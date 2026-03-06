@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Taxonomia Project - EPT OMR</title>
+
+    <!-- Ionic Framework (Core Web Components) -->
+    <script type="module" src="https://cdn.jsdelivr.net/npm/@ionic/core/dist/ionic/ionic.esm.js"></script>
+    <script nomodule src="https://cdn.jsdelivr.net/npm/@ionic/core/dist/ionic/ionic.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@ionic/core/css/ionic.bundle.css" />
+
+    <style>
+        :root {
+            --ion-color-primary: #0052cc;
+            --ion-color-primary-rgb: 0, 82, 204;
+            --ion-color-primary-contrast: #ffffff;
+            --ion-background-color: #f4f5f7;
+        }
+
+        /* Fix for desktop rendering of mobile views */
+        body {
+            margin: 0;
+            padding: 0;
+        }
+
+        .header-bg {
+            background: linear-gradient(90deg, var(--ion-color-primary), #0747a6);
+        }
+    </style>
+
+    <!-- Load SCHEMAS Dictionary -->
+    <?!= include('JS_Schemas_Config'); ?>
+</head>
+
+<body>
+    <ion-app>
+        <!-- General Layout Shell -->
+        <ion-header>
+            <ion-toolbar class="header-bg" color="primary">
+                <ion-title>Taxonomía Operativa</ion-title>
+                <ion-buttons slot="end">
+                    <ion-button id="btn-menu">
+                        <ion-icon name="menu-outline" slot="icon-only"></ion-icon>
+                    </ion-button>
+                </ion-buttons>
+            </ion-toolbar>
+        </ion-header>
+
+        <ion-content class="ion-padding">
+            <!-- This is where the FormEngine will dynamically inject Native Ionic Components -->
+            <div id="app-container">
+                <ion-card>
+                    <ion-card-header>
+                        <ion-card-title>Bienvenido</ion-card-title>
+                        <ion-card-subtitle>Plataforma de Gobernanza SAFe</ion-card-subtitle>
+                    </ion-card-header>
+                    <ion-card-content>
+                        <p>Selecciona una entidad para comenzar a gestionar el Portafolio.</p>
+                        <ion-button expand="block" onclick="renderForm('Portafolio')">Nuevo Portafolio</ion-button>
+                        <ion-button expand="block" color="secondary" onclick="renderForm('Producto')">Nuevo
+                            Producto</ion-button>
+                    </ion-card-content>
+                </ion-card>
+            </div>
+        </ion-content>
+    </ion-app>
+
+    <!-- Load Dynamic FormEngine Logic -->
+    <?!= include('FormEngine_UI'); ?>
+
+    <!-- Setup Ionic Icons -->
+    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+</body>
+
+</html>

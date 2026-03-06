@@ -1,0 +1,187 @@
+<script>
+    /**
+     * FormEngine_UI.html
+     *
+     * Client-side logic for dynamic UI generation.
+     * Mobile-First: Strictly generates Ionic Web Components (<ion-*>).
+     * Rule 5.1: Progressive Disclosure (Wizards).
+     * Rule 5.2: Responsive Native Grids.
+     */
+
+    (function (global) {
+
+        global.renderForm = function (entityName) {
+            const container = document.getElementById('app-container');
+            if (!container) throw new Error("Container #app-container not found");
+
+            // Limpieza segura del contenedor (no inyección indiscriminada)
+            while (container.firstChild) {
+                container.removeChild(container.firstChild);
+            }
+
+            const schemas = global.APP_SCHEMAS;
+            if (!schemas || !schemas[entityName]) {
+                throw new Error("Schema not found for entity: " + entityName);
+            }
+
+            const schemaDef = schemas[entityName];
+            // Normalize schema definition (flat array vs object containing steps)
+            const fields = Array.isArray(schemaDef) ? schemaDef : schemaDef.fields;
+            const steps = schemaDef.steps || null;
+
+            const card = document.createElement('ion-card');
+            const cardHeader = document.createElement('ion-card-header');
+            const cardTitle = document.createElement('ion-card-title');
+            cardTitle.textContent = "Nuevo: " + entityName;
+            cardHeader.appendChild(cardTitle);
+            card.appendChild(cardHeader);
+
+            const cardContent = document.createElement('ion-card-content');
+            card.appendChild(cardContent);
+
+            // Progressive Disclosure (Rule 5.1) - Contenedores Lógicos
+            let stepContainers = {};
+            if (steps && steps.length > 0) {
+                const ionSegment = document.createElement('ion-segment');
+                ionSegment.setAttribute('value', steps[0]); // Select first element
+
+                steps.forEach((stepName, index) => {
+                    const btn = document.createElement('ion-segment-button');
+                    btn.setAttribute('value', stepName);
+
+                    const label = document.createElement('ion-label');
+                    label.textContent = stepName;
+                    btn.appendChild(label);
+
+                    ionSegment.appendChild(btn);
+
+                    // Physical Container for the Step
+                    const stepDiv = document.createElement('div');
+                    stepDiv.id = 'step-' + stepName;
+                    if (index !== 0) stepDiv.style.display = 'none';
+                    stepContainers[stepName] = stepDiv;
+                });
+
+                // Segment toggle event
+                ionSegment.addEventListener('ionChange', (ev) => {
+                    const selectedStep = ev.detail.value;
+                    Object.keys(stepContainers).forEach(key => {
+                        stepContainers[key].style.display = (key === selectedStep) ? 'block' : 'none';
+                    });
+                });
+
+                cardContent.appendChild(ionSegment);
+
+                // Anexar los divs físicos al card Content
+                steps.forEach(stepName => {
+                    cardContent.appendChild(stepContainers[stepName]);
+                });
+            } else {
+                // Diseño plano (Sin Wizard)
+                stepContainers['default'] = document.createElement('div');
+                cardContent.appendChild(stepContainers['default']);
+            }
+
+            // Iniciar Grillas Responsivas (Rule 5.2) por contenedor lógico
+            const rows = {};
+            Object.keys(stepContainers).forEach(key => {
+                const grid = document.createElement('ion-grid');
+                const row = document.createElement('ion-row');
+                grid.appendChild(row);
+                stepContainers[key].appendChild(grid);
+                rows[key] = row; // Referencia rápida para inyectar las columnas (fields)
+            });
+
+            // Generación Segura de Componentes
+            fields.forEach(field => {
+                let targetRow = rows['default'];
+                if (steps && field.step && rows[field.step]) {
+                    targetRow = rows[field.step];
+                }
+
+                // Generar Columna Ionic
+                const ionCol = document.createElement('ion-col');
+                ionCol.setAttribute('size', '12'); // Mobile first
+                if (field.width) {
+                    ionCol.setAttribute('size-md', String(field.width)); // Responsive Override
+                }
+
+                const ionItem = document.createElement('ion-item');
+
+                switch (field.type) {
+                    case 'text':
+                    case 'number':
+                        const ionInput = document.createElement('ion-input');
+                        ionInput.setAttribute('label', field.label);
+                        ionInput.setAttribute('label-placement', 'stacked');
+                        ionInput.setAttribute('name', field.name);
+                        ionInput.setAttribute('type', field.type);
+                        if (field.required) ionInput.setAttribute('required', 'true');
+                        if (field.readonly) ionInput.setAttribute('readonly', 'true');
+                        ionItem.appendChild(ionInput);
+                        break;
+
+                    case 'select':
+                        const ionSelect = document.createElement('ion-select');
+                        ionSelect.setAttribute('label', field.label);
+                        ionSelect.setAttribute('label-placement', 'stacked');
+                        ionSelect.setAttribute('name', field.name);
+                        if (field.required) ionSelect.setAttribute('required', 'true');
+
+                        if (field.options && Array.isArray(field.options)) {
+                            field.options.forEach(opt => {
+                                const ionOption = document.createElement('ion-select-option');
+                                ionOption.value = opt;
+                                ionOption.textContent = opt;
+                                ionSelect.appendChild(ionOption);
+                            });
+                        }
+                        ionItem.appendChild(ionSelect);
+                        break;
+
+                    case 'lookup':
+                        const lookupInput = document.createElement('ion-input');
+                        lookupInput.setAttribute('label', field.label + ' (Lookup: ' + field.lookupTarget + ')');
+                        lookupInput.setAttribute('label-placement', 'stacked');
+                        lookupInput.setAttribute('name', field.name);
+                        lookupInput.setAttribute('readonly', 'true'); // Tapped via Modal
+                        if (field.required) lookupInput.setAttribute('required', 'true');
+                        ionItem.appendChild(lookupInput);
+                        break;
+
+                    default:
+                        console.warn("Unknown field type: " + field.type);
+                }
+
+                ionCol.appendChild(ionItem);
+                targetRow.appendChild(ionCol);
+            });
+
+            // Acción Guardar y UX Feedback (Rule 5.3)
+            const btnContainer = document.createElement('div');
+            btnContainer.className = "ion-padding";
+            const submitBtn = document.createElement('ion-button');
+            submitBtn.setAttribute('expand', 'block');
+            submitBtn.textContent = 'Guardar ' + entityName;
+
+            submitBtn.addEventListener('click', async () => {
+                if (global.presentLoading) {
+                    const loading = await global.presentLoading('Procesando...');
+                    setTimeout(async () => {
+                        loading.dismiss();
+                        if (global.presentToast) {
+                            global.presentToast('Datos listos para enviar (Mock)', 'success');
+                        }
+                    }, 500);
+                } else {
+                    console.log('Validando y ejecutando Engine_DB Mock...');
+                }
+            });
+
+            container.appendChild(card);
+            container.appendChild(btnContainer);
+            btnContainer.appendChild(submitBtn);
+        };
+
+    })(typeof window !== 'undefined' ? window : this);
+</script>

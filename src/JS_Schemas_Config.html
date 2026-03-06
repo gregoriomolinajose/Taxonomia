@@ -1,0 +1,43 @@
+<script>
+  /**
+   * EPT-OMR Project: APP_SCHEMAS Configuration
+   * 
+   * This object is the Single Source of Truth for the FormEngine.
+   * - name: EXACT column header in the Google Sheet (snake_case normalized by Engine_DB)
+   * - label: User-facing text in the UI
+   * - type: HTML/Ionic Input type (text, number, select, lookup, date)
+   * - required: Boolean for form validation
+   * - options: Array of values for 'select' types, or lookup configuration
+   */
+
+  const APP_SCHEMAS = {
+    Portafolio: {
+      steps: ["Estrategia", "Finanzas", "Aprobación"],
+      fields: [
+        { name: "id_portafolio", label: "ID Portafolio", type: "text", required: true, readonly: true, step: "Estrategia" },
+        { name: "nombre_portafolio", label: "Nombre del Portafolio", type: "text", required: true, step: "Estrategia" },
+        { name: "id_unidad_negocio", label: "Unidad de Negocio Padre", type: "lookup", required: true, lookupTarget: "Unidad_Negocio", step: "Estrategia" },
+        { name: "presupuesto_anual", label: "Presupuesto Anual (US$)", type: "number", required: true, step: "Finanzas" },
+        { name: "estado_aprobacion", label: "Estado de Aprobación", type: "select", required: true, options: ["DRAFT", "SUBMITTED", "APPROVED"], step: "Aprobación" }
+      ]
+    },
+    Equipo: {
+      fields: [
+        { name: "id_equipo", label: "ID del Equipo", type: "text", required: true, readonly: true },
+        { name: "nombre_equipo", label: "Nombre del Equipo", type: "text", required: true },
+        { name: "scrum_master", label: "Scrum Master", type: "lookup", required: true, lookupTarget: "Persona", width: 6 },
+        { name: "product_owner", label: "Product Owner", type: "lookup", required: true, lookupTarget: "Persona", width: 6 },
+        { name: "id_producto", label: "Producto o Canal Asignado", type: "lookup", required: true, lookupTarget: "Producto" }
+      ]
+    },
+    Producto: {
+      fields: [
+        { name: "id_producto", label: "ID Producto", type: "text", required: true, readonly: true },
+        { name: "nombre_producto", label: "Nombre del Producto", type: "text", required: true },
+        { name: "nivel_criticalidad", label: "Nivel de Criticalidad", type: "select", required: true, options: ["Tier 1 (Crítico)", "Tier 2 (Alto)", "Tier 3 (Medio)", "Tier 4 (Bajo)"] },
+        { name: "slo_objetivo", label: "SLO Objetivo (%)", type: "number", required: false },
+        { name: "id_grupo_padre", label: "Grupo de Productos Padre", type: "lookup", required: true, lookupTarget: "Grupo_Producto" }
+      ]
+    }
+  };
+</script>

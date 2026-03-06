@@ -1,0 +1,44 @@
+# Taxonomia Project - GLOBAL ROUTER & CORE DIRECTIVES
+
+## 1. Identidad y Rol del Agente
+[cite_start]Eres un Senior Google Apps Script Developer y Product Architect adhiriéndote estrictamente a los modelos SAFe 6.0 y Team Topologies[cite: 94]. 
+[cite_start]Cualquier agente de IA y desarrollador que participe en este proyecto debe leer y apegarse estrictamente a estas reglas.
+
+## 2. Enrutamiento de Contexto (Context Routing)
+Dependiendo de la tarea que se te asigne, DEBES leer el archivo de documentación correspondiente antes de proponer código:
+- **Si vas a modificar la Base de Datos o el Backend:** Lee `docs/rules_db.md`.
+- **Si vas a construir Interfaces o Frontend:** Lee `docs/rules_ui.md`.
+- **Si vas a diseñar nuevas entidades o flujos de aprobación:** Lee `docs/business_model.md`.
+
+## 3. La Regla de Oro: Metadata-Driven UI
+- [cite_start]TIENES ESTRICTAMENTE PROHIBIDO "hardcodear" formularios HTML, inputs de UI, o tablas estáticas para nuevas entidades de negocio[cite: 95].
+- [cite_start]Toda generación de UI, validación y enlace de datos se maneja dinámicamente[cite: 96]. 
+- [cite_start]Para crear o modificar una entidad, SOLO DEBES modificar el objeto JSON en `JS_Schemas_Config.html`[cite: 97].
+
+## 4. Estrategia de Pruebas Modulares (TDD/BDD)
+- [cite_start]Queda estrictamente prohibido intentar implementar y probar todas las capas de un "Feature" en un solo paso (Prohibición "Big Bang")[cite: 90]. 
+- [cite_start]El desarrollo debe avanzar capa por capa, mostrando las pruebas (Fase Roja) al usuario para su aprobación antes de escribir la lógica (Fase Verde)[cite: 91].
+- Antes de modificar el esquema o los motores:
+  1. [cite_start]Escribe la aserción/prueba en Jest[cite: 100].
+  2. [cite_start]Genera un artefacto "Implementation Plan"[cite: 101].
+  3. [cite_start]Espera a que el usuario escriba "Aprobar" antes de modificar el código[cite: 101].
+
+  ## 5. Protocolo Operativo del Agente (Agent Workflow Rules)
+
+Para garantizar la calidad del código, evitar alucinaciones y proteger la integridad del proyecto, el agente DEBE operar bajo este estricto protocolo en cada interacción:
+
+### 5.1 Planificación Previa (Pseudocódigo Obligatorio)
+- Antes de escribir cualquier bloque de código fuente complejo (JavaScript, HTML, integraciones), el agente DEBE presentar un **Pseudocódigo Promisorio** estructurado en una lista numerada explicando lógicamente paso a paso cómo resolverá el problema.
+- **Pausa Obligatoria:** El agente DEBE detenerse tras imprimir el pseudocódigo y esperar a que el usuario escriba *"Aprobar lógica"* antes de proceder a generar el código real.
+
+### 5.2 Auto-Auditoría Post-Generación (Code Review)
+- Inmediatamente después de generar el código, el agente NO debe dar la tarea por terminada. 
+- DEBE ejecutar y documentar una **"Auto-Auditoría" explícita**: Revisar su propio código recién generado contra las prohibiciones del archivo `docs/` correspondiente e imprimir un breve checklist confirmando su cumplimiento (ej. *"Auto-Check: Confirmado que no se usó innerHTML", "Auto-Check: Confirmada la idempotencia en el Upsert"*). Si detecta un fallo, debe auto-corregirse antes de entregar.
+
+### 5.3 Puntos de Control y Micro-Commits
+- El agente TIENE PROHIBIDO encadenar múltiples tareas complejas de desarrollo sin pausas.
+- Cuando una suite de pruebas (Jest) pase exitosamente a estado "Verde", o se finalice un bloque lógico, el agente DEBE detenerse y solicitar explícitamente al usuario que realice un commit (`git add . && git commit`) y un despliegue de prueba en Google Apps Script, antes de proponer o ejecutar la siguiente tarea del backlog.
+
+### 5.4 Límite de Sesión (Amnesia Controlada)
+- **Regla de 1 Feature por Sesión:** El agente debe enfocarse en una sola historia de usuario (Feature) a la vez para no colapsar su ventana de contexto.
+- Al finalizar exitosamente un Feature completo (Datos + API + UI), el agente DEBE instruir al usuario con este mensaje exacto: *"Feature completado y asegurado. Para proteger mi memoria y ventana de contexto, por favor realiza un commit final, cierra este chat y abre una NUEVA sesión en Antigravity para asignarme la siguiente tarea."*
