@@ -41,6 +41,11 @@
             <ion-toolbar class="header-bg" color="primary">
                 <ion-title>Taxonomía Operativa</ion-title>
                 <ion-buttons slot="end">
+                    <ion-button id="btn-logout" color="danger" fill="solid" style="margin-right: 10px;"
+                        onclick="window.AuthManager.logout()">
+                        <ion-icon slot="start" name="log-out-outline"></ion-icon>
+                        Cerrar Sesión
+                    </ion-button>
                     <ion-button id="btn-menu">
                         <ion-icon name="menu-outline" slot="icon-only"></ion-icon>
                     </ion-button>
@@ -73,6 +78,118 @@
     <!-- Setup Ionic Icons -->
     <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
     <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+
+    <!-- Authentication Logic -->
+    <script>
+        window.AuthManager = {
+            init: async function () {
+                const appContainer = document.getElementById('app-container');
+                const originalContent = appContainer.innerHTML;
+
+                // 1. Mostrar Loading
+                const loading = document.createElement('ion-loading');
+                loading.message = 'Verificando identidad...';
+                loading.spinner = 'crescent';
+                document.body.appendChild(loading);
+                await loading.present();
+
+                // Esconder contenido mientras carga
+                appContainer.innerHTML = '';
+                appContainer.style.display = 'none';
+
+                // 2. Llamar backend
+                if (typeof google !== 'undefined' && google.script && google.script.run) {
+                    google.script.run
+                        .withSuccessHandler(async (response) => {
+                            await loading.dismiss();
+                            this.handleAuthResponse(response, appContainer, originalContent);
+                        })
+                        .withFailureHandler(async (error) => {
+                            await loading.dismiss();
+                            this.renderAccessDenied(appContainer, "Error de conexión con el servidor.");
+                        })
+                        .getUserIdentity();
+                } else {
+                    // Modo desarrollo local (Mock)
+                    setTimeout(async () => {
+                        await loading.dismiss();
+                        console.warn("Entorno local: Simulando Auth exitosa.");
+                        this.handleAuthResponse({ authorized: true, email: "local@gmail.com" }, appContainer, originalContent);
+                    }, 800);
+                }
+            },
+
+            handleAuthResponse: function (response, container, originalContent) {
+                container.style.display = 'block';
+                if (response.authorized) {
+                    // Caso Seguro
+                    container.innerHTML = originalContent;
+                } else {
+                    // Caso Fallido
+                    this.renderAccessDenied(container, "Dominio no autorizado", response.email);
+                }
+            },
+
+            renderAccessDenied: function (container, reason, email = "") {
+                const emailMsg = email ? `<p>La cuenta <strong>${email}</strong> no tiene permisos de acceso al sistema.</p>` : '';
+                container.innerHTML = `
+                    <ion-grid>
+                        <ion-row class="ion-justify-content-center" style="margin-top: 50px;">
+                            <ion-col size="12" size-md="8" size-lg="6">
+                                <ion-card color="danger">
+                                    <ion-card-header>
+                                        <ion-icon name="lock-closed-outline" style="font-size: 64px; display: block; margin: 0 auto; padding-bottom: 20px;"></ion-icon>
+                                        <ion-card-title class="ion-text-center">Acceso Denegado</ion-card-title>
+                                    </ion-card-header>
+                                    <ion-card-content class="ion-text-center">
+                                        <h3>${reason}</h3>
+                                        ${emailMsg}
+                                        <p style="margin-top:20px;">Por favor, inicia sesión con una cuenta autorizada.</p>
+                                    </ion-card-content>
+                                </ion-card>
+                            </ion-col>
+                        </ion-row>
+                    </ion-grid>
+                `;
+            },
+
+            logout: async function () {
+                const ionApp = document.querySelector('ion-app');
+                if (ionApp) {
+                    // Destruir contenedor completo
+                    ionApp.innerHTML = `
+                        <ion-content class="ion-padding">
+                            <ion-grid style="height: 100%;">
+                                <ion-row class="ion-justify-content-center ion-align-items-center" style="height: 100%;">
+                                    <ion-col size="12" class="ion-text-center">
+                                        <ion-icon name="shield-checkmark-outline" color="success" style="font-size: 80px;"></ion-icon>
+                                        <h2 style="margin-top: 20px;">Sesión cerrada por seguridad</h2>
+                                        <p>Por favor, cierra esta pestaña del navegador.</p>
+                                    </ion-col>
+                                </ion-row>
+                            </ion-grid>
+                        </ion-content>
+                    `;
+
+                    // Mostrar Toast
+                    const toast = document.createElement('ion-toast');
+                    toast.message = 'Desconectado de forma segura.';
+                    toast.duration = 3000;
+                    toast.color = 'dark';
+                    document.body.appendChild(toast);
+                    await toast.present();
+                }
+            }
+        };
+
+        // Arrancar verificación al cargar el DOM de Ionic
+        document.addEventListener('DOMContentLoaded', () => {
+            // Esperar un toque a que Ionic se inicialice
+            setTimeout(() => {
+                window.AuthManager.init();
+            }, 100);
+        });
+    </script>
 </body>
 
 </html>

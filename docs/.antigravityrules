@@ -43,9 +43,19 @@ Para garantizar la calidad del código, evitar alucinaciones y proteger la integ
 - **Regla de 1 Feature por Sesión:** El agente debe enfocarse en una sola historia de usuario (Feature) a la vez para no colapsar su ventana de contexto.
 - Al finalizar exitosamente un Feature completo (Datos + API + UI), el agente DEBE instruir al usuario con este mensaje exacto: *"Feature completado y asegurado. Para proteger mi memoria y ventana de contexto, por favor realiza un commit final, cierra este chat y abre una NUEVA sesión en Antigravity para asignarme la siguiente tarea."*
 
-### 5.5 Comando de Cierre Automático (Macro: "CLouse")
-Si el usuario escribe únicamente la palabra "CLouse" (o "close"), el agente DEBE interpretar esto como el final exitoso del "Sprint" o "Feature" actual y DEBE ejecutar inmediatamente esta secuencia exacta:
-1. **Resumen Ejecutivo:** Imprimir una lista de máximo 3 viñetas (bullet points) resumiendo los logros técnicos de la sesión actual.
-2. **Generación de Commit:** Proveer el comando exacto de terminal (`git add . && git commit -m "..." && git push origin main`) redactando un mensaje de commit semántico y profesional basado en el resumen.
-3. **Recordatorio de Despliegue:** Recordar brevemente ejecutar `clasp push` (si aplica).
-4. **Despedida Arquitectónica:** Despedirse formalmente, recordando al usuario que debe cerrar la pestaña actual y abrir un nuevo chat para limpiar la ventana de contexto.
+### 5.5 Comando de Cierre y Despliegue Autónomo (Macro: "close")
+Si el usuario escribe ÚNICAMENTE la palabra "close" (sin importar mayúsculas, de forma aislada), el agente asume que el Sprint fue validado visualmente y DEBE ejecutar inmediatamente y de forma AUTÓNOMA esta secuencia utilizando sus herramientas de Terminal/CLI:
+
+1. **Sincronización Cloud (`clasp`):** Ejecutar en la terminal el comando `clasp push` para subir el código a Google Apps Script.
+2. **Versionado Git (Micro-Commit):** Ejecutar en la terminal la secuencia `git add .`, seguido de un `git commit -m "feat/fix: [Resumen semántico de la IA]"` y finalmente `git push origin main` (o la rama actual).
+3. **Reporte de Salida:** Una vez que la terminal confirme el éxito de los comandos, imprimir un resumen ejecutivo (máx. 3 viñetas) de lo que se construyó y confirmó que fue subido a la nube y al repositorio.
+4. **Cierre de Sesión:** Despedirse formalmente, indicando al usuario que la memoria del agente debe limpiarse y que puede abrir un nuevo chat para el siguiente Feature.
+
+### 5.6 Comando de Arranque Rápido (Macro: "init")
+Si el usuario escribe la palabra "init" (o le pide al agente que ejecute el macro de inicio), el agente asume que es una nueva sesión de trabajo y DEBE ejecutar esta secuencia de "Cold Start":
+
+1. **Recuperación de Contexto (Lectura Silenciosa):** Leer inmediatamente los archivos `docs/rules_db.md`, `docs/rules_ui.md` y `docs/business_model.md` para cargar en su memoria las reglas de base de datos, interfaz y negocio.
+2. **Confirmación de Estado:** Imprimir un mensaje muy breve confirmando que el contexto arquitectónico ha sido cargado (ej. "Contexto DB, UI y Negocio asimilados").
+3. **Petición de Instrucciones:** Preguntar al usuario: *"¿Cuál es el objetivo y las tareas para este nuevo Sprint?"* y esperar a que el usuario defina el alcance (aplicando siempre la regla del Pseudocódigo Obligatorio antes de codificar).
+
+
