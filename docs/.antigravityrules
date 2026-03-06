@@ -42,3 +42,10 @@ Para garantizar la calidad del código, evitar alucinaciones y proteger la integ
 ### 5.4 Límite de Sesión (Amnesia Controlada)
 - **Regla de 1 Feature por Sesión:** El agente debe enfocarse en una sola historia de usuario (Feature) a la vez para no colapsar su ventana de contexto.
 - Al finalizar exitosamente un Feature completo (Datos + API + UI), el agente DEBE instruir al usuario con este mensaje exacto: *"Feature completado y asegurado. Para proteger mi memoria y ventana de contexto, por favor realiza un commit final, cierra este chat y abre una NUEVA sesión en Antigravity para asignarme la siguiente tarea."*
+
+### 5.5 Comando de Cierre Automático (Macro: "CLouse")
+Si el usuario escribe únicamente la palabra "CLouse" (o "close"), el agente DEBE interpretar esto como el final exitoso del "Sprint" o "Feature" actual y DEBE ejecutar inmediatamente esta secuencia exacta:
+1. **Resumen Ejecutivo:** Imprimir una lista de máximo 3 viñetas (bullet points) resumiendo los logros técnicos de la sesión actual.
+2. **Generación de Commit:** Proveer el comando exacto de terminal (`git add . && git commit -m "..." && git push origin main`) redactando un mensaje de commit semántico y profesional basado en el resumen.
+3. **Recordatorio de Despliegue:** Recordar brevemente ejecutar `clasp push` (si aplica).
+4. **Despedida Arquitectónica:** Despedirse formalmente, recordando al usuario que debe cerrar la pestaña actual y abrir un nuevo chat para limpiar la ventana de contexto.

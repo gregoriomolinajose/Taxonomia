@@ -24,7 +24,7 @@ describe('FormEngine Logic (Ionic Web Components)', () => {
         // Load the schemas from the file as if they were evaluated
         const schemaFile = fs.readFileSync(path.join(__dirname, '../src/JS_Schemas_Config.html'), 'utf8');
         // Extract the JSON part from inside the <script> tags
-        const jsonMatch = schemaFile.match(/const APP_SCHEMAS = (\{[\s\S]*?\});/);
+        const jsonMatch = schemaFile.match(/window\.APP_SCHEMAS = (\{[\s\S]*?\});/);
         if (jsonMatch) {
             // Using new Function is safe here for our controlled local test
             APP_SCHEMAS = new Function('return ' + jsonMatch[1])();
