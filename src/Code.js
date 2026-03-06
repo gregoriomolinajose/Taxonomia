@@ -7,6 +7,15 @@
  * Renders the main SPA Index HTML.
  */
 function doGet(e) {
+    // Check user identity early to force Google Apps Script to request authorization
+    // and show the OAuth consent screen before loading the Web App UI.
+    var userEmail = '';
+    try {
+        userEmail = Session.getActiveUser().getEmail();
+    } catch (err) {
+        console.error("Auth Error", err);
+    }
+
     var template = HtmlService.createTemplateFromFile("Index");
     return template.evaluate()
         .setTitle("EPT-OMR Platform")
