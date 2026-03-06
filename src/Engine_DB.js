@@ -47,6 +47,6 @@ const Engine_DB = {
     }
 };
 
-if (typeof module !== 'undefined' && module.exports) {
+if (typeof module !== 'undefined') {
     module.exports = Engine_DB;
 }

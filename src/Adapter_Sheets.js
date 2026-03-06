@@ -28,6 +28,6 @@ const Adapter_Sheets = {
     _normalizeHeader: _normalizeHeader
 };
 
-if (typeof module !== 'undefined' && module.exports) {
+if (typeof module !== 'undefined') {
     module.exports = Adapter_Sheets;
 }

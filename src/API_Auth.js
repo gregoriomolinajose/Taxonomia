@@ -47,6 +47,6 @@ function getUserIdentity() {
     return API_Auth.getUserIdentity();
 }
 
-if (typeof module !== 'undefined' && module.exports) {
+if (typeof module !== 'undefined') {
     module.exports = { API_Auth, getUserIdentity, ALLOWED_DOMAINS };
 }

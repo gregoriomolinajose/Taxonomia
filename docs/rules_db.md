@@ -17,3 +17,7 @@
 ## 4. Inmutabilidad y Trazabilidad
 - [cite_start]Todo cambio en cualquier tabla debe inyectar `created_at`, `updated_at` y `updated_by`[cite: 21].
 - [cite_start]`T_Audit_Log` llevará el diario inmutable del sistema[cite: 22].
+
+## 5. Compatibilidad Híbrida (Jest vs GAS)
+- [cite_start]Queda Categóricamente Prohibido usar `module.exports = ...` o exportaciones de Node.js sin validarlo primero contra el entorno de ejecución, originando el error "module is not defined" en Cloud[cite: bugfix].
+- [cite_start]Todo export al final de un archivo backend (.js) DEBE utilizar EXACTAMENTE esta condicional: `if (typeof module !== 'undefined') { ... }` para no romper el entorno de producción de Google Apps Script[cite: bugfix].

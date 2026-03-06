@@ -7,6 +7,6 @@ const Adapter_CloudDB = {
     }
 };
 
-if (typeof module !== 'undefined' && module.exports) {
+if (typeof module !== 'undefined') {
     module.exports = Adapter_CloudDB;
 }
