@@ -15,10 +15,14 @@
       steps: ["Estrategia", "Finanzas", "Aprobación"],
       fields: [
         { name: "id_portafolio", label: "ID Portafolio", type: "text", required: true, readonly: true, step: "Estrategia" },
-        { name: "nombre_portafolio", label: "Nombre del Portafolio", type: "text", required: true, step: "Estrategia" },
-        { name: "id_unidad_negocio", label: "Unidad de Negocio Padre", type: "lookup", required: true, lookupTarget: "Unidad_Negocio", step: "Estrategia" },
-        { name: "presupuesto_anual", label: "Presupuesto Anual (US$)", type: "number", required: true, step: "Finanzas" },
-        { name: "estado_aprobacion", label: "Estado de Aprobación", type: "select", required: true, options: ["DRAFT", "SUBMITTED", "APPROVED"], step: "Aprobación" }
+        { name: "nombre", label: "Nombre", type: "text", required: true, step: "Estrategia" },
+        { name: "descripcion", label: "Descripción", type: "text", required: false, step: "Estrategia" },
+        { name: "temas_estrategicos", label: "Temas Estratégicos", type: "text", required: false, step: "Estrategia" },
+        { name: "flujos_valor", label: "Flujos de Valor", type: "text", required: false, step: "Finanzas" },
+        { name: "clientes_segmentos", label: "Clientes y Segmentos", type: "text", required: false, step: "Finanzas" },
+        { name: "presupuesto", label: "Presupuesto", type: "number", required: true, step: "Finanzas" },
+        { name: "kpis_metricas", label: "KPIs y Métricas", type: "text", required: false, step: "Finanzas" },
+        { name: "estado", label: "Estado", type: "select", required: true, options: ["Borrador", "Activo", "En Revisión"], step: "Aprobación" }
       ]
     },
     Equipo: {

@@ -157,25 +157,82 @@
                 targetRow.appendChild(ionCol);
             });
 
-            // Acción Guardar y UX Feedback (Rule 5.3)
             const btnContainer = document.createElement('div');
             btnContainer.className = "ion-padding";
             const submitBtn = document.createElement('ion-button');
             submitBtn.setAttribute('expand', 'block');
             submitBtn.textContent = 'Guardar ' + entityName;
 
+            let isSaving = false; // Bloqueo de Reentrada
+
             submitBtn.addEventListener('click', async () => {
-                if (global.presentLoading) {
-                    const loading = await global.presentLoading('Procesando...');
-                    setTimeout(async () => {
-                        loading.dismiss();
-                        if (global.presentToast) {
-                            global.presentToast('Datos listos para enviar (Mock)', 'success');
+                if (isSaving) return; // Abortar si ya está guardando
+                isSaving = true;
+                submitBtn.disabled = true; // Deshabilitar botón
+
+                // Mostrar Spinner Nativo en el botón
+                submitBtn.innerHTML = '<ion-spinner name="crescent"></ion-spinner> &nbsp; Guardando...';
+
+                // Capturar el Payload dinámicamente
+                const inputs = container.querySelectorAll('ion-input, ion-select');
+                const payload = {};
+                inputs.forEach(input => {
+                    const name = input.getAttribute('name');
+                    if (name) {
+                        payload[name] = input.value;
+                    }
+                });
+
+                // Función auxiliar para mostrar Ionic Toast alineado al estándar
+                const showToast = async (msg, color) => {
+                    const toast = document.createElement('ion-toast');
+                    toast.message = msg;
+                    toast.duration = 3000;
+                    toast.position = 'bottom';
+                    toast.color = color; // Usa la paleta nativa var(--ion-color-[color])
+
+                    // En lugar del body, atamos el toast a nuestro contenedor principal para aislar z-index
+                    container.appendChild(toast);
+
+                    // Esperar a que el componente Ionic esté listo en el DOM
+                    await toast.componentOnReady();
+                    await toast.present();
+                };
+
+                // Llamada nativa hacia Apps Script (API Real)
+                google.script.run
+                    .withSuccessHandler((response) => {
+                        try {
+                            if (response && response.status === 'success') {
+                                const itemName = (response.data && response.data.Entity) ? response.data.Entity : entityName;
+
+                                // Mostrar Toast Nativo de Éxito
+                                showToast('¡' + itemName + ' guardado con éxito!', 'success');
+
+                                // Limpieza del formulario
+                                inputs.forEach(input => {
+                                    input.value = '';
+                                });
+                            } else {
+                                // Error Controlado desde el Servidor
+                                showToast('Error: ' + (response ? response.message : 'Error Desconocido'), 'danger');
+                            }
+                        } catch (e) {
+                            showToast('Error procesando respuesta: ' + e.message, 'danger');
+                        } finally {
+                            isSaving = false;
+                            submitBtn.disabled = false;
+                            submitBtn.textContent = 'Guardar ' + entityName;
                         }
-                    }, 500);
-                } else {
-                    console.log('Validando y ejecutando Engine_DB Mock...');
-                }
+                    })
+                    .withFailureHandler((err) => {
+                        isSaving = false;
+                        submitBtn.disabled = false;
+                        submitBtn.textContent = 'Guardar ' + entityName;
+
+                        showToast('Error de Servidor: ' + err.message, 'danger');
+                    })
+                    .API_Universal_Router('create', entityName, payload);
             });
 
             container.appendChild(card);

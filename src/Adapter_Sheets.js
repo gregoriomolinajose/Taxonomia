@@ -13,17 +13,80 @@ function _normalizeHeader(headerStr) {
 }
 
 const Adapter_Sheets = {
-    upsert: async function (tableName, payload) {
+    upsert: function (tableName, payload, config) {
         // 1. Validar Llave Primaria (Regla 4.9.1)
-        // El ID debe comenzar con 'id_' extraído del payload
         const primaryKeyField = Object.keys(payload).find(key => key.startsWith('id_'));
 
         if (!primaryKeyField || !payload[primaryKeyField]) {
             throw new Error(`Primary Key requerida para operar el Upsert. No se encontró identificador único validado (ej. id_${tableName.toLowerCase()}) en el payload.`);
         }
 
-        // Mock response para simular éxito en Jest
-        return { status: 'success', action: 'updated', pk: primaryKeyField };
+        const primaryKeyValue = payload[primaryKeyField];
+
+        // 2. Conectar a SpreadsheetApp (solo en entorno GAS)
+        if (typeof SpreadsheetApp === 'undefined') {
+            // Entorno de pruebas (Jest)
+            return { status: 'success', action: 'mocked_upsert', pk: primaryKeyField, val: primaryKeyValue };
+        }
+
+        const spreadsheetId = config ? config.SPREADSHEET_ID_DB : CONFIG.SPREADSHEET_ID_DB;
+        Logger.log("Adapter_Sheets.upsert: Usando SPREADSHEET_ID_DB = " + spreadsheetId);
+
+        const ss = SpreadsheetApp.openById(spreadsheetId);
+        Logger.log("Adapter_Sheets.upsert: Buscando pestaña... DB_" + tableName);
+        let sheet = ss.getSheetByName('DB_' + tableName);
+
+        if (!sheet) {
+            sheet = ss.insertSheet('DB_' + tableName);
+            throw new Error(`La hoja DB_${tableName} no existe. Por favor créala con las columnas correspondientes.`);
+        }
+
+        // 3. Leer Encabezados
+        const headersRange = sheet.getRange(1, 1, 1, sheet.getLastColumn());
+        const headers = headersRange.getValues()[0];
+
+        // Mapear encabezados usando underscore para comparar con el payload
+        const normalizedHeaders = headers.map(h => _normalizeHeader(h));
+        Logger.log("Adapter_Sheets.upsert: Encabezados encontrados (normalizados): " + JSON.stringify(normalizedHeaders));
+
+        // 4. Construir Array de Fila
+        const rowToInsert = [];
+        for (let i = 0; i < normalizedHeaders.length; i++) {
+            const h = normalizedHeaders[i];
+            rowToInsert.push(payload.hasOwnProperty(h) ? payload[h] : '');
+        }
+
+        // 5. Idempotencia: Buscar si existe la PK (Upsert)
+        const pkIndex = normalizedHeaders.indexOf(primaryKeyField);
+        if (pkIndex === -1) {
+            throw new Error(`La columna llave primaria (${primaryKeyField}) no existe en DB_${tableName}`);
+        }
+
+        const dataRange = sheet.getDataRange();
+        const numRows = dataRange.getNumRows();
+
+        let foundRowIndex = -1;
+        if (numRows > 1) {
+            const pkColumnData = sheet.getRange(2, pkIndex + 1, numRows - 1, 1).getValues();
+            for (let r = 0; r < pkColumnData.length; r++) {
+                if (pkColumnData[r][0] == primaryKeyValue) {
+                    foundRowIndex = r + 2; // +2 porque el índice de la fila empieza en 1, y nos saltamos el header (fila 1)
+                    break;
+                }
+            }
+        }
+
+        if (foundRowIndex > -1) {
+            // Actualizar (Update)
+            Logger.log(`Adapter_Sheets.upsert: ¿Se encontró el ID?: Sí. Fila: ${foundRowIndex}`);
+            sheet.getRange(foundRowIndex, 1, 1, rowToInsert.length).setValues([rowToInsert]);
+            return { status: 'success', action: 'updated', pk: primaryKeyField, val: primaryKeyValue };
+        } else {
+            // Insertar (Create)
+            Logger.log("Adapter_Sheets.upsert: ¿Se encontró el ID?: No. Realizando appendRow...");
+            sheet.appendRow(rowToInsert);
+            return { status: 'success', action: 'created', pk: primaryKeyField, val: primaryKeyValue };
+        }
     },
     _normalizeHeader: _normalizeHeader
 };

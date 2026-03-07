@@ -19,31 +19,52 @@ if (typeof require !== 'undefined') {
 }
 
 const Engine_DB = {
-    save: async function (tableName, payload, config) {
+    save: function (tableName, payload, config) {
         const results = { sheets: {}, cloud: {} };
-        const promises = [];
 
-        // Dispatch a Sheets
+        // Dispatch a Sheets Síncrono
         if (config.useSheets) {
-            const pSheets = _Adapter_Sheets.upsert(tableName, payload)
-                .then(res => { results.sheets = res; })
-                .catch(err => { results.sheets = { status: 'error', error: err.message }; });
-            promises.push(pSheets);
+            try {
+                results.sheets = _Adapter_Sheets.upsert(tableName, payload, config);
+            } catch (err) {
+                results.sheets = { status: 'error', error: err.message };
+            }
         }
 
-        // Dispatch a Cloud (Non-blocking fail)
+        // Dispatch a Cloud Síncrono (Non-blocking fail simulado)
         if (config.useCloudDB) {
-            const pCloud = _Adapter_CloudDB.upsert(tableName, payload)
-                .then(res => { results.cloud = res; })
-                .catch(err => { results.cloud = { status: 'error', error: err.message }; });
-            promises.push(pCloud);
+            try {
+                results.cloud = _Adapter_CloudDB.upsert(tableName, payload, config);
+            } catch (err) {
+                results.cloud = { status: 'error', error: err.message };
+            }
         }
-
-        // Esperamos a que ambos terminen (triunfen o fallen, no importa, el Promise.all() acá 
-        // está cubierto por los .catch().
-        await Promise.all(promises);
 
         return results;
+    },
+
+    create: function (entityName, data) {
+        Logger.log("Engine_DB_create_router: Routing " + entityName + " to Adapters.");
+        // Utilizar la configuración global localmente accesible o pasarle los valores por defecto
+        const config = (typeof CONFIG !== 'undefined') ? CONFIG : { useSheets: true, useCloudDB: false };
+        const result = this.save(entityName, data, config);
+        return {
+            success: true,
+            Entity: entityName,
+            adapter_results: result
+        };
+    },
+
+    read: function (entityName, id) {
+        // Lógica futura de enrutamiento READ
+    },
+
+    update: function (entityName, id, data) {
+        // Lógica futura de enrutamiento UPDATE
+    },
+
+    delete: function (entityName, id) {
+        // Lógica futura de enrutamiento DELETE
     }
 };
 

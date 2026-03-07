@@ -44,12 +44,17 @@ Para garantizar la calidad del código, evitar alucinaciones y proteger la integ
 - Al finalizar exitosamente un Feature completo (Datos + API + UI), el agente DEBE instruir al usuario con este mensaje exacto: *"Feature completado y asegurado. Para proteger mi memoria y ventana de contexto, por favor realiza un commit final, cierra este chat y abre una NUEVA sesión en Antigravity para asignarme la siguiente tarea."*
 
 ### 5.5 Comando de Cierre y Despliegue Autónomo (Macro: "close")
-Si el usuario escribe ÚNICAMENTE la palabra "close" (sin importar mayúsculas, de forma aislada), el agente asume que el Sprint fue validado visualmente y DEBE ejecutar inmediatamente y de forma AUTÓNOMA esta secuencia utilizando sus herramientas de Terminal/CLI:
+Si el usuario escribe ÚNICAMENTE la palabra "close" (sin importar mayúsculas, de forma aislada), el agente asume que el Sprint finalizó y DEBE ejecutar autónomamente esta secuencia estricta:
 
-1. **Sincronización Cloud (`clasp`):** Ejecutar en la terminal el comando `clasp push` para subir el código a Google Apps Script.
-2. **Versionado Git (Micro-Commit):** Ejecutar en la terminal la secuencia `git add .`, seguido de un `git commit -m "feat/fix: [Resumen semántico de la IA]"` y finalmente `git push origin main` (o la rama actual).
-3. **Reporte de Salida:** Una vez que la terminal confirme el éxito de los comandos, imprimir un resumen ejecutivo (máx. 3 viñetas) de lo que se construyó y confirmó que fue subido a la nube y al repositorio.
-4. **Cierre de Sesión:** Despedirse formalmente, indicando al usuario que la memoria del agente debe limpiarse y que puede abrir un nuevo chat para el siguiente Feature.
+1. **Auditoría de Deuda Técnica (Refactor Check):** El agente evaluará el código escrito en este Sprint. Si detecta deuda técnica o "parches" no escalables, detendrá la secuencia, presentará el código refactorizado y esperará el comando "Aprobar refactor".
+
+2. **Validación de Pruebas (Test Pass):** Una vez que el código es definitivo (ya sea el original o el refactorizado), el agente DEBE ejecutar la suite de pruebas automatizadas (Jest). Si los tests fallan, aborta el despliegue inmediatamente y reporta el error. Si los tests pasan, procede automáticamente al siguiente paso.
+
+3. **Sincronización Cloud (clasp):** Ejecutar en la terminal el comando clasp push para subir el código validado a Google Apps Script.
+
+4. **Versionado Git (Micro-Commit):** Ejecutar en la terminal la secuencia git add ., seguido de un git commit -m "feat/fix: [Resumen semántico]" y finalmente git push origin main.
+
+5. **Reporte de Salida y Cierre:** Imprimir un resumen ejecutivo confirmando el despliegue y despedirse formalmente, indicando que se debe abrir un nuevo chat.
 
 ### 5.6 Comando de Arranque Rápido (Macro: "init")
 Si el usuario escribe la palabra "init" (o le pide al agente que ejecute el macro de inicio), el agente asume que es una nueva sesión de trabajo y DEBE ejecutar esta secuencia de "Cold Start":
@@ -57,5 +62,23 @@ Si el usuario escribe la palabra "init" (o le pide al agente que ejecute el macr
 1. **Recuperación de Contexto (Lectura Silenciosa):** Leer inmediatamente los archivos `docs/rules_db.md`, `docs/rules_ui.md` y `docs/business_model.md` para cargar en su memoria las reglas de base de datos, interfaz y negocio.
 2. **Confirmación de Estado:** Imprimir un mensaje muy breve confirmando que el contexto arquitectónico ha sido cargado (ej. "Contexto DB, UI y Negocio asimilados").
 3. **Petición de Instrucciones:** Preguntar al usuario: *"¿Cuál es el objetivo y las tareas para este nuevo Sprint?"* y esperar a que el usuario defina el alcance (aplicando siempre la regla del Pseudocódigo Obligatorio antes de codificar).
+
+## 6. Protocolo de Aprendizaje Continuo (Knowledge Loop)
+Esta regla se activa obligatoriamente al recibir el comando **"close"** tras una actividad que haya requerido depuración (debugging), refactorización arquitectónica o resolución de conflictos de integración.
+
+### 6.1 Activación de la Retrospectiva
+- Antes de ejecutar cualquier comando de persistencia (`git push` o `clasp push`), el agente DEBE evaluar si la sesión contuvo hitos de aprendizaje técnico significativos.
+- **Acción Obligatoria:** El agente DEBE preguntar: *"He detectado desafíos técnicos superados. ¿Deseas que documente las lecciones aprendidas para optimizar el próximo hito?"*.
+
+### 6.2 Generación Autónoma de Lecciones
+- Si el usuario acepta, el agente DEBE analizar el historial del chat y generar/actualizar el archivo `ARCH_LECCIONES_APRENDIDAS.md` con la siguiente estructura:
+    - **Hito:** [Nombre del Feature o Actividad].
+    - **Punto de Falla (Root Cause):** Explicación técnica precisa del error (ej. "Limites de serialización en google.script.run").
+    - **Solución Maestra (Golden Pattern):** El código o lógica final que garantizó la estabilidad y escalabilidad.
+    - **Regla Preventiva de Diseño:** Una instrucción específica para el agente (ej. "Prohibido retornar Promesas pendientes al Frontend en GAS").
+
+### 6.3 Persistencia y Reutilización de Memoria
+- El archivo de lecciones DEBE ser sincronizado al repositorio como parte del comando `close`.
+- **Regla de Inicio:** Al ejecutar el macro `init`, el agente TIENE LA OBLIGACIÓN de leer el archivo `ARCH_LECCIONES_APRENDIDAS.md` junto con los otros manuales de `docs/` para no repetir errores históricos.
 
 
