@@ -43,9 +43,6 @@
             cardContent.style.padding = '24px';
             card.appendChild(cardContent);
 
-            // Detección Resolutiva de Dispositivo (UX Mobile Fix)
-            const isDesktop = window.matchMedia('(min-width: 992px)').matches;
-
             // Progressive Disclosure (Rule 5.1) - Contenedores Lógicos
             let stepContainers = {};
             let menuItems = {};
@@ -73,16 +70,6 @@
             cardContent.appendChild(progressLabel);
 
             if (steps && steps.length > 0) {
-                let mobileSegment = null;
-
-                if (!isDesktop) {
-                    // Mobile: Inyectar Barra Horizontal (ion-segment) superior
-                    mobileSegment = document.createElement('ion-segment');
-                    mobileSegment.setAttribute('value', steps[0]);
-                    mobileSegment.setAttribute('scrollable', 'true');
-                    mobileSegment.style.marginBottom = '20px';
-                }
-
                 steps.forEach((stepName, index) => {
                     // Contenedor físico de los campos del paso
                     const stepDiv = document.createElement('div');
@@ -90,8 +77,8 @@
                     if (index !== 0) stepDiv.style.display = 'none';
                     stepContainers[stepName] = stepDiv;
 
-                    if (isDesktop && sidebarList) {
-                        // Escritorio: Inyectar el ítem en el ion-menu lateral (Solo Visual)
+                    if (sidebarList) {
+                        // Inyectar el ítem en el ion-menu lateral (Solo Visual)
                         const item = document.createElement('ion-item');
                         item.setAttribute('lines', 'none');
                         item.style.borderRadius = '8px';
@@ -115,35 +102,14 @@
                         sidebarList.appendChild(item);
 
                         menuItems[stepName] = { item, icon, label };
-                    } else if (!isDesktop && mobileSegment) {
-                        // Móvil: Inyectar botón en el ion-segment
-                        const btn = document.createElement('ion-segment-button');
-                        btn.setAttribute('value', stepName);
-
-                        const label = document.createElement('ion-label');
-                        label.textContent = stepName;
-
-                        btn.appendChild(label);
-                        mobileSegment.appendChild(btn);
                     }
 
                     cardContent.appendChild(stepContainers[stepName]);
                 });
 
-                // Attach event listener & place horizontal segment exactly at the top of Form Content
-                if (!isDesktop && mobileSegment) {
-                    mobileSegment.addEventListener('ionChange', (ev) => {
-                        const selectedStep = ev.detail.value;
-                        Object.keys(stepContainers).forEach(key => {
-                            stepContainers[key].style.display = (key === selectedStep) ? 'block' : 'none';
-                        });
-                    });
-                    cardContent.insertBefore(mobileSegment, cardContent.firstChild);
-                }
-
             } else {
                 // Diseño plano (Sin Wizard Steps definidos en metadatos)
-                if (isDesktop && sidebarList) {
+                if (sidebarList) {
                     const item = document.createElement('ion-item');
                     item.setAttribute('lines', 'none');
                     item.style.borderRadius = '8px';
@@ -386,7 +352,7 @@
                     stepContainers[key].style.display = (key === currentStepName) ? 'block' : 'none';
                 });
 
-                if (steps && steps.length > 0 && isDesktop && sidebarList) {
+                if (steps && steps.length > 0 && sidebarList) {
                     Object.values(menuItems).forEach((mi, idx) => {
                         mi.item.style.removeProperty('--background');
                         mi.icon.removeAttribute('color');
@@ -400,7 +366,7 @@
                 }
 
                 if (steps && steps.length > 0) {
-                    progressLabel.textContent = `Paso ${currentStepIndex + 1} de ${totalSteps}: ${currentStepName}`;
+                    progressLabel.textContent = `PASO ${currentStepIndex + 1} DE ${totalSteps}: ${currentStepName.toUpperCase()}`;
                     btnPrev.style.display = currentStepIndex === 0 ? 'none' : 'block';
 
                     if (currentStepIndex === totalSteps - 1) {
@@ -411,7 +377,7 @@
                         submitBtn.style.display = 'none';
                     }
                 } else {
-                    progressLabel.textContent = `Configuración General`;
+                    progressLabel.textContent = `CONFIGURACIÓN GENERAL`;
                     btnPrev.style.display = 'none';
                     btnNext.style.display = 'none';
                     submitBtn.style.display = 'block';
