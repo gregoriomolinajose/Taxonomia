@@ -16,5 +16,6 @@ ide:
 agents:
   types:
   - antigravity
+  - Gemini
 tier: null
 backlog: null

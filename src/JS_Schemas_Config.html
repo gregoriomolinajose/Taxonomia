@@ -11,6 +11,17 @@
    */
 
   window.APP_SCHEMAS = {
+    Grupo_Productos: {
+      steps: ["Datos Generales", "Estrategia de Negocio"],
+      fields: [
+        { name: "id_grupo_producto", label: "ID Grupo Producto", type: "text", required: true, readonly: true, step: "Datos Generales" },
+        { name: "nombre", label: "Nombre", type: "text", required: true, step: "Datos Generales" },
+        { name: "descripcion", label: "Descripción", type: "textarea", required: false, step: "Datos Generales" },
+        { name: "naturaleza_valor", label: "Naturaleza de Valor", type: "text", required: false, step: "Estrategia de Negocio" },
+        { name: "modelo_negocio", label: "Modelo de Negocio", type: "select", required: true, options: ["SaaS", "Marketplace", "B2B", "B2C", "Transaccional"], step: "Estrategia de Negocio" },
+        { name: "productos_asociados", label: "Productos Asociados", type: "chip-input", required: false, step: "Estrategia de Negocio" }
+      ]
+    },
     Portafolio: {
       steps: ["Estrategia", "Finanzas", "Aprobación"],
       fields: [

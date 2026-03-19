@@ -10,7 +10,7 @@
 
     (function (global) {
 
-        global.renderForm = function (entityName) {
+        global.renderForm = async function (entityName) {
             const container = document.getElementById('app-container');
             if (!container) throw new Error("Container #app-container not found");
 
@@ -28,6 +28,41 @@
             // Normalize schema definition (flat array vs object containing steps)
             const fields = Array.isArray(schemaDef) ? schemaDef : schemaDef.fields;
             const steps = schemaDef.steps || null;
+
+            // --- INYECCIÓN DINÁMICA DE METADATA (1:N Relational Mapping) ---
+            if (entityName === 'Producto') {
+                const loading = document.createElement('ion-loading');
+                loading.message = 'Cargando Grupos de Productos...';
+                loading.spinner = 'crescent';
+                document.body.appendChild(loading);
+                await loading.present();
+
+                try {
+                    const dynamicOptions = await new Promise((resolve, reject) => {
+                        if (typeof google !== 'undefined' && google.script && google.script.run) {
+                            google.script.run
+                                .withSuccessHandler(resolve)
+                                .withFailureHandler(reject)
+                                .getGruposProductosOptions();
+                        } else {
+                            setTimeout(() => resolve([{ value: 'GRP-LOCAL', label: 'Grupo Local Dev' }]), 600);
+                        }
+                    });
+
+                    // Modificamos dinámicamente el SCHEMA a nivel JS (solo para esta instancia/vista)
+                    const lookupGroupField = fields.find(f => f.name === 'id_grupo_padre');
+                    if (lookupGroupField) {
+                        lookupGroupField.type = 'select'; // Reemplazamos el 'lookup' original
+                        lookupGroupField.options = dynamicOptions; // Seteamos el array [{value, label}]
+                    }
+                } catch (e) {
+                    console.error("Fallo al inyectar opciones dinámicas:", e);
+                } finally {
+                    await loading.dismiss();
+                }
+            }
+            // -----------------------------------------------------------------
+
 
             // Referencias al Split-Pane Layout
             const sidebarList = document.getElementById('sidebar-step-list');
@@ -204,8 +239,13 @@
                         if (field.options && Array.isArray(field.options)) {
                             field.options.forEach(opt => {
                                 const ionOption = document.createElement('ion-select-option');
-                                ionOption.value = opt;
-                                ionOption.textContent = opt;
+                                if (typeof opt === 'object' && opt !== null) {
+                                    ionOption.value = opt.value;
+                                    ionOption.textContent = opt.label;
+                                } else {
+                                    ionOption.value = opt;
+                                    ionOption.textContent = opt;
+                                }
                                 inputEl.appendChild(ionOption);
                             });
                         }

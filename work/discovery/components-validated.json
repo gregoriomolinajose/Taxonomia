@@ -1,0 +1,51 @@
+[
+    {
+        "id": "Code.js",
+        "name": "Code",
+        "kind": "file",
+        "category": "entrypoint",
+        "purpose": "Serves as the main GAS HTTP entry point (doGet)."
+    },
+    {
+        "id": "FormEngine_UI.html",
+        "name": "FormEngine_UI",
+        "kind": "file",
+        "category": "ui",
+        "purpose": "Main Ionic UI application renderer."
+    },
+    {
+        "id": "Engine_DB.js",
+        "name": "Engine_DB",
+        "kind": "file",
+        "category": "service",
+        "purpose": "Agnostic persistence router for GAS backend."
+    },
+    {
+        "id": "API_Auth.js",
+        "name": "API_Auth",
+        "kind": "file",
+        "category": "service",
+        "purpose": "Handles authentication and session management."
+    },
+    {
+        "id": "Adapter_Sheets.js",
+        "name": "Adapter_Sheets",
+        "kind": "file",
+        "category": "adapter",
+        "purpose": "Data adapter for Google Sheets."
+    },
+    {
+        "id": "Adapter_CloudDB.js",
+        "name": "Adapter_CloudDB",
+        "kind": "file",
+        "category": "adapter",
+        "purpose": "Data adapter for Cloud Database (e.g. Firebase/Firestore)."
+    },
+    {
+        "id": "JS_Schemas_Config.html",
+        "name": "JS_Schemas_Config",
+        "kind": "file",
+        "category": "schema",
+        "purpose": "Single source of truth for entity definitions."
+    }
+]
