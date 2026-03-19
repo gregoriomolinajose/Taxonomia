@@ -12,21 +12,65 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@ionic/core/css/ionic.bundle.css" />
 
     <style>
+        /* =========================================================================
+           Design Tokens (Figma -> Native Ionic CSS Variables)
+           ========================================================================= */
         :root {
-            --ion-color-primary: #0052cc;
-            --ion-color-primary-rgb: 0, 82, 204;
+            /* Primary Colors */
+            --ion-color-primary: #3880ff;
+            --ion-color-primary-rgb: 56, 128, 255;
+            --ion-color-primary-shade: #3171e0;
             --ion-color-primary-contrast: #ffffff;
-            --ion-background-color: #f4f5f7;
+
+            /* Success Color */
+            --ion-color-success: #2dd36f;
+            --ion-color-success-rgb: 45, 211, 111;
+
+            /* Neutral / Backgrounds */
+            --ion-background-color: #f4f5f8;
+            /* Fondo principal (Gris claro) */
+            --ion-color-step-50: #ffffff;
+            /* Superficies blancas (Tarjetas) */
+            --ion-color-step-100: #f9fafc;
+            /* Fondo de inputs en Desktop */
+
+            /* Texts & Borders */
+            --ion-text-color: #1f2937;
+            --ion-color-medium: #9ca3af;
+            --ion-border-color: #e5e7eb;
+
+            /* Tipografía (Redefiniendo base de Ionic a System UI) */
+            --ion-font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
         }
 
-        /* Fix for desktop rendering of mobile views */
         body {
             margin: 0;
             padding: 0;
         }
 
+        /* 
+         * Styling Específico del Split Pane
+         * En Ionic, el menú lateral toma fondo blanco (surface) 
+         */
+        ion-menu {
+            --ion-background-color: #ffffff;
+            border-right: 1px solid var(--ion-border-color);
+        }
+
+        /* 
+         * Contenedor de Formulario Principal
+         * El fondo exterior es f4f5f8, pero las 'cards' de formulario serán blancas.
+         */
         .header-bg {
-            background: linear-gradient(90deg, var(--ion-color-primary), #0747a6);
+            background-color: var(--ion-color-step-50);
+            border-bottom: 1px solid var(--ion-border-color);
+            /* Removiendo el gradiente azul oscuro anterior para alinear al Figma (Fondo Blanco) */
+        }
+
+        /* Forzar toolbar a usar nuestra clase manual en lugar de color="primary" */
+        ion-toolbar.header-bg {
+            --background: var(--ion-color-step-50);
+            --color: var(--ion-text-color);
         }
     </style>
 
@@ -36,40 +80,95 @@
 
 <body>
     <ion-app>
-        <!-- General Layout Shell -->
-        <ion-header>
-            <ion-toolbar class="header-bg" color="primary">
-                <ion-title>Taxonomía Operativa</ion-title>
-                <ion-buttons slot="end">
-                    <ion-button id="btn-logout" color="danger" fill="solid" style="margin-right: 10px;"
-                        onclick="window.AuthManager.logout()">
-                        <ion-icon slot="start" name="log-out-outline"></ion-icon>
-                        Cerrar Sesión
-                    </ion-button>
-                    <ion-button id="btn-menu">
-                        <ion-icon name="menu-outline" slot="icon-only"></ion-icon>
-                    </ion-button>
-                </ion-buttons>
-            </ion-toolbar>
-        </ion-header>
+        <!-- 
+          Base Layout: Responsive Split-Pane (Directiva Arquitectónica #1)
+          Se activa automáticamente en Desktop (>= 992px)
+        -->
+        <ion-split-pane content-id="main-content" when="lg">
 
-        <ion-content class="ion-padding">
-            <!-- This is where the FormEngine will dynamically inject Native Ionic Components -->
-            <div id="app-container">
-                <ion-card>
-                    <ion-card-header>
-                        <ion-card-title>Bienvenido</ion-card-title>
-                        <ion-card-subtitle>Plataforma de Gobernanza SAFe</ion-card-subtitle>
-                    </ion-card-header>
-                    <ion-card-content>
-                        <p>Selecciona una entidad para comenzar a gestionar el Portafolio.</p>
-                        <ion-button expand="block" onclick="renderForm('Portafolio')">Nuevo Portafolio</ion-button>
-                        <ion-button expand="block" color="secondary" onclick="renderForm('Producto')">Nuevo
-                            Producto</ion-button>
-                    </ion-card-content>
-                </ion-card>
+            <!-- SIDEBAR MENÚ (Wizard Steps en Desktop, Hamburger en Mobile) -->
+            <ion-menu content-id="main-content">
+                <!-- Toolbar del Menú -->
+                <ion-header class="ion-no-border">
+                    <ion-toolbar class="header-bg">
+                        <ion-title>Navegación</ion-title>
+                    </ion-toolbar>
+                </ion-header>
+
+                <ion-content>
+                    <!-- Aquí el FormEngine_UI inyectará los pasos (Ej: Estrategia, Finanzas) -->
+                    <ion-list id="sidebar-step-list" lines="none">
+                        <ion-list-header>
+                            <ion-label color="medium">Fases del Formulario</ion-label>
+                        </ion-list-header>
+                        <!-- Items inyectados dinámicamente -->
+                        <ion-item disabled>
+                            <ion-icon slot="start" name="document-text-outline" color="medium"></ion-icon>
+                            <ion-label color="medium">Selecciona una Entidad</ion-label>
+                        </ion-item>
+                    </ion-list>
+                </ion-content>
+            </ion-menu>
+
+            <!-- ÁREA CENTRAL DE CONTENIDO -->
+            <div class="ion-page" id="main-content">
+                <ion-header class="ion-no-border">
+                    <!-- Toolbar Principal -->
+                    <ion-toolbar class="header-bg">
+                        <ion-buttons slot="start">
+                            <ion-menu-button></ion-menu-button>
+                            <ion-back-button default-href="#" hide-back-button="true" id="global-back-btn"
+                                color="primary"></ion-back-button>
+                        </ion-buttons>
+
+                        <!-- Título dinámico -->
+                        <ion-title id="main-header-title">Taxonomía Operativa</ion-title>
+
+                        <!-- Controles de Usuario -->
+                        <ion-buttons slot="end">
+                            <ion-button id="btn-logout" color="danger" fill="clear"
+                                onclick="window.AuthManager.logout()">
+                                <ion-icon slot="start" name="log-out-outline"></ion-icon>
+                                Cerrar Sesión
+                            </ion-button>
+                        </ion-buttons>
+                    </ion-toolbar>
+                </ion-header>
+
+                <!-- Surface Principal (Gris Claro) -->
+                <ion-content class="ion-padding" color="light">
+                    <!-- Contenedor inyectable del FormEngine -->
+                    <div id="app-container">
+                        <!-- Estado Default: Selección de Entidad -->
+                        <ion-grid>
+                            <ion-row class="ion-justify-content-center">
+                                <ion-col size="12" size-md="8" size-lg="6">
+                                    <ion-card style="margin-top: 20px;">
+                                        <ion-card-header>
+                                            <ion-card-subtitle color="primary">Generador de UI</ion-card-subtitle>
+                                            <ion-card-title>Plataforma de Gobernanza SAFe</ion-card-title>
+                                        </ion-card-header>
+                                        <ion-card-content>
+                                            <p style="margin-bottom: 20px;">Selecciona una entidad para comenzar a
+                                                gestionar.</p>
+                                            <ion-button expand="block" shape="round" onclick="renderForm('Portafolio')">
+                                                <ion-icon slot="start" name="briefcase-outline"></ion-icon>
+                                                Nuevo Portafolio
+                                            </ion-button>
+                                            <ion-button expand="block" shape="round" color="secondary"
+                                                style="margin-top: 10px;" onclick="renderForm('Producto')">
+                                                <ion-icon slot="start" name="cube-outline"></ion-icon>
+                                                Nuevo Producto
+                                            </ion-button>
+                                        </ion-card-content>
+                                    </ion-card>
+                                </ion-col>
+                            </ion-row>
+                        </ion-grid>
+                    </div>
+                </ion-content>
             </div>
-        </ion-content>
+        </ion-split-pane>
     </ion-app>
 
     <!-- Load Dynamic FormEngine Logic -->

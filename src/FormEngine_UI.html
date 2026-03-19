@@ -29,55 +29,142 @@
             const fields = Array.isArray(schemaDef) ? schemaDef : schemaDef.fields;
             const steps = schemaDef.steps || null;
 
+            // Referencias al Split-Pane Layout
+            const sidebarList = document.getElementById('sidebar-step-list');
+            const headerTitle = document.getElementById('main-header-title');
+
+            if (headerTitle) headerTitle.textContent = "Nuevo: " + entityName;
+
             const card = document.createElement('ion-card');
-            const cardHeader = document.createElement('ion-card-header');
-            const cardTitle = document.createElement('ion-card-title');
-            cardTitle.textContent = "Nuevo: " + entityName;
-            cardHeader.appendChild(cardTitle);
-            card.appendChild(cardHeader);
+            card.style.borderRadius = '12px'; // Redondeo Figma
+            card.style.boxShadow = 'var(--ion-shadow-sm)'; // Sombra suave Figma
 
             const cardContent = document.createElement('ion-card-content');
+            cardContent.style.padding = '24px';
             card.appendChild(cardContent);
+
+            // Detección Resolutiva de Dispositivo (UX Mobile Fix)
+            const isDesktop = window.matchMedia('(min-width: 992px)').matches;
 
             // Progressive Disclosure (Rule 5.1) - Contenedores Lógicos
             let stepContainers = {};
+            let menuItems = {};
+            const menuIcons = ['briefcase-outline', 'cash-outline', 'shield-checkmark-outline', 'analytics-outline'];
+
+            // Estado y Linear Wizard
+            let currentStepIndex = 0;
+            const totalSteps = (steps && steps.length > 0) ? steps.length : 1;
+
+            // Limpiar items previos del Sidebar siempre (evita basura si abrimos/cerramos forms)
+            if (sidebarList) {
+                const existingItems = sidebarList.querySelectorAll('ion-item');
+                existingItems.forEach(el => el.remove());
+            }
+
+            // Indicador de Progreso
+            let progressLabel = document.createElement('h3');
+            progressLabel.style.color = 'var(--ion-color-medium)';
+            progressLabel.style.fontSize = '12px';
+            progressLabel.style.marginTop = '0';
+            progressLabel.style.marginBottom = '20px';
+            progressLabel.style.fontWeight = '600';
+            progressLabel.style.textTransform = 'uppercase';
+            progressLabel.style.letterSpacing = '1px';
+            cardContent.appendChild(progressLabel);
+
             if (steps && steps.length > 0) {
-                const ionSegment = document.createElement('ion-segment');
-                ionSegment.setAttribute('value', steps[0]); // Select first element
+                let mobileSegment = null;
+
+                if (!isDesktop) {
+                    // Mobile: Inyectar Barra Horizontal (ion-segment) superior
+                    mobileSegment = document.createElement('ion-segment');
+                    mobileSegment.setAttribute('value', steps[0]);
+                    mobileSegment.setAttribute('scrollable', 'true');
+                    mobileSegment.style.marginBottom = '20px';
+                }
 
                 steps.forEach((stepName, index) => {
-                    const btn = document.createElement('ion-segment-button');
-                    btn.setAttribute('value', stepName);
-
-                    const label = document.createElement('ion-label');
-                    label.textContent = stepName;
-                    btn.appendChild(label);
-
-                    ionSegment.appendChild(btn);
-
-                    // Physical Container for the Step
+                    // Contenedor físico de los campos del paso
                     const stepDiv = document.createElement('div');
                     stepDiv.id = 'step-' + stepName;
                     if (index !== 0) stepDiv.style.display = 'none';
                     stepContainers[stepName] = stepDiv;
-                });
 
-                // Segment toggle event
-                ionSegment.addEventListener('ionChange', (ev) => {
-                    const selectedStep = ev.detail.value;
-                    Object.keys(stepContainers).forEach(key => {
-                        stepContainers[key].style.display = (key === selectedStep) ? 'block' : 'none';
-                    });
-                });
+                    if (isDesktop && sidebarList) {
+                        // Escritorio: Inyectar el ítem en el ion-menu lateral (Solo Visual)
+                        const item = document.createElement('ion-item');
+                        item.setAttribute('lines', 'none');
+                        item.style.borderRadius = '8px';
+                        item.style.margin = '4px 12px';
+                        item.style.setProperty('--min-height', '44px');
 
-                cardContent.appendChild(ionSegment);
+                        if (index === 0) item.style.setProperty('--background', 'var(--ion-color-step-100)');
 
-                // Anexar los divs físicos al card Content
-                steps.forEach(stepName => {
+                        const icon = document.createElement('ion-icon');
+                        icon.setAttribute('name', menuIcons[index % menuIcons.length]);
+                        icon.setAttribute('slot', 'start');
+                        if (index === 0) icon.setAttribute('color', 'primary');
+
+                        const label = document.createElement('ion-label');
+                        label.textContent = stepName;
+                        label.style.fontWeight = '500';
+                        if (index === 0) label.setAttribute('color', 'primary');
+
+                        item.appendChild(icon);
+                        item.appendChild(label);
+                        sidebarList.appendChild(item);
+
+                        menuItems[stepName] = { item, icon, label };
+                    } else if (!isDesktop && mobileSegment) {
+                        // Móvil: Inyectar botón en el ion-segment
+                        const btn = document.createElement('ion-segment-button');
+                        btn.setAttribute('value', stepName);
+
+                        const label = document.createElement('ion-label');
+                        label.textContent = stepName;
+
+                        btn.appendChild(label);
+                        mobileSegment.appendChild(btn);
+                    }
+
                     cardContent.appendChild(stepContainers[stepName]);
                 });
+
+                // Attach event listener & place horizontal segment exactly at the top of Form Content
+                if (!isDesktop && mobileSegment) {
+                    mobileSegment.addEventListener('ionChange', (ev) => {
+                        const selectedStep = ev.detail.value;
+                        Object.keys(stepContainers).forEach(key => {
+                            stepContainers[key].style.display = (key === selectedStep) ? 'block' : 'none';
+                        });
+                    });
+                    cardContent.insertBefore(mobileSegment, cardContent.firstChild);
+                }
+
             } else {
-                // Diseño plano (Sin Wizard)
+                // Diseño plano (Sin Wizard Steps definidos en metadatos)
+                if (isDesktop && sidebarList) {
+                    const item = document.createElement('ion-item');
+                    item.setAttribute('lines', 'none');
+                    item.style.borderRadius = '8px';
+                    item.style.margin = '4px 12px';
+                    item.style.setProperty('--background', 'var(--ion-color-step-100)');
+
+                    const icon = document.createElement('ion-icon');
+                    icon.setAttribute('name', 'list-outline');
+                    icon.setAttribute('slot', 'start');
+                    icon.setAttribute('color', 'primary');
+
+                    const label = document.createElement('ion-label');
+                    label.textContent = 'Configuración General';
+                    label.style.fontWeight = '500';
+                    label.setAttribute('color', 'primary');
+
+                    item.appendChild(icon);
+                    item.appendChild(label);
+                    sidebarList.appendChild(item);
+                }
+
                 stepContainers['default'] = document.createElement('div');
                 cardContent.appendChild(stepContainers['default']);
             }
@@ -85,83 +172,278 @@
             // Iniciar Grillas Responsivas (Rule 5.2) por contenedor lógico
             const rows = {};
             Object.keys(stepContainers).forEach(key => {
+                // Título de sección dentro del card
+                const sectionTitle = document.createElement('h2');
+                sectionTitle.textContent = (key === 'default' ? 'Configuración General' : key);
+                sectionTitle.style.color = 'var(--ion-text-color)';
+                sectionTitle.style.fontSize = '20px';
+                sectionTitle.style.fontWeight = '600';
+                sectionTitle.style.marginTop = '0';
+                sectionTitle.style.marginBottom = '20px';
+                stepContainers[key].appendChild(sectionTitle);
+
                 const grid = document.createElement('ion-grid');
+                grid.style.padding = '0';
                 const row = document.createElement('ion-row');
                 grid.appendChild(row);
+
                 stepContainers[key].appendChild(grid);
                 rows[key] = row; // Referencia rápida para inyectar las columnas (fields)
             });
 
-            // Generación Segura de Componentes
+            // Generación Segura de Componentes con Theming Activo
             fields.forEach(field => {
                 let targetRow = rows['default'];
                 if (steps && field.step && rows[field.step]) {
                     targetRow = rows[field.step];
                 }
 
-                // Generar Columna Ionic
+                // Generar Columna Ionic Responsive
                 const ionCol = document.createElement('ion-col');
-                ionCol.setAttribute('size', '12'); // Mobile first
-                if (field.width) {
-                    ionCol.setAttribute('size-md', String(field.width)); // Responsive Override
+                ionCol.setAttribute('size', '12'); // Mobile: ancho completo
+                if (field.width === 6) {
+                    ionCol.setAttribute('size-md', '6'); // Desktop: mitad de ancho si el esquema dictamina 6
+                } else {
+                    ionCol.setAttribute('size-md', '12'); // Desktop: ancho completo por defecto
                 }
 
-                const ionItem = document.createElement('ion-item');
+                // Usamos ion-input nativo pero configurando su "fill" y "label-placement"
+                // para emular el Figma (label arriba transparente, caja contorno)
+                let inputEl;
+
+                let isComplex = false;
 
                 switch (field.type) {
                     case 'text':
                     case 'number':
-                        const ionInput = document.createElement('ion-input');
-                        ionInput.setAttribute('label', field.label);
-                        ionInput.setAttribute('label-placement', 'stacked');
-                        ionInput.setAttribute('name', field.name);
-                        ionInput.setAttribute('type', field.type);
-                        if (field.required) ionInput.setAttribute('required', 'true');
-                        if (field.readonly) ionInput.setAttribute('readonly', 'true');
-                        ionItem.appendChild(ionInput);
+                    case 'date':
+                        inputEl = document.createElement('ion-input');
+                        inputEl.setAttribute('type', field.type);
+                        // Autogenerar UUID corto si es un ID readonly
+                        if (field.readonly && field.name.startsWith('id_')) {
+                            const prefix = entityName.substring(0, 4).toUpperCase();
+                            const sufix = Math.random().toString(36).substring(2, 7).toUpperCase();
+                            inputEl.value = `${prefix}-${sufix}`;
+                        }
                         break;
-
+                    case 'textarea':
+                        inputEl = document.createElement('ion-textarea');
+                        inputEl.setAttribute('rows', '4');
+                        break;
                     case 'select':
-                        const ionSelect = document.createElement('ion-select');
-                        ionSelect.setAttribute('label', field.label);
-                        ionSelect.setAttribute('label-placement', 'stacked');
-                        ionSelect.setAttribute('name', field.name);
-                        if (field.required) ionSelect.setAttribute('required', 'true');
-
+                        inputEl = document.createElement('ion-select');
+                        inputEl.setAttribute('interface', 'popover');
                         if (field.options && Array.isArray(field.options)) {
                             field.options.forEach(opt => {
                                 const ionOption = document.createElement('ion-select-option');
                                 ionOption.value = opt;
                                 ionOption.textContent = opt;
-                                ionSelect.appendChild(ionOption);
+                                inputEl.appendChild(ionOption);
                             });
                         }
-                        ionItem.appendChild(ionSelect);
                         break;
-
                     case 'lookup':
-                        const lookupInput = document.createElement('ion-input');
-                        lookupInput.setAttribute('label', field.label + ' (Lookup: ' + field.lookupTarget + ')');
-                        lookupInput.setAttribute('label-placement', 'stacked');
-                        lookupInput.setAttribute('name', field.name);
-                        lookupInput.setAttribute('readonly', 'true'); // Tapped via Modal
-                        if (field.required) lookupInput.setAttribute('required', 'true');
-                        ionItem.appendChild(lookupInput);
+                        inputEl = document.createElement('ion-input');
+                        inputEl.setAttribute('readonly', 'true');
                         break;
+                    case 'chip-input':
+                        isComplex = true;
+                        inputEl = document.createElement('div');
+                        inputEl.style.marginBottom = '16px';
 
+                        // Etiqueta del campo
+                        const cLabel = document.createElement('div');
+                        cLabel.style.fontSize = '12px';
+                        cLabel.style.color = 'var(--ion-color-medium)';
+                        cLabel.style.marginBottom = '4px';
+                        cLabel.style.paddingLeft = '5px';
+                        cLabel.textContent = field.label + (field.required ? ' *' : '');
+                        inputEl.appendChild(cLabel);
+
+                        // Contenedor del Input y Botón
+                        const chipItem = document.createElement('ion-item');
+                        chipItem.setAttribute('lines', 'none');
+                        chipItem.style.setProperty('--background', 'var(--ion-color-step-100)');
+                        chipItem.style.borderRadius = '8px';
+                        chipItem.style.marginBottom = '8px';
+                        chipItem.style.border = '1px solid var(--ion-color-step-300)';
+
+                        const innerInput = document.createElement('ion-input');
+                        innerInput.setAttribute('placeholder', `Añadir ${field.label}...`);
+
+                        const addBtn = document.createElement('ion-button');
+                        addBtn.setAttribute('slot', 'end');
+                        addBtn.setAttribute('fill', 'clear');
+                        addBtn.textContent = 'Agregar';
+
+                        chipItem.appendChild(innerInput);
+                        chipItem.appendChild(addBtn);
+
+                        // Contenedor visual de Chips
+                        const chipContainer = document.createElement('div');
+                        chipContainer.className = 'chip-container';
+                        chipContainer.setAttribute('data-chip-name', field.name);
+                        chipContainer.style.display = 'flex';
+                        chipContainer.style.flexWrap = 'wrap';
+                        chipContainer.style.gap = '8px';
+
+                        inputEl.appendChild(chipItem);
+                        inputEl.appendChild(chipContainer);
+
+                        // Lógica de adición
+                        const addChip = () => {
+                            const val = innerInput.value.trim();
+                            if (val) {
+                                const chip = document.createElement('ion-chip');
+                                chip.setAttribute('color', 'primary');
+
+                                const chipLabel = document.createElement('ion-label');
+                                chipLabel.textContent = val;
+
+                                const chipIcon = document.createElement('ion-icon');
+                                chipIcon.setAttribute('name', 'close-circle');
+                                chipIcon.addEventListener('click', () => { chip.remove(); });
+
+                                chip.appendChild(chipLabel);
+                                chip.appendChild(chipIcon);
+                                chipContainer.appendChild(chip);
+
+                                innerInput.value = '';
+                            }
+                        };
+
+                        addBtn.addEventListener('click', addChip);
+                        innerInput.addEventListener('keypress', (e) => {
+                            if (e.key === 'Enter') {
+                                e.preventDefault();
+                                addChip();
+                            }
+                        });
+                        break;
                     default:
-                        console.warn("Unknown field type: " + field.type);
+                        inputEl = document.createElement('ion-input');
+                        inputEl.setAttribute('type', 'text');
                 }
 
-                ionCol.appendChild(ionItem);
+                if (!isComplex) {
+                    inputEl.setAttribute('label', field.label + (field.type === 'lookup' ? ' (Buscar ' + field.lookupTarget + ')' : ''));
+                    inputEl.setAttribute('label-placement', 'stacked');
+                    inputEl.setAttribute('fill', 'outline');
+                    inputEl.setAttribute('name', field.name);
+                    inputEl.style.marginBottom = '16px';
+                    inputEl.style.setProperty('--background', 'var(--ion-color-step-100)');
+                    inputEl.style.borderRadius = '8px';
+
+                    if (field.required) inputEl.setAttribute('required', 'true');
+                    if (field.readonly && field.type !== 'lookup') inputEl.setAttribute('readonly', 'true');
+                }
+
+                ionCol.appendChild(inputEl);
                 targetRow.appendChild(ionCol);
             });
 
+            // Contenedor del Botón (Paginación + CTA)
             const btnContainer = document.createElement('div');
-            btnContainer.className = "ion-padding";
+            btnContainer.style.borderTop = '1px solid var(--ion-border-color)';
+            btnContainer.style.paddingTop = '20px';
+            btnContainer.style.marginTop = '10px';
+            btnContainer.style.display = 'flex';
+            btnContainer.style.justifyContent = 'space-between';
+
+            const btnPrev = document.createElement('ion-button');
+            btnPrev.setAttribute('fill', 'clear');
+            btnPrev.setAttribute('color', 'medium');
+            btnPrev.innerHTML = '<ion-icon slot="start" name="arrow-back-outline"></ion-icon> Anterior';
+
+            const centerRightWrapper = document.createElement('div');
+            centerRightWrapper.style.display = 'flex';
+            centerRightWrapper.style.justifyContent = 'flex-end';
+            centerRightWrapper.style.flex = '1';
+
+            const btnNext = document.createElement('ion-button');
+            btnNext.setAttribute('shape', 'round');
+            btnNext.setAttribute('color', 'primary');
+            btnNext.setAttribute('fill', 'outline');
+            btnNext.innerHTML = 'Siguiente <ion-icon slot="end" name="arrow-forward-outline"></ion-icon>';
+
             const submitBtn = document.createElement('ion-button');
-            submitBtn.setAttribute('expand', 'block');
-            submitBtn.textContent = 'Guardar ' + entityName;
+            submitBtn.setAttribute('shape', 'round');
+            submitBtn.setAttribute('color', 'primary');
+            submitBtn.innerHTML = '<ion-icon slot="start" name="save-outline"></ion-icon> Guardar ' + entityName;
+
+            btnContainer.appendChild(btnPrev);
+            centerRightWrapper.appendChild(btnNext);
+            centerRightWrapper.appendChild(submitBtn);
+            btnContainer.appendChild(centerRightWrapper);
+
+            // Funcionalidad Stepper Lineal
+            function goToStep(index) {
+                if (index < 0 || index >= totalSteps) return;
+                currentStepIndex = index;
+                const currentStepName = (steps && steps.length > 0) ? steps[currentStepIndex] : 'default';
+
+                Object.keys(stepContainers).forEach(key => {
+                    stepContainers[key].style.display = (key === currentStepName) ? 'block' : 'none';
+                });
+
+                if (steps && steps.length > 0 && isDesktop && sidebarList) {
+                    Object.values(menuItems).forEach((mi, idx) => {
+                        mi.item.style.removeProperty('--background');
+                        mi.icon.removeAttribute('color');
+                        mi.label.removeAttribute('color');
+                        if (idx === currentStepIndex) {
+                            mi.item.style.setProperty('--background', 'var(--ion-color-step-100)');
+                            mi.icon.setAttribute('color', 'primary');
+                            mi.label.setAttribute('color', 'primary');
+                        }
+                    });
+                }
+
+                if (steps && steps.length > 0) {
+                    progressLabel.textContent = `Paso ${currentStepIndex + 1} de ${totalSteps}: ${currentStepName}`;
+                    btnPrev.style.display = currentStepIndex === 0 ? 'none' : 'block';
+
+                    if (currentStepIndex === totalSteps - 1) {
+                        btnNext.style.display = 'none';
+                        submitBtn.style.display = 'block';
+                    } else {
+                        btnNext.style.display = 'block';
+                        submitBtn.style.display = 'none';
+                    }
+                } else {
+                    progressLabel.textContent = `Configuración General`;
+                    btnPrev.style.display = 'none';
+                    btnNext.style.display = 'none';
+                    submitBtn.style.display = 'block';
+                }
+            }
+
+            btnPrev.addEventListener('click', () => {
+                goToStep(currentStepIndex - 1);
+            });
+
+            btnNext.addEventListener('click', () => {
+                // Validación Simple
+                const currentContainer = stepContainers[(steps && steps.length > 0) ? steps[currentStepIndex] : 'default'];
+                const inputs = currentContainer.querySelectorAll('ion-input, ion-select');
+                let isValid = true;
+
+                inputs.forEach(input => {
+                    if (input.getAttribute('required') === 'true' && !input.value) {
+                        isValid = false;
+                        input.classList.add('ion-touched');
+                        input.classList.add('ion-invalid');
+                    } else {
+                        input.classList.remove('ion-invalid');
+                    }
+                });
+
+                if (isValid) {
+                    goToStep(currentStepIndex + 1);
+                }
+            });
+
+            goToStep(0);
 
             let isSaving = false; // Bloqueo de Reentrada
 
@@ -174,12 +456,24 @@
                 submitBtn.innerHTML = '<ion-spinner name="crescent"></ion-spinner> &nbsp; Guardando...';
 
                 // Capturar el Payload dinámicamente
-                const inputs = container.querySelectorAll('ion-input, ion-select');
+                const inputs = container.querySelectorAll('ion-input, ion-textarea, ion-select');
                 const payload = {};
                 inputs.forEach(input => {
                     const name = input.getAttribute('name');
                     if (name) {
                         payload[name] = input.value;
+                    }
+                });
+
+                // Capturar componentes Chip dinámicos
+                const chipContainers = container.querySelectorAll('.chip-container');
+                chipContainers.forEach(cc => {
+                    const name = cc.getAttribute('data-chip-name');
+                    if (name) {
+                        const chips = cc.querySelectorAll('ion-label');
+                        const arr = [];
+                        chips.forEach(l => arr.push(l.textContent));
+                        payload[name] = arr.join(', ');
                     }
                 });
 
@@ -209,10 +503,35 @@
                                 // Mostrar Toast Nativo de Éxito
                                 showToast('¡' + itemName + ' guardado con éxito!', 'success');
 
-                                // Limpieza del formulario
-                                inputs.forEach(input => {
-                                    input.value = '';
-                                });
+                                // Soft Reset Post-Guardado (Global Rule)
+                                const resetFormEngine = () => {
+                                    // 1. Limpieza de Inputs Estándar
+                                    inputs.forEach(input => {
+                                        input.value = '';
+                                    });
+
+                                    // 2. Limpieza de Custom Components (Chips)
+                                    chipContainers.forEach(cc => {
+                                        const chips = cc.querySelectorAll('ion-chip');
+                                        chips.forEach(chip => chip.remove());
+                                    });
+
+                                    // 3. Reinicio del Asistente Lineal
+                                    goToStep(0);
+
+                                    // 4. Regeneración de ID (Seguridad)
+                                    const idInputs = container.querySelectorAll('ion-input[readonly]');
+                                    idInputs.forEach(input => {
+                                        const name = input.getAttribute('name');
+                                        if (name && name.startsWith('id_')) {
+                                            const prefix = entityName.substring(0, 4).toUpperCase();
+                                            const sufix = Math.random().toString(36).substring(2, 7).toUpperCase();
+                                            input.value = `${prefix}-${sufix}`;
+                                        }
+                                    });
+                                };
+
+                                resetFormEngine();
                             } else {
                                 // Error Controlado desde el Servidor
                                 showToast('Error: ' + (response ? response.message : 'Error Desconocido'), 'danger');
