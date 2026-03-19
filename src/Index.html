@@ -72,6 +72,12 @@
             --background: var(--ion-color-step-50);
             --color: var(--ion-text-color);
         }
+
+        @media (max-width: 768px) {
+            .hide-on-mobile {
+                display: none;
+            }
+        }
     </style>
 
     <!-- Load SCHEMAS Dictionary -->
@@ -117,19 +123,20 @@
                     <ion-toolbar class="header-bg">
                         <ion-buttons slot="start">
                             <ion-menu-button></ion-menu-button>
-                            <ion-back-button default-href="#" hide-back-button="true" id="global-back-btn"
-                                color="primary"></ion-back-button>
+                            <ion-button id="global-back-btn" color="primary" fill="clear" style="display: none;"
+                                onclick="window.returnToDashboard()">
+                                <ion-icon slot="icon-only" name="arrow-back-outline"></ion-icon>
+                            </ion-button>
                         </ion-buttons>
 
                         <!-- Título dinámico -->
                         <ion-title id="main-header-title">Taxonomía Operativa</ion-title>
 
-                        <!-- Controles de Usuario -->
                         <ion-buttons slot="end">
                             <ion-button id="btn-logout" color="danger" fill="clear"
                                 onclick="window.AuthManager.logout()">
                                 <ion-icon slot="start" name="log-out-outline"></ion-icon>
-                                Cerrar Sesión
+                                <span class="hide-on-mobile">Cerrar Sesión</span>
                             </ion-button>
                         </ion-buttons>
                     </ion-toolbar>
@@ -183,6 +190,7 @@
         window.AuthManager = {
             init: async function () {
                 const appContainer = document.getElementById('app-container');
+                window.OriginalDashboardHTML = appContainer.innerHTML;
                 const originalContent = appContainer.innerHTML;
 
                 // 1. Mostrar Loading
@@ -278,6 +286,32 @@
                     document.body.appendChild(toast);
                     await toast.present();
                 }
+            }
+        };
+
+        window.returnToDashboard = function () {
+            const container = document.getElementById('app-container');
+            const headerTitle = document.getElementById('main-header-title');
+            const backBtn = document.getElementById('global-back-btn');
+            const sidebarList = document.getElementById('sidebar-step-list');
+
+            if (headerTitle) headerTitle.textContent = "Taxonomía Operativa";
+            if (backBtn) backBtn.style.display = 'none';
+
+            if (sidebarList) {
+                sidebarList.innerHTML = `
+                    <ion-list-header>
+                        <ion-label color="medium">Fases del Formulario</ion-label>
+                    </ion-list-header>
+                    <ion-item disabled>
+                        <ion-icon slot="start" name="document-text-outline" color="medium"></ion-icon>
+                        <ion-label color="medium">Selecciona una Entidad</ion-label>
+                    </ion-item>
+                `;
+            }
+
+            if (container && window.OriginalDashboardHTML) {
+                container.innerHTML = window.OriginalDashboardHTML;
             }
         };
 
