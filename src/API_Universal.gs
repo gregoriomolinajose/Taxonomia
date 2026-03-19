@@ -132,6 +132,47 @@ function getGruposProductosOptions() {
   }
 }
 
+/**
+ * getProductosOptions
+ * Devuelve [{value: id_producto, label: nombre_producto}] desde DB_Producto.
+ * Usado por el Dependency Resolver de FormEngine para el campo productos_asociados.
+ */
+function getProductosOptions() {
+  try {
+    if (typeof SpreadsheetApp === 'undefined') {
+      return [{ value: "MOCK-P1", label: "Producto Mock Local" }];
+    }
+    const config = (typeof CONFIG !== 'undefined') ? CONFIG : { SPREADSHEET_ID_DB: '' };
+    if (!config.SPREADSHEET_ID_DB) return [];
+
+    const ss = SpreadsheetApp.openById(config.SPREADSHEET_ID_DB);
+    const sheet = ss.getSheetByName('DB_Producto');
+    if (!sheet) return [];
+
+    const data = sheet.getDataRange().getValues();
+    if (data.length < 2) return [];
+
+    const headers = data[0].map(h => h.toLowerCase().trim()
+      .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, ""));
+    const idIndex   = headers.indexOf('id_producto');
+    const nameIndex = headers.indexOf('nombre_producto');
+
+    if (idIndex === -1 || nameIndex === -1) return [];
+
+    const options = [];
+    for (let i = 1; i < data.length; i++) {
+      const id     = String(data[i][idIndex]).trim();
+      const nombre = String(data[i][nameIndex]).trim();
+      if (id && nombre) options.push({ value: id, label: nombre });
+    }
+    return options;
+  } catch (error) {
+    Logger.log("Error en getProductosOptions: " + error.message);
+    return [];
+  }
+}
+
 // Bloque de Protección Híbrida (Jest vs GAS) - Regla 5 de docs/rules_db.md
 if (typeof module !== 'undefined') {
   module.exports = {

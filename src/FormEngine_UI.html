@@ -29,39 +29,47 @@
             const fields = Array.isArray(schemaDef) ? schemaDef : schemaDef.fields;
             const steps = schemaDef.steps || null;
 
-            // --- INYECCIÓN DINÁMICA DE METADATA (1:N Relational Mapping) ---
-            if (entityName === 'Producto') {
+            // --- DEPENDENCY RESOLVER: lookupSource Universal (Metadata-Driven) ---
+            /**
+             * Escanea el schema en busca de campos con `lookupSource`.
+             * Llama en paralelo a cada función backend y rellena field.options.
+             * Muestra ion-loading mientras resuelve; non-fatal si un lookup falla.
+             */
+            async function _resolveLookupSources(fields) {
+                const fieldsWithLookup = fields.filter(f => f.lookupSource);
+                if (fieldsWithLookup.length === 0) return;
+
                 const loading = document.createElement('ion-loading');
-                loading.message = 'Cargando Grupos de Productos...';
+                loading.message = 'Cargando opciones...';
                 loading.spinner = 'crescent';
                 document.body.appendChild(loading);
                 await loading.present();
 
                 try {
-                    const dynamicOptions = await new Promise((resolve, reject) => {
+                    const promises = fieldsWithLookup.map(field => new Promise((resolve) => {
                         if (typeof google !== 'undefined' && google.script && google.script.run) {
                             google.script.run
-                                .withSuccessHandler(resolve)
-                                .withFailureHandler(reject)
-                                .getGruposProductosOptions();
+                                .withSuccessHandler(opts => { field.options = opts || []; resolve(); })
+                                .withFailureHandler(err => {
+                                    console.error(`[FormEngine] lookupSource '${field.lookupSource}' falló:`, err);
+                                    resolve(); // non-fatal: el select quedará vacío
+                                })
+                            [field.lookupSource]();
                         } else {
-                            setTimeout(() => resolve([{ value: 'GRP-LOCAL', label: 'Grupo Local Dev' }]), 600);
+                            // Modo dev local: mock genérico por nombre de función
+                            field.options = [{ value: 'MOCK-1', label: `Mock: ${field.lookupSource}` }];
+                            resolve();
                         }
-                    });
-
-                    // Modificamos dinámicamente el SCHEMA a nivel JS (solo para esta instancia/vista)
-                    const lookupGroupField = fields.find(f => f.name === 'id_grupo_padre');
-                    if (lookupGroupField) {
-                        lookupGroupField.type = 'select'; // Reemplazamos el 'lookup' original
-                        lookupGroupField.options = dynamicOptions; // Seteamos el array [{value, label}]
-                    }
-                } catch (e) {
-                    console.error("Fallo al inyectar opciones dinámicas:", e);
+                    }));
+                    await Promise.all(promises);
                 } finally {
                     await loading.dismiss();
                 }
             }
             // -----------------------------------------------------------------
+
+            await _resolveLookupSources(fields);
+
 
 
             // Referencias al Split-Pane Layout
