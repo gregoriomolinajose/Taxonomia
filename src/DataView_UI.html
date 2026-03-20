@@ -452,7 +452,40 @@
         word-break: break-word;
     }
 
-    /* ── Paginación ── */
+    /* ── Drag & Drop Reorder (columnas) ── */
+    .dv-table th {
+        cursor: grab;
+    }
+
+    .dv-table th.dv-th-dragging {
+        opacity: .4;
+        cursor: grabbing;
+    }
+
+    .dv-table th.dv-th-drag-over {
+        background: var(--dv-primary-light);
+        color: var(--dv-primary);
+        border-top: 2px solid var(--dv-primary);
+        box-shadow: inset 3px 0 0 var(--dv-primary);
+    }
+
+    /* Handle visual — aparece al hover del th */
+    .dv-drag-handle {
+        display: inline-block;
+        margin-left: 6px;
+        opacity: 0;
+        font-size: .75rem;
+        color: var(--dv-text-light);
+        transition: opacity var(--dv-transition);
+        vertical-align: middle;
+        user-select: none;
+    }
+
+    .dv-table th:hover .dv-drag-handle {
+        opacity: 1;
+    }
+
+
     .dv-pagination {
         display: flex;
         align-items: center;
@@ -646,6 +679,9 @@
             containerId: ''
         };
 
+        /* Îndice de columna en arrastre (-1 = ninguno) */
+        let _dragSrcIdx = -1;
+
         /* ────────────────────────────────────────────
            Helpers
         ───────────────────────────────────────────── */
@@ -817,11 +853,23 @@
             if (visibleCols.length === 0 || rows.length === 0) return _renderEmpty();
 
             const thead = visibleCols.map(col => {
+                const colIdx = _state.columns.indexOf(col); // índice real en _state.columns
                 const isSorted = _state.sortCol === col.key;
                 const arrow = isSorted
                     ? `<span class="dv-sort-icon active">${_state.sortDir === 'asc' ? '↑' : '↓'}</span>`
                     : `<span class="dv-sort-icon">↕</span>`;
-                return `<th class="${isSorted ? 'sorted' : ''}" onclick="window.DataViewEngine._onSort('${col.key}')">${col.label}${arrow}</th>`;
+                return `<th
+                    class="${isSorted ? 'sorted' : ''}"
+                    data-colidx="${colIdx}"
+                    draggable="true"
+                    onclick="window.DataViewEngine._onSort('${col.key}')"
+                    ondragstart="window.DataViewEngine._onDragStart(${colIdx}, event)"
+                    ondragover="window.DataViewEngine._onDragOver(${colIdx}, event)"
+                    ondragleave="window.DataViewEngine._onDragLeave(event)"
+                    ondrop="window.DataViewEngine._onDrop(${colIdx}, event)"
+                    ondragend="window.DataViewEngine._onDragEnd(event)">
+                    ${col.label}${arrow}<span class="dv-drag-handle" title="Arrastra para reordenar">⣿</span>
+                </th>`;
             }).join('');
 
             const tbody = rows.map(row => {
@@ -1133,6 +1181,59 @@
             _rerenderData();
         }
 
+        /* ────────────────────────────────────────────
+           Drag & Drop — reordenar columnas (HTML5 nativo, sin librerías)
+        ───────────────────────────────────────────── */
+        function _onDragStart(idx, ev) {
+            _dragSrcIdx = idx;
+            ev.dataTransfer.effectAllowed = 'move';
+            ev.dataTransfer.setData('text/plain', String(idx)); // requerido en Firefox
+            // Marcar la columna origen con clase visual (con retardo para que el ghost se calcule primero)
+            requestAnimationFrame(() => {
+                const th = document.querySelector(`.dv-table th[data-colidx="${idx}"]`);
+                if (th) th.classList.add('dv-th-dragging');
+            });
+        }
+
+        function _onDragOver(targetIdx, ev) {
+            if (_dragSrcIdx === -1 || targetIdx === _dragSrcIdx) return;
+            ev.preventDefault(); // habilita el drop
+            ev.dataTransfer.dropEffect = 'move';
+            // Quitar clase de todas las th y añadir solo a la target
+            document.querySelectorAll('.dv-table th').forEach(th => th.classList.remove('dv-th-drag-over'));
+            const th = document.querySelector(`.dv-table th[data-colidx="${targetIdx}"]`);
+            if (th) th.classList.add('dv-th-drag-over');
+        }
+
+        function _onDragLeave(ev) {
+            const th = ev.target.closest('th');
+            if (th) th.classList.remove('dv-th-drag-over');
+        }
+
+        function _onDrop(targetIdx, ev) {
+            ev.preventDefault();
+            if (_dragSrcIdx === -1 || _dragSrcIdx === targetIdx) {
+                _dragSrcIdx = -1;
+                return;
+            }
+            // Reordenar: extraer la columna origen e insertarla en la posición destino
+            const cols = _state.columns;
+            const [moved] = cols.splice(_dragSrcIdx, 1);
+            cols.splice(targetIdx, 0, moved);
+            _dragSrcIdx = -1;
+            _rerenderToolbar(); // sincronizar checkboxes con el nuevo orden
+            _rerenderData();
+        }
+
+        function _onDragEnd(ev) {
+            _dragSrcIdx = -1;
+            // Limpiar clases drag de todos los th aunque haya sido cancelled
+            document.querySelectorAll('.dv-table th').forEach(th => {
+                th.classList.remove('dv-th-dragging');
+                th.classList.remove('dv-th-drag-over');
+            });
+        }
+
         /* Cerrar popover al hacer click fuera */
         document.addEventListener('click', function (e) {
             const wrap = document.querySelector('.dv-popover-wrap');
@@ -1147,7 +1248,8 @@
             render,
             _exportCSV,
             _onSearch, _onSort, _onPage, _onPageSize,
-            _onColToggle, _toggleColPopover, _onViewToggle
+            _onColToggle, _toggleColPopover, _onViewToggle,
+            _onDragStart, _onDragOver, _onDragLeave, _onDrop, _onDragEnd
         };
     })();
 </script>
