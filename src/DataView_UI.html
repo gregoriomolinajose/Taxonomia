@@ -49,6 +49,9 @@
         font-size: 1.35rem;
         font-weight: 700;
         color: var(--dv-text-primary);
+        display: flex;
+        align-items: center;
+        gap: 10px;
     }
 
     .dv-header-left p {
@@ -207,7 +210,7 @@
     }
 
     .dv-table-wrap::-webkit-scrollbar-track {
-        background: #f1f1f1;
+        background: var(--ion-color-light);
         border-radius: 4px;
     }
 
@@ -591,9 +594,9 @@
 
         /* ── Configuración de entidades (íconos, labels, campos FK) ── */
         const ENTITY_META = {
-            Portafolio: { icon: '💼', label: 'Portafolios', titleField: 'nombre', idField: 'id_portafolio', fkField: null },
-            Grupo_Productos: { icon: '🗂️', label: 'Grupos de Producto', titleField: 'nombre', idField: 'id_grupo_producto', fkField: { key: 'id_portafolio', label: 'Portafolio' } },
-            Producto: { icon: '📦', label: 'Productos', titleField: 'nombre_producto', idField: 'id_producto', fkField: { key: 'id_grupo_producto', label: 'Grupo' } }
+            Portafolio: { iconName: 'briefcase-outline', color: 'primary', label: 'Portafolios', titleField: 'nombre', idField: 'id_portafolio', fkField: null },
+            Grupo_Productos: { iconName: 'layers-outline', color: 'secondary', label: 'Grupos de Producto', titleField: 'nombre', idField: 'id_grupo_producto', fkField: { key: 'id_portafolio', label: 'Portafolio' } },
+            Producto: { iconName: 'cube-outline', color: 'tertiary', label: 'Productos', titleField: 'nombre_producto', idField: 'id_producto', fkField: { key: 'id_grupo_producto', label: 'Grupo' } }
         };
 
         /* ── Columnas excluidas de la tabla (campos de auditoría o muy largos) ── */
@@ -1026,20 +1029,20 @@
         }
 
         function _renderHeader() {
-            const meta = ENTITY_META[_state.entityName] || { icon: '📋', label: _state.entityName };
+            const meta = ENTITY_META[_state.entityName] || { iconName: 'document-text-outline', color: 'medium', label: _state.entityName };
             const total = _state.data.length;
             return `
         <div class="dv-header">
           <div class="dv-header-left">
-            <h2>${meta.icon} ${meta.label}</h2>
+            <h2><ion-icon name="${meta.iconName}" color="${meta.color}" style="font-size: 1.6rem;"></ion-icon> ${meta.label}</h2>
             <p>${total} registro${total !== 1 ? 's' : ''} en total</p>
           </div>
           <div class="dv-header-actions">
             <button class="dv-btn dv-btn-outline" onclick="window.DataViewEngine._exportCSV()">
-              ⤓ Exportar CSV
+              <ion-icon name="download-outline" slot="start"></ion-icon> Exportar CSV
             </button>
             <button class="dv-btn dv-btn-primary" onclick="renderForm('${_state.entityName}')">
-              + Crear ${meta.label.replace(/s$/, '')}
+              <ion-icon name="add-outline" slot="start"></ion-icon> Crear ${meta.label.replace(/s$/, '')}
             </button>
           </div>
         </div>`;
@@ -1111,7 +1114,7 @@
                 headerTitle.textContent = meta.label;
             }
             const backBtn = document.getElementById('global-back-btn');
-            if (backBtn) backBtn.style.display = 'flex';
+            if (backBtn) backBtn.style.display = 'none'; // Vista raíz del módulo: ocultar botón atrás
 
             // Fetch
             _fetchData(entityName, function (err, rows) {
