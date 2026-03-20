@@ -95,7 +95,51 @@ const Adapter_Sheets = {
             return { status: 'success', action: 'created', pk: primaryKeyField, val: primaryKeyValue };
         }
     },
-    _normalizeHeader: _normalizeHeader
+    _normalizeHeader: _normalizeHeader,
+
+    /**
+     * list(entityName, config)
+     * Lee todas las filas de DB_<entityName> y las devuelve como un objeto estructurado.
+     * @returns {{ headers: string[], rows: Object[] }}
+     */
+    list: function (entityName, config) {
+        // Entorno de pruebas (Jest) — devolver mock
+        if (typeof SpreadsheetApp === 'undefined') {
+            return { headers: ['id', 'nombre', 'estado'], rows: [] };
+        }
+
+        const spreadsheetId = (config && config.SPREADSHEET_ID_DB)
+            ? config.SPREADSHEET_ID_DB
+            : CONFIG.SPREADSHEET_ID_DB;
+
+        const ss = SpreadsheetApp.openById(spreadsheetId);
+        const sheet = ss.getSheetByName('DB_' + entityName);
+
+        if (!sheet) {
+            throw new Error(`La hoja DB_${entityName} no existe en el Spreadsheet.`);
+        }
+
+        const data = sheet.getDataRange().getValues();
+        if (data.length < 2) {
+            // Solo cabeceras o vacía
+            const headers = data.length === 1 ? data[0].map(_normalizeHeader) : [];
+            return { headers, rows: [] };
+        }
+
+        const rawHeaders = data[0];
+        const headers = rawHeaders.map(_normalizeHeader);
+
+        const rows = [];
+        for (let i = 1; i < data.length; i++) {
+            const row = {};
+            for (let j = 0; j < headers.length; j++) {
+                row[headers[j]] = data[i][j] !== undefined ? data[i][j] : '';
+            }
+            rows.push(row);
+        }
+
+        return { headers, rows };
+    }
 };
 
 if (typeof module !== 'undefined') {

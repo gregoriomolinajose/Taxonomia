@@ -21,7 +21,7 @@ function doPost(e) {
     if (action === 'create') {
       responseData = _handleCreate(entity, data);
     } else if (action === 'read') {
-      // responseData = _handleRead(entity, data);
+      responseData = _handleRead(entity);
     } else {
       throw new Error("Action not supported yet.");
     }
@@ -37,6 +37,15 @@ function doPost(e) {
       message: error.message
     })).setMimeType(ContentService.MimeType.JSON);
   }
+}
+
+/**
+ * _handleRead
+ * Retorna todos los registros de una entidad desde Engine_DB.list.
+ * @returns {{ headers: string[], rows: Object[] }}
+ */
+function _handleRead(entityName) {
+  return Engine_DB.list(entityName);
 }
 
 /**
@@ -76,7 +85,7 @@ function API_Universal_Router(action, entityName, payload) {
       }
       responseData = _handleCreate(entityName, payload);
     } else if (action === 'read') {
-      // responseData = _handleRead(entityName, payload);
+      responseData = _handleRead(entityName);
     } else {
       throw new Error(`Action '${action}' not supported yet.`);
     }

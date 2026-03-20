@@ -55,7 +55,18 @@ const Engine_DB = {
     },
 
     read: function (entityName, id) {
-        // Lógica futura de enrutamiento READ
+        // Lógica futura de enrutamiento READ (single record by ID)
+    },
+
+    /**
+     * list(entityName)
+     * Devuelve todos los registros de una entidad como { headers[], rows[] }.
+     * Delega a Adapter_Sheets (la única fuente de datos activa en este proyecto).
+     */
+    list: function (entityName) {
+        const config = (typeof CONFIG !== 'undefined') ? CONFIG : { useSheets: true, SPREADSHEET_ID_DB: '' };
+        Logger.log('Engine_DB.list: Listando entidad ' + entityName);
+        return _Adapter_Sheets.list(entityName, config);
     },
 
     update: function (entityName, id, data) {
