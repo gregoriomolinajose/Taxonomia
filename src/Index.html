@@ -324,6 +324,11 @@
             if (headerTitle) headerTitle.textContent = "Taxonomía Operativa";
             if (backBtn) backBtn.style.display = 'none';
 
+            // Limpiar el ion-popover de columnas si existe
+            const oldPop = document.getElementById('dv-col-ion-popover');
+            if (oldPop) oldPop.remove();
+
+            // Restaurar sidebar a modo 'Form' (Fases del Formulario)
             if (sidebarList) {
                 sidebarList.innerHTML = `
                     <ion-list-header>
@@ -339,6 +344,41 @@
             if (container && window.OriginalDashboardHTML) {
                 container.innerHTML = window.OriginalDashboardHTML;
             }
+        };
+
+        /**
+         * showListSidebar(activeEntityName)
+         * Renderiza el sidebar en modo LISTADO con navegación entre entidades.
+         * Llamado por DataViewEngine.render() — sustituye a 'Fases del Formulario'.
+         */
+        window.showListSidebar = function (activeEntityName) {
+            const sidebarList = document.getElementById('sidebar-step-list');
+            if (!sidebarList) return;
+
+            const entities = [
+                { key: 'Portafolio', icon: 'briefcase-outline', label: 'Portafolios' },
+                { key: 'Grupo_Productos', icon: 'layers-outline', label: 'Grupos de Producto' },
+                { key: 'Producto', icon: 'cube-outline', label: 'Productos' }
+            ];
+
+            const items = entities.map(function (e) {
+                const isActive = e.key === activeEntityName;
+                return `<ion-item button detail="false"
+                    style="--background:${isActive ? 'var(--ion-color-primary-tint,#eff6ff)' : 'transparent'};"
+                    onclick="window.DataViewEngine.render('${e.key}', 'app-container')">
+                    <ion-icon slot="start" name="${e.icon}"
+                        color="${isActive ? 'primary' : 'medium'}"></ion-icon>
+                    <ion-label style="font-weight:${isActive ? '700' : '400'};"
+                        color="${isActive ? 'primary' : ''}">${e.label}</ion-label>
+                </ion-item>`;
+            }).join('');
+
+            sidebarList.innerHTML = `
+                <ion-list-header>
+                    <ion-label color="medium">Navegación</ion-label>
+                </ion-list-header>
+                ${items}
+            `;
         };
 
         // Arrancar verificación al cargar el DOM de Ionic

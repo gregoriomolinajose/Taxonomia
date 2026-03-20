@@ -158,38 +158,28 @@
         /* los botones nunca se aplastan bajo el buscador */
     }
 
-    /* ── Search ── */
+    /* ── Search — estilos del ion-searchbar nativo ── */
     .dv-search-wrap {
         position: relative;
         flex: 1 1 220px;
-        /* crece, puede encogerse, base mínima razonable */
         max-width: 480px;
-        /* techo corporativo — no ocupa toda la pantalla en desktop */
     }
 
-    .dv-search-wrap svg {
-        position: absolute;
-        left: 10px;
-        top: 50%;
-        transform: translateY(-50%);
-        color: var(--dv-text-light);
-        pointer-events: none;
-    }
-
-    .dv-search {
-        width: 100%;
-        padding: 8px 12px 8px 34px;
+    /* Overrides del ion-searchbar para integrarlo al toolbar corporativo */
+    .dv-search-wrap ion-searchbar {
+        --background: var(--dv-surface);
+        --border-radius: 6px;
+        --box-shadow: none;
+        --placeholder-color: var(--dv-text-light);
+        --color: var(--dv-text-primary);
         border: 1.5px solid var(--dv-border);
-        border-radius: var(--dv-radius-sm);
-        font-size: .85rem;
-        background: var(--dv-surface);
-        color: var(--dv-text-primary);
-        outline: none;
-        box-sizing: border-box;
+        border-radius: 6px;
         transition: border-color var(--dv-transition);
+        padding: 0;
+        height: 38px;
     }
 
-    .dv-search:focus {
+    .dv-search-wrap ion-searchbar:focus-within {
         border-color: var(--dv-primary);
     }
 
@@ -997,11 +987,14 @@
         <div class="dv-toolbar">
           <div class="dv-toolbar-left">
             <div class="dv-search-wrap">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-              </svg>
-              <input class="dv-search" id="dv-search-input" placeholder="Buscar en todos los campos…"
-                oninput="window.DataViewEngine._onSearch(this.value)" autocomplete="off">
+              <!-- ion-searchbar nativo de Ionic: posiciona su propio icono y maneja a11y -->
+              <ion-searchbar
+                id="dv-search-input"
+                placeholder="Buscar en todos los campos…"
+                animated="true"
+                show-clear-button="focus"
+                debounce="120">
+              </ion-searchbar>
             </div>
           </div>
           <div class="dv-toolbar-right">
@@ -1019,6 +1012,17 @@
             </button>
           </div>
         </div>`;
+        }
+
+        /* Adjunta el listener ionInput al ion-searchbar tras cada re-render del toolbar.
+           ionInput es el evento nativo de Ionic Web Components (no 'oninput' HTML estándar). */
+        function _attachSearchHandler() {
+            const sb = document.getElementById('dv-search-input');
+            if (sb) {
+                sb.addEventListener('ionInput', function (e) {
+                    window.DataViewEngine._onSearch(e.detail.value || '');
+                });
+            }
         }
 
         function _renderHeader() {
@@ -1062,6 +1066,8 @@
         function _rerenderToolbar() {
             const zone = document.getElementById('dv-toolbar-zone');
             if (zone) zone.innerHTML = _renderToolbarHTML();
+            // ion-searchbar: adjuntar ionInput tras re-render
+            _attachSearchHandler();
             // Sincronizar ion-popover con el nuevo estado de columnas
             _ensureColPopover();
         }
@@ -1131,8 +1137,16 @@
                 const toolbarZone = document.getElementById('dv-toolbar-zone');
                 if (toolbarZone) toolbarZone.innerHTML = _renderToolbarHTML();
 
+                // ion-searchbar: adjuntar listener ionInput
+                _attachSearchHandler();
+
                 // Crear ion-popover nativo en el body (fuera del contenedor, sin desbordamiento)
                 _ensureColPopover();
+
+                // Actualizar sidebar con navegación de entidades (Directiva 1)
+                if (typeof window.showListSidebar === 'function') {
+                    window.showListSidebar(entityName);
+                }
 
                 _rerenderData();
             });
