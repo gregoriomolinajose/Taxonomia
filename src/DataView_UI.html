@@ -189,62 +189,8 @@
         border-color: var(--dv-primary);
     }
 
-    /* ── Column Configurator Popover ── */
-    .dv-popover-wrap {
-        position: relative;
-    }
-
-    .dv-popover {
-        display: none;
-        position: absolute;
-        right: 0;
-        top: calc(100% + 6px);
-        z-index: 500;
-        background: var(--dv-surface);
-        border: 1px solid var(--dv-border);
-        border-radius: var(--dv-radius);
-        box-shadow: var(--dv-shadow-md);
-        padding: 10px 0;
-        min-width: 200px;
-    }
-
-    .dv-popover.open {
-        display: block;
-    }
-
-    .dv-popover-header {
-        padding: 2px 14px 8px;
-        font-size: .75rem;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: .05em;
-        color: var(--dv-text-secondary);
-        border-bottom: 1px solid var(--dv-border);
-        margin-bottom: 6px;
-    }
-
-    .dv-popover-item {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        padding: 6px 14px;
-        cursor: pointer;
-        font-size: .85rem;
-        transition: background var(--dv-transition);
-        user-select: none;
-    }
-
-    .dv-popover-item:hover {
-        background: var(--dv-bg);
-    }
-
-    .dv-popover-item input[type="checkbox"] {
-        accent-color: var(--dv-primary);
-        width: 15px;
-        height: 15px;
-        cursor: pointer;
-        flex-shrink: 0;
-    }
+    /* Custom popover eliminado: reemplazado por <ion-popover> nativo de Ionic */
+    /* — Ver _ensureColPopover() en el JS — */
 
     /* ── Card principal ── */
     .dv-card {
@@ -969,14 +915,61 @@
         </div>`;
         }
 
-        function _renderToolbarHTML() {
-            const colItems = _state.columns.map((col, i) => `
-        <label class="dv-popover-item">
-          <input type="checkbox" ${col.visible ? 'checked' : ''}
-            onchange="window.DataViewEngine._onColToggle(${i}, this.checked)">
-          ${col.label}
-        </label>`).join('');
+        /* ────────────────────────────────────────────
+           ion-popover nativo: gestor de columnas visibles
+           — Renderiza un <ion-popover> en el body para garantizar que
+             Ionic lo posicione sin desbordamiento en móvil ni en desktop.
+        ───────────────────────────────────────────── */
+        function _renderColPopoverContentHTML() {
+            const items = _state.columns.map((col, i) => `
+                <ion-item lines="none" style="--min-height:42px;">
+                    <ion-checkbox
+                        slot="start"
+                        data-colidx="${i}"
+                        ${col.visible ? 'checked' : ''}
+                        style="--size:18px;--border-radius:4px;">
+                    </ion-checkbox>
+                    <ion-label style="font-size:.85rem;">${col.label}</ion-label>
+                </ion-item>`).join('');
 
+            return `
+                <ion-content style="--background:var(--dv-surface);width:220px;">
+                    <ion-list-header style="min-height:36px;">
+                        <ion-label style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--dv-text-secondary);">
+                            Columnas visibles
+                        </ion-label>
+                    </ion-list-header>
+                    <ion-list lines="none">${items}</ion-list>
+                </ion-content>`;
+        }
+
+        function _ensureColPopover() {
+            // Obtener o crear el ion-popover persistente en el body
+            let pop = document.getElementById('dv-col-ion-popover');
+            if (!pop) {
+                pop = document.createElement('ion-popover');
+                pop.id = 'dv-col-ion-popover';
+                pop.setAttribute('trigger', 'dv-col-trigger-btn');
+                pop.setAttribute('trigger-action', 'click');
+                pop.setAttribute('dismiss-on-select', 'false');
+                pop.setAttribute('side', 'bottom');
+                pop.setAttribute('alignment', 'end');
+                pop.setAttribute('show-backdrop', 'false');
+                document.body.appendChild(pop);
+            }
+            // Actualizar contenido (sincroniza estado de checkboxes)
+            pop.innerHTML = _renderColPopoverContentHTML();
+
+            // Adjuntar ionChange a cada ion-checkbox (lo necesita el web component de Ionic)
+            pop.querySelectorAll('ion-checkbox').forEach(function (cb) {
+                const idx = parseInt(cb.getAttribute('data-colidx'), 10);
+                cb.addEventListener('ionChange', function (e) {
+                    window.DataViewEngine._onColToggle(idx, e.detail.checked);
+                });
+            });
+        }
+
+        function _renderToolbarHTML() {
             return `
         <div class="dv-toolbar">
           <div class="dv-toolbar-left">
@@ -989,16 +982,10 @@
             </div>
           </div>
           <div class="dv-toolbar-right">
-            <div class="dv-popover-wrap">
-              <button class="dv-btn dv-btn-ghost" id="dv-col-toggle-btn"
-                onclick="window.DataViewEngine._toggleColPopover()" title="Configurar columnas">
-                ⊞ Columnas
-              </button>
-              <div class="dv-popover" id="dv-col-popover">
-                <div class="dv-popover-header">Columnas visibles</div>
-                ${colItems}
-              </div>
-            </div>
+            <!-- Trigger del ion-popover nativo — Ionic calcula la posición sin desbordamiento -->
+            <button class="dv-btn dv-btn-ghost" id="dv-col-trigger-btn" title="Configurar columnas">
+              ⊞ Columnas
+            </button>
             <button class="dv-btn-icon ${_state.view === 'table' ? 'active' : ''}" id="dv-view-table-btn"
               onclick="window.DataViewEngine._onViewToggle('table')" title="Vista de lista">
               ☰
@@ -1052,6 +1039,8 @@
         function _rerenderToolbar() {
             const zone = document.getElementById('dv-toolbar-zone');
             if (zone) zone.innerHTML = _renderToolbarHTML();
+            // Sincronizar ion-popover con el nuevo estado de columnas
+            _ensureColPopover();
         }
 
         /* ────────────────────────────────────────────
@@ -1068,6 +1057,10 @@
                 sortCol: '', sortDir: 'asc',
                 view: defaultView, columns: []
             };
+
+            // Limpiar ion-popover de la entidad anterior (si existe)
+            const oldPop = document.getElementById('dv-col-ion-popover');
+            if (oldPop) oldPop.remove();
 
             const container = document.getElementById(containerId);
             if (!container) return;
@@ -1114,6 +1107,9 @@
                 // Renderizar toolbar (una sola vez; luego _rerenderToolbar lo actualiza)
                 const toolbarZone = document.getElementById('dv-toolbar-zone');
                 if (toolbarZone) toolbarZone.innerHTML = _renderToolbarHTML();
+
+                // Crear ion-popover nativo en el body (fuera del contenedor, sin desbordamiento)
+                _ensureColPopover();
 
                 _rerenderData();
             });
@@ -1163,17 +1159,23 @@
 
         function _onColToggle(idx, visible) {
             _state.columns[idx].visible = visible;
-            _rerenderToolbar(); // actualiza checkboxes — NO destruye el input de búsqueda
+            // Actualizar solo el contenido del ion-popover (sin cerrarlo ni destruir el toolbar)
+            const pop = document.getElementById('dv-col-ion-popover');
+            if (pop) {
+                pop.innerHTML = _renderColPopoverContentHTML();
+                pop.querySelectorAll('ion-checkbox').forEach(function (cb) {
+                    const i = parseInt(cb.getAttribute('data-colidx'), 10);
+                    cb.addEventListener('ionChange', function (e) {
+                        window.DataViewEngine._onColToggle(i, e.detail.checked);
+                    });
+                });
+            }
+            // Actualizar botones de view toggle (no destruye el search input)
+            _rerenderToolbar();
             _rerenderData();
-            // Re-abrir popover tras re-render del toolbar
-            const pop = document.getElementById('dv-col-popover');
-            if (pop) pop.classList.add('open');
         }
 
-        function _toggleColPopover() {
-            const pop = document.getElementById('dv-col-popover');
-            if (pop) pop.classList.toggle('open');
-        }
+        function _toggleColPopover() { /* no-op: Ionic maneja apertura via trigger */ }
 
         function _onViewToggle(view) {
             _state.view = view;
