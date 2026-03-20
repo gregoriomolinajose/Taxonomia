@@ -89,7 +89,16 @@
             if (typeof window.showFormSidebar === 'function') {
                 window.showFormSidebar(entityName);
             }
+
+            // Reparación Crítica: Instanciar variable solicitada por el Stepper
+            const sidebarList = document.getElementById('sidebarList');
             const sidebarSteps = document.getElementById('form-steps-container');
+
+            // Validación de seguridad (Rule 5.3: Fault Tolerance)
+            if (!sidebarList) {
+                console.error("[FormEngine] No se encontró el contenedor #sidebarList en el DOM.");
+                return;
+            }
 
             const card = document.createElement('ion-card');
             card.style.borderRadius = '12px'; // Redondeo Figma

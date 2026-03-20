@@ -102,16 +102,14 @@
                 </ion-header>
 
                 <ion-content>
-                    <!-- Aquí el FormEngine_UI inyectará los pasos (Ej: Estrategia, Finanzas) -->
-                    <ion-list id="sidebar-step-list" lines="none">
-                        <ion-list-header>
-                            <ion-label color="medium">Fases del Formulario</ion-label>
-                        </ion-list-header>
-                        <!-- Items inyectados dinámicamente -->
-                        <ion-item disabled>
-                            <ion-icon slot="start" name="document-text-outline" color="medium"></ion-icon>
-                            <ion-label color="medium">Selecciona una Entidad</ion-label>
-                        </ion-item>
+                    <!-- Bloque para Navegación Global (Home / Listado) -->
+                    <ion-list id="main-nav-list" lines="none" style="display: block;">
+                        <!-- Se rellena dinámicamente por showHomeSidebar / showListSidebar -->
+                    </ion-list>
+
+                    <!-- Bloque para Stepper del Formulario (Wizard) -->
+                    <ion-list id="sidebarList" lines="none" style="display: none;">
+                        <!-- Se rellena dinámicamente por showFormSidebar + FormEngine_UI -->
                     </ion-list>
                 </ion-content>
             </ion-menu>
@@ -387,8 +385,13 @@
          * Renderiza el sidebar en modo DASHBOARD con navegación global.
          */
         window.showHomeSidebar = function () {
-            const sidebarList = document.getElementById('sidebar-step-list');
-            if (!sidebarList) return;
+            const navList = document.getElementById('main-nav-list');
+            const formList = document.getElementById('sidebarList');
+            if (!navList || !formList) return;
+
+            // Toggle de Listas
+            navList.style.display = 'block';
+            formList.style.display = 'none';
 
             const links = [
                 { id: 'home', icon: 'home-outline', label: 'Inicio', action: 'window.returnToDashboard()', active: true },
@@ -410,9 +413,7 @@
                 </ion-item>`;
             }).join('');
 
-            sidebarList.innerHTML = `
-                ${items}
-            `;
+            navList.innerHTML = items;
         };
 
         /**
@@ -420,8 +421,13 @@
          * Renderiza el sidebar en modo LISTADO con navegación entre entidades.
          */
         window.showListSidebar = function (activeEntityName) {
-            const sidebarList = document.getElementById('sidebar-step-list');
-            if (!sidebarList) return;
+            const navList = document.getElementById('main-nav-list');
+            const formList = document.getElementById('sidebarList');
+            if (!navList || !formList) return;
+
+            // Toggle de Listas
+            navList.style.display = 'block';
+            formList.style.display = 'none';
 
             // Siempre incluir Home como opción de escape
             const homeItem = `<ion-item button detail="false" 
@@ -450,10 +456,7 @@
                 </ion-item>`;
             }).join('');
 
-            sidebarList.innerHTML = `
-                ${homeItem}
-                ${items}
-            `;
+            navList.innerHTML = homeItem + items;
         };
 
         /**
@@ -461,8 +464,13 @@
          * Prepara el sidebar para el modo FORMULARIO (Wizard).
          */
         window.showFormSidebar = function (entityName) {
-            const sidebarList = document.getElementById('sidebar-step-list');
-            if (!sidebarList) return;
+            const navList = document.getElementById('main-nav-list');
+            const formList = document.getElementById('sidebarList');
+            if (!navList || !formList) return;
+
+            // Toggle de Listas
+            navList.style.display = 'none';
+            formList.style.display = 'block';
 
             // Siempre incluir Home como opción de escape
             const homeItem = `<ion-item button detail="false" 
@@ -472,7 +480,8 @@
                 <ion-label>Inicio</ion-label>
             </ion-item>`;
 
-            sidebarList.innerHTML = `
+            // ID obligatorio para que FormEngine inyecte los pasos
+            formList.innerHTML = `
                 ${homeItem}
                 <div id="form-steps-container"></div>
             `;
