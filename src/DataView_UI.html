@@ -154,13 +154,17 @@
         display: flex;
         gap: 8px;
         align-items: center;
+        flex-shrink: 0;
+        /* los botones nunca se aplastan bajo el buscador */
     }
 
     /* ── Search ── */
     .dv-search-wrap {
         position: relative;
-        flex: 1;
-        max-width: 360px;
+        flex: 1 1 220px;
+        /* crece, puede encogerse, base mínima razonable */
+        max-width: 480px;
+        /* techo corporativo — no ocupa toda la pantalla en desktop */
     }
 
     .dv-search-wrap svg {
@@ -192,19 +196,38 @@
     /* Custom popover eliminado: reemplazado por <ion-popover> nativo de Ionic */
     /* — Ver _ensureColPopover() en el JS — */
 
-    /* ── Card principal ── */
+    /* ── Card principal — Elevación Enterprise ── */
     .dv-card {
         background: var(--dv-surface);
-        border: 1px solid var(--dv-border);
-        border-radius: var(--dv-radius);
-        box-shadow: var(--dv-shadow);
+        border: 1px solid var(--ion-color-light-shade, var(--dv-border));
+        border-radius: 8px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
         overflow: hidden;
     }
 
-    /* ── Tabla ── */
+    /* ── Tabla + Scrollbar Corporativo (webkit) ── */
     .dv-table-wrap {
         overflow-x: auto;
         -webkit-overflow-scrolling: touch;
+    }
+
+    /* Scrollbar horizontal suavizado en Chrome/Safari/Edge */
+    .dv-table-wrap::-webkit-scrollbar {
+        height: 8px;
+    }
+
+    .dv-table-wrap::-webkit-scrollbar-track {
+        background: var(--ion-color-light, #f4f5f8);
+        border-radius: 4px;
+    }
+
+    .dv-table-wrap::-webkit-scrollbar-thumb {
+        background: var(--ion-color-medium-tint, #b2bec3);
+        border-radius: 4px;
+    }
+
+    .dv-table-wrap::-webkit-scrollbar-thumb:hover {
+        background: var(--ion-color-medium, #92949c);
     }
 
     .dv-table {
