@@ -396,67 +396,41 @@
         color: #475569;
     }
 
-    /* ── Grid View ── */
-    .dv-grid {
-        display: grid;
-        gap: 14px;
-        padding: 16px;
-        grid-template-columns: 1fr;
+    /* ── Grid View — Ionic-native layout (ion-grid/ion-row/ion-col/ion-card) ── */
+
+    /* Override ion-grid padding para alinearlo con el dv-root */
+    .dv-ionic-grid {
+        padding: 8px 0 0;
     }
 
-    @media (min-width: 480px) {
-        .dv-grid {
-            grid-template-columns: repeat(2, 1fr);
-        }
-    }
-
-    @media (min-width: 768px) {
-        .dv-grid {
-            grid-template-columns: repeat(3, 1fr);
-        }
-    }
-
-    @media (min-width: 1100px) {
-        .dv-grid {
-            grid-template-columns: repeat(4, 1fr);
-        }
-    }
-
-    .dv-card-item {
-        background: var(--dv-surface);
+    /* ion-card overrides: hereda tokens del design system */
+    .dv-ion-card {
+        margin: 0 0 2px;
         border: 1px solid var(--dv-border);
         border-radius: var(--dv-radius);
-        padding: 16px;
+        box-shadow: var(--dv-shadow);
         transition: box-shadow var(--dv-transition), transform var(--dv-transition);
-        cursor: default;
+        --background: var(--dv-surface);
+        --color: var(--dv-text-primary);
+        height: calc(100% - 2px);
     }
 
-    .dv-card-item:hover {
+    .dv-ion-card:hover {
         box-shadow: var(--dv-shadow-md);
         transform: translateY(-2px);
     }
 
-    .dv-card-item-title {
-        font-size: .95rem;
-        font-weight: 700;
-        color: var(--dv-text-primary);
-        margin-bottom: 4px;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
+    /* Columnas de la grilla — gap entre tarjetas */
+    .dv-grid-col {
+        padding: 6px;
     }
 
-    .dv-card-item-id {
-        font-size: .73rem;
-        color: var(--dv-text-light);
-        margin-bottom: 10px;
-        font-family: monospace;
-    }
-
+    /* Atributos dentro de la card */
     .dv-card-item-attrs {
         display: flex;
         flex-direction: column;
         gap: 5px;
+        margin-top: 4px;
     }
 
     .dv-card-item-attr {
@@ -476,17 +450,6 @@
     .dv-card-item-attr-val {
         color: var(--dv-text-primary);
         word-break: break-word;
-    }
-
-    .dv-card-item-fk-chip {
-        display: inline-block;
-        margin-top: 10px;
-        padding: 3px 10px;
-        background: var(--dv-primary-light);
-        color: var(--dv-primary);
-        border-radius: 999px;
-        font-size: .72rem;
-        font-weight: 600;
     }
 
     /* ── Paginación ── */
@@ -886,11 +849,14 @@
 
             if (rows.length === 0) return _renderEmpty();
 
-            const cards = rows.map(row => {
+            // Usar Ionic grid nativo: 1 col móvil, 2 sm, 3 md, 4 xl
+            const cols = rows.map(row => {
                 const title = row[meta.titleField] || row[meta.idField] || '—';
                 const id = row[meta.idField] || '';
+
+                // FK chip usando ion-badge de Ionic
                 const fkChip = meta.fkField && row[meta.fkField.key]
-                    ? `<span class="dv-card-item-fk-chip">🔗 ${meta.fkField.label}: ${row[meta.fkField.key]}</span>`
+                    ? `<ion-badge color="primary" style="font-size:.7rem;font-weight:600;margin-top:10px;display:inline-flex;align-items:center;gap:4px;">🔗 ${meta.fkField.label}: ${row[meta.fkField.key]}</ion-badge>`
                     : '';
 
                 const attrKeys = Object.keys(row)
@@ -900,25 +866,33 @@
                     .slice(0, MAX_ATTRS);
 
                 const attrs = attrKeys.map(k => `
-          <div class="dv-card-item-attr">
-            <span class="dv-card-item-attr-key">${_labelFromKey(k)}</span>
-            <span class="dv-card-item-attr-val">${_formatValue(k, row[k])}</span>
-          </div>`).join('');
+                    <div class="dv-card-item-attr">
+                        <span class="dv-card-item-attr-key">${_labelFromKey(k)}</span>
+                        <span class="dv-card-item-attr-val">${_formatValue(k, row[k])}</span>
+                    </div>`).join('');
 
                 return `
-          <div class="dv-card-item">
-            <div class="dv-card-item-title" title="${title}">${title}</div>
-            <div class="dv-card-item-id">${id}</div>
-            <div class="dv-card-item-attrs">${attrs}</div>
-            ${fkChip}
-          </div>`;
+                <ion-col size="12" size-sm="6" size-md="4" size-xl="3" class="dv-grid-col">
+                    <ion-card class="dv-ion-card">
+                        <ion-card-header>
+                            <ion-card-subtitle style="font-family:monospace;font-size:.72rem;color:var(--dv-text-light);">${id}</ion-card-subtitle>
+                            <ion-card-title style="font-size:.95rem;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${title}">${title}</ion-card-title>
+                        </ion-card-header>
+                        <ion-card-content>
+                            <div class="dv-card-item-attrs">${attrs}</div>
+                            ${fkChip}
+                        </ion-card-content>
+                    </ion-card>
+                </ion-col>`;
             }).join('');
 
             return `
-        <div class="dv-card">
-          <div class="dv-grid">${cards}</div>
-          ${_renderPaginationHTML()}
-        </div>`;
+                <ion-grid class="dv-ionic-grid">
+                    <ion-row>${cols}</ion-row>
+                </ion-grid>
+                <div style="border-top:1px solid var(--dv-border);background:var(--dv-surface);border-radius:0 0 var(--dv-radius) var(--dv-radius);">
+                    ${_renderPaginationHTML()}
+                </div>`;
         }
 
         function _renderPaginationHTML() {
@@ -1036,12 +1010,15 @@
            Render principal (entrada pública)
         ───────────────────────────────────────────── */
         function render(entityName, containerId) {
+            // Mobile-first: grid por defecto en móvil (<768px), tabla en desktop
+            const defaultView = (window.innerWidth < 768) ? 'grid' : 'table';
+
             _state = {
                 entityName, containerId,
                 data: [], filtered: [],
                 page: 1, pageSize: 25,
                 sortCol: '', sortDir: 'asc',
-                view: 'table', columns: []
+                view: defaultView, columns: []
             };
 
             const container = document.getElementById(containerId);
