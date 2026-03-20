@@ -14,16 +14,18 @@ function _normalizeHeader(headerStr) {
 
 const Adapter_Sheets = {
     upsert: function (tableName, payload, config) {
-        // 1. Determinar Llave Primaria por convención: id_<tableName> (case-insensitive)
-        //    Evita tomar una FK (ej. id_grupo_producto) como PK cuando hay múltiples campos id_*
-        const expectedPK = 'id_' + tableName.toLowerCase();
-        const primaryKeyField = payload.hasOwnProperty(expectedPK)
-            ? expectedPK
-            : Object.keys(payload).find(key => key.startsWith('id_'));
+        // 1. Determinar PK con soporte para entidades plurales (ej. Grupo_Productos → id_grupo_producto)
+        //    Prueba: id_<tableName> → id_<singular> → find(startsWith('id_'))
+        const tableKey = tableName.toLowerCase();
+        const singularKey = tableKey.endsWith('s') ? tableKey.slice(0, -1) : tableKey;
+        const primaryKeyField = payload.hasOwnProperty('id_' + tableKey) ? 'id_' + tableKey
+            : payload.hasOwnProperty('id_' + singularKey) ? 'id_' + singularKey
+                : Object.keys(payload).find(key => key.startsWith('id_'));
 
         if (!primaryKeyField || !payload[primaryKeyField]) {
-            throw new Error(`Primary Key requerida para operar el Upsert. Se esperaba '${expectedPK}' pero no se encontró en el payload.`);
+            throw new Error(`Primary Key requerida. No se encontró 'id_${tableKey}' ni 'id_${singularKey}' en el payload.`);
         }
+
 
 
         const primaryKeyValue = payload[primaryKeyField];

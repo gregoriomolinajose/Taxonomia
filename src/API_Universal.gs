@@ -64,12 +64,16 @@ function API_Universal_Router(action, entityName, payload) {
     let responseData = null;
 
     if (action === 'create') {
-      // Si el id está vacío desde el front-end (comportamiento normal de creación nueva), autoasignar:
-      const pkField = 'id_' + entityName.toLowerCase();
+      // Detectar el campo PK correcto: prueba id_<entityName>, luego id_<singular>, luego busca en payload
+      const tableKey = entityName.toLowerCase();
+      const singularKey = tableKey.endsWith('s') ? tableKey.slice(0, -1) : tableKey;
+      const pkField = payload.hasOwnProperty('id_' + tableKey) ? 'id_' + tableKey
+          : payload.hasOwnProperty('id_' + singularKey) ? 'id_' + singularKey
+          : 'id_' + tableKey; // fallback: genera con nombre exacto
+
       if (!payload[pkField] || String(payload[pkField]).trim() === '') {
         payload[pkField] = entityName.toUpperCase().substring(0,4) + '-' + new Date().getTime();
       }
-      
       responseData = _handleCreate(entityName, payload);
     } else if (action === 'read') {
       // responseData = _handleRead(entityName, payload);

@@ -24,12 +24,11 @@ const Engine_DB = {
 
         // Dispatch a Sheets Síncrono
         if (config.useSheets) {
-            try {
-                results.sheets = _Adapter_Sheets.upsert(tableName, payload, config);
-            } catch (err) {
-                results.sheets = { status: 'error', error: err.message };
-            }
+            // No atrapamos el error aquí — dejamos que suba para que API_Universal_Router lo capture y
+            // devuelva {status:'error'} correcto al frontend. Evita falsos positivos de "guardado con éxito".
+            results.sheets = _Adapter_Sheets.upsert(tableName, payload, config);
         }
+
 
         // Dispatch a Cloud Síncrono (Non-blocking fail simulado)
         if (config.useCloudDB) {
