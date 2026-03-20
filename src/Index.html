@@ -162,18 +162,20 @@
                                 <ion-col size="12" size-md="4">
                                     <ion-card>
                                         <ion-card-header class="ion-text-center">
-                                            <div style="font-size: 40px; margin-bottom: 10px;">💼</div>
+                                            <ion-icon name="briefcase-outline" color="primary"
+                                                style="font-size: 48px; margin-bottom: 10px;"></ion-icon>
                                             <ion-card-title>Portafolios</ion-card-title>
                                             <ion-card-subtitle>Nivel Estratégico</ion-card-subtitle>
                                         </ion-card-header>
                                         <ion-card-content>
-                                            <p style="margin-bottom: 20px; min-height: 40px;">Gestiona la visión
+                                            <p style="margin-bottom: 20px; min-height: 44px;">Gestiona la visión
                                                 estratégica y presupuestos de alto nivel.</p>
-                                            <ion-button expand="block" shape="round" onclick="renderForm('Portafolio')">
+                                            <ion-button expand="block" shape="round" color="primary"
+                                                onclick="renderForm('Portafolio')">
                                                 <ion-icon slot="start" name="add-circle-outline"></ion-icon>
                                                 Crear Nuevo
                                             </ion-button>
-                                            <ion-button expand="block" shape="round" fill="outline"
+                                            <ion-button expand="block" shape="round" color="primary" fill="outline"
                                                 style="margin-top: 8px;"
                                                 onclick="window.DataViewEngine.render('Portafolio', 'app-container')">
                                                 <ion-icon slot="start" name="list-outline"></ion-icon>
@@ -187,19 +189,20 @@
                                 <ion-col size="12" size-md="4">
                                     <ion-card>
                                         <ion-card-header class="ion-text-center">
-                                            <div style="font-size: 40px; margin-bottom: 10px;">layers</div>
+                                            <ion-icon name="layers-outline" color="secondary"
+                                                style="font-size: 48px; margin-bottom: 10px;"></ion-icon>
                                             <ion-card-title>Grupos</ion-card-title>
                                             <ion-card-subtitle>Nivel Táctico</ion-card-subtitle>
                                         </ion-card-header>
                                         <ion-card-content>
-                                            <p style="margin-bottom: 20px; min-height: 40px;">Organiza productos por
+                                            <p style="margin-bottom: 20px; min-height: 44px;">Organiza productos por
                                                 dominios y modelos de negocio.</p>
-                                            <ion-button expand="block" shape="round" color="tertiary"
+                                            <ion-button expand="block" shape="round" color="secondary"
                                                 onclick="renderForm('Grupo_Productos')">
                                                 <ion-icon slot="start" name="add-circle-outline"></ion-icon>
                                                 Crear Nuevo
                                             </ion-button>
-                                            <ion-button expand="block" shape="round" color="tertiary" fill="outline"
+                                            <ion-button expand="block" shape="round" color="secondary" fill="outline"
                                                 style="margin-top: 8px;"
                                                 onclick="window.DataViewEngine.render('Grupo_Productos', 'app-container')">
                                                 <ion-icon slot="start" name="list-outline"></ion-icon>
@@ -213,19 +216,20 @@
                                 <ion-col size="12" size-md="4">
                                     <ion-card>
                                         <ion-card-header class="ion-text-center">
-                                            <div style="font-size: 40px; margin-bottom: 10px;">📦</div>
+                                            <ion-icon name="cube-outline" color="tertiary"
+                                                style="font-size: 48px; margin-bottom: 10px;"></ion-icon>
                                             <ion-card-title>Productos</ion-card-title>
                                             <ion-card-subtitle>Nivel Operativo</ion-card-subtitle>
                                         </ion-card-header>
                                         <ion-card-content>
-                                            <p style="margin-bottom: 20px; min-height: 40px;">Detalle granular de cada
+                                            <p style="margin-bottom: 20px; min-height: 44px;">Detalle granular de cada
                                                 activo y su estado actual.</p>
-                                            <ion-button expand="block" shape="round" color="secondary"
+                                            <ion-button expand="block" shape="round" color="tertiary"
                                                 onclick="renderForm('Producto')">
                                                 <ion-icon slot="start" name="add-circle-outline"></ion-icon>
                                                 Crear Nuevo
                                             </ion-button>
-                                            <ion-button expand="block" shape="round" color="secondary" fill="outline"
+                                            <ion-button expand="block" shape="round" color="tertiary" fill="outline"
                                                 style="margin-top: 8px;"
                                                 onclick="window.DataViewEngine.render('Producto', 'app-container')">
                                                 <ion-icon slot="start" name="list-outline"></ion-icon>
@@ -388,16 +392,22 @@
             if (!sidebarList) return;
 
             const links = [
-                { id: 'home', icon: 'home-outline', label: 'Inicio', action: 'window.returnToDashboard()' },
+                { id: 'home', icon: 'home-outline', label: 'Inicio', action: 'window.returnToDashboard()', active: true },
                 { id: 'port', icon: 'briefcase-outline', label: 'Portafolios', action: "window.DataViewEngine.render('Portafolio', 'app-container')" },
                 { id: 'grup', icon: 'layers-outline', label: 'Grupos', action: "window.DataViewEngine.render('Grupo_Productos', 'app-container')" },
                 { id: 'prod', icon: 'cube-outline', label: 'Productos', action: "window.DataViewEngine.render('Producto', 'app-container')" }
             ];
 
             const items = links.map(function (l) {
-                return `<ion-item button detail="false" onclick="${l.action}">
-                    <ion-icon slot="start" name="${l.icon}" color="medium"></ion-icon>
-                    <ion-label>${l.label}</ion-label>
+                const isActive = l.active || false;
+                return `<ion-item button detail="false" 
+                    style="--background:${isActive ? 'var(--ion-color-primary)' : 'transparent'};"
+                    onclick="${l.action}">
+                    <ion-icon slot="start" name="${l.icon}" 
+                        style="color:${isActive ? '#ffffff' : 'var(--ion-color-medium)'}"></ion-icon>
+                    <ion-label style="font-weight:${isActive ? '700' : '400'}; color:${isActive ? '#ffffff' : 'inherit'};">
+                        ${l.label}
+                    </ion-label>
                 </ion-item>`;
             }).join('');
 
