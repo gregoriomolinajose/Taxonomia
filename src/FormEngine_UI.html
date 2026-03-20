@@ -63,7 +63,13 @@
                     }));
                     await Promise.all(promises);
                 } finally {
-                    await loading.dismiss();
+                    try {
+                        await loading.dismiss();
+                    } catch (_) {
+                        // Race condition: Ionic overlay ya fue desreferenciado por mutación del DOM.
+                        // Fallback: eliminar el elemento directamente.
+                        if (loading.parentNode) loading.parentNode.removeChild(loading);
+                    }
                 }
             }
             // -----------------------------------------------------------------
