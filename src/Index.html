@@ -144,51 +144,92 @@
 
                 <!-- Surface Principal (Gris Claro) -->
                 <ion-content class="ion-padding" color="light">
-                    <!-- Contenedor inyectable del FormEngine -->
+                    <!-- Contenedor inyectable del FormEngine / DataView -->
                     <div id="app-container">
-                        <!-- Estado Default: Selección de Entidad -->
+                        <!-- Dashboard Enterprise: 3 Columnas Grid -->
                         <ion-grid>
                             <ion-row class="ion-justify-content-center">
-                                <ion-col size="12" size-md="8" size-lg="6">
-                                    <ion-card style="margin-top: 20px;">
-                                        <ion-card-header>
-                                            <ion-card-subtitle color="primary">Generador de UI</ion-card-subtitle>
-                                            <ion-card-title>Plataforma de Gobernanza SAFe</ion-card-title>
+                                <ion-col size="12" class="ion-text-center" style="margin-bottom: 20px;">
+                                    <h1 style="font-weight: 700; color: var(--ion-color-dark);">Plataforma de Gobernanza
+                                        SAFe</h1>
+                                    <p style="color: var(--ion-color-medium);">Gestión centralizada de Taxonomía y
+                                        Portafolio</p>
+                                </ion-col>
+                            </ion-row>
+
+                            <ion-row>
+                                <!-- Tarjeta 1: Portafolios -->
+                                <ion-col size="12" size-md="4">
+                                    <ion-card>
+                                        <ion-card-header class="ion-text-center">
+                                            <div style="font-size: 40px; margin-bottom: 10px;">💼</div>
+                                            <ion-card-title>Portafolios</ion-card-title>
+                                            <ion-card-subtitle>Nivel Estratégico</ion-card-subtitle>
                                         </ion-card-header>
                                         <ion-card-content>
-                                            <p style="margin-bottom: 20px;">Selecciona una entidad para comenzar a
-                                                gestionar.</p>
+                                            <p style="margin-bottom: 20px; min-height: 40px;">Gestiona la visión
+                                                estratégica y presupuestos de alto nivel.</p>
                                             <ion-button expand="block" shape="round" onclick="renderForm('Portafolio')">
-                                                <ion-icon slot="start" name="briefcase-outline"></ion-icon>
-                                                Nuevo Portafolio
+                                                <ion-icon slot="start" name="add-circle-outline"></ion-icon>
+                                                Crear Nuevo
                                             </ion-button>
                                             <ion-button expand="block" shape="round" fill="outline"
-                                                style="margin-top: 6px;"
+                                                style="margin-top: 8px;"
                                                 onclick="window.DataViewEngine.render('Portafolio', 'app-container')">
                                                 <ion-icon slot="start" name="list-outline"></ion-icon>
-                                                Ver Portafolios
+                                                Ver Listado
                                             </ion-button>
-                                            <ion-button expand="block" shape="round" color="secondary"
-                                                style="margin-top: 14px;" onclick="renderForm('Producto')">
-                                                <ion-icon slot="start" name="cube-outline"></ion-icon>
-                                                Nuevo Producto
-                                            </ion-button>
-                                            <ion-button expand="block" shape="round" color="secondary" fill="outline"
-                                                style="margin-top: 6px;"
-                                                onclick="window.DataViewEngine.render('Producto', 'app-container')">
-                                                <ion-icon slot="start" name="list-outline"></ion-icon>
-                                                Ver Productos
-                                            </ion-button>
+                                        </ion-card-content>
+                                    </ion-card>
+                                </ion-col>
+
+                                <!-- Tarjeta 2: Grupos de Productos -->
+                                <ion-col size="12" size-md="4">
+                                    <ion-card>
+                                        <ion-card-header class="ion-text-center">
+                                            <div style="font-size: 40px; margin-bottom: 10px;">layers</div>
+                                            <ion-card-title>Grupos</ion-card-title>
+                                            <ion-card-subtitle>Nivel Táctico</ion-card-subtitle>
+                                        </ion-card-header>
+                                        <ion-card-content>
+                                            <p style="margin-bottom: 20px; min-height: 40px;">Organiza productos por
+                                                dominios y modelos de negocio.</p>
                                             <ion-button expand="block" shape="round" color="tertiary"
-                                                style="margin-top: 14px;" onclick="renderForm('Grupo_Productos')">
-                                                <ion-icon slot="start" name="layers-outline"></ion-icon>
-                                                Nuevo Grupo de Productos
+                                                onclick="renderForm('Grupo_Productos')">
+                                                <ion-icon slot="start" name="add-circle-outline"></ion-icon>
+                                                Crear Nuevo
                                             </ion-button>
                                             <ion-button expand="block" shape="round" color="tertiary" fill="outline"
-                                                style="margin-top: 6px;"
+                                                style="margin-top: 8px;"
                                                 onclick="window.DataViewEngine.render('Grupo_Productos', 'app-container')">
                                                 <ion-icon slot="start" name="list-outline"></ion-icon>
-                                                Ver Grupos de Productos
+                                                Ver Listado
+                                            </ion-button>
+                                        </ion-card-content>
+                                    </ion-card>
+                                </ion-col>
+
+                                <!-- Tarjeta 3: Productos -->
+                                <ion-col size="12" size-md="4">
+                                    <ion-card>
+                                        <ion-card-header class="ion-text-center">
+                                            <div style="font-size: 40px; margin-bottom: 10px;">📦</div>
+                                            <ion-card-title>Productos</ion-card-title>
+                                            <ion-card-subtitle>Nivel Operativo</ion-card-subtitle>
+                                        </ion-card-header>
+                                        <ion-card-content>
+                                            <p style="margin-bottom: 20px; min-height: 40px;">Detalle granular de cada
+                                                activo y su estado actual.</p>
+                                            <ion-button expand="block" shape="round" color="secondary"
+                                                onclick="renderForm('Producto')">
+                                                <ion-icon slot="start" name="add-circle-outline"></ion-icon>
+                                                Crear Nuevo
+                                            </ion-button>
+                                            <ion-button expand="block" shape="round" color="secondary" fill="outline"
+                                                style="margin-top: 8px;"
+                                                onclick="window.DataViewEngine.render('Producto', 'app-container')">
+                                                <ion-icon slot="start" name="list-outline"></ion-icon>
+                                                Ver Listado
                                             </ion-button>
                                         </ion-card-content>
                                     </ion-card>
@@ -328,22 +369,44 @@
             const oldPop = document.getElementById('dv-col-ion-popover');
             if (oldPop) oldPop.remove();
 
-            // Restaurar sidebar a modo 'Form' (Fases del Formulario)
-            if (sidebarList) {
-                sidebarList.innerHTML = `
-                    <ion-list-header>
-                        <ion-label color="medium">Fases del Formulario</ion-label>
-                    </ion-list-header>
-                    <ion-item disabled>
-                        <ion-icon slot="start" name="document-text-outline" color="medium"></ion-icon>
-                        <ion-label color="medium">Selecciona una Entidad</ion-label>
-                    </ion-item>
-                `;
+            // Restaurar sidebar a modo Home (Navegación Global)
+            if (typeof window.showHomeSidebar === 'function') {
+                window.showHomeSidebar();
             }
 
             if (container && window.OriginalDashboardHTML) {
                 container.innerHTML = window.OriginalDashboardHTML;
             }
+        };
+
+        /**
+         * showHomeSidebar()
+         * Renderiza el sidebar en modo DASHBOARD con navegación global.
+         */
+        window.showHomeSidebar = function () {
+            const sidebarList = document.getElementById('sidebar-step-list');
+            if (!sidebarList) return;
+
+            const links = [
+                { id: 'home', icon: 'home-outline', label: 'Inicio', action: 'window.returnToDashboard()' },
+                { id: 'port', icon: 'briefcase-outline', label: 'Portafolios', action: "window.DataViewEngine.render('Portafolio', 'app-container')" },
+                { id: 'grup', icon: 'layers-outline', label: 'Grupos', action: "window.DataViewEngine.render('Grupo_Productos', 'app-container')" },
+                { id: 'prod', icon: 'cube-outline', label: 'Productos', action: "window.DataViewEngine.render('Producto', 'app-container')" }
+            ];
+
+            const items = links.map(function (l) {
+                return `<ion-item button detail="false" onclick="${l.action}">
+                    <ion-icon slot="start" name="${l.icon}" color="medium"></ion-icon>
+                    <ion-label>${l.label}</ion-label>
+                </ion-item>`;
+            }).join('');
+
+            sidebarList.innerHTML = `
+                <ion-list-header>
+                    <ion-label color="medium">Gestión Global</ion-label>
+                </ion-list-header>
+                ${items}
+            `;
         };
 
         /**
@@ -382,10 +445,34 @@
             `;
         };
 
+        /**
+         * showFormSidebar(entityName)
+         * Prepara el sidebar para el modo FORMULARIO (Wizard).
+         * El renderizado real de los pasos lo hace FormEngine_UI.
+         */
+        window.showFormSidebar = function (entityName) {
+            const sidebarList = document.getElementById('sidebar-step-list');
+            if (!sidebarList) return;
+
+            sidebarList.innerHTML = `
+                <ion-list-header>
+                    <ion-label color="medium">Fases del Formulario</ion-label>
+                </ion-list-header>
+                <div id="form-steps-container"></div>
+            `;
+        };
+
         // Arrancar verificación al cargar el DOM de Ionic
         document.addEventListener('DOMContentLoaded', () => {
+            // Guardar el HTML original del dashboard para el returnToDashboard
+            const container = document.getElementById('app-container');
+            if (container) {
+                window.OriginalDashboardHTML = container.innerHTML;
+            }
+
             // Esperar un toque a que Ionic se inicialice
             setTimeout(() => {
+                window.showHomeSidebar(); // Cargar sidebar de inicio por defecto
                 window.AuthManager.init();
             }, 100);
         });

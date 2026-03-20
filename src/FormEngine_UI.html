@@ -79,12 +79,17 @@
 
 
             // Referencias al Split-Pane Layout
-            const sidebarList = document.getElementById('sidebar-step-list');
             const headerTitle = document.getElementById('main-header-title');
             const backBtn = document.getElementById('global-back-btn');
 
             if (headerTitle) headerTitle.textContent = "Nuevo: " + entityName;
             if (backBtn) backBtn.style.display = 'block';
+
+            // Preparar Sidebar Contextual
+            if (typeof window.showFormSidebar === 'function') {
+                window.showFormSidebar(entityName);
+            }
+            const sidebarSteps = document.getElementById('form-steps-container');
 
             const card = document.createElement('ion-card');
             card.style.borderRadius = '12px'; // Redondeo Figma
@@ -102,12 +107,6 @@
             // Estado y Linear Wizard
             let currentStepIndex = 0;
             const totalSteps = (steps && steps.length > 0) ? steps.length : 1;
-
-            // Limpiar items previos del Sidebar siempre (evita basura si abrimos/cerramos forms)
-            if (sidebarList) {
-                const existingItems = sidebarList.querySelectorAll('ion-item');
-                existingItems.forEach(el => el.remove());
-            }
 
             // Indicador de Progreso
             let progressLabel = document.createElement('h3');
@@ -128,7 +127,7 @@
                     if (index !== 0) stepDiv.style.display = 'none';
                     stepContainers[stepName] = stepDiv;
 
-                    if (sidebarList) {
+                    if (sidebarSteps) {
                         // Inyectar el ítem en el ion-menu lateral (Solo Visual)
                         const item = document.createElement('ion-item');
                         item.setAttribute('lines', 'none');
@@ -150,7 +149,7 @@
 
                         item.appendChild(icon);
                         item.appendChild(label);
-                        sidebarList.appendChild(item);
+                        sidebarSteps.appendChild(item);
 
                         menuItems[stepName] = { item, icon, label };
                     }
@@ -160,7 +159,7 @@
 
             } else {
                 // Diseño plano (Sin Wizard Steps definidos en metadatos)
-                if (sidebarList) {
+                if (sidebarSteps) {
                     const item = document.createElement('ion-item');
                     item.setAttribute('lines', 'none');
                     item.style.borderRadius = '8px';
@@ -179,7 +178,7 @@
 
                     item.appendChild(icon);
                     item.appendChild(label);
-                    sidebarList.appendChild(item);
+                    sidebarSteps.appendChild(item);
                 }
 
                 stepContainers['default'] = document.createElement('div');
