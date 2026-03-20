@@ -362,6 +362,7 @@
             ];
 
             const items = entities.map(function (e) {
+                const isActive = e.key === activeEntityName;
                 return `<ion-item button detail="false"
                     style="--background:${isActive ? 'var(--ion-color-primary)' : 'transparent'};"
                     onclick="window.DataViewEngine.render('${e.key}', 'app-container')">
