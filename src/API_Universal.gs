@@ -133,6 +133,47 @@ function getGruposProductosOptions() {
 }
 
 /**
+ * getPortafoliosOptions
+ * Devuelve [{value: id_portafolio, label: nombre}] desde DB_Portafolio.
+ * Usado por el Dependency Resolver de FormEngine para el campo id_portafolio en Grupo_Productos.
+ */
+function getPortafoliosOptions() {
+  try {
+    if (typeof SpreadsheetApp === 'undefined') {
+      return [{ value: "MOCK-PORT1", label: "Portafolio Mock Local" }];
+    }
+    const config = (typeof CONFIG !== 'undefined') ? CONFIG : { SPREADSHEET_ID_DB: '' };
+    if (!config.SPREADSHEET_ID_DB) return [];
+
+    const ss = SpreadsheetApp.openById(config.SPREADSHEET_ID_DB);
+    const sheet = ss.getSheetByName('DB_Portafolio');
+    if (!sheet) return [];
+
+    const data = sheet.getDataRange().getValues();
+    if (data.length < 2) return [];
+
+    const headers = data[0].map(h => h.toLowerCase().trim()
+      .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, ""));
+    const idIndex   = headers.indexOf('id_portafolio');
+    const nameIndex = headers.indexOf('nombre');
+
+    if (idIndex === -1 || nameIndex === -1) return [];
+
+    const options = [];
+    for (let i = 1; i < data.length; i++) {
+      const id     = String(data[i][idIndex]).trim();
+      const nombre = String(data[i][nameIndex]).trim();
+      if (id && nombre) options.push({ value: id, label: nombre });
+    }
+    return options;
+  } catch (error) {
+    Logger.log("Error en getPortafoliosOptions: " + error.message);
+    return [];
+  }
+}
+
+/**
  * getProductosOptions
  * Devuelve [{value: id_producto, label: nombre_producto}] desde DB_Producto.
  * Usado por el Dependency Resolver de FormEngine para el campo productos_asociados.

@@ -17,9 +17,9 @@
         { name: "id_grupo_producto", label: "ID Grupo Producto", type: "text", required: true, readonly: true, step: "Datos Generales" },
         { name: "nombre", label: "Nombre", type: "text", required: true, step: "Datos Generales" },
         { name: "descripcion", label: "Descripción", type: "textarea", required: false, step: "Datos Generales" },
+        { name: "id_portafolio", label: "Portafolio Padre", type: "select", required: true, step: "Datos Generales", options: [], lookupSource: "getPortafoliosOptions" },
         { name: "naturaleza_valor", label: "Naturaleza de Valor", type: "text", required: false, step: "Estrategia de Negocio" },
-        { name: "modelo_negocio", label: "Modelo de Negocio", type: "select", required: true, options: ["SaaS", "Marketplace", "B2B", "B2C", "Transaccional"], step: "Estrategia de Negocio" },
-        { name: "productos_asociados", label: "Productos Asociados", type: "select", required: false, step: "Estrategia de Negocio", options: [], lookupSource: "getProductosOptions" }
+        { name: "modelo_negocio", label: "Modelo de Negocio", type: "select", required: true, options: ["SaaS", "Marketplace", "B2B", "B2C", "Transaccional"], step: "Estrategia de Negocio" }
       ]
     },
     Portafolio: {
@@ -51,7 +51,7 @@
         { name: "nombre_producto", label: "Nombre del Producto", type: "text", required: true },
         { name: "nivel_criticalidad", label: "Nivel de Criticalidad", type: "select", required: true, options: ["Tier 1 (Crítico)", "Tier 2 (Alto)", "Tier 3 (Medio)", "Tier 4 (Bajo)"] },
         { name: "slo_objetivo", label: "SLO Objetivo (%)", type: "number", required: false },
-        { name: "id_grupo_padre", label: "Grupo de Productos Padre", type: "select", required: true, options: [], lookupSource: "getGruposProductosOptions" }
+        { name: "id_grupo_producto", label: "Grupo de Productos", type: "select", required: true, options: [], lookupSource: "getGruposProductosOptions" }
       ]
     }
   };
