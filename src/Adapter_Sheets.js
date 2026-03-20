@@ -14,12 +14,17 @@ function _normalizeHeader(headerStr) {
 
 const Adapter_Sheets = {
     upsert: function (tableName, payload, config) {
-        // 1. Validar Llave Primaria (Regla 4.9.1)
-        const primaryKeyField = Object.keys(payload).find(key => key.startsWith('id_'));
+        // 1. Determinar Llave Primaria por convención: id_<tableName> (case-insensitive)
+        //    Evita tomar una FK (ej. id_grupo_producto) como PK cuando hay múltiples campos id_*
+        const expectedPK = 'id_' + tableName.toLowerCase();
+        const primaryKeyField = payload.hasOwnProperty(expectedPK)
+            ? expectedPK
+            : Object.keys(payload).find(key => key.startsWith('id_'));
 
         if (!primaryKeyField || !payload[primaryKeyField]) {
-            throw new Error(`Primary Key requerida para operar el Upsert. No se encontró identificador único validado (ej. id_${tableName.toLowerCase()}) en el payload.`);
+            throw new Error(`Primary Key requerida para operar el Upsert. Se esperaba '${expectedPK}' pero no se encontró en el payload.`);
         }
+
 
         const primaryKeyValue = payload[primaryKeyField];
 
