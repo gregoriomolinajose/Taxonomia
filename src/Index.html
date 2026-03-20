@@ -362,14 +362,14 @@
             ];
 
             const items = entities.map(function (e) {
-                const isActive = e.key === activeEntityName;
                 return `<ion-item button detail="false"
-                    style="--background:${isActive ? 'var(--ion-color-primary-tint,#eff6ff)' : 'transparent'};"
+                    style="--background:${isActive ? 'var(--ion-color-primary)' : 'transparent'};"
                     onclick="window.DataViewEngine.render('${e.key}', 'app-container')">
                     <ion-icon slot="start" name="${e.icon}"
-                        color="${isActive ? 'primary' : 'medium'}"></ion-icon>
-                    <ion-label style="font-weight:${isActive ? '700' : '400'};"
-                        color="${isActive ? 'primary' : ''}">${e.label}</ion-label>
+                        style="color:${isActive ? '#ffffff' : 'var(--ion-color-medium)'}"></ion-icon>
+                    <ion-label style="font-weight:${isActive ? '700' : '400'}; color:${isActive ? '#ffffff' : 'inherit'};">
+                        ${e.label}
+                    </ion-label>
                 </ion-item>`;
             }).join('');
 
