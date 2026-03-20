@@ -794,7 +794,7 @@
                 );
             }
             _state.page = 1;
-            _rerender();
+            _rerenderData(); // Solo datos — el toolbar/search box NO se toca
         }
 
         function _applySort(colKey) {
@@ -1010,21 +1010,26 @@
         }
 
         /* ────────────────────────────────────────────
-           Re-render (sólo zona de datos)
+           Re-render: sólo zona de datos (tabla/grid + paginación)
+           El toolbar (#dv-toolbar-zone) NUNCA se toca aquí — preserva el foco del input.
         ───────────────────────────────────────────── */
-        function _rerender() {
-            const container = document.getElementById(_state.containerId);
-            if (!container) return;
-
+        function _rerenderData() {
             const pageRows = _getPage();
             const dataHTML = _state.view === 'table'
                 ? _renderTableView(pageRows)
                 : _renderGridView(pageRows);
 
-            const dataZone = container.querySelector('#dv-data-zone');
-            if (dataZone) {
-                dataZone.innerHTML = _renderToolbarHTML() + dataHTML;
-            }
+            const dataZone = document.getElementById('dv-data-zone');
+            if (dataZone) dataZone.innerHTML = dataHTML;
+        }
+
+        // Alias para compatibilidad interna (sort, page)
+        function _rerender() { _rerenderData(); }
+
+        /* Re-render sólo el toolbar (toggle de columnas / vista) */
+        function _rerenderToolbar() {
+            const zone = document.getElementById('dv-toolbar-zone');
+            if (zone) zone.innerHTML = _renderToolbarHTML();
         }
 
         /* ────────────────────────────────────────────
@@ -1042,10 +1047,13 @@
             const container = document.getElementById(containerId);
             if (!container) return;
 
-            // Header + skeleton
+            // Estructura inicial: header + toolbar (permanente) + skeleton de datos
+            // #dv-toolbar-zone: NUNCA se destruye durante búsqueda/sort/pagina
+            // #dv-data-zone:    se reemplaza en cada operación de datos
             container.innerHTML = `
-        <div class="dv-root">
-          ${_renderHeader()}
+        <div class="dv-root" id="dv-root">
+          <div id="dv-header-zone">${_renderHeader()}</div>
+          <div id="dv-toolbar-zone"></div>
           <div id="dv-data-zone">${_renderSkeleton()}</div>
         </div>`;
 
@@ -1074,13 +1082,15 @@
                 _state.filtered = [...rows];
                 _state.columns = _buildColumns(entityName, rows);
 
-                // Reconstruir header (ahora tenemos el total real)
-                const root = container.querySelector('.dv-root');
-                if (root) {
-                    root.querySelector('.dv-header').outerHTML = _renderHeader();
-                }
+                // Actualizar header con total real
+                const headerZone = document.getElementById('dv-header-zone');
+                if (headerZone) headerZone.innerHTML = _renderHeader();
 
-                _rerender();
+                // Renderizar toolbar (una sola vez; luego _rerenderToolbar lo actualiza)
+                const toolbarZone = document.getElementById('dv-toolbar-zone');
+                if (toolbarZone) toolbarZone.innerHTML = _renderToolbarHTML();
+
+                _rerenderData();
             });
         }
 
@@ -1128,8 +1138,9 @@
 
         function _onColToggle(idx, visible) {
             _state.columns[idx].visible = visible;
-            _rerender();
-            // Re-abrir popover tras re-render
+            _rerenderToolbar(); // actualiza checkboxes — NO destruye el input de búsqueda
+            _rerenderData();
+            // Re-abrir popover tras re-render del toolbar
             const pop = document.getElementById('dv-col-popover');
             if (pop) pop.classList.add('open');
         }
@@ -1141,7 +1152,8 @@
 
         function _onViewToggle(view) {
             _state.view = view;
-            _rerender();
+            _rerenderToolbar(); // actualiza clases active en botones lista/grid
+            _rerenderData();
         }
 
         /* Cerrar popover al hacer click fuera */
