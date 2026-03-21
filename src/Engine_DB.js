@@ -18,6 +18,30 @@ if (typeof require !== 'undefined') {
     _Adapter_CloudDB = Adapter_CloudDB;
 }
 
+/**
+ * _invalidateCache (Directiva Architect: Cache Busting)
+ * Purga la RAM para forzar lectura fresca tras mutaciones.
+ */
+function _invalidateCache(entityName) {
+    if (typeof CacheService === 'undefined') return;
+    const cache = CacheService.getScriptCache();
+    
+    // Invalidación de lista principal
+    cache.remove('CACHE_LIST_' + entityName);
+    
+    // Invalidación de lookups asociados
+    const lookupMap = {
+        'Portafolio': 'getPortafoliosOptions',
+        'Grupo_Productos': 'getGruposProductosOptions',
+        'Producto': 'getProductosOptions'
+    };
+    if (lookupMap[entityName]) {
+        cache.remove('CACHE_LOOKUP_' + lookupMap[entityName]);
+    }
+    
+    if (typeof Logger !== 'undefined') Logger.log(`[Cache] BUSTED para ${entityName}`);
+}
+
 const Engine_DB = {
     save: function (tableName, payload, config) {
         const results = { sheets: {}, cloud: {} };
@@ -55,9 +79,12 @@ const Engine_DB = {
 
     create: function (entityName, data) {
         Logger.log("Engine_DB_create_router: Routing " + entityName + " to Adapters.");
-        // Utilizar la configuración global localmente accesible o pasarle los valores por defecto
         const config = (typeof CONFIG !== 'undefined') ? CONFIG : { useSheets: true, useCloudDB: false };
         const result = this.save(entityName, data, config);
+        
+        // Cache Busting
+        _invalidateCache(entityName);
+        
         return {
             success: true,
             Entity: entityName,
@@ -70,22 +97,41 @@ const Engine_DB = {
     },
 
     /**
-     * list(entityName)
+     * list(entityName, format)
      * Devuelve todos los registros de una entidad como { headers[], rows[] }.
-     * Delega a Adapter_Sheets (la única fuente de datos activa en este proyecto).
+     * Delega a Adapter_Sheets con CAPA DE CACHÉ (Directiva Architect).
      */
-    list: function (entityName) {
+    list: function (entityName, format) {
         const config = (typeof CONFIG !== 'undefined') ? CONFIG : { useSheets: true, SPREADSHEET_ID_DB: '' };
-        Logger.log('Engine_DB.list: Listando entidad ' + entityName);
-        return _Adapter_Sheets.list(entityName, config);
+        
+        // Intentar leer de RAM (CacheService)
+        const cacheKey = 'CACHE_LIST_' + entityName;
+        if (typeof CacheService !== 'undefined') {
+            const cached = CacheService.getScriptCache().get(cacheKey);
+            if (cached && format !== 'tuples') { // No cacheamos tuplas por ahora para evitar colisiones de formato
+                Logger.log(`[Cache Engine] HIT para ${entityName}`);
+                return JSON.parse(cached);
+            }
+        }
+
+        Logger.log(`[Cache Engine] MISS para ${entityName}. Leyendo de DB...`);
+        const result = _Adapter_Sheets.list(entityName, config, format);
+        
+        // Guardar en caché si no es formato tuplas (para simplificar)
+        if (typeof CacheService !== 'undefined' && format !== 'tuples' && result) {
+            CacheService.getScriptCache().put(cacheKey, JSON.stringify(result), 3600);
+        }
+        
+        return result;
     },
 
     update: function (entityName, id, data) {
         Logger.log("Engine_DB_update_router: Routing " + entityName + " (ID: " + id + ") to Adapters.");
         const config = (typeof CONFIG !== 'undefined') ? CONFIG : { useSheets: true, useCloudDB: false };
-
-        // El id ya viene en el payload generalmente para Sheets, pero aseguramos consistencia
         const result = this.save(entityName, data, config);
+
+        // Cache Busting
+        _invalidateCache(entityName);
 
         return {
             success: true,
@@ -101,6 +147,10 @@ const Engine_DB = {
         if (config.useSheets) {
             results.sheets = _Adapter_Sheets.remove(entityName, id, config);
         }
+
+        // Cache Busting
+        _invalidateCache(entityName);
+
         return {
             success: true,
             Entity: entityName,

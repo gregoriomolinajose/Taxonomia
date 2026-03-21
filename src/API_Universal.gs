@@ -84,6 +84,73 @@ function _handleDelete(entityName, id) {
  * API_Universal_Router
  * Punto de entrada exclusivo para google.script.run (Frontend HTML a Backend GAS)
  */
+/**
+ * getInitialPayload(entityName)
+ * Endpoint maestro para Data Hydration. Consolida schema, data y lookups en un solo RPC.
+ */
+function getInitialPayload(entityName) {
+  const t0 = Date.now();
+  try {
+    Logger.log(`[Hydration] Iniciando carga para: ${entityName}`);
+    
+    // 1. Obtener Schema
+    const schema = getAppSchema(entityName);
+    
+    // 2. Obtener Data (en formato Tuplas para optimizar peso)
+    const dataResponse = Engine_DB.list(entityName, 'tuples');
+    
+    // 3. Obtener Lookups requeridos
+    const lookups = {};
+    const fields = schema.fields || Object.keys(schema).filter(k => typeof schema[k] === 'object').map(k => ({...schema[k], name: k}));
+    
+    fields.forEach(field => {
+      if (field.lookupSource) {
+        lookups[field.name] = _getCachedLookup(field.lookupSource);
+      } else if (field.lookupTarget) {
+        // Mapear lookupTarget a su función de opciones (convención)
+        const sourceFn = `get${field.lookupTarget}sOptions`;
+        if (typeof this[sourceFn] === 'function') {
+          lookups[field.name] = _getCachedLookup(sourceFn);
+        }
+      }
+    });
+
+    const executionTime = Date.now() - t0;
+    Logger.log(`[Perf] getInitialPayload(${entityName}) completado en ${executionTime}ms`);
+
+    return {
+      status: "success",
+      schema: schema,
+      data: dataResponse,
+      lookups: lookups,
+      executionTimeMs: executionTime
+    };
+  } catch (error) {
+    Logger.log(`[Hydration Error] ${error.message}`);
+    return { status: "error", message: error.message };
+  }
+}
+
+/**
+ * _getCachedLookup(sourceFnName)
+ * Implementa CacheService para evitar lecturas repetitivas de Sheets.
+ */
+function _getCachedLookup(sourceFnName) {
+  const cache = CacheService.getScriptCache();
+  const cacheKey = `CACHE_LOOKUP_${sourceFnName}`;
+  const cached = cache.get(cacheKey);
+  
+  if (cached) {
+    Logger.log(`[Cache] HIT para ${sourceFnName}`);
+    return JSON.parse(cached);
+  }
+  
+  Logger.log(`[Cache] MISS para ${sourceFnName}. Leyendo de DB...`);
+  const result = this[sourceFnName]();
+  cache.put(cacheKey, JSON.stringify(result), 3600); // 1 hora
+  return result;
+}
+
 function API_Universal_Router(action, entityName, payload) {
   try {
     let responseData = null;

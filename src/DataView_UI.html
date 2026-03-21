@@ -679,6 +679,9 @@
         /* Îndice de columna en arrastre (-1 = ninguno) */
         let _dragSrcIdx = -1;
 
+        /* Datos de lookup cacheados desde el servidor */
+        window._LOOKUP_DATA = {};
+
         /* ────────────────────────────────────────────
            Helpers
         ───────────────────────────────────────────── */
@@ -700,6 +703,15 @@
         function _formatValue(key, value) {
             if (value === null || value === undefined || value === '') return '<span style="color:var(--dv-text-light)">—</span>';
             const strVal = String(value);
+
+            // 1. Resolver desde Lookups si existe mapeo
+            if (window._LOOKUP_DATA && window._LOOKUP_DATA[key]) {
+                const lookupArr = window._LOOKUP_DATA[key];
+                const found = lookupArr.find(opt => String(opt.value) === strVal);
+                if (found) return found.label;
+            }
+
+            // 2. Badges para estatus
             if (STATUS_FIELDS.includes(key)) {
                 return `<span class="${_badgeClass(strVal)}">${strVal}</span>`;
             }
@@ -782,11 +794,23 @@
         function _fetchData(entityName, cb) {
             const isGAS = typeof google !== 'undefined' && google.script && google.script.run;
             if (isGAS) {
+                console.time('[Perf] Single RPC Hydration');
                 google.script.run
                     .withSuccessHandler(function (response) {
+                        console.timeEnd('[Perf] Single RPC Hydration');
                         if (response && response.status === 'success') {
-                            const rawRows = response.data ? response.data.rows || [] : [];
-                            const activeRows = rawRows.filter(r => r.estado !== 'Eliminado' && r.estado !== 'eliminado');
+                            // Guardar lookups para el formateador
+                            window._LOOKUP_DATA = response.lookups || {};
+                            
+                            // Inflar Tuplas a Objetos (Data Compression)
+                            const headers = response.data.headers;
+                            const rows = response.data.rows.map(tuple => {
+                                const obj = {};
+                                headers.forEach((h, i) => obj[h] = tuple[i]);
+                                return obj;
+                            });
+
+                            const activeRows = rows.filter(r => r.estado !== 'Eliminado' && r.estado !== 'eliminado');
                             cb(null, activeRows);
                         } else {
                             cb(new Error(response ? response.message : 'Error desconocido'));
@@ -795,7 +819,7 @@
                     .withFailureHandler(function (err) {
                         cb(err || new Error('Error de comunicación con el servidor'));
                     })
-                    .API_Universal_Router('read', entityName, {});
+                    .getInitialPayload(entityName);
             } else {
                 // Entorno local — usar mock
                 setTimeout(function () {

@@ -28,3 +28,8 @@
 - **Prefijo de Entidad:** Debe ser de 4 letras en mayúsculas (ej. `PORT`, `GRUP`, `PROD`, `UNID`).
 - **Sufijo UUID:** Debe ser alfanumérico (Base36), de 5 caracteres y siempre en MAYÚSCULAS (ej. `UNID-X9K2P`).
 - **Prohibición de Timestamps:** Se prohíbe el uso de milisegundos o números largos como IDs visibles; el sistema debe priorizar la legibilidad humana y la estética de la base de datos relacional.
+
+## 7. Optimización de Red y Latencia (Single RPC & Caching)
+- **Ley del Payload Único (Hydration):** Queda ESTRICTAMENTE PROHIBIDO realizar múltiples llamadas a `google.script.run` para inicializar una vista (Patrón Chatty). El frontend DEBE realizar una única petición (Single RPC) llamada `getInitialPayload(entity)` que retorne un objeto maestro con: metadatos, registros principales y todos los catálogos/lookups necesarios.
+- **Uso Obligatorio de CacheService:** Todo catálogo, lista desplegable o tabla de búsqueda (Lookups) DEBE ser almacenado en `CacheService.getScriptCache()` por un mínimo de 1 hora. El backend solo debe leer la Spreadsheet si el caché está vacío (Cache Miss).
+- **Compresión de Matrices (Tuplas):** Para listados de más de 100 registros, el backend NO DEBE retornar Arrays de Objetos. Debe retornar Arrays de Arrays (Tuplas) donde el índice 0 contenga los encabezados, delegando la reconstrucción de objetos al frontend para ahorrar ancho de banda.

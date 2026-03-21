@@ -81,7 +81,9 @@
     </style>
 
     <!-- Load SCHEMAS Dictionary -->
-    <?!= include('JS_Schemas_Config'); ?>
+    <script>
+        window.APP_SCHEMAS = <?!= JSON.stringify(getAppSchema()) ?>;
+    </script>
 </head>
 
 <body>
@@ -408,6 +410,24 @@
             if (container && window.OriginalDashboardHTML) {
                 container.innerHTML = window.OriginalDashboardHTML;
             }
+        };
+
+        window.runStressTest = function() {
+            const loading = document.createElement('ion-loading');
+            loading.message = 'Inyectando 1,000 registros...';
+            document.body.appendChild(loading);
+            loading.present();
+
+            google.script.run
+                .withSuccessHandler(msg => {
+                    loading.dismiss();
+                    alert(msg);
+                })
+                .withFailureHandler(err => {
+                    loading.dismiss();
+                    alert('Error: ' + err.message);
+                })
+                .runStressTest1K();
         };
 
         /**

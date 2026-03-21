@@ -202,11 +202,14 @@ const Adapter_Sheets = {
     _normalizeHeader: _normalizeHeader,
 
     /**
-     * list(entityName, config)
+     * list(entityName, config, format)
      * Lee todas las filas de DB_<entityName> y las devuelve como un objeto estructurado.
-     * @returns {{ headers: string[], rows: Object[] }}
+     * @param {string} entityName
+     * @param {Object} config
+     * @param {string} format 'objects' (defecto) o 'tuples'
+     * @returns {{ headers: string[], rows: (Object[]|Array[]) }}
      */
-    list: function (entityName, config) {
+    list: function (entityName, config, format) {
         // Entorno de pruebas (Jest) — devolver mock
         if (typeof SpreadsheetApp === 'undefined') {
             return { headers: ['id', 'nombre', 'estado'], rows: [] };
@@ -223,7 +226,7 @@ const Adapter_Sheets = {
             throw new Error(`La hoja DB_${entityName} no existe en el Spreadsheet.`);
         }
 
-        // 1. Batch Reading: Traer todo el rango de datos en una sola llamada
+        // [Regla 11: Performance] - Estándar Inmutable: Traer todo el rango de datos en una sola llamada
         const data = sheet.getDataRange().getValues();
         if (data.length < 1) return { headers: [], rows: [] };
 
@@ -254,15 +257,27 @@ const Adapter_Sheets = {
         }
 
         const rows = [];
+        const isTuples = (format === 'tuples');
+
         for (let i = 1; i < data.length; i++) {
-            const row = {};
             const rowData = data[i];
-            for (let k = 0; k < visibleHeaderIndices.length; k++) {
-                const colIdx = visibleHeaderIndices[k];
-                const headerName = filteredHeaders[k];
-                row[headerName] = rowData[colIdx] !== undefined ? rowData[colIdx] : '';
+
+            if (isTuples) {
+                const tuple = [];
+                for (let k = 0; k < visibleHeaderIndices.length; k++) {
+                    const colIdx = visibleHeaderIndices[k];
+                    tuple.push(rowData[colIdx] !== undefined ? rowData[colIdx] : '');
+                }
+                rows.push(tuple);
+            } else {
+                const rowObj = {};
+                for (let k = 0; k < visibleHeaderIndices.length; k++) {
+                    const colIdx = visibleHeaderIndices[k];
+                    const headerName = filteredHeaders[k];
+                    rowObj[headerName] = rowData[colIdx] !== undefined ? rowData[colIdx] : '';
+                }
+                rows.push(rowObj);
             }
-            rows.push(row);
         }
 
         return { headers: filteredHeaders, rows };
