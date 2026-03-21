@@ -866,7 +866,9 @@
             return `
         <div class="dv-card">
           <div class="dv-empty">
-            <div class="dv-empty-icon">🗃️</div>
+            <div class="dv-empty-icon">
+              <ion-icon name="folder-open-outline" style="font-size: 64px; color: var(--ion-color-medium);"></ion-icon>
+            </div>
             <h3>Sin resultados</h3>
             <p>No se encontraron registros. Prueba con otros términos de búsqueda o crea un nuevo registro.</p>
           </div>
@@ -1197,7 +1199,7 @@
             // Actualizar título global del header de Ionic
             const headerTitle = document.getElementById('main-header-title');
             if (headerTitle) {
-                const meta = ENTITY_META[entityName] || { label: entityName };
+                const meta = ENTITY_META[entityName] || { label: window.formatEntityName(entityName) };
                 headerTitle.textContent = meta.label;
             }
             const backBtn = document.getElementById('global-back-btn');
