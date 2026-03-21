@@ -20,3 +20,7 @@
 
 ## 5. Validación de Consistencia Visual
 - El QA debe verificar que tras cada cambio en el esquema, no existan "Fugas de Snake Case" (Guiones bajos) en los títulos, headers o botones, respetando la **Sección 7 de rules_ui.md**.
+
+## 6. Estándares de Performance y Latencia
+- **Ley de Lectura en Bloque (Batching):** Queda terminantemente prohibido realizar llamadas a la API de SpreadsheetApp (`getValue`, `getRange`, `setRow`) dentro de ciclos iterativos (`for`, `map`, `forEach`). Todo procesamiento debe hacerse sobre arreglos en memoria tras una única llamada de lectura masiva.
+- **Threshold de Aceptación:** Cualquier `callback` de lectura de datos que supere los 2.0 segundos en un entorno de desarrollo con menos de 100 registros debe ser marcado para refactorización inmediata de latencia.

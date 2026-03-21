@@ -152,7 +152,8 @@
                 'Estrategia': 'compass-outline',
                 'Capacidad': 'people-outline',
                 'Presupuesto': 'cash-outline',
-                'Gobernanza': 'briefcase-outline'
+                'Gobernanza': 'briefcase-outline',
+                'Relaciones': 'git-branch-outline'
             };
             const defaultIcons = ['folder-open-outline', 'list-outline', 'options-outline', 'analytics-outline'];
 
@@ -434,6 +435,100 @@
                 targetRow.appendChild(ionCol);
             });
 
+            // --- FUNCTION: renderSubgrid (Regla 15 UI) ---
+            async function renderSubgrid(field, container) {
+                const subgridDiv = document.createElement('div');
+                subgridDiv.style.border = '1px solid var(--ion-border-color)';
+                subgridDiv.style.borderRadius = '8px';
+                subgridDiv.style.overflow = 'hidden';
+                subgridDiv.style.marginBottom = '20px';
+
+                // Header de la mini-tabla
+                const header = document.createElement('div');
+                header.style.background = 'var(--ion-color-light)';
+                header.style.padding = '10px 15px';
+                header.style.display = 'flex';
+                header.style.justifyContent = 'space-between';
+                header.style.alignItems = 'center';
+                header.innerHTML = `<strong style="color:var(--ion-color-dark)">${field.label}</strong>`;
+
+                const addBtn = document.createElement('ion-button');
+                addBtn.setAttribute('size', 'small');
+                addBtn.setAttribute('fill', 'clear');
+                addBtn.innerHTML = '<ion-icon slot="start" name="add-outline"></ion-icon> Agregar';
+                header.appendChild(addBtn);
+                subgridDiv.appendChild(header);
+
+                // Body (Lista)
+                const list = document.createElement('ion-list');
+                list.setAttribute('lines', 'full');
+                list.style.padding = '0';
+                subgridDiv.appendChild(list);
+
+                const emptyState = document.createElement('div');
+                emptyState.style.padding = '20px';
+                emptyState.style.textAlign = 'center';
+                emptyState.innerHTML = `<ion-icon name="layers-outline" color="medium" style="font-size:32px"></ion-icon><p style="color:var(--ion-color-medium); font-size:12px">Sin registros vinculados</p>`;
+                list.appendChild(emptyState);
+
+                // Estado local del subgrid
+                const childRecords = [];
+                window.__NESTED_DATA__ = window.__NESTED_DATA__ || {};
+                window.__NESTED_DATA__[field.name] = childRecords;
+
+                addBtn.onclick = async () => {
+                    // Simulación de entrada rápida (Input Prompt)
+                    // En una versión más pro, usaríamos un modal con el esquema del targetEntity
+                    const name = prompt(`Nombre del ${field.label}:`);
+                    if (name) {
+                        const newChild = { nombre: name, estado: 'Activo' };
+                        childRecords.push(newChild);
+                        _refreshList();
+                    }
+                };
+
+                const _refreshList = () => {
+                    list.innerHTML = '';
+                    if (childRecords.length === 0) {
+                        list.appendChild(emptyState);
+                        return;
+                    }
+                    childRecords.forEach((record, idx) => {
+                        const item = document.createElement('ion-item');
+                        item.innerHTML = `
+                            <ion-label>
+                                <h2>${record.nombre}</h2>
+                                <p>${record.estado || 'Nuevo'}</p>
+                            </ion-label>
+                            <ion-button slot="end" fill="clear" color="danger" id="del-${idx}">
+                                <ion-icon name="trash-outline"></ion-icon>
+                            </ion-button>
+                        `;
+                        list.appendChild(item);
+                        item.querySelector(`#del-${idx}`).onclick = () => {
+                            childRecords.splice(idx, 1);
+                            _refreshList();
+                        };
+                    });
+                };
+
+                container.appendChild(subgridDiv);
+            }
+
+            // Habilitar el renderizado del componente 'relation'
+            for (const field of fields) {
+                if (field.type === 'relation' && field.uiBehavior === 'subgrid') {
+                    let targetRow = rows['default'];
+                    if (steps && field.step && rows[field.step]) {
+                        targetRow = rows[field.step];
+                    }
+                    const subCol = document.createElement('ion-col');
+                    subCol.setAttribute('size', '12');
+                    await renderSubgrid(field, subCol);
+                    targetRow.appendChild(subCol);
+                }
+            }
+
             // Contenedor del Botón (Paginación + CTA)
             const btnContainer = document.createElement('div');
             btnContainer.style.borderTop = '1px solid var(--ion-border-color)';
@@ -568,6 +663,13 @@
                         payload[name] = arr.join(', ');
                     }
                 });
+
+                // --- CAPTURAR PAYLOAD ANIDADO (Regla 15) ---
+                if (window.__NESTED_DATA__) {
+                    Object.keys(window.__NESTED_DATA__).forEach(key => {
+                        payload[key] = window.__NESTED_DATA__[key];
+                    });
+                }
 
                 // Función auxiliar para mostrar Ionic Toast alineado al estándar
                 const showToast = async (msg, color) => {

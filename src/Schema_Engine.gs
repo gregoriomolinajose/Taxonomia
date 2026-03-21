@@ -32,7 +32,16 @@ const APP_SCHEMAS = {
     "presupuesto_estrategico": { "type": "number", "label": "Presupuesto Estratégico ($)", "group": "Presupuesto" },
     "gobierno_liderazgo": { "type": "textarea", "label": "Gobierno (Roles y Nombres)", "group": "Gobernanza" },
     "stakeholders": { "type": "textarea", "label": "Stakeholders y Sponsors", "group": "Gobernanza" },
-    "producto_dominio": { "type": "textarea", "label": "Producto / Dominio (OMS, WMS, etc.)", "group": "Gobernanza" }
+    "producto_dominio": { "type": "textarea", "label": "Producto / Dominio (OMS, WMS, etc.)", "group": "Gobernanza" },
+    "grupos_hijos": { 
+      "type": "relation", 
+      "relationType": "1:N", 
+      "targetEntity": "Grupo_Productos", 
+      "foreignKey": "id_portafolio", 
+      "uiBehavior": "subgrid", 
+      "label": "Grupos de Producto",
+      "group": "Relaciones" 
+    }
   },
   Equipo: {
     fields: [

@@ -77,19 +77,92 @@ const Engine_DB = {
         return results;
     },
 
+    /**
+     * orchestrateNestedSave: Maneja transacciones Maestro-Detalle (Regla 15).
+     * 1. Desempaqueta hijos del payload.
+     * 2. Guarda Padre.
+     * 3. Inyecta FK en Hijos.
+     * 4. Guarda Hijos masivamente.
+     */
+    orchestrateNestedSave: function (entityName, payload, config) {
+        const nestedData = {};
+        const flatPayload = { ...payload };
+
+        // Paso A: Desempaquetado basado en esquema
+        const schema = (typeof APP_SCHEMAS !== 'undefined') ? APP_SCHEMAS[entityName] : null;
+        if (schema) {
+            const fields = schema.fields || (typeof schema === 'object' ? Object.keys(schema).map(k => ({ name: k, ...schema[k] })) : []);
+            fields.forEach(f => {
+                if (f.type === 'relation' && Array.isArray(payload[f.name])) {
+                    nestedData[f.name] = payload[f.name];
+                    delete flatPayload[f.name];
+                }
+            });
+        }
+
+        // Paso B: Transacción Padre
+        const parentResults = this.save(entityName, flatPayload, config);
+        
+        // Determinar la PK del padre (asumimos que viene en el payload ya que es client-side generated)
+        // O la extraemos del resultado del adapter
+        const parentIdField = Object.keys(flatPayload).find(k => k.startsWith('id_'));
+        const parentPK = flatPayload[parentIdField];
+
+        // Paso C y D: Inyección de FK y Transacción Hijos
+        if (schema) {
+            const fields = schema.fields || (typeof schema === 'object' ? Object.keys(schema).map(k => ({ name: k, ...schema[k] })) : []);
+            fields.forEach(f => {
+                if (f.type === 'relation' && nestedData[f.name]) {
+                    const children = nestedData[f.name];
+                    const targetEntity = f.targetEntity;
+                    const fkField = f.foreignKey;
+
+                    // Inyectar FK
+                    children.forEach(child => {
+                        child[fkField] = parentPK;
+                        // Asegurar PK para cada hijo si no tiene una
+                        const childIdField = Object.keys(child).find(k => k.startsWith('id_')) || ('id_' + targetEntity.toLowerCase().replace(/s$/, ''));
+                        if (!child[childIdField]) {
+                            const prefix = targetEntity.substring(0, 4).toUpperCase();
+                            const sufix = Math.random().toString(36).substring(2, 7).toUpperCase();
+                            child[childIdField] = `${prefix}-${sufix}`;
+                        }
+                    });
+
+                    // Guardar masivamente (Batch)
+                    if (config.useSheets) {
+                        _Adapter_Sheets.upsertBatch(targetEntity, children, config);
+                    }
+                    if (config.useCloudDB) {
+                        // Omitido para brevedad o implementado si el adapter soporta batch
+                    }
+                }
+            });
+        }
+
+        return parentResults;
+    },
+
     create: function (entityName, data) {
-        Logger.log("Engine_DB_create_router: Routing " + entityName + " to Adapters.");
+        Logger.log("Engine_DB_create_router: Routing " + entityName + " with Orchestration.");
         const config = (typeof CONFIG !== 'undefined') ? CONFIG : { useSheets: true, useCloudDB: false };
-        const result = this.save(entityName, data, config);
+        
+        // Usar orquestador para manejar posibles relaciones anidadas
+        const result = this.orchestrateNestedSave(entityName, data, config);
         
         // Cache Busting
         _invalidateCache(entityName);
         
         return {
             success: true,
-            Entity: entityName,
             adapter_results: result
         };
+    },
+
+    upsertBatch: function (tableName, items, config) {
+        if (!Array.isArray(items) || items.length === 0) return { status: 'success', count: 0 };
+        const results = items.map(item => this.save(tableName, item, config)); // Changed from this.upsert to this.save
+        return { status: 'success', count: results.length, details: results };
     },
 
     read: function (entityName, id) {
@@ -126,9 +199,11 @@ const Engine_DB = {
     },
 
     update: function (entityName, id, data) {
-        Logger.log("Engine_DB_update_router: Routing " + entityName + " (ID: " + id + ") to Adapters.");
+        Logger.log("Engine_DB_update_router: Routing " + entityName + " (ID: " + id + ") with Orchestration.");
         const config = (typeof CONFIG !== 'undefined') ? CONFIG : { useSheets: true, useCloudDB: false };
-        const result = this.save(entityName, data, config);
+        
+        // Usar orquestador para manejar posibles relaciones anidadas
+        const result = this.orchestrateNestedSave(entityName, data, config);
 
         // Cache Busting
         _invalidateCache(entityName);

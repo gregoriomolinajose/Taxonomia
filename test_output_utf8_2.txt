@@ -1,0 +1,28 @@
+FAIL __tests__/MasterDetail_Orchestration.test.js
+  Engine_DB Orchestration: Master-Detail (nested payloads)
+    × Should orchestrate a nested save: Parent first, then inject PK into Children (9 ms)
+
+  ● Engine_DB Orchestration: Master-Detail (nested payloads) › Should orchestrate a nested save: Parent first, then inject PK into Children
+
+    expect(jest.fn()).toHaveBeenCalledWith(...expected)
+
+    Expected: "Grupo_Producto", Anything, Anything
+    Received: "Grupo_Productos", [{"descripcion": "Primer hijo", "id_portafolio": "GRUP-KOPGZ", "nombre": "Grupo Alpha"}, {"descripcion": "Segundo hijo", "id_portafolio": "GRUP-L4F0T", "nombre": "Grupo Beta"}], {"SPREADSHEET_ID_DB": "test-spreadsheet-id", "useCloudDB": false, "useSheets": true}
+
+    Number of calls: 1
+
+    [0m [90m 68 |[39m
+     [90m 69 |[39m         [90m// B. Se debió llamar al adapter para los Hijos (batch upsert)[39m
+    [31m[1m>[22m[39m[90m 70 |[39m         expect([33mAdapter_Sheets[39m[33m.[39mupsertBatch)[33m.[39mtoHaveBeenCalledWith([32m'Grupo_Producto'[39m[33m,[39m expect[33m.[39manything()[33m,[39m expect[33m.[39manything())[33m;[39m
+     [90m    |[39m                                            [31m[1m^[22m[39m
+     [90m 71 |[39m
+     [90m 72 |[39m         [90m// C. INYECCIÓN DE LLAVE FORÁNEA (Crucial):[39m
+     [90m 73 |[39m         [90m// El llamado a upsertBatch DEBE contener la id_portafolio del padre en los hijos[39m[0m
+
+      at Object.toHaveBeenCalledWith (__tests__/MasterDetail_Orchestration.test.js:70:44)
+
+Test Suites: 1 failed, 1 total
+Tests:       1 failed, 1 total
+Snapshots:   0 total
+Time:        0.932 s, estimated 1 s
+Ran all test suites matching __tests__/MasterDetail_Orchestration.test.js.

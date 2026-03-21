@@ -39,3 +39,11 @@
 - **Ley de Memoria UI:** El Frontend DEBE actuar como una verdadera Single Page Application (SPA). Todo `MasterPayload` descargado desde el servidor DEBE ser almacenado en la memoria temporal del navegador (ej. `window.__APP_CACHE__`).
 - **Prohibición de Re-fetching:** Queda estrictamente prohibido volver a llamar a `google.script.run` para inicializar una vista si los datos ya existen en la memoria del cliente.
 - **Sincronización de Estado:** Toda operación de mutación (Crear, Editar, Eliminar) que se confirme exitosa por el servidor, DEBE purgar/invalidar obligatoriamente la llave correspondiente en el caché del cliente para garantizar la consistencia de datos en la siguiente navegación.
+
+## 9. Manejo de Relaciones y Grafo de Entidades (Master-Detail)
+- **Normalización Estricta (DB):** Las tablas físicas NUNCA deben guardar arreglos anidados. Toda relación 1:N se persiste almacenando la Llave Foránea (`foreignKey`) en la tabla hija.
+- **Transaccionalidad del Payload:** El Frontend está autorizado a enviar un "Payload Anidado" (Padre e Hijos en un solo JSON) para mejorar la UX. 
+- **Orquestación en Engine_DB:** El Backend DEBE desempaquetar el payload. DEBE insertar/actualizar primero a la entidad Padre, capturar su Llave Primaria, inyectar dicha llave en los registros Hijos, y finalmente delegar la inserción de los Hijos a sus respectivos adaptadores.
+- **Tipos de Relación Visual:**
+  - `1:N` (Jerarquía): Se renderiza como un `subgrid` (Tabla anidada editable).
+  - `M:N` (Grafo Simple): Se renderiza como un `multi-select` (Selector de etiquetas/chips).
