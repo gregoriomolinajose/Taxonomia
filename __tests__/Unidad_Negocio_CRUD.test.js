@@ -29,7 +29,7 @@ describe('Unidad_Negocio CRUD - Verification', () => {
 
     test('Should handle "Unidad_Negocio" creation via API_Universal', () => {
         const mockPayload = {
-            id_unidad: 'UNE-TEST-123',
+            id_unidad_negocio: 'UNE-TEST-123',
             nombre: 'Unidad de Prueba',
             codigo_interno: 'CC-999',
             director: 'Test Director',
@@ -54,10 +54,10 @@ describe('Unidad_Negocio CRUD - Verification', () => {
         const content = fs.readFileSync(schemaPath, 'utf8');
         
         expect(content).toContain('Unidad_Negocio:');
-        expect(content).toContain('"id_unidad": { "type": "hidden", "primaryKey": true }');
+        expect(content).toContain('"id_unidad_negocio": { "type": "hidden", "primaryKey": true }');
     });
 
-    test('Should generate a short UUID (UNID-XXXXX) if id_unidad is missing in Router', () => {
+    test('Should generate a short UUID (UNID-XXXXX) if id_unidad_negocio is missing in Router', () => {
         const payloadWithoutId = {
             nombre: 'Unidad sin ID predefinido',
             codigo_interno: 'ID-NULL',
@@ -71,6 +71,6 @@ describe('Unidad_Negocio CRUD - Verification', () => {
         
         const [entityName, data] = Engine_DB_Mock.create.mock.calls[0];
         // Prefijo UNID- (4 letras de Unidad_Negocio) + 5 alfanuméricos
-        expect(data.id_unidad).toMatch(/^UNID-[A-Z0-9]{5}$/);
+        expect(data.id_unidad_negocio).toMatch(/^UNID-[A-Z0-9]{5}$/);
     });
 });

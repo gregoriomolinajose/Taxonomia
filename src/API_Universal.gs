@@ -89,17 +89,11 @@ function API_Universal_Router(action, entityName, payload) {
     let responseData = null;
 
     if (action === 'create') {
-      // Detectar el campo PK correcto
       let pkField = Object.keys(payload).find(k => k.startsWith('id_'));
       if (!pkField) {
         const tableKey = entityName.toLowerCase();
         const singularKey = tableKey.endsWith('s') ? tableKey.slice(0, -1) : tableKey;
-        // Caso especial: Unidad_Negocio -> id_unidad (basado en JS_Schemas_Config)
-        if (entityName === 'Unidad_Negocio') {
-          pkField = 'id_unidad';
-        } else {
-          pkField = 'id_' + singularKey;
-        }
+        pkField = 'id_' + singularKey;
       }
 
       if (!payload[pkField] || String(payload[pkField]).trim() === '') {
