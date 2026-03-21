@@ -56,4 +56,21 @@ describe('Unidad_Negocio CRUD - Verification', () => {
         expect(content).toContain('Unidad_Negocio:');
         expect(content).toContain('"id_unidad": { "type": "hidden", "primaryKey": true }');
     });
+
+    test('Should generate a short UUID (UNID-XXXXX) if id_unidad is missing in Router', () => {
+        const payloadWithoutId = {
+            nombre: 'Unidad sin ID predefinido',
+            codigo_interno: 'ID-NULL',
+            director: 'Automated Gen'
+        };
+
+        const response = API_Universal.API_Universal_Router('create', 'Unidad_Negocio', payloadWithoutId);
+
+        expect(response.status).toBe('success');
+        expect(Engine_DB_Mock.create).toHaveBeenCalled();
+        
+        const [entityName, data] = Engine_DB_Mock.create.mock.calls[0];
+        // Prefijo UNID- (4 letras de Unidad_Negocio) + 5 alfanuméricos
+        expect(data.id_unidad).toMatch(/^UNID-[A-Z0-9]{5}$/);
+    });
 });

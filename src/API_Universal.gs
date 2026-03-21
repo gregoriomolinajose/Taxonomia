@@ -89,15 +89,21 @@ function API_Universal_Router(action, entityName, payload) {
     let responseData = null;
 
     if (action === 'create') {
-      // Detectar el campo PK correcto: prueba id_<entityName>, luego id_<singular>, luego busca en payload
-      const tableKey = entityName.toLowerCase();
-      const singularKey = tableKey.endsWith('s') ? tableKey.slice(0, -1) : tableKey;
-      const pkField = payload.hasOwnProperty('id_' + tableKey) ? 'id_' + tableKey
-          : payload.hasOwnProperty('id_' + singularKey) ? 'id_' + singularKey
-          : 'id_' + tableKey; // fallback: genera con nombre exacto
+      // Detectar el campo PK correcto
+      let pkField = Object.keys(payload).find(k => k.startsWith('id_'));
+      if (!pkField) {
+        const tableKey = entityName.toLowerCase();
+        const singularKey = tableKey.endsWith('s') ? tableKey.slice(0, -1) : tableKey;
+        // Caso especial: Unidad_Negocio -> id_unidad (basado en JS_Schemas_Config)
+        if (entityName === 'Unidad_Negocio') {
+          pkField = 'id_unidad';
+        } else {
+          pkField = 'id_' + singularKey;
+        }
+      }
 
       if (!payload[pkField] || String(payload[pkField]).trim() === '') {
-        payload[pkField] = entityName.toUpperCase().substring(0,4) + '-' + new Date().getTime();
+        payload[pkField] = _generateShortUUID(entityName);
       }
       responseData = _handleCreate(entityName, payload);
     } else if (action === 'read') {
@@ -251,12 +257,28 @@ function getProductosOptions() {
   }
 }
 
+/**
+ * _generateShortUUID
+ * Genera un ID con prefijo de 4 letras + sufijo de 5 caracteres alfanuméricos.
+ * Ejemplo: UNID-X8R2P
+ */
+function _generateShortUUID(entityName) {
+  var prefix = entityName.toUpperCase().substring(0, 4);
+  var chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  var suffix = '';
+  for (var i = 0; i < 5; i++) {
+    suffix += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return prefix + '-' + suffix;
+}
+
 // Bloque de Protección Híbrida (Jest vs GAS) - Regla 5 de docs/rules_db.md
 if (typeof module !== 'undefined') {
   module.exports = {
     _handleCreate,
     _handleUpdate,
     _handleDelete,
+    _generateShortUUID,
     API_Universal_Router
   };
 }
