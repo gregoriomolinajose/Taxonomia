@@ -134,35 +134,13 @@ function API_Universal_Router(action, entityName, payload) {
 // Bloque de Persistencia Dinámicas (Relacional 1:N)
 function getGruposProductosOptions() {
   try {
-    if (typeof SpreadsheetApp === 'undefined') {
-      return [{ value: "MOCK-1", label: "Local SaaS Mock" }, { value: "MOCK-2", label: "Local B2B Mock" }];
-    }
-    const config = (typeof CONFIG !== 'undefined') ? CONFIG : { SPREADSHEET_ID_DB: '' };
-    if (!config.SPREADSHEET_ID_DB) return [];
+    const result = Engine_DB.list('Grupo_Productos');
+    if (!result || !result.rows) return [];
     
-    const ss = SpreadsheetApp.openById(config.SPREADSHEET_ID_DB);
-    const sheet = ss.getSheetByName('DB_Grupo_Productos');
-    if (!sheet) return [];
-    
-    const data = sheet.getDataRange().getValues();
-    if (data.length < 2) return []; // Solo cabeceras
-    
-    // Normalizar headers (Regla normalización)
-    const headers = data[0].map(h => h.toLowerCase().trim().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, ""));
-    const idIndex = headers.indexOf('id_grupo_producto');
-    const nameIndex = headers.indexOf('nombre');
-    
-    if (idIndex === -1 || nameIndex === -1) return [];
-    
-    const options = [];
-    for (let i = 1; i < data.length; i++) { // Salta cabecera
-      const id = String(data[i][idIndex]).trim();
-      const nombre = String(data[i][nameIndex]).trim();
-      if (id && nombre) {
-        options.push({ value: id, label: nombre });
-      }
-    }
-    return options;
+    return result.rows.map(row => ({
+      value: row.id_grupo_producto,
+      label: row.nombre
+    })).filter(opt => opt.value && opt.label);
   } catch (error) {
     Logger.log("Error en getGruposProductosOptions: " + error.message);
     return [];
@@ -176,34 +154,13 @@ function getGruposProductosOptions() {
  */
 function getPortafoliosOptions() {
   try {
-    if (typeof SpreadsheetApp === 'undefined') {
-      return [{ value: "MOCK-PORT1", label: "Portafolio Mock Local" }];
-    }
-    const config = (typeof CONFIG !== 'undefined') ? CONFIG : { SPREADSHEET_ID_DB: '' };
-    if (!config.SPREADSHEET_ID_DB) return [];
+    const result = Engine_DB.list('Portafolio');
+    if (!result || !result.rows) return [];
 
-    const ss = SpreadsheetApp.openById(config.SPREADSHEET_ID_DB);
-    const sheet = ss.getSheetByName('DB_Portafolio');
-    if (!sheet) return [];
-
-    const data = sheet.getDataRange().getValues();
-    if (data.length < 2) return [];
-
-    const headers = data[0].map(h => h.toLowerCase().trim()
-      .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
-      .replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, ""));
-    const idIndex   = headers.indexOf('id_portafolio');
-    const nameIndex = headers.indexOf('nombre');
-
-    if (idIndex === -1 || nameIndex === -1) return [];
-
-    const options = [];
-    for (let i = 1; i < data.length; i++) {
-      const id     = String(data[i][idIndex]).trim();
-      const nombre = String(data[i][nameIndex]).trim();
-      if (id && nombre) options.push({ value: id, label: nombre });
-    }
-    return options;
+    return result.rows.map(row => ({
+      value: row.id_portafolio,
+      label: row.nombre
+    })).filter(opt => opt.value && opt.label);
   } catch (error) {
     Logger.log("Error en getPortafoliosOptions: " + error.message);
     return [];
@@ -217,34 +174,13 @@ function getPortafoliosOptions() {
  */
 function getProductosOptions() {
   try {
-    if (typeof SpreadsheetApp === 'undefined') {
-      return [{ value: "MOCK-P1", label: "Producto Mock Local" }];
-    }
-    const config = (typeof CONFIG !== 'undefined') ? CONFIG : { SPREADSHEET_ID_DB: '' };
-    if (!config.SPREADSHEET_ID_DB) return [];
+    const result = Engine_DB.list('Producto');
+    if (!result || !result.rows) return [];
 
-    const ss = SpreadsheetApp.openById(config.SPREADSHEET_ID_DB);
-    const sheet = ss.getSheetByName('DB_Producto');
-    if (!sheet) return [];
-
-    const data = sheet.getDataRange().getValues();
-    if (data.length < 2) return [];
-
-    const headers = data[0].map(h => h.toLowerCase().trim()
-      .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
-      .replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, ""));
-    const idIndex   = headers.indexOf('id_producto');
-    const nameIndex = headers.indexOf('nombre_producto');
-
-    if (idIndex === -1 || nameIndex === -1) return [];
-
-    const options = [];
-    for (let i = 1; i < data.length; i++) {
-      const id     = String(data[i][idIndex]).trim();
-      const nombre = String(data[i][nameIndex]).trim();
-      if (id && nombre) options.push({ value: id, label: nombre });
-    }
-    return options;
+    return result.rows.map(row => ({
+      value: row.id_producto,
+      label: row.nombre_producto
+    })).filter(opt => opt.value && opt.label);
   } catch (error) {
     Logger.log("Error en getProductosOptions: " + error.message);
     return [];

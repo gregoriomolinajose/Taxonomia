@@ -1,5 +1,8 @@
 // src/Adapter_Sheets.js
 
+// Global Cache per execution (GAS)
+var __HEADER_CACHE__ = {};
+
 function _normalizeHeader(headerStr) {
     if (!headerStr) return '';
 
@@ -220,26 +223,49 @@ const Adapter_Sheets = {
             throw new Error(`La hoja DB_${entityName} no existe en el Spreadsheet.`);
         }
 
+        // 1. Batch Reading: Traer todo el rango de datos en una sola llamada
         const data = sheet.getDataRange().getValues();
+        if (data.length < 1) return { headers: [], rows: [] };
+
+        // 2. Header Caching: Evitar re-procesar Regex si ya se hizo en esta ejecución
+        let headers;
+        if (__HEADER_CACHE__[entityName]) {
+            headers = __HEADER_CACHE__[entityName];
+        } else {
+            const rawHeaders = data[0];
+            headers = rawHeaders.map(_normalizeHeader);
+            __HEADER_CACHE__[entityName] = headers;
+        }
+
         if (data.length < 2) {
-            // Solo cabeceras o vacía
-            const headers = data.length === 1 ? data[0].map(_normalizeHeader) : [];
             return { headers, rows: [] };
         }
 
-        const rawHeaders = data[0];
-        const headers = rawHeaders.map(_normalizeHeader);
+        // 3. Payload Slimming: Filtrar columnas de auditoría para reducir latencia de red
+        const auditFields = ['created_at', 'created_by', 'updated_at', 'updated_by'];
+        const visibleHeaderIndices = [];
+        const filteredHeaders = [];
+
+        for (let j = 0; j < headers.length; j++) {
+            if (!auditFields.includes(headers[j])) {
+                visibleHeaderIndices.push(j);
+                filteredHeaders.push(headers[j]);
+            }
+        }
 
         const rows = [];
         for (let i = 1; i < data.length; i++) {
             const row = {};
-            for (let j = 0; j < headers.length; j++) {
-                row[headers[j]] = data[i][j] !== undefined ? data[i][j] : '';
+            const rowData = data[i];
+            for (let k = 0; k < visibleHeaderIndices.length; k++) {
+                const colIdx = visibleHeaderIndices[k];
+                const headerName = filteredHeaders[k];
+                row[headerName] = rowData[colIdx] !== undefined ? rowData[colIdx] : '';
             }
             rows.push(row);
         }
 
-        return { headers, rows };
+        return { headers: filteredHeaders, rows };
     }
 };
 
