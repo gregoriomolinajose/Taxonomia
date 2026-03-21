@@ -5,6 +5,7 @@
  * Valida la identidad y dominio del usuario utilizando SSO de Google Workspace.
  */
 
+const ALLOWED_DOMAINS = ['@gmail.com', '@bellfy.app'];
 
 const API_Auth = {
     getUserIdentity: function (mockEmail = null) {
@@ -31,11 +32,7 @@ const API_Auth = {
             };
         }
 
-        const domains = (typeof CONFIG !== 'undefined' && CONFIG.ALLOWED_DOMAINS)
-            ? CONFIG.ALLOWED_DOMAINS
-            : ['@coppel.com', '@bancoppel.com']; // Fallback seguro
-
-        const isAuthorized = domains.some(domain => email.endsWith(domain.toLowerCase()));
+        const isAuthorized = ALLOWED_DOMAINS.some(domain => email.endsWith(domain.toLowerCase()));
 
         return {
             email: email,
@@ -51,5 +48,5 @@ function getUserIdentity() {
 }
 
 if (typeof module !== 'undefined') {
-    module.exports = { API_Auth, getUserIdentity };
+    module.exports = { API_Auth, getUserIdentity, ALLOWED_DOMAINS };
 }

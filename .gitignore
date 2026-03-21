@@ -2,3 +2,5 @@ node_modules
 
 # RaiSE personal directory (per-developer, not shared)
 .raise/rai/personal/
+# Clasp configuration (managed by deploy.js)
+.clasp.json

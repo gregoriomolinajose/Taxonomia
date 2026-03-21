@@ -4,7 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "jest"
+    "test": "jest",
+    "deploy:dev": "node deploy.js dev",
+    "deploy:prod": "node deploy.js prod"
   },
   "keywords": [],
   "author": "",

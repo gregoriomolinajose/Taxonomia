@@ -1,0 +1,1298 @@
+<!-- ============================================================
+     DataView_UI.html — Motor de Vista de Datos Universal
+     Incluido via GAS: <?!= include('DataView_UI'); ?>
+     
+     window.DataViewEngine.render(entityName, containerId)
+     ============================================================ -->
+<style>
+    /* ── Design Tokens específicos del DataView ── */
+    :root {
+        --dv-primary: #2563eb;
+        --dv-primary-light: #eff6ff;
+        --dv-primary-dark: #1d4ed8;
+        --dv-surface: #ffffff;
+        --dv-bg: #f1f5f9;
+        --dv-border: #e2e8f0;
+        --dv-text-primary: #0f172a;
+        --dv-text-secondary: #64748b;
+        --dv-text-light: #94a3b8;
+        --dv-radius: 10px;
+        --dv-radius-sm: 6px;
+        --dv-shadow: 0 1px 3px rgba(0, 0, 0, .08), 0 1px 2px rgba(0, 0, 0, .04);
+        --dv-shadow-md: 0 4px 12px rgba(0, 0, 0, .10);
+        --dv-transition: .18s ease;
+    }
+
+    /* ── Contenedor raíz ── */
+    .dv-root {
+        font-family: var(--ion-font-family, system-ui, -apple-system, sans-serif);
+        color: var(--dv-text-primary);
+        min-height: 100%;
+        padding: 0 4px 32px;
+        box-sizing: border-box;
+    }
+
+    /* ── Header ── */
+    .dv-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-bottom: 18px;
+        padding-bottom: 14px;
+        border-bottom: 1px solid var(--dv-border);
+    }
+
+    .dv-header-left h2 {
+        margin: 0 0 2px;
+        font-size: 1.35rem;
+        font-weight: 700;
+        color: var(--dv-text-primary);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .dv-header-left p {
+        margin: 0;
+        font-size: .82rem;
+        color: var(--dv-text-secondary);
+    }
+
+    .dv-header-actions {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+
+    /* ── Botones base ── */
+    .dv-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 8px 16px;
+        border: none;
+        border-radius: var(--dv-radius-sm);
+        font-size: .85rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background var(--dv-transition), box-shadow var(--dv-transition);
+        text-decoration: none;
+        white-space: nowrap;
+    }
+
+    .dv-btn-primary {
+        background: var(--dv-primary);
+        color: #fff;
+    }
+
+    .dv-btn-primary:hover {
+        background: var(--dv-primary-dark);
+        box-shadow: var(--dv-shadow-md);
+    }
+
+    .dv-btn-outline {
+        background: transparent;
+        color: var(--dv-primary);
+        border: 1.5px solid var(--dv-primary);
+    }
+
+    .dv-btn-outline:hover {
+        background: var(--dv-primary-light);
+    }
+
+    .dv-btn-ghost {
+        background: transparent;
+        color: var(--dv-text-secondary);
+        border: 1.5px solid var(--dv-border);
+    }
+
+    .dv-btn-ghost:hover {
+        background: var(--dv-bg);
+    }
+
+    .dv-btn-icon {
+        padding: 7px 10px;
+        border-radius: var(--dv-radius-sm);
+        background: transparent;
+        border: 1.5px solid var(--dv-border);
+        color: var(--dv-text-secondary);
+        cursor: pointer;
+        transition: background var(--dv-transition);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .dv-btn-icon:hover {
+        background: var(--dv-bg);
+    }
+
+    .dv-btn-icon.active {
+        background: var(--dv-primary);
+        color: #fff;
+        border-color: var(--dv-primary);
+    }
+
+    /* ── Toolbar ── */
+    .dv-toolbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-bottom: 14px;
+    }
+
+    .dv-toolbar-left {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        flex: 1;
+        min-width: 200px;
+    }
+
+    .dv-toolbar-right {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        flex-shrink: 0;
+        /* los botones nunca se aplastan bajo el buscador */
+    }
+
+    /* ── Search — estilos del ion-searchbar nativo ── */
+    .dv-search-wrap {
+        position: relative;
+        flex: 1 1 220px;
+        max-width: 480px;
+    }
+
+    /* Overrides del ion-searchbar para integrarlo al toolbar corporativo */
+    .dv-search-wrap ion-searchbar {
+        --background: var(--dv-surface);
+        --border-radius: 6px;
+        --box-shadow: none;
+        --placeholder-color: var(--dv-text-light);
+        --color: var(--dv-text-primary);
+        border: 1.5px solid var(--dv-border);
+        border-radius: 6px;
+        transition: border-color var(--dv-transition);
+        padding: 0;
+        height: 38px;
+    }
+
+    .dv-search-wrap ion-searchbar:focus-within {
+        border-color: var(--dv-primary);
+    }
+
+    /* Custom popover eliminado: reemplazado por <ion-popover> nativo de Ionic */
+    /* — Ver _ensureColPopover() en el JS — */
+
+    /* ── Card principal — Elevación Enterprise ── */
+    .dv-card {
+        background: var(--dv-surface);
+        border: 1px solid var(--ion-color-light-shade, var(--dv-border));
+        border-radius: 8px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        overflow: hidden;
+    }
+
+    /* ── Tabla + Scrollbar Corporativo (webkit) ── */
+    .dv-table-wrap {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    /* Scrollbar horizontal suavizado en Chrome/Safari/Edge — Hardcoded Hex Polish */
+    .dv-table-wrap::-webkit-scrollbar {
+        height: 8px !important;
+    }
+
+    .dv-table-wrap::-webkit-scrollbar-track {
+        background: #f4f5f8 !important;
+        border-radius: 4px !important;
+    }
+
+    .dv-table-wrap::-webkit-scrollbar-thumb {
+        background-color: #c8c7cc !important;
+        border-radius: 4px !important;
+        border: 2px solid #f4f5f8 !important;
+    }
+
+    .dv-table-wrap::-webkit-scrollbar-thumb:hover {
+        background: #a1a1a1;
+    }
+
+    .dv-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: .85rem;
+    }
+
+    .dv-table thead {
+        background: var(--dv-bg);
+        position: sticky;
+        top: 0;
+    }
+
+    .dv-table th {
+        padding: 11px 14px;
+        text-align: left;
+        font-weight: 600;
+        font-size: .78rem;
+        text-transform: uppercase;
+        letter-spacing: .04em;
+        color: var(--dv-text-secondary);
+        border-bottom: 2px solid var(--dv-border);
+        white-space: nowrap;
+        cursor: pointer;
+        user-select: none;
+        transition: color var(--dv-transition);
+    }
+
+    .dv-table th:hover {
+        color: var(--dv-primary);
+    }
+
+    .dv-table th.sorted {
+        color: var(--dv-primary);
+    }
+
+    .dv-sort-icon {
+        display: inline-block;
+        margin-left: 4px;
+        opacity: .4;
+        font-size: .8rem;
+        vertical-align: middle;
+    }
+
+    .dv-sort-icon.active {
+        opacity: 1;
+        color: var(--dv-primary);
+    }
+
+    .dv-table td {
+        padding: 11px 14px;
+        border-bottom: 1px solid var(--dv-border);
+        color: var(--dv-text-primary);
+        vertical-align: middle;
+        white-space: nowrap;
+        max-width: 220px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .dv-table tr:last-child td {
+        border-bottom: none;
+    }
+
+    .dv-table tbody tr {
+        transition: background var(--dv-transition);
+    }
+
+    .dv-table tbody tr:hover {
+        background: var(--dv-primary-light);
+    }
+
+    /* ── Badges de Estatus ── */
+    .dv-badge {
+        display: inline-block;
+        padding: 2px 10px;
+        border-radius: 999px;
+        font-size: .75rem;
+        font-weight: 600;
+        letter-spacing: .02em;
+        white-space: nowrap;
+    }
+
+    .dv-badge-activo,
+    .dv-badge-tier-1-critico {
+        background: #dcfce7;
+        color: #15803d;
+    }
+
+    .dv-badge-borrador {
+        background: #fef9c3;
+        color: #a16207;
+    }
+
+    .dv-badge-en-revision {
+        background: #fff7ed;
+        color: #c2410c;
+    }
+
+    .dv-badge-tier-2-alto {
+        background: #ffe4e6;
+        color: #be123c;
+    }
+
+    .dv-badge-tier-3-medio {
+        background: #e0f2fe;
+        color: #0369a1;
+    }
+
+    .dv-badge-tier-4-bajo {
+        background: #f1f5f9;
+        color: #475569;
+    }
+
+    .dv-badge-saas,
+    .dv-badge-marketplace {
+        background: #f3e8ff;
+        color: #7c3aed;
+    }
+
+    .dv-badge-b2b,
+    .dv-badge-b2c {
+        background: #ecfdf5;
+        color: #065f46;
+    }
+
+    .dv-badge-transaccional {
+        background: #cffafe;
+        color: #0e7490;
+    }
+
+    .dv-badge-default {
+        background: #f1f5f9;
+        color: #475569;
+    }
+
+    /* ── Grid View — Ionic-native layout (ion-grid/ion-row/ion-col/ion-card) ── */
+
+    /* Override ion-grid padding para alinearlo con el dv-root */
+    .dv-ionic-grid {
+        padding: 8px 0 0;
+    }
+
+    /* ion-card overrides: hereda tokens del design system */
+    .dv-ion-card {
+        margin: 0 0 2px;
+        border: 1px solid var(--dv-border);
+        border-radius: var(--dv-radius);
+        box-shadow: var(--dv-shadow);
+        transition: box-shadow var(--dv-transition), transform var(--dv-transition);
+        --background: var(--dv-surface);
+        --color: var(--dv-text-primary);
+        height: calc(100% - 2px);
+    }
+
+    .dv-ion-card:hover {
+        box-shadow: var(--dv-shadow-md);
+        transform: translateY(-2px);
+    }
+
+    /* Columnas de la grilla — gap entre tarjetas */
+    .dv-grid-col {
+        padding: 6px;
+    }
+
+    /* Atributos dentro de la card */
+    .dv-card-item-attrs {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+        margin-top: 4px;
+    }
+
+    .dv-card-item-attr {
+        display: flex;
+        align-items: flex-start;
+        gap: 6px;
+        font-size: .78rem;
+    }
+
+    .dv-card-item-attr-key {
+        color: var(--dv-text-secondary);
+        min-width: 90px;
+        flex-shrink: 0;
+        font-weight: 600;
+    }
+
+    .dv-card-item-attr-val {
+        color: var(--dv-text-primary);
+        word-break: break-word;
+    }
+
+    /* ── Drag & Drop Reorder (columnas) ── */
+    .dv-table th {
+        cursor: grab;
+    }
+
+    .dv-table th.dv-th-dragging {
+        opacity: .4;
+        cursor: grabbing;
+    }
+
+    .dv-table th.dv-th-drag-over {
+        background: var(--dv-primary-light);
+        color: var(--dv-primary);
+        border-top: 2px solid var(--dv-primary);
+        box-shadow: inset 3px 0 0 var(--dv-primary);
+    }
+
+    /* Handle visual — aparece al hover del th */
+    .dv-drag-handle {
+        display: inline-block;
+        margin-left: 6px;
+        opacity: 0;
+        font-size: .75rem;
+        color: var(--dv-text-light);
+        transition: opacity var(--dv-transition);
+        vertical-align: middle;
+        user-select: none;
+    }
+
+    .dv-table th:hover .dv-drag-handle {
+        opacity: 1;
+    }
+
+
+    .dv-pagination {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 10px;
+        padding: 12px 16px;
+        border-top: 1px solid var(--dv-border);
+        background: var(--dv-surface);
+        border-radius: 0 0 var(--dv-radius) var(--dv-radius);
+    }
+
+    .dv-pagination-info {
+        font-size: .82rem;
+        color: var(--dv-text-secondary);
+    }
+
+    .dv-pagination-controls {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+    .dv-page-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 32px;
+        height: 32px;
+        border: 1.5px solid var(--dv-border);
+        border-radius: var(--dv-radius-sm);
+        background: var(--dv-surface);
+        color: var(--dv-text-secondary);
+        cursor: pointer;
+        font-size: .82rem;
+        font-weight: 600;
+        transition: all var(--dv-transition);
+        padding: 0;
+    }
+
+    .dv-page-btn:hover:not(:disabled) {
+        background: var(--dv-primary);
+        color: #fff;
+        border-color: var(--dv-primary);
+    }
+
+    .dv-page-btn:disabled {
+        opacity: .35;
+        cursor: not-allowed;
+    }
+
+    .dv-page-size-select {
+        font-size: .82rem;
+        padding: 5px 8px;
+        border: 1.5px solid var(--dv-border);
+        border-radius: var(--dv-radius-sm);
+        background: var(--dv-surface);
+        color: var(--dv-text-primary);
+        cursor: pointer;
+        outline: none;
+    }
+
+    .dv-page-size-select:focus {
+        border-color: var(--dv-primary);
+    }
+
+    /* ── Skeleton ── */
+    @keyframes dv-shimmer {
+        0% {
+            background-position: -600px 0;
+        }
+
+        100% {
+            background-position: 600px 0;
+        }
+    }
+
+    .dv-skeleton-row {
+        display: flex;
+        gap: 12px;
+        padding: 12px 16px;
+        border-bottom: 1px solid var(--dv-border);
+    }
+
+    .dv-skeleton-cell {
+        height: 14px;
+        border-radius: 4px;
+        background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%);
+        background-size: 600px 100%;
+        animation: dv-shimmer 1.4s infinite;
+    }
+
+    /* ── Empty State ── */
+    .dv-empty {
+        text-align: center;
+        padding: 48px 20px;
+        color: var(--dv-text-secondary);
+    }
+
+    .dv-empty-icon {
+        font-size: 3rem;
+        margin-bottom: 12px;
+        opacity: .4;
+    }
+
+    .dv-empty h3 {
+        margin: 0 0 6px;
+        font-size: 1rem;
+        color: var(--dv-text-primary);
+    }
+
+    .dv-empty p {
+        margin: 0;
+        font-size: .85rem;
+    }
+
+    /* ── Responsive header ── */
+    @media (max-width: 600px) {
+        .dv-header {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .dv-header-left h2 {
+            font-size: 1.1rem;
+        }
+
+        .dv-toolbar {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .dv-search-wrap {
+            max-width: 100%;
+        }
+    }
+</style>
+
+<script>
+    /* ============================================================
+       window.DataViewEngine
+       ============================================================ */
+    window.DataViewEngine = (function () {
+
+        /* ── Configuración de entidades (íconos, labels, campos FK) ── */
+        const ENTITY_META = {
+            Portafolio: { iconName: 'briefcase-outline', color: 'primary', label: 'Portafolios', titleField: 'nombre', idField: 'id_portafolio', fkField: null },
+            Grupo_Productos: { iconName: 'layers-outline', color: 'secondary', label: 'Grupos de Producto', titleField: 'nombre', idField: 'id_grupo_producto', fkField: { key: 'id_portafolio', label: 'Portafolio' } },
+            Producto: { iconName: 'cube-outline', color: 'tertiary', label: 'Productos', titleField: 'nombre_producto', idField: 'id_producto', fkField: { key: 'id_grupo_producto', label: 'Grupo' } }
+        };
+
+        /* ── Columnas excluidas de la tabla (campos de auditoría o muy largos) ── */
+        const HIDDEN_BY_DEFAULT = ['created_at', 'updated_by'];
+
+        /* ── Campos estatus para badges de color ── */
+        const STATUS_FIELDS = ['estado', 'nivel_criticalidad', 'modelo_negocio'];
+
+        /* ── Mock data por entidad (entorno local sin GAS) ── */
+        const MOCK_DATA = {
+            Portafolio: [
+                { id_portafolio: 'PORT-1710000001', nombre: 'Portafolio Digital', descripcion: 'Productos digitales core', temas_estrategicos: 'Transformación,IA', flujos_valor: 'SaaS,API', clientes_segmentos: 'Enterprise', presupuesto: 500000, kpis_metricas: 'NPS,CAC', estado: 'Activo', created_at: '2026-03-01', updated_by: 'admin@co.com' },
+                { id_portafolio: 'PORT-1710000002', nombre: 'Portafolio Operativo', descripcion: 'Plataformas internas', temas_estrategicos: 'Eficiencia', flujos_valor: 'B2B', clientes_segmentos: 'Interno', presupuesto: 120000, kpis_metricas: 'MTTR', estado: 'Borrador', created_at: '2026-03-05', updated_by: 'ops@co.com' },
+                { id_portafolio: 'PORT-1710000003', nombre: 'Portafolio Innovación', descripcion: 'Nuevas iniciativas', temas_estrategicos: 'Crecimiento,Web3', flujos_valor: 'Marketplace', clientes_segmentos: 'SMB,Enterprise', presupuesto: 250000, kpis_metricas: 'OKR', estado: 'En Revisión', created_at: '2026-03-10', updated_by: 'innov@co.com' }
+            ],
+            Grupo_Productos: [
+                { id_grupo_producto: 'GRUP-001', nombre: 'Plataforma Cloud', descripcion: 'Servicios en la nube', id_portafolio: 'PORT-1710000001', naturaleza_valor: 'Escalabilidad', modelo_negocio: 'SaaS', created_at: '2026-03-02', updated_by: 'admin@co.com' },
+                { id_grupo_producto: 'GRUP-002', nombre: 'MarketPlace B2B', descripcion: 'Comercio electrónico empresarial', id_portafolio: 'PORT-1710000001', naturaleza_valor: 'Comisiones', modelo_negocio: 'Marketplace', created_at: '2026-03-03', updated_by: 'admin@co.com' },
+                { id_grupo_producto: 'GRUP-003', nombre: 'Ops Interna', descripcion: 'Herramientas internas', id_portafolio: 'PORT-1710000002', naturaleza_valor: 'Eficiencia', modelo_negocio: 'B2B', created_at: '2026-03-06', updated_by: 'ops@co.com' }
+            ],
+            Producto: [
+                { id_producto: 'PROD-001', nombre_producto: 'API Gateway', nivel_criticalidad: 'Tier 1 (Crítico)', slo_objetivo: 99.99, id_grupo_producto: 'GRUP-001', created_at: '2026-03-04' },
+                { id_producto: 'PROD-002', nombre_producto: 'Auth Service', nivel_criticalidad: 'Tier 2 (Alto)', slo_objetivo: 99.9, id_grupo_producto: 'GRUP-001', created_at: '2026-03-04' },
+                { id_producto: 'PROD-003', nombre_producto: 'Vendor Portal', nivel_criticalidad: 'Tier 3 (Medio)', slo_objetivo: 99.5, id_grupo_producto: 'GRUP-002', created_at: '2026-03-05' },
+                { id_producto: 'PROD-004', nombre_producto: 'HR Tool', nivel_criticalidad: 'Tier 4 (Bajo)', slo_objetivo: 98.0, id_grupo_producto: 'GRUP-003', created_at: '2026-03-07' }
+            ]
+        };
+
+        /* ────────────────────────────────────────────
+           Estado interno por entidad
+        ───────────────────────────────────────────── */
+        let _state = {
+            entityName: '',
+            data: [],   // todos los registros (sin filtro)
+            filtered: [],   // tras búsqueda
+            page: 1,
+            pageSize: 25,
+            sortCol: '',
+            sortDir: 'asc',
+            view: 'table',  // 'table' | 'grid'
+            columns: [],   // { key, label, visible, sortable }
+            containerId: ''
+        };
+
+        /* Îndice de columna en arrastre (-1 = ninguno) */
+        let _dragSrcIdx = -1;
+
+        /* ────────────────────────────────────────────
+           Helpers
+        ───────────────────────────────────────────── */
+        function _slugify(str) {
+            return (str || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+        }
+
+        function _badgeClass(value) {
+            const slug = _slugify(String(value));
+            const map = {
+                'activo': 'activo', 'borrador': 'borrador', 'en-revis-n': 'en-revision', 'en-revision': 'en-revision',
+                'tier-1-cr-tico': 'tier-1-critico', 'tier-1-critico': 'tier-1-critico',
+                'tier-2-alto': 'tier-2-alto', 'tier-3-medio': 'tier-3-medio', 'tier-4-bajo': 'tier-4-bajo',
+                'saas': 'saas', 'marketplace': 'marketplace', 'b2b': 'b2b', 'b2c': 'b2c', 'transaccional': 'transaccional'
+            };
+            return 'dv-badge dv-badge-' + (map[slug] || 'default');
+        }
+
+        function _formatValue(key, value) {
+            if (value === null || value === undefined || value === '') return '<span style="color:var(--dv-text-light)">—</span>';
+            const strVal = String(value);
+            if (STATUS_FIELDS.includes(key)) {
+                return `<span class="${_badgeClass(strVal)}">${strVal}</span>`;
+            }
+            if (key === 'presupuesto' || key === 'slo_objetivo') {
+                const num = parseFloat(strVal);
+                if (!isNaN(num)) return key === 'presupuesto'
+                    ? '$' + num.toLocaleString('es-MX')
+                    : num + '%';
+            }
+            if (key.startsWith('id_')) {
+                return `<code style="font-size:.78rem;background:var(--dv-bg);padding:1px 5px;border-radius:3px;">${strVal}</code>`;
+            }
+            return strVal.length > 60 ? strVal.substring(0, 58) + '…' : strVal;
+        }
+
+        function _labelFromKey(key) {
+            // Encuentra en APP_SCHEMAS si está disponible
+            const schema = window.APP_SCHEMAS && window.APP_SCHEMAS[_state.entityName];
+            if (schema) {
+                const field = schema.fields.find(f => f.name === key);
+                if (field) return field.label;
+            }
+            return key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+        }
+
+        /* ────────────────────────────────────────────
+           Derivar columnas desde schema o datos
+        ───────────────────────────────────────────── */
+        function _buildColumns(entityName, rows) {
+            const schema = window.APP_SCHEMAS && window.APP_SCHEMAS[entityName];
+            let keys = [];
+
+            if (schema) {
+                keys = schema.fields.map(f => f.name);
+                // agregar claves presentes en datos pero no en schema (ej. created_at)
+                if (rows.length > 0) {
+                    Object.keys(rows[0]).forEach(k => { if (!keys.includes(k)) keys.push(k); });
+                }
+            } else if (rows.length > 0) {
+                keys = Object.keys(rows[0]);
+            }
+
+            return keys.map(key => ({
+                key,
+                label: _labelFromKey(key),
+                visible: !HIDDEN_BY_DEFAULT.includes(key),
+                sortable: true
+            }));
+        }
+
+        /* ────────────────────────────────────────────
+           Fetch data (GAS o Mock)
+        ───────────────────────────────────────────── */
+        function _fetchData(entityName, cb) {
+            const isGAS = typeof google !== 'undefined' && google.script && google.script.run;
+            if (isGAS) {
+                google.script.run
+                    .withSuccessHandler(function (response) {
+                        if (response && response.status === 'success') {
+                            cb(null, response.data ? response.data.rows || [] : []);
+                        } else {
+                            cb(new Error(response ? response.message : 'Error desconocido'));
+                        }
+                    })
+                    .withFailureHandler(function (err) {
+                        cb(err || new Error('Error de comunicación con el servidor'));
+                    })
+                    .API_Universal_Router('read', entityName, {});
+            } else {
+                // Entorno local — usar mock
+                setTimeout(function () {
+                    const mockRows = MOCK_DATA[entityName] || [];
+                    cb(null, mockRows);
+                }, 700);
+            }
+        }
+
+        /* ────────────────────────────────────────────
+           Búsqueda y Ordenación
+        ───────────────────────────────────────────── */
+        function _applyFilter(query) {
+            if (!query.trim()) {
+                _state.filtered = [..._state.data];
+            } else {
+                const q = query.toLowerCase();
+                _state.filtered = _state.data.filter(row =>
+                    Object.values(row).some(v => String(v).toLowerCase().includes(q))
+                );
+            }
+            _state.page = 1;
+            _rerenderData(); // Solo datos — el toolbar/search box NO se toca
+        }
+
+        function _applySort(colKey) {
+            if (_state.sortCol === colKey) {
+                _state.sortDir = _state.sortDir === 'asc' ? 'desc' : 'asc';
+            } else {
+                _state.sortCol = colKey;
+                _state.sortDir = 'asc';
+            }
+            _state.filtered.sort((a, b) => {
+                const av = String(a[colKey] ?? '').toLowerCase();
+                const bv = String(b[colKey] ?? '').toLowerCase();
+                const cmp = av.localeCompare(bv, 'es', { numeric: true });
+                return _state.sortDir === 'asc' ? cmp : -cmp;
+            });
+            _rerender();
+        }
+
+        /* ────────────────────────────────────────────
+           Paginación
+        ───────────────────────────────────────────── */
+        function _getPage() {
+            const start = (_state.page - 1) * _state.pageSize;
+            return _state.filtered.slice(start, start + _state.pageSize);
+        }
+
+        function _totalPages() {
+            return Math.max(1, Math.ceil(_state.filtered.length / _state.pageSize));
+        }
+
+        /* ────────────────────────────────────────────
+           Renderers
+        ───────────────────────────────────────────── */
+        function _renderSkeleton() {
+            let rows = '';
+            for (let i = 0; i < 5; i++) {
+                const widths = [80, 160, 120, 100, 90];
+                const cells = widths.map(w => `<div class="dv-skeleton-cell" style="width:${w}px;"></div>`).join('');
+                rows += `<div class="dv-skeleton-row">${cells}</div>`;
+            }
+            return `<div class="dv-card" style="padding:4px 0;">${rows}</div>`;
+        }
+
+        function _renderEmpty() {
+            return `
+        <div class="dv-card">
+          <div class="dv-empty">
+            <div class="dv-empty-icon">🗃️</div>
+            <h3>Sin resultados</h3>
+            <p>No se encontraron registros. Prueba con otros términos de búsqueda o crea un nuevo registro.</p>
+          </div>
+        </div>`;
+        }
+
+        function _renderTableView(rows) {
+            const visibleCols = _state.columns.filter(c => c.visible);
+            if (visibleCols.length === 0 || rows.length === 0) return _renderEmpty();
+
+            const thead = visibleCols.map(col => {
+                const colIdx = _state.columns.indexOf(col); // índice real en _state.columns
+                const isSorted = _state.sortCol === col.key;
+                const arrow = isSorted
+                    ? `<span class="dv-sort-icon active">${_state.sortDir === 'asc' ? '↑' : '↓'}</span>`
+                    : `<span class="dv-sort-icon">↕</span>`;
+                return `<th
+                    class="${isSorted ? 'sorted' : ''}"
+                    data-colidx="${colIdx}"
+                    draggable="true"
+                    onclick="window.DataViewEngine._onSort('${col.key}')"
+                    ondragstart="window.DataViewEngine._onDragStart(${colIdx}, event)"
+                    ondragover="window.DataViewEngine._onDragOver(${colIdx}, event)"
+                    ondragleave="window.DataViewEngine._onDragLeave(event)"
+                    ondrop="window.DataViewEngine._onDrop(${colIdx}, event)"
+                    ondragend="window.DataViewEngine._onDragEnd(event)">
+                    ${col.label}${arrow}<span class="dv-drag-handle" title="Arrastra para reordenar">⣿</span>
+                </th>`;
+            }).join('');
+
+            const tbody = rows.map(row => {
+                const cells = visibleCols.map(col =>
+                    `<td title="${String(row[col.key] ?? '')}">${_formatValue(col.key, row[col.key])}</td>`
+                ).join('');
+                return `<tr>${cells}</tr>`;
+            }).join('');
+
+            return `
+        <div class="dv-card">
+          <div class="dv-table-wrap">
+            <table class="dv-table">
+              <thead><tr>${thead}</tr></thead>
+              <tbody>${tbody}</tbody>
+            </table>
+          </div>
+          ${_renderPaginationHTML()}
+        </div>`;
+        }
+
+        function _renderGridView(rows) {
+            const meta = ENTITY_META[_state.entityName] || { titleField: 'nombre', idField: 'id', fkField: null };
+            const MAX_ATTRS = 5;
+
+            if (rows.length === 0) return _renderEmpty();
+
+            // Usar Ionic grid nativo: 1 col móvil, 2 sm, 3 md, 4 xl
+            const cols = rows.map(row => {
+                const title = row[meta.titleField] || row[meta.idField] || '—';
+                const id = row[meta.idField] || '';
+
+                // FK chip usando ion-badge de Ionic
+                const fkChip = meta.fkField && row[meta.fkField.key]
+                    ? `<ion-badge color="primary" style="font-size:.7rem;font-weight:600;margin-top:10px;display:inline-flex;align-items:center;gap:4px;">🔗 ${meta.fkField.label}: ${row[meta.fkField.key]}</ion-badge>`
+                    : '';
+
+                const attrKeys = Object.keys(row)
+                    .filter(k => k !== meta.titleField && k !== meta.idField &&
+                        !(meta.fkField && k === meta.fkField.key) &&
+                        !HIDDEN_BY_DEFAULT.includes(k))
+                    .slice(0, MAX_ATTRS);
+
+                const attrs = attrKeys.map(k => `
+                    <div class="dv-card-item-attr">
+                        <span class="dv-card-item-attr-key">${_labelFromKey(k)}</span>
+                        <span class="dv-card-item-attr-val">${_formatValue(k, row[k])}</span>
+                    </div>`).join('');
+
+                return `
+                <ion-col size="12" size-sm="6" size-md="4" size-xl="3" class="dv-grid-col">
+                    <ion-card class="dv-ion-card">
+                        <ion-card-header>
+                            <ion-card-subtitle style="font-family:monospace;font-size:.72rem;color:var(--dv-text-light);">${id}</ion-card-subtitle>
+                            <ion-card-title style="font-size:.95rem;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${title}">${title}</ion-card-title>
+                        </ion-card-header>
+                        <ion-card-content>
+                            <div class="dv-card-item-attrs">${attrs}</div>
+                            ${fkChip}
+                        </ion-card-content>
+                    </ion-card>
+                </ion-col>`;
+            }).join('');
+
+            return `
+                <ion-grid class="dv-ionic-grid">
+                    <ion-row>${cols}</ion-row>
+                </ion-grid>
+                <div style="border-top:1px solid var(--dv-border);background:var(--dv-surface);border-radius:0 0 var(--dv-radius) var(--dv-radius);">
+                    ${_renderPaginationHTML()}
+                </div>`;
+        }
+
+        function _renderPaginationHTML() {
+            const total = _state.filtered.length;
+            const start = total === 0 ? 0 : (_state.page - 1) * _state.pageSize + 1;
+            const end = Math.min(_state.page * _state.pageSize, total);
+            const tPages = _totalPages();
+
+            const sizes = [10, 25, 50, 100].map(s =>
+                `<option value="${s}" ${s === _state.pageSize ? 'selected' : ''}>${s}</option>`
+            ).join('');
+
+            return `
+        <div class="dv-pagination">
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span class="dv-pagination-info">Mostrando <strong>${start}–${end}</strong> de <strong>${total}</strong></span>
+            <select class="dv-page-size-select" onchange="window.DataViewEngine._onPageSize(this.value)">${sizes}</select>
+          </div>
+          <div class="dv-pagination-controls">
+            <button class="dv-page-btn" title="Primera" onclick="window.DataViewEngine._onPage(1)" ${_state.page === 1 ? 'disabled' : ''}>«</button>
+            <button class="dv-page-btn" title="Anterior" onclick="window.DataViewEngine._onPage(${_state.page - 1})" ${_state.page === 1 ? 'disabled' : ''}>‹</button>
+            <span style="padding:0 10px;font-size:.83rem;color:var(--dv-text-secondary);">Pág. ${_state.page} / ${tPages}</span>
+            <button class="dv-page-btn" title="Siguiente" onclick="window.DataViewEngine._onPage(${_state.page + 1})" ${_state.page >= tPages ? 'disabled' : ''}>›</button>
+            <button class="dv-page-btn" title="Última" onclick="window.DataViewEngine._onPage(${tPages})" ${_state.page >= tPages ? 'disabled' : ''}>»</button>
+          </div>
+        </div>`;
+        }
+
+        /* ────────────────────────────────────────────
+           ion-popover nativo: gestor de columnas visibles
+           — Renderiza un <ion-popover> en el body para garantizar que
+             Ionic lo posicione sin desbordamiento en móvil ni en desktop.
+        ───────────────────────────────────────────── */
+        function _renderColPopoverContentHTML() {
+            const items = _state.columns.map((col, i) => `
+                <ion-item lines="none" style="--min-height:42px;">
+                    <ion-checkbox
+                        slot="start"
+                        data-colidx="${i}"
+                        ${col.visible ? 'checked' : ''}
+                        style="--size:18px;--border-radius:4px;">
+                    </ion-checkbox>
+                    <ion-label style="font-size:.85rem;">${col.label}</ion-label>
+                </ion-item>`).join('');
+
+            return `
+                <ion-content style="--background:var(--dv-surface);width:220px;">
+                    <ion-list-header style="min-height:36px;">
+                        <ion-label style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--dv-text-secondary);">
+                            Columnas visibles
+                        </ion-label>
+                    </ion-list-header>
+                    <ion-list lines="none">${items}</ion-list>
+                </ion-content>`;
+        }
+
+        function _ensureColPopover() {
+            // Obtener o crear el ion-popover persistente en el body
+            let pop = document.getElementById('dv-col-ion-popover');
+            if (!pop) {
+                pop = document.createElement('ion-popover');
+                pop.id = 'dv-col-ion-popover';
+                pop.setAttribute('trigger', 'dv-col-trigger-btn');
+                pop.setAttribute('trigger-action', 'click');
+                pop.setAttribute('dismiss-on-select', 'false');
+                pop.setAttribute('side', 'bottom');
+                pop.setAttribute('alignment', 'end');
+                pop.setAttribute('show-backdrop', 'false');
+                document.body.appendChild(pop);
+            }
+            // Actualizar contenido (sincroniza estado de checkboxes)
+            pop.innerHTML = _renderColPopoverContentHTML();
+
+            // Adjuntar ionChange a cada ion-checkbox (lo necesita el web component de Ionic)
+            pop.querySelectorAll('ion-checkbox').forEach(function (cb) {
+                const idx = parseInt(cb.getAttribute('data-colidx'), 10);
+                cb.addEventListener('ionChange', function (e) {
+                    window.DataViewEngine._onColToggle(idx, e.detail.checked);
+                });
+            });
+        }
+
+        function _renderToolbarHTML() {
+            return `
+        <div class="dv-toolbar">
+          <div class="dv-toolbar-left">
+            <div class="dv-search-wrap">
+              <!-- ion-searchbar nativo de Ionic: posiciona su propio icono y maneja a11y -->
+              <ion-searchbar
+                id="dv-search-input"
+                placeholder="Buscar en todos los campos…"
+                animated="true"
+                show-clear-button="focus"
+                debounce="120">
+              </ion-searchbar>
+            </div>
+          </div>
+          <div class="dv-toolbar-right">
+            <!-- Trigger del ion-popover nativo — Ionic calcula la posición sin desbordamiento -->
+            <button class="dv-btn dv-btn-ghost" id="dv-col-trigger-btn" title="Configurar columnas">
+              <ion-icon name="options-outline" slot="start" style="margin-right: 6px;"></ion-icon> Columnas
+            </button>
+            <button class="dv-btn-icon ${_state.view === 'table' ? 'active' : ''}" id="dv-view-table-btn"
+              onclick="window.DataViewEngine._onViewToggle('table')" title="Vista de lista">
+              ☰
+            </button>
+            <button class="dv-btn-icon ${_state.view === 'grid' ? 'active' : ''}" id="dv-view-grid-btn"
+              onclick="window.DataViewEngine._onViewToggle('grid')" title="Vista de cuadrícula">
+              ⊞
+            </button>
+          </div>
+        </div>`;
+        }
+
+        /* Adjunta el listener ionInput al ion-searchbar tras cada re-render del toolbar.
+           ionInput es el evento nativo de Ionic Web Components (no 'oninput' HTML estándar). */
+        function _attachSearchHandler() {
+            const sb = document.getElementById('dv-search-input');
+            if (sb) {
+                sb.addEventListener('ionInput', function (e) {
+                    window.DataViewEngine._onSearch(e.detail.value || '');
+                });
+            }
+        }
+
+        function _renderHeader() {
+            const meta = ENTITY_META[_state.entityName] || { iconName: 'document-text-outline', color: 'medium', label: _state.entityName };
+            const total = _state.data.length;
+            return `
+        <div class="dv-header">
+          <div class="dv-header-left">
+            <h2><ion-icon name="${meta.iconName}" color="${meta.color}" style="font-size: 1.6rem;"></ion-icon> ${meta.label}</h2>
+            <p>${total} registro${total !== 1 ? 's' : ''} en total</p>
+          </div>
+          <div class="dv-header-actions">
+            <button class="dv-btn dv-btn-outline" onclick="window.DataViewEngine._exportCSV()">
+              <ion-icon name="download-outline" slot="start"></ion-icon> Exportar CSV
+            </button>
+            <button class="dv-btn dv-btn-primary" onclick="renderForm('${_state.entityName}')">
+              <ion-icon name="add-outline" slot="start"></ion-icon> Crear ${meta.label.replace(/s$/, '')}
+            </button>
+          </div>
+        </div>`;
+        }
+
+        /* ────────────────────────────────────────────
+           Re-render: sólo zona de datos (tabla/grid + paginación)
+           El toolbar (#dv-toolbar-zone) NUNCA se toca aquí — preserva el foco del input.
+        ───────────────────────────────────────────── */
+        function _rerenderData() {
+            const pageRows = _getPage();
+            const dataHTML = _state.view === 'table'
+                ? _renderTableView(pageRows)
+                : _renderGridView(pageRows);
+
+            const dataZone = document.getElementById('dv-data-zone');
+            if (dataZone) dataZone.innerHTML = dataHTML;
+        }
+
+        // Alias para compatibilidad interna (sort, page)
+        function _rerender() { _rerenderData(); }
+
+        /* Re-render sólo el toolbar (toggle de columnas / vista) */
+        function _rerenderToolbar() {
+            const zone = document.getElementById('dv-toolbar-zone');
+            if (zone) zone.innerHTML = _renderToolbarHTML();
+            // ion-searchbar: adjuntar ionInput tras re-render
+            _attachSearchHandler();
+            // Sincronizar ion-popover con el nuevo estado de columnas
+            _ensureColPopover();
+        }
+
+        /* ────────────────────────────────────────────
+           Render principal (entrada pública)
+        ───────────────────────────────────────────── */
+        function render(entityName, containerId) {
+            // Mobile-first: grid por defecto en móvil (<768px), tabla en desktop
+            const defaultView = (window.innerWidth < 768) ? 'grid' : 'table';
+
+            _state = {
+                entityName, containerId,
+                data: [], filtered: [],
+                page: 1, pageSize: 25,
+                sortCol: '', sortDir: 'asc',
+                view: defaultView, columns: []
+            };
+
+            // Limpiar ion-popover de la entidad anterior (si existe)
+            const oldPop = document.getElementById('dv-col-ion-popover');
+            if (oldPop) oldPop.remove();
+
+            const container = document.getElementById(containerId);
+            if (!container) return;
+
+            // Estructura inicial: header + toolbar (permanente) + skeleton de datos
+            // #dv-toolbar-zone: NUNCA se destruye durante búsqueda/sort/pagina
+            // #dv-data-zone:    se reemplaza en cada operación de datos
+            container.innerHTML = `
+        <div class="dv-root" id="dv-root">
+          <div id="dv-header-zone">${_renderHeader()}</div>
+          <div id="dv-toolbar-zone"></div>
+          <div id="dv-data-zone">${_renderSkeleton()}</div>
+        </div>`;
+
+            // Actualizar título global del header de Ionic
+            const headerTitle = document.getElementById('main-header-title');
+            if (headerTitle) {
+                const meta = ENTITY_META[entityName] || { label: entityName };
+                headerTitle.textContent = meta.label;
+            }
+            const backBtn = document.getElementById('global-back-btn');
+            if (backBtn) backBtn.style.display = 'none'; // Vista raíz del módulo: ocultar botón atrás
+
+            // Fetch
+            _fetchData(entityName, function (err, rows) {
+                if (err) {
+                    const zone = document.getElementById('dv-data-zone');
+                    if (zone) zone.innerHTML = `<div class="dv-card"><div class="dv-empty">
+            <div class="dv-empty-icon">⚠️</div>
+            <h3>Error al cargar datos</h3>
+            <p>${err.message}</p>
+          </div></div>`;
+                    return;
+                }
+
+                _state.data = rows;
+                _state.filtered = [...rows];
+                _state.columns = _buildColumns(entityName, rows);
+
+                // Actualizar header con total real
+                const headerZone = document.getElementById('dv-header-zone');
+                if (headerZone) headerZone.innerHTML = _renderHeader();
+
+                // Renderizar toolbar (una sola vez; luego _rerenderToolbar lo actualiza)
+                const toolbarZone = document.getElementById('dv-toolbar-zone');
+                if (toolbarZone) toolbarZone.innerHTML = _renderToolbarHTML();
+
+                // ion-searchbar: adjuntar listener ionInput
+                _attachSearchHandler();
+
+                // Crear ion-popover nativo en el body (fuera del contenedor, sin desbordamiento)
+                _ensureColPopover();
+
+                // Actualizar sidebar con navegación de entidades (Directiva 1)
+                if (typeof window.showListSidebar === 'function') {
+                    window.showListSidebar(entityName);
+                }
+
+                _rerenderData();
+            });
+        }
+
+        /* ────────────────────────────────────────────
+           CSV Export
+        ───────────────────────────────────────────── */
+        function _exportCSV() {
+            const visibleCols = _state.columns.filter(c => c.visible);
+            const header = visibleCols.map(c => `"${c.label}"`).join(',');
+            const bodyRows = _state.filtered.map(row =>
+                visibleCols.map(col => {
+                    const v = String(row[col.key] ?? '').replace(/"/g, '""');
+                    return `"${v}"`;
+                }).join(',')
+            ).join('\n');
+
+            const csv = '\uFEFF' + header + '\n' + bodyRows; // BOM para Excel/UTF-8
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${_state.entityName}_${new Date().toISOString().slice(0, 10)}.csv`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        /* ────────────────────────────────────────────
+           Event handlers (accesibles desde HTML inline)
+        ───────────────────────────────────────────── */
+        function _onSearch(query) { _applyFilter(query); }
+
+        function _onSort(colKey) { _applySort(colKey); }
+
+        function _onPage(p) {
+            const tp = _totalPages();
+            _state.page = Math.max(1, Math.min(p, tp));
+            _rerender();
+        }
+
+        function _onPageSize(size) {
+            _state.pageSize = parseInt(size, 10);
+            _state.page = 1;
+            _rerender();
+        }
+
+        function _onColToggle(idx, visible) {
+            _state.columns[idx].visible = visible;
+            // Actualizar solo el contenido del ion-popover (sin cerrarlo ni destruir el toolbar)
+            const pop = document.getElementById('dv-col-ion-popover');
+            if (pop) {
+                pop.innerHTML = _renderColPopoverContentHTML();
+                pop.querySelectorAll('ion-checkbox').forEach(function (cb) {
+                    const i = parseInt(cb.getAttribute('data-colidx'), 10);
+                    cb.addEventListener('ionChange', function (e) {
+                        window.DataViewEngine._onColToggle(i, e.detail.checked);
+                    });
+                });
+            }
+            // Actualizar botones de view toggle (no destruye el search input)
+            _rerenderToolbar();
+            _rerenderData();
+        }
+
+        function _toggleColPopover() { /* no-op: Ionic maneja apertura via trigger */ }
+
+        function _onViewToggle(view) {
+            _state.view = view;
+            _rerenderToolbar(); // actualiza clases active en botones lista/grid
+            _rerenderData();
+        }
+
+        /* ────────────────────────────────────────────
+           Drag & Drop — reordenar columnas (HTML5 nativo, sin librerías)
+        ───────────────────────────────────────────── */
+        function _onDragStart(idx, ev) {
+            _dragSrcIdx = idx;
+            ev.dataTransfer.effectAllowed = 'move';
+            ev.dataTransfer.setData('text/plain', String(idx)); // requerido en Firefox
+            // Marcar la columna origen con clase visual (con retardo para que el ghost se calcule primero)
+            requestAnimationFrame(() => {
+                const th = document.querySelector(`.dv-table th[data-colidx="${idx}"]`);
+                if (th) th.classList.add('dv-th-dragging');
+            });
+        }
+
+        function _onDragOver(targetIdx, ev) {
+            if (_dragSrcIdx === -1 || targetIdx === _dragSrcIdx) return;
+            ev.preventDefault(); // habilita el drop
+            ev.dataTransfer.dropEffect = 'move';
+            // Quitar clase de todas las th y añadir solo a la target
+            document.querySelectorAll('.dv-table th').forEach(th => th.classList.remove('dv-th-drag-over'));
+            const th = document.querySelector(`.dv-table th[data-colidx="${targetIdx}"]`);
+            if (th) th.classList.add('dv-th-drag-over');
+        }
+
+        function _onDragLeave(ev) {
+            const th = ev.target.closest('th');
+            if (th) th.classList.remove('dv-th-drag-over');
+        }
+
+        function _onDrop(targetIdx, ev) {
+            ev.preventDefault();
+            if (_dragSrcIdx === -1 || _dragSrcIdx === targetIdx) {
+                _dragSrcIdx = -1;
+                return;
+            }
+            // Reordenar: extraer la columna origen e insertarla en la posición destino
+            const cols = _state.columns;
+            const [moved] = cols.splice(_dragSrcIdx, 1);
+            cols.splice(targetIdx, 0, moved);
+            _dragSrcIdx = -1;
+            _rerenderToolbar(); // sincronizar checkboxes con el nuevo orden
+            _rerenderData();
+        }
+
+        function _onDragEnd(ev) {
+            _dragSrcIdx = -1;
+            // Limpiar clases drag de todos los th aunque haya sido cancelled
+            document.querySelectorAll('.dv-table th').forEach(th => {
+                th.classList.remove('dv-th-dragging');
+                th.classList.remove('dv-th-drag-over');
+            });
+        }
+
+        /* Cerrar popover al hacer click fuera */
+        document.addEventListener('click', function (e) {
+            const wrap = document.querySelector('.dv-popover-wrap');
+            if (wrap && !wrap.contains(e.target)) {
+                const pop = document.getElementById('dv-col-popover');
+                if (pop) pop.classList.remove('open');
+            }
+        });
+
+        /* API pública */
+        return {
+            render,
+            _exportCSV,
+            _onSearch, _onSort, _onPage, _onPageSize,
+            _onColToggle, _toggleColPopover, _onViewToggle,
+            _onDragStart, _onDragOver, _onDragLeave, _onDrop, _onDragEnd
+        };
+    })();
+</script>

@@ -1,0 +1,58 @@
+<script>
+  /**
+   * EPT-OMR Project: APP_SCHEMAS Configuration
+   * 
+   * This object is the Single Source of Truth for the FormEngine.
+   * - name: EXACT column header in the Google Sheet (snake_case normalized by Engine_DB)
+   * - label: User-facing text in the UI
+   * - type: HTML/Ionic Input type (text, number, select, lookup, date)
+   * - required: Boolean for form validation
+   * - options: Array of values for 'select' types, or lookup configuration
+   */
+
+  window.APP_SCHEMAS = {
+    Grupo_Productos: {
+      steps: ["Datos Generales", "Estrategia de Negocio"],
+      fields: [
+        { name: "id_grupo_producto", label: "ID Grupo Producto", type: "text", required: true, readonly: true, step: "Datos Generales" },
+        { name: "nombre", label: "Nombre", type: "text", required: true, step: "Datos Generales" },
+        { name: "descripcion", label: "Descripción", type: "textarea", required: false, step: "Datos Generales" },
+        { name: "id_portafolio", label: "Portafolio Padre", type: "select", required: true, step: "Datos Generales", options: [], lookupSource: "getPortafoliosOptions" },
+        { name: "naturaleza_valor", label: "Naturaleza de Valor", type: "text", required: false, step: "Estrategia de Negocio" },
+        { name: "modelo_negocio", label: "Modelo de Negocio", type: "select", required: true, options: ["SaaS", "Marketplace", "B2B", "B2C", "Transaccional"], step: "Estrategia de Negocio" }
+      ]
+    },
+    Portafolio: {
+      steps: ["Estrategia", "Finanzas", "Aprobación"],
+      fields: [
+        { name: "id_portafolio", label: "ID Portafolio", type: "text", required: true, readonly: true, step: "Estrategia" },
+        { name: "nombre", label: "Nombre", type: "text", required: true, step: "Estrategia" },
+        { name: "descripcion", label: "Descripción", type: "textarea", required: false, step: "Estrategia" },
+        { name: "temas_estrategicos", label: "Temas Estratégicos", type: "chip-input", required: false, step: "Estrategia" },
+        { name: "flujos_valor", label: "Flujos de Valor", type: "chip-input", required: false, step: "Finanzas" },
+        { name: "clientes_segmentos", label: "Clientes y Segmentos", type: "text", required: false, step: "Finanzas" },
+        { name: "presupuesto", label: "Presupuesto", type: "number", required: true, step: "Finanzas" },
+        { name: "kpis_metricas", label: "KPIs y Métricas", type: "text", required: false, step: "Finanzas" },
+        { name: "estado", label: "Estado", type: "select", required: true, options: ["Borrador", "Activo", "En Revisión"], step: "Aprobación" }
+      ]
+    },
+    Equipo: {
+      fields: [
+        { name: "id_equipo", label: "ID del Equipo", type: "text", required: true, readonly: true },
+        { name: "nombre_equipo", label: "Nombre del Equipo", type: "text", required: true },
+        { name: "scrum_master", label: "Scrum Master", type: "lookup", required: true, lookupTarget: "Persona", width: 6 },
+        { name: "product_owner", label: "Product Owner", type: "lookup", required: true, lookupTarget: "Persona", width: 6 },
+        { name: "id_producto", label: "Producto o Canal Asignado", type: "lookup", required: true, lookupTarget: "Producto" }
+      ]
+    },
+    Producto: {
+      fields: [
+        { name: "id_producto", label: "ID Producto", type: "text", required: true, readonly: true },
+        { name: "nombre_producto", label: "Nombre del Producto", type: "text", required: true },
+        { name: "nivel_criticalidad", label: "Nivel de Criticalidad", type: "select", required: true, options: ["Tier 1 (Crítico)", "Tier 2 (Alto)", "Tier 3 (Medio)", "Tier 4 (Bajo)"] },
+        { name: "slo_objetivo", label: "SLO Objetivo (%)", type: "number", required: false },
+        { name: "id_grupo_producto", label: "Grupo de Productos", type: "select", required: true, options: [], lookupSource: "getGruposProductosOptions" }
+      ]
+    }
+  };
+</script>

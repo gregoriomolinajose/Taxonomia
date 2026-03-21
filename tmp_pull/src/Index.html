@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Taxonomia Project - EPT OMR</title>
+
+    <!-- Ionic Framework (Core Web Components) -->
+    <script type="module" src="https://cdn.jsdelivr.net/npm/@ionic/core/dist/ionic/ionic.esm.js"></script>
+    <script nomodule src="https://cdn.jsdelivr.net/npm/@ionic/core/dist/ionic/ionic.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@ionic/core/css/ionic.bundle.css" />
+
+    <style>
+        /* =========================================================================
+           Design Tokens (Figma -> Native Ionic CSS Variables)
+           ========================================================================= */
+        :root {
+            /* Primary Colors */
+            --ion-color-primary: #3880ff;
+            --ion-color-primary-rgb: 56, 128, 255;
+            --ion-color-primary-shade: #3171e0;
+            --ion-color-primary-contrast: #ffffff;
+
+            /* Success Color */
+            --ion-color-success: #2dd36f;
+            --ion-color-success-rgb: 45, 211, 111;
+
+            /* Neutral / Backgrounds */
+            --ion-background-color: #f4f5f8;
+            /* Fondo principal (Gris claro) */
+            --ion-color-step-50: #ffffff;
+            /* Superficies blancas (Tarjetas) */
+            --ion-color-step-100: #f9fafc;
+            /* Fondo de inputs en Desktop */
+
+            /* Texts & Borders */
+            --ion-text-color: #1f2937;
+            --ion-color-medium: #9ca3af;
+            --ion-border-color: #e5e7eb;
+
+            /* Tipografía (Redefiniendo base de Ionic a System UI) */
+            --ion-font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+        }
+
+        /* 
+         * Styling Específico del Split Pane
+         * En Ionic, el menú lateral toma fondo blanco (surface) 
+         */
+        ion-menu {
+            --ion-background-color: #ffffff;
+            border-right: 1px solid var(--ion-border-color);
+        }
+
+        /* 
+         * Contenedor de Formulario Principal
+         * El fondo exterior es f4f5f8, pero las 'cards' de formulario serán blancas.
+         */
+        .header-bg {
+            background-color: var(--ion-color-step-50);
+            border-bottom: 1px solid var(--ion-border-color);
+            /* Removiendo el gradiente azul oscuro anterior para alinear al Figma (Fondo Blanco) */
+        }
+
+        /* Forzar toolbar a usar nuestra clase manual en lugar de color="primary" */
+        ion-toolbar.header-bg {
+            --background: var(--ion-color-step-50);
+            --color: var(--ion-text-color);
+        }
+
+        @media (max-width: 768px) {
+            .hide-on-mobile {
+                display: none;
+            }
+        }
+    </style>
+
+    <!-- Load SCHEMAS Dictionary -->
+    <?!= include('JS_Schemas_Config'); ?>
+</head>
+
+<body>
+    <ion-app>
+        <!-- 
+          Base Layout: Responsive Split-Pane (Directiva Arquitectónica #1)
+          Se activa automáticamente en Desktop (>= 992px)
+        -->
+        <ion-split-pane content-id="main-content" when="lg">
+
+            <!-- SIDEBAR MENÚ (Wizard Steps en Desktop, Hamburger en Mobile) -->
+            <ion-menu content-id="main-content">
+                <!-- Toolbar del Menú -->
+                <ion-header class="ion-no-border">
+                    <ion-toolbar class="header-bg">
+                        <ion-title>Gobierno de Modelo de Producto</ion-title>
+                    </ion-toolbar>
+                </ion-header>
+
+                <ion-content>
+                    <!-- Bloque para Navegación Global (Home / Listado) -->
+                    <ion-list id="main-nav-list" lines="none" style="display: block;">
+                        <!-- Se rellena dinámicamente por showHomeSidebar / showListSidebar -->
+                    </ion-list>
+
+                    <!-- Bloque para Stepper del Formulario (Wizard) -->
+                    <ion-list id="sidebarList" lines="none" style="display: none;">
+                        <!-- Se rellena dinámicamente por showFormSidebar + FormEngine_UI -->
+                    </ion-list>
+                </ion-content>
+            </ion-menu>
+
+            <!-- ÁREA CENTRAL DE CONTENIDO -->
+            <div class="ion-page" id="main-content">
+                <ion-header class="ion-no-border">
+                    <!-- Toolbar Principal -->
+                    <ion-toolbar class="header-bg">
+                        <ion-buttons slot="start">
+                            <ion-menu-button></ion-menu-button>
+                            <ion-button id="global-back-btn" color="primary" fill="clear" style="display: none;"
+                                onclick="window.returnToDashboard()">
+                                <ion-icon slot="icon-only" name="arrow-back-outline"></ion-icon>
+                            </ion-button>
+                        </ion-buttons>
+
+                        <!-- Título dinámico -->
+                        <ion-title id="main-header-title">Taxonomía Operativa</ion-title>
+
+                        <ion-buttons slot="end">
+                            <ion-button id="btn-logout" color="danger" fill="clear"
+                                onclick="window.AuthManager.logout()">
+                                <ion-icon slot="start" name="log-out-outline"></ion-icon>
+                                <span class="hide-on-mobile">Cerrar Sesión</span>
+                            </ion-button>
+                        </ion-buttons>
+                    </ion-toolbar>
+                </ion-header>
+
+                <!-- Surface Principal (Gris Claro) -->
+                <ion-content class="ion-padding" color="light">
+                    <!-- Contenedor inyectable del FormEngine / DataView -->
+                    <div id="app-container">
+                        <!-- Dashboard Enterprise: 3 Columnas Grid -->
+                        <ion-grid>
+                            <ion-row class="ion-justify-content-center">
+                                <ion-col size="12" class="ion-text-center" style="margin-bottom: 20px;">
+                                    <h1 style="font-weight: 700; color: var(--ion-color-dark);">Plataforma de Gobernanza
+                                    </h1>
+                                    <p style="color: var(--ion-color-medium);">Gestión Centralizada de Modelo de
+                                        Producto.</p>
+                                </ion-col>
+                            </ion-row>
+
+                            <ion-row>
+                                <!-- Tarjeta 1: Portafolios -->
+                                <ion-col size="12" size-md="4">
+                                    <ion-card>
+                                        <ion-card-header class="ion-text-center">
+                                            <ion-icon name="briefcase-outline" color="primary"
+                                                style="font-size: 48px; margin-bottom: 10px;"></ion-icon>
+                                            <ion-card-title>Portafolios</ion-card-title>
+                                            <ion-card-subtitle>Nivel Estratégico</ion-card-subtitle>
+                                        </ion-card-header>
+                                        <ion-card-content>
+                                            <p style="margin-bottom: 20px; min-height: 44px;">Gestiona la visión
+                                                estratégica y presupuestos de alto nivel.</p>
+                                            <ion-button expand="block" shape="round" color="primary"
+                                                onclick="renderForm('Portafolio')">
+                                                <ion-icon slot="start" name="add-circle-outline"></ion-icon>
+                                                Crear Nuevo
+                                            </ion-button>
+                                            <ion-button expand="block" shape="round" color="primary" fill="outline"
+                                                style="margin-top: 8px;"
+                                                onclick="window.DataViewEngine.render('Portafolio', 'app-container')">
+                                                <ion-icon slot="start" name="list-outline"></ion-icon>
+                                                Ver Listado
+                                            </ion-button>
+                                        </ion-card-content>
+                                    </ion-card>
+                                </ion-col>
+
+                                <!-- Tarjeta 2: Grupos de Productos -->
+                                <ion-col size="12" size-md="4">
+                                    <ion-card>
+                                        <ion-card-header class="ion-text-center">
+                                            <ion-icon name="layers-outline" color="secondary"
+                                                style="font-size: 48px; margin-bottom: 10px;"></ion-icon>
+                                            <ion-card-title>Grupos</ion-card-title>
+                                            <ion-card-subtitle>Nivel Táctico</ion-card-subtitle>
+                                        </ion-card-header>
+                                        <ion-card-content>
+                                            <p style="margin-bottom: 20px; min-height: 44px;">Organiza productos por
+                                                dominios y modelos de negocio.</p>
+                                            <ion-button expand="block" shape="round" color="secondary"
+                                                onclick="renderForm('Grupo_Productos')">
+                                                <ion-icon slot="start" name="add-circle-outline"></ion-icon>
+                                                Crear Nuevo
+                                            </ion-button>
+                                            <ion-button expand="block" shape="round" color="secondary" fill="outline"
+                                                style="margin-top: 8px;"
+                                                onclick="window.DataViewEngine.render('Grupo_Productos', 'app-container')">
+                                                <ion-icon slot="start" name="list-outline"></ion-icon>
+                                                Ver Listado
+                                            </ion-button>
+                                        </ion-card-content>
+                                    </ion-card>
+                                </ion-col>
+
+                                <!-- Tarjeta 3: Productos -->
+                                <ion-col size="12" size-md="4">
+                                    <ion-card>
+                                        <ion-card-header class="ion-text-center">
+                                            <ion-icon name="cube-outline" color="tertiary"
+                                                style="font-size: 48px; margin-bottom: 10px;"></ion-icon>
+                                            <ion-card-title>Productos</ion-card-title>
+                                            <ion-card-subtitle>Nivel Operativo</ion-card-subtitle>
+                                        </ion-card-header>
+                                        <ion-card-content>
+                                            <p style="margin-bottom: 20px; min-height: 44px;">Detalle granular de cada
+                                                activo y su estado actual.</p>
+                                            <ion-button expand="block" shape="round" color="tertiary"
+                                                onclick="renderForm('Producto')">
+                                                <ion-icon slot="start" name="add-circle-outline"></ion-icon>
+                                                Crear Nuevo
+                                            </ion-button>
+                                            <ion-button expand="block" shape="round" color="tertiary" fill="outline"
+                                                style="margin-top: 8px;"
+                                                onclick="window.DataViewEngine.render('Producto', 'app-container')">
+                                                <ion-icon slot="start" name="list-outline"></ion-icon>
+                                                Ver Listado
+                                            </ion-button>
+                                        </ion-card-content>
+                                    </ion-card>
+                                </ion-col>
+                            </ion-row>
+                        </ion-grid>
+                    </div>
+                </ion-content>
+            </div>
+        </ion-split-pane>
+    </ion-app>
+
+    <!-- Load Dynamic FormEngine Logic -->
+    <?!= include('FormEngine_UI'); ?>
+
+    <!-- Load DataView Engine (Universal List) -->
+    <?!= include('DataView_UI'); ?>
+
+    <!-- Setup Ionic Icons -->
+    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+
+    <!-- Authentication Logic -->
+    <script>
+        window.AuthManager = {
+            init: async function () {
+                const appContainer = document.getElementById('app-container');
+                window.OriginalDashboardHTML = appContainer.innerHTML;
+                const originalContent = appContainer.innerHTML;
+
+                // 1. Mostrar Loading
+                const loading = document.createElement('ion-loading');
+                loading.message = 'Verificando identidad...';
+                loading.spinner = 'crescent';
+                document.body.appendChild(loading);
+                await loading.present();
+
+                // Esconder contenido mientras carga
+                appContainer.innerHTML = '';
+                appContainer.style.display = 'none';
+
+                // 2. Llamar backend
+                if (typeof google !== 'undefined' && google.script && google.script.run) {
+                    google.script.run
+                        .withSuccessHandler(async (response) => {
+                            await loading.dismiss();
+                            this.handleAuthResponse(response, appContainer, originalContent);
+                        })
+                        .withFailureHandler(async (error) => {
+                            await loading.dismiss();
+                            this.renderAccessDenied(appContainer, "Error de conexión con el servidor.");
+                        })
+                        .getUserIdentity();
+                } else {
+                    // Modo desarrollo local (Mock)
+                    setTimeout(async () => {
+                        await loading.dismiss();
+                        console.warn("Entorno local: Simulando Auth exitosa.");
+                        this.handleAuthResponse({ authorized: true, email: "local@gmail.com" }, appContainer, originalContent);
+                    }, 800);
+                }
+            },
+
+            handleAuthResponse: function (response, container, originalContent) {
+                container.style.display = 'block';
+                if (response.authorized) {
+                    // Caso Seguro
+                    container.innerHTML = originalContent;
+                } else {
+                    // Caso Fallido
+                    this.renderAccessDenied(container, "Dominio no autorizado", response.email);
+                }
+            },
+
+            renderAccessDenied: function (container, reason, email = "") {
+                const emailMsg = email ? `<p>La cuenta <strong>${email}</strong> no tiene permisos de acceso al sistema.</p>` : '';
+                container.innerHTML = `
+                    <ion-grid>
+                        <ion-row class="ion-justify-content-center" style="margin-top: 50px;">
+                            <ion-col size="12" size-md="8" size-lg="6">
+                                <ion-card color="danger">
+                                    <ion-card-header>
+                                        <ion-icon name="lock-closed-outline" style="font-size: 64px; display: block; margin: 0 auto; padding-bottom: 20px;"></ion-icon>
+                                        <ion-card-title class="ion-text-center">Acceso Denegado</ion-card-title>
+                                    </ion-card-header>
+                                    <ion-card-content class="ion-text-center">
+                                        <h3>${reason}</h3>
+                                        ${emailMsg}
+                                        <p style="margin-top:20px;">Por favor, inicia sesión con una cuenta autorizada.</p>
+                                    </ion-card-content>
+                                </ion-card>
+                            </ion-col>
+                        </ion-row>
+                    </ion-grid>
+                `;
+            },
+
+            logout: async function () {
+                const ionApp = document.querySelector('ion-app');
+                if (ionApp) {
+                    // Destruir contenedor completo
+                    ionApp.innerHTML = `
+                        <ion-content class="ion-padding">
+                            <ion-grid style="height: 100%;">
+                                <ion-row class="ion-justify-content-center ion-align-items-center" style="height: 100%;">
+                                    <ion-col size="12" class="ion-text-center">
+                                        <ion-icon name="shield-checkmark-outline" color="success" style="font-size: 80px;"></ion-icon>
+                                        <h2 style="margin-top: 20px;">Sesión cerrada por seguridad</h2>
+                                        <p>Por favor, cierra esta pestaña del navegador.</p>
+                                    </ion-col>
+                                </ion-row>
+                            </ion-grid>
+                        </ion-content>
+                    `;
+
+                    // Mostrar Toast
+                    const toast = document.createElement('ion-toast');
+                    toast.message = 'Desconectado de forma segura.';
+                    toast.duration = 3000;
+                    toast.color = 'dark';
+                    document.body.appendChild(toast);
+                    await toast.present();
+                }
+            }
+        };
+
+        window.returnToDashboard = function () {
+            const container = document.getElementById('app-container');
+            const headerTitle = document.getElementById('main-header-title');
+            const backBtn = document.getElementById('global-back-btn');
+
+            if (headerTitle) headerTitle.textContent = "Taxonomía Operativa";
+            if (backBtn) backBtn.style.display = 'none';
+
+            // Limpiar el ion-popover de columnas si existe
+            const oldPop = document.getElementById('dv-col-ion-popover');
+            if (oldPop) oldPop.remove();
+
+            // Restaurar sidebar a modo Home (Navegación Global)
+            if (typeof window.showHomeSidebar === 'function') {
+                window.showHomeSidebar();
+            }
+
+            if (container && window.OriginalDashboardHTML) {
+                container.innerHTML = window.OriginalDashboardHTML;
+            }
+        };
+
+        /**
+         * showHomeSidebar()
+         * Renderiza el sidebar en modo DASHBOARD con navegación global.
+         */
+        window.showHomeSidebar = function () {
+            const navList = document.getElementById('main-nav-list');
+            const formList = document.getElementById('sidebarList');
+            if (!navList || !formList) return;
+
+            // Toggle de Listas
+            navList.style.display = 'block';
+            formList.style.display = 'none';
+
+            const links = [
+                { id: 'home', icon: 'home-outline', label: 'Inicio', action: 'window.returnToDashboard()', active: true },
+                { id: 'port', icon: 'briefcase-outline', label: 'Portafolios', action: "window.DataViewEngine.render('Portafolio', 'app-container')" },
+                { id: 'grup', icon: 'layers-outline', label: 'Grupos', action: "window.DataViewEngine.render('Grupo_Productos', 'app-container')" },
+                { id: 'prod', icon: 'cube-outline', label: 'Productos', action: "window.DataViewEngine.render('Producto', 'app-container')" }
+            ];
+
+            const items = links.map(function (l) {
+                const isActive = l.active || false;
+                return `<ion-item button detail="false" 
+                    style="--background:${isActive ? 'var(--ion-color-primary)' : 'transparent'};"
+                    onclick="${l.action}">
+                    <ion-icon slot="start" name="${l.icon}" 
+                        style="color:${isActive ? '#ffffff' : 'var(--ion-color-medium)'}"></ion-icon>
+                    <ion-label style="font-weight:${isActive ? '700' : '400'}; color:${isActive ? '#ffffff' : 'inherit'};">
+                        ${l.label}
+                    </ion-label>
+                </ion-item>`;
+            }).join('');
+
+            navList.innerHTML = items;
+        };
+
+        /**
+         * showListSidebar(activeEntityName)
+         * Renderiza el sidebar en modo LISTADO con navegación entre entidades.
+         */
+        window.showListSidebar = function (activeEntityName) {
+            const navList = document.getElementById('main-nav-list');
+            const formList = document.getElementById('sidebarList');
+            if (!navList || !formList) return;
+
+            // Toggle de Listas
+            navList.style.display = 'block';
+            formList.style.display = 'none';
+
+            // Siempre incluir Home como opción de escape
+            const homeItem = `<ion-item button detail="false" 
+                style="--background:transparent;"
+                onclick="window.returnToDashboard()">
+                <ion-icon slot="start" name="home-outline" style="color:var(--ion-color-medium)"></ion-icon>
+                <ion-label>Inicio</ion-label>
+            </ion-item>`;
+
+            const entities = [
+                { key: 'Portafolio', icon: 'briefcase-outline', label: 'Portafolios' },
+                { key: 'Grupo_Productos', icon: 'layers-outline', label: 'Grupos de Producto' },
+                { key: 'Producto', icon: 'cube-outline', label: 'Productos' }
+            ];
+
+            const items = entities.map(function (e) {
+                const isActive = e.key === activeEntityName;
+                return `<ion-item button detail="false"
+                    style="--background:${isActive ? 'var(--ion-color-primary)' : 'transparent'};"
+                    onclick="window.DataViewEngine.render('${e.key}', 'app-container')">
+                    <ion-icon slot="start" name="${e.icon}"
+                        style="color:${isActive ? '#ffffff' : 'var(--ion-color-medium)'}"></ion-icon>
+                    <ion-label style="font-weight:${isActive ? '700' : '400'}; color:${isActive ? '#ffffff' : 'inherit'};">
+                        ${e.label}
+                    </ion-label>
+                </ion-item>`;
+            }).join('');
+
+            navList.innerHTML = homeItem + items;
+        };
+
+        /**
+         * showFormSidebar(entityName)
+         * Prepara el sidebar para el modo FORMULARIO (Wizard).
+         */
+        window.showFormSidebar = function (entityName) {
+            const navList = document.getElementById('main-nav-list');
+            const formList = document.getElementById('sidebarList');
+            if (!navList || !formList) return;
+
+            // Toggle de Listas
+            navList.style.display = 'none';
+            formList.style.display = 'block';
+
+            // Siempre incluir Home como opción de escape
+            const homeItem = `<ion-item button detail="false" 
+                style="--background:transparent;"
+                onclick="window.returnToDashboard()">
+                <ion-icon slot="start" name="home-outline" style="color:var(--ion-color-medium)"></ion-icon>
+                <ion-label>Inicio</ion-label>
+            </ion-item>`;
+
+            // ID obligatorio para que FormEngine inyecte los pasos
+            formList.innerHTML = `
+                ${homeItem}
+                <div id="form-steps-container"></div>
+            `;
+        };
+
+        // Arrancar verificación al cargar el DOM de Ionic
+        document.addEventListener('DOMContentLoaded', () => {
+            // Guardar el HTML original del dashboard para el returnToDashboard
+            const container = document.getElementById('app-container');
+            if (container) {
+                window.OriginalDashboardHTML = container.innerHTML;
+            }
+
+            // Esperar un toque a que Ionic se inicialice
+            setTimeout(() => {
+                window.showHomeSidebar(); // Cargar sidebar de inicio por defecto
+                window.AuthManager.init();
+            }, 100);
+        });
+    </script>
+</body>
+
+</html>
