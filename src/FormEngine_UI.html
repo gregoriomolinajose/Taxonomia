@@ -702,12 +702,25 @@
             const data = state.data;
             const meta = state.entityMeta;
 
+            // --- REGLA 3 (rules_qa.md): PROTECTOR DE NULLS ---
+            if (!meta || !meta.idField) {
+                console.error("[FormEngine] Error Crítico: No se encontró metadata o 'idField' para la entidad:", entityName);
+                alert("Error de Configuración: La entidad '" + window.formatEntityName(entityName) + "' no tiene un mapeo de metadatos válido.");
+                return;
+            }
+
+            if (!data || !Array.isArray(data)) {
+                console.error("[FormEngine] Error: Cache de datos no disponible para la entidad:", entityName);
+                return;
+            }
+
             console.log("[FormEngine] Editando entidad:", entityName, "Usando metadata:", meta);
 
             // 2. Buscar el registro completo
             const record = data.find(item => item[meta.idField] === id);
             if (!record) {
                 console.error("[FormEngine] Error: Registro no encontrado en cache local para ID:", id, "en datos:", data);
+                alert("Error: El registro con ID '" + id + "' no pudo ser localizado para edición.");
                 return;
             }
 
