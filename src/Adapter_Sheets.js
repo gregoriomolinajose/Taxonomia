@@ -134,6 +134,68 @@ const Adapter_Sheets = {
             return { status: 'success', action: 'created', pk: primaryKeyField, val: primaryKeyValue };
         }
     },
+    remove: function (tableName, id, config) {
+        if (typeof SpreadsheetApp === 'undefined') {
+            return { status: 'success', action: 'deleted', pk: 'id', val: id };
+        }
+
+        const spreadsheetId = config ? config.SPREADSHEET_ID_DB : CONFIG.SPREADSHEET_ID_DB;
+        const ss = SpreadsheetApp.openById(spreadsheetId);
+        const sheet = ss.getSheetByName('DB_' + tableName);
+
+        if (!sheet) {
+            throw new Error(`La hoja DB_${tableName} no existe.`);
+        }
+
+        const headersRange = sheet.getRange(1, 1, 1, sheet.getLastColumn());
+        const headers = headersRange.getValues()[0];
+        const normalizedHeaders = headers.map(h => _normalizeHeader(h));
+
+        const tableKey = tableName.toLowerCase();
+        const singularKey = tableKey.endsWith('s') ? tableKey.slice(0, -1) : tableKey;
+        const pkCandidates = ['id_' + tableKey, 'id_' + singularKey].filter(k => normalizedHeaders.includes(k));
+        const pkField = pkCandidates.length > 0 ? pkCandidates[0] : normalizedHeaders.find(h => h.startsWith('id_'));
+
+        if (!pkField) throw new Error("No se pudo determinar la Primary Key en los encabezados para el Soft Delete.");
+
+        const pkIndex = normalizedHeaders.indexOf(pkField);
+
+        const dataRange = sheet.getDataRange();
+        const numRows = dataRange.getNumRows();
+
+        let foundRowIndex = -1;
+        if (numRows > 1) {
+            const pkColumnData = sheet.getRange(2, pkIndex + 1, numRows - 1, 1).getValues();
+            for (let r = 0; r < pkColumnData.length; r++) {
+                if (pkColumnData[r][0] == id) {
+                    foundRowIndex = r + 2;
+                    break;
+                }
+            }
+        }
+
+        if (foundRowIndex === -1) {
+            throw new Error(`Registro con ID ${id} no encontrado para borrado lógico.`);
+        }
+
+        const existingRow = sheet.getRange(foundRowIndex, 1, 1, normalizedHeaders.length).getValues()[0];
+
+        const currentUser = (typeof Session !== 'undefined') ? Session.getActiveUser().getEmail() : 'system@localhost';
+        const currentTimestamp = new Date().toISOString();
+
+        const idxEstado = normalizedHeaders.indexOf('estado');
+        const idxUpdatedAt = normalizedHeaders.indexOf('updated_at');
+        const idxUpdatedBy = normalizedHeaders.indexOf('updated_by');
+
+        const rowToUpdate = [...existingRow];
+
+        if (idxEstado > -1) rowToUpdate[idxEstado] = 'Eliminado';
+        if (idxUpdatedAt > -1) rowToUpdate[idxUpdatedAt] = currentTimestamp;
+        if (idxUpdatedBy > -1) rowToUpdate[idxUpdatedBy] = currentUser;
+
+        sheet.getRange(foundRowIndex, 1, 1, rowToUpdate.length).setValues([rowToUpdate]);
+        return { status: 'success', action: 'deleted', pk: pkField, val: id };
+    },
     _normalizeHeader: _normalizeHeader,
 
     /**

@@ -24,6 +24,8 @@ function doPost(e) {
       responseData = _handleRead(entity);
     } else if (action === 'update') {
       responseData = _handleUpdate(entity, data.id, data);
+    } else if (action === 'delete') {
+      responseData = _handleDelete(entity, data.id || data);
     } else {
       throw new Error("Action not supported yet.");
     }
@@ -70,6 +72,15 @@ function _handleUpdate(entityName, id, payload) {
 }
 
 /**
+ * _handleDelete
+ * Llama a Engine_DB.delete() para un borrado logico.
+ */
+function _handleDelete(entityName, id) {
+  const result = Engine_DB.delete(entityName, id);
+  return result;
+}
+
+/**
  * API_Universal_Router
  * Punto de entrada exclusivo para google.script.run (Frontend HTML a Backend GAS)
  */
@@ -95,6 +106,10 @@ function API_Universal_Router(action, entityName, payload) {
       const idField = Object.keys(payload).find(k => k.startsWith('id_'));
       const id = payload[idField];
       responseData = _handleUpdate(entityName, id, payload);
+    } else if (action === 'delete') {
+      // Para delete, el payload puede ser solo el ID como string o un obj {id: ...}
+      const id = (typeof payload === 'object') ? payload[Object.keys(payload).find(k => k.startsWith('id_'))] || payload.id : payload;
+      responseData = _handleDelete(entityName, id);
     } else {
       throw new Error(`Action '${action}' not supported yet.`);
     }
@@ -241,6 +256,7 @@ if (typeof module !== 'undefined') {
   module.exports = {
     _handleCreate,
     _handleUpdate,
+    _handleDelete,
     API_Universal_Router
   };
 }

@@ -758,7 +758,9 @@
                 google.script.run
                     .withSuccessHandler(function (response) {
                         if (response && response.status === 'success') {
-                            cb(null, response.data ? response.data.rows || [] : []);
+                            const rawRows = response.data ? response.data.rows || [] : [];
+                            const activeRows = rawRows.filter(r => r.estado !== 'Eliminado' && r.estado !== 'eliminado');
+                            cb(null, activeRows);
                         } else {
                             cb(new Error(response ? response.message : 'Error desconocido'));
                         }
@@ -771,7 +773,8 @@
                 // Entorno local — usar mock
                 setTimeout(function () {
                     const mockRows = MOCK_DATA[entityName] || [];
-                    cb(null, mockRows);
+                    const activeRows = mockRows.filter(r => r.estado !== 'Eliminado' && r.estado !== 'eliminado');
+                    cb(null, activeRows);
                 }, 700);
             }
         }
@@ -872,7 +875,7 @@
         <div class="dv-card">
           <div class="dv-table-wrap">
             <table class="dv-table">
-              <thead><tr>${thead}</tr></thead>
+              <thead><tr>${thead}<th style="width:50px;"></th></tr></thead>
               <tbody>${_renderTableBody(rows, visibleCols)}</tbody>
             </table>
           </div>
@@ -886,7 +889,15 @@
                     `<td title="${String(row[col.key] ?? '')}">${_formatValue(col.key, row[col.key])}</td>`
                 ).join('');
 
-                return `<tr>${cells}</tr>`;
+                const meta = ENTITY_META[_state.entityName] || { idField: 'id' };
+                const id = row[meta.idField] || '';
+                const actionCell = `<td style="width:50px; text-align:center;">
+                    <button class="dv-btn-icon" style="color:var(--ion-color-danger);" onclick="event.stopPropagation(); window.DataViewEngine._confirmDelete('${id}')" title="Eliminar">
+                        <ion-icon name="trash"></ion-icon>
+                    </button>
+                </td>`;
+
+                return `<tr>${cells}${actionCell}</tr>`;
             }).join('');
         }
 
@@ -921,13 +932,18 @@
                 return `
                 <ion-col size="12" size-sm="6" size-md="4" size-xl="3" class="dv-grid-col">
                     <ion-card class="dv-ion-card">
-                        <ion-card-header>
-                            <ion-card-subtitle 
-                                onclick="window.openEditForm('${id}')"
-                                style="font-family:monospace;font-size:.72rem;color:var(--dv-primary);cursor:pointer;text-decoration:underline;">
-                                ${id}
-                            </ion-card-subtitle>
-                            <ion-card-title style="font-size:.95rem;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${title}">${title}</ion-card-title>
+                        <ion-card-header style="display:flex; justify-content:space-between; align-items:flex-start;">
+                            <div>
+                                <ion-card-subtitle 
+                                    onclick="window.openEditForm('${id}')"
+                                    style="font-family:monospace;font-size:.72rem;color:var(--dv-primary);cursor:pointer;text-decoration:underline;">
+                                    ${id}
+                                </ion-card-subtitle>
+                                <ion-card-title style="font-size:.95rem;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${title}">${title}</ion-card-title>
+                            </div>
+                            <button class="dv-btn-icon" style="color:var(--ion-color-danger); border:none; padding:4px;" onclick="event.stopPropagation(); window.DataViewEngine._confirmDelete('${id}')" title="Eliminar">
+                                <ion-icon name="trash"></ion-icon>
+                            </button>
                         </ion-card-header>
                         <ion-card-content>
                             <div class="dv-card-item-attrs">${attrs}</div>
@@ -1329,6 +1345,74 @@
             }
         });
 
+        /* ────────────────────────────────────────────
+           Soft Delete Flow
+        ───────────────────────────────────────────── */
+        function _confirmDelete(id) {
+            const alert = document.createElement('ion-alert');
+            alert.header = 'Confirmar Borrado';
+            alert.message = '¿Estás seguro de que deseas borrar este registro de manera definitiva?';
+            alert.buttons = [
+                { text: 'Cancelar', role: 'cancel' },
+                {
+                    text: 'Borrar',
+                    role: 'confirm',
+                    handler: () => {
+                        _executeSoftDelete(id);
+                    }
+                }
+            ];
+            document.body.appendChild(alert);
+            return alert.present();
+        }
+
+        function _executeSoftDelete(id) {
+            // Optimistic UI update
+            const meta = ENTITY_META[_state.entityName] || { idField: 'id' };
+            const idField = meta.idField;
+            _state.data = _state.data.filter(r => r[idField] !== id);
+            _applyFilter(document.getElementById('dv-search-input') ? document.getElementById('dv-search-input').value || '' : '');
+
+            const loading = document.createElement('ion-loading');
+            loading.message = 'Borrando...';
+            document.body.appendChild(loading);
+            loading.present();
+
+            const isGAS = typeof google !== 'undefined' && google.script && google.script.run;
+            if (isGAS) {
+                google.script.run
+                    .withSuccessHandler(function (response) {
+                        loading.dismiss();
+                        if (response && response.status === 'success') {
+                            _showToast('Registro borrado con éxito.', 'success');
+                        } else {
+                            _showToast('Error al borrar: ' + (response ? response.message : ''), 'danger');
+                            render(_state.entityName, _state.containerId);
+                        }
+                    })
+                    .withFailureHandler(function (err) {
+                        loading.dismiss();
+                        _showToast('Error de red al borrar', 'danger');
+                        render(_state.entityName, _state.containerId);
+                    })
+                    .API_Universal_Router('delete', _state.entityName, id);
+            } else {
+                setTimeout(() => {
+                    loading.dismiss();
+                    _showToast('Mock: Registro borrado con éxito.', 'success');
+                }, 500);
+            }
+        }
+
+        function _showToast(message, color) {
+            const toast = document.createElement('ion-toast');
+            toast.message = message;
+            toast.duration = 2500;
+            toast.color = color || 'success';
+            document.body.appendChild(toast);
+            return toast.present();
+        }
+
         /* API pública */
         return {
             render,
@@ -1341,7 +1425,8 @@
             _exportCSV,
             _onSearch, _onSort, _onPage, _onPageSize,
             _onColToggle, _toggleColPopover, _onViewToggle,
-            _onDragStart, _onDragOver, _onDragLeave, _onDrop, _onDragEnd
+            _onDragStart, _onDragOver, _onDragLeave, _onDrop, _onDragEnd,
+            _confirmDelete
         };
     })();
 </script>

@@ -95,7 +95,17 @@ const Engine_DB = {
     },
 
     delete: function (entityName, id) {
-        // Lógica futura de enrutamiento DELETE
+        Logger.log("Engine_DB_delete_router: Routing " + entityName + " (ID: " + id + ") to Adapter_Sheets.remove.");
+        const config = (typeof CONFIG !== 'undefined') ? CONFIG : { useSheets: true, useCloudDB: false };
+        let results = { sheets: {}, cloud: {} };
+        if (config.useSheets) {
+            results.sheets = _Adapter_Sheets.remove(entityName, id, config);
+        }
+        return {
+            success: true,
+            Entity: entityName,
+            adapter_results: results
+        };
     }
 };
 

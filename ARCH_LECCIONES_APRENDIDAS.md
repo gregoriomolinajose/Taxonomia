@@ -41,3 +41,14 @@ Este documento registra las lecciones aprendidas durante los Sprints para evitar
   ```
   3. Mapear retornos síncronos mediante `.mockReturnValueOnce` en vez del resolutor de Promesas.
 - **Regla Preventiva de Diseño:** *Agnosticismo de Testing.* Todo simulador (Mock) de un componente de Google Apps Script debe ser inyectado obligatoriamente en la fase de `setupFiles` de Jest, jamás dentro del bloque individual. Además, si el diseño original es `sync` en GAS, el test debe mockear su fallo usando `.mockImplementationOnce(() => { throw new Error(...) })` y no Promesas Asíncronas filtradas que corrompan los Workers.
+
+---
+
+## Hito: Implementación de Borrado Seguro (Soft Delete) y Filtro UI
+- **Hito:** Prevención de pérdida de datos transaccionales mediante Soft Delete.
+- **Punto de Falla (Root Cause):** El borrado físico de registros (`deleteRow()`) destruía el historial inmutable de auditoría (`created_at`, `created_by`, etc.) requerido por el modelo SAFe 6.0, perdiendo completamente la trazabilidad de quién y cuándo se eliminó un dato.
+- **Solución Maestra (Golden Pattern):** Transformación del Delete a Update Dirigido.
+  1. El Backend intersecta la solicitud de borrado realizando una mutación in-place de la columna `estado` al valor `Eliminado`.
+  2. El Backend protege agresivamente `created_at` manteniéndolo intacto e inyecta `updated_by` y `updated_at` captando los datos del actor en vivo.
+  3. El Frontend aplica un filtro optimista y estático `data.filter(r => r.estado !== 'Eliminado')` inmediatamente al recibir el payload, aislando visualmente el dato sin corromper el almacén real.
+- **Regla Preventiva de Diseño:** *Inmortalidad del Registro.* Ninguna operación de negocio en el Backend debe eliminar filas físicas del almacenamiento persistente. Todo borrado debe ser ejecutado como un método que muta el "estado" a un flag de desactivación y delega al Frontend la responsabilidad de ocultar/ofuscar la data de la capa de UI.
