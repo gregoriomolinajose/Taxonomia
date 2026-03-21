@@ -9,8 +9,12 @@
      */
 
     (function (global) {
+        // Estado Global de Edición (Directiva 1)
+        global.currentEditId = null;
 
         global.renderForm = async function (entityName) {
+            // Asegurar reset de estado al abrir formulario nuevo (Directiva 1)
+            global.currentEditId = null;
             const container = document.getElementById('app-container');
             if (!container) throw new Error("Container #app-container not found");
 
@@ -522,8 +526,16 @@
                     await toast.componentOnReady();
                     await toast.present();
                 };
+                // --- Sanitización de Auditoría (Directiva Product Architect) ---
+                // El frontend NUNCA debe enviar datos de auditoría en el payload.
+                delete payload.created_at;
+                delete payload.created_by;
+                delete payload.updated_at;
+                delete payload.updated_by;
 
                 // Llamada nativa hacia Apps Script (API Real)
+                const action = global.currentEditId ? 'update' : 'create';
+
                 google.script.run
                     .withSuccessHandler((response) => {
                         try {
@@ -535,6 +547,9 @@
 
                                 // Soft Reset Post-Guardado (Global Rule)
                                 const resetFormEngine = () => {
+                                    // Reset de ID de edición
+                                    global.currentEditId = null;
+
                                     // 1. Limpieza de Inputs Estándar
                                     inputs.forEach(input => {
                                         input.value = '';
@@ -581,12 +596,122 @@
 
                         showToast('Error de Servidor: ' + err.message, 'danger');
                     })
-                    .API_Universal_Router('create', entityName, payload);
+                    .API_Universal_Router(action, entityName, payload);
             });
 
             container.appendChild(card);
             container.appendChild(btnContainer);
             btnContainer.appendChild(submitBtn);
+        };
+
+        /**
+         * openEditForm (Directiva 3)
+         * Busca un registro en el cache local de DataViewEngine, pre-llena el formulario
+         * y activa el modo UPDATE.
+         */
+        global.openEditForm = async function (id) {
+            console.log("[FormEngine] Solicitud de edición recibida para ID:", id);
+
+            // 1. Obtener la entidad activa desde el DataViewEngine
+            if (!window.DataViewEngine) {
+                console.error("[FormEngine] Error: DataViewEngine no encontrado en el objeto window.");
+                alert("Error técnico: No se pudo encontrar el motor de datos.");
+                return;
+            }
+
+            const state = window.DataViewEngine._getState();
+            if (!state || !state.entityName) {
+                console.error("[FormEngine] Error: El estado del listado no es válido.", state);
+                return;
+            }
+
+            const entityName = state.entityName;
+            const data = state.data;
+            const meta = state.entityMeta;
+
+            console.log("[FormEngine] Editando entidad:", entityName, "Usando metadata:", meta);
+
+            // 2. Buscar el registro completo
+            const record = data.find(item => item[meta.idField] === id);
+            if (!record) {
+                console.error("[FormEngine] Error: Registro no encontrado en cache local para ID:", id, "en datos:", data);
+                return;
+            }
+
+            console.log("[FormEngine] Registro encontrado:", record);
+
+            // 3. Renderizar el formulario base de la entidad
+            await global.renderForm(entityName);
+
+            // 4. Activar modo edición
+            global.currentEditId = id;
+            console.log("[FormEngine] currentEditId asignado:", global.currentEditId);
+
+            const headerTitle = document.getElementById('main-header-title');
+            if (headerTitle) headerTitle.textContent = "Editar: " + entityName;
+
+            // 5. Pre-llenado de campos (Directiva 3.c)
+            const container = document.getElementById('app-container');
+            const inputs = container.querySelectorAll('ion-input, ion-textarea, ion-select');
+
+            console.log("[FormEngine] Pre-llenando", inputs.length, "campos...");
+            inputs.forEach(input => {
+                const name = input.getAttribute('name');
+                if (name && record.hasOwnProperty(name)) {
+                    input.value = record[name];
+                }
+            });
+
+            // 6. Pre-llenado de Chip Components
+            const chipContainers = container.querySelectorAll('.chip-container');
+            chipContainers.forEach(cc => {
+                const name = cc.getAttribute('data-chip-name');
+                if (name && record[name]) {
+                    const values = String(record[name]).split(',').map(v => v.trim());
+                    values.forEach(val => {
+                        if (!val) return;
+                        const chip = document.createElement('ion-chip');
+                        chip.setAttribute('color', 'primary');
+                        const label = document.createElement('ion-label');
+                        label.textContent = val;
+                        const icon = document.createElement('ion-icon');
+                        icon.setAttribute('name', 'close-circle');
+                        icon.addEventListener('click', () => { chip.remove(); });
+                        chip.appendChild(label);
+                        chip.appendChild(icon);
+                        cc.appendChild(chip);
+                    });
+                }
+            });
+
+            // 7. Agregar Audit Trail (Directiva del Product Architect)
+            if (record.updated_at && record.updated_by) {
+                let formattedDate = record.updated_at;
+                try {
+                    const d = new Date(record.updated_at);
+                    if (!isNaN(d.getTime())) {
+                        formattedDate = d.toLocaleString();
+                    }
+                } catch (e) { }
+
+                const noteContainer = document.createElement('div');
+                noteContainer.style.textAlign = 'center';
+                noteContainer.style.padding = '16px';
+                noteContainer.style.marginTop = '10px';
+
+                const note = document.createElement('ion-note');
+                note.style.fontSize = '0.75rem';
+                note.style.color = 'var(--dv-text-light)';
+                note.textContent = `Última actualización por ${record.updated_by} el ${formattedDate}`;
+
+                noteContainer.appendChild(note);
+                container.appendChild(noteContainer);
+            }
+
+            // 8. Navegar al primer paso (Directiva 3.d)
+            if (typeof global.goToStep === 'function') {
+                global.goToStep(0);
+            }
         };
 
     })(typeof window !== 'undefined' ? window : this);

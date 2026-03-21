@@ -1,0 +1,35 @@
+session_id: "SES-001"
+summary: "CI/CD Pipeline & Authorization Resolution"
+type: infrastructure
+outcomes:
+  - "CI/CD pipeline implemented with deploy.js and environments/ Config swap"
+  - "Production authorized domains restricted to @coppel.com and @bancoppel.com"
+  - "Spreadsheet permissions resolved via direct access test"
+  - "Removed global naming conflict by moving Config.js to environments/ and renaming to Global_Config"
+patterns:
+  - description: "Using a dedicated environments/ folder for Config templates avoids GAS global namespace collisions"
+    context: "clasp, environments, config"
+    type: process
+corrections:
+  - what: "GAS global namespace conflict with multiple Config.js files"
+    lesson: "Ensure only one instance of a global configuration variable exists across all .gs/js files in the rootDir"
+current_work:
+  release: V1.0
+  epic: "CI/CD Setup"
+  story: "Environment Management"
+  phase: "Complete"
+  branch: main
+pending:
+  next_actions: ["Set up Dev Spreadsheet ID in environments/Config.dev.js"]
+narrative: |
+  ## Decisions
+  - Moved Config.dev.js and Config.prod.js to environments/ to avoid SyntaxError in GAS.
+  - Renamed src/Config.js to src/Global_Config.js to force sync and avoid caching.
+  - Set executeAs to USER_DEPLOYING to use developer permissions for Anyone access.
+  ## Artifacts
+  - deploy.js
+  - environments/Config.dev.js
+  - environments/Config.prod.js
+  - src/Global_Config.js
+next_session_prompt: |
+  The CI/CD pipeline is stable. Next steps: get the Dev Spreadsheet ID and configure Config.dev.js.

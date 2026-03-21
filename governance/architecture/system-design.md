@@ -2,7 +2,10 @@
 type: architecture_design
 project: "Taxonomia Project"
 status: draft
-layers: ["Frontend (Ionic)", "Backend API (GAS)", "Persistence Adapters"]
+layers:
+  - name: "Frontend (Ionic)"
+  - name: "Backend API (GAS)"
+  - name: "Persistence Adapters"
 ---
 
 # System Design: Taxonomia Project

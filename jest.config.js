@@ -5,5 +5,6 @@ module.exports = {
   rootDir: '.',
   transformIgnorePatterns: [
     "node_modules/(?!(@exodus/bytes|jsdom|html-encoding-sniffer|@asamuzakjp/css-color|cssstyle)/)"
-  ]
+  ],
+  setupFiles: ['<rootDir>/jest.setup.js']
 };

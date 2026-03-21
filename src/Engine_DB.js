@@ -30,11 +30,22 @@ const Engine_DB = {
         }
 
 
-        // Dispatch a Cloud Síncrono (Non-blocking fail simulado)
+        // Dispatch a Cloud (Resiliencia Dual-Write: Catch Sync y Async)
         if (config.useCloudDB) {
             try {
-                results.cloud = _Adapter_CloudDB.upsert(tableName, payload, config);
+                const cloudResult = _Adapter_CloudDB.upsert(tableName, payload, config);
+                // Si es una promesa (Jest Mock / Nube Real Asíncrona), atrapar el rechazo
+                if (cloudResult && typeof cloudResult.catch === 'function') {
+                    results.cloud = { status: 'pending' };
+                    cloudResult.catch(err => {
+                        if (typeof Logger !== 'undefined') Logger.log("CloudDB Async Error: " + err.message);
+                        results.cloud = { status: 'error', error: err.message };
+                    });
+                } else {
+                    results.cloud = cloudResult;
+                }
             } catch (err) {
+                if (typeof Logger !== 'undefined') Logger.log("CloudDB Sync Error: " + err.message);
                 results.cloud = { status: 'error', error: err.message };
             }
         }
@@ -70,7 +81,17 @@ const Engine_DB = {
     },
 
     update: function (entityName, id, data) {
-        // Lógica futura de enrutamiento UPDATE
+        Logger.log("Engine_DB_update_router: Routing " + entityName + " (ID: " + id + ") to Adapters.");
+        const config = (typeof CONFIG !== 'undefined') ? CONFIG : { useSheets: true, useCloudDB: false };
+
+        // El id ya viene en el payload generalmente para Sheets, pero aseguramos consistencia
+        const result = this.save(entityName, data, config);
+
+        return {
+            success: true,
+            Entity: entityName,
+            adapter_results: result
+        };
     },
 
     delete: function (entityName, id) {

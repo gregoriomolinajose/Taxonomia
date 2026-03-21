@@ -35,32 +35,32 @@ describe('Engine_DB Facade (Dual-Write & Idempotency)', () => {
     it('1. Dual-Write: Debe invocar ambos adaptadores al guardar un registro', async () => {
         const payload = { id_producto: 'PROD-001', nombre_producto: 'App MVP' };
 
-        Adapter_Sheets.upsert.mockResolvedValueOnce({ status: 'success', action: 'inserted' });
-        Adapter_CloudDB.upsert.mockResolvedValueOnce({ status: 'success', action: 'inserted' });
+        Adapter_Sheets.upsert.mockReturnValueOnce({ status: 'success', action: 'inserted' });
+        Adapter_CloudDB.upsert.mockReturnValueOnce({ status: 'success', action: 'inserted' });
 
-        await Engine_DB.save('Producto', payload, mockConfig);
+        Engine_DB.save('Producto', payload, mockConfig);
 
         // Aserción Clave: Ambos adaptadores DEBEN ser llamados exactamente una vez
         expect(Adapter_Sheets.upsert).toHaveBeenCalledTimes(1);
         expect(Adapter_CloudDB.upsert).toHaveBeenCalledTimes(1);
 
         // Verificamos que se pasaron los datos correctos
-        expect(Adapter_Sheets.upsert).toHaveBeenCalledWith('Producto', payload);
-        expect(Adapter_CloudDB.upsert).toHaveBeenCalledWith('Producto', payload);
+        expect(Adapter_Sheets.upsert).toHaveBeenCalledWith('Producto', payload, mockConfig);
+        expect(Adapter_CloudDB.upsert).toHaveBeenCalledWith('Producto', payload, mockConfig);
     });
 
     it('2. Idempotencia y Upsert: Múltiples envíos del mismo Payload no deben duplicar registros', async () => {
         const payload = { id_producto: 'PROD-002', nombre_producto: 'Sistema de Pagos' };
 
         // Simulamos la primera llamada (Insert)
-        Adapter_Sheets.upsert.mockResolvedValueOnce({ status: 'success', action: 'inserted' });
-        Adapter_CloudDB.upsert.mockResolvedValueOnce({ status: 'success', action: 'inserted' });
-        await Engine_DB.save('Producto', payload, mockConfig);
+        Adapter_Sheets.upsert.mockReturnValueOnce({ status: 'success', action: 'inserted' });
+        Adapter_CloudDB.upsert.mockReturnValueOnce({ status: 'success', action: 'inserted' });
+        Engine_DB.save('Producto', payload, mockConfig);
 
         // Simulamos un reintento o doble clic (Update en lugar de Insert)
-        Adapter_Sheets.upsert.mockResolvedValueOnce({ status: 'success', action: 'updated' });
-        Adapter_CloudDB.upsert.mockResolvedValueOnce({ status: 'success', action: 'updated' });
-        await Engine_DB.save('Producto', payload, mockConfig);
+        Adapter_Sheets.upsert.mockReturnValueOnce({ status: 'success', action: 'updated' });
+        Adapter_CloudDB.upsert.mockReturnValueOnce({ status: 'success', action: 'updated' });
+        Engine_DB.save('Producto', payload, mockConfig);
 
         // Aseguramos que el Engine delegó la responsabilidad del Upsert (no usar .insert crudo)
         // El método upsert del adaptador debe haberse llamado en total 2 veces por cada motor
@@ -68,18 +68,18 @@ describe('Engine_DB Facade (Dual-Write & Idempotency)', () => {
         expect(Adapter_CloudDB.upsert).toHaveBeenCalledTimes(2);
 
         // Adicionalmente verificamos que el Facade devolvió los estados actualizados en la segunda llamada
-        const result2 = await Adapter_Sheets.upsert.mock.results[1].value;
+        const result2 = Adapter_Sheets.upsert.mock.results[1].value;
         expect(result2.action).toBe('updated');
     });
 
     it('3. Resiliencia: Si Adapter_CloudDB falla, Adapter_Sheets debe guardar de todas formas', async () => {
         const payload = { id_producto: 'PROD-003', nombre_producto: 'Backend API' };
 
-        // Simulamos Timeout/Error en Cloud
-        Adapter_CloudDB.upsert.mockRejectedValueOnce(new Error('CloudDB Timeout'));
-        Adapter_Sheets.upsert.mockResolvedValueOnce({ status: 'success', action: 'inserted' });
+        // Simulamos Timeout/Error en Cloud (síncrono como en GAS real)
+        Adapter_CloudDB.upsert.mockImplementationOnce(() => { throw new Error('CloudDB Timeout'); });
+        Adapter_Sheets.upsert.mockReturnValueOnce({ status: 'success', action: 'inserted' });
 
-        const results = await Engine_DB.save('Producto', payload, mockConfig);
+        const results = Engine_DB.save('Producto', payload, mockConfig);
 
         // Cloud Falló, pero Sheets se llamó y triunfó
         expect(Adapter_CloudDB.upsert).toHaveBeenCalledTimes(1);
@@ -113,13 +113,13 @@ describe('Adapter_Sheets Normalization Logic (Regla 4.7)', () => {
         expect(normalizer('Dedicación %')).toBe('dedicacion');
     });
 
-    it('Debe requerir un Primary Key (PK) para evitar el uso ciego de appendRow', async () => {
+    it('Debe requerir un Primary Key (PK) para evitar el uso ciego de appendRow', () => {
         // En TDD Red Phase fallará porque upsert es un stub (jest.fn() en la declaración superior).
-        // Sin embargo, configuramos la promesa rechazada en el mock del adapter sheet
-        Adapter_Sheets.upsert.mockRejectedValueOnce(new Error('Primary Key requerida para operar el Upsert.'));
+        // Sin embargo, configuramos el error en el mock del adapter sheet
+        Adapter_Sheets.upsert.mockImplementationOnce(() => { throw new Error('Primary Key requerida para operar el Upsert.'); });
 
         try {
-            await Adapter_Sheets.upsert('Producto', { nombre: 'App Sin ID' });
+            Adapter_Sheets.upsert('Producto', { nombre: 'App Sin ID' });
             // Forzamos el fail si el adapter de arriba no lanzó el error que se supone deberá lanzar el real
             throw new Error('Debería haber fallado por falta de PK');
         } catch (e) {

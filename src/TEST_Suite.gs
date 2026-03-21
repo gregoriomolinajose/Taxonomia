@@ -19,9 +19,7 @@ function _test_insercion_portafolio() {
         flujos_valor: "Operaciones AI",
         clientes_segmentos: "B2B",
         presupuesto: 1500000,
-        kpis_metricas: "Adopción 50%",
-        created_at: new Date().toISOString(),
-        updated_by: Session.getActiveUser().getEmail()
+        kpis_metricas: "Adopción 50%"
     };
 
     try {

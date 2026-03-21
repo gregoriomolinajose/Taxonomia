@@ -22,6 +22,8 @@ function doPost(e) {
       responseData = _handleCreate(entity, data);
     } else if (action === 'read') {
       responseData = _handleRead(entity);
+    } else if (action === 'update') {
+      responseData = _handleUpdate(entity, data.id, data);
     } else {
       throw new Error("Action not supported yet.");
     }
@@ -50,17 +52,20 @@ function _handleRead(entityName) {
 
 /**
  * _handleCreate
- * Inyecta campos obligatorios (Time-Travel / Auditoría) y llama a Engine_DB.
+ * Llama a Engine_DB (la inyección de auditoría ocurre en Adapter_Sheets).
  */
 function _handleCreate(entityName, payload) {
-  // Inyección de campos de auditoría (Regla docs/rules_db.md #4)
-  payload.created_at = new Date().toISOString();
-  
-  // En el entorno de GAS, tenemos Session. En Jest, usamos el mock global.
-  payload.updated_by = Session.getActiveUser().getEmail();
-
   // Llamar al motor agnóstico
   const result = Engine_DB.create(entityName, payload);
+  return result;
+}
+
+/**
+ * _handleUpdate
+ * Llama a Engine_DB (la inyección de auditoría ocurre en Adapter_Sheets).
+ */
+function _handleUpdate(entityName, id, payload) {
+  const result = Engine_DB.update(entityName, id, payload);
   return result;
 }
 
@@ -86,6 +91,10 @@ function API_Universal_Router(action, entityName, payload) {
       responseData = _handleCreate(entityName, payload);
     } else if (action === 'read') {
       responseData = _handleRead(entityName);
+    } else if (action === 'update') {
+      const idField = Object.keys(payload).find(k => k.startsWith('id_'));
+      const id = payload[idField];
+      responseData = _handleUpdate(entityName, id, payload);
     } else {
       throw new Error(`Action '${action}' not supported yet.`);
     }
@@ -231,6 +240,7 @@ function getProductosOptions() {
 if (typeof module !== 'undefined') {
   module.exports = {
     _handleCreate,
+    _handleUpdate,
     API_Universal_Router
   };
 }

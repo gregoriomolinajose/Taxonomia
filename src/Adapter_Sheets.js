@@ -56,13 +56,6 @@ const Adapter_Sheets = {
         const normalizedHeaders = headers.map(h => _normalizeHeader(h));
         Logger.log("Adapter_Sheets.upsert: Encabezados encontrados (normalizados): " + JSON.stringify(normalizedHeaders));
 
-        // 4. Construir Array de Fila
-        const rowToInsert = [];
-        for (let i = 0; i < normalizedHeaders.length; i++) {
-            const h = normalizedHeaders[i];
-            rowToInsert.push(payload.hasOwnProperty(h) ? payload[h] : '');
-        }
-
         // 5. Idempotencia: Buscar si existe la PK (Upsert)
         const pkIndex = normalizedHeaders.indexOf(primaryKeyField);
         if (pkIndex === -1) {
@@ -83,13 +76,59 @@ const Adapter_Sheets = {
             }
         }
 
+        // 4. Construir Array de Fila e Inyección de Auditoría (Directiva de Product Architect)
+        const currentUser = (typeof Session !== 'undefined') ? Session.getActiveUser().getEmail() : 'system@localhost';
+        const currentTimestamp = new Date().toISOString();
+
+        const idxCreatedAt = normalizedHeaders.indexOf('created_at');
+        const idxCreatedBy = normalizedHeaders.indexOf('created_by');
+        const idxUpdatedAt = normalizedHeaders.indexOf('updated_at');
+        const idxUpdatedBy = normalizedHeaders.indexOf('updated_by');
+
+        const rowToInsert = [];
+        let existingRow = [];
         if (foundRowIndex > -1) {
-            // Actualizar (Update)
+            existingRow = sheet.getRange(foundRowIndex, 1, 1, normalizedHeaders.length).getValues()[0];
+        }
+
+        for (let i = 0; i < normalizedHeaders.length; i++) {
+            const h = normalizedHeaders[i];
+
+            if (foundRowIndex > -1) {
+                // Modo Update: Preservar estricamente campos de creación
+                if (h === 'created_at' || h === 'created_by') {
+                    rowToInsert.push(existingRow[i]);
+                } else if (payload.hasOwnProperty(h)) {
+                    rowToInsert.push(payload[h]);
+                } else {
+                    // Mantiene valores existentes de columnas que el payload no envió
+                    rowToInsert.push(existingRow[i]);
+                }
+            } else {
+                // Modo Create
+                rowToInsert.push(payload.hasOwnProperty(h) ? payload[h] : '');
+            }
+        }
+
+        if (foundRowIndex > -1) {
+            // Actualizar (Update) - Ya se iteró fusionando con existingRow
+            if (idxUpdatedAt > -1) rowToInsert[idxUpdatedAt] = currentTimestamp;
+            if (idxUpdatedBy > -1) rowToInsert[idxUpdatedBy] = currentUser;
+
             Logger.log(`Adapter_Sheets.upsert: ¿Se encontró el ID?: Sí. Fila: ${foundRowIndex}`);
             sheet.getRange(foundRowIndex, 1, 1, rowToInsert.length).setValues([rowToInsert]);
             return { status: 'success', action: 'updated', pk: primaryKeyField, val: primaryKeyValue };
         } else {
             // Insertar (Create)
+            if (idxCreatedAt > -1 && (!rowToInsert[idxCreatedAt] || String(rowToInsert[idxCreatedAt]).trim() === '')) {
+                rowToInsert[idxCreatedAt] = currentTimestamp;
+            }
+            if (idxCreatedBy > -1 && (!rowToInsert[idxCreatedBy] || String(rowToInsert[idxCreatedBy]).trim() === '')) {
+                rowToInsert[idxCreatedBy] = currentUser;
+            }
+            if (idxUpdatedAt > -1) rowToInsert[idxUpdatedAt] = currentTimestamp;
+            if (idxUpdatedBy > -1) rowToInsert[idxUpdatedBy] = currentUser;
+
             Logger.log("Adapter_Sheets.upsert: ¿Se encontró el ID?: No. Realizando appendRow...");
             sheet.appendRow(rowToInsert);
             return { status: 'success', action: 'created', pk: primaryKeyField, val: primaryKeyValue };

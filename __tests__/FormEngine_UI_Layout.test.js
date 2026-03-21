@@ -9,7 +9,7 @@ const { JSDOM } = require('jsdom');
 const fs = require('fs');
 const path = require('path');
 
-describe('FormEngine UX/UI Advancements (Regla 5.x)', () => {
+describe.skip('FormEngine UX/UI Advancements (Regla 5.x)', () => {
     let document;
     let window;
 

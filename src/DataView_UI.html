@@ -71,7 +71,9 @@
         display: inline-flex;
         align-items: center;
         gap: 6px;
-        padding: 8px 16px;
+        padding: 0 16px;
+        height: 38px;
+        box-sizing: border-box;
         border: none;
         border-radius: var(--dv-radius-sm);
         font-size: .85rem;
@@ -293,6 +295,7 @@
 
     .dv-table tbody tr:hover {
         background: var(--dv-primary-light);
+        cursor: pointer;
     }
 
     /* ── Badges de Estatus ── */
@@ -381,11 +384,41 @@
     .dv-ion-card:hover {
         box-shadow: var(--dv-shadow-md);
         transform: translateY(-2px);
+        cursor: pointer;
     }
 
-    /* Columnas de la grilla — gap entre tarjetas */
     .dv-grid-col {
-        padding: 6px;
+        padding: 8px;
+    }
+
+    .dv-btn-icon {
+        background: transparent;
+        border: 1.5px solid var(--dv-border);
+        color: var(--dv-text-secondary);
+        font-size: 1.1rem;
+        cursor: pointer;
+        padding: 0;
+        width: 38px;
+        height: 38px;
+        box-sizing: border-box;
+        border-radius: var(--dv-radius-sm);
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .dv-btn-icon:hover {
+        background: var(--dv-bg);
+        color: var(--dv-primary);
+        border-color: var(--dv-primary-light);
+    }
+
+    .dv-btn-icon.active {
+        background: var(--dv-primary);
+        color: #fff;
+        border-color: var(--dv-primary);
+        box-shadow: var(--dv-shadow);
     }
 
     /* Atributos dentro de la card */
@@ -676,7 +709,7 @@
                     : num + '%';
             }
             if (key.startsWith('id_')) {
-                return `<code style="font-size:.78rem;background:var(--dv-bg);padding:1px 5px;border-radius:3px;">${strVal}</code>`;
+                return `<code onclick="window.openEditForm('${strVal}')" style="font-size:.78rem;background:var(--dv-bg);padding:1px 5px;border-radius:3px;cursor:pointer;color:var(--dv-primary);font-weight:bold;text-decoration:underline;">${strVal}</code>`;
             }
             return strVal.length > 60 ? strVal.substring(0, 58) + '…' : strVal;
         }
@@ -835,23 +868,26 @@
                 </th>`;
             }).join('');
 
-            const tbody = rows.map(row => {
-                const cells = visibleCols.map(col =>
-                    `<td title="${String(row[col.key] ?? '')}">${_formatValue(col.key, row[col.key])}</td>`
-                ).join('');
-                return `<tr>${cells}</tr>`;
-            }).join('');
-
             return `
         <div class="dv-card">
           <div class="dv-table-wrap">
             <table class="dv-table">
               <thead><tr>${thead}</tr></thead>
-              <tbody>${tbody}</tbody>
+              <tbody>${_renderTableBody(rows, visibleCols)}</tbody>
             </table>
           </div>
           ${_renderPaginationHTML()}
         </div>`;
+        }
+
+        function _renderTableBody(rows, visibleCols) {
+            return rows.map(row => {
+                const cells = visibleCols.map(col =>
+                    `<td title="${String(row[col.key] ?? '')}">${_formatValue(col.key, row[col.key])}</td>`
+                ).join('');
+
+                return `<tr>${cells}</tr>`;
+            }).join('');
         }
 
         function _renderGridView(rows) {
@@ -886,7 +922,11 @@
                 <ion-col size="12" size-sm="6" size-md="4" size-xl="3" class="dv-grid-col">
                     <ion-card class="dv-ion-card">
                         <ion-card-header>
-                            <ion-card-subtitle style="font-family:monospace;font-size:.72rem;color:var(--dv-text-light);">${id}</ion-card-subtitle>
+                            <ion-card-subtitle 
+                                onclick="window.openEditForm('${id}')"
+                                style="font-family:monospace;font-size:.72rem;color:var(--dv-primary);cursor:pointer;text-decoration:underline;">
+                                ${id}
+                            </ion-card-subtitle>
                             <ion-card-title style="font-size:.95rem;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${title}">${title}</ion-card-title>
                         </ion-card-header>
                         <ion-card-content>
@@ -961,19 +1001,22 @@
         }
 
         function _ensureColPopover() {
-            // Obtener o crear el ion-popover persistente en el body
+            // Eliminar popover existente para forzar re-bind del trigger a nivel de Ionic
+            // Esto soluciona el problema donde el botón se destruye al cambiar de vista
             let pop = document.getElementById('dv-col-ion-popover');
-            if (!pop) {
-                pop = document.createElement('ion-popover');
-                pop.id = 'dv-col-ion-popover';
-                pop.setAttribute('trigger', 'dv-col-trigger-btn');
-                pop.setAttribute('trigger-action', 'click');
-                pop.setAttribute('dismiss-on-select', 'false');
-                pop.setAttribute('side', 'bottom');
-                pop.setAttribute('alignment', 'end');
-                pop.setAttribute('show-backdrop', 'false');
-                document.body.appendChild(pop);
+            if (pop) {
+                pop.remove();
             }
+
+            pop = document.createElement('ion-popover');
+            pop.id = 'dv-col-ion-popover';
+            pop.setAttribute('trigger', 'dv-col-trigger-btn');
+            pop.setAttribute('trigger-action', 'click');
+            pop.setAttribute('dismiss-on-select', 'false');
+            pop.setAttribute('side', 'bottom');
+            pop.setAttribute('alignment', 'end');
+            pop.setAttribute('show-backdrop', 'false');
+            document.body.appendChild(pop);
             // Actualizar contenido (sincroniza estado de checkboxes)
             pop.innerHTML = _renderColPopoverContentHTML();
 
@@ -1289,6 +1332,12 @@
         /* API pública */
         return {
             render,
+            _getState: function () {
+                return {
+                    ..._state,
+                    entityMeta: ENTITY_META[_state.entityName]
+                };
+            },
             _exportCSV,
             _onSearch, _onSort, _onPage, _onPageSize,
             _onColToggle, _toggleColPopover, _onViewToggle,
