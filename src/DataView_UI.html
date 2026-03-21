@@ -792,6 +792,15 @@
            Fetch data (GAS o Mock)
         ───────────────────────────────────────────── */
         function _fetchData(entityName, cb) {
+            // Check Frontend Cache first (Directiva Arquitectónica: 0.0s latency)
+            if (window.__APP_CACHE__ && window.__APP_CACHE__[entityName]) {
+                console.log(`[Cache Frontend] HIT para ${entityName}. Renderizado instantáneo.`);
+                const cachedData = window.__APP_CACHE__[entityName];
+                const activeRows = cachedData.filter(r => r.estado !== 'Eliminado' && r.estado !== 'eliminado');
+                cb(null, activeRows);
+                return;
+            }
+
             const isGAS = typeof google !== 'undefined' && google.script && google.script.run;
             if (isGAS) {
                 console.time('[Perf] Single RPC Hydration');
@@ -810,6 +819,11 @@
                                 return obj;
                             });
 
+                            // Store in Frontend Cache for 0.0s subsequent transitions
+                            if (window.__APP_CACHE__) {
+                                window.__APP_CACHE__[entityName] = rows;
+                            }
+
                             const activeRows = rows.filter(r => r.estado !== 'Eliminado' && r.estado !== 'eliminado');
                             cb(null, activeRows);
                         } else {
@@ -821,6 +835,7 @@
                     })
                     .getInitialPayload(entityName);
             } else {
+                // ... (mock remain unchanged)
                 // Entorno local — usar mock
                 setTimeout(function () {
                     const mockRows = MOCK_DATA[entityName] || [];
@@ -1438,6 +1453,10 @@
                     .withSuccessHandler(function (response) {
                         loading.dismiss();
                         if (response && response.status === 'success') {
+                            // Invalidate Frontend Cache (Client Busting)
+                            if (window.__APP_CACHE__) {
+                                delete window.__APP_CACHE__[_state.entityName];
+                            }
                             _showToast('Registro borrado con éxito.', 'success');
                         } else {
                             _showToast('Error al borrar: ' + (response ? response.message : ''), 'danger');

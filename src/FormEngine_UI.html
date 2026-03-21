@@ -598,8 +598,12 @@
                     .withSuccessHandler((response) => {
                         try {
                             if (response && response.status === 'success') {
-                                const itemName = (response.data && response.data.Entity) ? response.data.Entity : entityName;
+                                // Invalidate Frontend Cache (Client Busting - Directiva Arquitectónica)
+                                if (window.__APP_CACHE__) {
+                                    delete window.__APP_CACHE__[entityName];
+                                }
 
+                                const itemName = (response.data && response.data.Entity) ? response.data.Entity : entityName;
                                 // Mostrar Toast Nativo de Éxito
                                 showToast('¡' + itemName + ' guardado con éxito!', 'success');
 

@@ -83,6 +83,7 @@
     <!-- Load SCHEMAS Dictionary -->
     <script>
         window.APP_SCHEMAS = <?!= JSON.stringify(getAppSchema()) ?>;
+        window.__APP_CACHE__ = {}; // Global State Hub for Frontend Hydration
     </script>
 </head>
 
