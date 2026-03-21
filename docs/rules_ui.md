@@ -46,7 +46,7 @@
 - **Ley de Match de Esquema:** El motor de UI NUNCA debe hardcodear nombres de entidades en las funciones de edición. Toda llamada a `openEditForm` debe usar la referencia dinámica del esquema.
 - **Validación de Existencia:** Antes de intentar leer propiedades como `idField` o `steps`, el motor DEBE validar que el objeto de configuración de la entidad no sea `null` o `undefined`, lanzando un error controlado y descriptivo en lugar de un TypeError genérico.
 
-## 8. Prohibición de Feedback Nativo y Uso del Sistema de Diseño
+## 10. Prohibición de Feedback Nativo y Uso del Sistema de Diseño
 - **Ley de la Coherencia Visual:** Queda terminantemente PROHIBIDO el uso de mecanismos de interacción nativos del navegador como `window.alert()`, `window.prompt()`, `window.confirm()` o diálogos modales nativos de HtmlService (`createTemplateFromFile`).
 - **Uso de Componentes Ionic/Material:** Toda interacción que requiera feedback (Alertas), confirmación o entrada rápida de datos (Inputs rápidos) DEBE utilizar exclusivamente los componentes del framework de UI (ej. `ion-modal`, `ion-alert`, `ion-popover`). 
 - **Validación QA:** Cualquier interfaz que presente un diálogo nativo será rechazada automáticamente en la fase de control de calidad.

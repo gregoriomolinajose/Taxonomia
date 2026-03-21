@@ -477,6 +477,7 @@
                 window.__NESTED_DATA__[field.name] = childRecords;
 
                 addBtn.onclick = async () => {
+                    // Rule 1 Compliance: Using standard ion-alert component
                     const singularLabel = field.label.replace(/s de /i, ' de ').replace(/s$/i, '').replace(/Grupos/i, 'Grupo');
                     const alert = document.createElement('ion-alert');
                     alert.header = `Agregar ${singularLabel}`;
