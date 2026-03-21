@@ -714,12 +714,20 @@
             return strVal.length > 60 ? strVal.substring(0, 58) + '…' : strVal;
         }
 
+        function _normalizeFields(entityName) {
+            const schemaDef = window.APP_SCHEMAS && window.APP_SCHEMAS[entityName];
+            if (!schemaDef) return null;
+            if (Array.isArray(schemaDef)) return schemaDef;
+            if (schemaDef.fields) return schemaDef.fields;
+            return Object.keys(schemaDef).map(k => Object.assign({ name: k }, schemaDef[k]));
+        }
+
         function _labelFromKey(key) {
             // Encuentra en APP_SCHEMAS si está disponible
-            const schema = window.APP_SCHEMAS && window.APP_SCHEMAS[_state.entityName];
-            if (schema) {
-                const field = schema.fields.find(f => f.name === key);
-                if (field) return field.label;
+            const fields = _normalizeFields(_state.entityName);
+            if (fields) {
+                const field = fields.find(f => f.name === key);
+                if (field && field.label) return field.label;
             }
             return key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
         }
@@ -728,25 +736,43 @@
            Derivar columnas desde schema o datos
         ───────────────────────────────────────────── */
         function _buildColumns(entityName, rows) {
-            const schema = window.APP_SCHEMAS && window.APP_SCHEMAS[entityName];
+            const fields = _normalizeFields(entityName);
             let keys = [];
 
-            if (schema) {
-                keys = schema.fields.map(f => f.name);
+            if (fields) {
+                keys = fields.map(f => f.name);
                 // agregar claves presentes en datos pero no en schema (ej. created_at)
-                if (rows.length > 0) {
+                if (rows && rows.length > 0) {
                     Object.keys(rows[0]).forEach(k => { if (!keys.includes(k)) keys.push(k); });
                 }
-            } else if (rows.length > 0) {
+            } else if (rows && rows.length > 0) {
                 keys = Object.keys(rows[0]);
             }
 
-            return keys.map(key => ({
-                key,
-                label: _labelFromKey(key),
-                visible: !HIDDEN_BY_DEFAULT.includes(key),
-                sortable: true
-            }));
+            return keys.map(key => {
+                let isHidden = HIDDEN_BY_DEFAULT.includes(key);
+                let isPrimaryKey = false;
+
+                if (fields) {
+                    const f = fields.find(field => field.name === key);
+                    if (f) {
+                        if (f.primaryKey) isPrimaryKey = true;
+                        if (f.type === 'hidden' && !f.primaryKey) isHidden = true;
+                    }
+                }
+
+                // Heurística de respaldo para llaves primarias
+                if (key.startsWith('id_')) {
+                    isPrimaryKey = true;
+                }
+                
+                return {
+                    key,
+                    label: _labelFromKey(key),
+                    visible: isPrimaryKey ? true : !isHidden,
+                    sortable: true
+                };
+            });
         }
 
         /* ────────────────────────────────────────────
