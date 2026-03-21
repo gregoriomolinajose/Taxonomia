@@ -26,3 +26,8 @@
 - **Ley de Success Routing:** Todo evento de éxito al guardar o actualizar un registro DEBE destruir completamente el contenedor del formulario del DOM y retornar obligatoriamente a la vista de listado (`DataView_UI`).
 - **Ley de Escape Routing:** Todo botón de retroceso (`<ion-back-button>`) o botón de "Cancelar" en las pantallas de creación/edición DEBE cancelar el flujo de forma segura, destruir el contenedor del formulario y retornar a la vista de listado (`DataView_UI`).
 - **Ley de Visibilidad de la Llave Primaria (PK):** El campo definido como Llave Primaria (`primaryKey: true` o equivalente) JAMÁS debe ser ocultado en la cuadrícula de `DataView_UI`, incluso si en el esquema está marcado como `type: "hidden"`. Este campo es el ancla visual y obligatoria para que el usuario pueda acceder a la vista de edición.
+
+## 6. Sincronización de Layout y Menús (Sidebar & Dashboard)
+- **Ley de Jerarquía del Menú (Sidebar Index 0):** El ítem de navegación principal (`Inicio`, `Home` o `Dashboard`) es sagrado. DEBE ser siempre el primer elemento (Índice 0 absoluto) en la barra de navegación lateral. Ninguna entidad nueva, sin importar su nivel en la taxonomía, puede desplazar al Inicio de la parte superior.
+- **Ley de Sincronización del Dashboard (Cards):** Toda nueva entidad principal (CRUD) que se agregue al menú lateral DEBE tener obligatoriamente su representación visual equivalente en el panel de Inicio (Dashboard Principal). 
+- **Ley de Simetría Responsiva:** Al agregar una nueva tarjeta al Dashboard, el desarrollador o agente DEBE recalcular el Grid responsivo (`<ion-col>`) para asegurar que el diseño se mantenga simétrico (por ejemplo, pasar de tercios `size-xl="4"` a cuartos `size-xl="3"` si se tienen 4 tarjetas).
