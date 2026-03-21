@@ -477,14 +477,33 @@
                 window.__NESTED_DATA__[field.name] = childRecords;
 
                 addBtn.onclick = async () => {
-                    // Simulación de entrada rápida (Input Prompt)
-                    // En una versión más pro, usaríamos un modal con el esquema del targetEntity
-                    const name = prompt(`Nombre del ${field.label}:`);
-                    if (name) {
-                        const newChild = { nombre: name, estado: 'Activo' };
-                        childRecords.push(newChild);
-                        _refreshList();
-                    }
+                    const alert = document.createElement('ion-alert');
+                    alert.header = `Nuevo ${field.label}`;
+                    alert.inputs = [
+                        {
+                            name: 'nombre',
+                            type: 'text',
+                            placeholder: 'Nombre del registro'
+                        }
+                    ];
+                    alert.buttons = [
+                        {
+                            text: 'Cancelar',
+                            role: 'cancel'
+                        },
+                        {
+                            text: 'Agregar',
+                            handler: (data) => {
+                                if (data.nombre) {
+                                    const newChild = { nombre: data.nombre, estado: 'Activo' };
+                                    childRecords.push(newChild);
+                                    _refreshList();
+                                }
+                            }
+                        }
+                    ];
+                    document.body.appendChild(alert);
+                    await alert.present();
                 };
 
                 const _refreshList = () => {
