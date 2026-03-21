@@ -13,11 +13,21 @@ const { APP_SCHEMAS } = require('../src/Schema_Engine.gs');
 global.APP_SCHEMAS = APP_SCHEMAS;
 
 // Mock components
-jest.mock('../src/Adapter_Sheets', () => ({
-    upsert: jest.fn(),
-    upsertBatch: jest.fn(),
-    list: jest.fn()
-}));
+jest.mock('../src/Adapter_Sheets', () => {
+    const actual = jest.requireActual('../src/Adapter_Sheets');
+    
+    // Regla QA 7: Validar físicamente que el método existe en el código real antes de testear
+    if (typeof actual.upsertBatch !== 'function') {
+        throw new Error("CRITICAL: upsertBatch NO existe en Adapter_Sheets.js. El test fallará por integridad.");
+    }
+
+    return {
+        ...actual,
+        upsert: jest.fn(),
+        upsertBatch: jest.fn(actual.upsertBatch), // Mantenemos la referencia pero la envolvemos en un espía
+        list: jest.fn()
+    };
+});
 
 jest.mock('../src/Adapter_CloudDB', () => ({
     upsert: jest.fn()

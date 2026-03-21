@@ -137,6 +137,17 @@ const Adapter_Sheets = {
             return { status: 'success', action: 'created', pk: primaryKeyField, val: primaryKeyValue };
         }
     },
+
+    /**
+     * upsertBatch(tableName, items, config)
+     * Ejecuta múltiples upserts en bloque. Reutiliza la lógica de auditoría de upsert.
+     */
+    upsertBatch: function (tableName, items, config) {
+        if (!Array.isArray(items) || items.length === 0) return { status: 'success', count: 0 };
+        const results = items.map(item => this.upsert(tableName, item, config));
+        return { status: 'success', count: results.length, details: results };
+    },
+
     remove: function (tableName, id, config) {
         if (typeof SpreadsheetApp === 'undefined') {
             return { status: 'success', action: 'deleted', pk: 'id', val: id };

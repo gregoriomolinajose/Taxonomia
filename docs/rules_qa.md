@@ -24,3 +24,6 @@
 ## 6. Estándares de Performance y Latencia
 - **Ley de Lectura en Bloque (Batching):** Queda terminantemente prohibido realizar llamadas a la API de SpreadsheetApp (`getValue`, `getRange`, `setRow`) dentro de ciclos iterativos (`for`, `map`, `forEach`). Todo procesamiento debe hacerse sobre arreglos en memoria tras una única llamada de lectura masiva.
 - **Threshold de Aceptación:** Cualquier `callback` de lectura de datos que supere los 2.0 segundos en un entorno de desarrollo con menos de 100 registros debe ser marcado para refactorización inmediata de latencia.
+
+## 7. Integridad de Pruebas en Capa de Datos (Anti-Mocking)
+- **Prohibición de Mocks Superficiales:** Queda ESTRICTAMENTE PROHIBIDO mockear (simular) métodos del `Adapter_Sheets` en las pruebas de integración (`Engine_DB`). Si una prueba valida la persistencia de datos, debe ejecutar el código real del adaptador contra un entorno de base de datos de prueba (Test Environment) o memoria, para garantizar que la firma de la función realmente existe y opera.
