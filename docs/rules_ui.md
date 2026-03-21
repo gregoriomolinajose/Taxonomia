@@ -31,3 +31,8 @@
 - **Ley de Jerarquía del Menú (Sidebar Index 0):** El ítem de navegación principal (`Inicio`, `Home` o `Dashboard`) es sagrado. DEBE ser siempre el primer elemento (Índice 0 absoluto) en la barra de navegación lateral. Ninguna entidad nueva, sin importar su nivel en la taxonomía, puede desplazar al Inicio de la parte superior.
 - **Ley de Sincronización del Dashboard (Cards):** Toda nueva entidad principal (CRUD) que se agregue al menú lateral DEBE tener obligatoriamente su representación visual equivalente en el panel de Inicio (Dashboard Principal). 
 - **Ley de Simetría Responsiva:** Al agregar una nueva tarjeta al Dashboard, el desarrollador o agente DEBE recalcular el Grid responsivo (`<ion-col>`) para asegurar que el diseño se mantenga simétrico (por ejemplo, pasar de tercios `size-xl="4"` a cuartos `size-xl="3"` si se tienen 4 tarjetas).
+
+## 7. Formateo de Cadenas y Nomenclatura (Anti-Snake-Case Bleeding)
+- **Ley de Presentación de Entidades:** NUNCA expongas las llaves crudas de la base de datos (ej. `Unidad_Negocio`, `snake_case`) en la interfaz gráfica.
+- **Saneamiento Obligatorio:** Todo título principal, subtítulo de tabla, texto de botón de acción (ej. "+ Crear...") o mensaje de alerta (Toast) que se genere dinámicamente a partir de la llave del esquema, DEBE pasar por una función utilitaria de formateo.
+- **Regla de Transformación:** El formateador debe reemplazar todos los guiones bajos (`_`) por espacios en blanco (` `) para que el usuario final siempre lea lenguaje natural y corporativo (ej. transformar `Unidad_Negocio` a `Unidad de Negocio`).

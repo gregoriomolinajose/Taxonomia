@@ -384,6 +384,10 @@
             }
         };
 
+        window.formatEntityName = function (str) {
+            return (str || '').replace(/_/g, ' ');
+        };
+
         window.returnToDashboard = function () {
             const container = document.getElementById('app-container');
             const headerTitle = document.getElementById('main-header-title');
