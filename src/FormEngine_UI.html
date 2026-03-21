@@ -7,6 +7,21 @@
      * Rule 5.1: Progressive Disclosure (Wizards).
      * Rule 5.2: Responsive Native Grids.
      */
+    const MODERN_MODAL_CSS = `
+        ion-modal.modern-modal {
+            --height: auto;
+            --width: 400px;
+            --border-radius: 16px;
+            --box-shadow: 0 28px 48px rgba(0, 0, 0, 0.22);
+            --backdrop-opacity: 0.7;
+        }
+        ion-modal.modern-modal .modal-wrapper {
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05) !important;
+        }
+    `;
+    const styleEl = document.createElement('style');
+    styleEl.innerHTML = MODERN_MODAL_CSS;
+    document.head.appendChild(styleEl);
 
     (function (global) {
         // Estado Global de Edición (Directiva 1)
@@ -477,33 +492,42 @@
                 window.__NESTED_DATA__[field.name] = childRecords;
 
                 addBtn.onclick = async () => {
-                    const alert = document.createElement('ion-alert');
-                    alert.header = `Nuevo ${field.label}`;
-                    alert.inputs = [
-                        {
-                            name: 'nombre',
-                            type: 'text',
-                            placeholder: 'Nombre del registro'
+                    const singularLabel = field.label.replace(/s de /i, ' de ').replace(/s$/i, '').replace(/Grupos/i, 'Grupo');
+                    const modal = document.createElement('ion-modal');
+                    modal.className = 'modern-modal';
+                    modal.innerHTML = `
+                        <ion-header>
+                            <ion-toolbar color="light">
+                                <ion-title style="font-size: 16px; font-weight: 600;">Agregar ${singularLabel}</ion-title>
+                            </ion-toolbar>
+                        </ion-header>
+                        <ion-content class="ion-padding">
+                            <ion-item lines="none" style="--padding-start: 0;">
+                                <ion-input label="Nombre" label-placement="stacked" fill="outline" placeholder="Escriba el nombre aquí..." id="new-item-name"></ion-input>
+                            </ion-item>
+                            <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 20px;">
+                                <ion-button fill="clear" id="btn-cancel">Cancelar</ion-button>
+                                <ion-button id="btn-add">Agregar</ion-button>
+                            </div>
+                        </ion-content>
+                    `;
+                    document.body.appendChild(modal);
+                    await modal.present();
+
+                    const input = modal.querySelector('#new-item-name');
+                    const cancelBtn = modal.querySelector('#btn-cancel');
+                    const saveBtn = modal.querySelector('#btn-add');
+
+                    cancelBtn.onclick = () => modal.dismiss();
+                    saveBtn.onclick = () => {
+                        const val = input.value?.trim();
+                        if (val) {
+                            const newChild = { nombre: val, estado: 'Activo' };
+                            childRecords.push(newChild);
+                            _refreshList();
+                            modal.dismiss();
                         }
-                    ];
-                    alert.buttons = [
-                        {
-                            text: 'Cancelar',
-                            role: 'cancel'
-                        },
-                        {
-                            text: 'Agregar',
-                            handler: (data) => {
-                                if (data.nombre) {
-                                    const newChild = { nombre: data.nombre, estado: 'Activo' };
-                                    childRecords.push(newChild);
-                                    _refreshList();
-                                }
-                            }
-                        }
-                    ];
-                    document.body.appendChild(alert);
-                    await alert.present();
+                    };
                 };
 
                 const _refreshList = () => {
