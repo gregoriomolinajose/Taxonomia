@@ -16,10 +16,11 @@
 - Si el esquema define `width`, debe mapearse a breakpoints grandes (ej. `<ion-col size="12" size-md="6">`). 
 - NUNCA uses CSS crudo para el layout.
 
-## 4. Feedback Visual y Theming
+## 4. Feedback Visual, Theming e Iconografía
 - Toda operación de red DEBE bloquear la interfaz usando `<ion-loading>` o `<ion-spinner>`.
 - El resultado de las operaciones DEBE comunicarse mediante un `<ion-toast>` nativo. NUNCA uses `alert()` nativo.
 - DEBES usar los tokens de color nativos de Ionic (`primary`, `success`, etc.). NUNCA inyectes estilos CSS con colores "hardcoded".
+- **Consistencia de Iconografía (Design System):** La familia oficial de glifos de la aplicación es la variante delineada (`-outline`) de Ionicons. NUNCA mezcles íconos sólidos (`-sharp` o por defecto) con íconos delineados, para mantener el mismo peso visual en toda la navegación e interfaz.
 
 ## 5. Navegación y Flujos de Vida CRUD (Routing)
 - **Ley de Success Routing:** Todo evento de éxito al guardar o actualizar un registro DEBE destruir completamente el contenedor del formulario del DOM y retornar obligatoriamente a la vista de listado (`DataView_UI`).

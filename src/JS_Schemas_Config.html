@@ -71,6 +71,14 @@
         { name: "slo_objetivo", label: "SLO Objetivo (%)", type: "number", required: false },
         { name: "id_grupo_producto", label: "Grupo de Productos", type: "select", required: true, options: [], lookupSource: "getGruposProductosOptions" }
       ]
+    },
+    Unidad_Negocio: {
+      "id_unidad": { "type": "hidden", "primaryKey": true },
+      "estado": { "type": "hidden", "defaultValue": "Activo" },
+      "nombre": { "type": "text", "label": "Nombre de la Unidad", "required": true, "width": "12" },
+      "codigo_interno": { "type": "text", "label": "Código Interno / Centro de Costos", "required": true, "width": "6" },
+      "director": { "type": "text", "label": "Director Responsable", "required": true, "width": "6" },
+      "descripcion": { "type": "textarea", "label": "Descripción Estratégica", "width": "12" }
     }
   };
 </script>

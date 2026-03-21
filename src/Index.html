@@ -394,6 +394,7 @@
             formList.style.display = 'none';
 
             const links = [
+                { id: 'u_neg', icon: 'business-outline', label: 'Unidades de Negocio', action: "window.DataViewEngine.render('Unidad_Negocio', 'app-container')" },
                 { id: 'home', icon: 'home-outline', label: 'Inicio', action: 'window.returnToDashboard()', active: true },
                 { id: 'port', icon: 'briefcase-outline', label: 'Portafolios', action: "window.DataViewEngine.render('Portafolio', 'app-container')" },
                 { id: 'grup', icon: 'layers-outline', label: 'Grupos', action: "window.DataViewEngine.render('Grupo_Productos', 'app-container')" },
@@ -438,6 +439,7 @@
             </ion-item>`;
 
             const entities = [
+                { key: 'Unidad_Negocio', icon: 'business-outline', label: 'Unidades de Negocio' },
                 { key: 'Portafolio', icon: 'briefcase-outline', label: 'Portafolios' },
                 { key: 'Grupo_Productos', icon: 'layers-outline', label: 'Grupos de Producto' },
                 { key: 'Producto', icon: 'cube-outline', label: 'Productos' }
