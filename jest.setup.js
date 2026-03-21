@@ -26,6 +26,18 @@ global.CONFIG = {
     useCloudDB: false
 };
 
+// Mock para CacheService (Regla 11: Performance)
+const mockCache = {
+    get: jest.fn(),
+    put: jest.fn(),
+    remove: jest.fn()
+};
+global.CacheService = {
+    getScriptCache: jest.fn().mockReturnValue(mockCache),
+    getUserCache: jest.fn().mockReturnValue(mockCache),
+    getDocumentCache: jest.fn().mockReturnValue(mockCache)
+};
+
 // Mock para HtmlService (usado en vistas)
 global.HtmlService = {
     createTemplateFromFile: jest.fn().mockReturnValue({

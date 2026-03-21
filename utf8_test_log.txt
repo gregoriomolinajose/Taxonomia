@@ -1,0 +1,97 @@
+﻿
+> taxonomia-project@1.0.0 test
+> jest
+
+node.exe : PASS __tests__/FormEngine_UI_List.test.js
+En línea: 1 Carácter: 1
++ & "C:\Program Files\nodejs/node.exe" "C:\Program Files\nodejs/node_mo ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (PASS __tests__/...UI_List.test.js:Stri 
+   ng) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+  Frontend (Listado): Filtro de Soft Delete
+    ÔêÜ Debe excluir del DataGrid los registros con estado Eliminado (10 ms)
+
+PASS __tests__/Adapter_Sheets.delete.test.js
+  Soft Delete: Adapter_Sheets Inmutabilidad en Delete
+    ÔêÜ Debe realizar Soft Delete cambiando el estado a Eliminado y actualizando la 
+Auditor├¡a (16 ms)
+
+PASS __tests__/Portafolio_CRUD.test.js
+  Portafolio CRUD - Capa de Servicio API_Universal
+    ÔêÜ POST (Create) inyecta campos de auditor├¡a (created_at y updated_by) 
+correctamente antes de invocar Engine_DB (9 ms)
+
+FAIL __tests__/Unidad_Negocio_CRUD.test.js
+  Unidad_Negocio CRUD - Verification
+    ÔêÜ Should handle "Unidad_Negocio" creation via API_Universal (16 ms)
+    ├ù Should verify schema existence in JS_Schemas_Config (2 ms)
+    ÔêÜ Should generate a short UUID (UNID-XXXXX) if id_unidad_negocio is missing 
+in Router (3 ms)
+
+  ÔùÅ Unidad_Negocio CRUD - Verification ÔÇ║ Should verify schema existence in 
+JS_Schemas_Config
+
+    ENOENT: no such file or directory, open 'C:\Users\grego\Antigravity\Taxonomia 
+Project\src\JS_Schemas_Config.html'
+
+    [0m [90m 52 |[39m         [36mconst[39m path [33m=[39m 
+require([32m'path'[39m)[33m;[39m
+     [90m 53 |[39m         [36mconst[39m schemaPath [33m=[39m 
+path[33m.[39mresolve(__dirname[33m,[39m 
+[32m'../src/JS_Schemas_Config.html'[39m)[33m;[39m
+    [31m[1m>[22m[39m[90m 54 |[39m         [36mconst[39m content [33m=[39m 
+fs[33m.[39mreadFileSync(schemaPath[33m,[39m [32m'utf8'[39m)[33m;[39m
+     [90m    |[39m                            [31m[1m^[22m[39m
+     [90m 55 |[39m         
+     [90m 56 |[39m         
+expect(content)[33m.[39mtoContain([32m'Unidad_Negocio:'[39m)[33m;[39m
+     [90m 57 |[39m         
+expect(content)[33m.[39mtoContain([32m'"id_unidad_negocio": { "type": "hidden", 
+"primaryKey": true }'[39m)[33m;[39m[0m
+
+      at Object.readFileSync (__tests__/Unidad_Negocio_CRUD.test.js:54:28)
+
+PASS __tests__/API_Auth.test.js
+  API_Auth: Capa de Identidad y Seguridad
+    ÔêÜ Debe autorizar a un usuario con dominio @gmail.com (5 ms)
+    ÔêÜ Debe autorizar a un usuario con dominio @bellfy.app (1 ms)
+    ÔêÜ Debe rechazar a un usuario con dominio no autorizado (@hotmail.com)
+    ÔêÜ Debe manejar correos con may├║sculas y espacios correctamente (1 ms)
+    ÔêÜ Debe rechazar el acceso si no se provee correo (sesi├│n no disponible)
+
+PASS __tests__/Engine_DB.test.js
+  Engine_DB Facade (Dual-Write & Idempotency)
+    ÔêÜ 1. Dual-Write: Debe invocar ambos adaptadores al guardar un registro (8 ms)
+    ÔêÜ 2. Idempotencia y Upsert: M├║ltiples env├¡os del mismo Payload no deben 
+duplicar registros (1 ms)
+    ÔêÜ 3. Resiliencia: Si Adapter_CloudDB falla, Adapter_Sheets debe guardar de 
+todas formas (1 ms)
+  Adapter_Sheets Normalization Logic (Regla 4.7)
+    ÔêÜ Debe estandarizar el Mapping f├¡sico a formato snake_case predecible (1 ms)
+    ÔêÜ Debe requerir un Primary Key (PK) para evitar el uso ciego de appendRow (1 
+ms)
+
+PASS tests/adapter_sheets.update.test.js
+  Audit Trail: Adapter_Sheets Inmutabilidad en Update
+    ÔêÜ Debe preservar created_at de ayer y actualizar updated_at ignorando llaves 
+sucias del Frontend (13 ms)
+
+  console.log
+    [QA Stress] Processed 1,000 records in 2ms (Mocked Sheets)
+
+      at Object.log (tests/performance_stress.test.js:46:13)
+
+PASS tests/performance_stress.test.js
+  Performance Stress Regression Test (1K Records)
+    ÔêÜ Engine_DB.list should process 1,000 records as tuples without memory issues 
+(66 ms)
+    ÔêÜ Engine_DB.list should cache the result to achieve < 1.5s SLA (Rule 11/12) 
+(3 ms)
+
+Test Suites: 1 failed, 2 skipped, 7 passed, 8 of 10 total
+Tests:       1 failed, 8 skipped, 18 passed, 27 total
+Snapshots:   0 total
+Time:        4.013 s, estimated 14 s
+Ran all test suites.

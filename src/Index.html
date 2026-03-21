@@ -272,7 +272,14 @@
         </ion-split-pane>
     </ion-app>
 
-    <!-- Load Dynamic FormEngine Logic -->
+                         </ion-grid>
+                     </div>
+                 </ion-content>
+             </div>
+         </ion-split-pane>
+     </ion-app>
+
+     <!-- Load Dynamic FormEngine Logic -->
     <?!= include('FormEngine_UI'); ?>
 
     <!-- Load DataView Engine (Universal List) -->
@@ -410,24 +417,6 @@
             if (container && window.OriginalDashboardHTML) {
                 container.innerHTML = window.OriginalDashboardHTML;
             }
-        };
-
-        window.runStressTest = function() {
-            const loading = document.createElement('ion-loading');
-            loading.message = 'Inyectando 1,000 registros...';
-            document.body.appendChild(loading);
-            loading.present();
-
-            google.script.run
-                .withSuccessHandler(msg => {
-                    loading.dismiss();
-                    alert(msg);
-                })
-                .withFailureHandler(err => {
-                    loading.dismiss();
-                    alert('Error: ' + err.message);
-                })
-                .runStressTest1K();
         };
 
         /**
