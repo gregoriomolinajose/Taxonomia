@@ -23,18 +23,36 @@
       ]
     },
     Portafolio: {
-      steps: ["Estrategia", "Finanzas", "Aprobación"],
-      fields: [
-        { name: "id_portafolio", label: "ID Portafolio", type: "text", required: true, readonly: true, step: "Estrategia" },
-        { name: "nombre", label: "Nombre", type: "text", required: true, step: "Estrategia" },
-        { name: "descripcion", label: "Descripción", type: "textarea", required: false, step: "Estrategia" },
-        { name: "temas_estrategicos", label: "Temas Estratégicos", type: "chip-input", required: false, step: "Estrategia" },
-        { name: "flujos_valor", label: "Flujos de Valor", type: "chip-input", required: false, step: "Finanzas" },
-        { name: "clientes_segmentos", label: "Clientes y Segmentos", type: "text", required: false, step: "Finanzas" },
-        { name: "presupuesto", label: "Presupuesto", type: "number", required: true, step: "Finanzas" },
-        { name: "kpis_metricas", label: "KPIs y Métricas", type: "text", required: false, step: "Finanzas" },
-        { name: "estado", label: "Estado", type: "select", required: true, options: ["Borrador", "Activo", "En Revisión"], step: "Aprobación" }
-      ]
+      "id_portafolio": { "type": "hidden", "primaryKey": true },
+      "estado": { "type": "hidden", "defaultValue": "Activo" },
+
+      // --- GRUPO 1: Identidad y Propósito ---
+      "nombre": { "type": "text", "label": "Nombre del Portafolio", "required": true, "group": "Identidad" },
+      "descripcion": { "type": "hidden" }, // Columna histórica
+      "proposito": { "type": "textarea", "label": "Propósito del Portafolio", "required": true, "group": "Identidad" },
+
+      // --- GRUPO 2: Estrategia y Medición ---
+      "temas_estrategicos": { "type": "hidden" }, // Columna histórica
+      "objetivos_negocio": { "type": "textarea", "label": "Objetivos de Negocio (Lista)", "required": true, "group": "Estrategia" },
+      "kpis_metricas": { "type": "textarea", "label": "OKRs y KPIs del Portafolio", "required": true, "group": "Estrategia" },
+
+      // --- GRUPO 3: Capacidad y Flujos ---
+      "capacidad_continuidad": { "type": "number", "label": "% Continuidad Operativa", "group": "Capacidad" },
+      "capacidad_fundacional": { "type": "number", "label": "% Fundacionales", "group": "Capacidad" },
+      "capacidad_transformacion": { "type": "number", "label": "% Evolución y Transform.", "group": "Capacidad" },
+      "flujos_valor": { "type": "textarea", "label": "Value Streams / Flujos de Valor", "group": "Capacidad" },
+
+      // --- GRUPO 4: Presupuesto (Finanzas) ---
+      "presupuesto": { "type": "hidden" }, // Columna histórica
+      "presupuesto_bau": { "type": "number", "label": "Presupuesto BAU ($)", "group": "Presupuesto" },
+      "presupuesto_transformacion": { "type": "number", "label": "Presupuesto Transformación ($)", "group": "Presupuesto" },
+      "presupuesto_estrategico": { "type": "number", "label": "Presupuesto Estratégico ($)", "group": "Presupuesto" },
+
+      // --- GRUPO 5: Gobernanza y Dominio ---
+      "clientes_segmentos": { "type": "hidden" }, // Columna histórica
+      "gobierno_liderazgo": { "type": "textarea", "label": "Gobierno (Roles y Nombres)", "group": "Gobernanza" },
+      "stakeholders": { "type": "textarea", "label": "Stakeholders y Sponsors", "group": "Gobernanza" },
+      "producto_dominio": { "type": "textarea", "label": "Producto / Dominio (OMS, WMS, etc.)", "group": "Gobernanza" }
     },
     Equipo: {
       fields: [

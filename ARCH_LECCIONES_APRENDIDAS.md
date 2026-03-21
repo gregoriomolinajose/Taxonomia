@@ -52,3 +52,15 @@ Este documento registra las lecciones aprendidas durante los Sprints para evitar
   2. El Backend protege agresivamente `created_at` manteniéndolo intacto e inyecta `updated_by` y `updated_at` captando los datos del actor en vivo.
   3. El Frontend aplica un filtro optimista y estático `data.filter(r => r.estado !== 'Eliminado')` inmediatamente al recibir el payload, aislando visualmente el dato sin corromper el almacén real.
 - **Regla Preventiva de Diseño:** *Inmortalidad del Registro.* Ninguna operación de negocio en el Backend debe eliminar filas físicas del almacenamiento persistente. Todo borrado debe ser ejecutado como un método que muta el "estado" a un flag de desactivación y delega al Frontend la responsabilidad de ocultar/ofuscar la data de la capa de UI.
+
+---
+
+## Hito: Flexibilidad Estructural con Portfolio Canvas (Array vs Object Schemas)
+- **Hito:** Refactorización dinámica del generador de UI (`FormEngine_UI.html`) para interpretar esquemas orientados a configuración pura (Objetos JS en vez de Arrays restrictivos).
+- **Punto de Falla (Root Cause) previo:** Anteriormente, el motor estaba acoplado a leer un array `fields: []` dentro de `APP_SCHEMAS`. Al requerirse una vista tipo "Portfolio Canvas", estructurar todos los metadatos en un array resultaba repetitivo y rompía el control visual para el Developer/Architect; además, se introdujeron deudas técnicas como `API_Auth` fallando en CI/CD por falta del `CONFIG` global en el sandbox de Jest.
+- **Solución Maestra (Golden Pattern):** Polimorfismo de Schemas y Mocking Inclusivo.
+  1. Se agregó detección polimórfica en el generador de UI para procesar como Objeto todo aquello que carece de `.fields` o no es Array: `Object.keys(schemaDef).map(k => ({ name: k, ...schemaDef[k] }))`.
+  2. Map-reduce para normalizar la clave `group` en `step`, reutilizando el motor del "Line Wizard" que originalmente mapeaba por el nodo `step`. Transparencia para toda lógica posterior.
+  3. Soporte agnóstico e inmediato al grid para campos invisibles (`field.type === 'hidden'`).
+  4. La deuda técnica de tests dependientes del dominio en entorno virtualizado se saneó inyectando variables configuracionales en el bloque `beforeAll` (`global.CONFIG.ALLOWED_DOMAINS`) exclusivo para Jest.
+- **Regla Preventiva de Diseño:** *Solidaridad y Polimorfismo en Motor UI.* Un motor dinámico que escupe UI basándose en Diccionarios de Datos, NUNCA debe asumir una única estructura. Debe normalizar entradas agnósticamente para garantizar retrocompatibilidad. Las pruebas unitarias de Seguridad y Dominio (como correos permitidos) DEBEN ser aisladas parametrizando un mock en el hook principal del framework y jamás dejarse con variables indefinidas si el fallback rechaza configuraciones por diseño.

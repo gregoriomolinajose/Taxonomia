@@ -3,6 +3,10 @@
 const { API_Auth } = require('../src/API_Auth');
 
 describe('API_Auth: Capa de Identidad y Seguridad', () => {
+    beforeAll(() => {
+        global.CONFIG = global.CONFIG || {};
+        global.CONFIG.ALLOWED_DOMAINS = ['@gmail.com', '@bellfy.app'];
+    });
 
     it('Debe autorizar a un usuario con dominio @gmail.com', () => {
         const result = API_Auth.getUserIdentity("testuser@gmail.com");

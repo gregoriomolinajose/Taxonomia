@@ -66,13 +66,8 @@ describe('Portafolio CRUD - Capa de Servicio API_Universal', () => {
 
         expect(entityNameCalled).toBe('Portafolio');
 
-        // Verificaciones Clave de Auditoría (Regla de la documentación)
-        expect(payloadCalled).toHaveProperty('created_at');
-        // Validamos que sea un timestamp o fecha válida
-        expect(new Date(payloadCalled.created_at).getTime()).not.toBeNaN();
-
-        expect(payloadCalled).toHaveProperty('updated_by');
-        expect(payloadCalled.updated_by).toBe('test.user@taxonomia.com');
+        // Verificaciones de Delegación (La inyección de auditoría se movió a Adapter_Sheets)
+        expect(payloadCalled.nombre).toBe('Portafolio Estratégico 2026');
     });
 
 });

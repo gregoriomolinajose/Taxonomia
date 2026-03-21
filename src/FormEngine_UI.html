@@ -30,8 +30,27 @@
 
             const schemaDef = schemas[entityName];
             // Normalize schema definition (flat array vs object containing steps)
-            const fields = Array.isArray(schemaDef) ? schemaDef : schemaDef.fields;
-            const steps = schemaDef.steps || null;
+            let fields = [];
+            let steps = schemaDef.steps || null;
+
+            if (Array.isArray(schemaDef)) {
+                fields = schemaDef;
+            } else if (schemaDef.fields) {
+                fields = schemaDef.fields;
+            } else {
+                // Default to Portfolio Canvas layout
+                fields = Object.keys(schemaDef).map(k => ({ name: k, ...schemaDef[k] }));
+
+                if (!steps) {
+                    const extractedGroups = [...new Set(fields.map(f => f.group).filter(Boolean))];
+                    if (extractedGroups.length > 0) steps = extractedGroups;
+                }
+
+                // Map 'group' to 'step' for backward UI layout compatibility
+                fields.forEach(f => {
+                    if (f.group && !f.step) f.step = f.group;
+                });
+            }
 
             // --- DEPENDENCY RESOLVER: lookupSource Universal (Metadata-Driven) ---
             /**
@@ -222,6 +241,24 @@
 
             // Generación Segura de Componentes con Theming Activo
             fields.forEach(field => {
+                // Soporte nativo y rápido para campos ocultos fuera del Grid UI
+                if (field.type === 'hidden') {
+                    const hiddenInput = document.createElement('input');
+                    hiddenInput.setAttribute('type', 'hidden');
+                    hiddenInput.setAttribute('name', field.name);
+                    
+                    if (field.primaryKey) {
+                        const prefix = entityName.substring(0, 4).toUpperCase();
+                        const sufix = Math.random().toString(36).substring(2, 7).toUpperCase();
+                        hiddenInput.value = `${prefix}-${sufix}`;
+                    } else if (field.defaultValue !== undefined) {
+                        hiddenInput.value = field.defaultValue;
+                    }
+
+                    container.appendChild(hiddenInput); // Global persistency
+                    return; // Skip drawing UI columns
+                }
+
                 let targetRow = rows['default'];
                 if (steps && field.step && rows[field.step]) {
                     targetRow = rows[field.step];
@@ -490,7 +527,7 @@
                 submitBtn.innerHTML = '<ion-spinner name="crescent"></ion-spinner> &nbsp; Guardando...';
 
                 // Capturar el Payload dinámicamente
-                const inputs = container.querySelectorAll('ion-input, ion-textarea, ion-select');
+                const inputs = container.querySelectorAll('ion-input, ion-textarea, ion-select, input[type="hidden"]');
                 const payload = {};
                 inputs.forEach(input => {
                     const name = input.getAttribute('name');
@@ -565,13 +602,19 @@
                                     goToStep(0);
 
                                     // 4. Regeneración de ID (Seguridad)
-                                    const idInputs = container.querySelectorAll('ion-input[readonly]');
+                                    const idInputs = container.querySelectorAll('ion-input[readonly], input[type="hidden"]');
                                     idInputs.forEach(input => {
                                         const name = input.getAttribute('name');
                                         if (name && name.startsWith('id_')) {
                                             const prefix = entityName.substring(0, 4).toUpperCase();
                                             const sufix = Math.random().toString(36).substring(2, 7).toUpperCase();
                                             input.value = `${prefix}-${sufix}`;
+                                        } else if (input.getAttribute('type') === 'hidden') {
+                                             // Restablecer hidden predeterminados si los hubiera
+                                             const fSchema = fields.find(f => f.name === name);
+                                             if (fSchema && fSchema.defaultValue !== undefined && !name.startsWith('id_')) {
+                                                 input.value = fSchema.defaultValue;
+                                             }
                                         }
                                     });
                                 };
@@ -652,7 +695,7 @@
 
             // 5. Pre-llenado de campos (Directiva 3.c)
             const container = document.getElementById('app-container');
-            const inputs = container.querySelectorAll('ion-input, ion-textarea, ion-select');
+            const inputs = container.querySelectorAll('ion-input, ion-textarea, ion-select, input[type="hidden"]');
 
             console.log("[FormEngine] Pre-llenando", inputs.length, "campos...");
             inputs.forEach(input => {
