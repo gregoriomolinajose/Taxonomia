@@ -881,26 +881,48 @@
                         await loading.dismiss();
                         try {
                             if (response && response.status === 'success') {
-                                 // Server-Confirmed Frontend Cache Update (Inmutable - Zero-Latency Segura)
+                                 // ── Server-Confirmed Frontend Cache Injection (Immutable · Zero-Latency) ──
                                  if (window.__APP_CACHE__ && window.__APP_CACHE__[entityName]) {
-                                     // CRITICAL: Targeting .data directly to preserve container properties (schema, lookups)
                                      const cacheData = window.__APP_CACHE__[entityName].data;
                                      if (cacheData) {
-                                         const adapter_sheets = response.data.adapter_results.sheets;
-                                         const pkField = adapter_sheets.pk;
-                                         const pkValue = adapter_sheets.val;
+                                         // ── PK Resolution Chain (3 tiers, defensive) ─────────────────────────
+                                         // Tier 1: Server-confirmed via new response.pk / response.pkValue fields
+                                         let pkField = response.pk;
+                                         let pkValue = response.pkValue;
 
-                                         // REGLA DE ORO: Inyectar copia limpia del payload enriquecida con ID real.
-                                         const cleanRecord = { ...payload, [pkField]: pkValue };
+                                         // Tier 2: Derive from payload (client-generated IDs on create)
+                                         if (!pkField || !pkValue) {
+                                             pkField = Object.keys(payload).find(k => k.startsWith('id_'));
+                                             pkValue = pkField ? payload[pkField] : null;
+                                         }
 
-                                         // INMUTABILIDAD ESTRUCTURAL: Sólo se reemplaza el arreglo .data, preservando el contenedor
-                                         const existingIdx = cacheData.findIndex(r => _normalizeId(r[pkField]) === _normalizeId(pkValue));
-                                         
-                                         window.__APP_CACHE__[entityName].data = existingIdx !== -1
-                                             ? [...cacheData.slice(0, existingIdx), cleanRecord, ...cacheData.slice(existingIdx + 1)]
-                                             : [cleanRecord, ...cacheData];
+                                         // Tier 3: ENTITY_META fallback
+                                         if (!pkField || !pkValue) {
+                                             const meta = (window.DataViewEngine && typeof window.DataViewEngine._getState === 'function')
+                                                 ? window.DataViewEngine._getState().entityMeta
+                                                 : null;
+                                             pkField = meta && meta.idField ? meta.idField : pkField;
+                                             pkValue = pkField ? payload[pkField] : null;
+                                         }
+                                         // ─────────────────────────────────────────────────────────────────────
 
-                                         console.log(`[Cache] Update LIMPIO para: ${entityName}. Total: ${window.__APP_CACHE__[entityName].data.length}`);
+                                         if (pkField && pkValue) {
+                                             // REGLA DE ORO: Registro limpio fusionando payload con ID confirmado.
+                                             const cleanRecord = { ...payload, [pkField]: pkValue };
+
+                                             // INMUTABILIDAD ESTRUCTURAL: reemplaza sólo el arreglo .data
+                                             const existingIdx = cacheData.findIndex(r => _normalizeId(r[pkField]) === _normalizeId(pkValue));
+
+                                             window.__APP_CACHE__[entityName].data = existingIdx !== -1
+                                                 // UPDATE: reemplazar en su posición
+                                                 ? [...cacheData.slice(0, existingIdx), cleanRecord, ...cacheData.slice(existingIdx + 1)]
+                                                 // INSERT: prepend (aparece primero en la tabla)
+                                                 : [cleanRecord, ...cacheData];
+
+                                             console.log(`[Cache] ${existingIdx !== -1 ? 'UPDATE' : 'INSERT'} para: ${entityName} [${pkField}=${pkValue}]. Total: ${window.__APP_CACHE__[entityName].data.length}`);
+                                         } else {
+                                             console.warn(`[Cache] No se pudo resolver pkField/pkValue para ${entityName}. Cache no actualizado.`);
+                                         }
                                      }
                                  }
 
