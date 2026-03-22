@@ -112,6 +112,27 @@ function getInitialPayload(entityName) {
         if (typeof this[sourceFn] === 'function') {
           lookups[field.name] = _getCachedLookup(sourceFn);
         }
+      } else if (field.targetEntity) {
+        // Soporte para subgrid selections (Select OR Create)
+        const sourceFn = `get${field.targetEntity}Options`;
+        const pluralFn = `get${field.targetEntity.replace(/o$/i, 'os').replace(/a$/i, 'as')}Options`; // Handle common plurals
+        
+        if (typeof this[sourceFn] === 'function') {
+          lookups[field.name] = _getCachedLookup(sourceFn);
+        } else if (typeof this[pluralFn] === 'function') {
+          lookups[field.name] = _getCachedLookup(pluralFn);
+        } else {
+          // Fallback manual para Grupos_Productos -> getGruposProductosOptions
+          const clean = field.targetEntity.replace(/_/g, '');
+          const manualFn = `get${clean}Options`;
+          const altManualFn = `get${clean.replace(/o/i, 'os')}Options`; // e.g. GrupoProductos -> GruposProductos
+          
+          if (typeof this[manualFn] === 'function') {
+            lookups[field.name] = _getCachedLookup(manualFn);
+          } else if (typeof this[altManualFn] === 'function') {
+            lookups[field.name] = _getCachedLookup(altManualFn);
+          }
+        }
       }
     });
 
@@ -168,7 +189,12 @@ function API_Universal_Router(action, entityName, payload) {
       }
       responseData = _handleCreate(entityName, payload);
     } else if (action === 'read') {
-      responseData = _handleRead(entityName);
+      const id = (typeof payload === 'object') ? payload[Object.keys(payload).find(k => k.startsWith('id_'))] || payload.id : payload;
+      if (id) {
+        responseData = Engine_DB.readFull(entityName, id);
+      } else {
+        responseData = _handleRead(entityName);
+      }
     } else if (action === 'update') {
       const idField = Object.keys(payload).find(k => k.startsWith('id_'));
       const id = payload[idField];

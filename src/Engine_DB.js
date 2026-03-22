@@ -117,15 +117,36 @@ const Engine_DB = {
                     const targetEntity = f.targetEntity;
                     const fkField = f.foreignKey;
 
+                    // --- RECONCILIACIÓN (DIFFING) ---
+                    // Paso A: Buscar hijos huérfanos antes de actualizar
+                    const currentInDB = _Adapter_Sheets.list(targetEntity, config, 'objects') || { rows: [] };
+                    const orphanMatches = (currentInDB.rows || []).filter(c => c[fkField] == parentPK);
+                    
+                    // Paso B: Determinar cuáles ya no están en el nuevo payload
+                    const tableKey = targetEntity.toLowerCase();
+                    const singularKey = tableKey.endsWith('s') ? tableKey.slice(0, -1) : (tableKey.endsWith('es') ? tableKey.slice(0, -2) : tableKey);
+                    const pkField = 'id_' + singularKey;
+                    
+                    const incomingIds = children.map(c => String(c[pkField] || ''));
+                    const orphans = orphanMatches.filter(c => c && !incomingIds.includes(String(c[pkField] || '')));
+
+                    if (orphans.length > 0) {
+                        Logger.log(`[Diffing] Detectados ${orphans.length} huérfanos para desvincular.`);
+                        orphans.forEach(o => o[fkField] = ""); // Desvincular físicamente
+                        _Adapter_Sheets.upsertBatch(targetEntity, orphans, config);
+                    }
+
                     // Inyectar FK
                     children.forEach(child => {
                         child[fkField] = parentPK;
-                        // Asegurar PK para cada hijo si no tiene una
-                        const childIdField = Object.keys(child).find(k => k.startsWith('id_')) || ('id_' + targetEntity.toLowerCase().replace(/s$/, ''));
-                        if (!child[childIdField]) {
+                        
+                        // Si el registro es nuevo (no tiene PK), generarla
+                        if (!child[pkField]) {
                             const prefix = targetEntity.substring(0, 4).toUpperCase();
-                            const sufix = Math.random().toString(36).substring(2, 7).toUpperCase();
-                            child[childIdField] = `${prefix}-${sufix}`;
+                            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+                            let suffix = '';
+                            for (let i = 0; i < 5; i++) suffix += chars.charAt(Math.floor(Math.random() * chars.length));
+                            child[pkField] = `${prefix}-${suffix}`;
                         }
                     });
 
@@ -166,7 +187,43 @@ const Engine_DB = {
     },
 
     read: function (entityName, id) {
-        // Lógica futura de enrutamiento READ (single record by ID)
+        const config = (typeof CONFIG !== 'undefined') ? CONFIG : { useSheets: true };
+        const results = _Adapter_Sheets.list(entityName, config, 'objects');
+        const pkField = 'id_' + entityName.toLowerCase().replace(/s$/, '');
+        return results.rows.find(r => r[pkField] == id || r['id_' + entityName.toLowerCase()] == id);
+    },
+
+    /**
+     * readFull: Lee un registro e hidrata sus relaciones (Regla 15).
+     */
+    readFull: function (entityName, id) {
+        const mainRecord = this.read(entityName, id);
+        if (!mainRecord) return null;
+
+        const schema = (typeof APP_SCHEMAS !== 'undefined') ? APP_SCHEMAS[entityName] : null;
+        if (schema) {
+            const fields = schema.fields || (typeof schema === 'object' ? Object.keys(schema).map(k => ({ name: k, ...schema[k] })) : []);
+            fields.forEach(f => {
+                if (f.type === 'relation') {
+                    const targetEntity = f.targetEntity;
+                    const fkField = f.foreignKey;
+                    
+                    // Buscar hijos en la tabla destino
+                    const config = (typeof CONFIG !== 'undefined') ? CONFIG : { useSheets: true };
+                    const allChildren = _Adapter_Sheets.list(targetEntity, config, 'objects');
+                    
+                    // Filtrar por FK
+                    const matches = allChildren.rows.filter(child => child[fkField] == id);
+                    mainRecord[f.name] = matches;
+                    
+                    if (typeof Logger !== 'undefined') {
+                        Logger.log(`[Engine_DB.readFull] Hydrated ${matches.length} matches into ${f.name} for ID ${id}`);
+                    }
+                }
+            });
+        }
+
+        return mainRecord;
     },
 
     /**

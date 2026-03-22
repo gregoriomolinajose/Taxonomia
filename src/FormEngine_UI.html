@@ -12,7 +12,7 @@
         // Estado Global de Edición (Directiva 1)
         global.currentEditId = null;
 
-        global.renderForm = async function (entityName) {
+        global.renderForm = async function (entityName, data = null) {
             // Asegurar reset de estado al abrir formulario nuevo (Directiva 1)
             global.currentEditId = null;
             const container = document.getElementById('app-container');
@@ -59,7 +59,7 @@
              * Muestra ion-loading mientras resuelve; non-fatal si un lookup falla.
              */
             async function _resolveLookupSources(fields) {
-                const fieldsWithLookup = fields.filter(f => f.lookupSource);
+                const fieldsWithLookup = fields.filter(f => f.lookupSource || (f.type === 'relation' && f.targetEntity));
                 if (fieldsWithLookup.length === 0) return;
 
                 const loading = document.createElement('ion-loading');
@@ -71,16 +71,22 @@
                 try {
                     const promises = fieldsWithLookup.map(field => new Promise((resolve) => {
                         if (typeof google !== 'undefined' && google.script && google.script.run) {
-                            google.script.run
+                            const handler = google.script.run
                                 .withSuccessHandler(opts => { field.options = opts || []; resolve(); })
                                 .withFailureHandler(err => {
-                                    console.error(`[FormEngine] lookupSource '${field.lookupSource}' falló:`, err);
-                                    resolve(); // non-fatal: el select quedará vacío
-                                })
-                            [field.lookupSource]();
+                                    console.error(`[FormEngine] lookupSource falló:`, err);
+                                    resolve(); 
+                                });
+                            
+                            if (field.lookupSource) {
+                                handler[field.lookupSource]();
+                            } else if (field.type === 'relation' && field.targetEntity) {
+                                // Dynamic lookup for relations (Rules 15)
+                                handler.getInitialPayload(field.targetEntity);
+                            }
                         } else {
-                            // Modo dev local: mock genérico por nombre de función
-                            field.options = [{ value: 'MOCK-1', label: `Mock: ${field.lookupSource}` }];
+                            // Modo dev local
+                            field.options = [{ value: 'MOCK-1', label: `Mock: ${field.lookupSource || field.targetEntity}` }];
                             resolve();
                         }
                     }));
@@ -170,6 +176,7 @@
             progressLabel.style.fontWeight = '600';
             progressLabel.style.textTransform = 'uppercase';
             progressLabel.style.letterSpacing = '1px';
+            
             cardContent.appendChild(progressLabel);
 
             if (steps && steps.length > 0) {
@@ -189,6 +196,9 @@
                         item.style.setProperty('--min-height', '44px');
 
                         if (index === 0) item.style.setProperty('--background', 'var(--ion-color-step-100)');
+                        
+                        item.style.cursor = 'pointer';
+                        item.onclick = () => goToStep(index);
 
                         const icon = document.createElement('ion-icon');
                         const iconName = semanticIcons[stepName] || defaultIcons[index % defaultIcons.length];
@@ -210,7 +220,6 @@
 
                     cardContent.appendChild(stepContainers[stepName]);
                 });
-
             } else {
                 // Diseño plano (Sin Wizard Steps definidos en metadatos)
                 if (sidebarSteps) {
@@ -472,41 +481,10 @@
                 list.appendChild(emptyState);
 
                 // Estado local del subgrid
-                const childRecords = [];
+                // Hydration check: if data[field.name] exists, use it
+                const childRecords = (data && Array.isArray(data[field.name])) ? [...data[field.name]] : [];
                 window.__NESTED_DATA__ = window.__NESTED_DATA__ || {};
                 window.__NESTED_DATA__[field.name] = childRecords;
-
-                addBtn.onclick = async () => {
-                    // Rule 1 Compliance: Using standard ion-alert component
-                    const singularLabel = field.label.replace(/s de /i, ' de ').replace(/s$/i, '').replace(/Grupos/i, 'Grupo');
-                    const alert = document.createElement('ion-alert');
-                    alert.header = `Agregar ${singularLabel}`;
-                    alert.inputs = [
-                        {
-                            name: 'nombre',
-                            type: 'text',
-                            placeholder: 'Nombre del registro...'
-                        }
-                    ];
-                    alert.buttons = [
-                        {
-                            text: 'Cancelar',
-                            role: 'cancel'
-                        },
-                        {
-                            text: 'Agregar',
-                            handler: (data) => {
-                                if (data.nombre) {
-                                    const newChild = { nombre: data.nombre, estado: 'Activo' };
-                                    childRecords.push(newChild);
-                                    _refreshList();
-                                }
-                            }
-                        }
-                    ];
-                    document.body.appendChild(alert);
-                    await alert.present();
-                };
 
                 const _refreshList = () => {
                     list.innerHTML = '';
@@ -518,7 +496,7 @@
                         const item = document.createElement('ion-item');
                         item.innerHTML = `
                             <ion-label>
-                                <h2>${record.nombre}</h2>
+                                <h2>${record.nombre || 'Sin nombre'}</h2>
                                 <p>${record.estado || 'Nuevo'}</p>
                             </ion-label>
                             <ion-button slot="end" fill="clear" color="danger" id="del-${idx}">
@@ -531,6 +509,145 @@
                             _refreshList();
                         };
                     });
+                };
+
+                // Initial hydration
+                _refreshList();
+
+                addBtn.onclick = async () => {
+                    // Optimized UX: Select OR Create
+                    const modal = document.createElement('ion-modal');
+                    const modalId = 'modal-' + field.name;
+                    modal.id = modalId;
+                    
+                    const lookupSource = field.options || (window._LOOKUP_DATA && window._LOOKUP_DATA[field.name]) || [];
+                    let normalizedOptions = Array.isArray(lookupSource) ? lookupSource : [];
+                    
+                    if (lookupSource.data && lookupSource.lookups) {
+                         // If it came from getInitialPayload (Tuples)
+                         const headers = lookupSource.data.headers;
+                         const rows = lookupSource.data.rows.map(tuple => {
+                             const obj = {};
+                             headers.forEach((h, i) => obj[h] = tuple[i]);
+                             return obj;
+                         });
+                         // Map to {value, label}
+                         const pkField = Object.keys(rows[0] || {}).find(k => k.startsWith('id_'));
+                         if (pkField) {
+                             normalizedOptions = rows.map(r => ({ value: r[pkField], label: r.nombre || r.nombre_producto || r[pkField] }));
+                         }
+                    }
+
+                    // Determinar la PK real del hijo basada en la entidad destino
+                    const tableKey = field.targetEntity.toLowerCase();
+                    const singularKey = tableKey.endsWith('s') ? tableKey.slice(0, -1) : (tableKey.endsWith('es') ? tableKey.slice(0, -2) : tableKey);
+                    const childPK = 'id_' + singularKey;
+
+                    const selectedIds = childRecords.map(r => {
+                        return String(r[childPK] || r.id || '').trim().toUpperCase();
+                    });
+                    
+                    console.log(`[FormEngine] Sincronizando modal para ${field.targetEntity}. IDs vinculados (PK: ${childPK}):`, selectedIds);
+                    
+                    const availableOptions = normalizedOptions.filter(opt => {
+                        const val = String(opt.value || '').trim().toUpperCase();
+                        return !selectedIds.includes(val);
+                    });
+
+                    modal.innerHTML = `
+                        <ion-header>
+                            <ion-toolbar color="primary">
+                                <ion-title>Seleccionar ${field.label}</ion-title>
+                                <ion-buttons slot="end">
+                                    <ion-button onclick="document.getElementById('${modalId}').dismiss()">Cerrar</ion-button>
+                                </ion-buttons>
+                            </ion-toolbar>
+                        </ion-header>
+                        <ion-content>
+                            <ion-list>
+                                <ion-item button id="btn-create-new" lines="full" color="light">
+                                    <ion-icon name="add-circle-outline" slot="start" color="primary"></ion-icon>
+                                    <ion-label color="primary"><strong>+ Crear Nuevo ${field.label.replace(/s de /i, ' de ').replace(/s$/i, '').replace(/Grupos/i, 'Grupo')}</strong></ion-label>
+                                </ion-item>
+                                
+                                <ion-item-divider>
+                                    <ion-label>Registros Existentes</ion-label>
+                                </ion-item-divider>
+
+                                ${availableOptions.length === 0 ? '<ion-item><ion-label color="medium">No hay más registros disponibles</ion-label></ion-item>' : ''}
+                                       ${availableOptions.map(opt => `
+                                    <ion-item button class="lookup-option" data-value="${opt.value}" data-label="${opt.label}" onclick="const cb = this.querySelector('ion-checkbox'); cb.checked = !cb.checked; this.dispatchEvent(new CustomEvent('selectionChange'))">
+                                        <ion-label>${opt.label}</ion-label>
+                                        <ion-checkbox slot="end"></ion-checkbox>
+                                    </ion-item>
+                                `).join('')}
+                            </ion-list>
+                        </ion-content>
+                        <ion-footer>
+                            <ion-toolbar>
+                                <ion-button expand="block" id="btn-confirm-selection" disabled>Vincular Seleccionados (0)</ion-button>
+                            </ion-toolbar>
+                        </ion-footer>
+                    `;
+
+                    document.body.appendChild(modal);
+                    await modal.present();
+
+                    // Logic for selection
+                    const checkboxes = modal.querySelectorAll('ion-checkbox');
+                    const confirmBtn = modal.querySelector('#btn-confirm-selection');
+                    let selectedCount = 0;
+
+                    const optionsItems = modal.querySelectorAll('.lookup-option');
+                    optionsItems.forEach(item => {
+                        item.addEventListener('selectionChange', () => {
+                            const allCbs = Array.from(modal.querySelectorAll('ion-checkbox'));
+                            const checked = allCbs.filter(c => c.checked).length;
+                            confirmBtn.innerText = `Vincular Seleccionados (${checked})`;
+                            confirmBtn.disabled = checked === 0;
+                        });
+                    });
+
+                    modal.querySelector('#btn-confirm-selection').onclick = () => {
+                        const items = modal.querySelectorAll('.lookup-option');
+                        items.forEach(item => {
+                            const cb = item.querySelector('ion-checkbox');
+                            if (cb.checked) {
+                                const val = item.getAttribute('data-value');
+                                const lab = item.getAttribute('data-label');
+                                
+                                childRecords.push({
+                                    [childPK]: val,
+                                    nombre: lab,
+                                    estado: 'Activo'
+                                });
+                            }
+                        });
+                        _refreshList();
+                        modal.dismiss();
+                    };
+
+                    modal.querySelector('#btn-create-new').onclick = async () => {
+                        modal.dismiss();
+                        const singularLabel = field.label.replace(/s de /i, ' de ').replace(/s$/i, '').replace(/Grupos/i, 'Grupo');
+                        const alert = document.createElement('ion-alert');
+                        alert.header = `Agregar Nuevo ${singularLabel}`;
+                        alert.inputs = [{ name: 'nombre', type: 'text', placeholder: 'Nombre del registro...' }];
+                        alert.buttons = [
+                            { text: 'Cancelar', role: 'cancel' },
+                            { 
+                                text: 'Agregar', 
+                                handler: (data) => {
+                                    if (data.nombre) {
+                                        childRecords.push({ nombre: data.nombre, estado: 'Activo' });
+                                        _refreshList();
+                                    }
+                                } 
+                            }
+                        ];
+                        document.body.appendChild(alert);
+                        await alert.present();
+                    };
                 };
 
                 container.appendChild(subgridDiv);
@@ -594,11 +711,14 @@
                     stepContainers[key].style.display = (key === currentStepName) ? 'block' : 'none';
                 });
 
-                if (steps && steps.length > 0 && sidebarList) {
-                    Object.values(menuItems).forEach((mi, idx) => {
-                        mi.item.style.removeProperty('--background');
-                        mi.icon.removeAttribute('color');
-                        mi.label.removeAttribute('color');
+                if (steps && steps.length > 0 && sidebarSteps) {
+                    steps.forEach((stepName, idx) => {
+                        const mi = menuItems[stepName];
+                        if (!mi) return;
+                        mi.item.style.setProperty('--background', 'transparent');
+                        mi.icon.setAttribute('color', 'medium');
+                        mi.label.setAttribute('color', 'medium');
+
                         if (idx === currentStepIndex) {
                             mi.item.style.setProperty('--background', 'var(--ion-color-step-100)');
                             mi.icon.setAttribute('color', 'primary');
@@ -717,18 +837,44 @@
                 // Llamada nativa hacia Apps Script (API Real)
                 const action = global.currentEditId ? 'update' : 'create';
 
+                // --- UI Blocking (Zero-Latency Rule) ---
+                const loading = document.createElement('ion-loading');
+                loading.message = 'Guardando registro...';
+                loading.spinner = 'crescent';
+                document.body.appendChild(loading);
+                await loading.present();
+
                 google.script.run
-                    .withSuccessHandler((response) => {
+                    .withSuccessHandler(async (response) => {
+                        await loading.dismiss();
                         try {
                             if (response && response.status === 'success') {
-                                // Invalidate Frontend Cache (Client Busting - Directiva Arquitectónica)
-                                if (window.__APP_CACHE__) {
-                                    delete window.__APP_CACHE__[entityName];
-                                }
+                                 // Server-Confirmed Frontend Cache Update (Zero-Latency Segura)
+                                 if (window.__APP_CACHE__ && window.__APP_CACHE__[entityName]) {
+                                     const cachedData = window.__APP_CACHE__[entityName];
+                                     if (Array.isArray(cachedData)) {
+                                         const adapter_sheets = response.data.adapter_results.sheets;
+                                         const pkField = adapter_sheets.pk;
+                                         const pkValue = adapter_sheets.val;
 
-                                const itemName = (response.data && response.data.Entity) ? response.data.Entity : entityName;
-                                // Mostrar Toast Nativo de Éxito
-                                showToast('¡' + itemName + ' guardado con éxito!', 'success');
+                                         // REGLA DE ORO: No inyectar el objeto de control 'adapter_sheets'.
+                                         // Inyectar una copia del payload local enriquecida con el ID real del servidor.
+                                         const cleanRecord = { ...payload };
+                                         cleanRecord[pkField] = pkValue;
+
+                                         // Sincronizar con el cache (Update o Insert)
+                                         const idx = cachedData.findIndex(r => String(r[pkField]) === String(pkValue));
+                                         if (idx !== -1) {
+                                             cachedData[idx] = cleanRecord;
+                                         } else {
+                                             cachedData.unshift(cleanRecord);
+                                         }
+                                         console.log(`[Cache] Update confirmado y LIMPIO para: ${entityName}. Total: ${cachedData.length}`);
+                                     }
+                                 }
+
+                                 const itemName = (response.data && response.data.Entity) ? response.data.Entity : entityName;
+                                 showToast('¡' + itemName + ' guardado con éxito!', 'success');
 
                                 // Soft Reset Post-Guardado (Global Rule)
                                 const resetFormEngine = () => {
@@ -769,20 +915,19 @@
 
                                 resetFormEngine();
                                 
-                                // Enrutamiento post-Guardado (Success Routing)
+                                // Enrutamiento post-Guardado Inmediato (Directiva 0.0s)
                                 if (window.DataViewEngine) {
-                                    setTimeout(() => {
-                                        window.DataViewEngine.render(entityName, 'app-container');
-                                    }, 800); // Esperar un momento para leer el Toast
+                                    window.DataViewEngine.render(entityName, 'app-container');
                                 } else if (global.onSaveSuccessCallback) {
                                     global.onSaveSuccessCallback();
                                 }
                             } else {
                                 // Error Controlado desde el Servidor
-                                showToast('Error: ' + (response ? response.message : 'Error Desconocido'), 'danger');
+                                showToast('Error: ' + (response ? response.message : 'Error desconocido'), 'danger');
                             }
                         } catch (e) {
-                            showToast('Error procesando respuesta: ' + e.message, 'danger');
+                            console.error('[FormEngine] Error UI:', e);
+                            showToast('Error en la interfaz local', 'warning');
                         } finally {
                             isSaving = false;
                             submitBtn.disabled = false;
@@ -853,10 +998,38 @@
 
             console.log("[FormEngine] Registro encontrado:", record);
 
-            // 3. Renderizar el formulario base de la entidad
-            await global.renderForm(entityName);
+            // 3. Obtener registro hidratado desde el Servidor (Regla 15)
+            const loading = document.createElement('ion-loading');
+            loading.message = 'Hidratando registro...';
+            document.body.appendChild(loading);
+            await loading.present();
 
-            // 4. Activar modo edición
+            let fullRecord = record;
+            try {
+                if (typeof google !== 'undefined' && google.script && google.script.run) {
+                    fullRecord = await new Promise((resolve, reject) => {
+                        google.script.run
+                            .withSuccessHandler(res => {
+                                if (res && res.status === 'success') {
+                                    resolve(res.data);
+                                } else {
+                                    reject(new Error(res ? res.message : 'Respuesta inválida'));
+                                }
+                            })
+                            .withFailureHandler(err => reject(err))
+                            .API_Universal_Router('read', entityName, { id: id });
+                    });
+                }
+            } catch (e) {
+                console.warn("[FormEngine] Falló hidratación profunda, usando cache local:", e);
+            } finally {
+                loading.dismiss();
+            }
+
+            // 4. Renderizar el formulario base de la entidad
+            await global.renderForm(entityName, fullRecord);
+
+            // 5. Activar modo edición
             global.currentEditId = id;
             console.log("[FormEngine] currentEditId asignado:", global.currentEditId);
 

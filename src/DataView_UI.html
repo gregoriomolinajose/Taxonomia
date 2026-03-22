@@ -1436,11 +1436,17 @@
         }
 
         function _executeSoftDelete(id) {
-            // Optimistic UI update
+            // Optimistic UI update (Local state)
             const meta = ENTITY_META[_state.entityName] || { idField: 'id' };
             const idField = meta.idField;
             _state.data = _state.data.filter(r => r[idField] !== id);
             _applyFilter(document.getElementById('dv-search-input') ? document.getElementById('dv-search-input').value || '' : '');
+
+            // Global Cache sync (Prevent Re-render Desync)
+            if (window.__APP_CACHE__ && window.__APP_CACHE__[_state.entityName]) {
+                window.__APP_CACHE__[_state.entityName] = window.__APP_CACHE__[_state.entityName].filter(r => r[idField] !== id);
+                console.log(`[Cache] Registro eliminado de caché global: ${id}`);
+            }
 
             const loading = document.createElement('ion-loading');
             loading.message = 'Borrando...';
