@@ -7,8 +7,10 @@
 const APP_SCHEMAS = {
   Grupo_Productos: {
     steps: ["Datos Generales", "Estrategia de Negocio"],
+    primaryKey: "id_grupo_producto",
+    titleField: "nombre",
     fields: [
-      { name: "id_grupo_producto", label: "ID Grupo Producto", type: "text", required: true, readonly: true, step: "Datos Generales" },
+      { name: "id_grupo_producto", label: "ID Grupo Producto", type: "text", required: true, readonly: true, primaryKey: true, step: "Datos Generales" },
       { name: "nombre", label: "Nombre", type: "text", required: true, step: "Datos Generales" },
       { name: "descripcion", label: "Descripción", type: "textarea", required: false, step: "Datos Generales" },
       { name: "id_portafolio", label: "Portafolio Padre", type: "select", required: true, step: "Datos Generales", options: [], lookupSource: "getPortafoliosOptions" },
@@ -53,8 +55,10 @@ const APP_SCHEMAS = {
     ]
   },
   Producto: {
+    primaryKey: "id_producto",
+    titleField: "nombre_producto",
     fields: [
-      { name: "id_producto", label: "ID Producto", type: "text", required: true, readonly: true },
+      { name: "id_producto", label: "ID Producto", type: "text", required: true, readonly: true, primaryKey: true },
       { name: "nombre_producto", label: "Nombre del Producto", type: "text", required: true },
       { name: "nivel_criticalidad", label: "Nivel de Criticalidad", type: "select", required: true, options: ["Tier 1 (Crítico)", "Tier 2 (Alto)", "Tier 3 (Medio)", "Tier 4 (Bajo)"] },
       { name: "slo_objetivo", label: "SLO Objetivo (%)", type: "number", required: false },
