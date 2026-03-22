@@ -113,11 +113,11 @@ function buildSavePayload(flatParentData, fieldName, childRecords, foreignKey, p
     };
 }
 
-module.exports = {
-    _normalizeId,
-    initSubgridState,
-    filterAvailableOptions,
-    linkRecord,
-    unlinkRecord,
-    buildSavePayload
-};
+// Universal Wrapper: soporta Node.js (Tests/Jest) y Browser (GAS HTML Service)
+if (typeof module !== 'undefined' && module.exports) {
+    // Entorno Node.js / CommonJS
+    module.exports = { _normalizeId, initSubgridState, filterAvailableOptions, linkRecord, unlinkRecord, buildSavePayload };
+} else if (typeof window !== 'undefined') {
+    // Entorno Browser (GAS)
+    window.SubgridState = { _normalizeId, initSubgridState, filterAvailableOptions, linkRecord, unlinkRecord, buildSavePayload };
+}
