@@ -12,6 +12,38 @@
         // Estado Global de Edición (Directiva 1)
         global.currentEditId = null;
 
+        /* ─────────────────────────────────────────────────────────────────
+           PURE UTILITY FUNCTIONS (no side-effects, fully testable)
+           ─────────────────────────────────────────────────────────────── */
+
+        /**
+         * Normaliza un ID de registro: trim + uppercase.
+         * Garantiza comparaciones robustas con IDs sucios (espacios u otro case).
+         */
+        function _normalizeId(id) {
+            return String(id || '').trim().toUpperCase();
+        }
+
+        /**
+         * isRecordLinked(recordId, linkedRecordsArray, pkField)
+         * Función pura: devuelve true si recordId ya está en la lista vinculada.
+         * Maneja IDs sucios (espacios, diferencias de mayúsculas).
+         *
+         * @param {string} recordId       - ID del registro candidato a vincular.
+         * @param {Array}  linkedRecords  - Arreglo de registros ya vinculados.
+         * @param {string} pkField        - Campo PK dentro de linkedRecords.
+         * @returns {boolean}
+         */
+        function isRecordLinked(recordId, linkedRecords, pkField) {
+            const normalizedCandidate = _normalizeId(recordId);
+            return (linkedRecords || []).some(r => _normalizeId(r[pkField]) === normalizedCandidate);
+        }
+
+        // Exponer para pruebas unitarias (solo en entornos sin google.script)
+        if (typeof module !== 'undefined' && module.exports) {
+            module.exports = { isRecordLinked, _normalizeId };
+        }
+
         global.renderForm = async function (entityName, data = null) {
             // Asegurar reset de estado al abrir formulario nuevo (Directiva 1)
             global.currentEditId = null;
@@ -543,16 +575,9 @@
                     const singularKey = tableKey.endsWith('s') ? tableKey.slice(0, -1) : (tableKey.endsWith('es') ? tableKey.slice(0, -2) : tableKey);
                     const childPK = 'id_' + singularKey;
 
-                    const selectedIds = childRecords.map(r => {
-                        return String(r[childPK] || r.id || '').trim().toUpperCase();
-                    });
-                    
-                    console.log(`[FormEngine] Sincronizando modal para ${field.targetEntity}. IDs vinculados (PK: ${childPK}):`, selectedIds);
-                    
-                    const availableOptions = normalizedOptions.filter(opt => {
-                        const val = String(opt.value || '').trim().toUpperCase();
-                        return !selectedIds.includes(val);
-                    });
+                    // PURE UTILITY: Construir lista de IDs vinculados usando `isRecordLinked`
+                    const availableOptions = normalizedOptions.filter(opt => !isRecordLinked(opt.value, childRecords, childPK));
+                    console.log(`[FormEngine] Sincronizando modal para ${field.targetEntity}. IDs vinculados: ${childRecords.length}. Disponibles: ${availableOptions.length}`);
 
                     modal.innerHTML = `
                         <ion-header>
@@ -849,7 +874,7 @@
                         await loading.dismiss();
                         try {
                             if (response && response.status === 'success') {
-                                 // Server-Confirmed Frontend Cache Update (Zero-Latency Segura)
+                                 // Server-Confirmed Frontend Cache Update (Inmutable - Zero-Latency Segura)
                                  if (window.__APP_CACHE__ && window.__APP_CACHE__[entityName]) {
                                      const cachedData = window.__APP_CACHE__[entityName];
                                      if (Array.isArray(cachedData)) {
@@ -859,17 +884,15 @@
 
                                          // REGLA DE ORO: No inyectar el objeto de control 'adapter_sheets'.
                                          // Inyectar una copia del payload local enriquecida con el ID real del servidor.
-                                         const cleanRecord = { ...payload };
-                                         cleanRecord[pkField] = pkValue;
+                                         const cleanRecord = { ...payload, [pkField]: pkValue };
 
-                                         // Sincronizar con el cache (Update o Insert)
-                                         const idx = cachedData.findIndex(r => String(r[pkField]) === String(pkValue));
-                                         if (idx !== -1) {
-                                             cachedData[idx] = cleanRecord;
-                                         } else {
-                                             cachedData.unshift(cleanRecord);
-                                         }
-                                         console.log(`[Cache] Update confirmado y LIMPIO para: ${entityName}. Total: ${cachedData.length}`);
+                                         // INMUTABILIDAD: Crear un nuevo arreglo en lugar de mutar el existente.
+                                         const existingIdx = cachedData.findIndex(r => _normalizeId(r[pkField]) === _normalizeId(pkValue));
+                                         window.__APP_CACHE__[entityName] = existingIdx !== -1
+                                             ? [...cachedData.slice(0, existingIdx), cleanRecord, ...cachedData.slice(existingIdx + 1)]
+                                             : [cleanRecord, ...cachedData];
+
+                                         console.log(`[Cache] Update confirmado y LIMPIO para: ${entityName}. Total: ${window.__APP_CACHE__[entityName].length}`);
                                      }
                                  }
 

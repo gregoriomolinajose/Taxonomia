@@ -6,9 +6,12 @@
 - **Uso Estricto de Componentes Nativos:** Todo el DOM dinámico debe generarse usando Web Components de **Ionic (`<ion-input>`, `<ion-datetime>`)**.
 - NUNCA inventes o construyas componentes visuales complejos desde cero si existe una alternativa oficial en el framework.
 
+- **Precisión de Área Táctil (Hitboxes) y Event Bubbling:** En componentes compuestos como listas seleccionables (ej. `<ion-checkbox>` dentro de un `<ion-item>`), es OBLIGATORIO garantizar que la interacción funcione fluidamente ya sea que el usuario toque la fila completa o específicamente el recuadro del control. Se debe gestionar correctamente la propagación de eventos en el DOM (ej. delegando el clic al item o usando bindings nativos `ionChange`) para evitar que la interfaz se sienta rota o poco responsiva.
+
 ## 2. Progressive Disclosure (Wizards)
 - PROHIBIDO renderizar formularios largos en una sola vista plana.
 - Si el `APP_SCHEMAS` define la propiedad `steps`, el motor DEBE renderizar un componente de navegación paso a paso (Wizard) utilizando `<ion-stepper>` o `<ion-segment>`.
+- **Ley de Navegación Activa (Steppers):** Todo componente visual que indique progreso o pasos (ej. `<ion-segment>`, `<ion-stepper>`) DEBE ser obligatoriamente clickeable e interactivo. El usuario DEBE poder saltar a cualquier paso (anterior o posterior) tocando el indicador directamente. Queda prohibido el uso de steppers puramente cosméticos o de solo lectura.
 
 ## 3. Diseño Responsivo Nativo (Grid)
 - El layout DEBE construirse estrictamente sobre `<ion-grid>`, `<ion-row>` y `<ion-col>`.
