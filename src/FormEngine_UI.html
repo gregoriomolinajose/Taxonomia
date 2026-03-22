@@ -867,7 +867,9 @@
                 delete payload.updated_by;
 
                 // Llamada nativa hacia Apps Script (API Real)
+                // CRÍTICO: Resolver acción y limpiar ID ANTES de cualquier await
                 const action = global.currentEditId ? 'update' : 'create';
+                global.currentEditId = null; // Reset inmediato antes del async
 
                 // --- UI Blocking (Zero-Latency Rule) ---
                 const loading = document.createElement('ion-loading');
@@ -911,13 +913,14 @@
                                              const cleanRecord = { ...payload, [pkField]: pkValue };
 
                                              // INMUTABILIDAD ESTRUCTURAL: reemplaza sólo el arreglo .data
-                                             const existingIdx = cacheData.findIndex(r => _normalizeId(r[pkField]) === _normalizeId(pkValue));
+                                             const liveData = window.__APP_CACHE__[entityName].data || [];
+                                             const existingIdx = liveData.findIndex(r => _normalizeId(r[pkField]) === _normalizeId(pkValue));
 
                                              window.__APP_CACHE__[entityName].data = existingIdx !== -1
                                                  // UPDATE: reemplazar en su posición
-                                                 ? [...cacheData.slice(0, existingIdx), cleanRecord, ...cacheData.slice(existingIdx + 1)]
+                                                 ? [...liveData.slice(0, existingIdx), cleanRecord, ...liveData.slice(existingIdx + 1)]
                                                  // INSERT: prepend (aparece primero en la tabla)
-                                                 : [cleanRecord, ...cacheData];
+                                                 : [cleanRecord, ...liveData];
 
                                              console.log(`[Cache] ${existingIdx !== -1 ? 'UPDATE' : 'INSERT'} para: ${entityName} [${pkField}=${pkValue}]. Total: ${window.__APP_CACHE__[entityName].data.length}`);
                                          } else {
@@ -929,51 +932,45 @@
                                  const itemName = (response.data && response.data.Entity) ? response.data.Entity : entityName;
                                  showToast('¡' + itemName + ' guardado con éxito!', 'success');
 
-                                // Soft Reset Post-Guardado (Global Rule)
-                                const resetFormEngine = () => {
-                                    // Reset de ID de edición
-                                    global.currentEditId = null;
+                                // ── Soft Reset Post-Guardado (Anti Stale-State) ──
+                                 // CRÍTICO: liberar el guard y null-ear ID ANTES de render()
+                                 isSaving = false;
+                                 submitBtn.disabled = false;
+                                 submitBtn.innerHTML = '<ion-icon slot="start" name="save-outline"></ion-icon> Guardar ' + window.formatEntityName(entityName);
+                                 global.currentEditId = null;
 
-                                    // 1. Limpieza de Inputs Estándar
-                                    inputs.forEach(input => {
-                                        input.value = '';
-                                    });
+                                 // NUNCA usar NodeLists capturados en el outer click handler.
+                                 container.querySelectorAll('ion-input, ion-textarea, ion-select, input[type="hidden"]')
+                                     .forEach(input => { input.value = ''; });
 
-                                    // 2. Limpieza de Custom Components (Chips)
-                                    chipContainers.forEach(cc => {
-                                        const chips = cc.querySelectorAll('ion-chip');
-                                        chips.forEach(chip => chip.remove());
-                                    });
+                                 container.querySelectorAll('.chip-container')
+                                     .forEach(cc => cc.querySelectorAll('ion-chip').forEach(chip => chip.remove()));
 
-                                    // 3. Reinicio del Asistente Lineal
-                                    goToStep(0);
+                                 goToStep(0);
 
-                                    // 4. Regeneración de ID (Seguridad)
-                                    const idInputs = container.querySelectorAll('ion-input[readonly], input[type="hidden"]');
-                                    idInputs.forEach(input => {
-                                        const name = input.getAttribute('name');
-                                        if (name && name.startsWith('id_')) {
-                                            const prefix = entityName.substring(0, 4).toUpperCase();
-                                            const sufix = Math.random().toString(36).substring(2, 7).toUpperCase();
-                                            input.value = `${prefix}-${sufix}`;
-                                        } else if (input.getAttribute('type') === 'hidden') {
-                                             // Restablecer hidden predeterminados si los hubiera
-                                             const fSchema = fields.find(f => f.name === name);
-                                             if (fSchema && fSchema.defaultValue !== undefined && !name.startsWith('id_')) {
-                                                 input.value = fSchema.defaultValue;
-                                             }
-                                        }
-                                    });
-                                };
+                                 // Regenerar IDs frescos para el próximo registro
+                                 container.querySelectorAll('ion-input[readonly], input[type="hidden"]').forEach(input => {
+                                     const name = input.getAttribute('name');
+                                     if (name && name.startsWith('id_')) {
+                                         const prefix = entityName.substring(0, 4).toUpperCase();
+                                         const sufix = Math.random().toString(36).substring(2, 7).toUpperCase();
+                                         input.value = `${prefix}-${sufix}`;
+                                     } else if (input.getAttribute('type') === 'hidden') {
+                                         const fSchema = fields.find(f => f.name === name);
+                                         if (fSchema && fSchema.defaultValue !== undefined && !name.startsWith('id_')) {
+                                             input.value = fSchema.defaultValue;
+                                         }
+                                     }
+                                 });
 
-                                resetFormEngine();
-                                
-                                // Enrutamiento post-Guardado Inmediato (Directiva 0.0s)
-                                if (window.DataViewEngine) {
-                                    window.DataViewEngine.render(entityName, 'app-container');
-                                } else if (global.onSaveSuccessCallback) {
-                                    global.onSaveSuccessCallback();
-                                }
+                                 if (window.__NESTED_DATA__) window.__NESTED_DATA__ = {};
+
+                                 // Enrutamiento post-Guardado Inmediato (Directiva 0.0s)
+                                 if (window.DataViewEngine) {
+                                     window.DataViewEngine.render(entityName, 'app-container');
+                                 } else if (global.onSaveSuccessCallback) {
+                                     global.onSaveSuccessCallback();
+                                 }
                             } else {
                                 // Error Controlado desde el Servidor
                                 showToast('Error: ' + (response ? response.message : 'Error desconocido'), 'danger');
