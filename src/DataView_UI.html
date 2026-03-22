@@ -722,6 +722,26 @@
 
             const strVal = String(value);
 
+            // 0.5: Identificar si es la Llave Primaria de la entidad ACTUAL
+            // Para pintar crudo (PORT-XXXX) sin embellecimiento (Directiva Arquitectura Nivel 4)
+            let isPrimaryKey = false;
+            if (window._state && window._state.entityName && window.APP_SCHEMAS) {
+                const schemaDef = window.APP_SCHEMAS[_state.entityName];
+                let fieldsArray = [];
+                if (schemaDef) {
+                    if (Array.isArray(schemaDef)) fieldsArray = schemaDef;
+                    else if (schemaDef.fields) fieldsArray = schemaDef.fields;
+                    else fieldsArray = Object.keys(schemaDef).map(k => Object.assign({ name: k }, schemaDef[k]));
+                    
+                    const f = fieldsArray.find(field => field.name === key);
+                    if (f && f.primaryKey) isPrimaryKey = true;
+                }
+            }
+
+            if (isPrimaryKey) {
+                return `<code onclick="window.openEditForm('${strVal}')" style="font-size:.78rem;background:var(--dv-bg);padding:1px 5px;border-radius:3px;cursor:pointer;color:var(--dv-primary);font-weight:bold;text-decoration:underline;">${strVal}</code>`;
+            }
+
             // 1. Resolver desde Lookups si existe mapeo
             if (window._LOOKUP_DATA && window._LOOKUP_DATA[key]) {
                 const lookupArr = window._LOOKUP_DATA[key];
@@ -739,9 +759,7 @@
                     ? '$' + num.toLocaleString('es-MX')
                     : num + '%';
             }
-            if (key.startsWith('id_')) {
-                return `<code onclick="window.openEditForm('${strVal}')" style="font-size:.78rem;background:var(--dv-bg);padding:1px 5px;border-radius:3px;cursor:pointer;color:var(--dv-primary);font-weight:bold;text-decoration:underline;">${strVal}</code>`;
-            }
+
             return strVal.length > 60 ? strVal.substring(0, 58) + '…' : strVal;
         }
 
