@@ -322,6 +322,13 @@
                     return; // Skip drawing UI columns
                 }
 
+                // REGLA DE EXCLUSIÓN: Campos 'relation' son manejados por el Subgrid component.
+                // El generador NO debe crear un ion-input estándar para estos campos,
+                // ya que causaría un campo fantasma con "[object Object]".
+                if (field.type === 'relation' || field.type === 'subgrid') {
+                    return; // Skip — renderSubgrid() lo maneja en su propio flujo
+                }
+
                 let targetRow = rows['default'];
                 if (steps && field.step && rows[field.step]) {
                     targetRow = rows[field.step];
