@@ -725,7 +725,7 @@
             // 0.5: Identificar si es la Llave Primaria de la entidad ACTUAL
             // Para pintar crudo (PORT-XXXX) sin embellecimiento (Directiva Arquitectura Nivel 4)
             let isPrimaryKey = false;
-            if (window._state && window._state.entityName && window.APP_SCHEMAS) {
+            if (_state && _state.entityName && window.APP_SCHEMAS) {
                 const schemaDef = window.APP_SCHEMAS[_state.entityName];
                 let fieldsArray = [];
                 if (schemaDef) {
