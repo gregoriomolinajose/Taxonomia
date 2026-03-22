@@ -883,23 +883,24 @@
                             if (response && response.status === 'success') {
                                  // Server-Confirmed Frontend Cache Update (Inmutable - Zero-Latency Segura)
                                  if (window.__APP_CACHE__ && window.__APP_CACHE__[entityName]) {
-                                     const cachedData = window.__APP_CACHE__[entityName];
-                                     if (Array.isArray(cachedData)) {
+                                     // CRITICAL: Targeting .data directly to preserve container properties (schema, lookups)
+                                     const cacheData = window.__APP_CACHE__[entityName].data;
+                                     if (cacheData) {
                                          const adapter_sheets = response.data.adapter_results.sheets;
                                          const pkField = adapter_sheets.pk;
                                          const pkValue = adapter_sheets.val;
 
-                                         // REGLA DE ORO: No inyectar el objeto de control 'adapter_sheets'.
-                                         // Inyectar una copia del payload local enriquecida con el ID real del servidor.
+                                         // REGLA DE ORO: Inyectar copia limpia del payload enriquecida con ID real.
                                          const cleanRecord = { ...payload, [pkField]: pkValue };
 
-                                         // INMUTABILIDAD: Crear un nuevo arreglo en lugar de mutar el existente.
-                                         const existingIdx = cachedData.findIndex(r => _normalizeId(r[pkField]) === _normalizeId(pkValue));
-                                         window.__APP_CACHE__[entityName] = existingIdx !== -1
-                                             ? [...cachedData.slice(0, existingIdx), cleanRecord, ...cachedData.slice(existingIdx + 1)]
-                                             : [cleanRecord, ...cachedData];
+                                         // INMUTABILIDAD ESTRUCTURAL: Sólo se reemplaza el arreglo .data, preservando el contenedor
+                                         const existingIdx = cacheData.findIndex(r => _normalizeId(r[pkField]) === _normalizeId(pkValue));
+                                         
+                                         window.__APP_CACHE__[entityName].data = existingIdx !== -1
+                                             ? [...cacheData.slice(0, existingIdx), cleanRecord, ...cacheData.slice(existingIdx + 1)]
+                                             : [cleanRecord, ...cacheData];
 
-                                         console.log(`[Cache] Update confirmado y LIMPIO para: ${entityName}. Total: ${window.__APP_CACHE__[entityName].length}`);
+                                         console.log(`[Cache] Update LIMPIO para: ${entityName}. Total: ${window.__APP_CACHE__[entityName].data.length}`);
                                      }
                                  }
 
