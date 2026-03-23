@@ -474,6 +474,10 @@
 
         // Arrancar verificación al cargar el DOM de Ionic
         document.addEventListener('DOMContentLoaded', () => {
+            if (typeof window.renderDashboardCards === 'function') {
+                window.renderDashboardCards();
+            }
+
             // Guardar el HTML original del dashboard para el returnToDashboard
             const container = document.getElementById('app-container');
             if (container) {
