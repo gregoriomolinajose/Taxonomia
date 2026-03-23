@@ -213,9 +213,13 @@ const Adapter_Sheets = {
         // Auto-inyectar headers de esquema si está recién creada
         if (sheet.getLastRow() === 0) {
             let schemaFields = [];
-            if (typeof APP_SCHEMAS !== 'undefined' && APP_SCHEMAS[tableName] && APP_SCHEMAS[tableName].fields) {
-                // Sacar names (claves) asumiendo que el Schema Engine ya está cargado en Backend
-                schemaFields = APP_SCHEMAS[tableName].fields.map(f => f.name);
+            if (typeof APP_SCHEMAS !== 'undefined' && APP_SCHEMAS[tableName]) {
+                if (APP_SCHEMAS[tableName].fields) {
+                    schemaFields = APP_SCHEMAS[tableName].fields.map(f => f.name);
+                } else {
+                    // Fallback para entidades planas (como Dominio o Portafolio)
+                    schemaFields = Object.keys(APP_SCHEMAS[tableName]).filter(k => typeof APP_SCHEMAS[tableName][k] === 'object' && !['uiBehavior', 'relationType'].includes(k));
+                }
             } else {
                 // Fallback primario si no encuentra esquema global (por orden de carga)
                 schemaFields = ['id_' + tableName.toLowerCase().replace(/s$/, '')];

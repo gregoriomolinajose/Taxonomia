@@ -188,19 +188,20 @@ function API_Universal_Router(action, entityName, payload) {
         payload[pkField] = _generateShortUUID(entityName);
       }
       responseData = _handleCreate(entityName, payload);
+      responseData = JSON.parse(JSON.stringify(responseData)); // Destruir Date Nativos (Regla 10)
 
       // Enrich response with confirmed PK so the frontend cache injection
       // can build the newRecord without guessing the adapter's internal shape.
       const confirmedPkValue = payload[pkField];
       const itemName = payload.nombre || payload.nombre_producto || entityName;
       Logger.log('Persistencia completada para: ' + itemName);
-      return {
+      return JSON.stringify({
         status: "success",
-        data: JSON.parse(JSON.stringify(responseData || {})),
+        data: responseData,
         Entity: entityName,
         pk: pkField,
         pkValue: confirmedPkValue
-      };
+      });
     } else if (action === 'read') {
       const id = (typeof payload === 'object') ? payload[Object.keys(payload).find(k => k.startsWith('id_'))] || payload.id : payload;
       if (id) {
@@ -223,17 +224,20 @@ function API_Universal_Router(action, entityName, payload) {
     const itemName = payload.nombre || payload.id_portafolio || entityName;
     Logger.log('Persistencia completada para: ' + itemName);
 
-    return {
+    // Destruir Date Nativos (Regla 10) previo a postMessage
+    responseData = JSON.parse(JSON.stringify(responseData));
+
+    return JSON.stringify({
       status: "success",
-      data: JSON.parse(JSON.stringify(responseData || {}))
-    };
+      data: responseData
+    });
   } catch (error) {
     Logger.log('🚀 ERROR Atrapado en Servidor: ' + error.message + '\n' + error.stack);
-    return {
+    return JSON.stringify({
       status: "error", // Según el if(response.status === 'success') de UI
       success: false,   // Por seguridad
       message: error.message
-    };
+    });
   }
 }
 
