@@ -31,3 +31,19 @@ La interfaz gráfica debe desacoplarse como una aplicación basada en Web Compon
 ### RF-04: Control Resolutivo y Acceso (RBAC)
 
 Todo acceso debe autenticarse usando la cuenta de Google Workspace conectada, obligando a los usuarios "Padres" a aprobar flujos de componentes de nivel "Hijo".
+
+### RF-05: Auto-Aprovisionamiento Dinámico de Base de Datos
+
+El sistema tiene la capacidad arquitectónica de leer esquemas JSON (Metadata) y autoconstruir las tablas físicas, encabezados y columnas de auditoría en la base de datos sin intervención manual del administrador (DBA).
+
+### RF-06: Motor Transaccional de Cero-Latencia (Zero-Latency Routing)
+
+Capacidad técnica de inyectar mutaciones de datos directamente en la memoria RAM del navegador (Client-Side Caching) garantizando tiempos de respuesta visual de < 0.1s tras la confirmación del servidor, operando de forma asíncrona pero segura (Idempotencia estricta).
+
+### RF-07: Mapeo Relacional Visual (Entity Graphing)
+
+Capacidad para renderizar redes neuronales y grafos interactivos (vía Vis.js) que permitan a los directivos visualizar en tiempo real las dependencias de N niveles (ej. qué Capacidades sostienen a qué Productos, y a qué Portafolio pertenecen).
+
+### RF-08: Trazabilidad Inmutable (Audit Trail)
+
+Capacidad de gobierno estricto donde toda mutación (Creación/Edición) inyecta de forma obligatoria e invisible para el usuario firmas de tiempo y autoría (created_at, updated_by), garantizando el cumplimiento (Compliance) para auditorías de arquitectura empresarial.

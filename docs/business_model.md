@@ -72,3 +72,22 @@ Esta regla se activa obligatoriamente al recibir el comando **"close"** tras una
 
 ### 6.3 Persistencia y Reutilización de Memoria
 - **Regla de Inicio:** Al ejecutar el macro `init`, el agente TIENE LA OBLIGACIÓN de leer el archivo `ARCH_LECCIONES_APRENDIDAS.md` junto con los otros manuales.
+
+## 7. Versionado Estricto y Trazabilidad Visual (Build Tracking)
+- **Visibilidad Obligatoria:** La interfaz gráfica (Frontend) DEBE mostrar siempre la versión actual del sistema y el número de compilación (Build) en un lugar visible pero no intrusivo (ej. en el pie de página del menú lateral o en la esquina inferior del Dashboard).
+- **Formato SemVer y Build Dinámico:** El formato obligatorio es `v[Major].[Minor].[Patch] - Build [YYMMDD.HHMM]`. 
+- **Inyección Dinámica (Anti-Caché):** Queda ESTRICTAMENTE PROHIBIDO "hardcodear" la versión directamente en los archivos HTML. La versión DEBE estar centralizada en una constante del Backend (ej. `APP_VERSION` en `Config.gs`) y ser inyectada dinámicamente al Frontend mediante los Scriplets de Apps Script (`<?= APP_VERSION ?>`) o viajar dentro del `MasterPayload`.
+- **Mandato de Actualización por Despliegue:** CADA VEZ que el agente IA complete un "Feature", arregle un bug o solicite al usuario hacer un despliegue de prueba (`clasp push`), el agente DEBE obligatoriamente actualizar el número de Patch o el Timestamp del Build en el archivo de configuración. Esto garantiza que el QA visualice inmediatamente que está operando sobre el código más reciente, mitigando falsos positivos por caché del navegador.
+
+## 8. Blueprint Estricto para Nuevos CRUDs (Entity Lifecycle)
+Cuando el usuario ordene crear una "Nueva Entidad" o un "Nuevo CRUD", el Agente tiene ESTRICTAMENTE PROHIBIDO improvisar. DEBE ejecutar y documentar esta lista de verificación de 6 pasos exactos (El Blueprint):
+
+## 8. Blueprint Estricto para Nuevos CRUDs V2 (Entity Lifecycle)
+Cuando el usuario ordene crear una "Nueva Entidad" o un "Nuevo CRUD", el Agente tiene ESTRICTAMENTE PROHIBIDO improvisar código en el HTML. DEBE ejecutar esta lista de verificación de 6 pasos exactos:
+
+1. **Definición Maestra (APP_SCHEMAS):** Definir la nueva entidad en el motor de esquemas, declarando explícitamente el `primaryKey`, `titleField` y el arreglo de `fields` con sus tipos.
+2. **Registro de Metadatos (Single Source of Truth):** Registrar OBLIGATORIAMENTE la entidad en `window.ENTITY_META` (en el archivo global correspondiente), mapeando su `idField`, `titleField`, `iconName`, `color` y su índice de `order`. Esto alimentará automáticamente el menú y el dashboard.
+3. **Auto-Aprovisionamiento Dinámico (Backend):** Garantizar que si la base de datos (Google Sheets) no tiene la tabla, el Backend la cree extrayendo dinámicamente las llaves del esquema, sumando obligatoriamente las **6 columnas de auditoría** (`created_at`, `created_by`, `updated_at`, `updated_by`, `deleted_at`, `deleted_by`).
+4. **Sanitización de Salida (Regla Anti-Deserialize):** Asegurar que el backend aplique `JSON.parse(JSON.stringify(record))` para destruir objetos `Date` antes del retorno.
+5. **Cero-Toque en UI (Zero-Touch HTML):** Queda ESTRICTAMENTE PROHIBIDO modificar manualmente los archivos `Index.html` o `DataView_UI.html` para agregar tarjetas o ítems de menú. La UI es 100% reactiva a la configuración de `ENTITY_META`.
+6. **Build Tracking (Regla 12):** Incrementar obligatoriamente la versión de compilación (`APP_VERSION`) para forzar la invalidación del caché visual.

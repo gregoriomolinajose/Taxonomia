@@ -35,10 +35,10 @@
 - **Compresión de Matrices (Tuplas):** Para listados de más de 100 registros, el backend NO DEBE retornar Arrays de Objetos. Debe retornar Arrays de Arrays (Tuplas) donde el índice 0 contenga los encabezados, delegando la reconstrucción de objetos al frontend para ahorrar ancho de banda.
 - **Ley de Invalidación de Caché (Cache Busting):** Todo uso de `CacheService` para listas o catálogos DEBE estar acompañado de un mecanismo de purga. Toda operación de mutación de datos (Insert, Update, Delete) en el backend DEBE invalidar/borrar explícitamente la llave de caché correspondiente a esa entidad para evitar servir datos estancados (Stale Data).
 
-## 8. Gestión de Estado en Cliente (Client-Side Caching)
+## 8. Gestión de Estado en Cliente (Zero-Latency SPA)
 - **Ley de Memoria UI:** El Frontend DEBE actuar como una verdadera Single Page Application (SPA). Todo `MasterPayload` descargado desde el servidor DEBE ser almacenado en la memoria temporal del navegador (ej. `window.__APP_CACHE__`).
-- **Prohibición de Re-fetching:** Queda estrictamente prohibido volver a llamar a `google.script.run` para inicializar una vista si los datos ya existen en la memoria del cliente.
-- **Sincronización de Estado:** Toda operación de mutación (Crear, Editar, Eliminar) que se confirme exitosa por el servidor, DEBE purgar/invalidar obligatoriamente la llave correspondiente en el caché del cliente para garantizar la consistencia de datos en la siguiente navegación.
+- **Prohibición de Re-fetching y Purgado Ciego:** Queda ESTRICTAMENTE PROHIBIDO volver a llamar a `google.script.run` para inicializar una vista si los datos ya existen, y queda PROHIBIDO purgar el caché local tras una mutación exitosa.
+- **Mutación Inyectada (Local Cache Mutation):** Toda operación de mutación (Crear, Editar) confirmada por el servidor, DEBE inyectarse de forma inmutable y directa en el Arreglo Raíz del caché del cliente (`window.__APP_CACHE__[entityName]`). Esto garantiza un redibujado de tabla en 0.1s sin latencia de red.
 
 ## 9. Manejo de Relaciones y Grafo de Entidades (Master-Detail)
 - **Normalización Estricta (DB):** Las tablas físicas NUNCA deben guardar arreglos anidados. Toda relación 1:N se persiste almacenando la Llave Foránea (`foreignKey`) en la tabla hija.
@@ -47,3 +47,8 @@
 - **Tipos de Relación Visual:**
   - `1:N` (Jerarquía): Se renderiza como un `subgrid` (Tabla anidada editable).
   - `M:N` (Grafo Simple): Se renderiza como un `multi-select` (Selector de etiquetas/chips).
+
+  ## 10. Sanitización de Salida (Prevención de Colapso RPC)
+- **El Límite del postMessage:** Google Apps Script utiliza clonación estructurada para enviar datos del Backend al Frontend. Queda ESTRICTAMENTE PROHIBIDO retornar objetos complejos no serializables (como objetos `Date` nativos generados por la base de datos o referencias circulares) en las respuestas de éxito.
+- **Sanitización Obligatoria:** Toda respuesta de éxito en mutaciones (ej. el return de `upsertBatch` en `API_Universal.gs`) que incluya el registro completo, DEBE ser aplanada y sanitizada (ej. `JSON.parse(JSON.stringify(responseData))`) antes de ser enviada al cliente. 
+- **Objetivo:** Prevenir el fallo silencioso y críptico `dropping postMessage.. deserialize threw error` en la consola del navegador, el cual rompe el ciclo de vida de la inyección de caché.

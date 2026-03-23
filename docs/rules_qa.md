@@ -27,3 +27,8 @@
 
 ## 7. Integridad de Pruebas en Capa de Datos (Anti-Mocking)
 - **Prohibición de Mocks Superficiales:** Queda ESTRICTAMENTE PROHIBIDO mockear (simular) métodos del `Adapter_Sheets` en las pruebas de integración (`Engine_DB`). Si una prueba valida la persistencia de datos, debe ejecutar el código real del adaptador contra un entorno de base de datos de prueba (Test Environment) o memoria, para garantizar que la firma de la función realmente existe y opera.
+
+## 8. Pruebas de Estado UI y Mutaciones Secuenciales (Zero-Latency QA)
+- **Ley de la Doble Inserción (Anti-Stale State):** Toda prueba E2E o QA manual de un formulario de creación DEBE incluir la inserción de **dos registros consecutivos** sin recargar la página (Sin F5). 
+- **Criterio de Aceptación:** Si el primer registro se guarda pero el segundo falla, muere silenciosamente, o sobrescribe al primero, se considera un **Fallo Crítico de Arquitectura (Detached DOM Nodes o Stale Closure)** y el despliegue queda rechazado.
+- **Auditoría de Caché Raíz:** El motor de pruebas (o el desarrollador) DEBE verificar en la consola del navegador que `window.__APP_CACHE__[entityName]` incrementa su longitud (`length`) de manera inmutable y que la tabla HTML se redibuja en < 0.1s tras cada inserción.

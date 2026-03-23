@@ -53,3 +53,14 @@
 - **Ley de la Coherencia Visual:** Queda terminantemente PROHIBIDO el uso de mecanismos de interacción nativos del navegador como `window.alert()`, `window.prompt()`, `window.confirm()` o diálogos modales nativos de HtmlService (`createTemplateFromFile`).
 - **Uso de Componentes Ionic/Material:** Toda interacción que requiera feedback (Alertas), confirmación o entrada rápida de datos (Inputs rápidos) DEBE utilizar exclusivamente los componentes del framework de UI (ej. `ion-modal`, `ion-alert`, `ion-popover`). 
 - **Validación QA:** Cualquier interfaz que presente un diálogo nativo será rechazada automáticamente en la fase de control de calidad.
+
+## 11. Manipulación del DOM y Extracción de Datos (JIT Querying)
+- **Prohibición de Nodos Fantasma (Stale NodeLists):** Queda ESTRICTAMENTE PROHIBIDO capturar referencias a elementos de entrada del DOM (ej. `querySelectorAll('ion-input')`) en variables globales o closures fuera del evento principal de acción (ej. el clic del botón de Guardar).
+- **Lectura Just-In-Time (JIT):** Toda recolección de datos (Payload) de un formulario DEBE realizarse consultando el contenedor activo en el milisegundo exacto de la interacción: `document.getElementById('active-form-container').querySelectorAll(...)`.
+- **Destrucción y Reset de Formularios:** Alineado con las Leyes de Routing (Sección 5), al cerrar o completar un flujo, el contenedor del formulario no solo debe ocultarse; DEBE forzarse la limpieza de su estado interno y DOM para garantizar que la próxima vez que el usuario haga clic en "+ Crear", el formulario nazca como un lienzo en blanco (Anti-Stale State).
+
+## 12. Versionado Estricto y Trazabilidad Visual (Build Tracking)
+- **Visibilidad Obligatoria:** La interfaz gráfica (Frontend) DEBE mostrar siempre la versión actual del sistema y el número de compilación (Build) en un lugar visible pero no intrusivo (ej. en el pie de página del menú lateral o en la esquina inferior del Dashboard).
+- **Formato SemVer y Build Dinámico:** El formato obligatorio es `v[Major].[Minor].[Patch] - Build [YYMMDD.HHMM]`. 
+- **Inyección Dinámica (Anti-Caché):** Queda ESTRICTAMENTE PROHIBIDO "hardcodear" la versión directamente en los archivos HTML. La versión DEBE estar centralizada en una constante del Backend (ej. `APP_VERSION` en `Config.gs`) y ser inyectada dinámicamente al Frontend mediante los Scriplets de Apps Script (`<?= APP_VERSION ?>`) o viajar dentro del `MasterPayload`.
+- **Mandato de Actualización por Despliegue:** CADA VEZ que el agente IA complete un "Feature", arregle un bug o solicite al usuario hacer un despliegue de prueba (`clasp push`), el agente DEBE obligatoriamente actualizar el número de Patch o el Timestamp del Build en el archivo de configuración. Esto garantiza que el QA visualice inmediatamente que está operando sobre el código más reciente, mitigando falsos positivos por caché del navegador.

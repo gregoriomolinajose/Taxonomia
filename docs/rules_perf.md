@@ -1,26 +1,26 @@
-## 1. Mutaciones y Sincronización de Caché (Zero-Latency Routing)
-- **Prohibición de Datos Fantasma:** Queda PROHIBIDO que el Frontend actualice la interfaz de usuario asumiendo que una operación de guardado (Insert/Update) será exitosa antes de que el servidor responda (Optimistic UI).
-- **Inyección Confirmada por Servidor:** Tras una operación exitosa de guardado, la interfaz de usuario debe bloquearse (`<ion-loading>`) hasta recibir la confirmación y el registro final verificado del Backend. Solo al recibir esta confirmación, el Frontend empujará (push/update) el registro directamente al caché global (`window.__APP_CACHE__`) y procederá al enrutamiento de regreso a la vista de listado.
-- **Forzado de Reactividad del DOM:** Al retornar al listado de listado, el motor de UI DEBE forzar un redibujado total (re-render) de la cuadrícula o tabla de datos, garantizando que los datos visuales estén sincronizados al 100% con la memoria RAM, sin realizar un re-fetch de red completo. Esto garantiza un retorno de 0.0 segundos pero con datos verificados.
+## 1. Mutaciones Sincronizadas y Zero-Latency Routing (Server-Confirmed UI)
+- **Prohibición de Datos Fantasma (Anti-Optimistic UI):** Queda ESTRICTAMENTE PROHIBIDO actualizar la interfaz de usuario asumiendo que un guardado (Insert/Update) será exitoso antes de que el servidor responda.
+- **Idempotencia y UI Lock:** Al iniciar una mutación, el botón de acción debe deshabilitarse (`disabled=true`) y la pantalla debe bloquearse con un `<ion-loading>` irrompible para prevenir envíos duplicados.
+- **Inyección Segura:** Solo al recibir la respuesta confirmada del Backend (con la PK real), el Frontend inyectará el registro en la memoria RAM y forzará un redibujado instantáneo del `DataViewEngine`. Esto garantiza una navegación de 0.0 segundos de regreso al listado sin necesidad de un re-fetch de red completo.
 
-## 2. Mutaciones y Sincronización de Caché (Server-Confirmed Updates)
-- **Prohibición de Datos Fantasma (Anti-Optimistic UI):** Queda ESTRICTAMENTE PROHIBIDO que el Frontend actualice la interfaz de usuario o la memoria RAM (`window.__APP_CACHE__`) asumiendo que una operación de guardado (Insert/Update) será exitosa antes de que el servidor responda.
-- **Inyección Segura de Estado (Zero-Latency Routing):** Tras una operación CRUD, la UI debe bloquearse (Loading state). El sistema DEBE esperar la confirmación de éxito y el registro final devuelto por el Backend. Solo al recibir esta confirmación, el Frontend inyectará el registro en el caché local y realizará la transición a la vista de listado. Esto garantiza una navegación instantánea (sin re-fetch de red) sin comprometer la integridad de la base de datos.
+## 2. Inmutabilidad Estructural (Root Array Cache Injection)
+- **Estructura del Caché:** El caché global para los datos de la cuadrícula reside directamente en el arreglo raíz de la entidad: `window.__APP_CACHE__[entityName]`. NO se debe usar una propiedad fantasma `.data` para los registros.
+- **Mutación Cero-Latencia:** Para inyectar registros NUEVOS (Inserts), se debe clonar el arreglo raíz, insertar el nuevo registro en la primera posición (`unshift` inmutable) y sobrescribir el caché global.
 
-## 3. Preservación del Contenedor de Estado (Structural Immutability)
-- **Estructura del Caché:** El caché global de la aplicación (`window.__APP_CACHE__[entityName]`) NO es un arreglo plano de registros. Es un **Objeto Contenedor** estricto que posee múltiples propiedades críticas de infraestructura: `{ data: Array, schema: Object, lookups: Object }`.
-- **Prohibición de Destrucción del Esquema:** Queda ESTRICTAMENTE PROHIBIDO sobrescribir o reasignar el objeto contenedor principal en su totalidad. 
-- **Mutación Segura:** Toda actualización inmutable de registros (Insert, Update, Delete) DEBE apuntar exclusivamente a la propiedad `.data` del contenedor, preservando intactas las propiedades `.schema`, `.lookups` y cualquier otro metadato del nivel superior.
-
-**❌ ANTI-PATRÓN (Lo que rompe la UI):**
+**❌ ANTI-PATRÓN (Crea registros invisibles/fantasmas):**
 \`\`\`javascript
-// MAL: Destruye el esquema y los lookups.
-window.__APP_CACHE__[entityName] = [...cache.slice(0, idx), newRecord, ...cache.slice(idx + 1)];
+// MAL: Inyectar en una propiedad .data inexistente o anidada.
+window.__APP_CACHE__[entityName].data = [newRecord, ...staleCache];
 \`\`\`
 
-**✅ PATRÓN CORRECTO (Inmutabilidad Segura):**
+**✅ PATRÓN CORRECTO (Inmutabilidad Raíz):**
 \`\`\`javascript
-// BIEN: Solo actualiza el arreglo de datos, preservando el contenedor.
-const cacheData = window.__APP_CACHE__[entityName].data;
-window.__APP_CACHE__[entityName].data = [...cacheData.slice(0, idx), newRecord, ...cacheData.slice(idx + 1)];
+// BIEN: Inyectar directamente en el arreglo raíz que lee la tabla.
+const freshCache = window.__APP_CACHE__[entityName] || [];
+window.__APP_CACHE__[entityName] = [newRecord, ...freshCache];
+DataViewEngine.render(); // Redibujado instantáneo
 \`\`\`
+
+## 3. Lectura Just-In-Time (JIT) y Prevención de Nodos Fantasma (Stale Closures)
+- **Extracción de Payload JIT:** Al guardar un formulario, queda PROHIBIDO utilizar referencias globales o `NodeLists` cacheados para leer los inputs. Los datos deben extraerse consultando el DOM fresco en el milisegundo exacto de la ejecución (`document.getElementById()`).
+- **Limpieza de Estado Inicial:** Al abrir un formulario para creación, se debe asegurar la limpieza explícita de variables de estado anteriores (ej. `currentEditId = null`) para evitar que un *Insert* se convierta accidentalmente en un *Update* por memoria sucia.

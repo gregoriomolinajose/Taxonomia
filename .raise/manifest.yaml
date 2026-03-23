@@ -6,10 +6,10 @@ project:
   test_command: npx vitest run
   lint_command: npx eslint .
   type_check_command: npx tsc --noEmit
-  code_file_count: 80
-  detected_at: '2026-03-21T00:21:46.046508Z'
+  code_file_count: 93
+  detected_at: '2026-03-23T15:44:39.826035Z'
 branches:
-  development: main
+  development: develop
   main: main
 ide:
   type: claude

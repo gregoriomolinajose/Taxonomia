@@ -1,6 +1,6 @@
 // src/Config.dev.js
 const CONFIG = {
-    APP_VERSION: 'v1.0.8 - Build 260323.1230',
+    APP_VERSION: 'v1.0.9 - Build 260323.1245',
     // TODO: Reemplazar con el ID real de Desarrollo
     SPREADSHEET_ID_DB: '1tMyYBLPr0HJnJwbhFpCVoM4U8k1EVGycBDBjEnUGDts',
     ALLOWED_DOMAINS: ['@gmail.com', '@bellfy.app', '@coppel.com', '@bancoppel.com'],

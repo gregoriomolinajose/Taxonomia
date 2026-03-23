@@ -131,7 +131,7 @@
                 <ion-footer class="ion-no-border">
                     <ion-toolbar style="--background: transparent; --min-height: 40px; padding: 0 16px;">
                         <span style="font-size: 11px; color: var(--ion-color-medium); font-weight: 500;">
-                            <?= typeof CONFIG !== 'undefined' ? CONFIG.APP_VERSION : 'v1.0.7-Dev' ?>
+                            <?= typeof CONFIG !== 'undefined' ? CONFIG.APP_VERSION : 'v1.0.9-Dev' ?>
                         </span>
                     </ion-toolbar>
                 </ion-footer>
@@ -169,13 +169,17 @@
                     <div id="app-container">
                         <!-- Dashboard Enterprise: 3 Columnas Grid -->
                         <ion-grid>
-                            <ion-row class="ion-justify-content-center">
-                                <ion-col size="12" class="ion-text-center" style="margin-bottom: 20px;">
-                                    <h1 style="font-weight: 700; color: var(--ion-color-dark);">Plataforma de Gobernanza
-                                    </h1>
-                                    <h2 id="user-greeting" style="font-weight: 600; color: var(--ion-color-primary); margin-top: 5px; display: none;"></h2>
-                                    <p style="color: var(--ion-color-medium);">Gestión Centralizada de Modelo de
-                                        Producto.</p>
+                            <ion-row class="ion-align-items-center ion-margin-bottom">
+                                <ion-col size="12" class="ion-text-left">
+                                    <ion-text color="dark">
+                                        <h1 style="font-weight: 700; margin-bottom: 5px;">Plataforma de Gobernanza</h1>
+                                    </ion-text>
+                                    <ion-text color="medium">
+                                        <p style="margin-top: 0; font-size: 1.1rem;">
+                                            <ion-icon name="person-circle-outline" style="vertical-align: middle;"></ion-icon> 
+                                            Hola, <span id="user-greeting-name">Usuario</span>. Gestión Centralizada de Modelo de Producto.
+                                        </p>
+                                    </ion-text>
                                 </ion-col>
                             </ion-row>
 
@@ -254,12 +258,9 @@
                     container.innerHTML = originalContent;
 
                     // Extracción dinámica del nombre e Inyección del saludo
-                    const greetingEl = document.getElementById('user-greeting');
+                    const greetingEl = document.getElementById('user-greeting-name');
                     if (greetingEl) {
-                        const userName = response.email ? response.email.split('@')[0] : 'Usuario';
-                        const formattedName = userName.charAt(0).toUpperCase() + userName.slice(1);
-                        greetingEl.textContent = 'Hola, ' + formattedName;
-                        greetingEl.style.display = 'block';
+                        greetingEl.textContent = window.formatUserName(response.email);
                     }
 
                     // Forzar caché de UI actualizada para la persistencia al volver a inicio
@@ -324,6 +325,17 @@
 
         window.formatEntityName = function (str) {
             return (str || '').replace(/_/g, ' ');
+        };
+
+        window.formatUserName = function (emailStr) {
+            if (!emailStr) return 'Usuario';
+            // Tomar porción antes del arroba
+            const localPart = emailStr.split('@')[0];
+            // Dividir por caracteres no alfanuméricos comunes (, . _ -) y tomar la primera parte
+            const firstPart = localPart.split(/[\._-]/)[0];
+            if (!firstPart) return 'Usuario';
+            // Capitalizar
+            return firstPart.charAt(0).toUpperCase() + firstPart.slice(1).toLowerCase();
         };
 
         window.returnToDashboard = function () {
