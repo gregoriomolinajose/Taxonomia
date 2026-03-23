@@ -879,9 +879,10 @@
                 await loading.present();
 
                 google.script.run
-                    .withSuccessHandler(async (response) => {
+                    .withSuccessHandler(async (rawResponse) => {
                         await loading.dismiss();
                         try {
+                            const response = typeof rawResponse === 'string' ? JSON.parse(rawResponse) : rawResponse;
                             if (response && response.status === 'success') {
                                  // ── Server-Confirmed Frontend Cache Injection (Immutable · Zero-Latency) ──
                                  if (window.__APP_CACHE__ && window.__APP_CACHE__[entityName]) {
@@ -1060,7 +1061,8 @@
                 if (typeof google !== 'undefined' && google.script && google.script.run) {
                     fullRecord = await new Promise((resolve, reject) => {
                         google.script.run
-                            .withSuccessHandler(res => {
+                            .withSuccessHandler(rawRes => {
+                                const res = typeof rawRes === 'string' ? JSON.parse(rawRes) : rawRes;
                                 if (res && res.status === 'success') {
                                     resolve(res.data);
                                 } else {

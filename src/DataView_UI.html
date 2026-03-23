@@ -1492,7 +1492,8 @@
             const isGAS = typeof google !== 'undefined' && google.script && google.script.run;
             if (isGAS) {
                 google.script.run
-                    .withSuccessHandler(function (response) {
+                    .withSuccessHandler(function (rawResponse) {
+                        const response = typeof rawResponse === 'string' ? JSON.parse(rawResponse) : rawResponse;
                         loading.dismiss();
                         if (response && response.status === 'success') {
                             // Invalidate Frontend Cache (Client Busting)
