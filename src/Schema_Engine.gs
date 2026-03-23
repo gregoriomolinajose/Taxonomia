@@ -139,6 +139,11 @@ const APP_SCHEMAS = {
       { section: "Corporativo", name: "centro_costo", label: "Centro de Costo", type: "text", width: 6 },
       { section: "Corporativo", name: "ingreso", label: "Fecha de Ingreso", type: "date", width: 6 },
       { section: "Corporativo", name: "cargo", label: "Cargo", type: "text", width: 6 },
+      { section: "Corporativo", name: "fecha_inicio_vigencia", label: "Inicio de Vigencia", type: "date", width: 6 },
+      { section: "Corporativo", name: "fecha_cierre", label: "Fecha de Cierre", type: "date", width: 6 },
+      { section: "Corporativo", name: "estado_contratacion", label: "Estado Contratación", type: "select", options: ["Activo", "Inactivo", "Permiso", "Suspendido"], width: 6 },
+      { section: "Corporativo", name: "nombre_centro", label: "Nombre del Centro", type: "text", width: 6 },
+      { section: "Corporativo", name: "empleador_legal", label: "Empleador Legal", type: "text", width: 12 },
       
       // Sección 4: Operativa
       { section: "Operativa", name: "id_unidad_negocio", label: "Unidad de Negocio", type: "select", options: [], lookupSource: "getUnidadesNegocioOptions", width: 6 },
@@ -146,7 +151,10 @@ const APP_SCHEMAS = {
       { section: "Operativa", name: "rol", label: "Rol", type: "text", width: 6 },
       { section: "Operativa", name: "tiempo_rol", label: "Tiempo en Rol", type: "text", width: 6 },
       { section: "Operativa", name: "iniciativa", label: "Iniciativa", type: "text", width: 6 },
-      { section: "Operativa", name: "email_lider", label: "Email Líder", type: "email", width: 6 }
+      { section: "Operativa", name: "email_lider", label: "Email Líder", type: "email", width: 6 },
+      { section: "Operativa", name: "fecha_entrada_posicion", label: "Ingreso a Posición", type: "date", width: 6 },
+      { section: "Operativa", name: "nro_manager", label: "Nro del Manager", type: "text", width: 6 },
+      { section: "Operativa", name: "nombre_manager", label: "Nombre del Manager", type: "text", width: 12 }
     ]
   }
 };
