@@ -118,7 +118,9 @@
                 
                 <ion-footer class="ion-no-border">
                     <ion-toolbar style="--background: transparent; --min-height: 40px; padding: 0 16px;">
-                        <span style="font-size: 11px; color: var(--ion-color-medium); font-weight: 500;">v1.0.0</span>
+                        <span style="font-size: 11px; color: var(--ion-color-medium); font-weight: 500;">
+                            <?= typeof CONFIG !== 'undefined' ? CONFIG.APP_VERSION : 'v0.0.0-Dev' ?>
+                        </span>
                     </ion-toolbar>
                 </ion-footer>
             </ion-menu>

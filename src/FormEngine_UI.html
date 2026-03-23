@@ -815,6 +815,14 @@
                 // Mostrar Spinner Nativo en el botón
                 submitBtn.innerHTML = '<ion-spinner name="crescent"></ion-spinner> &nbsp; Guardando...';
 
+                // --- UI Blocking (Zero-Latency Rule & UI Idempotency) ---
+                const loading = document.createElement('ion-loading');
+                loading.backdropDismiss = false; // Bloqueo irrompible
+                loading.message = 'Guardando registro...';
+                loading.spinner = 'crescent';
+                document.body.appendChild(loading);
+                await loading.present();
+
                 // --- LECTURA FRESCA JIT (Evita Detached Nodes) ---
                 const activeForm = document.getElementById('app-container');
                 const freshInputs = activeForm.querySelectorAll('ion-input, ion-textarea, ion-select, input[type="hidden"]');
@@ -871,12 +879,7 @@
                 const action = global.currentEditId ? 'update' : 'create';
                 global.currentEditId = null; // Reset inmediato antes del async
 
-                // --- UI Blocking (Zero-Latency Rule) ---
-                const loading = document.createElement('ion-loading');
-                loading.message = 'Guardando registro...';
-                loading.spinner = 'crescent';
-                document.body.appendChild(loading);
-                await loading.present();
+                // El Loading ya se inició en el momento 0 (Idempotencia).
 
                 google.script.run
                     .withSuccessHandler(async (rawResponse) => {
@@ -1008,13 +1011,14 @@
                         } finally {
                             isSaving = false;
                             submitBtn.disabled = false;
-                            submitBtn.textContent = 'Guardar ' + window.formatEntityName(entityName);
+                            submitBtn.innerHTML = '<ion-icon slot="start" name="save-outline"></ion-icon> Guardar ' + window.formatEntityName(entityName);
                         }
                     })
-                    .withFailureHandler((err) => {
+                    .withFailureHandler(async (err) => {
+                        await loading.dismiss();
                         isSaving = false;
                         submitBtn.disabled = false;
-                        submitBtn.textContent = 'Guardar ' + window.formatEntityName(entityName);
+                        submitBtn.innerHTML = '<ion-icon slot="start" name="save-outline"></ion-icon> Guardar ' + window.formatEntityName(entityName);
 
                         showToast('Error de Servidor: ' + err.message, 'danger');
                     })
