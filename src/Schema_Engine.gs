@@ -19,56 +19,60 @@ const APP_SCHEMAS = {
     ]
   },
   Portafolio: {
-    "id_portafolio": { "type": "hidden", "primaryKey": true },
-    "estado": { "type": "hidden", "defaultValue": "Activo" },
-    "nombre": { "type": "text", "label": "Nombre del Portafolio", "required": true, "group": "Identidad" },
-    "proposito": { "type": "textarea", "label": "Propósito del Portafolio", "required": true, "group": "Identidad" },
-    "objetivos_negocio": { "type": "textarea", "label": "Objetivos de Negocio (Lista)", "required": true, "group": "Estrategia" },
-    "kpis_metricas": { "type": "textarea", "label": "OKRs y KPIs del Portafolio", "required": true, "group": "Estrategia" },
-    "capacidad_continuidad": { "type": "number", "label": "% Continuidad Operativa", "group": "Capacidad" },
-    "capacidad_fundacional": { "type": "number", "label": "% Fundacionales", "group": "Capacidad" },
-    "capacidad_transformacion": { "type": "number", "label": "% Evolución y Transform.", "group": "Capacidad" },
-    "flujos_valor": { "type": "textarea", "label": "Value Streams / Flujos de Valor", "group": "Capacidad" },
-    "presupuesto_bau": { "type": "number", "label": "Presupuesto BAU ($)", "group": "Presupuesto" },
-    "presupuesto_transformacion": { "type": "number", "label": "Presupuesto Transformación ($)", "group": "Presupuesto" },
-    "presupuesto_estrategico": { "type": "number", "label": "Presupuesto Estratégico ($)", "group": "Presupuesto" },
-    "gobierno_liderazgo": { "type": "textarea", "label": "Gobierno (Roles y Nombres)", "group": "Gobernanza" },
-    "stakeholders": { "type": "textarea", "label": "Stakeholders y Sponsors", "group": "Gobernanza" },
-    "producto_dominio": { "type": "textarea", "label": "Producto / Dominio (OMS, WMS, etc.)", "group": "Gobernanza" },
-    "grupos_hijos": { 
-      "type": "relation", 
-      "relationType": "1:N", 
-      "targetEntity": "Grupo_Productos", 
-      "foreignKey": "id_portafolio", 
-      "uiBehavior": "subgrid", 
-      "label": "Grupos de Producto",
-      "group": "Relaciones" 
-    }
+    primaryKey: "id_portafolio",
+    titleField: "nombre",
+    fields: [
+      { name: "id_portafolio", type: "hidden", primaryKey: true },
+      { name: "estado", type: "hidden", defaultValue: "Activo" },
+      { name: "nombre", type: "text", label: "Nombre del Portafolio", required: true, group: "Identidad" },
+      { name: "proposito", type: "textarea", label: "Propósito del Portafolio", required: true, group: "Identidad" },
+      { name: "objetivos_negocio", type: "textarea", label: "Objetivos de Negocio (Lista)", required: true, group: "Estrategia" },
+      { name: "kpis_metricas", type: "textarea", label: "OKRs y KPIs del Portafolio", required: true, group: "Estrategia" },
+      { name: "capacidad_continuidad", type: "number", label: "% Continuidad Operativa", group: "Capacidad" },
+      { name: "capacidad_fundacional", type: "number", label: "% Fundacionales", group: "Capacidad" },
+      { name: "capacidad_transformacion", type: "number", label: "% Evolución y Transform.", group: "Capacidad" },
+      { name: "flujos_valor", type: "textarea", label: "Value Streams / Flujos de Valor", group: "Capacidad" },
+      { name: "presupuesto_bau", type: "number", label: "Presupuesto BAU ($)", group: "Presupuesto" },
+      { name: "presupuesto_transformacion", type: "number", label: "Presupuesto Transformación ($)", group: "Presupuesto" },
+      { name: "presupuesto_estrategico", type: "number", label: "Presupuesto Estratégico ($)", group: "Presupuesto" },
+      { name: "gobierno_liderazgo", type: "textarea", label: "Gobierno (Roles y Nombres)", group: "Gobernanza" },
+      { name: "stakeholders", type: "textarea", label: "Stakeholders y Sponsors", group: "Gobernanza" },
+      { name: "producto_dominio", type: "textarea", label: "Producto / Dominio (OMS, WMS, etc.)", group: "Gobernanza" },
+      { name: "grupos_hijos", type: "relation", relationType: "1:N", targetEntity: "Grupo_Productos", foreignKey: "id_portafolio", uiBehavior: "subgrid", label: "Grupos de Producto", group: "Relaciones" }
+    ]
   },
   Dominio: {
-    "id_dominio": { "type": "hidden", "primaryKey": true },
-    "estado": { "type": "hidden", "defaultValue": "Activo" },
-    "id_registro": { "type": "text", "label": "ID TDE (Registro)", "required": true, "width": "12" },
-    "nivel_tipo": { "type": "number", "label": "Nivel Tipo", "required": true, "width": "6" },
-    "orden_path": { "type": "text", "label": "Orden Path", "required": true, "width": "6" },
-    "n0_es": { "type": "text", "label": "Nombre (ES)", "required": true, "width": "6" },
-    "nombre_ingles": { "type": "text", "label": "Nombre (EN)", "required": false, "width": "6" },
-    "abreviacion": { "type": "text", "label": "Abreviación", "required": false, "width": "6" },
-    "path_completo_es": { "type": "text", "label": "Path Completo (ES)", "required": true, "width": "12" },
-    "definicion": { "type": "textarea", "label": "Definición", "required": true, "width": "12" }
+    primaryKey: "id_dominio",
+    titleField: "n0_es",
+    fields: [
+      { name: "id_dominio", type: "hidden", primaryKey: true },
+      { name: "estado", type: "hidden", defaultValue: "Activo" },
+      { name: "id_registro", type: "text", label: "ID TDE (Registro)", required: true, width: "12" },
+      { name: "nivel_tipo", type: "number", label: "Nivel Tipo", required: true, width: "6" },
+      { name: "orden_path", type: "text", label: "Orden Path", required: true, width: "6" },
+      { name: "n0_es", type: "text", label: "Nombre (ES)", required: true, width: "6" },
+      { name: "nombre_ingles", type: "text", label: "Nombre (EN)", required: false, width: "6" },
+      { name: "abreviacion", type: "text", label: "Abreviación", required: false, width: "6" },
+      { name: "path_completo_es", type: "text", label: "Path Completo (ES)", required: true, width: "12" },
+      { name: "definicion", type: "textarea", label: "Definición", required: true, width: "12" }
+    ]
   },
   Capacidad: {
-    "id_capacidad": { "type": "hidden", "primaryKey": true },
-    "estado": { "type": "hidden", "defaultValue": "Activo" },
-    "id_externo": { "type": "text", "label": "ID Externo", "required": false, "width": "6" },
-    "nivel_tipo": { "type": "number", "label": "Nivel Tipo", "required": true, "width": "6" },
-    "orden_path": { "type": "text", "label": "Orden Path", "required": false, "width": "12" },
-    "macrocapacidad": { "type": "text", "label": "Macrocapacidad", "required": true, "width": "12" },
-    "nombre_ingles": { "type": "text", "label": "Nombre Inglés", "required": false, "width": "12" },
-    "abreviacion": { "type": "text", "label": "Abreviación", "required": false, "width": "6" },
-    "descripcion": { "type": "textarea", "label": "Descripción", "required": false, "width": "12" },
-    "contexto_completo_analisis": { "type": "textarea", "label": "Contexto Análisis", "required": false, "width": "12" },
-    "path_completo_es": { "type": "text", "label": "Path Completo", "required": false, "width": "12" }
+    primaryKey: "id_capacidad",
+    titleField: "macrocapacidad",
+    fields: [
+      { name: "id_capacidad", type: "hidden", primaryKey: true },
+      { name: "estado", type: "hidden", defaultValue: "Activo" },
+      { name: "id_externo", type: "text", label: "ID Externo", required: false, width: "6" },
+      { name: "nivel_tipo", type: "number", label: "Nivel Tipo", required: true, width: "6" },
+      { name: "orden_path", type: "text", label: "Orden Path", required: false, width: "12" },
+      { name: "macrocapacidad", type: "text", label: "Macrocapacidad", required: true, width: "12" },
+      { name: "nombre_ingles", type: "text", label: "Nombre Inglés", required: false, width: "12" },
+      { name: "abreviacion", type: "text", label: "Abreviación", required: false, width: "6" },
+      { name: "descripcion", type: "textarea", label: "Descripción", required: false, width: "12" },
+      { name: "contexto_completo_analisis", type: "textarea", label: "Contexto Análisis", required: false, width: "12" },
+      { name: "path_completo_es", type: "text", label: "Path Completo", required: false, width: "12" }
+    ]
   },
   Equipo: {
     primaryKey: "id_equipo",
@@ -94,12 +98,16 @@ const APP_SCHEMAS = {
     ]
   },
   Unidad_Negocio: {
-    "id_unidad_negocio": { "type": "hidden", "primaryKey": true },
-    "estado": { "type": "hidden", "defaultValue": "Activo" },
-    "nombre": { "type": "text", "label": "Nombre de la Unidad", "required": true, "width": "12" },
-    "codigo_interno": { "type": "text", "label": "Código Interno / Centro de Costos", "required": true, "width": "6" },
-    "director": { "type": "text", "label": "Director Responsable", "required": true, "width": "6" },
-    "descripcion": { "type": "textarea", "label": "Descripción Estratégica", "width": "12" }
+    primaryKey: "id_unidad_negocio",
+    titleField: "nombre",
+    fields: [
+      { name: "id_unidad_negocio", type: "hidden", primaryKey: true },
+      { name: "estado", type: "hidden", defaultValue: "Activo" },
+      { name: "nombre", type: "text", label: "Nombre de la Unidad", required: true, width: "12" },
+      { name: "codigo_interno", type: "text", label: "Código Interno / Centro de Costos", required: true, width: "6" },
+      { name: "director", type: "text", label: "Director Responsable", required: true, width: "6" },
+      { name: "descripcion", type: "textarea", label: "Descripción Estratégica", width: "12" }
+    ]
   },
   Persona: {
     primaryKey: "id_persona",
