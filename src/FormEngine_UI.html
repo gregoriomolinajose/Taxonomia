@@ -815,19 +815,19 @@
                 // Mostrar Spinner Nativo en el botón
                 submitBtn.innerHTML = '<ion-spinner name="crescent"></ion-spinner> &nbsp; Guardando...';
 
-                // Capturar el Payload dinámicamente
-                const inputs = container.querySelectorAll('ion-input, ion-textarea, ion-select, input[type="hidden"]');
+                // --- LECTURA FRESCA JIT (Evita Detached Nodes) ---
+                const activeForm = document.getElementById('app-container');
+                const freshInputs = activeForm.querySelectorAll('ion-input, ion-textarea, ion-select, input[type="hidden"]');
                 const payload = {};
-                inputs.forEach(input => {
+                freshInputs.forEach(input => {
                     const name = input.getAttribute('name');
                     if (name) {
                         payload[name] = input.value;
                     }
                 });
 
-                // Capturar componentes Chip dinámicos
-                const chipContainers = container.querySelectorAll('.chip-container');
-                chipContainers.forEach(cc => {
+                const freshChipContainers = activeForm.querySelectorAll('.chip-container');
+                freshChipContainers.forEach(cc => {
                     const name = cc.getAttribute('data-chip-name');
                     if (name) {
                         const chips = cc.querySelectorAll('ion-label');
@@ -940,16 +940,17 @@
                                  global.currentEditId = null;
 
                                  // NUNCA usar NodeLists capturados en el outer click handler.
-                                 container.querySelectorAll('ion-input, ion-textarea, ion-select, input[type="hidden"]')
+                                 const activeContainer = document.getElementById('app-container');
+                                 activeContainer.querySelectorAll('ion-input, ion-textarea, ion-select, input[type="hidden"]')
                                      .forEach(input => { input.value = ''; });
 
-                                 container.querySelectorAll('.chip-container')
+                                 activeContainer.querySelectorAll('.chip-container')
                                      .forEach(cc => cc.querySelectorAll('ion-chip').forEach(chip => chip.remove()));
 
                                  goToStep(0);
 
                                  // Regenerar IDs frescos para el próximo registro
-                                 container.querySelectorAll('ion-input[readonly], input[type="hidden"]').forEach(input => {
+                                 activeContainer.querySelectorAll('ion-input[readonly], input[type="hidden"]').forEach(input => {
                                      const name = input.getAttribute('name');
                                      if (name && name.startsWith('id_')) {
                                          const prefix = entityName.substring(0, 4).toUpperCase();
