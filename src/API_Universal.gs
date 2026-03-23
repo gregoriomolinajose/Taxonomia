@@ -196,7 +196,7 @@ function API_Universal_Router(action, entityName, payload) {
       Logger.log('Persistencia completada para: ' + itemName);
       return {
         status: "success",
-        data: responseData,
+        data: JSON.parse(JSON.stringify(responseData || {})),
         Entity: entityName,
         pk: pkField,
         pkValue: confirmedPkValue
@@ -225,7 +225,7 @@ function API_Universal_Router(action, entityName, payload) {
 
     return {
       status: "success",
-      data: responseData
+      data: JSON.parse(JSON.stringify(responseData || {}))
     };
   } catch (error) {
     Logger.log('🚀 ERROR Atrapado en Servidor: ' + error.message + '\n' + error.stack);
