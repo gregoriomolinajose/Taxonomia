@@ -1491,10 +1491,15 @@
                         const response = typeof rawResponse === 'string' ? JSON.parse(rawResponse) : rawResponse;
                         loading.dismiss();
                         if (response && response.status === 'success') {
-                            // Invalidate Frontend Cache (Client Busting)
-                            if (window.__APP_CACHE__) {
-                                delete window.__APP_CACHE__[_state.entityName];
+                            // Purgar de la RAM local
+                            if (window.__APP_CACHE__ && window.__APP_CACHE__[_state.entityName]) {
+                                const idField = (ENTITY_META[_state.entityName] || { idField: 'id' }).idField;
+                                window.__APP_CACHE__[_state.entityName] = window.__APP_CACHE__[_state.entityName].filter(row => row[idField] !== id);
                             }
+
+                            // Forzar re-renderización de la vista actual desde el caché actualizado
+                            _rerenderData();
+
                             _showToast('Registro borrado con éxito.', 'success');
                         } else {
                             _showToast('Error al borrar: ' + (response ? response.message : ''), 'danger');
