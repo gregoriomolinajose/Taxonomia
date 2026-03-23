@@ -33,12 +33,6 @@ const Adapter_Sheets = {
 
         const primaryKeyValue = payload[primaryKeyField];
 
-        // 2. Conectar a SpreadsheetApp (solo en entorno GAS)
-        if (typeof SpreadsheetApp === 'undefined') {
-            // Entorno de pruebas (Jest)
-            return { status: 'success', action: 'mocked_upsert', pk: primaryKeyField, val: primaryKeyValue };
-        }
-
         const spreadsheetId = config ? config.SPREADSHEET_ID_DB : CONFIG.SPREADSHEET_ID_DB;
         Logger.log("Adapter_Sheets.upsert: Usando SPREADSHEET_ID_DB = " + spreadsheetId);
 
@@ -144,10 +138,6 @@ const Adapter_Sheets = {
     },
 
     remove: function (tableName, id, config) {
-        if (typeof SpreadsheetApp === 'undefined') {
-            return { status: 'success', action: 'deleted', pk: 'id', val: id };
-        }
-
         const spreadsheetId = config ? config.SPREADSHEET_ID_DB : CONFIG.SPREADSHEET_ID_DB;
         const ss = SpreadsheetApp.openById(spreadsheetId);
         const sheet = this._ensureSheetExists(ss, tableName);
@@ -245,11 +235,6 @@ const Adapter_Sheets = {
      * @returns {{ headers: string[], rows: (Object[]|Array[]) }}
      */
     list: function (entityName, config, format) {
-        // Entorno de pruebas (Jest) — devolver mock
-        if (typeof SpreadsheetApp === 'undefined') {
-            return { headers: ['id', 'nombre', 'estado'], rows: [] };
-        }
-
         const spreadsheetId = (config && config.SPREADSHEET_ID_DB)
             ? config.SPREADSHEET_ID_DB
             : CONFIG.SPREADSHEET_ID_DB;

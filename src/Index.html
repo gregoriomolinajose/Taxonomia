@@ -299,6 +299,32 @@
                                         </ion-card-content>
                                     </ion-card>
                                 </ion-col>
+
+                                <!-- Tarjeta 5: Capacidades -->
+                                <ion-col size="12" size-md="6" size-xl="4">
+                                    <ion-card>
+                                        <ion-card-header class="ion-text-center">
+                                            <ion-icon name="layers-outline" color="warning"
+                                                style="font-size: 48px; margin-bottom: 10px;"></ion-icon>
+                                            <ion-card-title>Capacidades</ion-card-title>
+                                            <ion-card-subtitle>Arquitectura de Negocio</ion-card-subtitle>
+                                        </ion-card-header>
+                                        <ion-card-content>
+                                            <p style="margin-bottom: 20px; min-height: 44px;">Gestión de Macrocapacidades organizacionales.</p>
+                                            <ion-button expand="block" shape="round" color="warning"
+                                                onclick="renderForm('Capacidad')">
+                                                <ion-icon slot="start" name="add-circle-outline"></ion-icon>
+                                                Crear Nuevo
+                                            </ion-button>
+                                            <ion-button expand="block" shape="round" color="warning" fill="outline"
+                                                style="margin-top: 8px;"
+                                                onclick="window.DataViewEngine.render('Capacidad', 'app-container')">
+                                                <ion-icon slot="start" name="list-outline"></ion-icon>
+                                                Ver Listado
+                                            </ion-button>
+                                        </ion-card-content>
+                                    </ion-card>
+                                </ion-col>
                             </ion-row>
                         </ion-grid>
                     </div>
@@ -472,6 +498,7 @@
                 { id: 'u_neg', icon: 'business-outline', label: 'Unidades de Negocio', action: "window.DataViewEngine.render('Unidad_Negocio', 'app-container')" },
                 { id: 'port', icon: 'briefcase-outline', label: 'Portafolios', action: "window.DataViewEngine.render('Portafolio', 'app-container')" },
                 { id: 'dom', icon: 'globe-outline', label: 'Dominios', action: "window.DataViewEngine.render('Dominio', 'app-container')" },
+                { id: 'capa', icon: 'layers-outline', label: 'Capacidades', action: "window.DataViewEngine.render('Capacidad', 'app-container')" },
                 { id: 'grup', icon: 'layers-outline', label: 'Grupos de Producto', action: "window.DataViewEngine.render('Grupo_Productos', 'app-container')" },
                 { id: 'prod', icon: 'cube-outline', label: 'Productos', action: "window.DataViewEngine.render('Producto', 'app-container')" }
             ];

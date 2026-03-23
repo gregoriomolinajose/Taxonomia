@@ -57,6 +57,19 @@ const APP_SCHEMAS = {
     "path_completo_es": { "type": "text", "label": "Path Completo (ES)", "required": true, "width": "12" },
     "definicion": { "type": "textarea", "label": "Definición", "required": true, "width": "12" }
   },
+  Capacidad: {
+    "id_capacidad": { "type": "hidden", "primaryKey": true },
+    "estado": { "type": "hidden", "defaultValue": "Activo" },
+    "id_externo": { "type": "text", "label": "ID Externo", "required": false, "width": "6" },
+    "nivel_tipo": { "type": "number", "label": "Nivel Tipo", "required": true, "width": "6" },
+    "orden_path": { "type": "text", "label": "Orden Path", "required": false, "width": "12" },
+    "macrocapacidad": { "type": "text", "label": "Macrocapacidad", "required": true, "width": "12" },
+    "nombre_ingles": { "type": "text", "label": "Nombre Inglés", "required": false, "width": "12" },
+    "abreviacion": { "type": "text", "label": "Abreviación", "required": false, "width": "6" },
+    "descripcion": { "type": "textarea", "label": "Descripción", "required": false, "width": "12" },
+    "contexto_completo_analisis": { "type": "textarea", "label": "Contexto Análisis", "required": false, "width": "12" },
+    "path_completo_es": { "type": "text", "label": "Path Completo", "required": false, "width": "12" }
+  },
   Equipo: {
     fields: [
       { name: "id_equipo", label: "ID del Equipo", type: "text", required: true, readonly: true },
