@@ -930,22 +930,27 @@
                                      }
                                  }
 
-                                 // ── Invalidador Frontend Dinámico para Entidades Anidadas (Subgrids) ──
-                                 if (window.__NESTED_DATA__) {
-                                     Object.keys(window.__NESTED_DATA__).forEach(relationKey => {
-                                         const schemaDef = window.APP_SCHEMAS && window.APP_SCHEMAS[entityName];
-                                         let tEnt = null;
-                                         if (schemaDef) {
-                                             if (schemaDef.fields) {
-                                                 const f = schemaDef.fields.find(f => f.name === relationKey);
-                                                 if (f) tEnt = f.targetEntity;
-                                             } else if (schemaDef[relationKey]) {
-                                                 tEnt = schemaDef[relationKey].targetEntity;
-                                             }
-                                         }
-                                         if (tEnt && window.__APP_CACHE__ && window.__APP_CACHE__[tEnt]) {
-                                             console.log(`[Cache] Invalidando Frontend Cache para entidad hija (Subgrid): ${tEnt}`);
-                                             delete window.__APP_CACHE__[tEnt];
+                                 // ── Inyección Frontend Dinámica para Entidades Anidadas (Subgrids 0.0s latency) ──
+                                 // En vez de borrar la caché y forzar una recarga (Loading de 1.5s), insertamos los hijos directamente.
+                                 if (response.data && response.data.orchestratedChildren) {
+                                     const orch = response.data.orchestratedChildren;
+                                     Object.keys(orch).forEach(childEntity => {
+                                         if (window.__APP_CACHE__ && Array.isArray(window.__APP_CACHE__[childEntity])) {
+                                             const freshChildren = orch[childEntity] || [];
+                                             const childPkField = 'id_' + childEntity.toLowerCase().replace(/s$/, '').replace(/es$/, '');
+                                             
+                                             let currentCache = [...window.__APP_CACHE__[childEntity]];
+                                             freshChildren.forEach(newChild => {
+                                                 const cid = newChild[childPkField] || newChild['id_' + childEntity.toLowerCase()];
+                                                 const idx = currentCache.findIndex(c => (c[childPkField] === cid) || (c['id_' + childEntity.toLowerCase()] === cid));
+                                                 if (idx !== -1) {
+                                                     currentCache = [...currentCache.slice(0, idx), newChild, ...currentCache.slice(idx + 1)];
+                                                 } else {
+                                                     currentCache = [newChild, ...currentCache]; // prepend
+                                                 }
+                                             });
+                                             window.__APP_CACHE__[childEntity] = currentCache;
+                                             console.log(`[Cache] Inyectados ${freshChildren.length} registros anidados en caché de ${childEntity}`);
                                          }
                                      });
                                  }
