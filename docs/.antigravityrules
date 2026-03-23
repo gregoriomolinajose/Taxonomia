@@ -52,9 +52,11 @@ Si el usuario escribe ÚNICAMENTE la palabra "close" (sin importar mayúsculas, 
 
 3. **Sincronización Cloud (clasp):** Ejecutar en la terminal el comando clasp push para subir el código validado a Google Apps Script.
 
-4. **Versionado Git (Micro-Commit):** Ejecutar en la terminal la secuencia git add ., seguido de un git commit -m "feat/fix: [Resumen semántico]" y finalmente git push origin main.
+4. **Incremento de Versión UI:** Actualizar el indicador de versión en la esquina inferior izquierda de `Index.html` (incrementando el parche, ej. v1.0.X a v1.0.X+1) para reflejar la secuenciación del nuevo despliegue en la interfaz.
 
-5. **Reporte de Salida y Cierre:** Imprimir un resumen ejecutivo confirmando el despliegue y despedirse formalmente, indicando que se debe abrir un nuevo chat.
+5. **Versionado Git (Micro-Commit):** Ejecutar en la terminal la secuencia git add ., seguido de un git commit -m "feat/fix: [Resumen semántico]" y finalmente git push origin main.
+
+6. **Reporte de Salida y Cierre:** Imprimir un resumen ejecutivo confirmando el despliegue y despedirse formalmente, indicando que se debe abrir un nuevo chat.
 
 ### 5.6 Comando de Arranque Rápido (Macro: "init")
 Si el usuario escribe la palabra "init" (o le pide al agente que ejecute el macro de inicio), el agente asume que es una nueva sesión de trabajo y DEBE ejecutar esta secuencia de "Cold Start":
