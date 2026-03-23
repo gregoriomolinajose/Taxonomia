@@ -886,8 +886,8 @@
                             if (response && response.status === 'success') {
                                  // ── Server-Confirmed Frontend Cache Injection (Immutable · Zero-Latency) ──
                                  if (window.__APP_CACHE__ && window.__APP_CACHE__[entityName]) {
-                                     const cacheData = window.__APP_CACHE__[entityName].data;
-                                     if (cacheData) {
+                                     const cacheData = window.__APP_CACHE__[entityName];
+                                     if (Array.isArray(cacheData)) {
                                          // ── PK Resolution Chain (3 tiers, defensive) ─────────────────────────
                                          // Tier 1: Server-confirmed via new response.pk / response.pkValue fields
                                          let pkField = response.pk;
@@ -913,17 +913,17 @@
                                              // REGLA DE ORO: Registro limpio fusionando payload con ID confirmado.
                                              const cleanRecord = { ...payload, [pkField]: pkValue };
 
-                                             // INMUTABILIDAD ESTRUCTURAL: reemplaza sólo el arreglo .data
-                                             const liveData = window.__APP_CACHE__[entityName].data || [];
+                                             // INMUTABILIDAD ESTRUCTURAL: reemplaza el arreglo raíz
+                                             const liveData = Array.isArray(window.__APP_CACHE__[entityName]) ? window.__APP_CACHE__[entityName] : [];
                                              const existingIdx = liveData.findIndex(r => _normalizeId(r[pkField]) === _normalizeId(pkValue));
 
-                                             window.__APP_CACHE__[entityName].data = existingIdx !== -1
+                                             window.__APP_CACHE__[entityName] = existingIdx !== -1
                                                  // UPDATE: reemplazar en su posición
                                                  ? [...liveData.slice(0, existingIdx), cleanRecord, ...liveData.slice(existingIdx + 1)]
                                                  // INSERT: prepend (aparece primero en la tabla)
                                                  : [cleanRecord, ...liveData];
 
-                                             console.log(`[Cache] ${existingIdx !== -1 ? 'UPDATE' : 'INSERT'} para: ${entityName} [${pkField}=${pkValue}]. Total: ${window.__APP_CACHE__[entityName].data.length}`);
+                                             console.log(`[Cache] ${existingIdx !== -1 ? 'UPDATE' : 'INSERT'} para: ${entityName} [${pkField}=${pkValue}]. Total: ${window.__APP_CACHE__[entityName].length}`);
                                          } else {
                                              console.warn(`[Cache] No se pudo resolver pkField/pkValue para ${entityName}. Cache no actualizado.`);
                                          }
