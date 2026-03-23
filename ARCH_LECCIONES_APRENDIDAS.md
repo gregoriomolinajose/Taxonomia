@@ -64,3 +64,29 @@ Este documento registra las lecciones aprendidas durante los Sprints para evitar
   3. Soporte agnóstico e inmediato al grid para campos invisibles (`field.type === 'hidden'`).
   4. La deuda técnica de tests dependientes del dominio en entorno virtualizado se saneó inyectando variables configuracionales en el bloque `beforeAll` (`global.CONFIG.ALLOWED_DOMAINS`) exclusivo para Jest.
 - **Regla Preventiva de Diseño:** *Solidaridad y Polimorfismo en Motor UI.* Un motor dinámico que escupe UI basándose en Diccionarios de Datos, NUNCA debe asumir una única estructura. Debe normalizar entradas agnósticamente para garantizar retrocompatibilidad. Las pruebas unitarias de Seguridad y Dominio (como correos permitidos) DEBEN ser aisladas parametrizando un mock en el hook principal del framework y jamás dejarse con variables indefinidas si el fallback rechaza configuraciones por diseño.
+
+---
+
+## Hito: Sanitización Universal MALS (Pre-Serialization Hook)
+- **Hito:** Prevención de Error "Malformed JSON" en la Sincronización Mobile/Web Bridge.
+- **Punto de Falla (Root Cause):** Al devolver datos desde Google Apps Script (`google.script.run`) hacia la UI Mobile/Web, si el objeto `responseData` contiene tipos de datos nativos de GAS (específicamente ojetos `Date` de auditoría), el motor de serialización de Ionic/WebView puede fallar silenciosamente o lanzar excepciones de "Malformed JSON" debido a la incapacidad de serializar el prototipo del objeto `Date` dentro de un objeto anidado.
+- **Solución Maestra (Golden Pattern):** Patrón de *Clonación Dura para Aplanado de Prototipos*.
+  ```javascript
+  // En el controlador (API_Universal.gs), antes de retornar el payload final:
+  return JSON.parse(JSON.stringify(responseData));
+  ```
+- **Regla Preventiva de Diseño:** *Agnosticismo de Serialización.* Ningún controlador de Backend debe devolver objetos nativos o prototipados directamente a la red. Todo objeto de respuesta DEBE pasar por una fase de "Stringify-Parse" para garantizar que el payload sea JSON puro (texto e ints únicamente), eliminando referencias circulares y tipos no soportados antes de cruzar el puente de red.
+
+---
+
+## Hito: Auto-Aprovisionamiento Dinámico para Esquemas Planos (Flat Schemas)
+- **Hito:** Robustez en la Creación Automática de Pestañas (Refactor `Adapter_Sheets`).
+- **Punto de Falla (Root Cause):** El motor original de aprovisionamiento de encabezados (`_ensureSheetExists`) buscaba estrictamente un nodo `fields` (Array). Al introducir entidades configuradas como objetos de configuración plana (como `Capacidad` o `Dominio`), la lógica fallaba, dejando la hoja de Google Sheets creada pero sin encabezados. Esto causaba pérdida silenciosa de datos al intentar escribir en una hoja sin estructura.
+- **Solución Maestra (Golden Pattern):** Mapeo de Cabeceras por Extracción de Claves con Filtro de Metadatos.
+  ```javascript
+  // Si no hay .fields, extraer llaves del objeto raíz filtrando flags internos
+  schemaFields = Object.keys(APP_SCHEMAS[tableName]).filter(k => 
+      typeof APP_SCHEMAS[tableName][k] === 'object' && !['uiBehavior', 'relationType'].includes(k)
+  );
+  ```
+- **Regla Preventiva de Diseño:** *Provisionamiento Agresivo Basado en Llaves.* Si una entidad no declara un array explícito de campos, el sistema debe ser capaz de auto-descubrir su estructura recorriendo las claves del objeto primario. Jamás se debe permitir que un adaptador devuelva una hoja de base de datos sin inyectar preventivamente los nombres de columnas derivados del esquema.
