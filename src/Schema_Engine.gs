@@ -97,6 +97,17 @@ const APP_SCHEMAS = {
     "codigo_interno": { "type": "text", "label": "Código Interno / Centro de Costos", "required": true, "width": "6" },
     "director": { "type": "text", "label": "Director Responsable", "required": true, "width": "6" },
     "descripcion": { "type": "textarea", "label": "Descripción Estratégica", "width": "12" }
+  },
+  Persona: {
+    primaryKey: "id_persona",
+    titleField: "nombre_completo",
+    fields: [
+      { name: "id_persona", label: "ID Persona", type: "text", required: true, readonly: true, primaryKey: true, width: 4 },
+      { name: "nombre_completo", label: "Nombre Completo", type: "text", required: true, width: 8 },
+      { name: "email", label: "Correo Electrónico", type: "email", required: true, width: 6 },
+      { name: "rol_organizacional", label: "Rol Organizacional", type: "select", required: true, width: 6, options: ["Director", "Scrum Master", "Product Owner", "Arquitecto", "Desarrollador", "Business Analyst"] },
+      { name: "estado", type: "hidden", defaultValue: "Activo" }
+    ]
   }
 };
 

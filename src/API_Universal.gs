@@ -242,6 +242,23 @@ function API_Universal_Router(action, entityName, payload) {
 }
 
 // Bloque de Persistencia Dinámicas (Relacional 1:N)
+function getPersonasOptions() {
+  try {
+    const result = Engine_DB.list('Persona');
+    if (!result || !result.rows) return [];
+    
+    return result.rows
+      .filter(row => row.estado !== 'Eliminado')
+      .map(row => ({
+        value: row.id_persona,
+        label: row.nombre_completo + (row.rol_organizacional ? ` (${row.rol_organizacional})` : '')
+      }));
+  } catch(e) {
+    Logger.log("Error en getPersonasOptions: " + e.message);
+    return [];
+  }
+}
+
 function getGruposProductosOptions() {
   try {
     const result = Engine_DB.list('Grupo_Productos');

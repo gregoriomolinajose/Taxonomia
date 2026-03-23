@@ -93,7 +93,8 @@
             Grupo_Productos: { order: 4, iconName: 'layers-outline', color: 'secondary', label: 'Grupos de Producto', titleField: 'nombre', idField: 'id_grupo_producto', fkField: { key: 'id_portafolio', label: 'Portafolio' } },
             Producto: { order: 5, iconName: 'cube-outline', color: 'tertiary', label: 'Productos', titleField: 'nombre_producto', idField: 'id_producto', fkField: { key: 'id_grupo_producto', label: 'Grupo' } },
             Capacidad: { order: 6, iconName: 'layers-outline', color: 'warning', label: 'Capacidades', titleField: 'macrocapacidad', idField: 'id_capacidad', fkField: null },
-            Equipo: { order: 7, iconName: 'people-outline', color: 'dark', label: 'Equipos', titleField: 'nombre_equipo', idField: 'id_equipo', fkField: { key: 'id_producto', label: 'Producto' } }
+            Equipo: { order: 7, iconName: 'people-outline', color: 'dark', label: 'Equipos', titleField: 'nombre_equipo', idField: 'id_equipo', fkField: { key: 'id_producto', label: 'Producto' } },
+            Persona: { order: 8, iconName: 'person-outline', color: 'medium', label: 'Personas', titleField: 'nombre_completo', idField: 'id_persona', fkField: null }
         };
     </script>
 </head>
@@ -130,7 +131,7 @@
                 <ion-footer class="ion-no-border">
                     <ion-toolbar style="--background: transparent; --min-height: 40px; padding: 0 16px;">
                         <span style="font-size: 11px; color: var(--ion-color-medium); font-weight: 500;">
-                            <?= typeof CONFIG !== 'undefined' ? CONFIG.APP_VERSION : 'v1.0.6-Dev' ?>
+                            <?= typeof CONFIG !== 'undefined' ? CONFIG.APP_VERSION : 'v1.0.7-Dev' ?>
                         </span>
                     </ion-toolbar>
                 </ion-footer>

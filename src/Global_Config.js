@@ -1,9 +1,9 @@
-// src/Config.prod.js - VERIFIED PUSH: 2026-03-20 17:40
+// src/Config.dev.js
 const CONFIG = {
-    APP_VERSION: 'v1.0.6 - Build 260323.1023',
-    // ID real de producción
-    SPREADSHEET_ID_DB: '1DriqXz98fwXAsVTOioRlxJYfGbWFfIejGEJE99137aA',
-    ALLOWED_DOMAINS: ['@coppel.com', '@bancoppel.com'],
+    APP_VERSION: 'v1.0.7 - Build 260323.1130',
+    // TODO: Reemplazar con el ID real de Desarrollo
+    SPREADSHEET_ID_DB: '1tMyYBLPr0HJnJwbhFpCVoM4U8k1EVGycBDBjEnUGDts',
+    ALLOWED_DOMAINS: ['@gmail.com', '@bellfy.app', '@coppel.com', '@bancoppel.com'],
     useSheets: true,
     useCloudDB: false
 };
