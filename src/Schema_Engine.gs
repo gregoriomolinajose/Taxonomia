@@ -71,12 +71,15 @@ const APP_SCHEMAS = {
     "path_completo_es": { "type": "text", "label": "Path Completo", "required": false, "width": "12" }
   },
   Equipo: {
+    primaryKey: "id_equipo",
+    titleField: "nombre_equipo",
     fields: [
-      { name: "id_equipo", label: "ID del Equipo", type: "text", required: true, readonly: true },
+      { name: "id_equipo", label: "ID del Equipo", type: "text", required: true, readonly: true, primaryKey: true },
       { name: "nombre_equipo", label: "Nombre del Equipo", type: "text", required: true },
-      { name: "scrum_master", label: "Scrum Master", type: "lookup", required: true, lookupTarget: "Persona", width: 6 },
-      { name: "product_owner", label: "Product Owner", type: "lookup", required: true, lookupTarget: "Persona", width: 6 },
-      { name: "id_producto", label: "Producto o Canal Asignado", type: "lookup", required: true, lookupTarget: "Producto" }
+      { name: "scrum_master", label: "Scrum Master", type: "select", required: true, options: [], lookupSource: "getPersonasOptions", width: 6 },
+      { name: "product_owner", label: "Product Owner", type: "select", required: true, options: [], lookupSource: "getPersonasOptions", width: 6 },
+      { name: "id_producto", label: "Producto o Canal Asignado", type: "select", required: true, options: [], lookupSource: "getProductosOptions" },
+      { name: "estado", type: "hidden", defaultValue: "Activo" }
     ]
   },
   Producto: {

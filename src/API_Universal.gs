@@ -247,12 +247,13 @@ function getPersonasOptions() {
     const result = Engine_DB.list('Persona');
     if (!result || !result.rows) return [];
     
-    return result.rows
+    const options = result.rows
       .filter(row => row.estado !== 'Eliminado')
       .map(row => ({
         value: row.id_persona,
         label: row.nombre_completo + (row.rol_organizacional ? ` (${row.rol_organizacional})` : '')
       }));
+    return JSON.parse(JSON.stringify(options));
   } catch(e) {
     Logger.log("Error en getPersonasOptions: " + e.message);
     return [];
@@ -304,10 +305,11 @@ function getProductosOptions() {
     const result = Engine_DB.list('Producto');
     if (!result || !result.rows) return [];
 
-    return result.rows.map(row => ({
+    const options = result.rows.map(row => ({
       value: row.id_producto,
       label: row.nombre_producto
     })).filter(opt => opt.value && opt.label);
+    return JSON.parse(JSON.stringify(options));
   } catch (error) {
     Logger.log("Error en getProductosOptions: " + error.message);
     return [];
