@@ -44,12 +44,7 @@ const Adapter_Sheets = {
 
         const ss = SpreadsheetApp.openById(spreadsheetId);
         Logger.log("Adapter_Sheets.upsert: Buscando pestaña... DB_" + tableName);
-        let sheet = ss.getSheetByName('DB_' + tableName);
-
-        if (!sheet) {
-            sheet = ss.insertSheet('DB_' + tableName);
-            throw new Error(`La hoja DB_${tableName} no existe. Por favor créala con las columnas correspondientes.`);
-        }
+        const sheet = this._ensureSheetExists(ss, tableName);
 
         // 3. Leer Encabezados
         const headersRange = sheet.getRange(1, 1, 1, sheet.getLastColumn());
@@ -155,11 +150,7 @@ const Adapter_Sheets = {
 
         const spreadsheetId = config ? config.SPREADSHEET_ID_DB : CONFIG.SPREADSHEET_ID_DB;
         const ss = SpreadsheetApp.openById(spreadsheetId);
-        const sheet = ss.getSheetByName('DB_' + tableName);
-
-        if (!sheet) {
-            throw new Error(`La hoja DB_${tableName} no existe.`);
-        }
+        const sheet = this._ensureSheetExists(ss, tableName);
 
         const headersRange = sheet.getRange(1, 1, 1, sheet.getLastColumn());
         const headers = headersRange.getValues()[0];
@@ -212,6 +203,35 @@ const Adapter_Sheets = {
     },
     _normalizeHeader: _normalizeHeader,
 
+    _ensureSheetExists: function(ss, tableName) {
+        let sheet = ss.getSheetByName('DB_' + tableName);
+        if (!sheet) {
+            sheet = ss.insertSheet('DB_' + tableName);
+            Logger.log(`[Auto-Provision] Hoja creada automáticamente: DB_${tableName}`);
+        }
+        
+        // Auto-inyectar headers de esquema si está recién creada
+        if (sheet.getLastRow() === 0) {
+            let schemaFields = [];
+            if (typeof APP_SCHEMAS !== 'undefined' && APP_SCHEMAS[tableName] && APP_SCHEMAS[tableName].fields) {
+                // Sacar names (claves) asumiendo que el Schema Engine ya está cargado en Backend
+                schemaFields = APP_SCHEMAS[tableName].fields.map(f => f.name);
+            } else {
+                // Fallback primario si no encuentra esquema global (por orden de carga)
+                schemaFields = ['id_' + tableName.toLowerCase().replace(/s$/, '')];
+            }
+            
+            // Regla 4 de DB
+            const auditFields = ['created_at', 'created_by', 'updated_at', 'updated_by'];
+            const allHeaders = [...schemaFields, ...auditFields];
+            
+            sheet.getRange(1, 1, 1, allHeaders.length).setValues([allHeaders]);
+            Logger.log(`[Auto-Provision] Encabezados inyectados: ${allHeaders.join(', ')}`);
+        }
+        
+        return sheet;
+    },
+
     /**
      * list(entityName, config, format)
      * Lee todas las filas de DB_<entityName> y las devuelve como un objeto estructurado.
@@ -231,11 +251,7 @@ const Adapter_Sheets = {
             : CONFIG.SPREADSHEET_ID_DB;
 
         const ss = SpreadsheetApp.openById(spreadsheetId);
-        const sheet = ss.getSheetByName('DB_' + entityName);
-
-        if (!sheet) {
-            throw new Error(`La hoja DB_${entityName} no existe en el Spreadsheet.`);
-        }
+        const sheet = this._ensureSheetExists(ss, entityName);
 
         // [Regla 11: Performance] - Estándar Inmutable: Traer todo el rango de datos en una sola llamada
         const data = sheet.getDataRange().getValues();

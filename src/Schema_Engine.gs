@@ -45,6 +45,18 @@ const APP_SCHEMAS = {
       "group": "Relaciones" 
     }
   },
+  Dominio: {
+    "id_dominio": { "type": "hidden", "primaryKey": true },
+    "estado": { "type": "hidden", "defaultValue": "Activo" },
+    "id_registro": { "type": "text", "label": "ID TDE (Registro)", "required": true, "width": "12" },
+    "nivel_tipo": { "type": "number", "label": "Nivel Tipo", "required": true, "width": "6" },
+    "orden_path": { "type": "text", "label": "Orden Path", "required": true, "width": "6" },
+    "n0_es": { "type": "text", "label": "Nombre (ES)", "required": true, "width": "6" },
+    "nombre_ingles": { "type": "text", "label": "Nombre (EN)", "required": false, "width": "6" },
+    "abreviacion": { "type": "text", "label": "Abreviación", "required": false, "width": "6" },
+    "path_completo_es": { "type": "text", "label": "Path Completo (ES)", "required": true, "width": "12" },
+    "definicion": { "type": "textarea", "label": "Definición", "required": true, "width": "12" }
+  },
   Equipo: {
     fields: [
       { name: "id_equipo", label: "ID del Equipo", type: "text", required: true, readonly: true },

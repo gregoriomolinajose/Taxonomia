@@ -166,9 +166,9 @@
                                 </ion-col>
                             </ion-row>
 
-                            <ion-row>
+                            <ion-row class="ion-justify-content-center">
                                 <!-- Tarjeta 0: Unidades de Negocio (Corporativo) -->
-                                <ion-col size="12" size-md="6" size-xl="3">
+                                <ion-col size="12" size-md="6" size-xl="4">
                                     <ion-card>
                                         <ion-card-header class="ion-text-center">
                                             <ion-icon name="business-outline" color="primary"
@@ -194,7 +194,7 @@
                                 </ion-col>
 
                                 <!-- Tarjeta 1: Portafolios -->
-                                <ion-col size="12" size-md="6" size-xl="3">
+                                <ion-col size="12" size-md="6" size-xl="4">
                                     <ion-card>
                                         <ion-card-header class="ion-text-center">
                                             <ion-icon name="briefcase-outline" color="primary"
@@ -220,11 +220,37 @@
                                     </ion-card>
                                 </ion-col>
 
-                                <!-- Tarjeta 2: Grupos de Productos -->
-                                <ion-col size="12" size-md="6" size-xl="3">
+                                <!-- Tarjeta 2: Dominios -->
+                                <ion-col size="12" size-md="6" size-xl="4">
                                     <ion-card>
                                         <ion-card-header class="ion-text-center">
-                                            <ion-icon name="layers-outline" color="secondary"
+                                            <ion-icon name="globe-outline" color="secondary"
+                                                style="font-size: 48px; margin-bottom: 10px;"></ion-icon>
+                                            <ion-card-title>Dominios</ion-card-title>
+                                            <ion-card-subtitle>Taxonomía de Negocio</ion-card-subtitle>
+                                        </ion-card-header>
+                                        <ion-card-content>
+                                            <p style="margin-bottom: 20px; min-height: 44px;">Agrupadores sistémicos y áreas funcionales de alto nivel.</p>
+                                            <ion-button expand="block" shape="round" color="secondary"
+                                                onclick="renderForm('Dominio')">
+                                                <ion-icon slot="start" name="add-circle-outline"></ion-icon>
+                                                Crear Nuevo
+                                            </ion-button>
+                                            <ion-button expand="block" shape="round" color="secondary" fill="outline"
+                                                style="margin-top: 8px;"
+                                                onclick="window.DataViewEngine.render('Dominio', 'app-container')">
+                                                <ion-icon slot="start" name="list-outline"></ion-icon>
+                                                Ver Listado
+                                            </ion-button>
+                                        </ion-card-content>
+                                    </ion-card>
+                                </ion-col>
+
+                                <!-- Tarjeta 3: Grupos de Productos -->
+                                <ion-col size="12" size-md="6" size-xl="4">
+                                    <ion-card>
+                                        <ion-card-header class="ion-text-center">
+                                            <ion-icon name="layers-outline" color="tertiary"
                                                 style="font-size: 48px; margin-bottom: 10px;"></ion-icon>
                                             <ion-card-title>Grupos</ion-card-title>
                                             <ion-card-subtitle>Nivel Táctico</ion-card-subtitle>
@@ -232,12 +258,12 @@
                                         <ion-card-content>
                                             <p style="margin-bottom: 20px; min-height: 44px;">Organiza productos por
                                                 dominios y modelos de negocio.</p>
-                                            <ion-button expand="block" shape="round" color="secondary"
+                                            <ion-button expand="block" shape="round" color="tertiary"
                                                 onclick="renderForm('Grupo_Productos')">
                                                 <ion-icon slot="start" name="add-circle-outline"></ion-icon>
                                                 Crear Nuevo
                                             </ion-button>
-                                            <ion-button expand="block" shape="round" color="secondary" fill="outline"
+                                            <ion-button expand="block" shape="round" color="tertiary" fill="outline"
                                                 style="margin-top: 8px;"
                                                 onclick="window.DataViewEngine.render('Grupo_Productos', 'app-container')">
                                                 <ion-icon slot="start" name="list-outline"></ion-icon>
@@ -247,11 +273,11 @@
                                     </ion-card>
                                 </ion-col>
 
-                                <!-- Tarjeta 3: Productos -->
-                                <ion-col size="12" size-md="6" size-xl="3">
+                                <!-- Tarjeta 4: Productos -->
+                                <ion-col size="12" size-md="6" size-xl="4">
                                     <ion-card>
                                         <ion-card-header class="ion-text-center">
-                                            <ion-icon name="cube-outline" color="tertiary"
+                                            <ion-icon name="cube-outline" color="success"
                                                 style="font-size: 48px; margin-bottom: 10px;"></ion-icon>
                                             <ion-card-title>Productos</ion-card-title>
                                             <ion-card-subtitle>Nivel Operativo</ion-card-subtitle>
@@ -259,12 +285,12 @@
                                         <ion-card-content>
                                             <p style="margin-bottom: 20px; min-height: 44px;">Detalle granular de cada
                                                 activo y su estado actual.</p>
-                                            <ion-button expand="block" shape="round" color="tertiary"
+                                            <ion-button expand="block" shape="round" color="success"
                                                 onclick="renderForm('Producto')">
                                                 <ion-icon slot="start" name="add-circle-outline"></ion-icon>
                                                 Crear Nuevo
                                             </ion-button>
-                                            <ion-button expand="block" shape="round" color="tertiary" fill="outline"
+                                            <ion-button expand="block" shape="round" color="success" fill="outline"
                                                 style="margin-top: 8px;"
                                                 onclick="window.DataViewEngine.render('Producto', 'app-container')">
                                                 <ion-icon slot="start" name="list-outline"></ion-icon>
@@ -445,6 +471,7 @@
                 { id: 'home', icon: 'home-outline', label: 'Inicio', action: 'window.returnToDashboard()', active: true },
                 { id: 'u_neg', icon: 'business-outline', label: 'Unidades de Negocio', action: "window.DataViewEngine.render('Unidad_Negocio', 'app-container')" },
                 { id: 'port', icon: 'briefcase-outline', label: 'Portafolios', action: "window.DataViewEngine.render('Portafolio', 'app-container')" },
+                { id: 'dom', icon: 'globe-outline', label: 'Dominios', action: "window.DataViewEngine.render('Dominio', 'app-container')" },
                 { id: 'grup', icon: 'layers-outline', label: 'Grupos de Producto', action: "window.DataViewEngine.render('Grupo_Productos', 'app-container')" },
                 { id: 'prod', icon: 'cube-outline', label: 'Productos', action: "window.DataViewEngine.render('Producto', 'app-container')" }
             ];
@@ -489,6 +516,7 @@
             const entities = [
                 { key: 'Unidad_Negocio', icon: 'business-outline', label: 'Unidades de Negocio' },
                 { key: 'Portafolio', icon: 'briefcase-outline', label: 'Portafolios' },
+                { key: 'Dominio', icon: 'globe-outline', label: 'Dominios' },
                 { key: 'Grupo_Productos', icon: 'layers-outline', label: 'Grupos de Producto' },
                 { key: 'Producto', icon: 'cube-outline', label: 'Productos' }
             ];
