@@ -84,6 +84,17 @@
     <script>
         window.APP_SCHEMAS = <?!= JSON.stringify(getAppSchema()) ?>;
         window.__APP_CACHE__ = {}; // Global State Hub for Frontend Hydration
+        
+        // (NEW) Single Source of Truth for Entity Meta (Rule 8: Determinismo de Navegación)
+        window.ENTITY_META = {
+            Unidad_Negocio: { order: 1, iconName: 'business-outline', color: 'primary', label: 'Unidades de Negocio', titleField: 'nombre', idField: 'id_unidad_negocio', fkField: null },
+            Portafolio: { order: 2, iconName: 'briefcase-outline', color: 'primary', label: 'Portafolios', titleField: 'nombre', idField: 'id_portafolio', fkField: null },
+            Dominio: { order: 3, iconName: 'globe-outline', color: 'secondary', label: 'Dominios', titleField: 'n0_es', idField: 'id_dominio', fkField: null },
+            Grupo_Productos: { order: 4, iconName: 'layers-outline', color: 'secondary', label: 'Grupos de Producto', titleField: 'nombre', idField: 'id_grupo_producto', fkField: { key: 'id_portafolio', label: 'Portafolio' } },
+            Producto: { order: 5, iconName: 'cube-outline', color: 'tertiary', label: 'Productos', titleField: 'nombre_producto', idField: 'id_producto', fkField: { key: 'id_grupo_producto', label: 'Grupo' } },
+            Capacidad: { order: 6, iconName: 'layers-outline', color: 'warning', label: 'Capacidades', titleField: 'macrocapacidad', idField: 'id_capacidad', fkField: null },
+            Equipo: { order: 7, iconName: 'people-outline', color: 'dark', label: 'Equipos', titleField: 'nombre_equipo', idField: 'id_equipo', fkField: { key: 'id_producto', label: 'Producto' } }
+        };
     </script>
 </head>
 
@@ -119,7 +130,7 @@
                 <ion-footer class="ion-no-border">
                     <ion-toolbar style="--background: transparent; --min-height: 40px; padding: 0 16px;">
                         <span style="font-size: 11px; color: var(--ion-color-medium); font-weight: 500;">
-                            <?= typeof CONFIG !== 'undefined' ? CONFIG.APP_VERSION : 'v0.0.0-Dev' ?>
+                            <?= typeof CONFIG !== 'undefined' ? CONFIG.APP_VERSION : 'v1.0.6-Dev' ?>
                         </span>
                     </ion-toolbar>
                 </ion-footer>
@@ -166,165 +177,8 @@
                                 </ion-col>
                             </ion-row>
 
-                            <ion-row class="ion-justify-content-center">
-                                <!-- Tarjeta 0: Unidades de Negocio (Corporativo) -->
-                                <ion-col size="12" size-md="6" size-xl="4">
-                                    <ion-card>
-                                        <ion-card-header class="ion-text-center">
-                                            <ion-icon name="business-outline" color="primary"
-                                                style="font-size: 48px; margin-bottom: 10px;"></ion-icon>
-                                            <ion-card-title>Unidades de Negocio</ion-card-title>
-                                            <ion-card-subtitle>Nivel Corporativo</ion-card-subtitle>
-                                        </ion-card-header>
-                                        <ion-card-content>
-                                            <p style="margin-bottom: 20px; min-height: 44px;">Gestiona los centros de costos y directores responsables.</p>
-                                            <ion-button expand="block" shape="round" color="primary"
-                                                onclick="renderForm('Unidad_Negocio')">
-                                                <ion-icon slot="start" name="add-circle-outline"></ion-icon>
-                                                Crear Nuevo
-                                            </ion-button>
-                                            <ion-button expand="block" shape="round" color="primary" fill="outline"
-                                                style="margin-top: 8px;"
-                                                onclick="window.DataViewEngine.render('Unidad_Negocio', 'app-container')">
-                                                <ion-icon slot="start" name="list-outline"></ion-icon>
-                                                Ver Listado
-                                            </ion-button>
-                                        </ion-card-content>
-                                    </ion-card>
-                                </ion-col>
-
-                                <!-- Tarjeta 1: Portafolios -->
-                                <ion-col size="12" size-md="6" size-xl="4">
-                                    <ion-card>
-                                        <ion-card-header class="ion-text-center">
-                                            <ion-icon name="briefcase-outline" color="primary"
-                                                style="font-size: 48px; margin-bottom: 10px;"></ion-icon>
-                                            <ion-card-title>Portafolios</ion-card-title>
-                                            <ion-card-subtitle>Nivel Estratégico</ion-card-subtitle>
-                                        </ion-card-header>
-                                        <ion-card-content>
-                                            <p style="margin-bottom: 20px; min-height: 44px;">Gestiona la visión
-                                                estratégica y presupuestos de alto nivel.</p>
-                                            <ion-button expand="block" shape="round" color="primary"
-                                                onclick="renderForm('Portafolio')">
-                                                <ion-icon slot="start" name="add-circle-outline"></ion-icon>
-                                                Crear Nuevo
-                                            </ion-button>
-                                            <ion-button expand="block" shape="round" color="primary" fill="outline"
-                                                style="margin-top: 8px;"
-                                                onclick="window.DataViewEngine.render('Portafolio', 'app-container')">
-                                                <ion-icon slot="start" name="list-outline"></ion-icon>
-                                                Ver Listado
-                                            </ion-button>
-                                        </ion-card-content>
-                                    </ion-card>
-                                </ion-col>
-
-                                <!-- Tarjeta 2: Dominios -->
-                                <ion-col size="12" size-md="6" size-xl="4">
-                                    <ion-card>
-                                        <ion-card-header class="ion-text-center">
-                                            <ion-icon name="globe-outline" color="secondary"
-                                                style="font-size: 48px; margin-bottom: 10px;"></ion-icon>
-                                            <ion-card-title>Dominios</ion-card-title>
-                                            <ion-card-subtitle>Taxonomía de Negocio</ion-card-subtitle>
-                                        </ion-card-header>
-                                        <ion-card-content>
-                                            <p style="margin-bottom: 20px; min-height: 44px;">Agrupadores sistémicos y áreas funcionales de alto nivel.</p>
-                                            <ion-button expand="block" shape="round" color="secondary"
-                                                onclick="renderForm('Dominio')">
-                                                <ion-icon slot="start" name="add-circle-outline"></ion-icon>
-                                                Crear Nuevo
-                                            </ion-button>
-                                            <ion-button expand="block" shape="round" color="secondary" fill="outline"
-                                                style="margin-top: 8px;"
-                                                onclick="window.DataViewEngine.render('Dominio', 'app-container')">
-                                                <ion-icon slot="start" name="list-outline"></ion-icon>
-                                                Ver Listado
-                                            </ion-button>
-                                        </ion-card-content>
-                                    </ion-card>
-                                </ion-col>
-
-                                <!-- Tarjeta 3: Grupos de Productos -->
-                                <ion-col size="12" size-md="6" size-xl="4">
-                                    <ion-card>
-                                        <ion-card-header class="ion-text-center">
-                                            <ion-icon name="layers-outline" color="tertiary"
-                                                style="font-size: 48px; margin-bottom: 10px;"></ion-icon>
-                                            <ion-card-title>Grupos</ion-card-title>
-                                            <ion-card-subtitle>Nivel Táctico</ion-card-subtitle>
-                                        </ion-card-header>
-                                        <ion-card-content>
-                                            <p style="margin-bottom: 20px; min-height: 44px;">Organiza productos por
-                                                dominios y modelos de negocio.</p>
-                                            <ion-button expand="block" shape="round" color="tertiary"
-                                                onclick="renderForm('Grupo_Productos')">
-                                                <ion-icon slot="start" name="add-circle-outline"></ion-icon>
-                                                Crear Nuevo
-                                            </ion-button>
-                                            <ion-button expand="block" shape="round" color="tertiary" fill="outline"
-                                                style="margin-top: 8px;"
-                                                onclick="window.DataViewEngine.render('Grupo_Productos', 'app-container')">
-                                                <ion-icon slot="start" name="list-outline"></ion-icon>
-                                                Ver Listado
-                                            </ion-button>
-                                        </ion-card-content>
-                                    </ion-card>
-                                </ion-col>
-
-                                <!-- Tarjeta 4: Productos -->
-                                <ion-col size="12" size-md="6" size-xl="4">
-                                    <ion-card>
-                                        <ion-card-header class="ion-text-center">
-                                            <ion-icon name="cube-outline" color="success"
-                                                style="font-size: 48px; margin-bottom: 10px;"></ion-icon>
-                                            <ion-card-title>Productos</ion-card-title>
-                                            <ion-card-subtitle>Nivel Operativo</ion-card-subtitle>
-                                        </ion-card-header>
-                                        <ion-card-content>
-                                            <p style="margin-bottom: 20px; min-height: 44px;">Detalle granular de cada
-                                                activo y su estado actual.</p>
-                                            <ion-button expand="block" shape="round" color="success"
-                                                onclick="renderForm('Producto')">
-                                                <ion-icon slot="start" name="add-circle-outline"></ion-icon>
-                                                Crear Nuevo
-                                            </ion-button>
-                                            <ion-button expand="block" shape="round" color="success" fill="outline"
-                                                style="margin-top: 8px;"
-                                                onclick="window.DataViewEngine.render('Producto', 'app-container')">
-                                                <ion-icon slot="start" name="list-outline"></ion-icon>
-                                                Ver Listado
-                                            </ion-button>
-                                        </ion-card-content>
-                                    </ion-card>
-                                </ion-col>
-
-                                <!-- Tarjeta 5: Capacidades -->
-                                <ion-col size="12" size-md="6" size-xl="4">
-                                    <ion-card>
-                                        <ion-card-header class="ion-text-center">
-                                            <ion-icon name="layers-outline" color="warning"
-                                                style="font-size: 48px; margin-bottom: 10px;"></ion-icon>
-                                            <ion-card-title>Capacidades</ion-card-title>
-                                            <ion-card-subtitle>Arquitectura de Negocio</ion-card-subtitle>
-                                        </ion-card-header>
-                                        <ion-card-content>
-                                            <p style="margin-bottom: 20px; min-height: 44px;">Gestión de Macrocapacidades organizacionales.</p>
-                                            <ion-button expand="block" shape="round" color="warning"
-                                                onclick="renderForm('Capacidad')">
-                                                <ion-icon slot="start" name="add-circle-outline"></ion-icon>
-                                                Crear Nuevo
-                                            </ion-button>
-                                            <ion-button expand="block" shape="round" color="warning" fill="outline"
-                                                style="margin-top: 8px;"
-                                                onclick="window.DataViewEngine.render('Capacidad', 'app-container')">
-                                                <ion-icon slot="start" name="list-outline"></ion-icon>
-                                                Ver Listado
-                                            </ion-button>
-                                        </ion-card-content>
-                                    </ion-card>
-                                </ion-col>
+                            <ion-row class="ion-justify-content-center" id="dashboard-cards-container">
+                                <!-- Tarjetas renderizadas dinámicamente vía renderDashboardCards() -->
                             </ion-row>
                         </ion-grid>
                     </div>
@@ -493,30 +347,31 @@
             navList.style.display = 'block';
             formList.style.display = 'none';
 
-            const links = [
-                { id: 'home', icon: 'home-outline', label: 'Inicio', action: 'window.returnToDashboard()', active: true },
-                { id: 'u_neg', icon: 'business-outline', label: 'Unidades de Negocio', action: "window.DataViewEngine.render('Unidad_Negocio', 'app-container')" },
-                { id: 'port', icon: 'briefcase-outline', label: 'Portafolios', action: "window.DataViewEngine.render('Portafolio', 'app-container')" },
-                { id: 'dom', icon: 'globe-outline', label: 'Dominios', action: "window.DataViewEngine.render('Dominio', 'app-container')" },
-                { id: 'capa', icon: 'layers-outline', label: 'Capacidades', action: "window.DataViewEngine.render('Capacidad', 'app-container')" },
-                { id: 'grup', icon: 'layers-outline', label: 'Grupos de Producto', action: "window.DataViewEngine.render('Grupo_Productos', 'app-container')" },
-                { id: 'prod', icon: 'cube-outline', label: 'Productos', action: "window.DataViewEngine.render('Producto', 'app-container')" }
-            ];
+            let itemsHtml = `<ion-item button detail="false" 
+                style="--background:var(--ion-color-primary);"
+                onclick="window.returnToDashboard()">
+                <ion-icon slot="start" name="home-outline" 
+                    style="color:#ffffff"></ion-icon>
+                <ion-label style="font-weight:700; color:#ffffff;">
+                    Inicio
+                </ion-label>
+            </ion-item>`;
 
-            const items = links.map(function (l) {
-                const isActive = l.active || false;
+            const sortedEntities = Object.entries(window.ENTITY_META).sort((a,b) => a[1].order - b[1].order);
+
+            itemsHtml += sortedEntities.map(function ([key, meta]) {
                 return `<ion-item button detail="false" 
-                    style="--background:${isActive ? 'var(--ion-color-primary)' : 'transparent'};"
-                    onclick="${l.action}">
-                    <ion-icon slot="start" name="${l.icon}" 
-                        style="color:${isActive ? '#ffffff' : 'var(--ion-color-medium)'}"></ion-icon>
-                    <ion-label style="font-weight:${isActive ? '700' : '400'}; color:${isActive ? '#ffffff' : 'inherit'};">
-                        ${l.label}
+                    style="--background:transparent;"
+                    onclick="window.DataViewEngine.render('${key}', 'app-container')">
+                    <ion-icon slot="start" name="${meta.iconName}" 
+                        style="color:var(--ion-color-medium)"></ion-icon>
+                    <ion-label style="font-weight:400; color:inherit;">
+                        ${meta.label}
                     </ion-label>
                 </ion-item>`;
             }).join('');
 
-            navList.innerHTML = items;
+            navList.innerHTML = itemsHtml;
         };
 
         /**
@@ -540,23 +395,17 @@
                 <ion-label>Inicio</ion-label>
             </ion-item>`;
 
-            const entities = [
-                { key: 'Unidad_Negocio', icon: 'business-outline', label: 'Unidades de Negocio' },
-                { key: 'Portafolio', icon: 'briefcase-outline', label: 'Portafolios' },
-                { key: 'Dominio', icon: 'globe-outline', label: 'Dominios' },
-                { key: 'Grupo_Productos', icon: 'layers-outline', label: 'Grupos de Producto' },
-                { key: 'Producto', icon: 'cube-outline', label: 'Productos' }
-            ];
+            const sortedEntities = Object.entries(window.ENTITY_META).sort((a,b) => a[1].order - b[1].order);
 
-            const items = entities.map(function (e) {
-                const isActive = e.key === activeEntityName;
+            const items = sortedEntities.map(function ([key, meta]) {
+                const isActive = key === activeEntityName;
                 return `<ion-item button detail="false"
                     style="--background:${isActive ? 'var(--ion-color-primary)' : 'transparent'};"
-                    onclick="window.DataViewEngine.render('${e.key}', 'app-container')">
-                    <ion-icon slot="start" name="${e.icon}"
+                    onclick="window.DataViewEngine.render('${key}', 'app-container')">
+                    <ion-icon slot="start" name="${meta.iconName}"
                         style="color:${isActive ? '#ffffff' : 'var(--ion-color-medium)'}"></ion-icon>
                     <ion-label style="font-weight:${isActive ? '700' : '400'}; color:${isActive ? '#ffffff' : 'inherit'};">
-                        ${e.label}
+                        ${meta.label}
                     </ion-label>
                 </ion-item>`;
             }).join('');
@@ -590,6 +439,37 @@
                 ${homeItem}
                 <div id="form-steps-container"></div>
             `;
+        };
+
+        window.renderDashboardCards = function() {
+            const container = document.getElementById('dashboard-cards-container');
+            if (!container) return;
+            container.innerHTML = '';
+            
+            const sortedEntities = Object.entries(window.ENTITY_META).sort((a,b) => a[1].order - b[1].order);
+            
+            const cardsHtml = sortedEntities.map(([key, meta]) => {
+                return `
+                <ion-col size="12" size-md="6" size-xl="4">
+                    <ion-card>
+                        <ion-card-header class="ion-text-center">
+                            <ion-icon name="${meta.iconName}" color="${meta.color}" style="font-size: 48px; margin-bottom: 10px;"></ion-icon>
+                            <ion-card-title>${meta.label}</ion-card-title>
+                        </ion-card-header>
+                        <ion-card-content>
+                            <ion-button expand="block" shape="round" color="${meta.color}" onclick="renderForm('${key}')">
+                                <ion-icon slot="start" name="add-circle-outline"></ion-icon> Crear Nuevo
+                            </ion-button>
+                            <ion-button expand="block" shape="round" color="${meta.color}" fill="outline" style="margin-top: 8px;" onclick="window.DataViewEngine.render('${key}', 'app-container')">
+                                <ion-icon slot="start" name="list-outline"></ion-icon> Ver Listado
+                            </ion-button>
+                        </ion-card-content>
+                    </ion-card>
+                </ion-col>
+                `;
+            }).join('');
+            
+            container.innerHTML = cardsHtml;
         };
 
         // Arrancar verificación al cargar el DOM de Ionic

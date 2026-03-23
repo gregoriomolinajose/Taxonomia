@@ -160,12 +160,12 @@ const Adapter_Sheets = {
 
         let foundRowIndex = -1;
         if (numRows > 1) {
+            // Optimización vía findIndex + map en V8
             const pkColumnData = sheet.getRange(2, pkIndex + 1, numRows - 1, 1).getValues();
-            for (let r = 0; r < pkColumnData.length; r++) {
-                if (pkColumnData[r][0] == id) {
-                    foundRowIndex = r + 2;
-                    break;
-                }
+            const flatIds = pkColumnData.map(r => String(r[0]));
+            const arrayIndex = flatIds.indexOf(String(id));
+            if (arrayIndex > -1) {
+                foundRowIndex = arrayIndex + 2;
             }
         }
 
@@ -181,12 +181,16 @@ const Adapter_Sheets = {
         const idxEstado = normalizedHeaders.indexOf('estado');
         const idxUpdatedAt = normalizedHeaders.indexOf('updated_at');
         const idxUpdatedBy = normalizedHeaders.indexOf('updated_by');
+        const idxDeletedAt = normalizedHeaders.indexOf('deleted_at');
+        const idxDeletedBy = normalizedHeaders.indexOf('deleted_by');
 
         const rowToUpdate = [...existingRow];
 
         if (idxEstado > -1) rowToUpdate[idxEstado] = 'Eliminado';
         if (idxUpdatedAt > -1) rowToUpdate[idxUpdatedAt] = currentTimestamp;
         if (idxUpdatedBy > -1) rowToUpdate[idxUpdatedBy] = currentUser;
+        if (idxDeletedAt > -1) rowToUpdate[idxDeletedAt] = currentTimestamp;
+        if (idxDeletedBy > -1) rowToUpdate[idxDeletedBy] = currentUser;
 
         sheet.getRange(foundRowIndex, 1, 1, rowToUpdate.length).setValues([rowToUpdate]);
         return { status: 'success', action: 'deleted', pk: pkField, val: id };
@@ -216,7 +220,7 @@ const Adapter_Sheets = {
             }
             
             // Regla 4 de DB
-            const auditFields = ['created_at', 'created_by', 'updated_at', 'updated_by'];
+            const auditFields = ['created_at', 'created_by', 'updated_at', 'updated_by', 'deleted_at', 'deleted_by'];
             const allHeaders = [...schemaFields, ...auditFields];
             
             sheet.getRange(1, 1, 1, allHeaders.length).setValues([allHeaders]);

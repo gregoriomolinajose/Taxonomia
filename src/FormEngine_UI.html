@@ -522,8 +522,9 @@
                 // Estado local del subgrid
                 // Hydration check: if data[field.name] exists, use it
                 const childRecords = (data && Array.isArray(data[field.name])) ? [...data[field.name]] : [];
-                window.__NESTED_DATA__ = window.__NESTED_DATA__ || {};
-                window.__NESTED_DATA__[field.name] = childRecords;
+                window.__APP_CACHE__ = window.__APP_CACHE__ || {};
+                window.__APP_CACHE__.nestedData = window.__APP_CACHE__.nestedData || {};
+                window.__APP_CACHE__.nestedData[field.name] = childRecords;
 
                 const _refreshList = () => {
                     list.innerHTML = '';
@@ -591,7 +592,7 @@
                             <ion-toolbar color="primary">
                                 <ion-title>Seleccionar ${field.label}</ion-title>
                                 <ion-buttons slot="end">
-                                    <ion-button onclick="document.getElementById('${modalId}').dismiss()">Cerrar</ion-button>
+                                    <ion-button onclick="const m = document.getElementById('${modalId}'); m.dismiss().then(() => m.remove())">Cerrar</ion-button>
                                 </ion-buttons>
                             </ion-toolbar>
                         </ion-header>
@@ -656,11 +657,11 @@
                             }
                         });
                         _refreshList();
-                        modal.dismiss();
+                        modal.dismiss().then(() => modal.remove());
                     };
 
                     modal.querySelector('#btn-create-new').onclick = async () => {
-                        modal.dismiss();
+                        modal.dismiss().then(() => modal.remove());
                         const singularLabel = field.label.replace(/s de /i, ' de ').replace(/s$/i, '').replace(/Grupos/i, 'Grupo');
                         const alert = document.createElement('ion-alert');
                         alert.header = `Agregar Nuevo ${singularLabel}`;
@@ -846,9 +847,9 @@
                 });
 
                 // --- CAPTURAR PAYLOAD ANIDADO (Regla 15) ---
-                if (window.__NESTED_DATA__) {
-                    Object.keys(window.__NESTED_DATA__).forEach(key => {
-                        payload[key] = window.__NESTED_DATA__[key];
+                if (window.__APP_CACHE__ && window.__APP_CACHE__.nestedData) {
+                    Object.keys(window.__APP_CACHE__.nestedData).forEach(key => {
+                        payload[key] = window.__APP_CACHE__.nestedData[key];
                     });
                 }
 
@@ -880,6 +881,9 @@
                 global.currentEditId = null; // Reset inmediato antes del async
 
                 // El Loading ya se inició en el momento 0 (Idempotencia).
+
+                // SANITIZACION DE PAYLOAD (Evitar Detached Nodes y Proxies a GAS)
+                const safePayload = JSON.parse(JSON.stringify(payload));
 
                 google.script.run
                     .withSuccessHandler(async (rawResponse) => {
@@ -993,7 +997,7 @@
                                      }
                                  });
 
-                                 if (window.__NESTED_DATA__) window.__NESTED_DATA__ = {};
+                                 if (window.__APP_CACHE__ && window.__APP_CACHE__.nestedData) window.__APP_CACHE__.nestedData = {};
 
                                  // Enrutamiento post-Guardado Inmediato (Directiva 0.0s)
                                  if (window.DataViewEngine) {
@@ -1022,7 +1026,7 @@
 
                         showToast('Error de Servidor: ' + err.message, 'danger');
                     })
-                    .API_Universal_Router(action, entityName, payload);
+                    .API_Universal_Router(action, entityName, safePayload);
             });
 
             container.appendChild(card);
