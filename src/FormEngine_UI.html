@@ -930,6 +930,26 @@
                                      }
                                  }
 
+                                 // ── Invalidador Frontend Dinámico para Entidades Anidadas (Subgrids) ──
+                                 if (window.__NESTED_DATA__) {
+                                     Object.keys(window.__NESTED_DATA__).forEach(relationKey => {
+                                         const schemaDef = window.APP_SCHEMAS && window.APP_SCHEMAS[entityName];
+                                         let tEnt = null;
+                                         if (schemaDef) {
+                                             if (schemaDef.fields) {
+                                                 const f = schemaDef.fields.find(f => f.name === relationKey);
+                                                 if (f) tEnt = f.targetEntity;
+                                             } else if (schemaDef[relationKey]) {
+                                                 tEnt = schemaDef[relationKey].targetEntity;
+                                             }
+                                         }
+                                         if (tEnt && window.__APP_CACHE__ && window.__APP_CACHE__[tEnt]) {
+                                             console.log(`[Cache] Invalidando Frontend Cache para entidad hija (Subgrid): ${tEnt}`);
+                                             delete window.__APP_CACHE__[tEnt];
+                                         }
+                                     });
+                                 }
+
                                  const itemName = (response.data && response.data.Entity) ? response.data.Entity : entityName;
                                  showToast('¡' + itemName + ' guardado con éxito!', 'success');
 

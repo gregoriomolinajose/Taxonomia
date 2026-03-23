@@ -157,6 +157,9 @@ const Engine_DB = {
                     if (config.useCloudDB) {
                         // Omitido para brevedad o implementado si el adapter soporta batch
                     }
+                    
+                    // IMPORTANTE: Invalidar Backend Cache del hijo recién modificado en el Subgrid
+                    _invalidateCache(targetEntity);
                 }
             });
         }
