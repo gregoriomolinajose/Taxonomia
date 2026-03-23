@@ -33,7 +33,9 @@ function _invalidateCache(entityName) {
     const lookupMap = {
         'Portafolio': 'getPortafoliosOptions',
         'Grupo_Productos': 'getGruposProductosOptions',
-        'Producto': 'getProductosOptions'
+        'Producto': 'getProductosOptions',
+        'Unidad_Negocio': 'getUnidadesNegocioOptions',
+        'Equipo': 'getEquiposOptions'
     };
     if (lookupMap[entityName]) {
         cache.remove('CACHE_LOOKUP_' + lookupMap[entityName]);

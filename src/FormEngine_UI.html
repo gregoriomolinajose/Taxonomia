@@ -47,6 +47,7 @@
         global.renderForm = async function (entityName, data = null) {
             // Asegurar reset de estado al abrir formulario nuevo (Directiva 1)
             global.currentEditId = null;
+            window._lastSection = null; // Reset de secciones UI
             const container = document.getElementById('app-container');
             if (!container) throw new Error("Container #app-container not found");
 
@@ -332,6 +333,28 @@
                 let targetRow = rows['default'];
                 if (steps && field.step && rows[field.step]) {
                     targetRow = rows[field.step];
+                }
+
+                // --- NUEVA LÓGICA DE SECCIONES (Just-In-Time) ---
+                if (field.section && field.section !== (window._lastSection || null)) {
+                    window._lastSection = field.section;
+                    
+                    const dividerCol = document.createElement('ion-col');
+                    dividerCol.setAttribute('size', '12');
+                    
+                    const itemDivider = document.createElement('ion-item-divider');
+                    itemDivider.style.marginTop = '20px';
+                    itemDivider.style.marginBottom = '10px';
+                    itemDivider.style.setProperty('--background', 'var(--ion-color-light)');
+                    
+                    const labelDiv = document.createElement('ion-label');
+                    labelDiv.style.fontWeight = 'bold';
+                    labelDiv.style.color = 'var(--ion-color-primary)';
+                    labelDiv.textContent = field.section;
+                    
+                    itemDivider.appendChild(labelDiv);
+                    dividerCol.appendChild(itemDivider);
+                    targetRow.appendChild(dividerCol);
                 }
 
                 // Generar Columna Ionic Responsive
