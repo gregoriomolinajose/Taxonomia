@@ -24,3 +24,10 @@ DataViewEngine.render(); // Redibujado instantáneo
 ## 3. Lectura Just-In-Time (JIT) y Prevención de Nodos Fantasma (Stale Closures)
 - **Extracción de Payload JIT:** Al guardar un formulario, queda PROHIBIDO utilizar referencias globales o `NodeLists` cacheados para leer los inputs. Los datos deben extraerse consultando el DOM fresco en el milisegundo exacto de la ejecución (`document.getElementById()`).
 - **Limpieza de Estado Inicial:** Al abrir un formulario para creación, se debe asegurar la limpieza explícita de variables de estado anteriores (ej. `currentEditId = null`) para evitar que un *Insert* se convierta accidentalmente en un *Update* por memoria sucia.
+
+## X. Mutación de Caché Zero-Latency (CRUD Completo)
+- **Prohibición de Refetching:** Queda ESTRICTAMENTE PROHIBIDO que la navegación entre listados del menú lateral dispare llamadas al servidor (`google.script.run`) si los datos ya existen en `window.__APP_CACHE__[entityName]`. La latencia al cambiar de pestaña debe ser de 0.0s.
+- **Sincronización Estricta de RAM:** Toda operación de mutación (Crear, Editar, **ELIMINAR**) debe actualizar OBLIGATORIAMENTE el arreglo raíz en la memoria del cliente en el milisegundo exacto en que el servidor confirma el éxito. 
+  - Al **Editar**: Buscar el índice en `window.__APP_CACHE__` y reemplazar el objeto.
+  - Al **Eliminar**: Filtrar y remover el objeto de `window.__APP_CACHE__` (ej. usando `.filter(r => r[idField] !== deletedId)`) o actualizar su propiedad `deleted_at` si el frontend maneja filtros de Soft-Delete.
+- Si el frontend oculta un elemento visualmente del DOM pero no actualiza el `__APP_CACHE__`, se considerará un "Fallo Crítico de Desincronización".
