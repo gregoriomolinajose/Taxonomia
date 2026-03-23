@@ -85,6 +85,51 @@ function _handleDelete(entityName, id) {
  * Punto de entrada exclusivo para google.script.run (Frontend HTML a Backend GAS)
  */
 /**
+ * getAppBootstrapPayload()
+ * Endpoint consolidado para Precarga Global (Global Prefetch).
+ * Retorna diccionarios de datos ya desempacados (Arreglo de Objetos) para todas las entidades.
+ */
+function getAppBootstrapPayload() {
+  const t0 = Date.now();
+  try {
+    const payload = {};
+    const schemas = getAppSchema();
+    const entities = Object.keys(schemas);
+    
+    for (let i = 0; i < entities.length; i++) {
+        const entityName = entities[i];
+        const result = Engine_DB.list(entityName, 'tuples'); // Tuples for internal speed
+        
+        // Desempacar tuplas a objetos en el backend para evitar bloqueos de renderizado en UI
+        if (result && result.headers && result.rows) {
+            const headers = result.headers;
+            const rows = result.rows.map(tuple => {
+                const obj = {};
+                headers.forEach((h, j) => obj[h] = tuple[j]);
+                return obj;
+            });
+            payload[entityName] = rows;
+        } else {
+            payload[entityName] = [];
+        }
+    }
+    
+    // OBLIGATORIO: Sanitización JSON.parse(stringify) para destruir proxies nativos
+    const sanitizedPayload = JSON.parse(JSON.stringify(payload));
+    const executionTime = Date.now() - t0;
+    Logger.log(`[Perf] getAppBootstrapPayload completado en ${executionTime}ms`);
+    
+    return {
+      status: "success",
+      data: sanitizedPayload
+    };
+  } catch (error) {
+    Logger.log(`[Bootstrap Error] ${error.message}`);
+    return { status: "error", message: error.message };
+  }
+}
+
+/**
  * getInitialPayload(entityName)
  * Endpoint maestro para Data Hydration. Consolida schema, data y lookups en un solo RPC.
  */

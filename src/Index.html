@@ -131,7 +131,7 @@
                 <ion-footer class="ion-no-border">
                     <ion-toolbar style="--background: transparent; --min-height: 40px; padding: 0 16px;">
                         <span style="font-size: 11px; color: var(--ion-color-medium); font-weight: 500;">
-                            <?= typeof CONFIG !== 'undefined' ? CONFIG.APP_VERSION : 'v1.0.10-Dev' ?>
+                            <?= typeof CONFIG !== 'undefined' ? CONFIG.APP_VERSION : 'v1.0.11-Dev' ?>
                         </span>
                     </ion-toolbar>
                 </ion-footer>
@@ -265,6 +265,9 @@
 
                     // Forzar caché de UI actualizada para la persistencia al volver a inicio
                     window.OriginalDashboardHTML = container.innerHTML;
+
+                    // Desencadenar la sincronización global (Global Prefetch)
+                    this.runAppBootstrap();
                 } else {
                     // Caso Fallido
                     this.renderAccessDenied(container, "Dominio no autorizado", response.email);
@@ -292,6 +295,52 @@
                         </ion-row>
                     </ion-grid>
                 `;
+            },
+
+            runAppBootstrap: async function () {
+                // Mostrar Toast: "Sincronizando plataforma..."
+                const toast = document.createElement('ion-toast');
+                toast.message = 'Sincronizando plataforma...';
+                toast.position = 'bottom';
+                toast.color = 'dark';
+                toast.icon = 'sync-outline';
+                document.body.appendChild(toast);
+                await toast.present();
+
+                if (typeof google !== 'undefined' && google.script && google.script.run) {
+                    google.script.run
+                        .withSuccessHandler(async (res) => {
+                            if (res.status === 'success') {
+                                // Inyectar datos directamente en la Memoria Global
+                                const entitiesData = res.data;
+                                for (const entity in entitiesData) {
+                                    window.__APP_CACHE__[entity] = entitiesData[entity];
+                                }
+                                toast.message = 'Plataforma sincronizada.';
+                                toast.icon = 'checkmark-circle-outline';
+                                toast.color = 'success';
+                                toast.duration = 2000;
+                            } else {
+                                toast.message = 'Error en sincronización.';
+                                toast.color = 'danger';
+                                toast.icon = 'warning-outline';
+                                toast.duration = 3000;
+                            }
+                        })
+                        .withFailureHandler((err) => {
+                            toast.message = 'Error de red en sincronización.';
+                            toast.color = 'danger';
+                            toast.duration = 3000;
+                        })
+                        .getAppBootstrapPayload();
+                } else {
+                    // Local fallback
+                    setTimeout(async () => {
+                        toast.message = 'Mock: Plataforma sincronizada.';
+                        toast.color = 'success';
+                        toast.duration = 2000;
+                    }, 1000);
+                }
             },
 
             logout: async function () {
