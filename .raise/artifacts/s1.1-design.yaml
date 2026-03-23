@@ -1,0 +1,26 @@
+artifact_type: story-design
+version: 1
+skill: rai-story-design
+created: '2026-03-23T12:18:00Z'
+story: 'S1.1'
+epic: ''
+content:
+  summary: 'Mostrar saludo de usuario tras inicio de sesión.'
+  complexity: simple
+  acceptance_criteria:
+    - id: AC1
+      description: 'El usuario ve Hola, [Nombre] en la UI'
+      verifiable: true
+  integration_points:
+    - module: 'frontend.ui'
+      change_type: modification
+      files: ['DataView_UI.html']
+  decisions:
+    - id: D1
+      choice: 'Usar variable de entorno/sesión disponible en el frontend'
+      rationale: 'KISS, requerimiento simple'
+      alternatives_considered: ['Nueva llamada de red al backend']
+refs:
+  backlog_item: ''
+  epic_scope: ''
+metadata: {}
