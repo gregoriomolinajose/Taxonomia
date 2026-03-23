@@ -90,3 +90,22 @@ Este documento registra las lecciones aprendidas durante los Sprints para evitar
   );
   ```
 - **Regla Preventiva de Diseño:** *Provisionamiento Agresivo Basado en Llaves.* Si una entidad no declara un array explícito de campos, el sistema debe ser capaz de auto-descubrir su estructura recorriendo las claves del objeto primario. Jamás se debe permitir que un adaptador devuelva una hoja de base de datos sin inyectar preventivamente los nombres de columnas derivados del esquema.
+
+---
+
+## Hito: Integridad Relacional en FormEngine (Zero-Touch Selects)
+- **Hito:** Refactorización Arquitectónica de Dependencias 1:N (Select Asíncrono Delegado).
+- **Punto de Falla (Root Cause):** Durante el aprovisionamiento de entidades relacionales (ej. `Equipo`), el esquema declaraba erróneamente dependencias usando `type: "lookup"` e `lookupTarget`. El FormEngine compila esto como un input de texto ciego (`readonly: true`) sin lógica adjunta de modal, rompiendo la capacidad de interactuar y seleccionar las foráneas como el Scrum Master.
+- **Solución Maestra (Golden Pattern):** Patrón de *Select Relacional Hidratado*.
+  ```javascript
+  // 1. En Schema_Engine.gs: Declaración nativa apuntando al endpoint Resolutor
+  { name: "scrum_master", type: "select", options: [], lookupSource: "getPersonasOptions" }
+  
+  // 2. En API_Universal.gs: Retornar Array purificado de tuplas {value, label}
+  function getPersonasOptions() {
+      const result = Engine_DB.list('Persona');
+      const options = result.rows.map(row => ({ value: row.id_persona, label: row.nombre_completo }));
+      return JSON.parse(JSON.stringify(options)); // Destrucción MALS requerida (Regla 10)
+  }
+  ```
+- **Regla Preventiva de Diseño:** *Fidelidad al Motor Selectivo UI.* Al provisionar nuevos CRUDs bajo el Blueprint V2, el agente NUNCA debe alucinar el tipo `lookup` para relaciones parentales o listas simples. Toda dependencia Foránea ("Pertenece a") debe ser modelada inquebrantablemente mediante `type: "select"`, vinculando un `lookupSource` que resuelva al vuelo desde el servidor. Esto acopla la vista sin inyectar HTML explícito.
