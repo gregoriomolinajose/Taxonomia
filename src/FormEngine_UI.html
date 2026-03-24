@@ -772,10 +772,8 @@
             // Habilitar el renderizado del componente 'relation'
             for (const field of fields) {
                 if (field.type === 'relation' && field.uiBehavior === 'subgrid') {
-                    let targetRow = rows['default'];
-                    if (steps && field.step && rows[field.step]) {
-                        targetRow = rows[field.step];
-                    }
+                    const targetSection = field.section || field.step || (steps && steps[0]);
+                    let targetRow = rows[targetSection] || rows[Object.keys(rows)[0]];
                     const subCol = document.createElement('ion-col');
                     subCol.setAttribute('size', '12');
                     await renderSubgrid(field, subCol);
