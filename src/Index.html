@@ -188,12 +188,27 @@
                                 </ion-col>
                             </ion-row>
 
+                            <!-- Filtro Global de Portafolio -->
+                            <ion-row id="dashboard-filter-container" class="ion-justify-content-end ion-padding-horizontal" style="display: none;">
+                                <ion-col size="12" size-md="4">
+                                    <ion-item lines="none" class="ion-no-padding" style="--background: transparent;">
+                                        <ion-select id="dashboard-portfolio-filter" 
+                                                    interface="popover" 
+                                                    placeholder="Todos los Portafolios" 
+                                                    onValueChange="window.renderDashboard(true)"
+                                                    style="width: 100%; max-width: 100%; font-weight: 600; font-size: 1.1em; color: var(--ion-color-primary);">
+                                            <ion-select-option value="all">TODOS LOS PORTAFOLIOS</ion-select-option>
+                                        </ion-select>
+                                    </ion-item>
+                                </ion-col>
+                            </ion-row>
+
                             <!-- Executive Dashboard Charts -->
                             <ion-row id="dashboard-charts-container" class="ion-margin-bottom" style="display: none;">
                                 <ion-col size="12" size-md="6">
                                     <ion-card style="height: 100%;">
                                         <ion-card-header>
-                                            <ion-card-title>Topología por Tipo de Equipo</ion-card-title>
+                                            <ion-card-title>Especialidades</ion-card-title>
                                         </ion-card-header>
                                         <ion-card-content>
                                             <div id="chart-topology"></div>
@@ -577,37 +592,85 @@
             `;
         };
 
-        window.renderDashboard = function() {
+        window.renderDashboard = function(forceRefresh = false) {
             // Fase 4: Limpieza previa
             if (window.chartTopology) { window.chartTopology.destroy(); window.chartTopology = null; }
             if (window.chartCapacity) { window.chartCapacity.destroy(); window.chartCapacity = null; }
 
             const container = document.getElementById('dashboard-charts-container');
+            const filterContainer = document.getElementById('dashboard-filter-container');
             if (!container) return;
 
-            const equipos = window.__APP_CACHE__['Equipo'];
-            if (!equipos || equipos.length === 0) return;
+            let equipos = window.__APP_CACHE__['Equipo'] || [];
+            if (equipos.length === 0) return;
             
+            // Configuración inicial del filtro de Portafolios
+            const portfolioSel = document.getElementById('dashboard-portfolio-filter');
+            let selectedPortfolio = 'all';
+            
+            if (portfolioSel) {
+                if (portfolioSel.childElementCount <= 1) { // Llenar opciones si está vacío
+                    const portafolios = window.__APP_CACHE__['Portafolio'] || [];
+                    let htmlOptions = '<ion-select-option value="all">TODOS LOS PORTAFOLIOS</ion-select-option>';
+                    portafolios.forEach(p => {
+                        htmlOptions += `<ion-select-option value="${p.id_portafolio}">${p.nombre}</ion-select-option>`;
+                    });
+                    portfolioSel.innerHTML = htmlOptions;
+                    portfolioSel.value = 'all';
+                    
+                    // Adjuntar eventLister nativo para Ionic si no existe
+                    portfolioSel.addEventListener('ionChange', (e) => {
+                        window.renderDashboard(true);
+                    });
+                }
+                selectedPortfolio = portfolioSel.value || 'all';
+            }
+
+            // Fase 2: Filtrado Dinámico de Equipos (Relación transitiva)
+            if (selectedPortfolio !== 'all') {
+                const productos = window.__APP_CACHE__['Producto'] || [];
+                const grupos = window.__APP_CACHE__['Grupo_Productos'] || [];
+                
+                equipos = equipos.filter(eq => {
+                    const prod = productos.find(p => String(p.id_producto) === String(eq.id_producto));
+                    if (!prod) return false;
+                    const grupo = grupos.find(g => String(g.id_grupo_producto) === String(prod.id_grupo_producto));
+                    if (!grupo) return false;
+                    return String(grupo.id_portafolio) === String(selectedPortfolio);
+                });
+            }
+
+            if (filterContainer) filterContainer.style.display = 'flex';
             container.style.display = 'flex';
 
-            // Fase 3: Minería de Datos en RAM
-            const topologyCount = {};
+            // Fase 3: Suma Totalizadora en RAM
+            let sumBack = 0, sumFront = 0, sumFull = 0, sumTesters = 0, sumTech = 0, sumCoach = 0, sumPO = 0, sumOtros = 0;
             const capacityData = [];
             
             equipos.forEach(eq => {
-                const tipo = eq.tipo_equipo || 'Sin Asignar';
-                topologyCount[tipo] = (topologyCount[tipo] || 0) + 1;
+                sumBack += parseInt(eq.cant_dev_back) || 0;
+                sumFront += parseInt(eq.cant_dev_front) || 0;
+                sumFull += parseInt(eq.cant_fullstack) || 0;
+                sumTesters += parseInt(eq.cant_testers) || 0;
+                sumTech += parseInt(eq.cant_tech_leads) || 0;
+                sumCoach += parseInt(eq.cant_team_coach) || 0;
+                sumPO += parseInt(eq.cant_po_pm) || 0;
+                sumOtros += parseInt(eq.cant_otros) || 0;
                 
                 const integrantes = parseInt(eq.total_integrantes) || 0;
                 capacityData.push({ x: eq.nombre_equipo || 'Desconocido', y: integrantes });
             });
 
-            // Graph 1: Topology
+            // Graph 1: Especialidades
+            const seriesEsp = [sumBack, sumFront, sumFull, sumTesters, sumTech, sumCoach, sumPO, sumOtros];
+            const labelsEsp = ['Backend', 'Frontend', 'Fullstack', 'Testers', 'Tech Lead', 'Team Coach', 'Product Owner', 'Otros Roles'];
+
             window.chartTopology = new ApexCharts(document.querySelector("#chart-topology"), {
-                series: Object.values(topologyCount),
-                labels: Object.keys(topologyCount),
+                series: seriesEsp,
+                labels: labelsEsp,
                 chart: { type: 'donut', height: 350 },
-                colors: ['#3880ff', '#2dd36f', '#ffc409', '#eb445a', '#92949c']
+                legend: { position: 'bottom' },
+                colors: ['#3880ff', '#2dd36f', '#ffc409', '#eb445a', '#92949c', '#3dc2ff', '#2fdf75', '#000000']
             });
             window.chartTopology.render();
 
