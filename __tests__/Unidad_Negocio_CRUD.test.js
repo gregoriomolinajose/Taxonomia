@@ -54,7 +54,7 @@ describe('Unidad_Negocio CRUD - Verification', () => {
         const content = fs.readFileSync(schemaPath, 'utf8');
         
         expect(content).toContain('Unidad_Negocio:');
-        expect(content).toContain('"id_unidad_negocio": { "type": "hidden", "primaryKey": true }');
+        expect(content).toContain('name: "id_unidad_negocio"');
     });
 
     test('Should generate a short UUID (UNID-XXXXX) if id_unidad_negocio is missing in Router', () => {

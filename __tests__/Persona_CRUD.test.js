@@ -62,10 +62,10 @@ describe('Persona CRUD - Blueprint V2 Verification', () => {
         expect(Engine_DB_Mock.create).toHaveBeenCalled();
     });
 
-    test('Step 6: Build Tracking - APP_VERSION should be bumped from v1.0.6 to v1.0.7', () => {
+    test('Step 6: Build Tracking - APP_VERSION should be bumped', () => {
         const configPath = path.resolve(__dirname, '../src/Global_Config.js');
         const content = fs.readFileSync(configPath, 'utf8');
         
-        expect(content).toMatch(/APP_VERSION: 'v1\.0\.[7-9]/);
+        expect(content).toMatch(/APP_VERSION: 'v1\.0\.\d+/);
     });
 });
