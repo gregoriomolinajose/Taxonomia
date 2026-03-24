@@ -111,13 +111,51 @@ const APP_SCHEMAS = {
   },
   Persona: {
     primaryKey: "id_persona",
-    titleField: "nombre_completo",
+    titleField: "nombre",
     fields: [
+      // Sistema (Ocultos / Readonly)
       { name: "id_persona", label: "ID Persona", type: "text", required: true, readonly: true, primaryKey: true, width: 4 },
-      { name: "nombre_completo", label: "Nombre Completo", type: "text", required: true, width: 8 },
-      { name: "email", label: "Correo Electrónico", type: "email", required: true, width: 6 },
-      { name: "rol_organizacional", label: "Rol Organizacional", type: "select", required: true, width: 6, options: ["Director", "Scrum Master", "Product Owner", "Arquitecto", "Desarrollador", "Business Analyst"] },
-      { name: "estado", type: "hidden", defaultValue: "Activo" }
+      { name: "estado", type: "hidden", defaultValue: "Activo" },
+      
+      // Sección 1: Datos Personales
+      { section: "Datos Personales", name: "nombre", label: "Nombre Apellido", type: "text", required: true, width: 6 },
+      { section: "Datos Personales", name: "email", label: "Correo", type: "email", required: true, width: 6 },
+      { section: "Datos Personales", name: "fecha_nacimiento", label: "Fecha de Nacimiento", type: "date", width: 6 },
+      { section: "Datos Personales", name: "telefono", label: "Nro de Teléfono", type: "tel", width: 6 },
+      
+      // Sección 2: Ubicación
+      { section: "Ubicación", name: "pais", label: "País", type: "text", width: 4 },
+      { section: "Ubicación", name: "estado_ubicacion", label: "Estado", type: "text", width: 4 },
+      { section: "Ubicación", name: "ciudad", label: "Ciudad", type: "text", width: 4 },
+      { section: "Ubicación", name: "cp", label: "Código Postal", type: "text", width: 4 },
+      { section: "Ubicación", name: "colonia", label: "Colonia", type: "text", width: 8 },
+      { section: "Ubicación", name: "calle", label: "Calle", type: "text", width: 12 },
+      
+      // Sección 3: Corporativo
+      { section: "Corporativo", name: "nro_empleado", label: "Nro Empleado", type: "text", required: true, width: 6 },
+      { section: "Corporativo", name: "empresa", label: "Empresa", type: "text", width: 6 },
+      { section: "Corporativo", name: "contrato", label: "Contrato", type: "text", width: 6 },
+      { section: "Corporativo", name: "modalidad", label: "Modalidad de trabajo", type: "select", options: ["Presencial", "Híbrido", "Remoto"], width: 6 },
+      { section: "Corporativo", name: "oficina", label: "Oficina/Lugar", type: "text", width: 6 },
+      { section: "Corporativo", name: "centro_costo", label: "Centro de Costo", type: "text", width: 6 },
+      { section: "Corporativo", name: "nombre_centro", label: "Nombre del Centro", type: "text", width: 6 },
+      { section: "Corporativo", name: "fecha_inicio_vigencia", label: "Inicio de Vigencia", type: "date", width: 6 },
+      { section: "Corporativo", name: "fecha_cierre", label: "Fecha de Cierre", type: "date", width: 6 },
+      { section: "Corporativo", name: "fecha_ingreso", label: "Fecha de Ingreso", type: "date", width: 6 },
+      { section: "Corporativo", name: "cargo", label: "Cargo", type: "text", width: 6 },
+      { section: "Corporativo", name: "estado_contratacion", label: "Estado Contratación", type: "select", options: ["Activo", "Inactivo", "Permiso", "Suspendido"], width: 6 },
+      { section: "Corporativo", name: "empleador_legal", label: "Empleador Legal", type: "text", width: 12 },
+      
+      // Sección 4: Operativa
+      { section: "Operativa", name: "id_unidad_negocio", label: "Unidad de Negocio", type: "select", options: [], lookupSource: "getUnidadesNegocioOptions", width: 6 },
+      { section: "Operativa", name: "id_equipo", label: "Equipo", type: "select", options: [], lookupSource: "getEquiposOptions", width: 6 },
+      { section: "Operativa", name: "rol", label: "Rol Operativo", type: "text", width: 6 },
+      { section: "Operativa", name: "tiempo_rol", label: "Tiempo en el rol", type: "text", width: 6 },
+      { section: "Operativa", name: "fecha_entrada_posicion", label: "Ingreso a Posición", type: "date", width: 6 },
+      { section: "Operativa", name: "iniciativa", label: "Iniciativa Actual", type: "text", width: 6 },
+      { section: "Operativa", name: "email_manager", label: "Correo del Líder", type: "email", width: 6 },
+      { section: "Operativa", name: "nro_manager", label: "Número del Manager", type: "text", width: 6 },
+      { section: "Operativa", name: "nombre_manager", label: "Nombre del Manager", type: "text", width: 12 }
     ]
   }
 };

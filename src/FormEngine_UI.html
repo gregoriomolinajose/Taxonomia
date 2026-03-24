@@ -47,6 +47,7 @@
         global.renderForm = async function (entityName, data = null) {
             // Asegurar reset de estado al abrir formulario nuevo (Directiva 1)
             global.currentEditId = null;
+            window._lastSection = null; // Reset de secciones UI
             const container = document.getElementById('app-container');
             if (!container) throw new Error("Container #app-container not found");
 
@@ -184,20 +185,22 @@
             // Progressive Disclosure (Rule 5.1) - Contenedores Lógicos
             let stepContainers = {};
             let menuItems = {};
-            // Diccionario Semántico Arquitectónico (Ionicons v7)
             const semanticIcons = {
-                'Identidad': 'business-outline',
-                'Estrategia': 'compass-outline',
-                'Capacidad': 'people-outline',
-                'Presupuesto': 'cash-outline',
-                'Gobernanza': 'briefcase-outline',
-                'Relaciones': 'git-branch-outline'
+                'Datos Personales': 'person-outline',
+                'Ubicación': 'location-outline',
+                'Corporativo': 'business-outline',
+                'Operativa': 'briefcase-outline'
             };
             const defaultIcons = ['folder-open-outline', 'list-outline', 'options-outline', 'analytics-outline'];
 
+            // 1. Extracción Dinámica de Menú (Secciones)
+            const extractedSections = [...new Set(fields.filter(f => f.section).map(f => f.section))];
+            if (extractedSections.length > 0) steps = extractedSections;
+            if (!steps || steps.length === 0) steps = ['Configuración General'];
+
             // Estado y Linear Wizard
             let currentStepIndex = 0;
-            const totalSteps = (steps && steps.length > 0) ? steps.length : 1;
+            const totalSteps = steps.length;
 
             // Indicador de Progreso
             let progressLabel = document.createElement('h3');
@@ -208,77 +211,51 @@
             progressLabel.style.fontWeight = '600';
             progressLabel.style.textTransform = 'uppercase';
             progressLabel.style.letterSpacing = '1px';
-            
             cardContent.appendChild(progressLabel);
 
-            if (steps && steps.length > 0) {
-                steps.forEach((stepName, index) => {
-                    // Contenedor físico de los campos del paso
-                    const stepDiv = document.createElement('div');
-                    stepDiv.id = 'step-' + stepName;
-                    if (index !== 0) stepDiv.style.display = 'none';
-                    stepContainers[stepName] = stepDiv;
+            // 2. Renderizado del Menú Lateral y Contenedores
+            if (sidebarSteps) sidebarSteps.innerHTML = ''; // Vaciar contenedor lateral por seguridad
 
-                    if (sidebarSteps) {
-                        // Inyectar el ítem en el ion-menu lateral (Solo Visual)
-                        const item = document.createElement('ion-item');
-                        item.setAttribute('lines', 'none');
-                        item.style.borderRadius = '8px';
-                        item.style.margin = '4px 12px';
-                        item.style.setProperty('--min-height', '44px');
+            steps.forEach((stepName, index) => {
+                const stepDiv = document.createElement('div');
+                stepDiv.id = 'form-section-' + stepName.replace(/\s+/g, '-');
+                stepDiv.style.display = index === 0 ? 'block' : 'none';
+                stepContainers[stepName] = stepDiv;
 
-                        if (index === 0) item.style.setProperty('--background', 'var(--ion-color-step-100)');
-                        
-                        item.style.cursor = 'pointer';
-                        item.onclick = () => goToStep(index);
-
-                        const icon = document.createElement('ion-icon');
-                        const iconName = semanticIcons[stepName] || defaultIcons[index % defaultIcons.length];
-                        icon.setAttribute('name', iconName);
-                        icon.setAttribute('slot', 'start');
-                        if (index === 0) icon.setAttribute('color', 'primary');
-
-                        const label = document.createElement('ion-label');
-                        label.textContent = stepName;
-                        label.style.fontWeight = '500';
-                        if (index === 0) label.setAttribute('color', 'primary');
-
-                        item.appendChild(icon);
-                        item.appendChild(label);
-                        sidebarSteps.appendChild(item);
-
-                        menuItems[stepName] = { item, icon, label };
-                    }
-
-                    cardContent.appendChild(stepContainers[stepName]);
-                });
-            } else {
-                // Diseño plano (Sin Wizard Steps definidos en metadatos)
                 if (sidebarSteps) {
                     const item = document.createElement('ion-item');
+                    item.button = true; // Efecto Ripple interactivo
                     item.setAttribute('lines', 'none');
                     item.style.borderRadius = '8px';
                     item.style.margin = '4px 12px';
-                    item.style.setProperty('--background', 'var(--ion-color-step-100)');
+                    item.style.setProperty('--min-height', '44px');
+                    if (index === 0) item.style.setProperty('--background', 'var(--ion-color-step-100)');
+                    
+                    item.onclick = () => {
+                        window.goToFormSection(stepName);
+                        // Al estar en el listener, window.goToFormSection ya se encargará de sincronizar el currentStepIndex
+                    };
 
                     const icon = document.createElement('ion-icon');
-                    icon.setAttribute('name', 'list-outline');
+                    const iconName = semanticIcons[stepName] || defaultIcons[index % defaultIcons.length];
+                    icon.setAttribute('name', iconName);
                     icon.setAttribute('slot', 'start');
-                    icon.setAttribute('color', 'primary');
+                    if (index === 0) icon.setAttribute('color', 'primary');
 
                     const label = document.createElement('ion-label');
-                    label.textContent = 'Configuración General';
+                    label.textContent = stepName;
                     label.style.fontWeight = '500';
-                    label.setAttribute('color', 'primary');
+                    if (index === 0) label.setAttribute('color', 'primary');
 
                     item.appendChild(icon);
                     item.appendChild(label);
                     sidebarSteps.appendChild(item);
+
+                    menuItems[stepName] = { item, icon, label };
                 }
 
-                stepContainers['default'] = document.createElement('div');
-                cardContent.appendChild(stepContainers['default']);
-            }
+                cardContent.appendChild(stepDiv);
+            });
 
             // Iniciar Grillas Responsivas (Rule 5.2) por contenedor lógico
             const rows = {};
@@ -329,10 +306,9 @@
                     return; // Skip — renderSubgrid() lo maneja en su propio flujo
                 }
 
-                let targetRow = rows['default'];
-                if (steps && field.step && rows[field.step]) {
-                    targetRow = rows[field.step];
-                }
+                // 3. Distribución de Campos JIT por Sección
+                const targetRowName = field.section || steps[0];
+                let targetRow = rows[targetRowName] || rows[Object.keys(rows)[0]];
 
                 // Generar Columna Ionic Responsive
                 const ionCol = document.createElement('ion-col');
@@ -734,17 +710,16 @@
             centerRightWrapper.appendChild(submitBtn);
             btnContainer.appendChild(centerRightWrapper);
 
-            // Funcionalidad Stepper Lineal
-            function goToStep(index) {
-                if (index < 0 || index >= totalSteps) return;
-                currentStepIndex = index;
-                const currentStepName = (steps && steps.length > 0) ? steps[currentStepIndex] : 'default';
+            // Funcionalidad Stepper Lineal Dinámico (Wizard Handler)
+            window.goToFormSection = function(targetSectionName) {
+                currentStepIndex = steps.indexOf(targetSectionName);
+                if (currentStepIndex === -1) currentStepIndex = 0;
 
                 Object.keys(stepContainers).forEach(key => {
-                    stepContainers[key].style.display = (key === currentStepName) ? 'block' : 'none';
+                    stepContainers[key].style.display = (key === targetSectionName) ? 'block' : 'none';
                 });
 
-                if (steps && steps.length > 0 && sidebarSteps) {
+                if (sidebarSteps) {
                     steps.forEach((stepName, idx) => {
                         const mi = menuItems[stepName];
                         if (!mi) return;
@@ -760,51 +735,45 @@
                     });
                 }
 
-                if (steps && steps.length > 0) {
-                    progressLabel.textContent = `PASO ${currentStepIndex + 1} DE ${totalSteps}: ${currentStepName.toUpperCase()}`;
-                    btnPrev.style.display = currentStepIndex === 0 ? 'none' : 'block';
+                progressLabel.textContent = `PASO ${currentStepIndex + 1} DE ${totalSteps}: ${targetSectionName.toUpperCase()}`;
+                
+                btnPrev.style.display = currentStepIndex === 0 ? 'none' : 'block';
 
-                    if (currentStepIndex === totalSteps - 1) {
-                        btnNext.style.display = 'none';
-                        submitBtn.style.display = 'block';
-                    } else {
-                        btnNext.style.display = 'block';
-                        submitBtn.style.display = 'none';
-                    }
-                } else {
-                    progressLabel.textContent = `CONFIGURACIÓN GENERAL`;
-                    btnPrev.style.display = 'none';
+                if (currentStepIndex === totalSteps - 1) {
                     btnNext.style.display = 'none';
                     submitBtn.style.display = 'block';
+                } else {
+                    btnNext.style.display = 'block';
+                    submitBtn.style.display = 'none';
                 }
-            }
+            };
 
             btnPrev.addEventListener('click', () => {
-                goToStep(currentStepIndex - 1);
+                if (currentStepIndex > 0) window.goToFormSection(steps[currentStepIndex - 1]);
             });
 
             btnNext.addEventListener('click', () => {
-                // Validación Simple
-                const currentContainer = stepContainers[(steps && steps.length > 0) ? steps[currentStepIndex] : 'default'];
+                // Validación Simple de Requeridos (JIT)
+                const currentContainer = stepContainers[steps[currentStepIndex]];
                 const inputs = currentContainer.querySelectorAll('ion-input, ion-select');
                 let isValid = true;
 
                 inputs.forEach(input => {
                     if (input.getAttribute('required') === 'true' && !input.value) {
                         isValid = false;
-                        input.classList.add('ion-touched');
-                        input.classList.add('ion-invalid');
+                        input.classList.add('ion-touched', 'ion-invalid');
                     } else {
                         input.classList.remove('ion-invalid');
                     }
                 });
 
-                if (isValid) {
-                    goToStep(currentStepIndex + 1);
+                if (isValid && currentStepIndex < totalSteps - 1) {
+                    window.goToFormSection(steps[currentStepIndex + 1]);
                 }
             });
 
-            goToStep(0);
+            // Auto-arranque mostrando la primera sección
+            window.goToFormSection(steps[0]);
 
             let isSaving = false; // Bloqueo de Reentrada
 

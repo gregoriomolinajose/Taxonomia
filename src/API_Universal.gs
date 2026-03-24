@@ -362,6 +362,44 @@ function getProductosOptions() {
 }
 
 /**
+ * getUnidadesNegocioOptions
+ * Devuelve [{value: id_unidad_negocio, label: nombre}] desde DB_Unidad_Negocio.
+ */
+function getUnidadesNegocioOptions() {
+  try {
+    const result = Engine_DB.list('Unidad_Negocio');
+    if (!result || !result.rows) return [];
+
+    return result.rows.map(row => ({
+      value: row.id_unidad_negocio,
+      label: row.nombre
+    })).filter(opt => opt.value && opt.label);
+  } catch (error) {
+    Logger.log("Error en getUnidadesNegocioOptions: " + error.message);
+    return [];
+  }
+}
+
+/**
+ * getEquiposOptions
+ * Devuelve [{value: id_equipo, label: nombre_equipo}] desde DB_Equipo.
+ */
+function getEquiposOptions() {
+  try {
+    const result = Engine_DB.list('Equipo');
+    if (!result || !result.rows) return [];
+
+    return result.rows.map(row => ({
+      value: row.id_equipo,
+      label: row.nombre_equipo
+    })).filter(opt => opt.value && opt.label);
+  } catch (error) {
+    Logger.log("Error en getEquiposOptions: " + error.message);
+    return [];
+  }
+}
+
+/**
  * _generateShortUUID
  * Genera un ID con prefijo de 4 letras + sufijo de 5 caracteres alfanuméricos.
  * Ejemplo: UNID-X8R2P
