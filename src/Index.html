@@ -11,6 +11,9 @@
     <script nomodule src="https://cdn.jsdelivr.net/npm/@ionic/core/dist/ionic/ionic.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@ionic/core/css/ionic.bundle.css" />
 
+    <!-- ApexCharts (Executive Dashboard BI) -->
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+
     <style>
         /* =========================================================================
            Design Tokens (Figma -> Native Ionic CSS Variables)
@@ -185,6 +188,30 @@
                                 </ion-col>
                             </ion-row>
 
+                            <!-- Executive Dashboard Charts -->
+                            <ion-row id="dashboard-charts-container" class="ion-margin-bottom" style="display: none;">
+                                <ion-col size="12" size-md="6">
+                                    <ion-card style="height: 100%;">
+                                        <ion-card-header>
+                                            <ion-card-title>Topología por Tipo de Equipo</ion-card-title>
+                                        </ion-card-header>
+                                        <ion-card-content>
+                                            <div id="chart-topology"></div>
+                                        </ion-card-content>
+                                    </ion-card>
+                                </ion-col>
+                                <ion-col size="12" size-md="6">
+                                    <ion-card style="height: 100%;">
+                                        <ion-card-header>
+                                            <ion-card-title>Capacidad por Equipo (Integrantes)</ion-card-title>
+                                        </ion-card-header>
+                                        <ion-card-content>
+                                            <div id="chart-capacity"></div>
+                                        </ion-card-content>
+                                    </ion-card>
+                                </ion-col>
+                            </ion-row>
+
                             <ion-row class="ion-justify-content-center" id="dashboard-cards-container">
                                 <!-- Tarjetas renderizadas dinámicamente vía renderDashboardCards() -->
                             </ion-row>
@@ -321,6 +348,12 @@
                                 for (const entity in entitiesData) {
                                     window.__APP_CACHE__[entity] = entitiesData[entity];
                                 }
+                                
+                                // Renderizar el BI Dashboard luego de cargar la caché
+                                if (typeof window.renderDashboard === 'function') {
+                                    window.renderDashboard();
+                                }
+
                                 newToast.message = 'Plataforma sincronizada.';
                                 newToast.icon = 'checkmark-circle-outline';
                                 newToast.color = 'success';
@@ -349,6 +382,12 @@
                     // Local fallback
                     setTimeout(async () => {
                         await toast.dismiss();
+                        
+                        // Renderizar el BI Dashboard en mock
+                        if (typeof window.renderDashboard === 'function') {
+                            window.renderDashboard();
+                        }
+
                         const newToast = document.createElement('ion-toast');
                         newToast.position = 'bottom';
                         newToast.message = 'Mock: Plataforma sincronizada.';
@@ -423,6 +462,11 @@
 
             if (container && window.OriginalDashboardHTML) {
                 container.innerHTML = window.OriginalDashboardHTML;
+                
+                // Re-render del Dashboard Ejecutivo
+                if (typeof window.renderDashboard === 'function') {
+                    window.renderDashboard();
+                }
             }
         };
 
@@ -531,6 +575,51 @@
                 ${homeItem}
                 <div id="form-steps-container"></div>
             `;
+        };
+
+        window.renderDashboard = function() {
+            // Fase 4: Limpieza previa
+            if (window.chartTopology) { window.chartTopology.destroy(); window.chartTopology = null; }
+            if (window.chartCapacity) { window.chartCapacity.destroy(); window.chartCapacity = null; }
+
+            const container = document.getElementById('dashboard-charts-container');
+            if (!container) return;
+
+            const equipos = window.__APP_CACHE__['Equipo'];
+            if (!equipos || equipos.length === 0) return;
+            
+            container.style.display = 'flex';
+
+            // Fase 3: Minería de Datos en RAM
+            const topologyCount = {};
+            const capacityData = [];
+            
+            equipos.forEach(eq => {
+                const tipo = eq.tipo_equipo || 'Sin Asignar';
+                topologyCount[tipo] = (topologyCount[tipo] || 0) + 1;
+                
+                const integrantes = parseInt(eq.total_integrantes) || 0;
+                capacityData.push({ x: eq.nombre_equipo || 'Desconocido', y: integrantes });
+            });
+
+            // Graph 1: Topology
+            window.chartTopology = new ApexCharts(document.querySelector("#chart-topology"), {
+                series: Object.values(topologyCount),
+                labels: Object.keys(topologyCount),
+                chart: { type: 'donut', height: 350 },
+                colors: ['#3880ff', '#2dd36f', '#ffc409', '#eb445a', '#92949c']
+            });
+            window.chartTopology.render();
+
+            // Graph 2: Capacity
+            capacityData.sort((a, b) => b.y - a.y);
+            window.chartCapacity = new ApexCharts(document.querySelector("#chart-capacity"), {
+                series: [{ name: 'Integrantes', data: capacityData }],
+                chart: { type: 'bar', height: 350 },
+                plotOptions: { bar: { horizontal: true } },
+                colors: ['#3880ff']
+            });
+            window.chartCapacity.render();
         };
 
         window.renderDashboardCards = function() {
