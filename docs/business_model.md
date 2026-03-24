@@ -79,15 +79,25 @@ Esta regla se activa obligatoriamente al recibir el comando **"close"** tras una
 - **Inyección Dinámica (Anti-Caché):** Queda ESTRICTAMENTE PROHIBIDO "hardcodear" la versión directamente en los archivos HTML. La versión DEBE estar centralizada en una constante del Backend (ej. `APP_VERSION` en `Config.gs`) y ser inyectada dinámicamente al Frontend mediante los Scriplets de Apps Script (`<?= APP_VERSION ?>`) o viajar dentro del `MasterPayload`.
 - **Mandato de Actualización por Despliegue:** CADA VEZ que el agente IA complete un "Feature", arregle un bug o solicite al usuario hacer un despliegue de prueba (`clasp push`), el agente DEBE obligatoriamente actualizar el número de Patch o el Timestamp del Build en el archivo de configuración. Esto garantiza que el QA visualice inmediatamente que está operando sobre el código más reciente, mitigando falsos positivos por caché del navegador.
 
-## 8. Blueprint Estricto para Nuevos CRUDs (Entity Lifecycle)
-Cuando el usuario ordene crear una "Nueva Entidad" o un "Nuevo CRUD", el Agente tiene ESTRICTAMENTE PROHIBIDO improvisar. DEBE ejecutar y documentar esta lista de verificación de 6 pasos exactos (El Blueprint):
+## 8. Blueprint Estricto para Nuevos CRUDs V3 (Enterprise Wizard Lifecycle)
+Cuando el usuario ordene crear una "Nueva Entidad" o un "Nuevo CRUD", el Agente tiene ESTRICTAMENTE PROHIBIDO improvisar código en el HTML. DEBE ejecutar esta lista de verificación exacta, garantizando que el formulario se renderice como un Wizard interactivo y mantenga la integridad relacional:
 
-## 8. Blueprint Estricto para Nuevos CRUDs V2 (Entity Lifecycle)
-Cuando el usuario ordene crear una "Nueva Entidad" o un "Nuevo CRUD", el Agente tiene ESTRICTAMENTE PROHIBIDO improvisar código en el HTML. DEBE ejecutar esta lista de verificación de 6 pasos exactos:
+1. **Definición Maestra del Esquema (APP_SCHEMAS):** Definir la nueva entidad en el motor de esquemas, declarando explícitamente el `primaryKey`, `titleField` y el arreglo de `fields`. Todo nuevo esquema DEBE acatar las siguientes 4 directrices de UI/Datos:
+   * **Mandato del Wizard (`section`):** TODO campo de negocio debe incluir la propiedad `section: "Nombre de Pestaña"`. El `FormEngine` usará esto para construir la navegación lateral. Si se omite, se agrupará en "Configuración General".
+   * **Diseño de Cuadrícula Activa (`width`):** Asignar anchos basados en 12 columnas. Textos largos/URLs = `12`, inputs normales = `6`, selects cortos = `4`, métricas/contadores numéricos = `2` o `3`.
+   * **Integridad Relacional (`lookupSource`):** Prohibido pedir nombres manualmente si existe la entidad. Usar `type: "select"` con `lookupSource: "getEntidadOptions"` y asegurar que el Backend exporte dicha función desde el Caché.
+   * **Protocolo 1:N (`dynamic_list`):** Prohibido crear hojas de Google Sheets "hijas" para colecciones pequeñas (ej. integrantes de un equipo). Usar `type: "dynamic_list"` con un arreglo de `subFields`. El frontend lo renderizará como sub-grilla y el backend lo almacenará en una sola celda como un JSON stringificado.
 
-1. **Definición Maestra (APP_SCHEMAS):** Definir la nueva entidad en el motor de esquemas, declarando explícitamente el `primaryKey`, `titleField` y el arreglo de `fields` con sus tipos.
-2. **Registro de Metadatos (Single Source of Truth):** Registrar OBLIGATORIAMENTE la entidad en `window.ENTITY_META` (en el archivo global correspondiente), mapeando su `idField`, `titleField`, `iconName`, `color` y su índice de `order`. Esto alimentará automáticamente el menú y el dashboard.
-3. **Auto-Aprovisionamiento Dinámico (Backend):** Garantizar que si la base de datos (Google Sheets) no tiene la tabla, el Backend la cree extrayendo dinámicamente las llaves del esquema, sumando obligatoriamente las **6 columnas de auditoría** (`created_at`, `created_by`, `updated_at`, `updated_by`, `deleted_at`, `deleted_by`).
-4. **Sanitización de Salida (Regla Anti-Deserialize):** Asegurar que el backend aplique `JSON.parse(JSON.stringify(record))` para destruir objetos `Date` antes del retorno.
-5. **Cero-Toque en UI (Zero-Touch HTML):** Queda ESTRICTAMENTE PROHIBIDO modificar manualmente los archivos `Index.html` o `DataView_UI.html` para agregar tarjetas o ítems de menú. La UI es 100% reactiva a la configuración de `ENTITY_META`.
-6. **Build Tracking (Regla 12):** Incrementar obligatoriamente la versión de compilación (`APP_VERSION`) para forzar la invalidación del caché visual.
+2. **Registro de Metadatos (Single Source of Truth):** Registrar OBLIGATORIAMENTE la entidad en `window.ENTITY_META` (o archivo global correspondiente), mapeando su `idField`, `titleField`, `iconName`, `color` y su índice de `order`. Esto alimentará automáticamente el menú lateral principal y el dashboard.
+
+3. **Auto-Aprovisionamiento Dinámico (Backend):** Garantizar que, si la base de datos (Google Sheets) no tiene la pestaña física, el Backend la cree extrayendo dinámicamente las llaves del esquema (incluyendo las llaves `JSON` del dynamic list), sumando obligatoriamente las **6 columnas de auditoría** (`created_at`, `created_by`, `updated_at`, `updated_by`, `deleted_at`, `deleted_by`).
+
+4. **Sanitización de Salida (Regla Anti-Deserialize):** Asegurar que el backend aplique `JSON.parse(JSON.stringify(record))` para destruir objetos `Date` nativos antes de retornar el payload al frontend.
+
+5. **Cero-Toque en UI (Zero-Touch HTML):** Queda ESTRICTAMENTE PROHIBIDO modificar manualmente los archivos `Index.html`, `FormEngine_UI.html` o `DataView_UI.html` para agregar pestañas, tarjetas o ítems de menú. La UI es 100% reactiva y se construye dinámicamente leyendo los metadatos y las propiedades `section` y `width` del esquema.
+
+6. **Build Tracking (Regla de Invalidación):** Incrementar obligatoriamente la versión de compilación (`APP_VERSION` o Build Tracker) en cada despliegue para forzar la invalidación del caché visual del navegador en el cliente.
+
+7. **Motor de Carga/Descarga Universal (Bulk Operations Zero-Touch):** Todo nuevo CRUD hereda automáticamente la capacidad de Importación y Exportación Masiva en formato CSV. Queda ESTRICTAMENTE PROHIBIDO crear rutinas de parseo de archivos por entidad. 
+   - La **Exportación** debe leer los encabezados directamente de `APP_SCHEMAS[entity].fields` y extraer la data del caché visual local.
+   - La **Importación** debe acoplarse obligatoriamente a la función de backend `bulkInsert(entity, array)`, la cual tiene el mandato de procesar matrices de datos usando `setValues()` en bloque para maximizar la velocidad y aplicar las reglas de auditoría dinámicas a todo el lote antes de tocar la base de datos (Google Sheets).

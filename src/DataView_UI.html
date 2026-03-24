@@ -1198,8 +1198,12 @@
             <p>${total} registro${total !== 1 ? 's' : ''} en total</p>
           </div>
           <div class="dv-header-actions">
+            <input type="file" id="dv-bulk-upload-input" accept=".csv" style="display:none;" onchange="window.DataViewEngine._importCSV(event)">
             <button class="dv-btn dv-btn-outline" onclick="window.DataViewEngine._exportCSV()">
               <ion-icon name="download-outline" slot="start"></ion-icon> Exportar CSV
+            </button>
+            <button class="dv-btn dv-btn-outline" style="color:var(--ion-color-secondary); border-color:var(--ion-color-secondary);" onclick="document.getElementById('dv-bulk-upload-input').click()">
+              <ion-icon name="cloud-upload-outline" slot="start"></ion-icon> Importar CSV
             </button>
             <button class="dv-btn dv-btn-primary" onclick="renderForm('${_state.entityName}')">
               <ion-icon name="add-outline" slot="start"></ion-icon> Crear ${displayLabel.replace(/s$/, '')}
@@ -1529,6 +1533,148 @@
             return toast.present();
         }
 
+        /* ────────────────────────────────────────────
+           Universal Bulk Data Engine (CSV Import/Export)
+        ───────────────────────────────────────────── */
+        function _exportCSV() {
+            if (!_state.entityName || !_state.data || _state.data.length === 0) {
+                _showToast('No hay datos para exportar.', 'warning');
+                return;
+            }
+            
+            // 1. Obtener headers basados en el esquema
+            const fields = _normalizeFields(_state.entityName) || Object.keys(_state.data[0]).map(k => ({name: k, label: k}));
+            const exportHeaders = fields.map(f => f.name);
+            
+            // 2. Construir CSV escapando comillas y saltos de línea
+            let csvContent = exportHeaders.join(',') + '\n';
+            
+            _state.data.forEach(row => {
+                const rowArray = exportHeaders.map(header => {
+                    let val = row[header] === undefined || row[header] === null ? '' : String(row[header]);
+                    // Escapar comillas dobles y envolver en comillas si hay comas, comillas o saltos de línea
+                    if (val.includes(',') || val.includes('"') || val.includes('\n')) {
+                        val = '"' + val.replace(/"/g, '""') + '"';
+                    }
+                    return val;
+                });
+                csvContent += rowArray.join(',') + '\n';
+            });
+            
+            // 3. Descarga
+            const blob = new Blob([new Uint8Array([0xEF, 0xBB, 0xBF]), csvContent], { type: 'text/csv;charset=utf-8;' }); // BOM for UTF-8 Excel
+            const link = document.createElement("a");
+            const url = URL.createObjectURL(blob);
+            link.setAttribute("href", url);
+            link.setAttribute("download", `${_state.entityName}_Export.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            _showToast('Exportación iniciada.', 'success');
+        }
+
+        function _importCSV(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const text = e.target.result;
+                
+                // Parser robusto con Regex para comillas
+                const regex = /(?!\s*$)\s*(?:'([^'\\]*(?:\\[\s\S][^'\\]*)*)'|"([^"\\]*(?:\\[\s\S][^"\\]*)*)"|([^,'"\s\\]*(?:\s+[^,'"\s\\]+)*))\s*(?:,|$)/g;
+                
+                const rawRows = text.split(/\r?\n/).filter(r => r.trim() !== '');
+                if (rawRows.length < 2) {
+                    _showToast('El CSV está vacío o no tiene datos.', 'danger');
+                    event.target.value = '';
+                    return;
+                }
+
+                // Parser iterativo por fila
+                const parsedRows = rawRows.map(rowStr => {
+                    let row = [];
+                    let match;
+                    regex.lastIndex = 0; // Reset
+                    while ((match = regex.exec(rowStr)) !== null) {
+                        let val = match[1] || match[2] || match[3] || '';
+                        // Unescape quotes if it was quoted
+                        if (match[2]) val = val.replace(/""/g, '"');
+                        row.push(val);
+                        // Stop if we matched the end
+                        if (match[0] === '' || !match[0].endsWith(',')) break;
+                    }
+                    // Limpieza simple en caso de que regex falle (fallback)
+                    if (row.length === 0) row = rowStr.split(',').map(s => s.trim());
+                    return row;
+                });
+
+                const headers = parsedRows.shift();
+                
+                const jsonArray = parsedRows.filter(r => r.length > 0).map(row => {
+                    let obj = {};
+                    headers.forEach((h, i) => {
+                        obj[h.trim()] = row[i] !== undefined ? row[i] : '';
+                    });
+                    return obj;
+                });
+
+                // Middleware de Cálculo Pre-Inserción
+                if (_state.entityName === 'Equipo') {
+                    jsonArray.forEach(row => {
+                        let total = 0;
+                        // Sumar todas las propiedades que empiecen con 'cant_' (si son números válidos)
+                        Object.keys(row).forEach(key => {
+                            if (key.startsWith('cant_') && !isNaN(parseInt(row[key]))) {
+                                total += parseInt(row[key]);
+                            }
+                        });
+                        row['total_integrantes'] = total;
+                    });
+                }
+
+                if (confirm(`Se encontraron ${jsonArray.length} registros. ¿Deseas importarlos a la entidad '${_state.entityName}'?`)) {
+                    const loading = document.createElement('ion-loading');
+                    loading.message = 'Importando masivamente...';
+                    document.body.appendChild(loading);
+                    loading.present();
+
+                    const isGAS = typeof google !== 'undefined' && google.script && google.script.run;
+                    if (isGAS) {
+                        google.script.run
+                            .withSuccessHandler(response => {
+                                loading.dismiss();
+                                if (response.status === 'success') {
+                                    _showToast(`Se importaron ${response.insertedCount} registros con éxito.`, 'success');
+                                    // Purgar caché y recargar
+                                    if (window.__APP_CACHE__) window.__APP_CACHE__[_state.entityName] = null;
+                                    render(_state.entityName, _state.containerId);
+                                } else {
+                                    alert("Error en carga masiva: " + response.message);
+                                }
+                                event.target.value = '';
+                            })
+                            .withFailureHandler(err => {
+                                loading.dismiss();
+                                alert("Error en carga masiva: " + err.message);
+                                event.target.value = '';
+                            })
+                            .bulkInsert(_state.entityName, jsonArray);
+                    } else {
+                        setTimeout(() => {
+                            loading.dismiss();
+                            _showToast('Mock: Importación exitosa.', 'success');
+                            event.target.value = '';
+                        }, 1000);
+                    }
+                } else {
+                    event.target.value = '';
+                }
+            };
+            reader.readAsText(file);
+        }
+
         /* API pública */
         return {
             render,
@@ -1538,7 +1684,7 @@
                     entityMeta: ENTITY_META[_state.entityName]
                 };
             },
-            _exportCSV,
+            _exportCSV, _importCSV,
             _onSearch, _onSort, _onPage, _onPageSize,
             _onColToggle, _toggleColPopover, _onViewToggle,
             _onDragStart, _onDragOver, _onDragLeave, _onDrop, _onDragEnd,

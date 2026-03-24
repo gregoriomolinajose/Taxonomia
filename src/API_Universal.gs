@@ -286,6 +286,103 @@ function API_Universal_Router(action, entityName, payload) {
   }
 }
 
+/**
+ * bulkInsert (Operating as Bulk Upsert in Memory)
+ * Inserción y actualización masiva de registros en hoja (Universal Bulk Data Engine)
+ */
+function bulkInsert(entityName, recordsArray) {
+    const user = Session.getActiveUser().getEmail();
+    const timestamp = new Date();
+    
+    // Conexión explícita DB para contexto WebApp
+    const config = (typeof CONFIG !== 'undefined') ? CONFIG : { SPREADSHEET_ID_DB: '' };
+    const ss = SpreadsheetApp.openById(config.SPREADSHEET_ID_DB);
+    if (!ss) return { status: 'error', message: 'No se pudo conectar a la base de datos (Spreadsheet nulo).' };
+
+    // Auto-Aprovisionamiento explícito usando el Adapter
+    const sheet = Adapter_Sheets._ensureSheetExists(ss, entityName);
+    if (!sheet) return { status: 'error', message: `No se pudo acceder a la hoja ${entityName}` };
+
+    const dataRange = sheet.getDataRange();
+    const allValues = dataRange.getValues();
+    const headers = allValues[0];
+    let existingData = allValues.slice(1);
+    
+    if (headers.length === 0 || headers[0] === "") {
+       return { status: 'error', message: `La entidad ${entityName} no está aprovisionada (faltan cabeceras).` };
+    }
+    
+    // Determinar Primary Key dinámicamente desde los headers o la convención
+    let pkField = headers.find(h => h.toString().startsWith('id_'));
+    if (!pkField) {
+        const tableKey = entityName.toLowerCase();
+        const singularKey = tableKey.endsWith('s') ? tableKey.slice(0, -1) : tableKey;
+        pkField = 'id_' + singularKey;
+    }
+
+    let idIndex = headers.indexOf(pkField);
+    if(idIndex === -1) idIndex = 0; // Fallback to first column
+
+    let existingMap = {};
+    existingData.forEach((row, index) => {
+        if (row[idIndex]) existingMap[row[idIndex]] = index;
+    });
+
+    let newRecordsCount = 0;
+    let updatedRecordsCount = 0;
+
+    recordsArray.forEach(record => {
+        const recordId = record[pkField] || record['id'];
+        
+        // Es un UPDATE
+        if (recordId && existingMap.hasOwnProperty(recordId)) {
+            const rowIndex = existingMap[recordId];
+            
+            // Mantener datos de creación originales
+            record.created_at = existingData[rowIndex][headers.indexOf('created_at')] || timestamp;
+            record.created_by = existingData[rowIndex][headers.indexOf('created_by')] || user;
+            // Actualizar auditoría
+            record.updated_at = timestamp;
+            record.updated_by = user;
+            record.estado = record.estado || existingData[rowIndex][headers.indexOf('estado')] || 'Activo';
+            
+            // Reconstruir la fila preservando el orden de las cabeceras
+            const updatedRow = headers.map(colName => record[colName] !== undefined ? record[colName] : existingData[rowIndex][headers.indexOf(colName)]);
+            existingData[rowIndex] = updatedRow;
+            updatedRecordsCount++;
+        } 
+        // Es un INSERT
+        else {
+            const newId = recordId || _generateShortUUID(entityName);
+            record[pkField] = newId; 
+            record.created_at = timestamp;
+            record.created_by = user;
+            record.updated_at = timestamp;
+            record.updated_by = user;
+            record.estado = record.estado || 'Activo';
+            
+            const newRow = headers.map(colName => record[colName] !== undefined ? record[colName] : '');
+            existingData.push(newRow);
+            existingMap[newId] = existingData.length - 1;
+            newRecordsCount++;
+        }
+    });
+
+    // Escribir de vuelta TODO a la base de datos en 1 sola operación (Flash Write)
+    if (existingData.length > 0) {
+        if(sheet.getLastRow() > 1) {
+            sheet.getRange(2, 1, sheet.getLastRow() - 1, headers.length).clearContent();
+        }
+        sheet.getRange(2, 1, existingData.length, headers.length).setValues(existingData);
+    }
+    
+    Logger.log(`BulkUpsert completado para ${entityName}: ${newRecordsCount} insertados, ${updatedRecordsCount} actualizados.`);
+    
+    // Devolvemos insertedCount y updatedCount. insertedCount se usa en DataView_UI para el Toast.
+    // Sumamos ambos para el mensaje de éxito "Se importaron X registros" si el backend actualizó los que existían.
+    return { status: 'success', insertedCount: (newRecordsCount + updatedRecordsCount), newRecords: newRecordsCount, updatedRecords: updatedRecordsCount };
+}
+
 // Bloque de Persistencia Dinámicas (Relacional 1:N)
 function getPersonasOptions() {
   try {
