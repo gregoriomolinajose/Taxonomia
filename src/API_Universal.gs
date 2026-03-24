@@ -295,8 +295,10 @@ function getPersonasOptions() {
     const options = result.rows
       .filter(row => row.estado !== 'Eliminado')
       .map(row => ({
+        id: row.id_persona,
+        nombre: row.nombre,
         value: row.id_persona,
-        label: row.nombre_completo + (row.rol_organizacional ? ` (${row.rol_organizacional})` : '')
+        label: row.nombre + (row.cargo ? ` (${row.cargo})` : '')
       }));
     return JSON.parse(JSON.stringify(options));
   } catch(e) {

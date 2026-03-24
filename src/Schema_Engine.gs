@@ -78,12 +78,50 @@ const APP_SCHEMAS = {
     primaryKey: "id_equipo",
     titleField: "nombre_equipo",
     fields: [
-      { name: "id_equipo", label: "ID del Equipo", type: "text", required: true, readonly: true, primaryKey: true },
-      { name: "nombre_equipo", label: "Nombre del Equipo", type: "text", required: true },
-      { name: "scrum_master", label: "Scrum Master", type: "select", required: true, options: [], lookupSource: "getPersonasOptions", width: 6 },
-      { name: "product_owner", label: "Product Owner", type: "select", required: true, options: [], lookupSource: "getPersonasOptions", width: 6 },
-      { name: "id_producto", label: "Producto o Canal Asignado", type: "select", required: true, options: [], lookupSource: "getProductosOptions" },
-      { name: "estado", type: "hidden", defaultValue: "Activo" }
+      // Sistema e IDs
+      { name: "id_equipo", label: "ID Sistema", type: "text", required: true, readonly: true, primaryKey: true, width: 4 },
+      { name: "id_externo", label: "ID Equipo (Externo/Nómina)", type: "text", width: 4 },
+      { name: "estado", type: "hidden", defaultValue: "Activo" },
+      
+      // Sección 1: Identidad
+      { section: "Identidad", name: "nombre_equipo", label: "Nombre Oficial", type: "text", required: true, width: 4 },
+      { section: "Identidad", name: "seudonimo", label: "Seudónimo / Alias", type: "text", width: 4 },
+      { section: "Identidad", name: "tipo_equipo", label: "Topología (Team Topologies)", type: "select", options: ["Stream-aligned", "Platform", "Enabling", "Complicated-subsystem"], required: true, width: 4 },
+      { section: "Identidad", name: "proposito", label: "Propósito / Misión", type: "textarea", width: 12 },
+      
+      // Sección 2: Gobernanza
+      { section: "Gobernanza", name: "id_unidad_negocio", label: "Unidad de Negocio", type: "select", lookupSource: "getUnidadesNegocioOptions", required: true, width: 6 },
+      { section: "Gobernanza", name: "id_portafolio", label: "Portafolio (Financiamiento)", type: "select", lookupSource: "getPortafoliosOptions", width: 6 },
+      
+      // Sección 3: Integrantes y Roles (Dynamic List)
+      { 
+        section: "Plantilla de Integrantes", 
+        name: "integrantes_json", 
+        label: "Integrantes y Roles", 
+        type: "dynamic_list", 
+        width: 12,
+        subFields: [
+          { name: "id_persona", label: "Seleccionar Persona", type: "select", lookupSource: "getPersonasOptions", width: 7 },
+          { name: "rol_asignado", label: "Rol en esta Célula", type: "text", width: 4 }
+        ]
+      },
+      
+      // Sección 4: Capacidad y Especialidad (Grid Numérico Compacto)
+      { section: "Capacidad", name: "cant_dev_back", label: "Dev Back", type: "number", width: 2 },
+      { section: "Capacidad", name: "cant_dev_front", label: "Dev Front", type: "number", width: 2 },
+      { section: "Capacidad", name: "cant_fullstack", label: "Fullstack", type: "number", width: 2 },
+      { section: "Capacidad", name: "cant_testers", label: "Testers (QA)", type: "number", width: 2 },
+      { section: "Capacidad", name: "cant_tech_lead", label: "Tech Leads", type: "number", width: 2 },
+      { section: "Capacidad", name: "cant_team_coach", label: "Team Coach", type: "number", width: 2 },
+      { section: "Capacidad", name: "cant_po", label: "PO / PM", type: "number", width: 2 },
+      { section: "Capacidad", name: "cant_otros", label: "Otros", type: "number", width: 2 },
+      { section: "Capacidad", name: "roles_otros", label: "¿Qué rol tienen? (Otros)", type: "text", width: 4 },
+      { section: "Capacidad", name: "total_integrantes", label: "Total Suma", type: "number", readonly: true, width: 4 }, // Campo Calculado
+      
+      // Sección 5: Operativa
+      { section: "Operativa", name: "metodologia", label: "Metodología", type: "select", options: ["Scrum", "Kanban", "Híbrida"], width: 4 },
+      { section: "Operativa", name: "herramienta_tracker", label: "Herramienta de Gestión", type: "select", options: ["Jira", "Azure DevOps"], width: 4 },
+      { section: "Operativa", name: "url_tablero", label: "URL del Tablero", type: "url", width: 4 }
     ]
   },
   Producto: {

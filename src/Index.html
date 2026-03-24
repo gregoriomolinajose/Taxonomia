@@ -312,35 +312,50 @@
                 if (typeof google !== 'undefined' && google.script && google.script.run) {
                     google.script.run
                         .withSuccessHandler(async (res) => {
+                            await toast.dismiss();
+                            const newToast = document.createElement('ion-toast');
+                            newToast.position = 'bottom';
                             if (res.status === 'success') {
                                 // Inyectar datos directamente en la Memoria Global
                                 const entitiesData = res.data;
                                 for (const entity in entitiesData) {
                                     window.__APP_CACHE__[entity] = entitiesData[entity];
                                 }
-                                toast.message = 'Plataforma sincronizada.';
-                                toast.icon = 'checkmark-circle-outline';
-                                toast.color = 'success';
-                                toast.duration = 2000;
+                                newToast.message = 'Plataforma sincronizada.';
+                                newToast.icon = 'checkmark-circle-outline';
+                                newToast.color = 'success';
+                                newToast.duration = 2000;
                             } else {
-                                toast.message = 'Error en sincronización.';
-                                toast.color = 'danger';
-                                toast.icon = 'warning-outline';
-                                toast.duration = 3000;
+                                newToast.message = 'Error en sincronización.';
+                                newToast.color = 'danger';
+                                newToast.icon = 'warning-outline';
+                                newToast.duration = 3000;
                             }
+                            document.body.appendChild(newToast);
+                            await newToast.present();
                         })
-                        .withFailureHandler((err) => {
-                            toast.message = 'Error de red en sincronización.';
-                            toast.color = 'danger';
-                            toast.duration = 3000;
+                        .withFailureHandler(async (err) => {
+                            await toast.dismiss();
+                            const newToast = document.createElement('ion-toast');
+                            newToast.position = 'bottom';
+                            newToast.message = 'Error de red en sincronización.';
+                            newToast.color = 'danger';
+                            newToast.duration = 3000;
+                            document.body.appendChild(newToast);
+                            await newToast.present();
                         })
                         .getAppBootstrapPayload();
                 } else {
                     // Local fallback
                     setTimeout(async () => {
-                        toast.message = 'Mock: Plataforma sincronizada.';
-                        toast.color = 'success';
-                        toast.duration = 2000;
+                        await toast.dismiss();
+                        const newToast = document.createElement('ion-toast');
+                        newToast.position = 'bottom';
+                        newToast.message = 'Mock: Plataforma sincronizada.';
+                        newToast.color = 'success';
+                        newToast.duration = 2000;
+                        document.body.appendChild(newToast);
+                        await newToast.present();
                     }, 1000);
                 }
             },

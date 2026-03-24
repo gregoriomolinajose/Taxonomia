@@ -8,7 +8,8 @@ function clearProjectCache() {
       'Grupo_Productos': 'getGruposProductosOptions',
       'Producto': 'getProductosOptions',
       'Unidad_Negocio': 'getUnidadesNegocioOptions',
-      'Equipo': 'getEquiposOptions'
+      'Equipo': 'getEquiposOptions',
+      'Persona': 'getPersonasOptions'
     };
     if (lookupMap[ent]) cache.remove('CACHE_LOOKUP_' + lookupMap[ent]);
   });

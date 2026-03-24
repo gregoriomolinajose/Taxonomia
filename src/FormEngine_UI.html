@@ -92,7 +92,17 @@
              * Muestra ion-loading mientras resuelve; non-fatal si un lookup falla.
              */
             async function _resolveLookupSources(fields) {
-                const fieldsWithLookup = fields.filter(f => f.lookupSource || (f.type === 'relation' && f.targetEntity));
+                const fieldsWithLookup = [];
+                fields.forEach(f => {
+                    if (f.lookupSource || (f.type === 'relation' && f.targetEntity)) {
+                        fieldsWithLookup.push(f);
+                    }
+                    if (f.type === 'dynamic_list' && f.subFields) {
+                        f.subFields.forEach(sub => {
+                            if (sub.lookupSource) fieldsWithLookup.push(sub);
+                        });
+                    }
+                });
                 if (fieldsWithLookup.length === 0) return;
 
                 const loading = document.createElement('ion-loading');
@@ -313,8 +323,8 @@
                 // Generar Columna Ionic Responsive
                 const ionCol = document.createElement('ion-col');
                 ionCol.setAttribute('size', '12'); // Mobile: ancho completo
-                if (field.width === 6) {
-                    ionCol.setAttribute('size-md', '6'); // Desktop: mitad de ancho si el esquema dictamina 6
+                if (field.width) {
+                    ionCol.setAttribute('size-md', String(field.width)); // Desktop: respeta el width en grid 12-columnas
                 } else {
                     ionCol.setAttribute('size-md', '12'); // Desktop: ancho completo por defecto
                 }
@@ -359,6 +369,98 @@
                             });
                         }
                         break;
+                    case 'dynamic_list': {
+                        isComplex = true;
+                        inputEl = document.createElement('div');
+                        inputEl.setAttribute('data-dynamic-list', field.name);
+                        inputEl.style.border = '0px solid var(--ion-border-color)';
+                        inputEl.style.padding = '0px';
+                        inputEl.style.marginBottom = '16px';
+                        
+                        const dlHeader = document.createElement('div');
+                        dlHeader.style.fontSize = '12px';
+                        dlHeader.style.color = 'var(--ion-color-medium)';
+                        dlHeader.style.marginBottom = '8px';
+                        dlHeader.style.paddingLeft = '5px';
+                        dlHeader.textContent = field.label + (field.required ? ' *' : '');
+                        inputEl.appendChild(dlHeader);
+
+                        const listRowsContainer = document.createElement('div');
+                        inputEl.appendChild(listRowsContainer);
+
+                        const addBtn = document.createElement('ion-button');
+                        addBtn.setAttribute('fill', 'outline');
+                        addBtn.setAttribute('size', 'small');
+                        addBtn.innerHTML = `<ion-icon slot="start" name="add"></ion-icon> Agregar`;
+                        
+                        let initialData = [];
+                        if (data && data[field.name]) {
+                            try {
+                                initialData = typeof data[field.name] === 'string' ? JSON.parse(data[field.name]) : data[field.name];
+                            } catch(e) {}
+                        }
+                        
+                        const createRow = (rowData = {}) => {
+                            const row = document.createElement('ion-row');
+                            row.classList.add('dynamic-list-row');
+                            row.style.alignItems = 'center';
+                            row.style.marginBottom = '8px';
+
+                            field.subFields.forEach(sub => {
+                                const col = document.createElement('ion-col');
+                                col.setAttribute('size-md', String(sub.width || 12));
+                                col.setAttribute('size', '12');
+
+                                const subInput = document.createElement(sub.type === 'select' ? 'ion-select' : 'ion-input');
+                                subInput.setAttribute('name', sub.name);
+                                subInput.setAttribute('label', sub.label);
+                                subInput.setAttribute('label-placement', 'stacked');
+                                subInput.setAttribute('fill', 'outline');
+                                subInput.style.setProperty('--background', 'var(--ion-color-step-100)');
+                                
+                                if (rowData[sub.name]) {
+                                    subInput.value = rowData[sub.name];
+                                }
+
+                                if (sub.type === 'select' && sub.lookupSource) {
+                                    subInput.setAttribute('interface', 'popover');
+                                    if (sub.options && Array.isArray(sub.options)) {
+                                        sub.options.forEach(opt => {
+                                            const ionOption = document.createElement('ion-select-option');
+                                            ionOption.value = (typeof opt === 'object' && opt !== null) ? opt.value : opt;
+                                            ionOption.textContent = (typeof opt === 'object' && opt !== null) ? opt.label : opt;
+                                            subInput.appendChild(ionOption);
+                                        });
+                                    }
+                                }
+                                col.appendChild(subInput);
+                                row.appendChild(col);
+                            });
+
+                            const delCol = document.createElement('ion-col');
+                            delCol.setAttribute('size-md', '1');
+                            delCol.setAttribute('size', '2');
+                            const delBtn = document.createElement('ion-button');
+                            delBtn.setAttribute('color', 'danger');
+                            delBtn.setAttribute('fill', 'clear');
+                            delBtn.innerHTML = '<ion-icon name="trash-outline"></ion-icon>';
+                            delBtn.onclick = () => row.remove();
+                            
+                            delCol.appendChild(delBtn);
+                            row.appendChild(delCol);
+
+                            listRowsContainer.appendChild(row);
+                        };
+
+                        if (initialData.length > 0 && Array.isArray(initialData)) {
+                            initialData.forEach(item => createRow(item));
+                        }
+
+                        addBtn.onclick = () => createRow();
+
+                        inputEl.appendChild(addBtn);
+                        break;
+                    }
                     case 'lookup':
                         inputEl = document.createElement('ion-input');
                         inputEl.setAttribute('readonly', 'true');
@@ -710,6 +812,8 @@
             centerRightWrapper.appendChild(submitBtn);
             btnContainer.appendChild(centerRightWrapper);
 
+            window.__CURRENT_WIZARD_STEPS = steps;
+
             // Funcionalidad Stepper Lineal Dinámico (Wizard Handler)
             window.goToFormSection = function(targetSectionName) {
                 currentStepIndex = steps.indexOf(targetSectionName);
@@ -775,6 +879,24 @@
             // Auto-arranque mostrando la primera sección
             window.goToFormSection(steps[0]);
 
+            // --- REGLA V4.0: Lógica de Suma Automática para Total Integrantes ---
+            container.addEventListener('ionInput', (e) => {
+                const target = e.target;
+                if (target.tagName && target.tagName.toLowerCase() === 'ion-input' && target.name && target.name.startsWith('cant_')) {
+                    const allCants = container.querySelectorAll('ion-input[name^="cant_"]');
+                    let total = 0;
+                    allCants.forEach(input => {
+                        const val = parseInt(input.value, 10);
+                        if (!isNaN(val)) total += val;
+                    });
+                    const totalInput = container.querySelector('ion-input[name="total_integrantes"]');
+                    if (totalInput) {
+                        totalInput.value = total;
+                    }
+                }
+            });
+            // --------------------------------------------------------------------
+
             let isSaving = false; // Bloqueo de Reentrada
 
             submitBtn.addEventListener('click', async () => {
@@ -799,9 +921,28 @@
                 const payload = {};
                 freshInputs.forEach(input => {
                     const name = input.getAttribute('name');
-                    if (name) {
+                    if (name && !input.closest('[data-dynamic-list]')) {
                         payload[name] = input.value;
                     }
+                });
+
+                // Extractor JIT para Dynamic Lists
+                const dynamicLists = activeForm.querySelectorAll('[data-dynamic-list]');
+                dynamicLists.forEach(list => {
+                    const fieldName = list.getAttribute('data-dynamic-list');
+                    const rows = list.querySelectorAll('.dynamic-list-row');
+                    const jsonArray = [];
+                    
+                    rows.forEach(row => {
+                        const rowData = {};
+                        const rowInputs = row.querySelectorAll('ion-input, ion-select');
+                        rowInputs.forEach(inp => {
+                            if (inp.name) rowData[inp.name] = inp.value;
+                        });
+                        jsonArray.push(rowData);
+                    });
+                    
+                    payload[fieldName] = JSON.stringify(jsonArray);
                 });
 
                 const freshChipContainers = activeForm.querySelectorAll('.chip-container');
@@ -949,7 +1090,7 @@
                                  activeContainer.querySelectorAll('.chip-container')
                                      .forEach(cc => cc.querySelectorAll('ion-chip').forEach(chip => chip.remove()));
 
-                                 goToStep(0);
+                                 window.goToFormSection(steps[0]);
 
                                  // Regenerar IDs frescos para el próximo registro
                                  activeContainer.querySelectorAll('ion-input[readonly], input[type="hidden"]').forEach(input => {
@@ -982,6 +1123,7 @@
                             console.error('[FormEngine] Error UI:', e);
                             showToast('Error en la interfaz local', 'warning');
                         } finally {
+                            loading.dismiss();
                             isSaving = false;
                             submitBtn.disabled = false;
                             submitBtn.innerHTML = '<ion-icon slot="start" name="save-outline"></ion-icon> Guardar ' + window.formatEntityName(entityName);
@@ -1150,8 +1292,8 @@
             }
 
             // 8. Navegar al primer paso (Directiva 3.d)
-            if (typeof global.goToStep === 'function') {
-                global.goToStep(0);
+            if (typeof global.goToFormSection === 'function' && window.__CURRENT_WIZARD_STEPS) {
+                global.goToFormSection(window.__CURRENT_WIZARD_STEPS[0]);
             }
         };
 
