@@ -609,7 +609,7 @@
             let selectedPortfolio = 'all';
             
             if (portfolioSel) {
-                if (portfolioSel.childElementCount <= 1) { // Llenar opciones si está vacío
+                if (!portfolioSel.dataset.populated) { // Evitar repopular si ya se cargó, usando un flag en lugar de childElementCount (que falla en Ionic por el Shadow DOM)
                     const portafolios = window.__APP_CACHE__['Portafolio'] || [];
                     let htmlOptions = '<ion-select-option value="all">TODOS LOS PORTAFOLIOS</ion-select-option>';
                     portafolios.forEach(p => {
@@ -617,6 +617,7 @@
                     });
                     portfolioSel.innerHTML = htmlOptions;
                     portfolioSel.value = 'all';
+                    portfolioSel.dataset.populated = 'true';
                     
                     // Adjuntar eventLister nativo para Ionic si no existe
                     portfolioSel.addEventListener('ionChange', (e) => {
