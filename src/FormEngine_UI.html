@@ -317,6 +317,11 @@
                 }
 
                 // 3. Distribución de Campos JIT por Sección
+                if (!field.section || !field.width) {
+                    console.warn(`[FormEngine] ALERTA: La entidad ${entityName} se está renderizando con valores por defecto. Falta 'section' o 'width' en el campo '${field.name}'. Actualice al Blueprint V3.`);
+                    field.section = field.section || "Datos Generales";
+                    field.width = field.width || 12;
+                }
                 const targetRowName = field.section || steps[0];
                 let targetRow = rows[targetRowName] || rows[Object.keys(rows)[0]];
 

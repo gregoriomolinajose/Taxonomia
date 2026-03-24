@@ -10,12 +10,12 @@ const APP_SCHEMAS = {
     primaryKey: "id_grupo_producto",
     titleField: "nombre",
     fields: [
-      { name: "id_grupo_producto", label: "ID Grupo Producto", type: "text", required: true, readonly: true, primaryKey: true, step: "Datos Generales" },
-      { name: "nombre", label: "Nombre", type: "text", required: true, step: "Datos Generales" },
-      { name: "descripcion", label: "Descripción", type: "textarea", required: false, step: "Datos Generales" },
-      { name: "id_portafolio", label: "Portafolio Padre", type: "select", required: true, step: "Datos Generales", options: [], lookupSource: "getPortafoliosOptions" },
-      { name: "naturaleza_valor", label: "Naturaleza de Valor", type: "text", required: false, step: "Estrategia de Negocio" },
-      { name: "modelo_negocio", label: "Modelo de Negocio", type: "select", required: true, options: ["SaaS", "Marketplace", "B2B", "B2C", "Transaccional"], step: "Estrategia de Negocio" }
+      { section: "Datos Generales", width: 12, name: "id_grupo_producto", label: "ID Grupo Producto", type: "text", required: true, readonly: true, primaryKey: true },
+      { section: "Datos Generales", width: 12, name: "nombre", label: "Nombre", type: "text", required: true },
+      { section: "Datos Generales", width: 12, name: "descripcion", label: "Descripción", type: "textarea", required: false },
+      { section: "Datos Generales", width: 12, name: "id_portafolio", label: "Portafolio Padre", type: "select", required: true, options: [], lookupSource: "getPortafoliosOptions" },
+      { section: "Estrategia de Negocio", width: 12, name: "naturaleza_valor", label: "Naturaleza de Valor", type: "text", required: false },
+      { section: "Estrategia de Negocio", width: 12, name: "modelo_negocio", label: "Modelo de Negocio", type: "select", required: true, options: ["SaaS", "Marketplace", "B2B", "B2C", "Transaccional"] }
     ]
   },
   Portafolio: {
@@ -24,21 +24,21 @@ const APP_SCHEMAS = {
     fields: [
       { name: "id_portafolio", type: "hidden", primaryKey: true },
       { name: "estado", type: "hidden", defaultValue: "Activo" },
-      { name: "nombre", type: "text", label: "Nombre del Portafolio", required: true, group: "Identidad" },
-      { name: "proposito", type: "textarea", label: "Propósito del Portafolio", required: true, group: "Identidad" },
-      { name: "objetivos_negocio", type: "textarea", label: "Objetivos de Negocio (Lista)", required: true, group: "Estrategia" },
-      { name: "kpis_metricas", type: "textarea", label: "OKRs y KPIs del Portafolio", required: true, group: "Estrategia" },
-      { name: "capacidad_continuidad", type: "number", label: "% Continuidad Operativa", group: "Capacidad" },
-      { name: "capacidad_fundacional", type: "number", label: "% Fundacionales", group: "Capacidad" },
-      { name: "capacidad_transformacion", type: "number", label: "% Evolución y Transform.", group: "Capacidad" },
-      { name: "flujos_valor", type: "textarea", label: "Value Streams / Flujos de Valor", group: "Capacidad" },
-      { name: "presupuesto_bau", type: "number", label: "Presupuesto BAU ($)", group: "Presupuesto" },
-      { name: "presupuesto_transformacion", type: "number", label: "Presupuesto Transformación ($)", group: "Presupuesto" },
-      { name: "presupuesto_estrategico", type: "number", label: "Presupuesto Estratégico ($)", group: "Presupuesto" },
-      { name: "gobierno_liderazgo", type: "textarea", label: "Gobierno (Roles y Nombres)", group: "Gobernanza" },
-      { name: "stakeholders", type: "textarea", label: "Stakeholders y Sponsors", group: "Gobernanza" },
-      { name: "producto_dominio", type: "textarea", label: "Producto / Dominio (OMS, WMS, etc.)", group: "Gobernanza" },
-      { name: "grupos_hijos", type: "relation", relationType: "1:N", targetEntity: "Grupo_Productos", foreignKey: "id_portafolio", uiBehavior: "subgrid", label: "Grupos de Producto", group: "Relaciones" }
+      { section: "Identidad", width: 12, name: "nombre", type: "text", label: "Nombre del Portafolio", required: true },
+      { section: "Identidad", width: 12, name: "proposito", type: "textarea", label: "Propósito del Portafolio", required: true },
+      { section: "Estrategia", width: 12, name: "objetivos_negocio", type: "textarea", label: "Objetivos de Negocio (Lista)", required: true },
+      { section: "Estrategia", width: 12, name: "kpis_metricas", type: "textarea", label: "OKRs y KPIs del Portafolio", required: true },
+      { section: "Capacidad", width: 4, name: "capacidad_continuidad", type: "number", label: "% Continuidad Operativa" },
+      { section: "Capacidad", width: 4, name: "capacidad_fundacional", type: "number", label: "% Fundacionales" },
+      { section: "Capacidad", width: 4, name: "capacidad_transformacion", type: "number", label: "% Evolución y Transform." },
+      { section: "Capacidad", width: 12, name: "flujos_valor", type: "textarea", label: "Value Streams / Flujos de Valor" },
+      { section: "Presupuesto", width: 4, name: "presupuesto_bau", type: "number", label: "Presupuesto BAU ($)" },
+      { section: "Presupuesto", width: 4, name: "presupuesto_transformacion", type: "number", label: "Presupuesto Transformación ($)" },
+      { section: "Presupuesto", width: 4, name: "presupuesto_estrategico", type: "number", label: "Presupuesto Estratégico ($)" },
+      { section: "Gobernanza", width: 12, name: "gobierno_liderazgo", type: "textarea", label: "Gobierno (Roles y Nombres)" },
+      { section: "Gobernanza", width: 12, name: "stakeholders", type: "textarea", label: "Stakeholders y Sponsors" },
+      { section: "Gobernanza", width: 12, name: "producto_dominio", type: "textarea", label: "Producto / Dominio (OMS, WMS, etc.)" },
+      { section: "Relaciones", width: 12, name: "grupos_hijos", type: "relation", relationType: "1:N", targetEntity: "Grupo_Productos", foreignKey: "id_portafolio", uiBehavior: "subgrid", label: "Grupos de Producto" }
     ]
   },
   Dominio: {
@@ -47,14 +47,14 @@ const APP_SCHEMAS = {
     fields: [
       { name: "id_dominio", type: "hidden", primaryKey: true },
       { name: "estado", type: "hidden", defaultValue: "Activo" },
-      { name: "id_registro", type: "text", label: "ID TDE (Registro)", required: true, width: "12" },
-      { name: "nivel_tipo", type: "number", label: "Nivel Tipo", required: true, width: "6" },
-      { name: "orden_path", type: "text", label: "Orden Path", required: true, width: "6" },
-      { name: "n0_es", type: "text", label: "Nombre (ES)", required: true, width: "6" },
-      { name: "nombre_ingles", type: "text", label: "Nombre (EN)", required: false, width: "6" },
-      { name: "abreviacion", type: "text", label: "Abreviación", required: false, width: "6" },
-      { name: "path_completo_es", type: "text", label: "Path Completo (ES)", required: true, width: "12" },
-      { name: "definicion", type: "textarea", label: "Definición", required: true, width: "12" }
+      { section: "Datos Generales", name: "id_registro", type: "text", label: "ID TDE (Registro)", required: true, width: 12 },
+      { section: "Datos Generales", name: "nivel_tipo", type: "number", label: "Nivel Tipo", required: true, width: 6 },
+      { section: "Datos Generales", name: "orden_path", type: "text", label: "Orden Path", required: true, width: 6 },
+      { section: "Datos Generales", name: "n0_es", type: "text", label: "Nombre (ES)", required: true, width: 6 },
+      { section: "Datos Generales", name: "nombre_ingles", type: "text", label: "Nombre (EN)", required: false, width: 6 },
+      { section: "Datos Generales", name: "abreviacion", type: "text", label: "Abreviación", required: false, width: 6 },
+      { section: "Datos Generales", name: "path_completo_es", type: "text", label: "Path Completo (ES)", required: true, width: 12 },
+      { section: "Datos Generales", name: "definicion", type: "textarea", label: "Definición", required: true, width: 12 }
     ]
   },
   Capacidad: {
@@ -63,15 +63,15 @@ const APP_SCHEMAS = {
     fields: [
       { name: "id_capacidad", type: "hidden", primaryKey: true },
       { name: "estado", type: "hidden", defaultValue: "Activo" },
-      { name: "id_externo", type: "text", label: "ID Externo", required: false, width: "6" },
-      { name: "nivel_tipo", type: "number", label: "Nivel Tipo", required: true, width: "6" },
-      { name: "orden_path", type: "text", label: "Orden Path", required: false, width: "12" },
-      { name: "macrocapacidad", type: "text", label: "Macrocapacidad", required: true, width: "12" },
-      { name: "nombre_ingles", type: "text", label: "Nombre Inglés", required: false, width: "12" },
-      { name: "abreviacion", type: "text", label: "Abreviación", required: false, width: "6" },
-      { name: "descripcion", type: "textarea", label: "Descripción", required: false, width: "12" },
-      { name: "contexto_completo_analisis", type: "textarea", label: "Contexto Análisis", required: false, width: "12" },
-      { name: "path_completo_es", type: "text", label: "Path Completo", required: false, width: "12" }
+      { section: "Datos Generales", name: "id_externo", type: "text", label: "ID Externo", required: false, width: 6 },
+      { section: "Datos Generales", name: "nivel_tipo", type: "number", label: "Nivel Tipo", required: true, width: 6 },
+      { section: "Datos Generales", name: "orden_path", type: "text", label: "Orden Path", required: false, width: 12 },
+      { section: "Datos Generales", name: "macrocapacidad", type: "text", label: "Macrocapacidad", required: true, width: 12 },
+      { section: "Datos Generales", name: "nombre_ingles", type: "text", label: "Nombre Inglés", required: false, width: 12 },
+      { section: "Datos Generales", name: "abreviacion", type: "text", label: "Abreviación", required: false, width: 6 },
+      { section: "Datos Generales", name: "descripcion", type: "textarea", label: "Descripción", required: false, width: 12 },
+      { section: "Datos Generales", name: "contexto_completo_analisis", type: "textarea", label: "Contexto Análisis", required: false, width: 12 },
+      { section: "Datos Generales", name: "path_completo_es", type: "text", label: "Path Completo", required: false, width: 12 }
     ]
   },
   Equipo: {
@@ -128,11 +128,11 @@ const APP_SCHEMAS = {
     primaryKey: "id_producto",
     titleField: "nombre_producto",
     fields: [
-      { name: "id_producto", label: "ID Producto", type: "text", required: true, readonly: true, primaryKey: true },
-      { name: "nombre_producto", label: "Nombre del Producto", type: "text", required: true },
-      { name: "nivel_criticalidad", label: "Nivel de Criticalidad", type: "select", required: true, options: ["Tier 1 (Crítico)", "Tier 2 (Alto)", "Tier 3 (Medio)", "Tier 4 (Bajo)"] },
-      { name: "slo_objetivo", label: "SLO Objetivo (%)", type: "number", required: false },
-      { name: "id_grupo_producto", label: "Grupo de Productos", type: "select", required: true, options: [], lookupSource: "getGruposProductosOptions" }
+      { section: "Datos Generales", width: 12, name: "id_producto", label: "ID Producto", type: "text", required: true, readonly: true, primaryKey: true },
+      { section: "Datos Generales", width: 12, name: "nombre_producto", label: "Nombre del Producto", type: "text", required: true },
+      { section: "Datos Generales", width: 6, name: "nivel_criticalidad", label: "Nivel de Criticalidad", type: "select", required: true, options: ["Tier 1 (Crítico)", "Tier 2 (Alto)", "Tier 3 (Medio)", "Tier 4 (Bajo)"] },
+      { section: "Datos Generales", width: 6, name: "slo_objetivo", label: "SLO Objetivo (%)", type: "number", required: false },
+      { section: "Datos Generales", width: 12, name: "id_grupo_producto", label: "Grupo de Productos", type: "select", required: true, options: [], lookupSource: "getGruposProductosOptions" }
     ]
   },
   Unidad_Negocio: {
@@ -141,10 +141,10 @@ const APP_SCHEMAS = {
     fields: [
       { name: "id_unidad_negocio", type: "hidden", primaryKey: true },
       { name: "estado", type: "hidden", defaultValue: "Activo" },
-      { name: "nombre", type: "text", label: "Nombre de la Unidad", required: true, width: "12" },
-      { name: "codigo_interno", type: "text", label: "Código Interno / Centro de Costos", required: true, width: "6" },
-      { name: "director", type: "text", label: "Director Responsable", required: true, width: "6" },
-      { name: "descripcion", type: "textarea", label: "Descripción Estratégica", width: "12" }
+      { section: "Datos Generales", name: "nombre", type: "text", label: "Nombre de la Unidad", required: true, width: 12 },
+      { section: "Datos Generales", name: "codigo_interno", type: "text", label: "Código Interno / Centro de Costos", required: true, width: 6 },
+      { section: "Datos Generales", name: "director", type: "text", label: "Director Responsable", required: true, width: 6 },
+      { section: "Datos Generales", name: "descripcion", type: "textarea", label: "Descripción Estratégica", width: 12 }
     ]
   },
   Persona: {
