@@ -121,8 +121,8 @@ const Adapter_Sheets = {
             if (idxUpdatedAt > -1) rowToInsert[idxUpdatedAt] = currentTimestamp;
             if (idxUpdatedBy > -1) rowToInsert[idxUpdatedBy] = currentUser;
 
-            Logger.log("Adapter_Sheets.upsert: ¿Se encontró el ID?: No. Realizando appendRow...");
-            sheet.appendRow(rowToInsert);
+            Logger.log("Adapter_Sheets.upsert: ¿Se encontró el ID?: No. Creando nueva fila para idempotencia...");
+            sheet.getRange(sheet.getLastRow() + 1, 1, 1, rowToInsert.length).setValues([rowToInsert]);
             return { status: 'success', action: 'created', pk: primaryKeyField, val: primaryKeyValue };
         }
     },
@@ -300,7 +300,10 @@ const Adapter_Sheets = {
             }
         }
 
-        return { headers: filteredHeaders, rows };
+        // Sanitización Obligatoria: Destruir Objetos Date nativos de Rhino/V8
+        const sanitizedRows = JSON.parse(JSON.stringify(rows));
+        
+        return { headers: filteredHeaders, rows: sanitizedRows };
     }
 };
 

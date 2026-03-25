@@ -109,3 +109,14 @@ Este documento registra las lecciones aprendidas durante los Sprints para evitar
   }
   ```
 - **Regla Preventiva de Diseño:** *Fidelidad al Motor Selectivo UI.* Al provisionar nuevos CRUDs bajo el Blueprint V2, el agente NUNCA debe alucinar el tipo `lookup` para relaciones parentales o listas simples. Toda dependencia Foránea ("Pertenece a") debe ser modelada inquebrantablemente mediante `type: "select"`, vinculando un `lookupSource` que resuelva al vuelo desde el servidor. Esto acopla la vista sin inyectar HTML explícito.
+
+---
+
+## Hito: Inyección Inmutable en RAM (Zero-Latency UI)
+- **Hito:** Prevención de Re-Fetch (latencia 2-3s) tras operaciones CRUD exitosas.
+- **Punto de Falla (Root Cause):** Al guardar una entidad (Crear o Editar) en `FormEngine_UI`, el *success handler* estaba acoplado a invocar `window.DataViewEngine.render(...)`, lo cual forzaba a Apps Script a descargar toda la base de datos de nuevo provocando latencias severas, consumo de cuota e interrupciones del hilo visual.
+- **Solución Maestra (Golden Pattern):** Patrón de *Inyección Pura de Frontend Cache (Optimistic UI)*.
+  1. El servidor responde estrictamente la Primary Key afectada y su valor (`response.pk`, `response.pkValue`).
+  2. El cliente ubica el caché `window.__APP_CACHE__[entityName]`, genera una copia del arreglo `[...liveData]` y aplica un `splice` in-place (o destructuración pre/post índice) sin mutar la referencia de Reactividad.
+  3. Los registros nuevos se inyectan `unshift()` (prepends) para que el grid los renderice inmediatamente de primeros.
+- **Regla Preventiva de Diseño:** *Prohibición de Re-Fetch Ciclico.* Ninguna operación de escritura que regrese "success" debe invocar un método GET/List de red. El frontend de Taxonomía es el dueño del estado una vez cargado; toda mutación exitosa debe reflejarse sincronizando la variable global en RAM y detonando un re-render puramente basado en DOM.

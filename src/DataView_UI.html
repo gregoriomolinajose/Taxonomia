@@ -773,7 +773,7 @@
                 const field = fields.find(f => f.name === key);
                 if (field && field.label) return field.label;
             }
-            return key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+            return window.formatLabelString ? window.formatLabelString(key) : key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
         }
 
         /* ────────────────────────────────────────────
