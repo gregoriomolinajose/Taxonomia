@@ -1,115 +1,310 @@
 <script>
   /* ═══════════════════════════════════════════════════════
-     JS_Core.html — Motor Logico (Regla UI §14)
-     EXCLUSIVO: Motor Sidebar §13, View Router, Wizard, Toast, Theme
+     JS_Core.html — Motor Logico Completo (Regla UI §14)
+     CONTIENE: AuthManager, Sidebar §13, navegacion, dashboard,
+               formatters, wizard, toast, theme
      Inyectado via: <?!= include('JS_Core'); ?>
   ═══════════════════════════════════════════════════════ */
 
-  /* View Router */
-  function setView(viewName) {
-    var isDashboard = viewName === 'dashboard';
-    document.getElementById('view-dashboard').style.display = isDashboard ? '' : 'none';
-    document.getElementById('view-wizard').style.display   = isDashboard ? 'none' : '';
-    document.getElementById('wizard-footer').style.display = isDashboard ? 'none' : '';
-    document.getElementById('topbar-title').textContent    = isDashboard ? 'Dashboard' : 'Nuevo Proyecto';
-    document.querySelectorAll('.nav-item').forEach(function(el) { el.classList.remove('active'); });
-    var map = { dashboard: 'nav-dashboard', wizard: 'nav-wizard' };
-    if (map[viewName]) document.getElementById(map[viewName]).classList.add('active');
-    if (!isDashboard) { currentStep = 0; renderStep(); }
-  }
+  /* ── Formatters ──────────────────────────────────────── */
+  window.formatLabelString = function(str) {
+    return (str || '').replace(/_/g, ' ').replace(/\b\w/g, function(c) { return c.toUpperCase(); });
+  };
+  window.formatEntityName = window.formatLabelString;
+  window.formatUserName = function(emailStr) {
+    if (!emailStr) return 'Usuario';
+    var local = emailStr.split('@')[0];
+    var first = local.split(/[\._-]/)[0];
+    if (!first) return 'Usuario';
+    return first.charAt(0).toUpperCase() + first.slice(1).toLowerCase();
+  };
 
-  /* Wizard Stepper */
-  var steps = ['step1', 'step2', 'step3', 'step4'];
-  var currentStep = 0;
+  /* ── Sidebar Desktop (3-State §13) ──────────────────── */
+  window.sidebarState = 0;
 
-  function renderStep() {
-    steps.forEach(function(s, i) {
-      var el = document.getElementById('panel-' + s);
-      if (el) el.classList.toggle('active', i === currentStep);
+  window.applySidebarState = function() {
+    var splitPane = document.querySelector('ion-split-pane');
+    if (!splitPane) return;
+    var state = localStorage.getItem('sidebar_state') || '0';
+    splitPane.classList.remove('shell-mini', 'shell-hidden');
+    if (state === '1') splitPane.classList.add('shell-mini');
+    if (state === '2') splitPane.setAttribute('when', 'false');
+    else splitPane.setAttribute('when', 'lg');
+    setTimeout(function() { window.dispatchEvent(new Event('resize')); }, 350);
+  };
+
+  window.toggleDesktopMenu = function() {
+    if (window.innerWidth < 992) return;
+    window.sidebarState = (window.sidebarState + 1) % 3;
+    localStorage.setItem('sidebar_state', window.sidebarState);
+    window.applySidebarState();
+  };
+
+  /* ── Sidebar Modes ───────────────────────────────────── */
+  window.showHomeSidebar = function() {
+    var navList  = document.getElementById('main-nav-list');
+    var formList = document.getElementById('sidebarList');
+    if (!navList || !formList) return;
+    navList.style.display = 'block';
+    formList.style.display = 'none';
+    var homeItem = '<ion-item button detail="false" title="Inicio" style="--background:var(--ion-color-primary);" onclick="window.returnToDashboard()">' +
+      '<ion-icon slot="start" name="home-outline" style="color:#fff"></ion-icon>' +
+      '<ion-label style="font-weight:700;color:#fff;">Inicio</ion-label></ion-item>';
+    var sorted = Object.entries(window.ENTITY_META).sort(function(a,b){ return a[1].order - b[1].order; });
+    var items = sorted.map(function(entry) {
+      var key = entry[0]; var meta = entry[1];
+      return '<ion-item button detail="false" title="' + meta.label + '" style="--background:transparent;" onclick="window.DataViewEngine.render(\'' + key + '\',\'app-container\')">' +
+        '<ion-icon slot="start" name="' + meta.iconName + '" style="color:var(--ion-color-medium)"></ion-icon>' +
+        '<ion-label style="font-weight:400;">' + meta.label + '</ion-label></ion-item>';
+    }).join('');
+    navList.innerHTML = homeItem + items;
+  };
+
+  window.showListSidebar = function(activeEntityName) {
+    var navList  = document.getElementById('main-nav-list');
+    var formList = document.getElementById('sidebarList');
+    if (!navList || !formList) return;
+    navList.style.display = 'block';
+    formList.style.display = 'none';
+    var homeItem = '<ion-item button detail="false" title="Inicio" style="--background:transparent;" onclick="window.returnToDashboard()">' +
+      '<ion-icon slot="start" name="home-outline" style="color:var(--ion-color-medium)"></ion-icon>' +
+      '<ion-label>Inicio</ion-label></ion-item>';
+    var sorted = Object.entries(window.ENTITY_META).sort(function(a,b){ return a[1].order - b[1].order; });
+    var items = sorted.map(function(entry) {
+      var key = entry[0]; var meta = entry[1]; var isActive = key === activeEntityName;
+      return '<ion-item button detail="false" title="' + meta.label + '" style="--background:' + (isActive ? 'var(--ion-color-primary)' : 'transparent') + ';" onclick="window.DataViewEngine.render(\'' + key + '\',\'app-container\')">' +
+        '<ion-icon slot="start" name="' + meta.iconName + '" style="color:' + (isActive ? '#fff' : 'var(--ion-color-medium)') + '"></ion-icon>' +
+        '<ion-label style="font-weight:' + (isActive ? '700' : '400') + ';color:' + (isActive ? '#fff' : 'inherit') + ';">' + meta.label + '</ion-label></ion-item>';
+    }).join('');
+    navList.innerHTML = homeItem + items;
+  };
+
+  window.showFormSidebar = function(entityName) {
+    var navList  = document.getElementById('main-nav-list');
+    var formList = document.getElementById('sidebarList');
+    if (!navList || !formList) return;
+    navList.style.display  = 'none';
+    formList.style.display = 'block';
+    var homeItem = '<ion-item button detail="false" title="Inicio" style="--background:transparent;" onclick="window.returnToDashboard()">' +
+      '<ion-icon slot="start" name="home-outline" style="color:var(--ion-color-medium)"></ion-icon>' +
+      '<ion-label>Inicio</ion-label></ion-item>';
+    formList.innerHTML = homeItem + '<div id="form-steps-container"></div>';
+  };
+
+  /* ── returnToDashboard ───────────────────────────────── */
+  window.returnToDashboard = function() {
+    var container   = document.getElementById('app-container');
+    var headerTitle = document.getElementById('main-header-title');
+    var backBtn     = document.getElementById('global-back-btn');
+    if (headerTitle) headerTitle.textContent = 'Taxonomia Operativa';
+    if (backBtn) backBtn.style.display = 'none';
+    var oldPop = document.getElementById('dv-col-ion-popover');
+    if (oldPop) oldPop.remove();
+    if (typeof window.showHomeSidebar === 'function') window.showHomeSidebar();
+    if (container && window.OriginalDashboardHTML) {
+      container.innerHTML = window.OriginalDashboardHTML;
+      if (typeof window.renderDashboard === 'function') window.renderDashboard();
+    }
+  };
+
+  /* ── Dashboard Render ────────────────────────────────── */
+  window.renderDashboard = function(forceRefresh) {
+    if (window.chartTopology) { window.chartTopology.destroy(); window.chartTopology = null; }
+    if (window.chartCapacity) { window.chartCapacity.destroy(); window.chartCapacity = null; }
+    var container       = document.getElementById('dashboard-charts-container');
+    var filterContainer = document.getElementById('dashboard-filter-container');
+    if (!container) return;
+    var equipos = window.__APP_CACHE__['Equipo'] || [];
+    if (equipos.length === 0) return;
+    var portfolioSel = document.getElementById('dashboard-portfolio-filter');
+    var selectedPortfolio = 'all';
+    if (portfolioSel) {
+      if (!portfolioSel.dataset.populated) {
+        var portafolios = window.__APP_CACHE__['Portafolio'] || [];
+        var htmlOpts = '<ion-select-option value="all">TODOS LOS PORTAFOLIOS</ion-select-option>';
+        portafolios.forEach(function(p) { htmlOpts += '<ion-select-option value="' + p.id_portafolio + '">' + p.nombre + '</ion-select-option>'; });
+        portfolioSel.innerHTML = htmlOpts;
+        portfolioSel.value = 'all';
+        portfolioSel.dataset.populated = 'true';
+        portfolioSel.addEventListener('ionChange', function() { window.renderDashboard(true); });
+      }
+      selectedPortfolio = portfolioSel.value || 'all';
+    }
+    if (selectedPortfolio !== 'all') {
+      var productos = window.__APP_CACHE__['Producto'] || [];
+      var grupos    = window.__APP_CACHE__['Grupo_Productos'] || [];
+      equipos = equipos.filter(function(eq) {
+        var prod = productos.find(function(p) { return String(p.id_producto) === String(eq.id_producto); });
+        if (!prod) return false;
+        var grupo = grupos.find(function(g) { return String(g.id_grupo_producto) === String(prod.id_grupo_producto); });
+        return grupo && String(grupo.id_portafolio) === String(selectedPortfolio);
+      });
+    }
+    if (filterContainer) filterContainer.style.display = 'flex';
+    container.style.display = 'flex';
+    var sumBack=0,sumFront=0,sumFull=0,sumTesters=0,sumTech=0,sumCoach=0,sumPO=0,sumOtros=0;
+    var capacityData = [];
+    equipos.forEach(function(eq) {
+      sumBack    += parseInt(eq.cant_dev_back)    || 0;
+      sumFront   += parseInt(eq.cant_dev_front)   || 0;
+      sumFull    += parseInt(eq.cant_fullstack)    || 0;
+      sumTesters += parseInt(eq.cant_testers)     || 0;
+      sumTech    += parseInt(eq.cant_tech_leads)  || 0;
+      sumCoach   += parseInt(eq.cant_team_coach)  || 0;
+      sumPO      += parseInt(eq.cant_po_pm)       || 0;
+      sumOtros   += parseInt(eq.cant_otros)       || 0;
+      capacityData.push({ x: eq.nombre_equipo || 'Desconocido', y: parseInt(eq.total_integrantes) || 0 });
     });
-    var seg = document.getElementById('wizard-seg');
-    if (seg) seg.value = steps[currentStep];
-    var btnBack = document.getElementById('btn-back');
-    var btnNext = document.getElementById('btn-next');
-    if (btnBack) btnBack.style.display = currentStep === 0 ? 'none' : '';
-    if (btnNext) {
-      if (currentStep === steps.length - 1) {
-        btnNext.color = 'success';
-        btnNext.innerHTML = '<ion-icon slot="start" name="rocket-outline"></ion-icon> Crear Proyecto';
-        btnNext.onclick = submitWizard;
+    var seriesEsp = [sumBack,sumFront,sumFull,sumTesters,sumTech,sumCoach,sumPO,sumOtros];
+    var labelsEsp = ['Backend','Frontend','Fullstack','Testers','Tech Lead','Team Coach','Product Owner','Otros'];
+    window.chartTopology = new ApexCharts(document.querySelector('#chart-topology'), {
+      series: seriesEsp, labels: labelsEsp,
+      chart: { type:'donut', height:350 }, legend: { position:'bottom' },
+      colors: ['#1C42E8','#0ABF4F','#FFAE43','#FF594D','#8C8C8C','#1CA8F7','#2fdf75','#000000']
+    });
+    window.chartTopology.render();
+    capacityData.sort(function(a,b) { return b.y - a.y; });
+    window.chartCapacity = new ApexCharts(document.querySelector('#chart-capacity'), {
+      series: [{ name:'Integrantes', data: capacityData }],
+      chart: { type:'bar', height:350 }, plotOptions: { bar: { horizontal:true } },
+      colors: ['#1C42E8']
+    });
+    window.chartCapacity.render();
+  };
+
+  window.renderDashboardCards = function() {
+    var container = document.getElementById('dashboard-cards-container');
+    if (!container) return;
+    container.innerHTML = '';
+    var sorted = Object.entries(window.ENTITY_META).sort(function(a,b){ return a[1].order - b[1].order; });
+    container.innerHTML = sorted.map(function(entry) {
+      var key = entry[0]; var meta = entry[1];
+      return '<ion-col size="12" size-md="6" size-xl="4"><ion-card>' +
+        '<ion-card-header class="ion-text-center">' +
+        '<ion-icon name="' + meta.iconName + '" color="' + meta.color + '" style="font-size:48px;margin-bottom:10px;"></ion-icon>' +
+        '<ion-card-title>' + meta.label + '</ion-card-title></ion-card-header><ion-card-content>' +
+        '<ion-button expand="block" shape="round" color="' + meta.color + '" onclick="renderForm(\'' + key + '\')">' +
+        '<ion-icon slot="start" name="add-circle-outline"></ion-icon> Crear Nuevo</ion-button>' +
+        '<ion-button expand="block" shape="round" color="' + meta.color + '" fill="outline" style="margin-top:8px;" onclick="window.DataViewEngine.render(\'' + key + '\',\'app-container\')">' +
+        '<ion-icon slot="start" name="list-outline"></ion-icon> Ver Listado</ion-button>' +
+        '</ion-card-content></ion-card></ion-col>';
+    }).join('');
+  };
+
+  /* ── AuthManager ─────────────────────────────────────── */
+  window.AuthManager = {
+    init: async function() {
+      var appContainer   = document.getElementById('app-container');
+      window.OriginalDashboardHTML = appContainer.innerHTML;
+      var originalContent = appContainer.innerHTML;
+      var loading = document.createElement('ion-loading');
+      loading.message = 'Verificando identidad...';
+      loading.spinner = 'crescent';
+      document.body.appendChild(loading);
+      await loading.present();
+      appContainer.innerHTML = '';
+      appContainer.style.display = 'none';
+      if (typeof google !== 'undefined' && google.script && google.script.run) {
+        google.script.run
+          .withSuccessHandler(async function(response) {
+            await loading.dismiss();
+            window.AuthManager.handleAuthResponse(response, appContainer, originalContent);
+          })
+          .withFailureHandler(async function(error) {
+            await loading.dismiss();
+            window.AuthManager.renderAccessDenied(appContainer, 'Error de conexion con el servidor.');
+          })
+          .getUserIdentity();
       } else {
-        btnNext.color = 'primary';
-        btnNext.innerHTML = 'Siguiente <ion-icon slot="end" name="arrow-forward-outline"></ion-icon>';
-        btnNext.onclick = wizardNext;
+        setTimeout(async function() {
+          await loading.dismiss();
+          window.AuthManager.handleAuthResponse({ authorized:true, email:'local@gmail.com' }, appContainer, originalContent);
+        }, 800);
+      }
+    },
+    handleAuthResponse: function(response, container, originalContent) {
+      container.style.display = 'block';
+      if (response.authorized) {
+        container.innerHTML = originalContent;
+        var greetingEl = document.getElementById('user-greeting-name');
+        if (greetingEl) greetingEl.textContent = window.formatUserName(response.email);
+        window.OriginalDashboardHTML = container.innerHTML;
+        this.runAppBootstrap();
+      } else {
+        this.renderAccessDenied(container, 'Dominio no autorizado', response.email);
+      }
+    },
+    renderAccessDenied: function(container, reason, email) {
+      var emailMsg = email ? '<p>La cuenta <strong>' + email + '</strong> no tiene permisos.</p>' : '';
+      container.innerHTML = '<ion-grid><ion-row class="ion-justify-content-center" style="margin-top:50px;"><ion-col size="12" size-md="8" size-lg="6">' +
+        '<ion-card color="danger"><ion-card-header>' +
+        '<ion-icon name="lock-closed-outline" style="font-size:64px;display:block;margin:0 auto;padding-bottom:20px;"></ion-icon>' +
+        '<ion-card-title class="ion-text-center">Acceso Denegado</ion-card-title></ion-card-header>' +
+        '<ion-card-content class="ion-text-center"><h3>' + reason + '</h3>' + emailMsg + '</ion-card-content>' +
+        '</ion-card></ion-col></ion-row></ion-grid>';
+    },
+    runAppBootstrap: async function() {
+      var toast = document.createElement('ion-toast');
+      toast.message  = 'Sincronizando plataforma...';
+      toast.position = 'bottom'; toast.color = 'dark'; toast.icon = 'sync-outline';
+      document.body.appendChild(toast);
+      await toast.present();
+      var onSuccess = async function(res) {
+        await toast.dismiss();
+        var newToast = document.createElement('ion-toast');
+        newToast.position = 'bottom';
+        if (res && res.status === 'success') {
+          var data = res.data;
+          for (var entity in data) { window.__APP_CACHE__[entity] = data[entity]; }
+          if (typeof window.renderDashboard === 'function') window.renderDashboard();
+          newToast.message = 'Plataforma sincronizada.'; newToast.icon = 'checkmark-circle-outline';
+          newToast.color = 'success'; newToast.duration = 2000;
+        } else {
+          newToast.message = 'Error en sincronizacion.'; newToast.color = 'danger'; newToast.duration = 3000;
+        }
+        document.body.appendChild(newToast); await newToast.present();
+      };
+      if (typeof google !== 'undefined' && google.script && google.script.run) {
+        google.script.run.withSuccessHandler(onSuccess).withFailureHandler(async function() {
+          await toast.dismiss();
+        }).getAppBootstrapPayload();
+      } else {
+        setTimeout(async function() {
+          await toast.dismiss();
+          if (typeof window.renderDashboard === 'function') window.renderDashboard();
+          var newToast = document.createElement('ion-toast');
+          newToast.position = 'bottom'; newToast.message = 'Mock: Plataforma sincronizada.';
+          newToast.color = 'success'; newToast.duration = 2000;
+          document.body.appendChild(newToast); await newToast.present();
+        }, 1000);
+      }
+    },
+    logout: async function() {
+      var ionApp = document.querySelector('ion-app');
+      if (ionApp) {
+        ionApp.innerHTML = '<ion-content class="ion-padding"><ion-grid style="height:100%;">' +
+          '<ion-row class="ion-justify-content-center ion-align-items-center" style="height:100%;">' +
+          '<ion-col size="12" class="ion-text-center">' +
+          '<ion-icon name="shield-checkmark-outline" color="success" style="font-size:80px;"></ion-icon>' +
+          '<h2 style="margin-top:20px;">Sesion cerrada por seguridad</h2>' +
+          '<p>Por favor, cierra esta pestana del navegador.</p></ion-col></ion-row></ion-grid></ion-content>';
+        var t = document.createElement('ion-toast');
+        t.message = 'Desconectado de forma segura.'; t.duration = 3000; t.color = 'dark';
+        document.body.appendChild(t); await t.present();
       }
     }
-  }
-  function wizardNext() { if (currentStep < steps.length - 1) { currentStep++; renderStep(); } }
-  function wizardBack() { if (currentStep > 0) { currentStep--; renderStep(); } }
-  function submitWizard() {
-    showToast('Proyecto creado exitosamente. Redirigiendo...');
-    setTimeout(function() { setView('dashboard'); }, 2000);
-  }
-  document.addEventListener('ionChange', function(e) {
-    if (e.target && e.target.id === 'wizard-seg') {
-      var idx = steps.indexOf(e.detail.value);
-      if (idx !== -1) { currentStep = idx; renderStep(); }
-    }
-  });
+  };
 
-  /* Toast — Regla UI §10: prohibido alert() */
-  function showToast(msg, duration) {
-    duration = duration || 3200;
-    var toast = document.getElementById('sim-toast');
-    document.getElementById('sim-toast-msg').textContent = msg;
-    toast.classList.add('show');
-    setTimeout(function() { toast.classList.remove('show'); }, duration);
-  }
-  function hideToast() { document.getElementById('sim-toast').classList.remove('show'); }
-
-  /* Motor Sidebar §13 — 3 estados */
-  var sidebarState = 0;
-
-  function initSidebar() {
-    var saved = localStorage.getItem('sidebar_state');
-    if (saved !== null) { sidebarState = parseInt(saved, 10); applySidebarState(); }
-  }
-  function cycleSidebarState() {
-    sidebarState = (sidebarState + 1) % 3;
-    localStorage.setItem('sidebar_state', sidebarState);
-    applySidebarState();
-  }
-  function applySidebarState() {
-    var shell = document.getElementById('split-pane-shell');
-    if (!shell) return;
-    shell.classList.remove('shell-mini', 'shell-hidden');
-    if (sidebarState === 1) shell.classList.add('shell-mini');
-    if (sidebarState === 2) shell.classList.add('shell-hidden');
-    /* Reflow obligatorio GP-6: permite que ion-grid recalcule tras la transicion CSS */
-    setTimeout(function() { window.dispatchEvent(new Event('resize')); }, 350);
-  }
-
-  /* Motor de Tema Dual */
-  function initTheme() {
-    var saved = localStorage.getItem('app_theme');
-    var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    var shouldBeDark = saved === 'dark' || (saved === null && prefersDark);
-    document.body.classList.toggle('dark', shouldBeDark);
-    syncThemeIcon(shouldBeDark);
-  }
-  function toggleTheme() {
-    var isDark = document.body.classList.toggle('dark');
-    localStorage.setItem('app_theme', isDark ? 'dark' : 'light');
-    syncThemeIcon(isDark);
-  }
-  function syncThemeIcon(isDark) {
-    var icon = document.getElementById('theme-icon');
-    if (icon) icon.setAttribute('name', isDark ? 'sunny-outline' : 'moon-outline');
-  }
-
-  /* Bootstrap */
+  /* ── DOMContentLoaded Bootstrap ─────────────────────── */
   document.addEventListener('DOMContentLoaded', function() {
-    initSidebar();
-    initTheme();
+    window.sidebarState = parseInt(localStorage.getItem('sidebar_state')) || 0;
+    window.applySidebarState();
+    if (typeof window.renderDashboardCards === 'function') window.renderDashboardCards();
+    var container = document.getElementById('app-container');
+    if (container) window.OriginalDashboardHTML = container.innerHTML;
+    setTimeout(function() {
+      window.showHomeSidebar();
+      window.AuthManager.init();
+    }, 100);
   });
 </script>

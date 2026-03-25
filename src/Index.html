@@ -1,779 +1,150 @@
 <!DOCTYPE html>
 <html lang="es">
-
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Taxonomia Project - EPT OMR</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Taxonomia Project - EPT OMR</title>
 
-    <!-- Ionic Framework (Core Web Components) -->
-    <script type="module" src="https://cdn.jsdelivr.net/npm/@ionic/core/dist/ionic/ionic.esm.js"></script>
-    <script nomodule src="https://cdn.jsdelivr.net/npm/@ionic/core/dist/ionic/ionic.js"></script>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@ionic/core/css/ionic.bundle.css" />
+  <!-- Ionic Framework CDN -->
+  <script type="module" src="https://cdn.jsdelivr.net/npm/@ionic/core/dist/ionic/ionic.esm.js"></script>
+  <script nomodule src="https://cdn.jsdelivr.net/npm/@ionic/core/dist/ionic/ionic.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@ionic/core/css/ionic.bundle.css"/>
 
-    <!-- ApexCharts (Executive Dashboard BI) -->
-    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+  <!-- Ionicons CDN -->
+  <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+  <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
 
-    <!-- ÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉ
-         MOTOR DE DISE├æO (Regla UI ┬º14 ÔÇö Modularizaci├│n GAS)
-         CSS_DesignSystem: Brand Tokens + Alias Ionic + Tipograf├¡a Fluida
-         CSS_App: Sidebar 3-State + Grid Responsivo + Bento Box + Utilidades
-    ÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉ -->
-    <?!= include('CSS_DesignSystem'); ?>
-    <?!= include('CSS_App'); ?>
+  <!-- ApexCharts -->
+  <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
 
-    <style>
-        /* ÔöÇÔöÇÔöÇ Overrides de producci├│n (SGMP Taxonomia) ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
-           Solo se mantiene CSS que no puede vivir en los m├│dulos globales
-           porque depende del contexto espec├¡fico de producci├│n:
-           - Layout del Split Pane de la app real (304px ÔåÆ legacy)
-           - Header con .header-bg (color de fondo de Ionic claro)
-           - Helpers de visibilidad responsive (.hide-on-mobile, etc.)
-           PROHIBIDO: Brand Tokens, Sidebar 3-State (ya en CSS_App.html)
-        ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ */
+  <!-- MOTOR DE DISENO (Regla UI §14) -->
+  <?!= include('CSS_DesignSystem'); ?>
+  <?!= include('CSS_App'); ?>
 
-        body { margin: 0; padding: 0; }
+  <style>
+    body { margin: 0; padding: 0; }
+    ion-menu { --ion-background-color: var(--color-bg-body); border-right: 1px solid var(--color-border); }
+    .header-bg { background-color: var(--color-bg-body); border-bottom: 1px solid var(--color-border); }
+    ion-toolbar.header-bg { --background: var(--color-bg-body); --color: var(--color-text); }
+    @media (max-width: 991px) { .hide-on-mobile  { display: none !important; } }
+    @media (min-width: 992px) { .hide-on-desktop { display: none !important; } }
+    .build-version { position: absolute; bottom: 15px; left: 0; width: 100%; text-align: center; font-size: 11px; color: var(--ion-color-medium); font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; pointer-events: none; }
+    ion-split-pane.shell-mini .build-version { font-size: 9px !important; white-space: normal !important; word-wrap: break-word !important; }
+  </style>
 
-        ion-menu {
-            --ion-background-color: var(--color-bg-body);
-            border-right: 1px solid var(--color-border);
-        }
-
-        /* Build Tracker (Regla UI ┬º12) ÔÇö versi├│n de producci├│n */
-        .build-version {
-            position: absolute;
-            bottom: 15px; left: 0;
-            width: 100%; text-align: center;
-            font-size: 11px; color: var(--ion-color-medium);
-            font-weight: 500; white-space: nowrap;
-            overflow: hidden; text-overflow: ellipsis;
-            transition: font-size 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            pointer-events: none;
-        }
-        ion-split-pane.shell-mini .build-version {
-            position: absolute !important; bottom: 10px !important;
-            width: 100% !important; text-align: center !important;
-            font-size: 9px !important; left: 0 !important;
-            padding: 0 4px !important; line-height: 1.1 !important;
-            white-space: normal !important; word-wrap: break-word !important;
-        }
-
-        .header-bg { background-color: var(--color-bg-body); border-bottom: 1px solid var(--color-border); }
-        ion-toolbar.header-bg { --background: var(--color-bg-body); --color: var(--color-text); }
-
-        @media (max-width: 991px) { .hide-on-mobile { display: none !important; } }
-        @media (min-width: 992px) { .hide-on-desktop { display: none !important; } }
-    </style>
-
-    <!-- Load SCHEMAS Dictionary -->
-    <script>
-        window.APP_SCHEMAS = <?!= JSON.stringify(getAppSchema()) ?>;
-        window.__APP_CACHE__ = {}; // Global State Hub for Frontend Hydration
-        
-        // (NEW) Single Source of Truth for Entity Meta (Rule 8: Determinismo de Navegaci├│n)
-        window.ENTITY_META = {
-            Unidad_Negocio: { order: 1, iconName: 'business-outline', color: 'primary', label: 'Unidades de Negocio', titleField: 'nombre', idField: 'id_unidad_negocio', fkField: null },
-            Portafolio: { order: 2, iconName: 'briefcase-outline', color: 'primary', label: 'Portafolios', titleField: 'nombre', idField: 'id_portafolio', fkField: null },
-            Dominio: { order: 3, iconName: 'globe-outline', color: 'secondary', label: 'Dominios', titleField: 'n0_es', idField: 'id_dominio', fkField: null },
-            Grupo_Productos: { order: 4, iconName: 'layers-outline', color: 'secondary', label: 'Grupos de Producto', titleField: 'nombre', idField: 'id_grupo_producto', fkField: { key: 'id_portafolio', label: 'Portafolio' } },
-            Producto: { order: 5, iconName: 'cube-outline', color: 'tertiary', label: 'Productos', titleField: 'nombre_producto', idField: 'id_producto', fkField: { key: 'id_grupo_producto', label: 'Grupo' } },
-            Capacidad: { order: 6, iconName: 'layers-outline', color: 'warning', label: 'Capacidades', titleField: 'macrocapacidad', idField: 'id_capacidad', fkField: null },
-            Equipo: { order: 7, iconName: 'people-outline', color: 'dark', label: 'Equipos', titleField: 'nombre_equipo', idField: 'id_equipo', fkField: { key: 'id_producto', label: 'Producto' } },
-            Persona: { order: 8, iconName: 'person-outline', color: 'medium', label: 'Personas', titleField: 'nombre_completo', idField: 'id_persona', fkField: null }
-        };
-    </script>
+  <!-- DATA LAYER: Schemas y Estado Global (inyectados por GAS antes del DOM) -->
+  <script>
+    window.APP_SCHEMAS = <?!= JSON.stringify(getAppSchema()) ?>;
+    window.__APP_CACHE__ = {};
+    window.ENTITY_META = {
+      Unidad_Negocio:  { order:1, iconName:'business-outline',   color:'primary',  label:'Unidades de Negocio',   titleField:'nombre',          idField:'id_unidad_negocio',  fkField:null },
+      Portafolio:      { order:2, iconName:'briefcase-outline',   color:'primary',  label:'Portafolios',            titleField:'nombre',          idField:'id_portafolio',      fkField:null },
+      Dominio:         { order:3, iconName:'globe-outline',       color:'secondary',label:'Dominios',               titleField:'n0_es',           idField:'id_dominio',         fkField:null },
+      Grupo_Productos: { order:4, iconName:'layers-outline',      color:'secondary',label:'Grupos de Producto',     titleField:'nombre',          idField:'id_grupo_producto',  fkField:{ key:'id_portafolio',     label:'Portafolio' } },
+      Producto:        { order:5, iconName:'cube-outline',        color:'tertiary', label:'Productos',              titleField:'nombre_producto', idField:'id_producto',        fkField:{ key:'id_grupo_producto', label:'Grupo' } },
+      Capacidad:       { order:6, iconName:'layers-outline',      color:'warning',  label:'Capacidades',            titleField:'macrocapacidad',  idField:'id_capacidad',       fkField:null },
+      Equipo:          { order:7, iconName:'people-outline',      color:'dark',     label:'Equipos',                titleField:'nombre_equipo',   idField:'id_equipo',          fkField:{ key:'id_producto',       label:'Producto' } },
+      Persona:         { order:8, iconName:'person-outline',      color:'medium',   label:'Personas',               titleField:'nombre_completo', idField:'id_persona',         fkField:null }
+    };
+  </script>
 </head>
-
 <body>
-    <ion-app>
-        <!-- 
-          Base Layout: Responsive Split-Pane (Directiva Arquitect├│nica #1)
-          Se activa autom├íticamente en Desktop (>= 992px)
-        -->
-        <ion-split-pane content-id="main-content" when="lg">
-
-            <!-- SIDEBAR MEN├Ü (Wizard Steps en Desktop, Hamburger en Mobile) -->
-            <ion-menu content-id="main-content">
-                <!-- Toolbar del Men├║ -->
-                <ion-header class="ion-no-border">
-                    <ion-toolbar class="header-bg">
-                        <ion-title>Gobierno de Modelo de Producto</ion-title>
-                    </ion-toolbar>
-                </ion-header>
-
-                <ion-content>
-                    <!-- Bloque para Navegaci├│n Global (Home / Listado) -->
-                    <ion-list id="main-nav-list" lines="none" style="display: block;">
-                        <!-- Se rellena din├ímicamente por showHomeSidebar / showListSidebar -->
-                    </ion-list>
-
-                    <!-- Bloque para Stepper del Formulario (Wizard) -->
-                    <ion-list id="sidebarList" lines="none" style="display: none;">
-                        <!-- Se rellena din├ímicamente por showFormSidebar + FormEngine_UI -->
-                    </ion-list>
-                </ion-content>
-                
-                <ion-footer class="ion-no-border" style="position: relative; height: 50px; background: transparent;">
-                    <div class="build-version">
-                        <?= typeof CONFIG !== 'undefined' ? CONFIG.APP_VERSION : 'v1.0.13-Dev' ?>
-                    </div>
-                </ion-footer>
-            </ion-menu>
-
-            <!-- ├üREA CENTRAL DE CONTENIDO -->
-            <div class="ion-page" id="main-content">
-                <ion-header class="ion-no-border">
-                    <!-- Toolbar Principal -->
-                    <ion-toolbar class="header-bg">
-                        <ion-buttons slot="start">
-                            <!-- Native overlay button for Mobile -->
-                            <ion-menu-button class="hide-on-desktop"></ion-menu-button>
-                            
-                            <!-- Custom state cycler button for Desktop -->
-                            <ion-button class="hide-on-mobile" color="dark" fill="clear" onclick="window.toggleDesktopMenu()">
-                                <ion-icon slot="icon-only" name="menu-outline"></ion-icon>
-                            </ion-button>
-
-                            <ion-button id="global-back-btn" color="primary" fill="clear" style="display: none;"
-                                onclick="window.returnToDashboard()">
-                                <ion-icon slot="icon-only" name="arrow-back-outline"></ion-icon>
-                            </ion-button>
-                        </ion-buttons>
-
-                        <!-- T├¡tulo din├ímico -->
-                        <ion-title id="main-header-title">Taxonom├¡a Operativa</ion-title>
-
-                        <ion-buttons slot="end">
-                            <ion-button id="btn-logout" color="danger" fill="clear"
-                                onclick="window.AuthManager.logout()">
-                                <ion-icon slot="start" name="log-out-outline"></ion-icon>
-                                <span class="hide-on-mobile">Cerrar Sesi├│n</span>
-                            </ion-button>
-                        </ion-buttons>
-                    </ion-toolbar>
-                </ion-header>
-
-                <!-- Surface Principal (Gris Claro) -->
-                <ion-content class="ion-padding" color="light">
-                    <!-- Contenedor inyectable del FormEngine / DataView -->
-                    <div id="app-container">
-                        <!-- Dashboard Enterprise: 3 Columnas Grid -->
-                        <ion-grid>
-                            <ion-row class="ion-align-items-center ion-margin-bottom">
-                                <ion-col size="12" class="ion-text-left">
-                                    <ion-text color="dark">
-                                        <h1 style="font-weight: 700; margin-bottom: 5px;">Plataforma de Gobernanza</h1>
-                                    </ion-text>
-                                    <ion-text color="medium">
-                                        <p style="margin-top: 0; font-size: 1.1rem;">
-                                            <ion-icon name="person-circle-outline" style="vertical-align: middle;"></ion-icon> 
-                                            Hola, <span id="user-greeting-name">Usuario</span>. Gesti├│n Centralizada de Modelo de Producto.
-                                        </p>
-                                    </ion-text>
-                                </ion-col>
-                            </ion-row>
-
-                            <!-- Filtro Global de Portafolio -->
-                            <ion-row id="dashboard-filter-container" class="ion-justify-content-end ion-padding-horizontal" style="display: none;">
-                                <ion-col size="12" size-md="4">
-                                    <ion-item lines="none" class="ion-no-padding" style="--background: transparent;">
-                                        <ion-select id="dashboard-portfolio-filter" 
-                                                    interface="popover" 
-                                                    placeholder="Todos los Portafolios" 
-                                                    onValueChange="window.renderDashboard(true)"
-                                                    style="width: 100%; max-width: 100%; font-weight: 600; font-size: 1.1em; color: var(--ion-color-primary);">
-                                            <ion-select-option value="all">TODOS LOS PORTAFOLIOS</ion-select-option>
-                                        </ion-select>
-                                    </ion-item>
-                                </ion-col>
-                            </ion-row>
-
-                            <!-- Executive Dashboard Charts -->
-                            <ion-row id="dashboard-charts-container" class="ion-margin-bottom" style="display: none;">
-                                <ion-col size="12" size-md="6">
-                                    <ion-card style="height: 100%;">
-                                        <ion-card-header>
-                                            <ion-card-title>Especialidades</ion-card-title>
-                                        </ion-card-header>
-                                        <ion-card-content>
-                                            <div id="chart-topology"></div>
-                                        </ion-card-content>
-                                    </ion-card>
-                                </ion-col>
-                                <ion-col size="12" size-md="6">
-                                    <ion-card style="height: 100%;">
-                                        <ion-card-header>
-                                            <ion-card-title>Capacidad por Equipo (Integrantes)</ion-card-title>
-                                        </ion-card-header>
-                                        <ion-card-content>
-                                            <div id="chart-capacity"></div>
-                                        </ion-card-content>
-                                    </ion-card>
-                                </ion-col>
-                            </ion-row>
-
-                            <ion-row class="ion-justify-content-center" id="dashboard-cards-container">
-                                <!-- Tarjetas renderizadas din├ímicamente v├¡a renderDashboardCards() -->
-                            </ion-row>
-                        </ion-grid>
-                    </div>
-                </ion-content>
-            </div>
-        </ion-split-pane>
-    </ion-app>
-
-                         </ion-grid>
-                     </div>
-                 </ion-content>
-             </div>
-         </ion-split-pane>
-     </ion-app>
-
-     <!-- Load Dynamic FormEngine Logic -->
-    <?!= include('FormEngine_UI'); ?>
-
-    <!-- Load DataView Engine (Universal List) -->
-    <?!= include('DataView_UI'); ?>
-
-    <!-- Setup Ionic Icons -->
-    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
-    <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
-
-    <!-- Authentication Logic -->
-    <script>
-        window.AuthManager = {
-            init: async function () {
-                const appContainer = document.getElementById('app-container');
-                window.OriginalDashboardHTML = appContainer.innerHTML;
-                const originalContent = appContainer.innerHTML;
-
-                // 1. Mostrar Loading
-                const loading = document.createElement('ion-loading');
-                loading.message = 'Verificando identidad...';
-                loading.spinner = 'crescent';
-                document.body.appendChild(loading);
-                await loading.present();
-
-                // Esconder contenido mientras carga
-                appContainer.innerHTML = '';
-                appContainer.style.display = 'none';
-
-                // 2. Llamar backend
-                if (typeof google !== 'undefined' && google.script && google.script.run) {
-                    google.script.run
-                        .withSuccessHandler(async (response) => {
-                            await loading.dismiss();
-                            this.handleAuthResponse(response, appContainer, originalContent);
-                        })
-                        .withFailureHandler(async (error) => {
-                            await loading.dismiss();
-                            this.renderAccessDenied(appContainer, "Error de conexi├│n con el servidor.");
-                        })
-                        .getUserIdentity();
-                } else {
-                    // Modo desarrollo local (Mock)
-                    setTimeout(async () => {
-                        await loading.dismiss();
-                        console.warn("Entorno local: Simulando Auth exitosa.");
-                        this.handleAuthResponse({ authorized: true, email: "local@gmail.com" }, appContainer, originalContent);
-                    }, 800);
-                }
-            },
-
-            handleAuthResponse: function (response, container, originalContent) {
-                container.style.display = 'block';
-                if (response.authorized) {
-                    // Caso Seguro
-                    container.innerHTML = originalContent;
-
-                    // Extracci├│n din├ímica del nombre e Inyecci├│n del saludo
-                    const greetingEl = document.getElementById('user-greeting-name');
-                    if (greetingEl) {
-                        greetingEl.textContent = window.formatUserName(response.email);
-                    }
-
-                    // Forzar cach├® de UI actualizada para la persistencia al volver a inicio
-                    window.OriginalDashboardHTML = container.innerHTML;
-
-                    // Desencadenar la sincronizaci├│n global (Global Prefetch)
-                    this.runAppBootstrap();
-                } else {
-                    // Caso Fallido
-                    this.renderAccessDenied(container, "Dominio no autorizado", response.email);
-                }
-            },
-
-            renderAccessDenied: function (container, reason, email = "") {
-                const emailMsg = email ? `<p>La cuenta <strong>${email}</strong> no tiene permisos de acceso al sistema.</p>` : '';
-                container.innerHTML = `
-                    <ion-grid>
-                        <ion-row class="ion-justify-content-center" style="margin-top: 50px;">
-                            <ion-col size="12" size-md="8" size-lg="6">
-                                <ion-card color="danger">
-                                    <ion-card-header>
-                                        <ion-icon name="lock-closed-outline" style="font-size: 64px; display: block; margin: 0 auto; padding-bottom: 20px;"></ion-icon>
-                                        <ion-card-title class="ion-text-center">Acceso Denegado</ion-card-title>
-                                    </ion-card-header>
-                                    <ion-card-content class="ion-text-center">
-                                        <h3>${reason}</h3>
-                                        ${emailMsg}
-                                        <p style="margin-top:20px;">Por favor, inicia sesi├│n con una cuenta autorizada.</p>
-                                    </ion-card-content>
-                                </ion-card>
-                            </ion-col>
-                        </ion-row>
-                    </ion-grid>
-                `;
-            },
-
-            runAppBootstrap: async function () {
-                // Mostrar Toast: "Sincronizando plataforma..."
-                const toast = document.createElement('ion-toast');
-                toast.message = 'Sincronizando plataforma...';
-                toast.position = 'bottom';
-                toast.color = 'dark';
-                toast.icon = 'sync-outline';
-                document.body.appendChild(toast);
-                await toast.present();
-
-                if (typeof google !== 'undefined' && google.script && google.script.run) {
-                    google.script.run
-                        .withSuccessHandler(async (res) => {
-                            await toast.dismiss();
-                            const newToast = document.createElement('ion-toast');
-                            newToast.position = 'bottom';
-                            if (res.status === 'success') {
-                                // Inyectar datos directamente en la Memoria Global
-                                const entitiesData = res.data;
-                                for (const entity in entitiesData) {
-                                    window.__APP_CACHE__[entity] = entitiesData[entity];
-                                }
-                                
-                                // Renderizar el BI Dashboard luego de cargar la cach├®
-                                if (typeof window.renderDashboard === 'function') {
-                                    window.renderDashboard();
-                                }
-
-                                newToast.message = 'Plataforma sincronizada.';
-                                newToast.icon = 'checkmark-circle-outline';
-                                newToast.color = 'success';
-                                newToast.duration = 2000;
-                            } else {
-                                newToast.message = 'Error en sincronizaci├│n.';
-                                newToast.color = 'danger';
-                                newToast.icon = 'warning-outline';
-                                newToast.duration = 3000;
-                            }
-                            document.body.appendChild(newToast);
-                            await newToast.present();
-                        })
-                        .withFailureHandler(async (err) => {
-                            await toast.dismiss();
-                            const newToast = document.createElement('ion-toast');
-                            newToast.position = 'bottom';
-                            newToast.message = 'Error de red en sincronizaci├│n.';
-                            newToast.color = 'danger';
-                            newToast.duration = 3000;
-                            document.body.appendChild(newToast);
-                            await newToast.present();
-                        })
-                        .getAppBootstrapPayload();
-                } else {
-                    // Local fallback
-                    setTimeout(async () => {
-                        await toast.dismiss();
-                        
-                        // Renderizar el BI Dashboard en mock
-                        if (typeof window.renderDashboard === 'function') {
-                            window.renderDashboard();
-                        }
-
-                        const newToast = document.createElement('ion-toast');
-                        newToast.position = 'bottom';
-                        newToast.message = 'Mock: Plataforma sincronizada.';
-                        newToast.color = 'success';
-                        newToast.duration = 2000;
-                        document.body.appendChild(newToast);
-                        await newToast.present();
-                    }, 1000);
-                }
-            },
-
-            logout: async function () {
-                const ionApp = document.querySelector('ion-app');
-                if (ionApp) {
-                    // Destruir contenedor completo
-                    ionApp.innerHTML = `
-                        <ion-content class="ion-padding">
-                            <ion-grid style="height: 100%;">
-                                <ion-row class="ion-justify-content-center ion-align-items-center" style="height: 100%;">
-                                    <ion-col size="12" class="ion-text-center">
-                                        <ion-icon name="shield-checkmark-outline" color="success" style="font-size: 80px;"></ion-icon>
-                                        <h2 style="margin-top: 20px;">Sesi├│n cerrada por seguridad</h2>
-                                        <p>Por favor, cierra esta pesta├▒a del navegador.</p>
-                                    </ion-col>
-                                </ion-row>
-                            </ion-grid>
-                        </ion-content>
-                    `;
-
-                    // Mostrar Toast
-                    const toast = document.createElement('ion-toast');
-                    toast.message = 'Desconectado de forma segura.';
-                    toast.duration = 3000;
-                    toast.color = 'dark';
-                    document.body.appendChild(toast);
-                    await toast.present();
-                }
-            }
-        };
-
-        window.formatLabelString = function (str) {
-            return (str || '').replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
-        };
-
-        window.formatEntityName = window.formatLabelString;
-
-        window.formatUserName = function (emailStr) {
-            if (!emailStr) return 'Usuario';
-            // Tomar porci├│n antes del arroba
-            const localPart = emailStr.split('@')[0];
-            // Dividir por caracteres no alfanum├®ricos comunes (, . _ -) y tomar la primera parte
-            const firstPart = localPart.split(/[\._-]/)[0];
-            if (!firstPart) return 'Usuario';
-            // Capitalizar
-            return firstPart.charAt(0).toUpperCase() + firstPart.slice(1).toLowerCase();
-        };
-
-        window.returnToDashboard = function () {
-            const container = document.getElementById('app-container');
-            const headerTitle = document.getElementById('main-header-title');
-            const backBtn = document.getElementById('global-back-btn');
-
-            if (headerTitle) headerTitle.textContent = "Taxonom├¡a Operativa";
-            if (backBtn) backBtn.style.display = 'none';
-
-            // Limpiar el ion-popover de columnas si existe
-            const oldPop = document.getElementById('dv-col-ion-popover');
-            if (oldPop) oldPop.remove();
-
-            // Restaurar sidebar a modo Home (Navegaci├│n Global)
-            if (typeof window.showHomeSidebar === 'function') {
-                window.showHomeSidebar();
-            }
-
-            if (container && window.OriginalDashboardHTML) {
-                container.innerHTML = window.OriginalDashboardHTML;
-                
-                // Re-render del Dashboard Ejecutivo
-                if (typeof window.renderDashboard === 'function') {
-                    window.renderDashboard();
-                }
-            }
-        };
-
-        // Estado del Sidebar Desktop persistente seg├║n SGMP
-        window.sidebarState = 0; // Default inicial
-        
-        document.addEventListener('DOMContentLoaded', () => {
-            window.sidebarState = parseInt(localStorage.getItem('sidebar_state')) || 0;
-            window.applySidebarState();
-        });
-        
-        window.applySidebarState = function() {
-            const splitPane = document.querySelector('ion-split-pane');
-            if (!splitPane) return;
-            const state = localStorage.getItem('sidebar_state') || '0';
-            
-            // Resetear clases
-            splitPane.classList.remove('shell-mini', 'shell-hidden');
-            
-            if (state === '1') splitPane.classList.add('shell-mini');
-            
-            if (state === '2') {
-                splitPane.setAttribute('when', 'false'); // Hidden
-            } else {
-                splitPane.setAttribute('when', 'lg');
-            }
-
-            // REFLOW OBLIGATORIO (Regla 13)
-            setTimeout(() => {
-                window.dispatchEvent(new Event('resize'));
-            }, 350);
-        };
-
-        window.toggleDesktopMenu = function() {
-            const isDesktop = window.innerWidth >= 992;
-            if (!isDesktop) return; // Validaci├│n rigurosa de modo Mobile Intacto
-
-            window.sidebarState = (window.sidebarState + 1) % 3;
-            localStorage.setItem('sidebar_state', window.sidebarState);
-
-            window.applySidebarState();
-        };
-
-        /**
-         * showHomeSidebar()
-         * Renderiza el sidebar en modo DASHBOARD con navegaci├│n global.
-         */
-        window.showHomeSidebar = function () {
-            const navList = document.getElementById('main-nav-list');
-            const formList = document.getElementById('sidebarList');
-            if (!navList || !formList) return;
-
-            // Toggle de Listas
-            navList.style.display = 'block';
-            formList.style.display = 'none';
-
-            let itemsHtml = `<ion-item button detail="false" 
-                title="Inicio"
-                style="--background:var(--ion-color-primary);"
-                onclick="window.returnToDashboard()">
-                <ion-icon slot="start" name="home-outline" 
-                    style="color:#ffffff"></ion-icon>
-                <ion-label style="font-weight:700; color:#ffffff;">
-                    Inicio
-                </ion-label>
-            </ion-item>`;
-
-            const sortedEntities = Object.entries(window.ENTITY_META).sort((a,b) => a[1].order - b[1].order);
-
-            itemsHtml += sortedEntities.map(function ([key, meta]) {
-                return `<ion-item button detail="false" 
-                    title="${meta.label}"
-                    style="--background:transparent;"
-                    onclick="window.DataViewEngine.render('${key}', 'app-container')">
-                    <ion-icon slot="start" name="${meta.iconName}" 
-                        style="color:var(--ion-color-medium)"></ion-icon>
-                    <ion-label style="font-weight:400; color:inherit;">
-                        ${meta.label}
-                    </ion-label>
-                </ion-item>`;
-            }).join('');
-
-            navList.innerHTML = itemsHtml;
-        };
-
-        /**
-         * showListSidebar(activeEntityName)
-         * Renderiza el sidebar en modo LISTADO con navegaci├│n entre entidades.
-         */
-        window.showListSidebar = function (activeEntityName) {
-            const navList = document.getElementById('main-nav-list');
-            const formList = document.getElementById('sidebarList');
-            if (!navList || !formList) return;
-
-            // Toggle de Listas
-            navList.style.display = 'block';
-            formList.style.display = 'none';
-
-            // Siempre incluir Home como opci├│n de escape
-            const homeItem = `<ion-item button detail="false" 
-                title="Inicio"
-                style="--background:transparent;"
-                onclick="window.returnToDashboard()">
-                <ion-icon slot="start" name="home-outline" style="color:var(--ion-color-medium)"></ion-icon>
-                <ion-label>Inicio</ion-label>
-            </ion-item>`;
-
-            const sortedEntities = Object.entries(window.ENTITY_META).sort((a,b) => a[1].order - b[1].order);
-
-            const items = sortedEntities.map(function ([key, meta]) {
-                const isActive = key === activeEntityName;
-                return `<ion-item button detail="false"
-                    title="${meta.label}"
-                    style="--background:${isActive ? 'var(--ion-color-primary)' : 'transparent'};"
-                    onclick="window.DataViewEngine.render('${key}', 'app-container')">
-                    <ion-icon slot="start" name="${meta.iconName}"
-                        style="color:${isActive ? '#ffffff' : 'var(--ion-color-medium)'}"></ion-icon>
-                    <ion-label style="font-weight:${isActive ? '700' : '400'}; color:${isActive ? '#ffffff' : 'inherit'};">
-                        ${meta.label}
-                    </ion-label>
-                </ion-item>`;
-            }).join('');
-
-            navList.innerHTML = homeItem + items;
-        };
-
-        /**
-         * showFormSidebar(entityName)
-         * Prepara el sidebar para el modo FORMULARIO (Wizard).
-         */
-        window.showFormSidebar = function (entityName) {
-            const navList = document.getElementById('main-nav-list');
-            const formList = document.getElementById('sidebarList');
-            if (!navList || !formList) return;
-
-            // Toggle de Listas
-            navList.style.display = 'none';
-            formList.style.display = 'block';
-
-            // Siempre incluir Home como opci├│n de escape
-            const homeItem = `<ion-item button detail="false" 
-                title="Inicio"
-                style="--background:transparent;"
-                onclick="window.returnToDashboard()">
-                <ion-icon slot="start" name="home-outline" style="color:var(--ion-color-medium)"></ion-icon>
-                <ion-label>Inicio</ion-label>
-            </ion-item>`;
-
-            // ID obligatorio para que FormEngine inyecte los pasos
-            formList.innerHTML = `
-                ${homeItem}
-                <div id="form-steps-container"></div>
-            `;
-        };
-
-        window.renderDashboard = function(forceRefresh = false) {
-            // Fase 4: Limpieza previa
-            if (window.chartTopology) { window.chartTopology.destroy(); window.chartTopology = null; }
-            if (window.chartCapacity) { window.chartCapacity.destroy(); window.chartCapacity = null; }
-
-            const container = document.getElementById('dashboard-charts-container');
-            const filterContainer = document.getElementById('dashboard-filter-container');
-            if (!container) return;
-
-            let equipos = window.__APP_CACHE__['Equipo'] || [];
-            if (equipos.length === 0) return;
-            
-            // Configuraci├│n inicial del filtro de Portafolios
-            const portfolioSel = document.getElementById('dashboard-portfolio-filter');
-            let selectedPortfolio = 'all';
-            
-            if (portfolioSel) {
-                if (!portfolioSel.dataset.populated) { // Evitar repopular si ya se carg├│, usando un flag en lugar de childElementCount (que falla en Ionic por el Shadow DOM)
-                    const portafolios = window.__APP_CACHE__['Portafolio'] || [];
-                    let htmlOptions = '<ion-select-option value="all">TODOS LOS PORTAFOLIOS</ion-select-option>';
-                    portafolios.forEach(p => {
-                        htmlOptions += `<ion-select-option value="${p.id_portafolio}">${p.nombre}</ion-select-option>`;
-                    });
-                    portfolioSel.innerHTML = htmlOptions;
-                    portfolioSel.value = 'all';
-                    portfolioSel.dataset.populated = 'true';
-                    
-                    // Adjuntar eventLister nativo para Ionic si no existe
-                    portfolioSel.addEventListener('ionChange', (e) => {
-                        window.renderDashboard(true);
-                    });
-                }
-                selectedPortfolio = portfolioSel.value || 'all';
-            }
-
-            // Fase 2: Filtrado Din├ímico de Equipos (Relaci├│n transitiva)
-            if (selectedPortfolio !== 'all') {
-                const productos = window.__APP_CACHE__['Producto'] || [];
-                const grupos = window.__APP_CACHE__['Grupo_Productos'] || [];
-                
-                equipos = equipos.filter(eq => {
-                    const prod = productos.find(p => String(p.id_producto) === String(eq.id_producto));
-                    if (!prod) return false;
-                    const grupo = grupos.find(g => String(g.id_grupo_producto) === String(prod.id_grupo_producto));
-                    if (!grupo) return false;
-                    return String(grupo.id_portafolio) === String(selectedPortfolio);
-                });
-            }
-
-            if (filterContainer) filterContainer.style.display = 'flex';
-            container.style.display = 'flex';
-
-            // Fase 3: Suma Totalizadora en RAM
-            let sumBack = 0, sumFront = 0, sumFull = 0, sumTesters = 0, sumTech = 0, sumCoach = 0, sumPO = 0, sumOtros = 0;
-            const capacityData = [];
-            
-            equipos.forEach(eq => {
-                sumBack += parseInt(eq.cant_dev_back) || 0;
-                sumFront += parseInt(eq.cant_dev_front) || 0;
-                sumFull += parseInt(eq.cant_fullstack) || 0;
-                sumTesters += parseInt(eq.cant_testers) || 0;
-                sumTech += parseInt(eq.cant_tech_leads) || 0;
-                sumCoach += parseInt(eq.cant_team_coach) || 0;
-                sumPO += parseInt(eq.cant_po_pm) || 0;
-                sumOtros += parseInt(eq.cant_otros) || 0;
-                
-                const integrantes = parseInt(eq.total_integrantes) || 0;
-                capacityData.push({ x: eq.nombre_equipo || 'Desconocido', y: integrantes });
-            });
-
-            // Graph 1: Especialidades
-            const seriesEsp = [sumBack, sumFront, sumFull, sumTesters, sumTech, sumCoach, sumPO, sumOtros];
-            const labelsEsp = ['Backend', 'Frontend', 'Fullstack', 'Testers', 'Tech Lead', 'Team Coach', 'Product Owner', 'Otros Roles'];
-
-            window.chartTopology = new ApexCharts(document.querySelector("#chart-topology"), {
-                series: seriesEsp,
-                labels: labelsEsp,
-                chart: { type: 'donut', height: 350 },
-                legend: { position: 'bottom' },
-                colors: ['#3880ff', '#2dd36f', '#ffc409', '#eb445a', '#92949c', '#3dc2ff', '#2fdf75', '#000000']
-            });
-            window.chartTopology.render();
-
-            // Graph 2: Capacity
-            capacityData.sort((a, b) => b.y - a.y);
-            window.chartCapacity = new ApexCharts(document.querySelector("#chart-capacity"), {
-                series: [{ name: 'Integrantes', data: capacityData }],
-                chart: { type: 'bar', height: 350 },
-                plotOptions: { bar: { horizontal: true } },
-                colors: ['#3880ff']
-            });
-            window.chartCapacity.render();
-        };
-
-        window.renderDashboardCards = function() {
-            const container = document.getElementById('dashboard-cards-container');
-            if (!container) return;
-            container.innerHTML = '';
-            
-            const sortedEntities = Object.entries(window.ENTITY_META).sort((a,b) => a[1].order - b[1].order);
-            
-            const cardsHtml = sortedEntities.map(([key, meta]) => {
-                return `
-                <ion-col size="12" size-md="6" size-xl="4">
-                    <ion-card>
-                        <ion-card-header class="ion-text-center">
-                            <ion-icon name="${meta.iconName}" color="${meta.color}" style="font-size: 48px; margin-bottom: 10px;"></ion-icon>
-                            <ion-card-title>${meta.label}</ion-card-title>
-                        </ion-card-header>
-                        <ion-card-content>
-                            <ion-button expand="block" shape="round" color="${meta.color}" onclick="renderForm('${key}')">
-                                <ion-icon slot="start" name="add-circle-outline"></ion-icon> Crear Nuevo
-                            </ion-button>
-                            <ion-button expand="block" shape="round" color="${meta.color}" fill="outline" style="margin-top: 8px;" onclick="window.DataViewEngine.render('${key}', 'app-container')">
-                                <ion-icon slot="start" name="list-outline"></ion-icon> Ver Listado
-                            </ion-button>
-                        </ion-card-content>
-                    </ion-card>
+  <ion-app>
+
+    <!-- SPLIT PANE — 3-State Sidebar (Regla UI §13) -->
+    <ion-split-pane id="split-pane-shell" content-id="main-content" when="lg">
+
+      <!-- SIDEBAR -->
+      <ion-menu content-id="main-content" side="start">
+        <ion-header class="ion-no-border">
+          <ion-toolbar class="header-bg">
+            <ion-title>Gobierno de Modelo de Producto</ion-title>
+          </ion-toolbar>
+        </ion-header>
+        <ion-content>
+          <ion-list id="main-nav-list" lines="none" style="display:block;"></ion-list>
+          <ion-list id="sidebarList"   lines="none" style="display:none;"></ion-list>
+        </ion-content>
+        <ion-footer class="ion-no-border" style="position:relative;height:50px;background:transparent;">
+          <div class="build-version"><?= APP_VERSION ?></div>
+        </ion-footer>
+      </ion-menu>
+
+      <!-- CONTENT AREA -->
+      <div class="ion-page" id="main-content">
+        <ion-header class="ion-no-border">
+          <ion-toolbar class="header-bg">
+            <ion-buttons slot="start">
+              <ion-menu-button class="hide-on-desktop"></ion-menu-button>
+              <ion-button class="hide-on-mobile" color="dark" fill="clear" onclick="window.toggleDesktopMenu()">
+                <ion-icon slot="icon-only" name="menu-outline"></ion-icon>
+              </ion-button>
+              <ion-button id="global-back-btn" color="primary" fill="clear" style="display:none;" onclick="window.returnToDashboard()">
+                <ion-icon slot="icon-only" name="arrow-back-outline"></ion-icon>
+              </ion-button>
+            </ion-buttons>
+            <ion-title id="main-header-title">Taxonomia Operativa</ion-title>
+            <ion-buttons slot="end">
+              <ion-button id="btn-logout" color="danger" fill="clear" onclick="window.AuthManager.logout()">
+                <ion-icon slot="start" name="log-out-outline"></ion-icon>
+                <span class="hide-on-mobile">Cerrar Sesion</span>
+              </ion-button>
+            </ion-buttons>
+          </ion-toolbar>
+        </ion-header>
+
+        <ion-content class="ion-padding" color="light">
+          <div id="app-container">
+            <ion-grid>
+              <ion-row class="ion-align-items-center ion-margin-bottom">
+                <ion-col size="12">
+                  <ion-text color="dark">
+                    <h1 style="font-weight:700;margin-bottom:5px;">Plataforma de Gobernanza</h1>
+                  </ion-text>
+                  <ion-text color="medium">
+                    <p style="margin-top:0;font-size:1.1rem;">
+                      <ion-icon name="person-circle-outline" style="vertical-align:middle;"></ion-icon>
+                      Hola, <span id="user-greeting-name">Usuario</span>. Gestion Centralizada de Modelo de Producto.
+                    </p>
+                  </ion-text>
                 </ion-col>
-                `;
-            }).join('');
-            
-            container.innerHTML = cardsHtml;
-        };
+              </ion-row>
+              <!-- Filtro Portafolio -->
+              <ion-row id="dashboard-filter-container" class="ion-justify-content-end ion-padding-horizontal" style="display:none;">
+                <ion-col size="12" size-md="4">
+                  <ion-item lines="none" class="ion-no-padding" style="--background:transparent;">
+                    <ion-select id="dashboard-portfolio-filter" interface="popover" placeholder="Todos los Portafolios"
+                      style="width:100%;max-width:100%;font-weight:600;font-size:1.1em;color:var(--ion-color-primary);">
+                      <ion-select-option value="all">TODOS LOS PORTAFOLIOS</ion-select-option>
+                    </ion-select>
+                  </ion-item>
+                </ion-col>
+              </ion-row>
+              <!-- Charts -->
+              <ion-row id="dashboard-charts-container" class="ion-margin-bottom" style="display:none;">
+                <ion-col size="12" size-md="6">
+                  <ion-card style="height:100%;"><ion-card-header><ion-card-title>Especialidades</ion-card-title></ion-card-header>
+                    <ion-card-content><div id="chart-topology"></div></ion-card-content></ion-card>
+                </ion-col>
+                <ion-col size="12" size-md="6">
+                  <ion-card style="height:100%;"><ion-card-header><ion-card-title>Capacidad por Equipo</ion-card-title></ion-card-header>
+                    <ion-card-content><div id="chart-capacity"></div></ion-card-content></ion-card>
+                </ion-col>
+              </ion-row>
+              <!-- Entity Cards -->
+              <ion-row class="ion-justify-content-center" id="dashboard-cards-container"></ion-row>
+            </ion-grid>
+          </div>
+        </ion-content>
+      </div><!-- /main-content -->
 
-        // Arrancar verificaci├│n al cargar el DOM de Ionic
-        document.addEventListener('DOMContentLoaded', () => {
-            // Arrancar verificaci├│n al cargar el DOM de Ionic
-            if (typeof window.renderDashboardCards === 'function') {
-                window.renderDashboardCards();
-            }
+    </ion-split-pane>
+  </ion-app>
 
-            // Guardar el HTML original del dashboard para el returnToDashboard
-            const container = document.getElementById('app-container');
-            if (container) {
-                window.OriginalDashboardHTML = container.innerHTML;
-            }
+  <!-- MOTORES LOGICOS (Regla UI §14) -->
+  <?!= include('FormEngine_UI'); ?>
+  <?!= include('DataView_UI'); ?>
+  <?!= include('JS_Core'); ?>
 
-            // Aplicar el estado guardado del layout
-            if (typeof window.applySidebarState === 'function') {
-                window.applySidebarState();
-            }
-
-            // Esperar un toque a que Ionic se inicialice
-            setTimeout(() => {
-                window.showHomeSidebar(); // Cargar sidebar de inicio por defecto
-                window.AuthManager.init();
-            }, 100);
-        });
-    </script>
 </body>
-
 </html>
