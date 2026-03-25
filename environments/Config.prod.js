@@ -1,6 +1,6 @@
 // src/Config.prod.js - VERIFIED PUSH: 2026-03-20 17:40
 const CONFIG = {
-    APP_VERSION: 'v1.0.32 - Build 260324.0207',
+    APP_VERSION: 'v1.0.38 - Build 260325.0932',
     // ID real de producción
     SPREADSHEET_ID_DB: '1DriqXz98fwXAsVTOioRlxJYfGbWFfIejGEJE99137aA',
     ALLOWED_DOMAINS: ['@coppel.com', '@bancoppel.com'],
