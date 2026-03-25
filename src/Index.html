@@ -580,7 +580,12 @@
         };
 
         // Estado del Sidebar Desktop persistente según SGMP
-        window.sidebarState = parseInt(localStorage.getItem('sidebar_state')) || 0;
+        window.sidebarState = 0; // Default inicial
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            window.sidebarState = parseInt(localStorage.getItem('sidebar_state')) || 0;
+            window.applySidebarState();
+        });
         
         window.applySidebarState = function() {
             const splitPane = document.querySelector('ion-split-pane');
@@ -601,7 +606,6 @@
             // REFLOW OBLIGATORIO (Regla 13)
             setTimeout(() => {
                 window.dispatchEvent(new Event('resize'));
-                console.log("Reflow ejecutado tras 350ms");
             }, 350);
         };
 
