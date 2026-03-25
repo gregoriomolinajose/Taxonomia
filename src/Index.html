@@ -78,25 +78,54 @@
 
         ion-split-pane.shell-mini ion-label,
         ion-split-pane.shell-mini ion-title {
-            opacity: 0;
-            display: none;
+            opacity: 0 !important;
+            display: none !important;
         }
 
         ion-split-pane.shell-mini ion-item::part(detail-icon) {
-            display: none;
+            display: none !important;
         }
         
         /* Hitbox y centrado de la columna de 72px */
         ion-split-pane.shell-mini ion-item {
-            --padding-start: 0;
-            --inner-padding-end: 0;
-            --min-height: 50px;
-            text-align: center;
+            --padding-start: 0 !important;
+            --inner-padding-end: 0 !important;
+            --min-height: 56px !important;
+            height: 56px !important;
+            justify-content: center !important;
+            text-align: center !important;
+        }
+
+        ion-split-pane.shell-mini ion-item::part(native) {
+            padding-inline-start: 0 !important;
+            justify-content: center !important;
         }
 
         ion-split-pane.shell-mini ion-icon {
             margin: 0 auto;
             font-size: 1.5em; /* Escala de 1.2em a 1.5em según SGMP */
+        }
+
+        /* Tratamiento del Build Tracking */
+        .version-badge {
+            position: absolute;
+            bottom: 15px;
+            left: 0;
+            width: 100%;
+            text-align: center;
+            font-size: 11px;
+            color: var(--ion-color-medium);
+            font-weight: 500;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            transition: font-size 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            pointer-events: none;
+        }
+
+        ion-split-pane.shell-mini .version-badge {
+            font-size: 9px;
+            padding: 0 4px;
         }
 
         /* Estado Oculto */
@@ -178,14 +207,10 @@
                     </ion-list>
                 </ion-content>
                 
-                <ion-footer class="ion-no-border">
-                    <ion-toolbar style="--background: transparent; --min-height: 40px; padding: 0 16px;">
-                        <span style="font-size: 11px; color: var(--ion-color-medium); font-weight: 500;">
-                            <div class="version-badge">
-                                <?= typeof CONFIG !== 'undefined' ? CONFIG.APP_VERSION : 'v1.0.13-Dev' ?>
-                            </div>
-                        </span>
-                    </ion-toolbar>
+                <ion-footer class="ion-no-border" style="position: relative; height: 50px; background: transparent;">
+                    <div class="version-badge">
+                        <?= typeof CONFIG !== 'undefined' ? CONFIG.APP_VERSION : 'v1.0.13-Dev' ?>
+                    </div>
                 </ion-footer>
             </ion-menu>
 
