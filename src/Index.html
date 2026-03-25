@@ -78,7 +78,6 @@
 
         ion-split-pane.shell-mini ion-label,
         ion-split-pane.shell-mini ion-title {
-            opacity: 0 !important;
             display: none !important;
         }
 
@@ -90,10 +89,8 @@
         ion-split-pane.shell-mini ion-item {
             --padding-start: 0 !important;
             --inner-padding-end: 0 !important;
-            --min-height: 56px !important;
-            height: 56px !important;
             justify-content: center !important;
-            text-align: center !important;
+            height: 56px !important;
         }
 
         ion-split-pane.shell-mini ion-item::part(native) {
@@ -102,12 +99,12 @@
         }
 
         ion-split-pane.shell-mini ion-icon {
-            margin: 0 auto;
-            font-size: 1.5em; /* Escala de 1.2em a 1.5em según SGMP */
+            margin: 0 auto !important;
+            font-size: 24px !important;
         }
 
         /* Tratamiento del Build Tracking */
-        .version-badge {
+        .build-version {
             position: absolute;
             bottom: 15px;
             left: 0;
@@ -123,9 +120,12 @@
             pointer-events: none;
         }
 
-        ion-split-pane.shell-mini .version-badge {
+        ion-split-pane.shell-mini .build-version {
+            position: absolute;
+            bottom: 10px;
+            width: 100%;
+            text-align: center;
             font-size: 9px;
-            padding: 0 4px;
         }
 
         /* Estado Oculto */
@@ -208,7 +208,7 @@
                 </ion-content>
                 
                 <ion-footer class="ion-no-border" style="position: relative; height: 50px; background: transparent;">
-                    <div class="version-badge">
+                    <div class="build-version">
                         <?= typeof CONFIG !== 'undefined' ? CONFIG.APP_VERSION : 'v1.0.13-Dev' ?>
                     </div>
                 </ion-footer>
@@ -586,6 +586,12 @@
                 splitPane.classList.add('shell-hidden');
                 splitPane.setAttribute('when', 'false'); 
             }
+
+            // Regla 13: Sincronización de Layout
+            // Hack de sincronización para componentes de terceros (ApexCharts) tras cambio de clase
+            setTimeout(() => {
+                window.dispatchEvent(new Event('resize'));
+            }, 350);
         };
 
         window.toggleDesktopMenu = function() {
@@ -596,11 +602,6 @@
             localStorage.setItem('sidebar_state', window.sidebarState);
 
             window.applySidebarState();
-
-            // Hack de sincronización para componentes de terceros (ApexCharts)
-            setTimeout(() => {
-                window.dispatchEvent(new Event('resize'));
-            }, 350);
         };
 
         /**
