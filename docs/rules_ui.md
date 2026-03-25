@@ -64,3 +64,11 @@
 - **Formato SemVer y Build Dinámico:** El formato obligatorio es `v[Major].[Minor].[Patch] - Build [YYMMDD.HHMM]`. 
 - **Inyección Dinámica (Anti-Caché):** Queda ESTRICTAMENTE PROHIBIDO "hardcodear" la versión directamente en los archivos HTML. La versión DEBE estar centralizada en una constante del Backend (ej. `APP_VERSION` en `Config.gs`) y ser inyectada dinámicamente al Frontend mediante los Scriplets de Apps Script (`<?= APP_VERSION ?>`) o viajar dentro del `MasterPayload`.
 - **Mandato de Actualización por Despliegue:** CADA VEZ que el agente IA complete un "Feature", arregle un bug o solicite al usuario hacer un despliegue de prueba (`clasp push`), el agente DEBE obligatoriamente actualizar el número de Patch o el Timestamp del Build en el archivo de configuración. Esto garantiza que el QA visualice inmediatamente que está operando sobre el código más reciente, mitigando falsos positivos por caché del navegador.
+
+## 13. Estándar de Shell: 3-State Sidebar (Desktop Only)
+- **Definición de Estados:** El sistema de navegación lateral DEBE soportar tres estados deterministas: `0: Full` (304px), `1: Mini` (72px), y `2: Hidden` (0px).
+- **Mecánica de Activación:** - El cambio de estado SOLO se permite en Viewports >= 992px (LG).
+  - Queda PROHIBIDO el uso de `style.width`. Se debe alternar la clase `.shell-mini` o `.shell-hidden` en el ancestro `ion-split-pane`.
+- **Persistencia Obligatoria:** El estado debe ser recuperado de `localStorage.getItem('sidebar_state')` durante el evento `DOMContentLoaded`.
+- **Sincronización de Layout (Reflow):** Al transicionar entre estados, es OBLIGATORIO disparar `window.dispatchEvent(new Event('resize'))` tras 350ms. Esto garantiza que los componentes de terceros (ApexCharts, Grids) recalculen su contenedor.
+- **Accesibilidad en Modo Mini:** Al ocultar los `<ion-label>`, los `<ion-item>` DEBEN poseer un atributo `title` dinámico o un `ion-tooltip` para no romper la navegación por descubrimiento.
