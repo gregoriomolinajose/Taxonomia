@@ -64,7 +64,9 @@
             --side-width: 304px;
             --side-min-width: 304px;
             --side-max-width: 304px;
-            transition: var(--side-width) 0.3s ease, var(--side-min-width) 0.3s ease, var(--side-max-width) 0.3s ease;
+            transition: var(--side-width) 0.3s cubic-bezier(0.4, 0, 0.2, 1), 
+                        var(--side-min-width) 0.3s cubic-bezier(0.4, 0, 0.2, 1), 
+                        var(--side-max-width) 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         /* Estado Mini */
@@ -83,10 +85,18 @@
         ion-split-pane.menu-mini ion-item::part(detail-icon) {
             display: none;
         }
+        
+        /* Hitbox y centrado de la columna de 72px */
+        ion-split-pane.menu-mini ion-item {
+            --padding-start: 0;
+            --inner-padding-end: 0;
+            --min-height: 50px;
+            text-align: center;
+        }
 
         ion-split-pane.menu-mini ion-icon {
             margin: 0 auto;
-            font-size: 26px; /* Slightly larger for touch/click in mini mode */
+            font-size: 1.5em; /* Escala de 1.2em a 1.5em según SGMP */
         }
 
         /* 
@@ -524,20 +534,13 @@
             }
         };
 
-        // Estado del Sidebar Desktop: 0 = Full, 1 = Mini, 2 = Hidden
-        window.sidebarState = 0;
+        // Estado del Sidebar Desktop persistente según SGMP
+        window.sidebarState = parseInt(localStorage.getItem('sidebarState')) || 0;
         
-        window.toggleDesktopMenu = function() {
-            // Este botón solo es visible en desktop gracias a las clases CSS, 
-            // pero validamos por completitud.
-            const isDesktop = window.innerWidth >= 992;
-            if (!isDesktop) return;
-
+        window.applySidebarState = function() {
             const splitPane = document.querySelector('ion-split-pane');
             if (!splitPane) return;
-
-            window.sidebarState = (window.sidebarState + 1) % 3;
-
+            
             if (window.sidebarState === 0) {
                 // Estado 0: Full
                 splitPane.classList.remove('menu-mini');
@@ -549,12 +552,20 @@
             } else if (window.sidebarState === 2) {
                 // Estado 2: Hidden
                 splitPane.classList.remove('menu-mini');
-                // Deshabilitando el split-pane forzaremos a que el content tome el 100% 
                 splitPane.setAttribute('when', 'false'); 
             }
+        };
 
-            // CRÍTICO: Disparar reflow después de la transición de CSS (~300ms)
-            // para que los ApexCharts y tablas tabulares recalculen su ancho dinámicamente.
+        window.toggleDesktopMenu = function() {
+            const isDesktop = window.innerWidth >= 992;
+            if (!isDesktop) return; // Validación rigurosa de modo Mobile Intacto
+
+            window.sidebarState = (window.sidebarState + 1) % 3;
+            localStorage.setItem('sidebarState', window.sidebarState);
+
+            window.applySidebarState();
+
+            // Hack de sincronización para componentes de terceros (ApexCharts)
             setTimeout(() => {
                 window.dispatchEvent(new Event('resize'));
             }, 350);
@@ -574,6 +585,7 @@
             formList.style.display = 'none';
 
             let itemsHtml = `<ion-item button detail="false" 
+                title="Inicio"
                 style="--background:var(--ion-color-primary);"
                 onclick="window.returnToDashboard()">
                 <ion-icon slot="start" name="home-outline" 
@@ -587,6 +599,7 @@
 
             itemsHtml += sortedEntities.map(function ([key, meta]) {
                 return `<ion-item button detail="false" 
+                    title="${meta.label}"
                     style="--background:transparent;"
                     onclick="window.DataViewEngine.render('${key}', 'app-container')">
                     <ion-icon slot="start" name="${meta.iconName}" 
@@ -615,6 +628,7 @@
 
             // Siempre incluir Home como opción de escape
             const homeItem = `<ion-item button detail="false" 
+                title="Inicio"
                 style="--background:transparent;"
                 onclick="window.returnToDashboard()">
                 <ion-icon slot="start" name="home-outline" style="color:var(--ion-color-medium)"></ion-icon>
@@ -626,6 +640,7 @@
             const items = sortedEntities.map(function ([key, meta]) {
                 const isActive = key === activeEntityName;
                 return `<ion-item button detail="false"
+                    title="${meta.label}"
                     style="--background:${isActive ? 'var(--ion-color-primary)' : 'transparent'};"
                     onclick="window.DataViewEngine.render('${key}', 'app-container')">
                     <ion-icon slot="start" name="${meta.iconName}"
@@ -654,6 +669,7 @@
 
             // Siempre incluir Home como opción de escape
             const homeItem = `<ion-item button detail="false" 
+                title="Inicio"
                 style="--background:transparent;"
                 onclick="window.returnToDashboard()">
                 <ion-icon slot="start" name="home-outline" style="color:var(--ion-color-medium)"></ion-icon>
@@ -794,6 +810,7 @@
 
         // Arrancar verificación al cargar el DOM de Ionic
         document.addEventListener('DOMContentLoaded', () => {
+            // Arrancar verificación al cargar el DOM de Ionic
             if (typeof window.renderDashboardCards === 'function') {
                 window.renderDashboardCards();
             }
@@ -802,6 +819,11 @@
             const container = document.getElementById('app-container');
             if (container) {
                 window.OriginalDashboardHTML = container.innerHTML;
+            }
+
+            // Aplicar el estado guardado del layout
+            if (typeof window.applySidebarState === 'function') {
+                window.applySidebarState();
             }
 
             // Esperar un toque a que Ionic se inicialice
