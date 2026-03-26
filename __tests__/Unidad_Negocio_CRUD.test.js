@@ -64,7 +64,8 @@ describe('Unidad_Negocio CRUD - Verification', () => {
             director: 'Automated Gen'
         };
 
-        const response = API_Universal.API_Universal_Router('create', 'Unidad_Negocio', payloadWithoutId);
+        const rawResponse = API_Universal.API_Universal_Router('create', 'Unidad_Negocio', payloadWithoutId);
+        const response = typeof rawResponse === 'string' ? JSON.parse(rawResponse) : rawResponse;
 
         expect(response.status).toBe('success');
         expect(Engine_DB_Mock.create).toHaveBeenCalled();

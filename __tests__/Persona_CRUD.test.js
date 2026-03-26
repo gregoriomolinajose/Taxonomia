@@ -41,9 +41,9 @@ describe('Persona CRUD - Blueprint V2 Verification', () => {
         const indexPath = path.resolve(__dirname, '../src/Index.html');
         const content = fs.readFileSync(indexPath, 'utf8');
         
-        expect(content).toContain('Persona: {');
-        expect(content).toContain("iconName: 'person-outline'");
-        expect(content).toContain("idField: 'id_persona'");
+        expect(content).toMatch(/Persona:\s+\{/);
+        expect(content).toMatch(/iconName:\s*'person-outline'/);
+        expect(content).toMatch(/idField:\s*'id_persona'/);
     });
 
     test('Step 4: Output Sanitization - API should return JSON sanitized data', () => {

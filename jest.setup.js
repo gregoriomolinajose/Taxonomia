@@ -14,8 +14,31 @@ global.Session = {
 
 global.SpreadsheetApp = {
     openById: jest.fn().mockReturnValue({
-        getSheetByName: jest.fn(),
-        insertSheet: jest.fn()
+        getSheetByName: jest.fn().mockReturnValue({
+            getLastRow: jest.fn().mockReturnValue(3),
+            getLastColumn: jest.fn().mockReturnValue(1),
+            getDataRange: jest.fn().mockReturnValue({
+                getValues: jest.fn().mockReturnValue([['id_user', 'estado', 'id_grupo_producto'], ['USER-123', 'Activo', 'GRUP-01'], ['USER-456', 'Activo', 'GRUP-02']]),
+                getNumRows: jest.fn().mockReturnValue(3)
+            }),
+            getRange: jest.fn().mockReturnValue({
+                getValues: jest.fn().mockReturnValue([[]]),
+                setValues: jest.fn(),
+                clearContent: jest.fn()
+            }),
+            appendRow: jest.fn()
+        }),
+        insertSheet: jest.fn().mockReturnValue({
+            getLastRow: jest.fn().mockReturnValue(0),
+            getDataRange: jest.fn().mockReturnValue({
+                getValues: jest.fn().mockReturnValue([[]]),
+                getNumRows: () => 0
+            }),
+            getRange: jest.fn().mockReturnValue({
+                setValues: jest.fn()
+            }),
+            appendRow: jest.fn()
+        })
     }),
     getActiveSpreadsheet: jest.fn()
 };

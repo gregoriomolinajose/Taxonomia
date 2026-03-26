@@ -48,8 +48,11 @@
       <!-- SIDEBAR -->
       <ion-menu content-id="main-content" side="start">
         <ion-header class="ion-no-border">
-          <div class="sidebar-logo">
-            <ion-icon name="aperture-outline" style="font-size:22px;color:white;"></ion-icon>
+          <div class="sidebar-brand-container">
+            <div class="sidebar-logo-box">
+              <ion-icon name="aperture-outline"></ion-icon>
+            </div>
+            <span class="sidebar-app-title">Sistema de Taxonomía</span>
           </div>
         </ion-header>
         <ion-content>
@@ -79,10 +82,10 @@
       <!-- CONTENT AREA -->
       <div class="ion-page" id="main-content">
         <ion-header class="ion-no-border">
-          <ion-toolbar class="header-bg">
+          <ion-toolbar>
             <ion-buttons slot="start">
               <ion-menu-button class="hide-on-desktop"></ion-menu-button>
-              <ion-button class="hide-on-mobile" color="dark" fill="clear" onclick="window.toggleDesktopMenu()">
+              <ion-button class="hide-on-mobile" fill="clear" onclick="window.toggleDesktopMenu()">
                 <ion-icon slot="icon-only" name="menu-outline"></ion-icon>
               </ion-button>
               <ion-button id="global-back-btn" color="primary" fill="clear" style="display:none;" onclick="window.returnToDashboard()">
@@ -91,6 +94,9 @@
             </ion-buttons>
             <ion-title id="main-header-title">Taxonomia Operativa</ion-title>
             <ion-buttons slot="end">
+              <ion-button fill="clear" onclick="window.ThemeManager.cycleTheme()" title="Cambiar Tema">
+                <ion-icon id="theme-toggle-icon" slot="icon-only" name="moon-outline"></ion-icon>
+              </ion-button>
               <ion-button id="btn-logout" color="danger" fill="clear" onclick="window.AuthManager.logout()">
                 <ion-icon slot="start" name="log-out-outline"></ion-icon>
                 <span class="hide-on-mobile">Cerrar Sesion</span>
@@ -99,13 +105,13 @@
           </ion-toolbar>
         </ion-header>
 
-        <ion-content class="ion-padding" color="light">
+        <ion-content class="ion-padding">
           <div id="app-container">
             <ion-grid>
               <ion-row class="ion-align-items-center">
                 <ion-col size="12" class="ion-padding-bottom">
-                  <ion-text color="dark">
-                    <h1 style="font-weight:700;margin-bottom:5px;">Plataforma de Gobernanza</h1>
+                  <ion-text>
+                    <h1 style="font-weight:700;">Plataforma de Gobernanza</h1>
                   </ion-text>
                   <ion-text color="medium">
                     <p style="margin-top:0;font-size:1.1rem;">

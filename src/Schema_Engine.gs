@@ -92,6 +92,7 @@ const APP_SCHEMAS = {
       // Sección 2: Gobernanza
       { section: "Gobernanza", name: "id_unidad_negocio", label: "Unidad de Negocio", type: "select", lookupSource: "getUnidadesNegocioOptions", required: true, width: 6 },
       { section: "Gobernanza", name: "id_portafolio", label: "Portafolio (Financiamiento)", type: "select", lookupSource: "getPortafoliosOptions", width: 6 },
+      { section: "Gobernanza", name: "id_producto", label: "Producto Padre", type: "select", lookupSource: "getProductosOptions", width: 12 },
       
       // Sección 3: Integrantes y Roles (Dynamic List)
       { 

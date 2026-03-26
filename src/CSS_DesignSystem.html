@@ -173,20 +173,26 @@
   .text-caption { font-size: var(--sys-font-caption); }
   .text-mini    { font-size: var(--sys-font-mini); text-transform: uppercase; letter-spacing: 0.05em; }
 
-  /* Modo Oscuro */
+  /* Modo Oscuro (Grises Originales - Especificidad Blindada) */
   body.dark {
-    --ion-background-color:     #4A4A4A;
-    --ion-background-color-rgb: 74,74,74;
-    --ion-card-background:      #333333;
-    --ion-item-background:      #333333;
-    --ion-toolbar-background:   #4A4A4A;
-    --ion-tab-bar-background:   #333333;
-    --ion-text-color:           #FFFFFF;
-    --ion-text-color-rgb:       255,255,255;
-    --ion-color-medium:         #C9C9C9;
-    --ion-color-medium-rgb:     201,201,201;
-    --sidebar-bg:               #333333;
-    --sidebar-icon-color:       #C9C9C9;
-    --sidebar-border:           rgba(255,255,255,0.1);
+    /* Variables Nativas Ionic */
+    --ion-background-color:     #4A4A4A !important;
+    --ion-background-color-rgb: 74,74,74 !important;
+    --ion-card-background:      #333333 !important;
+    --ion-item-background:      #333333 !important;
+    --ion-toolbar-background:   #4A4A4A !important;
+    --ion-tab-bar-background:   #333333 !important;
+    --ion-text-color:           #FFFFFF !important;
+    --ion-text-color-rgb:       255,255,255 !important;
+    --ion-color-medium:         #C9C9C9 !important;
+    --ion-color-medium-rgb:     201,201,201 !important;
+
+    /* Variables Custom del Sistema y Sidebar */
+    --color-bg-body:            #4A4A4A !important;
+    --color-text:               #FFFFFF !important;
+    --color-border:             rgba(255,255,255,0.1) !important;
+    --sidebar-bg:               #333333 !important;
+    --sidebar-icon-color:       #C9C9C9 !important;
+    --sidebar-border:           rgba(255,255,255,0.1) !important;
   }
 </style>

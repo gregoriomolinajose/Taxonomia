@@ -242,8 +242,63 @@
     }
   };
 
+  /* ── ThemeManager (S1.3 Multi-Theme Engine) ──────────── */
+  window.ThemeManager = {
+    themeIcons: {
+      'light': 'moon-outline',
+      'dark': 'sunny-outline',
+      'ocean': 'water-outline',
+      'high-contrast': 'contrast-outline'
+    },
+    get availableThemes() {
+      return Object.keys(this.themeIcons);
+    },
+    currentTheme: 'light',
+
+    init: function() {
+      var savedTheme = localStorage.getItem('app_theme') || 'light';
+      this.setTheme(savedTheme);
+    },
+
+    setTheme: function(themeName) {
+      if (!this.availableThemes.includes(themeName)) return;
+
+      var self = this;
+      this.availableThemes.forEach(function(t) {
+        if (t !== 'light') document.body.classList.remove(t);
+      });
+
+      if (themeName !== 'light') {
+        document.body.classList.add(themeName);
+      }
+
+      this.currentTheme = themeName;
+      localStorage.setItem('app_theme', themeName);
+      this.updateIcon();
+
+      // Golden Pattern 6: Reflow mandatory after CSS token switch
+      setTimeout(function() {
+        window.dispatchEvent(new Event('resize'));
+      }, 350);
+    },
+
+    cycleTheme: function() {
+      var activeThemes = ['light', 'dark']; // Active scaling
+      var currentIndex = activeThemes.indexOf(this.currentTheme);
+      var nextIndex = (currentIndex + 1) % activeThemes.length;
+      this.setTheme(activeThemes[nextIndex]);
+    },
+
+    updateIcon: function() {
+      var icon = document.getElementById('theme-toggle-icon');
+      if (!icon) return;
+      icon.name = this.themeIcons[this.currentTheme] || 'moon-outline';
+    }
+  };
+
   /* ── DOMContentLoaded Bootstrap ─────────────────────── */
   document.addEventListener('DOMContentLoaded', function() {
+    if (window.ThemeManager) window.ThemeManager.init();
     window.sidebarState = parseInt(localStorage.getItem('sidebar_state')) || 0;
     window.applySidebarState();
     if (typeof window.renderDashboardCards === 'function') window.renderDashboardCards();

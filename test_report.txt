@@ -1,0 +1,636 @@
+﻿
+> taxonomia-project@1.0.0 test
+> jest
+
+node.exe : FAIL __tests__/adapter_sheets.update.test.js
+En línea: 1 Carácter: 1
++ & "C:\Program Files\nodejs/node.exe" "C:\Program Files\nodejs/node_mo ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (FAIL __tests__/....update.test.js:String) [], Re 
+   moteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+  Audit Trail: Adapter_Sheets Inmutabilidad en Update
+    ├ù Debe preservar created_at de ayer y actualizar updated_at ignorando llaves sucias del 
+Frontend (4 ms)
+
+  ÔùÅ Audit Trail: Adapter_Sheets Inmutabilidad en Update ÔÇ║ Debe preservar created_at de 
+ayer y actualizar updated_at ignorando llaves sucias del Frontend
+
+    TypeError: sheet.getLastRow is not a function
+
+    [0m [90m 290 |[39m         
+     [90m 291 |[39m         [90m// Auto-inyectar headers de esquema si est├í reci├®n 
+creada[39m
+    [31m[1m>[22m[39m[90m 292 |[39m         [36mif[39m (sheet[33m.[39mgetLastRow() 
+[33m===[39m [35m0[39m) {
+     [90m     |[39m                   [31m[1m^[22m[39m
+     [90m 293 |[39m             [36mlet[39m schemaFields [33m=[39m [][33m;[39m
+     [90m 294 |[39m             [36mif[39m ([36mtypeof[39m [33mAPP_SCHEMAS[39m 
+[33m!==[39m [32m'undefined'[39m [33m&&[39m [33mAPP_SCHEMAS[39m[tableName]) {
+     [90m 295 |[39m                 [36mif[39m 
+([33mAPP_SCHEMAS[39m[tableName][33m.[39mfields) {[0m
+
+      at Object.getLastRow [as _ensureSheetExists] (src/Adapter_Sheets.js:292:19)
+      at Object._ensureSheetExists [as upsert] (src/Adapter_Sheets.js:41:28)
+      at Object.upsert (__tests__/adapter_sheets.update.test.js:98:39)
+
+FAIL __tests__/performance_stress.test.js
+  Performance Stress Regression Test (1K Records)
+    ├ù Engine_DB.list should process 1,000 records as tuples without memory issues (3 ms)
+    ├ù Engine_DB.list should cache the result to achieve < 1.5s SLA (Rule 11/12)
+
+  ÔùÅ Performance Stress Regression Test (1K Records) ÔÇ║ Engine_DB.list should process 1,000 
+records as tuples without memory issues
+
+    TypeError: sheet.getLastRow is not a function
+
+    [0m [90m 290 |[39m         
+     [90m 291 |[39m         [90m// Auto-inyectar headers de esquema si est├í reci├®n 
+creada[39m
+    [31m[1m>[22m[39m[90m 292 |[39m         [36mif[39m (sheet[33m.[39mgetLastRow() 
+[33m===[39m [35m0[39m) {
+     [90m     |[39m                   [31m[1m^[22m[39m
+     [90m 293 |[39m             [36mlet[39m schemaFields [33m=[39m [][33m;[39m
+     [90m 294 |[39m             [36mif[39m ([36mtypeof[39m [33mAPP_SCHEMAS[39m 
+[33m!==[39m [32m'undefined'[39m [33m&&[39m [33mAPP_SCHEMAS[39m[tableName]) {
+     [90m 295 |[39m                 [36mif[39m 
+([33mAPP_SCHEMAS[39m[tableName][33m.[39mfields) {[0m
+
+      at Object.getLastRow [as _ensureSheetExists] (src/Adapter_Sheets.js:292:19)
+      at Object._ensureSheetExists [as list] (src/Adapter_Sheets.js:331:28)
+      at Object.list (src/Engine_DB.js:253:40)
+      at Object.list (__tests__/performance_stress.test.js:36:30)
+
+  ÔùÅ Performance Stress Regression Test (1K Records) ÔÇ║ Engine_DB.list should cache the 
+result to achieve < 1.5s SLA (Rule 11/12)
+
+    TypeError: sheet.getLastRow is not a function
+
+    [0m [90m 290 |[39m         
+     [90m 291 |[39m         [90m// Auto-inyectar headers de esquema si est├í reci├®n 
+creada[39m
+    [31m[1m>[22m[39m[90m 292 |[39m         [36mif[39m (sheet[33m.[39mgetLastRow() 
+[33m===[39m [35m0[39m) {
+     [90m     |[39m                   [31m[1m^[22m[39m
+     [90m 293 |[39m             [36mlet[39m schemaFields [33m=[39m [][33m;[39m
+     [90m 294 |[39m             [36mif[39m ([36mtypeof[39m [33mAPP_SCHEMAS[39m 
+[33m!==[39m [32m'undefined'[39m [33m&&[39m [33mAPP_SCHEMAS[39m[tableName]) {
+     [90m 295 |[39m                 [36mif[39m 
+([33mAPP_SCHEMAS[39m[tableName][33m.[39mfields) {[0m
+
+      at Object.getLastRow [as _ensureSheetExists] (src/Adapter_Sheets.js:292:19)
+      at Object._ensureSheetExists [as list] (src/Adapter_Sheets.js:331:28)
+      at Object.list (src/Engine_DB.js:253:40)
+      at Object.list (__tests__/performance_stress.test.js:54:15)
+
+FAIL __tests__/Dominio_Provisioning.test.js
+  Auto-Aprovisionamiento DB y Schema Dominio
+    ├ù Debe crear la hoja Dominio autom├íticamente e inyectarle los encabezados del esquema + 
+auditor├¡a (1 ms)
+
+  ÔùÅ Auto-Aprovisionamiento DB y Schema Dominio ÔÇ║ Debe crear la hoja Dominio 
+autom├íticamente e inyectarle los encabezados del esquema + auditor├¡a
+
+    TypeError: sheet.getDataRange(...).getValues is not a function
+
+    [0m [90m 332 |[39m
+     [90m 333 |[39m         [90m// [Regla 11: Performance] - Est├índar Inmutable: Traer 
+todo el rango de datos en una sola llamada[39m
+    [31m[1m>[22m[39m[90m 334 |[39m         [36mconst[39m data [33m=[39m 
+sheet[33m.[39mgetDataRange()[33m.[39mgetValues()[33m;[39m
+     [90m     |[39m                                           [31m[1m^[22m[39m
+     [90m 335 |[39m         [36mif[39m (data[33m.[39mlength [33m<[39m [35m1[39m) 
+[36mreturn[39m { headers[33m:[39m [][33m,[39m rows[33m:[39m [] }[33m;[39m
+     [90m 336 |[39m
+     [90m 337 |[39m         [90m// 2. Header Caching: Evitar re-procesar Regex si ya se 
+hizo en esta ejecuci├│n[39m[0m
+
+      at Object.getValues [as list] (src/Adapter_Sheets.js:334:43)
+      at Object.list (__tests__/Dominio_Provisioning.test.js:75:39)
+
+FAIL __tests__/MasterDetail_Orchestration.test.js
+  Engine_DB Orchestration: Master-Detail (nested payloads)
+    ├ù Should orchestrate a nested save: Parent first, then inject PK into Children (1 ms)
+
+  ÔùÅ Engine_DB Orchestration: Master-Detail (nested payloads) ÔÇ║ Should orchestrate a 
+nested save: Parent first, then inject PK into Children
+
+    TypeError: Cannot read properties of undefined (reading 'getLastRow')
+
+    [0m [90m 290 |[39m         
+     [90m 291 |[39m         [90m// Auto-inyectar headers de esquema si est├í reci├®n 
+creada[39m
+    [31m[1m>[22m[39m[90m 292 |[39m         [36mif[39m (sheet[33m.[39mgetLastRow() 
+[33m===[39m [35m0[39m) {
+     [90m     |[39m                   [31m[1m^[22m[39m
+     [90m 293 |[39m             [36mlet[39m schemaFields [33m=[39m [][33m;[39m
+     [90m 294 |[39m             [36mif[39m ([36mtypeof[39m [33mAPP_SCHEMAS[39m 
+[33m!==[39m [32m'undefined'[39m [33m&&[39m [33mAPP_SCHEMAS[39m[tableName]) {
+     [90m 295 |[39m                 [36mif[39m 
+([33mAPP_SCHEMAS[39m[tableName][33m.[39mfields) {[0m
+
+      at Object.getLastRow [as _ensureSheetExists] (src/Adapter_Sheets.js:292:19)
+      at Object._ensureSheetExists (src/Adapter_Sheets.js:150:28)
+      at upsertBatch (src/Engine_DB.js:157:41)
+          at Array.forEach (<anonymous>)
+      at Object.forEach [as orchestrateNestedSave] (src/Engine_DB.js:116:20)
+      at Object.orchestrateNestedSave [as create] (src/Engine_DB.js:177:29)
+      at Object.create (__tests__/MasterDetail_Orchestration.test.js:71:34)
+
+FAIL __tests__/Unidad_Negocio_CRUD.test.js
+  Unidad_Negocio CRUD - Verification
+    ÔêÜ Should handle "Unidad_Negocio" creation via API_Universal (1 ms)
+    ÔêÜ Should verify schema existence in Schema_Engine.gs
+    ├ù Should generate a short UUID (UNID-XXXXX) if id_unidad_negocio is missing in Router (2 
+ms)
+
+  ÔùÅ Unidad_Negocio CRUD - Verification ÔÇ║ Should generate a short UUID (UNID-XXXXX) if 
+id_unidad_negocio is missing in Router
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: "success"
+    Received: undefined
+
+    [0m [90m 67 |[39m         [36mconst[39m response [33m=[39m [33mAPI_Universal[39m
+[33m.[39m[33mAPI_Universal_Router[39m([32m'create'[39m[33m,[39m 
+[32m'Unidad_Negocio'[39m[33m,[39m payloadWithoutId)[33m;[39m
+     [90m 68 |[39m
+    [31m[1m>[22m[39m[90m 69 |[39m         
+expect(response[33m.[39mstatus)[33m.[39mtoBe([32m'success'[39m)[33m;[39m
+     [90m    |[39m                                 [31m[1m^[22m[39m
+     [90m 70 |[39m         
+expect([33mEngine_DB_Mock[39m[33m.[39mcreate)[33m.[39mtoHaveBeenCalled()[33m;[39m
+     [90m 71 |[39m         
+     [90m 72 |[39m         [36mconst[39m [entityName[33m,[39m data] [33m=[39m [33mEng
+ine_DB_Mock[39m[33m.[39mcreate[33m.[39mmock[33m.[39mcalls[[35m0[39m][33m;[39m[0m
+
+      at Object.toBe (__tests__/Unidad_Negocio_CRUD.test.js:69:33)
+
+FAIL __tests__/Adapter_Sheets.delete.test.js
+  Soft Delete: Adapter_Sheets Inmutabilidad en Delete
+    ├ù Debe realizar Soft Delete cambiando el estado a Eliminado y actualizando la Auditor├¡a 
+(2 ms)
+
+  ÔùÅ Soft Delete: Adapter_Sheets Inmutabilidad en Delete ÔÇ║ Debe realizar Soft Delete 
+cambiando el estado a Eliminado y actualizando la Auditor├¡a
+
+    TypeError: sheet.getLastRow is not a function
+
+    [0m [90m 290 |[39m         
+     [90m 291 |[39m         [90m// Auto-inyectar headers de esquema si est├í reci├®n 
+creada[39m
+    [31m[1m>[22m[39m[90m 292 |[39m         [36mif[39m (sheet[33m.[39mgetLastRow() 
+[33m===[39m [35m0[39m) {
+     [90m     |[39m                   [31m[1m^[22m[39m
+     [90m 293 |[39m             [36mlet[39m schemaFields [33m=[39m [][33m;[39m
+     [90m 294 |[39m             [36mif[39m ([36mtypeof[39m [33mAPP_SCHEMAS[39m 
+[33m!==[39m [32m'undefined'[39m [33m&&[39m [33mAPP_SCHEMAS[39m[tableName]) {
+     [90m 295 |[39m                 [36mif[39m 
+([33mAPP_SCHEMAS[39m[tableName][33m.[39mfields) {[0m
+
+      at Object.getLastRow [as _ensureSheetExists] (src/Adapter_Sheets.js:292:19)
+      at Object._ensureSheetExists [as remove] (src/Adapter_Sheets.js:227:28)
+      at Object.remove (__tests__/Adapter_Sheets.delete.test.js:86:39)
+
+FAIL __tests__/Persona_CRUD.test.js
+  Persona CRUD - Blueprint V2 Verification
+    ÔêÜ Step 1: Document Schema - Should verify schema existence in Schema_Engine.gs
+    ├ù Step 2 & 5: UI Routing & Zero-Touch - Should verify ENTITY_META registration in 
+Index.html
+    ÔêÜ Step 4: Output Sanitization - API should return JSON sanitized data (1 ms)
+    ÔêÜ Step 6: Build Tracking - APP_VERSION should be bumped
+
+  ÔùÅ Persona CRUD - Blueprint V2 Verification ÔÇ║ Step 2 & 5: UI Routing & Zero-Touch - 
+Should verify ENTITY_META registration in Index.html
+
+    expect(received).toContain(expected) // indexOf
+
+    Expected substring: "Persona: {"
+    Received string:    "<!DOCTYPE html>┬À
+    <html lang=\"es\">┬À
+    <head>┬À
+      <meta charset=\"UTF-8\">┬À
+      <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0, 
+viewport-fit=cover\">┬À
+      <title>Taxonomia Project - EPT OMR</title>┬À┬À┬À
+      <!-- Ionic Framework CDN -->┬À
+      <script type=\"module\" 
+src=\"https://cdn.jsdelivr.net/npm/@ionic/core/dist/ionic/ionic.esm.js\"></script>┬À
+      <script nomodule 
+src=\"https://cdn.jsdelivr.net/npm/@ionic/core/dist/ionic/ionic.js\"></script>┬À
+      <link rel=\"stylesheet\" 
+href=\"https://cdn.jsdelivr.net/npm/@ionic/core/css/ionic.bundle.css\"/>┬À┬À┬À
+      <!-- Ionicons CDN -->┬À
+      <script type=\"module\" 
+src=\"https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js\"></script>┬À
+      <script nomodule 
+src=\"https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js\"></script>┬À┬À┬À
+      <!-- ApexCharts -->┬À
+      <script src=\"https://cdn.jsdelivr.net/npm/apexcharts\"></script>┬À┬À┬À
+      <!-- MOTOR DE DISENO (Regla UI ┬º14) -->┬À
+      <?!= include('CSS_DesignSystem'); ?>┬À
+      <?!= include('CSS_App'); ?>┬À┬À┬À┬À┬À┬À┬À
+      <!-- DATA LAYER: Schemas y Estado Global (inyectados por GAS antes del DOM) -->┬À
+      <script>┬À
+        window.APP_SCHEMAS = <?!= JSON.stringify(getAppSchema()) ?>;┬À
+        window.__APP_CACHE__ = {};┬À
+        window.ENTITY_META = {┬À
+          Unidad_Negocio:  { order:1, iconName:'business-outline',   color:'primary',  
+label:'Unidades de Negocio',   titleField:'nombre',          idField:'id_unidad_negocio',  
+fkField:null },┬À
+          Portafolio:      { order:2, iconName:'briefcase-outline',   color:'primary',  
+label:'Portafolios',            titleField:'nombre',          idField:'id_portafolio',      
+fkField:null },┬À
+          Dominio:         { order:3, iconName:'globe-outline',       
+color:'secondary',label:'Dominios',               titleField:'n0_es',           
+idField:'id_dominio',         fkField:null },┬À
+          Grupo_Productos: { order:4, iconName:'layers-outline',      
+color:'secondary',label:'Grupos de Producto',     titleField:'nombre',          
+idField:'id_grupo_producto',  fkField:{ key:'id_portafolio',     label:'Portafolio' } },┬À
+          Producto:        { order:5, iconName:'cube-outline',        color:'tertiary', 
+label:'Productos',              titleField:'nombre_producto', idField:'id_producto',        
+fkField:{ key:'id_grupo_producto', label:'Grupo' } },┬À
+          Capacidad:       { order:6, iconName:'layers-outline',      color:'warning',  
+label:'Capacidades',            titleField:'macrocapacidad',  idField:'id_capacidad',       
+fkField:null },┬À
+          Equipo:          { order:7, iconName:'people-outline',      color:'dark',     
+label:'Equipos',                titleField:'nombre_equipo',   idField:'id_equipo',          
+fkField:{ key:'id_producto',       label:'Producto' } },┬À
+          Persona:         { order:8, iconName:'person-outline',      color:'medium',   
+label:'Personas',               titleField:'nombre_completo', idField:'id_persona',         
+fkField:null }┬À
+        };┬À
+      </script>┬À
+    </head>┬À
+    <body>┬À
+      <ion-app>┬À┬À┬À
+        <!-- SPLIT PANE ÔÇö 3-State Sidebar (Regla UI ┬º13) -->┬À
+        <ion-split-pane id=\"split-pane-shell\" content-id=\"main-content\" when=\"lg\">┬À┬À┬À
+          <!-- SIDEBAR -->┬À
+          <ion-menu content-id=\"main-content\" side=\"start\">┬À
+            <ion-header class=\"ion-no-border\">┬À
+              <div class=\"sidebar-brand-container\">┬À
+                <div class=\"sidebar-logo-box\">┬À
+                  <ion-icon name=\"aperture-outline\"></ion-icon>┬À
+                </div>┬À
+                <span class=\"sidebar-app-title\">Sistema de Taxonom├¡a</span>┬À
+              </div>┬À
+            </ion-header>┬À
+            <ion-content>┬À
+              <ion-list id=\"main-nav-list\" lines=\"none\" 
+style=\"display:block;\"></ion-list>┬À
+              <ion-list id=\"sidebarList\"   lines=\"none\" 
+style=\"display:none;\"></ion-list>┬À
+            </ion-content>┬À
+            <ion-footer class=\"ion-no-border\" style=\"background: transparent;\">┬À
+              <div class=\"sidebar-heading\"><span>SISTEMA</span></div>┬À
+              <div class=\"nav-item\" id=\"nav-item-settings\" 
+onclick=\"window.showToast('M├│dulo en construcci├│n')\" title=\"Ajustes\">┬À
+                <ion-icon name=\"settings-outline\"></ion-icon>┬À
+                <ion-label>Ajustes</ion-label>┬À
+              </div>┬À
+              <div class=\"nav-item\" id=\"nav-item-profile\" 
+onclick=\"window.showToast('M├│dulo en construcci├│n')\" title=\"Mi Perfil\">┬À
+                <ion-icon name=\"person-circle-outline\"></ion-icon>┬À
+                <ion-label>Mi Perfil</ion-label>┬À
+              </div>┬À
+              <div class=\"build-tracker\">┬À
+                <span class=\"build-version\">┬À
+                  <ion-icon name=\"git-branch-outline\" 
+style=\"vertical-align:middle;font-size:11px;margin-right:4px;\"></ion-icon>┬À
+                  <?= APP_VERSION ?>┬À
+                </span>┬À
+                <span class=\"build-hash\">sha: dynamic &middot; dev-build</span>┬À
+              </div>┬À
+            </ion-footer>┬À
+          </ion-menu>┬À┬À┬À
+          <!-- CONTENT AREA -->┬À
+          <div class=\"ion-page\" id=\"main-content\">┬À
+            <ion-header class=\"ion-no-border\">┬À
+              <ion-toolbar class=\"header-bg\">┬À
+                <ion-buttons slot=\"start\">┬À
+                  <ion-menu-button class=\"hide-on-desktop\"></ion-menu-button>┬À
+                  <ion-button class=\"hide-on-mobile\" color=\"dark\" fill=\"clear\" 
+onclick=\"window.toggleDesktopMenu()\">┬À
+                    <ion-icon slot=\"icon-only\" name=\"menu-outline\"></ion-icon>┬À
+                  </ion-button>┬À
+                  <ion-button id=\"global-back-btn\" color=\"primary\" fill=\"clear\" 
+style=\"display:none;\" onclick=\"window.returnToDashboard()\">┬À
+                    <ion-icon slot=\"icon-only\" name=\"arrow-back-outline\"></ion-icon>┬À
+                  </ion-button>┬À
+                </ion-buttons>┬À
+                <ion-title id=\"main-header-title\">Taxonomia Operativa</ion-title>┬À
+                <ion-buttons slot=\"end\">┬À
+                  <ion-button id=\"btn-logout\" color=\"danger\" fill=\"clear\" 
+onclick=\"window.AuthManager.logout()\">┬À
+                    <ion-icon slot=\"start\" name=\"log-out-outline\"></ion-icon>┬À
+                    <span class=\"hide-on-mobile\">Cerrar Sesion</span>┬À
+                  </ion-button>┬À
+                </ion-buttons>┬À
+              </ion-toolbar>┬À
+            </ion-header>┬À┬À┬À
+            <ion-content class=\"ion-padding\" color=\"light\">┬À
+              <div id=\"app-container\">┬À
+                <ion-grid>┬À
+                  <ion-row class=\"ion-align-items-center\">┬À
+                    <ion-col size=\"12\" class=\"ion-padding-bottom\">┬À
+                      <ion-text color=\"dark\">┬À
+                        <h1 style=\"font-weight:700;\">Plataforma de Gobernanza</h1>┬À
+                      </ion-text>┬À
+                      <ion-text color=\"medium\">┬À
+                        <p style=\"margin-top:0;font-size:1.1rem;\">┬À
+                          <ion-icon name=\"person-circle-outline\" 
+style=\"vertical-align:middle;\"></ion-icon>┬À
+                          Hola, <span id=\"user-greeting-name\">Usuario</span>. Gestion 
+Centralizada de Modelo de Producto.┬À
+                        </p>┬À
+                      </ion-text>┬À
+                    </ion-col>┬À
+                  </ion-row>┬À
+                  <!-- Filtro Portafolio -->┬À
+                  <ion-row id=\"dashboard-filter-container\" class=\"ion-justify-content-end 
+ion-padding-horizontal\" style=\"display:none;\">┬À
+                    <ion-col size=\"12\" size-md=\"4\" class=\"ion-padding-bottom\">┬À
+                      <ion-item lines=\"none\" class=\"ion-no-padding\" 
+style=\"--background:transparent;\">┬À
+                        <ion-select id=\"dashboard-portfolio-filter\" interface=\"popover\" 
+placeholder=\"Todos los Portafolios\"┬À
+                          style=\"width:100%;max-width:100%;font-weight:600;font-size:1.1em;co
+lor:var(--ion-color-primary);\">┬À
+                          <ion-select-option value=\"all\">TODOS LOS 
+PORTAFOLIOS</ion-select-option>┬À
+                        </ion-select>┬À
+                      </ion-item>┬À
+                    </ion-col>┬À
+                  </ion-row>┬À
+                  <!-- Charts -->┬À
+                  <ion-row id=\"dashboard-charts-container\" style=\"display:none;\">┬À
+                    <ion-col size=\"12\" size-md=\"6\" class=\"ion-padding-bottom\">┬À
+                      <ion-card style=\"height:100%;\"><ion-card-header><ion-card-title>Especi
+alidades</ion-card-title></ion-card-header>┬À
+                        <ion-card-content><div 
+id=\"chart-topology\"></div></ion-card-content></ion-card>┬À
+                    </ion-col>┬À
+                    <ion-col size=\"12\" size-md=\"6\" class=\"ion-padding-bottom\">┬À
+                      <ion-card 
+style=\"height:100%;\"><ion-card-header><ion-card-title>Capacidad por 
+Equipo</ion-card-title></ion-card-header>┬À
+                        <ion-card-content><div 
+id=\"chart-capacity\"></div></ion-card-content></ion-card>┬À
+                    </ion-col>┬À
+                  </ion-row>┬À
+                  <!-- Entity Cards -->┬À
+                  <ion-row class=\"ion-justify-content-center\" 
+id=\"dashboard-cards-container\"></ion-row>┬À
+                </ion-grid>┬À
+              </div>┬À
+            </ion-content>┬À
+          </div><!-- /main-content -->┬À┬À┬À
+        </ion-split-pane>┬À
+      </ion-app>┬À┬À┬À
+      <!-- MOTORES LOGICOS (Regla UI ┬º14) -->┬À
+      <?!= include('FormEngine_UI'); ?>┬À
+      <?!= include('DataView_UI'); ?>┬À
+      <?!= include('Dashboard_UI'); ?>┬À
+      <?!= include('JS_Core'); ?>┬À┬À┬À
+    </body>┬À
+    </html>┬À
+    "
+
+    [0m [90m 42 |[39m         [36mconst[39m content [33m=[39m 
+fs[33m.[39mreadFileSync(indexPath[33m,[39m [32m'utf8'[39m)[33m;[39m
+     [90m 43 |[39m         
+    [31m[1m>[22m[39m[90m 44 |[39m         
+expect(content)[33m.[39mtoContain([32m'Persona: {'[39m)[33m;[39m
+     [90m    |[39m                         [31m[1m^[22m[39m
+     [90m 45 |[39m         expect(content)[33m.[39mtoContain([32m"iconName: 
+'person-outline'"[39m)[33m;[39m
+     [90m 46 |[39m         expect(content)[33m.[39mtoContain([32m"idField: 
+'id_persona'"[39m)[33m;[39m
+     [90m 47 |[39m     })[33m;[39m[0m
+
+      at Object.toContain (__tests__/Persona_CRUD.test.js:44:25)
+
+FAIL __tests__/Equipo_CRUD_Fix.test.js
+  Equipo Entity Structural Integrity - Blueprint V2
+    ÔêÜ 1. Equipo schema MUST define primaryKey and titleField at root
+    ├ù 2. Relation fields MUST use type: "select" and NOT the unimplemented "lookup" (1 ms)
+    ÔêÜ 3. Must contain explicitly the estado hidden field for soft delete engine
+
+  ÔùÅ Equipo Entity Structural Integrity - Blueprint V2 ÔÇ║ 2. Relation fields MUST use type: 
+"select" and NOT the unimplemented "lookup"
+
+    expect(received).toContain(expected) // indexOf
+
+    Expected substring: "lookupSource: \"getProductosOptions\""
+    Received string:    "Equipo: {┬À
+        primaryKey: \"id_equipo\",┬À
+        titleField: \"nombre_equipo\",┬À
+        fields: [┬À
+          // Sistema e IDs┬À
+          { name: \"id_equipo\", label: \"ID Sistema\", type: \"text\", required: true, 
+readonly: true, primaryKey: true, width: 4 },┬À
+          { name: \"id_externo\", label: \"ID Equipo (Externo/N├│mina)\", type: \"text\", 
+width: 4 },┬À
+          { name: \"estado\", type: \"hidden\", defaultValue: \"Activo\" },┬À┬À┬À┬À┬À┬À┬À┬À┬À
+          // Secci├│n 1: Identidad┬À
+          { section: \"Identidad\", name: \"nombre_equipo\", label: \"Nombre Oficial\", type: 
+\"text\", required: true, width: 4 },┬À
+          { section: \"Identidad\", name: \"seudonimo\", label: \"Seud├│nimo / Alias\", type: 
+\"text\", width: 4 },┬À
+          { section: \"Identidad\", name: \"tipo_equipo\", label: \"Topolog├¡a (Team 
+Topologies)\", type: \"select\", options: [\"Stream-aligned\", \"Platform\", \"Enabling\", 
+\"Complicated-subsystem\"], required: true, width: 4 },┬À
+          { section: \"Identidad\", name: \"proposito\", label: \"Prop├│sito / Misi├│n\", 
+type: \"textarea\", width: 12 },┬À┬À┬À┬À┬À┬À┬À┬À┬À
+          // Secci├│n 2: Gobernanza┬À
+          { section: \"Gobernanza\", name: \"id_unidad_negocio\", label: \"Unidad de 
+Negocio\", type: \"select\", lookupSource: \"getUnidadesNegocioOptions\", required: true, 
+width: 6 },┬À
+          { section: \"Gobernanza\", name: \"id_portafolio\", label: \"Portafolio 
+(Financiamiento)\", type: \"select\", lookupSource: \"getPortafoliosOptions\", width: 6 
+},┬À┬À┬À┬À┬À┬À┬À┬À┬À
+          // Secci├│n 3: Integrantes y Roles (Dynamic List)┬À
+          {┬À┬À
+            section: \"Plantilla de Integrantes\",┬À┬À
+            name: \"integrantes_json\",┬À┬À
+            label: \"Integrantes y Roles\",┬À┬À
+            type: \"dynamic_list\",┬À┬À
+            width: 12,┬À
+            subFields: [┬À
+              { name: \"id_persona\", label: \"Seleccionar Persona\", type: \"select\", 
+lookupSource: \"getPersonasOptions\", width: 7 },┬À
+              { name: \"rol_asignado\", label: \"Rol en esta C├®lula\", type: \"text\", 
+width: 4 }┬À
+            ]┬À
+          },┬À┬À┬À┬À┬À┬À┬À┬À┬À
+          // Secci├│n 4: Capacidad y Especialidad (Grid Num├®rico Compacto)┬À
+          { section: \"Capacidad\", name: \"cant_dev_back\", label: \"Dev Back\", type: 
+\"number\", width: 2 },┬À
+          { section: \"Capacidad\", name: \"cant_dev_front\", label: \"Dev Front\", type: 
+\"number\", width: 2 },┬À
+          { section: \"Capacidad\", name: \"cant_fullstack\", label: \"Fullstack\", type: 
+\"number\", width: 2 },┬À
+          { section: \"Capacidad\", name: \"cant_testers\", label: \"Testers (QA)\", type: 
+\"number\", width: 2 },┬À
+          { section: \"Capacidad\", name: \"cant_tech_lead\", label: \"Tech Leads\", type: 
+\"number\", width: 2 },┬À
+          { section: \"Capacidad\", name: \"cant_team_coach\", label: \"Team Coach\", type: 
+\"number\", width: 2 },┬À
+          { section: \"Capacidad\", name: \"cant_po\", label: \"PO / PM\", type: \"number\", 
+width: 2 },┬À
+          { section: \"Capacidad\", name: \"cant_otros\", label: \"Otros\", type: \"number\", 
+width: 2 },┬À
+          { section: \"Capacidad\", name: \"roles_otros\", label: \"┬┐Qu├® rol tienen? 
+(Otros)\", type: \"text\", width: 4 },┬À
+          { section: \"Capacidad\", name: \"total_integrantes\", label: \"Total Suma\", type: 
+\"number\", readonly: true, width: 4 }, // Campo Calculado┬À┬À┬À┬À┬À┬À┬À┬À┬À
+          // Secci├│n 5: Operativa┬À
+          { section: \"Operativa\", name: \"metodologia\", label: \"Metodolog├¡a\", type: 
+\"select\", options: [\"Scrum\", \"Kanban\", \"H├¡brida\"], width: 4 },┬À
+          { section: \"Operativa\", name: \"herramienta_tracker\", label: \"Herramienta de 
+Gesti├│n\", type: \"select\", options: [\"Jira\", \"Azure DevOps\"], width: 4 },┬À
+          { section: \"Operativa\", name: \"url_tablero\", label: \"URL del Tablero\", type: 
+\"url\", width: 4 }┬À
+        ]┬À
+      },┬À
+      "
+
+    [0m [90m 36 |[39m         expect(block)[33m.[39mtoContain([32m'type: 
+"select"'[39m)[33m;[39m
+     [90m 37 |[39m         expect(block)[33m.[39mtoContain([32m'lookupSource: 
+"getPersonasOptions"'[39m)[33m;[39m
+    [31m[1m>[22m[39m[90m 38 |[39m         
+expect(block)[33m.[39mtoContain([32m'lookupSource: "getProductosOptions"'[39m)[33m;[39m
+     [90m    |[39m                       [31m[1m^[22m[39m
+     [90m 39 |[39m     })[33m;[39m
+     [90m 40 |[39m
+     [90m 41 |[39m     test([32m'3. Must contain explicitly the estado hidden field for 
+soft delete engine'[39m[33m,[39m () [33m=>[39m {[0m
+
+      at Object.toContain (__tests__/Equipo_CRUD_Fix.test.js:38:23)
+
+FAIL __tests__/Capacidad_Provisioning.test.js
+  Red Phase - Auto-Aprovisionamiento DB y Schema: Capacidad
+    ├ù Debe interceptar, crear la hoja Capacidad e inyectarle los encabezados planos + 
+auditor├¡a (2 ms)
+
+  ÔùÅ Red Phase - Auto-Aprovisionamiento DB y Schema: Capacidad ÔÇ║ Debe interceptar, crear 
+la hoja Capacidad e inyectarle los encabezados planos + auditor├¡a
+
+    expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 0
+    + Received  + 2
+
+    @@ -12,6 +12,8 @@
+        "path_completo_es",
+        "created_at",
+        "created_by",
+        "updated_at",
+        "updated_by",
+    +   "deleted_at",
+    +   "deleted_by",
+      ]
+
+    [0m [90m 90 |[39m         ][33m;[39m
+     [90m 91 |[39m         
+    [31m[1m>[22m[39m[90m 92 |[39m         
+expect(injectedHeaders)[33m.[39mtoEqual(expectedHeaders)[33m;[39m
+     [90m    |[39m                                 [31m[1m^[22m[39m
+     [90m 93 |[39m         
+     [90m 94 |[39m         [90m// 3. Validar finalizaci├│n limpia del RPC list()[39m
+     [90m 95 |[39m         
+expect(result[33m.[39mrows)[33m.[39mtoEqual([])[33m;[39m[0m
+
+      at Object.toEqual (__tests__/Capacidad_Provisioning.test.js:92:33)
+
+PASS __tests__/Subgrid_Lifecycle.test.js
+  Test 1 ÔÇö Hydration Test (initSubgridState)
+    ÔêÜ Padre con 2 hijos debe inicializar el estado del subgrid con exactamente 2 registros 
+(1 ms)
+    ÔêÜ Hydration produce una COPIA (no la referencia original)
+    ÔêÜ Padre sin hijos inicializa el estado como arreglo vac├¡o
+    ÔêÜ parentData null inicializa el estado como arreglo vac├¡o
+  Test 2 ÔÇö Modal Exclusion Test (filterAvailableOptions)
+    ÔêÜ Cat├ílogo de 5, subgrid con 2 ÔåÆ modal debe mostrar exactamente 3 opciones
+    ÔêÜ Los 3 disponibles NO contienen elementos ya vinculados
+    ÔêÜ Filtra correctamente aunque el ID del subgrid tenga diferente capitalizaci├│n
+    ÔêÜ Con subgrid vac├¡o, el modal debe mostrar TODOS los disponibles (5)
+  Test 3 ÔÇö Link Test (linkRecord)
+    ÔêÜ A├▒adir un NUEVO registro al subgrid crece el estado a 3 elementos
+    ÔêÜ El payload de guardado incluye la FK correcta para los 3 hijos
+    ÔêÜ linkRecord es inmutable: el arreglo original no se muta
+    ÔêÜ linkRecord es idempotente: no agrega duplicados
+  Test 4 ÔÇö Unlink Test (unlinkRecord)
+    ÔêÜ Eliminar un elemento del subgrid reduce el estado a 1
+    ÔêÜ El elemento eliminado es reportado en "removed" para que el backend haga diffing
+    ÔêÜ unlinkRecord es inmutable: el arreglo original no se muta
+    ÔêÜ Eliminar un ID que NO existe devuelve el mismo estado y removed = null
+    ÔêÜ Eliminar con ID sucio (espacios + lowercase) funciona correctamente
+
+PASS __tests__/MasterDetail_Regression.test.js
+  Test 1 ÔÇö Motor de Reconciliaci├│n (Orphan Cleanup)
+    ÔêÜ Padre con 3 hijos guardado con solo 2: debe desvincular el hu├®rfano (FK = "") (1 ms)
+  Test 2 ÔÇö Aislamiento de Cach├® (Inmutabilidad de Estado)
+    ÔêÜ Inyectar un nuevo registro no debe mutar el arreglo original del cach├®
+    ÔêÜ Actualizar un registro existente tampoco debe mutar el arreglo original
+  Test 3 ÔÇö Saneamiento de Filtro (isRecordLinked con IDs sucios)
+    ÔêÜ Detecta un registro vinculado con ID limpio (caso base) (1 ms)
+    ÔêÜ Detecta un registro vinculado si el candidato tiene espacios extra
+    ÔêÜ Detecta un registro vinculado si el candidato est├í en min├║sculas
+    ÔêÜ Combina suciedad: espacios + lowercase
+    ÔêÜ Retorna false para un registro NO vinculado
+    ÔêÜ Retorna false si linkedRecords est├í vac├¡o (1 ms)
+    ÔêÜ Retorna false si linkedRecords es null (robusto ante estado no inicializado)
+
+PASS __tests__/Engine_DB.test.js
+  Engine_DB Facade (Dual-Write & Idempotency)
+    ÔêÜ 1. Dual-Write: Debe invocar ambos adaptadores al guardar un registro
+    ÔêÜ 2. Idempotencia y Upsert: M├║ltiples env├¡os del mismo Payload no deben duplicar 
+registros
+    ÔêÜ 3. Resiliencia: Si Adapter_CloudDB falla, Adapter_Sheets debe guardar de todas formas
+  Adapter_Sheets Normalization Logic (Regla 4.7)
+    ÔêÜ Debe estandarizar el Mapping f├¡sico a formato snake_case predecible (1 ms)
+    ÔêÜ Debe requerir un Primary Key (PK) para evitar el uso ciego de appendRow
+
+PASS __tests__/MasterDetail_Corruption.test.js
+  Master-Detail Data Integrity & Hydration
+    ÔêÜ Bug 1: Children should receive unique IDs if missing (1 ms)
+    ÔêÜ Bug 2: Batch saving should not overwrite (verified via call count)
+    ÔêÜ Bug 3: Read single should hydrate relations (1 ms)
+
+PASS __tests__/API_Auth.test.js
+  API_Auth: Capa de Identidad y Seguridad
+    ÔêÜ Debe autorizar a un usuario con dominio @gmail.com
+    ÔêÜ Debe autorizar a un usuario con dominio @bellfy.app
+    ÔêÜ Debe rechazar a un usuario con dominio no autorizado (@hotmail.com)
+    ÔêÜ Debe manejar correos con may├║sculas y espacios correctamente
+    ÔêÜ Debe rechazar el acceso si no se provee correo (sesi├│n no disponible)
+
+PASS __tests__/IntegrityRefactor.test.js
+  Mandato A: Capa de Datos (Backend)
+    ÔêÜ A.1: Debe existir una rutina de Upsert Idempotente que no use appendRow() (1 ms)
+    ÔêÜ A.2: Sanitizaci├│n Obligatoria de Salida (Regla de postMessage) (1 ms)
+    ÔêÜ A.3: Auditor├¡a Silenciosa en el Backend
+    ÔêÜ A.4: Integridad de Soft-Delete (Regla 3 DB)
+  Mandato B: Capa de Memoria y UI (Frontend)
+    ÔêÜ B.1: Saneamiento de Strings (Anti-Snake-Case)
+    ÔêÜ B.2: Inyecci├│n Inmutable en RAM y Cero Re-fetching
+
+PASS __tests__/FormEngine_UI_List.test.js
+  Frontend (Listado): Filtro de Soft Delete
+    ÔêÜ Debe excluir del DataGrid los registros con estado Eliminado
+
+PASS __tests__/Portafolio_CRUD.test.js
+  Portafolio CRUD - Capa de Servicio API_Universal
+    ÔêÜ POST (Create) inyecta campos de auditor├¡a (created_at y updated_by) correctamente 
+antes de invocar Engine_DB (1 ms)
+
+Test Suites: 9 failed, 2 skipped, 8 passed, 17 of 19 total
+Tests:       10 failed, 8 skipped, 55 passed, 73 total
+Snapshots:   0 total
+Time:        2.277 s
+Ran all test suites.

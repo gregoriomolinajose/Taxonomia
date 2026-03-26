@@ -22,7 +22,7 @@
     }
     .shell-mini .nav-item ion-label,
     .shell-mini .nav-item span:not(.nav-tooltip) { display: none !important; }
-    .shell-mini ion-menu .sidebar-logo span { display: none !important; }
+    .shell-mini .sidebar-app-title { display: none !important; }
   }
 
   @media (min-width: 992px) {
@@ -70,10 +70,25 @@
     }
   }
 
-  .sidebar-logo {
-    width: 40px; height: 40px; background: var(--ion-color-primary);
+  .sidebar-brand-container {
+    display: flex; align-items: center; gap: 12px;
+    padding: 16px; margin-top: 8px; transition: all 0.25s ease;
+  }
+  .sidebar-logo-box {
+    width: 48px; height: 48px; background: var(--ion-color-primary);
     border-radius: 12px; display: flex; align-items: center;
-    justify-content: center; margin: 20px auto 24px auto !important;
+    justify-content: center; transition: all 0.25s ease;
+    flex-shrink: 0;
+  }
+  .sidebar-logo-box ion-icon { font-size: 24px; color: var(--ion-color-light, #fff); }
+  .sidebar-app-title {
+    font-size: 1rem; color: var(--ion-color-medium); font-weight: 600;
+    transition: opacity 0.25s ease; white-space: nowrap; overflow: hidden;
+  }
+  @media (min-width: 992px) {
+    .shell-mini .sidebar-brand-container { padding: 16px 0; justify-content: center; }
+    .shell-mini .sidebar-logo-box { width: 40px !important; height: 40px !important; }
+    .shell-mini .sidebar-app-title { display: none !important; }
   }
   .sidebar-divider { width: 32px; height: 1px; background: var(--sidebar-border); margin: 8px auto; }
   .nav-spacer { flex: 1; }
