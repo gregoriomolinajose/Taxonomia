@@ -10,7 +10,6 @@ if (!['dev', 'prod'].includes(env)) {
 }
 
 const envFile = `.clasp-${env}.json`;
-const targetFile = '.clasp.json';
 
 try {
     console.log(`[Deploy] Switching to ${env} environment...`);
@@ -18,9 +17,6 @@ try {
     if (!fs.existsSync(envFile)) {
         throw new Error(`Source file ${envFile} not found.`);
     }
-
-    const configContent = fs.readFileSync(envFile, 'utf8');
-    fs.writeFileSync(targetFile, configContent);
 
     // Swap Config.js
     const configFile = `environments/Config.${env}.js`;
@@ -30,9 +26,9 @@ try {
         fs.copyFileSync(configFile, targetConfig);
     }
 
-    console.log(`[Deploy] Environment files updated for ${env}. Running npx clasp push...`);
+    console.log(`[Deploy] Environment files updated for ${env}. Running npx clasp push explicitly with ${envFile}...`);
 
-    execSync('npx clasp push -f', { stdio: 'inherit' });
+    execSync(`npx clasp push -P ${envFile} -f`, { stdio: 'inherit' });
 
     console.log(`[Deploy] Successfully deployed to ${env}!`);
 } catch (error) {

@@ -10,38 +10,88 @@
      Inyectado via: <?!= include('CSS_App'); ?>
   ═══════════════════════════════════════════════════════ */
 
-  /* SIDEBAR 3-STATE — Regla UI §13 */
+  /* ═══════════════════════════════════════════════════════
+     SIDEBAR OFFSET (Override Final de Componentes Internos) — Regla UI §13
+  ═══════════════════════════════════════════════════════ */
   @media (min-width: 992px) {
-    .shell-mini ion-menu[side="start"] {
-      --width:     var(--sidebar-width-mini) !important;
-      --min-width: var(--sidebar-width-mini) !important;
-      --max-width: var(--sidebar-width-mini) !important;
-      min-width:   var(--sidebar-width-mini) !important;
-      max-width:   var(--sidebar-width-mini) !important;
-      width:       var(--sidebar-width-mini) !important;
+    
+    /* Fallback Transition para atenuar redimensiones en caliente del Split Pane nativo */
+    #main-content {
+      transition: left 0.3s ease, width 0.3s ease, right 0.3s ease;
     }
-    .shell-mini .nav-item ion-label,
-    .shell-mini .nav-item span:not(.nav-tooltip) { display: none !important; }
-    .shell-mini .sidebar-app-title { display: none !important; }
-  }
 
-  @media (min-width: 992px) {
-    ion-split-pane { --side-width: 240px; }
-    ion-split-pane.shell-mini { --side-width: 72px; }
-    ion-split-pane.shell-mini ion-menu {
-      --width:   72px !important;
-      min-width: 72px !important;
-      max-width: 72px !important;
+    /* ESTADO EXPANDIDO (Default) */
+    ion-split-pane { 
+      --side-width: calc(240px + calc(var(--spacing-4) * 2)) !important; 
+      --side-min-width: calc(240px + calc(var(--spacing-4) * 2)) !important;
+      --side-max-width: calc(240px + calc(var(--spacing-4) * 2)) !important;
+      transition: --side-width 0.3s ease; 
     }
+    /* Forzar ancho en el contenedor interno de Ionic */
+    ion-split-pane > ion-menu,
+    ion-menu {
+        width: calc(240px + calc(var(--spacing-4) * 2)) !important;
+        min-width: calc(240px + calc(var(--spacing-4) * 2)) !important;
+        max-width: calc(240px + calc(var(--spacing-4) * 2)) !important;
+        border-right: none !important;
+        --width: calc(240px + calc(var(--spacing-4) * 2)) !important;
+    }
+
+    /* ESTADO MINI */
+    .shell-mini ion-split-pane,
+    ion-split-pane.shell-mini { 
+      --side-width: calc(72px + calc(var(--spacing-4) * 2)) !important; 
+      --side-min-width: calc(72px + calc(var(--spacing-4) * 2)) !important;
+      --side-max-width: calc(72px + calc(var(--spacing-4) * 2)) !important;
+    }
+    /* Forzar ancho reducido en el contenedor interno */
+    .shell-mini ion-split-pane > ion-menu,
+    ion-split-pane.shell-mini > ion-menu,
+    .shell-mini ion-menu {
+        width: calc(72px + calc(var(--spacing-4) * 2)) !important;
+        min-width: calc(72px + calc(var(--spacing-4) * 2)) !important;
+        max-width: calc(72px + calc(var(--spacing-4) * 2)) !important;
+        --width: calc(72px + calc(var(--spacing-4) * 2)) !important;
+    }
+    
     .shell-mini .nav-item span:not(.nav-tooltip),
     .shell-mini .nav-item ion-label { display: none !important; }
-    ion-split-pane.shell-hidden { --side-width: 0px; }
-    .shell-hidden ion-menu[side="start"] { display: none !important; }
+    .shell-mini .sidebar-app-title { display: none !important; }
+
+    /* ESTADO HIDDEN */
+    .shell-hidden ion-split-pane,
+    ion-split-pane.shell-hidden { 
+      --side-width: 0px !important; 
+      --side-min-width: 0px !important;
+      --side-max-width: 0px !important;
+    }
+    .shell-hidden ion-split-pane > ion-menu,
+    ion-split-pane.shell-hidden > ion-menu,
+    .shell-hidden ion-menu {
+        width: 0px !important;
+        min-width: 0px !important;
+        max-width: 0px !important;
+        --width: 0px !important;
+        display: none !important;
+    }
+  }
+
+  /* ═══════════════════════════════════════════════════════
+     SIDEBAR FLOATING CARD (Token-Driven Shadow DOM)
+  ═══════════════════════════════════════════════════════ */
+  ion-menu::part(container) {
+    border-radius: var(--rounded-md);
+    margin: var(--spacing-4);
+    height: calc(100% - calc(var(--spacing-4) * 2));
+    border: 1px solid var(--sidebar-border);
+    box-shadow: var(--shadow-floating);
+    transition: all 0.3s ease;
+    z-index: 100;
   }
 
   /* Nav item base */
   .nav-item {
-    width: calc(100% - 32px); height: 48px;
+    width: calc(100% - 32px); min-height: 48px;
     border-radius: 14px;
     display: flex; align-items: center; justify-content: flex-start;
     padding: 0 16px; gap: 16px; cursor: pointer;
@@ -52,8 +102,22 @@
   .nav-item:hover  { background: var(--sidebar-item-hover); color: var(--ion-text-color); }
   .nav-item.active { background: rgba(108,99,255,0.18); color: var(--sidebar-icon-active); }
   .nav-item ion-icon { font-size: 22px; flex-shrink: 0; }
+  
+  /* ═══════════════════════════════════════════════════════
+     SIDEBAR TYPOGRAPHY (2-Line Text Wrapping)
+  ═══════════════════════════════════════════════════════ */
   .nav-item ion-label, .nav-item span:not(.nav-tooltip) {
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 0.9rem;
+    font-size: 0.9rem;
+    white-space: normal !important;
+    display: -webkit-box !important;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    line-height: 1.2;
+    word-break: break-word;
+    /* Margen para que las 2 líneas no queden asfixiadas */
+    padding-top: 2px;
+    padding-bottom: 2px;
   }
 
   @media (min-width: 992px) {
@@ -81,9 +145,19 @@
     flex-shrink: 0;
   }
   .sidebar-logo-box ion-icon { font-size: 24px; color: var(--ion-color-light, #fff); }
+  /* ═══════════════════════════════════════════════════════
+     SIDEBAR BRAND TYPOGRAPHY (2-Line Text Wrapping)
+  ═══════════════════════════════════════════════════════ */
   .sidebar-app-title {
     font-size: 1rem; color: var(--ion-color-medium); font-weight: 600;
-    transition: opacity 0.25s ease; white-space: nowrap; overflow: hidden;
+    transition: opacity 0.25s ease;
+    white-space: normal !important;
+    display: -webkit-box !important;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    line-height: 1.1;
+    word-break: break-word;
   }
   @media (min-width: 992px) {
     .shell-mini .sidebar-brand-container { padding: 16px 0; justify-content: center; }
@@ -174,7 +248,7 @@
 
   /* ── Extraído de Index.html (Regla UI §14) ── */
   body { margin: 0; padding: 0; }
-  ion-menu { --ion-background-color: var(--color-bg-body); border-right: 1px solid var(--color-border); }
+  ion-menu { --ion-background-color: var(--color-bg-body); border-right: none !important; }
   .header-bg { background-color: var(--color-bg-body); border-bottom: 1px solid var(--color-border); }
   ion-toolbar.header-bg { --background: var(--color-bg-body); --color: var(--color-text); }
   @media (max-width: 991px) { .hide-on-mobile  { display: none !important; } }

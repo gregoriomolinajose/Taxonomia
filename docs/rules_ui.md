@@ -93,3 +93,8 @@ Debido a la naturaleza modular del menú colapsable, los footers estáticos y lo
 
 ## 15. Renderizado Híbrido (Metadatos vs Datos de Negocio)
 - **Metadatos vs Datos de Negocio:** Variables críticas de cache y build (ej. `APP_VERSION`) deben inyectarse mediante Scriptlets estáticos del servidor (`<?= ?>`) en el orquestador principal para el First Contentful Paint. La lógica de negocio y esquemas pesados (ej. `APP_SCHEMAS`) se hidratan en el cliente vía JS asíncrono o variables globales de estado.
+
+## 16. Regla UI §15 (Single Source of Truth & Zero Hardcoding)
+- **Auditoría Obligatoria (Design System First):** Antes de proponer o escribir cualquier bloque de CSS o estilo en línea, tienes la obligación absoluta de leer el archivo `CSS_DesignSystem.html`.
+- **Mapeado de Tokens (Strict Matching):** Todo color, margen, padding, sombra, tipografía o radio de borde DEBE estar mapeado a un token existente (ej. `var(--spacing-4)`, `var(--rounded-md)`, `var(--color-interactive-primary)`). Queda ESTRICTAMENTE PROHIBIDO el uso de valores mágicos o quemados (hardcoding).
+- **Protocolo de Alerta (Stop & Escalate):** Si el diseño requiere un valor, componente, color o comportamiento que NO EXISTE actualmente en `CSS_DesignSystem.html`, TIENES PROHIBIDO inventarlo. Debes DETENER la implementación inmediatamente, emitir la alerta: **"Falta de Token Detectada (Stop & Escalate)"**, proponer la adición de dicho token y solicitar autorización ("Aprobar lógica") antes de continuar.
