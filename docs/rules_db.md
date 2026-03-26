@@ -52,3 +52,6 @@
 - **El Límite del postMessage:** Google Apps Script utiliza clonación estructurada para enviar datos del Backend al Frontend. Queda ESTRICTAMENTE PROHIBIDO retornar objetos complejos no serializables (como objetos `Date` nativos generados por la base de datos o referencias circulares) en las respuestas de éxito.
 - **Sanitización Obligatoria:** Toda respuesta de éxito en mutaciones (ej. el return de `upsertBatch` en `API_Universal.gs`) que incluya el registro completo, DEBE ser aplanada y sanitizada (ej. `JSON.parse(JSON.stringify(responseData))`) antes de ser enviada al cliente. 
 - **Objetivo:** Prevenir el fallo silencioso y críptico `dropping postMessage.. deserialize threw error` en la consola del navegador, el cual rompe el ciclo de vida de la inyección de caché.
+
+## 11. Performance Crítico en GAS (Imperativo de Bloque)
+- **Operaciones Bulk Ops:** Queda estrictamente prohibido invocar APIs nativas de GAS (`SpreadsheetApp`, `getRange`, `setValues`) dentro de bucles iterativos. Toda operación de base de datos debe mapearse en memoria (Array 2D) y escribirse con una sola llamada O(1).

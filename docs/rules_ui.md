@@ -11,6 +11,7 @@
 - **Cero Fugas Semánticas (Zero Hardcoding):** PROHIBIDO forzar colores en el HTML (ej. `color="light"`, `style="color: blue"`). Textos y fondos DEBEN heredar su color del motor CSS (Modos Claro/Oscuro).
 - **Tipografía Fluida:** El escalado tipográfico se controla mediante variables `--sys-font-*` que mutan basándose en Breakpoints (Mobile First por defecto, escalando en `>= 768px`).
 - **Hitboxes:** En componentes compuestos (ej. listas seleccionables), es OBLIGATORIO garantizar un área táctil fluida y gestionar la propagación de eventos (`ionChange`).
+- **Prohibición de JS Inline Styles:** El JavaScript tiene prohibido inyectar propiedades `style` físicas (ej. colores, márgenes) en el DOM. El JS debe limitarse a conmutar clases semánticas (ej. `.active`, `.is-hidden`), delegando la resolución visual pura al archivo `CSS_DesignSystem`.
 
 ## 2. Progressive Disclosure (Wizards) y Anclaje de Acciones
 - **Desglose Cognitivo:** PROHIBIDO renderizar formularios largos en una vista plana. Si hay `steps`, el motor DEBE renderizar un Wizard (`<ion-segment>` o `<ion-stepper>`). Todo componente visual de progreso DEBE ser interactivo.
@@ -20,7 +21,7 @@
 - **Estructura Base:** El layout DEBE construirse sobre `<ion-grid>`, `<ion-row>` y `<ion-col>`. Todo input debe ser Mobile-First (`size="12"`). NUNCA uses CSS crudo para el layout.
 - **Protección de Cunetas (Gutter Preservation):** PROHIBIDO usar la clase `ion-no-padding` en contenedores `<ion-grid>` que alojen tarjetas o campos de formulario. El espaciado DEBE calcularse por el motor de Ionic (`--ion-grid-column-padding`).
 - **Estructura Bento Box:** Para asimetría sin colisiones, el grid define la separación, y las tarjetas (`<ion-card>`) absorben el tamaño exacto configurando `margin: 0 !important; width: 100%; height: 100%;`.
-- **Amortiguación Vertical en Formularios:** Para evitar colisión de inputs en móvil, el espaciado vertical NUNCA se aplica mediante `margin-bottom` en `<ion-row>`. Se DEBE inyectar como `padding-bottom` en `<ion-col>`.
+- **Amortiguación Vertical de Grid:** Queda prohibido aplicar `margin-bottom` a las etiquetas `<ion-row>`. El espaciado vertical debe gestionarse internamente mediante `padding-bottom` en los contenedores `<ion-col>`.
 
 ## 4. Feedback Visual e Iconografía
 - Toda operación de red DEBE bloquear la interfaz usando `<ion-loading>` o `<ion-spinner>`.
@@ -89,3 +90,6 @@ Debido a la naturaleza modular del menú colapsable, los footers estáticos y lo
 * `z-index: 50` - Overlay del Sidebar en versión móvil.
 * `z-index: 100` - Modales (`<ion-modal>`).
 * `z-index: 9999` - Sistema de Toasts y Loaders (Máxima prioridad visual).
+
+## 15. Renderizado Híbrido (Metadatos vs Datos de Negocio)
+- **Metadatos vs Datos de Negocio:** Variables críticas de cache y build (ej. `APP_VERSION`) deben inyectarse mediante Scriptlets estáticos del servidor (`<?= ?>`) en el orquestador principal para el First Contentful Paint. La lógica de negocio y esquemas pesados (ej. `APP_SCHEMAS`) se hidratan en el cliente vía JS asíncrono o variables globales de estado.
