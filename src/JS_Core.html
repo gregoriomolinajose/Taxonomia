@@ -40,44 +40,89 @@
     window.applySidebarState();
   };
 
+  /* ── Dinamic Router (Regla UI §5 y §14) ──────────────── */
+  window.navigateTo = function(viewType, entityKey) {
+    if (typeof entityKey === 'undefined') entityKey = null;
+    var container   = document.getElementById('app-container');
+    var headerTitle = document.getElementById('main-header-title');
+    var backBtn     = document.getElementById('global-back-btn');
+    
+    // 1. Quitar la clase .active de todos los items
+    var navItems = document.querySelectorAll('.nav-item');
+    navItems.forEach(function(item) { item.classList.remove('active'); });
+    
+    if (viewType === 'dashboard') {
+      if (headerTitle) headerTitle.textContent = 'Plataforma de Gobernanza';
+      if (backBtn) { backBtn.style.display = 'none'; backBtn.onclick = null; }
+      
+      var oldPop = document.getElementById('dv-col-ion-popover');
+      if (oldPop) oldPop.remove();
+      
+      var homeBtn = document.getElementById('nav-item-dashboard');
+      if (homeBtn) homeBtn.classList.add('active');
+      
+      if (container && window.OriginalDashboardHTML) {
+        container.innerHTML = window.OriginalDashboardHTML;
+        if (typeof window.renderDashboard === 'function') window.renderDashboard();
+      }
+    } 
+    else if (viewType === 'dataview' && entityKey) {
+      if (headerTitle && window.ENTITY_META && window.ENTITY_META[entityKey]) {
+        headerTitle.textContent = window.ENTITY_META[entityKey].label;
+      }
+      
+      // Regla 5: Escape Routing
+      if (backBtn) {
+        backBtn.style.display = 'block';
+        backBtn.onclick = function() { window.navigateTo('dashboard'); };
+      }
+      
+      var entityBtn = document.getElementById('nav-item-' + entityKey);
+      if (entityBtn) entityBtn.classList.add('active');
+      
+      if (window.DataViewEngine && typeof window.DataViewEngine.render === 'function') {
+        window.DataViewEngine.render(entityKey, 'app-container');
+      }
+    }
+  };
+
   /* ── Sidebar Modes ───────────────────────────────────── */
-  window.showHomeSidebar = function() {
+  window.renderMainNav = function() {
     var navList  = document.getElementById('main-nav-list');
     var formList = document.getElementById('sidebarList');
     if (!navList || !formList) return;
     navList.style.display = 'block';
     formList.style.display = 'none';
-    var homeItem = '<ion-item button detail="false" title="Inicio" style="--background:var(--ion-color-primary);" onclick="window.returnToDashboard()">' +
-      '<ion-icon slot="start" name="home-outline" style="color:var(--color-text-invert)"></ion-icon>' +
-      '<ion-label style="font-weight:700;color:var(--color-text-invert);">Inicio</ion-label></ion-item>';
+    
+    var headerPrincipal = '<div class="sidebar-heading"><span>PRINCIPAL</span></div>';
+    var homeItem = '<div class="nav-item" id="nav-item-dashboard" onclick="window.navigateTo(\'dashboard\')" title="Inicio">' +
+      '<ion-icon name="grid-outline"></ion-icon>' +
+      '<ion-label>Inicio</ion-label></div>';
+      
+    var headerEntidades = '<div class="sidebar-heading"><span>ENTIDADES</span></div>';
+    
     var sorted = Object.entries(window.ENTITY_META).sort(function(a,b){ return a[1].order - b[1].order; });
     var items = sorted.map(function(entry) {
       var key = entry[0]; var meta = entry[1];
-      return '<ion-item button detail="false" title="' + meta.label + '" style="--background:transparent;" onclick="window.DataViewEngine.render(\'' + key + '\',\'app-container\')">' +
-        '<ion-icon slot="start" name="' + meta.iconName + '" style="color:var(--ion-color-medium)"></ion-icon>' +
-        '<ion-label style="font-weight:400;">' + meta.label + '</ion-label></ion-item>';
+      if(meta.hideFromMenu === true) return '';
+      return '<div class="nav-item" id="nav-item-' + key + '" onclick="window.navigateTo(\'dataview\', \'' + key + '\')" title="' + meta.label + '">' +
+        '<ion-icon name="' + meta.iconName + '"></ion-icon>' +
+        '<ion-label>' + meta.label + '</ion-label></div>';
     }).join('');
-    navList.innerHTML = homeItem + items;
+    
+    navList.innerHTML = headerPrincipal + homeItem + headerEntidades + items;
   };
 
-  window.showListSidebar = function(activeEntityName) {
-    var navList  = document.getElementById('main-nav-list');
-    var formList = document.getElementById('sidebarList');
-    if (!navList || !formList) return;
-    navList.style.display = 'block';
-    formList.style.display = 'none';
-    var homeItem = '<ion-item button detail="false" title="Inicio" style="--background:transparent;" onclick="window.returnToDashboard()">' +
-      '<ion-icon slot="start" name="home-outline" style="color:var(--ion-color-medium)"></ion-icon>' +
-      '<ion-label>Inicio</ion-label></ion-item>';
-    var sorted = Object.entries(window.ENTITY_META).sort(function(a,b){ return a[1].order - b[1].order; });
-    var items = sorted.map(function(entry) {
-      var key = entry[0]; var meta = entry[1]; var isActive = key === activeEntityName;
-      return '<ion-item button detail="false" title="' + meta.label + '" style="--background:' + (isActive ? 'var(--ion-color-primary)' : 'transparent') + ';" onclick="window.DataViewEngine.render(\'' + key + '\',\'app-container\')">' +
-        '<ion-icon slot="start" name="' + meta.iconName + '" style="color:' + (isActive ? 'var(--color-text-invert)' : 'var(--ion-color-medium)') + '"></ion-icon>' +
-        '<ion-label style="font-weight:' + (isActive ? '700' : '400') + ';color:' + (isActive ? 'var(--color-text-invert)' : 'inherit') + ';">' + meta.label + '</ion-label></ion-item>';
-    }).join('');
-    navList.innerHTML = homeItem + items;
+  // Alias retrocompatibles para DataView_UI
+  window.showHomeSidebar = function() { window.renderMainNav(); };
+  window.showListSidebar = function(entityKey) {
+    window.renderMainNav();
+    var navItems = document.querySelectorAll('.nav-item');
+    navItems.forEach(function(item) { item.classList.remove('active'); });
+    var btn = document.getElementById('nav-item-' + entityKey);
+    if (btn) btn.classList.add('active');
   };
+  window.returnToDashboard = function() { window.navigateTo('dashboard'); };
 
   window.showFormSidebar = function(entityName) {
     var navList  = document.getElementById('main-nav-list');
@@ -85,26 +130,10 @@
     if (!navList || !formList) return;
     navList.style.display  = 'none';
     formList.style.display = 'block';
-    var homeItem = '<ion-item button detail="false" title="Inicio" style="--background:transparent;" onclick="window.returnToDashboard()">' +
-      '<ion-icon slot="start" name="home-outline" style="color:var(--ion-color-medium)"></ion-icon>' +
-      '<ion-label>Inicio</ion-label></ion-item>';
+    var homeItem = '<div class="nav-item" id="nav-item-dashboard" onclick="window.navigateTo(\'dashboard\')" title="Inicio">' +
+      '<ion-icon name="grid-outline"></ion-icon>' +
+      '<ion-label>Inicio</ion-label></div>';
     formList.innerHTML = homeItem + '<div id="form-steps-container"></div>';
-  };
-
-  /* ── returnToDashboard ───────────────────────────────── */
-  window.returnToDashboard = function() {
-    var container   = document.getElementById('app-container');
-    var headerTitle = document.getElementById('main-header-title');
-    var backBtn     = document.getElementById('global-back-btn');
-    if (headerTitle) headerTitle.textContent = 'Taxonomia Operativa';
-    if (backBtn) backBtn.style.display = 'none';
-    var oldPop = document.getElementById('dv-col-ion-popover');
-    if (oldPop) oldPop.remove();
-    if (typeof window.showHomeSidebar === 'function') window.showHomeSidebar();
-    if (container && window.OriginalDashboardHTML) {
-      container.innerHTML = window.OriginalDashboardHTML;
-      if (typeof window.renderDashboard === 'function') window.renderDashboard();
-    }
   };
 
   /* ── Dashboard logic moved to Dashboard_UI.html ── */
@@ -222,6 +251,10 @@
     if (container) window.OriginalDashboardHTML = container.innerHTML;
     setTimeout(function() {
       window.showHomeSidebar();
+      // Forzar el estado inicial del enrutador para pintar la UI
+      if (typeof window.navigateTo === 'function') {
+        window.navigateTo('dashboard');
+      }
       window.AuthManager.init();
     }, 100);
   });

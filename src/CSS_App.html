@@ -58,21 +58,22 @@
 
   @media (min-width: 992px) {
     .shell-mini .nav-item {
-      width: 48px !important; padding: 4px 0 !important;
+      width: 48px !important; height: 48px !important; padding: 4px 0 !important;
       justify-content: center !important; flex-direction: column !important;
-      gap: 2px !important;
+      gap: 2px !important; overflow: hidden !important;
     }
     .shell-mini .nav-item ion-label,
     .shell-mini .nav-item span:not(.nav-tooltip) {
       font-size: 0.65rem !important; text-align: center !important;
-      white-space: normal !important; display: block !important;
+      white-space: nowrap !important; overflow: hidden !important;
+      text-overflow: ellipsis !important; width: 100% !important; display: block !important;
     }
   }
 
   .sidebar-logo {
     width: 40px; height: 40px; background: var(--ion-color-primary);
     border-radius: 12px; display: flex; align-items: center;
-    justify-content: center; margin: 20px auto 24px;
+    justify-content: center; margin: 20px auto 24px auto !important;
   }
   .sidebar-divider { width: 32px; height: 1px; background: var(--sidebar-border); margin: 8px auto; }
   .nav-spacer { flex: 1; }
@@ -81,16 +82,16 @@
   .sidebar-heading { width: calc(100% - 32px); margin: 16px auto 8px; padding: 0 16px; transition: all 0.25s; }
   .sidebar-heading span { font-size: 0.65rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ion-color-medium); white-space: nowrap; }
   @media (min-width: 992px) {
-    .shell-mini .sidebar-heading { width: 32px !important; height: 1px !important; background: rgba(255,255,255,0.08) !important; padding: 0 !important; margin: 12px auto !important; }
+    .shell-mini .sidebar-heading { width: 32px !important; height: 1px !important; background: rgba(0,0,0,0.1) !important; padding: 0 !important; margin: 12px auto !important; }
     .shell-mini .sidebar-heading span { display: none !important; }
   }
 
   /* Build tracker */
-  .build-tracker { padding: 8px 16px; border-top: 1px solid rgba(255,255,255,0.06); display: flex; flex-direction: column; gap: 2px; transition: all 0.25s; }
+  .build-tracker { padding: 8px 16px 8px; border-top: 1px solid rgba(0,0,0,0.06); display: flex; flex-direction: column; gap: 2px; transition: all 0.25s; }
   .build-tracker .build-version { font-size: 0.7rem; font-weight: 600; color: var(--ion-color-medium); white-space: nowrap; }
-  .build-tracker .build-hash    { font-size: 0.62rem; color: rgba(100,116,139,0.6); white-space: nowrap; font-family: monospace; }
+  .build-tracker .build-hash { font-size: 0.62rem; color: rgba(100,116,139,0.6); white-space: nowrap; font-family: monospace; }
   @media (min-width: 992px) {
-    .shell-mini .build-tracker { padding: 8px 0; align-items: center; border-top: none; }
+    .shell-mini .build-tracker { padding: 8px 0; border-top: none; align-items: center; }
     .shell-mini .build-tracker .build-version,
     .shell-mini .build-tracker .build-hash { display: none !important; }
   }
@@ -163,6 +164,5 @@
   ion-toolbar.header-bg { --background: var(--color-bg-body); --color: var(--color-text); }
   @media (max-width: 991px) { .hide-on-mobile  { display: none !important; } }
   @media (min-width: 992px) { .hide-on-desktop { display: none !important; } }
-  .build-version { position: absolute; bottom: 15px; left: 0; width: 100%; text-align: center; font-size: 11px; color: var(--ion-color-medium); font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; pointer-events: none; }
-  ion-split-pane.shell-mini .build-version { font-size: 9px !important; white-space: normal !important; word-wrap: break-word !important; }
+  /* Eliminado: .build-version legado (ahora .build-tracker maneja footer state) */
 </style>

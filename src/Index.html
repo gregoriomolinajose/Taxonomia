@@ -48,16 +48,31 @@
       <!-- SIDEBAR -->
       <ion-menu content-id="main-content" side="start">
         <ion-header class="ion-no-border">
-          <ion-toolbar class="header-bg">
-            <ion-title>Gobierno de Modelo de Producto</ion-title>
-          </ion-toolbar>
+          <div class="sidebar-logo">
+            <ion-icon name="aperture-outline" style="font-size:22px;color:white;"></ion-icon>
+          </div>
         </ion-header>
         <ion-content>
           <ion-list id="main-nav-list" lines="none" style="display:block;"></ion-list>
           <ion-list id="sidebarList"   lines="none" style="display:none;"></ion-list>
         </ion-content>
-        <ion-footer class="ion-no-border" style="position:relative;height:50px;background:transparent;">
-          <div class="build-version"><?= APP_VERSION ?></div>
+        <ion-footer class="ion-no-border" style="background: transparent;">
+          <div class="sidebar-heading"><span>SISTEMA</span></div>
+          <div class="nav-item" id="nav-item-settings" onclick="window.showToast('Módulo en construcción')" title="Ajustes">
+            <ion-icon name="settings-outline"></ion-icon>
+            <ion-label>Ajustes</ion-label>
+          </div>
+          <div class="nav-item" id="nav-item-profile" onclick="window.showToast('Módulo en construcción')" title="Mi Perfil">
+            <ion-icon name="person-circle-outline"></ion-icon>
+            <ion-label>Mi Perfil</ion-label>
+          </div>
+          <div class="build-tracker">
+            <span class="build-version">
+              <ion-icon name="git-branch-outline" style="vertical-align:middle;font-size:11px;margin-right:4px;"></ion-icon>
+              <?= APP_VERSION ?>
+            </span>
+            <span class="build-hash">sha: dynamic &middot; dev-build</span>
+          </div>
         </ion-footer>
       </ion-menu>
 
