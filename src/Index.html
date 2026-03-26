@@ -21,16 +21,7 @@
   <?!= include('CSS_DesignSystem'); ?>
   <?!= include('CSS_App'); ?>
 
-  <style>
-    body { margin: 0; padding: 0; }
-    ion-menu { --ion-background-color: var(--color-bg-body); border-right: 1px solid var(--color-border); }
-    .header-bg { background-color: var(--color-bg-body); border-bottom: 1px solid var(--color-border); }
-    ion-toolbar.header-bg { --background: var(--color-bg-body); --color: var(--color-text); }
-    @media (max-width: 991px) { .hide-on-mobile  { display: none !important; } }
-    @media (min-width: 992px) { .hide-on-desktop { display: none !important; } }
-    .build-version { position: absolute; bottom: 15px; left: 0; width: 100%; text-align: center; font-size: 11px; color: var(--ion-color-medium); font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; pointer-events: none; }
-    ion-split-pane.shell-mini .build-version { font-size: 9px !important; white-space: normal !important; word-wrap: break-word !important; }
-  </style>
+
 
   <!-- DATA LAYER: Schemas y Estado Global (inyectados por GAS antes del DOM) -->
   <script>
@@ -96,8 +87,8 @@
         <ion-content class="ion-padding" color="light">
           <div id="app-container">
             <ion-grid>
-              <ion-row class="ion-align-items-center ion-margin-bottom">
-                <ion-col size="12">
+              <ion-row class="ion-align-items-center">
+                <ion-col size="12" class="ion-padding-bottom">
                   <ion-text color="dark">
                     <h1 style="font-weight:700;margin-bottom:5px;">Plataforma de Gobernanza</h1>
                   </ion-text>
@@ -111,7 +102,7 @@
               </ion-row>
               <!-- Filtro Portafolio -->
               <ion-row id="dashboard-filter-container" class="ion-justify-content-end ion-padding-horizontal" style="display:none;">
-                <ion-col size="12" size-md="4">
+                <ion-col size="12" size-md="4" class="ion-padding-bottom">
                   <ion-item lines="none" class="ion-no-padding" style="--background:transparent;">
                     <ion-select id="dashboard-portfolio-filter" interface="popover" placeholder="Todos los Portafolios"
                       style="width:100%;max-width:100%;font-weight:600;font-size:1.1em;color:var(--ion-color-primary);">
@@ -121,12 +112,12 @@
                 </ion-col>
               </ion-row>
               <!-- Charts -->
-              <ion-row id="dashboard-charts-container" class="ion-margin-bottom" style="display:none;">
-                <ion-col size="12" size-md="6">
+              <ion-row id="dashboard-charts-container" style="display:none;">
+                <ion-col size="12" size-md="6" class="ion-padding-bottom">
                   <ion-card style="height:100%;"><ion-card-header><ion-card-title>Especialidades</ion-card-title></ion-card-header>
                     <ion-card-content><div id="chart-topology"></div></ion-card-content></ion-card>
                 </ion-col>
-                <ion-col size="12" size-md="6">
+                <ion-col size="12" size-md="6" class="ion-padding-bottom">
                   <ion-card style="height:100%;"><ion-card-header><ion-card-title>Capacidad por Equipo</ion-card-title></ion-card-header>
                     <ion-card-content><div id="chart-capacity"></div></ion-card-content></ion-card>
                 </ion-col>
@@ -144,6 +135,7 @@
   <!-- MOTORES LOGICOS (Regla UI §14) -->
   <?!= include('FormEngine_UI'); ?>
   <?!= include('DataView_UI'); ?>
+  <?!= include('Dashboard_UI'); ?>
   <?!= include('JS_Core'); ?>
 
 </body>

@@ -129,11 +129,95 @@ const Adapter_Sheets = {
 
     /**
      * upsertBatch(tableName, items, config)
-     * Ejecuta múltiples upserts en bloque. Reutiliza la lógica de auditoría de upsert.
+     * Ejecuta múltiples upserts en bloque en memoria y escribe una sola vez para maximizar el rendimiento.
      */
     upsertBatch: function (tableName, items, config) {
         if (!Array.isArray(items) || items.length === 0) return { status: 'success', count: 0 };
-        const results = items.map(item => this.upsert(tableName, item, config));
+        
+        const tableKey = tableName.toLowerCase();
+        const singularKey = tableKey.endsWith('s') ? tableKey.slice(0, -1) : tableKey;
+        const firstItem = items[0];
+        const primaryKeyField = firstItem.hasOwnProperty('id_' + tableKey) ? 'id_' + tableKey
+            : firstItem.hasOwnProperty('id_' + singularKey) ? 'id_' + singularKey
+                : Object.keys(firstItem).find(key => key.startsWith('id_'));
+                
+        if (!primaryKeyField) {
+            throw new Error(`Primary Key requerida para upsertBatch.`);
+        }
+
+        const spreadsheetId = config ? config.SPREADSHEET_ID_DB : CONFIG.SPREADSHEET_ID_DB;
+        const ss = SpreadsheetApp.openById(spreadsheetId);
+        const sheet = this._ensureSheetExists(ss, tableName);
+
+        const dataRange = sheet.getDataRange();
+        const originalData = dataRange.getValues();
+        const headers = originalData[0];
+        const normalizedHeaders = headers.map(h => _normalizeHeader(h));
+        
+        const pkIndex = normalizedHeaders.indexOf(primaryKeyField);
+        if (pkIndex === -1) {
+            throw new Error(`La columna llave primaria (${primaryKeyField}) no existe en DB_${tableName}`);
+        }
+
+        const idToIndexMap = new Map();
+        for (let r = 1; r < originalData.length; r++) {
+            idToIndexMap.set(String(originalData[r][pkIndex]), r);
+        }
+
+        const currentUser = (typeof Session !== 'undefined') ? Session.getActiveUser().getEmail() : 'system@localhost';
+        const currentTimestamp = new Date().toISOString();
+
+        const idxCreatedAt = normalizedHeaders.indexOf('created_at');
+        const idxCreatedBy = normalizedHeaders.indexOf('created_by');
+        const idxUpdatedAt = normalizedHeaders.indexOf('updated_at');
+        const idxUpdatedBy = normalizedHeaders.indexOf('updated_by');
+
+        const results = [];
+        for (const payload of items) {
+            const primaryKeyValue = payload[primaryKeyField];
+            if (!primaryKeyValue) continue;
+            
+            const rowIndex = idToIndexMap.get(String(primaryKeyValue));
+            let rowToInsert = [];
+            
+            if (rowIndex !== undefined) {
+                const existingRow = originalData[rowIndex];
+                for (let i = 0; i < normalizedHeaders.length; i++) {
+                    const h = normalizedHeaders[i];
+                    if (h === 'created_at' || h === 'created_by') {
+                        rowToInsert.push(existingRow[i]);
+                    } else if (payload.hasOwnProperty(h)) {
+                        rowToInsert.push(payload[h]);
+                    } else {
+                        rowToInsert.push(existingRow[i]);
+                    }
+                }
+                if (idxUpdatedAt > -1) rowToInsert[idxUpdatedAt] = currentTimestamp;
+                if (idxUpdatedBy > -1) rowToInsert[idxUpdatedBy] = currentUser;
+                originalData[rowIndex] = rowToInsert;
+                results.push({ status: 'success', action: 'updated', pk: primaryKeyField, val: primaryKeyValue });
+            } else {
+                for (let i = 0; i < normalizedHeaders.length; i++) {
+                    const h = normalizedHeaders[i];
+                    rowToInsert.push(payload.hasOwnProperty(h) ? payload[h] : '');
+                }
+                if (idxCreatedAt > -1 && (!rowToInsert[idxCreatedAt] || String(rowToInsert[idxCreatedAt]).trim() === '')) {
+                    rowToInsert[idxCreatedAt] = currentTimestamp;
+                }
+                if (idxCreatedBy > -1 && (!rowToInsert[idxCreatedBy] || String(rowToInsert[idxCreatedBy]).trim() === '')) {
+                    rowToInsert[idxCreatedBy] = currentUser;
+                }
+                if (idxUpdatedAt > -1) rowToInsert[idxUpdatedAt] = currentTimestamp;
+                if (idxUpdatedBy > -1) rowToInsert[idxUpdatedBy] = currentUser;
+                
+                originalData.push(rowToInsert);
+                idToIndexMap.set(String(primaryKeyValue), originalData.length - 1);
+                results.push({ status: 'success', action: 'created', pk: primaryKeyField, val: primaryKeyValue });
+            }
+        }
+        
+        sheet.getRange(1, 1, originalData.length, originalData[0].length).setValues(originalData);
+
         return { status: 'success', count: results.length, details: results };
     },
 

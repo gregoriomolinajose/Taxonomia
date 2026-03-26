@@ -155,4 +155,14 @@
     transition: all 0.35s cubic-bezier(0.34,1.56,0.64,1);
   }
   .sim-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); pointer-events: all; }
+
+  /* ── Extraído de Index.html (Regla UI §14) ── */
+  body { margin: 0; padding: 0; }
+  ion-menu { --ion-background-color: var(--color-bg-body); border-right: 1px solid var(--color-border); }
+  .header-bg { background-color: var(--color-bg-body); border-bottom: 1px solid var(--color-border); }
+  ion-toolbar.header-bg { --background: var(--color-bg-body); --color: var(--color-text); }
+  @media (max-width: 991px) { .hide-on-mobile  { display: none !important; } }
+  @media (min-width: 992px) { .hide-on-desktop { display: none !important; } }
+  .build-version { position: absolute; bottom: 15px; left: 0; width: 100%; text-align: center; font-size: 11px; color: var(--ion-color-medium); font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; pointer-events: none; }
+  ion-split-pane.shell-mini .build-version { font-size: 9px !important; white-space: normal !important; word-wrap: break-word !important; }
 </style>

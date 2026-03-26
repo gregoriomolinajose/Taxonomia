@@ -48,8 +48,8 @@
     navList.style.display = 'block';
     formList.style.display = 'none';
     var homeItem = '<ion-item button detail="false" title="Inicio" style="--background:var(--ion-color-primary);" onclick="window.returnToDashboard()">' +
-      '<ion-icon slot="start" name="home-outline" style="color:#fff"></ion-icon>' +
-      '<ion-label style="font-weight:700;color:#fff;">Inicio</ion-label></ion-item>';
+      '<ion-icon slot="start" name="home-outline" style="color:var(--color-text-invert)"></ion-icon>' +
+      '<ion-label style="font-weight:700;color:var(--color-text-invert);">Inicio</ion-label></ion-item>';
     var sorted = Object.entries(window.ENTITY_META).sort(function(a,b){ return a[1].order - b[1].order; });
     var items = sorted.map(function(entry) {
       var key = entry[0]; var meta = entry[1];
@@ -73,8 +73,8 @@
     var items = sorted.map(function(entry) {
       var key = entry[0]; var meta = entry[1]; var isActive = key === activeEntityName;
       return '<ion-item button detail="false" title="' + meta.label + '" style="--background:' + (isActive ? 'var(--ion-color-primary)' : 'transparent') + ';" onclick="window.DataViewEngine.render(\'' + key + '\',\'app-container\')">' +
-        '<ion-icon slot="start" name="' + meta.iconName + '" style="color:' + (isActive ? '#fff' : 'var(--ion-color-medium)') + '"></ion-icon>' +
-        '<ion-label style="font-weight:' + (isActive ? '700' : '400') + ';color:' + (isActive ? '#fff' : 'inherit') + ';">' + meta.label + '</ion-label></ion-item>';
+        '<ion-icon slot="start" name="' + meta.iconName + '" style="color:' + (isActive ? 'var(--color-text-invert)' : 'var(--ion-color-medium)') + '"></ion-icon>' +
+        '<ion-label style="font-weight:' + (isActive ? '700' : '400') + ';color:' + (isActive ? 'var(--color-text-invert)' : 'inherit') + ';">' + meta.label + '</ion-label></ion-item>';
     }).join('');
     navList.innerHTML = homeItem + items;
   };
@@ -107,89 +107,7 @@
     }
   };
 
-  /* ── Dashboard Render ────────────────────────────────── */
-  window.renderDashboard = function(forceRefresh) {
-    if (window.chartTopology) { window.chartTopology.destroy(); window.chartTopology = null; }
-    if (window.chartCapacity) { window.chartCapacity.destroy(); window.chartCapacity = null; }
-    var container       = document.getElementById('dashboard-charts-container');
-    var filterContainer = document.getElementById('dashboard-filter-container');
-    if (!container) return;
-    var equipos = window.__APP_CACHE__['Equipo'] || [];
-    if (equipos.length === 0) return;
-    var portfolioSel = document.getElementById('dashboard-portfolio-filter');
-    var selectedPortfolio = 'all';
-    if (portfolioSel) {
-      if (!portfolioSel.dataset.populated) {
-        var portafolios = window.__APP_CACHE__['Portafolio'] || [];
-        var htmlOpts = '<ion-select-option value="all">TODOS LOS PORTAFOLIOS</ion-select-option>';
-        portafolios.forEach(function(p) { htmlOpts += '<ion-select-option value="' + p.id_portafolio + '">' + p.nombre + '</ion-select-option>'; });
-        portfolioSel.innerHTML = htmlOpts;
-        portfolioSel.value = 'all';
-        portfolioSel.dataset.populated = 'true';
-        portfolioSel.addEventListener('ionChange', function() { window.renderDashboard(true); });
-      }
-      selectedPortfolio = portfolioSel.value || 'all';
-    }
-    if (selectedPortfolio !== 'all') {
-      var productos = window.__APP_CACHE__['Producto'] || [];
-      var grupos    = window.__APP_CACHE__['Grupo_Productos'] || [];
-      equipos = equipos.filter(function(eq) {
-        var prod = productos.find(function(p) { return String(p.id_producto) === String(eq.id_producto); });
-        if (!prod) return false;
-        var grupo = grupos.find(function(g) { return String(g.id_grupo_producto) === String(prod.id_grupo_producto); });
-        return grupo && String(grupo.id_portafolio) === String(selectedPortfolio);
-      });
-    }
-    if (filterContainer) filterContainer.style.display = 'flex';
-    container.style.display = 'flex';
-    var sumBack=0,sumFront=0,sumFull=0,sumTesters=0,sumTech=0,sumCoach=0,sumPO=0,sumOtros=0;
-    var capacityData = [];
-    equipos.forEach(function(eq) {
-      sumBack    += parseInt(eq.cant_dev_back)    || 0;
-      sumFront   += parseInt(eq.cant_dev_front)   || 0;
-      sumFull    += parseInt(eq.cant_fullstack)    || 0;
-      sumTesters += parseInt(eq.cant_testers)     || 0;
-      sumTech    += parseInt(eq.cant_tech_leads)  || 0;
-      sumCoach   += parseInt(eq.cant_team_coach)  || 0;
-      sumPO      += parseInt(eq.cant_po_pm)       || 0;
-      sumOtros   += parseInt(eq.cant_otros)       || 0;
-      capacityData.push({ x: eq.nombre_equipo || 'Desconocido', y: parseInt(eq.total_integrantes) || 0 });
-    });
-    var seriesEsp = [sumBack,sumFront,sumFull,sumTesters,sumTech,sumCoach,sumPO,sumOtros];
-    var labelsEsp = ['Backend','Frontend','Fullstack','Testers','Tech Lead','Team Coach','Product Owner','Otros'];
-    window.chartTopology = new ApexCharts(document.querySelector('#chart-topology'), {
-      series: seriesEsp, labels: labelsEsp,
-      chart: { type:'donut', height:350 }, legend: { position:'bottom' },
-      colors: ['#1C42E8','#0ABF4F','#FFAE43','#FF594D','#8C8C8C','#1CA8F7','#2fdf75','#000000']
-    });
-    window.chartTopology.render();
-    capacityData.sort(function(a,b) { return b.y - a.y; });
-    window.chartCapacity = new ApexCharts(document.querySelector('#chart-capacity'), {
-      series: [{ name:'Integrantes', data: capacityData }],
-      chart: { type:'bar', height:350 }, plotOptions: { bar: { horizontal:true } },
-      colors: ['#1C42E8']
-    });
-    window.chartCapacity.render();
-  };
-
-  window.renderDashboardCards = function() {
-    var container = document.getElementById('dashboard-cards-container');
-    if (!container) return;
-    container.innerHTML = '';
-    var sorted = Object.entries(window.ENTITY_META).sort(function(a,b){ return a[1].order - b[1].order; });
-    container.innerHTML = sorted.map(function(entry) {
-      var key = entry[0]; var meta = entry[1];
-      return '<ion-col size="12" size-md="6" size-xl="4"><ion-card>' +
-        '<ion-card-header class="ion-text-center">' +
-        '<ion-icon name="' + meta.iconName + '" color="' + meta.color + '" style="font-size:48px;margin-bottom:10px;"></ion-icon>' +
-        '<ion-card-title>' + meta.label + '</ion-card-title></ion-card-header><ion-card-content>' +
-        '<ion-button expand="block" shape="round" color="' + meta.color + '" onclick="renderForm(\'' + key + '\')">' +
-        '<ion-icon slot="start" name="add-circle-outline"></ion-icon> Crear Nuevo</ion-button>' +
-        '<ion-button expand="block" shape="round" color="' + meta.color + '" fill="outline" style="margin-top:8px;" onclick="window.DataViewEngine.render(\'' + key + '\',\'app-container\')">' +
-        '<ion-icon slot="start" name="list-outline"></ion-icon> Ver Listado</ion-button>' +
-        '</ion-card-content></ion-card></ion-col>';
-    }).join('');
-  };
+  /* ── Dashboard logic moved to Dashboard_UI.html ── */
 
   /* ── AuthManager ─────────────────────────────────────── */
   window.AuthManager = {
