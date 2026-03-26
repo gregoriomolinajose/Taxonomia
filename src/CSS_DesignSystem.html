@@ -173,6 +173,13 @@
   .text-caption { font-size: var(--sys-font-caption); }
   .text-mini    { font-size: var(--sys-font-mini); text-transform: uppercase; letter-spacing: 0.05em; }
 
+  /* Forzado Tipográfico Absoluto en Modo Oscuro */
+  body.dark h1, body.dark h2, body.dark h3, body.dark h4, body.dark h5, body.dark h6, 
+  body.dark p, body.dark span, body.dark ion-card-title, body.dark ion-card-subtitle, 
+  body.dark ion-text, body.dark ion-label {
+      color: #FFFFFF !important;
+  }
+
   /* Modo Oscuro (Grises Originales - Especificidad Blindada) */
   body.dark {
     /* Variables Nativas Ionic */

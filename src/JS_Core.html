@@ -276,6 +276,22 @@
       localStorage.setItem('app_theme', themeName);
       this.updateIcon();
 
+      // Actualizacion dinamica de ApexCharts (Golden Pattern Direct-Instance & ForeColor)
+      var isDark = themeName === 'dark';
+      var chartOptionsUpdate = { 
+        theme: { mode: isDark ? 'dark' : 'light' },
+        chart: { 
+          foreColor: isDark ? '#FFFFFF' : '#081754',
+          background: 'transparent'
+        }
+      };
+      if (typeof window.chartTopology !== 'undefined' && window.chartTopology) {
+        window.chartTopology.updateOptions(chartOptionsUpdate);
+      }
+      if (typeof window.chartCapacity !== 'undefined' && window.chartCapacity) {
+        window.chartCapacity.updateOptions(chartOptionsUpdate);
+      }
+
       // Golden Pattern 6: Reflow mandatory after CSS token switch
       setTimeout(function() {
         window.dispatchEvent(new Event('resize'));
