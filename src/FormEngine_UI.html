@@ -1087,7 +1087,9 @@
 
                                  // NUNCA usar NodeLists capturados en el outer click handler.
                                  const activeContainer = document.getElementById('app-container');
-                                 activeContainer.querySelectorAll('ion-input, ion-textarea, ion-select, input[type="hidden"]')
+                                 
+                                 // Vaciado Nativo
+                                 activeContainer.querySelectorAll('ion-input, ion-textarea, ion-select')
                                      .forEach(input => { input.value = ''; });
 
                                  activeContainer.querySelectorAll('.chip-container')
@@ -1095,18 +1097,13 @@
 
                                  window.goToFormSection(steps[0]);
 
-                                 // Regenerar IDs frescos para el próximo registro
+                                 // Regenerar IDs frescos
                                  activeContainer.querySelectorAll('ion-input[readonly], input[type="hidden"]').forEach(input => {
                                      const name = input.getAttribute('name');
                                      if (name && name.startsWith('id_')) {
                                          const prefix = entityName.substring(0, 4).toUpperCase();
                                          const sufix = Math.random().toString(36).substring(2, 7).toUpperCase();
                                          input.value = `${prefix}-${sufix}`;
-                                     } else if (input.getAttribute('type') === 'hidden') {
-                                         const fSchema = fields.find(f => f.name === name);
-                                         if (fSchema && fSchema.defaultValue !== undefined && !name.startsWith('id_')) {
-                                             input.value = fSchema.defaultValue;
-                                         }
                                      }
                                  });
 
