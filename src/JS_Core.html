@@ -83,6 +83,23 @@
       if (window.DataViewEngine && typeof window.DataViewEngine.render === 'function') {
         window.DataViewEngine.render(entityKey, 'app-container');
       }
+    } 
+    else if (viewType === 'designkit') {
+      if (headerTitle) headerTitle.textContent = 'Design System Kit';
+      if (backBtn) {
+        backBtn.style.display = 'block';
+        backBtn.onclick = function() { window.navigateTo('dashboard'); };
+      }
+      var settingsBtn = document.getElementById('nav-item-settings');
+      if (settingsBtn) settingsBtn.classList.add('active');
+      
+      if (container) {
+        var tmpl = document.getElementById('tmpl-designkit');
+        if (tmpl) {
+          container.innerHTML = tmpl.innerHTML;
+          if (typeof window.mountDesignKit === 'function') window.mountDesignKit();
+        }
+      }
     }
   };
 

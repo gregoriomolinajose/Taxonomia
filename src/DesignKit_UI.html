@@ -1,0 +1,546 @@
+<!-- src/DesignKit_UI.html -->
+<style>
+  /* 1. Purga del Scrollbar (ion-segment) */
+  ion-segment::-webkit-scrollbar { display: none; }
+  ion-segment { -ms-overflow-style: none; scrollbar-width: none; }
+
+  .design-kit-card { margin-bottom: var(--spacing-4); }
+
+  /* 2. Sticky Flow Pattern (Evitar Nested Content Doom) */
+  .dk-sticky-tabs {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    background: var(--color-bg-body);
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  /* 3. Breathing Room */
+  .dk-tab-content {
+    padding: var(--spacing-6) var(--spacing-2);
+    display: none;
+  }
+  .dk-tab-content.active {
+    display: block;
+    animation: fade-in 0.3s ease;
+  }
+  @keyframes fade-in {
+    from { opacity: 0; transform: translateY(5px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  
+  /* 4. Swatches de Color Inquebrantables */
+  .color-swatch {
+    display: flex;
+    flex-direction: column;
+    box-shadow: var(--shadow-default);
+    border: 1px solid var(--color-border);
+    border-radius: var(--rounded-md);
+    overflow: hidden;
+    margin-bottom: var(--spacing-4);
+  }
+  .color-swatch-color {
+    flex-grow: 1;
+    min-height: 80px;
+    width: 100%;
+  }
+  .color-swatch-info {
+    background: var(--color-bg-body);
+    padding: var(--spacing-2);
+    text-align: center;
+    border-top: 1px solid var(--color-border);
+  }
+
+  /* 5. Cajas de Radio Perfectas */
+  .radius-box {
+    width: 120px;
+    height: 120px;
+    background: var(--color-interactive-primary);
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* 6. Tarjetas de Sombra Reales */
+  .shadow-card {
+    width: 100%;
+    max-width: 200px;
+    height: 120px;
+    background: var(--color-bg-body);
+    border-radius: var(--rounded-md);
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* 7. Theme Control Card */
+  .theme-control-item {
+    --padding-start: var(--spacing-4);
+    --inner-padding-end: var(--spacing-4);
+  }
+  .color-picker-wrapper {
+    position: relative;
+    width: 32px;
+    height: 32px;
+    border-radius: var(--rounded-full);
+    overflow: hidden;
+    border: 1px solid var(--color-border);
+    box-shadow: var(--shadow-default);
+    margin-right: var(--spacing-3);
+  }
+  .color-picker-input {
+    position: absolute;
+    top: -10px;
+    left: -10px;
+    width: 60px;
+    height: 60px;
+    opacity: 0;
+    cursor: pointer;
+  }
+  .hex-display {
+    font-family: monospace;
+    color: var(--color-text-soft);
+    font-size: 14px;
+    margin-top: 4px;
+  }
+</style>
+
+<template id="tmpl-designkit">
+  <div class="dk-sticky-tabs">
+    <ion-segment id="dk-segment" value="typography" scrollable="true">
+      <ion-segment-button value="fundations"><ion-label>Fundamentos</ion-label></ion-segment-button>
+      <ion-segment-button value="typography"><ion-label>Tipografía</ion-label></ion-segment-button>
+      <ion-segment-button value="colors"><ion-label>Colores</ion-label></ion-segment-button>
+      <ion-segment-button value="depth"><ion-label>Profundidad</ion-label></ion-segment-button>
+      <ion-segment-button value="radius"><ion-label>Redondeado</ion-label></ion-segment-button>
+      <ion-segment-button value="grids"><ion-label>Grids</ion-label></ion-segment-button>
+      <ion-segment-button value="variables"><ion-label>Local Variables</ion-label></ion-segment-button>
+      <ion-segment-button value="components"><ion-label>Componentes</ion-label></ion-segment-button>
+    </ion-segment>
+  </div>
+
+  <div class="dk-content-wrapper" style="min-height: 60vh;">
+    
+    <!-- Tab: Fundamentos -->
+    <div id="dk-tab-fundations" class="dk-tab-content">
+      <ion-text color="primary"><h2 class="text-h2">Fundamentos</h2></ion-text>
+      <p>Pendiente de integración.</p>
+    </div>
+
+    <!-- Tab: Tipografía -->
+    <div id="dk-tab-typography" class="dk-tab-content active">
+      <ion-text color="primary"><h2 class="text-h2">Tipografía (Brand Fonts)</h2></ion-text>
+      <ion-card class="design-kit-card">
+        <ion-card-content>
+          <div class="text-display">Playfair Display: text-display</div>
+          <h1>Playfair Display: h1 tag</h1>
+          <div class="text-h2">Poppins: text-h2</div>
+          <div class="text-h3">Poppins: text-h3</div>
+          <div class="text-body">Poppins: text-body (Body Content)</div>
+          <div class="text-sub">Poppins: text-sub (Subheader)</div>
+          <div class="text-caption">Poppins: text-caption</div>
+          <div class="text-mini">Poppins: text-mini</div>
+        </ion-card-content>
+      </ion-card>
+    </div>
+
+    <!-- Tab: Colores -->
+    <div id="dk-tab-colors" class="dk-tab-content">
+      <ion-text color="primary"><h2 class="text-h2">Design System Colors</h2></ion-text>
+      
+      <h3 class="text-h3" style="margin-top: var(--spacing-4);">Interactivos</h3>
+      <ion-grid>
+        <ion-row>
+          <ion-col size="6" size-md="4" size-lg="3">
+            <div class="color-swatch">
+              <div class="color-swatch-color" style="background-color: var(--color-interactive-primary)"></div>
+              <div class="color-swatch-info"><div class="text-mini">--color-interactive-primary</div></div>
+            </div>
+          </ion-col>
+          <ion-col size="6" size-md="4" size-lg="3">
+            <div class="color-swatch">
+              <div class="color-swatch-color" style="background-color: var(--color-interactive-secondary)"></div>
+              <div class="color-swatch-info"><div class="text-mini">--color-interactive-secondary</div></div>
+            </div>
+          </ion-col>
+          <ion-col size="6" size-md="4" size-lg="3">
+            <div class="color-swatch">
+              <div class="color-swatch-color" style="background-color: var(--color-interactive-error)"></div>
+              <div class="color-swatch-info"><div class="text-mini">--color-interactive-error</div></div>
+            </div>
+          </ion-col>
+        </ion-row>
+      </ion-grid>
+
+      <h3 class="text-h3" style="margin-top: var(--spacing-4);">Texto</h3>
+      <ion-grid>
+        <ion-row>
+          <ion-col size="6" size-md="4" size-lg="3">
+            <div class="color-swatch">
+              <div class="color-swatch-color" style="background-color: var(--color-text)"></div>
+              <div class="color-swatch-info"><div class="text-mini">--color-text</div></div>
+            </div>
+          </ion-col>
+          <ion-col size="6" size-md="4" size-lg="3">
+            <div class="color-swatch">
+              <div class="color-swatch-color" style="background-color: var(--color-text-soft)"></div>
+              <div class="color-swatch-info"><div class="text-mini">--color-text-soft</div></div>
+            </div>
+          </ion-col>
+          <ion-col size="6" size-md="4" size-lg="3">
+            <div class="color-swatch">
+              <div class="color-swatch-color" style="background-color: var(--color-text-invert)"></div>
+              <div class="color-swatch-info"><div class="text-mini">--color-text-invert</div></div>
+            </div>
+          </ion-col>
+        </ion-row>
+      </ion-grid>
+
+      <h3 class="text-h3" style="margin-top: var(--spacing-4);">Fondos</h3>
+      <ion-grid>
+        <ion-row>
+          <ion-col size="6" size-md="4" size-lg="3">
+            <div class="color-swatch">
+              <div class="color-swatch-color" style="background-color: var(--color-bg-0)"></div>
+              <div class="color-swatch-info"><div class="text-mini">--color-bg-0</div></div>
+            </div>
+          </ion-col>
+          <ion-col size="6" size-md="4" size-lg="3">
+            <div class="color-swatch">
+              <div class="color-swatch-color" style="background-color: var(--color-bg-body)"></div>
+              <div class="color-swatch-info"><div class="text-mini">--color-bg-body</div></div>
+            </div>
+          </ion-col>
+          <ion-col size="6" size-md="4" size-lg="3">
+            <div class="color-swatch">
+              <div class="color-swatch-color" style="background-color: var(--color-bg-success)"></div>
+              <div class="color-swatch-info"><div class="text-mini">--color-bg-success</div></div>
+            </div>
+          </ion-col>
+        </ion-row>
+      </ion-grid>
+
+      <h3 class="text-h3" style="margin-top: var(--spacing-4);">Bordes</h3>
+      <ion-grid>
+        <ion-row>
+          <ion-col size="6" size-md="4" size-lg="3">
+            <div class="color-swatch">
+              <div class="color-swatch-color" style="background-color: transparent; border: 2px solid var(--color-border); border-bottom: none;"></div>
+              <div class="color-swatch-info"><div class="text-mini">--color-border</div></div>
+            </div>
+          </ion-col>
+          <ion-col size="6" size-md="4" size-lg="3">
+            <div class="color-swatch">
+              <div class="color-swatch-color" style="background-color: transparent; border: 2px solid var(--color-border-error); border-bottom: none;"></div>
+              <div class="color-swatch-info"><div class="text-mini">--color-border-error</div></div>
+            </div>
+          </ion-col>
+          <ion-col size="6" size-md="4" size-lg="3">
+            <div class="color-swatch">
+              <div class="color-swatch-color" style="background-color: transparent; border: 2px solid var(--color-border-success); border-bottom: none;"></div>
+              <div class="color-swatch-info"><div class="text-mini">--color-border-success</div></div>
+            </div>
+          </ion-col>
+        </ion-row>
+      </ion-grid>
+
+      <h3 class="text-h3" style="margin-top: var(--spacing-4);">Marcas</h3>
+      <ion-grid>
+        <ion-row>
+          <ion-col size="6" size-md="4" size-lg="3">
+            <div class="color-swatch">
+              <div class="color-swatch-color" style="background-color: var(--color-brand-coppel)"></div>
+              <div class="color-swatch-info"><div class="text-mini">--color-brand-coppel</div></div>
+            </div>
+          </ion-col>
+          <ion-col size="6" size-md="4" size-lg="3">
+            <div class="color-swatch">
+              <div class="color-swatch-color" style="background-color: var(--color-brand-bancoppel)"></div>
+              <div class="color-swatch-info"><div class="text-mini">--color-brand-bancoppel</div></div>
+            </div>
+          </ion-col>
+          <ion-col size="6" size-md="4" size-lg="3">
+            <div class="color-swatch">
+              <div class="color-swatch-color" style="background-color: var(--color-brand-sales)"></div>
+              <div class="color-swatch-info"><div class="text-mini">--color-brand-sales</div></div>
+            </div>
+          </ion-col>
+        </ion-row>
+      </ion-grid>
+    </div>
+
+    <!-- Tab: Profundidad -->
+    <div id="dk-tab-depth" class="dk-tab-content">
+      <ion-text color="primary"><h2 class="text-h2">Profundidad (Shadows)</h2></ion-text>
+      <div style="background-color: var(--color-bg-0); padding: var(--spacing-6); border-radius: var(--rounded-md); margin-top: var(--spacing-4);">
+        <ion-grid>
+          <ion-row>
+            <ion-col size="12" size-md="6" size-lg="3" class="ion-text-center ion-padding-bottom">
+              <div class="shadow-card" style="box-shadow: var(--shadow-default); margin-bottom: var(--spacing-2);">
+                <div class="text-body" style="font-weight: 500;">Default</div>
+              </div>
+              <div class="text-small">--shadow-default</div>
+            </ion-col>
+            <ion-col size="12" size-md="6" size-lg="3" class="ion-text-center ion-padding-bottom">
+              <div class="shadow-card" style="box-shadow: var(--shadow-hover); margin-bottom: var(--spacing-2);">
+                <div class="text-body" style="font-weight: 500;">Hover</div>
+              </div>
+              <div class="text-small">--shadow-hover</div>
+            </ion-col>
+            <ion-col size="12" size-md="6" size-lg="3" class="ion-text-center ion-padding-bottom">
+              <div class="shadow-card" style="box-shadow: var(--shadow-primary); margin-bottom: var(--spacing-2);">
+                <div class="text-body" style="font-weight: 500; color: var(--color-interactive-primary);">Primary</div>
+              </div>
+              <div class="text-small">--shadow-primary</div>
+            </ion-col>
+            <ion-col size="12" size-md="6" size-lg="3" class="ion-text-center ion-padding-bottom">
+              <div class="shadow-card" style="box-shadow: var(--shadow-floating); margin-bottom: var(--spacing-2);">
+                <div class="text-body" style="font-weight: 500;">Floating</div>
+              </div>
+              <div class="text-small">--shadow-floating</div>
+            </ion-col>
+          </ion-row>
+        </ion-grid>
+      </div>
+    </div>
+
+    <!-- Tab: Redondeado -->
+    <div id="dk-tab-radius" class="dk-tab-content">
+      <ion-text color="primary"><h2 class="text-h2">Redondeado (Border Radius)</h2></ion-text>
+      <ion-grid style="margin-top: var(--spacing-4);">
+        <ion-row>
+          <ion-col size="6" size-md="3" class="ion-text-center">
+            <div class="radius-box" style="border-radius: var(--rounded-none); margin-bottom: var(--spacing-2);"></div>
+            <div class="text-small">--rounded-none</div>
+          </ion-col>
+          <ion-col size="6" size-md="3" class="ion-text-center">
+            <div class="radius-box" style="border-radius: var(--rounded-sm); margin-bottom: var(--spacing-2);"></div>
+            <div class="text-small">--rounded-sm</div>
+          </ion-col>
+          <ion-col size="6" size-md="3" class="ion-text-center">
+            <div class="radius-box" style="border-radius: var(--rounded-md); margin-bottom: var(--spacing-2);"></div>
+            <div class="text-small">--rounded-md</div>
+          </ion-col>
+          <ion-col size="6" size-md="3" class="ion-text-center">
+            <div class="radius-box" style="border-radius: var(--rounded-full); margin-bottom: var(--spacing-2);"></div>
+            <div class="text-small">--rounded-full</div>
+          </ion-col>
+        </ion-row>
+      </ion-grid>
+    </div>
+
+    <!-- Tab: Grids -->
+    <div id="dk-tab-grids" class="dk-tab-content">
+      <ion-text color="primary"><h2 class="text-h2">Grids</h2></ion-text>
+      <p>Pendiente de integración.</p>
+    </div>
+
+    <!-- Tab: Local Variables -->
+    <div id="dk-tab-variables" class="dk-tab-content">
+      <ion-text color="primary"><h2 class="text-h2">Theme Builder (Live White-label)</h2></ion-text>
+      <p class="text-body" style="margin-bottom: var(--spacing-4);">Modifica las variables fundacionales en tiempo real. Este motor muta el Shadow DOM nativo de Ionic.</p>
+      
+      <ion-card class="design-kit-card">
+        <ion-item lines="none" class="theme-control-item">
+          <div slot="start" class="color-picker-wrapper" id="primary-picker-bg">
+            <input type="color" class="color-picker-input theme-mutator" 
+                   data-token="--color-interactive-primary" 
+                   data-ion-token="primary" 
+                   id="primary-mutator">
+          </div>
+          <ion-label>
+            <h3 class="text-h3" style="margin: 0;">Interactive Primary</h3>
+            <div class="hex-display" id="primary-hex-display">Calculando...</div>
+          </ion-label>
+          <ion-button fill="clear" color="medium" slot="end" onclick="window.resetThemeEngine()">
+            <ion-icon name="refresh-outline" slot="start"></ion-icon> Restablecer
+          </ion-button>
+        </ion-item>
+      </ion-card>
+    </div>
+
+    <!-- Tab: Componentes -->
+    <div id="dk-tab-components" class="dk-tab-content">
+      <ion-text color="primary"><h2 class="text-h2">Componentes (Golden Patterns)</h2></ion-text>
+      <ion-card class="design-kit-card">
+        <ion-card-content>
+          
+          <h3 class="text-h3">Pattern 1: Inputs Modernos</h3>
+          <ion-item>
+            <ion-input label="Campo de Texto Flotante" label-placement="floating" fill="outline" placeholder="Escribe aquí..."></ion-input>
+          </ion-item>
+          
+          <br>
+          <h3 class="text-h3">Pattern 2: Smart Select</h3>
+          <ion-item>
+            <ion-select class="smart-select-demo" label="Selector Dinámico" label-placement="floating" fill="outline" placeholder="Selecciona una opción...">
+              <ion-select-option value="1">Opción 1</ion-select-option>
+              <ion-select-option value="2">Opción 2</ion-select-option>
+            </ion-select>
+          </ion-item>
+          
+          <br>
+          <h3 class="text-h3">Pattern 3: Enterprise Modal</h3>
+          <ion-button expand="block" onclick="window.openTestModal()">Abrir Modal de Prueba</ion-button>
+          
+        </ion-card-content>
+      </ion-card>
+    </div>
+
+  </div>
+</template>
+
+<!-- Modal Base -->
+<ion-modal id="enterpriseModalTest" class="enterprise-modal-clean">
+  <ion-header>
+    <ion-toolbar color="primary">
+      <ion-title>Modal Enterprise</ion-title>
+      <ion-buttons slot="end">
+        <ion-button onclick="document.getElementById('enterpriseModalTest').dismiss()">
+          <ion-icon name="close-outline"></ion-icon>
+        </ion-button>
+      </ion-buttons>
+    </ion-toolbar>
+  </ion-header>
+  
+  <ion-content class="ion-padding">
+    <div class="modal-body-content text-body" style="padding: var(--spacing-4);">
+      <h2 class="text-h2">Validación Correcta</h2>
+      <p>Este modal usa el patrón limpio, sin dobles tarjetas anidadas, respetando las dimensiones del Design System.</p>
+    </div>
+  </ion-content>
+</ion-modal>
+
+<script>
+  window.switchDesignKitTab = function(event) {
+    if (!event || !event.detail) return;
+    var tabName = event.detail.value;
+    var tabs = document.querySelectorAll('.dk-tab-content');
+    tabs.forEach(function(tab) {
+      tab.classList.remove('active');
+    });
+    var target = document.getElementById('dk-tab-' + tabName);
+    if (target) {
+      target.classList.add('active');
+    }
+  };
+
+  window.openTestModal = function() {
+    var modal = document.getElementById('enterpriseModalTest');
+    if (modal) modal.present();
+  };
+
+  // Helper: Hex to RGB Converter
+  window.hexToRgb = function(hex) {
+    var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return result ? 
+      parseInt(result[1], 16) + ', ' + parseInt(result[2], 16) + ', ' + parseInt(result[3], 16) 
+      : null;
+  };
+
+  // Helper: Luminance Engine
+  window.calculateContrast = function(hex) {
+    var rgb = window.hexToRgb(hex);
+    if (!rgb) return '#ffffff';
+    var parts = rgb.split(',').map(Number);
+    // Fórmula YIQ para brillo visual humano
+    var yiq = ((parts[0] * 299) + (parts[1] * 587) + (parts[2] * 114)) / 1000;
+    return (yiq >= 128) ? '#000000' : '#ffffff';
+  };
+
+  // Failsafe: Reset Theme Engine
+  window.resetThemeEngine = function() {
+    var mutators = document.querySelectorAll('.theme-mutator');
+    mutators.forEach(function(mutator) {
+      var cssVar = mutator.getAttribute('data-token');
+      var ionBase = mutator.getAttribute('data-ion-token');
+      
+      document.documentElement.style.removeProperty(cssVar);
+      if (ionBase) {
+        document.documentElement.style.removeProperty('--ion-color-' + ionBase);
+        document.documentElement.style.removeProperty('--ion-color-' + ionBase + '-rgb');
+        document.documentElement.style.removeProperty('--ion-color-' + ionBase + '-contrast');
+        document.documentElement.style.removeProperty('--ion-color-' + ionBase + '-contrast-rgb');
+      }
+    });
+    // Re-initialize values to reflect original CSS
+    window.initThemeMutators();
+  };
+
+  window.initThemeMutators = function() {
+    var mutators = document.querySelectorAll('.theme-mutator');
+    const rootStyle = getComputedStyle(document.documentElement);
+    
+    mutators.forEach(function(mutator) {
+      var cssVar = mutator.getAttribute('data-token');
+      var currentValue = rootStyle.getPropertyValue(cssVar).trim();
+      
+      // Update the input value and bg color
+      if (currentValue && currentValue.startsWith('#')) {
+        mutator.value = currentValue;
+        var wrapper = mutator.parentElement;
+        if (wrapper) wrapper.style.backgroundColor = currentValue;
+        
+        var hexDisplay = document.getElementById(mutator.id.replace('mutator', 'hex-display'));
+        if (hexDisplay) hexDisplay.textContent = currentValue.toUpperCase();
+      }
+    });
+  };
+
+  window.mountDesignKit = function() {
+    // 1. Inicializar selectores en vivo
+    const selects = document.querySelectorAll('.smart-select-demo');
+    const isDesktop = window.innerWidth >= 768;
+    selects.forEach(select => {
+      select.interface = isDesktop ? 'popover' : 'action-sheet';
+    });
+
+    // 2. Anclar el View Switcher Engine a ion-segment nativo
+    const segment = document.getElementById('dk-segment');
+    if (segment) {
+      segment.addEventListener('ionChange', window.switchDesignKitTab);
+    }
+
+    // 3. Inicializar Dynamic Token Mutator
+    window.initThemeMutators();
+    
+    // Anclar listeners de mutación
+    document.querySelectorAll('.theme-mutator').forEach(function(mutator) {
+      // Remover posible evento huérfano para evitar duplicados en SPA
+      const newMutator = mutator.cloneNode(true);
+      mutator.parentNode.replaceChild(newMutator, mutator);
+      
+      newMutator.addEventListener('input', function(e) {
+        var newColor = e.target.value;
+        var cssVar = newMutator.getAttribute('data-token');
+        var ionBase = newMutator.getAttribute('data-ion-token');
+        
+        // Mute Global App Brand
+        document.documentElement.style.setProperty(cssVar, newColor);
+        
+        // Mute Ionic Shadow DOM bindings (Solid + RGB + Contrast for ripples/opacities/text)
+        if (ionBase) {
+          document.documentElement.style.setProperty('--ion-color-' + ionBase, newColor);
+          var rgb = window.hexToRgb(newColor);
+          if (rgb) {
+            document.documentElement.style.setProperty('--ion-color-' + ionBase + '-rgb', rgb);
+          }
+          var contrast = window.calculateContrast(newColor);
+          document.documentElement.style.setProperty('--ion-color-' + ionBase + '-contrast', contrast);
+          var contrastRgb = window.hexToRgb(contrast);
+          if (contrastRgb) {
+            document.documentElement.style.setProperty('--ion-color-' + ionBase + '-contrast-rgb', contrastRgb);
+          }
+        }
+        
+        // Update UI
+        var wrapper = newMutator.parentElement;
+        if (wrapper) wrapper.style.backgroundColor = newColor;
+        var hexDisplay = document.getElementById(newMutator.id.replace('mutator', 'hex-display'));
+        if (hexDisplay) hexDisplay.textContent = newColor.toUpperCase();
+      });
+    });
+  };
+</script>

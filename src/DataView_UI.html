@@ -5,21 +5,24 @@
      window.DataViewEngine.render(entityName, containerId)
      ============================================================ -->
 <style>
-    /* ── Design Tokens específicos del DataView ── */
-    :root {
-        --dv-primary: #2563eb;
-        --dv-primary-light: #eff6ff;
-        --dv-primary-dark: #1d4ed8;
-        --dv-surface: #ffffff;
-        --dv-bg: #f1f5f9;
-        --dv-border: #e2e8f0;
-        --dv-text-primary: #0f172a;
-        --dv-text-secondary: #64748b;
-        --dv-text-light: #94a3b8;
-        --dv-radius: 10px;
-        --dv-radius-sm: 6px;
-        --dv-shadow: 0 1px 3px rgba(0, 0, 0, .08), 0 1px 2px rgba(0, 0, 0, .04);
-        --dv-shadow-md: 0 4px 12px rgba(0, 0, 0, .10);
+    /* ── Corrección de Design Tokens (DataView) ── */
+    body {
+        /* Mapeo estricto al Design System */
+        --dv-primary: var(--ion-color-primary, #1C42E8); 
+        --dv-primary-light: rgba(var(--ion-color-primary-rgb, 28, 66, 232), 0.1); 
+        --dv-primary-dark: var(--ion-color-primary-shade, #081754);
+
+        /* Sincronización Estricta del Mapeo a CSS_DesignSystem */
+        --dv-surface: var(--ion-background-color, #ffffff);
+        --dv-bg: var(--sidebar-bg, var(--ion-card-background));
+        --dv-border: var(--color-border, #C9C9C9);
+        --dv-text-primary: var(--ion-text-color, #081754);
+        --dv-text-secondary: var(--color-text-soft, #A4A4A4);
+        --dv-text-light: var(--color-text-soft, #94a3b8);
+        --dv-radius: var(--rounded-md, 10px);
+        --dv-radius-sm: var(--rounded-sm, 6px);
+        --dv-shadow: var(--shadow-default, 0 1px 3px rgba(0, 0, 0, .08), 0 1px 2px rgba(0, 0, 0, .04));
+        --dv-shadow-md: var(--shadow-hover, 0 4px 12px rgba(0, 0, 0, .10));
         --dv-transition: .18s ease;
     }
 
@@ -86,7 +89,7 @@
 
     .dv-btn-primary {
         background: var(--dv-primary);
-        color: #fff;
+        color: var(--ion-color-primary-contrast, #ffffff);
     }
 
     .dv-btn-primary:hover {
@@ -133,7 +136,7 @@
 
     .dv-btn-icon.active {
         background: var(--dv-primary);
-        color: #fff;
+        color: var(--ion-color-primary-contrast, #ffffff);
         border-color: var(--dv-primary);
     }
 
@@ -193,10 +196,10 @@
 
     /* ── Card principal — Elevación Enterprise ── */
     .dv-card {
-        background: var(--dv-surface);
-        border: 1px solid var(--ion-color-light-shade, var(--dv-border));
+        background: var(--dv-bg);
+        border: 1px solid var(--dv-border);
         border-radius: 8px;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        box-shadow: var(--dv-shadow);
         overflow: hidden;
     }
 
@@ -206,24 +209,23 @@
         -webkit-overflow-scrolling: touch;
     }
 
-    /* Scrollbar horizontal suavizado en Chrome/Safari/Edge — Hardcoded Hex Polish */
+    /* Scrollbar horizontal suavizado (macOS style fluido) */
     .dv-table-wrap::-webkit-scrollbar {
-        height: 8px !important;
+        height: 8px;
+        width: 8px;
     }
 
     .dv-table-wrap::-webkit-scrollbar-track {
-        background: #f4f5f8 !important;
-        border-radius: 4px !important;
+        background: transparent;
     }
 
     .dv-table-wrap::-webkit-scrollbar-thumb {
-        background-color: #c8c7cc !important;
-        border-radius: 4px !important;
-        border: 2px solid #f4f5f8 !important;
+        background: var(--color-border);
+        border-radius: var(--rounded-full);
     }
 
     .dv-table-wrap::-webkit-scrollbar-thumb:hover {
-        background: #a1a1a1;
+        background: var(--dv-text-secondary);
     }
 
     .dv-table {
@@ -242,11 +244,13 @@
         padding: 11px 14px;
         text-align: left;
         font-weight: 600;
-        font-size: .78rem;
+        font-size: var(--sys-font-small);
         text-transform: uppercase;
         letter-spacing: .04em;
         color: var(--dv-text-secondary);
         border-bottom: 2px solid var(--dv-border);
+        border-left: none;
+        border-right: none;
         white-space: nowrap;
         cursor: pointer;
         user-select: none;
@@ -275,8 +279,10 @@
     }
 
     .dv-table td {
-        padding: 11px 14px;
+        padding: 16px 14px;
         border-bottom: 1px solid var(--dv-border);
+        border-left: none;
+        border-right: none;
         color: var(--dv-text-primary);
         vertical-align: middle;
         white-space: nowrap;
@@ -416,7 +422,7 @@
 
     .dv-btn-icon.active {
         background: var(--dv-primary);
-        color: #fff;
+        color: var(--ion-color-primary-contrast, #ffffff);
         border-color: var(--dv-primary);
         box-shadow: var(--dv-shadow);
     }
@@ -524,7 +530,7 @@
 
     .dv-page-btn:hover:not(:disabled) {
         background: var(--dv-primary);
-        color: #fff;
+        color: var(--ion-color-primary-contrast, #ffffff);
         border-color: var(--dv-primary);
     }
 
@@ -617,6 +623,14 @@
         .dv-search-wrap {
             max-width: 100%;
         }
+    }
+    /* ── UX Polish S1.6.15 ── */
+    .dv-pagination {
+        border-bottom-left-radius: var(--dv-radius);
+        border-bottom-right-radius: var(--dv-radius);
+    }
+    .dv-table tbody tr:nth-child(even) {
+        background: rgba(var(--ion-text-color-rgb, 8, 23, 84), 0.03); 
     }
 </style>
 
@@ -974,7 +988,7 @@
         <div class="dv-card">
           <div class="dv-table-wrap">
             <table class="dv-table">
-              <thead><tr>${thead}<th style="width:50px;"></th></tr></thead>
+              <thead><tr><th style="width: 50px; text-align: center;">#</th>${thead}<th style="width:50px;"></th></tr></thead>
               <tbody>${_renderTableBody(rows, visibleCols)}</tbody>
             </table>
           </div>
@@ -983,7 +997,11 @@
         }
 
         function _renderTableBody(rows, visibleCols) {
-            return rows.map(row => {
+            const startIdx = (_state.page - 1) * _state.pageSize;
+            return rows.map((row, idx) => {
+                const rowNum = startIdx + idx + 1;
+                const indexCell = `<td style="width: 50px; text-align: center; color: var(--dv-text-secondary); font-variant-numeric: tabular-nums; font-weight: 500;">${rowNum}</td>`;
+
                 const cells = visibleCols.map(col =>
                     `<td title="${String(row[col.key] ?? '')}">${_formatValue(col.key, row[col.key])}</td>`
                 ).join('');
@@ -996,7 +1014,7 @@
                     </button>
                 </td>`;
 
-                return `<tr>${cells}${actionCell}</tr>`;
+                return `<tr>${indexCell}${cells}${actionCell}</tr>`;
             }).join('');
         }
 
@@ -1199,13 +1217,13 @@
           </div>
           <div class="dv-header-actions">
             <input type="file" id="dv-bulk-upload-input" accept=".csv" style="display:none;" onchange="window.DataViewEngine._importCSV(event)">
-            <button class="dv-btn dv-btn-outline" onclick="window.DataViewEngine._exportCSV()">
+            <button class="dv-btn dv-btn-ghost" onclick="window.DataViewEngine._exportCSV()">
               <ion-icon name="download-outline" slot="start"></ion-icon> Exportar CSV
             </button>
-            <button class="dv-btn dv-btn-outline" style="color:var(--ion-color-secondary); border-color:var(--ion-color-secondary);" onclick="document.getElementById('dv-bulk-upload-input').click()">
+            <button class="dv-btn dv-btn-ghost" onclick="document.getElementById('dv-bulk-upload-input').click()">
               <ion-icon name="cloud-upload-outline" slot="start"></ion-icon> Importar CSV
             </button>
-            <button class="dv-btn dv-btn-primary" onclick="renderForm('${_state.entityName}')">
+            <button class="dv-btn dv-btn-outline" onclick="renderForm('${_state.entityName}')">
               <ion-icon name="add-outline" slot="start"></ion-icon> Crear ${displayLabel.replace(/s$/, '')}
             </button>
           </div>
