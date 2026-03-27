@@ -254,4 +254,31 @@
   @media (max-width: 991px) { .hide-on-mobile  { display: none !important; } }
   @media (min-width: 992px) { .hide-on-desktop { display: none !important; } }
   /* Eliminado: .build-version legado (ahora .build-tracker maneja footer state) */
+
+  /* ═══════════════════════════════════════════════════════
+     ENTERPRISE MODAL OVERRIDE (Desktop Desktop)
+  ═══════════════════════════════════════════════════════ */
+  @media (min-width: 768px) {
+    ion-modal {
+      --width: 800px !important;
+      --max-width: 90vw !important;
+      --height: 85vh !important;
+      --max-height: 90vh !important;
+      --border-radius: var(--rounded-md) !important;
+      --box-shadow: var(--shadow-floating) !important;
+    }
+  }
+
+  /* Limpieza visual del contenedor interno del Formulario */
+  ion-modal .form-engine-wrapper,
+  ion-modal ion-card {
+    box-shadow: none !important;
+    margin: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+  }
+
+  ion-modal ion-content {
+    --background: var(--color-bg-body) !important;
+  }
 </style>

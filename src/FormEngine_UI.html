@@ -1,3 +1,4 @@
+
 <script>
     /**
      * FormEngine_UI.html
@@ -48,13 +49,27 @@
             // Asegurar reset de estado al abrir formulario nuevo (Directiva 1)
             global.currentEditId = null;
             window._lastSection = null; // Reset de secciones UI
-            const container = document.getElementById('app-container');
-            if (!container) throw new Error("Container #app-container not found");
+            
+            // Construcción del Modal de la Vista de Formularios (Keyboard-Aware Fix)
+            const modal = document.createElement('ion-modal');
+            global.currentFormModal = modal;
+            
+            // Header Nativo del Modal
+            const header = document.createElement('ion-header');
+            header.innerHTML = `
+              <ion-toolbar>
+                <ion-title>Taxonomia: ${window.formatEntityName(entityName)}</ion-title>
+                <ion-buttons slot="end">
+                  <ion-button onclick="if(window.currentFormModal) { window.currentFormModal.dismiss().then(() => window.currentFormModal.remove()); }">Cerrar</ion-button>
+                </ion-buttons>
+              </ion-toolbar>
+            `;
+            modal.appendChild(header);
 
-            // Limpieza segura del contenedor (no inyección indiscriminada)
-            while (container.firstChild) {
-                container.removeChild(container.firstChild);
-            }
+            // Reemplazamos 'container' por el Content Nativo
+            const container = document.createElement('ion-content');
+            container.className = 'ion-padding';
+            modal.appendChild(container);
 
             const schemas = global.APP_SCHEMAS;
             if (!schemas || !schemas[entityName]) {
@@ -185,11 +200,11 @@
             }
 
             const card = document.createElement('ion-card');
-            card.style.borderRadius = '12px'; // Redondeo Figma
-            card.style.boxShadow = 'var(--ion-shadow-sm)'; // Sombra suave Figma
+            card.style.borderRadius = 'var(--rounded-md)'; // Redondeo Figma
+            card.style.boxShadow = 'var(--shadow-floating)'; // Sombra suave Figma
 
             const cardContent = document.createElement('ion-card-content');
-            cardContent.style.padding = '24px';
+            cardContent.style.padding = 'var(--spacing-6)';
             card.appendChild(cardContent);
 
             // Progressive Disclosure (Rule 5.1) - Contenedores Lógicos
@@ -215,7 +230,7 @@
             // Indicador de Progreso
             let progressLabel = document.createElement('h3');
             progressLabel.style.color = 'var(--ion-color-medium)';
-            progressLabel.style.fontSize = '12px';
+            progressLabel.style.fontSize = 'var(--sys-font-small)';
             progressLabel.style.marginTop = '0';
             progressLabel.style.marginBottom = '20px';
             progressLabel.style.fontWeight = '600';
@@ -274,7 +289,7 @@
                 const sectionTitle = document.createElement('h2');
                 sectionTitle.textContent = (key === 'default' ? 'Configuración General' : key);
                 sectionTitle.style.color = 'var(--ion-text-color)';
-                sectionTitle.style.fontSize = '20px';
+                sectionTitle.style.fontSize = 'var(--sys-font-h3)';
                 sectionTitle.style.fontWeight = '600';
                 sectionTitle.style.marginTop = '0';
                 sectionTitle.style.marginBottom = '20px';
@@ -359,7 +374,7 @@
                         break;
                     case 'select':
                         inputEl = document.createElement('ion-select');
-                        inputEl.setAttribute('interface', 'popover');
+                        inputEl.setAttribute('interface', window.innerWidth < 768 ? 'action-sheet' : 'popover');
                         if (field.options && Array.isArray(field.options)) {
                             field.options.forEach(opt => {
                                 const ionOption = document.createElement('ion-select-option');
@@ -380,10 +395,10 @@
                         inputEl.setAttribute('data-dynamic-list', field.name);
                         inputEl.style.border = '0px solid var(--ion-border-color)';
                         inputEl.style.padding = '0px';
-                        inputEl.style.marginBottom = '16px';
+                        inputEl.style.marginBottom = 'var(--spacing-4)';
                         
                         const dlHeader = document.createElement('div');
-                        dlHeader.style.fontSize = '12px';
+                        dlHeader.style.fontSize = 'var(--sys-font-small)';
                         dlHeader.style.color = 'var(--ion-color-medium)';
                         dlHeader.style.marginBottom = '8px';
                         dlHeader.style.paddingLeft = '5px';
@@ -409,7 +424,7 @@
                             const row = document.createElement('ion-row');
                             row.classList.add('dynamic-list-row');
                             row.style.alignItems = 'center';
-                            row.style.marginBottom = '8px';
+                            row.style.marginBottom = 'var(--spacing-2)';
 
                             field.subFields.forEach(sub => {
                                 const col = document.createElement('ion-col');
@@ -419,7 +434,7 @@
                                 const subInput = document.createElement(sub.type === 'select' ? 'ion-select' : 'ion-input');
                                 subInput.setAttribute('name', sub.name);
                                 subInput.setAttribute('label', sub.label);
-                                subInput.setAttribute('label-placement', 'stacked');
+                                subInput.setAttribute('label-placement', 'floating');
                                 subInput.setAttribute('fill', 'outline');
                                 subInput.style.setProperty('--background', 'var(--ion-color-step-100)');
                                 
@@ -428,7 +443,7 @@
                                 }
 
                                 if (sub.type === 'select' && sub.lookupSource) {
-                                    subInput.setAttribute('interface', 'popover');
+                                    subInput.setAttribute('interface', window.innerWidth < 768 ? 'action-sheet' : 'popover');
                                     if (sub.options && Array.isArray(sub.options)) {
                                         sub.options.forEach(opt => {
                                             const ionOption = document.createElement('ion-select-option');
@@ -473,11 +488,11 @@
                     case 'chip-input':
                         isComplex = true;
                         inputEl = document.createElement('div');
-                        inputEl.style.marginBottom = '16px';
+                        inputEl.style.marginBottom = 'var(--spacing-4)';
 
                         // Etiqueta del campo
                         const cLabel = document.createElement('div');
-                        cLabel.style.fontSize = '12px';
+                        cLabel.style.fontSize = 'var(--sys-font-small)';
                         cLabel.style.color = 'var(--ion-color-medium)';
                         cLabel.style.marginBottom = '4px';
                         cLabel.style.paddingLeft = '5px';
@@ -488,8 +503,8 @@
                         const chipItem = document.createElement('ion-item');
                         chipItem.setAttribute('lines', 'none');
                         chipItem.style.setProperty('--background', 'var(--ion-color-step-100)');
-                        chipItem.style.borderRadius = '8px';
-                        chipItem.style.marginBottom = '8px';
+                        chipItem.style.borderRadius = 'var(--rounded-sm)';
+                        chipItem.style.marginBottom = 'var(--spacing-2)';
                         chipItem.style.border = '1px solid var(--ion-color-step-300)';
 
                         const innerInput = document.createElement('ion-input');
@@ -509,7 +524,7 @@
                         chipContainer.setAttribute('data-chip-name', field.name);
                         chipContainer.style.display = 'flex';
                         chipContainer.style.flexWrap = 'wrap';
-                        chipContainer.style.gap = '8px';
+                        chipContainer.style.gap = 'var(--spacing-2)';
 
                         inputEl.appendChild(chipItem);
                         inputEl.appendChild(chipContainer);
@@ -551,12 +566,12 @@
 
                 if (!isComplex) {
                     inputEl.setAttribute('label', field.label + (field.type === 'lookup' ? ' (Buscar ' + field.lookupTarget + ')' : ''));
-                    inputEl.setAttribute('label-placement', 'stacked');
+                    inputEl.setAttribute('label-placement', 'floating');
                     inputEl.setAttribute('fill', 'outline');
                     inputEl.setAttribute('name', field.name);
-                    inputEl.style.marginBottom = '16px';
+                    inputEl.style.marginBottom = 'var(--spacing-4)';
                     inputEl.style.setProperty('--background', 'var(--ion-color-step-100)');
-                    inputEl.style.borderRadius = '8px';
+                    inputEl.style.borderRadius = 'var(--rounded-sm)';
 
                     if (field.required) inputEl.setAttribute('required', 'true');
                     if (field.readonly && field.type !== 'lookup') inputEl.setAttribute('readonly', 'true');
@@ -781,23 +796,30 @@
                 }
             }
 
-            // Contenedor del Botón (Paginación + CTA)
-            const btnContainer = document.createElement('div');
-            btnContainer.style.borderTop = '1px solid var(--ion-border-color)';
-            btnContainer.style.paddingTop = '20px';
-            btnContainer.style.marginTop = '10px';
-            btnContainer.style.display = 'flex';
-            btnContainer.style.justifyContent = 'space-between';
+            // --- PATRÓN MODAL: ION-FOOTER NATIVO (Keyboard-Aware) ---
+            const footerContainer = document.createElement('ion-footer');
+            footerContainer.className = 'ion-no-border';
+            
+            const btnGrid = document.createElement('ion-grid');
+            btnGrid.style.padding = 'var(--spacing-2) var(--spacing-4)';
+            const btnRow = document.createElement('ion-row');
+            btnRow.style.alignItems = 'center';
+            
+            const colLeft = document.createElement('ion-col');
+            colLeft.setAttribute('size', '6');
+            colLeft.style.display = 'flex';
+            colLeft.style.justifyContent = 'flex-start';
+            
+            const colRight = document.createElement('ion-col');
+            colRight.setAttribute('size', '6');
+            colRight.style.display = 'flex';
+            colRight.style.justifyContent = 'flex-end';
+            colRight.style.gap = 'var(--spacing-3)';
 
             const btnPrev = document.createElement('ion-button');
             btnPrev.setAttribute('fill', 'clear');
             btnPrev.setAttribute('color', 'medium');
             btnPrev.innerHTML = '<ion-icon slot="start" name="arrow-back-outline"></ion-icon> Anterior';
-
-            const centerRightWrapper = document.createElement('div');
-            centerRightWrapper.style.display = 'flex';
-            centerRightWrapper.style.justifyContent = 'flex-end';
-            centerRightWrapper.style.flex = '1';
 
             const btnNext = document.createElement('ion-button');
             btnNext.setAttribute('shape', 'round');
@@ -810,10 +832,14 @@
             submitBtn.setAttribute('color', 'primary');
             submitBtn.innerHTML = '<ion-icon slot="start" name="save-outline"></ion-icon> Guardar ' + window.formatEntityName(entityName);
 
-            btnContainer.appendChild(btnPrev);
-            centerRightWrapper.appendChild(btnNext);
-            centerRightWrapper.appendChild(submitBtn);
-            btnContainer.appendChild(centerRightWrapper);
+            colLeft.appendChild(btnPrev);
+            colRight.appendChild(btnNext);
+            colRight.appendChild(submitBtn);
+            
+            btnRow.appendChild(colLeft);
+            btnRow.appendChild(colRight);
+            btnGrid.appendChild(btnRow);
+            footerContainer.appendChild(btnGrid);
 
             window.__CURRENT_WIZARD_STEPS = steps;
 
@@ -919,7 +945,7 @@
                 await loading.present();
 
                 // --- LECTURA FRESCA JIT (Evita Detached Nodes) ---
-                const activeForm = document.getElementById('app-container');
+                const activeForm = global.currentFormModal || document.getElementById('app-container');
                 const freshInputs = activeForm.querySelectorAll('ion-input, ion-textarea, ion-select, input[type="hidden"]');
                 const payload = {};
                 freshInputs.forEach(input => {
@@ -947,6 +973,7 @@
                     
                     payload[fieldName] = JSON.stringify(jsonArray);
                 });
+
 
                 const freshChipContainers = activeForm.querySelectorAll('.chip-container');
                 freshChipContainers.forEach(cc => {
@@ -1085,31 +1112,17 @@
                                  submitBtn.innerHTML = '<ion-icon slot="start" name="save-outline"></ion-icon> Guardar ' + window.formatEntityName(entityName);
                                  global.currentEditId = null;
 
-                                 // NUNCA usar NodeLists capturados en el outer click handler.
-                                 const activeContainer = document.getElementById('app-container');
-                                 
-                                 // Vaciado Nativo
-                                 activeContainer.querySelectorAll('ion-input, ion-textarea, ion-select')
-                                     .forEach(input => { input.value = ''; });
-
-                                 activeContainer.querySelectorAll('.chip-container')
-                                     .forEach(cc => cc.querySelectorAll('ion-chip').forEach(chip => chip.remove()));
-
-                                 window.goToFormSection(steps[0]);
-
-                                 // Regenerar IDs frescos
-                                 activeContainer.querySelectorAll('ion-input[readonly], input[type="hidden"]').forEach(input => {
-                                     const name = input.getAttribute('name');
-                                     if (name && name.startsWith('id_')) {
-                                         const prefix = entityName.substring(0, 4).toUpperCase();
-                                         const sufix = Math.random().toString(36).substring(2, 7).toUpperCase();
-                                         input.value = `${prefix}-${sufix}`;
-                                     }
-                                 });
-
                                  if (window.__APP_CACHE__ && window.__APP_CACHE__.nestedData) window.__APP_CACHE__.nestedData = {};
 
-                                 // Enrutamiento post-Guardado Inmediato (Directiva 0.0s)
+                                 // Cerramos el Modal (Directiva 0.0s visual)
+                                 if (global.currentFormModal) {
+                                     global.currentFormModal.dismiss().then(() => {
+                                         global.currentFormModal.remove();
+                                         global.currentFormModal = null;
+                                     });
+                                 }
+
+                                 // Enrutamiento post-Guardado Inmediato
                                  if (window.DataViewEngine) {
                                      window.DataViewEngine.render(entityName, 'app-container');
                                  } else if (global.onSaveSuccessCallback) {
@@ -1141,8 +1154,10 @@
             });
 
             container.appendChild(card);
-            container.appendChild(btnContainer);
-            btnContainer.appendChild(submitBtn);
+            
+            modal.appendChild(footerContainer);
+            document.body.appendChild(modal);
+            await modal.present();
         };
 
         /**
@@ -1233,8 +1248,13 @@
             const headerTitle = document.getElementById('main-header-title');
             if (headerTitle) headerTitle.textContent = "Editar: " + window.formatEntityName(entityName);
 
+            if (global.currentFormModal) {
+                const modalTitle = global.currentFormModal.querySelector('ion-title');
+                if (modalTitle) modalTitle.textContent = "Editar: " + window.formatEntityName(entityName);
+            }
+
             // 5. Pre-llenado de campos (Directiva 3.c)
-            const container = document.getElementById('app-container');
+            const container = global.currentFormModal || document.getElementById('app-container');
             const inputs = container.querySelectorAll('ion-input, ion-textarea, ion-select, input[type="hidden"]');
 
             console.log("[FormEngine] Pre-llenando", inputs.length, "campos...");
