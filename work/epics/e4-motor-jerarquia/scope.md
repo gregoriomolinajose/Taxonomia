@@ -31,3 +31,29 @@ status: in-progress
 1. Un padre *jamás* puede declararse hijo de su propia descendencia (Selector UI filtrado).
 2. Mover un Nivel 1 hacia un nuevo Padre actualiza a toda su línea de descendencia en BD (Paths intactos).
 3. Eliminar "Retail" fallará en BD tirando un Error Controlado si "Retail" cuenta con hijos en su dominio.
+
+---
+
+## Implementation Plan
+
+### Sequencing Rationale
+1. **S4.1 (Prevención de Ciclos UI):** *Quick Win & Risk-First (UI).* Abordamos primero la barrera de entrada para frenar la creación de nuevos datos corruptos desde el Front-End de manera inmediata.
+2. **S4.2 (Mutación en Cascada Bulk):** *Walking Skeleton (Backend).* Constituye el núcleo algorítmico transaccional de O(1). Representa la mayor carga de riesgo y es prerrequisito para gobernar las jerarquías en memoria.
+3. **S4.3 (Safe Block contra orfandad):** *Dependency-driven.* Tarea final que sella y blinda las eliminaciones, apoyándose en la infraestructura de validación in-memory construida en S4.2.
+
+### Milestones & E2E Integration
+- **M1: UI Shield (Walking Skeleton)**
+  - *Incluye:* S4.1
+  - *Criterio de Éxito:* Desaparición visual de los hijos en el menú desplegable `lookupSource` durante la edición.
+- **M2: Backend Transaccional (Core MVP)**
+  - *Incluye:* S4.2
+  - *Criterio de Éxito:* Al mover un Dominio Nivel 1 hacia un nuevo padre, los registros hijos en Google Sheets heredan el nuevo `path_completo`.
+- **M3: Epic Complete & E2E Integration (PAT-E-539)**
+  - *Incluye:* Tratamiento manual E2E de Edición, Traslado masivo y Eliminaciones (S4.3) testeado directamente contra el servidor App Script en entorno DEV.
+
+### Progress Tracking
+| Secuencia | Historia | Rationale / Enfoque | Dependencias | Estado |
+| --- | --- | --- | --- | --- |
+| 1 | **S4.1** Ciclos UI | Contener creación de data corrupta. | Ninguna | `Pending` |
+| 2 | **S4.2** Cascada DB | Motor masivo transaccional O(1). | Ninguna | `Pending` |
+| 3 | **S4.3** Safe Block | Interceptador lógico Soft-Delete. | S4.2 | `Pending` |
