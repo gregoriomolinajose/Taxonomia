@@ -5,21 +5,24 @@
      window.DataViewEngine.render(entityName, containerId)
      ============================================================ -->
 <style>
-    /* ── Design Tokens específicos del DataView ── */
-    :root {
-        --dv-primary: #2563eb;
-        --dv-primary-light: #eff6ff;
-        --dv-primary-dark: #1d4ed8;
-        --dv-surface: #ffffff;
-        --dv-bg: #f1f5f9;
-        --dv-border: #e2e8f0;
-        --dv-text-primary: #0f172a;
-        --dv-text-secondary: #64748b;
-        --dv-text-light: #94a3b8;
-        --dv-radius: 10px;
-        --dv-radius-sm: 6px;
-        --dv-shadow: 0 1px 3px rgba(0, 0, 0, .08), 0 1px 2px rgba(0, 0, 0, .04);
-        --dv-shadow-md: 0 4px 12px rgba(0, 0, 0, .10);
+    /* ── Corrección de Design Tokens (DataView) ── */
+    body {
+        /* Mapeo estricto al Design System */
+        --dv-primary: var(--ion-color-primary, #1C42E8); 
+        --dv-primary-light: rgba(var(--ion-color-primary-rgb, 28, 66, 232), 0.1); 
+        --dv-primary-dark: var(--ion-color-primary-shade, #081754);
+
+        /* Sincronización Estricta del Mapeo a CSS_DesignSystem */
+        --dv-surface: var(--ion-background-color, #ffffff);
+        --dv-bg: var(--sidebar-bg, var(--ion-card-background));
+        --dv-border: var(--color-border, #C9C9C9);
+        --dv-text-primary: var(--ion-text-color, #081754);
+        --dv-text-secondary: var(--color-text-soft, #A4A4A4);
+        --dv-text-light: var(--color-text-soft, #94a3b8);
+        --dv-radius: var(--rounded-md, 10px);
+        --dv-radius-sm: var(--rounded-sm, 6px);
+        --dv-shadow: var(--shadow-default, 0 1px 3px rgba(0, 0, 0, .08), 0 1px 2px rgba(0, 0, 0, .04));
+        --dv-shadow-md: var(--shadow-hover, 0 4px 12px rgba(0, 0, 0, .10));
         --dv-transition: .18s ease;
     }
 
@@ -86,7 +89,7 @@
 
     .dv-btn-primary {
         background: var(--dv-primary);
-        color: #fff;
+        color: var(--ion-color-primary-contrast, #ffffff);
     }
 
     .dv-btn-primary:hover {
@@ -133,7 +136,7 @@
 
     .dv-btn-icon.active {
         background: var(--dv-primary);
-        color: #fff;
+        color: var(--ion-color-primary-contrast, #ffffff);
         border-color: var(--dv-primary);
     }
 
@@ -193,10 +196,10 @@
 
     /* ── Card principal — Elevación Enterprise ── */
     .dv-card {
-        background: var(--dv-surface);
-        border: 1px solid var(--ion-color-light-shade, var(--dv-border));
+        background: var(--dv-bg);
+        border: 1px solid var(--dv-border);
         border-radius: 8px;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        box-shadow: var(--dv-shadow);
         overflow: hidden;
     }
 
@@ -206,24 +209,23 @@
         -webkit-overflow-scrolling: touch;
     }
 
-    /* Scrollbar horizontal suavizado en Chrome/Safari/Edge — Hardcoded Hex Polish */
+    /* Scrollbar horizontal suavizado (macOS style fluido) */
     .dv-table-wrap::-webkit-scrollbar {
-        height: 8px !important;
+        height: 8px;
+        width: 8px;
     }
 
     .dv-table-wrap::-webkit-scrollbar-track {
-        background: #f4f5f8 !important;
-        border-radius: 4px !important;
+        background: transparent;
     }
 
     .dv-table-wrap::-webkit-scrollbar-thumb {
-        background-color: #c8c7cc !important;
-        border-radius: 4px !important;
-        border: 2px solid #f4f5f8 !important;
+        background: var(--color-border);
+        border-radius: var(--rounded-full);
     }
 
     .dv-table-wrap::-webkit-scrollbar-thumb:hover {
-        background: #a1a1a1;
+        background: var(--dv-text-secondary);
     }
 
     .dv-table {
@@ -242,11 +244,13 @@
         padding: 11px 14px;
         text-align: left;
         font-weight: 600;
-        font-size: .78rem;
+        font-size: var(--sys-font-small);
         text-transform: uppercase;
         letter-spacing: .04em;
         color: var(--dv-text-secondary);
         border-bottom: 2px solid var(--dv-border);
+        border-left: none;
+        border-right: none;
         white-space: nowrap;
         cursor: pointer;
         user-select: none;
@@ -275,8 +279,10 @@
     }
 
     .dv-table td {
-        padding: 11px 14px;
+        padding: 16px 14px;
         border-bottom: 1px solid var(--dv-border);
+        border-left: none;
+        border-right: none;
         color: var(--dv-text-primary);
         vertical-align: middle;
         white-space: nowrap;
@@ -416,7 +422,7 @@
 
     .dv-btn-icon.active {
         background: var(--dv-primary);
-        color: #fff;
+        color: var(--ion-color-primary-contrast, #ffffff);
         border-color: var(--dv-primary);
         box-shadow: var(--dv-shadow);
     }
@@ -524,7 +530,7 @@
 
     .dv-page-btn:hover:not(:disabled) {
         background: var(--dv-primary);
-        color: #fff;
+        color: var(--ion-color-primary-contrast, #ffffff);
         border-color: var(--dv-primary);
     }
 
@@ -618,6 +624,14 @@
             max-width: 100%;
         }
     }
+    /* ── UX Polish S1.6.15 ── */
+    .dv-pagination {
+        border-bottom-left-radius: var(--dv-radius);
+        border-bottom-right-radius: var(--dv-radius);
+    }
+    .dv-table tbody tr:nth-child(even) {
+        background: rgba(var(--ion-text-color-rgb, 8, 23, 84), 0.03); 
+    }
 </style>
 
 <script>
@@ -635,25 +649,7 @@
         /* ── Campos estatus para badges de color ── */
         const STATUS_FIELDS = ['estado', 'nivel_criticalidad', 'modelo_negocio'];
 
-        /* ── Mock data por entidad (entorno local sin GAS) ── */
-        const MOCK_DATA = {
-            Portafolio: [
-                { id_portafolio: 'PORT-1710000001', nombre: 'Portafolio Digital', descripcion: 'Productos digitales core', temas_estrategicos: 'Transformación,IA', flujos_valor: 'SaaS,API', clientes_segmentos: 'Enterprise', presupuesto: 500000, kpis_metricas: 'NPS,CAC', estado: 'Activo', created_at: '2026-03-01', updated_by: 'admin@co.com' },
-                { id_portafolio: 'PORT-1710000002', nombre: 'Portafolio Operativo', descripcion: 'Plataformas internas', temas_estrategicos: 'Eficiencia', flujos_valor: 'B2B', clientes_segmentos: 'Interno', presupuesto: 120000, kpis_metricas: 'MTTR', estado: 'Borrador', created_at: '2026-03-05', updated_by: 'ops@co.com' },
-                { id_portafolio: 'PORT-1710000003', nombre: 'Portafolio Innovación', descripcion: 'Nuevas iniciativas', temas_estrategicos: 'Crecimiento,Web3', flujos_valor: 'Marketplace', clientes_segmentos: 'SMB,Enterprise', presupuesto: 250000, kpis_metricas: 'OKR', estado: 'En Revisión', created_at: '2026-03-10', updated_by: 'innov@co.com' }
-            ],
-            Grupo_Productos: [
-                { id_grupo_producto: 'GRUP-001', nombre: 'Plataforma Cloud', descripcion: 'Servicios en la nube', id_portafolio: 'PORT-1710000001', naturaleza_valor: 'Escalabilidad', modelo_negocio: 'SaaS', created_at: '2026-03-02', updated_by: 'admin@co.com' },
-                { id_grupo_producto: 'GRUP-002', nombre: 'MarketPlace B2B', descripcion: 'Comercio electrónico empresarial', id_portafolio: 'PORT-1710000001', naturaleza_valor: 'Comisiones', modelo_negocio: 'Marketplace', created_at: '2026-03-03', updated_by: 'admin@co.com' },
-                { id_grupo_producto: 'GRUP-003', nombre: 'Ops Interna', descripcion: 'Herramientas internas', id_portafolio: 'PORT-1710000002', naturaleza_valor: 'Eficiencia', modelo_negocio: 'B2B', created_at: '2026-03-06', updated_by: 'ops@co.com' }
-            ],
-            Producto: [
-                { id_producto: 'PROD-001', nombre_producto: 'API Gateway', nivel_criticalidad: 'Tier 1 (Crítico)', slo_objetivo: 99.99, id_grupo_producto: 'GRUP-001', created_at: '2026-03-04' },
-                { id_producto: 'PROD-002', nombre_producto: 'Auth Service', nivel_criticalidad: 'Tier 2 (Alto)', slo_objetivo: 99.9, id_grupo_producto: 'GRUP-001', created_at: '2026-03-04' },
-                { id_producto: 'PROD-003', nombre_producto: 'Vendor Portal', nivel_criticalidad: 'Tier 3 (Medio)', slo_objetivo: 99.5, id_grupo_producto: 'GRUP-002', created_at: '2026-03-05' },
-                { id_producto: 'PROD-004', nombre_producto: 'HR Tool', nivel_criticalidad: 'Tier 4 (Bajo)', slo_objetivo: 98.0, id_grupo_producto: 'GRUP-003', created_at: '2026-03-07' }
-            ]
-        };
+        /* ── Mock data por entidad (Eliminado en refactorización JIT S2.2) ── */
 
         /* ────────────────────────────────────────────
            Estado interno por entidad
@@ -773,7 +769,7 @@
                 const field = fields.find(f => f.name === key);
                 if (field && field.label) return field.label;
             }
-            return key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+            return window.formatLabelString ? window.formatLabelString(key) : key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
         }
 
         /* ────────────────────────────────────────────
@@ -820,9 +816,33 @@
         }
 
         /* ────────────────────────────────────────────
+           Estados Visuales de Carga y Error
+        ───────────────────────────────────────────── */
+        function _showLoadingState() {
+            const zone = document.getElementById('dv-data-zone');
+            if (zone) zone.innerHTML = _renderSkeleton();
+        }
+
+        function _showErrorState(error) {
+            const zone = document.getElementById('dv-data-zone');
+            if (zone) {
+                zone.innerHTML = `
+                <div class="dv-card">
+                    <div class="dv-empty">
+                        <div class="dv-empty-icon">⚠️</div>
+                        <h3 style="color:var(--ion-color-danger)">No pudimos cargar la información.</h3>
+                        <p>Por favor, refresca la página para intentar de nuevo.</p>
+                        <p style="font-size:0.75rem; color:var(--dv-text-light); margin-top:8px;">(Detalle: ${error ? error.message : 'Error de red'})</p>
+                    </div>
+                </div>`;
+            }
+        }
+
+        /* ────────────────────────────────────────────
            Fetch data (GAS o Mock)
         ───────────────────────────────────────────── */
         function _fetchData(entityName, cb) {
+            _showLoadingState();
             // Check Frontend Cache first (Directiva Arquitectónica: 0.0s latency)
             if (window.__APP_CACHE__ && window.__APP_CACHE__[entityName]) {
                 console.log(`[Cache Frontend] HIT para ${entityName}. Renderizado instantáneo.`);
@@ -866,13 +886,7 @@
                     })
                     .getInitialPayload(entityName);
             } else {
-                // ... (mock remain unchanged)
-                // Entorno local — usar mock
-                setTimeout(function () {
-                    const mockRows = MOCK_DATA[entityName] || [];
-                    const activeRows = mockRows.filter(r => r.estado !== 'Eliminado' && r.estado !== 'eliminado');
-                    cb(null, activeRows);
-                }, 700);
+                cb(new Error('Se requiere el entorno de producción de Google (Los datos mock fueron removidos)'));
             }
         }
 
@@ -974,7 +988,7 @@
         <div class="dv-card">
           <div class="dv-table-wrap">
             <table class="dv-table">
-              <thead><tr>${thead}<th style="width:50px;"></th></tr></thead>
+              <thead><tr><th style="width: 50px; text-align: center;">#</th>${thead}<th style="width:50px;"></th></tr></thead>
               <tbody>${_renderTableBody(rows, visibleCols)}</tbody>
             </table>
           </div>
@@ -983,7 +997,11 @@
         }
 
         function _renderTableBody(rows, visibleCols) {
-            return rows.map(row => {
+            const startIdx = (_state.page - 1) * _state.pageSize;
+            return rows.map((row, idx) => {
+                const rowNum = startIdx + idx + 1;
+                const indexCell = `<td style="width: 50px; text-align: center; color: var(--dv-text-secondary); font-variant-numeric: tabular-nums; font-weight: 500;">${rowNum}</td>`;
+
                 const cells = visibleCols.map(col =>
                     `<td title="${String(row[col.key] ?? '')}">${_formatValue(col.key, row[col.key])}</td>`
                 ).join('');
@@ -996,7 +1014,7 @@
                     </button>
                 </td>`;
 
-                return `<tr>${cells}${actionCell}</tr>`;
+                return `<tr>${indexCell}${cells}${actionCell}</tr>`;
             }).join('');
         }
 
@@ -1199,13 +1217,13 @@
           </div>
           <div class="dv-header-actions">
             <input type="file" id="dv-bulk-upload-input" accept=".csv" style="display:none;" onchange="window.DataViewEngine._importCSV(event)">
-            <button class="dv-btn dv-btn-outline" onclick="window.DataViewEngine._exportCSV()">
+            <button class="dv-btn dv-btn-ghost" onclick="window.DataViewEngine._exportCSV()">
               <ion-icon name="download-outline" slot="start"></ion-icon> Exportar CSV
             </button>
-            <button class="dv-btn dv-btn-outline" style="color:var(--ion-color-secondary); border-color:var(--ion-color-secondary);" onclick="document.getElementById('dv-bulk-upload-input').click()">
+            <button class="dv-btn dv-btn-ghost" onclick="document.getElementById('dv-bulk-upload-input').click()">
               <ion-icon name="cloud-upload-outline" slot="start"></ion-icon> Importar CSV
             </button>
-            <button class="dv-btn dv-btn-primary" onclick="renderForm('${_state.entityName}')">
+            <button class="dv-btn dv-btn-outline" onclick="renderForm('${_state.entityName}')">
               <ion-icon name="add-outline" slot="start"></ion-icon> Crear ${displayLabel.replace(/s$/, '')}
             </button>
           </div>
@@ -1283,12 +1301,7 @@
             // Fetch
             _fetchData(entityName, function (err, rows) {
                 if (err) {
-                    const zone = document.getElementById('dv-data-zone');
-                    if (zone) zone.innerHTML = `<div class="dv-card"><div class="dv-empty">
-            <div class="dv-empty-icon">⚠️</div>
-            <h3>Error al cargar datos</h3>
-            <p>${err.message}</p>
-          </div></div>`;
+                    _showErrorState(err);
                     return;
                 }
 

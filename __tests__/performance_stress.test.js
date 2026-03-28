@@ -9,24 +9,20 @@ global.CONFIG = {
   SPREADSHEET_ID_DB: 'MOCK_ID'
 };
 
-// Mock SpreadsheetApp for Adapter_Sheets
-global.SpreadsheetApp = {
-  openById: jest.fn(() => ({
-    getSheetByName: jest.fn(() => ({
-      getDataRange: jest.fn(() => ({
-        getValues: jest.fn(() => {
-          // Generate 1,001 rows (headers + 1000 records)
-          const headers = ['id_producto', 'nombre_producto', 'nivel_criticalidad', 'slo_objetivo', 'id_grupo_producto', 'estado'];
-          const rows = [headers];
-          for (let i = 1; i <= 1000; i++) {
+// Removed individual mock, using global from jest.setup.js
+const globalSheet = global.SpreadsheetApp.openById().getSheetByName();
+globalSheet.getDataRange.mockReturnValue({
+    getValues: jest.fn(() => {
+        // Generate 1,001 rows (headers + 1000 records)
+        const headers = ['id_producto', 'nombre_producto', 'nivel_criticalidad', 'slo_objetivo', 'id_grupo_producto', 'estado'];
+        const rows = [headers];
+        for (let i = 1; i <= 1000; i++) {
             rows.push([`ID-${i}`, `Prod-${i}`, 'Tier 1', '99.9', 'GRUP-01', 'Activo']);
-          }
-          return rows;
-        })
-      }))
-    }))
-  }))
-};
+        }
+        return rows;
+    })
+});
+globalSheet.getLastRow.mockReturnValue(1001);
 
 describe('Performance Stress Regression Test (1K Records)', () => {
   test('Engine_DB.list should process 1,000 records as tuples without memory issues', () => {

@@ -64,14 +64,16 @@ describe('Soft Delete: Adapter_Sheets Inmutabilidad en Delete', () => {
             })
         };
 
-        global.SpreadsheetApp = mockSpreadsheetApp;
+        // Consumir el mock central
+        const globalSheet = global.SpreadsheetApp.openById().getSheetByName();
+        globalSheet.getRange = mockSheet.getRange;
+        globalSheet.getLastColumn = mockSheet.getLastColumn;
         global.Session = mockSession;
         global.Logger = { log: jest.fn() };
         global.CONFIG = { SPREADSHEET_ID_DB: 'test-id' };
     });
 
     afterEach(() => {
-        delete global.SpreadsheetApp;
         delete global.Session;
         delete global.Logger;
         delete global.CONFIG;

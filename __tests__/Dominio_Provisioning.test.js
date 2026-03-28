@@ -17,6 +17,7 @@ describe('Auto-Aprovisionamiento DB y Schema Dominio', () => {
             }),
             appendRow: jest.fn(),
             getDataRange: jest.fn().mockReturnValue({
+                getValues: jest.fn().mockReturnValue([[]]),
                 getNumRows: () => 0
             })
         };
@@ -38,7 +39,9 @@ describe('Auto-Aprovisionamiento DB y Schema Dominio', () => {
             })
         };
 
-        global.SpreadsheetApp = mockSpreadsheetApp;
+        // Consumir el mock centralizado
+        global.SpreadsheetApp.openById().getSheetByName.mockReturnValue(null);
+        global.SpreadsheetApp.openById().insertSheet = insertSheetMock;
         global.Session = mockSession;
         global.Logger = { log: jest.fn() };
         global.CONFIG = { SPREADSHEET_ID_DB: 'test-id' };
@@ -63,7 +66,6 @@ describe('Auto-Aprovisionamiento DB y Schema Dominio', () => {
     });
 
     afterEach(() => {
-        delete global.SpreadsheetApp;
         delete global.Session;
         delete global.Logger;
         delete global.CONFIG;
@@ -75,8 +77,8 @@ describe('Auto-Aprovisionamiento DB y Schema Dominio', () => {
         const result = Adapter_Sheets.list('Dominio', global.CONFIG);
         
         // 1. Validamos que detectó que la hoja no existía y ordenó crearla
-        expect(mockSpreadsheet.getSheetByName).toHaveBeenCalledWith('Dominio');
-        expect(insertSheetMock).toHaveBeenCalledWith('Dominio');
+        expect(global.SpreadsheetApp.openById().getSheetByName).toHaveBeenCalledWith('DB_Dominio');
+        expect(global.SpreadsheetApp.openById().insertSheet).toHaveBeenCalledWith('DB_Dominio');
 
         // 2. Validamos que inyectó correctamente los encabezados en la Fila 1
         expect(setValuesMock).toHaveBeenCalledTimes(1);
@@ -86,7 +88,7 @@ describe('Auto-Aprovisionamiento DB y Schema Dominio', () => {
         const expectedHeaders = [
             'id_dominio', 'id_registro', 'nivel_tipo', 'orden_path', 'n0_es', 
             'nombre_ingles', 'definicion', 'abreviacion', 'path_completo_es',
-            'created_at', 'created_by', 'updated_at', 'updated_by'
+            'created_at', 'created_by', 'updated_at', 'updated_by', 'deleted_at', 'deleted_by'
         ];
         
         expect(injectedHeaders).toEqual(expectedHeaders);

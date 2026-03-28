@@ -50,9 +50,9 @@ Si el usuario escribe ÚNICAMENTE la palabra "close" (sin importar mayúsculas, 
 
 2. **Validación de Pruebas (Test Pass):** Una vez que el código es definitivo (ya sea el original o el refactorizado), el agente DEBE ejecutar la suite de pruebas automatizadas (Jest). Si los tests fallan, aborta el despliegue inmediatamente y reporta el error. Si los tests pasan, procede automáticamente al siguiente paso.
 
-3. **Sincronización Cloud (clasp):** Ejecutar en la terminal el comando clasp push para subir el código validado a Google Apps Script.
+3. **Sincronización Cloud Segura (Deploy Script):** Ejecutar en la terminal el comando `npm run deploy:dev` (o `prod` según aplique) para subir el código validado a Google Apps Script. **TIENES ESTRICTAMENTE PROHIBIDO** usar `clasp push` directo, ya que ignora la inyección de variables de entorno configuradas en `deploy.js`.
 
-4. **Incremento de Versión UI:** Actualizar el indicador de versión en la esquina inferior izquierda de `Index.html` (incrementando el parche, ej. v1.0.X a v1.0.X+1) para reflejar la secuenciación del nuevo despliegue en la interfaz.
+4. **Incremento de Versión UI (Invalidación de Caché):** Actualizar el indicador de versión `APP_VERSION` directamente en el archivo base del entorno, por ejemplo `environments/Config.dev.js` (incrementando el parche, ej. v1.0.X a v1.0.X+1). Esto asegura que al compilar, el nuevo hash se inyecte en `Global_Config.js` forzando la recarga en los clientes web.
 
 5. **Versionado Git (Micro-Commit):** Ejecutar en la terminal la secuencia git add ., seguido de un git commit -m "feat/fix: [Resumen semántico]" y finalmente git push origin main.
 

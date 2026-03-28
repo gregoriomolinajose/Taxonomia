@@ -1,0 +1,102 @@
+<!-- 
+  ═══════════════════════════════════════════════════════
+  UI_Components.html — Component Registry (Cerebro de Componentes)
+  Single Source of Truth UI - Golden Patterns
+  ESTE ARCHIVO NO SE RENDERIZA DIRECTAMENTE AL USUARIO. 
+  Contiene los esqueletos HTML/JS estandarizados para Ionic 7.
+  ═══════════════════════════════════════════════════════ 
+-->
+
+<!-- 
+  =======================================================
+  PATTERN 1: Formulario Grid Estricto con Sticky Footer
+  =======================================================
+  Uso: Creación/Edición de entidades. El footer queda anclado.
+  PROHIBIDO: Usar <ion-content> o <ion-footer> nativos aquí.
+-->
+<template id="pattern-form-sticky-footer">
+  <div class="form-engine-wrapper">
+    <!-- Contenido Scrollable -->
+    <div class="form-scroll-content">
+      <ion-grid>
+        <ion-row>
+          <ion-col size="12" size-md="6">
+            <ion-item>
+              <ion-input type="text" label="Campo Ejemplo" label-placement="floating" fill="outline"></ion-input>
+            </ion-item>
+          </ion-col>
+          <!-- Agregar más columnas respetando el Grid 12 -->
+        </ion-row>
+      </ion-grid>
+    </div>
+    
+    <!-- Footer Anclado (Sticky) puro HTML -->
+    <div class="form-sticky-footer">
+      <ion-toolbar>
+        <ion-buttons slot="end">
+          <ion-button color="medium" onclick="cancelForm()">Cancelar</ion-button>
+          <ion-button color="primary" fill="solid" onclick="saveForm()">Guardar</ion-button>
+        </ion-buttons>
+      </ion-toolbar>
+    </div>
+  </div>
+</template>
+
+<!-- 
+  =======================================================
+  PATTERN 2: Smart Select (Responsive Dropdown)
+  =======================================================
+  Uso: Selects que cambian su interfaz según el tamaño de pantalla.
+  < 768px: action-sheet (móvil)
+  >= 768px: popover (desktop)
+-->
+<template id="pattern-smart-select">
+  <ion-item>
+    <ion-select class="smart-select" label="Selector Dinámico" label-placement="floating" fill="outline" placeholder="Selecciona una opción...">
+      <ion-select-option value="1">Opción 1</ion-select-option>
+      <ion-select-option value="2">Opción 2</ion-select-option>
+    </ion-select>
+  </ion-item>
+
+  <!-- Script de Inyección para Smart Select -->
+  <script>
+    function initializeSmartSelects() {
+      const selects = document.querySelectorAll('.smart-select');
+      const isDesktop = window.innerWidth >= 768;
+      selects.forEach(select => {
+        select.interface = isDesktop ? 'popover' : 'action-sheet';
+      });
+    }
+  </script>
+</template>
+
+<!-- 
+  =======================================================
+  PATTERN 3: Enterprise Modal (Desktop Override)
+  =======================================================
+  Uso: Modal limpio, sin dobles tarjetas anidadas.
+  Estilos en CSS_DesignSystem.html o CSS_App.html:
+  --width: 800px;
+  --max-width: 90vw;
+-->
+<template id="pattern-enterprise-modal">
+  <ion-modal id="enterpriseModal" class="enterprise-modal-clean">
+    <ion-header>
+      <ion-toolbar color="primary">
+        <ion-title>Título del Modal</ion-title>
+        <ion-buttons slot="end">
+          <ion-button onclick="closeModal()">
+            <ion-icon name="close-outline"></ion-icon>
+          </ion-button>
+        </ion-buttons>
+      </ion-toolbar>
+    </ion-header>
+    
+    <ion-content class="ion-padding">
+      <!-- No insertar ion-card aquí para evitar doble margin -->
+      <div class="modal-body-content">
+        <!-- Contenido principal -->
+      </div>
+    </ion-content>
+  </ion-modal>
+</template>

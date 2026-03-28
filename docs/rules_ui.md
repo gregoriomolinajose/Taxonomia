@@ -1,66 +1,100 @@
 # Reglas de Interfaz Gráfica y UX/UI (Frontend)
+**Proyecto:** Taxonomía  
+**Estándar:** Enterprise / Ionic Framework (Mobile-First)
 
-## 1. Arquitectura Frontend Mobile-First
-- Aplicación de Arquitectura Híbrida (Capacitor-Ready) SPA.
-- Apps Script solo funge como API/Servidor que inyecta la página; el UI está desacoplado.
-- **Uso Estricto de Componentes Nativos:** Todo el DOM dinámico debe generarse usando Web Components de **Ionic (`<ion-input>`, `<ion-datetime>`)**.
-- NUNCA inventes o construyas componentes visuales complejos desde cero si existe una alternativa oficial en el framework.
+---
 
-- **Precisión de Área Táctil (Hitboxes) y Event Bubbling:** En componentes compuestos como listas seleccionables (ej. `<ion-checkbox>` dentro de un `<ion-item>`), es OBLIGATORIO garantizar que la interacción funcione fluidamente ya sea que el usuario toque la fila completa o específicamente el recuadro del control. Se debe gestionar correctamente la propagación de eventos en el DOM (ej. delegando el clic al item o usando bindings nativos `ionChange`) para evitar que la interfaz se sienta rota o poco responsiva.
+## 1. Arquitectura Frontend y Sistema de Diseño (Two-Tier Tokens)
+- **SPA Híbrida:** Apps Script solo funge como API/Servidor que inyecta la página; el UI está desacoplado.
+- **Componentes Nativos:** Todo el DOM dinámico debe generarse usando Web Components de Ionic (`<ion-input>`, etc.). NUNCA inventes componentes visuales desde cero si existe alternativa oficial.
+- **Arquitectura de Tokens (SSOT):** Los colores se rigen por Dos Niveles en el `:root`. El Nivel 1 contiene los Brand Tokens del cliente (inmutables). El Nivel 2 mapea las variables nativas de Ionic hacia el Nivel 1.
+- **Cero Fugas Semánticas (Zero Hardcoding):** PROHIBIDO forzar colores en el HTML (ej. `color="light"`, `style="color: blue"`). Textos y fondos DEBEN heredar su color del motor CSS (Modos Claro/Oscuro).
+- **Tipografía Fluida:** El escalado tipográfico se controla mediante variables `--sys-font-*` que mutan basándose en Breakpoints (Mobile First por defecto, escalando en `>= 768px`).
+- **Hitboxes:** En componentes compuestos (ej. listas seleccionables), es OBLIGATORIO garantizar un área táctil fluida y gestionar la propagación de eventos (`ionChange`).
+- **Prohibición de JS Inline Styles:** El JavaScript tiene prohibido inyectar propiedades `style` físicas (ej. colores, márgenes) en el DOM. El JS debe limitarse a conmutar clases semánticas (ej. `.active`, `.is-hidden`), delegando la resolución visual pura al archivo `CSS_DesignSystem`.
 
-## 2. Progressive Disclosure (Wizards)
-- PROHIBIDO renderizar formularios largos en una sola vista plana.
-- Si el `APP_SCHEMAS` define la propiedad `steps`, el motor DEBE renderizar un componente de navegación paso a paso (Wizard) utilizando `<ion-stepper>` o `<ion-segment>`.
-- **Ley de Navegación Activa (Steppers):** Todo componente visual que indique progreso o pasos (ej. `<ion-segment>`, `<ion-stepper>`) DEBE ser obligatoriamente clickeable e interactivo. El usuario DEBE poder saltar a cualquier paso (anterior o posterior) tocando el indicador directamente. Queda prohibido el uso de steppers puramente cosméticos o de solo lectura.
+## 2. Progressive Disclosure (Wizards) y Anclaje de Acciones
+- **Desglose Cognitivo:** PROHIBIDO renderizar formularios largos en una vista plana. Si hay `steps`, el motor DEBE renderizar un Wizard (`<ion-segment>` o `<ion-stepper>`). Todo componente visual de progreso DEBE ser interactivo.
+- **Ley de Anclaje de Acciones (Sticky Footer):** Los botones de mutación ("Guardar", "Siguiente", "Atrás", "Cancelar") NUNCA deben vivir dentro del flujo de scroll (`<ion-content>`). DEBEN estar aislados y anclados en la base de la pantalla utilizando estrictamente `<ion-footer>`.
 
-## 3. Diseño Responsivo Nativo (Grid)
-- El layout DEBE construirse estrictamente sobre `<ion-grid>`, `<ion-row>` y `<ion-col>`.
-- Todo input debe ser Mobile-First (`size="12"`). 
-- Si el esquema define `width`, debe mapearse a breakpoints grandes (ej. `<ion-col size="12" size-md="6">`). 
-- NUNCA uses CSS crudo para el layout.
+## 3. Diseño Responsivo Nativo (Grid) y Patrón Bento Box
+- **Estructura Base:** El layout DEBE construirse sobre `<ion-grid>`, `<ion-row>` y `<ion-col>`. Todo input debe ser Mobile-First (`size="12"`). NUNCA uses CSS crudo para el layout.
+- **Protección de Cunetas (Gutter Preservation):** PROHIBIDO usar la clase `ion-no-padding` en contenedores `<ion-grid>` que alojen tarjetas o campos de formulario. El espaciado DEBE calcularse por el motor de Ionic (`--ion-grid-column-padding`).
+- **Estructura Bento Box:** Para asimetría sin colisiones, el grid define la separación, y las tarjetas (`<ion-card>`) absorben el tamaño exacto configurando `margin: 0 !important; width: 100%; height: 100%;`.
+- **Amortiguación Vertical de Grid:** Queda prohibido aplicar `margin-bottom` a las etiquetas `<ion-row>`. El espaciado vertical debe gestionarse internamente mediante `padding-bottom` en los contenedores `<ion-col>`.
 
-## 4. Feedback Visual, Theming e Iconografía
+## 4. Feedback Visual e Iconografía
 - Toda operación de red DEBE bloquear la interfaz usando `<ion-loading>` o `<ion-spinner>`.
-- El resultado de las operaciones DEBE comunicarse mediante un `<ion-toast>` nativo. NUNCA uses `alert()` nativo.
-- DEBES usar los tokens de color nativos de Ionic (`primary`, `success`, etc.). NUNCA inyectes estilos CSS con colores "hardcoded".
-- **Consistencia de Iconografía (Design System):** La familia oficial de glifos de la aplicación es la variante delineada (`-outline`) de Ionicons. NUNCA mezcles íconos sólidos (`-sharp` o por defecto) con íconos delineados, para mantener el mismo peso visual en toda la navegación e interfaz.
+- El resultado de las operaciones DEBE comunicarse mediante `<ion-toast>` nativo.
+- **Consistencia de Iconografía:** La familia oficial de glifos es la variante delineada (`-outline`) de Ionicons. NUNCA mezcles íconos sólidos con delineados.
 
 ## 5. Navegación y Flujos de Vida CRUD (Routing)
-- **Ley de Success Routing:** Todo evento de éxito al guardar o actualizar un registro DEBE destruir completamente el contenedor del formulario del DOM y retornar obligatoriamente a la vista de listado (`DataView_UI`).
-- **Ley de Escape Routing:** Todo botón de retroceso (`<ion-back-button>`) o botón de "Cancelar" en las pantallas de creación/edición DEBE cancelar el flujo de forma segura, destruir el contenedor del formulario y retornar a la vista de listado (`DataView_UI`).
-- **Ley de Visibilidad de la Llave Primaria (PK):** El campo definido como Llave Primaria (`primaryKey: true` o equivalente) JAMÁS debe ser ocultado en la cuadrícula de `DataView_UI`, incluso si en el esquema está marcado como `type: "hidden"`. Este campo es el ancla visual y obligatoria para que el usuario pueda acceder a la vista de edición.
+- **Success Routing:** Todo evento de éxito al guardar/actualizar DEBE destruir el contenedor del formulario del DOM y retornar a la vista de listado (`DataView_UI`).
+- **Escape Routing:** Todo botón de retroceso/cancelar DEBE cancelar el flujo de forma segura, destruir el contenedor y retornar a `DataView_UI`.
+- **Visibilidad de PK:** El campo Llave Primaria JAMÁS debe ser ocultado en la cuadrícula de `DataView_UI`, incluso si es `type: "hidden"`. Es el ancla visual para acceder a la edición.
 
 ## 6. Sincronización de Layout y Menús (Sidebar & Dashboard)
-- **Ley de Jerarquía del Menú (Sidebar Index 0):** El ítem de navegación principal (`Inicio`, `Home` o `Dashboard`) es sagrado. DEBE ser siempre el primer elemento (Índice 0 absoluto) en la barra de navegación lateral. Ninguna entidad nueva, sin importar su nivel en la taxonomía, puede desplazar al Inicio de la parte superior.
-- **Ley de Sincronización del Dashboard (Cards):** Toda nueva entidad principal (CRUD) que se agregue al menú lateral DEBE tener obligatoriamente su representación visual equivalente en el panel de Inicio (Dashboard Principal). 
-- **Ley de Simetría Responsiva:** Al agregar una nueva tarjeta al Dashboard, el desarrollador o agente DEBE recalcular el Grid responsivo (`<ion-col>`) para asegurar que el diseño se mantenga simétrico (por ejemplo, pasar de tercios `size-xl="4"` a cuartos `size-xl="3"` si se tienen 4 tarjetas).
+- **Jerarquía del Menú (Index 0):** El ítem `Inicio` / `Dashboard` es sagrado. DEBE ser siempre el primer elemento absoluto en la navegación.
+- **Sincronización del Dashboard:** Toda nueva entidad CRUD en el menú DEBE tener su representación visual equivalente en el Dashboard Principal.
+- **Simetría Responsiva:** Al agregar tarjetas al Dashboard, se DEBE recalcular el Grid responsivo para mantener la simetría (ej. de tercios a cuartos).
 
-## 7. Formateo de Cadenas y Nomenclatura (Anti-Snake-Case Bleeding)
-- **Ley de Presentación de Entidades:** NUNCA expongas las llaves crudas de la base de datos (ej. `Unidad_Negocio`, `snake_case`) en la interfaz gráfica.
-- **Saneamiento Obligatorio:** Todo título principal, subtítulo de tabla, texto de botón de acción (ej. "+ Crear...") o mensaje de alerta (Toast) que se genere dinámicamente a partir de la llave del esquema, DEBE pasar por una función utilitaria de formateo.
-- **Regla de Transformación:** El formateador debe reemplazar todos los guiones bajos (`_`) por espacios en blanco (` `) para que el usuario final siempre lea lenguaje natural y corporativo (ej. transformar `Unidad_Negocio` a `Unidad de Negocio`).
+## 7. Formateo de Cadenas (Anti-Snake-Case Bleeding)
+- **Saneamiento Obligatorio:** NUNCA expongas llaves crudas de BD (ej. `Unidad_Negocio`) en la UI.
+- Todo título, subtítulo, botón o alerta generado por esquema DEBE pasar por un formateador que reemplace guiones bajos (`_`) por espacios, presentando lenguaje natural corporativo.
 
-## 8. Determinismo de Navegación y Estados Vacíos (Empty States)
-- **Ley de Navegación Determinista:** El orden de renderizado de los elementos en el menú lateral (Sidebar) NO DEBE depender del orden de iteración de las llaves del objeto de base de datos (`Object.keys()`). El motor de UI DEBE contar con una configuración explícita (un arreglo de ordenamiento o una propiedad `order` en el esquema) que garantice que la jerarquía del modelo de negocio (ej. Inicio > Unidades > Portafolios > Grupos > Productos) se mantenga inmutable y estática.
-- **Ley de Estados Vacíos (Empty States) Nativos:** Queda ESTRICTAMENTE PROHIBIDO el uso de imágenes (`<img>`), SVGs personalizados o ilustraciones de terceros para representar pantallas sin datos (ej. "Sin resultados"). Todo Empty State DEBE construirse utilizando componentes nativos: un `<ion-icon>` de la familia `-outline` (ej. `folder-open-outline`), un título `<ion-text>` y un subtítulo, respetando la paleta de colores del Design System (ej. `color="medium"`).
-- **Alcance Global del Saneamiento de Strings:** La regla Anti-Snake-Case (Sección 7) no solo aplica al contenedor principal. Aplica de manera global y absoluta a TODOS los nodos de texto dinámicos, incluyendo la barra superior de navegación (Navbar/Header), migas de pan (Breadcrumbs) y tooltips.
+## 8. Determinismo y Estados Vacíos (Empty States)
+- **Navegación Determinista:** El orden del menú NO DEBE depender de `Object.keys()`. Se DEBE usar una configuración explícita (`order` en esquema) para garantizar una jerarquía inmutable.
+- **Empty States Nativos:** PROHIBIDO usar imágenes, SVGs o ilustraciones externas para "Sin resultados". DEBEN construirse con componentes nativos: `<ion-icon>` outline, título y subtítulo `<ion-text>` respetando la paleta de colores.
+- **Alcance Global del Saneamiento:** La regla Anti-Snake-Case aplica a TODOS los nodos de texto dinámicos (Navbar, Breadcrumbs, Tooltips).
 
 ## 9. Integridad de Referencias de Entidad (Click-to-Edit)
-- **Ley de Match de Esquema:** El motor de UI NUNCA debe hardcodear nombres de entidades en las funciones de edición. Toda llamada a `openEditForm` debe usar la referencia dinámica del esquema.
-- **Validación de Existencia:** Antes de intentar leer propiedades como `idField` o `steps`, el motor DEBE validar que el objeto de configuración de la entidad no sea `null` o `undefined`, lanzando un error controlado y descriptivo en lugar de un TypeError genérico.
+- **Match de Esquema:** NUNCA hardcodear nombres de entidades en funciones de edición. Toda llamada a `openEditForm` debe usar la referencia dinámica.
+- **Validación de Existencia:** Antes de leer propiedades de esquema, el motor DEBE validar que el objeto no sea `null`/`undefined`, lanzando errores descriptivos.
 
-## 10. Prohibición de Feedback Nativo y Uso del Sistema de Diseño
-- **Ley de la Coherencia Visual:** Queda terminantemente PROHIBIDO el uso de mecanismos de interacción nativos del navegador como `window.alert()`, `window.prompt()`, `window.confirm()` o diálogos modales nativos de HtmlService (`createTemplateFromFile`).
-- **Uso de Componentes Ionic/Material:** Toda interacción que requiera feedback (Alertas), confirmación o entrada rápida de datos (Inputs rápidos) DEBE utilizar exclusivamente los componentes del framework de UI (ej. `ion-modal`, `ion-alert`, `ion-popover`). 
-- **Validación QA:** Cualquier interfaz que presente un diálogo nativo será rechazada automáticamente en la fase de control de calidad.
+## 10. Prohibición de Feedback Nativo (Alert/Confirm)
+- **Coherencia Visual:** PROHIBIDO el uso de `window.alert()`, `window.prompt()`, `window.confirm()` o modales nativos de HtmlService.
+- Toda interacción de feedback o confirmación DEBE usar componentes Ionic (`ion-modal`, `ion-alert`). Interfaces con diálogos nativos serán rechazadas en QA.
 
-## 11. Manipulación del DOM y Extracción de Datos (JIT Querying)
-- **Prohibición de Nodos Fantasma (Stale NodeLists):** Queda ESTRICTAMENTE PROHIBIDO capturar referencias a elementos de entrada del DOM (ej. `querySelectorAll('ion-input')`) en variables globales o closures fuera del evento principal de acción (ej. el clic del botón de Guardar).
-- **Lectura Just-In-Time (JIT):** Toda recolección de datos (Payload) de un formulario DEBE realizarse consultando el contenedor activo en el milisegundo exacto de la interacción: `document.getElementById('active-form-container').querySelectorAll(...)`.
-- **Destrucción y Reset de Formularios:** Alineado con las Leyes de Routing (Sección 5), al cerrar o completar un flujo, el contenedor del formulario no solo debe ocultarse; DEBE forzarse la limpieza de su estado interno y DOM para garantizar que la próxima vez que el usuario haga clic en "+ Crear", el formulario nazca como un lienzo en blanco (Anti-Stale State).
+## 11. Manipulación del DOM y Lectura JIT
+- **Prohibición de Nodos Fantasma:** PROHIBIDO capturar referencias a inputs del DOM en variables globales o closures fuera del evento de acción.
+- **Lectura Just-In-Time (JIT):** Toda recolección de Payload DEBE realizarse consultando el contenedor activo en el milisegundo exacto del clic.
+- **Destrucción y Reset:** Al completar/cancelar un flujo, el contenedor DEBE forzar la limpieza de su estado interno y DOM (Anti-Stale State) para que nazca como un lienzo en blanco la próxima vez.
 
-## 12. Versionado Estricto y Trazabilidad Visual (Build Tracking)
-- **Visibilidad Obligatoria:** La interfaz gráfica (Frontend) DEBE mostrar siempre la versión actual del sistema y el número de compilación (Build) en un lugar visible pero no intrusivo (ej. en el pie de página del menú lateral o en la esquina inferior del Dashboard).
-- **Formato SemVer y Build Dinámico:** El formato obligatorio es `v[Major].[Minor].[Patch] - Build [YYMMDD.HHMM]`. 
-- **Inyección Dinámica (Anti-Caché):** Queda ESTRICTAMENTE PROHIBIDO "hardcodear" la versión directamente en los archivos HTML. La versión DEBE estar centralizada en una constante del Backend (ej. `APP_VERSION` en `Config.gs`) y ser inyectada dinámicamente al Frontend mediante los Scriplets de Apps Script (`<?= APP_VERSION ?>`) o viajar dentro del `MasterPayload`.
-- **Mandato de Actualización por Despliegue:** CADA VEZ que el agente IA complete un "Feature", arregle un bug o solicite al usuario hacer un despliegue de prueba (`clasp push`), el agente DEBE obligatoriamente actualizar el número de Patch o el Timestamp del Build en el archivo de configuración. Esto garantiza que el QA visualice inmediatamente que está operando sobre el código más reciente, mitigando falsos positivos por caché del navegador.
+## 12. Versionado Estricto y Trazabilidad Visual
+- **Visibilidad Obligatoria:** La UI DEBE mostrar siempre la versión y build actual (ej. `v1.0.0 - Build 260325.1030`).
+- **Inyección Dinámica:** PROHIBIDO hardcodear la versión en HTML. DEBE inyectarse dinámicamente desde el Backend (ej. `<?= APP_VERSION ?>`).
+- **Actualización por Despliegue:** CADA VEZ que el agente complete un feature, arregle un bug o solicite un despliegue (`clasp push`), DEBE actualizar el Patch o Timestamp en la configuración para que QA mitigue falsos positivos por caché.
+
+## 13. Arquitectura Estricta del Menú Lateral (3-State Sidebar)
+- **Blindaje de Viewport:** El colapso a "Mini" (72px) o "Hidden" SOLO aplica en `min-width: 992px`. En móvil, opera como Drawer nativo.
+- **Esqueleto Elástico:** Botones (`.nav-item`) sin ancho fijo base; usan `width: calc(100% - Xpx)`. En "Mini", mutan a cubo con `flex-direction: column`.
+- **Encapsulamiento DOM:** Solo se permite `.nav-item` con `<ion-icon>` y `<ion-label>`. Cero nodos huérfanos.
+- **Cabeceras Metamórficas:** `.sidebar-heading` colapsa visualmente a una línea divisoria de 1px en estado Mini.
+- **Accesibilidad Nativa:** Se usa el atributo `title` en el contenedor en lugar de `<ion-tooltip>` para evitar fallos de hidratación.
+
+## 14. Modularización en Google Apps Script (Separation of Concerns)
+
+Para evitar que el archivo principal de la interfaz (`Index.html`) se convierta en un monolito inmanejable, el código Frontend DEBE separarse estrictamente utilizando el patrón de inyección de recursos (Scriptlets de GAS). Queda PROHIBIDO colocar grandes bloques de CSS o lógica JavaScript de negocio directamente en el archivo base.
+
+### 14.1. Taxonomía de Archivos Frontend
+El código DEBE fragmentarse en archivos HTML que actúen como módulos puros, inyectados mediante `<?!= include('NombreArchivo'); ?>`:
+
+* **`CSS_DesignSystem.html`:** Archivo EXCLUSIVO para almacenar la Arquitectura de Tokens (Nivel 1 y 2), la Tipografía Fluida y las variables nativas del tema.
+* **`CSS_Layout.html` (o `CSS_App.html`):** Archivo exclusivo para las clases estructurales (Sidebar, Bento Box, utilidades de márgenes).
+* **`JS_Core.html`:** Archivo que contiene el motor de estado del Menú Lateral (`initSidebar`, etc.) y las funciones utilitarias globales (Toasts, Loaders).
+* **`Index.html` (Shell):** Es el orquestador. Solo debe contener la estructura del DOM (`<ion-app>`, `<ion-split-pane>`) y las llamadas a los `includes`.
+
+### 14.2. Gobernanza de Z-Index (Stacking Context)
+Debido a la naturaleza modular del menú colapsable, los footers estáticos y los componentes de retroalimentación, se prohíbe el uso de `z-index` arbitrarios (ej. `z-index: 99999;`). El ecosistema se rige por esta escala absoluta:
+* `z-index: 10` - Sticky Footers (`<ion-footer>`).
+* `z-index: 50` - Overlay del Sidebar en versión móvil.
+* `z-index: 100` - Modales (`<ion-modal>`).
+* `z-index: 9999` - Sistema de Toasts y Loaders (Máxima prioridad visual).
+
+## 15. Renderizado Híbrido (Metadatos vs Datos de Negocio)
+- **Metadatos vs Datos de Negocio:** Variables críticas de cache y build (ej. `APP_VERSION`) deben inyectarse mediante Scriptlets estáticos del servidor (`<?= ?>`) en el orquestador principal para el First Contentful Paint. La lógica de negocio y esquemas pesados (ej. `APP_SCHEMAS`) se hidratan en el cliente vía JS asíncrono o variables globales de estado.
+
+## 16. Regla UI §15 (Single Source of Truth & Zero Hardcoding)
+- **Auditoría Obligatoria (Design System First):** Antes de proponer o escribir cualquier bloque de CSS o estilo en línea, tienes la obligación absoluta de leer el archivo `CSS_DesignSystem.html`.
+- **Mapeado de Tokens (Strict Matching):** Todo color, margen, padding, sombra, tipografía o radio de borde DEBE estar mapeado a un token existente (ej. `var(--spacing-4)`, `var(--rounded-md)`, `var(--color-interactive-primary)`). Queda ESTRICTAMENTE PROHIBIDO el uso de valores mágicos o quemados (hardcoding).
+- **Protocolo de Alerta (Stop & Escalate):** Si el diseño requiere un valor, componente, color o comportamiento que NO EXISTE actualmente en `CSS_DesignSystem.html`, TIENES PROHIBIDO inventarlo. Debes DETENER la implementación inmediatamente, emitir la alerta: **"Falta de Token Detectada (Stop & Escalate)"**, proponer la adición de dicho token y solicitar autorización ("Aprobar lógica") antes de continuar.

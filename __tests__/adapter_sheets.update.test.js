@@ -63,15 +63,19 @@ describe('Audit Trail: Adapter_Sheets Inmutabilidad en Update', () => {
             })
         };
 
-        // Mock variables globales de Apps Script
-        global.SpreadsheetApp = mockSpreadsheetApp;
+        // Spy sobre el mock global
+        const globalSheet = global.SpreadsheetApp.openById().getSheetByName();
+        
+        globalSheet.getRange = mockSheet.getRange;
+        globalSheet.getLastColumn = mockSheet.getLastColumn;
+        
+        // No sobreescribir global.SpreadsheetApp
         global.Session = mockSession;
         global.Logger = { log: jest.fn() };
         global.CONFIG = { SPREADSHEET_ID_DB: 'test-id' };
     });
 
     afterEach(() => {
-        delete global.SpreadsheetApp;
         delete global.Session;
         delete global.Logger;
         delete global.CONFIG;

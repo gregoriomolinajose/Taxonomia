@@ -86,7 +86,7 @@ describe('Red Phase - Auto-Aprovisionamiento DB y Schema: Capacidad', () => {
         const expectedHeaders = [
             'id_capacidad', 'estado', 'id_externo', 'nivel_tipo', 'orden_path', 'macrocapacidad', 
             'nombre_ingles', 'abreviacion', 'descripcion', 'contexto_completo_analisis', 'path_completo_es',
-            'created_at', 'created_by', 'updated_at', 'updated_by'
+            'created_at', 'created_by', 'updated_at', 'updated_by', 'deleted_at', 'deleted_by'
         ];
         
         expect(injectedHeaders).toEqual(expectedHeaders);

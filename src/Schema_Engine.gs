@@ -47,13 +47,14 @@ const APP_SCHEMAS = {
     fields: [
       { name: "id_dominio", type: "hidden", primaryKey: true },
       { name: "estado", type: "hidden", defaultValue: "Activo" },
-      { section: "Datos Generales", name: "id_registro", type: "text", label: "ID TDE (Registro)", required: true, width: 12 },
-      { section: "Datos Generales", name: "nivel_tipo", type: "number", label: "Nivel Tipo", required: true, width: 6 },
-      { section: "Datos Generales", name: "orden_path", type: "text", label: "Orden Path", required: true, width: 6 },
-      { section: "Datos Generales", name: "n0_es", type: "text", label: "Nombre (ES)", required: true, width: 6 },
+      { section: "Datos Generales", name: "id_registro", type: "text", label: "ID Externo", required: true, width: 12 },
+      { section: "Datos Generales", name: "nivel_tipo", type: "number", label: "Nivel Tipo", required: true, width: 6, triggers_refresh_of: ["id_dominio_padre", "orden_path"] },
+      { section: "Datos Generales", name: "id_dominio_padre", type: "select", label: "Dominio Padre", required: false, width: 12, lookupSource: "getDominiosPadreOptions", triggers_refresh_of: ["orden_path", "path_completo_es"] },
+      { section: "Datos Generales", name: "orden_path", type: "text", label: "Orden Path", readonly: true, required: true, width: 6, calculatedValue: "getGenericOrdenPath", calcParams: { entity: "Dominio", parentField: "id_dominio_padre", levelField: "nivel_tipo", orderField: "orden_path" } },
+      { section: "Datos Generales", name: "n0_es", type: "text", label: "Nombre (ES)", required: true, width: 6, triggers_refresh_of: ["path_completo_es"] },
       { section: "Datos Generales", name: "nombre_ingles", type: "text", label: "Nombre (EN)", required: false, width: 6 },
       { section: "Datos Generales", name: "abreviacion", type: "text", label: "Abreviación", required: false, width: 6 },
-      { section: "Datos Generales", name: "path_completo_es", type: "text", label: "Path Completo (ES)", required: true, width: 12 },
+      { section: "Datos Generales", name: "path_completo_es", type: "text", label: "Path Completo", readonly: true, required: true, width: 12, calculatedValue: "getGenericPathName", calcParams: { entity: "Dominio", parentField: "id_dominio_padre", nameField: "n0_es", pathField: "path_completo_es" } },
       { section: "Datos Generales", name: "definicion", type: "textarea", label: "Definición", required: true, width: 12 }
     ]
   },
@@ -92,6 +93,7 @@ const APP_SCHEMAS = {
       // Sección 2: Gobernanza
       { section: "Gobernanza", name: "id_unidad_negocio", label: "Unidad de Negocio", type: "select", lookupSource: "getUnidadesNegocioOptions", required: true, width: 6 },
       { section: "Gobernanza", name: "id_portafolio", label: "Portafolio (Financiamiento)", type: "select", lookupSource: "getPortafoliosOptions", width: 6 },
+      { section: "Gobernanza", name: "id_producto", label: "Producto Padre", type: "select", lookupSource: "getProductosOptions", width: 12 },
       
       // Sección 3: Integrantes y Roles (Dynamic List)
       { 

@@ -5,8 +5,8 @@
 ## Session
 
 - **Active Session**: SES-003
-- **Last Summary**: Completed S1.1 Task 3: FormEngine Dynamic List Integration for "Equipo", JIT Serialization, and UI sync stabilization logic. (Prod v1.0.25)
-- **Next Focus**: Pending user directive for the next capability injection or structural modifications.
+- **Last Summary**: Completed s2.1 UX Evolution: Implemented 3-State Sidebar (Full, Mini, Hidden) with CSS transition and explicitly triggered ApexCharts reflow on toggle. Story merged.
+- **Next Focus**: Pending user directives for next UI/UX sprint.
 
 ## Patterns
 

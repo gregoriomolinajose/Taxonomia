@@ -1,3 +1,4 @@
+
 <script>
     /**
      * FormEngine_UI.html
@@ -11,6 +12,36 @@
     (function (global) {
         // Estado Global de Edición (Directiva 1)
         global.currentEditId = null;
+
+        /**
+         * Resolutor de opciones para "Dominio Padre"
+         * Filtra desde el caché 100% Zero-Latency.
+         */
+        global.getDominiosPadreOptions = function(formCurrentState) {
+            if (!formCurrentState) {
+                const activeForm = document.querySelector('ion-modal');
+                if (activeForm) {
+                    const inputs = activeForm.querySelectorAll('ion-input, ion-select');
+                    formCurrentState = Array.from(inputs).map(inp => ({ name: inp.name, value: inp.value }));
+                } else {
+                    formCurrentState = [];
+                }
+            }
+
+            const nivelObj = formCurrentState.find(c => c.name === 'nivel_tipo');
+            if (!nivelObj || !nivelObj.value) return [];
+            
+            const currentNivel = parseInt(nivelObj.value, 10);
+            if (isNaN(currentNivel) || currentNivel <= 0) return []; // Strict N>0
+            
+            const cache = (window.__APP_CACHE__ && window.__APP_CACHE__['Dominio']) ? window.__APP_CACHE__['Dominio'] : [];
+            const validParents = cache.filter(r => parseInt(r.nivel_tipo, 10) === currentNivel - 1 && r.estado !== 'Eliminado');
+            
+            return validParents.map(p => ({
+                value: p.id_dominio || p.id_registro,
+                label: `[Nivel ${p.nivel_tipo}] ${p.nombre_ingles || p.n0_es || p.nombre || p.id_registro}`
+            }));
+        };
 
         /* ─────────────────────────────────────────────────────────────────
            PURE UTILITY FUNCTIONS (no side-effects, fully testable)
@@ -48,13 +79,27 @@
             // Asegurar reset de estado al abrir formulario nuevo (Directiva 1)
             global.currentEditId = null;
             window._lastSection = null; // Reset de secciones UI
-            const container = document.getElementById('app-container');
-            if (!container) throw new Error("Container #app-container not found");
+            
+            // Construcción del Modal de la Vista de Formularios (Keyboard-Aware Fix)
+            const modal = document.createElement('ion-modal');
+            global.currentFormModal = modal;
+            
+            // Header Nativo del Modal
+            const header = document.createElement('ion-header');
+            header.innerHTML = `
+              <ion-toolbar>
+                <ion-title>Taxonomia: ${window.formatEntityName(entityName)}</ion-title>
+                <ion-buttons slot="end">
+                  <ion-button onclick="if(window.currentFormModal) { window.currentFormModal.dismiss().then(() => window.currentFormModal.remove()); }">Cerrar</ion-button>
+                </ion-buttons>
+              </ion-toolbar>
+            `;
+            modal.appendChild(header);
 
-            // Limpieza segura del contenedor (no inyección indiscriminada)
-            while (container.firstChild) {
-                container.removeChild(container.firstChild);
-            }
+            // Reemplazamos 'container' por el Content Nativo
+            const container = document.createElement('ion-content');
+            container.className = 'ion-padding';
+            modal.appendChild(container);
 
             const schemas = global.APP_SCHEMAS;
             if (!schemas || !schemas[entityName]) {
@@ -85,6 +130,80 @@
                 });
             }
 
+            // --- MATH ENGINES (Sprint 4.0: Generic Abstraction & 4.2 DB Normalization) ---
+            global.getGenericOrdenPath = function(formStateObj, params) {
+                if (!params || !params.entity) return '';
+
+                const levelField = params.levelField || 'nivel_tipo';
+                const parentField = params.parentField || 'id_dominio_padre';
+                const pkField = params.pkField || 'id_' + params.entity.toLowerCase();
+                const orderField = params.orderField || 'orden_path';
+
+                const nivelStr = formStateObj[levelField];
+                if (nivelStr === undefined || nivelStr === null) return '';
+                const nivel = parseInt(nivelStr, 10);
+                if (isNaN(nivel)) return '';
+                
+                const cache = (window.__APP_CACHE__ && window.__APP_CACHE__[params.entity]) ? window.__APP_CACHE__[params.entity] : [];
+                
+                if (nivel === 0) {
+                    let maxRoot = 0;
+                    cache.filter(d => parseInt(d[levelField], 10) === 0).forEach(d => {
+                        if (d[orderField]) {
+                            const val = parseInt(String(d[orderField]).split('.')[0], 10);
+                            if (!isNaN(val) && val > maxRoot) maxRoot = val;
+                        }
+                    });
+                    return String(maxRoot + 1).padStart(2, '0');
+                } else {
+                    const idPadre = formStateObj[parentField];
+                    if (!idPadre || idPadre === '') return ''; // Bloqueo de seguridad si no hay FK seleccionada
+                    
+                    // Buscar al padre mediante Casting fuerte FK === PK
+                    const padre = cache.find(d => String(d[pkField]) === String(idPadre));
+                    if (!padre || !padre[orderField]) return '';
+                    
+                    // Asegurar que si Sheets castigó "02" a entero 2, lo volvemos a padear visualmente
+                    const parentPathStr = String(padre[orderField]).split('.').map(p => p.padStart(2, '0')).join('.');
+                    
+                    // S4.2 ENTERPRISE FIX: Encontrar hermanos comparando Adjacency List (FK real)
+                    const siblings = cache.filter(d => String(d[parentField]) === String(idPadre));
+                    
+                    let maxSuffix = 0;
+                    siblings.forEach(sib => {
+                        if (sib[orderField]) {
+                            const parts = String(sib[orderField]).split('.');
+                            const lastPart = parseInt(parts[parts.length - 1], 10);
+                            if (!isNaN(lastPart) && lastPart > maxSuffix) maxSuffix = lastPart;
+                        }
+                    });
+                    
+                    const newSuffix = String(maxSuffix + 1).padStart(2, '0');
+                    return parentPathStr + '.' + newSuffix;
+                }
+            };
+
+            global.getGenericPathName = function(formStateObj, params) {
+                if (!params || !params.entity || !params.parentField || !params.nameField || !params.pathField) return '';
+                
+                const nombre = formStateObj[params.nameField] || '';
+                const idPadre = formStateObj[params.parentField];
+                
+                if (!idPadre || idPadre === '') {
+                    return `PATH: ${nombre}`;
+                }
+                
+                const cache = (window.__APP_CACHE__ && window.__APP_CACHE__[params.entity]) ? window.__APP_CACHE__[params.entity] : [];
+                const pkField = params.pkField || 'id_' + params.entity.toLowerCase();
+                const padreRecord = cache.find(r => String(r[pkField]) === String(idPadre));
+                
+                if (!padreRecord || !padreRecord[params.pathField]) {
+                    return `PATH: ${nombre}`;
+                }
+                
+                return `${padreRecord[params.pathField]} > ${nombre}`;
+            };
+
             // --- DEPENDENCY RESOLVER: lookupSource Universal (Metadata-Driven) ---
             /**
              * Escanea el schema en busca de campos con `lookupSource`.
@@ -113,6 +232,19 @@
 
                 try {
                     const promises = fieldsWithLookup.map(field => new Promise((resolve) => {
+                        // REGLA SGMP (Bugfix): Intercepción Local (Zero-Latency)
+                        const localResolver = window[field.lookupSource] || global[field.lookupSource];
+                        if (field.lookupSource && typeof localResolver === 'function') {
+                            const result = localResolver();
+                            if (result instanceof Promise) {
+                                result.then(opts => { field.options = opts || []; resolve(); }).catch(() => { field.options = []; resolve(); });
+                            } else {
+                                field.options = result || [];
+                                resolve();
+                            }
+                            return; // Salir prematuramente, no llamar al backend
+                        }
+
                         if (typeof google !== 'undefined' && google.script && google.script.run) {
                             const handler = google.script.run
                                 .withSuccessHandler(opts => { field.options = opts || []; resolve(); })
@@ -185,11 +317,11 @@
             }
 
             const card = document.createElement('ion-card');
-            card.style.borderRadius = '12px'; // Redondeo Figma
-            card.style.boxShadow = 'var(--ion-shadow-sm)'; // Sombra suave Figma
+            card.style.borderRadius = 'var(--rounded-md)'; // Redondeo Figma
+            card.style.boxShadow = 'var(--shadow-floating)'; // Sombra suave Figma
 
             const cardContent = document.createElement('ion-card-content');
-            cardContent.style.padding = '24px';
+            cardContent.style.padding = 'var(--spacing-6)';
             card.appendChild(cardContent);
 
             // Progressive Disclosure (Rule 5.1) - Contenedores Lógicos
@@ -215,7 +347,7 @@
             // Indicador de Progreso
             let progressLabel = document.createElement('h3');
             progressLabel.style.color = 'var(--ion-color-medium)';
-            progressLabel.style.fontSize = '12px';
+            progressLabel.style.fontSize = 'var(--sys-font-small)';
             progressLabel.style.marginTop = '0';
             progressLabel.style.marginBottom = '20px';
             progressLabel.style.fontWeight = '600';
@@ -274,7 +406,7 @@
                 const sectionTitle = document.createElement('h2');
                 sectionTitle.textContent = (key === 'default' ? 'Configuración General' : key);
                 sectionTitle.style.color = 'var(--ion-text-color)';
-                sectionTitle.style.fontSize = '20px';
+                sectionTitle.style.fontSize = 'var(--sys-font-h3)';
                 sectionTitle.style.fontWeight = '600';
                 sectionTitle.style.marginTop = '0';
                 sectionTitle.style.marginBottom = '20px';
@@ -359,7 +491,7 @@
                         break;
                     case 'select':
                         inputEl = document.createElement('ion-select');
-                        inputEl.setAttribute('interface', 'popover');
+                        inputEl.setAttribute('interface', window.innerWidth < 768 ? 'action-sheet' : 'popover');
                         if (field.options && Array.isArray(field.options)) {
                             field.options.forEach(opt => {
                                 const ionOption = document.createElement('ion-select-option');
@@ -380,10 +512,10 @@
                         inputEl.setAttribute('data-dynamic-list', field.name);
                         inputEl.style.border = '0px solid var(--ion-border-color)';
                         inputEl.style.padding = '0px';
-                        inputEl.style.marginBottom = '16px';
+                        inputEl.style.marginBottom = 'var(--spacing-4)';
                         
                         const dlHeader = document.createElement('div');
-                        dlHeader.style.fontSize = '12px';
+                        dlHeader.style.fontSize = 'var(--sys-font-small)';
                         dlHeader.style.color = 'var(--ion-color-medium)';
                         dlHeader.style.marginBottom = '8px';
                         dlHeader.style.paddingLeft = '5px';
@@ -409,7 +541,7 @@
                             const row = document.createElement('ion-row');
                             row.classList.add('dynamic-list-row');
                             row.style.alignItems = 'center';
-                            row.style.marginBottom = '8px';
+                            row.style.marginBottom = 'var(--spacing-2)';
 
                             field.subFields.forEach(sub => {
                                 const col = document.createElement('ion-col');
@@ -419,7 +551,7 @@
                                 const subInput = document.createElement(sub.type === 'select' ? 'ion-select' : 'ion-input');
                                 subInput.setAttribute('name', sub.name);
                                 subInput.setAttribute('label', sub.label);
-                                subInput.setAttribute('label-placement', 'stacked');
+                                subInput.setAttribute('label-placement', 'floating');
                                 subInput.setAttribute('fill', 'outline');
                                 subInput.style.setProperty('--background', 'var(--ion-color-step-100)');
                                 
@@ -428,7 +560,7 @@
                                 }
 
                                 if (sub.type === 'select' && sub.lookupSource) {
-                                    subInput.setAttribute('interface', 'popover');
+                                    subInput.setAttribute('interface', window.innerWidth < 768 ? 'action-sheet' : 'popover');
                                     if (sub.options && Array.isArray(sub.options)) {
                                         sub.options.forEach(opt => {
                                             const ionOption = document.createElement('ion-select-option');
@@ -473,11 +605,11 @@
                     case 'chip-input':
                         isComplex = true;
                         inputEl = document.createElement('div');
-                        inputEl.style.marginBottom = '16px';
+                        inputEl.style.marginBottom = 'var(--spacing-4)';
 
                         // Etiqueta del campo
                         const cLabel = document.createElement('div');
-                        cLabel.style.fontSize = '12px';
+                        cLabel.style.fontSize = 'var(--sys-font-small)';
                         cLabel.style.color = 'var(--ion-color-medium)';
                         cLabel.style.marginBottom = '4px';
                         cLabel.style.paddingLeft = '5px';
@@ -488,8 +620,8 @@
                         const chipItem = document.createElement('ion-item');
                         chipItem.setAttribute('lines', 'none');
                         chipItem.style.setProperty('--background', 'var(--ion-color-step-100)');
-                        chipItem.style.borderRadius = '8px';
-                        chipItem.style.marginBottom = '8px';
+                        chipItem.style.borderRadius = 'var(--rounded-sm)';
+                        chipItem.style.marginBottom = 'var(--spacing-2)';
                         chipItem.style.border = '1px solid var(--ion-color-step-300)';
 
                         const innerInput = document.createElement('ion-input');
@@ -509,7 +641,7 @@
                         chipContainer.setAttribute('data-chip-name', field.name);
                         chipContainer.style.display = 'flex';
                         chipContainer.style.flexWrap = 'wrap';
-                        chipContainer.style.gap = '8px';
+                        chipContainer.style.gap = 'var(--spacing-2)';
 
                         inputEl.appendChild(chipItem);
                         inputEl.appendChild(chipContainer);
@@ -551,15 +683,18 @@
 
                 if (!isComplex) {
                     inputEl.setAttribute('label', field.label + (field.type === 'lookup' ? ' (Buscar ' + field.lookupTarget + ')' : ''));
-                    inputEl.setAttribute('label-placement', 'stacked');
+                    inputEl.setAttribute('label-placement', 'floating');
                     inputEl.setAttribute('fill', 'outline');
                     inputEl.setAttribute('name', field.name);
-                    inputEl.style.marginBottom = '16px';
+                    inputEl.style.marginBottom = 'var(--spacing-4)';
                     inputEl.style.setProperty('--background', 'var(--ion-color-step-100)');
-                    inputEl.style.borderRadius = '8px';
+                    inputEl.style.borderRadius = 'var(--rounded-sm)';
 
                     if (field.required) inputEl.setAttribute('required', 'true');
-                    if (field.readonly && field.type !== 'lookup') inputEl.setAttribute('readonly', 'true');
+                    if (field.readonly && field.type !== 'lookup') {
+                        inputEl.setAttribute('readonly', 'true');
+                        inputEl.readonly = true;
+                    }
                 }
 
                 ionCol.appendChild(inputEl);
@@ -781,23 +916,30 @@
                 }
             }
 
-            // Contenedor del Botón (Paginación + CTA)
-            const btnContainer = document.createElement('div');
-            btnContainer.style.borderTop = '1px solid var(--ion-border-color)';
-            btnContainer.style.paddingTop = '20px';
-            btnContainer.style.marginTop = '10px';
-            btnContainer.style.display = 'flex';
-            btnContainer.style.justifyContent = 'space-between';
+            // --- PATRÓN MODAL: ION-FOOTER NATIVO (Keyboard-Aware) ---
+            const footerContainer = document.createElement('ion-footer');
+            footerContainer.className = 'ion-no-border';
+            
+            const btnGrid = document.createElement('ion-grid');
+            btnGrid.style.padding = 'var(--spacing-2) var(--spacing-4)';
+            const btnRow = document.createElement('ion-row');
+            btnRow.style.alignItems = 'center';
+            
+            const colLeft = document.createElement('ion-col');
+            colLeft.setAttribute('size', '6');
+            colLeft.style.display = 'flex';
+            colLeft.style.justifyContent = 'flex-start';
+            
+            const colRight = document.createElement('ion-col');
+            colRight.setAttribute('size', '6');
+            colRight.style.display = 'flex';
+            colRight.style.justifyContent = 'flex-end';
+            colRight.style.gap = 'var(--spacing-3)';
 
             const btnPrev = document.createElement('ion-button');
             btnPrev.setAttribute('fill', 'clear');
             btnPrev.setAttribute('color', 'medium');
             btnPrev.innerHTML = '<ion-icon slot="start" name="arrow-back-outline"></ion-icon> Anterior';
-
-            const centerRightWrapper = document.createElement('div');
-            centerRightWrapper.style.display = 'flex';
-            centerRightWrapper.style.justifyContent = 'flex-end';
-            centerRightWrapper.style.flex = '1';
 
             const btnNext = document.createElement('ion-button');
             btnNext.setAttribute('shape', 'round');
@@ -810,10 +952,14 @@
             submitBtn.setAttribute('color', 'primary');
             submitBtn.innerHTML = '<ion-icon slot="start" name="save-outline"></ion-icon> Guardar ' + window.formatEntityName(entityName);
 
-            btnContainer.appendChild(btnPrev);
-            centerRightWrapper.appendChild(btnNext);
-            centerRightWrapper.appendChild(submitBtn);
-            btnContainer.appendChild(centerRightWrapper);
+            colLeft.appendChild(btnPrev);
+            colRight.appendChild(btnNext);
+            colRight.appendChild(submitBtn);
+            
+            btnRow.appendChild(colLeft);
+            btnRow.appendChild(colRight);
+            btnGrid.appendChild(btnRow);
+            footerContainer.appendChild(btnGrid);
 
             window.__CURRENT_WIZARD_STEPS = steps;
 
@@ -919,7 +1065,7 @@
                 await loading.present();
 
                 // --- LECTURA FRESCA JIT (Evita Detached Nodes) ---
-                const activeForm = document.getElementById('app-container');
+                const activeForm = global.currentFormModal || document.getElementById('app-container');
                 const freshInputs = activeForm.querySelectorAll('ion-input, ion-textarea, ion-select, input[type="hidden"]');
                 const payload = {};
                 freshInputs.forEach(input => {
@@ -947,6 +1093,7 @@
                     
                     payload[fieldName] = JSON.stringify(jsonArray);
                 });
+
 
                 const freshChipContainers = activeForm.querySelectorAll('.chip-container');
                 freshChipContainers.forEach(cc => {
@@ -1085,34 +1232,17 @@
                                  submitBtn.innerHTML = '<ion-icon slot="start" name="save-outline"></ion-icon> Guardar ' + window.formatEntityName(entityName);
                                  global.currentEditId = null;
 
-                                 // NUNCA usar NodeLists capturados en el outer click handler.
-                                 const activeContainer = document.getElementById('app-container');
-                                 activeContainer.querySelectorAll('ion-input, ion-textarea, ion-select, input[type="hidden"]')
-                                     .forEach(input => { input.value = ''; });
-
-                                 activeContainer.querySelectorAll('.chip-container')
-                                     .forEach(cc => cc.querySelectorAll('ion-chip').forEach(chip => chip.remove()));
-
-                                 window.goToFormSection(steps[0]);
-
-                                 // Regenerar IDs frescos para el próximo registro
-                                 activeContainer.querySelectorAll('ion-input[readonly], input[type="hidden"]').forEach(input => {
-                                     const name = input.getAttribute('name');
-                                     if (name && name.startsWith('id_')) {
-                                         const prefix = entityName.substring(0, 4).toUpperCase();
-                                         const sufix = Math.random().toString(36).substring(2, 7).toUpperCase();
-                                         input.value = `${prefix}-${sufix}`;
-                                     } else if (input.getAttribute('type') === 'hidden') {
-                                         const fSchema = fields.find(f => f.name === name);
-                                         if (fSchema && fSchema.defaultValue !== undefined && !name.startsWith('id_')) {
-                                             input.value = fSchema.defaultValue;
-                                         }
-                                     }
-                                 });
-
                                  if (window.__APP_CACHE__ && window.__APP_CACHE__.nestedData) window.__APP_CACHE__.nestedData = {};
 
-                                 // Enrutamiento post-Guardado Inmediato (Directiva 0.0s)
+                                 // Cerramos el Modal (Directiva 0.0s visual)
+                                 if (global.currentFormModal) {
+                                     global.currentFormModal.dismiss().then(() => {
+                                         global.currentFormModal.remove();
+                                         global.currentFormModal = null;
+                                     });
+                                 }
+
+                                 // Enrutamiento post-Guardado Inmediato
                                  if (window.DataViewEngine) {
                                      window.DataViewEngine.render(entityName, 'app-container');
                                  } else if (global.onSaveSuccessCallback) {
@@ -1144,8 +1274,80 @@
             });
 
             container.appendChild(card);
-            container.appendChild(btnContainer);
-            btnContainer.appendChild(submitBtn);
+            
+            // --- Metadata-Driven Dependency Injection (Zero-Touch UI) ---
+            let debounceTimer; // S4.3: Debounce logic para blindar Event Loop
+            ['ionChange', 'ionInput'].forEach(eventType => {
+                modal.addEventListener(eventType, (e) => {
+                    const triggerInput = e.target;
+                    const fieldName = triggerInput.name;
+                    if (!fieldName || !fields) return;
+
+                    const schemaField = fields.find(f => f.name === fieldName);
+                    if (schemaField && Array.isArray(schemaField.triggers_refresh_of)) {
+                        
+                        // Limpiar timer previo (Debouncing)
+                        clearTimeout(debounceTimer);
+                        
+                        debounceTimer = setTimeout(async () => {
+                            // Recopilar formStateObj JIT (Diccionario Puro)
+                            const currentInputs = modal.querySelectorAll('ion-input, ion-select');
+                            const formStateObj = Array.from(currentInputs).reduce((acc, inp) => {
+                                acc[inp.name] = inp.value;
+                                return acc;
+                            }, {});
+                            const formCurrentStateArr = Object.keys(formStateObj).map(k => ({name: k, value: formStateObj[k]}));
+
+                            // Procesar cada target
+                            for (const targetName of schemaField.triggers_refresh_of) {
+                                const targetSchema = fields.find(f => f.name === targetName);
+                                if (!targetSchema) continue;
+
+                                // 1. Caso lookupSource (Dropdowns)
+                                if (targetSchema.lookupSource) {
+                                    const targetComponent = modal.querySelector(`ion-select[name="${targetName}"]`);
+                                    if (!targetComponent || eventType === 'ionInput') continue; // Lookup solo reacciona a ionChange por rendimiento
+
+                                    targetComponent.disabled = true;
+                                    targetComponent.innerHTML = '';
+                                    targetComponent.value = null;
+
+                                    const resolver = window[targetSchema.lookupSource] || global[targetSchema.lookupSource];
+                                    if (typeof resolver === 'function') {
+                                        const newOptions = await resolver(formCurrentStateArr);
+                                        
+                                        if (newOptions && Array.isArray(newOptions)) {
+                                            newOptions.forEach(opt => {
+                                                const ionOpt = document.createElement('ion-select-option');
+                                                ionOpt.value = opt.value;
+                                                ionOpt.textContent = opt.label;
+                                                targetComponent.appendChild(ionOpt);
+                                            });
+                                        }
+                                        
+                                        if (newOptions.length > 0) targetComponent.disabled = false;
+                                    }
+                                }
+
+                                // 2. Caso calculatedValue (Campos Matemáticos reactivos)
+                                if (targetSchema.calculatedValue) {
+                                    const calculator = window[targetSchema.calculatedValue] || global[targetSchema.calculatedValue];
+                                    if (typeof calculator === 'function') {
+                                        const newVal = calculator(formStateObj, targetSchema.calcParams || {});
+                                        const targetInput = modal.querySelector(`ion-input[name="${targetName}"], ion-textarea[name="${targetName}"]`);
+                                        if (targetInput) targetInput.value = newVal;
+                                    }
+                                }
+                            }
+                        }, 300); // 300ms espera antes de calcular jerarquía pesada
+                    }
+                });
+            });
+            // ------------------------------------------------------------
+
+            modal.appendChild(footerContainer);
+            document.body.appendChild(modal);
+            await modal.present();
         };
 
         /**
@@ -1236,9 +1438,49 @@
             const headerTitle = document.getElementById('main-header-title');
             if (headerTitle) headerTitle.textContent = "Editar: " + window.formatEntityName(entityName);
 
+            if (global.currentFormModal) {
+                const modalTitle = global.currentFormModal.querySelector('ion-title');
+                if (modalTitle) modalTitle.textContent = "Editar: " + window.formatEntityName(entityName);
+            }
+
             // 5. Pre-llenado de campos (Directiva 3.c)
-            const container = document.getElementById('app-container');
+            const container = global.currentFormModal || document.getElementById('app-container');
             const inputs = container.querySelectorAll('ion-input, ion-textarea, ion-select, input[type="hidden"]');
+
+            // =========================================================================================
+            // MDM Guardrail S4.3 Auditoría: Pre-Hidratación de 0ms (Solución a Fallo de Tree Lock Visual)
+            // =========================================================================================
+            // ARQUITECTURA: En Modo Edición (UPDATE), los campos anidados padre como `id_dominio_padre`
+            // son sometidos a inmutabilidad de estructura, impidiendo iterar combos cerrados.
+            // Para que el WebComponent de Ionic renderice el valor seleccionado en pantalla y NO un
+            // string nulo fantasma, inyectamos primero las `<ion-select-option>` buscando funciones
+            // locales 0ms. Todo ocurre ANTES del populate original de record[name].
+            // =========================================================================================
+            const formSchema = APP_SCHEMAS[entityName]?.fields || [];
+            const formStateObj = { ...record };
+            const formCurrentStateArr = Object.keys(formStateObj).map(k => ({name: k, value: formStateObj[k]}));
+
+            for (const input of Array.from(inputs)) {
+                if (input.tagName.toLowerCase() === 'ion-select') {
+                    const fieldName = input.getAttribute('name');
+                    const schemaDef = formSchema.find(f => f.name === fieldName);
+                    
+                    if (schemaDef && schemaDef.lookupSource) {
+                        const localResolver = window[schemaDef.lookupSource] || global[schemaDef.lookupSource];
+                        if (typeof localResolver === 'function') {
+                            const newOptions = localResolver(formCurrentStateArr);
+                            input.innerHTML = '';
+                            
+                            (Array.isArray(newOptions) ? newOptions : []).forEach(opt => {
+                                const ionOption = document.createElement('ion-select-option');
+                                ionOption.value = opt.value;
+                                ionOption.textContent = opt.label;
+                                input.appendChild(ionOption);
+                            });
+                        }
+                    }
+                }
+            }
 
             console.log("[FormEngine] Pre-llenando", inputs.length, "campos...");
             inputs.forEach(input => {

@@ -115,14 +115,14 @@ function getAppBootstrapPayload() {
     }
     
     // OBLIGATORIO: Sanitización JSON.parse(stringify) para destruir proxies nativos
-    const sanitizedPayload = JSON.parse(JSON.stringify(payload));
+    const sanitizedReturn = JSON.parse(JSON.stringify({
+      status: "success",
+      data: payload
+    }));
     const executionTime = Date.now() - t0;
     Logger.log(`[Perf] getAppBootstrapPayload completado en ${executionTime}ms`);
     
-    return {
-      status: "success",
-      data: sanitizedPayload
-    };
+    return sanitizedReturn;
   } catch (error) {
     Logger.log(`[Bootstrap Error] ${error.message}`);
     return { status: "error", message: error.message };
@@ -184,13 +184,14 @@ function getInitialPayload(entityName) {
     const executionTime = Date.now() - t0;
     Logger.log(`[Perf] getInitialPayload(${entityName}) completado en ${executionTime}ms`);
 
-    return {
+    const sanitizedReturn = JSON.parse(JSON.stringify({
       status: "success",
       schema: schema,
       data: dataResponse,
       lookups: lookups,
       executionTimeMs: executionTime
-    };
+    }));
+    return sanitizedReturn;
   } catch (error) {
     Logger.log(`[Hydration Error] ${error.message}`);
     return { status: "error", message: error.message };
@@ -240,13 +241,15 @@ function API_Universal_Router(action, entityName, payload) {
       const confirmedPkValue = payload[pkField];
       const itemName = payload.nombre || payload.nombre_producto || entityName;
       Logger.log('Persistencia completada para: ' + itemName);
-      return JSON.stringify({
+      
+      const sanitizedReturn = JSON.parse(JSON.stringify({
         status: "success",
         data: responseData,
         Entity: entityName,
         pk: pkField,
         pkValue: confirmedPkValue
-      });
+      }));
+      return sanitizedReturn;
     } else if (action === 'read') {
       const id = (typeof payload === 'object') ? payload[Object.keys(payload).find(k => k.startsWith('id_'))] || payload.id : payload;
       if (id) {
@@ -270,19 +273,19 @@ function API_Universal_Router(action, entityName, payload) {
     Logger.log('Persistencia completada para: ' + itemName);
 
     // Destruir Date Nativos (Regla 10) previo a postMessage
-    responseData = JSON.parse(JSON.stringify(responseData));
-
-    return JSON.stringify({
+    const sanitizedReturn = JSON.parse(JSON.stringify({
       status: "success",
       data: responseData
-    });
+    }));
+    return sanitizedReturn;
   } catch (error) {
     Logger.log('🚀 ERROR Atrapado en Servidor: ' + error.message + '\n' + error.stack);
-    return JSON.stringify({
-      status: "error", // Según el if(response.status === 'success') de UI
-      success: false,   // Por seguridad
+    const sanitizedReturn = JSON.parse(JSON.stringify({
+      status: "error",
+      success: false,
       message: error.message
-    });
+    }));
+    return sanitizedReturn;
   }
 }
 
