@@ -1323,9 +1323,9 @@
                                                 ionOpt.textContent = opt.label;
                                                 targetComponent.appendChild(ionOpt);
                                             });
+                                            // C-02: Guard inside Array.isArray to prevent null.length crash
+                                            if (newOptions.length > 0) targetComponent.disabled = false;
                                         }
-                                        
-                                        if (newOptions.length > 0) targetComponent.disabled = false;
                                     }
                                 }
 
@@ -1468,7 +1468,9 @@
                     if (schemaDef && schemaDef.lookupSource) {
                         const localResolver = window[schemaDef.lookupSource] || global[schemaDef.lookupSource];
                         if (typeof localResolver === 'function') {
-                            const newOptions = localResolver(formCurrentStateArr);
+                            // R-03: await Promise.resolve() handles both sync and async resolvers
+                            // without crashing when a resolver is a google.script.run wrapper (returns Promise)
+                            const newOptions = await Promise.resolve(localResolver(formCurrentStateArr));
                             input.innerHTML = '';
                             
                             (Array.isArray(newOptions) ? newOptions : []).forEach(opt => {

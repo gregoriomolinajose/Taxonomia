@@ -1,0 +1,115 @@
+{
+  "modules": [
+    {
+      "name": "GAS_Server",
+      "category": "service",
+      "confidence": 97,
+      "auto_accepted": true,
+      "purpose": "Google Apps Script server layer. Exposes the SPA via doGet/doPost, routes all RPC calls from the frontend (google.script.run) through API_Universal_Router, and delegates persistence to Engine_DB.",
+      "depends_on": ["Data_Schemas"],
+      "files": [
+        "src/Code.js",
+        "src/API_Universal.gs",
+        "src/API_Auth.js",
+        "src/Cache_Utils.gs"
+      ]
+    },
+    {
+      "name": "DB_Layer",
+      "category": "service",
+      "confidence": 96,
+      "auto_accepted": true,
+      "purpose": "Agnostic persistence facade (Adapter Pattern). Engine_DB routes CRUD + nested saves to Adapter_Sheets (Google Sheets ORM) and optionally to Adapter_CloudDB. Implements Cache-Aside (CacheService) and silent Audit Trail injection.",
+      "depends_on": ["GAS_Server", "Data_Schemas"],
+      "files": [
+        "src/Engine_DB.js",
+        "src/Adapter_Sheets.js",
+        "src/Adapter_CloudDB.js"
+      ]
+    },
+    {
+      "name": "Data_Schemas",
+      "category": "schema",
+      "confidence": 99,
+      "auto_accepted": true,
+      "purpose": "Single Source of Truth for all entity models. The 'APP_SCHEMAS' constant object defines fields, types, validators, lookupSources, triggers, and calcParams for both the backend (Engine_DB) and the frontend (FormEngine). This is the metadata brain of the entire system.",
+      "depends_on": [],
+      "files": [
+        "src/Schema_Engine.gs"
+      ]
+    },
+    {
+      "name": "UI_Shell",
+      "category": "service",
+      "confidence": 92,
+      "auto_accepted": true,
+      "purpose": "Application bootstrap and router. Index.html is the entry shell. JS_Core.html provides AuthManager (GAS identity verification), ThemeManager (multi-theme engine), navigateTo() SPA router, and the Sidebar 3-state controller. CSS_DesignSystem.html and CSS_App.html provide the full design token system.",
+      "depends_on": ["GAS_Server"],
+      "files": [
+        "src/Index.html",
+        "src/JS_Core.html",
+        "src/CSS_DesignSystem.html",
+        "src/CSS_App.html",
+        "src/Global_Config.js"
+      ]
+    },
+    {
+      "name": "DataView_Engine",
+      "category": "handler",
+      "confidence": 94,
+      "auto_accepted": true,
+      "purpose": "Dynamic table renderer. DataView_UI.html provides the zero-latency, in-memory data grid driven from window.__APP_CACHE__. Supports sorting, search, pagination, and wires up create/edit/delete actions to the FormEngine.",
+      "depends_on": ["UI_Shell", "Data_Schemas"],
+      "files": [
+        "src/DataView_UI.html",
+        "src/SubgridState.js"
+      ]
+    },
+    {
+      "name": "Form_Engine",
+      "category": "handler",
+      "confidence": 95,
+      "auto_accepted": true,
+      "purpose": "Metadata-driven, reactive form generator. FormEngine_UI.html reads APP_SCHEMAS to build multi-step wizard forms with Ionic Web Components. Implements the generic Adjacency List hierarchy engine (getGenericOrdenPath, getGenericPathName), S4.3 Debounce listeners, and 0ms modal pre-hydration for edit mode.",
+      "depends_on": ["UI_Shell", "Data_Schemas", "DataView_Engine"],
+      "files": [
+        "src/FormEngine_UI.html"
+      ]
+    },
+    {
+      "name": "Dashboard_UI",
+      "category": "handler",
+      "confidence": 88,
+      "auto_accepted": true,
+      "purpose": "Executive summary and portfolio overview. Dashboard_UI.html renders ApexCharts-based KPIs and metric cards mined from window.__APP_CACHE__ data at near-zero latency.",
+      "depends_on": ["UI_Shell"],
+      "files": [
+        "src/Dashboard_UI.html",
+        "src/UI_Components.html"
+      ]
+    },
+    {
+      "name": "DesignKit_UI",
+      "category": "utility",
+      "confidence": 85,
+      "auto_accepted": true,
+      "purpose": "Living Design System showcase. Renders all UI tokens, colors, typography and components for visual validation by developers and designers.",
+      "depends_on": ["UI_Shell"],
+      "files": [
+        "src/DesignKit_UI.html"
+      ]
+    },
+    {
+      "name": "Test_Suite",
+      "category": "test",
+      "confidence": 90,
+      "auto_accepted": true,
+      "purpose": "GAS-side test helpers and unit test coverage for hierarchy math and persistence logic.",
+      "depends_on": ["DB_Layer"],
+      "files": [
+        "src/TEST_Suite.gs",
+        "__tests__/Dominio_Hierarchy.test.js"
+      ]
+    }
+  ]
+}

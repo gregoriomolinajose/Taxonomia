@@ -20,7 +20,9 @@ const Adapter_Sheets = {
         // 1. Determinar PK con soporte para entidades plurales (ej. Grupo_Productos → id_grupo_producto)
         //    Prueba: id_<tableName> → id_<singular> → find(startsWith('id_'))
         const tableKey = tableName.toLowerCase();
-        const singularKey = tableKey.endsWith('s') ? tableKey.slice(0, -1) : tableKey;
+        // R-02: Handle Spanish -es suffix (e.g. capacidades→capacidad) before generic -s
+        const singularKey = tableKey.endsWith('es') ? tableKey.slice(0, -2)
+            : tableKey.endsWith('s') ? tableKey.slice(0, -1) : tableKey;
         const primaryKeyField = payload.hasOwnProperty('id_' + tableKey) ? 'id_' + tableKey
             : payload.hasOwnProperty('id_' + singularKey) ? 'id_' + singularKey
                 : Object.keys(payload).find(key => key.startsWith('id_'));
@@ -61,8 +63,9 @@ const Adapter_Sheets = {
         if (numRows > 1) {
             const pkColumnData = sheet.getRange(2, pkIndex + 1, numRows - 1, 1).getValues();
             for (let r = 0; r < pkColumnData.length; r++) {
-                if (pkColumnData[r][0] == primaryKeyValue) {
-                    foundRowIndex = r + 2; // +2 porque el índice de la fila empieza en 1, y nos saltamos el header (fila 1)
+                // C-01: Strict string comparison to prevent type-coercion collisions (e.g. "1" == 1)
+                if (String(pkColumnData[r][0]) === String(primaryKeyValue)) {
+                    foundRowIndex = r + 2; // +2: filas 1-indexed + skip header
                     break;
                 }
             }
@@ -135,7 +138,9 @@ const Adapter_Sheets = {
         if (!Array.isArray(items) || items.length === 0) return { status: 'success', count: 0 };
         
         const tableKey = tableName.toLowerCase();
-        const singularKey = tableKey.endsWith('s') ? tableKey.slice(0, -1) : tableKey;
+        // R-02: Handle Spanish -es suffix
+        const singularKey = tableKey.endsWith('es') ? tableKey.slice(0, -2)
+            : tableKey.endsWith('s') ? tableKey.slice(0, -1) : tableKey;
         const firstItem = items[0];
         const primaryKeyField = firstItem.hasOwnProperty('id_' + tableKey) ? 'id_' + tableKey
             : firstItem.hasOwnProperty('id_' + singularKey) ? 'id_' + singularKey
@@ -322,7 +327,11 @@ const Adapter_Sheets = {
      * @param {string} format 'objects' (defecto) o 'tuples'
      * @returns {{ headers: string[], rows: (Object[]|Array[]) }}
      */
-    list: function (entityName, config, format) {
+    /**
+     * R-01: includeAudit flag — when true, audit columns (created_at etc.) are NOT stripped.
+     * Use this in openEditForm to display the Audit Trail badge correctly.
+     */
+    list: function (entityName, config, format, includeAudit) {
         const spreadsheetId = (config && config.SPREADSHEET_ID_DB)
             ? config.SPREADSHEET_ID_DB
             : CONFIG.SPREADSHEET_ID_DB;
@@ -349,12 +358,13 @@ const Adapter_Sheets = {
         }
 
         // 3. Payload Slimming: Filtrar columnas de auditoría para reducir latencia de red
+        // R-01: When includeAudit===true, keep audit columns (needed for edit hydration trail)
         const auditFields = ['created_at', 'created_by', 'updated_at', 'updated_by'];
         const visibleHeaderIndices = [];
         const filteredHeaders = [];
 
         for (let j = 0; j < headers.length; j++) {
-            if (!auditFields.includes(headers[j])) {
+            if (includeAudit || !auditFields.includes(headers[j])) {
                 visibleHeaderIndices.push(j);
                 filteredHeaders.push(headers[j]);
             }

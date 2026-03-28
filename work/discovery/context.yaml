@@ -1,5 +1,13 @@
-project: "Taxonomia Project"
-languages: ["javascript", "html"]
-root_dirs: ["src"]
-entry_points: ["src/Code.js", "src/Index.html"]
-detected_at: "2026-03-19T13:30:00Z"
+project: Taxonomia Project
+description: "Metadata-driven taxonomy SPA for SAFe 6.0 governance, running on Google Apps Script + Google Sheets"
+languages:
+  - javascript
+  - html
+  - css
+root_dirs:
+  - src
+entry_points:
+  - src/Code.js
+  - src/Index.html
+detected_at: "2026-03-27T19:00:00Z"
+test_command: "npx jest"
