@@ -23,9 +23,9 @@ status: in-progress
 - Restauración granular con propagación inversa en caso de undo (Solo Prevención Avanzada).
 
 ## Stories
-- [ ] S4.1 (Prevención de Ciclos en UI)
-- [ ] S4.2 (Actualización de Cascada / Re-parenting)
-- [ ] S4.3 (Barrera de Soft-Delete contra orfandad)
+- **S4.1** | Prevención de Ciclos en UI (Circular Dependency Guard) | Oculta el propio sub-árbol en los menús select de jerarquía. | Size: S | Deps: None
+- **S4.2** | Mutación en Cascada (Re-Parenting & Bulk Path Update) | Traslado y serialización O(1) masiva de `orden_path` de toda la rama descendiente. | Size: M | Deps: None
+- **S4.3** | Integridad de Eliminación (Safe Block contra orfandad) | Backend aborta Soft-Deletes si la entidad conserva IDs dependientes. | Size: S | Deps: S4.2
 
 ## Done Criteria
 1. Un padre *jamás* puede declararse hijo de su propia descendencia (Selector UI filtrado).
