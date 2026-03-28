@@ -4,3 +4,11 @@ node_modules
 .raise/rai/personal/
 # Clasp configuration (managed by deploy.js)
 .clasp.json
+
+# Debug & test log artifacts (prevent future accumulation)
+*.log
+test_*.txt
+*_test_*.txt
+*_output.txt
+*_report.txt
+tmp_pull/
