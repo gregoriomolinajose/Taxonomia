@@ -100,6 +100,20 @@
           if (typeof window.mountDesignKit === 'function') window.mountDesignKit();
         }
       }
+    } 
+    else if (viewType === 'domainmap') {
+      if (headerTitle) headerTitle.textContent = 'Mapa M/N: Dominios';
+      if (backBtn) {
+        backBtn.style.display = 'block';
+        backBtn.onclick = function() { window.navigateTo('dashboard'); };
+      }
+      
+      var mapBtn = document.getElementById('nav-item-domainmap');
+      if (mapBtn) mapBtn.classList.add('active');
+      
+      if (container && typeof window.renderDomainMap === 'function') {
+        window.renderDomainMap(container);
+      }
     }
   };
 
@@ -346,4 +360,57 @@
       window.AuthManager.init();
     }, 100);
   });
+
+  /* ── Modulos Transversales y Utils (S6.3) ──────── */
+  window.Cache_Utils = {
+    // Treemap Builder (O(N) Dictionary Mapping)
+    buildEChartsTreemapData: function() {
+      var rawData = [];
+      if (window.__APP_CACHE__ && Array.isArray(window.__APP_CACHE__['Dominio'])) {
+        rawData = window.__APP_CACHE__['Dominio'];
+      }
+      
+      if (!rawData || rawData.length === 0) return [];
+      
+      var mapData = {};
+      var rootNodes = [];
+      
+      // 1. Create O(1) Lookup Map and deep copy nodes sin asignar Value (Echarts lo calcula por peso de hojas)
+      rawData.forEach(function(row) {
+        mapData[row.id_dominio] = {
+          id: row.id_dominio,
+          name: (row.n0_es || '').replace(/[▶►▸>]/g, '').trim(),
+          path: (row.path_completo_es || '').replace(/[▶►▸>]/g, '').trim(), // Tooltip payload
+          _record: row, // reference for deep linking
+          children: []
+        };
+      });
+      
+      // 2. Iterate once O(N) to wire up parent-child relationships
+      rawData.forEach(function(row) {
+        var node = mapData[row.id_dominio];
+        if (row.id_dominio_padre && String(row.id_dominio_padre).trim() !== '' && mapData[row.id_dominio_padre]) {
+            var parentNode = mapData[row.id_dominio_padre];
+            parentNode.children.push(node);
+        } else {
+            rootNodes.push(node);
+        }
+      });
+      
+      // 3. Limpiar arreglos "children" vacios para evitar fallas visuales
+      var pruneEmptyChildren = function(nodeArr) {
+         nodeArr.forEach(function(n) {
+            if (n.children && n.children.length === 0) {
+               delete n.children;
+               n.value = 1; // HOTFIX: ECharts necesita un area > 0 en las hojas para inflar a los padres
+            } else if (n.children && n.children.length > 0) {
+               pruneEmptyChildren(n.children);
+            }
+         });
+      };
+      pruneEmptyChildren(rootNodes);
+
+      return rootNodes;
+    }
+  };
 </script>

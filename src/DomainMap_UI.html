@@ -1,0 +1,213 @@
+<script>
+  /* ═══════════════════════════════════════════════════════
+     DomainMap_UI.html — Apache ECharts Treemap Renderer
+     CONTIENE: Logica nativa O(N) para instanciar mapa ortogonal (S6.3)
+     Inyectado via: <?!= include('DomainMap_UI'); ?>
+  ═══════════════════════════════════════════════════════ */
+
+  window.triggerDomainEditFromTooltip = function() {
+      var record = window._domainMapHoverRecord;
+      if (!record || typeof window.openEditForm !== 'function') return;
+      
+      var oDVE = window.DataViewEngine;
+      var oGS = oDVE ? oDVE._getState : null;
+      if (!window.DataViewEngine) window.DataViewEngine = {};
+      window.DataViewEngine._getState = function() {
+          return { entityName: 'Dominio', data: window.__APP_CACHE__['Dominio'] || [record], entityMeta: { idField: 'id_dominio' } };
+      };
+      
+      if (window.DomainTreemapInstance) window.DomainTreemapInstance.dispatchAction({ type: 'hideTip' });
+
+      window.openEditForm(record.id_dominio).finally(function() {
+          if (oGS) window.DataViewEngine._getState = oGS;
+          else if (!oDVE) window.DataViewEngine = undefined; 
+      });
+  };
+
+  window.renderDomainMap = function(containerEl) {
+    // 1. Limpiar contenedor principal y armar envoltorio
+    containerEl.innerHTML = `
+      <ion-grid class="ion-no-padding">
+        <ion-row class="ion-no-padding">
+          <ion-col size="12" class="ion-no-padding">
+            <ion-card style="height: calc(100vh - 230px); margin: 6px; border-radius: 12px; display: flex; flex-direction: column;">
+              <ion-card-header>
+                <ion-card-title>Mapa de Relaciones: Dominios</ion-card-title>
+                <ion-card-subtitle>Jerarquía Treemap (Clic para explorar rama. Mantén pulsado o usa Clic Derecho para configurar)</ion-card-subtitle>
+              </ion-card-header>
+              <ion-card-content class="ion-no-padding" style="flex: 1;">
+                <div id="domain-treemap-container" style="width: 100%; height: 100%;"></div>
+              </ion-card-content>
+            </ion-card>
+          </ion-col>
+        </ion-row>
+      </ion-grid>
+    `;
+
+    // 2. Extraer datos procesados anidados via O(N) HashMap
+    var graphData = window.Cache_Utils.buildEChartsTreemapData();
+    var treemapContainer = document.getElementById('domain-treemap-container');
+
+    if (!graphData || graphData.length === 0) {
+      treemapContainer.innerHTML = '<div style="padding: 20px; text-align: center;">No hay datos de Dominios para graficar.</div>';
+      return;
+    }
+
+    // 3. Instanciar ECharts
+    if (window.DomainTreemapInstance) {
+        window.DomainTreemapInstance.dispose();
+    }
+    
+    var chart = echarts.init(treemapContainer);
+    
+    // Tema dinámico y Extracción de Variables de Sistema
+    var isDark = document.body.classList.contains('dark');
+    var ionicTextColor = getComputedStyle(document.body).getPropertyValue('--ion-text-color').trim();
+    var breadcrumbTextColor = ionicTextColor || (isDark ? '#ffffff' : '#1e2022');
+    
+    // 4. Configuracion Premium Treemap
+    var option = {
+        tooltip: {
+            trigger: 'item',
+            enterable: true,
+            hideDelay: 250,
+            backgroundColor: 'rgba(30, 32, 35, 0.95)',
+            borderColor: '#3b5998',
+            borderWidth: 1,
+            formatter: function (info) {
+                var val = info.value || 0;
+                
+                var percentage = 100;
+                if (info.treePathInfo && info.treePathInfo.length > 1) {
+                    var parentNode = info.treePathInfo[info.treePathInfo.length - 2];
+                    if (parentNode && parentNode.value) {
+                        percentage = ((val / parentNode.value) * 100).toFixed(1);
+                    }
+                }
+                
+                if (info.data && info.data._record) {
+                    window._domainMapHoverRecord = info.data._record;
+                }
+
+                return '<div style="padding: 10px; min-width: 250px;">' +
+                            '<div style="font-weight:bold; font-size:15px; margin-bottom:12px; color:#ffffff; white-space:normal; word-break:break-word;">' + (info.name || '') + '</div>' +
+                            '<div style="display:flex; justify-content:space-between; margin-bottom:12px; font-size:13px; color:#f0f2f5;">' +
+                                '<span>Subdominios: <b style="color:#4a8bff;">' + val + '</b></span>' +
+                                '<span>Densidad: <b style="color:#4a8bff;">' + percentage + '%</b></span>' +
+                            '</div>' +
+                            '<div style="text-align:center;">' +
+                                '<button onclick="window.triggerDomainEditFromTooltip()" style="width:100%; padding:8px; background:#3b5998; color:white; border:none; border-radius:4px; cursor:pointer; font-weight:bold; font-size:13px; box-shadow: 0 2px 4px rgba(0,0,0,0.3); transition: 0.2s;">' +
+                                    '<ion-icon name="create-outline" style="vertical-align:middle; margin-right:5px;"></ion-icon>Configurar Dominio' +
+                                '</button>' +
+                            '</div>' +
+                        '</div>';
+            }
+        },
+        series: [{
+            type: 'treemap',
+            data: graphData,
+            left: '1%',
+            right: '1%',
+            top: '40px',
+            bottom: '1%',
+            leafDepth: 1, // UX: S7.2 Restaurado para restringir el visor a un solo nivel jerárquico a la vez
+            roam: false, // Forzar uso del Clic Navigacional (Drill-down sin panneo)
+            nodeClick: 'zoomToNode', 
+            animationDurationUpdate: 500,
+            itemStyle: {
+                borderColor: '#f4f5f7', 
+                borderWidth: 2,
+                gapWidth: 2, 
+                borderRadius: 4 
+            },
+            label: {
+                show: true,
+                position: 'insideTopLeft',
+                formatter: '{b}',
+                fontSize: 14,
+                fontWeight: '500',
+                padding: [10, 10, 10, 10], 
+                overflow: 'break' 
+            },
+            upperLabel: {
+                show: true,
+                height: 30,
+                color: '#ffffff',
+                backgroundColor: '#3b5998',
+                fontSize: 12
+            },
+            levels: [
+                {
+                    itemStyle: { borderColor: '#fff', borderWidth: 4, gapWidth: 4 }
+                },
+                {
+                    colorSaturation: [0.3, 0.6], 
+                    itemStyle: { borderColorSaturation: 0.7, gapWidth: 2, borderWidth: 2 }
+                },
+                {
+                    colorSaturation: [0.3, 0.5],
+                    itemStyle: { borderColorSaturation: 0.6, gapWidth: 1 }
+                }
+            ],
+            breadcrumb: {
+                show: true,
+                top: 0,
+                bottom: 'auto',
+                left: '1%',
+                emptyItemWidth: 25,
+                itemStyle: {
+                    color: '#3b5998', 
+                    borderWidth: 0,
+                    borderRadius: 15,
+                    shadowColor: 'rgba(0,0,0,0.3)',
+                    shadowBlur: 5
+                },
+                textStyle: {
+                    color: '#ffffff', 
+                    fontSize: 14,
+                    fontWeight: 'bold'
+                }
+            }
+        }]
+    };
+
+    chart.setOption(option);
+
+    // UX: Si existe un único Dominio Raíz (ej. "Retail"), auto-perforarlo para no mostrar una caja gigante inútil
+    if (graphData.length === 1) {
+        setTimeout(function() {
+            try {
+                chart.dispatchAction({
+                    type: 'treemapRootToNode',
+                    seriesIndex: 0,
+                    targetNodeId: graphData[0].id,
+                    targetNode: graphData[0].name
+                });
+            } catch(e) {
+                console.warn("ECharts Auto-Drilldown fail:", e);
+            }
+        }, 400); // 400ms: Asegura que el canvas y el grid terminaron su reflujo de renderizado inicial
+    }
+
+    // Responsive window resizing
+    var resizeObserver = new ResizeObserver(function() {
+         chart.resize();
+    });
+    resizeObserver.observe(treemapContainer);
+    
+    // 5. S6.8: Native Mobile UX & Desktop Context Menu Editing
+    chart.on('contextmenu', function(params) {
+        if (params.event && params.event.event) {
+            params.event.event.preventDefault(); // Stop native browser menu
+        }
+        if (params.data && params.data._record) {
+            window._domainMapHoverRecord = params.data._record;
+            if (typeof window.triggerDomainEditFromTooltip === 'function') {
+                window.triggerDomainEditFromTooltip();
+            }
+        }
+    });
+
+    window.DomainTreemapInstance = chart;
+  };
+</script>

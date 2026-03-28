@@ -1190,6 +1190,12 @@
               onclick="window.DataViewEngine._onViewToggle('grid')" title="Vista de cuadrícula">
               ⊞
             </button>
+            ${_state.entityName === 'Dominio' ? `
+            <button class="dv-btn-icon ${_state.view === 'map' ? 'active' : ''}" id="dv-view-map-btn"
+              onclick="window.DataViewEngine._onViewToggle('map')" title="Formato Mapa (Treemap)">
+              <ion-icon name="git-network-outline"></ion-icon>
+            </button>
+            ` : ''}
           </div>
         </div>`;
         }
@@ -1236,12 +1242,21 @@
         ───────────────────────────────────────────── */
         function _rerenderData() {
             const pageRows = _getPage();
-            const dataHTML = _state.view === 'table'
-                ? _renderTableView(pageRows)
-                : _renderGridView(pageRows);
-
             const dataZone = document.getElementById('dv-data-zone');
-            if (dataZone) dataZone.innerHTML = dataHTML;
+            if (!dataZone) return;
+
+            if (_state.view === 'map') {
+                if (window.renderDomainMap) {
+                    window.renderDomainMap(dataZone);
+                } else {
+                    dataZone.innerHTML = '<div class="dv-empty">Motor de Mapa no disponible.</div>';
+                }
+            } else {
+                const dataHTML = _state.view === 'table'
+                    ? _renderTableView(pageRows)
+                    : _renderGridView(pageRows);
+                dataZone.innerHTML = dataHTML;
+            }
         }
 
         // Alias para compatibilidad interna (sort, page)
