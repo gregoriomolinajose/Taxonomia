@@ -377,15 +377,18 @@
       var rootNodes = [];
       var hasParentMap = {};
       
-      // 1. Create O(1) Lookup Map and deep copy nodes (Echarts Weighted Leaf Requirements S5.5)
+      // Configuration over Convention (S5.5 Architecture Review)
+      var PRIMARY_RELATION_TYPE = "Militar_Directa";
+      
+      // 1. Create O(1) Lookup Map and deep copy nodes (Lazy Init Requirements)
       rawData.forEach(function(row) {
         mapData[row.id_dominio] = {
           id: row.id_dominio,
           name: (row.n0_es || '').replace(/[▶►▸>]/g, '').trim(),
-          path: (row.path_completo_es || '').replace(/[▶►▸>]/g, '').trim(), // Tooltip payload
-          value: 1, // [S5.5] Inyectado estáticamente para forzar área de dibujo simétrica
-          _record: row, // reference for deep linking
-          children: []
+          path: (row.path_completo_es || '').replace(/[▶►▸>]/g, '').trim(), 
+          value: 1, 
+          _record: row
+          // children property omitted deliberately to leverage Lazy Initialization (O(N) Optimization)
         };
       });
       
@@ -393,53 +396,40 @@
       var relationData = (window.__APP_CACHE__ && Array.isArray(window.__APP_CACHE__['Relacion_Dominios'])) ? window.__APP_CACHE__['Relacion_Dominios'] : [];
 
       if (relationData.length > 0) {
-          // Extraemos exclusivamente aristas SCD-2 Activas (Current = true) originadas paramétricamente
           var activeEdges = relationData.filter(function(edge) {
               var isCurrent = (edge.es_version_actual === true || edge.es_version_actual === "TRUE" || edge.es_version_actual === "true");
-              var isDirect = (edge.tipo_relacion === "Militar_Directa");
+              var isDirect = (edge.tipo_relacion === PRIMARY_RELATION_TYPE);
               return isCurrent && isDirect;
           });
 
-          // Conectar Aristas Activas (Padre -> Hijo)
           activeEdges.forEach(function(edge) {
               var parentNode = mapData[edge.id_nodo_padre];
               var childNode = mapData[edge.id_nodo_hijo];
               if (parentNode && childNode) {
+                  if (!parentNode.children) parentNode.children = [];
                   parentNode.children.push(childNode);
                   hasParentMap[edge.id_nodo_hijo] = true;
               }
           });
       } else {
-          // Fallback Clásico (si Relacion_Dominios aún está vacía, intentamos hidratar con datos legacy)
           rawData.forEach(function(row) {
               if (row.id_dominio_padre && String(row.id_dominio_padre).trim() !== '' && mapData[row.id_dominio_padre]) {
                   var parentNode = mapData[row.id_dominio_padre];
                   var node = mapData[row.id_dominio];
+                  if (!parentNode.children) parentNode.children = [];
                   parentNode.children.push(node);
                   hasParentMap[row.id_dominio] = true;
               }
           });
       }
 
-      // 3. Resolución de Nodos Raíz (Nivel 0 Histórico y Edge Cases Huerfanos)
+      // 3. Resolución de Nodos Raíz
       rawData.forEach(function(row) {
           if (!hasParentMap[row.id_dominio]) {
               rootNodes.push(mapData[row.id_dominio]);
           }
       });
       
-      // 4. Limpiar arreglos "children" vacios sin alterar los "value" funcionales
-      var pruneEmptyChildren = function(nodeArr) {
-         nodeArr.forEach(function(n) {
-            if (n.children && n.children.length === 0) {
-               delete n.children;
-            } else if (n.children && n.children.length > 0) {
-               pruneEmptyChildren(n.children);
-            }
-         });
-      };
-      pruneEmptyChildren(rootNodes);
-
       return rootNodes;
     }
   };
