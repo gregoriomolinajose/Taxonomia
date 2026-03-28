@@ -405,7 +405,8 @@
           activeEdges.forEach(function(edge) {
               var parentNode = mapData[edge.id_nodo_padre];
               var childNode = mapData[edge.id_nodo_hijo];
-              if (parentNode && childNode) {
+              // [S5.5 Quality Guard] Previene Loops Infinitos en ECharts si un Dominio es padre de sí mismo accidentalmente.
+              if (parentNode && childNode && edge.id_nodo_padre !== edge.id_nodo_hijo) {
                   if (!parentNode.children) parentNode.children = [];
                   parentNode.children.push(childNode);
                   hasParentMap[edge.id_nodo_hijo] = true;
