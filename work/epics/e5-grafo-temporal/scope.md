@@ -19,7 +19,7 @@ status: in-progress
 - Implementación del nuevo gráfico ECharts Force-Directed Graph (Esto se enviará a una Epic posterior. Solo el backend soportará la N-dimensionalidad por ahora).
 
 ## Stories
-- **S5.1** | Diseño e Inserción de Metadatos Puente (Esquema `Relacion_Dominios`). | Size: S | Deps: None
+- **S5.1** | Diseño e Inserción de Metadatos Puente (Esquema `Relacion_Dominios`). | Size: S | Deps: None | ✓
 - **S5.2** | Script ETL de Migración Estructural Transaccional (O(1)). | Size: M | Deps: S5.1
 - **S5.3** | Ingeniería Backend: Creación del Motor Setter DAG e Inserciones SCD-2 (Orquestador Re-Parenting). | Size: L | Deps: S5.2
 - **S5.4** | Ingeniería Backend: Algoritmo de Cascade Flattening (Soft Delete con Reasignación de Abuelo). | Size: L | Deps: S5.3
