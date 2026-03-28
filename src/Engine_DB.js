@@ -119,6 +119,105 @@ function _updateGraphEdges(childId, newParentId, config) {
     _invalidateCache("Relacion_Dominios");
 }
 
+/**
+ * _flattenGraphNode (S5.4)
+ * O(1) Bulk RAM Push para curar Grafos Temporales ante Deletes.
+ */
+function _flattenGraphNode(nodeIdToDelete, config) {
+    if (typeof SpreadsheetApp === 'undefined') return;
+    const ssStr = (config && config.SPREADSHEET_ID_DB) ? config.SPREADSHEET_ID_DB : (typeof CONFIG !== 'undefined' ? CONFIG.SPREADSHEET_ID_DB : null);
+    if (!ssStr) return;
+    
+    const ss = SpreadsheetApp.openById(ssStr);
+    const relSheet = ss.getSheetByName("Relacion_Dominios");
+    if (!relSheet) return;
+    
+    let data = relSheet.getDataRange().getValues();
+    if (data.length <= 1) return;
+    
+    const headers = data[0];
+    const idxHid = headers.indexOf("id_nodo_hijo");
+    const idxPid = headers.indexOf("id_nodo_padre");
+    const idxHasta = headers.indexOf("valido_hasta");
+    const idxActual = headers.indexOf("es_version_actual");
+    const idxUpdated = headers.indexOf("updated_at");
+    
+    const sysDate = new Date().toISOString();
+    
+    let abueloId = null;
+    let aristaSuperiorIdx = -1;
+    let tieneCambios = false;
+    
+    // 1. Extraer Arista Superior (Mapeo de Abuelo)
+    for (let i = 1; i < data.length; i++) {
+        if (data[i][idxHid] === nodeIdToDelete && data[i][idxActual] === true) {
+            abueloId = data[i][idxPid];
+            aristaSuperiorIdx = i;
+            break;
+        }
+    }
+    
+    // Caducar Arista Superior SCD-2
+    if (aristaSuperiorIdx !== -1) {
+        data[aristaSuperiorIdx][idxHasta] = sysDate;
+        data[aristaSuperiorIdx][idxActual] = false;
+        data[aristaSuperiorIdx][idxUpdated] = sysDate;
+        tieneCambios = true;
+        if (typeof Logger !== 'undefined') Logger.log(`[DAG Flatten] Edge Superior (hacia Abuelo ${abueloId}) caducado.`);
+    }
+    
+    // 2. Extraer Aristas Inferiores (Mapeo de Nietos)
+    let nietos = [];
+    for (let i = 1; i < data.length; i++) {
+        if (data[i][idxPid] === nodeIdToDelete && data[i][idxActual] === true) {
+            data[i][idxHasta] = sysDate;
+            data[i][idxActual] = false;
+            data[i][idxUpdated] = sysDate;
+            nietos.push(data[i][idxHid]);
+            tieneCambios = true;
+        }
+    }
+    
+    if (nietos.length > 0) {
+        if (typeof Logger !== 'undefined') Logger.log(`[DAG Flatten] Identificados ${nietos.length} nietos huérfanos. Formulando Saneamiento...`);
+    }
+
+    // 3. Reasignar Descendientes (Si Abuelo existe)
+    if (abueloId && nietos.length > 0) {
+        nietos.forEach(nietoId => {
+            let rID = "RELA-" + Utilities.getUuid().substring(0, 5).toUpperCase();
+            let newEdge = [];
+            for (let j = 0; j < headers.length; j++) {
+                let h = headers[j];
+                if (h === "id_relacion") newEdge.push(rID);
+                else if (h === "id_nodo_padre") newEdge.push(abueloId);
+                else if (h === "id_nodo_hijo") newEdge.push(nietoId);
+                else if (h === "tipo_relacion") newEdge.push("Militar_Directa");
+                else if (h === "peso_influencia") newEdge.push(1);
+                else if (h === "valido_desde") newEdge.push(sysDate);
+                else if (h === "valido_hasta") newEdge.push("");
+                else if (h === "es_version_actual") newEdge.push(true);
+                else if (h === "created_at") newEdge.push(sysDate);
+                else if (h === "created_by") newEdge.push("DAG_CASCADE_FLATTEN");
+                else newEdge.push("");
+            }
+            data.push(newEdge);
+            tieneCambios = true;
+        });
+        if (typeof Logger !== 'undefined') Logger.log(`[DAG Flatten] Nietos re-anclados exitosamente al Abuelo ${abueloId}.`);
+    } else if (!abueloId && nietos.length > 0) {
+         // Edge Case: Root Node Deletion
+         if (typeof Logger !== 'undefined') Logger.log(`[DAG Flatten] Root Node Exception: Nodo eliminado no poseía Abuelo (Nivel 0). Promoviendo ${nietos.length} nietos a Nodos Raíz.`);
+    }
+    
+    // 4. BULK OPS IMPERATIVE: Volcado Íntegro
+    if (tieneCambios) {
+        relSheet.getRange(1, 1, data.length, headers.length).setValues(data);
+        if (typeof Logger !== 'undefined') Logger.log(`[DAG Flatten] O(1) Bulk RAM Push ejecutado. Arrays Volcados: ${data.length}`);
+        _invalidateCache("Relacion_Dominios");
+    }
+}
+
 const Engine_DB = {
     save: function (tableName, payload, config) {
         const results = { sheets: {}, cloud: {} };
@@ -366,6 +465,12 @@ const Engine_DB = {
     delete: function (entityName, id) {
         Logger.log("Engine_DB_delete_router: Routing " + entityName + " (ID: " + id + ") to Adapter_Sheets.remove.");
         const config = (typeof CONFIG !== 'undefined') ? CONFIG : { useSheets: true, useCloudDB: false };
+        
+        // [S5.4] Cascade Flattening Hook (Tree Node Orphans Relocation)
+        if (entityName === "Dominio") {
+            _flattenGraphNode(id, config);
+        }
+
         let results = { sheets: {}, cloud: {} };
         if (config.useSheets) {
             results.sheets = _Adapter_Sheets.remove(entityName, id, config);
