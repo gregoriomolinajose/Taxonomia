@@ -16,10 +16,11 @@ Este documento establece los patrones arquitectónicos bajo los cuales las Histo
 - **Interceptar en Facade (Backend):** Cuando el adaptador de base de datos recibe un `Update` sobre una entidad `Dominio`, comparará el `id_dominio_padre` entrante vs el existente en la base.
 - Si cambió, se detona la cascada:
   1. Descarga total del caché de dominios (Lectura RAM matriz 2D).
-  2. Extracción de todos los hijos/nietos utilizando `startsWith(viejo_orden_path)`.
-  3. Mutación puramente en memoria del nuevo prefijo jerárquico (`orden_path` y `path_completo_es`).
-  4. Ejecución del Upsert en bloque (`setValues()`) en una única llamada, sobre-escribiendo a la matriz completa en la hoja *Dominios* para respetar el desempeño O(1).
-  5. Invocación imperativa de Invalidador de Caché Server-Side.
+  2. Construcción rigurosa del árbol genealógico en Memoria (*Relational Graph Traversal*). Utilizando Búsqueda en Profundidad (DFS) sobre las llaves foráneas `id_dominio_padre`, extraeremos el listado absoluto y finito de llaves primarias descendientes.
+  3. Queda absolutamente prohibido el uso heurístico de `.startsWith(viejo_orden_path)` para evitar atrapar strings homófonos (ej. confundir `01.02` con `01.020`).
+  4. Mutación puramente en memoria del nuevo prefijo jerárquico (`orden_path` y `path_completo_es`) estrictamente a los herederos aislados por DFS.
+  5. Ejecución del Upsert en bloque (`setValues()`) en una única llamada, sobre-escribiendo a la matriz completa en la hoja *Dominios* para respetar el desempeño O(1).
+  6. Invocación imperativa de Invalidador de Caché Server-Side.
 
 ## 3. Diseño Lógico S4.3: Barrera de Soft-Delete contra orfandad (Safe Block)
 **El Veto Arquitectónico:** El *Backend es la Autoridad Absoluta*. El UI jamás debe tomar decisiones de integridad sobre eliminaciones.
