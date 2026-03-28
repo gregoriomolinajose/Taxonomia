@@ -38,7 +38,8 @@
       Producto:        { order:5, iconName:'cube-outline',        color:'tertiary', label:'Productos',              titleField:'nombre_producto', idField:'id_producto',        fkField:{ key:'id_grupo_producto', label:'Grupo' } },
       Capacidad:       { order:6, iconName:'layers-outline',      color:'warning',  label:'Capacidades',            titleField:'macrocapacidad',  idField:'id_capacidad',       fkField:null },
       Equipo:          { order:7, iconName:'people-outline',      color:'dark',     label:'Equipos',                titleField:'nombre_equipo',   idField:'id_equipo',          fkField:{ key:'id_producto',       label:'Producto' } },
-      Persona:         { order:8, iconName:'person-outline',      color:'medium',   label:'Personas',               titleField:'nombre_completo', idField:'id_persona',         fkField:null }
+      Persona:         { order:8, iconName:'person-outline',      color:'medium',   label:'Personas',               titleField:'nombre_completo', idField:'id_persona',         fkField:null },
+      Relacion_Dominios:{ order:9, iconName:'git-network-outline', color:'primary',  label:'Conexiones Topológicas', titleField:'tipo_relacion',   idField:'id_relacion',        fkField:{ key:'id_nodo_padre',     label:'Dominio' } }
     };
   </script>
 </head>
