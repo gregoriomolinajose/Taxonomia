@@ -22,14 +22,15 @@ El script de transición debe ejecutarse una única vez en el Servidor (App Scri
    - `tipo_relacion`: `"Militar_Directa"` (Legado actual).
    - `peso_influencia`: `1` (100% de influencia).
    - `valido_desde`: `Dominio.created_at` (Hereda la fecha de creación del dominio para respetar el SCD2 histórico).
-   - `valido_hasta`: `NULL` (Significando "Al infinito / Vigente").
+   - `valido_hasta`: `""` (String vacío. Google Sheets castea la palabra "NULL" como texto, arruinando búsquedas).
    - `es_version_actual`: `TRUE`.
    - Campos de Auditoría Mandatorios (`created_at`, `created_by`, `updated_at`, `updated_by`).
 
-### [L]oad (Inserción O(1) y Depreciación)
+### [L]oad (Inserción O(1) y Depreciación SSOT)
 1. El backend creará la nueva hoja física **`Relacion_Dominios`** si no existe, imprimiendo su Header-Row exacto.
 2. Inyectará todo el `newRelationsArray` en un barrido masivo `setValues()`.
-3. Posteriormente, correrá un barrido sobre la matriz original de Dominios y borrará (colocará a `NULL`) exclusivamente la columna `id_dominio_padre`. Se empujará este cambio a Google Sheets.
+3. Posteriormente, correrá un barrido sobre la matriz original de Dominios y borrará (colocará un string vacío `""`) exclusivamente la columna `id_dominio_padre`. Se empujará este cambio a Google Sheets.
+4. **Declaración SSOT (Limpieza de Frontend y Endpoints):** Destruiremos el campo `id_dominio_padre` de la const `APP_SCHEMAS.Dominio` en las reglas centrales (`JS_Schemas_Config.html` y configuraciones SSOT equivalentes) para suprimir definitivamente su existencia y prevenir renderizados obsoletos en el Form Engine.
 
 ## 3. Impacto Arquitectónico y RoadMap Lógico
 
