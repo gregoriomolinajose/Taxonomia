@@ -1,0 +1,29 @@
+artifact_type: story-design
+version: 1
+skill: rai-story-design
+created: '2026-03-28T16:07:02-06:00'
+story: 'S5.5'
+epic: 'E5'
+content:
+  summary: 'Intercepción del motor Apache ECharts para consumir la nueva Tabla Puente Relacional (Filtrada por SCD-2 Activos) y desacoplar la topología del plano de los metadatos visuales.'
+  complexity: medium
+  acceptance_criteria:
+    - id: AC1
+      description: 'El D3 Tree Builder omite silenciosamente aristas donde es_version_actual sea falso.'
+      verifiable: true
+    - id: AC2
+      description: 'El fallback de Root Nodes captura a cualquier Dominio que no figure jamás como nodo_hijo en las aristas activas, solventando Nivel-0 orgánico.'
+      verifiable: true
+  integration_points:
+    - module: 'Frontend.JS_Core'
+      change_type: modify
+      files: ['src/JS_Core.html']
+  decisions:
+    - id: D1
+      choice: 'Filtrado Puro en Cliente (Vanilla JS Memory Map)'
+      rationale: 'Se usó la variable compartida __APP_CACHE__ evitando costosas llamadas asincrónicas RPC de Backend, garantizando un renderizado visual Zero-Latency.'
+      alternatives_considered: ['Crear Endpoint D3 API. Descartado por ser demasiado lento y consumir cuotas gratuitas.']
+refs:
+  backlog_item: 'RAISE-S5.5'
+  epic_scope: 'work/epics/e5-grafo-temporal/scope.md'
+metadata: {}
