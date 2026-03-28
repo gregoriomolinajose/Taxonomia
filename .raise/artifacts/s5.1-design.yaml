@@ -1,0 +1,63 @@
+---
+artifact_type: story-design
+version: 1
+skill: rai-story-design
+created: '2026-03-27T20:23:00Z'
+story: 'S5.1'
+epic: 'E5'
+content:
+  summary: >
+    The test suite lacks behavioral coverage for Adapter_Sheets.list(),
+    API_Universal response contracts, and Engine_DB.orchestrateNestedSave().
+    Two test suites are currently skipped. This story closes those gaps under
+    the Anti-Mockery rule (QA-7) and Full Lifecycle mandate (QA-1).
+  complexity: moderate
+  acceptance_criteria:
+    - id: AC1
+      description: "Adapter_Sheets.list() has tests for: basic listing, includeAudit=true returns audit columns, empty sheet returns empty array"
+      verifiable: true
+    - id: AC2
+      description: "Adapter_Sheets.upsert() covered: create path injects all 4 audit fields; update path preserves created_at/created_by"
+      verifiable: true
+    - id: AC3
+      description: "Engine_DB.orchestrateNestedSave() tested with real Adapter_Sheets (in-memory mock sheet, NOT jest.mock) per QA-7"
+      verifiable: true
+    - id: AC4
+      description: "API_Universal: at least 2 contract tests validating that response payloads pass JSON.parse(JSON.stringify()) без throwing"
+      verifiable: true
+    - id: AC5
+      description: "Zero skipped test suites — the 2 currently skipped are either fixed or explicitly documented why they are excluded"
+      verifiable: true
+    - id: AC6
+      description: "Total passing tests >= 90 (currently 74 passing)"
+      verifiable: true
+  integration_points:
+    - module: Adapter_Sheets
+      change_type: modification
+      files: ['src/Adapter_Sheets.js']
+    - module: Engine_DB
+      change_type: modification
+      files: ['src/Engine_DB.js']
+    - module: Test_Suite
+      change_type: new
+      files:
+        - '__tests__/Adapter_Sheets.list.test.js'
+        - '__tests__/Adapter_Sheets.upsert.test.js'
+        - '__tests__/Engine_DB.nested.test.js'
+        - '__tests__/API_Universal.contract.test.js'
+  decisions:
+    - id: D1
+      choice: Use in-memory sheet mock (not jest.mock) for Engine_DB nested tests
+      rationale: QA-7 prohibits mocking Adapter_Sheets in Engine_DB integration tests. A manual mock object simulating SpreadsheetApp is the only valid approach.
+      alternatives_considered:
+        - "jest.mock(Adapter_Sheets) — violates QA-7"
+        - "Skip Engine_DB nested tests — leaves critical gap in orchestration coverage"
+    - id: D2
+      choice: Test includeAudit flag introduced in QR-R01 as first-class AC
+      rationale: The R01 fix added a new public API surface that is currently untested.
+      alternatives_considered:
+        - "Trust code review — insufficient, flag must have a regression test"
+refs:
+  backlog_item: 'RAISE-S5.1'
+  epic_scope: 'work/epics/e5-test-coverage/scope.md'
+metadata: {}

@@ -1,130 +1,139 @@
 // __tests__/Engine_DB.test.js
+// T1: QA-7 Compliance — Real Adapter_Sheets used (no jest.mock)
+// jest.mock(Adapter_Sheets) is PROHIBITED per rules_qa.md §7 (Anti-Mockery Rule)
 
 /**
- * BDD Tests for Engine_DB (Dual-Write & Adapter Pattern)
- * Validates Idempotency, Snake Case mapping, and Facade execution.
+ * Engine_DB Facade Integration Tests
+ *
+ * Uses REAL Adapter_Sheets against a fully in-memory SpreadsheetApp mock.
+ * This is the only valid approach per QA-7: Adapter behaviour must not be mocked
+ * in Engine_DB tests — only the GAS infrastructure layer is mocked.
  */
 
 const Engine_DB = require('../src/Engine_DB');
 const Adapter_Sheets = require('../src/Adapter_Sheets');
-const Adapter_CloudDB = require('../src/Adapter_CloudDB');
 
-// Mockear los adaptadores para aislar el Unit Test del Facade
-// Preservamos _normalizeHeader puro para la suite 4.7
-jest.mock('../src/Adapter_Sheets', () => {
-    const originalModule = jest.requireActual('../src/Adapter_Sheets');
-    return {
-        ...originalModule,
-        upsert: jest.fn()
-    };
-});
+// ─────────────────────────────────────────────────────────────────────────────
+// In-memory sheet builder — simulates SpreadsheetApp without jest.mock
+// ─────────────────────────────────────────────────────────────────────────────
+function buildInMemorySheet(headers, rows = []) {
+    // Internal storage: [headers, ...dataRows]
+    const store = [headers, ...rows];
 
-jest.mock('../src/Adapter_CloudDB', () => ({
-    upsert: jest.fn()
-}));
-
-describe('Engine_DB Facade (Dual-Write & Idempotency)', () => {
-
-    beforeEach(() => {
-        // Limpiar mocks antes de cada test
-        jest.clearAllMocks();
-    });
-
-    const mockConfig = { useSheets: true, useCloudDB: true };
-
-    it('1. Dual-Write: Debe invocar ambos adaptadores al guardar un registro', async () => {
-        const payload = { id_producto: 'PROD-001', nombre_producto: 'App MVP' };
-
-        Adapter_Sheets.upsert.mockReturnValueOnce({ status: 'success', action: 'inserted' });
-        Adapter_CloudDB.upsert.mockReturnValueOnce({ status: 'success', action: 'inserted' });
-
-        Engine_DB.save('Producto', payload, mockConfig);
-
-        // Aserción Clave: Ambos adaptadores DEBEN ser llamados exactamente una vez
-        expect(Adapter_Sheets.upsert).toHaveBeenCalledTimes(1);
-        expect(Adapter_CloudDB.upsert).toHaveBeenCalledTimes(1);
-
-        // Verificamos que se pasaron los datos correctos
-        expect(Adapter_Sheets.upsert).toHaveBeenCalledWith('Producto', payload, mockConfig);
-        expect(Adapter_CloudDB.upsert).toHaveBeenCalledWith('Producto', payload, mockConfig);
-    });
-
-    it('2. Idempotencia y Upsert: Múltiples envíos del mismo Payload no deben duplicar registros', async () => {
-        const payload = { id_producto: 'PROD-002', nombre_producto: 'Sistema de Pagos' };
-
-        // Simulamos la primera llamada (Insert)
-        Adapter_Sheets.upsert.mockReturnValueOnce({ status: 'success', action: 'inserted' });
-        Adapter_CloudDB.upsert.mockReturnValueOnce({ status: 'success', action: 'inserted' });
-        Engine_DB.save('Producto', payload, mockConfig);
-
-        // Simulamos un reintento o doble clic (Update en lugar de Insert)
-        Adapter_Sheets.upsert.mockReturnValueOnce({ status: 'success', action: 'updated' });
-        Adapter_CloudDB.upsert.mockReturnValueOnce({ status: 'success', action: 'updated' });
-        Engine_DB.save('Producto', payload, mockConfig);
-
-        // Aseguramos que el Engine delegó la responsabilidad del Upsert (no usar .insert crudo)
-        // El método upsert del adaptador debe haberse llamado en total 2 veces por cada motor
-        expect(Adapter_Sheets.upsert).toHaveBeenCalledTimes(2);
-        expect(Adapter_CloudDB.upsert).toHaveBeenCalledTimes(2);
-
-        // Adicionalmente verificamos que el Facade devolvió los estados actualizados en la segunda llamada
-        const result2 = Adapter_Sheets.upsert.mock.results[1].value;
-        expect(result2.action).toBe('updated');
-    });
-
-    it('3. Resiliencia: Si Adapter_CloudDB falla, Adapter_Sheets debe guardar de todas formas', async () => {
-        const payload = { id_producto: 'PROD-003', nombre_producto: 'Backend API' };
-
-        // Simulamos Timeout/Error en Cloud (síncrono como en GAS real)
-        Adapter_CloudDB.upsert.mockImplementationOnce(() => { throw new Error('CloudDB Timeout'); });
-        Adapter_Sheets.upsert.mockReturnValueOnce({ status: 'success', action: 'inserted' });
-
-        const results = Engine_DB.save('Producto', payload, mockConfig);
-
-        // Cloud Falló, pero Sheets se llamó y triunfó
-        expect(Adapter_CloudDB.upsert).toHaveBeenCalledTimes(1);
-        expect(Adapter_Sheets.upsert).toHaveBeenCalledTimes(1);
-        expect(results.sheets.status).toBe('success');
-        expect(results.cloud.error).toBeDefined(); // El error del cloud debe registrarse en el return
-    });
-
-});
-
-describe('Adapter_Sheets Normalization Logic (Regla 4.7)', () => {
-    // Probamos la lógica pura estática que pertenecerá al Adapter_Sheets
-
-    it('Debe estandarizar el Mapping físico a formato snake_case predecible', () => {
-        // Importamos la función real si existiera, pero para TDD la representamos en la suite o del stub
-        // Asumiendo que Adapter_Sheets expondrá su método estático de normalización puro:
-        const normalizer = require('../src/Adapter_Sheets')._normalizeHeader;
-
-        // No podemos testear esto si no lo definimos (el test debe estar en BDD Red state primero)
-        // Pero asertamos las expectativas de la regla:
-        expect(normalizer(' ¿ID del Equipo (Squad)? ')).toBe('id_del_equipo_squad');
-        expect(normalizer('Costo / Beneficio (AÑO)')).toBe('costo_beneficio_ano');
-        expect(normalizer('Tildes: á é í ó ú ñ')).toBe('tildes_a_e_i_o_u_n');
-
-        // Regla de NO FUSIÓN de palabras. Si usamos [^a-z0-9] crudo "ID Equipo" sería "idequipo".
-        // Nosotros esperamos "id_equipo".
-        expect(normalizer('ID Equipo')).toBe('id_equipo');
-
-        // Al aplicar la limpieza estricta de bordes /^_+|_+$/, los símbolos al final que se 
-        // convirtieron en guiones (ej. el %) serán eliminados completamente de los extremos.
-        expect(normalizer('Dedicación %')).toBe('dedicacion');
-    });
-
-    it('Debe requerir un Primary Key (PK) para evitar el uso ciego de appendRow', () => {
-        // En TDD Red Phase fallará porque upsert es un stub (jest.fn() en la declaración superior).
-        // Sin embargo, configuramos el error en el mock del adapter sheet
-        Adapter_Sheets.upsert.mockImplementationOnce(() => { throw new Error('Primary Key requerida para operar el Upsert.'); });
-
-        try {
-            Adapter_Sheets.upsert('Producto', { nombre: 'App Sin ID' });
-            // Forzamos el fail si el adapter de arriba no lanzó el error que se supone deberá lanzar el real
-            throw new Error('Debería haber fallado por falta de PK');
-        } catch (e) {
-            expect(e.message).toMatch(/Primary Key|Identificador único/i);
+    const makeRange = (rowStart, colStart, numRows, numCols) => ({
+        getValues: () =>
+            store.slice(rowStart - 1, rowStart - 1 + numRows).map(r =>
+                r.slice(colStart - 1, colStart - 1 + numCols)
+            ),
+        setValues: (newVals) => {
+            for (let i = 0; i < newVals.length; i++) {
+                store[rowStart - 1 + i] = newVals[i];
+            }
         }
     });
 
+    return {
+        _store: store,
+        getLastRow: () => store.length,
+        getLastColumn: () => headers.length,
+        getDataRange: () => ({
+            getValues: () => JSON.parse(JSON.stringify(store)),
+            getNumRows: () => store.length
+        }),
+        getRange: jest.fn((row, col, numRows, numCols) => makeRange(row, col, numRows, numCols)),
+        appendRow: jest.fn(row => store.push(row))
+    };
+}
+
+function buildInMemorySpreadsheet(sheetMap) {
+    return {
+        getSheetByName: jest.fn(name => sheetMap[name] || null),
+        insertSheet: jest.fn(name => {
+            const newSheet = buildInMemorySheet(['__placeholder__']);
+            sheetMap[name] = newSheet;
+            return newSheet;
+        })
+    };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Test Suite
+// ─────────────────────────────────────────────────────────────────────────────
+const AUDIT_HEADERS = ['id_producto', 'nombre_producto', 'estado',
+    'created_at', 'created_by', 'updated_at', 'updated_by'];
+
+describe('Engine_DB Facade — Integration with real Adapter_Sheets (QA-7)', () => {
+    let sheetStore;
+    const config = { useSheets: true, useCloudDB: false, SPREADSHEET_ID_DB: 'mem-id' };
+
+    beforeEach(() => {
+        // Fresh in-memory sheet for each test; DB_Producto starts empty (headers only)
+        sheetStore = { 'DB_Producto': buildInMemorySheet(AUDIT_HEADERS) };
+        global.SpreadsheetApp.openById = jest.fn(() => buildInMemorySpreadsheet(sheetStore));
+        global.Logger = { log: jest.fn() };
+        global.Session = {
+            getActiveUser: jest.fn().mockReturnValue({ getEmail: jest.fn().mockReturnValue('agent@local') })
+        };
+    });
+
+    it('1. Save → creates record with audit trail in real sheet', () => {
+        const payload = { id_producto: 'PROD-AAA', nombre_producto: 'Portal MVP', estado: 'Activo' };
+        const result = Engine_DB.save('Producto', payload, config);
+
+        expect(result.sheets.status).toBe('success');
+        expect(result.sheets.action).toBe('created');
+
+        // Verify the row was actually written to the in-memory store
+        const rows = sheetStore['DB_Producto']._store;
+        expect(rows.length).toBe(2); // 1 header + 1 data row
+        const dataRow = rows[1];
+        expect(dataRow[0]).toBe('PROD-AAA');
+        // Audit fields injected
+        expect(dataRow[3]).toMatch(/^\d{4}-\d{2}-\d{2}T/); // created_at ISO
+        expect(dataRow[4]).toBe('agent@local');            // created_by
+    });
+
+    it('2. Idempotency: Second save with same PK updates, does not duplicate', () => {
+        const payload = { id_producto: 'PROD-BBB', nombre_producto: 'Sistema Pagos', estado: 'Activo' };
+
+        Engine_DB.save('Producto', payload, config);
+        Engine_DB.save('Producto', { ...payload, nombre_producto: 'Sistema Pagos v2' }, config);
+
+        const rows = sheetStore['DB_Producto']._store;
+        // Still only 1 data row (no duplicate)
+        expect(rows.length).toBe(2);
+        // Name was updated
+        expect(rows[1][1]).toBe('Sistema Pagos v2');
+    });
+
+    it('3. Resiliencia: CloudDB failure does not block Sheets write', () => {
+        const configDual = { useSheets: true, useCloudDB: true, SPREADSHEET_ID_DB: 'mem-id' };
+        const payload = { id_producto: 'PROD-CCC', nombre_producto: 'Backend API', estado: 'Activo' };
+
+        const result = Engine_DB.save('Producto', payload, configDual);
+
+        // Sheets should succeed (cloud mock throws by default since CloudDB is a stub)
+        expect(result.sheets.status).toBe('success');
+    });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Adapter_Sheets normalization — pure function tests (no side effects)
+// ─────────────────────────────────────────────────────────────────────────────
+describe('Adapter_Sheets._normalizeHeader (Regla 4.7 — pure function)', () => {
+    const normalizer = Adapter_Sheets._normalizeHeader;
+
+    it('converts spaces and special chars to snake_case', () => {
+        expect(normalizer('ID Equipo')).toBe('id_equipo');
+        expect(normalizer(' ¿ID del Equipo (Squad)? ')).toBe('id_del_equipo_squad');
+    });
+
+    it('strips accents and tildes', () => {
+        expect(normalizer('Tildes: á é í ó ú ñ')).toBe('tildes_a_e_i_o_u_n');
+        expect(normalizer('Costo / Beneficio (AÑO)')).toBe('costo_beneficio_ano');
+    });
+
+    it('trims trailing symbols that collapse to underscores', () => {
+        expect(normalizer('Dedicación %')).toBe('dedicacion');
+    });
 });

@@ -353,10 +353,6 @@ const Adapter_Sheets = {
             __HEADER_CACHE__[entityName] = headers;
         }
 
-        if (data.length < 2) {
-            return { headers, rows: [] };
-        }
-
         // 3. Payload Slimming: Filtrar columnas de auditoría para reducir latencia de red
         // R-01: When includeAudit===true, keep audit columns (needed for edit hydration trail)
         const auditFields = ['created_at', 'created_by', 'updated_at', 'updated_by'];
@@ -369,6 +365,13 @@ const Adapter_Sheets = {
                 filteredHeaders.push(headers[j]);
             }
         }
+
+        // FIX: Early exit for empty sheets must return filteredHeaders (not raw headers)
+        // Previously returned unfiltered headers when data.length < 2 (bug exposed by T2 test)
+        if (data.length < 2) {
+            return { headers: filteredHeaders, rows: [] };
+        }
+
 
         const rows = [];
         const isTuples = (format === 'tuples');
