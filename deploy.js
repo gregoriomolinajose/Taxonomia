@@ -26,9 +26,12 @@ try {
         fs.copyFileSync(configFile, targetConfig);
     }
 
-    console.log(`[Deploy] Environment files updated for ${env}. Running npx clasp push explicitly with ${envFile}...`);
+    console.log(`[Deploy] Copying ${envFile} to .clasp.json to guarantee exact script ID routing...`);
+    fs.copyFileSync(envFile, '.clasp.json');
 
-    execSync(`npx clasp push -P ${envFile} -f`, { stdio: 'inherit' });
+    console.log(`[Deploy] Environment files updated for ${env}. Running npx clasp push...`);
+
+    execSync(`npx clasp push -f`, { stdio: 'inherit' });
 
     console.log(`[Deploy] Successfully deployed to ${env}!`);
 } catch (error) {
