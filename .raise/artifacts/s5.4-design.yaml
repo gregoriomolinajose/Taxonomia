@@ -1,0 +1,29 @@
+artifact_type: story-design
+version: 1
+skill: rai-story-design
+created: '2026-03-28T15:39:10-06:00'
+story: 'S5.4'
+epic: 'E5'
+content:
+  summary: 'Diseño del Agente Abuelo-Nieto en Engine_DB para reparar el DAG de Taxonomías eludiendo ciclos y aristas muertas durante la eliminación de entidades esféricas.'
+  complexity: high
+  acceptance_criteria:
+    - id: AC1
+      description: 'El payload de delete transacciona la BD Plana únicamente si la matriz SCD-2 relacional curó el árbol previamente.'
+      verifiable: true
+    - id: AC2
+      description: 'La función identifica dinámicamente todos los descendientes directos (Nietos) y les provee el Parent_ID superior (Abuelo).'
+      verifiable: true
+  integration_points:
+    - module: 'Backend.Engine_DB'
+      change_type: modify
+      files: ['src/Engine_DB.js']
+  decisions:
+    - id: D1
+      choice: 'Interceptor Asincrónico Pre-Delete empaquetado como subrutina pura.'
+      rationale: 'Aísla el Engine_DB genérico de la lógica pesada de lectura condicional, permitiendo que Delete() resulte siempre seguro por defecto.'
+      alternatives_considered: ['Trigger OnChange en Google Sheets. (Descartado: Muy susceptible al Error Humano y Timeouts).']
+refs:
+  backlog_item: 'RAISE-S5.4'
+  epic_scope: 'work/epics/e5-grafo-temporal/scope.md'
+metadata: {}
