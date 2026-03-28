@@ -1,0 +1,32 @@
+artifact_type: story-design
+version: 1
+skill: rai-story-design
+created: '2026-03-28T14:44:13-06:00'
+story: 'S5.2'
+epic: 'E5'
+content:
+  summary: 'Diseño del algoritmo ETL Server-Side para extraer propiedades planas, parsear SCD-2 y recargar las capas masivamente.'
+  complexity: moderate
+  acceptance_criteria:
+    - id: AC1
+      description: 'El script consolida datos de Dominios, aisla campos padre validos y fabrica arrays relacionales (RELA-XXXXX).'
+      verifiable: true
+    - id: AC2
+      description: 'La hoja Relacion_Dominios se crea si no existe con toda la metadata del cabezote.'
+      verifiable: true
+    - id: AC3
+      description: 'La escritura ocurre puramente en O(1) con setValues() en ambas hojas involucradas (Cero loops de I/O).'
+      verifiable: true
+  integration_points:
+    - module: 'Backend.ETL'
+      change_type: new
+      files: ['src/ETL_Runner.gs']
+  decisions:
+    - id: D1
+      choice: 'Crear un archivo unitario (ETL_Runner.gs) separado de Adapter_Sheets.js'
+      rationale: 'Dado que este archivo es temporal (One-Shot), mantenerlo fuera de los adapters previene contaminación monolítica posterior al Epic.'
+      alternatives_considered: ['Meter la función en Adapter_Sheets.js', 'Hacer un payload cliente-servidor']
+refs:
+  backlog_item: 'RAISE-S5.2'
+  epic_scope: 'work/epics/e5-grafo-temporal/scope.md'
+metadata: {}
