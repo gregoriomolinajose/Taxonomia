@@ -48,8 +48,7 @@ const APP_SCHEMAS = {
       { name: "id_dominio", type: "hidden", primaryKey: true },
       { name: "estado", type: "hidden", defaultValue: "Activo" },
       { section: "Datos Generales", name: "id_registro", type: "text", label: "ID Externo", required: true, width: 12 },
-      { section: "Datos Generales", name: "nivel_tipo", type: "number", label: "Nivel Tipo", required: true, width: 6, triggers_refresh_of: ["id_dominio_padre", "orden_path"] },
-      { section: "Datos Generales", name: "id_dominio_padre", type: "select", label: "Dominio Padre", required: false, width: 12, lookupSource: "getDominiosPadreOptions", triggers_refresh_of: ["orden_path", "path_completo_es"] },
+      { section: "Datos Generales", name: "nivel_tipo", type: "number", label: "Nivel Tipo", required: true, width: 6, triggers_refresh_of: ["orden_path"] },
       { section: "Datos Generales", name: "orden_path", type: "text", label: "Orden Path", readonly: true, required: true, width: 6, calculatedValue: "getGenericOrdenPath", calcParams: { entity: "Dominio", pkField: "id_dominio", parentField: "id_dominio_padre", levelField: "nivel_tipo", orderField: "orden_path" } },
       { section: "Datos Generales", name: "n0_es", type: "text", label: "Nombre (ES)", required: true, width: 6, triggers_refresh_of: ["path_completo_es"] },
       { section: "Datos Generales", name: "nombre_ingles", type: "text", label: "Nombre (EN)", required: false, width: 6 },
@@ -196,6 +195,20 @@ const APP_SCHEMAS = {
       { section: "Operativa", name: "email_manager", label: "Correo del Líder", type: "email", width: 6 },
       { section: "Operativa", name: "nro_manager", label: "Número del Manager", type: "text", width: 6 },
       { section: "Operativa", name: "nombre_manager", label: "Nombre del Manager", type: "text", width: 12 }
+    ]
+  },
+  Relacion_Dominios: {
+    primaryKey: "id_relacion",
+    titleField: "tipo_relacion",
+    fields: [
+      { name: "id_relacion", type: "hidden", primaryKey: true },
+      { section: "Relación", name: "id_nodo_padre", type: "select", label: "Dominio Padre", required: true, width: 6, lookupSource: "getDominioOptions" },
+      { section: "Relación", name: "id_nodo_hijo", type: "select", label: "Dominio Hijo", required: true, width: 6, lookupSource: "getDominioOptions" },
+      { section: "Atributos", name: "tipo_relacion", type: "select", label: "Tipo Relación", required: true, width: 6, options: ["Militar_Directa", "Matricial_Secundaria", "Colaborativa_Red"] },
+      { section: "Atributos", name: "peso_influencia", type: "number", label: "Peso Influencia", required: true, width: 6 },
+      { section: "Trazabilidad", name: "valido_desde", type: "text", label: "Válido Desde", required: false, width: 4 },
+      { section: "Trazabilidad", name: "valido_hasta", type: "text", label: "Válido Hasta", required: false, width: 4 },
+      { section: "Trazabilidad", name: "es_version_actual", type: "checkbox", label: "Es Versión Actual", required: false, width: 4 }
     ]
   }
 };
