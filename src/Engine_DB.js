@@ -44,6 +44,81 @@ function _invalidateCache(entityName) {
     if (typeof Logger !== 'undefined') Logger.log(`[Cache] BUSTED para ${entityName}`);
 }
 
+/**
+ * _updateGraphEdges (S5.3)
+ * Orquesta transacciones SCD-2 interrumpiendo el flujo plano para poblar el Grafo Temporal.
+ */
+function _updateGraphEdges(childId, newParentId, config) {
+    if (typeof SpreadsheetApp === 'undefined') return; 
+    const ssStr = (config && config.SPREADSHEET_ID_DB) ? config.SPREADSHEET_ID_DB : (typeof CONFIG !== 'undefined' ? CONFIG.SPREADSHEET_ID_DB : null);
+    if (!ssStr) return;
+    
+    newParentId = (newParentId === "NULL" || !newParentId) ? "" : String(newParentId).trim();
+
+    const ss = SpreadsheetApp.openById(ssStr);
+    const relSheet = ss.getSheetByName("Relacion_Dominios");
+    if (!relSheet) return;
+    
+    let data = relSheet.getDataRange().getValues();
+    if (data.length === 0) return;
+    
+    const headers = data[0];
+    const idxHid = headers.indexOf("id_nodo_hijo");
+    const idxPid = headers.indexOf("id_nodo_padre");
+    const idxHasta = headers.indexOf("valido_hasta");
+    const idxActual = headers.indexOf("es_version_actual");
+    const idxUpdated = headers.indexOf("updated_at");
+    
+    let currentActiveIdx = -1;
+    let oldParentId = "";
+    
+    for (let i = 1; i < data.length; i++) {
+        if (data[i][idxHid] === childId && data[i][idxActual] === true) {
+            currentActiveIdx = i;
+            oldParentId = data[i][idxPid];
+            break;
+        }
+    }
+    
+    if (currentActiveIdx !== -1 && oldParentId === newParentId) return; 
+    
+    const sysDate = new Date().toISOString();
+    
+    // Soft-Expire Old Edge (SCD-2)
+    if (currentActiveIdx !== -1) {
+        data[currentActiveIdx][idxHasta] = sysDate;
+        data[currentActiveIdx][idxActual] = false;
+        data[currentActiveIdx][idxUpdated] = sysDate;
+        
+        relSheet.getRange(currentActiveIdx + 1, 1, 1, headers.length).setValues([data[currentActiveIdx]]);
+        if (typeof Logger !== 'undefined') Logger.log(`[DAG] Caducada arista vieja para hijo ${childId} (padre previo: ${oldParentId})`);
+    }
+    
+    // Spawn Active Edge
+    if (newParentId !== "") {
+        let rID = "RELA-" + Utilities.getUuid().substring(0, 5).toUpperCase();
+        let newEdge = [];
+        for (let i = 0; i < headers.length; i++) {
+            let h = headers[i];
+            if (h === "id_relacion") newEdge.push(rID);
+            else if (h === "id_nodo_padre") newEdge.push(newParentId);
+            else if (h === "id_nodo_hijo") newEdge.push(childId);
+            else if (h === "tipo_relacion") newEdge.push("Militar_Directa");
+            else if (h === "peso_influencia") newEdge.push(1);
+            else if (h === "valido_desde") newEdge.push(sysDate);
+            else if (h === "valido_hasta") newEdge.push("");
+            else if (h === "es_version_actual") newEdge.push(true);
+            else if (h === "created_at") newEdge.push(sysDate);
+            else if (h === "created_by") newEdge.push("DAG_SETTER");
+            else newEdge.push("");
+        }
+        relSheet.appendRow(newEdge);
+        if (typeof Logger !== 'undefined') Logger.log(`[DAG] Arista nueva instanciada: ${newParentId} -> ${childId}`);
+    }
+    
+    _invalidateCache("Relacion_Dominios");
+}
+
 const Engine_DB = {
     save: function (tableName, payload, config) {
         const results = { sheets: {}, cloud: {} };
@@ -90,6 +165,13 @@ const Engine_DB = {
         const nestedData = {};
         const flatPayload = { ...payload };
 
+        // [S5.3] Graph Edge Interception (Transient Node De-pollution)
+        let transientParentId = null;
+        if (entityName === "Dominio" && flatPayload.id_nodo_padre !== undefined) {
+            transientParentId = flatPayload.id_nodo_padre;
+            delete flatPayload.id_nodo_padre; // Previene I/O error en capa plana
+        }
+
         // Paso A: Desempaquetado basado en esquema
         const schema = (typeof APP_SCHEMAS !== 'undefined') ? APP_SCHEMAS[entityName] : null;
         if (schema) {
@@ -105,10 +187,14 @@ const Engine_DB = {
         // Paso B: Transacción Padre
         const parentResults = this.save(entityName, flatPayload, config);
         
-        // Determinar la PK del padre (asumimos que viene en el payload ya que es client-side generated)
-        // O la extraemos del resultado del adapter
-        const parentIdField = Object.keys(flatPayload).find(k => k.startsWith('id_'));
+        // Determinar la PK extrayéndola del flatPayload
+        const parentIdField = Object.keys(flatPayload).find(k => k.startsWith('id_')) || "id_dominio";
         const parentPK = flatPayload[parentIdField];
+
+        // [S5.3] Graph Edge SCD-2 Orchestration Hook
+        if (entityName === "Dominio" && transientParentId !== null && parentPK) {
+            _updateGraphEdges(parentPK, transientParentId, config);
+        }
 
         // Paso C y D: Inyección de FK y Transacción Hijos
         if (schema) {

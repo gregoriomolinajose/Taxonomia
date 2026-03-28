@@ -1,0 +1,32 @@
+artifact_type: story-design
+version: 1
+skill: rai-story-design
+created: '2026-03-28T15:05:43-06:00'
+story: 'S5.3'
+epic: 'E5'
+content:
+  summary: 'Diseño del algoritmo Interceptor en Engine_DB.js para orquestar inserciones y anulaciones (SCD-2) de grafos relacionales ante un payload plano del UI.'
+  complexity: high
+  acceptance_criteria:
+    - id: AC1
+      description: 'El payload entrante de UPSERT si posee `id_nodo_padre` o análogos se extirpa antes de escribir Dominios.'
+      verifiable: true
+    - id: AC2
+      description: 'Lectura de Relacion_Dominios busca arista antigua `es_version_actual=true` vinculada al hijo y muta `valido_hasta` y `es_version_actual=false`.'
+      verifiable: true
+    - id: AC3
+      description: 'Inyecta la nueva arista activa.'
+      verifiable: true
+  integration_points:
+    - module: 'Backend.Engine_DB'
+      change_type: modify
+      files: ['src/Engine_DB.js']
+  decisions:
+    - id: D1
+      choice: 'Interceptar directamente dentro de `upsertRecord` en `Engine_DB.js`'
+      rationale: 'Dado que el Formulario envía un Dictionary flat, el Motor DB es la capa más defensiva para separar la topología del esquema estático.'
+      alternatives_considered: ['Crear un endpoint RPC distinto `upsertNode()` (Descartado por requerir refactor masivo de UI).']
+refs:
+  backlog_item: 'RAISE-S5.3'
+  epic_scope: 'work/epics/e5-grafo-temporal/scope.md'
+metadata: {}
