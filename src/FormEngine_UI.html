@@ -130,6 +130,80 @@
                 });
             }
 
+            // --- MATH ENGINES (Sprint 4.0: Generic Abstraction & 4.2 DB Normalization) ---
+            global.getGenericOrdenPath = function(formStateObj, params) {
+                if (!params || !params.entity) return '';
+
+                const levelField = params.levelField || 'nivel_tipo';
+                const parentField = params.parentField || 'id_dominio_padre';
+                const pkField = params.pkField || 'id_' + params.entity.toLowerCase();
+                const orderField = params.orderField || 'orden_path';
+
+                const nivelStr = formStateObj[levelField];
+                if (nivelStr === undefined || nivelStr === null) return '';
+                const nivel = parseInt(nivelStr, 10);
+                if (isNaN(nivel)) return '';
+                
+                const cache = (window.__APP_CACHE__ && window.__APP_CACHE__[params.entity]) ? window.__APP_CACHE__[params.entity] : [];
+                
+                if (nivel === 0) {
+                    let maxRoot = 0;
+                    cache.filter(d => parseInt(d[levelField], 10) === 0).forEach(d => {
+                        if (d[orderField]) {
+                            const val = parseInt(String(d[orderField]).split('.')[0], 10);
+                            if (!isNaN(val) && val > maxRoot) maxRoot = val;
+                        }
+                    });
+                    return String(maxRoot + 1).padStart(2, '0');
+                } else {
+                    const idPadre = formStateObj[parentField];
+                    if (!idPadre || idPadre === '') return ''; // Bloqueo de seguridad si no hay FK seleccionada
+                    
+                    // Buscar al padre mediante Casting fuerte FK === PK
+                    const padre = cache.find(d => String(d[pkField]) === String(idPadre));
+                    if (!padre || !padre[orderField]) return '';
+                    
+                    // Asegurar que si Sheets castigó "02" a entero 2, lo volvemos a padear visualmente
+                    const parentPathStr = String(padre[orderField]).split('.').map(p => p.padStart(2, '0')).join('.');
+                    
+                    // S4.2 ENTERPRISE FIX: Encontrar hermanos comparando Adjacency List (FK real)
+                    const siblings = cache.filter(d => String(d[parentField]) === String(idPadre));
+                    
+                    let maxSuffix = 0;
+                    siblings.forEach(sib => {
+                        if (sib[orderField]) {
+                            const parts = String(sib[orderField]).split('.');
+                            const lastPart = parseInt(parts[parts.length - 1], 10);
+                            if (!isNaN(lastPart) && lastPart > maxSuffix) maxSuffix = lastPart;
+                        }
+                    });
+                    
+                    const newSuffix = String(maxSuffix + 1).padStart(2, '0');
+                    return parentPathStr + '.' + newSuffix;
+                }
+            };
+
+            global.getGenericPathName = function(formStateObj, params) {
+                if (!params || !params.entity || !params.parentField || !params.nameField || !params.pathField) return '';
+                
+                const nombre = formStateObj[params.nameField] || '';
+                const idPadre = formStateObj[params.parentField];
+                
+                if (!idPadre || idPadre === '') {
+                    return `PATH: ${nombre}`;
+                }
+                
+                const cache = (window.__APP_CACHE__ && window.__APP_CACHE__[params.entity]) ? window.__APP_CACHE__[params.entity] : [];
+                const pkField = params.pkField || 'id_' + params.entity.toLowerCase();
+                const padreRecord = cache.find(r => String(r[pkField]) === String(idPadre));
+                
+                if (!padreRecord || !padreRecord[params.pathField]) {
+                    return `PATH: ${nombre}`;
+                }
+                
+                return `${padreRecord[params.pathField]} > ${nombre}`;
+            };
+
             // --- DEPENDENCY RESOLVER: lookupSource Universal (Metadata-Driven) ---
             /**
              * Escanea el schema en busca de campos con `lookupSource`.
@@ -617,7 +691,10 @@
                     inputEl.style.borderRadius = 'var(--rounded-sm)';
 
                     if (field.required) inputEl.setAttribute('required', 'true');
-                    if (field.readonly && field.type !== 'lookup') inputEl.setAttribute('readonly', 'true');
+                    if (field.readonly && field.type !== 'lookup') {
+                        inputEl.setAttribute('readonly', 'true');
+                        inputEl.readonly = true;
+                    }
                 }
 
                 ionCol.appendChild(inputEl);
@@ -1199,55 +1276,72 @@
             container.appendChild(card);
             
             // --- Metadata-Driven Dependency Injection (Zero-Touch UI) ---
-            modal.addEventListener('ionChange', async (e) => {
-                const triggerInput = e.target;
-                const fieldName = triggerInput.name;
-                if (!fieldName || !fields) return;
+            let debounceTimer; // S4.3: Debounce logic para blindar Event Loop
+            ['ionChange', 'ionInput'].forEach(eventType => {
+                modal.addEventListener(eventType, (e) => {
+                    const triggerInput = e.target;
+                    const fieldName = triggerInput.name;
+                    if (!fieldName || !fields) return;
 
-                const schemaField = fields.find(f => f.name === fieldName);
-                if (schemaField && Array.isArray(schemaField.triggers_refresh_of)) {
-                    // Recopilar formCurrentState JIT
-                    const currentInputs = modal.querySelectorAll('ion-input, ion-select');
-                    const formCurrentState = Array.from(currentInputs).map(inp => ({
-                        name: inp.name,
-                        value: inp.value
-                    }));
+                    const schemaField = fields.find(f => f.name === fieldName);
+                    if (schemaField && Array.isArray(schemaField.triggers_refresh_of)) {
+                        
+                        // Limpiar timer previo (Debouncing)
+                        clearTimeout(debounceTimer);
+                        
+                        debounceTimer = setTimeout(async () => {
+                            // Recopilar formStateObj JIT (Diccionario Puro)
+                            const currentInputs = modal.querySelectorAll('ion-input, ion-select');
+                            const formStateObj = Array.from(currentInputs).reduce((acc, inp) => {
+                                acc[inp.name] = inp.value;
+                                return acc;
+                            }, {});
+                            const formCurrentStateArr = Object.keys(formStateObj).map(k => ({name: k, value: formStateObj[k]}));
 
-                    // Procesar cada target
-                    for (const targetName of schemaField.triggers_refresh_of) {
-                        const targetComponent = modal.querySelector(`ion-select[name="${targetName}"]`);
-                        if (!targetComponent) continue;
+                            // Procesar cada target
+                            for (const targetName of schemaField.triggers_refresh_of) {
+                                const targetSchema = fields.find(f => f.name === targetName);
+                                if (!targetSchema) continue;
 
-                        const targetSchema = fields.find(f => f.name === targetName);
-                        if (!targetSchema || !targetSchema.lookupSource) continue;
+                                // 1. Caso lookupSource (Dropdowns)
+                                if (targetSchema.lookupSource) {
+                                    const targetComponent = modal.querySelector(`ion-select[name="${targetName}"]`);
+                                    if (!targetComponent || eventType === 'ionInput') continue; // Lookup solo reacciona a ionChange por rendimiento
 
-                        // Congelar destino
-                        targetComponent.disabled = true;
-                        targetComponent.innerHTML = '';
-                        targetComponent.value = null;
+                                    targetComponent.disabled = true;
+                                    targetComponent.innerHTML = '';
+                                    targetComponent.value = null;
 
-                        // Ejecutar Resolutor
-                        const resolver = window[targetSchema.lookupSource] || global[targetSchema.lookupSource];
-                        if (typeof resolver === 'function') {
-                            const newOptions = await resolver(formCurrentState);
-                            
-                            // Repoblar
-                            if (newOptions && Array.isArray(newOptions)) {
-                                newOptions.forEach(opt => {
-                                    const ionOpt = document.createElement('ion-select-option');
-                                    ionOpt.value = opt.value;
-                                    ionOpt.textContent = opt.label;
-                                    targetComponent.appendChild(ionOpt);
-                                });
+                                    const resolver = window[targetSchema.lookupSource] || global[targetSchema.lookupSource];
+                                    if (typeof resolver === 'function') {
+                                        const newOptions = await resolver(formCurrentStateArr);
+                                        
+                                        if (newOptions && Array.isArray(newOptions)) {
+                                            newOptions.forEach(opt => {
+                                                const ionOpt = document.createElement('ion-select-option');
+                                                ionOpt.value = opt.value;
+                                                ionOpt.textContent = opt.label;
+                                                targetComponent.appendChild(ionOpt);
+                                            });
+                                        }
+                                        
+                                        if (newOptions.length > 0) targetComponent.disabled = false;
+                                    }
+                                }
+
+                                // 2. Caso calculatedValue (Campos Matemáticos reactivos)
+                                if (targetSchema.calculatedValue) {
+                                    const calculator = window[targetSchema.calculatedValue] || global[targetSchema.calculatedValue];
+                                    if (typeof calculator === 'function') {
+                                        const newVal = calculator(formStateObj, targetSchema.calcParams || {});
+                                        const targetInput = modal.querySelector(`ion-input[name="${targetName}"], ion-textarea[name="${targetName}"]`);
+                                        if (targetInput) targetInput.value = newVal;
+                                    }
+                                }
                             }
-                            
-                            // Habilitar si hay opciones y si no es un nivel base
-                            if (newOptions.length > 0) {
-                                targetComponent.disabled = false;
-                            }
-                        }
+                        }, 300); // 300ms espera antes de calcular jerarquía pesada
                     }
-                }
+                });
             });
             // ------------------------------------------------------------
 
@@ -1352,6 +1446,41 @@
             // 5. Pre-llenado de campos (Directiva 3.c)
             const container = global.currentFormModal || document.getElementById('app-container');
             const inputs = container.querySelectorAll('ion-input, ion-textarea, ion-select, input[type="hidden"]');
+
+            // =========================================================================================
+            // MDM Guardrail S4.3 Auditoría: Pre-Hidratación de 0ms (Solución a Fallo de Tree Lock Visual)
+            // =========================================================================================
+            // ARQUITECTURA: En Modo Edición (UPDATE), los campos anidados padre como `id_dominio_padre`
+            // son sometidos a inmutabilidad de estructura, impidiendo iterar combos cerrados.
+            // Para que el WebComponent de Ionic renderice el valor seleccionado en pantalla y NO un
+            // string nulo fantasma, inyectamos primero las `<ion-select-option>` buscando funciones
+            // locales 0ms. Todo ocurre ANTES del populate original de record[name].
+            // =========================================================================================
+            const formSchema = APP_SCHEMAS[entityName]?.fields || [];
+            const formStateObj = { ...record };
+            const formCurrentStateArr = Object.keys(formStateObj).map(k => ({name: k, value: formStateObj[k]}));
+
+            for (const input of Array.from(inputs)) {
+                if (input.tagName.toLowerCase() === 'ion-select') {
+                    const fieldName = input.getAttribute('name');
+                    const schemaDef = formSchema.find(f => f.name === fieldName);
+                    
+                    if (schemaDef && schemaDef.lookupSource) {
+                        const localResolver = window[schemaDef.lookupSource] || global[schemaDef.lookupSource];
+                        if (typeof localResolver === 'function') {
+                            const newOptions = localResolver(formCurrentStateArr);
+                            input.innerHTML = '';
+                            
+                            (Array.isArray(newOptions) ? newOptions : []).forEach(opt => {
+                                const ionOption = document.createElement('ion-select-option');
+                                ionOption.value = opt.value;
+                                ionOption.textContent = opt.label;
+                                input.appendChild(ionOption);
+                            });
+                        }
+                    }
+                }
+            }
 
             console.log("[FormEngine] Pre-llenando", inputs.length, "campos...");
             inputs.forEach(input => {
