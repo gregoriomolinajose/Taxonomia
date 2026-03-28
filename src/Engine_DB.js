@@ -45,21 +45,39 @@ function _invalidateCache(entityName) {
 }
 
 /**
+ * [S5.4 Quality] Dependency Injection: Matrix Provider
+ * Desacopla la lógica topológica de la API nativa de Google Sheets para posibilitar Tests locales (Jest).
+ */
+const SheetMatrixIO = {
+    readRelacionDominios: function(config) {
+        if (typeof SpreadsheetApp === 'undefined') return { sheet: null, data: [] };
+        const ssStr = (config && config.SPREADSHEET_ID_DB) ? config.SPREADSHEET_ID_DB : (typeof CONFIG !== 'undefined' ? CONFIG.SPREADSHEET_ID_DB : null);
+        if (!ssStr) return { sheet: null, data: [] };
+        const ss = SpreadsheetApp.openById(ssStr);
+        const relSheet = ss.getSheetByName("Relacion_Dominios");
+        if (!relSheet) return { sheet: null, data: [] };
+        return { sheet: relSheet, data: relSheet.getDataRange().getValues() };
+    },
+    writeBulk: function(sheet, data, headersLength) {
+        if (sheet && typeof SpreadsheetApp !== 'undefined') sheet.getRange(1, 1, data.length, headersLength).setValues(data);
+    },
+    writeRow: function(sheet, rowNum, rowData, headersLength) {
+        if (sheet && typeof SpreadsheetApp !== 'undefined') sheet.getRange(rowNum, 1, 1, headersLength).setValues([rowData]);
+    },
+    appendRow: function(sheet, rowData) {
+        if (sheet && typeof SpreadsheetApp !== 'undefined') sheet.appendRow(rowData);
+    }
+};
+
+/**
  * _updateGraphEdges (S5.3)
  * Orquesta transacciones SCD-2 interrumpiendo el flujo plano para poblar el Grafo Temporal.
  */
 function _updateGraphEdges(childId, newParentId, config) {
-    if (typeof SpreadsheetApp === 'undefined') return; 
-    const ssStr = (config && config.SPREADSHEET_ID_DB) ? config.SPREADSHEET_ID_DB : (typeof CONFIG !== 'undefined' ? CONFIG.SPREADSHEET_ID_DB : null);
-    if (!ssStr) return;
-    
     newParentId = (newParentId === "NULL" || !newParentId) ? "" : String(newParentId).trim();
 
-    const ss = SpreadsheetApp.openById(ssStr);
-    const relSheet = ss.getSheetByName("Relacion_Dominios");
-    if (!relSheet) return;
-    
-    let data = relSheet.getDataRange().getValues();
+    const io = SheetMatrixIO.readRelacionDominios(config);
+    let data = io.data;
     if (data.length === 0) return;
     
     const headers = data[0];
@@ -90,13 +108,13 @@ function _updateGraphEdges(childId, newParentId, config) {
         data[currentActiveIdx][idxActual] = false;
         data[currentActiveIdx][idxUpdated] = sysDate;
         
-        relSheet.getRange(currentActiveIdx + 1, 1, 1, headers.length).setValues([data[currentActiveIdx]]);
+        SheetMatrixIO.writeRow(io.sheet, currentActiveIdx + 1, data[currentActiveIdx], headers.length);
         if (typeof Logger !== 'undefined') Logger.log(`[DAG] Caducada arista vieja para hijo ${childId} (padre previo: ${oldParentId})`);
     }
     
     // Spawn Active Edge
     if (newParentId !== "") {
-        let rID = "RELA-" + Utilities.getUuid().substring(0, 5).toUpperCase();
+        let rID = "RELA-" + Utilities.getUuid().substring(0, 8).toUpperCase(); // [S5.4 Quality] Collision hardening
         let newEdge = [];
         for (let i = 0; i < headers.length; i++) {
             let h = headers[i];
@@ -112,7 +130,7 @@ function _updateGraphEdges(childId, newParentId, config) {
             else if (h === "created_by") newEdge.push("DAG_SETTER");
             else newEdge.push("");
         }
-        relSheet.appendRow(newEdge);
+        SheetMatrixIO.appendRow(io.sheet, newEdge);
         if (typeof Logger !== 'undefined') Logger.log(`[DAG] Arista nueva instanciada: ${newParentId} -> ${childId}`);
     }
     
@@ -124,15 +142,8 @@ function _updateGraphEdges(childId, newParentId, config) {
  * O(1) Bulk RAM Push para curar Grafos Temporales ante Deletes.
  */
 function _flattenGraphNode(nodeIdToDelete, config) {
-    if (typeof SpreadsheetApp === 'undefined') return;
-    const ssStr = (config && config.SPREADSHEET_ID_DB) ? config.SPREADSHEET_ID_DB : (typeof CONFIG !== 'undefined' ? CONFIG.SPREADSHEET_ID_DB : null);
-    if (!ssStr) return;
-    
-    const ss = SpreadsheetApp.openById(ssStr);
-    const relSheet = ss.getSheetByName("Relacion_Dominios");
-    if (!relSheet) return;
-    
-    let data = relSheet.getDataRange().getValues();
+    const io = SheetMatrixIO.readRelacionDominios(config);
+    let data = io.data;
     if (data.length <= 1) return;
     
     const headers = data[0];
@@ -183,9 +194,10 @@ function _flattenGraphNode(nodeIdToDelete, config) {
     }
 
     // 3. Reasignar Descendientes (Si Abuelo existe)
-    if (abueloId && nietos.length > 0) {
+    // [S5.4 Quality] Strict truthiness coercion 
+    if (abueloId !== null && abueloId !== "" && nietos.length > 0) {
         nietos.forEach(nietoId => {
-            let rID = "RELA-" + Utilities.getUuid().substring(0, 5).toUpperCase();
+            let rID = "RELA-" + Utilities.getUuid().substring(0, 8).toUpperCase();
             let newEdge = [];
             for (let j = 0; j < headers.length; j++) {
                 let h = headers[j];
@@ -205,14 +217,14 @@ function _flattenGraphNode(nodeIdToDelete, config) {
             tieneCambios = true;
         });
         if (typeof Logger !== 'undefined') Logger.log(`[DAG Flatten] Nietos re-anclados exitosamente al Abuelo ${abueloId}.`);
-    } else if (!abueloId && nietos.length > 0) {
+    } else if ((abueloId === null || abueloId === "") && nietos.length > 0) {
          // Edge Case: Root Node Deletion
          if (typeof Logger !== 'undefined') Logger.log(`[DAG Flatten] Root Node Exception: Nodo eliminado no poseía Abuelo (Nivel 0). Promoviendo ${nietos.length} nietos a Nodos Raíz.`);
     }
     
     // 4. BULK OPS IMPERATIVE: Volcado Íntegro
     if (tieneCambios) {
-        relSheet.getRange(1, 1, data.length, headers.length).setValues(data);
+        SheetMatrixIO.writeBulk(io.sheet, data, headers.length);
         if (typeof Logger !== 'undefined') Logger.log(`[DAG Flatten] O(1) Bulk RAM Push ejecutado. Arrays Volcados: ${data.length}`);
         _invalidateCache("Relacion_Dominios");
     }
