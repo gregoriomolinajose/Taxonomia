@@ -171,11 +171,11 @@
         }]
     };
 
-    chart.setOption(option);
-
     // UX: Si existe un único Dominio Raíz (ej. "Retail"), auto-perforarlo para no mostrar una caja gigante inútil
     if (graphData.length === 1) {
-        setTimeout(function() {
+        chart.on('finished', function autoDrilldownHandler() {
+            // Desligar inmediatamente el listener para que no se dispare en posteriores re-renders
+            chart.off('finished', autoDrilldownHandler);
             try {
                 chart.dispatchAction({
                     type: 'treemapRootToNode',
@@ -186,8 +186,11 @@
             } catch(e) {
                 console.warn("ECharts Auto-Drilldown fail:", e);
             }
-        }, 400); // 400ms: Asegura que el canvas y el grid terminaron su reflujo de renderizado inicial
+        });
     }
+
+    // Instanciar motor gráfico
+    chart.setOption(option);
 
     // Responsive window resizing
     var resizeObserver = new ResizeObserver(function() {
