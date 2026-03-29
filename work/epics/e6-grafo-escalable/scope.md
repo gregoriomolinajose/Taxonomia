@@ -7,19 +7,20 @@ Desacoplar las operaciones SCD-2 N:M del motor CRUD generalizando el enfoque "Co
 **In Scope:**
 - Extensión Config-Driven (`isTemporalGraph` en `Schema_Engine`).
 - Creación de `Engine_Graph.js` para manipulación de aristas SCD-2.
-- Refactorización de `orchestrateNestedSave`.
+- Refactorización de `orchestrateNestedSave` en `Engine_DB`.
 
 **Out Scope:**
-- Componentes UI (FormEngine_UI) — ya fueron agnostizados en E5.
-- Front-end Treemaps.
+- Alteraciones en UI de componentes (FormEngine_UI) — ya fueron agnostizados.
+- Refactor visual de Treemaps.
 
 ## Planned Stories
 ### Progress Tracking
 | Story | Size | Status | Actual | Velocity | Notes |
 |-------|------|--------|--------|----------|-------|
-| S6.1 - Config-Driven SCD-2 | M | Pending | - | - | Esquema Dinámico |
-| S6.2 - Engine_Graph Service | M | Pending | - | - | Single Responsibility |
+| S6.1 - Config-Driven SCD-2 | M | Pending | - | - | Esquema Dinámico en Schema_Engine |
+| S6.2 - Engine_Graph Service | M | Pending | - | - | Single Responsibility (Engine_DB -> Engine_Graph) |
 
 ## Definition of Done
 - `npm test` verde.
-- Grafo transacciona limpiamente sin If hardcodeados en el orquestador principal.
+- Inserción y Modificación de aristas DAG validadas.
+- Eliminación total de comparadores estáticos `if (entity === 'Relacion_Dominios')`.
