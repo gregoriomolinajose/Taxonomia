@@ -18,9 +18,9 @@ Desacoplar las operaciones SCD-2 N:M del motor CRUD generalizando el enfoque "Co
 ### Progress Tracking
 | Story | Size | Status | Actual | Velocity | Notes |
 |-------|------|--------|--------|----------|-------|
-| S6.1 - Config-Driven SCD-2 | M | Pending | - | - | Esquema Dinámico en Schema_Engine |
-| S6.2 - Diccionario de Topologías | S | Pending | - | - | Engine_Graph Validador de Cardinalidad Estructural |
-| S6.3 - Engine_Graph Service | M | Pending | - | - | Single Responsibility (Engine_DB -> Engine_Graph) |
+| S6.1 - Config-Driven SCD-2 | M | Done | - | - | Esquema Dinámico en Schema_Engine |
+| S6.2 - Diccionario de Topologías | S | Done | - | - | Engine_Graph Validador de Cardinalidad Estructural |
+| S6.3 - Engine_Graph Service | M | Done | - | - | Single Responsibility cumplido prematuramente en S6.1 (ADR-002) |
 
 ## Definition of Done
 - `npm test` verde.
