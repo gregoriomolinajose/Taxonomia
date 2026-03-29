@@ -23,6 +23,7 @@ Desacoplar las operaciones SCD-2 N:M del motor CRUD generalizando el enfoque "Co
 | S6.3 - Engine_Graph Service | M | Done | - | - | Single Responsibility cumplido prematuramente en S6.1 (ADR-002) |
 | S6.4 - Convention Defaulting (H8) | S | Done | - | - | Default implícito a JERARQUICA_LINEAL |
 | S6.5 - Polymorphic Handlers (H1) | M | Done | - | - | Strategy Pattern para topologías dinámicas |
+| S6.6 - Segregate Strategies (H11) | S | Done | - | - | Split Topology_Strategies.js from Engine_Graph |
 
 ## Definition of Done
 - `npm test` verde.

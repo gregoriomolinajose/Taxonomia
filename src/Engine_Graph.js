@@ -3,31 +3,10 @@
  * Encapsulate all temporal edge logic (SCD-2) and topological cardinalities via Strategy Pattern.
  */
 
-const default1toNHandler = function(incomingEdges, currentActiveEdges) {
-    if (incomingEdges.length > 1) {
-        throw new Error("Violación de Topología: Payload excede el límite de padres simultáneos.");
-    }
-    
-    const actives = currentActiveEdges.filter(e => e.es_version_actual !== false);
-    return { edgesToClose: actives };
-};
-
-const defaultMtoNHandler = function(incomingEdges, currentActiveEdges) {
-    const incomingIds = incomingEdges.map(e => String(e.id_nodo_padre || ''));
-    const toClose = currentActiveEdges.filter(e => e.es_version_actual !== false && !incomingIds.includes(String(e.id_nodo_padre || '')));
-    return { edgesToClose: toClose };
-};
-
-const TOPOLOGY_STRATEGIES = {
-    FUNCIONAL: { evaluateTransition: default1toNHandler },
-    DIVISIONAL: { evaluateTransition: default1toNHandler },
-    PLANA_HORIZONTAL: { evaluateTransition: defaultMtoNHandler },
-    EQUIPOS: { evaluateTransition: defaultMtoNHandler },
-    JERARQUICA_LINEAL: { evaluateTransition: default1toNHandler },
-    LINEA_STAFF: { evaluateTransition: defaultMtoNHandler },
-    PROYECTOS: { evaluateTransition: defaultMtoNHandler },
-    HIBRIDA_MATRICIAL: { evaluateTransition: defaultMtoNHandler }
-};
+// If running in Jest, require the strategies
+if (typeof require !== 'undefined' && typeof module !== 'undefined') {
+    var { TOPOLOGY_STRATEGIES } = require('./Topology_Strategies');
+}
 
 const Engine_Graph = {
     /**
@@ -82,10 +61,5 @@ const Engine_Graph = {
 
 // Export for Node/Jest
 if (typeof module !== 'undefined' && module.exports) {
-    module.exports = { Engine_Graph, TOPOLOGY_STRATEGIES };
-}
-
-// Export for Node/Jest
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = { Engine_Graph, TOPOLOGY_STRATEGIES };
+    module.exports = { Engine_Graph };
 }
