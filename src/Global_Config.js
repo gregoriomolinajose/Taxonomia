@@ -1,5 +1,5 @@
 const CONFIG = {
-    APP_VERSION: 'v1.1.5 - Sprint 7.5',
+    APP_VERSION: 'v1.1.6 - Grafo Temporal\n',
     // TODO: Reemplazar con el ID real de Desarrollo
     SPREADSHEET_ID_DB: '1tMyYBLPr0HJnJwbhFpCVoM4U8k1EVGycBDBjEnUGDts',
     ALLOWED_DOMAINS: ['@gmail.com', '@bellfy.app', '@coppel.com', '@bancoppel.com'],
