@@ -4,6 +4,7 @@
 **Estado:** ✅ Complete
 
 ## Epic E6: Arquitectura Escalable de Grafos (Engine_Graph)
+**Estado:** 🏃 In Progress
 
 **Origen:** Recomendaciones derivadas de la revisión de Arquitectura (Epic E5).
 
