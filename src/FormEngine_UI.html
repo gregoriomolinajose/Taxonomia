@@ -620,10 +620,10 @@
                                 const aristas = window.__APP_CACHE__[field.graphEntity].filter(e => e.es_version_actual !== false);
                                 if (field.relationType === 'padre') {
                                     // Mis padres (mi PK está en id_nodo_hijo)
-                                    initialValues = aristas.filter(e => String(e.id_nodo_hijo) === String(currentPK)).map(e => String(e.id_nodo_padre));
+                                    initialValues = aristas.filter(e => _normalizeId(e.id_nodo_hijo) === _normalizeId(currentPK)).map(e => _normalizeId(e.id_nodo_padre));
                                 } else if (field.relationType === 'hijo') {
                                     // Mis hijos (mi PK está en id_nodo_padre)
-                                    initialValues = aristas.filter(e => String(e.id_nodo_padre) === String(currentPK)).map(e => String(e.id_nodo_hijo));
+                                    initialValues = aristas.filter(e => _normalizeId(e.id_nodo_padre) === _normalizeId(currentPK)).map(e => _normalizeId(e.id_nodo_hijo));
                                 }
                             }
                         } else if (data && data[field.name]) {
@@ -640,8 +640,22 @@
                             const basicSel = document.createElement('ion-select');
                             basicSel.setAttribute('interface', window.innerWidth < 768 ? 'action-sheet' : 'popover');
                             basicSel.setAttribute('name', field.name);
+                            basicSel.setAttribute('label', field.label);
+                            basicSel.setAttribute('label-placement', 'stacked');
+                            
+                            // Prevent overlapping by adding a tiny margin
+                            basicSel.style.marginBottom = '8px';
+
+                            // Empty Default "Ninguno"
+                            const emptyOpt = document.createElement('ion-select-option');
+                            emptyOpt.value = "";
+                            emptyOpt.textContent = "— Sin asignar —";
+                            basicSel.appendChild(emptyOpt);
+
                             // Set initial value for single select
-                            if (initialValues.length > 0) basicSel.value = initialValues[0];
+                            if (initialValues.length > 0) {
+                                basicSel.value = initialValues[0];
+                            }
                             
                             activeData.forEach(d => {
                                 const opt = document.createElement('ion-select-option');
