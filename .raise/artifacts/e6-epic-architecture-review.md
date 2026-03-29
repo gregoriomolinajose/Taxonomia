@@ -1,13 +1,18 @@
 ## Architecture Review: Epic E6 (scope: epic)
 
 ### Critical (fix before merge)
-Ninguno.
+Ninguno. Resolvimos el desacoplamiento de lógicas recursivas tempranamente en la historia S6.1 per exigencia de revisión (ADR-002).
 
 ### Recommended (simplify before next cycle)
-- **H4 (YAGNI):** Cuidado con abstraer demasiado pronto los 8 tipos de estructura organizativa si no van a utilizarse de inmediato en la UI. Recomiendo que el *Diccionario de Topologías* soporte conceptualmente todas pero que en esta etapa solo instancie sus reglas de cardinalidad básicas (1:N, M:N) para no recargar memoria con topologías muertas.
+- **H8 (Configuration Over Convention):** Si a futuro notamos que el 90% de los grafos son `JERARQUICA_LINEAL`, considerar que `isTemporalGraph: true` asuma esta topología como un default implícito para evitar boilerplate innecesario dentro de `Schema_Engine.gs`.
+
+### Questions (require human judgment)
+- **H1 (Single Implementation):** ¿Será necesario que el sub-sistema de validación de topologías dentro de `Engine_Graph` escale a inyectar handlers customizados por topología (`topologyHandlers[t]()`) o es suficiente mantener un switch declarativo sobre `maxActiveParents`?
 
 ### Observations (patterns noted)
-- **H7 (Abstraction-to-LOC Ratio):** El diseño propone la creación de `Engine_Graph.js` y un Diccionario. Dado el requerimiento explícito del negocio de manejar ambigüedades cruzadas (Equipos vs Lineal), la abstracción es rigurosamente proporcional al caso de uso. Sin el diccionario, el `Engine_DB` se contaminaría irremisiblemente de reglas locales. PASS.
+- **H13 (Orphaned Abstractions):** Neutralizado. `Engine_Graph` nació y fue consumimentado inmediatamente como Proxy Router oficial para SCD-2.
+- **H16 (Shotgun Surgery):** PASS. Al remover la lógica temporal hardcodeada de `Engine_DB.js`, se redujo enormemente el radio explosivo de cualquier cambio futuro en modelos relacionales jerárquicos.
+- **H7 (Abstraction-to-LOC Ratio):** PASS. Se agregó un módulo con poco código e inmenso valor regulador, cumpliendo estrictamente con proporciones de separación de capas.
 
 ### Verdict
 - [x] PASS
