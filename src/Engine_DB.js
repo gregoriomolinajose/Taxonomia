@@ -321,25 +321,27 @@ const Engine_DB = {
                     const pkField = 'id_' + singularKey;
                     
                     const incomingIds = children.map(c => String(c[pkField] || ''));
-                    const orphans = orphanMatches.filter(c => c && !incomingIds.includes(String(c[pkField] || '')));
+                    let orphansToProcess = [];
 
                     // [S6.1] Config-Driven Delegation to Engine_Graph
                     if (f.isTemporalGraph) {
                         if (typeof Engine_Graph !== 'undefined') {
-                            Engine_Graph.patchSCD2Edges(children, orphans, f.topology);
+                            // En SR-Strategy delegamos que el motor calcule y devuelva los edge que se deben cerrar
+                            orphansToProcess = Engine_Graph.patchSCD2Edges(children, orphanMatches, f.topology) || [];
                         } else {
                             if (typeof Logger !== 'undefined') Logger.log(`[ERROR] Engine_Graph no encontrado para resolver topología ${f.topology}.`);
                         }
                     } else {
                         // Standard Unlink para 1:N no temporal
-                        if (orphans.length > 0) {
-                            orphans.forEach(o => o[fkField] = ""); // Desvincular físicamente
+                        orphansToProcess = orphanMatches.filter(c => c && !incomingIds.includes(String(c[pkField] || '')));
+                        if (orphansToProcess.length > 0) {
+                            orphansToProcess.forEach(o => o[fkField] = ""); // Desvincular físicamente
                         }
                     }
 
-                    if (orphans.length > 0) {
-                        if (typeof Logger !== 'undefined') Logger.log(`[Diffing] Detectados ${orphans.length} huérfanos para desvincular.`);
-                        _Adapter_Sheets.upsertBatch(targetEntity, orphans, config);
+                    if (orphansToProcess.length > 0) {
+                        if (typeof Logger !== 'undefined') Logger.log(`[Diffing] Detectados ${orphansToProcess.length} huérfanos para desvincular.`);
+                        _Adapter_Sheets.upsertBatch(targetEntity, orphansToProcess, config);
                     }
 
                     // Inyectar FK
