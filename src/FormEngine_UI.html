@@ -117,7 +117,7 @@
                 
                 selectedIds.forEach(id => {
                     const match = dataset.find(d => String(d[fieldDef.valueField]) === String(id));
-                    const labelText = match && match[fieldDef.labelField] ? match[fieldDef.labelField] : id;
+                    const labelText = match && match[fieldDef.labelField] ? `[${match[fieldDef.valueField]}] ${match[fieldDef.labelField]}` : id;
                     
                     const chip = document.createElement('ion-chip');
                     chip.innerHTML = `<ion-label>${labelText}</ion-label><ion-icon name="close-circle"></ion-icon>`;
@@ -146,7 +146,7 @@
                     matches.forEach(m => {
                         const item = document.createElement('ion-item');
                         item.button = true;
-                        item.textContent = m[fieldDef.labelField];
+                        item.textContent = `[${m[fieldDef.valueField]}] ${m[fieldDef.labelField]}`;
                         item.onclick = () => {
                             selectedIds.push(String(m[fieldDef.valueField]));
                             searchbar.value = '';
@@ -612,10 +612,24 @@
                         const activeData = liveData.filter(d => d.estado !== 'Eliminado' && typeof d === 'object');
                         
                         let initialValues = [];
-                        if (data && data[field.name]) {
+                        
+                        // UAT Point 3: Auto-populate existing relation records using Zero-Latency Graph resolution
+                        if (field.isTemporalGraph && field.graphEntity && window.__APP_CACHE__ && window.__APP_CACHE__[field.graphEntity]) {
+                            const currentPK = data ? (data.id_dominio || data.id_registro) : null;
+                            if (currentPK) {
+                                const aristas = window.__APP_CACHE__[field.graphEntity].filter(e => e.es_version_actual !== false);
+                                if (field.relationType === 'padre') {
+                                    // Mis padres (mi PK está en id_nodo_hijo)
+                                    initialValues = aristas.filter(e => String(e.id_nodo_hijo) === String(currentPK)).map(e => String(e.id_nodo_padre));
+                                } else if (field.relationType === 'hijo') {
+                                    // Mis hijos (mi PK está en id_nodo_padre)
+                                    initialValues = aristas.filter(e => String(e.id_nodo_padre) === String(currentPK)).map(e => String(e.id_nodo_hijo));
+                                }
+                            }
+                        } else if (data && data[field.name]) {
                             try {
                                 initialValues = Array.isArray(data[field.name]) ? data[field.name] : JSON.parse(data[field.name]);
-                            } catch(e) { initialValues = []; } // fallback
+                            } catch(e) { initialValues = (typeof data[field.name] === 'string') ? [data[field.name]] : []; } // fallback
                         }
 
                         if (field.uiComponent === 'searchable_multi') {
@@ -625,10 +639,14 @@
                         } else if (field.uiComponent === 'select_single') {
                             const basicSel = document.createElement('ion-select');
                             basicSel.setAttribute('interface', window.innerWidth < 768 ? 'action-sheet' : 'popover');
+                            basicSel.setAttribute('name', field.name);
+                            // Set initial value for single select
+                            if (initialValues.length > 0) basicSel.value = initialValues[0];
+                            
                             activeData.forEach(d => {
                                 const opt = document.createElement('ion-select-option');
                                 opt.value = typeof d[field.valueField] !== 'undefined' ? d[field.valueField] : d.id_registro;
-                                opt.textContent = typeof d[field.labelField] !== 'undefined' ? d[field.labelField] : d.nombre;
+                                opt.textContent = `[${opt.value}] ${typeof d[field.labelField] !== 'undefined' ? d[field.labelField] : d.nombre}`;
                                 basicSel.appendChild(opt);
                             });
                             inputEl.appendChild(basicSel);

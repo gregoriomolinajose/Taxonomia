@@ -53,7 +53,8 @@ const APP_SCHEMAS = {
       { section: "Datos Generales", name: "nombre_ingles", type: "text", label: "Nombre (EN)", required: false, width: 6 },
       { section: "Datos Generales", name: "abreviacion", type: "text", label: "Abreviación", required: false, width: 6 },
       { section: "Datos Generales", name: "definicion", type: "textarea", label: "Definición", required: true, width: 12 },
-      { section: "Topología (Grafo)", width: 12, name: "relaciones_padre", type: "relation", relationType: "padre", targetEntity: "Dominio", valueField: "id_dominio", labelField: "n0_es", uiComponent: "searchable_multi", uiBehavior: "subgrid", label: "Administrar Padres (N:M)", isTemporalGraph: true, topology: "JERARQUICA_MILITAR" }
+      { section: "Topología (Grafo)", width: 6, name: "relaciones_padre", type: "relation", relationType: "padre", targetEntity: "Dominio", graphEntity: "Relacion_Dominios", valueField: "id_dominio", labelField: "n0_es", uiComponent: "select_single", uiBehavior: "subgrid", label: "Dominio Padre", isTemporalGraph: true, topology: "JERARQUICA_MILITAR" },
+      { section: "Topología (Grafo)", width: 6, name: "relaciones_hijo", type: "relation", relationType: "hijo", targetEntity: "Dominio", graphEntity: "Relacion_Dominios", valueField: "id_dominio", labelField: "n0_es", uiComponent: "searchable_multi", uiBehavior: "subgrid", label: "Dominios Subordinados", isTemporalGraph: true, topology: "JERARQUICA_MILITAR" }
     ]
   },
   Capacidad: {
