@@ -1,0 +1,35 @@
+artifact_type: story-design
+version: 1
+skill: rai-story-design
+created: '2026-03-28T23:48:00-06:00'
+story: 'S5.6'
+epic: 'E5'
+content:
+  summary: 'Eliminar columnas estáticas heredadas (Orden y Path) del Schema Dominio y habilitar interfaz de administración directa de Relaciones N:M al crear/editar un dominio en el UI.'
+  complexity: moderate
+  acceptance_criteria:
+    - id: AC1
+      description: 'APP_SCHEMAS.Dominio no contiene orden_path ni path_completo_es.'
+      verifiable: true
+    - id: AC2
+      description: 'El formulario de Dominio expone una sección para gestionar las relaciones (Aristas) en formato dynamic_list o subgrid apuntando a Relacion_Dominios.'
+      verifiable: true
+    - id: AC3
+      description: 'El guardado de un Dominio impacta correctamente Relacion_Dominios con lógica SCD-2.'
+      verifiable: true
+  integration_points:
+    - module: 'Frontend.Config'
+      change_type: modification
+      files: ['src/Schema_Engine.gs']
+    - module: 'Backend.Engine'
+      change_type: modification
+      files: ['src/Engine_DB.js']
+  decisions:
+    - id: D1
+      choice: 'Sustituir el Transient Edge estático id_nodo_padre por una lista dinámica de aristas (dynamic_list)'
+      rationale: 'Permite al usuario seleccionar Múltiples padres y tipos de relación (Matricial, Militar) desde el mismo formulario en vez de un simple desplegable 1:N.'
+      alternatives_considered: ['Subgrid nativo (Descartado por conflicto con SCD-2 default)']
+refs:
+  backlog_item: 'RAISE-S5.6'
+  epic_scope: 'work/epics/e5-grafo-temporal/scope.md'
+metadata: {}
