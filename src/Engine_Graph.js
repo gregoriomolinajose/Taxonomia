@@ -3,11 +3,7 @@
  * Encapsulate all temporal edge logic (SCD-2) and topological cardinalities via Strategy Pattern.
  */
 
-// If running in Jest, require the strategies
-if (typeof require !== 'undefined' && typeof module !== 'undefined') {
-    var { TOPOLOGY_STRATEGIES } = require('./Topology_Strategies');
-}
-
+// Dynamic import handles both Jest and Apps Script V8 Environment without hoisting collisions
 const Engine_Graph = {
     /**
      * Patch SCD-2 metrics for edges based on topology Strategy Handlers.
@@ -22,8 +18,15 @@ const Engine_Graph = {
         let edgesToClose = [];
 
         // 1. Delegar a la Estrategia Topológica Inyectada (Polymorphism)
-        if (activeTopology && TOPOLOGY_STRATEGIES[activeTopology]) {
-            const strategy = TOPOLOGY_STRATEGIES[activeTopology];
+        let STRATEGIES = null;
+        if (typeof TOPOLOGY_STRATEGIES !== 'undefined') {
+            STRATEGIES = TOPOLOGY_STRATEGIES;
+        } else if (typeof require !== 'undefined') {
+            STRATEGIES = require('./Topology_Strategies').TOPOLOGY_STRATEGIES;
+        }
+
+        if (activeTopology && STRATEGIES && STRATEGIES[activeTopology]) {
+            const strategy = STRATEGIES[activeTopology];
             if (typeof strategy.evaluateTransition === 'function') {
                 const result = strategy.evaluateTransition(incomingEdges, currentActiveEdges || []);
                 edgesToClose = result.edgesToClose || [];
