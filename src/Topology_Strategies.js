@@ -26,6 +26,7 @@ const TOPOLOGY_STRATEGIES = {
     PLANA_HORIZONTAL: { evaluateTransition: defaultMtoNHandler },
     EQUIPOS: { evaluateTransition: defaultMtoNHandler },
     JERARQUICA_LINEAL: { evaluateTransition: default1toNHandler },
+    JERARQUICA_MILITAR: { evaluateTransition: default1toNHandler },
     LINEA_STAFF: { evaluateTransition: defaultMtoNHandler },
     PROYECTOS: { evaluateTransition: defaultMtoNHandler },
     HIBRIDA_MATRICIAL: { evaluateTransition: defaultMtoNHandler }

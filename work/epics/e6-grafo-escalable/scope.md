@@ -24,6 +24,7 @@ Desacoplar las operaciones SCD-2 N:M del motor CRUD generalizando el enfoque "Co
 | S6.4 - Convention Defaulting (H8) | S | Done | - | - | Default implícito a JERARQUICA_LINEAL |
 | S6.5 - Polymorphic Handlers (H1) | M | Done | - | - | Strategy Pattern para topologías dinámicas |
 | S6.6 - Segregate Strategies (H11) | S | Done | - | - | Split Topology_Strategies.js from Engine_Graph |
+| S6.7 - Domain Topology Configuration | XS | Done | - | - | Configurar Dominio con JERARQUICA_MILITAR |
 
 ## Definition of Done
 - `npm test` verde.
