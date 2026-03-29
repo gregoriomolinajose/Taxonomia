@@ -6,7 +6,7 @@ story: 'S5.3'
 epic: 'E5'
 content:
   summary: 'Diseño del algoritmo Interceptor en Engine_DB.js para orquestar inserciones y anulaciones (SCD-2) de grafos relacionales ante un payload plano del UI.'
-  complexity: high
+  complexity: complex
   acceptance_criteria:
     - id: AC1
       description: 'El payload entrante de UPSERT si posee `id_nodo_padre` o análogos se extirpa antes de escribir Dominios.'

@@ -6,7 +6,8 @@ status: active
 depends_on: [UI_Shell, Data_Schemas, DataView_Engine]
 depended_by: []
 components:
-  - FormEngine_UI.html (renderForm, openEditForm, getGenericOrdenPath, getGenericPathName)
+  - FormEngine_UI.html (renderForm, openEditForm, _patchFrontendCache)
+  - Math_Engine.js (buildOrdenPath, buildPathName)
 ---
 
 ## Purpose
@@ -25,8 +26,8 @@ renderForm(entityName, record?)
 ```
 
 **Hierarchy Engine (S4.x — Adjacency List Model):**
-- `getGenericOrdenPath(formState, calcParams)` — Reads the FK parent from `formState[parentField]`, finds that parent in `window.__APP_CACHE__`, counts existing siblings sharing the same FK, and assembles the ordered path string (e.g. `02.01.03`) with `.padStart(2,'0')` defense against Google Sheets integer casting.
-- `getGenericPathName(formState, calcParams)` — Walks the Adjacency List upward via FK until the root, concatenating `nameField` values with ` > `.
+- `buildOrdenPath(payload, parentLookup, parentEdgeField)` (in `Math_Engine.js`) — Derives the logical string path combining parent order and sibling counts, pure function.
+- `buildPathName(payload, parentLookup, parentEdgeField, nameField)` (in `Math_Engine.js`) — Resolves the human-readable hierarchy path recursively.
 
 **0ms Pre-Hydration (Edit Mode):**
 Before assigning `record[name]` to `<ion-select>`, the engine first injects `<ion-select-option>` elements from the local lookup resolver, then assigns the value. This prevents Ionic's WebComponent from rendering an empty string instead of the selected label.

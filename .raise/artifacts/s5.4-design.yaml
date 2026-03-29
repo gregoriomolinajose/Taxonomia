@@ -6,7 +6,7 @@ story: 'S5.4'
 epic: 'E5'
 content:
   summary: 'Diseño del Agente Abuelo-Nieto en Engine_DB para reparar el DAG de Taxonomías eludiendo ciclos y aristas muertas durante la eliminación de entidades esféricas.'
-  complexity: high
+  complexity: complex
   acceptance_criteria:
     - id: AC1
       description: 'El payload de delete transacciona la BD Plana únicamente si la matriz SCD-2 relacional curó el árbol previamente.'

@@ -6,7 +6,7 @@ story: 'S5.5'
 epic: 'E5'
 content:
   summary: 'Intercepción del motor Apache ECharts para consumir la nueva Tabla Puente Relacional (Filtrada por SCD-2 Activos) y desacoplar la topología del plano de los metadatos visuales.'
-  complexity: medium
+  complexity: moderate
   acceptance_criteria:
     - id: AC1
       description: 'El D3 Tree Builder omite silenciosamente aristas donde es_version_actual sea falso.'

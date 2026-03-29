@@ -70,9 +70,74 @@
             return (linkedRecords || []).some(r => _normalizeId(r[pkField]) === normalizedCandidate);
         }
 
+        /**
+         * _patchFrontendCache (H11 Simplification)
+         * Inyección limpia en caché local post-Server Confirmation.
+         */
+        function _patchFrontendCache(entityName, response, payload) {
+            if (!window.__APP_CACHE__) return;
+
+            // 1. Root Entity Injection
+            if (window.__APP_CACHE__[entityName] && Array.isArray(window.__APP_CACHE__[entityName])) {
+                let pkField = response.pk;
+                let pkValue = response.pkValue;
+
+                if (!pkField || !pkValue) {
+                    pkField = Object.keys(payload).find(k => k.startsWith('id_'));
+                    pkValue = pkField ? payload[pkField] : null;
+                }
+
+                if (!pkField || !pkValue) {
+                    const meta = (window.DataViewEngine && typeof window.DataViewEngine._getState === 'function')
+                        ? window.DataViewEngine._getState().entityMeta
+                        : null;
+                    pkField = meta && meta.idField ? meta.idField : pkField;
+                    pkValue = pkField ? payload[pkField] : null;
+                }
+
+                if (pkField && pkValue) {
+                    const cleanRecord = { ...payload, [pkField]: pkValue };
+                    const liveData = window.__APP_CACHE__[entityName];
+                    const existingIdx = liveData.findIndex(r => _normalizeId(r[pkField]) === _normalizeId(pkValue));
+
+                    window.__APP_CACHE__[entityName] = existingIdx !== -1
+                        ? [...liveData.slice(0, existingIdx), cleanRecord, ...liveData.slice(existingIdx + 1)]
+                        : [cleanRecord, ...liveData];
+
+                    console.log(`[Cache] ${existingIdx !== -1 ? 'UPDATE' : 'INSERT'} para: ${entityName} [${pkField}=${pkValue}]. Total: ${window.__APP_CACHE__[entityName].length}`);
+                } else {
+                    console.warn(`[Cache] No se pudo resolver pkField/pkValue para ${entityName}. Cache no actualizado.`);
+                }
+            }
+
+            // 2. Inyección Dinámica para Entidades Anidadas (Subgrids 0.0s latency)
+            if (response.data && response.data.orchestratedChildren) {
+                const orch = response.data.orchestratedChildren;
+                Object.keys(orch).forEach(childEntity => {
+                    if (Array.isArray(window.__APP_CACHE__[childEntity])) {
+                        const freshChildren = orch[childEntity] || [];
+                        const childPkField = 'id_' + childEntity.toLowerCase().replace(/s$/, '').replace(/es$/, '');
+                        
+                        let currentCache = [...window.__APP_CACHE__[childEntity]];
+                        freshChildren.forEach(newChild => {
+                            const cid = newChild[childPkField] || newChild['id_' + childEntity.toLowerCase()];
+                            const idx = currentCache.findIndex(c => (c[childPkField] === cid) || (c['id_' + childEntity.toLowerCase()] === cid));
+                            if (idx !== -1) {
+                                currentCache = [...currentCache.slice(0, idx), newChild, ...currentCache.slice(idx + 1)];
+                            } else {
+                                currentCache = [newChild, ...currentCache]; // prepend
+                            }
+                        });
+                        window.__APP_CACHE__[childEntity] = currentCache;
+                        console.log(`[Cache] Inyectados ${freshChildren.length} registros anidados en caché de ${childEntity}`);
+                    }
+                });
+            }
+        }
+
         // Exponer para pruebas unitarias (solo en entornos sin google.script)
         if (typeof module !== 'undefined' && module.exports) {
-            module.exports = { isRecordLinked, _normalizeId };
+            module.exports = { isRecordLinked, _normalizeId, _patchFrontendCache };
         }
 
         global.renderForm = async function (entityName, data = null) {
@@ -130,78 +195,15 @@
                 });
             }
 
-            // --- MATH ENGINES (Sprint 4.0: Generic Abstraction & 4.2 DB Normalization) ---
+            // --- MATH ENGINES (Delegado a Math_Engine.js universal) ---
             global.getGenericOrdenPath = function(formStateObj, params) {
-                if (!params || !params.entity) return '';
-
-                const levelField = params.levelField || 'nivel_tipo';
-                const parentField = params.parentField || 'id_dominio_padre';
-                const pkField = params.pkField || 'id_' + params.entity.toLowerCase();
-                const orderField = params.orderField || 'orden_path';
-
-                const nivelStr = formStateObj[levelField];
-                if (nivelStr === undefined || nivelStr === null) return '';
-                const nivel = parseInt(nivelStr, 10);
-                if (isNaN(nivel)) return '';
-                
                 const cache = (window.__APP_CACHE__ && window.__APP_CACHE__[params.entity]) ? window.__APP_CACHE__[params.entity] : [];
-                
-                if (nivel === 0) {
-                    let maxRoot = 0;
-                    cache.filter(d => parseInt(d[levelField], 10) === 0).forEach(d => {
-                        if (d[orderField]) {
-                            const val = parseInt(String(d[orderField]).split('.')[0], 10);
-                            if (!isNaN(val) && val > maxRoot) maxRoot = val;
-                        }
-                    });
-                    return String(maxRoot + 1).padStart(2, '0');
-                } else {
-                    const idPadre = formStateObj[parentField];
-                    if (!idPadre || idPadre === '') return ''; // Bloqueo de seguridad si no hay FK seleccionada
-                    
-                    // Buscar al padre mediante Casting fuerte FK === PK
-                    const padre = cache.find(d => String(d[pkField]) === String(idPadre));
-                    if (!padre || !padre[orderField]) return '';
-                    
-                    // Asegurar que si Sheets castigó "02" a entero 2, lo volvemos a padear visualmente
-                    const parentPathStr = String(padre[orderField]).split('.').map(p => p.padStart(2, '0')).join('.');
-                    
-                    // S4.2 ENTERPRISE FIX: Encontrar hermanos comparando Adjacency List (FK real)
-                    const siblings = cache.filter(d => String(d[parentField]) === String(idPadre));
-                    
-                    let maxSuffix = 0;
-                    siblings.forEach(sib => {
-                        if (sib[orderField]) {
-                            const parts = String(sib[orderField]).split('.');
-                            const lastPart = parseInt(parts[parts.length - 1], 10);
-                            if (!isNaN(lastPart) && lastPart > maxSuffix) maxSuffix = lastPart;
-                        }
-                    });
-                    
-                    const newSuffix = String(maxSuffix + 1).padStart(2, '0');
-                    return parentPathStr + '.' + newSuffix;
-                }
+                return window.Math_Engine ? window.Math_Engine.buildOrdenPath(formStateObj, params, cache) : '';
             };
 
             global.getGenericPathName = function(formStateObj, params) {
-                if (!params || !params.entity || !params.parentField || !params.nameField || !params.pathField) return '';
-                
-                const nombre = formStateObj[params.nameField] || '';
-                const idPadre = formStateObj[params.parentField];
-                
-                if (!idPadre || idPadre === '') {
-                    return `PATH: ${nombre}`;
-                }
-                
                 const cache = (window.__APP_CACHE__ && window.__APP_CACHE__[params.entity]) ? window.__APP_CACHE__[params.entity] : [];
-                const pkField = params.pkField || 'id_' + params.entity.toLowerCase();
-                const padreRecord = cache.find(r => String(r[pkField]) === String(idPadre));
-                
-                if (!padreRecord || !padreRecord[params.pathField]) {
-                    return `PATH: ${nombre}`;
-                }
-                
-                return `${padreRecord[params.pathField]} > ${nombre}`;
+                return window.Math_Engine ? window.Math_Engine.buildPathName(formStateObj, params, cache) : '';
             };
 
             // --- DEPENDENCY RESOLVER: lookupSource Universal (Metadata-Driven) ---
@@ -1152,75 +1154,7 @@
                             const response = typeof rawResponse === 'string' ? JSON.parse(rawResponse) : rawResponse;
                             if (response && response.status === 'success') {
                                  // ── Server-Confirmed Frontend Cache Injection (Immutable · Zero-Latency) ──
-                                 if (window.__APP_CACHE__ && window.__APP_CACHE__[entityName]) {
-                                     const cacheData = window.__APP_CACHE__[entityName];
-                                     if (Array.isArray(cacheData)) {
-                                         // ── PK Resolution Chain (3 tiers, defensive) ─────────────────────────
-                                         // Tier 1: Server-confirmed via new response.pk / response.pkValue fields
-                                         let pkField = response.pk;
-                                         let pkValue = response.pkValue;
-
-                                         // Tier 2: Derive from payload (client-generated IDs on create)
-                                         if (!pkField || !pkValue) {
-                                             pkField = Object.keys(payload).find(k => k.startsWith('id_'));
-                                             pkValue = pkField ? payload[pkField] : null;
-                                         }
-
-                                         // Tier 3: ENTITY_META fallback
-                                         if (!pkField || !pkValue) {
-                                             const meta = (window.DataViewEngine && typeof window.DataViewEngine._getState === 'function')
-                                                 ? window.DataViewEngine._getState().entityMeta
-                                                 : null;
-                                             pkField = meta && meta.idField ? meta.idField : pkField;
-                                             pkValue = pkField ? payload[pkField] : null;
-                                         }
-                                         // ─────────────────────────────────────────────────────────────────────
-
-                                         if (pkField && pkValue) {
-                                             // REGLA DE ORO: Registro limpio fusionando payload con ID confirmado.
-                                             const cleanRecord = { ...payload, [pkField]: pkValue };
-
-                                             // INMUTABILIDAD ESTRUCTURAL: reemplaza el arreglo raíz
-                                             const liveData = Array.isArray(window.__APP_CACHE__[entityName]) ? window.__APP_CACHE__[entityName] : [];
-                                             const existingIdx = liveData.findIndex(r => _normalizeId(r[pkField]) === _normalizeId(pkValue));
-
-                                             window.__APP_CACHE__[entityName] = existingIdx !== -1
-                                                 // UPDATE: reemplazar en su posición
-                                                 ? [...liveData.slice(0, existingIdx), cleanRecord, ...liveData.slice(existingIdx + 1)]
-                                                 // INSERT: prepend (aparece primero en la tabla)
-                                                 : [cleanRecord, ...liveData];
-
-                                             console.log(`[Cache] ${existingIdx !== -1 ? 'UPDATE' : 'INSERT'} para: ${entityName} [${pkField}=${pkValue}]. Total: ${window.__APP_CACHE__[entityName].length}`);
-                                         } else {
-                                             console.warn(`[Cache] No se pudo resolver pkField/pkValue para ${entityName}. Cache no actualizado.`);
-                                         }
-                                     }
-                                 }
-
-                                 // ── Inyección Frontend Dinámica para Entidades Anidadas (Subgrids 0.0s latency) ──
-                                 // En vez de borrar la caché y forzar una recarga (Loading de 1.5s), insertamos los hijos directamente.
-                                 if (response.data && response.data.orchestratedChildren) {
-                                     const orch = response.data.orchestratedChildren;
-                                     Object.keys(orch).forEach(childEntity => {
-                                         if (window.__APP_CACHE__ && Array.isArray(window.__APP_CACHE__[childEntity])) {
-                                             const freshChildren = orch[childEntity] || [];
-                                             const childPkField = 'id_' + childEntity.toLowerCase().replace(/s$/, '').replace(/es$/, '');
-                                             
-                                             let currentCache = [...window.__APP_CACHE__[childEntity]];
-                                             freshChildren.forEach(newChild => {
-                                                 const cid = newChild[childPkField] || newChild['id_' + childEntity.toLowerCase()];
-                                                 const idx = currentCache.findIndex(c => (c[childPkField] === cid) || (c['id_' + childEntity.toLowerCase()] === cid));
-                                                 if (idx !== -1) {
-                                                     currentCache = [...currentCache.slice(0, idx), newChild, ...currentCache.slice(idx + 1)];
-                                                 } else {
-                                                     currentCache = [newChild, ...currentCache]; // prepend
-                                                 }
-                                             });
-                                             window.__APP_CACHE__[childEntity] = currentCache;
-                                             console.log(`[Cache] Inyectados ${freshChildren.length} registros anidados en caché de ${childEntity}`);
-                                         }
-                                     });
-                                 }
+                                 _patchFrontendCache(entityName, response, payload);
 
                                  const itemName = (response.data && response.data.Entity) ? response.data.Entity : entityName;
                                  showToast('¡' + itemName + ' guardado con éxito!', 'success');

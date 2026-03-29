@@ -66,6 +66,6 @@ describe('Persona CRUD - Blueprint V2 Verification', () => {
         const configPath = path.resolve(__dirname, '../src/Global_Config.js');
         const content = fs.readFileSync(configPath, 'utf8');
         
-        expect(content).toMatch(/APP_VERSION: 'v1\.0\.\d+/);
+        expect(content).toMatch(/APP_VERSION: 'v1\.\d+\.\d+/);
     });
 });
