@@ -323,18 +323,22 @@ const Engine_DB = {
                     const incomingIds = children.map(c => String(c[pkField] || ''));
                     const orphans = orphanMatches.filter(c => c && !incomingIds.includes(String(c[pkField] || '')));
 
-                    if (orphans.length > 0) {
-                        if (typeof Logger !== 'undefined') Logger.log(`[Diffing] Detectados ${orphans.length} huérfanos para desvincular.`);
-                        if (targetEntity === "Relacion_Dominios") {
-                            const sysDate = new Date().toISOString();
-                            orphans.forEach(o => {
-                                o.es_version_actual = false;
-                                o.valido_hasta = sysDate;
-                                o.updated_at = sysDate;
-                            });
+                    // [S6.1] Config-Driven Delegation to Engine_Graph
+                    if (f.isTemporalGraph) {
+                        if (typeof Engine_Graph !== 'undefined') {
+                            Engine_Graph.patchSCD2Edges(children, orphans, f.topology);
                         } else {
+                            if (typeof Logger !== 'undefined') Logger.log(`[ERROR] Engine_Graph no encontrado para resolver topología ${f.topology}.`);
+                        }
+                    } else {
+                        // Standard Unlink para 1:N no temporal
+                        if (orphans.length > 0) {
                             orphans.forEach(o => o[fkField] = ""); // Desvincular físicamente
                         }
+                    }
+
+                    if (orphans.length > 0) {
+                        if (typeof Logger !== 'undefined') Logger.log(`[Diffing] Detectados ${orphans.length} huérfanos para desvincular.`);
                         _Adapter_Sheets.upsertBatch(targetEntity, orphans, config);
                     }
 
@@ -349,16 +353,6 @@ const Engine_DB = {
                             let suffix = '';
                             for (let i = 0; i < 5; i++) suffix += chars.charAt(Math.floor(Math.random() * chars.length));
                             child[pkField] = `${prefix}-${suffix}`;
-                            
-                            // Initialize SCD-2 active fields if it's the DAG Bridge
-                            if (targetEntity === "Relacion_Dominios") {
-                                const sysDate = new Date().toISOString();
-                                child.valido_desde = sysDate;
-                                child.valido_hasta = "";
-                                child.es_version_actual = true;
-                                child.created_at = sysDate;
-                                child.created_by = "UI_SUBGRID";
-                            }
                         }
                     });
 
