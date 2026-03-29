@@ -5,8 +5,9 @@ Desacoplar las operaciones SCD-2 N:M del motor CRUD generalizando el enfoque "Co
 
 ## Boundaries
 **In Scope:**
-- Extensión Config-Driven (`isTemporalGraph` en `Schema_Engine`).
+- Extensión Config-Driven (`isTemporalGraph` y `topology` en `Schema_Engine`).
 - Creación de `Engine_Graph.js` para manipulación de aristas SCD-2.
+- Diccionario de Estructuras (Lineal, Funcional, Matricial, Equipos, etc.) con validación de cardinalidad (1:N, M:N).
 - Refactorización de `orchestrateNestedSave` en `Engine_DB`.
 
 **Out Scope:**
@@ -18,7 +19,8 @@ Desacoplar las operaciones SCD-2 N:M del motor CRUD generalizando el enfoque "Co
 | Story | Size | Status | Actual | Velocity | Notes |
 |-------|------|--------|--------|----------|-------|
 | S6.1 - Config-Driven SCD-2 | M | Pending | - | - | Esquema Dinámico en Schema_Engine |
-| S6.2 - Engine_Graph Service | M | Pending | - | - | Single Responsibility (Engine_DB -> Engine_Graph) |
+| S6.2 - Diccionario de Topologías | S | Pending | - | - | Engine_Graph Validador de Cardinalidad Estructural |
+| S6.3 - Engine_Graph Service | M | Pending | - | - | Single Responsibility (Engine_DB -> Engine_Graph) |
 
 ## Definition of Done
 - `npm test` verde.
