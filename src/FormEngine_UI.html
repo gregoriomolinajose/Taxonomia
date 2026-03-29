@@ -58,6 +58,11 @@
         };
 
         /* ─────────────────────────────────────────────────────────────────
+           NOTA ARQUITECTURA (S7.1): Component Factory _buildSearchableMulti 
+           fue extraída a UI_Components.html para cumplir reglas SOLID/H11.
+           ─────────────────────────────────────────────────────────────── */
+
+        /* ─────────────────────────────────────────────────────────────────
            PURE UTILITY FUNCTIONS (no side-effects, fully testable)
            ─────────────────────────────────────────────────────────────── */
 
@@ -457,10 +462,8 @@
                     return; // Skip drawing UI columns
                 }
 
-                // REGLA DE EXCLUSIÓN: Campos 'relation' son manejados por el Subgrid component.
-                // El generador NO debe crear un ion-input estándar para estos campos,
-                // ya que causaría un campo fantasma con "[object Object]".
-                if (field.type === 'relation' || field.type === 'subgrid') {
+                // REGLA DE EXCLUSIÓN: Campos 'relation' sin uiComponent son manejados por el Subgrid component.
+                if ((field.type === 'relation' && !field.uiComponent) || field.type === 'subgrid') {
                     return; // Skip — renderSubgrid() lo maneja en su propio flujo
                 }
 
@@ -489,6 +492,72 @@
                 let isComplex = false;
 
                 switch (field.type) {
+                    case 'relation':
+                        inputEl = document.createElement('div');
+                        inputEl.setAttribute('data-relation-type', field.relationType || 'relacionado');
+                        inputEl.style.width = '100%';
+                        inputEl.style.marginBottom = '10px';
+                        
+                        const liveData = (window.__APP_CACHE__ && window.__APP_CACHE__[field.targetEntity]) ? window.__APP_CACHE__[field.targetEntity] : [];
+                        const activeData = liveData.filter(d => d.estado !== 'Eliminado' && typeof d === 'object');
+                        
+                        let initialValues = [];
+                        
+                        // UAT Point 3: Auto-populate existing relation records using Zero-Latency Graph resolution
+                        if (field.isTemporalGraph && field.graphEntity && window.__APP_CACHE__ && window.__APP_CACHE__[field.graphEntity]) {
+                            const currentPK = data ? (data.id_dominio || data.id_registro) : null;
+                            if (currentPK) {
+                                const aristas = window.__APP_CACHE__[field.graphEntity].filter(e => e.es_version_actual !== false);
+                                if (field.relationType === 'padre') {
+                                    // Mis padres (mi PK está en id_nodo_hijo)
+                                    initialValues = aristas.filter(e => _normalizeId(e.id_nodo_hijo) === _normalizeId(currentPK)).map(e => _normalizeId(e.id_nodo_padre));
+                                } else if (field.relationType === 'hijo') {
+                                    // Mis hijos (mi PK está en id_nodo_padre)
+                                    initialValues = aristas.filter(e => _normalizeId(e.id_nodo_padre) === _normalizeId(currentPK)).map(e => _normalizeId(e.id_nodo_hijo));
+                                }
+                            }
+                        } else if (data && data[field.name]) {
+                            try {
+                                initialValues = Array.isArray(data[field.name]) ? data[field.name] : JSON.parse(data[field.name]);
+                            } catch(e) { initialValues = (typeof data[field.name] === 'string') ? [data[field.name]] : []; } // fallback
+                        }
+
+                        if (field.uiComponent === 'searchable_multi') {
+                            isComplex = true;
+                            // Constructor del Componente Searchable+Chips Modal-like Inline
+                            window._buildSearchableMulti(inputEl, field, activeData, initialValues);
+                        } else if (field.uiComponent === 'select_single') {
+                            const basicSel = document.createElement('ion-select');
+                            basicSel.setAttribute('interface', window.innerWidth < 768 ? 'action-sheet' : 'popover');
+                            basicSel.setAttribute('name', field.name);
+                            basicSel.setAttribute('label', field.label);
+                            basicSel.setAttribute('label-placement', 'stacked');
+                            basicSel.setAttribute('fill', 'outline');
+                            
+                            // Prevent overlapping by adding a tiny margin
+                            basicSel.style.marginBottom = '12px';
+
+                            // Empty Default "Ninguno"
+                            const emptyOpt = document.createElement('ion-select-option');
+                            emptyOpt.value = "";
+                            emptyOpt.textContent = "— Sin asignar —";
+                            basicSel.appendChild(emptyOpt);
+
+                            // Set initial value for single select
+                            if (initialValues.length > 0) {
+                                basicSel.value = initialValues[0];
+                            }
+                            
+                            activeData.forEach(d => {
+                                const opt = document.createElement('ion-select-option');
+                                opt.value = typeof d[field.valueField] !== 'undefined' ? d[field.valueField] : d.id_registro;
+                                opt.textContent = `[${opt.value}] ${typeof d[field.labelField] !== 'undefined' ? d[field.labelField] : d.nombre}`;
+                                basicSel.appendChild(opt);
+                            });
+                            inputEl.appendChild(basicSel);
+                        }
+                        break;
+
                     case 'text':
                     case 'number':
                     case 'date':
@@ -922,7 +991,8 @@
 
             // Habilitar el renderizado del componente 'relation'
             for (const field of fields) {
-                if (field.type === 'relation' && field.uiBehavior === 'subgrid') {
+                // Solo renderizar el Subgrid si NO tiene un uiComponent propio
+                if (field.type === 'relation' && field.uiBehavior === 'subgrid' && !field.uiComponent) {
                     const targetSection = field.section || field.step || (steps && steps[0]);
                     let targetRow = rows[targetSection] || rows[Object.keys(rows)[0]];
                     const subCol = document.createElement('ion-col');
@@ -1087,7 +1157,31 @@
                 freshInputs.forEach(input => {
                     const name = input.getAttribute('name');
                     if (name && !input.closest('[data-dynamic-list]')) {
-                        payload[name] = input.value;
+                        let val = input.value;
+                        
+                        // S7.2 Intercepción MDM (Safe Payload Serialization & OCP H8 Fix)
+                        const schemaField = fields ? fields.find(f => f.name === name) : null;
+                        
+                        if (input.dataset.parser === 'json_array') {
+                            // Regla 1: Parseo Defensivo Safe Parse (Contrato DOM OCP)
+                            try {
+                                let parsed = JSON.parse(val);
+                                payload[name] = Array.isArray(parsed) ? parsed.filter(i => Boolean(i) && String(i).trim() !== "") : [];
+                            } catch(e) { 
+                                payload[name] = []; 
+                            }
+                        } else if (schemaField) {
+                            if (schemaField.type === 'relation' || schemaField.uiComponent === 'select_single') {
+                                // Regla 2: Coerción Segura (1:1)
+                                let strVal = (val === null || val === undefined) ? "" : String(val).trim();
+                                if (strVal.toLowerCase() === "null" || strVal.toLowerCase() === "undefined") strVal = "";
+                                payload[name] = strVal;
+                            } else {
+                                payload[name] = val; // Default nativo
+                            }
+                        } else {
+                            payload[name] = val; // Fallback libre
+                        }
                     }
                 });
 
