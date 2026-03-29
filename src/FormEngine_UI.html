@@ -14,7 +14,21 @@
         global.currentEditId = null;
 
         /**
-         * Resolutor de opciones para "Dominio Padre"
+         * Resolutor de opciones genérico para Dominios completos
+         * (Requerido por M:N Subgrid en N-Dimensional Graph)
+         */
+        global.getDominioOptions = function(formCurrentState) {
+            const cache = (window.__APP_CACHE__ && window.__APP_CACHE__['Dominio']) ? window.__APP_CACHE__['Dominio'] : [];
+            const active = cache.filter(r => r.estado !== 'Eliminado');
+            return active.map(p => ({
+                value: p.id_dominio || p.id_registro,
+                label: `[Nivel ${p.nivel_tipo}] ${p.nombre_ingles || p.n0_es || p.nombre || p.id_registro}`
+            }));
+        };
+
+        /**
+         * Resolutor de opciones (Limitado) para "Dominio Padre"
+         * Usado por reliquias planas o vistas restrictivas.
          * Filtra desde el caché 100% Zero-Latency.
          */
         global.getDominiosPadreOptions = function(formCurrentState) {

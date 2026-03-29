@@ -276,12 +276,9 @@ const Engine_DB = {
         const nestedData = {};
         const flatPayload = { ...payload };
 
-        // [S5.3] Graph Edge Interception (Transient Node De-pollution)
-        let transientParentId = null;
-        if (entityName === "Dominio" && flatPayload.id_nodo_padre !== undefined) {
-            transientParentId = flatPayload.id_nodo_padre;
-            delete flatPayload.id_nodo_padre; // Previene I/O error en capa plana
-        }
+        // [S5.6] Dynamic DAG Subgrid takes over Transient Edge
+        // transientParentId y _updateGraphEdges ya no se usan porque la topología
+        // se administra directamente mediante subgrids hacia Relacion_Dominios.
 
         // Paso A: Desempaquetado basado en esquema
         const schema = (typeof APP_SCHEMAS !== 'undefined') ? APP_SCHEMAS[entityName] : null;
@@ -302,10 +299,7 @@ const Engine_DB = {
         const parentIdField = Object.keys(flatPayload).find(k => k.startsWith('id_')) || "id_dominio";
         const parentPK = flatPayload[parentIdField];
 
-        // [S5.3] Graph Edge SCD-2 Orchestration Hook
-        if (entityName === "Dominio" && transientParentId !== null && parentPK) {
-            _updateGraphEdges(parentPK, transientParentId, config);
-        }
+        // [S5.6] Legacy Graph Edge SCD-2 Orchestrator eliminado (Delegado al bloque de relaciones)
 
         // Paso C y D: Inyección de FK y Transacción Hijos
         if (schema) {
@@ -330,8 +324,17 @@ const Engine_DB = {
                     const orphans = orphanMatches.filter(c => c && !incomingIds.includes(String(c[pkField] || '')));
 
                     if (orphans.length > 0) {
-                        Logger.log(`[Diffing] Detectados ${orphans.length} huérfanos para desvincular.`);
-                        orphans.forEach(o => o[fkField] = ""); // Desvincular físicamente
+                        if (typeof Logger !== 'undefined') Logger.log(`[Diffing] Detectados ${orphans.length} huérfanos para desvincular.`);
+                        if (targetEntity === "Relacion_Dominios") {
+                            const sysDate = new Date().toISOString();
+                            orphans.forEach(o => {
+                                o.es_version_actual = false;
+                                o.valido_hasta = sysDate;
+                                o.updated_at = sysDate;
+                            });
+                        } else {
+                            orphans.forEach(o => o[fkField] = ""); // Desvincular físicamente
+                        }
                         _Adapter_Sheets.upsertBatch(targetEntity, orphans, config);
                     }
 
@@ -346,6 +349,16 @@ const Engine_DB = {
                             let suffix = '';
                             for (let i = 0; i < 5; i++) suffix += chars.charAt(Math.floor(Math.random() * chars.length));
                             child[pkField] = `${prefix}-${suffix}`;
+                            
+                            // Initialize SCD-2 active fields if it's the DAG Bridge
+                            if (targetEntity === "Relacion_Dominios") {
+                                const sysDate = new Date().toISOString();
+                                child.valido_desde = sysDate;
+                                child.valido_hasta = "";
+                                child.es_version_actual = true;
+                                child.created_at = sysDate;
+                                child.created_by = "UI_SUBGRID";
+                            }
                         }
                     });
 
