@@ -5,22 +5,24 @@ const { APP_SCHEMAS } = require('../src/Schema_Engine.gs');
 // ─────────────────────────────────────────────────────────────────────────────
 const { buildOrdenPath } = require('../src/Math_Engine');
 
-const CALC_PARAMS = APP_SCHEMAS['Dominio'].fields.find(f => f.name === 'orden_path').calcParams;
+const CALC_PARAMS = {
+    entity: 'Dominio',
+    levelField: 'nivel_tipo',
+    parentField: 'id_nodo_padre',
+    pkField: 'id_dominio',
+    orderField: 'orden_path'
+};
 
 describe('TDD: Jerarquía Recursiva Dinámica (Zero-Touch Trigger)', () => {
     // ── STRUCTURAL TEST (existing) ────────────────────────────────────────
-    test('El esquema Dominio debe incluir triggers_refresh_of en nivel_tipo y el componente receptor en id_dominio_padre', () => {
+    test('El esquema Dominio debe usar el subgrid relaciones_padre (E5 refactor)', () => {
         const schema = APP_SCHEMAS['Dominio'];
         expect(schema).toBeDefined();
 
-        const sourceField = schema.fields.find(f => f.name === 'nivel_tipo');
-        expect(sourceField).toBeDefined();
-        expect(sourceField.triggers_refresh_of).toContain('orden_path');
-
-        const parentField = schema.fields.find(f => f.name === 'id_nodo_padre');
-        expect(parentField).toBeDefined();
-        expect(parentField.type).toBe('select');
-        expect(parentField.lookupSource).toBe('getDominiosPadreOptions');
+        const relationsField = schema.fields.find(f => f.name === 'relaciones_padre');
+        expect(relationsField).toBeDefined();
+        expect(relationsField.uiBehavior).toBe('subgrid');
+        expect(relationsField.isTemporalGraph).toBe(true);
     });
 
     // ── O-01: BEHAVIORAL TESTS ────────────────────────────────────────────
