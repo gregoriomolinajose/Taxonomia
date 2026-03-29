@@ -1157,7 +1157,31 @@
                 freshInputs.forEach(input => {
                     const name = input.getAttribute('name');
                     if (name && !input.closest('[data-dynamic-list]')) {
-                        payload[name] = input.value;
+                        let val = input.value;
+                        
+                        // S7.2 Intercepción MDM (Safe Payload Serialization)
+                        const schemaField = fields ? fields.find(f => f.name === name) : null;
+                        
+                        if (schemaField) {
+                            if (schemaField.uiComponent === 'searchable_multi') {
+                                // Regla 1: Parseo Defensivo Safe Parse
+                                try {
+                                    let parsed = JSON.parse(val);
+                                    payload[name] = Array.isArray(parsed) ? parsed.filter(i => Boolean(i) && String(i).trim() !== "") : [];
+                                } catch(e) { 
+                                    payload[name] = []; 
+                                }
+                            } else if (schemaField.type === 'relation' || schemaField.uiComponent === 'select_single') {
+                                // Regla 2: Coerción Segura (1:1)
+                                let strVal = (val === null || val === undefined) ? "" : String(val).trim();
+                                if (strVal.toLowerCase() === "null" || strVal.toLowerCase() === "undefined") strVal = "";
+                                payload[name] = strVal;
+                            } else {
+                                payload[name] = val; // Default nativo
+                            }
+                        } else {
+                            payload[name] = val; // Fallback libre
+                        }
                     }
                 });
 
