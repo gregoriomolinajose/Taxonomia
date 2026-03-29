@@ -23,10 +23,11 @@ const Engine_Graph = {
      */
     patchSCD2Edges: function(activeEdges, orphanEdges, topology) {
         const sysDate = new Date().toISOString();
+        const activeTopology = topology || 'JERARQUICA_LINEAL';
 
         // 1. Escenario 1: Validación de Payload (Hard Error)
-        if (topology && TOPOLOGY_DICTIONARY[topology]) {
-            const rules = TOPOLOGY_DICTIONARY[topology];
+        if (activeTopology && TOPOLOGY_DICTIONARY[activeTopology]) {
+            const rules = TOPOLOGY_DICTIONARY[activeTopology];
             if (rules.maxActiveParents !== null && activeEdges && activeEdges.length > rules.maxActiveParents) {
                 // Bloquea payloads maliciosos o mal formados que exceden capacidad
                 throw new Error("Violación de Topología: Payload excede el límite de padres simultáneos.");

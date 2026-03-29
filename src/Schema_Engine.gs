@@ -53,7 +53,7 @@ const APP_SCHEMAS = {
       { section: "Datos Generales", name: "nombre_ingles", type: "text", label: "Nombre (EN)", required: false, width: 6 },
       { section: "Datos Generales", name: "abreviacion", type: "text", label: "Abreviación", required: false, width: 6 },
       { section: "Datos Generales", name: "definicion", type: "textarea", label: "Definición", required: true, width: 12 },
-      { section: "Topología (Grafo)", width: 12, name: "relaciones_padre", type: "relation", relationType: "1:N", targetEntity: "Relacion_Dominios", foreignKey: "id_nodo_hijo", uiBehavior: "subgrid", label: "Administrar Padres (N:M)", isTemporalGraph: true, topology: "JERARQUICA_LINEAL" }
+      { section: "Topología (Grafo)", width: 12, name: "relaciones_padre", type: "relation", relationType: "1:N", targetEntity: "Relacion_Dominios", foreignKey: "id_nodo_hijo", uiBehavior: "subgrid", label: "Administrar Padres (N:M)", isTemporalGraph: true }
     ]
   },
   Capacidad: {
