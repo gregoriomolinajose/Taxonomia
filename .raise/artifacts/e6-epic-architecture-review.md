@@ -1,19 +1,20 @@
-## Architecture Review: Epic E6 (scope: epic)
+## Architecture Review: Epic E6 (Systemic - FINAL)
 
 ### Critical (fix before merge)
-Ninguno.
+*Ninguno.*
 
 ### Recommended (simplify before next cycle)
-- **H11 (Change Reason Count):** Actualmente los Handlers `default1toNHandler` y `defaultMtoNHandler` residen dentro del propio `Engine_Graph.js`. Para mantener la segregación, en épicas futuras (cuando las estrategias de negocio crezcan), convendría moverlas a su propio archivo `Topology_Strategies.js` para evitar que `Engine_Graph.js` asuma demasiados motivos de cambio (SOLID Single Responsibility).
+*Ninguno. La segregación del Patrón Strategy completó la sanitización de módulos (H11).*
 
 ### Questions (require human judgment)
-- **H5 (Dead Exports):** `TOPOLOGY_STRATEGIES` fue exportado para testeos, pero ningún módulo real de producción lo importa (el enrutamiento ocurre internamente en `patchSCD2Edges`). ¿Vale la pena mantenerlo público o debería encapsularse privadamente al ser consumido únicamente por el motor de transiciones?
+- **H5 (Dead Exports):** Mantenemos `module.exports = { TOPOLOGY_STRATEGIES }` en `Topology_Strategies.js` para consumo del framework de pruebas (`Jest`). En Apps Script los módulos se integran por namespace global o V8 engine, por lo cual la sintaxis de exportación de Node sigue siendo requerida hasta la unificación universal por webpack u otra vía.
 
 ### Observations (patterns noted)
-- **H1 (Single Implementation):** RESUELTO en S6.5. El motor ahora ejecuta funciones delegadas polimórficas (Strategy Pattern) en lugar de un `if` quemado, dotando a la arquitectura de "Open-Closed Principle".
-- **H8 (Configuration Over Convention):** RESUELTO en S6.4. Proveer un default "JERARQUICA_LINEAL" erradicó la redundancia estática en el config de `Schema_Engine.gs`.
-- **H13 (Orphaned Abstractions):** PASS. La extracción temprana del control `Engine_Graph` validó el proxy-router inmediatamente para 8 topologías transversales.
-- **H16 (Shotgun Surgery):** PASS. Ningún cambio topológico actual implicó mutar `Engine_DB.js`, el cual ahora funciona como un simple ORM.
+- **H1 (Single Implementation):** RESUELTO. `Engine_Graph` dejó de acoplarse a lógicas transaccionales específicas de la topología; ahora inyecta estrategias (`evaluateTransition`).
+- **H8 (Configuration Over Convention):** RESUELTO. La convención implícita de jerarquía (`JERARQUICA_LINEAL`) reduce dramáticamente el boilerplate en `Schema_Engine.gs`.
+- **H11 (Change Reason Count):** RESUELTO (S6.6). Reglas Topológicas segregadas de `Engine_Graph` garantizando Alta Cohesión. Se respeta SRP de principio a fin.
+- **H13 (Orphaned Abstractions):** ALINEADO. El enrutamiento de Proxy-SCD2 está sirviendo exitosamente a las 8 topologías transversales.
+- **H16 (Shotgun Surgery):** ALINEADO. La lógica Base ORM transaccional de Google Drive (`Engine_DB`) no precisará alteraciones ante la adición de futuras estructuras organizacionales complejas.
 
 ### Verdict
 - [x] PASS
