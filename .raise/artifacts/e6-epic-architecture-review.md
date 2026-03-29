@@ -1,18 +1,19 @@
 ## Architecture Review: Epic E6 (scope: epic)
 
 ### Critical (fix before merge)
-Ninguno. Resolvimos el desacoplamiento de lógicas recursivas tempranamente en la historia S6.1 per exigencia de revisión (ADR-002).
+Ninguno.
 
 ### Recommended (simplify before next cycle)
-- **H8 (Configuration Over Convention):** Si a futuro notamos que el 90% de los grafos son `JERARQUICA_LINEAL`, considerar que `isTemporalGraph: true` asuma esta topología como un default implícito para evitar boilerplate innecesario dentro de `Schema_Engine.gs`.
+- **H11 (Change Reason Count):** Actualmente los Handlers `default1toNHandler` y `defaultMtoNHandler` residen dentro del propio `Engine_Graph.js`. Para mantener la segregación, en épicas futuras (cuando las estrategias de negocio crezcan), convendría moverlas a su propio archivo `Topology_Strategies.js` para evitar que `Engine_Graph.js` asuma demasiados motivos de cambio (SOLID Single Responsibility).
 
 ### Questions (require human judgment)
-- **H1 (Single Implementation):** ¿Será necesario que el sub-sistema de validación de topologías dentro de `Engine_Graph` escale a inyectar handlers customizados por topología (`topologyHandlers[t]()`) o es suficiente mantener un switch declarativo sobre `maxActiveParents`?
+- **H5 (Dead Exports):** `TOPOLOGY_STRATEGIES` fue exportado para testeos, pero ningún módulo real de producción lo importa (el enrutamiento ocurre internamente en `patchSCD2Edges`). ¿Vale la pena mantenerlo público o debería encapsularse privadamente al ser consumido únicamente por el motor de transiciones?
 
 ### Observations (patterns noted)
-- **H13 (Orphaned Abstractions):** Neutralizado. `Engine_Graph` nació y fue consumimentado inmediatamente como Proxy Router oficial para SCD-2.
-- **H16 (Shotgun Surgery):** PASS. Al remover la lógica temporal hardcodeada de `Engine_DB.js`, se redujo enormemente el radio explosivo de cualquier cambio futuro en modelos relacionales jerárquicos.
-- **H7 (Abstraction-to-LOC Ratio):** PASS. Se agregó un módulo con poco código e inmenso valor regulador, cumpliendo estrictamente con proporciones de separación de capas.
+- **H1 (Single Implementation):** RESUELTO en S6.5. El motor ahora ejecuta funciones delegadas polimórficas (Strategy Pattern) en lugar de un `if` quemado, dotando a la arquitectura de "Open-Closed Principle".
+- **H8 (Configuration Over Convention):** RESUELTO en S6.4. Proveer un default "JERARQUICA_LINEAL" erradicó la redundancia estática en el config de `Schema_Engine.gs`.
+- **H13 (Orphaned Abstractions):** PASS. La extracción temprana del control `Engine_Graph` validó el proxy-router inmediatamente para 8 topologías transversales.
+- **H16 (Shotgun Surgery):** PASS. Ningún cambio topológico actual implicó mutar `Engine_DB.js`, el cual ahora funciona como un simple ORM.
 
 ### Verdict
 - [x] PASS

@@ -1,5 +1,5 @@
 const CONFIG = {
-    APP_VERSION: 'v1.1.7 - Diccionario Topologico',
+    APP_VERSION: 'v1.0.93 - Polymorphic Handlers',
     // TODO: Reemplazar con el ID real de Desarrollo
     SPREADSHEET_ID_DB: '1tMyYBLPr0HJnJwbhFpCVoM4U8k1EVGycBDBjEnUGDts',
     ALLOWED_DOMAINS: ['@gmail.com', '@bellfy.app', '@coppel.com', '@bancoppel.com'],
