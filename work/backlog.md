@@ -1,5 +1,8 @@
 # Backlog
 
+## Epic E5: Grafo Temporal Multi-Estructural
+**Estado:** ✅ Complete
+
 ## Epic E6: Arquitectura Escalable de Grafos (Engine_Graph)
 
 **Origen:** Recomendaciones derivadas de la revisión de Arquitectura (Epic E5).
