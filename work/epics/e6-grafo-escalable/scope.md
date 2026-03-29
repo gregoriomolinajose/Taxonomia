@@ -22,7 +22,7 @@ Desacoplar las operaciones SCD-2 N:M del motor CRUD generalizando el enfoque "Co
 | S6.2 - Diccionario de Topologías | S | Done | - | - | Engine_Graph Validador de Cardinalidad Estructural |
 | S6.3 - Engine_Graph Service | M | Done | - | - | Single Responsibility cumplido prematuramente en S6.1 (ADR-002) |
 | S6.4 - Convention Defaulting (H8) | S | Done | - | - | Default implícito a JERARQUICA_LINEAL |
-| S6.5 - Polymorphic Handlers (H1) | M | Pending | - | - | Strategy Pattern para topologías dinámicas |
+| S6.5 - Polymorphic Handlers (H1) | M | Done | - | - | Strategy Pattern para topologías dinámicas |
 
 ## Definition of Done
 - `npm test` verde.
