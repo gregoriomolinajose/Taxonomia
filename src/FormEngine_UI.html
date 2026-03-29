@@ -1530,31 +1530,21 @@
             inputs.forEach(input => {
                 const name = input.getAttribute('name');
                 if (name && record.hasOwnProperty(name)) {
-                    input.value = record[name];
+                    if (input.dataset.parser === 'json_array') {
+                        let parsedData = [];
+                        try {
+                            parsedData = typeof record[name] === 'string' ? JSON.parse(record[name]) : record[name];
+                        } catch(e) { parsedData = typeof record[name] === 'string' && record[name] ? [record[name]] : []; }
+                        input.value = JSON.stringify(Array.isArray(parsedData) ? parsedData : []);
+                    } else {
+                        input.value = record[name];
+                    }
                 }
             });
 
-            // 6. Pre-llenado de Chip Components
-            const chipContainers = container.querySelectorAll('.chip-container');
-            chipContainers.forEach(cc => {
-                const name = cc.getAttribute('data-chip-name');
-                if (name && record[name]) {
-                    const values = String(record[name]).split(',').map(v => v.trim());
-                    values.forEach(val => {
-                        if (!val) return;
-                        const chip = document.createElement('ion-chip');
-                        chip.setAttribute('color', 'primary');
-                        const label = document.createElement('ion-label');
-                        label.textContent = val;
-                        const icon = document.createElement('ion-icon');
-                        icon.setAttribute('name', 'close-circle');
-                        icon.addEventListener('click', () => { chip.remove(); });
-                        chip.appendChild(label);
-                        chip.appendChild(icon);
-                        cc.appendChild(chip);
-                    });
-                }
-            });
+            // S7.3 - El "Pre-llenado de Chip Components" nativo fue removido. 
+            // Reason (Principio DRY): UI_Components gestiona esta hidratación activamente
+            // al ser instanciados con `window._buildSearchableMulti(...)` en el switch parent.
 
             // 7. Agregar Audit Trail (Directiva del Product Architect)
             if (record.updated_at && record.updated_by) {

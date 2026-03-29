@@ -112,6 +112,21 @@
   /**
    * Component Factory: Searchable Multi (Searchbar + Chips)
    */
+  // S7.3 DRY Principle - Factory global de Chips
+  window.UI_Components = window.UI_Components || {};
+  window.UI_Components.drawChip = function(id, labelText, onRemoveCallback) {
+      const chip = document.createElement('ion-chip');
+      chip.color = 'primary';
+      chip.innerHTML = `<ion-label>${labelText}</ion-label>`;
+      if (typeof onRemoveCallback === 'function') {
+          const icon = document.createElement('ion-icon');
+          icon.name = 'close-circle';
+          icon.onclick = (e) => onRemoveCallback(e, id);
+          chip.appendChild(icon);
+      }
+      return chip;
+  };
+
   window._buildSearchableMulti = function(container, fieldDef, dataset, initialSelection) {
       let selectedIds = Array.isArray(initialSelection) ? [...initialSelection] : [];
       
@@ -182,12 +197,11 @@
               const match = dataset.find(d => String(d[fieldDef.valueField]) === String(id));
               const labelText = match && match[fieldDef.labelField] ? `[${match[fieldDef.valueField]}] ${match[fieldDef.labelField]}` : id;
               
-              const chip = document.createElement('ion-chip');
-              chip.innerHTML = `<ion-label>${labelText}</ion-label><ion-icon name="close-circle"></ion-icon>`;
-              chip.onclick = () => {
-                  selectedIds = selectedIds.filter(sid => sid !== id);
+              const chip = window.UI_Components.drawChip(id, labelText, (e, chipId) => {
+                  e.stopPropagation();
+                  selectedIds = selectedIds.filter(sid => sid !== chipId);
                   renderChips();
-              };
+              });
               chipsBox.appendChild(chip);
           });
       };
