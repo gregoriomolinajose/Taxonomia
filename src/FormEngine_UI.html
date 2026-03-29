@@ -652,9 +652,10 @@
                             basicSel.setAttribute('name', field.name);
                             basicSel.setAttribute('label', field.label);
                             basicSel.setAttribute('label-placement', 'stacked');
+                            basicSel.setAttribute('fill', 'outline');
                             
                             // Prevent overlapping by adding a tiny margin
-                            basicSel.style.marginBottom = '8px';
+                            basicSel.style.marginBottom = '12px';
 
                             // Empty Default "Ninguno"
                             const emptyOpt = document.createElement('ion-select-option');
