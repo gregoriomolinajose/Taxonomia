@@ -121,6 +121,7 @@
       hidden.name = fieldDef.name;
       hidden.value = JSON.stringify(selectedIds);
       hidden.id = `hidden_${fieldDef.name}`;
+      hidden.dataset.parser = 'json_array';
       container.appendChild(hidden);
 
       // Título
