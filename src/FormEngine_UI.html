@@ -551,7 +551,7 @@
                             activeData.forEach(d => {
                                 const opt = document.createElement('ion-select-option');
                                 opt.value = typeof d[field.valueField] !== 'undefined' ? d[field.valueField] : d.id_registro;
-                                opt.textContent = `[${opt.value}] ${typeof d[field.labelField] !== 'undefined' ? d[field.labelField] : d.nombre}`;
+                                opt.textContent = `${opt.value} - ${typeof d[field.labelField] !== 'undefined' ? d[field.labelField] : d.nombre}`;
                                 basicSel.appendChild(opt);
                             });
                             inputEl.appendChild(basicSel);

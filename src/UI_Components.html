@@ -108,6 +108,12 @@
   Uso: Renderizado in-line de relaciones N:M con predicción en caché local.
   Componente importado desde FormEngine para cumplir regla H11.
 -->
+<style id="ux-relational-overrides">
+  /* S7.4 - Override Ionic Shadow DOM para fluidez en textos de Select y Chips */
+  ion-chip ion-label { white-space: normal !important; text-overflow: clip !important; overflow: visible !important; }
+  ion-select::part(text) { white-space: normal !important; text-overflow: clip !important; overflow: visible !important; }
+  .select-popover ion-item { white-space: normal !important; }
+</style>
 <script>
   /**
    * Component Factory: Searchable Multi (Searchbar + Chips)
@@ -171,8 +177,10 @@
       visualWrapper.style.minHeight = '48px';
       visualWrapper.style.backgroundColor = 'var(--ion-color-step-50, #f4f5f8)';
       
-      visualWrapper.appendChild(chipsBox);
+      // S7.4 CPO UAT: Searchbar arriba, Chips abajo con un leve padding.
+      chipsBox.style.marginTop = '8px';
       visualWrapper.appendChild(searchbar);
+      visualWrapper.appendChild(chipsBox);
       container.appendChild(visualWrapper);
 
       // Popover/Dropdown Lista
@@ -195,7 +203,7 @@
           
           selectedIds.forEach(id => {
               const match = dataset.find(d => String(d[fieldDef.valueField]) === String(id));
-              const labelText = match && match[fieldDef.labelField] ? `[${match[fieldDef.valueField]}] ${match[fieldDef.labelField]}` : id;
+              const labelText = match && match[fieldDef.labelField] ? `${match[fieldDef.valueField]} - ${match[fieldDef.labelField]}` : id;
               
               const chip = window.UI_Components.drawChip(id, labelText, (e, chipId) => {
                   e.stopPropagation();
@@ -223,7 +231,7 @@
               matches.forEach(m => {
                   const item = document.createElement('ion-item');
                   item.button = true;
-                  item.textContent = `[${m[fieldDef.valueField]}] ${m[fieldDef.labelField]}`;
+                  item.textContent = `${m[fieldDef.valueField]} - ${m[fieldDef.labelField]}`;
                   item.onclick = () => {
                       selectedIds.push(String(m[fieldDef.valueField]));
                       searchbar.value = '';
