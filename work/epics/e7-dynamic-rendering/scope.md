@@ -6,7 +6,9 @@ El CPO ha requerido que el frontend (`FormEngine_UI.html`) sea capaz de renderiz
 ## Historias de Usuario
 | Historia | Talla | Estado | Rama | PR | Notas |
 |----------|-------|--------|------|----|-------|
-| S7.1 - Dynamic UI Mapping | M | Pending | story/s7.1/dynamic-form-rendering | - | Schema metadata inyección y renderizado <ion-select> múltiple. |
+| S7.1 - Dynamic UI Mapping | M | Done | merged | - | Schema metadata inyección y renderizado <ion-select> múltiple. |
+| S7.2 - Payload Serialization | M | Done | merged | - | Regla OCP, JSON Parsing try-catch. |
+| S7.3 - UI Hydration | S | Done | merged | - | Reconstrucción visual OCP-DRY de Graph Chips. |
 
 ## Definition of Done
 - Los subgrids relacionales se dibujan usando `uiComponent`.
