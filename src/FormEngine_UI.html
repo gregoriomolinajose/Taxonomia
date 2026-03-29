@@ -86,7 +86,6 @@
             chipsBox.style.gap = '8px';
             chipsBox.style.marginBottom = '8px';
             chipsBox.style.minHeight = '32px';
-            container.appendChild(chipsBox);
 
             // Input Searchbar
             const searchbar = document.createElement('ion-searchbar');
@@ -94,8 +93,19 @@
             searchbar.debounce = 100;
             searchbar.style.padding = '0';
             searchbar.style.setProperty('--box-shadow', 'none');
-            searchbar.style.setProperty('--background', 'var(--ion-color-step-50)');
-            container.appendChild(searchbar);
+            searchbar.style.setProperty('--background', 'transparent');
+            
+            // Visual Input Wrapper for Searchable Component
+            const visualWrapper = document.createElement('div');
+            visualWrapper.style.border = '1px solid var(--ion-color-step-300, #c8c7cc)';
+            visualWrapper.style.borderRadius = 'var(--rounded-md, 4px)';
+            visualWrapper.style.padding = '8px';
+            visualWrapper.style.minHeight = '48px';
+            visualWrapper.style.backgroundColor = 'var(--ion-color-step-50, #f4f5f8)';
+            
+            visualWrapper.appendChild(chipsBox);
+            visualWrapper.appendChild(searchbar);
+            container.appendChild(visualWrapper);
 
             // Popover/Dropdown Lista
             const listCard = document.createElement('ion-card');
@@ -1100,7 +1110,8 @@
 
             // Habilitar el renderizado del componente 'relation'
             for (const field of fields) {
-                if (field.type === 'relation' && field.uiBehavior === 'subgrid') {
+                // Solo renderizar el Subgrid si NO tiene un uiComponent propio
+                if (field.type === 'relation' && field.uiBehavior === 'subgrid' && !field.uiComponent) {
                     const targetSection = field.section || field.step || (steps && steps[0]);
                     let targetRow = rows[targetSection] || rows[Object.keys(rows)[0]];
                     const subCol = document.createElement('ion-col');
