@@ -56,4 +56,4 @@ status: in-progress
 | --- | --- | --- | --- | --- |
 | 1 | **S4.1** Ciclos UI | Contener creación de data corrupta. | Ninguna | `Pending` |
 | 2 | **S4.2** Cascada DB | Motor masivo transaccional O(1). | Ninguna | `Pending` |
-| 3 | **S4.3** Safe Block | Interceptador lógico Soft-Delete. | S4.2 | `Pending` |
+| 3 | **S4.3** Safe Block | Interceptador lógico Soft-Delete. | S4.2 | `Done ✓` |
