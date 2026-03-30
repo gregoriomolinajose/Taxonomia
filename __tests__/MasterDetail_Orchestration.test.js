@@ -40,6 +40,15 @@ describe('Engine_DB Orchestration: Master-Detail (nested payloads)', () => {
     
     beforeEach(() => {
         jest.clearAllMocks();
+        // Isolating Schema from Human-Led overrides:
+        global.APP_SCHEMAS.Portafolio = {
+            primaryKey: 'id_portafolio',
+            titleField: 'nombre',
+            fields: [
+                { name: 'id_portafolio', type: 'hidden', primaryKey: true },
+                { name: 'grupos_hijos', type: 'relation', relationType: '1:N', targetEntity: 'Grupo_Productos', foreignKey: 'id_portafolio', uiBehavior: 'subgrid' }
+            ]
+        };
     });
 
     const mockConfig = { useSheets: true, useCloudDB: false };
