@@ -1,10 +1,9 @@
-// src/Config.prod.js
 const CONFIG = {
-    APP_VERSION: 'v1.2.0 - E8 Graph Governance',
-    SPREADSHEET_ID_DB: '1b15c9TylT8U5Z1eO8VjD0t-45YnI-K9LqV9x6G2K_pA',
-    ALLOWED_DOMAINS: ['@coppel.com', '@bancoppel.com', '@bellfy.app', '@gmail.com'],
-    ENV: 'production',
-    DEBUG: false,
+    APP_VERSION: 'v1.2.6-stable',
+    ENVIRONMENT: 'DEV',
+    // TODO: Reemplazar con el ID real de Desarrollo
+    SPREADSHEET_ID_DB: '1tMyYBLPr0HJnJwbhFpCVoM4U8k1EVGycBDBjEnUGDts',
+    ALLOWED_DOMAINS: ['@gmail.com', '@bellfy.app', '@coppel.com', '@bancoppel.com'],
     useSheets: true,
     useCloudDB: false
 };

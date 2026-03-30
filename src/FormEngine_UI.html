@@ -599,6 +599,43 @@
                                 basicSel.appendChild(opt);
                             });
 
+                            // --- S8.7.2: EVENT LISTENER DE REPAINT BINDING ---
+                            inputEl.addEventListener('levelChanged', (ev) => {
+                                const newLevel = ev.detail.newLevel;
+                                const rulesContext = ev.detail.rules;
+                                
+                                // Reset general
+                                basicSel.disabled = false;
+                                basicSel.style.opacity = '1';
+                                emptyOpt.textContent = "— Sin asignar —";
+                                
+                                let freshFiltered = activeData;
+                                
+                                if (rulesContext) {
+                                    if (rulesContext.levelFiltering === true && rulesContext.strictLevelJumps === true && field.relationType === 'padre') {
+                                        freshFiltered = activeData.filter(d => Number(d.nivel_tipo) === newLevel - 1);
+                                    }
+                                    
+                                    if (rulesContext.rootRequiresNoParent === true && newLevel === 1 && field.relationType === 'padre') {
+                                        basicSel.disabled = true;
+                                        basicSel.style.opacity = '0.5';
+                                        emptyOpt.textContent = "— Nodo Raíz (No requiere padre) —";
+                                        freshFiltered = []; 
+                                    }
+                                }
+                                
+                                // REPAINT
+                                basicSel.innerHTML = '';
+                                basicSel.appendChild(emptyOpt);
+                                
+                                freshFiltered.forEach(d => {
+                                    const opt = document.createElement('ion-select-option');
+                                    opt.value = typeof d[field.valueField] !== 'undefined' ? d[field.valueField] : d.id_registro;
+                                    opt.textContent = `${opt.value} - ${typeof d[field.labelField] !== 'undefined' ? d[field.labelField] : d.nombre}`;
+                                    basicSel.appendChild(opt);
+                                });
+                            });
+
                             // [S8.7] Branch Shifting Interceptor
                             if (field.isTemporalGraph && field.relationType === 'padre') {
                                 // Wait for the component to attach to grab initial value later, or just use initialValues[0]
@@ -606,8 +643,10 @@
                                 
                                 basicSel.addEventListener('ionChange', async (ev) => {
                                     const newVal = ev.detail.value;
+                                    const isNewContext = { currentEditId: global.currentEditId, data: data };
+                                    const isNewRecord = window.SubgridState ? window.SubgridState.isNewRecord(isNewContext) : (!global.currentEditId && (!data || !data.id_registro));
                                     // Detonar alerta si ya existía un padre y ahora se seleccionó algo distinto al origin (Branch Shift)
-                                    if (originalVal && originalVal !== "" && newVal !== originalVal) {
+                                    if (!isNewRecord && originalVal && originalVal !== "" && newVal !== originalVal) {
                                         const alert = document.createElement('ion-alert');
                                         alert.header = 'Cambio de Jerarquía Detectado';
                                         alert.message = 'Estás reasignando el nodo padre. Si guardas este cambio, este registro y todos sus descendientes (toda la rama) se trasladarán a la nueva ubicación. ¿Estás seguro de continuar con el re-emplazamiento?';
@@ -959,7 +998,12 @@
                          // Map to {value, label}
                          const pkField = Object.keys(rows[0] || {}).find(k => k.startsWith('id_'));
                          if (pkField) {
-                             normalizedOptions = rows.map(r => ({ value: r[pkField], label: r.nombre || r.nombre_producto || r[pkField] }));
+                             normalizedOptions = rows.map(r => ({ 
+                                 value: r[pkField], 
+                                 label: r.nombre || r.nombre_producto || r[pkField],
+                                 nivel_tipo: r.nivel_tipo,
+                                 hasActiveParent: r.hasActiveParent
+                             }));
                          }
                     }
 
@@ -969,9 +1013,13 @@
                     const childPK = 'id_' + singularKey;
 
                     // [S8.5.1] DRY Cleanup: Delegación a SubgridState PURE Engine (Inyectado Híbridamente)
+                    const liveNivelInput = global.currentFormModal ? global.currentFormModal.querySelector('ion-input[name="nivel_tipo"], ion-select[name="nivel_tipo"]') : document.querySelector('ion-input[name="nivel_tipo"], ion-select[name="nivel_tipo"]');
+                    const val = liveNivelInput?.value;
+                    const liveLevel = (val !== undefined && val !== "") ? Number(val) : Number(data ? (data.nivel_tipo || 1) : 1);
+
                     const rulesContext = {
                         topologyRules: global.APP_SCHEMAS[entityName]?.topologyRules || null,
-                        currentLevel: Number(data ? (data.nivel_tipo || 1) : 1),
+                        currentLevel: liveLevel,
                         relationType: field.relationType
                     };
                     
@@ -984,7 +1032,7 @@
                             <ion-toolbar color="primary">
                                 <ion-title>Seleccionar ${field.label}</ion-title>
                                 <ion-buttons slot="end">
-                                    <ion-button onclick="const m = document.getElementById('${modalId}'); m.dismiss().then(() => m.remove())">Cerrar</ion-button>
+                                    <ion-button style="color: var(--ion-color-primary-contrast);" fill="clear" onclick="const m = document.getElementById('${modalId}'); m.dismiss().then(() => m.remove())">Cerrar</ion-button>
                                 </ion-buttons>
                             </ion-toolbar>
                         </ion-header>
@@ -1219,6 +1267,25 @@
                     const totalInput = container.querySelector('ion-input[name="total_integrantes"]');
                     if (totalInput) {
                         totalInput.value = total;
+                    }
+                }
+            });
+            // --------------------------------------------------------------------
+
+            // --- HOTFIX v1.2.2: Repaint Bidireccional de Opciones por Cambio de Nivel ---
+            container.addEventListener('ionChange', (e) => {
+                const target = e.target;
+                if (target && target.name === 'nivel_tipo') {
+                    const rules = global.APP_SCHEMAS[entityName]?.topologyRules;
+                    if (rules) {
+                        const nuevoNivel = parseInt(target.value, 10);
+                        const parentWrappers = container.querySelectorAll('div[data-relation-type="padre"]');
+                        parentWrappers.forEach(wrapper => {
+                            // Pub/Sub: Notificamos a los contenedores padre para que repinten sus <ion-select-option>
+                            wrapper.dispatchEvent(new CustomEvent('levelChanged', { 
+                                detail: { newLevel: nuevoNivel, rules: rules } 
+                            }));
+                        });
                     }
                 }
             });

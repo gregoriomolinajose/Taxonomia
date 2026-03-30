@@ -10,8 +10,8 @@ describe('S6.5: Diccionario de Topologías Polimórfico (Strategy Pattern + Auto
         const currentActiveEdges = []; // BD Vacía
 
         expect(() => {
-            Engine_Graph.patchSCD2Edges(incomingEdges, currentActiveEdges, 'JERARQUICA_LINEAL');
-        }).toThrow('Violación de Topología: Payload excede el límite de padres simultáneos.');
+            Engine_Graph.patchSCD2Edges(incomingEdges, currentActiveEdges, '1:N');
+        }).toThrow('La regla de topología piramidal prohíbe relaciones cíclicas (no puedes asignar a un padre/ancestro como hijo)');
     });
 
     test('Escenario 2: Auto-Close - Strategy evalúa transacción exitosa de reemplazo', () => {
@@ -28,7 +28,7 @@ describe('S6.5: Diccionario de Topologías Polimórfico (Strategy Pattern + Auto
 
         let edgesToClose;
         expect(() => {
-            edgesToClose = Engine_Graph.patchSCD2Edges(incomingEdges, currentActiveEdges, 'JERARQUICA_LINEAL');
+            edgesToClose = Engine_Graph.patchSCD2Edges(incomingEdges, currentActiveEdges, '1:N');
         }).not.toThrow();
 
         // El motor determinó correctamente cerrar únicamente el que era activo (DOM-A)
@@ -58,7 +58,7 @@ describe('S6.5: Diccionario de Topologías Polimórfico (Strategy Pattern + Auto
 
         let edgesToClose;
         expect(() => {
-            edgesToClose = Engine_Graph.patchSCD2Edges(incomingEdges, currentActiveEdges, 'HIBRIDA_MATRICIAL');
+            edgesToClose = Engine_Graph.patchSCD2Edges(incomingEdges, currentActiveEdges, 'M:N');
         }).not.toThrow();
         
         // Cierres

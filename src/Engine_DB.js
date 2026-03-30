@@ -183,6 +183,7 @@ const Engine_DB = {
     orchestrateNestedSave: function (entityName, payload, config) {
         const nestedData = {};
         const flatPayload = { ...payload };
+        let precalculatedGraphContext = {};
 
         // [S5.6] Dynamic DAG Subgrid takes over Transient Edge
         // transientParentId y _updateGraphEdges ya no se usan porque la topología
@@ -196,6 +197,34 @@ const Engine_DB = {
                 if (f.type === 'relation' && Array.isArray(payload[f.name])) {
                     nestedData[f.name] = payload[f.name];
                     delete flatPayload[f.name];
+                }
+            });
+
+            // Paso A.1: Pre-Validación Topológica Atómica (Evita Padre Huérfano)
+            const parentIdField = Object.keys(flatPayload).find(k => k.startsWith('id_')) || "id_dominio";
+            const tempParentPK = flatPayload[parentIdField];
+            
+            fields.forEach(f => {
+                if (f.type === 'relation' && nestedData[f.name] && f.isTemporalGraph && typeof Engine_Graph !== 'undefined') {
+                    const children = nestedData[f.name];
+                    const topologyRules = (typeof getEntityTopologyRules !== 'undefined') 
+                                            ? getEntityTopologyRules(entityName)
+                                            : { preventCycles: false, maxDepth: 0, siblingCollisionCheck: false };
+                    const fullGraph = _Adapter_Sheets.list(f.graphEntity, config, 'objects').rows || [];
+                    const activeGraph = fullGraph.filter(e => e.es_version_actual !== false);
+
+                    const topologyResult = Engine_Graph.analyzeTopology(children, activeGraph, topologyRules);
+                    const stolenEdges = topologyResult.stolenEdges || [];
+                    
+                    const currentInDB = _Adapter_Sheets.list(f.targetEntity, config, 'objects') || { rows: [] };
+                    const orphanMatches = (currentInDB.rows || []).filter(c => c[f.foreignKey] == tempParentPK);
+                    
+                    const normalClose = Engine_Graph.patchSCD2Edges(children, orphanMatches, f.topologyCardinality) || [];
+                    const stealClose = Engine_Graph.patchSCD2Edges([], stolenEdges, f.topologyCardinality) || [];
+                    
+                    precalculatedGraphContext[f.name] = { 
+                        orphansToProcess: normalClose.concat(stealClose) 
+                    };
                 }
             });
         }
@@ -233,25 +262,10 @@ const Engine_DB = {
 
                     // [S6.1] Config-Driven Delegation to Engine_Graph
                     if (f.isTemporalGraph) {
-                        if (typeof Engine_Graph !== 'undefined') {
-                            // [S8.2] Backend Enforcer - Validate Topology 
-                            const topologyRules = (typeof getEntityTopologyRules !== 'undefined') 
-                                                    ? getEntityTopologyRules(entityName) // Entity name of the parent being configured
-                                                    : { preventCycles: false, maxDepth: 0, siblingCollisionCheck: false };
-                            const fullGraph = _Adapter_Sheets.list(f.graphEntity, config, 'objects').rows || [];
-                            const activeGraph = fullGraph.filter(e => e.es_version_actual !== false);
-                            
-                            // [S8.3.1] Backend Enforcer - Validate Topology & Capture Stealing in single O(1) pass
-                            const topologyResult = Engine_Graph.analyzeTopology(children, activeGraph, topologyRules);
-                            const stolenEdges = topologyResult.stolenEdges || [];
-
-                            // En SR-Strategy delegamos que el motor calcule y devuelva los edge que se deben cerrar
-                            const normalClose = Engine_Graph.patchSCD2Edges(children, orphanMatches, f.topology) || [];
-                            const stealClose = Engine_Graph.patchSCD2Edges([], stolenEdges, f.topology) || [];
-                            
-                            orphansToProcess = normalClose.concat(stealClose);
+                        if (precalculatedGraphContext[f.name]) {
+                            orphansToProcess = precalculatedGraphContext[f.name].orphansToProcess || [];
                         } else {
-                            if (typeof Logger !== 'undefined') Logger.log(`[ERROR] Engine_Graph no encontrado para resolver topología ${f.topology}.`);
+                            if (typeof Logger !== 'undefined') Logger.log(`[WARN] GraphQL Context no precalculado para ${f.name}`);
                         }
                     } else {
                         // Standard Unlink para 1:N no temporal

@@ -162,9 +162,9 @@ const Engine_Graph = {
      * @param {Array} currentActiveEdges ALL valid edges existing in the DB for this node
      * @param {String} topology The structure dictionary rule
      */
-    patchSCD2Edges: function(incomingEdges, currentActiveEdges, topology) {
+    patchSCD2Edges: function(incomingEdges, currentActiveEdges, topologyCardinality) {
         const sysDate = new Date().toISOString();
-        const activeTopology = topology || 'JERARQUICA_LINEAL';
+        const activeTopology = topologyCardinality || '1:N';
         
         let edgesToClose = [];
 

@@ -158,11 +158,22 @@ function buildSavePayload(flatParentData, fieldName, childRecords, foreignKey, p
     };
 }
 
+/**
+ * isNewRecord(context)
+ * Determines if the current form represents a new record initialization.
+ * @param {Object} context - { currentEditId, data } representing the UI global edit state
+ * @returns {boolean} True if new record
+ */
+function isNewRecord(context) {
+    if (!context) return true;
+    return !context.currentEditId && (!context.data || !context.data.id_registro);
+}
+
 // Universal Wrapper: soporta Node.js (Tests/Jest) y Browser (GAS HTML Service)
 if (typeof module !== 'undefined' && module.exports) {
     // Entorno Node.js / CommonJS
-    module.exports = { _normalizeId, initSubgridState, filterAvailableOptions, linkRecord, unlinkRecord, buildSavePayload };
+    module.exports = { _normalizeId, initSubgridState, filterAvailableOptions, linkRecord, unlinkRecord, buildSavePayload, isNewRecord };
 } else if (typeof window !== 'undefined') {
     // Entorno Browser (GAS)
-    window.SubgridState = { _normalizeId, initSubgridState, filterAvailableOptions, linkRecord, unlinkRecord, buildSavePayload };
+    window.SubgridState = { _normalizeId, initSubgridState, filterAvailableOptions, linkRecord, unlinkRecord, buildSavePayload, isNewRecord };
 }
