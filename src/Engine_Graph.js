@@ -210,6 +210,102 @@ const Engine_Graph = {
         }
         
         return edgesToClose;
+    },
+
+    /**
+     * S8.4 - M:N Deletion Strategies (Unit of Work Calculation)
+     * Calculates the entire mathematical ripple effect of a node deletion 
+     * without mutating the database, using Reference Counting for safe M:N pruning.
+     * 
+     * @param {string|number} targetNodeId 
+     * @param {string} strategy (ORPHAN, CASCADE, GRANDPARENT)
+     * @param {Array} activeGraph 
+     * @returns {Object} { edgesToClose: [], edgesToSpawn: [], nodesToDelete: [] }
+     */
+    buildDeletionPatch: function(targetNodeId, strategy, activeGraph) {
+        // [Pattern] Start with the exact target as the only guaranteed node deletion.
+        const patch = {
+            edgesToClose: [],
+            edgesToSpawn: [],
+            nodesToDelete: [targetNodeId] 
+        };
+
+        const parentsOf = {};
+        const childrenOf = {};
+        
+        // Hash map O(N) indexing
+        activeGraph.forEach(e => {
+            if (!parentsOf[e.id_nodo_hijo]) parentsOf[e.id_nodo_hijo] = [];
+            parentsOf[e.id_nodo_hijo].push(e.id_nodo_padre);
+            
+            if (!childrenOf[e.id_nodo_padre]) childrenOf[e.id_nodo_padre] = [];
+            childrenOf[e.id_nodo_padre].push(e.id_nodo_hijo);
+        });
+
+        if (strategy === "ORPHAN" || !strategy) {
+            patch.edgesToClose = activeGraph.filter(e => e.id_nodo_padre === targetNodeId || e.id_nodo_hijo === targetNodeId);
+            return patch; 
+        }
+
+        if (strategy === "CASCADE") {
+            // BFS with M:N Reference Counting for surviving branches
+            let processQueue = [targetNodeId];
+            let nodesToDeleteSet = new Set([targetNodeId]);
+            let edgesToCloseSet = new Set();
+            
+            while (processQueue.length > 0) {
+                const currentId = processQueue.shift();
+                
+                // 1. Collect touching edges
+                activeGraph.forEach(e => {
+                    if ((e.id_nodo_padre === currentId || e.id_nodo_hijo === currentId) && !edgesToCloseSet.has(e)) {
+                        edgesToCloseSet.add(e);
+                        patch.edgesToClose.push(e);
+                    }
+                });
+                
+                // 2. Reference counting children
+                const children = childrenOf[currentId] || [];
+                children.forEach(child => {
+                    if (!nodesToDeleteSet.has(child)) {
+                        // A child only dies if ALL of its parents are in the dying pool
+                        const parents = parentsOf[child] || [];
+                        const survivingParents = parents.filter(p => !nodesToDeleteSet.has(p));
+                        
+                        if (survivingParents.length === 0) {
+                            nodesToDeleteSet.add(child);
+                            processQueue.push(child);
+                            patch.nodesToDelete.push(child);
+                        }
+                    }
+                });
+            }
+            return patch;
+        }
+
+        if (strategy === "GRANDPARENT") {
+            patch.edgesToClose = activeGraph.filter(e => e.id_nodo_padre === targetNodeId || e.id_nodo_hijo === targetNodeId);
+            
+            const children = childrenOf[targetNodeId] || [];
+            const parents = parentsOf[targetNodeId] || [];
+            
+            // Cartesian product NxM for poly-tree skipping
+            parents.forEach(pId => {
+                children.forEach(cId => {
+                    // Prevent M:N SCD-2 collisions (if the grandparent already directly governs the child)
+                    const alreadyExists = activeGraph.some(e => e.id_nodo_padre === pId && e.id_nodo_hijo === cId);
+                    if (!alreadyExists) {
+                        patch.edgesToSpawn.push({
+                            id_nodo_padre: pId,
+                            id_nodo_hijo: cId
+                        });
+                    }
+                });
+            });
+            return patch;
+        }
+
+        return patch; // Fallback for unknown strategies
     }
 };
 

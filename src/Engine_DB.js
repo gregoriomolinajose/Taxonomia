@@ -137,98 +137,6 @@ function _updateGraphEdges(childId, newParentId, config) {
     _invalidateCache("Relacion_Dominios");
 }
 
-/**
- * _flattenGraphNode (S5.4)
- * O(1) Bulk RAM Push para curar Grafos Temporales ante Deletes.
- */
-function _flattenGraphNode(nodeIdToDelete, config) {
-    const io = SheetMatrixIO.readRelacionDominios(config);
-    let data = io.data;
-    if (data.length <= 1) return;
-    
-    const headers = data[0];
-    const idxHid = headers.indexOf("id_nodo_hijo");
-    const idxPid = headers.indexOf("id_nodo_padre");
-    const idxHasta = headers.indexOf("valido_hasta");
-    const idxActual = headers.indexOf("es_version_actual");
-    const idxUpdated = headers.indexOf("updated_at");
-    
-    const sysDate = new Date().toISOString();
-    
-    let abueloId = null;
-    let aristaSuperiorIdx = -1;
-    let tieneCambios = false;
-    
-    // 1. Extraer Arista Superior (Mapeo de Abuelo)
-    for (let i = 1; i < data.length; i++) {
-        if (data[i][idxHid] === nodeIdToDelete && data[i][idxActual] === true) {
-            abueloId = data[i][idxPid];
-            aristaSuperiorIdx = i;
-            break;
-        }
-    }
-    
-    // Caducar Arista Superior SCD-2
-    if (aristaSuperiorIdx !== -1) {
-        data[aristaSuperiorIdx][idxHasta] = sysDate;
-        data[aristaSuperiorIdx][idxActual] = false;
-        data[aristaSuperiorIdx][idxUpdated] = sysDate;
-        tieneCambios = true;
-        if (typeof Logger !== 'undefined') Logger.log(`[DAG Flatten] Edge Superior (hacia Abuelo ${abueloId}) caducado.`);
-    }
-    
-    // 2. Extraer Aristas Inferiores (Mapeo de Nietos)
-    let nietos = [];
-    for (let i = 1; i < data.length; i++) {
-        if (data[i][idxPid] === nodeIdToDelete && data[i][idxActual] === true) {
-            data[i][idxHasta] = sysDate;
-            data[i][idxActual] = false;
-            data[i][idxUpdated] = sysDate;
-            nietos.push(data[i][idxHid]);
-            tieneCambios = true;
-        }
-    }
-    
-    if (nietos.length > 0) {
-        if (typeof Logger !== 'undefined') Logger.log(`[DAG Flatten] Identificados ${nietos.length} nietos huérfanos. Formulando Saneamiento...`);
-    }
-
-    // 3. Reasignar Descendientes (Si Abuelo existe)
-    // [S5.4 Quality] Strict truthiness coercion 
-    if (abueloId !== null && abueloId !== "" && nietos.length > 0) {
-        nietos.forEach(nietoId => {
-            let rID = "RELA-" + Utilities.getUuid().substring(0, 8).toUpperCase();
-            let newEdge = [];
-            for (let j = 0; j < headers.length; j++) {
-                let h = headers[j];
-                if (h === "id_relacion") newEdge.push(rID);
-                else if (h === "id_nodo_padre") newEdge.push(abueloId);
-                else if (h === "id_nodo_hijo") newEdge.push(nietoId);
-                else if (h === "tipo_relacion") newEdge.push("Militar_Directa");
-                else if (h === "peso_influencia") newEdge.push(1);
-                else if (h === "valido_desde") newEdge.push(sysDate);
-                else if (h === "valido_hasta") newEdge.push("");
-                else if (h === "es_version_actual") newEdge.push(true);
-                else if (h === "created_at") newEdge.push(sysDate);
-                else if (h === "created_by") newEdge.push("DAG_CASCADE_FLATTEN");
-                else newEdge.push("");
-            }
-            data.push(newEdge);
-            tieneCambios = true;
-        });
-        if (typeof Logger !== 'undefined') Logger.log(`[DAG Flatten] Nietos re-anclados exitosamente al Abuelo ${abueloId}.`);
-    } else if ((abueloId === null || abueloId === "") && nietos.length > 0) {
-         // Edge Case: Root Node Deletion
-         if (typeof Logger !== 'undefined') Logger.log(`[DAG Flatten] Root Node Exception: Nodo eliminado no poseía Abuelo (Nivel 0). Promoviendo ${nietos.length} nietos a Nodos Raíz.`);
-    }
-    
-    // 4. BULK OPS IMPERATIVE: Volcado Íntegro
-    if (tieneCambios) {
-        SheetMatrixIO.writeBulk(io.sheet, data, headers.length);
-        if (typeof Logger !== 'undefined') Logger.log(`[DAG Flatten] O(1) Bulk RAM Push ejecutado. Arrays Volcados: ${data.length}`);
-        _invalidateCache("Relacion_Dominios");
-    }
-}
 
 const Engine_DB = {
     save: function (tableName, payload, config) {
@@ -498,17 +406,112 @@ const Engine_DB = {
     },
 
     delete: function (entityName, id) {
-        Logger.log("Engine_DB_delete_router: Routing " + entityName + " (ID: " + id + ") to Adapter_Sheets.remove.");
         const config = (typeof CONFIG !== 'undefined') ? CONFIG : { useSheets: true, useCloudDB: false };
+        if (typeof Logger !== 'undefined') Logger.log("Engine_DB_delete_router: Routing " + entityName + " (ID: " + id + ") to Architect Unit of Work Deletion.");
         
-        // [S5.4] Cascade Flattening Hook (Tree Node Orphans Relocation)
-        if (entityName === "Dominio") {
-            _flattenGraphNode(id, config);
+        let results = { sheets: {}, cloud: {} };
+
+        // [S8.1] Check graph topology configuration
+        let strategy = "ORPHAN"; 
+        let isGraphEntity = false;
+        if (typeof getEntityTopologyRules !== 'undefined') {
+            const rules = getEntityTopologyRules(entityName);
+            // Si la entidad tiene configuración de grafo explícita pero NO ES FLAT, es un Poly-Tree sujeto a cascadas topológicas.
+            if (rules && rules.topologyType && rules.topologyType !== "FLAT") {
+                isGraphEntity = true;
+                strategy = rules.deletionStrategy || "ORPHAN";
+            }
+        } else {
+            // Legacy hardcode validation
+            if (entityName === "Dominio") {
+                isGraphEntity = true;
+                strategy = "GRANDPARENT"; // fallback behavior if Schema_Engine isn't strictly loaded
+            }
         }
 
-        let results = { sheets: {}, cloud: {} };
-        if (config.useSheets) {
-            results.sheets = _Adapter_Sheets.remove(entityName, id, config);
+        if (isGraphEntity && config.useSheets) {
+            // ==============================================
+            // UNIT OF WORK ORCHESTRATION (M:N DAGS)
+            // ==============================================
+            
+            // 1. Load active graph
+            // Asume que _Adapter_Sheets expone list(Entity, Config, Format).
+            const listResponse = _Adapter_Sheets.list("Relacion_Dominios", config, "objects");
+            const activeGraph = (listResponse && listResponse.rows) ? listResponse.rows.filter(r => r.es_version_actual !== false) : [];
+            
+            // 2. Build Patch Mathematically (No DB touch)
+            let patch = { edgesToClose: [], edgesToSpawn: [], nodesToDelete: [id] };
+            if (typeof Engine_Graph !== 'undefined' && typeof Engine_Graph.buildDeletionPatch === 'function') {
+                patch = Engine_Graph.buildDeletionPatch(id, strategy, activeGraph);
+            } else {
+                if (typeof Logger !== 'undefined') Logger.log("[WARN] Engine_Graph not found, falling back to basic self soft-delete.");
+            }
+
+            const sysDate = new Date().toISOString();
+            const currentUser = (typeof Session !== 'undefined') ? Session.getActiveUser().getEmail() : 'system@localhost';
+
+            // 3. Translate Edges to Upsert Payloads
+            const edgesClosed = patch.edgesToClose.map(e => ({
+                id_relacion: e.id_relacion,
+                es_version_actual: false,
+                valido_hasta: sysDate,
+                updated_at: sysDate
+            }));
+
+            const uuidFn = (typeof Utilities !== 'undefined') ? Utilities.getUuid : () => Math.random().toString(36).substring(2,10);
+            
+            const edgesSpawned = patch.edgesToSpawn.map(e => {
+                let rID = "RELA-" + uuidFn().substring(0, 8).toUpperCase();
+                return {
+                    id_relacion: rID,
+                    id_nodo_padre: e.id_nodo_padre,
+                    id_nodo_hijo: e.id_nodo_hijo,
+                    tipo_relacion: "Militar_Directa",
+                    peso_influencia: 1,
+                    valido_desde: sysDate,
+                    valido_hasta: "",
+                    es_version_actual: true,
+                    created_at: sysDate,
+                    created_by: "DAG_DELETION_" + strategy
+                };
+            });
+
+            const edgesToUpsert = [...edgesClosed, ...edgesSpawned];
+
+            // 4. Translate Nodes to Soft-Delete Upsert Payloads
+            const pkPrefix = entityName.toLowerCase().endsWith('es') ? entityName.toLowerCase().slice(0, -2) : (entityName.toLowerCase().endsWith('s') ? entityName.toLowerCase().slice(0, -1) : entityName.toLowerCase());
+            const pkField = 'id_' + pkPrefix;
+
+            const nodesToSoftDelete = patch.nodesToDelete.map(nId => {
+                const nodePayload = {
+                    estado: 'Eliminado',
+                    deleted_at: sysDate,
+                    deleted_by: currentUser
+                };
+                nodePayload[pkField] = nId;
+                return nodePayload;
+            });
+
+            // 5. Commit Unit of Work (The O(1) Bulk Pushes)
+            if (edgesToUpsert.length > 0) {
+                if (typeof Logger !== 'undefined') Logger.log(`[Unit of Work] Upserting ${edgesToUpsert.length} graph edges (SCD-2) to array.`);
+                this.upsertBatch("Relacion_Dominios", edgesToUpsert, config);
+            }
+
+            if (nodesToSoftDelete.length > 0) {
+                if (typeof Logger !== 'undefined') Logger.log(`[Unit of Work] Logical bulk deletion of ${nodesToSoftDelete.length} nodes in DB_${entityName}.`);
+                results.sheets = this.upsertBatch(entityName, nodesToSoftDelete, config);
+            }
+
+            _invalidateCache("Relacion_Dominios");
+
+        } else {
+            // ==============================================
+            // STANDARD SINGULAR DELETETION 
+            // ==============================================
+            if (config.useSheets) {
+                results.sheets = _Adapter_Sheets.remove(entityName, id, config);
+            }
         }
 
         // Cache Busting
