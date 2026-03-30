@@ -537,7 +537,7 @@
                             // Prevent overlapping by adding a tiny margin
                             basicSel.style.marginBottom = '12px';
 
-                            // Empty Default "Ninguno"
+                            // Empty Default 'Ninguno'
                             const emptyOpt = document.createElement('ion-select-option');
                             emptyOpt.value = "";
                             emptyOpt.textContent = "— Sin asignar —";
@@ -548,7 +548,28 @@
                                 basicSel.value = initialValues[0];
                             }
                             
-                            activeData.forEach(d => {
+                            // [S8.5] UI Dumbness Guards (Single Select Hierarchy filter)
+                            let filteredActiveData = activeData;
+                            const rules = global.APP_SCHEMAS[entityName]?.topologyRules;
+                            
+                            // Asumimos Nivel 1 si es un nuevo registro
+                            const cLevel = Number(data ? (data.nivel_tipo || 1) : 1);
+                            
+                            if (rules) {
+                                if (rules.levelFiltering === true && rules.strictLevelJumps === true && field.relationType === 'padre') {
+                                    // Regla Topológica: El Padre siempre debe estar 1 nivel por encima
+                                    filteredActiveData = activeData.filter(d => Number(d.nivel_tipo) === cLevel - 1);
+                                }
+                                
+                                if (rules.rootRequiresNoParent === true && cLevel === 1 && field.relationType === 'padre') {
+                                    basicSel.setAttribute('disabled', 'true');
+                                    // Overwrite the placeholder to indicate visual lockdown
+                                    emptyOpt.textContent = "— Nodo Raíz (No requiere padre) —";
+                                    filteredActiveData = []; // Eliminar opciones
+                                }
+                            }
+                            
+                            filteredActiveData.forEach(d => {
                                 const opt = document.createElement('ion-select-option');
                                 opt.value = typeof d[field.valueField] !== 'undefined' ? d[field.valueField] : d.id_registro;
                                 opt.textContent = `${opt.value} - ${typeof d[field.labelField] !== 'undefined' ? d[field.labelField] : d.nombre}`;
@@ -886,8 +907,15 @@
                     const singularKey = tableKey.endsWith('s') ? tableKey.slice(0, -1) : (tableKey.endsWith('es') ? tableKey.slice(0, -2) : tableKey);
                     const childPK = 'id_' + singularKey;
 
-                    // PURE UTILITY: Construir lista de IDs vinculados usando `isRecordLinked`
-                    const availableOptions = normalizedOptions.filter(opt => !isRecordLinked(opt.value, childRecords, childPK));
+                    // [S8.5.1] DRY Cleanup: Delegación a SubgridState PURE Engine (Inyectado Híbridamente)
+                    const rulesContext = {
+                        topologyRules: global.APP_SCHEMAS[entityName]?.topologyRules || null,
+                        currentLevel: Number(data ? (data.nivel_tipo || 1) : 1),
+                        relationType: field.relationType
+                    };
+                    
+                    const availableOptions = window.SubgridState.filterAvailableOptions(normalizedOptions, childRecords, childPK, rulesContext);
+
                     console.log(`[FormEngine] Sincronizando modal para ${field.targetEntity}. IDs vinculados: ${childRecords.length}. Disponibles: ${availableOptions.length}`);
 
                     modal.innerHTML = `
