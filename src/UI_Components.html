@@ -145,27 +145,32 @@
       hidden.dataset.parser = 'json_array';
       container.appendChild(hidden);
 
-      // Título
+      // Visual Input Wrapper for Searchable Component (Main Form)
+      const visualWrapper = document.createElement('div');
+      visualWrapper.style.width = '100%';
+      visualWrapper.style.marginBottom = '16px';
+      
+      // Flex Header Subgrid Clone
+      const headerRow = document.createElement('div');
+      headerRow.style.display = 'flex';
+      headerRow.style.justifyContent = 'space-between';
+      headerRow.style.alignItems = 'center';
+      headerRow.style.width = '100%';
+      headerRow.style.marginBottom = '8px';
+      
       const label = document.createElement('div');
       label.style.fontSize = 'var(--sys-font-small)';
       label.style.color = 'var(--ion-color-medium)';
-      label.style.marginBottom = '4px';
+      label.style.fontWeight = 'bold';
       label.textContent = fieldDef.label + (fieldDef.required ? ' *' : '');
-      container.appendChild(label);
-
-      // Visual Input Wrapper for Searchable Component (Main Form)
-      const visualWrapper = document.createElement('div');
-      visualWrapper.style.border = '1px solid var(--ion-color-step-300, #c8c7cc)';
-      visualWrapper.style.borderRadius = 'var(--rounded-md, 4px)';
-      visualWrapper.style.padding = '8px';
-      visualWrapper.style.minHeight = '48px';
-      visualWrapper.style.backgroundColor = 'var(--ion-color-step-50, #f4f5f8)';
       
       const addBtn = document.createElement('ion-button');
-      addBtn.fill = 'outline';
+      addBtn.fill = 'clear';
       addBtn.size = 'small';
       addBtn.innerHTML = '<ion-icon name="add" slot="start"></ion-icon> AGREGAR';
-      addBtn.style.marginBottom = '8px';
+
+      headerRow.appendChild(label);
+      headerRow.appendChild(addBtn);
 
       // Contenedor Chips (Primary Read-Only View)
       const chipsBox = document.createElement('div');
@@ -174,7 +179,7 @@
       chipsBox.style.gap = '8px';
       chipsBox.style.minHeight = '32px';
 
-      visualWrapper.appendChild(addBtn);
+      visualWrapper.appendChild(headerRow);
       visualWrapper.appendChild(chipsBox);
       container.appendChild(visualWrapper);
 
@@ -282,6 +287,16 @@
           chipsBox.innerHTML = '';
           hidden.value = JSON.stringify(selectedIds);
           
+          if (selectedIds.length === 0) {
+              chipsBox.innerHTML = `
+                  <div style="width: 100%; text-align: center; color: var(--ion-color-medium); padding: 16px; border: 1px dashed var(--ion-color-step-300, #c8c7cc); border-radius: 8px;">
+                      <ion-icon name="layers-outline" style="font-size: 24px;"></ion-icon>
+                      <div style="font-size: 14px; margin-top: 8px;">Sin registros vinculados</div>
+                  </div>
+              `;
+              return;
+          }
+
           selectedIds.forEach(id => {
               const match = dataset.find(d => String(d[fieldDef.valueField]) === String(id));
               const labelText = match && match[fieldDef.labelField] ? `${match[fieldDef.valueField]} - ${match[fieldDef.labelField]}` : id;
