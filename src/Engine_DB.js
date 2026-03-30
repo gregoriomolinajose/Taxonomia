@@ -331,10 +331,11 @@ const Engine_DB = {
                                                     ? getEntityTopologyRules(entityName) // Entity name of the parent being configured
                                                     : { preventCycles: false, maxDepth: 0, siblingCollisionCheck: false };
                             const fullGraph = _Adapter_Sheets.list(f.graphEntity, config, 'objects').rows || [];
-                            Engine_Graph.validateTopology(children, fullGraph, topologyRules);
-
-                            // [S8.3] Backend Enforcer - Capture Re-parented nodes to expire them gracefully
-                            const stolenEdges = Engine_Graph.getReParentingEdges(children, fullGraph, topologyRules);
+                            const activeGraph = fullGraph.filter(e => e.es_version_actual !== false);
+                            
+                            // [S8.3.1] Backend Enforcer - Validate Topology & Capture Stealing in single O(1) pass
+                            const topologyResult = Engine_Graph.analyzeTopology(children, activeGraph, topologyRules);
+                            const stolenEdges = topologyResult.stolenEdges || [];
 
                             // En SR-Strategy delegamos que el motor calcule y devuelva los edge que se deben cerrar
                             const normalClose = Engine_Graph.patchSCD2Edges(children, orphanMatches, f.topology) || [];

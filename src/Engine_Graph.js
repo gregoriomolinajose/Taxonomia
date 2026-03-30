@@ -6,20 +6,23 @@
 // Dynamic import handles both Jest and Apps Script V8 Environment without hoisting collisions
 const Engine_Graph = {
     /**
-     * S8.2 Backend Enforcer: Topological validation before allowing persistence.
+     * S8.3.1 Algorithmic Refinement: Single-pass topological validation and orphan stealing extraction.
+     * Throws an error on violations (cycles, collisions, depth).
+     * Returns: { stolenEdges: Array }
      */
-    validateTopology: function(incomingEdges, fullGraphEdges, rules) {
-        if (!rules || typeof rules !== 'object') return true;
+    analyzeTopology: function(incomingEdges, activeGraphEdges, rules) {
+        const result = { stolenEdges: [] };
+        if (!rules || typeof rules !== 'object') return result;
 
-        const activeEdges = (fullGraphEdges || []).filter(e => e.es_version_actual !== false);
-        
         const parentOf = {};
         const childrenOf = {};
+        const edgeOf = {}; // O(1) retrieval for stolen edges
         
-        activeEdges.forEach(e => {
+        (activeGraphEdges || []).forEach(e => {
             const childId = String(e.id_nodo_hijo);
             const pId = String(e.id_nodo_padre);
             parentOf[childId] = pId;
+            edgeOf[childId] = e;
             if (!childrenOf[pId]) childrenOf[pId] = [];
             childrenOf[pId].push(childId);
         });
@@ -89,54 +92,27 @@ const Engine_Graph = {
                 }
             }
             
-            // 4. Orphan Stealing Check
+            // 4. Orphan Stealing Check & O(1) Extraction
             if (rules.topologyType === "JERARQUICA_ESTRICTA" || rules.topologyType === "JERARQUICA_ORGANICA") {
                 const oldParent = parentOf[childId];
                 if (oldParent && oldParent !== parentId) {
                     if (rules.allowOrphanStealing === false) {
                         throw new Error(`[Topology Error] Exclusividad de Orfandad: El nodo ${childId} ya pertenece a ${oldParent} y el robo de nodos está deshabilitado.`);
                     }
+                    if (edgeOf[childId]) {
+                        result.stolenEdges.push(edgeOf[childId]);
+                    }
                 }
             }
 
             // Assign temporary mapping to validate subsequent edges in the same payload
             parentOf[childId] = parentId;
+            edgeOf[childId] = newEdge;
             if (!childrenOf[parentId]) childrenOf[parentId] = [];
             childrenOf[parentId].push(childId);
         });
         
-        return true;
-    },
-
-    /**
-     * S8.3 Identifies edges that need to be closed because they belong to previous parents.
-     * Only applies to 1:N Hierarchies. Does NOT apply to M:N topologies.
-     */
-    getReParentingEdges: function(incomingEdges, fullGraphEdges, rules) {
-        if (!rules) return [];
-        // Only 1:N topologies enforce uniqueness of parents. M:N topologies allow multiple parents.
-        if (rules.topologyType !== "JERARQUICA_ESTRICTA" && rules.topologyType !== "JERARQUICA_ORGANICA") {
-            return [];
-        }
-        
-        const activeEdges = (fullGraphEdges || []).filter(e => e.es_version_actual !== false);
-        const stolenEdges = [];
-        
-        (incomingEdges || []).forEach(newEdge => {
-            const childId = String(newEdge.id_nodo_hijo);
-            const newParentId = String(newEdge.id_nodo_padre);
-            
-            if (!childId || !newParentId || newParentId === 'undefined' || childId === 'undefined') return;
-
-            // Find if child is assigned to a DIFFERENT parent
-            const existingEdges = activeEdges.filter(e => String(e.id_nodo_hijo) === childId && String(e.id_nodo_padre) !== newParentId);
-            
-            existingEdges.forEach(e => {
-                stolenEdges.push(e);
-            });
-        });
-        
-        return stolenEdges;
+        return result;
     },
 
     /**
