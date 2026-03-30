@@ -11,6 +11,7 @@ El CPO ha requerido que el frontend (`FormEngine_UI.html`) sea capaz de renderiz
 | S7.3 - UI Hydration | S | Done | merged | - | Reconstrucción visual OCP-DRY de Graph Chips. |
 | S7.4 - UX Refinements | S | Done | merged | - | Fast-Follow UI tweaks (Hierarchy, Dropdown CSS wrap). |
 | S7.5 - Picker Modal Pattern | L | Done | merged | - | Refactor hacia Master-Detail View con Subgrid Modals OCP. |
+| S7.6 - Subgrid UI Clone | M | Done | merged | - | Match de CSS/Layout contra Subgrid Clásico, test mocks fix. |
 
 ## Definition of Done
 - Los subgrids relacionales se dibujan usando `uiComponent`.
