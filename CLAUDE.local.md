@@ -5,8 +5,8 @@
 ## Session
 
 - **Active Session**: SES-003
-- **Last Summary**: Completed S8.6 (Relational Proximity Rules). Added Lax Math Guards to `SubgridState.js` and expanded Jest coverage perfectly (114 passing tests, preventing Truthy Traps).
-- **Next Focus**: S8.7 - In-line UX & Branch Shifting (UX compleja para creación in-line y re-emplazamiento de ramas enteras).
+- **Last Summary**: Completed S8.7 (In-line UX & Branch Shifting). Apilado Recursivo LIFO implementado firmemente en `FormEngine_UI.html` via `window.formModalStack[]`. The E8 Epic is now technically 100% complete!
+- **Next Focus**: Closure of Epic E8 (Graph Governance). Movernos hacia testeo de integración global o despliegue (`clasp push`).
 
 ## Patterns
 
