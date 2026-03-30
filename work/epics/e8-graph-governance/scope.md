@@ -16,6 +16,7 @@
 
 | # | Story | Size | Status | Actual | Velocity | Notes |
 |:-:|-------|:----:|--------|--------|----------|-------|
+
 | 1 | S8.1 — Schema Extension & Governance | S | Done | 1.0 | 1 | Fallbacks injected and verified |
 | 2 | S8.2 — Backend Enforcer (Engine_Graph.js) | M | Done | 1.5 | 1 | DAG + Tests + Integration Done |
 | 3 | S8.3 — Re-parenting & Temporal SCD-2 | M | Done | 1.5 | 1.33 | Refactored M:N DFS via Fast-Follows |
@@ -23,3 +24,5 @@
 | 5 | S8.5 — UI Dumbness Guards | S | Done | 1.5 | 0.67 | S8.5.1 Fast Follow for H9 included |
 | 6 | S8.6 — Relational Proximity Rules | S | Done | 1.0 | 0.5 | Strict and Lax mode validated mathematically |
 | 7 | S8.7 — In-line UX & Branch Shifting | L | Done | 3.0 | 0.75 | Modal Stack y Branch Shifting Interceptor |
+| - | S8.7.3 — UAT UX Fixes & CSS Contrast | S | Done | 0.5 | 1 | Design System Enforcement |
+| - | S8.7.4-6 — UAT Quality Gates (Hotfixes) | S | Done | 1.2 | 1 | $O(1)$ Hermetic Strategies and DB Memoization |
