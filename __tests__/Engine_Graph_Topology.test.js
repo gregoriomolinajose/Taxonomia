@@ -19,14 +19,13 @@ describe('Engine_Graph - Topology Defenses (S8.2)', () => {
 
     test('Should prevent Cycles (DAG)', () => {
         const rules = { preventCycles: true };
-        // Graph: A -> B -> C.  Incoming: C -> A (Creates A -> B -> C -> A)
         const fullGraph = [
             { id_nodo_padre: 'A', id_nodo_hijo: 'B', es_version_actual: true },
             { id_nodo_padre: 'B', id_nodo_hijo: 'C', es_version_actual: true }
         ];
         const incoming = [{ id_nodo_padre: 'C', id_nodo_hijo: 'A' }];
         
-        expect(() => Engine_Graph.analyzeTopology(incoming, fullGraph, rules)).toThrow(/Detección de Ciclo/);
+        expect(() => Engine_Graph.analyzeTopology(incoming, fullGraph, rules)).toThrow(/Ruta circular: A -> C -> B -> A/);
     });
 
     test('Should detect and prevent Max Depth violations', () => {
@@ -37,7 +36,7 @@ describe('Engine_Graph - Topology Defenses (S8.2)', () => {
         ];
         const incoming = [{ id_nodo_padre: 'C', id_nodo_hijo: 'D' }];
         
-        expect(() => Engine_Graph.analyzeTopology(incoming, fullGraph, rules)).toThrow(/Profundidad Máxima/);
+        expect(() => Engine_Graph.analyzeTopology(incoming, fullGraph, rules)).toThrow(/Ruta conflictiva: A -> B -> C -> D/);
     });
 
     test('Should deny orphan stealing if disabled in 1:N hierarchy', () => {
@@ -109,9 +108,8 @@ describe('Engine_Graph - Topology Defenses (S8.2)', () => {
             { id_nodo_padre: 'B', id_nodo_hijo: 'Child1', es_version_actual: true },
             { id_nodo_padre: 'Child1', id_nodo_hijo: 'Child2', es_version_actual: true }
         ];
-        // Incoming: Child2 -> B (This creates a cycle on the B lineage: B -> Child1 -> Child2 -> B)
         const incoming = [{ id_nodo_padre: 'Child2', id_nodo_hijo: 'B' }];
         
-        expect(() => Engine_Graph.analyzeTopology(incoming, fullGraph, rules)).toThrow(/Ciclo infinito detectado en linaje M:N/);
+        expect(() => Engine_Graph.analyzeTopology(incoming, fullGraph, rules)).toThrow(/Ruta circular: B -> Child2 -> Child1 -> B/);
     });
 });

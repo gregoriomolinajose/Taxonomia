@@ -52,10 +52,11 @@ const Engine_Graph = {
             if (rules.preventCycles || rules.maxDepth > 0) {
                 
                 function dfsTraversal(currentNode, pathStack, memo) {
-                    if (!currentNode || currentNode === "" || currentNode === "NULL") return 0;
+                    if (!currentNode || currentNode === "" || currentNode === "NULL") return { depth: 0, path: [] };
                     
                     if (rules.preventCycles && pathStack.has(currentNode)) {
-                        throw new Error(`[Topology Error] Detección de Ciclo (DAG): Infracción DAG: Ciclo infinito detectado en linaje M:N.`);
+                        const guiltyPath = Array.from(pathStack).join(' -> ') + ' -> ' + currentNode;
+                        throw new Error(`[Topology Error] Detección de Ciclo (DAG): Infracción DAG: Ciclo infinito detectado en linaje M:N. Ruta circular: ${guiltyPath}`);
                     }
                     
                     if (memo.has(currentNode)) return memo.get(currentNode);
@@ -63,18 +64,21 @@ const Engine_Graph = {
                     pathStack.add(currentNode);
                     
                     const nextParents = parentsOf[currentNode] || [];
-                    let maxPDepth = 0;
+                    let maxResult = { depth: 0, path: [] };
                     
                     for (const p of nextParents) {
-                        const d = dfsTraversal(p, pathStack, memo);
-                        if (d > maxPDepth) maxPDepth = d;
+                        const res = dfsTraversal(p, pathStack, memo);
+                        if (res.depth > maxResult.depth) maxResult = res;
                     }
                     
                     pathStack.delete(currentNode);
                     
-                    const longestPath = 1 + maxPDepth;
-                    memo.set(currentNode, longestPath);
-                    return longestPath;
+                    const finalResult = { 
+                        depth: 1 + maxResult.depth, 
+                        path: [...maxResult.path, currentNode] 
+                    };
+                    memo.set(currentNode, finalResult);
+                    return finalResult;
                 }
                 
                 // Preseed pathSet with childId to detect if the new edge to parentId creates a cycle back to childId.
@@ -83,25 +87,39 @@ const Engine_Graph = {
                 const maxDepthUp = dfsTraversal(parentId, pathSet, memoMap);
                 
                 if (rules.maxDepth > 0) {
-                    function getSubtreeMaxDepth(nodeId, visitedDown) {
-                        if (!childrenOf[nodeId] || childrenOf[nodeId].length === 0) return 0;
-                        let maxD = 0;
+                    function getSubtreeMaxDepth(nodeId, visitedDown, memoDown) {
+                        if (memoDown.has(nodeId)) return memoDown.get(nodeId);
+                        
+                        if (!childrenOf[nodeId] || childrenOf[nodeId].length === 0) {
+                            const end = { depth: 0, path: [] };
+                            memoDown.set(nodeId, end);
+                            return end;
+                        }
+                        
+                        let maxResult = { depth: 0, path: [] };
+                        
                         childrenOf[nodeId].forEach(c => {
                             if (!visitedDown.has(c)) {
                                 visitedDown.add(c);
-                                const d = 1 + getSubtreeMaxDepth(c, visitedDown);
-                                if (d > maxD) maxD = d;
+                                const res = getSubtreeMaxDepth(c, visitedDown, memoDown);
+                                const combinedDepth = 1 + res.depth;
+                                if (combinedDepth > maxResult.depth) {
+                                    maxResult = { depth: combinedDepth, path: [c, ...res.path] };
+                                }
                                 visitedDown.delete(c);
                             }
                         });
-                        return maxD;
+                        
+                        memoDown.set(nodeId, maxResult);
+                        return maxResult;
                     }
                     
-                    const depthChildTree = getSubtreeMaxDepth(childId, new Set([childId]));
-                    const totalDepth = maxDepthUp + 1 + depthChildTree;
+                    const depthChildTree = getSubtreeMaxDepth(childId, new Set([childId]), new Map());
+                    const totalDepth = maxDepthUp.depth + 1 + depthChildTree.depth;
                     
                     if (totalDepth > rules.maxDepth) {
-                        throw new Error(`[Topology Error] Profundidad Máxima Excedida: La vinculación genera una profundidad de ${totalDepth} niveles (Límite: ${rules.maxDepth}).`);
+                        const guiltyPath = [...maxDepthUp.path, childId, ...depthChildTree.path].join(' -> ');
+                        throw new Error(`[Topology Error] Profundidad Máxima Excedida: La vinculación genera una profundidad de ${totalDepth} niveles (Límite: ${rules.maxDepth}). Ruta conflictiva: ${guiltyPath}`);
                     }
                 }
             }
