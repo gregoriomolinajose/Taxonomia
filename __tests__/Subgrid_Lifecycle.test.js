@@ -194,3 +194,92 @@ describe('Test 4 — Unlink Test (unlinkRecord)', () => {
         expect(removed.id_grupo_producto).toBe('GRUP-001');
     });
 });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// TEST 5: Topological Guards (S8.5 & S8.6)
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe('Test 5 — Topological Guards in filterAvailableOptions', () => {
+    const DOMINIO_OPTIONS = [
+        { value: 'DOM-1', label: 'Nivel 1', nivel_tipo: 1, hasActiveParent: false },
+        { value: 'DOM-2', label: 'Nivel 2', nivel_tipo: 2, hasActiveParent: true },
+        { value: 'DOM-3', label: 'Nivel 3', nivel_tipo: 3, hasActiveParent: false },
+        { value: 'DOM-4', label: 'Nivel 4', nivel_tipo: 4, hasActiveParent: true },
+    ];
+
+    test('Falta de Contexto (Legacy FLAT) omite las validaciones', () => {
+        const filtered = filterAvailableOptions(DOMINIO_OPTIONS, [], 'id_dominio', null);
+        expect(filtered).toHaveLength(4);
+    });
+
+    test('Orphan Stealing Ban remueve opciones con hasActiveParent (isHijo, allowOrphanStealing: false)', () => {
+        const rulesContext = {
+            topologyRules: { allowOrphanStealing: false },
+            currentLevel: 1,
+            relationType: 'hijo'
+        };
+        const filtered = filterAvailableOptions(DOMINIO_OPTIONS, [], 'id_dominio', rulesContext);
+        // DOM-2 y DOM-4 tienen hasActiveParent: true, deben ser excluidos
+        expect(filtered).toHaveLength(2);
+        expect(filtered.map(o => o.value)).toEqual(['DOM-1', 'DOM-3']);
+    });
+
+    test('Saltos Estrictos (strictLevelJumps: true) para relación HIJO exige Nivel Objetivo = cLevel + 1', () => {
+        const rulesContext = {
+            topologyRules: { levelFiltering: true, strictLevelJumps: true },
+            currentLevel: 2,
+            relationType: 'hijo'
+        };
+        const filtered = filterAvailableOptions(DOMINIO_OPTIONS, [], 'id_dominio', rulesContext);
+        // Si estoy en Nivel 2, busco hijos en Nivel 3 exclusivamente
+        expect(filtered).toHaveLength(1);
+        expect(filtered[0].value).toBe('DOM-3');
+    });
+
+    test('Saltos Estrictos (strictLevelJumps: true) para relación PADRE exige Nivel Objetivo = cLevel - 1', () => {
+        const rulesContext = {
+            topologyRules: { levelFiltering: true, strictLevelJumps: true },
+            currentLevel: 3,
+            relationType: 'padre'
+        };
+        const filtered = filterAvailableOptions(DOMINIO_OPTIONS, [], 'id_dominio', rulesContext);
+        // Si estoy en Nivel 3, busco padre en Nivel 2 exclusivamente
+        expect(filtered).toHaveLength(1);
+        expect(filtered[0].value).toBe('DOM-2');
+    });
+
+    test('Saltos Laxos (strictLevelJumps: false) para relación HIJO permite cualquier Nivel Objetivo > cLevel', () => {
+        const rulesContext = {
+            topologyRules: { levelFiltering: true, strictLevelJumps: false },
+            currentLevel: 2,
+            relationType: 'hijo'
+        };
+        const filtered = filterAvailableOptions(DOMINIO_OPTIONS, [], 'id_dominio', rulesContext);
+        // Si estoy en Nivel 2, los hijos válidos son Nivel 3 y Nivel 4
+        expect(filtered).toHaveLength(2);
+        expect(filtered.map(o => o.value)).toEqual(['DOM-3', 'DOM-4']);
+    });
+
+    test('Saltos Laxos (strictLevelJumps: false) para relación PADRE permite cualquier Nivel Objetivo < cLevel', () => {
+        const rulesContext = {
+            topologyRules: { levelFiltering: true, strictLevelJumps: false },
+            currentLevel: 3,
+            relationType: 'padre'
+        };
+        const filtered = filterAvailableOptions(DOMINIO_OPTIONS, [], 'id_dominio', rulesContext);
+        // Si estoy en Nivel 3, los padres válidos pueden ser Nivel 1 o Nivel 2
+        expect(filtered).toHaveLength(2);
+        expect(filtered.map(o => o.value)).toEqual(['DOM-1', 'DOM-2']);
+    });
+
+    test('Protección de Root (rootRequiresNoParent: true)', () => {
+        const rulesContext = {
+            topologyRules: { levelFiltering: true, strictLevelJumps: true, rootRequiresNoParent: true },
+            currentLevel: 1,
+            relationType: 'padre'
+        };
+        const filtered = filterAvailableOptions(DOMINIO_OPTIONS, [], 'id_dominio', rulesContext);
+        // Nivel 1 no puede tener padre
+        expect(filtered).toHaveLength(0);
+    });
+});

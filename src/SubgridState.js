@@ -66,19 +66,31 @@ function filterAvailableOptions(allOptions, linkedRecords, pkField, rulesContext
             filtered = filtered.filter(opt => opt.hasActiveParent !== true);
         }
 
-        // 2. Depth Mathematical Guard (Restricting visual options preventing deep-jumps)
-        if (rules.levelFiltering === true && rules.strictLevelJumps === true && cLevel > 0) {
-            if (isHijo) {
-                // Must be exactly one level below
-                filtered = filtered.filter(opt => Number(opt.nivel_tipo) === cLevel + 1);
-            } else if (isPadre) {
-                // Must be exactly one level above
-                const targetPadreLevel = cLevel - 1;
-                if (targetPadreLevel > 0) {
-                     filtered = filtered.filter(opt => Number(opt.nivel_tipo) === targetPadreLevel);
-                } else if (targetPadreLevel === 0 && rules.rootRequiresNoParent) {
-                     // Node is Root (Level 1), it shouldn't have parents. Shield against illegal binds.
-                     filtered = [];
+        // 2. Depth Mathematical Guard (Restricting visual options preventing loop-jumps)
+        if (rules.levelFiltering === true && cLevel > 0) {
+            if (rules.strictLevelJumps === true) {
+                // Strict Mode: Exactly +1 or -1
+                if (isHijo) {
+                    filtered = filtered.filter(opt => Number(opt.nivel_tipo) === cLevel + 1);
+                } else if (isPadre) {
+                    const targetPadreLevel = cLevel - 1;
+                    if (targetPadreLevel > 0) {
+                         filtered = filtered.filter(opt => Number(opt.nivel_tipo) === targetPadreLevel);
+                    } else if (targetPadreLevel === 0 && rules.rootRequiresNoParent) {
+                         // Node is Root (Level 1), no parents allowed
+                         filtered = [];
+                    }
+                }
+            } else {
+                // Lax Mode: Asymmetric Proximity (Any level below for child, any level above for parent)
+                if (isHijo) {
+                    filtered = filtered.filter(opt => Number(opt.nivel_tipo) > cLevel);
+                } else if (isPadre) {
+                    if (cLevel === 1 && rules.rootRequiresNoParent) {
+                         filtered = [];
+                    } else {
+                         filtered = filtered.filter(opt => Number(opt.nivel_tipo) < cLevel);
+                    }
                 }
             }
         }
