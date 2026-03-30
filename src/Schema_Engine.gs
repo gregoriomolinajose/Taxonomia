@@ -18,29 +18,6 @@ const APP_SCHEMAS = {
       { section: "Estrategia de Negocio", width: 12, name: "modelo_negocio", label: "Modelo de Negocio", type: "select", required: true, options: ["SaaS", "Marketplace", "B2B", "B2C", "Transaccional"] }
     ]
   },
-  Portafolio: {
-    primaryKey: "id_portafolio",
-    titleField: "nombre",
-    fields: [
-      { name: "id_portafolio", type: "hidden", primaryKey: true },
-      { name: "estado", type: "hidden", defaultValue: "Activo" },
-      { section: "Identidad", width: 12, name: "nombre", type: "text", label: "Nombre del Portafolio", required: true },
-      { section: "Identidad", width: 12, name: "proposito", type: "textarea", label: "Propósito del Portafolio", required: true },
-      { section: "Estrategia", width: 12, name: "objetivos_negocio", type: "textarea", label: "Objetivos de Negocio (Lista)", required: true },
-      { section: "Estrategia", width: 12, name: "kpis_metricas", type: "textarea", label: "OKRs y KPIs del Portafolio", required: true },
-      { section: "Capacidad", width: 4, name: "capacidad_continuidad", type: "number", label: "% Continuidad Operativa" },
-      { section: "Capacidad", width: 4, name: "capacidad_fundacional", type: "number", label: "% Fundacionales" },
-      { section: "Capacidad", width: 4, name: "capacidad_transformacion", type: "number", label: "% Evolución y Transform." },
-      { section: "Capacidad", width: 12, name: "flujos_valor", type: "textarea", label: "Value Streams / Flujos de Valor" },
-      { section: "Presupuesto", width: 4, name: "presupuesto_bau", type: "number", label: "Presupuesto BAU ($)" },
-      { section: "Presupuesto", width: 4, name: "presupuesto_transformacion", type: "number", label: "Presupuesto Transformación ($)" },
-      { section: "Presupuesto", width: 4, name: "presupuesto_estrategico", type: "number", label: "Presupuesto Estratégico ($)" },
-      { section: "Gobernanza", width: 12, name: "gobierno_liderazgo", type: "textarea", label: "Gobierno (Roles y Nombres)" },
-      { section: "Gobernanza", width: 12, name: "stakeholders", type: "textarea", label: "Stakeholders y Sponsors" },
-      { section: "Gobernanza", width: 12, name: "producto_dominio", type: "textarea", label: "Producto / Dominio (OMS, WMS, etc.)" },
-      { section: "Relaciones", width: 12, name: "grupos_hijos", type: "relation", relationType: "1:N", targetEntity: "Grupo_Productos", foreignKey: "id_portafolio", uiBehavior: "subgrid", label: "Grupos de Producto" }
-    ]
-  },
   Dominio: {
     primaryKey: "id_dominio",
     titleField: "n0_es",
@@ -53,8 +30,8 @@ const APP_SCHEMAS = {
       { section: "Datos Generales", name: "nombre_ingles", type: "text", label: "Nombre (EN)", required: false, width: 6 },
       { section: "Datos Generales", name: "abreviacion", type: "text", label: "Abreviación", required: false, width: 6 },
       { section: "Datos Generales", name: "definicion", type: "textarea", label: "Definición", required: true, width: 12 },
-      { section: "Topología (Grafo)", width: 6, name: "relaciones_padre", type: "relation", relationType: "padre", targetEntity: "Dominio", graphEntity: "Relacion_Dominios", valueField: "id_dominio", labelField: "n0_es", uiComponent: "select_single", uiBehavior: "subgrid", label: "Dominio Padre (1:1)", isTemporalGraph: true, topology: "JERARQUICA_MILITAR" },
-      { section: "Topología (Grafo)", width: 6, name: "relaciones_hijo", type: "relation", relationType: "hijo", targetEntity: "Dominio", graphEntity: "Relacion_Dominios", valueField: "id_dominio", labelField: "n0_es", uiComponent: "searchable_multi", uiBehavior: "subgrid", label: "Dominios Subordinados (1:N)", isTemporalGraph: true, topology: "JERARQUICA_MILITAR" }
+      { section: "Topología (Grafo)", width: 12, name: "relaciones_padre", type: "relation", relationType: "padre", targetEntity: "Dominio", graphEntity: "Relacion_Dominios", valueField: "id_dominio", labelField: "n0_es", uiComponent: "select_single", uiBehavior: "subgrid", label: "Dominio Padre (1:1)", isTemporalGraph: true, topology: "JERARQUICA_MILITAR" },
+      { section: "Topología (Grafo)", width: 12,name: "relaciones_hijo", type: "relation", relationType: "hijo", targetEntity: "Dominio", graphEntity: "Relacion_Dominios", valueField: "id_dominio", labelField: "n0_es", uiComponent: "searchable_multi", uiBehavior: "subgrid", label: "Dominios Subordinados (1:N)", isTemporalGraph: true, topology: "JERARQUICA_MILITAR" }
     ]
   },
   Capacidad: {
