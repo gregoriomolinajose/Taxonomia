@@ -23,3 +23,7 @@ Este documento registra deudas técnicas, ideas y recomendaciones observadas dur
 ### 5. Extracción y Desacoplamiento de Event Listeners
 * **Contexto (S8.7.2):** Se inyectaron escuchadores custom (`levelChanged`) directamente dentro del iterador de inyección de HTML (`uiComponent()`) en `FormEngine_UI.html` para lograr la reactividad de los dropdowns padre-hijo.
 * **Acción para E9:** Evaluar la migración y centralización de todos los *Custom Events* interactivos hacia una macro-clase o Controller puro (idealmente `SubgridState.js` o un `Events_Controller.js`) separando completamente el registro de eventos DOM de las directivas de interpolación de HTML, reduciendo el peso cognitivo e impidiendo el desborde (fat file smell) del motor gráfico.
+
+### 6. Subrutina de Renderizado DRY (FormEngine_UI)
+* **Contexto (S8.7.2 Quality Review):** La declaración de Elementos del DOM como `document.createElement('ion-select-option')` fue repetida idénticamente tanto en la inicialización principal del componente como dentro de los eventos de *repaint* (`levelChanged`).
+* **Acción para E9:** Modularizar la inyección de opciones HTML extrayendo esa lógica hacia una función de dibujo aislada y reutilizable dentro del Controller. Esto limpiará el método primario adhiriéndose al principio DRY (Don't Repeat Yourself).
