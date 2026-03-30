@@ -21,6 +21,18 @@ const APP_SCHEMAS = {
   Dominio: {
     primaryKey: "id_dominio",
     titleField: "n0_es",
+    topologyRules: {
+      topologyType: "JERARQUICA_ESTRICTA",
+      levelFiltering: true,
+      strictLevelJumps: true,
+      rootRequiresNoParent: true,
+      allowOrphanStealing: true,
+      maxDepth: 5,
+      deletionStrategy: "ORPHAN",
+      siblingCollisionCheck: true,
+      scd2Enabled: true,
+      preventCycles: true
+    },
     fields: [
       { name: "id_dominio", type: "hidden", primaryKey: true },
       { name: "estado", type: "hidden", defaultValue: "Activo" },
@@ -194,6 +206,31 @@ function getAppSchema(entityName) {
   return entityName ? APP_SCHEMAS[entityName] : APP_SCHEMAS;
 }
 
+/**
+ * Epic E8: Safe getter for topology rules. Returns the configured rules
+ * for the entity if available, otherwise returns a safe default (FLAT).
+ * Prevents downstream failures for legacy entities.
+ */
+function getEntityTopologyRules(entityName) {
+  const schema = getAppSchema(entityName);
+  if (schema && schema.topologyRules) {
+    return schema.topologyRules;
+  }
+  // Safe Fallback defaults
+  return {
+    topologyType: "FLAT",
+    levelFiltering: false,
+    strictLevelJumps: false,
+    rootRequiresNoParent: false,
+    allowOrphanStealing: false,
+    maxDepth: 0,
+    deletionStrategy: "ORPHAN", // Always default to a safe setting (no cascading)
+    siblingCollisionCheck: false,
+    scd2Enabled: false,
+    preventCycles: false
+  };
+}
+
 if (typeof module !== 'undefined') {
-  module.exports = { APP_SCHEMAS, getAppSchema };
+  module.exports = { APP_SCHEMAS, getAppSchema, getEntityTopologyRules };
 }

@@ -326,8 +326,21 @@ const Engine_DB = {
                     // [S6.1] Config-Driven Delegation to Engine_Graph
                     if (f.isTemporalGraph) {
                         if (typeof Engine_Graph !== 'undefined') {
+                            // [S8.2] Backend Enforcer - Validate Topology 
+                            const topologyRules = (typeof getEntityTopologyRules !== 'undefined') 
+                                                    ? getEntityTopologyRules(entityName) // Entity name of the parent being configured
+                                                    : { preventCycles: false, maxDepth: 0, siblingCollisionCheck: false };
+                            const fullGraph = _Adapter_Sheets.list(f.graphEntity, config, 'objects').rows || [];
+                            Engine_Graph.validateTopology(children, fullGraph, topologyRules);
+
+                            // [S8.3] Backend Enforcer - Capture Re-parented nodes to expire them gracefully
+                            const stolenEdges = Engine_Graph.getReParentingEdges(children, fullGraph, topologyRules);
+
                             // En SR-Strategy delegamos que el motor calcule y devuelva los edge que se deben cerrar
-                            orphansToProcess = Engine_Graph.patchSCD2Edges(children, orphanMatches, f.topology) || [];
+                            const normalClose = Engine_Graph.patchSCD2Edges(children, orphanMatches, f.topology) || [];
+                            const stealClose = Engine_Graph.patchSCD2Edges([], stolenEdges, f.topology) || [];
+                            
+                            orphansToProcess = normalClose.concat(stealClose);
                         } else {
                             if (typeof Logger !== 'undefined') Logger.log(`[ERROR] Engine_Graph no encontrado para resolver topología ${f.topology}.`);
                         }
