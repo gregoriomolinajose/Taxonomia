@@ -89,4 +89,29 @@ describe('Engine_Graph - Topology Defenses (S8.2)', () => {
         const result = Engine_Graph.analyzeTopology(incoming, fullGraph, rules);
         expect(result.stolenEdges.length).toBe(0);
     });
+
+    test('Should allow valid multi-parent traversal in M:N topology (Poly-Tree)', () => {
+        const rules = { preventCycles: true, maxDepth: 4, topologyType: "RED_M_N" };
+        const fullGraph = [
+            { id_nodo_padre: 'A', id_nodo_hijo: 'Child1', es_version_actual: true },
+            { id_nodo_padre: 'B', id_nodo_hijo: 'Child1', es_version_actual: true }
+        ];
+        // Inserting a child under Child1 should trace back through both A and B without error
+        const incoming = [{ id_nodo_padre: 'Child1', id_nodo_hijo: 'Child2' }];
+        
+        expect(() => Engine_Graph.analyzeTopology(incoming, fullGraph, rules)).not.toThrow();
+    });
+
+    test('Should prevent Cycles (DAG) via BFS in M:N topology when a secondary lineage forms a cycle', () => {
+        const rules = { preventCycles: true, topologyType: "RED_M_N" };
+        const fullGraph = [
+            { id_nodo_padre: 'A', id_nodo_hijo: 'Child1', es_version_actual: true },
+            { id_nodo_padre: 'B', id_nodo_hijo: 'Child1', es_version_actual: true },
+            { id_nodo_padre: 'Child1', id_nodo_hijo: 'Child2', es_version_actual: true }
+        ];
+        // Incoming: Child2 -> B (This creates a cycle on the B lineage: B -> Child1 -> Child2 -> B)
+        const incoming = [{ id_nodo_padre: 'Child2', id_nodo_hijo: 'B' }];
+        
+        expect(() => Engine_Graph.analyzeTopology(incoming, fullGraph, rules)).toThrow(/Ciclo infinito detectado en linaje M:N/);
+    });
 });

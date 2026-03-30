@@ -14,15 +14,19 @@ const Engine_Graph = {
         const result = { stolenEdges: [] };
         if (!rules || typeof rules !== 'object') return result;
 
-        const parentOf = {};
+        const parentsOf = {};
         const childrenOf = {};
-        const edgeOf = {}; // O(1) retrieval for stolen edges
+        const edgesOf = {}; // We store arrays because M:N can have multiple edges per child
         
         (activeGraphEdges || []).forEach(e => {
             const childId = String(e.id_nodo_hijo);
             const pId = String(e.id_nodo_padre);
-            parentOf[childId] = pId;
-            edgeOf[childId] = e;
+            if (!parentsOf[childId]) parentsOf[childId] = [];
+            parentsOf[childId].push(pId);
+            
+            if (!edgesOf[childId]) edgesOf[childId] = [];
+            edgesOf[childId].push(e);
+            
             if (!childrenOf[pId]) childrenOf[pId] = [];
             childrenOf[pId].push(childId);
         });
@@ -44,30 +48,42 @@ const Engine_Graph = {
                 }
             }
 
-            // 2. Prevent Cycles (DAG) [Rule 7]
+            // 2. Prevent Cycles (DAG) via BFS [Rule 7]
             if (rules.preventCycles) {
-                let currentAncestor = parentId;
-                const visited = new Set();
-                while (currentAncestor && currentAncestor !== "" && currentAncestor !== "NULL") {
+                const queue = [parentId];
+                const visitedAncestors = new Set();
+                while (queue.length > 0) {
+                    const currentAncestor = queue.shift();
+                    if (!currentAncestor || currentAncestor === "" || currentAncestor === "NULL") continue;
+                    
                     if (currentAncestor === childId) {
-                        throw new Error(`[Topology Error] Detección de Ciclo (DAG): El nodo ${childId} no puede ser ancestro de su propio padre ${parentId}.`);
+                        throw new Error(`[Topology Error] Detección de Ciclo (DAG): Infracción DAG: Ciclo infinito detectado en linaje M:N.`);
                     }
-                    if (visited.has(currentAncestor)) break; // graph already has a cycle somewhere, avoid infinite loop
-                    visited.add(currentAncestor);
-                    currentAncestor = parentOf[currentAncestor];
+                    if (visitedAncestors.has(currentAncestor)) continue;
+                    visitedAncestors.add(currentAncestor);
+                    
+                    const nextParents = parentsOf[currentAncestor] || [];
+                    nextParents.forEach(p => queue.push(p));
                 }
             }
             
-            // 3. Max Depth Calculation [Rule 9]
+            // 3. Max Depth Calculation via BFS (Longest Path UP) [Rule 9]
             if (rules.maxDepth > 0) {
-                let depthParent = 0;
-                let current = parentId;
+                let maxDepthUp = 0;
+                const queueUp = [{ id: parentId, depth: 1 }];
                 const visitedUp = new Set();
-                while (current && current !== "" && current !== "NULL") {
-                    depthParent++;
-                    if (visitedUp.has(current)) break;
-                    visitedUp.add(current);
-                    current = parentOf[current];
+                
+                while (queueUp.length > 0) {
+                    const current = queueUp.shift();
+                    if (!current.id || current.id === "" || current.id === "NULL") continue;
+                    
+                    if (current.depth > maxDepthUp) maxDepthUp = current.depth;
+                    
+                    if (visitedUp.has(current.id)) continue;
+                    visitedUp.add(current.id);
+                    
+                    const nextParents = parentsOf[current.id] || [];
+                    nextParents.forEach(p => queueUp.push({ id: p, depth: current.depth + 1 }));
                 }
                 
                 function getSubtreeMaxDepth(nodeId, visitedDown) {
@@ -85,7 +101,7 @@ const Engine_Graph = {
                 }
                 
                 const depthChildTree = getSubtreeMaxDepth(childId, new Set([childId]));
-                const totalDepth = depthParent + 1 + depthChildTree;
+                const totalDepth = maxDepthUp + 1 + depthChildTree;
                 
                 if (totalDepth > rules.maxDepth) {
                     throw new Error(`[Topology Error] Profundidad Máxima Excedida: La vinculación genera una profundidad de ${totalDepth} niveles (Límite: ${rules.maxDepth}).`);
@@ -94,20 +110,29 @@ const Engine_Graph = {
             
             // 4. Orphan Stealing Check & O(1) Extraction
             if (rules.topologyType === "JERARQUICA_ESTRICTA" || rules.topologyType === "JERARQUICA_ORGANICA") {
-                const oldParent = parentOf[childId];
-                if (oldParent && oldParent !== parentId) {
-                    if (rules.allowOrphanStealing === false) {
-                        throw new Error(`[Topology Error] Exclusividad de Orfandad: El nodo ${childId} ya pertenece a ${oldParent} y el robo de nodos está deshabilitado.`);
+                const oldParents = parentsOf[childId] || [];
+                oldParents.forEach(oldParent => {
+                    if (oldParent !== parentId) {
+                        if (rules.allowOrphanStealing === false) {
+                            throw new Error(`[Topology Error] Exclusividad de Orfandad: El nodo ${childId} ya pertenece a ${oldParent} y el robo de nodos está deshabilitado.`);
+                        }
+                        const childEdges = edgesOf[childId] || [];
+                        const oldEdge = childEdges.find(e => String(e.id_nodo_padre) === oldParent);
+                        if (oldEdge) result.stolenEdges.push(oldEdge);
                     }
-                    if (edgeOf[childId]) {
-                        result.stolenEdges.push(edgeOf[childId]);
-                    }
-                }
+                });
+                // Wipe arrays so we don't double loop inside the same array iteration
+                parentsOf[childId] = [];
+                edgesOf[childId] = [];
             }
 
             // Assign temporary mapping to validate subsequent edges in the same payload
-            parentOf[childId] = parentId;
-            edgeOf[childId] = newEdge;
+            if (!parentsOf[childId]) parentsOf[childId] = [];
+            parentsOf[childId].push(parentId);
+            
+            if (!edgesOf[childId]) edgesOf[childId] = [];
+            edgesOf[childId].push(newEdge);
+            
             if (!childrenOf[parentId]) childrenOf[parentId] = [];
             childrenOf[parentId].push(childId);
         });
