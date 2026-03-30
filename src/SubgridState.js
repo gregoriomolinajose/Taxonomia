@@ -38,20 +38,53 @@ function initSubgridState(parentData, fieldName) {
 }
 
 /**
- * filterAvailableOptions(allOptions, linkedRecords, pkField)
- * Returns only the options that are NOT already linked in the subgrid.
+ * filterAvailableOptions(allOptions, linkedRecords, pkField, rulesContext)
+ * Returns only the options that are NOT already linked in the subgrid and are topologically valid.
  * Used to populate the selection modal.
  *
- * @param {Array}  allOptions     - Full catalog of { value, label } options.
+ * @param {Array}  allOptions     - Full catalog of { value, label, nivel_tipo, hasActiveParent }.
  * @param {Array}  linkedRecords  - Records already in the subgrid.
  * @param {string} pkField        - PK field name within linkedRecords.
+ * @param {Object} rulesContext   - { topologyRules: {}, currentLevel: Number, relationType: 'padre' | 'hijo' } (S8.5)
  * @returns {Array} - Filtered options safe to show in the modal.
  */
-function filterAvailableOptions(allOptions, linkedRecords, pkField) {
-    return (allOptions || []).filter(opt => {
+function filterAvailableOptions(allOptions, linkedRecords, pkField, rulesContext = null) {
+    let filtered = (allOptions || []).filter(opt => {
         const normalizedValue = _normalizeId(opt.value);
         return !(linkedRecords || []).some(r => _normalizeId(r[pkField]) === normalizedValue);
     });
+
+    // [S8.5] UI Dumbness Guards (Topological Pre-Filters)
+    if (rulesContext && rulesContext.topologyRules) {
+        const rules = rulesContext.topologyRules;
+        const cLevel = Number(rulesContext.currentLevel) || 0;
+        const isHijo = rulesContext.relationType === 'hijo';
+        const isPadre = rulesContext.relationType === 'padre';
+
+        // 1. Orphan Stealing Ban (Graph M:N restricted to 1:N exclusively via steal banning)
+        if (isHijo && rules.allowOrphanStealing === false) {
+            filtered = filtered.filter(opt => opt.hasActiveParent !== true);
+        }
+
+        // 2. Depth Mathematical Guard (Restricting visual options preventing deep-jumps)
+        if (rules.levelFiltering === true && rules.strictLevelJumps === true && cLevel > 0) {
+            if (isHijo) {
+                // Must be exactly one level below
+                filtered = filtered.filter(opt => Number(opt.nivel_tipo) === cLevel + 1);
+            } else if (isPadre) {
+                // Must be exactly one level above
+                const targetPadreLevel = cLevel - 1;
+                if (targetPadreLevel > 0) {
+                     filtered = filtered.filter(opt => Number(opt.nivel_tipo) === targetPadreLevel);
+                } else if (targetPadreLevel === 0 && rules.rootRequiresNoParent) {
+                     // Node is Root (Level 1), it shouldn't have parents. Shield against illegal binds.
+                     filtered = [];
+                }
+            }
+        }
+    }
+
+    return filtered;
 }
 
 /**

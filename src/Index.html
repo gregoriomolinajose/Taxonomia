@@ -41,6 +41,11 @@
       Persona:         { order:8, iconName:'person-outline',      color:'medium',   label:'Personas',               titleField:'nombre_completo', idField:'id_persona',         fkField:null },
       Relacion_Dominios:{ order:9, iconName:'git-network-outline', color:'primary',  label:'Conexiones Topológicas', titleField:'tipo_relacion',   idField:'id_relacion',        fkField:{ key:'id_nodo_padre',     label:'Dominio' } }
     };
+
+    // [S8.5.1] Inyección Híbrida: Funciones Puras del Backend materializadas en el Frontend
+    <?!= typeof _normalizeId !== 'undefined' ? _normalizeId.toString() : 'function _normalizeId(){}' ?>;
+    <?!= typeof filterAvailableOptions !== 'undefined' ? filterAvailableOptions.toString() : 'function filterAvailableOptions(){return []}' ?>;
+    window.SubgridState = { _normalizeId, filterAvailableOptions };
   </script>
 </head>
 <body>

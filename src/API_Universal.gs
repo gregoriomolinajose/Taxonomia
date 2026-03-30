@@ -387,6 +387,46 @@ function bulkInsert(entityName, recordsArray) {
 }
 
 // Bloque de Persistencia Dinámicas (Relacional 1:N)
+
+/**
+ * getDominioOptions (S8.5)
+ * Devuelve opciones enriquecidas con Metadatos Topológicos (nivel_tipo y hasActiveParent)
+ * para permitir Filtros 'Dumbness Guards' en el Frontend.
+ */
+function getDominioOptions() {
+  try {
+    const rawDominios = Engine_DB.list('Dominio');
+    if (!rawDominios || !rawDominios.rows) return [];
+
+    // Cargar mapa referencial de Relaciones Activas para detectar 'Hijos ya adoptados'
+    const rawRelaciones = Engine_DB.list('Relacion_Dominios');
+    const hasActiveParentMap = {}; // { childId: true }
+    
+    if (rawRelaciones && rawRelaciones.rows) {
+        rawRelaciones.rows.forEach(r => {
+            if (r.es_version_actual !== false) {
+                hasActiveParentMap[r.id_nodo_hijo] = true;
+            }
+        });
+    }
+    
+    const options = rawDominios.rows
+      .filter(row => row.estado !== 'Eliminado')
+      .map(row => ({
+        id: row.id_dominio,
+        value: row.id_dominio,
+        label: `[N${row.nivel_tipo}] ${row.n0_es}`, // UX: Mostrar nivel en el dropdown visualmente
+        nivel_tipo: Number(row.nivel_tipo) || 0,
+        hasActiveParent: !!hasActiveParentMap[row.id_dominio]
+      }));
+      
+    return JSON.parse(JSON.stringify(options));
+  } catch(e) {
+    Logger.log("Error en getDominioOptions: " + e.message);
+    return [];
+  }
+}
+
 function getPersonasOptions() {
   try {
     const result = Engine_DB.list('Persona');
