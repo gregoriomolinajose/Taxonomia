@@ -9,7 +9,7 @@
 3. **- [x] S8.3: Re-parenting & Temporal State (SCD-2) ✓** - Robo de nodos y expiraciones temporales correctas.
 4. **- [x] S8.4: Deletion Strategies Execution ✓** - Orphan vs Cascade vs Grandparent implementations.
 5. **- [x] S8.5: UI Dumbness & Form Validation Guards ✓** - Exenciones de raíz, exclusiones de orfandad y Filtros de Nivel.
-6. **S8.6: Relational Proximity Rules** - Restricciones asimétricas en dropdowns (Strict vs Lax Level jumps).
+6. **- [x] S8.6: Relational Proximity Rules ✓** - Restricciones asimétricas en dropdowns (Strict vs Lax Level jumps).
 7. **S8.7: In-line UX & Branch Shifting** - UX compleja para creación in-line y re-emplazamiento de ramas enteras.
 
 ## ### Progress Tracking
@@ -21,5 +21,5 @@
 | 3 | S8.3 — Re-parenting & Temporal SCD-2 | M | Done | 1.5 | 1.33 | Refactored M:N DFS via Fast-Follows |
 | 4 | S8.4 — Deletion Strategies Execution | M | Done | 3.0 | 0.8 | Garbage Collector logic implemented via Unit of Work |
 | 5 | S8.5 — UI Dumbness Guards | S | Done | 1.5 | 0.67 | S8.5.1 Fast Follow for H9 included |
-| 6 | S8.6 — Relational Proximity Rules | M | Pending | - | - | |
+| 6 | S8.6 — Relational Proximity Rules | S | Done | 1.0 | 0.5 | Strict and Lax mode validated mathematically |
 | 7 | S8.7 — In-line UX & Branch Shifting | L | Pending | - | - | |

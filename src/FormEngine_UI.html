@@ -159,22 +159,45 @@
             module.exports = { isRecordLinked, _normalizeId, _patchFrontendCache };
         }
 
-        global.renderForm = async function (entityName, data = null) {
+        // [S8.7] Arquitectura de Formularios Apilables (Modal Stack)
+        global.formModalStack = global.formModalStack || [];
+
+        global._closeTopModal = function() {
+            if (global.formModalStack.length > 0) {
+                const topModal = global.formModalStack.pop();
+                topModal.dismiss().then(() => topModal.remove());
+                global.currentFormModal = global.formModalStack.length > 0 ? global.formModalStack[global.formModalStack.length - 1] : null;
+                
+                // Si cerramos el último modal, reseteamos el estado de edición actual
+                if (global.formModalStack.length === 0) {
+                    global.currentEditId = null;
+                }
+            }
+        };
+
+        global.renderForm = async function (entityName, data = null, injectedCallback = null) {
             // Asegurar reset de estado al abrir formulario nuevo (Directiva 1)
-            global.currentEditId = null;
-            window._lastSection = null; // Reset de secciones UI
+            // Ya no lo hacemos incondicionalmente, solo si es la capa raíz
+            if (global.formModalStack.length === 0) {
+                global.currentEditId = null;
+                window._lastSection = null; // Reset de secciones UI
+            }
             
             // Construcción del Modal de la Vista de Formularios (Keyboard-Aware Fix)
             const modal = document.createElement('ion-modal');
+            global.formModalStack.push(modal);
             global.currentFormModal = modal;
             
+            // Inyectar callback opcional (In-line Creation)
+            modal.__onSaveSuccessFallback = injectedCallback;
+
             // Header Nativo del Modal
             const header = document.createElement('ion-header');
             header.innerHTML = `
               <ion-toolbar>
                 <ion-title>Taxonomia: ${window.formatEntityName(entityName)}</ion-title>
                 <ion-buttons slot="end">
-                  <ion-button onclick="if(window.currentFormModal) { window.currentFormModal.dismiss().then(() => window.currentFormModal.remove()); }">Cerrar</ion-button>
+                  <ion-button onclick="if(window._closeTopModal) { window._closeTopModal(); }">Cerrar</ion-button>
                 </ion-buttons>
               </ion-toolbar>
             `;
@@ -575,6 +598,44 @@
                                 opt.textContent = `${opt.value} - ${typeof d[field.labelField] !== 'undefined' ? d[field.labelField] : d.nombre}`;
                                 basicSel.appendChild(opt);
                             });
+
+                            // [S8.7] Branch Shifting Interceptor
+                            if (field.isTemporalGraph && field.relationType === 'padre') {
+                                // Wait for the component to attach to grab initial value later, or just use initialValues[0]
+                                let originalVal = initialValues.length > 0 ? initialValues[0] : "";
+                                
+                                basicSel.addEventListener('ionChange', async (ev) => {
+                                    const newVal = ev.detail.value;
+                                    // Detonar alerta si ya existía un padre y ahora se seleccionó algo distinto al origin (Branch Shift)
+                                    if (originalVal && originalVal !== "" && newVal !== originalVal) {
+                                        const alert = document.createElement('ion-alert');
+                                        alert.header = 'Cambio de Jerarquía Detectado';
+                                        alert.message = 'Estás reasignando el nodo padre. Si guardas este cambio, este registro y todos sus descendientes (toda la rama) se trasladarán a la nueva ubicación. ¿Estás seguro de continuar con el re-emplazamiento?';
+                                        alert.buttons = [
+                                            { 
+                                                text: 'Cancelar', 
+                                                role: 'cancel',
+                                                handler: () => {
+                                                    // Rollback dinámico
+                                                    basicSel.value = originalVal;
+                                                }
+                                            },
+                                            { 
+                                                text: 'Sí, reubicar rama',
+                                                handler: () => {
+                                                    originalVal = newVal; // Confirmamos el cambio
+                                                }
+                                            }
+                                        ];
+                                        document.body.appendChild(alert);
+                                        await alert.present();
+                                    } else if (!originalVal || originalVal === "") {
+                                        // Si no tenía padre antes, el cambio se acepta directamente
+                                        originalVal = newVal;
+                                    }
+                                });
+                            }
+
                             inputEl.appendChild(basicSel);
                         }
                         break;
@@ -992,25 +1053,28 @@
                     };
 
                     modal.querySelector('#btn-create-new').onclick = async () => {
+                        // [S8.7] In-Line Creation via Modal Stack
+                        // Desmontamos el Subgrid Picker
                         modal.dismiss().then(() => modal.remove());
-                        const singularLabel = field.label.replace(/s de /i, ' de ').replace(/s$/i, '').replace(/Grupos/i, 'Grupo');
-                        const alert = document.createElement('ion-alert');
-                        alert.header = `Agregar Nuevo ${singularLabel}`;
-                        alert.inputs = [{ name: 'nombre', type: 'text', placeholder: 'Nombre del registro...' }];
-                        alert.buttons = [
-                            { text: 'Cancelar', role: 'cancel' },
-                            { 
-                                text: 'Agregar', 
-                                handler: (data) => {
-                                    if (data.nombre) {
-                                        childRecords.push({ nombre: data.nombre, estado: 'Activo' });
-                                        _refreshList();
-                                    }
-                                } 
+                        
+                        // Renderizamos Formulario Principal Anidado (Modal Stack) y enlazamos el Callback
+                        global.renderForm(field.targetEntity, null, (newRecordResp) => {
+                            if (newRecordResp && newRecordResp.status === 'success') {
+                                // Soporte para distintas firmas de payload (según controlador de GAS)
+                                const itemPayload = (newRecordResp.data && newRecordResp.data.data) ? newRecordResp.data.data : (newRecordResp.data || newRecordResp);
+                                const newId = itemPayload[childPK] || itemPayload['id_registro'];
+                                const newName = itemPayload.nombre || itemPayload.nombre_producto || newId;
+
+                                if (newId) {
+                                    childRecords.push({
+                                        [childPK]: newId,
+                                        nombre: newName,
+                                        estado: 'Activo'
+                                    });
+                                    _refreshList();
+                                }
                             }
-                        ];
-                        document.body.appendChild(alert);
-                        await alert.present();
+                        });
                     };
                 };
 
@@ -1304,19 +1368,27 @@
 
                                  if (window.__APP_CACHE__ && window.__APP_CACHE__.nestedData) window.__APP_CACHE__.nestedData = {};
 
-                                 // Cerramos el Modal (Directiva 0.0s visual)
-                                 if (global.currentFormModal) {
-                                     global.currentFormModal.dismiss().then(() => {
-                                         global.currentFormModal.remove();
-                                         global.currentFormModal = null;
-                                     });
+                                 // Obtener callback si es un Modal anidado (In-line Creation)
+                                 let inlineCallback = null;
+                                 if (global.currentFormModal && global.currentFormModal.__onSaveSuccessFallback) {
+                                     inlineCallback = global.currentFormModal.__onSaveSuccessFallback;
+                                 }
+
+                                 // Cerramos el Modal (ahora usando Stack)
+                                 if (global._closeTopModal) {
+                                     global._closeTopModal();
                                  }
 
                                  // Enrutamiento post-Guardado Inmediato
-                                 if (window.DataViewEngine) {
-                                     window.DataViewEngine.render(entityName, 'app-container');
-                                 } else if (global.onSaveSuccessCallback) {
-                                     global.onSaveSuccessCallback();
+                                 if (inlineCallback) {
+                                     inlineCallback(response); // Notificamos al picker que solicitó la creación
+                                 } else if (!global.formModalStack || global.formModalStack.length === 0) {
+                                     // Solo recargar DataView si era el Formulario Principal
+                                     if (window.DataViewEngine) {
+                                         window.DataViewEngine.render(entityName, 'app-container');
+                                     } else if (global.onSaveSuccessCallback) {
+                                         global.onSaveSuccessCallback();
+                                     }
                                  }
                             } else {
                                 // Error Controlado desde el Servidor
