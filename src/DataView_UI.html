@@ -26,7 +26,38 @@
         --dv-transition: .18s ease;
     }
 
-    /* ── Contenedor raíz ── */
+    
+    /* ── UI Design Classes (Refactor S9.4) ── */
+    .dv-empty-text { color: var(--dv-text-light); }
+    .dv-chip { display:inline-block; background:var(--dv-bg); border:1px solid var(--dv-border); border-radius:4px; padding:1px 7px; font-size:.78rem; margin:1px; }
+    .dv-pk-code { font-size:.78rem; background:var(--dv-bg); padding:1px 5px; border-radius:3px; cursor:pointer; color:var(--dv-primary); font-weight:bold; text-decoration:underline; }
+    .dv-error-title { color: var(--color-interactive-error); }
+    .dv-error-desc { font-size: 0.75rem; color: var(--dv-text-light); margin-top: 8px; }
+    .dv-card-skel { padding: 4px 0; }
+    .dv-folder-icon { font-size: 64px; color: var(--ion-color-medium); }
+    .dv-th-num { width: 50px; text-align: center; }
+    .dv-th-action { width: 50px; }
+    .dv-td-num { width: 50px; text-align: center; color: var(--dv-text-secondary); font-variant-numeric: tabular-nums; font-weight: 500; }
+    .dv-td-action { width: 50px; text-align: center; }
+    .dv-btn-danger { color: var(--color-interactive-error); }
+    .dv-btn-danger-lite { color: var(--color-interactive-error); border: none; padding: 4px; }
+    .dv-fk-badge { --background: var(--dv-primary); font-size: .7rem; font-weight: 600; margin-top: 10px; display: inline-flex; align-items: center; gap: 4px; }
+    .dv-card-header-flex { display: flex; justify-content: space-between; align-items: flex-start; }
+    .dv-code-link { font-family: monospace; font-size: .72rem; color: var(--dv-primary); cursor: pointer; text-decoration: underline; }
+    .dv-card-title-clamp { font-size: .95rem; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .dv-card-footer { border-top: 1px solid var(--dv-border); background: var(--dv-surface); border-radius: 0 0 var(--dv-radius) var(--dv-radius); }
+    .dv-flex-group { display: flex; align-items: center; gap: 8px; }
+    .dv-page-info { padding: 0 10px; font-size: .83rem; color: var(--dv-text-secondary); }
+    .dv-popover-item { --min-height: 42px; }
+    .dv-popover-checkbox { --size: 18px; --border-radius: 4px; }
+    .dv-popover-label { font-size: .85rem; }
+    .dv-popover-content { --background: var(--dv-surface); width: 220px; }
+    .dv-popover-header { min-height: 36px; }
+    .dv-sub-label { font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--dv-text-secondary); }
+    .dv-options-icon { margin-right: 6px; }
+    .dv-title-icon { font-size: 1.6rem; color: var(--dv-primary); }
+    .dv-hidden { display: none; }
+\n    /* ── Contenedor raíz ── */
     .dv-root {
         font-family: var(--ion-font-family, system-ui, -apple-system, sans-serif);
         color: var(--dv-text-primary);
@@ -692,13 +723,13 @@
         }
 
         function _formatValue(key, value) {
-            if (value === null || value === undefined || value === '') return '<span style="color:var(--dv-text-light)">—</span>';
+            if (value === null || value === undefined || value === '') return '<span class="dv-empty-text">—</span>';
 
             // 0. Arreglos de objetos (campos de Relación tipo Master-Detail)
             //    Ejemplo: grupos_hijos = [{nombre:'A',...}, {nombre:'B',...}]
             //    Renderizar como chips de texto legibles, NO como [object Object]
             if (Array.isArray(value)) {
-                if (value.length === 0) return '<span style="color:var(--dv-text-light)">—</span>';
+                if (value.length === 0) return '<span class="dv-empty-text">—</span>';
                 const labels = value.map(item => {
                     if (typeof item === 'object' && item !== null) {
                         // Intentar extraer un campo de nombre legible
@@ -708,7 +739,7 @@
                     }
                     return String(item);
                 });
-                return labels.map(l => `<span style="display:inline-block;background:var(--dv-bg,#f0f0f0);border:1px solid var(--dv-border,#ddd);border-radius:4px;padding:1px 7px;font-size:.78rem;margin:1px;">${l}</span>`).join(' ');
+                return labels.map(l => `<span class="dv-chip">${l}</span>`).join(' ');
             }
 
             const strVal = String(value);
@@ -730,7 +761,7 @@
             }
 
             if (isPrimaryKey) {
-                return `<code onclick="window.openEditForm('${strVal}')" style="font-size:.78rem;background:var(--dv-bg);padding:1px 5px;border-radius:3px;cursor:pointer;color:var(--dv-primary);font-weight:bold;text-decoration:underline;">${strVal}</code>`;
+                return `<code class="dv-pk-code" onclick="window.openEditForm('${strVal}')">${strVal}</code>`;
             }
 
             // 1. Resolver desde Lookups si existe mapeo
@@ -830,9 +861,9 @@
                 <div class="dv-card">
                     <div class="dv-empty">
                         <div class="dv-empty-icon">⚠️</div>
-                        <h3 style="color:var(--ion-color-danger)">No pudimos cargar la información.</h3>
+                        <h3 class="dv-error-title">No pudimos cargar la información.</h3>
                         <p>Por favor, refresca la página para intentar de nuevo.</p>
-                        <p style="font-size:0.75rem; color:var(--dv-text-light); margin-top:8px;">(Detalle: ${error ? error.message : 'Error de red'})</p>
+                        <p class="dv-error-desc">(Detalle: ${error ? error.message : 'Error de red'})</p>
                     </div>
                 </div>`;
             }
@@ -941,10 +972,10 @@
             let rows = '';
             for (let i = 0; i < 5; i++) {
                 const widths = [80, 160, 120, 100, 90];
-                const cells = widths.map(w => `<div class="dv-skeleton-cell" style="width:${w}px;"></div>`).join('');
+                const cells = widths.map(w => `<div class="dv-skeleton-cell" style="width:${w}px;"></div>`).join(''); // width is dynamic layout
                 rows += `<div class="dv-skeleton-row">${cells}</div>`;
             }
-            return `<div class="dv-card" style="padding:4px 0;">${rows}</div>`;
+            return `<div class="dv-card dv-card-skel">${rows}</div>`;
         }
 
         function _renderEmpty() {
@@ -952,7 +983,7 @@
         <div class="dv-card">
           <div class="dv-empty">
             <div class="dv-empty-icon">
-              <ion-icon name="folder-open-outline" style="font-size: 64px; color: var(--ion-color-medium);"></ion-icon>
+              <ion-icon class="dv-folder-icon" name="folder-open-outline"></ion-icon>
             </div>
             <h3>Sin resultados</h3>
             <p>No se encontraron registros. Prueba con otros términos de búsqueda o crea un nuevo registro.</p>
@@ -988,7 +1019,7 @@
         <div class="dv-card">
           <div class="dv-table-wrap">
             <table class="dv-table">
-              <thead><tr><th style="width: 50px; text-align: center;">#</th>${thead}<th style="width:50px;"></th></tr></thead>
+              <thead><tr><th class="dv-th-num">#</th>${thead}<th class="dv-th-action"></th></tr></thead>
               <tbody>${_renderTableBody(rows, visibleCols)}</tbody>
             </table>
           </div>
@@ -1000,7 +1031,7 @@
             const startIdx = (_state.page - 1) * _state.pageSize;
             return rows.map((row, idx) => {
                 const rowNum = startIdx + idx + 1;
-                const indexCell = `<td style="width: 50px; text-align: center; color: var(--dv-text-secondary); font-variant-numeric: tabular-nums; font-weight: 500;">${rowNum}</td>`;
+                const indexCell = `<td class="dv-td-num">${rowNum}</td>`;
 
                 const cells = visibleCols.map(col =>
                     `<td title="${String(row[col.key] ?? '')}">${_formatValue(col.key, row[col.key])}</td>`
@@ -1008,8 +1039,8 @@
 
                 const meta = ENTITY_META[_state.entityName] || { idField: 'id' };
                 const id = row[meta.idField] || '';
-                const actionCell = `<td style="width:50px; text-align:center;">
-                    <button class="dv-btn-icon" style="color:var(--ion-color-danger);" onclick="event.stopPropagation(); window.DataViewEngine._confirmDelete('${id}')" title="Eliminar">
+                const actionCell = `<td class="dv-td-action">
+                    <button class="dv-btn-icon dv-btn-danger" onclick="event.stopPropagation(); window.DataViewEngine._confirmDelete('${id}')" title="Eliminar">
                         <ion-icon name="trash"></ion-icon>
                     </button>
                 </td>`;
@@ -1031,7 +1062,7 @@
 
                 // FK chip usando ion-badge de Ionic
                 const fkChip = meta.fkField && row[meta.fkField.key]
-                    ? `<ion-badge color="primary" style="font-size:.7rem;font-weight:600;margin-top:10px;display:inline-flex;align-items:center;gap:4px;">🔗 ${meta.fkField.label}: ${row[meta.fkField.key]}</ion-badge>`
+                    ? `<ion-badge class="dv-fk-badge">🔗 ${meta.fkField.label}: ${row[meta.fkField.key]}</ion-badge>`
                     : '';
 
                 const attrKeys = Object.keys(row)
@@ -1049,16 +1080,16 @@
                 return `
                 <ion-col size="12" size-sm="6" size-md="4" size-xl="3" class="dv-grid-col">
                     <ion-card class="dv-ion-card">
-                        <ion-card-header style="display:flex; justify-content:space-between; align-items:flex-start;">
+                        <ion-card-header class="dv-card-header-flex">
                             <div>
                                 <ion-card-subtitle 
                                     onclick="window.openEditForm('${id}')"
-                                    style="font-family:monospace;font-size:.72rem;color:var(--dv-primary);cursor:pointer;text-decoration:underline;">
+                                    class="dv-code-link">
                                     ${id}
                                 </ion-card-subtitle>
-                                <ion-card-title style="font-size:.95rem;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${title}">${title}</ion-card-title>
+                                <ion-card-title class="dv-card-title-clamp" title="${title}">${title}</ion-card-title>
                             </div>
-                            <button class="dv-btn-icon" style="color:var(--ion-color-danger); border:none; padding:4px;" onclick="event.stopPropagation(); window.DataViewEngine._confirmDelete('${id}')" title="Eliminar">
+                            <button class="dv-btn-icon dv-btn-danger-lite" onclick="event.stopPropagation(); window.DataViewEngine._confirmDelete('${id}')" title="Eliminar">
                                 <ion-icon name="trash"></ion-icon>
                             </button>
                         </ion-card-header>
@@ -1074,7 +1105,7 @@
                 <ion-grid class="dv-ionic-grid">
                     <ion-row>${cols}</ion-row>
                 </ion-grid>
-                <div style="border-top:1px solid var(--dv-border);background:var(--dv-surface);border-radius:0 0 var(--dv-radius) var(--dv-radius);">
+                <div class="dv-card-footer">
                     ${_renderPaginationHTML()}
                 </div>`;
         }
@@ -1091,14 +1122,14 @@
 
             return `
         <div class="dv-pagination">
-          <div style="display:flex;align-items:center;gap:8px;">
+          <div class="dv-flex-group">
             <span class="dv-pagination-info">Mostrando <strong>${start}–${end}</strong> de <strong>${total}</strong></span>
             <select class="dv-page-size-select" onchange="window.DataViewEngine._onPageSize(this.value)">${sizes}</select>
           </div>
           <div class="dv-pagination-controls">
             <button class="dv-page-btn" title="Primera" onclick="window.DataViewEngine._onPage(1)" ${_state.page === 1 ? 'disabled' : ''}>«</button>
             <button class="dv-page-btn" title="Anterior" onclick="window.DataViewEngine._onPage(${_state.page - 1})" ${_state.page === 1 ? 'disabled' : ''}>‹</button>
-            <span style="padding:0 10px;font-size:.83rem;color:var(--dv-text-secondary);">Pág. ${_state.page} / ${tPages}</span>
+            <span class="dv-page-info">Pág. ${_state.page} / ${tPages}</span>
             <button class="dv-page-btn" title="Siguiente" onclick="window.DataViewEngine._onPage(${_state.page + 1})" ${_state.page >= tPages ? 'disabled' : ''}>›</button>
             <button class="dv-page-btn" title="Última" onclick="window.DataViewEngine._onPage(${tPages})" ${_state.page >= tPages ? 'disabled' : ''}>»</button>
           </div>
@@ -1112,20 +1143,20 @@
         ───────────────────────────────────────────── */
         function _renderColPopoverContentHTML() {
             const items = _state.columns.map((col, i) => `
-                <ion-item lines="none" style="--min-height:42px;">
+                <ion-item class="dv-popover-item" lines="none">
                     <ion-checkbox
                         slot="start"
                         data-colidx="${i}"
                         ${col.visible ? 'checked' : ''}
-                        style="--size:18px;--border-radius:4px;">
+                        class="dv-popover-checkbox">
                     </ion-checkbox>
-                    <ion-label style="font-size:.85rem;">${col.label}</ion-label>
+                    <ion-label class="dv-popover-label">${col.label}</ion-label>
                 </ion-item>`).join('');
 
             return `
-                <ion-content style="--background:var(--dv-surface);width:220px;">
-                    <ion-list-header style="min-height:36px;">
-                        <ion-label style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--dv-text-secondary);">
+                <ion-content class="dv-popover-content">
+                    <ion-list-header class="dv-popover-header">
+                        <ion-label class="dv-sub-label">
                             Columnas visibles
                         </ion-label>
                     </ion-list-header>
@@ -1180,7 +1211,7 @@
           <div class="dv-toolbar-right">
             <!-- Trigger del ion-popover nativo — Ionic calcula la posición sin desbordamiento -->
             <button class="dv-btn dv-btn-ghost" id="dv-col-trigger-btn" title="Configurar columnas">
-              <ion-icon name="options-outline" slot="start" style="margin-right: 6px;"></ion-icon> Columnas
+              <ion-icon class="dv-options-icon" name="options-outline" slot="start"></ion-icon> Columnas
             </button>
             <button class="dv-btn-icon ${_state.view === 'table' ? 'active' : ''}" id="dv-view-table-btn"
               onclick="window.DataViewEngine._onViewToggle('table')" title="Vista de lista">
@@ -1218,11 +1249,11 @@
             return `
         <div class="dv-header">
           <div class="dv-header-left">
-            <h2><ion-icon name="${meta.iconName}" color="${meta.color}" style="font-size: 1.6rem;"></ion-icon> ${displayLabel}</h2>
+            <h2><ion-icon class="dv-title-icon" name="${meta.iconName}"></ion-icon> ${displayLabel}</h2>
             <p>${total} registro${total !== 1 ? 's' : ''} en total</p>
           </div>
           <div class="dv-header-actions">
-            <input type="file" id="dv-bulk-upload-input" accept=".csv" style="display:none;" onchange="window.DataViewEngine._importCSV(event)">
+            <input type="file" id="dv-bulk-upload-input" accept=".csv" class="dv-hidden" onchange="window.DataViewEngine._importCSV(event)">
             <button class="dv-btn dv-btn-ghost" onclick="window.DataViewEngine._exportCSV()">
               <ion-icon name="download-outline" slot="start"></ion-icon> Exportar CSV
             </button>
