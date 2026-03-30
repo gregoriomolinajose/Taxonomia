@@ -25,6 +25,8 @@ Desacoplar las operaciones SCD-2 N:M del motor CRUD generalizando el enfoque "Co
 | S6.5 - Polymorphic Handlers (H1) | M | Done | - | - | Strategy Pattern para topologías dinámicas |
 | S6.6 - Segregate Strategies (H11) | S | Done | - | - | Split Topology_Strategies.js from Engine_Graph |
 | S6.7 - Domain Topology Configuration | XS | Done | - | - | Configurar Dominio con JERARQUICA_MILITAR |
+| S7.1 - Dynamic Graph Rendering | L | Done | - | - | Custom UI Components for 1:N / M:N SCD2 Graphs |
+| S7.2 - Payload Serialization | M | Done | - | - | Safe Try/Catch parse & OCP Native HTML dataset attributes |
 
 ## Definition of Done
 - `npm test` verde.
