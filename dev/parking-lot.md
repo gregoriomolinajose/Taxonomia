@@ -19,3 +19,7 @@ Este documento registra deudas técnicas, ideas y recomendaciones observadas dur
 ### 4. Definición de Theme Manager (Native vs JS)
 * **Contexto (S8.7.3):** Eliminar parámetros duramente fijados en HTML y CSS levantó un interrogante arquitectónico fundamental para el soporte del Multi-Theme (Dark/Light).
 * **Acción para E9:** Decidir si la persistencia y lectura dinámica del Tema (Dark Mode, High Contrast, etc.) operará exclusivamente usando el objeto global de CSS `:root` nativo con Media Queries, o si será centralizado mediante una instancia JavaScript pura (ThemeManager) estandarizando diccionarios de color para elementos inalcanzables del DOM (ej. librerías y gráficos SVG / ApexCharts).
+
+### 5. Extracción y Desacoplamiento de Event Listeners
+* **Contexto (S8.7.2):** Se inyectaron escuchadores custom (`levelChanged`) directamente dentro del iterador de inyección de HTML (`uiComponent()`) en `FormEngine_UI.html` para lograr la reactividad de los dropdowns padre-hijo.
+* **Acción para E9:** Evaluar la migración y centralización de todos los *Custom Events* interactivos hacia una macro-clase o Controller puro (idealmente `SubgridState.js` o un `Events_Controller.js`) separando completamente el registro de eventos DOM de las directivas de interpolación de HTML, reduciendo el peso cognitivo e impidiendo el desborde (fat file smell) del motor gráfico.
