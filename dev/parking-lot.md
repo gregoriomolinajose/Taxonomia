@@ -35,3 +35,7 @@ Este documento registra deudas técnicas, ideas y recomendaciones observadas dur
 ### 8. UX Boundary: Profundidad Máxima de Modales Recursivos (Z-Index Guard)
 * **Contexto (S8.7.1):** La recursividad del FormEngine admite infinitos formularios incrustados (Sub-familias -> Familias -> Módulos -> Divisiones) sin advertir fatiga de navegador ni escalando infinitamente el `z-index`.
 * **Acción para E9:** Implementar un límite algorítmico front-end (Max Depth o Constraint de Apilamiento, sugerido 3 niveles) donde la interfaz alerte al usuario o impida seguir anidando la creación in-line, forzándolo a resolver las dependencias subyacentes primero y evitando colapsos visuales.
+
+### 9. Memory Profiling (Garbage Collection QA)
+* **Contexto (S8.7.1 Quality Review):** Se programó el Pop manual del *Modal Stack* tras operaciones exitosas de base de datos para prevenir *Memory Leaks* causados por Closures y Virtual Scrolls ocultos, pero actualmente no tenemos métricas de retención de memoria.
+* **Acción para E9:** Integrar pruebas e2e automatizadas o mediciones de *Profiling* enfocadas al consumo de RAM nativa cuando un operador anida y desanida N modales consecutivamente, certificando matemáticamente que Ionic y el recolector de basura de JS desechan correctamente el nodo desprendido.
