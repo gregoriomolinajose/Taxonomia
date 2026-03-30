@@ -8,54 +8,7 @@
   @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600&family=Poppins:wght@400;500;600&display=swap');
 
   :root {
-    /* NIVEL 1: BRAND TOKENS */
-    --color-interactive-primary:        #1C42E8;
-    --color-interactive-primary-hover:  #081754;
-    --color-interactive-primary-press:  #05297A;
-    --color-interactive-secondary:      #F3F3F3;
-    --color-interactive-secondary-hover:#C9C9C9;
-    --color-interactive-secondary-press:#DEDEDE;
-    --color-interactive-error:          #FF594D;
-    --color-interactive-error-hover:    #A26267;
-    --color-interactive-error-press:    #C8180D;
-
-    --color-text:           #081754;
-    --color-text-soft:      #A4A4A4;
-    --color-text-inactive:  #8C8C8C;
-    --color-text-invert:    #FFFFFF;
-    --color-text-error:     #C8180D;
-    --color-text-warning:   #CF4600;
-    --color-text-success:   #2E8A41;
-    --color-text-info:      #0062A5;
-
-    --color-bg-0:           #F3F3F3;
-    --color-bg-body:        #FFFFFF;
-    --color-bg-dark:        #4A4A4A;
-    --color-bg-error:       #FF594D;
-    --color-bg-success:     #0ABF4F;
-    --color-bg-warning:     #FFAE43;
-    --color-bg-info:        #1CA8F7;
-    --color-bg-inactive:    #DEDEDE;
-
-    --color-icon:           #081754;
-    --color-icon-soft:      #4A4A4A;
-    --color-icon-inactive:  #8C8C8C;
-    --color-icon-invert:    #FFFFFF;
-    --color-icon-error:     #FF594D;
-    --color-icon-success:   #0ABF4F;
-    --color-icon-warning:   #FFAE43;
-    --color-icon-info:      #1CA8F7;
-
-    --color-border:         #C9C9C9;
-    --color-border-error:   #FF594D;
-    --color-border-success: #0ABF4F;
-    --color-border-warning: #FFAE43;
-    --color-border-info:    #1CA8F7;
-
-    --color-brand-coppel:    #F0D224;
-    --color-brand-bancoppel: #05297A;
-    --color-brand-sales:     #C8180D;
-
+    /* NIVEL 2: ALIAS TOKENS IONIC (Mapeos a las variables inyectadas en $O(1)$) */
     --rounded-none: 0px;
     --rounded-sm:   8px;
     --rounded-md:   16px;
@@ -70,6 +23,99 @@
     --shadow-hover:    0px 6px 24px 0px rgba(25,75,123,0.12);
     --shadow-primary:  0px 6px 24px 0px rgba(25,75,123,0.18);
     --shadow-floating: 0px 4px 16px rgba(25,75,123,0.24),0px 6px 24px rgba(25,75,123,0.16);
+  }
+</style>
+
+<script>
+  /* ═══════════════════════════════════════════════════════
+     THEME MANAGER $O(1)$ — JSON TOKENS HYDRATOR (Regla UI §14)
+  ═══════════════════════════════════════════════════════ */
+  window.__THEME_TOKENS__ = {
+    color: {
+      interactive: {
+        primary: "#1C42E8",
+        "primary-hover": "#081754",
+        "primary-press": "#05297A",
+        secondary: "#F3F3F3",
+        "secondary-hover": "#C9C9C9",
+        "secondary-press": "#DEDEDE",
+        error: "#FF594D",
+        "error-hover": "#A26267",
+        "error-press": "#C8180D"
+      },
+      text: {
+        default: "#081754",
+        soft: "#A4A4A4",
+        inactive: "#8C8C8C",
+        invert: "#FFFFFF",
+        error: "#C8180D",
+        warning: "#CF4600",
+        success: "#2E8A41",
+        info: "#0062A5"
+      },
+      bg: {
+        "0": "#F3F3F3",
+        body: "#FFFFFF",
+        dark: "#4A4A4A",
+        error: "#FF594D",
+        success: "#0ABF4F",
+        warning: "#FFAE43",
+        info: "#1CA8F7",
+        inactive: "#DEDEDE"
+      },
+      icon: {
+        default: "#081754",
+        soft: "#4A4A4A",
+        inactive: "#8C8C8C",
+        invert: "#FFFFFF",
+        error: "#FF594D",
+        success: "#0ABF4F",
+        warning: "#FFAE43",
+        info: "#1CA8F7"
+      },
+      border: {
+        default: "#C9C9C9",
+        error: "#FF594D",
+        success: "#0ABF4F",
+        warning: "#FFAE43",
+        info: "#1CA8F7"
+      },
+      brand: {
+        coppel: "#F0D224",
+        bancoppel: "#05297A",
+        sales: "#C8180D"
+      }
+    }
+  };
+
+  /**
+   * Transforma el JSON estructurado en Variables Kebab-case de CSS
+   * e inyecta asíncronamente en document.documentElement.style para 
+   * evitar bloqueo de Thread y gobernar el renderizado Themed.
+   */
+  (function hydrateTheme(tokens) {
+    const flattenObject = (obj, prefix = '') => {
+      Object.keys(obj).forEach(key => {
+        let propName = prefix ? `${prefix}-${key}` : `--${key}`;
+        // Fix para "text.default" o "icon.default" -> "--color-text"
+        if (key === "default") {
+          let parentName = prefix ? prefix : '--';
+          document.documentElement.style.setProperty(parentName, obj[key]);
+        }
+        
+        if (typeof obj[key] === 'object' && obj[key] !== null) {
+          flattenObject(obj[key], propName);
+        } else {
+          document.documentElement.style.setProperty(propName, obj[key]);
+        }
+      });
+    };
+    flattenObject(tokens);
+  })(window.__THEME_TOKENS__);
+</script>
+
+<style>
+  :root {
 
     /* NIVEL 2: ALIAS TOKENS IONIC */
     --ion-color-primary:           var(--color-interactive-primary);

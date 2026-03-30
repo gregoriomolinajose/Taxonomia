@@ -393,10 +393,10 @@
             progressLabel.style.color = 'var(--ion-color-medium)';
             progressLabel.style.fontSize = 'var(--sys-font-small)';
             progressLabel.style.marginTop = '0';
-            progressLabel.style.marginBottom = '20px';
+            progressLabel.style.marginBottom = 'var(--spacing-5)';
             progressLabel.style.fontWeight = '600';
             progressLabel.style.textTransform = 'uppercase';
-            progressLabel.style.letterSpacing = '1px';
+            progressLabel.style.letterSpacing = '0.05em';
             cardContent.appendChild(progressLabel);
 
             // 2. Renderizado del Menú Lateral y Contenedores
@@ -412,8 +412,8 @@
                     const item = document.createElement('ion-item');
                     item.button = true; // Efecto Ripple interactivo
                     item.setAttribute('lines', 'none');
-                    item.style.borderRadius = '8px';
-                    item.style.margin = '4px 12px';
+                    item.style.borderRadius = 'var(--rounded-sm)';
+                    item.style.margin = 'var(--spacing-1) var(--spacing-3)';
                     item.style.setProperty('--min-height', '44px');
                     if (index === 0) item.style.setProperty('--background', 'var(--ion-color-step-100)');
                     
@@ -453,11 +453,11 @@
                 sectionTitle.style.fontSize = 'var(--sys-font-h3)';
                 sectionTitle.style.fontWeight = '600';
                 sectionTitle.style.marginTop = '0';
-                sectionTitle.style.marginBottom = '20px';
+                sectionTitle.style.marginBottom = 'var(--spacing-5)';
                 stepContainers[key].appendChild(sectionTitle);
 
                 const grid = document.createElement('ion-grid');
-                grid.style.padding = '0';
+                grid.style.padding = 'var(--spacing-0)';
                 const row = document.createElement('ion-row');
                 grid.appendChild(row);
 
@@ -519,7 +519,7 @@
                         inputEl = document.createElement('div');
                         inputEl.setAttribute('data-relation-type', field.relationType || 'relacionado');
                         inputEl.style.width = '100%';
-                        inputEl.style.marginBottom = '10px';
+                        inputEl.style.marginBottom = 'var(--spacing-2)';
                         
                         const liveData = (window.__APP_CACHE__ && window.__APP_CACHE__[field.targetEntity]) ? window.__APP_CACHE__[field.targetEntity] : [];
                         const activeData = liveData.filter(d => d.estado !== 'Eliminado' && typeof d === 'object');
@@ -558,7 +558,7 @@
                             basicSel.setAttribute('fill', 'outline');
                             
                             // Prevent overlapping by adding a tiny margin
-                            basicSel.style.marginBottom = '12px';
+                            basicSel.style.marginBottom = 'var(--spacing-3)';
 
                             // Empty Default 'Ninguno'
                             const emptyOpt = document.createElement('ion-select-option');
@@ -717,14 +717,14 @@
                         inputEl = document.createElement('div');
                         inputEl.setAttribute('data-dynamic-list', field.name);
                         inputEl.style.border = '0px solid var(--ion-border-color)';
-                        inputEl.style.padding = '0px';
+                        inputEl.style.padding = 'var(--spacing-0)';
                         inputEl.style.marginBottom = 'var(--spacing-4)';
                         
                         const dlHeader = document.createElement('div');
                         dlHeader.style.fontSize = 'var(--sys-font-small)';
                         dlHeader.style.color = 'var(--ion-color-medium)';
-                        dlHeader.style.marginBottom = '8px';
-                        dlHeader.style.paddingLeft = '5px';
+                        dlHeader.style.marginBottom = 'var(--spacing-2)';
+                        dlHeader.style.paddingLeft = 'var(--spacing-1)';
                         dlHeader.textContent = field.label + (field.required ? ' *' : '');
                         inputEl.appendChild(dlHeader);
 
@@ -817,8 +817,8 @@
                         const cLabel = document.createElement('div');
                         cLabel.style.fontSize = 'var(--sys-font-small)';
                         cLabel.style.color = 'var(--ion-color-medium)';
-                        cLabel.style.marginBottom = '4px';
-                        cLabel.style.paddingLeft = '5px';
+                        cLabel.style.marginBottom = 'var(--spacing-1)';
+                        cLabel.style.paddingLeft = 'var(--spacing-1)';
                         cLabel.textContent = field.label + (field.required ? ' *' : '');
                         inputEl.appendChild(cLabel);
 
@@ -911,14 +911,14 @@
             async function renderSubgrid(field, container) {
                 const subgridDiv = document.createElement('div');
                 subgridDiv.style.border = '1px solid var(--ion-border-color)';
-                subgridDiv.style.borderRadius = '8px';
+                subgridDiv.style.borderRadius = 'var(--rounded-sm)';
                 subgridDiv.style.overflow = 'hidden';
-                subgridDiv.style.marginBottom = '20px';
+                subgridDiv.style.marginBottom = 'var(--spacing-5)';
 
                 // Header de la mini-tabla
                 const header = document.createElement('div');
                 header.style.background = 'var(--ion-color-light)';
-                header.style.padding = '10px 15px';
+                header.style.padding = 'var(--spacing-2) var(--spacing-4)';
                 header.style.display = 'flex';
                 header.style.justifyContent = 'space-between';
                 header.style.alignItems = 'center';
@@ -934,13 +934,13 @@
                 // Body (Lista)
                 const list = document.createElement('ion-list');
                 list.setAttribute('lines', 'full');
-                list.style.padding = '0';
+                list.style.padding = 'var(--spacing-0)';
                 subgridDiv.appendChild(list);
 
                 const emptyState = document.createElement('div');
-                emptyState.style.padding = '20px';
+                emptyState.style.padding = 'var(--spacing-5)';
                 emptyState.style.textAlign = 'center';
-                emptyState.innerHTML = `<ion-icon name="layers-outline" color="medium" style="font-size:32px"></ion-icon><p style="color:var(--ion-color-medium); font-size:12px">Sin registros vinculados</p>`;
+                emptyState.innerHTML = `<ion-icon name="layers-outline" color="medium" style="font-size:var(--sys-font-display)"></ion-icon><p style="color:var(--ion-color-medium); font-size:12px">Sin registros vinculados</p>`;
                 list.appendChild(emptyState);
 
                 // Estado local del subgrid
@@ -1725,11 +1725,11 @@
 
                 const noteContainer = document.createElement('div');
                 noteContainer.style.textAlign = 'center';
-                noteContainer.style.padding = '16px';
-                noteContainer.style.marginTop = '10px';
+                noteContainer.style.padding = 'var(--spacing-4)';
+                noteContainer.style.marginTop = 'var(--spacing-2)';
 
                 const note = document.createElement('ion-note');
-                note.style.fontSize = '0.75rem';
+                note.style.fontSize = 'var(--sys-font-small)';
                 note.style.color = 'var(--dv-text-light)';
                 note.textContent = `Última actualización por ${record.updated_by} el ${formattedDate}`;
 
