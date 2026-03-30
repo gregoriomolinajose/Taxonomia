@@ -24,6 +24,7 @@
 | 5 | S8.5 — UI Dumbness Guards | S | Done | 1.5 | 0.67 | S8.5.1 Fast Follow for H9 included |
 | 6 | S8.6 — Relational Proximity Rules | S | Done | 1.0 | 0.5 | Strict and Lax mode validated mathematically |
 | 7 | S8.7 — In-line UX & Branch Shifting | L | Done | 3.0 | 0.75 | Modal Stack y Branch Shifting Interceptor |
+| - | S8.7.1 — In-line UX & LIFO Modal Stack | M | Done | 2.0 | 0.75 | Apilado LIFO y UI Recursiva |
 | - | S8.7.2 — Event Listener Repaint Binding | XS | Done | 0.3 | 1 | Reactividad Asíncrona (DOM) |
 | - | S8.7.3 — UAT UX Fixes & CSS Contrast | S | Done | 0.5 | 1 | Design System Enforcement |
 | - | S8.7.4-6 — UAT Quality Gates (Hotfixes) | S | Done | 1.2 | 1 | $O(1)$ Hermetic Strategies and DB Memoization |
