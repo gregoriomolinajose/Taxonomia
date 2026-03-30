@@ -153,23 +153,7 @@
       label.textContent = fieldDef.label + (fieldDef.required ? ' *' : '');
       container.appendChild(label);
 
-      // Contenedor Chips
-      const chipsBox = document.createElement('div');
-      chipsBox.style.display = 'flex';
-      chipsBox.style.flexWrap = 'wrap';
-      chipsBox.style.gap = '8px';
-      chipsBox.style.marginBottom = '8px';
-      chipsBox.style.minHeight = '32px';
-
-      // Input Searchbar
-      const searchbar = document.createElement('ion-searchbar');
-      searchbar.placeholder = `Buscar ${fieldDef.targetEntity}...`;
-      searchbar.debounce = 100;
-      searchbar.style.padding = '0';
-      searchbar.style.setProperty('--box-shadow', 'none');
-      searchbar.style.setProperty('--background', 'transparent');
-      
-      // Visual Input Wrapper for Searchable Component
+      // Visual Input Wrapper for Searchable Component (Main Form)
       const visualWrapper = document.createElement('div');
       visualWrapper.style.border = '1px solid var(--ion-color-step-300, #c8c7cc)';
       visualWrapper.style.borderRadius = 'var(--rounded-md, 4px)';
@@ -177,26 +161,123 @@
       visualWrapper.style.minHeight = '48px';
       visualWrapper.style.backgroundColor = 'var(--ion-color-step-50, #f4f5f8)';
       
-      // S7.4 CPO UAT: Searchbar arriba, Chips abajo con un leve padding.
-      chipsBox.style.marginTop = '8px';
-      visualWrapper.appendChild(searchbar);
+      const addBtn = document.createElement('ion-button');
+      addBtn.fill = 'outline';
+      addBtn.size = 'small';
+      addBtn.innerHTML = '<ion-icon name="add" slot="start"></ion-icon> AGREGAR';
+      addBtn.style.marginBottom = '8px';
+
+      // Contenedor Chips (Primary Read-Only View)
+      const chipsBox = document.createElement('div');
+      chipsBox.style.display = 'flex';
+      chipsBox.style.flexWrap = 'wrap';
+      chipsBox.style.gap = '8px';
+      chipsBox.style.minHeight = '32px';
+
+      visualWrapper.appendChild(addBtn);
       visualWrapper.appendChild(chipsBox);
       container.appendChild(visualWrapper);
 
-      // Popover/Dropdown Lista
-      const listCard = document.createElement('ion-card');
-      listCard.style.display = 'none';
-      listCard.style.position = 'absolute';
-      listCard.style.width = 'calc(100% - 32px)';
-      listCard.style.zIndex = '999';
-      listCard.style.maxHeight = '250px';
-      listCard.style.overflowY = 'auto';
-      listCard.style.margin = '0';
-      const list = document.createElement('ion-list');
-      listCard.appendChild(list);
-      container.appendChild(listCard);
+      // S7.5 - Picker Modal Pattern
+      addBtn.onclick = () => {
+          let draftIds = [...selectedIds];
+          
+          const pickerModal = document.createElement('ion-modal');
+          pickerModal.isOpen = true;
+          
+          const header = document.createElement('ion-header');
+          const toolbar = document.createElement('ion-toolbar');
+          const title = document.createElement('ion-title');
+          title.textContent = `Seleccionar ${fieldDef.targetEntity}`;
+          
+          const buttonsStart = document.createElement('ion-buttons');
+          buttonsStart.slot = 'start';
+          const cancelBtn = document.createElement('ion-button');
+          cancelBtn.textContent = 'Cerrar';
+          cancelBtn.onclick = () => { pickerModal.isOpen = false; setTimeout(() => pickerModal.remove(), 300); };
+          buttonsStart.appendChild(cancelBtn);
+
+          const buttonsEnd = document.createElement('ion-buttons');
+          buttonsEnd.slot = 'end';
+          const confirmBtn = document.createElement('ion-button');
+          confirmBtn.textContent = 'Confirmar';
+          confirmBtn.color = 'primary';
+          confirmBtn.onclick = () => {
+              selectedIds = [...draftIds];
+              renderChips();
+              pickerModal.isOpen = false;
+              setTimeout(() => pickerModal.remove(), 300);
+          };
+          buttonsEnd.appendChild(confirmBtn);
+
+          toolbar.appendChild(buttonsStart);
+          toolbar.appendChild(title);
+          toolbar.appendChild(buttonsEnd);
+          header.appendChild(toolbar);
+
+          const content = document.createElement('ion-content');
+          content.classList.add('ion-padding');
+          
+          const searchbar = document.createElement('ion-searchbar');
+          searchbar.placeholder = `Buscar ${fieldDef.targetEntity}...`;
+          searchbar.debounce = 100;
+
+          const draftChipsBox = document.createElement('div');
+          draftChipsBox.style.display = 'flex';
+          draftChipsBox.style.flexWrap = 'wrap';
+          draftChipsBox.style.gap = '8px';
+          draftChipsBox.style.marginBottom = '16px';
+          
+          const renderDraftChips = () => {
+              draftChipsBox.innerHTML = '';
+              draftIds.forEach(id => {
+                  const match = dataset.find(d => String(d[fieldDef.valueField]) === String(id));
+                  const labelText = match && match[fieldDef.labelField] ? `${match[fieldDef.valueField]} - ${match[fieldDef.labelField]}` : id;
+                  const chip = window.UI_Components.drawChip(id, labelText, (e, chipId) => {
+                      draftIds = draftIds.filter(sid => sid !== chipId);
+                      renderDraftChips();
+                  });
+                  draftChipsBox.appendChild(chip);
+              });
+          };
+          renderDraftChips();
+
+          const list = document.createElement('ion-list');
+
+          searchbar.addEventListener('ionInput', (e) => {
+              const term = (e.detail.value || '').toLowerCase().trim();
+              list.innerHTML = '';
+              if (!term) return;
+              
+              const matches = dataset.filter(d => {
+                  const l = d[fieldDef.labelField] || '';
+                  return String(l).toLowerCase().includes(term) && !draftIds.includes(String(d[fieldDef.valueField]));
+              }).slice(0, 15);
+              
+              matches.forEach(m => {
+                  const item = document.createElement('ion-item');
+                  item.button = true;
+                  item.textContent = `${m[fieldDef.valueField]} - ${m[fieldDef.labelField]}`;
+                  item.onclick = () => {
+                      draftIds.push(String(m[fieldDef.valueField]));
+                      searchbar.value = '';
+                      list.innerHTML = '';
+                      renderDraftChips();
+                  };
+                  list.appendChild(item);
+              });
+          });
+
+          content.appendChild(searchbar);
+          content.appendChild(draftChipsBox);
+          content.appendChild(list);
+
+          pickerModal.appendChild(header);
+          pickerModal.appendChild(content);
+          document.body.appendChild(pickerModal);
+      };
       
-      // Función renderizado chips
+      // Función renderizado chips en el Main Form
       const renderChips = () => {
           chipsBox.innerHTML = '';
           hidden.value = JSON.stringify(selectedIds);
@@ -214,45 +295,6 @@
           });
       };
       
-      // Evento busqueda
-      searchbar.addEventListener('ionInput', (e) => {
-          const term = (e.detail.value || '').toLowerCase().trim();
-          list.innerHTML = '';
-          if (!term) {
-              listCard.style.display = 'none';
-              return;
-          }
-          const matches = dataset.filter(d => {
-              const l = d[fieldDef.labelField] || '';
-              return String(l).toLowerCase().includes(term) && !selectedIds.includes(String(d[fieldDef.valueField]));
-          }).slice(0, 15); // limit to 15 predictions
-          
-          if (matches.length > 0) {
-              matches.forEach(m => {
-                  const item = document.createElement('ion-item');
-                  item.button = true;
-                  item.textContent = `${m[fieldDef.valueField]} - ${m[fieldDef.labelField]}`;
-                  item.onclick = () => {
-                      selectedIds.push(String(m[fieldDef.valueField]));
-                      searchbar.value = '';
-                      listCard.style.display = 'none';
-                      renderChips();
-                  };
-                  list.appendChild(item);
-              });
-              listCard.style.display = 'block';
-          } else {
-              listCard.style.display = 'none';
-          }
-      });
-
-      // Close popover when clicking outside
-      document.addEventListener('click', (ev) => {
-          if (!container.contains(ev.target)) {
-              listCard.style.display = 'none';
-          }
-      });
-
       // Init call
       renderChips();
   };
