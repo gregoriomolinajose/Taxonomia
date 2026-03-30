@@ -27,3 +27,11 @@ Este documento registra deudas técnicas, ideas y recomendaciones observadas dur
 ### 6. Subrutina de Renderizado DRY (FormEngine_UI)
 * **Contexto (S8.7.2 Quality Review):** La declaración de Elementos del DOM como `document.createElement('ion-select-option')` fue repetida idénticamente tanto en la inicialización principal del componente como dentro de los eventos de *repaint* (`levelChanged`).
 * **Acción para E9:** Modularizar la inyección de opciones HTML extrayendo esa lógica hacia una función de dibujo aislada y reutilizable dentro del Controller. Esto limpiará el método primario adhiriéndose al principio DRY (Don't Repeat Yourself).
+
+### 7. Gobernanza de Estado del Modal Stack (Desacoplamiento)
+* **Contexto (S8.7.1):** La estructura MDM In-line se apoya actualmente de una pila LIFO global inyectada rudimentariamente vía `window.formModalStack = window.formModalStack || []`.
+* **Acción para E9:** Refactorizar el control y apilamiento asíncrono hacia el ecosistema inyectado puramente (e.g. `SubgridState.js`), extirpando por completo el enrutamiento visual dependiente del objeto `window` principal.
+
+### 8. UX Boundary: Profundidad Máxima de Modales Recursivos (Z-Index Guard)
+* **Contexto (S8.7.1):** La recursividad del FormEngine admite infinitos formularios incrustados (Sub-familias -> Familias -> Módulos -> Divisiones) sin advertir fatiga de navegador ni escalando infinitamente el `z-index`.
+* **Acción para E9:** Implementar un límite algorítmico front-end (Max Depth o Constraint de Apilamiento, sugerido 3 niveles) donde la interfaz alerte al usuario o impida seguir anidando la creación in-line, forzándolo a resolver las dependencias subyacentes primero y evitando colapsos visuales.
