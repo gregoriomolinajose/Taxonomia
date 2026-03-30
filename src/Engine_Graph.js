@@ -48,63 +48,61 @@ const Engine_Graph = {
                 }
             }
 
-            // 2. Prevent Cycles (DAG) via BFS [Rule 7]
-            if (rules.preventCycles) {
-                const queue = [parentId];
-                const visitedAncestors = new Set();
-                while (queue.length > 0) {
-                    const currentAncestor = queue.shift();
-                    if (!currentAncestor || currentAncestor === "" || currentAncestor === "NULL") continue;
+            // 2 & 3. Unified DFS Recursion (Cycles & Max Depth) [Rules 7 & 9]
+            if (rules.preventCycles || rules.maxDepth > 0) {
+                
+                function dfsTraversal(currentNode, pathStack, memo) {
+                    if (!currentNode || currentNode === "" || currentNode === "NULL") return 0;
                     
-                    if (currentAncestor === childId) {
+                    if (rules.preventCycles && pathStack.has(currentNode)) {
                         throw new Error(`[Topology Error] Detección de Ciclo (DAG): Infracción DAG: Ciclo infinito detectado en linaje M:N.`);
                     }
-                    if (visitedAncestors.has(currentAncestor)) continue;
-                    visitedAncestors.add(currentAncestor);
                     
-                    const nextParents = parentsOf[currentAncestor] || [];
-                    nextParents.forEach(p => queue.push(p));
-                }
-            }
-            
-            // 3. Max Depth Calculation via BFS (Longest Path UP) [Rule 9]
-            if (rules.maxDepth > 0) {
-                let maxDepthUp = 0;
-                const queueUp = [{ id: parentId, depth: 1 }];
-                const visitedUp = new Set();
-                
-                while (queueUp.length > 0) {
-                    const current = queueUp.shift();
-                    if (!current.id || current.id === "" || current.id === "NULL") continue;
+                    if (memo.has(currentNode)) return memo.get(currentNode);
                     
-                    if (current.depth > maxDepthUp) maxDepthUp = current.depth;
+                    pathStack.add(currentNode);
                     
-                    if (visitedUp.has(current.id)) continue;
-                    visitedUp.add(current.id);
+                    const nextParents = parentsOf[currentNode] || [];
+                    let maxPDepth = 0;
                     
-                    const nextParents = parentsOf[current.id] || [];
-                    nextParents.forEach(p => queueUp.push({ id: p, depth: current.depth + 1 }));
+                    for (const p of nextParents) {
+                        const d = dfsTraversal(p, pathStack, memo);
+                        if (d > maxPDepth) maxPDepth = d;
+                    }
+                    
+                    pathStack.delete(currentNode);
+                    
+                    const longestPath = 1 + maxPDepth;
+                    memo.set(currentNode, longestPath);
+                    return longestPath;
                 }
                 
-                function getSubtreeMaxDepth(nodeId, visitedDown) {
-                    if (!childrenOf[nodeId] || childrenOf[nodeId].length === 0) return 0;
-                    let maxD = 0;
-                    childrenOf[nodeId].forEach(c => {
-                        if (!visitedDown.has(c)) {
-                            visitedDown.add(c);
-                            const d = 1 + getSubtreeMaxDepth(c, visitedDown);
-                            if (d > maxD) maxD = d;
-                            visitedDown.delete(c);
-                        }
-                    });
-                    return maxD;
-                }
+                // Preseed pathSet with childId to detect if the new edge to parentId creates a cycle back to childId.
+                const pathSet = new Set([childId]);
+                const memoMap = new Map();
+                const maxDepthUp = dfsTraversal(parentId, pathSet, memoMap);
                 
-                const depthChildTree = getSubtreeMaxDepth(childId, new Set([childId]));
-                const totalDepth = maxDepthUp + 1 + depthChildTree;
-                
-                if (totalDepth > rules.maxDepth) {
-                    throw new Error(`[Topology Error] Profundidad Máxima Excedida: La vinculación genera una profundidad de ${totalDepth} niveles (Límite: ${rules.maxDepth}).`);
+                if (rules.maxDepth > 0) {
+                    function getSubtreeMaxDepth(nodeId, visitedDown) {
+                        if (!childrenOf[nodeId] || childrenOf[nodeId].length === 0) return 0;
+                        let maxD = 0;
+                        childrenOf[nodeId].forEach(c => {
+                            if (!visitedDown.has(c)) {
+                                visitedDown.add(c);
+                                const d = 1 + getSubtreeMaxDepth(c, visitedDown);
+                                if (d > maxD) maxD = d;
+                                visitedDown.delete(c);
+                            }
+                        });
+                        return maxD;
+                    }
+                    
+                    const depthChildTree = getSubtreeMaxDepth(childId, new Set([childId]));
+                    const totalDepth = maxDepthUp + 1 + depthChildTree;
+                    
+                    if (totalDepth > rules.maxDepth) {
+                        throw new Error(`[Topology Error] Profundidad Máxima Excedida: La vinculación genera una profundidad de ${totalDepth} niveles (Límite: ${rules.maxDepth}).`);
+                    }
                 }
             }
             
