@@ -15,3 +15,7 @@ Este documento registra deudas técnicas, ideas y recomendaciones observadas dur
 ### 3. Design System Linter (UI Hardcoding)
 * **Contexto (S8.7.3):** Se erradicaron colores CSS explícitos (ej. `red`, `blue`) que rompían la experiencia de contraste Multitemático en `DataView_UI`.
 * **Acción para E9:** Implementar validaciones automatizadas (Linters o RegExp Checks en scripts de Build) o refactorizar el `CSS_App.html` aislando totalmente cualquier parámetro estético de reactividad forzándolo a utilizar variables declaradas (`var(--color-danger)`). Prohibición absoluta de inyectar reglas estáticas locales por JavaScript al `style`.
+
+### 4. Definición de Theme Manager (Native vs JS)
+* **Contexto (S8.7.3):** Eliminar parámetros duramente fijados en HTML y CSS levantó un interrogante arquitectónico fundamental para el soporte del Multi-Theme (Dark/Light).
+* **Acción para E9:** Decidir si la persistencia y lectura dinámica del Tema (Dark Mode, High Contrast, etc.) operará exclusivamente usando el objeto global de CSS `:root` nativo con Media Queries, o si será centralizado mediante una instancia JavaScript pura (ThemeManager) estandarizando diccionarios de color para elementos inalcanzables del DOM (ej. librerías y gráficos SVG / ApexCharts).
