@@ -189,12 +189,7 @@
 
         _badgeClass: function(value) {
             var slug = this._slugify(String(value));
-            var map = {
-                'activo': 'activo', 'borrador': 'borrador', 'en-revis-n': 'en-revision', 'en-revision': 'en-revision',
-                'tier-1-cr-tico': 'tier-1-critico', 'tier-1-critico': 'tier-1-critico',
-                'tier-2-alto': 'tier-2-alto', 'tier-3-medio': 'tier-3-medio', 'tier-4-bajo': 'tier-4-bajo',
-                'saas': 'saas', 'marketplace': 'marketplace', 'b2b': 'b2b', 'b2c': 'b2c', 'transaccional': 'transaccional'
-            };
+            var map = (window.APP_SCHEMAS && window.APP_SCHEMAS._UI_CONFIG && window.APP_SCHEMAS._UI_CONFIG.badgeMap) || {};
             return 'dv-badge dv-badge-' + (map[slug] || 'default');
         },
 

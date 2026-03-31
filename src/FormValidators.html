@@ -36,26 +36,43 @@
         /**
          * @function attachBusinessRulesListeners
          * Aplica listeners locales para calcular dinámicamente campos computados en frontend
-         * de manera hardcoded por Reglas de Negocio específicas de la Taxonomía.
+         * Basado en meta-declaraciones en APP_SCHEMAS (Config-Driven), sin hardcoding OCP.
          * @param {HTMLElement} container Formulario global
+         * @param {String} entityName Entidad activa
          */
-        global.UI_Validators.attachBusinessRulesListeners = function(container) {
-            // --- REGLA V4.0: Lógica de Suma Automática para Total Integrantes ---
+        global.UI_Validators.attachBusinessRulesListeners = function(container, entityName) {
+            if (!entityName || !global.APP_SCHEMAS || !global.APP_SCHEMAS[entityName]) return;
+            
+            const rules = global.APP_SCHEMAS[entityName].businessRules || [];
+            if (rules.length === 0) return;
+
+            // --- REGLA: Procesador Dinámico de Reglas de Negocio en UI ---
             container.addEventListener('ionInput', (e) => {
                 const target = e.target;
-                if (target.tagName && target.tagName.toLowerCase() === 'ion-input' && target.name && target.name.startsWith('cant_')) {
-                    const allCants = container.querySelectorAll('ion-input[name^="cant_"]');
-                    let total = 0;
-                    allCants.forEach(input => {
-                        const val = parseInt(input.value, 10);
-                        if (!isNaN(val)) total += val;
-                    });
-                    
-                    const totalInput = container.querySelector('ion-input[name="total_integrantes"]');
-                    if (totalInput) {
-                        totalInput.value = total;
+                if (!target.tagName || target.tagName.toLowerCase() !== 'ion-input' || !target.name) return;
+
+                rules.forEach(rule => {
+                    // Logic for Declarative Rule: "sumPrefix"
+                    if (rule.trigger === 'onInput' && rule.action === 'sumPrefix') {
+                        if (target.name.startsWith(rule.prefix)) {
+                            const allInputs = container.querySelectorAll(`ion-input[name^="${rule.prefix}"]`);
+                            let total = 0;
+                            allInputs.forEach(input => {
+                                const val = parseInt(input.value, 10);
+                                if (!isNaN(val)) total += val;
+                            });
+                            
+                            const targetInput = container.querySelector(`ion-input[name="${rule.target}"]`);
+                            if (targetInput) {
+                                targetInput.value = total;
+                                // Disparar alerta visual de update (UX)
+                                targetInput.style.transition = 'color 0.3s ease';
+                                targetInput.style.color = 'var(--ion-color-secondary)';
+                                setTimeout(() => targetInput.style.color = '', 300);
+                            }
+                        }
                     }
-                }
+                });
             });
         };
 

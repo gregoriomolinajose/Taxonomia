@@ -816,7 +816,7 @@
 
             // --- Delegación de Business Rules UI_Validators ---
             if (global.UI_Validators && typeof global.UI_Validators.attachBusinessRulesListeners === 'function') {
-                global.UI_Validators.attachBusinessRulesListeners(container);
+                global.UI_Validators.attachBusinessRulesListeners(container, entityName);
             }
             // --------------------------------------------------------------------
 
