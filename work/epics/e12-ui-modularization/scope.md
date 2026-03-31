@@ -52,5 +52,5 @@ Desarrollar una infraestructura SPA escalable mediante la amputación y deconstr
 | ID | Story Name | Status | Size | Deps | Rationale |
 |----|------------|--------|------|------|-----------|
 | S12.1 | FormEngine Splitting | Done     | L | None | **Risk-First** (Mitigar colapso cognitivo del Inyector principal). |
-| S12.2 | DataGrid & Routing Abstraction | Pending | M | S12.1 | Despejar componentes presentacionales pesados. |
+| S12.2 | DataGrid & Routing Abstraction | In-Progress | M | S12.1 | Despejar componentes presentacionales pesados. |
 | S12.3 | GC Safety & Tooling Boundaries | Pending | S | S12.2 | Cierre Quirúrgico de la Épica. |
