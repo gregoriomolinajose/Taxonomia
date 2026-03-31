@@ -1,5 +1,5 @@
 const CONFIG = {
-    APP_VERSION: 'v1.2.6-stable',
+    APP_VERSION: 'v1.2.7-stable',
     ENVIRONMENT: 'DEV',
     // TODO: Reemplazar con el ID real de Desarrollo
     SPREADSHEET_ID_DB: '1tMyYBLPr0HJnJwbhFpCVoM4U8k1EVGycBDBjEnUGDts',
