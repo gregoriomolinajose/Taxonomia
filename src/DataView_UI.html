@@ -770,8 +770,8 @@
                         jsonArray.forEach(row => {
                             let total = 0;
                             Object.keys(row).forEach(key => {
-                                if (key.startsWith(rule.prefix) && !isNaN(parseInt(row[key]))) {
-                                    total += parseInt(row[key]);
+                                if (key.startsWith(rule.prefix) && !isNaN(parseInt(row[key], 10))) {
+                                    total += parseInt(row[key], 10);
                                 }
                             });
                             row[rule.target] = total;
