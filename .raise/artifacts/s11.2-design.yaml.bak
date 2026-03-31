@@ -1,0 +1,15 @@
+# S11.2 Design Metadata
+version: '1.0'
+type: design-spec
+attributes:
+  epic: "E11"
+  story: "S11.2"
+  title: "Topological & Parsing Resilience"
+components_affected:
+  - FormEngine_UI.html (Frontend Graph Rendering)
+  - CSS_DesignSystem.html (Frontend CSS Variable Injector)
+  - Topology_Strategies.js (Central Guard Clause utility)
+complexity:
+  level: "moderate"
+  risk_factors: ["Memory regression during string allocations", "DOM Paint lock during massive CSS injects"]
+  mitigations: ["Memory-O(1) isolated flattening", "Strict Try/Catch boundary"]

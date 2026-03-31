@@ -39,3 +39,7 @@ Este documento condensa la Deuda Técnica material, ideas heurísticas y adverte
 ### 8. Ecosistema Exclusivo de Automatización QA (Testing Sandboxing)
 * **Origen:** E10 E2E Profiler Tool inyectado productivamente.
 * **Acción Causal:** Extirpar asimetrías de control de calidad. Utilidades E2E como nuestro asincrónico `__runMemoryProfile_E2E()` anidan en entornos operativos reales. Reordenarlos exiliándolos dentro de artefactos encapsulados localmente (ej: `TEST_Suite_UI.html`) o directivas *Tree-Shaking* permitiendo flujos E2E desinfectados contra el ecosistema final estable del cliente.
+
+### 9. File-Aware Deployment & QA Isolation (H21)
+* **Origen:** E11.S11.4 Architecture Review.
+* **Acción Causal:** Aunque el código QA (`TEST_Suite_UI.html`) ha sido extraído semánticamente, el compilador actual de Apps Script lo sigue empujando incondicionamente. En la próxima refactorización de DevSecOps, se debe integrar una exclusión explícita en el sub-proceso `.build/` del `deploy.js` (`exclude: ['TEST_*.html']`) y condicionales en `Index.html` (`<?!= IS_DEV ? include('TEST_Suite_UI') : "" ?>`) para asegurar verdadero *Tree-Shaking* en Producción.

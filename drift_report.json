@@ -1,0 +1,158 @@
+{
+  "DataView_Engine": {
+    "doc": {
+      "depends_on": [
+        "UI_Shell",
+        "Data_Schemas"
+      ],
+      "depended_by": [
+        "Form_Engine"
+      ],
+      "public_api": [],
+      "components": 2
+    },
+    "graph": {
+      "depends_on": [
+        "UI_Shell",
+        "Data_Schemas"
+      ],
+      "depended_by": [
+        "Form_Engine"
+      ],
+      "public_api": [],
+      "components": 2
+    },
+    "file": "governance\\architecture\\modules\\DataView_Engine.md",
+    "frontmatterString": "type: module\r\nname: DataView_Engine\r\npurpose: \"Zero-latency, in-memory data grid renderer. Drives all entity list views from window.__APP_CACHE__ without server round-trips. Wires create/edit/delete actions to FormEngine and provides bulk import via CSV.\"\r\nstatus: active\r\ndepends_on: [UI_Shell, Data_Schemas]\r\ndepended_by: [Form_Engine]\r\ncomponents:\r\n  - DataView_UI.html (DataViewEngine object, table renderer, column sorter, search)\r\n  - SubgridState.js (persistent open/close state for nested subgrid panels)"
+  },
+  "Data_Schemas": {
+    "doc": {
+      "depends_on": [],
+      "depended_by": [
+        "GAS_Server",
+        "DB_Layer",
+        "Form_Engine",
+        "DataView_Engine"
+      ],
+      "public_api": [],
+      "components": 1
+    },
+    "graph": {
+      "depends_on": [],
+      "depended_by": [
+        "GAS_Server",
+        "DB_Layer",
+        "Form_Engine",
+        "DataView_Engine"
+      ],
+      "public_api": [],
+      "components": 1
+    },
+    "file": "governance\\architecture\\modules\\Data_Schemas.md",
+    "frontmatterString": "type: module\r\nname: Data_Schemas\r\npurpose: \"The Single Source of Truth brain of the system. Defines all entity field models, validators, lookupSources, event triggers, and hierarchy calcParams without any UI or persistence coupling.\"\r\nstatus: active\r\ndepends_on: []\r\ndepended_by: [GAS_Server, DB_Layer, Form_Engine, DataView_Engine]\r\ncomponents:\r\n  - Schema_Engine.gs (APP_SCHEMAS constant — the global entity registry)"
+  },
+  "DB_Layer": {
+    "doc": {
+      "depends_on": [
+        "GAS_Server",
+        "Data_Schemas"
+      ],
+      "depended_by": [
+        "GAS_Server"
+      ],
+      "public_api": [],
+      "components": 3
+    },
+    "graph": {
+      "depends_on": [
+        "GAS_Server",
+        "Data_Schemas"
+      ],
+      "depended_by": [
+        "GAS_Server"
+      ],
+      "public_api": [],
+      "components": 3
+    },
+    "file": "governance\\architecture\\modules\\DB_Layer.md",
+    "frontmatterString": "type: module\r\nname: DB_Layer\r\npurpose: \"Agnostic persistence facade implementing Cache-Aside, Dual-Write, and nested orchestration (maestro-detalle) without coupling to any specific database vendor.\"\r\nstatus: active\r\ndepends_on: [GAS_Server, Data_Schemas]\r\ndepended_by: [GAS_Server]\r\ncomponents:\r\n  - Engine_DB.js (facade router, cache invalidation, nested save orchestrator)\r\n  - Adapter_Sheets.js (Google Sheets ORM with upsert, list, remove, audit injection)\r\n  - Adapter_CloudDB.js (Cloud NoSQL stub for Dual-Write resilience)"
+  },
+  "Form_Engine": {
+    "doc": {
+      "depends_on": [
+        "UI_Shell",
+        "Data_Schemas",
+        "DataView_Engine"
+      ],
+      "depended_by": [],
+      "public_api": [],
+      "components": 2
+    },
+    "graph": {
+      "depends_on": [
+        "UI_Shell",
+        "Data_Schemas",
+        "DataView_Engine"
+      ],
+      "depended_by": [],
+      "public_api": [],
+      "components": 2
+    },
+    "file": "governance\\architecture\\modules\\Form_Engine.md",
+    "frontmatterString": "type: module\r\nname: Form_Engine\r\npurpose: \"Metadata-driven, reactive form generator that reads APP_SCHEMAS to build multi-step wizard forms with Ionic Web Components. Includes the generic Adjacency List hierarchy engine (S4.x).\"\r\nstatus: active\r\ndepends_on: [UI_Shell, Data_Schemas, DataView_Engine]\r\ndepended_by: []\r\ncomponents:\r\n  - FormEngine_UI.html (renderForm, openEditForm, _patchFrontendCache)\r\n  - Math_Engine.js (buildOrdenPath, buildPathName)"
+  },
+  "GAS_Server": {
+    "doc": {
+      "depends_on": [
+        "Data_Schemas"
+      ],
+      "depended_by": [
+        "DB_Layer",
+        "UI_Shell"
+      ],
+      "public_api": [],
+      "components": 4
+    },
+    "graph": {
+      "depends_on": [
+        "Data_Schemas"
+      ],
+      "depended_by": [
+        "DB_Layer",
+        "UI_Shell"
+      ],
+      "public_api": [],
+      "components": 4
+    },
+    "file": "governance\\architecture\\modules\\GAS_Server.md",
+    "frontmatterString": "type: module\r\nname: GAS_Server\r\npurpose: \"Google Apps Script server layer that bootstraps the SPA and routes all RPC calls from the frontend.\"\r\nstatus: active\r\ndepends_on: [Data_Schemas]\r\ndepended_by: [DB_Layer, UI_Shell]\r\ncomponents:\r\n  - Code.js (entry point, doGet/doPost handlers)\r\n  - API_Universal.gs (API_Universal_Router, CRUD dispatchers, lookup functions)\r\n  - API_Auth.js (getUserIdentity, domain allowlist)\r\n  - Cache_Utils.gs (CacheService helpers)"
+  },
+  "UI_Shell": {
+    "doc": {
+      "depends_on": [
+        "GAS_Server"
+      ],
+      "depended_by": [
+        "DataView_Engine",
+        "Form_Engine",
+        "Dashboard_UI"
+      ],
+      "public_api": [],
+      "components": 5
+    },
+    "graph": {
+      "depends_on": [
+        "GAS_Server"
+      ],
+      "depended_by": [
+        "DataView_Engine",
+        "Form_Engine",
+        "Dashboard_UI"
+      ],
+      "public_api": [],
+      "components": 5
+    },
+    "file": "governance\\architecture\\modules\\UI_Shell.md",
+    "frontmatterString": "type: module\r\nname: UI_Shell\r\npurpose: \"Application bootstrap shell. Provides AuthManager, ThemeManager, SPA router (navigateTo), and the 3-state responsive sidebar. The entry point that wires every other UI module together.\"\r\nstatus: active\r\ndepends_on: [GAS_Server]\r\ndepended_by: [DataView_Engine, Form_Engine, Dashboard_UI]\r\ncomponents:\r\n  - Index.html (DOM shell, scriptlet injector)\r\n  - JS_Core.html (AuthManager, ThemeManager, navigateTo, sidebar logic)\r\n  - CSS_DesignSystem.html (design token system)\r\n  - CSS_App.html (component overrides, responsive rules)\r\n  - Global_Config.js (version, spreadsheet IDs)"
+  }
+}

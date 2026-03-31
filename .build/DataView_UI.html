@@ -1,0 +1,1093 @@
+<!-- ============================================================
+     DataView_UI.html — Motor de Vista de Datos Universal
+     Incluido via GAS: <?!= include('DataView_UI'); ?>
+     
+     window.DataViewEngine.render(entityName, containerId)
+     ============================================================ -->
+
+<script>
+    /* ============================================================
+       window.DataViewEngine
+       ============================================================ */
+    window.DataViewEngine = (function () {
+
+        /* ── Configuración de entidades (íconos, labels, campos FK) ── */
+        const ENTITY_META = window.ENTITY_META || {};
+
+        /* ── Columnas excluidas de la tabla (campos de auditoría o muy largos) ── */
+        const HIDDEN_BY_DEFAULT = ['created_at', 'updated_by'];
+
+        /* ── Campos estatus para badges de color ── */
+        const STATUS_FIELDS = ['estado', 'nivel_criticalidad', 'modelo_negocio'];
+
+        /* ── Mock data por entidad (Eliminado en refactorización JIT S2.2) ── */
+
+        /* ────────────────────────────────────────────
+           Estado interno por entidad
+        ───────────────────────────────────────────── */
+        let _state = {
+            entityName: '',
+            data: [],   // todos los registros (sin filtro)
+            filtered: [],   // tras búsqueda
+            page: 1,
+            pageSize: 25,
+            sortCol: '',
+            sortDir: 'asc',
+            view: 'table',  // 'table' | 'grid'
+            columns: [],   // { key, label, visible, sortable }
+            containerId: ''
+        };
+
+        /* Îndice de columna en arrastre (-1 = ninguno) */
+        let _dragSrcIdx = -1;
+
+        /* Datos de lookup cacheados desde el servidor */
+        window._LOOKUP_DATA = {};
+
+        /* ────────────────────────────────────────────
+           Helpers
+        ───────────────────────────────────────────── */
+        function _slugify(str) {
+            return (str || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+        }
+
+        function _badgeClass(value) {
+            const slug = _slugify(String(value));
+            const map = {
+                'activo': 'activo', 'borrador': 'borrador', 'en-revis-n': 'en-revision', 'en-revision': 'en-revision',
+                'tier-1-cr-tico': 'tier-1-critico', 'tier-1-critico': 'tier-1-critico',
+                'tier-2-alto': 'tier-2-alto', 'tier-3-medio': 'tier-3-medio', 'tier-4-bajo': 'tier-4-bajo',
+                'saas': 'saas', 'marketplace': 'marketplace', 'b2b': 'b2b', 'b2c': 'b2c', 'transaccional': 'transaccional'
+            };
+            return 'dv-badge dv-badge-' + (map[slug] || 'default');
+        }
+
+        function _formatValue(key, value) {
+            if (value === null || value === undefined || value === '') return '<span class="dv-empty-text">—</span>';
+
+            // 0. Arreglos de objetos (campos de Relación tipo Master-Detail)
+            //    Ejemplo: grupos_hijos = [{nombre:'A',...}, {nombre:'B',...}]
+            //    Renderizar como chips de texto legibles, NO como [object Object]
+            if (Array.isArray(value)) {
+                if (value.length === 0) return '<span class="dv-empty-text">—</span>';
+                const labels = value.map(item => {
+                    if (typeof item === 'object' && item !== null) {
+                        // Intentar extraer un campo de nombre legible
+                        return item.nombre || item.name || item.label || item.nombre_producto
+                            || Object.values(item).find(v => typeof v === 'string' && !String(v).startsWith('id_') && v.length > 0)
+                            || '—';
+                    }
+                    return String(item);
+                });
+                return labels.map(l => `<span class="dv-chip">${l}</span>`).join(' ');
+            }
+
+            const strVal = String(value);
+
+            // 0.5: Identificar si es la Llave Primaria de la entidad ACTUAL
+            // Para pintar crudo (PORT-XXXX) sin embellecimiento (Directiva Arquitectura Nivel 4)
+            let isPrimaryKey = false;
+            if (_state && _state.entityName && window.APP_SCHEMAS) {
+                const schemaDef = window.APP_SCHEMAS[_state.entityName];
+                let fieldsArray = [];
+                if (schemaDef) {
+                    if (Array.isArray(schemaDef)) fieldsArray = schemaDef;
+                    else if (schemaDef.fields) fieldsArray = schemaDef.fields;
+                    else fieldsArray = Object.keys(schemaDef).map(k => Object.assign({ name: k }, schemaDef[k]));
+                    
+                    const f = fieldsArray.find(field => field.name === key);
+                    if (f && f.primaryKey) isPrimaryKey = true;
+                }
+            }
+
+            if (isPrimaryKey) {
+                return `<code class="dv-pk-code" onclick="window.openEditForm('${strVal}')">${strVal}</code>`;
+            }
+
+            // 1. Resolver desde Lookups si existe mapeo
+            if (window._LOOKUP_DATA && window._LOOKUP_DATA[key]) {
+                const lookupArr = window._LOOKUP_DATA[key];
+                const found = lookupArr.find(opt => String(opt.value) === strVal);
+                if (found) return found.label;
+            }
+
+            // 2. Badges para estatus
+            if (STATUS_FIELDS.includes(key)) {
+                return `<span class="${_badgeClass(strVal)}">${strVal}</span>`;
+            }
+            if (key === 'presupuesto' || key === 'slo_objetivo') {
+                const num = parseFloat(strVal);
+                if (!isNaN(num)) return key === 'presupuesto'
+                    ? '$' + num.toLocaleString('es-MX')
+                    : num + '%';
+            }
+
+            return strVal.length > 60 ? strVal.substring(0, 58) + '…' : strVal;
+        }
+
+        function _normalizeFields(entityName) {
+            const schemaDef = window.APP_SCHEMAS && window.APP_SCHEMAS[entityName];
+            if (!schemaDef) return null;
+            if (Array.isArray(schemaDef)) return schemaDef;
+            if (schemaDef.fields) return schemaDef.fields;
+            return Object.keys(schemaDef).map(k => Object.assign({ name: k }, schemaDef[k]));
+        }
+
+        function _labelFromKey(key) {
+            // Encuentra en APP_SCHEMAS si está disponible
+            const fields = _normalizeFields(_state.entityName);
+            if (fields) {
+                const field = fields.find(f => f.name === key);
+                if (field && field.label) return field.label;
+            }
+            return window.formatLabelString ? window.formatLabelString(key) : key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+        }
+
+        /* ────────────────────────────────────────────
+           Derivar columnas desde schema o datos
+        ───────────────────────────────────────────── */
+        function _buildColumns(entityName, rows) {
+            const fields = _normalizeFields(entityName);
+            let keys = [];
+
+            if (fields) {
+                keys = fields.map(f => f.name);
+                // agregar claves presentes en datos pero no en schema (ej. created_at)
+                if (rows && rows.length > 0) {
+                    Object.keys(rows[0]).forEach(k => { if (!keys.includes(k)) keys.push(k); });
+                }
+            } else if (rows && rows.length > 0) {
+                keys = Object.keys(rows[0]);
+            }
+
+            return keys.map(key => {
+                let isHidden = HIDDEN_BY_DEFAULT.includes(key);
+                let isPrimaryKey = false;
+
+                if (fields) {
+                    const f = fields.find(field => field.name === key);
+                    if (f) {
+                        if (f.primaryKey) isPrimaryKey = true;
+                        if (f.type === 'hidden' && !f.primaryKey) isHidden = true;
+                    }
+                }
+
+                // Heurística de respaldo para llaves primarias
+                if (key.startsWith('id_')) {
+                    isPrimaryKey = true;
+                }
+                
+                return {
+                    key,
+                    label: _labelFromKey(key),
+                    visible: isPrimaryKey ? true : !isHidden,
+                    sortable: true
+                };
+            });
+        }
+
+        /* ────────────────────────────────────────────
+           Estados Visuales de Carga y Error
+        ───────────────────────────────────────────── */
+        function _showLoadingState() {
+            const zone = document.getElementById('dv-data-zone');
+            if (zone) zone.innerHTML = _renderSkeleton();
+        }
+
+        function _showErrorState(error) {
+            const zone = document.getElementById('dv-data-zone');
+            if (zone) {
+                zone.innerHTML = `
+                <div class="dv-card">
+                    <div class="dv-empty">
+                        <div class="dv-empty-icon">⚠️</div>
+                        <h3 class="dv-error-title">No pudimos cargar la información.</h3>
+                        <p>Por favor, refresca la página para intentar de nuevo.</p>
+                        <p class="dv-error-desc">(Detalle: ${error ? error.message : 'Error de red'})</p>
+                    </div>
+                </div>`;
+            }
+        }
+
+        /* ────────────────────────────────────────────
+           Fetch data (GAS o Mock)
+        ───────────────────────────────────────────── */
+        function _fetchData(entityName, cb) {
+            _showLoadingState();
+            // Check Frontend Cache first (Directiva Arquitectónica: 0.0s latency)
+            if (window.__APP_CACHE__ && window.__APP_CACHE__[entityName]) {
+                console.log(`[Cache Frontend] HIT para ${entityName}. Renderizado instantáneo.`);
+                const cachedData = window.__APP_CACHE__[entityName];
+                const activeRows = cachedData.filter(r => r.estado !== 'Eliminado' && r.estado !== 'eliminado');
+                cb(null, activeRows);
+                return;
+            }
+
+            const isGAS = typeof google !== 'undefined' && google.script && google.script.run;
+            if (isGAS) {
+                console.time('[Perf] Single RPC Hydration');
+                google.script.run
+                    .withSuccessHandler(function (response) {
+                        console.timeEnd('[Perf] Single RPC Hydration');
+                        if (response && response.status === 'success') {
+                            // Guardar lookups para el formateador
+                            window._LOOKUP_DATA = response.lookups || {};
+                            
+                            // Inflar Tuplas a Objetos (Data Compression)
+                            const headers = response.data.headers;
+                            const rows = response.data.rows.map(tuple => {
+                                const obj = {};
+                                headers.forEach((h, i) => obj[h] = tuple[i]);
+                                return obj;
+                            });
+
+                            // Store in Frontend Cache for 0.0s subsequent transitions
+                            if (window.__APP_CACHE__) {
+                                window.__APP_CACHE__[entityName] = rows;
+                            }
+
+                            const activeRows = rows.filter(r => r.estado !== 'Eliminado' && r.estado !== 'eliminado');
+                            cb(null, activeRows);
+                        } else {
+                            cb(new Error(response ? response.message : 'Error desconocido'));
+                        }
+                    })
+                    .withFailureHandler(function (err) {
+                        cb(err || new Error('Error de comunicación con el servidor'));
+                    })
+                    .getInitialPayload(entityName);
+            } else {
+                cb(new Error('Se requiere el entorno de producción de Google (Los datos mock fueron removidos)'));
+            }
+        }
+
+        /* ────────────────────────────────────────────
+           Búsqueda y Ordenación
+        ───────────────────────────────────────────── */
+        function _applyFilter(query) {
+            if (!query.trim()) {
+                _state.filtered = [..._state.data];
+            } else {
+                const q = query.toLowerCase();
+                _state.filtered = _state.data.filter(row =>
+                    Object.values(row).some(v => String(v).toLowerCase().includes(q))
+                );
+            }
+            _state.page = 1;
+            _rerenderData(); // Solo datos — el toolbar/search box NO se toca
+        }
+
+        function _applySort(colKey) {
+            if (_state.sortCol === colKey) {
+                _state.sortDir = _state.sortDir === 'asc' ? 'desc' : 'asc';
+            } else {
+                _state.sortCol = colKey;
+                _state.sortDir = 'asc';
+            }
+            _state.filtered.sort((a, b) => {
+                const av = String(a[colKey] ?? '').toLowerCase();
+                const bv = String(b[colKey] ?? '').toLowerCase();
+                const cmp = av.localeCompare(bv, 'es', { numeric: true });
+                return _state.sortDir === 'asc' ? cmp : -cmp;
+            });
+            _rerender();
+        }
+
+        /* ────────────────────────────────────────────
+           Paginación
+        ───────────────────────────────────────────── */
+        function _getPage() {
+            const start = (_state.page - 1) * _state.pageSize;
+            return _state.filtered.slice(start, start + _state.pageSize);
+        }
+
+        function _totalPages() {
+            return Math.max(1, Math.ceil(_state.filtered.length / _state.pageSize));
+        }
+
+        /* ────────────────────────────────────────────
+           Renderers
+        ───────────────────────────────────────────── */
+        function _renderSkeleton() {
+            let rows = '';
+            for (let i = 0; i < 5; i++) {
+                const widths = [80, 160, 120, 100, 90];
+                const cells = widths.map(w => `<div class="dv-skeleton-cell" style="width:${w}px;"></div>`).join(''); // width is dynamic layout
+                rows += `<div class="dv-skeleton-row">${cells}</div>`;
+            }
+            return `<div class="dv-card dv-card-skel">${rows}</div>`;
+        }
+
+        function _renderEmpty() {
+            return `
+        <div class="dv-card">
+          <div class="dv-empty">
+            <div class="dv-empty-icon">
+              <ion-icon class="dv-folder-icon" name="folder-open-outline"></ion-icon>
+            </div>
+            <h3>Sin resultados</h3>
+            <p>No se encontraron registros. Prueba con otros términos de búsqueda o crea un nuevo registro.</p>
+          </div>
+        </div>`;
+        }
+
+        function _renderTableView(rows) {
+            const visibleCols = _state.columns.filter(c => c.visible);
+            if (visibleCols.length === 0 || rows.length === 0) return _renderEmpty();
+
+            const thead = visibleCols.map(col => {
+                const colIdx = _state.columns.indexOf(col); // índice real en _state.columns
+                const isSorted = _state.sortCol === col.key;
+                const arrow = isSorted
+                    ? `<span class="dv-sort-icon active">${_state.sortDir === 'asc' ? '↑' : '↓'}</span>`
+                    : `<span class="dv-sort-icon">↕</span>`;
+                return `<th
+                    class="${isSorted ? 'sorted' : ''}"
+                    data-colidx="${colIdx}"
+                    draggable="true"
+                    onclick="window.DataViewEngine._onSort('${col.key}')"
+                    ondragstart="window.DataViewEngine._onDragStart(${colIdx}, event)"
+                    ondragover="window.DataViewEngine._onDragOver(${colIdx}, event)"
+                    ondragleave="window.DataViewEngine._onDragLeave(event)"
+                    ondrop="window.DataViewEngine._onDrop(${colIdx}, event)"
+                    ondragend="window.DataViewEngine._onDragEnd(event)">
+                    ${col.label}${arrow}<span class="dv-drag-handle" title="Arrastra para reordenar">⣿</span>
+                </th>`;
+            }).join('');
+
+            return `
+        <div class="dv-card">
+          <div class="dv-table-wrap">
+            <table class="dv-table">
+              <thead><tr><th class="dv-th-num">#</th>${thead}<th class="dv-th-action"></th></tr></thead>
+              <tbody>${_renderTableBody(rows, visibleCols)}</tbody>
+            </table>
+          </div>
+          ${_renderPaginationHTML()}
+        </div>`;
+        }
+
+        function _renderTableBody(rows, visibleCols) {
+            const startIdx = (_state.page - 1) * _state.pageSize;
+            return rows.map((row, idx) => {
+                const rowNum = startIdx + idx + 1;
+                const indexCell = `<td class="dv-td-num">${rowNum}</td>`;
+
+                const cells = visibleCols.map(col =>
+                    `<td title="${String(row[col.key] ?? '')}">${_formatValue(col.key, row[col.key])}</td>`
+                ).join('');
+
+                const meta = ENTITY_META[_state.entityName] || { idField: 'id' };
+                const id = row[meta.idField] || '';
+                const actionCell = `<td class="dv-td-action">
+                    <button class="dv-btn-icon dv-btn-danger" onclick="event.stopPropagation(); window.DataViewEngine._confirmDelete('${id}')" title="Eliminar">
+                        <ion-icon name="trash"></ion-icon>
+                    </button>
+                </td>`;
+
+                return `<tr>${indexCell}${cells}${actionCell}</tr>`;
+            }).join('');
+        }
+
+        function _renderGridView(rows) {
+            const meta = ENTITY_META[_state.entityName] || { titleField: 'nombre', idField: 'id', fkField: null };
+            const MAX_ATTRS = 5;
+
+            if (rows.length === 0) return _renderEmpty();
+
+            // Usar Ionic grid nativo: 1 col móvil, 2 sm, 3 md, 4 xl
+            const cols = rows.map(row => {
+                const title = row[meta.titleField] || row[meta.idField] || '—';
+                const id = row[meta.idField] || '';
+
+                // FK chip usando ion-badge de Ionic
+                const fkChip = meta.fkField && row[meta.fkField.key]
+                    ? `<ion-badge class="dv-fk-badge">🔗 ${meta.fkField.label}: ${row[meta.fkField.key]}</ion-badge>`
+                    : '';
+
+                const attrKeys = Object.keys(row)
+                    .filter(k => k !== meta.titleField && k !== meta.idField &&
+                        !(meta.fkField && k === meta.fkField.key) &&
+                        !HIDDEN_BY_DEFAULT.includes(k))
+                    .slice(0, MAX_ATTRS);
+
+                const attrs = attrKeys.map(k => `
+                    <div class="dv-card-item-attr">
+                        <span class="dv-card-item-attr-key">${_labelFromKey(k)}</span>
+                        <span class="dv-card-item-attr-val">${_formatValue(k, row[k])}</span>
+                    </div>`).join('');
+
+                return `
+                <ion-col size="12" size-sm="6" size-md="4" size-xl="3" class="dv-grid-col">
+                    <ion-card class="dv-ion-card">
+                        <ion-card-header class="dv-card-header-flex">
+                            <div>
+                                <ion-card-subtitle 
+                                    onclick="window.openEditForm('${id}')"
+                                    class="dv-code-link">
+                                    ${id}
+                                </ion-card-subtitle>
+                                <ion-card-title class="dv-card-title-clamp" title="${title}">${title}</ion-card-title>
+                            </div>
+                            <button class="dv-btn-icon dv-btn-danger-lite" onclick="event.stopPropagation(); window.DataViewEngine._confirmDelete('${id}')" title="Eliminar">
+                                <ion-icon name="trash"></ion-icon>
+                            </button>
+                        </ion-card-header>
+                        <ion-card-content>
+                            <div class="dv-card-item-attrs">${attrs}</div>
+                            ${fkChip}
+                        </ion-card-content>
+                    </ion-card>
+                </ion-col>`;
+            }).join('');
+
+            return `
+                <ion-grid class="dv-ionic-grid">
+                    <ion-row>${cols}</ion-row>
+                </ion-grid>
+                <div class="dv-card-footer">
+                    ${_renderPaginationHTML()}
+                </div>`;
+        }
+
+        function _renderPaginationHTML() {
+            const total = _state.filtered.length;
+            const start = total === 0 ? 0 : (_state.page - 1) * _state.pageSize + 1;
+            const end = Math.min(_state.page * _state.pageSize, total);
+            const tPages = _totalPages();
+
+            const sizes = [10, 25, 50, 100].map(s =>
+                `<option value="${s}" ${s === _state.pageSize ? 'selected' : ''}>${s}</option>`
+            ).join('');
+
+            return `
+        <div class="dv-pagination">
+          <div class="dv-flex-group">
+            <span class="dv-pagination-info">Mostrando <strong>${start}–${end}</strong> de <strong>${total}</strong></span>
+            <select class="dv-page-size-select" onchange="window.DataViewEngine._onPageSize(this.value)">${sizes}</select>
+          </div>
+          <div class="dv-pagination-controls">
+            <button class="dv-page-btn" title="Primera" onclick="window.DataViewEngine._onPage(1)" ${_state.page === 1 ? 'disabled' : ''}>«</button>
+            <button class="dv-page-btn" title="Anterior" onclick="window.DataViewEngine._onPage(${_state.page - 1})" ${_state.page === 1 ? 'disabled' : ''}>‹</button>
+            <span class="dv-page-info">Pág. ${_state.page} / ${tPages}</span>
+            <button class="dv-page-btn" title="Siguiente" onclick="window.DataViewEngine._onPage(${_state.page + 1})" ${_state.page >= tPages ? 'disabled' : ''}>›</button>
+            <button class="dv-page-btn" title="Última" onclick="window.DataViewEngine._onPage(${tPages})" ${_state.page >= tPages ? 'disabled' : ''}>»</button>
+          </div>
+        </div>`;
+        }
+
+        /* ────────────────────────────────────────────
+           ion-popover nativo: gestor de columnas visibles
+           — Renderiza un <ion-popover> en el body para garantizar que
+             Ionic lo posicione sin desbordamiento en móvil ni en desktop.
+        ───────────────────────────────────────────── */
+        function _renderColPopoverContentHTML() {
+            const items = _state.columns.map((col, i) => `
+                <ion-item class="dv-popover-item" lines="none">
+                    <ion-checkbox
+                        slot="start"
+                        data-colidx="${i}"
+                        ${col.visible ? 'checked' : ''}
+                        class="dv-popover-checkbox">
+                    </ion-checkbox>
+                    <ion-label class="dv-popover-label">${col.label}</ion-label>
+                </ion-item>`).join('');
+
+            return `
+                <ion-content class="dv-popover-content">
+                    <ion-list-header class="dv-popover-header">
+                        <ion-label class="dv-sub-label">
+                            Columnas visibles
+                        </ion-label>
+                    </ion-list-header>
+                    <ion-list lines="none">${items}</ion-list>
+                </ion-content>`;
+        }
+
+        function _ensureColPopover() {
+            // Eliminar popover existente para forzar re-bind del trigger a nivel de Ionic
+            // Esto soluciona el problema donde el botón se destruye al cambiar de vista
+            let pop = document.getElementById('dv-col-ion-popover');
+            if (pop) {
+                pop.remove();
+            }
+
+            pop = document.createElement('ion-popover');
+            pop.id = 'dv-col-ion-popover';
+            pop.setAttribute('trigger', 'dv-col-trigger-btn');
+            pop.setAttribute('trigger-action', 'click');
+            pop.setAttribute('dismiss-on-select', 'false');
+            pop.setAttribute('side', 'bottom');
+            pop.setAttribute('alignment', 'end');
+            pop.setAttribute('show-backdrop', 'false');
+            document.body.appendChild(pop);
+            // Actualizar contenido (sincroniza estado de checkboxes)
+            pop.innerHTML = _renderColPopoverContentHTML();
+
+            // Adjuntar ionChange a cada ion-checkbox (lo necesita el web component de Ionic)
+            pop.querySelectorAll('ion-checkbox').forEach(function (cb) {
+                const idx = parseInt(cb.getAttribute('data-colidx'), 10);
+                cb.addEventListener('ionChange', function (e) {
+                    window.DataViewEngine._onColToggle(idx, e.detail.checked);
+                });
+            });
+        }
+
+        function _renderToolbarHTML() {
+            return `
+        <div class="dv-toolbar">
+          <div class="dv-toolbar-left">
+            <div class="dv-search-wrap">
+              <!-- ion-searchbar nativo de Ionic: posiciona su propio icono y maneja a11y -->
+              <ion-searchbar
+                id="dv-search-input"
+                placeholder="Buscar en todos los campos…"
+                animated="true"
+                show-clear-button="focus"
+                debounce="120">
+              </ion-searchbar>
+            </div>
+          </div>
+          <div class="dv-toolbar-right">
+            <!-- Trigger del ion-popover nativo — Ionic calcula la posición sin desbordamiento -->
+            <button class="dv-btn dv-btn-ghost" id="dv-col-trigger-btn" title="Configurar columnas">
+              <ion-icon class="dv-options-icon" name="options-outline" slot="start"></ion-icon> Columnas
+            </button>
+            <button class="dv-btn-icon ${_state.view === 'table' ? 'active' : ''}" id="dv-view-table-btn"
+              onclick="window.DataViewEngine._onViewToggle('table')" title="Vista de lista">
+              ☰
+            </button>
+            <button class="dv-btn-icon ${_state.view === 'grid' ? 'active' : ''}" id="dv-view-grid-btn"
+              onclick="window.DataViewEngine._onViewToggle('grid')" title="Vista de cuadrícula">
+              ⊞
+            </button>
+            ${_state.entityName === 'Dominio' ? `
+            <button class="dv-btn-icon ${_state.view === 'map' ? 'active' : ''}" id="dv-view-map-btn"
+              onclick="window.DataViewEngine._onViewToggle('map')" title="Formato Mapa (Treemap)">
+              <ion-icon name="git-network-outline"></ion-icon>
+            </button>
+            ` : ''}
+          </div>
+        </div>`;
+        }
+
+        /* Adjunta el listener ionInput al ion-searchbar tras cada re-render del toolbar.
+           ionInput es el evento nativo de Ionic Web Components (no 'oninput' HTML estándar). */
+        function _attachSearchHandler() {
+            const sb = document.getElementById('dv-search-input');
+            if (sb) {
+                sb.addEventListener('ionInput', function (e) {
+                    window.DataViewEngine._onSearch(e.detail.value || '');
+                });
+            }
+        }
+
+        function _renderHeader() {
+            const meta = ENTITY_META[_state.entityName] || { iconName: 'document-text-outline', color: 'medium', label: window.formatEntityName(_state.entityName) };
+            const total = _state.data.length;
+            const displayLabel = window.formatEntityName(meta.label);
+            return `
+        <div class="dv-header">
+          <div class="dv-header-left">
+            <h2><ion-icon class="dv-title-icon" name="${meta.iconName}"></ion-icon> ${displayLabel}</h2>
+            <p>${total} registro${total !== 1 ? 's' : ''} en total</p>
+          </div>
+          <div class="dv-header-actions">
+            <input type="file" id="dv-bulk-upload-input" accept=".csv" class="dv-hidden" onchange="window.DataViewEngine._importCSV(event)">
+            <button class="dv-btn dv-btn-ghost" onclick="window.DataViewEngine._exportCSV()">
+              <ion-icon name="download-outline" slot="start"></ion-icon> Exportar CSV
+            </button>
+            <button class="dv-btn dv-btn-ghost" onclick="document.getElementById('dv-bulk-upload-input').click()">
+              <ion-icon name="cloud-upload-outline" slot="start"></ion-icon> Importar CSV
+            </button>
+            <button class="dv-btn dv-btn-outline" onclick="renderForm('${_state.entityName}')">
+              <ion-icon name="add-outline" slot="start"></ion-icon> Crear ${displayLabel.replace(/s$/, '')}
+            </button>
+          </div>
+        </div>`;
+        }
+
+        /* ────────────────────────────────────────────
+           Re-render: sólo zona de datos (tabla/grid + paginación)
+           El toolbar (#dv-toolbar-zone) NUNCA se toca aquí — preserva el foco del input.
+        ───────────────────────────────────────────── */
+        function _rerenderData() {
+            const pageRows = _getPage();
+            const dataZone = document.getElementById('dv-data-zone');
+            if (!dataZone) return;
+
+            if (_state.view === 'map') {
+                if (window.renderDomainMap) {
+                    window.renderDomainMap(dataZone);
+                } else {
+                    dataZone.innerHTML = '<div class="dv-empty">Motor de Mapa no disponible.</div>';
+                }
+            } else {
+                const dataHTML = _state.view === 'table'
+                    ? _renderTableView(pageRows)
+                    : _renderGridView(pageRows);
+                dataZone.innerHTML = dataHTML;
+            }
+        }
+
+        // Alias para compatibilidad interna (sort, page)
+        function _rerender() { _rerenderData(); }
+
+        /* Re-render sólo el toolbar (toggle de columnas / vista) */
+        function _rerenderToolbar() {
+            const zone = document.getElementById('dv-toolbar-zone');
+            if (zone) zone.innerHTML = _renderToolbarHTML();
+            // ion-searchbar: adjuntar ionInput tras re-render
+            _attachSearchHandler();
+            // Sincronizar ion-popover con el nuevo estado de columnas
+            _ensureColPopover();
+        }
+
+        /* ────────────────────────────────────────────
+           Render principal (entrada pública)
+        ───────────────────────────────────────────── */
+        function render(entityName, containerId) {
+            // Mobile-first: grid por defecto en móvil (<768px), tabla en desktop
+            const defaultView = (window.innerWidth < 768) ? 'grid' : 'table';
+
+            _state = {
+                entityName, containerId,
+                data: [], filtered: [],
+                page: 1, pageSize: 25,
+                sortCol: '', sortDir: 'asc',
+                view: defaultView, columns: []
+            };
+
+            // Limpiar ion-popover de la entidad anterior (si existe)
+            const oldPop = document.getElementById('dv-col-ion-popover');
+            if (oldPop) oldPop.remove();
+
+            const container = document.getElementById(containerId);
+            if (!container) return;
+
+            // Estructura inicial: header + toolbar (permanente) + skeleton de datos
+            // #dv-toolbar-zone: NUNCA se destruye durante búsqueda/sort/pagina
+            // #dv-data-zone:    se reemplaza en cada operación de datos
+            container.innerHTML = `
+        <div class="dv-root" id="dv-root">
+          <div id="dv-header-zone">${_renderHeader()}</div>
+          <div id="dv-toolbar-zone"></div>
+          <div id="dv-data-zone">${_renderSkeleton()}</div>
+        </div>`;
+
+            // Actualizar título global del header de Ionic
+            const headerTitle = document.getElementById('main-header-title');
+            if (headerTitle) {
+                const meta = ENTITY_META[entityName] || { label: window.formatEntityName(entityName) };
+                headerTitle.textContent = meta.label;
+            }
+            const backBtn = document.getElementById('global-back-btn');
+            if (backBtn) backBtn.style.display = 'none'; // Vista raíz del módulo: ocultar botón atrás
+
+            // Fetch
+            _fetchData(entityName, function (err, rows) {
+                if (err) {
+                    _showErrorState(err);
+                    return;
+                }
+
+                _state.data = rows;
+                _state.filtered = [...rows];
+                _state.columns = _buildColumns(entityName, rows);
+
+                // Actualizar header con total real
+                const headerZone = document.getElementById('dv-header-zone');
+                if (headerZone) headerZone.innerHTML = _renderHeader();
+
+                // Renderizar toolbar (una sola vez; luego _rerenderToolbar lo actualiza)
+                const toolbarZone = document.getElementById('dv-toolbar-zone');
+                if (toolbarZone) toolbarZone.innerHTML = _renderToolbarHTML();
+
+                // ion-searchbar: adjuntar listener ionInput
+                _attachSearchHandler();
+
+                // Crear ion-popover nativo en el body (fuera del contenedor, sin desbordamiento)
+                _ensureColPopover();
+
+                // Actualizar sidebar con navegación de entidades (Directiva 1)
+                if (typeof window.showListSidebar === 'function') {
+                    window.showListSidebar(entityName);
+                }
+
+                _rerenderData();
+            });
+        }
+
+        /* ────────────────────────────────────────────
+           CSV Export
+        ───────────────────────────────────────────── */
+        function _exportCSV() {
+            const visibleCols = _state.columns.filter(c => c.visible);
+            const header = visibleCols.map(c => `"${c.label}"`).join(',');
+            const bodyRows = _state.filtered.map(row =>
+                visibleCols.map(col => {
+                    const v = String(row[col.key] ?? '').replace(/"/g, '""');
+                    return `"${v}"`;
+                }).join(',')
+            ).join('\n');
+
+            const csv = '\uFEFF' + header + '\n' + bodyRows; // BOM para Excel/UTF-8
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${_state.entityName}_${new Date().toISOString().slice(0, 10)}.csv`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        /* ────────────────────────────────────────────
+           Event handlers (accesibles desde HTML inline)
+        ───────────────────────────────────────────── */
+        function _onSearch(query) { _applyFilter(query); }
+
+        function _onSort(colKey) { _applySort(colKey); }
+
+        function _onPage(p) {
+            const tp = _totalPages();
+            _state.page = Math.max(1, Math.min(p, tp));
+            _rerender();
+        }
+
+        function _onPageSize(size) {
+            _state.pageSize = parseInt(size, 10);
+            _state.page = 1;
+            _rerender();
+        }
+
+        function _onColToggle(idx, visible) {
+            _state.columns[idx].visible = visible;
+            // Actualizar solo el contenido del ion-popover (sin cerrarlo ni destruir el toolbar)
+            const pop = document.getElementById('dv-col-ion-popover');
+            if (pop) {
+                pop.innerHTML = _renderColPopoverContentHTML();
+                pop.querySelectorAll('ion-checkbox').forEach(function (cb) {
+                    const i = parseInt(cb.getAttribute('data-colidx'), 10);
+                    cb.addEventListener('ionChange', function (e) {
+                        window.DataViewEngine._onColToggle(i, e.detail.checked);
+                    });
+                });
+            }
+            // Actualizar botones de view toggle (no destruye el search input)
+            _rerenderToolbar();
+            _rerenderData();
+        }
+
+        function _toggleColPopover() { /* no-op: Ionic maneja apertura via trigger */ }
+
+        function _onViewToggle(view) {
+            _state.view = view;
+            _rerenderToolbar(); // actualiza clases active en botones lista/grid
+            _rerenderData();
+        }
+
+        /* ────────────────────────────────────────────
+           Drag & Drop — reordenar columnas (HTML5 nativo, sin librerías)
+        ───────────────────────────────────────────── */
+        function _onDragStart(idx, ev) {
+            _dragSrcIdx = idx;
+            ev.dataTransfer.effectAllowed = 'move';
+            ev.dataTransfer.setData('text/plain', String(idx)); // requerido en Firefox
+            // Marcar la columna origen con clase visual (con retardo para que el ghost se calcule primero)
+            requestAnimationFrame(() => {
+                const th = document.querySelector(`.dv-table th[data-colidx="${idx}"]`);
+                if (th) th.classList.add('dv-th-dragging');
+            });
+        }
+
+        function _onDragOver(targetIdx, ev) {
+            if (_dragSrcIdx === -1 || targetIdx === _dragSrcIdx) return;
+            ev.preventDefault(); // habilita el drop
+            ev.dataTransfer.dropEffect = 'move';
+            // Quitar clase de todas las th y añadir solo a la target
+            document.querySelectorAll('.dv-table th').forEach(th => th.classList.remove('dv-th-drag-over'));
+            const th = document.querySelector(`.dv-table th[data-colidx="${targetIdx}"]`);
+            if (th) th.classList.add('dv-th-drag-over');
+        }
+
+        function _onDragLeave(ev) {
+            const th = ev.target.closest('th');
+            if (th) th.classList.remove('dv-th-drag-over');
+        }
+
+        function _onDrop(targetIdx, ev) {
+            ev.preventDefault();
+            if (_dragSrcIdx === -1 || _dragSrcIdx === targetIdx) {
+                _dragSrcIdx = -1;
+                return;
+            }
+            // Reordenar: extraer la columna origen e insertarla en la posición destino
+            const cols = _state.columns;
+            const [moved] = cols.splice(_dragSrcIdx, 1);
+            cols.splice(targetIdx, 0, moved);
+            _dragSrcIdx = -1;
+            _rerenderToolbar(); // sincronizar checkboxes con el nuevo orden
+            _rerenderData();
+        }
+
+        function _onDragEnd(ev) {
+            _dragSrcIdx = -1;
+            // Limpiar clases drag de todos los th aunque haya sido cancelled
+            document.querySelectorAll('.dv-table th').forEach(th => {
+                th.classList.remove('dv-th-dragging');
+                th.classList.remove('dv-th-drag-over');
+            });
+        }
+
+        /* Cerrar popover al hacer click fuera */
+        document.addEventListener('click', function (e) {
+            const wrap = document.querySelector('.dv-popover-wrap');
+            if (wrap && !wrap.contains(e.target)) {
+                const pop = document.getElementById('dv-col-popover');
+                if (pop) pop.classList.remove('open');
+            }
+        });
+
+        /* ────────────────────────────────────────────
+           Soft Delete Flow
+        ───────────────────────────────────────────── */
+        function _confirmDelete(id) {
+            const alert = document.createElement('ion-alert');
+            alert.header = 'Confirmar Borrado';
+            alert.message = '¿Estás seguro de que deseas borrar este registro de manera definitiva?';
+            alert.buttons = [
+                { text: 'Cancelar', role: 'cancel' },
+                {
+                    text: 'Borrar',
+                    role: 'confirm',
+                    handler: () => {
+                        _executeSoftDelete(id);
+                    }
+                }
+            ];
+            document.body.appendChild(alert);
+            return alert.present();
+        }
+
+        function _executeSoftDelete(id) {
+            // Optimistic UI update (Local state)
+            const meta = ENTITY_META[_state.entityName] || { idField: 'id' };
+            const idField = meta.idField;
+            _state.data = _state.data.filter(r => r[idField] !== id);
+            _applyFilter(document.getElementById('dv-search-input') ? document.getElementById('dv-search-input').value || '' : '');
+
+            // Global Cache sync (Prevent Re-render Desync)
+            if (window.__APP_CACHE__ && window.__APP_CACHE__[_state.entityName]) {
+                window.__APP_CACHE__[_state.entityName] = window.__APP_CACHE__[_state.entityName].filter(r => r[idField] !== id);
+                console.log(`[Cache] Registro eliminado de caché global: ${id}`);
+            }
+
+            const loading = document.createElement('ion-loading');
+            loading.message = 'Borrando...';
+            document.body.appendChild(loading);
+            loading.present();
+
+            const isGAS = typeof google !== 'undefined' && google.script && google.script.run;
+            if (isGAS) {
+                google.script.run
+                    .withSuccessHandler(function (rawResponse) {
+                        const response = typeof rawResponse === 'string' ? JSON.parse(rawResponse) : rawResponse;
+                        loading.dismiss();
+                        if (response && response.status === 'success') {
+                            // Purgar de la RAM local
+                            if (window.__APP_CACHE__ && window.__APP_CACHE__[_state.entityName]) {
+                                const idField = (ENTITY_META[_state.entityName] || { idField: 'id' }).idField;
+                                window.__APP_CACHE__[_state.entityName] = window.__APP_CACHE__[_state.entityName].filter(row => row[idField] !== id);
+                            }
+
+                            // Forzar re-renderización de la vista actual desde el caché actualizado
+                            _rerenderData();
+
+                            _showToast('Registro borrado con éxito.', 'success');
+                        } else {
+                            _showToast('Error al borrar: ' + (response ? response.message : ''), 'danger');
+                            render(_state.entityName, _state.containerId);
+                        }
+                    })
+                    .withFailureHandler(function (err) {
+                        loading.dismiss();
+                        _showToast('Error de red al borrar', 'danger');
+                        render(_state.entityName, _state.containerId);
+                    })
+                    .API_Universal_Router('delete', _state.entityName, id);
+            } else {
+                setTimeout(() => {
+                    loading.dismiss();
+                    _showToast('Mock: Registro borrado con éxito.', 'success');
+                }, 500);
+            }
+        }
+
+        function _showToast(message, color) {
+            const toast = document.createElement('ion-toast');
+            toast.message = message;
+            toast.duration = 2500;
+            toast.color = color || 'success';
+            document.body.appendChild(toast);
+            return toast.present();
+        }
+
+        /* ────────────────────────────────────────────
+           Universal Bulk Data Engine (CSV Import/Export)
+        ───────────────────────────────────────────── */
+        function _exportCSV() {
+            if (!_state.entityName || !_state.data || _state.data.length === 0) {
+                _showToast('No hay datos para exportar.', 'warning');
+                return;
+            }
+            
+            // 1. Obtener headers basados en el esquema
+            const fields = _normalizeFields(_state.entityName) || Object.keys(_state.data[0]).map(k => ({name: k, label: k}));
+            const exportHeaders = fields.map(f => f.name);
+            
+            // 2. Construir CSV escapando comillas y saltos de línea
+            let csvContent = exportHeaders.join(',') + '\n';
+            
+            _state.data.forEach(row => {
+                const rowArray = exportHeaders.map(header => {
+                    let val = row[header] === undefined || row[header] === null ? '' : String(row[header]);
+                    // Escapar comillas dobles y envolver en comillas si hay comas, comillas o saltos de línea
+                    if (val.includes(',') || val.includes('"') || val.includes('\n')) {
+                        val = '"' + val.replace(/"/g, '""') + '"';
+                    }
+                    return val;
+                });
+                csvContent += rowArray.join(',') + '\n';
+            });
+            
+            // 3. Descarga
+            const blob = new Blob([new Uint8Array([0xEF, 0xBB, 0xBF]), csvContent], { type: 'text/csv;charset=utf-8;' }); // BOM for UTF-8 Excel
+            const link = document.createElement("a");
+            const url = URL.createObjectURL(blob);
+            link.setAttribute("href", url);
+            link.setAttribute("download", `${_state.entityName}_Export.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            _showToast('Exportación iniciada.', 'success');
+        }
+
+        function _importCSV(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const text = e.target.result;
+                
+                // Parser robusto con Regex para comillas
+                const regex = /(?!\s*$)\s*(?:'([^'\\]*(?:\\[\s\S][^'\\]*)*)'|"([^"\\]*(?:\\[\s\S][^"\\]*)*)"|([^,'"\s\\]*(?:\s+[^,'"\s\\]+)*))\s*(?:,|$)/g;
+                
+                const rawRows = text.split(/\r?\n/).filter(r => r.trim() !== '');
+                if (rawRows.length < 2) {
+                    _showToast('El CSV está vacío o no tiene datos.', 'danger');
+                    event.target.value = '';
+                    return;
+                }
+
+                // Parser iterativo por fila
+                const parsedRows = rawRows.map(rowStr => {
+                    let row = [];
+                    let match;
+                    regex.lastIndex = 0; // Reset
+                    while ((match = regex.exec(rowStr)) !== null) {
+                        let val = match[1] || match[2] || match[3] || '';
+                        // Unescape quotes if it was quoted
+                        if (match[2]) val = val.replace(/""/g, '"');
+                        row.push(val);
+                        // Stop if we matched the end
+                        if (match[0] === '' || !match[0].endsWith(',')) break;
+                    }
+                    // Limpieza simple en caso de que regex falle (fallback)
+                    if (row.length === 0) row = rowStr.split(',').map(s => s.trim());
+                    return row;
+                });
+
+                const headers = parsedRows.shift();
+                
+                const jsonArray = parsedRows.filter(r => r.length > 0).map(row => {
+                    let obj = {};
+                    headers.forEach((h, i) => {
+                        obj[h.trim()] = row[i] !== undefined ? row[i] : '';
+                    });
+                    return obj;
+                });
+
+                // Middleware de Cálculo Pre-Inserción
+                if (_state.entityName === 'Equipo') {
+                    jsonArray.forEach(row => {
+                        let total = 0;
+                        // Sumar todas las propiedades que empiecen con 'cant_' (si son números válidos)
+                        Object.keys(row).forEach(key => {
+                            if (key.startsWith('cant_') && !isNaN(parseInt(row[key]))) {
+                                total += parseInt(row[key]);
+                            }
+                        });
+                        row['total_integrantes'] = total;
+                    });
+                }
+
+                if (confirm(`Se encontraron ${jsonArray.length} registros. ¿Deseas importarlos a la entidad '${_state.entityName}'?`)) {
+                    const loading = document.createElement('ion-loading');
+                    loading.message = 'Importando masivamente...';
+                    document.body.appendChild(loading);
+                    loading.present();
+
+                    const isGAS = typeof google !== 'undefined' && google.script && google.script.run;
+                    if (isGAS) {
+                        google.script.run
+                            .withSuccessHandler(response => {
+                                loading.dismiss();
+                                if (response.status === 'success') {
+                                    _showToast(`Se importaron ${response.insertedCount} registros con éxito.`, 'success');
+                                    // Purgar caché y recargar
+                                    if (window.__APP_CACHE__) window.__APP_CACHE__[_state.entityName] = null;
+                                    render(_state.entityName, _state.containerId);
+                                } else {
+                                    alert("Error en carga masiva: " + response.message);
+                                }
+                                event.target.value = '';
+                            })
+                            .withFailureHandler(err => {
+                                loading.dismiss();
+                                alert("Error en carga masiva: " + err.message);
+                                event.target.value = '';
+                            })
+                            .bulkInsert(_state.entityName, jsonArray);
+                    } else {
+                        setTimeout(() => {
+                            loading.dismiss();
+                            _showToast('Mock: Importación exitosa.', 'success');
+                            event.target.value = '';
+                        }, 1000);
+                    }
+                } else {
+                    event.target.value = '';
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        /* API pública */
+        return {
+            render,
+            _getState: function () {
+                return {
+                    ..._state,
+                    entityMeta: ENTITY_META[_state.entityName]
+                };
+            },
+            _exportCSV, _importCSV,
+            _onSearch, _onSort, _onPage, _onPageSize,
+            _onColToggle, _toggleColPopover, _onViewToggle,
+            _onDragStart, _onDragOver, _onDragLeave, _onDrop, _onDragEnd,
+            _confirmDelete
+        };
+    })();
+</script>

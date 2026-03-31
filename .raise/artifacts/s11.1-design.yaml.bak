@@ -1,0 +1,28 @@
+artifact_type: story-design
+version: 1
+skill: rai-story-design
+created: '2026-03-31T03:00:00Z'
+story: 'S11.1'
+epic: 'E11'
+content:
+  summary: 'Refactor procedural document.createElement into Declarative Factory Component Pattern for O(1) DOM rendering.'
+  complexity: complex
+  acceptance_criteria:
+    - id: AC1
+      description: 'FormEngine_UI.html renders input fields without document.createElement loops.'
+      verifiable: true
+    - id: AC2
+      description: 'Event bindings (Subgrid alerts) are isolated in a post-render logic step.'
+      verifiable: true
+  integration_points:
+    - module: 'FormEngine_UI'
+      change_type: modification
+      files: ['src/FormEngine_UI.html']
+  decisions:
+    - id: D1
+      choice: 'Template Literals inside UI_Factory'
+      rationale: 'Maximum native C++ parsing speed via innerHTML vs overhead.'
+      alternatives_considered: ['React', 'Angular', 'DocumentFragments']
+refs:
+  epic_scope: 'work/epics/e11-declarative-ui/scope.md'
+metadata: {}

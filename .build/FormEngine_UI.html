@@ -232,10 +232,7 @@
                 },
                 publish: function(event, detail) {
                     if (!this.listeners[event]) return;
-                    this.listeners[event].forEach(cb => {
-                        try { cb({detail: detail}); } 
-                        catch (e) { console.error(`[LocalEventBus] Error in subscriber for ${event}:`, e); }
-                    });
+                    this.listeners[event].forEach(cb => cb({detail: detail}));
                 }
             };
 

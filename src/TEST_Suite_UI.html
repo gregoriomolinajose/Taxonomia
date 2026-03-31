@@ -1,0 +1,54 @@
+<script>
+    /* ═══════════════════════════════════════════════════════
+       TEST_Suite_UI.html — Módulo de QA y Profiling (Aislado)
+       Inyectado via: <?!= include('TEST_Suite_UI'); ?>
+       Responsabilidades: Stress Tests, Memory Profiler E2E y 
+       diagnóstico de Garbage Collection V8.
+    ═══════════════════════════════════════════════════════ */
+
+    // [S11.4] E2E Memory Profiler (Garbage Collection QA Tool)
+    // Extraído de FormEngine_UI.html para aislamiento productivo
+    window.__runMemoryProfile_E2E = async function (iterations = 50) {
+        console.log(`%c[QA] Iniciando Memory Profiling E2E - Iteraciones: ${iterations}`, 'color: #7c3aed; font-weight: bold;');
+        
+        const baselineNodes = document.getElementsByTagName('*').length;
+        const baselineMem = performance.memory ? (performance.memory.usedJSHeapSize / 1024 / 1024).toFixed(2) : 'N/A';
+        console.log(`[QA] Baseline - Nodos DOM: ${baselineNodes} | Heap: ${baselineMem} MB`);
+        
+        for (let i = 1; i <= iterations; i++) {
+            // Instanciar (Simular renderizado topológico)
+            await window.renderForm('familia');
+            await new Promise(r => setTimeout(r, 600)); 
+            
+            // Destruir (Simular cierre de componente)
+            if (window._closeTopModal) {
+                window._closeTopModal();
+            } else if (window.ModalStackController) {
+                window.ModalStackController.closeTop();
+            }
+            await new Promise(r => setTimeout(r, 600)); 
+            
+            if (i % 10 === 0) console.log(`[QA] Progreso: ${i}/${iterations}...`);
+        }
+        
+        // Dejar tiempo al Browser GC (V8)
+        await new Promise(r => setTimeout(r, 1500));
+        
+        const finalNodes = document.getElementsByTagName('*').length;
+        const finalMem = performance.memory ? (performance.memory.usedJSHeapSize / 1024 / 1024).toFixed(2) : 'N/A';
+        const nodeDiff = finalNodes - baselineNodes;
+        
+        console.table({
+            'Métrica': ['Nodos DOM', 'Memoria Heap (MB)'],
+            'Baseline': [baselineNodes, baselineMem],
+            'Final': [finalNodes, finalMem],
+            'Variación (Delta)': [`${nodeDiff > 0 ? '+' : ''}${nodeDiff}`, '-']
+        });
+        
+        if (nodeDiff <= 5 && nodeDiff >= -5) {
+            console.log('%c[QA] ✔ PASSED: El recolector de basura (GC) operó impecablemente.', 'color: #10b981; font-weight: bold;');
+        } else {
+            console.warn(`%c[QA] ⚠ WARNING: Fuga de memoria detectada. Deltas inestables (${nodeDiff} nodos huérfanos).`, 'color: #f59e0b; font-weight: bold;');
+        }
+    };
+</script>

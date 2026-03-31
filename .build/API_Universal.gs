@@ -1,0 +1,568 @@
+/**
+ * API_Universal.gs
+ * 
+ * Controlador universal para las solicitudes POST/GET desde el HTML frontend.
+ * Contiene el hook de enrutamiento y la lógica básica de negocio y auditoría.
+ */
+
+/**
+ * doPost
+ * Punto de entrada HTTP POST para la Web App de Google Apps Script.
+ */
+function doPost(e) {
+  try {
+    const request = JSON.parse(e.postData.contents);
+    const entity = request.entity;
+    const action = request.action; // create, read, update, delete
+    const data = request.data;    // Payload
+
+    let responseData = null;
+
+    if (action === 'create') {
+      responseData = _handleCreate(entity, data);
+    } else if (action === 'read') {
+      responseData = _handleRead(entity);
+    } else if (action === 'update') {
+      responseData = _handleUpdate(entity, data.id, data);
+    } else if (action === 'delete') {
+      responseData = _handleDelete(entity, data.id || data);
+    } else {
+      throw new Error("Action not supported yet.");
+    }
+
+    return ContentService.createTextOutput(JSON.stringify({
+      status: "success",
+      data: responseData
+    })).setMimeType(ContentService.MimeType.JSON);
+
+  } catch (error) {
+    return ContentService.createTextOutput(JSON.stringify({
+      status: "error",
+      message: error.message
+    })).setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+/**
+ * _handleRead
+ * Retorna todos los registros de una entidad desde Engine_DB.list.
+ * @returns {{ headers: string[], rows: Object[] }}
+ */
+function _handleRead(entityName) {
+  return Engine_DB.list(entityName);
+}
+
+/**
+ * _handleCreate
+ * Llama a Engine_DB (la inyección de auditoría ocurre en Adapter_Sheets).
+ */
+function _handleCreate(entityName, payload) {
+  // Llamar al motor agnóstico
+  const result = Engine_DB.create(entityName, payload);
+  return result;
+}
+
+/**
+ * _handleUpdate
+ * Llama a Engine_DB (la inyección de auditoría ocurre en Adapter_Sheets).
+ */
+function _handleUpdate(entityName, id, payload) {
+  const result = Engine_DB.update(entityName, id, payload);
+  return result;
+}
+
+/**
+ * _handleDelete
+ * Llama a Engine_DB.delete() para un borrado logico.
+ */
+function _handleDelete(entityName, id) {
+  const result = Engine_DB.delete(entityName, id);
+  return result;
+}
+
+/**
+ * API_Universal_Router
+ * Punto de entrada exclusivo para google.script.run (Frontend HTML a Backend GAS)
+ */
+/**
+ * getAppBootstrapPayload()
+ * Endpoint consolidado para Precarga Global (Global Prefetch).
+ * Retorna diccionarios de datos ya desempacados (Arreglo de Objetos) para todas las entidades.
+ */
+function getAppBootstrapPayload() {
+  const t0 = Date.now();
+  try {
+    const payload = {};
+    const schemas = getAppSchema();
+    const entities = Object.keys(schemas);
+    
+    for (let i = 0; i < entities.length; i++) {
+        const entityName = entities[i];
+        const result = Engine_DB.list(entityName, 'tuples'); // Tuples for internal speed
+        
+        // Desempacar tuplas a objetos en el backend para evitar bloqueos de renderizado en UI
+        if (result && result.headers && result.rows) {
+            const headers = result.headers;
+            const rows = result.rows.map(tuple => {
+                const obj = {};
+                headers.forEach((h, j) => obj[h] = tuple[j]);
+                return obj;
+            });
+            payload[entityName] = rows;
+        } else {
+            payload[entityName] = [];
+        }
+    }
+    
+    // OBLIGATORIO: Sanitización JSON.parse(stringify) para destruir proxies nativos
+    const sanitizedReturn = JSON.parse(JSON.stringify({
+      status: "success",
+      data: payload
+    }));
+    const executionTime = Date.now() - t0;
+    Logger.log(`[Perf] getAppBootstrapPayload completado en ${executionTime}ms`);
+    
+    return sanitizedReturn;
+  } catch (error) {
+    Logger.log(`[Bootstrap Error] ${error.message}`);
+    return { status: "error", message: error.message };
+  }
+}
+
+/**
+ * getInitialPayload(entityName)
+ * Endpoint maestro para Data Hydration. Consolida schema, data y lookups en un solo RPC.
+ */
+function getInitialPayload(entityName) {
+  const t0 = Date.now();
+  try {
+    Logger.log(`[Hydration] Iniciando carga para: ${entityName}`);
+    
+    // 1. Obtener Schema
+    const schema = getAppSchema(entityName);
+    
+    // 2. Obtener Data (en formato Tuplas para optimizar peso)
+    const dataResponse = Engine_DB.list(entityName, 'tuples');
+    
+    // 3. Obtener Lookups requeridos
+    const lookups = {};
+    const fields = schema.fields || Object.keys(schema).filter(k => typeof schema[k] === 'object').map(k => ({...schema[k], name: k}));
+    
+    fields.forEach(field => {
+      if (field.lookupSource) {
+        lookups[field.name] = _getCachedLookup(field.lookupSource);
+      } else if (field.lookupTarget) {
+        // Mapear lookupTarget a su función de opciones (convención)
+        const sourceFn = `get${field.lookupTarget}sOptions`;
+        if (typeof this[sourceFn] === 'function') {
+          lookups[field.name] = _getCachedLookup(sourceFn);
+        }
+      } else if (field.targetEntity) {
+        // Soporte para subgrid selections (Select OR Create)
+        const sourceFn = `get${field.targetEntity}Options`;
+        const pluralFn = `get${field.targetEntity.replace(/o$/i, 'os').replace(/a$/i, 'as')}Options`; // Handle common plurals
+        
+        if (typeof this[sourceFn] === 'function') {
+          lookups[field.name] = _getCachedLookup(sourceFn);
+        } else if (typeof this[pluralFn] === 'function') {
+          lookups[field.name] = _getCachedLookup(pluralFn);
+        } else {
+          // Fallback manual para Grupos_Productos -> getGruposProductosOptions
+          const clean = field.targetEntity.replace(/_/g, '');
+          const manualFn = `get${clean}Options`;
+          const altManualFn = `get${clean.replace(/o/i, 'os')}Options`; // e.g. GrupoProductos -> GruposProductos
+          
+          if (typeof this[manualFn] === 'function') {
+            lookups[field.name] = _getCachedLookup(manualFn);
+          } else if (typeof this[altManualFn] === 'function') {
+            lookups[field.name] = _getCachedLookup(altManualFn);
+          }
+        }
+      }
+    });
+
+    const executionTime = Date.now() - t0;
+    Logger.log(`[Perf] getInitialPayload(${entityName}) completado en ${executionTime}ms`);
+
+    const sanitizedReturn = JSON.parse(JSON.stringify({
+      status: "success",
+      schema: schema,
+      data: dataResponse,
+      lookups: lookups,
+      executionTimeMs: executionTime
+    }));
+    return sanitizedReturn;
+  } catch (error) {
+    Logger.log(`[Hydration Error] ${error.message}`);
+    return { status: "error", message: error.message };
+  }
+}
+
+/**
+ * _getCachedLookup(sourceFnName)
+ * Implementa CacheService para evitar lecturas repetitivas de Sheets.
+ */
+function _getCachedLookup(sourceFnName) {
+  const cache = CacheService.getScriptCache();
+  const cacheKey = `CACHE_LOOKUP_${sourceFnName}`;
+  const cached = cache.get(cacheKey);
+  
+  if (cached) {
+    Logger.log(`[Cache] HIT para ${sourceFnName}`);
+    return JSON.parse(cached);
+  }
+  
+  Logger.log(`[Cache] MISS para ${sourceFnName}. Leyendo de DB...`);
+  const result = this[sourceFnName]();
+  cache.put(cacheKey, JSON.stringify(result), 3600); // 1 hora
+  return result;
+}
+
+function API_Universal_Router(action, entityName, payload) {
+  try {
+    let responseData = null;
+
+    if (action === 'create') {
+      let pkField = Object.keys(payload).find(k => k.startsWith('id_'));
+      if (!pkField) {
+        const tableKey = entityName.toLowerCase();
+        const singularKey = tableKey.endsWith('s') ? tableKey.slice(0, -1) : tableKey;
+        pkField = 'id_' + singularKey;
+      }
+
+      if (!payload[pkField] || String(payload[pkField]).trim() === '') {
+        payload[pkField] = _generateShortUUID(entityName);
+      }
+      responseData = _handleCreate(entityName, payload);
+      responseData = JSON.parse(JSON.stringify(responseData)); // Destruir Date Nativos (Regla 10)
+
+      // Enrich response with confirmed PK so the frontend cache injection
+      // can build the newRecord without guessing the adapter's internal shape.
+      const confirmedPkValue = payload[pkField];
+      const itemName = payload.nombre || payload.nombre_producto || entityName;
+      Logger.log('Persistencia completada para: ' + itemName);
+      
+      const sanitizedReturn = JSON.parse(JSON.stringify({
+        status: "success",
+        data: responseData,
+        Entity: entityName,
+        pk: pkField,
+        pkValue: confirmedPkValue
+      }));
+      return sanitizedReturn;
+    } else if (action === 'read') {
+      const id = (typeof payload === 'object') ? payload[Object.keys(payload).find(k => k.startsWith('id_'))] || payload.id : payload;
+      if (id) {
+        responseData = Engine_DB.readFull(entityName, id);
+      } else {
+        responseData = _handleRead(entityName);
+      }
+    } else if (action === 'update') {
+      const idField = Object.keys(payload).find(k => k.startsWith('id_'));
+      const id = payload[idField];
+      responseData = _handleUpdate(entityName, id, payload);
+    } else if (action === 'delete') {
+      // Para delete, el payload puede ser solo el ID como string o un obj {id: ...}
+      const id = (typeof payload === 'object') ? payload[Object.keys(payload).find(k => k.startsWith('id_'))] || payload.id : payload;
+      responseData = _handleDelete(entityName, id);
+    } else {
+      throw new Error(`Action '${action}' not supported yet.`);
+    }
+
+    const itemName = payload.nombre || payload.id_portafolio || entityName;
+    Logger.log('Persistencia completada para: ' + itemName);
+
+    // Destruir Date Nativos (Regla 10) previo a postMessage
+    const sanitizedReturn = JSON.parse(JSON.stringify({
+      status: "success",
+      data: responseData
+    }));
+    return sanitizedReturn;
+  } catch (error) {
+    Logger.log('🚀 ERROR Atrapado en Servidor: ' + error.message + '\n' + error.stack);
+    const sanitizedReturn = JSON.parse(JSON.stringify({
+      status: "error",
+      success: false,
+      message: error.message
+    }));
+    return sanitizedReturn;
+  }
+}
+
+/**
+ * bulkInsert (Operating as Bulk Upsert in Memory)
+ * Inserción y actualización masiva de registros en hoja (Universal Bulk Data Engine)
+ */
+function bulkInsert(entityName, recordsArray) {
+    const user = Session.getActiveUser().getEmail();
+    const timestamp = new Date();
+    
+    // Conexión explícita DB para contexto WebApp
+    const config = (typeof CONFIG !== 'undefined') ? CONFIG : { SPREADSHEET_ID_DB: '' };
+    const ss = SpreadsheetApp.openById(config.SPREADSHEET_ID_DB);
+    if (!ss) return { status: 'error', message: 'No se pudo conectar a la base de datos (Spreadsheet nulo).' };
+
+    // Auto-Aprovisionamiento explícito usando el Adapter
+    const sheet = Adapter_Sheets._ensureSheetExists(ss, entityName);
+    if (!sheet) return { status: 'error', message: `No se pudo acceder a la hoja ${entityName}` };
+
+    const dataRange = sheet.getDataRange();
+    const allValues = dataRange.getValues();
+    const headers = allValues[0];
+    let existingData = allValues.slice(1);
+    
+    if (headers.length === 0 || headers[0] === "") {
+       return { status: 'error', message: `La entidad ${entityName} no está aprovisionada (faltan cabeceras).` };
+    }
+    
+    // Determinar Primary Key dinámicamente desde los headers o la convención
+    let pkField = headers.find(h => h.toString().startsWith('id_'));
+    if (!pkField) {
+        const tableKey = entityName.toLowerCase();
+        const singularKey = tableKey.endsWith('s') ? tableKey.slice(0, -1) : tableKey;
+        pkField = 'id_' + singularKey;
+    }
+
+    let idIndex = headers.indexOf(pkField);
+    if(idIndex === -1) idIndex = 0; // Fallback to first column
+
+    let existingMap = {};
+    existingData.forEach((row, index) => {
+        if (row[idIndex]) existingMap[row[idIndex]] = index;
+    });
+
+    let newRecordsCount = 0;
+    let updatedRecordsCount = 0;
+
+    recordsArray.forEach(record => {
+        const recordId = record[pkField] || record['id'];
+        
+        // Es un UPDATE
+        if (recordId && existingMap.hasOwnProperty(recordId)) {
+            const rowIndex = existingMap[recordId];
+            
+            // Mantener datos de creación originales
+            record.created_at = existingData[rowIndex][headers.indexOf('created_at')] || timestamp;
+            record.created_by = existingData[rowIndex][headers.indexOf('created_by')] || user;
+            // Actualizar auditoría
+            record.updated_at = timestamp;
+            record.updated_by = user;
+            record.estado = record.estado || existingData[rowIndex][headers.indexOf('estado')] || 'Activo';
+            
+            // Reconstruir la fila preservando el orden de las cabeceras
+            const updatedRow = headers.map(colName => record[colName] !== undefined ? record[colName] : existingData[rowIndex][headers.indexOf(colName)]);
+            existingData[rowIndex] = updatedRow;
+            updatedRecordsCount++;
+        } 
+        // Es un INSERT
+        else {
+            const newId = recordId || _generateShortUUID(entityName);
+            record[pkField] = newId; 
+            record.created_at = timestamp;
+            record.created_by = user;
+            record.updated_at = timestamp;
+            record.updated_by = user;
+            record.estado = record.estado || 'Activo';
+            
+            const newRow = headers.map(colName => record[colName] !== undefined ? record[colName] : '');
+            existingData.push(newRow);
+            existingMap[newId] = existingData.length - 1;
+            newRecordsCount++;
+        }
+    });
+
+    // Escribir de vuelta TODO a la base de datos en 1 sola operación (Flash Write)
+    if (existingData.length > 0) {
+        if(sheet.getLastRow() > 1) {
+            sheet.getRange(2, 1, sheet.getLastRow() - 1, headers.length).clearContent();
+        }
+        sheet.getRange(2, 1, existingData.length, headers.length).setValues(existingData);
+    }
+    
+    Logger.log(`BulkUpsert completado para ${entityName}: ${newRecordsCount} insertados, ${updatedRecordsCount} actualizados.`);
+    
+    // Devolvemos insertedCount y updatedCount. insertedCount se usa en DataView_UI para el Toast.
+    // Sumamos ambos para el mensaje de éxito "Se importaron X registros" si el backend actualizó los que existían.
+    return { status: 'success', insertedCount: (newRecordsCount + updatedRecordsCount), newRecords: newRecordsCount, updatedRecords: updatedRecordsCount };
+}
+
+// Bloque de Persistencia Dinámicas (Relacional 1:N)
+
+/**
+ * getDominioOptions (S8.5)
+ * Devuelve opciones enriquecidas con Metadatos Topológicos (nivel_tipo y hasActiveParent)
+ * para permitir Filtros 'Dumbness Guards' en el Frontend.
+ */
+function getDominioOptions() {
+  try {
+    const rawDominios = Engine_DB.list('Dominio');
+    if (!rawDominios || !rawDominios.rows) return [];
+
+    // Cargar mapa referencial de Relaciones Activas para detectar 'Hijos ya adoptados'
+    const rawRelaciones = Engine_DB.list('Relacion_Dominios');
+    const hasActiveParentMap = {}; // { childId: true }
+    
+    if (rawRelaciones && rawRelaciones.rows) {
+        rawRelaciones.rows.forEach(r => {
+            if (r.es_version_actual !== false) {
+                hasActiveParentMap[r.id_nodo_hijo] = true;
+            }
+        });
+    }
+    
+    const options = rawDominios.rows
+      .filter(row => row.estado !== 'Eliminado')
+      .map(row => ({
+        id: row.id_dominio,
+        value: row.id_dominio,
+        label: `[N${row.nivel_tipo}] ${row.n0_es}`, // UX: Mostrar nivel en el dropdown visualmente
+        nivel_tipo: Number(row.nivel_tipo) || 0,
+        hasActiveParent: !!hasActiveParentMap[row.id_dominio]
+      }));
+      
+    return JSON.parse(JSON.stringify(options));
+  } catch(e) {
+    Logger.log("Error en getDominioOptions: " + e.message);
+    return [];
+  }
+}
+
+function getPersonasOptions() {
+  try {
+    const result = Engine_DB.list('Persona');
+    if (!result || !result.rows) return [];
+    
+    const options = result.rows
+      .filter(row => row.estado !== 'Eliminado')
+      .map(row => ({
+        id: row.id_persona,
+        nombre: row.nombre,
+        value: row.id_persona,
+        label: row.nombre + (row.cargo ? ` (${row.cargo})` : '')
+      }));
+    return JSON.parse(JSON.stringify(options));
+  } catch(e) {
+    Logger.log("Error en getPersonasOptions: " + e.message);
+    return [];
+  }
+}
+
+function getGruposProductosOptions() {
+  try {
+    const result = Engine_DB.list('Grupo_Productos');
+    if (!result || !result.rows) return [];
+    
+    return result.rows.map(row => ({
+      value: row.id_grupo_producto,
+      label: row.nombre
+    })).filter(opt => opt.value && opt.label);
+  } catch (error) {
+    Logger.log("Error en getGruposProductosOptions: " + error.message);
+    return [];
+  }
+}
+
+/**
+ * getPortafoliosOptions
+ * Devuelve [{value: id_portafolio, label: nombre}] desde DB_Portafolio.
+ * Usado por el Dependency Resolver de FormEngine para el campo id_portafolio en Grupo_Productos.
+ */
+function getPortafoliosOptions() {
+  try {
+    const result = Engine_DB.list('Portafolio');
+    if (!result || !result.rows) return [];
+
+    return result.rows.map(row => ({
+      value: row.id_portafolio,
+      label: row.nombre
+    })).filter(opt => opt.value && opt.label);
+  } catch (error) {
+    Logger.log("Error en getPortafoliosOptions: " + error.message);
+    return [];
+  }
+}
+
+/**
+ * getProductosOptions
+ * Devuelve [{value: id_producto, label: nombre_producto}] desde DB_Producto.
+ * Usado por el Dependency Resolver de FormEngine para el campo productos_asociados.
+ */
+function getProductosOptions() {
+  try {
+    const result = Engine_DB.list('Producto');
+    if (!result || !result.rows) return [];
+
+    const options = result.rows.map(row => ({
+      value: row.id_producto,
+      label: row.nombre_producto
+    })).filter(opt => opt.value && opt.label);
+    return JSON.parse(JSON.stringify(options));
+  } catch (error) {
+    Logger.log("Error en getProductosOptions: " + error.message);
+    return [];
+  }
+}
+
+/**
+ * getUnidadesNegocioOptions
+ * Devuelve [{value: id_unidad_negocio, label: nombre}] desde DB_Unidad_Negocio.
+ */
+function getUnidadesNegocioOptions() {
+  try {
+    const result = Engine_DB.list('Unidad_Negocio');
+    if (!result || !result.rows) return [];
+
+    return result.rows.map(row => ({
+      value: row.id_unidad_negocio,
+      label: row.nombre
+    })).filter(opt => opt.value && opt.label);
+  } catch (error) {
+    Logger.log("Error en getUnidadesNegocioOptions: " + error.message);
+    return [];
+  }
+}
+
+/**
+ * getEquiposOptions
+ * Devuelve [{value: id_equipo, label: nombre_equipo}] desde DB_Equipo.
+ */
+function getEquiposOptions() {
+  try {
+    const result = Engine_DB.list('Equipo');
+    if (!result || !result.rows) return [];
+
+    return result.rows.map(row => ({
+      value: row.id_equipo,
+      label: row.nombre_equipo
+    })).filter(opt => opt.value && opt.label);
+  } catch (error) {
+    Logger.log("Error en getEquiposOptions: " + error.message);
+    return [];
+  }
+}
+
+/**
+ * _generateShortUUID
+ * Genera un ID con prefijo de 4 letras + sufijo de 5 caracteres alfanuméricos.
+ * Ejemplo: UNID-X8R2P
+ */
+function _generateShortUUID(entityName) {
+  var prefix = entityName.toUpperCase().substring(0, 4);
+  var chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  var suffix = '';
+  for (var i = 0; i < 5; i++) {
+    suffix += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return prefix + '-' + suffix;
+}
+
+// Bloque de Protección Híbrida (Jest vs GAS) - Regla 5 de docs/rules_db.md
+if (typeof module !== 'undefined') {
+  module.exports = {
+    _handleCreate,
+    _handleUpdate,
+    _handleDelete,
+    _generateShortUUID,
+    API_Universal_Router
+  };
+}
