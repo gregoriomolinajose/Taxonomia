@@ -111,6 +111,11 @@ window.UI_SubgridBuilder = {
             }
 
             // Determinar la PK real del hijo basada en la entidad destino
+            if (!field.targetEntity) {
+                console.error(`[UI_SubgridBuilder] Error Crítico: field.targetEntity indefinido en esquema de campo '${field.name}'`);
+                window.showToast && window.showToast(`Error de esquema en Subgrid: Múltiples de ${field.label}`, 'danger');
+                return;
+            }
             const tableKey = field.targetEntity.toLowerCase();
             const singularKey = tableKey.endsWith('s') ? tableKey.slice(0, -1) : (tableKey.endsWith('es') ? tableKey.slice(0, -2) : tableKey);
             const childPK = 'id_' + singularKey;
@@ -167,6 +172,13 @@ window.UI_SubgridBuilder = {
             `;
 
             document.body.appendChild(modal);
+            
+            // GC Native Bind: Destruir el nodo DOM huérfano si el usuario cierra tocando el Backdrop oscuro
+            modal.addEventListener('ionModalDidDismiss', () => {
+                const el = document.getElementById(modalId);
+                if (el) el.remove();
+            });
+            
             await modal.present();
 
             // Logic for selection
