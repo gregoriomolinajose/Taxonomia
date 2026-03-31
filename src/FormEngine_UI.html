@@ -159,34 +159,69 @@
             module.exports = { isRecordLinked, _normalizeId, _patchFrontendCache };
         }
 
-        // [S8.7] Arquitectura de Formularios Apilables (Modal Stack)
-        global.formModalStack = global.formModalStack || [];
-
-        global._closeTopModal = function() {
-            if (global.formModalStack.length > 0) {
-                const topModal = global.formModalStack.pop();
-                topModal.dismiss().then(() => topModal.remove());
-                global.currentFormModal = global.formModalStack.length > 0 ? global.formModalStack[global.formModalStack.length - 1] : null;
-                
-                // Si cerramos el último modal, reseteamos el estado de edición actual
-                if (global.formModalStack.length === 0) {
-                    global.currentEditId = null;
+        // [S9.2] Modal Stack Controller (LIFO Isolation & Max Depth Z-Index Guard)
+        global.ModalStackController = (function() {
+            const stack = [];
+            const MAX_DEPTH = 3;
+            
+            return {
+                push: function(modalNode) {
+                    if (stack.length >= MAX_DEPTH) {
+                        const alert = document.createElement('ion-alert');
+                        alert.header = 'Límite de Anidación Alcanzado';
+                        alert.message = 'Has rebasado la profundidad máxima para la creación In-line. Por favor, finaliza o cancela primero los formularios pendientes para proteger la estabilidad visual.';
+                        alert.buttons = ['Entendido'];
+                        document.body.appendChild(alert);
+                        alert.present();
+                        return false; // Deny push
+                    }
+                    stack.push(modalNode);
+                    global.currentFormModal = modalNode;
+                    return true;
+                },
+                closeTop: function() {
+                    if (stack.length > 0) {
+                        const topModal = stack.pop();
+                        // Garantía fuerte de Garbage Collection (T16)
+                        topModal.dismiss().catch(() => {}).finally(() => {
+                            setTimeout(() => topModal.remove(), 300);
+                            console.log(`[GC] Modal Destruido. Nodos Vivos: ${stack.length}`);
+                        });
+                        
+                        global.currentFormModal = stack.length > 0 ? stack[stack.length - 1] : null;
+                        
+                        // Mutación de estado global (T15)
+                        if (stack.length === 0) {
+                            global.currentEditId = null;
+                        }
+                    }
+                },
+                getDepth: () => stack.length,
+                clearAll: function() {
+                    while(stack.length > 0) {
+                        this.closeTop();
+                    }
                 }
-            }
-        };
+            };
+        })();
+
+        // Backward compatibility (T7)
+        global._closeTopModal = global.ModalStackController.closeTop;
+
 
         global.renderForm = async function (entityName, data = null, injectedCallback = null) {
             // Asegurar reset de estado al abrir formulario nuevo (Directiva 1)
             // Ya no lo hacemos incondicionalmente, solo si es la capa raíz
-            if (global.formModalStack.length === 0) {
+            if (global.ModalStackController.getDepth() === 0) {
                 global.currentEditId = null;
                 window._lastSection = null; // Reset de secciones UI
             }
             
             // Construcción del Modal de la Vista de Formularios (Keyboard-Aware Fix)
             const modal = document.createElement('ion-modal');
-            global.formModalStack.push(modal);
-            global.currentFormModal = modal;
+            if (!global.ModalStackController.push(modal)) {
+                return false; // Abort topological creation (Max Depth Guard triggered)
+            }
             
             // Inyectar callback opcional (In-line Creation)
             modal.__onSaveSuccessFallback = injectedCallback;
@@ -1449,7 +1484,7 @@
                                  // Enrutamiento post-Guardado Inmediato
                                  if (inlineCallback) {
                                      inlineCallback(response); // Notificamos al picker que solicitó la creación
-                                 } else if (!global.formModalStack || global.formModalStack.length === 0) {
+                                 } else if (!global.ModalStackController || global.ModalStackController.getDepth() === 0) {
                                      // Solo recargar DataView si era el Formulario Principal
                                      if (window.DataViewEngine) {
                                          window.DataViewEngine.render(entityName, 'app-container');
