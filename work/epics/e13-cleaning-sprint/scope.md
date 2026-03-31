@@ -37,3 +37,22 @@ Desacoplar la lógica polinómica de relaciones del inyector maestro `FormRender
    * *Mitigación:* Continuar usando el Patrón `LocalEventBus` inyectado por Dependencia desde el FormRenderer hacia el SubgridBuilder.
 2. **Riesgo:** Rupturas Regex por Migración AST Minify.
    * *Mitigación:* Sandbox de CI con Tests E2E de Renderizado del DOM Central.
+
+## Implementation Plan (Roadmap)
+
+### Milestones
+* **M1: UI Subgrid Factorizado** (S13.1) - Aislamiento atómico de las relaciones polimórficas (Walking Skeleton).
+* **M2: Reglas Nativas & QA Cleanup** (S13.2, S13.3) - Eliminación de Lógica en Frontend y punteros muertos.
+* **M3: AST Pipeline Activo** (S13.4) - Empaquetamiento CSS automatizado de Node (Feature Complete).
+
+### Parallel Opportunities
+- La S13.4 (AST Minifier) puede trabajarse de forma concurrente con S13.1, ya que afecta al pipeline de construcción (`deploy.js`, `package.json`), sin tocar el DOM Core del Frontend.
+
+### Story Sequence Tracking
+
+| ID | Story Name | Status | Size | Deps | Rationale |
+|----|------------|--------|------|------|-----------|
+| S13.1 | Subgrid Extractor | Pending | L | None | **Dependency-driven:** El monstruo de FormEngine debe desintegrarse primero para asegurar la viabilidad topológica. |
+| S13.2 | Schema Declarative Push | Pending | M | S13.1 | **Quick-wins:** Eliminar quemado de strings (`cant_`) reduce Bugs potenciales antes de seguir sumando features escalables. |
+| S13.3 | Legacy Alias Purging | Pending | S | S13.1 | Cerrar el E12 routing definitivamente purgando el antiguo Router inactivo. |
+| S13.4 | CSS AST Minifier | Pending | M | None | Se puede ejecutar en paralelo; sanea el pipeline Node para alivianar los pases a PROD de CSS gigantescos. |
