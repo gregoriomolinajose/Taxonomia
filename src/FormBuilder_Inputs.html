@@ -337,7 +337,8 @@
                 buttonsStart.slot = 'start';
                 const cancelBtn = document.createElement('ion-button');
                 cancelBtn.textContent = 'Cerrar';
-                cancelBtn.onclick = () => { pickerModal.isOpen = false; setTimeout(() => pickerModal.remove(), 300); };
+                pickerModal.addEventListener('ionModalDidDismiss', () => pickerModal.remove(), { once: true });
+                cancelBtn.onclick = () => { pickerModal.isOpen = false; };
                 buttonsStart.appendChild(cancelBtn);
 
                 const buttonsEnd = document.createElement('ion-buttons');
@@ -349,7 +350,6 @@
                     selectedIds = [...draftIds];
                     renderChips();
                     pickerModal.isOpen = false;
-                    setTimeout(() => pickerModal.remove(), 300);
                     
                     // Notificar el EventBus a toda la topología sobre la selección múltiple
                     if (localEventBus && typeof localEventBus.publish === 'function') {
