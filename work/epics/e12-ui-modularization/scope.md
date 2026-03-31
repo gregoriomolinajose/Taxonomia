@@ -23,7 +23,7 @@ Desarrollar una infraestructura SPA escalable mediante la amputación y deconstr
 
 ## Planned Stories
 - **[x] S12.1**: FormEngine Splitting. Extraer lógicas de construcción atómica del `FormEngine` hacia sub-fábricas puras (`FormBuilder_Inputs`). (Size: L, Deps: None) ✓
-- **[ ] S12.2**: Enrutamiento Autocontenido. Separar motor lógico de navegación desde `JS_Core` a `UI_Router` e instanciar Grillas abstractas para `DataView_UI`. (Size: M, Deps: S12.1).
+- **[x] S12.2**: Enrutamiento Autocontenido. Separar motor lógico de navegación desde `JS_Core` a `UI_Router` e instanciar Grillas abstractas para `DataView_UI`. (Size: M, Deps: S12.1). ✓
 - **[ ] S12.3**: Resiliencia y Tooling. Atacar los Fallos Heurísticos de Calidad (Boundary Errors del SPA y Cierre Nativo de Modal Managers). (Size: S, Deps: S12.2).
 
 ## Done Criteria
@@ -52,5 +52,5 @@ Desarrollar una infraestructura SPA escalable mediante la amputación y deconstr
 | ID | Story Name | Status | Size | Deps | Rationale |
 |----|------------|--------|------|------|-----------|
 | S12.1 | FormEngine Splitting | Done     | L | None | **Risk-First** (Mitigar colapso cognitivo del Inyector principal). |
-| S12.2 | DataGrid & Routing Abstraction | In-Progress | M | S12.1 | Despejar componentes presentacionales pesados. |
+| S12.2 | DataGrid & Routing Abstraction | Done | M | S12.1 | Despejar componentes presentacionales pesados. |
 | S12.3 | GC Safety & Tooling Boundaries | Pending | S | S12.2 | Cierre Quirúrgico de la Épica. |
