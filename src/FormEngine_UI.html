@@ -154,6 +154,50 @@
             }
         }
 
+        // [S9.3] Modularización DRY: Subrutina de Poblamiento Selectivo O(N)
+        window._populateSelectOptions = function(selectEl, dataArr, field) {
+            dataArr.forEach(d => {
+                const opt = document.createElement('ion-select-option');
+                opt.value = typeof d[field.valueField] !== 'undefined' ? d[field.valueField] : d.id_registro;
+                opt.textContent = `${opt.value} - ${typeof d[field.labelField] !== 'undefined' ? d[field.labelField] : d.nombre}`;
+                selectEl.appendChild(opt);
+            });
+        };
+
+        // [S9.3] Modularización DRY: Binding Aislado de Eventos (Padre-Hijo)
+        window._bindLevelChangeRepaint = function(triggerEl, selectEl, activeData, field, emptyOptNode) {
+            triggerEl.addEventListener('levelChanged', (ev) => {
+                const newLevel = ev.detail.newLevel;
+                const rulesContext = ev.detail.rules;
+                
+                // Reset general
+                selectEl.disabled = false;
+                selectEl.style.opacity = '1';
+                emptyOptNode.textContent = "— Sin asignar —";
+                
+                let freshFiltered = activeData;
+                
+                if (rulesContext) {
+                    if (rulesContext.levelFiltering === true && rulesContext.strictLevelJumps === true && field.relationType === 'padre') {
+                        freshFiltered = activeData.filter(d => Number(d.nivel_tipo) === newLevel - 1);
+                    }
+                    
+                    if (rulesContext.rootRequiresNoParent === true && newLevel === 1 && field.relationType === 'padre') {
+                        selectEl.disabled = true;
+                        selectEl.style.opacity = '0.5';
+                        emptyOptNode.textContent = "— Nodo Raíz (No requiere padre) —";
+                        freshFiltered = []; 
+                    }
+                }
+                
+                // REPAINT
+                selectEl.innerHTML = '';
+                selectEl.appendChild(emptyOptNode);
+                
+                window._populateSelectOptions(selectEl, freshFiltered, field);
+            });
+        };
+
         // Exponer para pruebas unitarias (solo en entornos sin google.script)
         if (typeof module !== 'undefined' && module.exports) {
             module.exports = { isRecordLinked, _normalizeId, _patchFrontendCache };
@@ -627,49 +671,11 @@
                                 }
                             }
                             
-                            filteredActiveData.forEach(d => {
-                                const opt = document.createElement('ion-select-option');
-                                opt.value = typeof d[field.valueField] !== 'undefined' ? d[field.valueField] : d.id_registro;
-                                opt.textContent = `${opt.value} - ${typeof d[field.labelField] !== 'undefined' ? d[field.labelField] : d.nombre}`;
-                                basicSel.appendChild(opt);
-                            });
+                            // Inyección DRY Inicial
+                            window._populateSelectOptions(basicSel, filteredActiveData, field);
 
-                            // --- S8.7.2: EVENT LISTENER DE REPAINT BINDING ---
-                            inputEl.addEventListener('levelChanged', (ev) => {
-                                const newLevel = ev.detail.newLevel;
-                                const rulesContext = ev.detail.rules;
-                                
-                                // Reset general
-                                basicSel.disabled = false;
-                                basicSel.style.opacity = '1';
-                                emptyOpt.textContent = "— Sin asignar —";
-                                
-                                let freshFiltered = activeData;
-                                
-                                if (rulesContext) {
-                                    if (rulesContext.levelFiltering === true && rulesContext.strictLevelJumps === true && field.relationType === 'padre') {
-                                        freshFiltered = activeData.filter(d => Number(d.nivel_tipo) === newLevel - 1);
-                                    }
-                                    
-                                    if (rulesContext.rootRequiresNoParent === true && newLevel === 1 && field.relationType === 'padre') {
-                                        basicSel.disabled = true;
-                                        basicSel.style.opacity = '0.5';
-                                        emptyOpt.textContent = "— Nodo Raíz (No requiere padre) —";
-                                        freshFiltered = []; 
-                                    }
-                                }
-                                
-                                // REPAINT
-                                basicSel.innerHTML = '';
-                                basicSel.appendChild(emptyOpt);
-                                
-                                freshFiltered.forEach(d => {
-                                    const opt = document.createElement('ion-select-option');
-                                    opt.value = typeof d[field.valueField] !== 'undefined' ? d[field.valueField] : d.id_registro;
-                                    opt.textContent = `${opt.value} - ${typeof d[field.labelField] !== 'undefined' ? d[field.labelField] : d.nombre}`;
-                                    basicSel.appendChild(opt);
-                                });
-                            });
+                            // --- S8.7.2/S9.3: EVENT LISTENER DE REPAINT BINDING ---
+                            window._bindLevelChangeRepaint(inputEl, basicSel, activeData, field, emptyOpt);
 
                             // [S8.7] Branch Shifting Interceptor
                             if (field.isTemporalGraph && field.relationType === 'padre') {
