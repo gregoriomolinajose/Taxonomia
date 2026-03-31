@@ -136,11 +136,4 @@
         }
     };
 
-    // Alias Retrocompatibles (Evita romper FormRenderer_UI y dependencias)
-    window.navigateTo = function(v, e) { window.UI_Router.navigateTo(v, e); };
-    window.renderMainNav = function() { window.UI_Router.renderMainNav(); };
-    window.showHomeSidebar = function() { window.UI_Router.showHomeSidebar(); };
-    window.showListSidebar = function(e) { window.UI_Router.showListSidebar(e); };
-    window.returnToDashboard = function() { window.UI_Router.returnToDashboard(); };
-    window.showFormSidebar = function(e) { window.UI_Router.showFormSidebar(e); };
 </script>
