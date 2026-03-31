@@ -22,12 +22,12 @@ Desarrollar una infraestructura SPA escalable mediante la amputación y deconstr
 - Alterar las capacidades declarativas base del `Schema_Engine.gs`.
 
 ## Planned Stories
-- **[ ] S12.1**: FormEngine Splitting. Extraer lógicas de construcción atómica del `FormEngine` hacia sub-fábricas puras (`FormBuilder_Inputs`). (Size: L, Deps: None).
+- **[x] S12.1**: FormEngine Splitting. Extraer lógicas de construcción atómica del `FormEngine` hacia sub-fábricas puras (`FormBuilder_Inputs`). (Size: L, Deps: None) ✓
 - **[ ] S12.2**: Enrutamiento Autocontenido. Separar motor lógico de navegación desde `JS_Core` a `UI_Router` e instanciar Grillas abstractas para `DataView_UI`. (Size: M, Deps: S12.1).
 - **[ ] S12.3**: Resiliencia y Tooling. Atacar los Fallos Heurísticos de Calidad (Boundary Errors del SPA y Cierre Nativo de Modal Managers). (Size: S, Deps: S12.2).
 
 ## Done Criteria
-- [ ] `FormEngine_UI.html` fue sustituido (o decantado) por un inyector maestro (Ej. `FormRenderer_UI`) que no rebasa los 25 KB o las 800 LOC de complejidad ciclomática bruta.
+- [x] `FormEngine_UI.html` fue sustituido (o decantado) por un inyector maestro (Ej. `FormRenderer_UI`) que no rebasa los 25 KB o las 800 LOC de complejidad ciclomática bruta.
 - [ ] Listados/DataTables son componentes aislados que actúan por polimorfismo hacia `DataView_UI.html`.
 - [ ] El Router Global y Variables del Estado (`window.AppState`) habitan en un script de lógica pura con Cero-Manejo-DOM.
 - [ ] Cierres Modales aguardan la animación web nativa para liberar memoria.
@@ -51,6 +51,6 @@ Desarrollar una infraestructura SPA escalable mediante la amputación y deconstr
 
 | ID | Story Name | Status | Size | Deps | Rationale |
 |----|------------|--------|------|------|-----------|
-| S12.1 | FormEngine Splitting | In-Progress | L | None | **Risk-First** (Mitigar colapso cognitivo del Inyector principal). |
+| S12.1 | FormEngine Splitting | Done     | L | None | **Risk-First** (Mitigar colapso cognitivo del Inyector principal). |
 | S12.2 | DataGrid & Routing Abstraction | Pending | M | S12.1 | Despejar componentes presentacionales pesados. |
 | S12.3 | GC Safety & Tooling Boundaries | Pending | S | S12.2 | Cierre Quirúrgico de la Épica. |

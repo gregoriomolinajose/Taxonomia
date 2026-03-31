@@ -33,7 +33,7 @@ describe.skip('FormEngine Logic (Ionic Web Components)', () => {
         }
 
         // Load the FormEngine logic (simulating the script tag)
-        const engineFile = fs.readFileSync(path.join(__dirname, '../src/FormEngine_UI.html'), 'utf8');
+        const engineFile = fs.readFileSync(path.join(__dirname, '../src/FormRenderer_UI.html'), 'utf8');
         const engineScript = engineFile.replace(/<\/?script>/g, '');
 
         // Inject dependencies into our simulated window
