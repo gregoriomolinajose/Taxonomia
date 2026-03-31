@@ -41,7 +41,7 @@ describe.skip('FormEngine UX/UI Advancements (Regla 5.x)', () => {
         window.APP_SCHEMAS = MOCK_SCHEMAS;
 
         // Cargamos y ejecutamos dinámicamente el FormEngine actual
-        const engineFile = fs.readFileSync(path.join(__dirname, '../src/FormEngine_UI.html'), 'utf8');
+        const engineFile = fs.readFileSync(path.join(__dirname, '../src/FormRenderer_UI.html'), 'utf8');
         const engineScript = engineFile.replace(/<\/?script>/g, '');
 
         const scriptEl = document.createElement('script');

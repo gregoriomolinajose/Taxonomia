@@ -1,0 +1,35 @@
+artifact_type: story-design
+version: 1
+skill: rai-story-design
+created: '2026-03-31T19:55:00Z'
+story: 'S12.2'
+epic: 'E12'
+content:
+  summary: 'Extracción del motor de routing y encapsulamiento de DataGrid en factorías OOTB.'
+  complexity: moderate
+  acceptance_criteria:
+    - id: AC1
+      description: 'JS_Core.html inicializa mediante llamadas neutras, erradicando manipulacion del router directo.'
+      verifiable: true
+    - id: AC2
+      description: 'DataView_UI invoca a UI_DataGrid para pintar colecciones en TABLAS sin ensuciar su Controlador.'
+      verifiable: true
+  integration_points:
+    - module: 'Core.Router'
+      change_type: new
+      files: ['src/UI_Router.html']
+    - module: 'Core.Grid'
+      change_type: new
+      files: ['src/UI_DataGrid.html']
+    - module: 'Core.Bootstrapper'
+      change_type: modification
+      files: ['src/Index.html', 'src/JS_Core.html', 'src/DataView_UI.html']
+  decisions:
+    - id: D1
+      choice: 'Separación pasiva de UI_DataGrid'
+      rationale: 'Para reducir complejidad ciclomática de DataView_UI y aislar concerns de CSS nativo.'
+      alternatives_considered: ['Usar Web Components Nativo (demasiada resiliencia necesaria para GAS)']
+refs:
+  backlog_item: 'S12.2'
+  epic_scope: 'work/epics/e12-ui-modularization/scope.md'
+metadata: {}
