@@ -39,3 +39,37 @@ Este documento registra deudas técnicas, ideas y recomendaciones observadas dur
 ### 9. Memory Profiling (Garbage Collection QA)
 * **Contexto (S8.7.1 Quality Review):** Se programó el Pop manual del *Modal Stack* tras operaciones exitosas de base de datos para prevenir *Memory Leaks* causados por Closures y Virtual Scrolls ocultos, pero actualmente no tenemos métricas de retención de memoria.
 * **Acción para E9:** Integrar pruebas e2e automatizadas o mediciones de *Profiling* enfocadas al consumo de RAM nativa cuando un operador anida y desanida N modales consecutivamente, certificando matemáticamente que Ionic y el recolector de basura de JS desechan correctamente el nodo desprendido.
+
+## 💡 Recomendaciones de Arquitectura y Calidad (Desde E9 / S9.1)
+
+### 10. `flattenTokens()` - Especialización del Flattener Recursivo (H8)
+* **Contexto (S9.1 AR):** La función recursiva de hidratación de JSON Theming contiene una lógica condicional fuerte \`if (key === "default")\` que acopla el analizador abstracto a convenciones sintácticas locales del negocio.
+* **Acción Futura:** Refactorizar la estructura de los JSON Tokens (ej: aislar un subárbol paralelo de variables abstractas) o separar esta sustitución en un mapeo de alias post-proceso, garantizando que la función base \`flattenObject\` recupere su pureza matemática matemática ciega frente al dominio.
+
+### 11. CSS Structural Isolation `DataView_UI.html` vs `CSS_App.html` (H11)
+* **Contexto (S9.1 AR):** A fin de erradicar los estilos en línea y obedecer la pureza de tokens nativos, se incrustaron selectores dedicados \`.dv-x\` temporalmente en un bloque interno \`<style>\` de \`DataView_UI.html\`.
+* **Acción Futura:** Determinar si este enfoque de "Shadow-DOM emulado" es lo oficial. De no serlo y privilegiar una Gobernanza Global a escala de SPA MDM, será imprescindible purgar todos los bloques locales \`<style>\` y aglutinarlos centralmente en \`CSS_App.html\` delegándole toda responsabilidad estructural general.
+
+### 12. Generación Procedimental DOM (H7)
+* **Contexto (S9.1 AR):** \`FormEngine_UI.html\` logró despenderse de constantes pixel numéricas (ej. utilizando tokens variables \`var(--spacing-5)\`), pero su proceso de ensamblaje continúa atado intrínsecamente a \`document.createElement\` iterativo en más de 1700 líneas.
+* **Acción Futura:** Considerar la encapsulación eventual en un patrón "Factory Component" puro, o migrar hacia Plantillas Reactivas Interpolarizadas que eleven la razón Abstracción / Líneas de Código, permitiendo mayor predecibilidad estructural y mejor facilidad de testing.
+
+### 13. Redundancia Semántica en Inyección asíncrona (Quality Review S9.1)
+* **Contexto (S9.1 QR):** Durante el pipeline de parseo JSON (`flattenTokens`), la intercepción de variables tipo `default` causa que la iteración continúe y genere duplicaciones en memoria (ej. `--color-text` y `--color-text-default`).
+* **Acción Futura:** Añadir un `return;` interno iterativo en `flattenTokens` o manejar la sub-llave con condicionales mutuamente excluyentes para economizar milisegundos de arranque y aligerar la entropía del `:root` en el navegador.
+
+### 14. Delegación de Responsabilidad de Topological Guard (H6/H7)
+* **Contexto (S9.2 AR):** El diseño inicial del `ModalStackController` delegó la comprobación de profundidad (Max Depth Guard) al propio generador visual (`FormEngine.renderForm`), fragmentando la responsabilidad.
+* **Acción Futura:** Refactorizar el diseño para que el método puro `ModalStackController.push()` sea el único soberano responsable de evaluar la profundidad y devolver un booleano (Aceptado/Rechazado), absorbiendo la lógica de detonación de alertas y manteniendo el controlador visual limpio.
+
+### 15. Corrupción de Estado Global tras Extracción de Modal Stack (Quality Review S9.2)
+* **Contexto (S9.2 QR):** Al abstraer `formModalStack` a un Controller IIFE, existe el altísimo riesgo de olvidar migrar el reseteo explícito de la variable global `currentEditId` que se ejecutaba en la rutina antigua al cerrar todos los modales. 
+* **Acción Futura:** Asegurar que `ModalStackController.pop()` o `closeTop()` fuerce proactivamente la mutación de `window.currentEditId = null` y reasigne `window.currentFormModal` apropiadamente si el LIFO queda vacío, previniendo ediciones accidentales sobre registros limpios.
+
+### 16. Fallo Silencioso en Garbage Collection UI (Quality Review S9.2)
+* **Contexto (S9.2 QR):** El plan sugirió usar `modal.dismiss().then(() => modal.remove())` para eliminar el nodo Ionic. Si `dismiss()` dispara un error (ej. superposición de overlays), la promesa es rechazada, omitiendo el `.then()` y provocando un Memory Leak visual (DOM Node zombi).
+* **Acción Futura:** Aplicar una cadena de promesas tolerante a fallos: `modal.dismiss().catch(()=>{}).finally(() => modal.remove())` garantizando matemáticamente la destrucción final del nodo desprendido (Zero-Trust al Lifecycle de Ionic).
+
+### 17. Ausencia de Safety Checks en DOM Inyectado (Quality Review S9.2)
+* **Contexto (S9.2 QR):** En `closeTop()`, se asume ciegamente que el objeto devuelto por `stack.pop()` siempre contedrá el método nativo `.dismiss()`. Si el DOM llegara a mutilarse remotamente o el objeto perdiera su interfaz gráfica (mutación de Frameworks externos), la llamada cruda reventaría con un *TypeError*.
+* **Acción Futura:** Agregar Guard Clauses formales tipo `if (topModal && typeof topModal.dismiss === 'function')` antes de ejecutar el ciclo de vida de Ionic para blindar totalmente el Controlador contra corrupciones de punteros nativos.
