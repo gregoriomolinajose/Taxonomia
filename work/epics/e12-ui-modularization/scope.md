@@ -38,3 +38,19 @@ Desarrollar una infraestructura SPA escalable mediante la amputación y deconstr
    * *Mitigación:* Inyección estricta (DI) del `LocalEventBus` hacia cada widget factorizado para mantener viva la comunicación ascendente/descendente (SCD-2).
 2. **Riesgo:** WSOD (White Screen of Death) por asimetrías de inyección HTTP usando Apps Script en Producción debido al tamaño fragmentado de scripts. (Impacto: Medio).
    * *Mitigación:* Exponer `window.onerror` en todo `Index.html` e insertar barreras pre-renderizado. Activar Build Stripping de test suites mediante `deploy.js`.
+
+---
+## Implementation Plan (Roadmap)
+
+### Milestones
+* **M1: Factoría Atómica (Walking Skeleton)** - Separación estable entre Orquestador (Renderer) e Inputs (Builder).
+* **M2: Agnosticismo de Vistas (Core MVP)** - `UI_Router` y `UI_DataGrid` externalizados y puros.
+* **M3: Resiliencia Final (Feature Complete)** - Blindajes WSOD y GC Modal operando en `Index.html`.
+
+### Story Sequence Tracking
+
+| ID | Story Name | Status | Size | Deps | Rationale |
+|----|------------|--------|------|------|-----------|
+| S12.1 | FormEngine Splitting | In-Progress | L | None | **Risk-First** (Mitigar colapso cognitivo del Inyector principal). |
+| S12.2 | DataGrid & Routing Abstraction | Pending | M | S12.1 | Despejar componentes presentacionales pesados. |
+| S12.3 | GC Safety & Tooling Boundaries | Pending | S | S12.2 | Cierre Quirúrgico de la Épica. |
