@@ -4,6 +4,9 @@
  */
 
 const strategy_1toN = function(incomingEdges, currentActiveEdges) {
+    if (!Array.isArray(incomingEdges) || incomingEdges.length === 0) return { edgesToClose: [] };
+    if (!Array.isArray(currentActiveEdges) || currentActiveEdges.length === 0) return { edgesToClose: [] };
+
     const incomingChildSet = new Set();
     incomingEdges.forEach(e => {
         const childId = String(e.id_nodo_hijo || '');
@@ -23,6 +26,9 @@ const strategy_1toN = function(incomingEdges, currentActiveEdges) {
 };
 
 const strategy_MtoN = function(incomingEdges, currentActiveEdges) {
+    if (!Array.isArray(incomingEdges) || incomingEdges.length === 0) return { edgesToClose: [] };
+    if (!Array.isArray(currentActiveEdges) || currentActiveEdges.length === 0) return { edgesToClose: [] };
+
     const payloadMap = new Map();
     incomingEdges.forEach(e => {
         const child = String(e.id_nodo_hijo || '');
