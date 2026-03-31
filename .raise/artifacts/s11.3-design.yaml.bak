@@ -1,0 +1,13 @@
+# S11.3 Design Metadata
+version: '1.0'
+type: design-spec
+attributes:
+  epic: "E11"
+  story: "S11.3"
+  title: "Decoupled Event Controllers"
+components_affected:
+  - FormEngine_UI.html (Frontend Form Generator)
+complexity:
+  level: "moderate"
+  risk_factors: ["Memory Leak en Listeners", "Condition Race durante Repintado Selectores"]
+  mitigations: ["Instanciación Local/Closure del Event Bus", "Eventos desacoplados del DOM"]

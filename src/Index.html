@@ -164,12 +164,18 @@
 
   <!-- MOTORES LOGICOS (Regla UI §14) -->
   <?!= include('UI_Components'); ?>
-  <?!= include('FormEngine_UI'); ?>
+  <?!= include('UI_ModalManager'); ?>
+  <?!= include('FormBuilder_Inputs'); ?>
+  <?!= include('FormValidators'); ?>
+  <?!= include('FormRenderer_UI'); ?>
   <?!= include('DataView_UI'); ?>
   <?!= include('Dashboard_UI'); ?>
   <?!= include('DomainMap_UI'); ?>
   <?!= include('DesignKit_UI'); ?>
   <?!= include('JS_Core'); ?>
 
+  <!-- [QA_MODULE_START] -->
+  <?!= include('TEST_Suite_UI'); ?>
+  <!-- [QA_MODULE_END] -->
 </body>
 </html>

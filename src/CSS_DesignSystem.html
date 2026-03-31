@@ -93,17 +93,20 @@
    * e inyecta asíncronamente en document.documentElement.style para 
    * evitar bloqueo de Thread y gobernar el renderizado Themed.
    */
-  (function hydrateTheme(tokens) {
+  window.hydrateThemeConfig = function(tokens) {
+    if (!tokens) return;
     const flattenObject = (obj, prefix = '') => {
+      if (typeof obj !== 'object' || obj === null) return;
+      
+      // Resiliencia Top-Down: si el sub-arbol tiene un default, bindear directo a la raíz (Prefijo)
+      if (prefix && obj.default !== undefined) {
+          document.documentElement.style.setProperty(prefix, obj.default);
+      }
+      
       Object.keys(obj).forEach(key => {
-        let propName = prefix ? `${prefix}-${key}` : `--${key}`;
-        // Fix para "text.default" o "icon.default" -> "--color-text"
-        if (key === "default") {
-          let parentName = prefix ? prefix : '--';
-          document.documentElement.style.setProperty(parentName, obj[key]);
-          return; // [S10.2] Evitar duplicación del nodo en memoria 
-        }
+        if (key === 'default') return; // [S11.2] Aplanamiento ciego sin duplicacion dura O(1)
         
+        let propName = prefix ? `${prefix}-${key}` : `--${key}`;
         if (typeof obj[key] === 'object' && obj[key] !== null) {
           flattenObject(obj[key], propName);
         } else {
@@ -112,7 +115,10 @@
       });
     };
     flattenObject(tokens);
-  })(window.__THEME_TOKENS__);
+  };
+  
+  // Ejecucion asincrona y expuesta globalmente
+  window.hydrateThemeConfig(window.__THEME_TOKENS__);
 </script>
 
 <style>

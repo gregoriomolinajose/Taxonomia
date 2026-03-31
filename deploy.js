@@ -37,15 +37,53 @@ try {
             console.log(`[Deploy] Version actualizada a ${newVersion} en ${configFile}`);
         }
 
-        // Swap Config.js
-        const targetConfig = 'src/Global_Config.js';
+        // Create .build directory
+        const buildDir = '.build';
+        if (fs.existsSync(buildDir)) {
+            fs.rmSync(buildDir, { recursive: true, force: true });
+        }
+        fs.cpSync('src', buildDir, { recursive: true });
+
+        // Strip QA Module in Production
+        if (env === 'prod') {
+            const indexFile = `${buildDir}/Index.html`;
+            if (fs.existsSync(indexFile)) {
+                let indexContent = fs.readFileSync(indexFile, 'utf8');
+                indexContent = indexContent.replace(/<!-- \[QA_MODULE_START\] -->[\s\S]*<!-- \[QA_MODULE_END\] -->/, '');
+                fs.writeFileSync(indexFile, indexContent, 'utf8');
+                console.log(`[Deploy] Stripped QA Module from PROD build.`);
+            }
+        }
+
+        // Safe CSS Minification (AST-Like RegExp)
+        ['CSS_App.html', 'CSS_DesignSystem.html'].forEach(filename => {
+            const filepath = `${buildDir}/${filename}`;
+            if (!fs.existsSync(filepath)) return;
+            let fileContent = fs.readFileSync(filepath, 'utf8');
+            
+            // Reemplazar solo el contenido interior de las etiquetas <style>
+            fileContent = fileContent.replace(/<style>([\s\S]*?)<\/style>/gi, (match, p1) => {
+                let minified = p1.replace(/\/\*[\s\S]*?\*\//g, ''); // Remover bloque de comentarios
+                minified = minified.replace(/[\n\r\t]+/g, ' '); // Remover line breaks
+                minified = minified.replace(/\s{2,}/g, ' '); // Remover espacios repetidos
+                return `<style>\n${minified}\n</style>`;
+            });
+            fs.writeFileSync(filepath, fileContent, 'utf8');
+        });
+        console.log(`[Deploy] Minified ${buildDir}/CSS_App.html and CSS_DesignSystem.html`);
+
+        // Swap Config.js in .build
+        const targetConfig = `${buildDir}/Global_Config.js`;
         if (fs.existsSync(configFile)) {
             console.log(`[Deploy] Updating ${targetConfig} with ${configFile}...`);
             fs.copyFileSync(configFile, targetConfig);
         }
 
-        console.log(`[Deploy] Copying ${envFile} to .clasp.json to guarantee exact script ID routing...`);
-        fs.copyFileSync(envFile, '.clasp.json');
+        // Alter .clasp.json to point to .build
+        console.log(`[Deploy] Generating temporary .clasp.json for ${env}...`);
+        let claspConfig = JSON.parse(fs.readFileSync(envFile, 'utf8'));
+        claspConfig.rootDir = '.build';
+        fs.writeFileSync('.clasp.json', JSON.stringify(claspConfig, null, 2), 'utf8');
 
         console.log(`[Deploy] Environment files updated for ${env}. Running npx clasp push...`);
 
@@ -84,6 +122,14 @@ try {
             console.error("[Deploy] Error: Clasp failed to reliably push code after 3 attempts.");
             process.exit(1);
         }
+
+        // Cleanup
+        if (fs.existsSync(buildDir)) {
+            fs.rmSync(buildDir, { recursive: true, force: true });
+        }
+        // Restore .clasp.json rootDir
+        claspConfig.rootDir = 'src';
+        fs.writeFileSync('.clasp.json', JSON.stringify(claspConfig, null, 2), 'utf8');
 
         console.log(`[Deploy] Successfully deployed to ${env}!`);
     });
