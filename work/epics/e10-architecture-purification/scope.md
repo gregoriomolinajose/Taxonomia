@@ -1,7 +1,9 @@
 ---
 epic: E10
 title: "Architecture Purification & Enterprise Modularity"
-status: "in progress"
+status: "completed"
+start_date: "2026-03-30"
+end_date: "2026-03-30"
 ---
 
 # Epic E10: Architecture Purification & Enterprise Modularity - Scope
@@ -25,10 +27,10 @@ El objetivo principal es lograr el Isomorfismo (testeabilidad agnóstica del UI)
 - **[x] S10.1**: Isomorphism & Namespace Factory (Aislar Utilidades DRY y agregar Type Guards, Migrar Validaciones Subgrid) ✓
 - **[x] S10.2**: Agnosticismo del Design System V2 (Desacoplar tokens *default*, Purgar `<style>` locales, y definir el Theme Manager final) ✓
 - **[x] S10.3**: Memory Profiling & Defensive E2E (Evitar Garbage Collection Leaks y comprobar GC del Modal Stack con flujos agresivos) ✓
-- **S10.4**: (Spike/Dragon) Exploración hacia un FormEngine *Factory Component Pattern* alejándose de `document.createElement`.
+- **[-] S10.4**: (Spike/Dragon) Exploración hacia un FormEngine *Factory Component Pattern* alejándose de `document.createElement` (Transferido a Parking Lot #12).
 
 ## Done Criteria
-- [ ] El namespace `window.UI_Factory` (o equivalente) concentra los helpers (Tickets 18, 19).
-- [ ] JSON Parser para temas corre independientemente de directivas "default" (Tickets 10, 13).
-- [ ] Ningún Partial HTML de UI contiene reglas `<style>` estáticas localizadas (Ticket 11).
-- [ ] Existen métricas o pruebas demostrando que un modal desanidado es destruido en RAM (Ticket 9).
+- [x] El namespace `window.UI_Factory` (o equivalente) concentra los helpers (Tickets 18, 19).
+- [x] JSON Parser para temas corre independientemente de directivas "default" (Tickets 10, 13).
+- [x] Ningún Partial HTML de UI contiene reglas `<style>` estáticas localizadas (Ticket 11).
+- [x] Existen métricas o pruebas demostrando que un modal desanidado es destruido en RAM (Ticket 9).
