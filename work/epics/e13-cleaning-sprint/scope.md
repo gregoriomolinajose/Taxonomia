@@ -24,7 +24,7 @@ Desacoplar la lógica polinómica de relaciones del inyector maestro `FormRender
 ## Planned Stories
 - **[x] S13.1:** Subgrid Extractor. Extraer lógica atómica relacional (UI anidada) a `UI_SubgridBuilder`.
 - **[x] S13.2:** Schema Declarative Push. Transicionar validadores in-line (`Test Truthiness`, Badge Status) a los Esquemas Globales.
-- **[ ] S13.3:** Legacy Alias Purging. Purgado del `Router` y sus listeners fantasmas viejos.
+- **[x] S13.3:** Legacy Alias Purging. Purgado del `Router` y sus listeners fantasmas viejos.
 - **[ ] S13.4:** CSS AST Minifier. Empaquetamiento CSS usando herramientas maduras Node en entorno CI local.
 
 ## Done Criteria
@@ -54,5 +54,5 @@ Desacoplar la lógica polinómica de relaciones del inyector maestro `FormRender
 |----|------------|--------|------|------|-----------|
 | S13.1 | Subgrid Extractor | Complete | L | None | **Dependency-driven:** El monstruo de FormEngine debe desintegrarse primero para asegurar la viabilidad topológica. |
 | S13.2 | Schema Declarative Push | Complete | M | S13.1 | **Quick-wins:** Eliminar quemado de strings (`cant_`) reduce Bugs potenciales antes de seguir sumando features escalables. |
-| S13.3 | Legacy Alias Purging | Pending | S | S13.1 | Cerrar el E12 routing definitivamente purgando el antiguo Router inactivo. |
+| S13.3 | Legacy Alias Purging | Complete | S | S13.1 | Cerrar el E12 routing definitivamente purgando el antiguo Router inactivo. |
 | S13.4 | CSS AST Minifier | Pending | M | None | Se puede ejecutar en paralelo; sanea el pipeline Node para alivianar los pases a PROD de CSS gigantescos. |
