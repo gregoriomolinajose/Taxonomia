@@ -9,8 +9,9 @@
 | E1 | Setup de Plataforma SAFe 6.0 e Integración Dual-Write | ✅ Complete  | Implementar backend en GAS y base UI en Ionic. | Alta     |
 | E3 | Migración a Producción SGMP                           | 🚧 In Prog   | S3.2 / S1.1 / S1.2: [DONE]                            | Alta     |
 | E8 | Graph Governance & Business Rules Engine              | ✅ Complete  | TDAG server backend & Business Rules interceptors     | Media    |
-| E9 | Refactor UI MDM & ThemeManager                        | 🚧 In Prog   | Migrar estilos hardcoded, sanear LIFO Max Depth GC    | Alta     |
+| E9 | Refactor UI MDM & ThemeManager                        | ✅ Complete   | Migrar estilos hardcoded, sanear LIFO Max Depth GC    | Alta     |
 | E11| Declarative UI Refactoring                            | ✅ Complete  | Componentización SPA y Pipeline QA/Minify             | Alta     |
+| E12| UI Modularization & Core Scaling                      | 🚧 In Prog   | Deconstrucción FormEngine, Routing, y Tooling CSS     | Muy Alta |
 
 ## Parking Lot / Deuda Técnica (Post-Epic 11)
 
