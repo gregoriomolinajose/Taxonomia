@@ -185,8 +185,17 @@
                 _state.sortDir = 'asc';
             }
             _state.filtered.sort((a, b) => {
-                const av = String(a[colKey] ?? '').toLowerCase();
-                const bv = String(b[colKey] ?? '').toLowerCase();
+                const extractVal = (val) => {
+                    if (Array.isArray(val) && val.length > 0) {
+                        const item = val[0];
+                        if (typeof item === 'object' && item !== null) {
+                            return item.nombre || item.name || item.label || item.nombre_producto || '';
+                        }
+                    }
+                    return String(val ?? '');
+                };
+                const av = extractVal(a[colKey]).toLowerCase();
+                const bv = extractVal(b[colKey]).toLowerCase();
                 const cmp = av.localeCompare(bv, 'es', { numeric: true });
                 return _state.sortDir === 'asc' ? cmp : -cmp;
             });
@@ -484,7 +493,7 @@
         function _onSort(colKey) { _applySort(colKey); }
 
         function _onPage(p) {
-            const tp = _totalPages();
+            const tp = Math.max(1, Math.ceil(_state.filtered.length / _state.pageSize));
             _state.page = Math.max(1, Math.min(p, tp));
             _rerender();
         }
