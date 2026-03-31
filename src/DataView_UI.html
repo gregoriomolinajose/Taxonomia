@@ -454,8 +454,8 @@
                 _ensureColPopover();
 
                 // Actualizar sidebar con navegación de entidades (Directiva 1)
-                if (typeof window.showListSidebar === 'function') {
-                    window.showListSidebar(entityName);
+                if (window.UI_Router && typeof window.UI_Router.showListSidebar === 'function') {
+                    window.UI_Router.showListSidebar(entityName);
                 }
 
                 _rerenderData();

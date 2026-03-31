@@ -83,7 +83,7 @@
         </ion-content>
         <ion-footer class="ion-no-border" style="background: transparent;">
           <div class="sidebar-heading"><span>SISTEMA</span></div>
-          <div class="nav-item" id="nav-item-settings" onclick="window.navigateTo('designkit')" title="Ajustes">
+          <div class="nav-item" id="nav-item-settings" onclick="window.UI_Router.navigateTo('designkit')" title="Ajustes">
             <ion-icon name="settings-outline"></ion-icon>
             <ion-label>Ajustes</ion-label>
           </div>
@@ -110,7 +110,7 @@
               <ion-button class="hide-on-mobile" fill="clear" onclick="window.toggleDesktopMenu()">
                 <ion-icon slot="icon-only" name="menu-outline"></ion-icon>
               </ion-button>
-              <ion-button id="global-back-btn" color="primary" fill="clear" style="display:none;" onclick="window.returnToDashboard()">
+              <ion-button id="global-back-btn" color="primary" fill="clear" style="display:none;" onclick="window.UI_Router.returnToDashboard()">
                 <ion-icon slot="icon-only" name="arrow-back-outline"></ion-icon>
               </ion-button>
             </ion-buttons>

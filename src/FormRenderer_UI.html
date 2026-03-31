@@ -355,15 +355,15 @@
                     while (container.firstChild) container.removeChild(container.firstChild);
                     if (window.DataViewEngine) {
                         window.DataViewEngine.render(entityName, 'app-container');
-                    } else {
-                        window.returnToDashboard();
+                    } else if (window.UI_Router && typeof window.UI_Router.returnToDashboard === 'function') {
+                        window.UI_Router.returnToDashboard();
                     }
                 };
             }
 
-            // Preparar Sidebar Contextual
-            if (typeof window.showFormSidebar === 'function') {
-                window.showFormSidebar(entityName);
+            // --- NUEVO: Switch Sidebar a modo Formulario ---
+            if (window.UI_Router && typeof window.UI_Router.showFormSidebar === 'function') {
+                window.UI_Router.showFormSidebar(entityName);
             }
 
             // Reparación Crítica: Instanciar variable solicitada por el Stepper

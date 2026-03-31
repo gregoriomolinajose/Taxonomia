@@ -246,8 +246,8 @@
     
     // Regla S11.1: EventBus Subscription para Router
     window.AppEventBus.subscribe('NAV::CHANGE', function(payload) {
-      if (payload && payload.viewType) {
-        window.navigateTo(payload.viewType, payload.entityKey);
+      if (payload.viewType && window.UI_Router) {
+        window.UI_Router.navigateTo(payload.viewType, payload.entityKey);
       }
     });
 
@@ -257,10 +257,12 @@
     var container = document.getElementById('app-container');
     if (container) window.OriginalDashboardHTML = container.innerHTML;
     setTimeout(function() {
-      window.showHomeSidebar();
-      // Forzar el estado inicial del enrutador para pintar la UI
-      if (typeof window.navigateTo === 'function') {
-        window.navigateTo('dashboard');
+      if (window.UI_Router) {
+        window.UI_Router.showHomeSidebar();
+      }
+      
+      if (window.UI_Router && typeof window.UI_Router.navigateTo === 'function') {
+        window.UI_Router.navigateTo('dashboard');
       }
       window.AuthManager.init();
     }, 100);
