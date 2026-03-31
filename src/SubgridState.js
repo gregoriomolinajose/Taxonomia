@@ -169,11 +169,27 @@ function isNewRecord(context) {
     return !context.currentEditId && (!context.data || !context.data.id_registro);
 }
 
+/**
+ * evaluateFieldState(rulesContext, newLevel, relationType)
+ * Isomorphic state container to dictate DOM behavior without DOM dependencies.
+ * @returns {Object} { isDisabled: boolean, opacity: string, placeholder: string }
+ */
+function evaluateFieldState(rulesContext, newLevel, relationType) {
+    const state = { isDisabled: false, opacity: '1', placeholder: '— Sin asignar —' };
+    
+    if (rulesContext && rulesContext.rootRequiresNoParent === true && newLevel === 1 && relationType === 'padre') {
+        state.isDisabled = true;
+        state.opacity = '0.5';
+        state.placeholder = '— Nodo Raíz (No requiere padre) —';
+    }
+    return state;
+}
+
 // Universal Wrapper: soporta Node.js (Tests/Jest) y Browser (GAS HTML Service)
 if (typeof module !== 'undefined' && module.exports) {
     // Entorno Node.js / CommonJS
-    module.exports = { _normalizeId, initSubgridState, filterAvailableOptions, linkRecord, unlinkRecord, buildSavePayload, isNewRecord };
+    module.exports = { _normalizeId, initSubgridState, filterAvailableOptions, linkRecord, unlinkRecord, buildSavePayload, isNewRecord, evaluateFieldState };
 } else if (typeof window !== 'undefined') {
     // Entorno Browser (GAS)
-    window.SubgridState = { _normalizeId, initSubgridState, filterAvailableOptions, linkRecord, unlinkRecord, buildSavePayload, isNewRecord };
+    window.SubgridState = { _normalizeId, initSubgridState, filterAvailableOptions, linkRecord, unlinkRecord, buildSavePayload, isNewRecord, evaluateFieldState };
 }

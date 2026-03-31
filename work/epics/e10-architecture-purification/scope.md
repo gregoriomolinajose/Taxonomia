@@ -22,7 +22,7 @@ El objetivo principal es lograr el Isomorfismo (testeabilidad agnóstica del UI)
 - Implementación de nuevas arquitecturas de base de datos (Ej DB NoSQL distintas a las aprobadas).
 
 ## Planned Stories
-- **S10.1**: Isomorphism & Namespace Factory (Aislar Utilidades DRY y agregar Type Guards, Migrar Validaciones Subgrid).
+- **[x] S10.1**: Isomorphism & Namespace Factory (Aislar Utilidades DRY y agregar Type Guards, Migrar Validaciones Subgrid) ✓
 - **S10.2**: Agnosticismo del Design System V2 (Desacoplar tokens *default*, Purgar `<style>` locales, y definir el Theme Manager final).
 - **S10.3**: Memory Profiling & Defensive E2E (Evitar Garbage Collection Leaks y comprobar GC del Modal Stack con flujos agresivos).
 - **S10.4**: (Spike/Dragon) Exploración hacia un FormEngine *Factory Component Pattern* alejándose de `document.createElement`.
