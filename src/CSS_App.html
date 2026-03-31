@@ -281,4 +281,670 @@
   ion-modal ion-content {
     --background: var(--color-bg-body) !important;
   }
+
+
+/* ============================================================ */
+/* DATAVIEW STRUCTURAL LAYOUT */
+/* (Migrado en S10.2 desde DataView_UI.html) */
+/* ============================================================ */
+/* ── Corrección de Design Tokens (DataView) ── */
+    body {
+        /* Mapeo estricto al Design System */
+        --dv-primary: var(--ion-color-primary, #1C42E8); 
+        --dv-primary-light: rgba(var(--ion-color-primary-rgb, 28, 66, 232), 0.1); 
+        --dv-primary-dark: var(--ion-color-primary-shade, #081754);
+
+        /* Sincronización Estricta del Mapeo a CSS_DesignSystem */
+        --dv-surface: var(--ion-background-color, #ffffff);
+        --dv-bg: var(--sidebar-bg, var(--ion-card-background));
+        --dv-border: var(--color-border, #C9C9C9);
+        --dv-text-primary: var(--ion-text-color, #081754);
+        --dv-text-secondary: var(--color-text-soft, #A4A4A4);
+        --dv-text-light: var(--color-text-soft, #94a3b8);
+        --dv-radius: var(--rounded-md, 10px);
+        --dv-radius-sm: var(--rounded-sm, 6px);
+        --dv-shadow: var(--shadow-default, 0 1px 3px rgba(0, 0, 0, .08), 0 1px 2px rgba(0, 0, 0, .04));
+        --dv-shadow-md: var(--shadow-hover, 0 4px 12px rgba(0, 0, 0, .10));
+        --dv-transition: .18s ease;
+    }
+
+    
+    /* ── UI Design Classes (Refactor S9.4) ── */
+    .dv-empty-text { color: var(--dv-text-light); }
+    .dv-chip { display:inline-block; background:var(--dv-bg); border:1px solid var(--dv-border); border-radius:4px; padding:1px 7px; font-size:.78rem; margin:1px; }
+    .dv-pk-code { font-size:.78rem; background:var(--dv-bg); padding:1px 5px; border-radius:3px; cursor:pointer; color:var(--dv-primary); font-weight:bold; text-decoration:underline; }
+    .dv-error-title { color: var(--color-interactive-error); }
+    .dv-error-desc { font-size: 0.75rem; color: var(--dv-text-light); margin-top: 8px; }
+    .dv-card-skel { padding: 4px 0; }
+    .dv-folder-icon { font-size: 64px; color: var(--ion-color-medium); }
+    .dv-th-num { width: 50px; text-align: center; }
+    .dv-th-action { width: 50px; }
+    .dv-td-num { width: 50px; text-align: center; color: var(--dv-text-secondary); font-variant-numeric: tabular-nums; font-weight: 500; }
+    .dv-td-action { width: 50px; text-align: center; }
+    .dv-btn-danger { color: var(--color-interactive-error); }
+    .dv-btn-danger-lite { color: var(--color-interactive-error); border: none; padding: 4px; }
+    .dv-fk-badge { --background: var(--dv-primary); font-size: .7rem; font-weight: 600; margin-top: 10px; display: inline-flex; align-items: center; gap: 4px; }
+    .dv-card-header-flex { display: flex; justify-content: space-between; align-items: flex-start; }
+    .dv-code-link { font-family: monospace; font-size: .72rem; color: var(--dv-primary); cursor: pointer; text-decoration: underline; }
+    .dv-card-title-clamp { font-size: .95rem; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .dv-card-footer { border-top: 1px solid var(--dv-border); background: var(--dv-surface); border-radius: 0 0 var(--dv-radius) var(--dv-radius); }
+    .dv-flex-group { display: flex; align-items: center; gap: 8px; }
+    .dv-page-info { padding: 0 10px; font-size: .83rem; color: var(--dv-text-secondary); }
+    .dv-popover-item { --min-height: 42px; }
+    .dv-popover-checkbox { --size: 18px; --border-radius: 4px; }
+    .dv-popover-label { font-size: .85rem; }
+    .dv-popover-content { --background: var(--dv-surface); width: 220px; }
+    .dv-popover-header { min-height: 36px; }
+    .dv-sub-label { font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--dv-text-secondary); }
+    .dv-options-icon { margin-right: 6px; }
+    .dv-title-icon { font-size: 1.6rem; color: var(--dv-primary); }
+    .dv-hidden { display: none; }
+\n    /* ── Contenedor raíz ── */
+    .dv-root {
+        font-family: var(--ion-font-family, system-ui, -apple-system, sans-serif);
+        color: var(--dv-text-primary);
+        min-height: 100%;
+        padding: 0 4px 32px;
+        box-sizing: border-box;
+    }
+
+    /* ── Header ── */
+    .dv-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-bottom: 18px;
+        padding-bottom: 14px;
+        border-bottom: 1px solid var(--dv-border);
+    }
+
+    .dv-header-left h2 {
+        margin: 0 0 2px;
+        font-size: 1.35rem;
+        font-weight: 700;
+        color: var(--dv-text-primary);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .dv-header-left p {
+        margin: 0;
+        font-size: .82rem;
+        color: var(--dv-text-secondary);
+    }
+
+    .dv-header-actions {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+
+    /* ── Botones base ── */
+    .dv-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 0 16px;
+        height: 38px;
+        box-sizing: border-box;
+        border: none;
+        border-radius: var(--dv-radius-sm);
+        font-size: .85rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background var(--dv-transition), box-shadow var(--dv-transition);
+        text-decoration: none;
+        white-space: nowrap;
+    }
+
+    .dv-btn-primary {
+        background: var(--dv-primary);
+        color: var(--ion-color-primary-contrast, #ffffff);
+    }
+
+    .dv-btn-primary:hover {
+        background: var(--dv-primary-dark);
+        box-shadow: var(--dv-shadow-md);
+    }
+
+    .dv-btn-outline {
+        background: transparent;
+        color: var(--dv-primary);
+        border: 1.5px solid var(--dv-primary);
+    }
+
+    .dv-btn-outline:hover {
+        background: var(--dv-primary-light);
+    }
+
+    .dv-btn-ghost {
+        background: transparent;
+        color: var(--dv-text-secondary);
+        border: 1.5px solid var(--dv-border);
+    }
+
+    .dv-btn-ghost:hover {
+        background: var(--dv-bg);
+    }
+
+    .dv-btn-icon {
+        padding: 7px 10px;
+        border-radius: var(--dv-radius-sm);
+        background: transparent;
+        border: 1.5px solid var(--dv-border);
+        color: var(--dv-text-secondary);
+        cursor: pointer;
+        transition: background var(--dv-transition);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .dv-btn-icon:hover {
+        background: var(--dv-bg);
+    }
+
+    .dv-btn-icon.active {
+        background: var(--dv-primary);
+        color: var(--ion-color-primary-contrast, #ffffff);
+        border-color: var(--dv-primary);
+    }
+
+    /* ── Toolbar ── */
+    .dv-toolbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-bottom: 14px;
+    }
+
+    .dv-toolbar-left {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        flex: 1;
+        min-width: 200px;
+    }
+
+    .dv-toolbar-right {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        flex-shrink: 0;
+        /* los botones nunca se aplastan bajo el buscador */
+    }
+
+    /* ── Search — estilos del ion-searchbar nativo ── */
+    .dv-search-wrap {
+        position: relative;
+        flex: 1 1 220px;
+        max-width: 480px;
+    }
+
+    /* Overrides del ion-searchbar para integrarlo al toolbar corporativo */
+    .dv-search-wrap ion-searchbar {
+        --background: var(--dv-surface);
+        --border-radius: 6px;
+        --box-shadow: none;
+        --placeholder-color: var(--dv-text-light);
+        --color: var(--dv-text-primary);
+        border: 1.5px solid var(--dv-border);
+        border-radius: 6px;
+        transition: border-color var(--dv-transition);
+        padding: 0;
+        height: 38px;
+    }
+
+    .dv-search-wrap ion-searchbar:focus-within {
+        border-color: var(--dv-primary);
+    }
+
+    /* Custom popover eliminado: reemplazado por <ion-popover> nativo de Ionic */
+    /* — Ver _ensureColPopover() en el JS — */
+
+    /* ── Card principal — Elevación Enterprise ── */
+    .dv-card {
+        background: var(--dv-bg);
+        border: 1px solid var(--dv-border);
+        border-radius: 8px;
+        box-shadow: var(--dv-shadow);
+        overflow: hidden;
+    }
+
+    /* ── Tabla + Scrollbar Corporativo (webkit) ── */
+    .dv-table-wrap {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    /* Scrollbar horizontal suavizado (macOS style fluido) */
+    .dv-table-wrap::-webkit-scrollbar {
+        height: 8px;
+        width: 8px;
+    }
+
+    .dv-table-wrap::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    .dv-table-wrap::-webkit-scrollbar-thumb {
+        background: var(--color-border);
+        border-radius: var(--rounded-full);
+    }
+
+    .dv-table-wrap::-webkit-scrollbar-thumb:hover {
+        background: var(--dv-text-secondary);
+    }
+
+    .dv-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: .85rem;
+    }
+
+    .dv-table thead {
+        background: var(--dv-bg);
+        position: sticky;
+        top: 0;
+    }
+
+    .dv-table th {
+        padding: 11px 14px;
+        text-align: left;
+        font-weight: 600;
+        font-size: var(--sys-font-small);
+        text-transform: uppercase;
+        letter-spacing: .04em;
+        color: var(--dv-text-secondary);
+        border-bottom: 2px solid var(--dv-border);
+        border-left: none;
+        border-right: none;
+        white-space: nowrap;
+        cursor: pointer;
+        user-select: none;
+        transition: color var(--dv-transition);
+    }
+
+    .dv-table th:hover {
+        color: var(--dv-primary);
+    }
+
+    .dv-table th.sorted {
+        color: var(--dv-primary);
+    }
+
+    .dv-sort-icon {
+        display: inline-block;
+        margin-left: 4px;
+        opacity: .4;
+        font-size: .8rem;
+        vertical-align: middle;
+    }
+
+    .dv-sort-icon.active {
+        opacity: 1;
+        color: var(--dv-primary);
+    }
+
+    .dv-table td {
+        padding: 16px 14px;
+        border-bottom: 1px solid var(--dv-border);
+        border-left: none;
+        border-right: none;
+        color: var(--dv-text-primary);
+        vertical-align: middle;
+        white-space: nowrap;
+        max-width: 220px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .dv-table tr:last-child td {
+        border-bottom: none;
+    }
+
+    .dv-table tbody tr {
+        transition: background var(--dv-transition);
+    }
+
+    .dv-table tbody tr:hover {
+        background: var(--dv-primary-light);
+        cursor: pointer;
+    }
+
+    /* ── Badges de Estatus ── */
+    .dv-badge {
+        display: inline-block;
+        padding: 2px 10px;
+        border-radius: 999px;
+        font-size: .75rem;
+        font-weight: 600;
+        letter-spacing: .02em;
+        white-space: nowrap;
+    }
+
+    .dv-badge-activo,
+    .dv-badge-tier-1-critico {
+        background: #dcfce7;
+        color: #15803d;
+    }
+
+    .dv-badge-borrador {
+        background: #fef9c3;
+        color: #a16207;
+    }
+
+    .dv-badge-en-revision {
+        background: #fff7ed;
+        color: #c2410c;
+    }
+
+    .dv-badge-tier-2-alto {
+        background: #ffe4e6;
+        color: #be123c;
+    }
+
+    .dv-badge-tier-3-medio {
+        background: #e0f2fe;
+        color: #0369a1;
+    }
+
+    .dv-badge-tier-4-bajo {
+        background: #f1f5f9;
+        color: #475569;
+    }
+
+    .dv-badge-saas,
+    .dv-badge-marketplace {
+        background: #f3e8ff;
+        color: #7c3aed;
+    }
+
+    .dv-badge-b2b,
+    .dv-badge-b2c {
+        background: #ecfdf5;
+        color: #065f46;
+    }
+
+    .dv-badge-transaccional {
+        background: #cffafe;
+        color: #0e7490;
+    }
+
+    .dv-badge-default {
+        background: #f1f5f9;
+        color: #475569;
+    }
+
+    /* ── Grid View — Ionic-native layout (ion-grid/ion-row/ion-col/ion-card) ── */
+
+    /* Override ion-grid padding para alinearlo con el dv-root */
+    .dv-ionic-grid {
+        padding: 8px 0 0;
+    }
+
+    /* ion-card overrides: hereda tokens del design system */
+    .dv-ion-card {
+        margin: 0 0 2px;
+        border: 1px solid var(--dv-border);
+        border-radius: var(--dv-radius);
+        box-shadow: var(--dv-shadow);
+        transition: box-shadow var(--dv-transition), transform var(--dv-transition);
+        --background: var(--dv-surface);
+        --color: var(--dv-text-primary);
+        height: calc(100% - 2px);
+    }
+
+    .dv-ion-card:hover {
+        box-shadow: var(--dv-shadow-md);
+        transform: translateY(-2px);
+        cursor: pointer;
+    }
+
+    .dv-grid-col {
+        padding: 8px;
+    }
+
+    .dv-btn-icon {
+        background: transparent;
+        border: 1.5px solid var(--dv-border);
+        color: var(--dv-text-secondary);
+        font-size: 1.1rem;
+        cursor: pointer;
+        padding: 0;
+        width: 38px;
+        height: 38px;
+        box-sizing: border-box;
+        border-radius: var(--dv-radius-sm);
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .dv-btn-icon:hover {
+        background: var(--dv-bg);
+        color: var(--dv-primary);
+        border-color: var(--dv-primary-light);
+    }
+
+    .dv-btn-icon.active {
+        background: var(--dv-primary);
+        color: var(--ion-color-primary-contrast, #ffffff);
+        border-color: var(--dv-primary);
+        box-shadow: var(--dv-shadow);
+    }
+
+    /* Atributos dentro de la card */
+    .dv-card-item-attrs {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+        margin-top: 4px;
+    }
+
+    .dv-card-item-attr {
+        display: flex;
+        align-items: flex-start;
+        gap: 6px;
+        font-size: .78rem;
+    }
+
+    .dv-card-item-attr-key {
+        color: var(--dv-text-secondary);
+        min-width: 90px;
+        flex-shrink: 0;
+        font-weight: 600;
+    }
+
+    .dv-card-item-attr-val {
+        color: var(--dv-text-primary);
+        word-break: break-word;
+    }
+
+    /* ── Drag & Drop Reorder (columnas) ── */
+    .dv-table th {
+        cursor: grab;
+    }
+
+    .dv-table th.dv-th-dragging {
+        opacity: .4;
+        cursor: grabbing;
+    }
+
+    .dv-table th.dv-th-drag-over {
+        background: var(--dv-primary-light);
+        color: var(--dv-primary);
+        border-top: 2px solid var(--dv-primary);
+        box-shadow: inset 3px 0 0 var(--dv-primary);
+    }
+
+    /* Handle visual — aparece al hover del th */
+    .dv-drag-handle {
+        display: inline-block;
+        margin-left: 6px;
+        opacity: 0;
+        font-size: .75rem;
+        color: var(--dv-text-light);
+        transition: opacity var(--dv-transition);
+        vertical-align: middle;
+        user-select: none;
+    }
+
+    .dv-table th:hover .dv-drag-handle {
+        opacity: 1;
+    }
+
+
+    .dv-pagination {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 10px;
+        padding: 12px 16px;
+        border-top: 1px solid var(--dv-border);
+        background: var(--dv-surface);
+        border-radius: 0 0 var(--dv-radius) var(--dv-radius);
+    }
+
+    .dv-pagination-info {
+        font-size: .82rem;
+        color: var(--dv-text-secondary);
+    }
+
+    .dv-pagination-controls {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+    .dv-page-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 32px;
+        height: 32px;
+        border: 1.5px solid var(--dv-border);
+        border-radius: var(--dv-radius-sm);
+        background: var(--dv-surface);
+        color: var(--dv-text-secondary);
+        cursor: pointer;
+        font-size: .82rem;
+        font-weight: 600;
+        transition: all var(--dv-transition);
+        padding: 0;
+    }
+
+    .dv-page-btn:hover:not(:disabled) {
+        background: var(--dv-primary);
+        color: var(--ion-color-primary-contrast, #ffffff);
+        border-color: var(--dv-primary);
+    }
+
+    .dv-page-btn:disabled {
+        opacity: .35;
+        cursor: not-allowed;
+    }
+
+    .dv-page-size-select {
+        font-size: .82rem;
+        padding: 5px 8px;
+        border: 1.5px solid var(--dv-border);
+        border-radius: var(--dv-radius-sm);
+        background: var(--dv-surface);
+        color: var(--dv-text-primary);
+        cursor: pointer;
+        outline: none;
+    }
+
+    .dv-page-size-select:focus {
+        border-color: var(--dv-primary);
+    }
+
+    /* ── Skeleton ── */
+    @keyframes dv-shimmer {
+        0% {
+            background-position: -600px 0;
+        }
+
+        100% {
+            background-position: 600px 0;
+        }
+    }
+
+    .dv-skeleton-row {
+        display: flex;
+        gap: 12px;
+        padding: 12px 16px;
+        border-bottom: 1px solid var(--dv-border);
+    }
+
+    .dv-skeleton-cell {
+        height: 14px;
+        border-radius: 4px;
+        background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%);
+        background-size: 600px 100%;
+        animation: dv-shimmer 1.4s infinite;
+    }
+
+    /* ── Empty State ── */
+    .dv-empty {
+        text-align: center;
+        padding: 48px 20px;
+        color: var(--dv-text-secondary);
+    }
+
+    .dv-empty-icon {
+        font-size: 3rem;
+        margin-bottom: 12px;
+        opacity: .4;
+    }
+
+    .dv-empty h3 {
+        margin: 0 0 6px;
+        font-size: 1rem;
+        color: var(--dv-text-primary);
+    }
+
+    .dv-empty p {
+        margin: 0;
+        font-size: .85rem;
+    }
+
+    /* ── Responsive header ── */
+    @media (max-width: 600px) {
+        .dv-header {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .dv-header-left h2 {
+            font-size: 1.1rem;
+        }
+
+        .dv-toolbar {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .dv-search-wrap {
+            max-width: 100%;
+        }
+    }
+    /* ── UX Polish S1.6.15 ── */
+    .dv-pagination {
+        border-bottom-left-radius: var(--dv-radius);
+        border-bottom-right-radius: var(--dv-radius);
+    }
+    .dv-table tbody tr:nth-child(even) {
+        background: rgba(var(--ion-text-color-rgb, 8, 23, 84), 0.03); 
+    }
+
+
 </style>

@@ -89,3 +89,7 @@ Este documento registra deudas técnicas, ideas y recomendaciones observadas dur
 ### 21. Desarrollo de Suites Unitarias Jest Pruebas de DOM Desacoplado (AR S10.1)
 * **Contexto (S10.1 AR):** Tras migrar las condicionales jerárquicas ($O(N)$) de opacidad y *disable* lógico de listas en el componente relacional hacia el retorno puro `{isDisabled, opacity, placeholder}` de `SubgridState.evaluateFieldState`, la validación topológica quedó 100% aislada de Google Apps Script.
 * **Acción Futura:** Instanciar formalmente un `SubgridState.test.js` e incorporar una Suite en Jest de pruebas *NodeJS-Native* orientada ciegamente a verificar el dictamen lógico de estados del UI al inyectar reglas complejas (ej. `rules.rootRequiresNoParent`). Esto cimenta el estándar Unit-Tested Isomórfico impulsado en S10.1.
+
+### 22. Pipeline de Minificación para SSoT CSS (AR S10.2)
+* **Contexto (S10.2 AR):** Tras extraer exitosamente el Shadow-DOM de 660 líneas desde `DataView_UI.html` hacia el archivo absoluto `CSS_App.html`, nuestro archivo maestro ahora concentra +1100 líneas de reglas estáticas.
+* **Acción Futura:** Al despachar a Producción o instanciar una Épica de Rendimiento, se recomienda integrar un *Build Tool* ligero (ej. gulp-clean-css o esbuild) exclusivo para minificar el contenido de `CSS_App.html` (quitar espacios, comentarios arquitectónicos y retornos de carro) ahorrando entre un 30% a 50% de peso (Payload) de transferencia de red HTTP hacia el navegador cliente.

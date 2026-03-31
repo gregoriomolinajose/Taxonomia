@@ -101,6 +101,7 @@
         if (key === "default") {
           let parentName = prefix ? prefix : '--';
           document.documentElement.style.setProperty(parentName, obj[key]);
+          return; // [S10.2] Evitar duplicación del nodo en memoria 
         }
         
         if (typeof obj[key] === 'object' && obj[key] !== null) {
