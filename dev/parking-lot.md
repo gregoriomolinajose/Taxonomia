@@ -93,3 +93,7 @@ Este documento registra deudas técnicas, ideas y recomendaciones observadas dur
 ### 22. Pipeline de Minificación para SSoT CSS (AR S10.2)
 * **Contexto (S10.2 AR):** Tras extraer exitosamente el Shadow-DOM de 660 líneas desde `DataView_UI.html` hacia el archivo absoluto `CSS_App.html`, nuestro archivo maestro ahora concentra +1100 líneas de reglas estáticas.
 * **Acción Futura:** Al despachar a Producción o instanciar una Épica de Rendimiento, se recomienda integrar un *Build Tool* ligero (ej. gulp-clean-css o esbuild) exclusivo para minificar el contenido de `CSS_App.html` (quitar espacios, comentarios arquitectónicos y retornos de carro) ahorrando entre un 30% a 50% de peso (Payload) de transferencia de red HTTP hacia el navegador cliente.
+
+### 23. Ecosistema Aislado de Pruebas Cliente `TEST_Suite_UI.html` (AR S10.3)
+* **Contexto (S10.3 AR):** Se inyectó el QA Tool `__runMemoryProfile_E2E()` de 40 líneas directamente al fondo del bloque de `FormEngine_UI.html` para habilitar profilings locales. Si bien su peso es irrisorio, mantener artefactos de QA en archivos productivos desmitifica la gobernanza SSoT.
+* **Acción Futura:** Si el portafolio de comprobantes E2E del cliente evoluciona en la próxima fase madurativa (ej. integrando un `__runTopologicalCreation_E2E()`), se aconseja extraer toda subrutina del dev console hacia un archivo dedicado que el compilador de GAS pueda excluir o ignorar dinámicamente en ramificaciones productivas.
