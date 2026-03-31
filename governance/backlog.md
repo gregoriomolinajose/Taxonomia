@@ -21,6 +21,29 @@
 | **AST RegExp CSS Minifier** | Arch Review (H14) | Considerar integración oficial de _Rollup_ o _Esbuild_ al pipeline Node.js, evaluando abandonar la minificación Regex manual (en `deploy.js`) si la densidad de tokens/alias CSS crece exponencialmente. | Low | Diferido |
 | **Optimistic Timers (GC)** | Quality Rev. | Reemplazar `setTimeout(() => topModal.remove(), 300);` en `UI_ModalManager.html` por subscripción nativa al evento de animación de desmonte (`ionModalDidDismiss`) para prevenir flashes/parpadeos en dispositivos lentos. | Medium | Prioritario E12 |
 | **Profilers Magic Literals** | Quality Rev. | Estandarizar exigencia de Delta = 0 para el test de fuga de memoria E2E en `TEST_Suite_UI.html` (removiendo umbral tolerante `±5`). Documentar causas nativas si persisten nodos huérfanos de Ionic (e.g., Ion-Backdrops). | Low | Diferido |
+# Backlog: Taxonomia Project
+
+> **Status**: Draft
+
+## Epics
+
+| ID | Epic | Status | Scope | Priority |
+|----|------|--------|-------|----------|
+| E1 | Setup de Plataforma SAFe 6.0 e Integración Dual-Write | ✅ Complete  | Implementar backend en GAS y base UI en Ionic. | Alta     |
+| E3 | Migración a Producción SGMP                           | 🚧 In Prog   | S3.2 / S1.1 / S1.2: [DONE]                            | Alta     |
+| E8 | Graph Governance & Business Rules Engine              | ✅ Complete  | TDAG server backend & Business Rules interceptors     | Media    |
+| E9 | Refactor UI MDM & ThemeManager                        | ✅ Complete   | Migrar estilos hardcoded, sanear LIFO Max Depth GC    | Alta     |
+| E11| Declarative UI Refactoring                            | ✅ Complete  | Componentización SPA y Pipeline QA/Minify             | Alta     |
+| E12| UI Modularization & Core Scaling                      | 🚧 In Prog   | Deconstrucción FormEngine, Routing, y Tooling CSS     | Muy Alta |
+
+## Parking Lot / Deuda Técnica (Post-Epic 11)
+
+| Item | Origen | Descripción | Severidad | Prioridad |
+|------|--------|-------------|-----------|-----------|
+| **FormEngine_UI Growth** | Arch Review (H7) | Vigilar el tamaño y complejidad cognitiva de `FormEngine_UI.html`. Aunque fue purgado, aún contiene generadores pesados (`renderForm`, `buildSearchableMulti`). Considerar dividir sus responsabilidades de factory (templating) en la próxima épica si excede los 2000 LOC. | Medium | Para evaluar en Epic 12 |
+| **AST RegExp CSS Minifier** | Arch Review (H14) | Considerar integración oficial de _Rollup_ o _Esbuild_ al pipeline Node.js, evaluando abandonar la minificación Regex manual (en `deploy.js`) si la densidad de tokens/alias CSS crece exponencialmente. | Low | Diferido |
+| **Optimistic Timers (GC)** | Quality Rev. | Reemplazar `setTimeout(() => topModal.remove(), 300);` en `UI_ModalManager.html` por subscripción nativa al evento de animación de desmonte (`ionModalDidDismiss`) para prevenir flashes/parpadeos en dispositivos lentos. | Medium | Prioritario E12 |
+| **Profilers Magic Literals** | Quality Rev. | Estandarizar exigencia de Delta = 0 para el test de fuga de memoria E2E en `TEST_Suite_UI.html` (removiendo umbral tolerante `±5`). Documentar causas nativas si persisten nodos huérfanos de Ionic (e.g., Ion-Backdrops). | Low | Diferido |
 | **API Fail-Fast Scoping** | Quality Rev. | Los bloques lógicos de la SPA (archivos `_UI`) se anexan sin *Error Boundaries* en `Index.html`. Un syntax error deriva inmediatamente en un *White Screen of Death*. Mitigable para cliente, pero un riesgo severo de desarrollo. | Low | Tracking |
 | **Hardcoded Taxonomia Rules** | Arch Review (H8, H11) | `attachBusinessRulesListeners` en `FormValidators.html` amarra lógica OCP a identificadores del Portafolio de productos (`cant_`, `total_integrantes`). Deberían transicionarse hacia el motor de configuración `APP_SCHEMAS`. | Medium | S12.2 / Epic 13 |
 | **Orphaned Factory Repaint** | Arch Review (H13) | `UI_Factory.bindLevelChangeRepaint` introduce subscripciones asíncronas a una herramienta teóricamente pura (`FormBuilder_Inputs`). Se recomienda abstraer orquestación topológica a un `UI_EventBinder` dedicado. | Low | Diferido |
@@ -30,3 +53,4 @@
 | **UI_Router Global Aliases** | Arch Review S12.2 (H2) | Purgar los alias globales pasivos (`window.navigateTo`, etc.) cuando todos los consumidores (vistas legacy) cambien a usar la instancia `window.UI_Router` de forma estricta. | Low | Cleaning Sprint E13 |
 | **Grid Status Tokens** | Arch Review S12.2 (H9) | Centralizar los literales "duros" de `_badgeClass` que habitan en `UI_DataGrid` para que residan dentro de `APP_SCHEMAS`, evitando repetir lógica CSS-JS semántica. | Low | Cleaning Sprint E13 |
 | **Grid Pagination Slicing** | Arch Review S12.2 (Q1) | Evaluar si el componente `UI_DataGrid` debe perder el conocimiento lógico de paginar (`filteredData.slice`) en pro de ser totalmente "tonto" (solo recibir `visibleRows`). Necesario si se introduce Remote Pagination, aunque introduce rediseño sobre `DataView_UI`. | Medium | Evaluación E13 |
+| **ES5 String Concatenation** | Quality Rev. S12.2 | La factoría `UI_DataGrid` concatena cadenas de manera masiva en formato ES5 puro. Si Google Apps Script implementa definitivamente compatibilidad oficial y estable moderna V8, migrar todo a Template Literals (`` ` ``) para mayor legibilidad. | Low | Evolutivo |
