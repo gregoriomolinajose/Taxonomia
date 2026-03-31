@@ -763,19 +763,21 @@
                     return obj;
                 });
 
-                // Middleware de Cálculo Pre-Inserción
-                if (_state.entityName === 'Equipo') {
-                    jsonArray.forEach(row => {
-                        let total = 0;
-                        // Sumar todas las propiedades que empiecen con 'cant_' (si son números válidos)
-                        Object.keys(row).forEach(key => {
-                            if (key.startsWith('cant_') && !isNaN(parseInt(row[key]))) {
-                                total += parseInt(row[key]);
-                            }
+                // Middleware de Cálculo Pre-Inserción (Declarativo / Config-Driven)
+                const rules = (window.APP_SCHEMAS && window.APP_SCHEMAS[_state.entityName] && window.APP_SCHEMAS[_state.entityName].businessRules) || [];
+                rules.forEach(rule => {
+                    if (rule.action === 'sumPrefix') {
+                        jsonArray.forEach(row => {
+                            let total = 0;
+                            Object.keys(row).forEach(key => {
+                                if (key.startsWith(rule.prefix) && !isNaN(parseInt(row[key]))) {
+                                    total += parseInt(row[key]);
+                                }
+                            });
+                            row[rule.target] = total;
                         });
-                        row['total_integrantes'] = total;
-                    });
-                }
+                    }
+                });
 
                 if (confirm(`Se encontraron ${jsonArray.length} registros. ¿Deseas importarlos a la entidad '${_state.entityName}'?`)) {
                     const loading = document.createElement('ion-loading');
