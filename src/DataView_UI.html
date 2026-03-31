@@ -47,107 +47,15 @@
         /* ────────────────────────────────────────────
            Helpers
         ───────────────────────────────────────────── */
-        function _slugify(str) {
-            return (str || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
-        }
-
-        function _badgeClass(value) {
-            const slug = _slugify(String(value));
-            const map = {
-                'activo': 'activo', 'borrador': 'borrador', 'en-revis-n': 'en-revision', 'en-revision': 'en-revision',
-                'tier-1-cr-tico': 'tier-1-critico', 'tier-1-critico': 'tier-1-critico',
-                'tier-2-alto': 'tier-2-alto', 'tier-3-medio': 'tier-3-medio', 'tier-4-bajo': 'tier-4-bajo',
-                'saas': 'saas', 'marketplace': 'marketplace', 'b2b': 'b2b', 'b2c': 'b2c', 'transaccional': 'transaccional'
-            };
-            return 'dv-badge dv-badge-' + (map[slug] || 'default');
-        }
-
-        function _formatValue(key, value) {
-            if (value === null || value === undefined || value === '') return '<span class="dv-empty-text">—</span>';
-
-            // 0. Arreglos de objetos (campos de Relación tipo Master-Detail)
-            //    Ejemplo: grupos_hijos = [{nombre:'A',...}, {nombre:'B',...}]
-            //    Renderizar como chips de texto legibles, NO como [object Object]
-            if (Array.isArray(value)) {
-                if (value.length === 0) return '<span class="dv-empty-text">—</span>';
-                const labels = value.map(item => {
-                    if (typeof item === 'object' && item !== null) {
-                        // Intentar extraer un campo de nombre legible
-                        return item.nombre || item.name || item.label || item.nombre_producto
-                            || Object.values(item).find(v => typeof v === 'string' && !String(v).startsWith('id_') && v.length > 0)
-                            || '—';
-                    }
-                    return String(item);
-                });
-                return labels.map(l => `<span class="dv-chip">${l}</span>`).join(' ');
-            }
-
-            const strVal = String(value);
-
-            // 0.5: Identificar si es la Llave Primaria de la entidad ACTUAL
-            // Para pintar crudo (PORT-XXXX) sin embellecimiento (Directiva Arquitectura Nivel 4)
-            let isPrimaryKey = false;
-            if (_state && _state.entityName && window.APP_SCHEMAS) {
-                const schemaDef = window.APP_SCHEMAS[_state.entityName];
-                let fieldsArray = [];
-                if (schemaDef) {
-                    if (Array.isArray(schemaDef)) fieldsArray = schemaDef;
-                    else if (schemaDef.fields) fieldsArray = schemaDef.fields;
-                    else fieldsArray = Object.keys(schemaDef).map(k => Object.assign({ name: k }, schemaDef[k]));
-                    
-                    const f = fieldsArray.find(field => field.name === key);
-                    if (f && f.primaryKey) isPrimaryKey = true;
-                }
-            }
-
-            if (isPrimaryKey) {
-                return `<code class="dv-pk-code" onclick="window.openEditForm('${strVal}')">${strVal}</code>`;
-            }
-
-            // 1. Resolver desde Lookups si existe mapeo
-            if (window._LOOKUP_DATA && window._LOOKUP_DATA[key]) {
-                const lookupArr = window._LOOKUP_DATA[key];
-                const found = lookupArr.find(opt => String(opt.value) === strVal);
-                if (found) return found.label;
-            }
-
-            // 2. Badges para estatus
-            if (STATUS_FIELDS.includes(key)) {
-                return `<span class="${_badgeClass(strVal)}">${strVal}</span>`;
-            }
-            if (key === 'presupuesto' || key === 'slo_objetivo') {
-                const num = parseFloat(strVal);
-                if (!isNaN(num)) return key === 'presupuesto'
-                    ? '$' + num.toLocaleString('es-MX')
-                    : num + '%';
-            }
-
-            return strVal.length > 60 ? strVal.substring(0, 58) + '…' : strVal;
-        }
-
-        function _normalizeFields(entityName) {
-            const schemaDef = window.APP_SCHEMAS && window.APP_SCHEMAS[entityName];
-            if (!schemaDef) return null;
-            if (Array.isArray(schemaDef)) return schemaDef;
-            if (schemaDef.fields) return schemaDef.fields;
-            return Object.keys(schemaDef).map(k => Object.assign({ name: k }, schemaDef[k]));
-        }
-
-        function _labelFromKey(key) {
-            // Encuentra en APP_SCHEMAS si está disponible
-            const fields = _normalizeFields(_state.entityName);
-            if (fields) {
-                const field = fields.find(f => f.name === key);
-                if (field && field.label) return field.label;
-            }
-            return window.formatLabelString ? window.formatLabelString(key) : key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
-        }
+        /* ────────────────────────────────────────────
+           Helpers (Movidos a UI_DataGrid.html en S12.2)
+        ───────────────────────────────────────────── */
 
         /* ────────────────────────────────────────────
            Derivar columnas desde schema o datos
         ───────────────────────────────────────────── */
         function _buildColumns(entityName, rows) {
-            const fields = _normalizeFields(entityName);
+            const fields = window.UI_DataGrid && window.UI_DataGrid._normalizeFields ? window.UI_DataGrid._normalizeFields(entityName) : null;
             let keys = [];
 
             if (fields) {
@@ -161,7 +69,7 @@
             }
 
             return keys.map(key => {
-                let isHidden = HIDDEN_BY_DEFAULT.includes(key);
+                let isHidden = window.UI_DataGrid && window.UI_DataGrid.HIDDEN_BY_DEFAULT ? window.UI_DataGrid.HIDDEN_BY_DEFAULT.includes(key) : ['created_at', 'updated_by'].includes(key);
                 let isPrimaryKey = false;
 
                 if (fields) {
@@ -179,7 +87,7 @@
                 
                 return {
                     key,
-                    label: _labelFromKey(key),
+                    label: window.UI_DataGrid && window.UI_DataGrid._labelFromKey ? window.UI_DataGrid._labelFromKey(key, entityName) : key,
                     visible: isPrimaryKey ? true : !isHidden,
                     sortable: true
                 };
@@ -191,21 +99,13 @@
         ───────────────────────────────────────────── */
         function _showLoadingState() {
             const zone = document.getElementById('dv-data-zone');
-            if (zone) zone.innerHTML = _renderSkeleton();
+            if (zone && window.UI_DataGrid) zone.innerHTML = window.UI_DataGrid.buildLayout({ loading: true });
         }
 
         function _showErrorState(error) {
             const zone = document.getElementById('dv-data-zone');
-            if (zone) {
-                zone.innerHTML = `
-                <div class="dv-card">
-                    <div class="dv-empty">
-                        <div class="dv-empty-icon">⚠️</div>
-                        <h3 class="dv-error-title">No pudimos cargar la información.</h3>
-                        <p>Por favor, refresca la página para intentar de nuevo.</p>
-                        <p class="dv-error-desc">(Detalle: ${error ? error.message : 'Error de red'})</p>
-                    </div>
-                </div>`;
+            if (zone && window.UI_DataGrid) {
+                zone.innerHTML = window.UI_DataGrid.buildLayout({ error: error });
             }
         }
 
@@ -294,189 +194,8 @@
         }
 
         /* ────────────────────────────────────────────
-           Paginación
-        ───────────────────────────────────────────── */
-        function _getPage() {
-            const start = (_state.page - 1) * _state.pageSize;
-            return _state.filtered.slice(start, start + _state.pageSize);
-        }
-
-        function _totalPages() {
-            return Math.max(1, Math.ceil(_state.filtered.length / _state.pageSize));
-        }
-
-        /* ────────────────────────────────────────────
-           Renderers
-        ───────────────────────────────────────────── */
-        function _renderSkeleton() {
-            let rows = '';
-            for (let i = 0; i < 5; i++) {
-                const widths = [80, 160, 120, 100, 90];
-                const cells = widths.map(w => `<div class="dv-skeleton-cell" style="width:${w}px;"></div>`).join(''); // width is dynamic layout
-                rows += `<div class="dv-skeleton-row">${cells}</div>`;
-            }
-            return `<div class="dv-card dv-card-skel">${rows}</div>`;
-        }
-
-        function _renderEmpty() {
-            return `
-        <div class="dv-card">
-          <div class="dv-empty">
-            <div class="dv-empty-icon">
-              <ion-icon class="dv-folder-icon" name="folder-open-outline"></ion-icon>
-            </div>
-            <h3>Sin resultados</h3>
-            <p>No se encontraron registros. Prueba con otros términos de búsqueda o crea un nuevo registro.</p>
-          </div>
-        </div>`;
-        }
-
-        function _renderTableView(rows) {
-            const visibleCols = _state.columns.filter(c => c.visible);
-            if (visibleCols.length === 0 || rows.length === 0) return _renderEmpty();
-
-            const thead = visibleCols.map(col => {
-                const colIdx = _state.columns.indexOf(col); // índice real en _state.columns
-                const isSorted = _state.sortCol === col.key;
-                const arrow = isSorted
-                    ? `<span class="dv-sort-icon active">${_state.sortDir === 'asc' ? '↑' : '↓'}</span>`
-                    : `<span class="dv-sort-icon">↕</span>`;
-                return `<th
-                    class="${isSorted ? 'sorted' : ''}"
-                    data-colidx="${colIdx}"
-                    draggable="true"
-                    onclick="window.DataViewEngine._onSort('${col.key}')"
-                    ondragstart="window.DataViewEngine._onDragStart(${colIdx}, event)"
-                    ondragover="window.DataViewEngine._onDragOver(${colIdx}, event)"
-                    ondragleave="window.DataViewEngine._onDragLeave(event)"
-                    ondrop="window.DataViewEngine._onDrop(${colIdx}, event)"
-                    ondragend="window.DataViewEngine._onDragEnd(event)">
-                    ${col.label}${arrow}<span class="dv-drag-handle" title="Arrastra para reordenar">⣿</span>
-                </th>`;
-            }).join('');
-
-            return `
-        <div class="dv-card">
-          <div class="dv-table-wrap">
-            <table class="dv-table">
-              <thead><tr><th class="dv-th-num">#</th>${thead}<th class="dv-th-action"></th></tr></thead>
-              <tbody>${_renderTableBody(rows, visibleCols)}</tbody>
-            </table>
-          </div>
-          ${_renderPaginationHTML()}
-        </div>`;
-        }
-
-        function _renderTableBody(rows, visibleCols) {
-            const startIdx = (_state.page - 1) * _state.pageSize;
-            return rows.map((row, idx) => {
-                const rowNum = startIdx + idx + 1;
-                const indexCell = `<td class="dv-td-num">${rowNum}</td>`;
-
-                const cells = visibleCols.map(col =>
-                    `<td title="${String(row[col.key] ?? '')}">${_formatValue(col.key, row[col.key])}</td>`
-                ).join('');
-
-                const meta = ENTITY_META[_state.entityName] || { idField: 'id' };
-                const id = row[meta.idField] || '';
-                const actionCell = `<td class="dv-td-action">
-                    <button class="dv-btn-icon dv-btn-danger" onclick="event.stopPropagation(); window.DataViewEngine._confirmDelete('${id}')" title="Eliminar">
-                        <ion-icon name="trash"></ion-icon>
-                    </button>
-                </td>`;
-
-                return `<tr>${indexCell}${cells}${actionCell}</tr>`;
-            }).join('');
-        }
-
-        function _renderGridView(rows) {
-            const meta = ENTITY_META[_state.entityName] || { titleField: 'nombre', idField: 'id', fkField: null };
-            const MAX_ATTRS = 5;
-
-            if (rows.length === 0) return _renderEmpty();
-
-            // Usar Ionic grid nativo: 1 col móvil, 2 sm, 3 md, 4 xl
-            const cols = rows.map(row => {
-                const title = row[meta.titleField] || row[meta.idField] || '—';
-                const id = row[meta.idField] || '';
-
-                // FK chip usando ion-badge de Ionic
-                const fkChip = meta.fkField && row[meta.fkField.key]
-                    ? `<ion-badge class="dv-fk-badge">🔗 ${meta.fkField.label}: ${row[meta.fkField.key]}</ion-badge>`
-                    : '';
-
-                const attrKeys = Object.keys(row)
-                    .filter(k => k !== meta.titleField && k !== meta.idField &&
-                        !(meta.fkField && k === meta.fkField.key) &&
-                        !HIDDEN_BY_DEFAULT.includes(k))
-                    .slice(0, MAX_ATTRS);
-
-                const attrs = attrKeys.map(k => `
-                    <div class="dv-card-item-attr">
-                        <span class="dv-card-item-attr-key">${_labelFromKey(k)}</span>
-                        <span class="dv-card-item-attr-val">${_formatValue(k, row[k])}</span>
-                    </div>`).join('');
-
-                return `
-                <ion-col size="12" size-sm="6" size-md="4" size-xl="3" class="dv-grid-col">
-                    <ion-card class="dv-ion-card">
-                        <ion-card-header class="dv-card-header-flex">
-                            <div>
-                                <ion-card-subtitle 
-                                    onclick="window.openEditForm('${id}')"
-                                    class="dv-code-link">
-                                    ${id}
-                                </ion-card-subtitle>
-                                <ion-card-title class="dv-card-title-clamp" title="${title}">${title}</ion-card-title>
-                            </div>
-                            <button class="dv-btn-icon dv-btn-danger-lite" onclick="event.stopPropagation(); window.DataViewEngine._confirmDelete('${id}')" title="Eliminar">
-                                <ion-icon name="trash"></ion-icon>
-                            </button>
-                        </ion-card-header>
-                        <ion-card-content>
-                            <div class="dv-card-item-attrs">${attrs}</div>
-                            ${fkChip}
-                        </ion-card-content>
-                    </ion-card>
-                </ion-col>`;
-            }).join('');
-
-            return `
-                <ion-grid class="dv-ionic-grid">
-                    <ion-row>${cols}</ion-row>
-                </ion-grid>
-                <div class="dv-card-footer">
-                    ${_renderPaginationHTML()}
-                </div>`;
-        }
-
-        function _renderPaginationHTML() {
-            const total = _state.filtered.length;
-            const start = total === 0 ? 0 : (_state.page - 1) * _state.pageSize + 1;
-            const end = Math.min(_state.page * _state.pageSize, total);
-            const tPages = _totalPages();
-
-            const sizes = [10, 25, 50, 100].map(s =>
-                `<option value="${s}" ${s === _state.pageSize ? 'selected' : ''}>${s}</option>`
-            ).join('');
-
-            return `
-        <div class="dv-pagination">
-          <div class="dv-flex-group">
-            <span class="dv-pagination-info">Mostrando <strong>${start}–${end}</strong> de <strong>${total}</strong></span>
-            <select class="dv-page-size-select" onchange="window.DataViewEngine._onPageSize(this.value)">${sizes}</select>
-          </div>
-          <div class="dv-pagination-controls">
-            <button class="dv-page-btn" title="Primera" onclick="window.DataViewEngine._onPage(1)" ${_state.page === 1 ? 'disabled' : ''}>«</button>
-            <button class="dv-page-btn" title="Anterior" onclick="window.DataViewEngine._onPage(${_state.page - 1})" ${_state.page === 1 ? 'disabled' : ''}>‹</button>
-            <span class="dv-page-info">Pág. ${_state.page} / ${tPages}</span>
-            <button class="dv-page-btn" title="Siguiente" onclick="window.DataViewEngine._onPage(${_state.page + 1})" ${_state.page >= tPages ? 'disabled' : ''}>›</button>
-            <button class="dv-page-btn" title="Última" onclick="window.DataViewEngine._onPage(${tPages})" ${_state.page >= tPages ? 'disabled' : ''}>»</button>
-          </div>
-        </div>`;
-        }
-
-        /* ────────────────────────────────────────────
+           Renderers HTML (Movidos a UI_DataGrid.html en S12.2)
+        ───────────────────────────────────────────── */        /* ────────────────────────────────────────────
            ion-popover nativo: gestor de columnas visibles
            — Renderiza un <ion-popover> en el body para garantizar que
              Ionic lo posicione sin desbordamiento en móvil ni en desktop.
@@ -612,7 +331,6 @@
            El toolbar (#dv-toolbar-zone) NUNCA se toca aquí — preserva el foco del input.
         ───────────────────────────────────────────── */
         function _rerenderData() {
-            const pageRows = _getPage();
             const dataZone = document.getElementById('dv-data-zone');
             if (!dataZone) return;
 
@@ -622,11 +340,18 @@
                 } else {
                     dataZone.innerHTML = '<div class="dv-empty">Motor de Mapa no disponible.</div>';
                 }
-            } else {
-                const dataHTML = _state.view === 'table'
-                    ? _renderTableView(pageRows)
-                    : _renderGridView(pageRows);
-                dataZone.innerHTML = dataHTML;
+            } else if (window.UI_DataGrid) {
+                // Inyectamos estado hacia la factoría pura:
+                dataZone.innerHTML = window.UI_DataGrid.buildLayout({
+                    view: _state.view,
+                    entityName: _state.entityName,
+                    filteredData: _state.filtered,
+                    page: _state.page,
+                    pageSize: _state.pageSize,
+                    sortCol: _state.sortCol,
+                    sortDir: _state.sortDir,
+                    columns: _state.columns
+                });
             }
         }
 
@@ -672,7 +397,7 @@
         <div class="dv-root" id="dv-root">
           <div id="dv-header-zone">${_renderHeader()}</div>
           <div id="dv-toolbar-zone"></div>
-          <div id="dv-data-zone">${_renderSkeleton()}</div>
+          <div id="dv-data-zone">${window.UI_DataGrid ? window.UI_DataGrid.buildLayout({ loading: true }) : ''}</div>
         </div>`;
 
             // Actualizar título global del header de Ionic
