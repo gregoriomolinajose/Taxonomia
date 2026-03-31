@@ -2,6 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const { execSync } = require('child_process');
 const readline = require('readline');
+const CleanCSS = require('clean-css');
 
 const env = process.argv[2];
 
@@ -61,11 +62,19 @@ try {
             if (!fs.existsSync(filepath)) return;
             let fileContent = fs.readFileSync(filepath, 'utf8');
             
-            // Reemplazar solo el contenido interior de las etiquetas <style>
+            // Reemplazar de forma segura y basada en AST (AST Minify) el contenido del Style
             fileContent = fileContent.replace(/<style>([\s\S]*?)<\/style>/gi, (match, p1) => {
-                let minified = p1.replace(/\/\*[\s\S]*?\*\//g, ''); // Remover bloque de comentarios
-                minified = minified.replace(/[\n\r\t]+/g, ' '); // Remover line breaks
-                minified = minified.replace(/\s{2,}/g, ' '); // Remover espacios repetidos
+                let minified = p1;
+                try {
+                    const output = new CleanCSS({ level: 1 }).minify(p1);
+                    if (output.errors.length > 0) {
+                        console.error(`\x1b[31m[Deploy-Error] Fallo CSS AST Minifier en ${filename}:\x1b[0m`, output.errors);
+                    } else {
+                        minified = output.styles;
+                    }
+                } catch (e) {
+                    console.error(`\x1b[31m[Deploy-Error] Excepción Crítica compilando CSS en ${filename}:\x1b[0m`, e);
+                }
                 return `<style>\n${minified}\n</style>`;
             });
             fs.writeFileSync(filepath, fileContent, 'utf8');
