@@ -70,12 +70,12 @@
                     : '<span class="dv-sort-icon">↕</span>';
                 return '<th class="' + (isSorted ? 'sorted' : '') + '" data-colidx="' + colIdx + '" ' +
                     'draggable="true" ' +
-                    'onclick="window.DataViewEngine._onSort(\'' + col.key + '\')" ' +
-                    'ondragstart="window.DataViewEngine._onDragStart(' + colIdx + ', event)" ' +
-                    'ondragover="window.DataViewEngine._onDragOver(' + colIdx + ', event)" ' +
-                    'ondragleave="window.DataViewEngine._onDragLeave(event)" ' +
-                    'ondrop="window.DataViewEngine._onDrop(' + colIdx + ', event)" ' +
-                    'ondragend="window.DataViewEngine._onDragEnd(event)">' +
+                    'onclick="' + (self.cfg.onSort ? self.cfg.onSort + '(\'' + col.key + '\')' : '') + '" ' +
+                    'ondragstart="' + (self.cfg.onDragStart ? self.cfg.onDragStart + '(' + colIdx + ', event)' : '') + '" ' +
+                    'ondragover="' + (self.cfg.onDragOver ? self.cfg.onDragOver + '(' + colIdx + ', event)' : '') + '" ' +
+                    'ondragleave="' + (self.cfg.onDragLeave ? self.cfg.onDragLeave + '(event)' : '') + '" ' +
+                    'ondrop="' + (self.cfg.onDrop ? self.cfg.onDrop + '(' + colIdx + ', event)' : '') + '" ' +
+                    'ondragend="' + (self.cfg.onDragEnd ? self.cfg.onDragEnd + '(event)' : '') + '">' +
                     col.label + arrow + '<span class="dv-drag-handle" title="Arrastra para reordenar">⣿</span>' +
                     '</th>';
             }).join('');
@@ -102,7 +102,7 @@
                 var meta = (window.ENTITY_META && window.ENTITY_META[self.cfg.entityName]) || { idField: 'id' };
                 var id = row[meta.idField] || '';
                 var actionCell = '<td class="dv-td-action">' +
-                    '<button class="dv-btn-icon dv-btn-danger" onclick="event.stopPropagation(); window.DataViewEngine._confirmDelete(\'' + id + '\')" title="Eliminar">' +
+                    '<button class="dv-btn-icon dv-btn-danger" onclick="event.stopPropagation(); ' + (self.cfg.onDelete ? self.cfg.onDelete + '(\'' + id + '\')' : '') + '" title="Eliminar">' +
                         '<ion-icon name="trash"></ion-icon>' +
                     '</button>' +
                 '</td>';
@@ -142,9 +142,9 @@
 
                 return '<ion-col size="12" size-sm="6" size-md="4" size-xl="3" class="dv-grid-col">' +
                        '<ion-card class="dv-ion-card"><ion-card-header class="dv-card-header-flex"><div>' +
-                       '<ion-card-subtitle onclick="window.openEditForm(\'' + id + '\')" class="dv-code-link">' + id + '</ion-card-subtitle>' +
+                       '<ion-card-subtitle onclick="' + (self.cfg.onEdit ? self.cfg.onEdit + '(\'' + id.replace(/'/g, "\\'") + '\')' : '') + '" class="dv-code-link">' + id + '</ion-card-subtitle>' +
                        '<ion-card-title class="dv-card-title-clamp" title="' + title + '">' + title + '</ion-card-title></div>' +
-                       '<button class="dv-btn-icon dv-btn-danger-lite" onclick="event.stopPropagation(); window.DataViewEngine._confirmDelete(\'' + id + '\')" title="Eliminar">' +
+                       '<button class="dv-btn-icon dv-btn-danger-lite" onclick="event.stopPropagation(); ' + (self.cfg.onDelete ? self.cfg.onDelete + '(\'' + id + '\')' : '') + '" title="Eliminar">' +
                        '<ion-icon name="trash"></ion-icon></button></ion-card-header>' +
                        '<ion-card-content><div class="dv-card-item-attrs">' + attrs + '</div>' + fkChip + '</ion-card-content>' +
                        '</ion-card></ion-col>';
@@ -167,13 +167,13 @@
 
             return '<div class="dv-pagination"><div class="dv-flex-group">' +
                    '<span class="dv-pagination-info">Mostrando <strong>' + start + '–' + end + '</strong> de <strong>' + total + '</strong></span>' +
-                   '<select class="dv-page-size-select" onchange="window.DataViewEngine._onPageSize(this.value)">' + sizes + '</select></div>' +
+                   '<select class="dv-page-size-select" onchange="' + (self.cfg.onPageSize ? self.cfg.onPageSize + '(this.value)' : '') + '">' + sizes + '</select></div>' +
                    '<div class="dv-pagination-controls">' +
-                   '<button class="dv-page-btn" title="Primera" onclick="window.DataViewEngine._onPage(1)" ' + (this.cfg.page === 1 ? 'disabled' : '') + '>«</button>' +
-                   '<button class="dv-page-btn" title="Anterior" onclick="window.DataViewEngine._onPage(' + (this.cfg.page - 1) + ')" ' + (this.cfg.page === 1 ? 'disabled' : '') + '>‹</button>' +
+                   '<button class="dv-page-btn" title="Primera" onclick="' + (self.cfg.onPage ? self.cfg.onPage + '(1)' : '') + '" ' + (this.cfg.page === 1 ? 'disabled' : '') + '>«</button>' +
+                   '<button class="dv-page-btn" title="Anterior" onclick="' + (self.cfg.onPage ? self.cfg.onPage + '(' + (this.cfg.page - 1) + ')' : '') + '" ' + (this.cfg.page === 1 ? 'disabled' : '') + '>‹</button>' +
                    '<span class="dv-page-info">Pág. ' + this.cfg.page + ' / ' + tPages + '</span>' +
-                   '<button class="dv-page-btn" title="Siguiente" onclick="window.DataViewEngine._onPage(' + (this.cfg.page + 1) + ')" ' + (this.cfg.page >= tPages ? 'disabled' : '') + '>›</button>' +
-                   '<button class="dv-page-btn" title="Última" onclick="window.DataViewEngine._onPage(' + tPages + ')" ' + (this.cfg.page >= tPages ? 'disabled' : '') + '>»</button>' +
+                   '<button class="dv-page-btn" title="Siguiente" onclick="' + (self.cfg.onPage ? self.cfg.onPage + '(' + (this.cfg.page + 1) + ')' : '') + '" ' + (this.cfg.page >= tPages ? 'disabled' : '') + '>›</button>' +
+                   '<button class="dv-page-btn" title="Última" onclick="' + (self.cfg.onPage ? self.cfg.onPage + '(' + tPages + ')' : '') + '" ' + (this.cfg.page >= tPages ? 'disabled' : '') + '>»</button>' +
                    '</div></div>';
         },
 
@@ -232,7 +232,7 @@
 
             if (isPrimaryKey) {
                 // Return link format - notice we escape the quotes
-                return '<code class="dv-pk-code" onclick="window.openEditForm(\'' + strVal.replace(/'/g, "\\'") + '\')">' + strVal + '</code>';
+                return '<code class="dv-pk-code" onclick="' + (this.cfg && this.cfg.onEdit ? this.cfg.onEdit + '(\'' + strVal.replace(/'/g, "\\'") + '\')' : '') + '">' + strVal + '</code>';
             }
 
             if (window._LOOKUP_DATA && window._LOOKUP_DATA[key]) {

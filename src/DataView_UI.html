@@ -350,7 +350,17 @@
                     pageSize: _state.pageSize,
                     sortCol: _state.sortCol,
                     sortDir: _state.sortDir,
-                    columns: _state.columns
+                    columns: _state.columns,
+                    onSort: 'window.DataViewEngine._onSort',
+                    onDragStart: 'window.DataViewEngine._onDragStart',
+                    onDragOver: 'window.DataViewEngine._onDragOver',
+                    onDragLeave: 'window.DataViewEngine._onDragLeave',
+                    onDrop: 'window.DataViewEngine._onDrop',
+                    onDragEnd: 'window.DataViewEngine._onDragEnd',
+                    onDelete: 'window.DataViewEngine._confirmDelete',
+                    onPageSize: 'window.DataViewEngine._onPageSize',
+                    onPage: 'window.DataViewEngine._onPage',
+                    onEdit: 'window.openEditForm'
                 });
             }
         }
