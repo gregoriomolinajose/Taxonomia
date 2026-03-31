@@ -73,3 +73,11 @@ Este documento registra deudas técnicas, ideas y recomendaciones observadas dur
 ### 17. Ausencia de Safety Checks en DOM Inyectado (Quality Review S9.2)
 * **Contexto (S9.2 QR):** En `closeTop()`, se asume ciegamente que el objeto devuelto por `stack.pop()` siempre contedrá el método nativo `.dismiss()`. Si el DOM llegara a mutilarse remotamente o el objeto perdiera su interfaz gráfica (mutación de Frameworks externos), la llamada cruda reventaría con un *TypeError*.
 * **Acción Futura:** Agregar Guard Clauses formales tipo `if (topModal && typeof topModal.dismiss === 'function')` antes de ejecutar el ciclo de vida de Ionic para blindar totalmente el Controlador contra corrupciones de punteros nativos.
+
+### 18. Contaminación del Global Namespace por Controladores Utilitarios (H11/H12)
+* **Contexto (S9.3 AR):** Durante la extracción DRY del FormEngine, las funciones `_populateSelectOptions` y `_bindLevelChangeRepaint` se inyectaron directamente al objeto `window` para asegurar el minimum viable scope sin refactorizar la orquestación del empaquetado. 
+* **Acción Futura:** En futuras épicas donde extraigamos esta lógica hacia archivos dedicados (ej. `utils.js` o ESM Modules), estos helpers procedimentales deben encapsularse dentro de un Namespace formal genérico (ej. `const UI_Factory = { ... }`) para mitigar cualquier riesgo de colisión de verbos a escala global.
+
+### 19. Ausencia de Defensividad Tipo "Type Checking" en Helpers DRY (Quality Review S9.3)
+* **Contexto (S9.3 QR):** Las abstracciones creadas recientemente (`_populateSelectOptions`) operan incondicionalmente bajo la presunción semántica estricta (`dataArr.forEach()`). Si las asincronías fallaran inyectando un tipo divergente (`null`, `string`, `undefined`) a los inyectores procedimentales globales, la aplicación colapsará visualmente en su totalidad por una variable no iterable.
+* **Acción Futura:** Incrustar validaciones puras iniciales en las utilidades visuales (`if (!Array.isArray(dataArr)) return;`) para salvaguardar la robustez del V8 Engine.
