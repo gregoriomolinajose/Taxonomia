@@ -4,23 +4,9 @@ Este documento condensa la Deuda Técnica material devuelta por los heurísticos
 
 ## 🏗️ Deuda Topológica y Estructural
 
-### 1. FormEngine_UI Growth (H7)
-* **Origen:** Arch Review Epic E11.
-* **Acción Causal:** El componente gigante `FormEngine_UI.html` supera las 1700 LOC. Contiene generadores pesados. Dividir responsabilidades de factory (templating) si excede los 2000 LOC, partiendo la inyección de la orquestación.
-
 ### 2. AST RegExp CSS Minifier (H14)
 * **Origen:** Arch Review Epic E11 (`deploy.js`).
 * **Acción Causal:** Abandonar la regex casera en favor de integrar oficialmente _Rollup_ o _Esbuild_ al pipeline Node.js si la densidad de tokens/alias CSS de Ionic se descontrola en la siguiente iteración.
-
-
-### 4. API Fail-Fast Scoping
-* **Origen:** Quality Review Epic E11.
-* **Acción Causal:** Las utilerías UI (`JS_Core`, etc.) se anexan con Carga Avasalladora (`include(...)`) sin Error Boundaries globales (`window.onerror`), acarreando peligro de WSOD incontrolado si `UI_Components` corrompe su AST.
-
-### 5. FormRenderer Input Generation (H11)
-* **Origen:** Arch Review Epic 14 (S14.1).
-* **Acción Causal:** A pesar de la reducción masiva de responsabilidad de `FormRenderer_UI.html`, todavía contiene un `switch (field.type)` interno para la generación básica de inputs. Éste debe ser abstraído por completo moviendo estas directivas a `UI_Factory.html`.
-
 
 ### 7. FormContext Object Injection (H8)
 * **Origen:** Arch Review Epic 14 (S14.1).
@@ -38,22 +24,9 @@ _Nota: Todo el parking lot fundacional (Factory Components, Minifiers y QA Sandb
 * **Origen:** Arch Review Epic 14 (S14.2).
 * **Acción Causal:** La eliminación forzada del directorio temporal `.build/assets` en `deploy.js` previene colisiones con Clasp. Evaluar si delegar esta exclusión estrictamente al filtro pasivo de `.claspignore` (ej. ignorar `**/*.css` nativo) es preferible frente a operaciones activas de File System (Mutación) en el pipeline script.
 
-### 12. Fallback Defensivo en UI_SubgridBuilder (H2)
-* **Origen:** Arch Review Epic 14 (S14.3).
-* **Acción Causal:** En `UI_SubgridBuilder.html` se ha implementado el Pub/Sub con el LocalEventBus, pero se dejó expuesto un fallback (`else if (typeof window.renderForm)`) protector hacia la macro-función global por retro-compatibilidad. Al estabilizar todos los Componentes e implementarse ES6 estricto, erradicar este amortiguador para forzar obligatoriamente el aprovisionamiento del Hub de Eventos o fallar limpiamente.
-
 ### 13. Granularidad Múltiple en DataGrid (H4)
 * **Origen:** Arch Review Epic 14 (S14.4).
 * **Acción Causal:** Tras la migración a ES6 Template Literals, `UI_DataGrid` ha ganado muchísima legibilidad pero retiene gran tamaño (>280 líneas HTML). Evaluar si justificar la fragmentación de sus renderizadores en micro-módulos (`UI_DataGrid_Table.html` y `UI_DataGrid_Grid.html`) excede la directiva de Keep It Simple (KISS) o si aporta valor a futuro para mantenimientos específicos.
-
-### 14. AST Build-Time Validation en CI/CD (Pipeline Gap)
-* **Origen:** Arch Review Epic 14 (Post-Deploy Addendum S14.4).
-* **Acción Causal:** Un error de sintaxis crudo (backslashes escapando Template Literals ES6 en `<script>`) en `UI_DataGrid.html` burló la validación del Node Deployer porque `deploy.js` sólo minifica `CSS_App`. Clasp inyectó el JS inválido a GAS causando un *White Screen of Death* silencioso y no recuperable en FrontEnd.
-* **Resolución Necesaria:** Es urgente ampliar el script de despliegue `deploy.js` añadiéndole bibliotecas como `acorn.parse()` o `esprima` que arranquen y verifiquen estáticamente el Abstract Syntax Tree (AST) de cada bloque de `<script>` que exista dentro de nuestros Módulos HTML *ANTES* de disparar el `clasp push`. Esto blindará contra Typos fatales en Producción.
-
-### 15. Compatibilidad V8 Acorn Parser (H8)
-* **Origen:** Arch Review Epic 15 (S15.1).
-* **Acción Causal:** Al implementar la validación AST en `deploy.js`, se configuró `ecmaVersion: 'latest'`. Si los desarrolladores introducen azucar sintáctico muy moderno que el Runtime V8 de Apps Script no soporte nativamente, la validación local pasará en el pipeline pero fallará en el servidor G-Suite. Evaluar si es prudente anclar el `ecmaVersion` a `2022` o similar en la próxima revisión del pipeline.
 
 ## 🚀 Next-Gen MDM Architecture (Post-Epic 14 / Roadmap)
 
