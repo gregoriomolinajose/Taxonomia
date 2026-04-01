@@ -58,12 +58,16 @@ window.UI_FormSubmitter = class UI_FormSubmitter {
                             if (strVal.toLowerCase() === "null" || strVal.toLowerCase() === "undefined") strVal = "";
                             payload[name] = strVal;
                         } else {
-                            let strVal = (val !== undefined && val !== null) ? String(val).trim() : '';
-                            if (strVal !== '') payload[name] = strVal;
+                            let cleanVal = (typeof val === 'string') ? val.trim() : val;
+                            if (cleanVal !== undefined && cleanVal !== null && cleanVal !== '') {
+                                payload[name] = cleanVal;
+                            }
                         }
                     } else {
-                        let strVal = (val !== undefined && val !== null) ? String(val).trim() : '';
-                        if (strVal !== '') payload[name] = strVal;
+                        let cleanVal = (typeof val === 'string') ? val.trim() : val;
+                        if (cleanVal !== undefined && cleanVal !== null && cleanVal !== '') {
+                            payload[name] = cleanVal;
+                        }
                     }
                 }
             });

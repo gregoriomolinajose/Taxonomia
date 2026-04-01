@@ -15,9 +15,8 @@
     </div>
   </template>
   <script>
-    window.addEventListener('error', function(e) {
+    function triggerWSOD(errDetail) {
       if (!document.body) return; // Prevent before body is ready
-      var errDetail = e.error ? (e.error.stack || e.error.message) : e.message;
       var template = document.getElementById('wsod-mitigator');
       if (template) {
         var clone = template.content.cloneNode(true);
@@ -25,6 +24,14 @@
         document.body.innerHTML = '';
         document.body.appendChild(clone);
       }
+    }
+    window.addEventListener('error', function(e) {
+      triggerWSOD(e.error ? (e.error.stack || e.error.message) : e.message);
+    });
+    window.addEventListener('unhandledrejection', function(e) {
+      var reason = e.reason;
+      var detail = (reason && reason.stack) ? reason.stack : String(reason);
+      triggerWSOD('Unhandled Promise Rejection: ' + detail);
     });
   </script>
 
