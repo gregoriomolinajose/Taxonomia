@@ -50,3 +50,7 @@ _Nota: Todo el parking lot fundacional (Factory Components, Minifiers y QA Sandb
 ### 11. Limpieza Segura de Assets Temporales (H4)
 * **Origen:** Arch Review Epic 14 (S14.2).
 * **Acción Causal:** La eliminación forzada del directorio temporal `.build/assets` en `deploy.js` previene colisiones con Clasp. Evaluar si delegar esta exclusión estrictamente al filtro pasivo de `.claspignore` (ej. ignorar `**/*.css` nativo) es preferible frente a operaciones activas de File System (Mutación) en el pipeline script.
+
+### 12. Fallback Defensivo en UI_SubgridBuilder (H2)
+* **Origen:** Arch Review Epic 14 (S14.3).
+* **Acción Causal:** En `UI_SubgridBuilder.html` se ha implementado el Pub/Sub con el LocalEventBus, pero se dejó expuesto un fallback (`else if (typeof window.renderForm)`) protector hacia la macro-función global por retro-compatibilidad. Al estabilizar todos los Componentes e implementarse ES6 estricto, erradicar este amortiguador para forzar obligatoriamente el aprovisionamiento del Hub de Eventos o fallar limpiamente.

@@ -11,7 +11,7 @@ window.UI_SubgridBuilder = {
      * @param {Object} data - Mutación Data actual (Hydration Cache)
      * @param {String} entityName - Nombre de la tabla principal
      */
-    build: async function(field, container, data, entityName) {
+    build: async function(field, container, data, entityName, localEventBus, modalContext) {
         const subgridDiv = document.createElement('div');
         subgridDiv.style.border = '1px solid var(--ion-border-color)';
         subgridDiv.style.borderRadius = 'var(--rounded-sm)';
@@ -121,7 +121,8 @@ window.UI_SubgridBuilder = {
             const childPK = 'id_' + singularKey;
 
             // Delegación a SubgridState PURE Engine (Inyectado Híbridamente)
-            const liveNivelInput = window.currentFormModal ? window.currentFormModal.querySelector('ion-input[name="nivel_tipo"], ion-select[name="nivel_tipo"]') : document.querySelector('ion-input[name="nivel_tipo"], ion-select[name="nivel_tipo"]');
+            const rootDOMContext = modalContext || window.currentFormModal || document;
+            const liveNivelInput = rootDOMContext.querySelector('ion-input[name="nivel_tipo"], ion-select[name="nivel_tipo"]');
             const val = liveNivelInput?.value;
             const liveLevel = (val !== undefined && val !== "") ? Number(val) : Number(data ? (data.nivel_tipo || 1) : 1);
 
@@ -220,8 +221,7 @@ window.UI_SubgridBuilder = {
                 // Desmontamos el Subgrid Picker
                 modal.dismiss().then(() => modal.remove());
                 
-                // Renderizamos Formulario Principal Anidado (Modal Stack) y enlazamos el Callback
-                window.renderForm(field.targetEntity, null, (newRecordResp) => {
+                const onSubFormSuccess = (newRecordResp) => {
                     if (newRecordResp && newRecordResp.status === 'success') {
                         // Soporte para distintas firmas de payload (según controlador de GAS)
                         const itemPayload = (newRecordResp.data && newRecordResp.data.data) ? newRecordResp.data.data : (newRecordResp.data || newRecordResp);
@@ -237,7 +237,18 @@ window.UI_SubgridBuilder = {
                             _refreshList();
                         }
                     }
-                });
+                };
+                
+                // Emisión Invertida (Pub/Sub Topológico) hacia el EventBus para no llamar a globals
+                if (localEventBus && typeof localEventBus.publish === 'function') {
+                    localEventBus.publish('UI::REQUEST_SUBFORM_OPEN', {
+                        targetEntity: field.targetEntity,
+                        onSuccess: onSubFormSuccess
+                    });
+                } else if (typeof window.renderForm === 'function') {
+                    // Renderizamos Formulario Principal Anidado (Backward compatibility / Fallback)
+                    window.renderForm(field.targetEntity, null, onSubFormSuccess);
+                }
             };
         };
 
