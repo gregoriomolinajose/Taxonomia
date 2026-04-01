@@ -13,7 +13,7 @@
 | E9 | Refactor UI MDM & ThemeManager                        | ✅ Complete   | Migrar estilos hardcoded, sanear LIFO Max Depth GC    | Alta     |
 | E11| Declarative UI Refactoring                            | ✅ Complete  | Componentización SPA y Pipeline QA/Minify             | Alta     |
 | E12| UI Modularization & Core Scaling                      | ✅ Complete  | Deconstrucción FormEngine, Routing, y Tooling CSS     | Muy Alta |
-| E13| The Cleaning Sprint (Arch & Tech Debt)                | 🚧 In Prog   | Extracción de Subgrids M:N, CSS Minifier y Rules      | Alta     |
+| E13| The Cleaning Sprint (Arch & Tech Debt)                | ✅ Complete   | Extracción de Subgrids M:N, CSS Minifier y Rules      | Alta     |
 
 ## Parking Lot / Deuda Técnica (Post-Epic 11)
 
