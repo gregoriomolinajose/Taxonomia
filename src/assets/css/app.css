@@ -1,18 +1,17 @@
-<style>
-  /* ═══════════════════════════════════════════════════════
-     CSS_App.html — Motor Estructural (Regla UI §14)
+﻿  /* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+     CSS_App.html â€” Motor Estructural (Regla UI Â§14)
      EXCLUSIVO: Sidebar 3-State, Grid, Bento Box, UI Components
-     Z-INDEX GOVERNANCE (Regla UI §14.2):
-       10   → Sticky Footers
-       50   → Sidebar Overlay móvil
-       100  → Modales
-       9999 → Toasts y Loaders
+     Z-INDEX GOVERNANCE (Regla UI Â§14.2):
+       10   â†’ Sticky Footers
+       50   â†’ Sidebar Overlay mÃ³vil
+       100  â†’ Modales
+       9999 â†’ Toasts y Loaders
      Inyectado via: <?!= include('CSS_App'); ?>
-  ═══════════════════════════════════════════════════════ */
+  â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 
-  /* ═══════════════════════════════════════════════════════
-     SIDEBAR OFFSET (Override Final de Componentes Internos) — Regla UI §13
-  ═══════════════════════════════════════════════════════ */
+  /* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+     SIDEBAR OFFSET (Override Final de Componentes Internos) â€” Regla UI Â§13
+  â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
   @media (min-width: 992px) {
     
     /* Fallback Transition para atenuar redimensiones en caliente del Split Pane nativo */
@@ -76,9 +75,9 @@
     }
   }
 
-  /* ═══════════════════════════════════════════════════════
+  /* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
      SIDEBAR FLOATING CARD (Token-Driven Shadow DOM)
-  ═══════════════════════════════════════════════════════ */
+  â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
   ion-menu::part(container) {
     border-radius: var(--rounded-md);
     margin: var(--spacing-4);
@@ -103,9 +102,9 @@
   .nav-item.active { background: rgba(108,99,255,0.18); color: var(--sidebar-icon-active); }
   .nav-item ion-icon { font-size: 22px; flex-shrink: 0; }
   
-  /* ═══════════════════════════════════════════════════════
+  /* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
      SIDEBAR TYPOGRAPHY (2-Line Text Wrapping)
-  ═══════════════════════════════════════════════════════ */
+  â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
   .nav-item ion-label, .nav-item span:not(.nav-tooltip) {
     font-size: 0.9rem;
     white-space: normal !important;
@@ -115,7 +114,7 @@
     overflow: hidden;
     line-height: 1.2;
     word-break: break-word;
-    /* Margen para que las 2 líneas no queden asfixiadas */
+    /* Margen para que las 2 lÃ­neas no queden asfixiadas */
     padding-top: 2px;
     padding-bottom: 2px;
   }
@@ -145,9 +144,9 @@
     flex-shrink: 0;
   }
   .sidebar-logo-box ion-icon { font-size: 24px; color: var(--ion-color-light, #fff); }
-  /* ═══════════════════════════════════════════════════════
+  /* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
      SIDEBAR BRAND TYPOGRAPHY (2-Line Text Wrapping)
-  ═══════════════════════════════════════════════════════ */
+  â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
   .sidebar-app-title {
     font-size: 1rem; color: var(--ion-color-medium); font-weight: 600;
     transition: opacity 0.25s ease;
@@ -232,7 +231,7 @@
   .wizard-step-panel.active { display: block; }
   .wizard-step-panel ion-col { padding-bottom: 16px; }
 
-  /* Toast — z-index: 9999 (maxima prioridad — Regla UI §14.2) */
+  /* Toast â€” z-index: 9999 (maxima prioridad â€” Regla UI Â§14.2) */
   .sim-toast {
     position: fixed; bottom: 32px; left: 50%;
     transform: translateX(-50%) translateY(80px);
@@ -246,7 +245,7 @@
   }
   .sim-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); pointer-events: all; }
 
-  /* ── Extraído de Index.html (Regla UI §14) ── */
+  /* â”€â”€ ExtraÃ­do de Index.html (Regla UI Â§14) â”€â”€ */
   body { margin: 0; padding: 0; }
   ion-menu { --ion-background-color: var(--color-bg-body); border-right: none !important; }
   .header-bg { background-color: var(--color-bg-body); border-bottom: 1px solid var(--color-border); }
@@ -255,9 +254,9 @@
   @media (min-width: 992px) { .hide-on-desktop { display: none !important; } }
   /* Eliminado: .build-version legado (ahora .build-tracker maneja footer state) */
 
-  /* ═══════════════════════════════════════════════════════
+  /* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
      ENTERPRISE MODAL OVERRIDE (Desktop Desktop)
-  ═══════════════════════════════════════════════════════ */
+  â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
   @media (min-width: 768px) {
     ion-modal {
       --width: 800px !important;
@@ -287,14 +286,14 @@
 /* DATAVIEW STRUCTURAL LAYOUT */
 /* (Migrado en S10.2 desde DataView_UI.html) */
 /* ============================================================ */
-/* ── Corrección de Design Tokens (DataView) ── */
+/* â”€â”€ CorrecciÃ³n de Design Tokens (DataView) â”€â”€ */
     body {
         /* Mapeo estricto al Design System */
         --dv-primary: var(--ion-color-primary, #1C42E8); 
         --dv-primary-light: rgba(var(--ion-color-primary-rgb, 28, 66, 232), 0.1); 
         --dv-primary-dark: var(--ion-color-primary-shade, #081754);
 
-        /* Sincronización Estricta del Mapeo a CSS_DesignSystem */
+        /* SincronizaciÃ³n Estricta del Mapeo a CSS_DesignSystem */
         --dv-surface: var(--ion-background-color, #ffffff);
         --dv-bg: var(--sidebar-bg, var(--ion-card-background));
         --dv-border: var(--color-border, #C9C9C9);
@@ -309,7 +308,7 @@
     }
 
     
-    /* ── UI Design Classes (Refactor S9.4) ── */
+    /* â”€â”€ UI Design Classes (Refactor S9.4) â”€â”€ */
     .dv-empty-text { color: var(--dv-text-light); }
     .dv-chip { display:inline-block; background:var(--dv-bg); border:1px solid var(--dv-border); border-radius:4px; padding:1px 7px; font-size:.78rem; margin:1px; }
     .dv-pk-code { font-size:.78rem; background:var(--dv-bg); padding:1px 5px; border-radius:3px; cursor:pointer; color:var(--dv-primary); font-weight:bold; text-decoration:underline; }
@@ -339,7 +338,7 @@
     .dv-options-icon { margin-right: 6px; }
     .dv-title-icon { font-size: 1.6rem; color: var(--dv-primary); }
     .dv-hidden { display: none; }
-\n    /* ── Contenedor raíz ── */
+\n    /* â”€â”€ Contenedor raÃ­z â”€â”€ */
     .dv-root {
         font-family: var(--ion-font-family, system-ui, -apple-system, sans-serif);
         color: var(--dv-text-primary);
@@ -348,7 +347,7 @@
         box-sizing: border-box;
     }
 
-    /* ── Header ── */
+    /* â”€â”€ Header â”€â”€ */
     .dv-header {
         display: flex;
         align-items: center;
@@ -382,7 +381,7 @@
         flex-wrap: wrap;
     }
 
-    /* ── Botones base ── */
+    /* â”€â”€ Botones base â”€â”€ */
     .dv-btn {
         display: inline-flex;
         align-items: center;
@@ -453,7 +452,7 @@
         border-color: var(--dv-primary);
     }
 
-    /* ── Toolbar ── */
+    /* â”€â”€ Toolbar â”€â”€ */
     .dv-toolbar {
         display: flex;
         align-items: center;
@@ -479,7 +478,7 @@
         /* los botones nunca se aplastan bajo el buscador */
     }
 
-    /* ── Search — estilos del ion-searchbar nativo ── */
+    /* â”€â”€ Search â€” estilos del ion-searchbar nativo â”€â”€ */
     .dv-search-wrap {
         position: relative;
         flex: 1 1 220px;
@@ -505,9 +504,9 @@
     }
 
     /* Custom popover eliminado: reemplazado por <ion-popover> nativo de Ionic */
-    /* — Ver _ensureColPopover() en el JS — */
+    /* â€” Ver _ensureColPopover() en el JS â€” */
 
-    /* ── Card principal — Elevación Enterprise ── */
+    /* â”€â”€ Card principal â€” ElevaciÃ³n Enterprise â”€â”€ */
     .dv-card {
         background: var(--dv-bg);
         border: 1px solid var(--dv-border);
@@ -516,7 +515,7 @@
         overflow: hidden;
     }
 
-    /* ── Tabla + Scrollbar Corporativo (webkit) ── */
+    /* â”€â”€ Tabla + Scrollbar Corporativo (webkit) â”€â”€ */
     .dv-table-wrap {
         overflow-x: auto;
         -webkit-overflow-scrolling: touch;
@@ -617,7 +616,7 @@
         cursor: pointer;
     }
 
-    /* ── Badges de Estatus ── */
+    /* â”€â”€ Badges de Estatus â”€â”€ */
     .dv-badge {
         display: inline-block;
         padding: 2px 10px;
@@ -681,7 +680,7 @@
         color: #475569;
     }
 
-    /* ── Grid View — Ionic-native layout (ion-grid/ion-row/ion-col/ion-card) ── */
+    /* â”€â”€ Grid View â€” Ionic-native layout (ion-grid/ion-row/ion-col/ion-card) â”€â”€ */
 
     /* Override ion-grid padding para alinearlo con el dv-root */
     .dv-ionic-grid {
@@ -767,7 +766,7 @@
         word-break: break-word;
     }
 
-    /* ── Drag & Drop Reorder (columnas) ── */
+    /* â”€â”€ Drag & Drop Reorder (columnas) â”€â”€ */
     .dv-table th {
         cursor: grab;
     }
@@ -784,7 +783,7 @@
         box-shadow: inset 3px 0 0 var(--dv-primary);
     }
 
-    /* Handle visual — aparece al hover del th */
+    /* Handle visual â€” aparece al hover del th */
     .dv-drag-handle {
         display: inline-block;
         margin-left: 6px;
@@ -867,7 +866,7 @@
         border-color: var(--dv-primary);
     }
 
-    /* ── Skeleton ── */
+    /* â”€â”€ Skeleton â”€â”€ */
     @keyframes dv-shimmer {
         0% {
             background-position: -600px 0;
@@ -893,7 +892,7 @@
         animation: dv-shimmer 1.4s infinite;
     }
 
-    /* ── Empty State ── */
+    /* â”€â”€ Empty State â”€â”€ */
     .dv-empty {
         text-align: center;
         padding: 48px 20px;
@@ -917,7 +916,7 @@
         font-size: .85rem;
     }
 
-    /* ── Responsive header ── */
+    /* â”€â”€ Responsive header â”€â”€ */
     @media (max-width: 600px) {
         .dv-header {
             flex-direction: column;
@@ -937,7 +936,7 @@
             max-width: 100%;
         }
     }
-    /* ── UX Polish S1.6.15 ── */
+    /* â”€â”€ UX Polish S1.6.15 â”€â”€ */
     .dv-pagination {
         border-bottom-left-radius: var(--dv-radius);
         border-bottom-right-radius: var(--dv-radius);
@@ -946,5 +945,3 @@
         background: rgba(var(--ion-text-color-rgb, 8, 23, 84), 0.03); 
     }
 
-
-</style>

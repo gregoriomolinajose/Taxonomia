@@ -4,9 +4,9 @@
 
 ## Session
 
-- **Active Session**: E11-Close
-- **Last Summary**: Completed Epic E11 (Declarative UI & Topological Scaling). Delivered FormEngine modularity, EventBus, UI Modals, QA Stripping, and AST-safe Minification. `v1.2.6-stable` augmented with Zero-Trust principles.
-- **Next Focus**: Transition to Epic E12 (Parking Lot cleanup: ESBuild/Rollup pipelines, Theme/CSS Token refinement, FormEngine splitting).
+- **Active Session**: E14-Module Splitting
+- **Last Summary**: Completed Story S14.2. Extracted CSS logic from HTML into native CSS files (`assets/css/app.css`, `assets/css/design-system.css`) and upgraded `deploy.js` to act as a JIT bundler via CleanCSS, protecting the GAS zero-touch integration. Escaped Theme Manager scripts into `UI_ThemeManager.html`.
+- **Next Focus**: Transition to Story S14.3 (PubSub Topológico. Invertir las dependencias del SubgridBuilder y FormBuilder).
 
 ## Patterns
 

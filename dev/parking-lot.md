@@ -42,3 +42,11 @@ Este documento condensa la Deuda Técnica material devuelta por los heurísticos
 
 ---
 _Nota: Todo el parking lot fundacional (Factory Components, Minifiers y QA Sandboxing) ha sido finalizado con éxito durante Epic E11._
+
+### 10. Evolución de ThemeManager (H1)
+* **Origen:** Arch Review Epic 14 (S14.2).
+* **Acción Causal:** El script `UI_ThemeManager.html` fue extraído exitosamente aislando `window.hydrateThemeConfig()`. Al tener una única implementación inyectada en crudo, se propone evaluar su migración a una Clase ES6 formal orquestada dinámicamente por `AppController` en iteraciones futuras de arquitectura.
+
+### 11. Limpieza Segura de Assets Temporales (H4)
+* **Origen:** Arch Review Epic 14 (S14.2).
+* **Acción Causal:** La eliminación forzada del directorio temporal `.build/assets` en `deploy.js` previene colisiones con Clasp. Evaluar si delegar esta exclusión estrictamente al filtro pasivo de `.claspignore` (ej. ignorar `**/*.css` nativo) es preferible frente a operaciones activas de File System (Mutación) en el pipeline script.

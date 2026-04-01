@@ -1,0 +1,94 @@
+<script>
+  /* ═══════════════════════════════════════════════════════
+     THEME MANAGER $O(1)$ — JSON TOKENS HYDRATOR (Regla UI §14)
+  ═══════════════════════════════════════════════════════ */
+  window.__THEME_TOKENS__ = {
+    color: {
+      interactive: {
+        primary: "#1C42E8",
+        "primary-hover": "#081754",
+        "primary-press": "#05297A",
+        secondary: "#F3F3F3",
+        "secondary-hover": "#C9C9C9",
+        "secondary-press": "#DEDEDE",
+        error: "#FF594D",
+        "error-hover": "#A26267",
+        "error-press": "#C8180D"
+      },
+      text: {
+        default: "#081754",
+        soft: "#A4A4A4",
+        inactive: "#8C8C8C",
+        invert: "#FFFFFF",
+        error: "#C8180D",
+        warning: "#CF4600",
+        success: "#2E8A41",
+        info: "#0062A5"
+      },
+      bg: {
+        "0": "#F3F3F3",
+        body: "#FFFFFF",
+        dark: "#4A4A4A",
+        error: "#FF594D",
+        success: "#0ABF4F",
+        warning: "#FFAE43",
+        info: "#1CA8F7",
+        inactive: "#DEDEDE"
+      },
+      icon: {
+        default: "#081754",
+        soft: "#4A4A4A",
+        inactive: "#8C8C8C",
+        invert: "#FFFFFF",
+        error: "#FF594D",
+        success: "#0ABF4F",
+        warning: "#FFAE43",
+        info: "#1CA8F7"
+      },
+      border: {
+        default: "#C9C9C9",
+        error: "#FF594D",
+        success: "#0ABF4F",
+        warning: "#FFAE43",
+        info: "#1CA8F7"
+      },
+      brand: {
+        coppel: "#F0D224",
+        bancoppel: "#05297A",
+        sales: "#C8180D"
+      }
+    }
+  };
+
+  /**
+   * Transforma el JSON estructurado en Variables Kebab-case de CSS
+   * e inyecta asíncronamente en document.documentElement.style para 
+   * evitar bloqueo de Thread y gobernar el renderizado Themed.
+   */
+  window.hydrateThemeConfig = function(tokens) {
+    if (!tokens) return;
+    const flattenObject = (obj, prefix = '') => {
+      if (typeof obj !== 'object' || obj === null) return;
+      
+      // Resiliencia Top-Down: si el sub-arbol tiene un default, bindear directo a la raíz (Prefijo)
+      if (prefix && obj.default !== undefined) {
+          document.documentElement.style.setProperty(prefix, obj.default);
+      }
+      
+      Object.keys(obj).forEach(key => {
+        if (key === 'default') return; // [S11.2] Aplanamiento ciego sin duplicacion dura O(1)
+        
+        let propName = prefix ? `${prefix}-${key}` : `--${key}`;
+        if (typeof obj[key] === 'object' && obj[key] !== null) {
+          flattenObject(obj[key], propName);
+        } else {
+          document.documentElement.style.setProperty(propName, obj[key]);
+        }
+      });
+    };
+    flattenObject(tokens);
+  };
+  
+  // Ejecucion asincrona y expuesta globalmente
+  window.hydrateThemeConfig(window.__THEME_TOKENS__);
+</script>
