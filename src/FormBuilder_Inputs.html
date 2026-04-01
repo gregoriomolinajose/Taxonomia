@@ -510,5 +510,174 @@
             }
         };
 
+        global.UI_Factory.buildFieldNode = function(field, entityName, data, localEventBus, currentEditId) {
+            let inputEl;
+            try {
+                switch (field.type) {
+                    case 'relation':
+                        inputEl = document.createElement('div');
+                        inputEl.setAttribute('data-relation-type', field.relationType || 'relacionado');
+                        inputEl.style.width = '100%';
+                        inputEl.style.marginBottom = 'var(--spacing-2)';
+                        
+                        const liveData = (window.__APP_CACHE__ && window.__APP_CACHE__[field.targetEntity]) ? window.__APP_CACHE__[field.targetEntity] : [];
+                        const activeData = liveData.filter(d => d.estado !== 'Eliminado' && typeof d === 'object');
+                        
+                        let initialValues = [];
+                        
+                        // UAT Point 3: Auto-populate existing relation records using Zero-Latency Graph resolution
+                        if (field.isTemporalGraph && field.graphEntity && window.__APP_CACHE__ && window.__APP_CACHE__[field.graphEntity]) {
+                            const currentPK = data ? (data.id_dominio || data.id_registro) : null;
+                            if (currentPK) {
+                                const aristas = window.__APP_CACHE__[field.graphEntity].filter(e => e.es_version_actual !== false);
+                                if (field.relationType === 'padre') {
+                                    // Mis padres (mi PK está en id_nodo_hijo)
+                                    initialValues = aristas.filter(e => window.UI_FormUtils.normalizeId(e.id_nodo_hijo) === window.UI_FormUtils.normalizeId(currentPK)).map(e => window.UI_FormUtils.normalizeId(e.id_nodo_padre));
+                                } else if (field.relationType === 'hijo') {
+                                    // Mis hijos (mi PK está en id_nodo_padre)
+                                    initialValues = aristas.filter(e => window.UI_FormUtils.normalizeId(e.id_nodo_padre) === window.UI_FormUtils.normalizeId(currentPK)).map(e => window.UI_FormUtils.normalizeId(e.id_nodo_hijo));
+                                }
+                            }
+                        } else if (data && data[field.name]) {
+                            try {
+                                initialValues = Array.isArray(data[field.name]) ? data[field.name] : JSON.parse(data[field.name]);
+                            } catch(e) { initialValues = (typeof data[field.name] === 'string') ? [data[field.name]] : []; } // fallback
+                        }
+                        if (field.uiComponent === 'searchable_multi') {
+                            // Constructor del Componente Searchable+Chips Modal-like Inline
+                            const multiNodes = global.UI_Factory.buildSearchableMulti(field, activeData, initialValues, localEventBus);
+                            inputEl.appendChild(multiNodes);
+                        } else if (field.uiComponent === 'select_single') {
+                            const basicSel = document.createElement('ion-select');
+                            basicSel.setAttribute('interface', window.innerWidth < 768 ? 'action-sheet' : 'popover');
+                            basicSel.setAttribute('name', field.name);
+                            basicSel.setAttribute('label', field.label);
+                            basicSel.setAttribute('label-placement', 'stacked');
+                            basicSel.setAttribute('fill', 'outline');
+                            
+                            // Prevent overlapping by adding a tiny margin
+                            basicSel.style.marginBottom = 'var(--spacing-3)';
+
+                            // Empty Default 'Ninguno'
+                            const emptyOpt = document.createElement('ion-select-option');
+                            emptyOpt.value = "";
+                            emptyOpt.textContent = "— Sin asignar —";
+                            basicSel.appendChild(emptyOpt);
+
+                            // Set initial value for single select
+                            if (initialValues.length > 0) {
+                                basicSel.value = initialValues[0];
+                            }
+                            
+                            // [S8.5] UI Dumbness Guards (Single Select Hierarchy filter)
+                            let filteredActiveData = activeData;
+                            const rules = window.APP_SCHEMAS && window.APP_SCHEMAS[entityName] ? window.APP_SCHEMAS[entityName].topologyRules : null;
+                            
+                            // Asumimos Nivel 1 si es un nuevo registro
+                            const cLevel = Number(data ? (data.nivel_tipo || 1) : 1);
+                            
+                            if (rules) {
+                                // Isomorphic State Resolution
+                                const uiStateInit = window.SubgridState ? 
+                                    window.SubgridState.evaluateFieldState(rules, cLevel, field.relationType) : 
+                                    { isDisabled: false, opacity: '1', placeholder: '— Sin asignar —' };
+                                
+                                if (uiStateInit.isDisabled) {
+                                    basicSel.setAttribute('disabled', 'true');
+                                }
+                                basicSel.style.opacity = uiStateInit.opacity;
+                                emptyOpt.textContent = uiStateInit.placeholder;
+
+                                if (rules.levelFiltering === true && rules.strictLevelJumps === true && field.relationType === 'padre') {
+                                    // Regla Topológica: El Padre siempre debe estar 1 nivel por encima
+                                    filteredActiveData = activeData.filter(d => Number(d.nivel_tipo) === cLevel - 1);
+                                }
+                                
+                                if (rules.rootRequiresNoParent === true && cLevel === 1 && field.relationType === 'padre') {
+                                    filteredActiveData = []; // Eliminar opciones
+                                }
+                            }
+                            
+                            // Inyección DRY Inicial Isomórfica
+                            global.UI_Factory.populateSelectOptions(basicSel, filteredActiveData, field);
+
+                            // --- S8.7.2/S10.1: EVENT LISTENER DE REPAINT BINDING ---
+                            global.UI_Factory.bindLevelChangeRepaint(basicSel, activeData, field, emptyOpt, localEventBus);
+
+                            // [S8.7] Branch Shifting Interceptor
+                            if (field.isTemporalGraph && field.relationType === 'padre') {
+                                // Wait for the component to attach to grab initial value later, or just use initialValues[0]
+                                let originalVal = initialValues.length > 0 ? initialValues[0] : "";
+                                
+                                basicSel.addEventListener('ionChange', async (ev) => {
+                                    const newVal = ev.detail.value;
+                                    const isNewContext = { currentEditId: currentEditId, data: data };
+                                    const isNewRecord = window.SubgridState ? window.SubgridState.isNewRecord(isNewContext) : (!currentEditId && (!data || !data.id_registro));
+                                    // Detonar alerta si ya existía un padre y ahora se seleccionó algo distinto al origin (Branch Shift)
+                                    if (!isNewRecord && originalVal && originalVal !== "" && newVal !== originalVal) {
+                                        const alert = document.createElement('ion-alert');
+                                        alert.header = 'Cambio de Jerarquía Detectado';
+                                        alert.message = 'Estás reasignando el nodo padre. Si guardas este cambio, este registro y todos sus descendientes (toda la rama) se trasladarán a la nueva ubicación. ¿Estás seguro de continuar con el re-emplazamiento?';
+                                        alert.buttons = [
+                                            { 
+                                                text: 'Cancelar', 
+                                                role: 'cancel',
+                                                handler: () => {
+                                                    // Rollback dinámico
+                                                    basicSel.value = originalVal;
+                                                }
+                                            },
+                                            { 
+                                                text: 'Sí, reubicar rama',
+                                                handler: () => {
+                                                    originalVal = newVal; // Confirmamos el cambio
+                                                }
+                                            }
+                                        ];
+                                        document.body.appendChild(alert);
+                                        await alert.present();
+                                    } else if (!originalVal || originalVal === "") {
+                                        // Si no tenía padre antes, el cambio se acepta directamente
+                                        originalVal = newVal;
+                                    }
+                                });
+                            }
+
+                            inputEl.appendChild(basicSel);
+                        }
+                        break;
+
+                    case 'text':
+                    case 'number':
+                    case 'date':
+                        inputEl = global.UI_Factory.buildInput(field, entityName);
+                        break;
+                    case 'textarea':
+                        inputEl = global.UI_Factory.buildTextarea(field);
+                        break;
+                    case 'select':
+                        inputEl = global.UI_Factory.buildSelect(field);
+                        break;
+                    case 'dynamic_list': {
+                        inputEl = global.UI_Factory.buildDynamicList(field, data);
+                        break;
+                    }
+                    case 'lookup':
+                        inputEl = global.UI_Factory.buildLookup(field);
+                        break;
+                    case 'chip-input':
+                        inputEl = global.UI_Factory.buildChipInput(field);
+                        break;
+                    default:
+                        inputEl = global.UI_Factory.buildInput(field, entityName);
+                }
+            } catch (err) {
+                console.error("[UI_Factory] Error construyendo FieldNode para:", field.name, err);
+                inputEl = document.createElement('div');
+                inputEl.innerHTML = `<ion-text color="danger"><small>⚠ Error UI: ${field.name}</small></ion-text>`;
+            }
+            return inputEl;
+        };
+
     })(window);
 </script>
