@@ -61,23 +61,28 @@
   <script>
     window.APP_SCHEMAS = <?!= JSON.stringify(getAppSchema()) ?>;
     window.__APP_CACHE__ = {};
-    window.ENTITY_META = {
-      Unidad_Negocio:  { order:1, iconName:'business-outline',   color:'primary',  label:'Unidades de Negocio',   titleField:'nombre',          idField:'id_unidad_negocio',  fkField:null },
-      Portafolio:      { order:2, iconName:'briefcase-outline',   color:'primary',  label:'Portafolios',            titleField:'nombre',          idField:'id_portafolio',      fkField:null },
-      Dominio:         { order:3, iconName:'globe-outline',       color:'secondary',label:'Dominios',               titleField:'n0_es',           idField:'id_dominio',         fkField:null },
-      Grupo_Productos: { order:4, iconName:'layers-outline',      color:'secondary',label:'Grupos de Producto',     titleField:'nombre',          idField:'id_grupo_producto',  fkField:{ key:'id_portafolio',     label:'Portafolio' } },
-      Producto:        { order:5, iconName:'cube-outline',        color:'tertiary', label:'Productos',              titleField:'nombre_producto', idField:'id_producto',        fkField:{ key:'id_grupo_producto', label:'Grupo' } },
-      Capacidad:       { order:6, iconName:'layers-outline',      color:'warning',  label:'Capacidades',            titleField:'macrocapacidad',  idField:'id_capacidad',       fkField:null },
-      Equipo:          { order:7, iconName:'people-outline',      color:'dark',     label:'Equipos',                titleField:'nombre_equipo',   idField:'id_equipo',          fkField:{ key:'id_producto',       label:'Producto' } },
-      Persona:         { order:8, iconName:'person-outline',      color:'medium',   label:'Personas',               titleField:'nombre_completo', idField:'id_persona',         fkField:null },
-      Relacion_Dominios:{ order:9, iconName:'git-network-outline', color:'primary',  label:'Conexiones Topológicas', titleField:'tipo_relacion',   idField:'id_relacion',        fkField:{ key:'id_nodo_padre',     label:'Dominio' } }
+    window.getEntitiesByMetaFlag = function(flagName) {
+      if (!window.APP_SCHEMAS) return [];
+      var items = Object.keys(window.APP_SCHEMAS).reduce((acc, k) => { 
+        var meta = window.APP_SCHEMAS[k].metadata;
+        // Convención Opt-in: Asumir false a menos que sea explícitamente true
+        if (meta && meta[flagName] === true) acc[k] = meta; 
+        return acc; 
+      }, {});
+      return Object.entries(items).sort(function(a,b){ return (a[1].order || 999) - (b[1].order || 999); });
     };
+
+    window.ENTITY_META = Object.keys(window.APP_SCHEMAS).reduce((acc, key) => {
+      if (key !== '_UI_CONFIG' && window.APP_SCHEMAS[key].metadata) acc[key] = window.APP_SCHEMAS[key].metadata;
+      return acc;
+    }, {});
 
     // [S8.5.1] Inyección Híbrida: Funciones Puras del Backend materializadas en el Frontend
     <?!= typeof _normalizeId !== 'undefined' ? _normalizeId.toString() : 'function _normalizeId(){}' ?>;
     <?!= typeof filterAvailableOptions !== 'undefined' ? filterAvailableOptions.toString() : 'function filterAvailableOptions(){return []}' ?>;
     <?!= typeof evaluateFieldState !== 'undefined' ? evaluateFieldState.toString() : 'function evaluateFieldState(){return "optional"}' ?>;
-    window.SubgridState = { _normalizeId, filterAvailableOptions, evaluateFieldState };
+    <?!= typeof isNewRecord !== 'undefined' ? isNewRecord.toString() : 'function isNewRecord(){return true}' ?>;
+    window.SubgridState = { _normalizeId, filterAvailableOptions, evaluateFieldState, isNewRecord };
   </script>
 </head>
 <body>

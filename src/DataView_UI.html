@@ -77,6 +77,7 @@
                     if (f) {
                         if (f.primaryKey) isPrimaryKey = true;
                         if (f.type === 'hidden' && !f.primaryKey) isHidden = true;
+                        if (f.showInList === false) isHidden = true;
                     }
                 }
 

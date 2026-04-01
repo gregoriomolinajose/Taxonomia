@@ -103,7 +103,7 @@
     var container = document.getElementById('dashboard-cards-container');
     if (!container) return;
     container.innerHTML = '';
-    var sorted = Object.entries(window.ENTITY_META).sort(function(a,b){ return a[1].order - b[1].order; });
+    var sorted = window.getEntitiesByMetaFlag('showInDashboard');
     container.innerHTML = sorted.map(function(entry) {
       var key = entry[0]; var meta = entry[1];
       return '<ion-col size="12" size-md="6" size-xl="4"><ion-card>' +

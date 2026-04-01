@@ -95,7 +95,7 @@
                 
             var headerEntidades = '<div class="sidebar-heading"><span>ENTIDADES</span></div>';
             
-            var sorted = Object.entries(window.ENTITY_META).sort(function(a,b){ return a[1].order - b[1].order; });
+            var sorted = window.getEntitiesByMetaFlag('showInMenu');
             var items = sorted.map(function(entry) {
                 var key = entry[0]; var meta = entry[1];
                 if(meta.hideFromMenu === true) return '';
