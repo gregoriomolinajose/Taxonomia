@@ -35,9 +35,6 @@ window.UI_FormStepper = class UI_FormStepper {
 
         this._initializeDOM();
         this._attachListeners();
-
-        // Backward compatibility inject for _guardarFormData or global usage if really needed
-        window.__CURRENT_WIZARD_STEPS = this.steps;
     }
 
     _initializeDOM() {
@@ -101,8 +98,6 @@ window.UI_FormStepper = class UI_FormStepper {
             this.rows[stepName] = row; // Referencia rápida para inyectar campos
         });
 
-        // Tweak para funciones externas asumiendo global object
-        window.goToFormSection = (stepName) => this.goToSection(stepName);
     }
 
     _attachListeners() {
