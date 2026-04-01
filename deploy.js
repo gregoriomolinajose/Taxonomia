@@ -3,6 +3,7 @@ const path = require('path');
 const { execSync } = require('child_process');
 const readline = require('readline');
 const CleanCSS = require('clean-css');
+const acorn = require('acorn');
 
 const env = process.argv[2];
 
@@ -78,6 +79,31 @@ try {
                 console.log(`[Deploy] Stripped QA Module from PROD build.`);
             }
         }
+
+        // Validate JS AST in HTML files (S15.1)
+        console.log(`[Deploy] Validating JavaScript AST in all HTML modules...`);
+        const files = fs.readdirSync(buildDir);
+        for (const file of files) {
+            if (!file.endsWith('.html')) continue;
+            const filePath = path.join(buildDir, file);
+            const content = fs.readFileSync(filePath, 'utf8');
+            
+            const scriptRegex = /<script\b[^>]*>([\s\S]*?)<\/script>/gi;
+            let match;
+            while ((match = scriptRegex.exec(content)) !== null) {
+                const scriptContent = match[1].trim();
+                // Omitir templates de EJS / App Script directivos cortos si fallan, priorizamos pure JS logs.
+                if (!scriptContent || scriptContent.includes('<?!=')) continue;
+                
+                try {
+                    acorn.parse(scriptContent, { ecmaVersion: 'latest', sourceType: 'script' });
+                } catch (e) {
+                    console.error(`\x1b[31m[Deploy-Error] SyntaxError in ${file} at line ${e.loc ? e.loc.line : 'unknown'}:\x1b[0m ${e.message}`);
+                    process.exit(1);
+                }
+            }
+        }
+        console.log(`[Deploy] AST Validation passed.`);
 
         // Native CSS Bundler (S14.2)
         const cssFiles = [

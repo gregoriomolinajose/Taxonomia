@@ -6,15 +6,25 @@
   <title>Taxonomia Project - EPT OMR</title>
 
   <!-- Fail-Fast WSOD Mitigation (System Error Interceptor) -->
+  <template id="wsod-mitigator">
+    <div style="background:#fff3f3;color:#8a0000;padding:2rem;font-family:sans-serif;height:100vh;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;">
+      <h1 style="font-size:3rem;margin-bottom:0.5rem">⚠️</h1><h2>Error de Sistema</h2>
+      <p style="max-width:500px">Fallo crítico durante la inicialización de la plataforma (SyntaxError o ReferenceError asíncrono). La ejecución ha sido bloqueada (API Fail-Fast).</p>
+      <pre id="wsod-error-detail" style="background:#fbe9e9;padding:1rem;border-radius:6px;width:100%;max-width:600px;overflow-x:auto;text-align:left;font-size:0.85rem;border:1px solid #ecc;"></pre>
+      <button onclick="location.reload()" style="margin-top:1.5rem;padding:0.75rem 1.5rem;background:#cc0000;color:white;border:none;border-radius:6px;cursor:pointer;font-weight:600;">Regresar al Inicio</button>
+    </div>
+  </template>
   <script>
     window.addEventListener('error', function(e) {
       if (!document.body) return; // Prevent before body is ready
       var errDetail = e.error ? (e.error.stack || e.error.message) : e.message;
-      document.body.innerHTML = '<div style="background:#fff3f3;color:#8a0000;padding:2rem;font-family:sans-serif;height:100vh;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;">' +
-        '<h1 style="font-size:3rem;margin-bottom:0.5rem">⚠️</h1><h2>Error de Sistema</h2>' +
-        '<p style="max-width:500px">Fallo crítico durante la inicialización de la plataforma (SyntaxError o ReferenceError asíncrono). La ejecución ha sido bloqueada (API Fail-Fast).</p>' +
-        '<pre style="background:#fbe9e9;padding:1rem;border-radius:6px;width:100%;max-width:600px;overflow-x:auto;text-align:left;font-size:0.85rem;border:1px solid #ecc;">' + errDetail + '</pre>' +
-        '<button onclick="location.reload()" style="margin-top:1.5rem;padding:0.75rem 1.5rem;background:#cc0000;color:white;border:none;border-radius:6px;cursor:pointer;font-weight:600;">Regresar al Inicio</button></div>';
+      var template = document.getElementById('wsod-mitigator');
+      if (template) {
+        var clone = template.content.cloneNode(true);
+        clone.getElementById('wsod-error-detail').textContent = errDetail;
+        document.body.innerHTML = '';
+        document.body.appendChild(clone);
+      }
     });
   </script>
 
