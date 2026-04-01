@@ -11,15 +11,18 @@ if (!['dev', 'prod'].includes(env)) {
     process.exit(1);
 }
 
-const envFile = `.clasp-${env}.json`;
-
 const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
 
 try {
     console.log(`[Deploy] Switching to ${env} environment...`);
 
-    if (!fs.existsSync(envFile)) {
-        throw new Error(`Source file ${envFile} not found.`);
+    const SCRIPT_IDS = {
+        'dev': '1ZjGYDSsBgXy9mxa9guRoj69oabUJAVZz9GOy9DzJ5280tzYmMIjIBd5q',
+        'prod': '14oIjG_akx2DuX1nZe_HWBR8TECPYZgCyYikKwtRnng_pgzxcK0wLekYa'
+    };
+
+    if (!SCRIPT_IDS[env]) {
+        throw new Error(`No scriptId configured for environment: ${env}`);
     }
 
     const configFile = `environments/Config.${env}.js`;
@@ -110,8 +113,10 @@ try {
 
         // Alter .clasp.json to point to .build
         console.log(`[Deploy] Generating temporary .clasp.json for ${env}...`);
-        let claspConfig = JSON.parse(fs.readFileSync(envFile, 'utf8'));
-        claspConfig.rootDir = '.build';
+        let claspConfig = {
+            scriptId: SCRIPT_IDS[env],
+            rootDir: ".build"
+        };
         fs.writeFileSync('.clasp.json', JSON.stringify(claspConfig, null, 2), 'utf8');
 
         console.log(`[Deploy] Environment files updated for ${env}. Running npx clasp push...`);
@@ -157,8 +162,11 @@ try {
             fs.rmSync(buildDir, { recursive: true, force: true });
         }
         // Restore .clasp.json rootDir
-        claspConfig.rootDir = 'src';
-        fs.writeFileSync('.clasp.json', JSON.stringify(claspConfig, null, 2), 'utf8');
+        console.log(`[Deploy] Restoring base .clasp.json to target dev/src...`);
+        fs.writeFileSync('.clasp.json', JSON.stringify({
+            scriptId: SCRIPT_IDS['dev'],
+            rootDir: 'src'
+        }, null, 2), 'utf8');
 
         console.log(`[Deploy] Successfully deployed to ${env}!`);
     });
