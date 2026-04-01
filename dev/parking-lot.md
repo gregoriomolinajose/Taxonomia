@@ -20,5 +20,25 @@ Este documento condensa la Deuda Técnica material devuelta por los heurísticos
 * **Origen:** Quality Review Epic E11.
 * **Acción Causal:** Las utilerías UI (`JS_Core`, etc.) se anexan con Carga Avasalladora (`include(...)`) sin Error Boundaries globales (`window.onerror`), acarreando peligro de WSOD incontrolado si `UI_Components` corrompe su AST.
 
+### 5. FormRenderer Input Generation (H11)
+* **Origen:** Arch Review Epic 14 (S14.1).
+* **Acción Causal:** A pesar de la reducción masiva de responsabilidad de `FormRenderer_UI.html`, todavía contiene un `switch (field.type)` interno para la generación básica de inputs. Éste debe ser abstraído por completo moviendo estas directivas a `UI_Factory.html`.
+
+### 6. Legacy Global Aliases Deprecation (H2)
+* **Origen:** Arch Review Epic 14 (S14.1).
+* **Acción Causal:** `UI_FormStepper` y `UI_FormUtils` exponen aliases para `FormRenderer_UI` invocables vía obj Global (ej. `window.goToFormSection`). Documentar su periodo de latencia y removerlos en fases maduras para no acumular Orphaned Abstractions.
+
+### 7. FormContext Object Injection (H8)
+* **Origen:** Arch Review Epic 14 (S14.1).
+* **Acción Causal:** Simplificar la macro-configuración inyectada al inicializar `UI_FormStepper` (`stepperConfig` de 7 variables directas) integrando toda la herencia a través del unificado objeto local `FormContext`.
+
+### 8. Null/Empty String Normalization (Falsy/Truthiness Trap)
+* **Origen:** Quality Review Epic 14 (S14.1).
+* **Acción Causal:** `UI_FormSubmitter.html` procesa inputs regulares validando `val !== undefined && val !== null`. Esto permite enviar Strings vacíos (`""`), rompiendo validaciones backend en bases estrictamente normalizadas (OCP) o reglas Not-Null engañosas en App Script. Aplicar trim forzado (`String(val).trim() !== ''`) universalmente antes de empaquetar en el JSON.
+
+### 9. Leak Detection and Global Scope Pollution
+* **Origen:** Quality Review Epic 14 (S14.1).
+* **Acción Causal:** El Helper purificado `UI_FormUtils.html` expone redundancias explícitas a V8 global (`window.getDominiosPadreOptions = window.UI_FormUtils.getDominiosPadreOptions`) elevando el riesgo de "Unconscious Object Mutation" si módulos paralelos o scripts de terceros interfieren. Evaluar un patrón Sandbox Strict o eliminar the alias bindings tan pronto como todos los componentes consuman `UI_FormUtils` directamente.
+
 ---
 _Nota: Todo el parking lot fundacional (Factory Components, Minifiers y QA Sandboxing) ha sido finalizado con éxito durante Epic E11._

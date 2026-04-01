@@ -2,6 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const { execSync } = require('child_process');
 const readline = require('readline');
+const CleanCSS = require('clean-css');
 
 const env = process.argv[2];
 
@@ -10,15 +11,18 @@ if (!['dev', 'prod'].includes(env)) {
     process.exit(1);
 }
 
-const envFile = `.clasp-${env}.json`;
-
 const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
 
 try {
     console.log(`[Deploy] Switching to ${env} environment...`);
 
-    if (!fs.existsSync(envFile)) {
-        throw new Error(`Source file ${envFile} not found.`);
+    const SCRIPT_IDS = {
+        'dev': '1ZjGYDSsBgXy9mxa9guRoj69oabUJAVZz9GOy9DzJ5280tzYmMIjIBd5q',
+        'prod': '14oIjG_akx2DuX1nZe_HWBR8TECPYZgCyYikKwtRnng_pgzxcK0wLekYa'
+    };
+
+    if (!SCRIPT_IDS[env]) {
+        throw new Error(`No scriptId configured for environment: ${env}`);
     }
 
     const configFile = `environments/Config.${env}.js`;
@@ -26,9 +30,29 @@ try {
     let currentVersionMatch = currentConfigContent.match(/APP_VERSION:\s*['"](.*?)['"]/);
     let currentVersion = currentVersionMatch ? currentVersionMatch[1] : 'v1.0.0';
 
-    rl.question(`\n[Deploy] Current version in ${env}: ${currentVersion}\n[Deploy] Ingresa la nueva version (o presiona Enter para dejar la misma): `, (newVersion) => {
+    // Aislar la base de la versión (ej. 'v1.4.0' de 'v1.4.0 - 2603310930' o 'v1.4.0-stable')
+    let baseVersion = currentVersion.split(' - ')[0].replace(/-stable|-dev/gi, '').trim();
+
+    const now = new Date();
+    const yy = String(now.getFullYear()).slice(-2);
+    const mm = String(now.getMonth() + 1).padStart(2, '0');
+    const dd = String(now.getDate()).padStart(2, '0');
+    const hh = String(now.getHours()).padStart(2, '0');
+    const min = String(now.getMinutes()).padStart(2, '0');
+    const suffix = `${yy}${mm}${dd}${hh}${min}`;
+
+    const autoVersion = `${baseVersion} - ${suffix}`;
+
+    rl.question(`\n[Deploy] Current version in ${env}: ${currentVersion}\n[Deploy] Presiona Enter para auto-generar (${autoVersion}) o escribe una base nueva (ej. v1.5.0): `, (inputVersion) => {
         rl.close();
-        newVersion = newVersion.trim() || currentVersion;
+        
+        let finalBase = inputVersion.trim() || baseVersion;
+        // Si el usuario escribió la base manual (ej v1.5.0), le agregamos el sufijo igual.
+        // Si escribió todo completo, lo respetamos, pero asumimos que escribirá la base.
+        if (!finalBase.includes(' - ')) {
+            finalBase = `${finalBase} - ${suffix}`;
+        }
+        let newVersion = finalBase;
 
         // Si cambió la versión, modificamos el archivo Config original
         if (newVersion !== currentVersion && currentConfigContent) {
@@ -61,11 +85,19 @@ try {
             if (!fs.existsSync(filepath)) return;
             let fileContent = fs.readFileSync(filepath, 'utf8');
             
-            // Reemplazar solo el contenido interior de las etiquetas <style>
+            // Reemplazar de forma segura y basada en AST (AST Minify) el contenido del Style
             fileContent = fileContent.replace(/<style>([\s\S]*?)<\/style>/gi, (match, p1) => {
-                let minified = p1.replace(/\/\*[\s\S]*?\*\//g, ''); // Remover bloque de comentarios
-                minified = minified.replace(/[\n\r\t]+/g, ' '); // Remover line breaks
-                minified = minified.replace(/\s{2,}/g, ' '); // Remover espacios repetidos
+                let minified = p1;
+                try {
+                    const output = new CleanCSS({ level: 1 }).minify(p1);
+                    if (output.errors.length > 0) {
+                        console.error(`\x1b[31m[Deploy-Error] Fallo CSS AST Minifier en ${filename}:\x1b[0m`, output.errors);
+                    } else {
+                        minified = output.styles;
+                    }
+                } catch (e) {
+                    console.error(`\x1b[31m[Deploy-Error] Excepción Crítica compilando CSS en ${filename}:\x1b[0m`, e);
+                }
                 return `<style>\n${minified}\n</style>`;
             });
             fs.writeFileSync(filepath, fileContent, 'utf8');
@@ -81,8 +113,10 @@ try {
 
         // Alter .clasp.json to point to .build
         console.log(`[Deploy] Generating temporary .clasp.json for ${env}...`);
-        let claspConfig = JSON.parse(fs.readFileSync(envFile, 'utf8'));
-        claspConfig.rootDir = '.build';
+        let claspConfig = {
+            scriptId: SCRIPT_IDS[env],
+            rootDir: ".build"
+        };
         fs.writeFileSync('.clasp.json', JSON.stringify(claspConfig, null, 2), 'utf8');
 
         console.log(`[Deploy] Environment files updated for ${env}. Running npx clasp push...`);
@@ -128,8 +162,11 @@ try {
             fs.rmSync(buildDir, { recursive: true, force: true });
         }
         // Restore .clasp.json rootDir
-        claspConfig.rootDir = 'src';
-        fs.writeFileSync('.clasp.json', JSON.stringify(claspConfig, null, 2), 'utf8');
+        console.log(`[Deploy] Restoring base .clasp.json to target dev/src...`);
+        fs.writeFileSync('.clasp.json', JSON.stringify({
+            scriptId: SCRIPT_IDS['dev'],
+            rootDir: 'src'
+        }, null, 2), 'utf8');
 
         console.log(`[Deploy] Successfully deployed to ${env}!`);
     });

@@ -1,0 +1,268 @@
+<script>
+    /* ============================================================
+       UI_DataGrid.html — Factoría Visual de Tablas y Cuadrículas
+       Incluido via GAS: <?!= include('UI_DataGrid'); ?>
+       
+       Módulo Puro: Sólo recibe datos de estado (config) y devuelve HTML.
+       ============================================================ */
+
+    window.UI_DataGrid = {
+        
+        /* ── Constantes Estéticas ── */
+        HIDDEN_BY_DEFAULT: ['created_at', 'updated_by'],
+        STATUS_FIELDS: ['estado', 'nivel_criticalidad', 'modelo_negocio'],
+
+        /* ── Punto de Entrada Central de la Factoría ── */
+        buildLayout: function(config) {
+            this.cfg = config; // { view, entityName, filteredData, page, pageSize, sortCol, sortDir, columns }
+            
+            if (config.loading) return this._renderSkeleton();
+            if (config.error) return this._renderErrorState(config.error);
+            if (!config.filteredData || config.filteredData.length === 0) return this._renderEmpty();
+
+            if (config.view === 'table') {
+                return this._renderTableView();
+            } else if (config.view === 'grid') {
+                return this._renderGridView();
+            }
+            return this._renderEmpty();
+        },
+
+        /* ── Renderers Estructurales ── */
+        _renderSkeleton: function() {
+            var rows = '';
+            for (var i = 0; i < 5; i++) {
+                var widths = [80, 160, 120, 100, 90];
+                var cells = widths.map(function(w) { return '<div class="dv-skeleton-cell" style="width:' + w + 'px;"></div>'; }).join('');
+                rows += '<div class="dv-skeleton-row">' + cells + '</div>';
+            }
+            return '<div class="dv-card dv-card-skel">' + rows + '</div>';
+        },
+
+        _renderErrorState: function(error) {
+            return '<div class="dv-card"><div class="dv-empty"><div class="dv-empty-icon">⚠️</div>' +
+                   '<h3 class="dv-error-title">No pudimos cargar la información.</h3>' +
+                   '<p>Por favor, refresca la página para intentar de nuevo.</p>' +
+                   '<p class="dv-error-desc">(Detalle: ' + (error ? error.message : 'Error de red') + ')</p>' +
+                   '</div></div>';
+        },
+
+        _renderEmpty: function() {
+            return '<div class="dv-card"><div class="dv-empty"><div class="dv-empty-icon">' +
+                   '<ion-icon class="dv-folder-icon" name="folder-open-outline"></ion-icon>' +
+                   '</div><h3>Sin resultados</h3>' +
+                   '<p>No se encontraron registros. Prueba con otros términos de búsqueda o crea un nuevo registro.</p>' +
+                   '</div></div>';
+        },
+
+        _renderTableView: function() {
+            var self = this;
+            var visibleCols = this.cfg.columns.filter(function(c) { return c.visible; });
+            var rows = this._getPageData();
+            
+            if (visibleCols.length === 0 || rows.length === 0) return this._renderEmpty();
+
+            var thead = visibleCols.map(function(col) {
+                var colIdx = self.cfg.columns.indexOf(col);
+                var isSorted = self.cfg.sortCol === col.key;
+                var arrow = isSorted
+                    ? '<span class="dv-sort-icon active">' + (self.cfg.sortDir === 'asc' ? '↑' : '↓') + '</span>'
+                    : '<span class="dv-sort-icon">↕</span>';
+                return '<th class="' + (isSorted ? 'sorted' : '') + '" data-colidx="' + colIdx + '" ' +
+                    'draggable="true" ' +
+                    'onclick="' + (self.cfg.onSort ? self.cfg.onSort + '(\'' + col.key + '\')' : '') + '" ' +
+                    'ondragstart="' + (self.cfg.onDragStart ? self.cfg.onDragStart + '(' + colIdx + ', event)' : '') + '" ' +
+                    'ondragover="' + (self.cfg.onDragOver ? self.cfg.onDragOver + '(' + colIdx + ', event)' : '') + '" ' +
+                    'ondragleave="' + (self.cfg.onDragLeave ? self.cfg.onDragLeave + '(event)' : '') + '" ' +
+                    'ondrop="' + (self.cfg.onDrop ? self.cfg.onDrop + '(' + colIdx + ', event)' : '') + '" ' +
+                    'ondragend="' + (self.cfg.onDragEnd ? self.cfg.onDragEnd + '(event)' : '') + '">' +
+                    col.label + arrow + '<span class="dv-drag-handle" title="Arrastra para reordenar">⣿</span>' +
+                    '</th>';
+            }).join('');
+
+            return '<div class="dv-card"><div class="dv-table-wrap"><table class="dv-table">' +
+                   '<thead><tr><th class="dv-th-num">#</th>' + thead + '<th class="dv-th-action"></th></tr></thead>' +
+                   '<tbody>' + this._renderTableBody(rows, visibleCols) + '</tbody>' +
+                   '</table></div>' + this._renderPaginationHTML() + '</div>';
+        },
+
+        _renderTableBody: function(rows, visibleCols) {
+            var self = this;
+            var startIdx = (this.cfg.page - 1) * this.cfg.pageSize;
+            
+            return rows.map(function(row, idx) {
+                var rowNum = startIdx + idx + 1;
+                var indexCell = '<td class="dv-td-num">' + rowNum + '</td>';
+
+                var cells = visibleCols.map(function(col) {
+                    var val = typeof row[col.key] !== "undefined" ? String(row[col.key]) : '';
+                    return '<td title="' + val + '">' + self._formatValue(col.key, row[col.key]) + '</td>';
+                }).join('');
+
+                var meta = (window.ENTITY_META && window.ENTITY_META[self.cfg.entityName]) || { idField: 'id' };
+                var id = row[meta.idField] || '';
+                var actionCell = '<td class="dv-td-action">' +
+                    '<button class="dv-btn-icon dv-btn-danger" onclick="event.stopPropagation(); ' + (self.cfg.onDelete ? self.cfg.onDelete + '(\'' + id + '\')' : '') + '" title="Eliminar">' +
+                        '<ion-icon name="trash"></ion-icon>' +
+                    '</button>' +
+                '</td>';
+
+                return '<tr>' + indexCell + cells + actionCell + '</tr>';
+            }).join('');
+        },
+
+        _renderGridView: function() {
+            var self = this;
+            var rows = this._getPageData();
+            if (rows.length === 0) return this._renderEmpty();
+
+            var meta = (window.ENTITY_META && window.ENTITY_META[this.cfg.entityName]) || { titleField: 'nombre', idField: 'id', fkField: null };
+            var MAX_ATTRS = 5;
+
+            var cols = rows.map(function(row) {
+                var title = row[meta.titleField] || row[meta.idField] || '—';
+                var id = row[meta.idField] || '';
+
+                var fkChip = meta.fkField && row[meta.fkField.key]
+                    ? '<ion-badge class="dv-fk-badge">🔗 ' + meta.fkField.label + ': ' + row[meta.fkField.key] + '</ion-badge>'
+                    : '';
+
+                var attrKeys = Object.keys(row).filter(function(k) {
+                    return k !== meta.titleField && k !== meta.idField &&
+                           !(meta.fkField && k === meta.fkField.key) &&
+                           !self.HIDDEN_BY_DEFAULT.includes(k);
+                }).slice(0, MAX_ATTRS);
+
+                var attrs = attrKeys.map(function(k) {
+                    return '<div class="dv-card-item-attr">' +
+                           '<span class="dv-card-item-attr-key">' + self._labelFromKey(k) + '</span>' +
+                           '<span class="dv-card-item-attr-val">' + self._formatValue(k, row[k]) + '</span>' +
+                           '</div>';
+                }).join('');
+
+                return '<ion-col size="12" size-sm="6" size-md="4" size-xl="3" class="dv-grid-col">' +
+                       '<ion-card class="dv-ion-card"><ion-card-header class="dv-card-header-flex"><div>' +
+                       '<ion-card-subtitle onclick="' + (self.cfg.onEdit ? self.cfg.onEdit + '(\'' + id.replace(/'/g, "\\'") + '\')' : '') + '" class="dv-code-link">' + id + '</ion-card-subtitle>' +
+                       '<ion-card-title class="dv-card-title-clamp" title="' + title + '">' + title + '</ion-card-title></div>' +
+                       '<button class="dv-btn-icon dv-btn-danger-lite" onclick="event.stopPropagation(); ' + (self.cfg.onDelete ? self.cfg.onDelete + '(\'' + id + '\')' : '') + '" title="Eliminar">' +
+                       '<ion-icon name="trash"></ion-icon></button></ion-card-header>' +
+                       '<ion-card-content><div class="dv-card-item-attrs">' + attrs + '</div>' + fkChip + '</ion-card-content>' +
+                       '</ion-card></ion-col>';
+            }).join('');
+
+            return '<ion-grid class="dv-ionic-grid"><ion-row>' + cols + '</ion-row></ion-grid>' +
+                   '<div class="dv-card-footer">' + this._renderPaginationHTML() + '</div>';
+        },
+
+        _renderPaginationHTML: function() {
+            var total = this.cfg.filteredData.length;
+            var start = total === 0 ? 0 : (this.cfg.page - 1) * this.cfg.pageSize + 1;
+            var end = Math.min(this.cfg.page * this.cfg.pageSize, total);
+            var tPages = Math.max(1, Math.ceil(total / this.cfg.pageSize));
+            
+            var self = this;
+            var sizes = [10, 25, 50, 100].map(function(s) {
+                return '<option value="' + s + '" ' + (s === self.cfg.pageSize ? 'selected' : '') + '>' + s + '</option>';
+            }).join('');
+
+            return '<div class="dv-pagination"><div class="dv-flex-group">' +
+                   '<span class="dv-pagination-info">Mostrando <strong>' + start + '–' + end + '</strong> de <strong>' + total + '</strong></span>' +
+                   '<select class="dv-page-size-select" onchange="' + (self.cfg.onPageSize ? self.cfg.onPageSize + '(this.value)' : '') + '">' + sizes + '</select></div>' +
+                   '<div class="dv-pagination-controls">' +
+                   '<button class="dv-page-btn" title="Primera" onclick="' + (self.cfg.onPage ? self.cfg.onPage + '(1)' : '') + '" ' + (this.cfg.page === 1 ? 'disabled' : '') + '>«</button>' +
+                   '<button class="dv-page-btn" title="Anterior" onclick="' + (self.cfg.onPage ? self.cfg.onPage + '(' + (this.cfg.page - 1) + ')' : '') + '" ' + (this.cfg.page === 1 ? 'disabled' : '') + '>‹</button>' +
+                   '<span class="dv-page-info">Pág. ' + this.cfg.page + ' / ' + tPages + '</span>' +
+                   '<button class="dv-page-btn" title="Siguiente" onclick="' + (self.cfg.onPage ? self.cfg.onPage + '(' + (this.cfg.page + 1) + ')' : '') + '" ' + (this.cfg.page >= tPages ? 'disabled' : '') + '>›</button>' +
+                   '<button class="dv-page-btn" title="Última" onclick="' + (self.cfg.onPage ? self.cfg.onPage + '(' + tPages + ')' : '') + '" ' + (this.cfg.page >= tPages ? 'disabled' : '') + '>»</button>' +
+                   '</div></div>';
+        },
+
+        /* ── Helpers y Formateadores (Extirpados de DataView_UI) ── */
+        _getPageData: function() {
+            var start = (this.cfg.page - 1) * this.cfg.pageSize;
+            return this.cfg.filteredData.slice(start, start + this.cfg.pageSize);
+        },
+
+        _slugify: function(str) {
+            return (str || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+        },
+
+        _badgeClass: function(value) {
+            var slug = this._slugify(String(value));
+            var map = (window.APP_SCHEMAS && window.APP_SCHEMAS._UI_CONFIG && window.APP_SCHEMAS._UI_CONFIG.badgeMap) || {};
+            return 'dv-badge dv-badge-' + (map[slug] || 'default');
+        },
+
+        _formatValue: function(key, value) {
+            if (value === null || value === undefined || value === '') return '<span class="dv-empty-text">—</span>';
+
+            if (Array.isArray(value)) {
+                if (value.length === 0) return '<span class="dv-empty-text">—</span>';
+                var labels = value.map(function(item) {
+                    if (typeof item === 'object' && item !== null) {
+                        return item.nombre || item.name || item.label || item.nombre_producto
+                            || Object.values(item).find(function(v) { return typeof v === 'string' && !String(v).startsWith('id_') && v.length > 0; })
+                            || '—';
+                    }
+                    return String(item);
+                });
+                return labels.map(function(l) { return '<span class="dv-chip">' + l + '</span>'; }).join(' ');
+            }
+
+            var strVal = String(value);
+            var isPrimaryKey = false;
+
+            if (this.cfg && this.cfg.entityName && window.APP_SCHEMAS) {
+                var schemaDef = window.APP_SCHEMAS[this.cfg.entityName];
+                var fieldsArray = [];
+                if (schemaDef) {
+                    if (Array.isArray(schemaDef)) fieldsArray = schemaDef;
+                    else if (schemaDef.fields) fieldsArray = schemaDef.fields;
+                    else fieldsArray = Object.keys(schemaDef).map(function(k) { return Object.assign({ name: k }, schemaDef[k]); });
+                    
+                    var f = fieldsArray.find(function(field) { return field.name === key; });
+                    if (f && f.primaryKey) isPrimaryKey = true;
+                }
+            }
+
+            if (isPrimaryKey) {
+                // Return link format - notice we escape the quotes
+                return '<code class="dv-pk-code" onclick="' + (this.cfg && this.cfg.onEdit ? this.cfg.onEdit + '(\'' + strVal.replace(/'/g, "\\'") + '\')' : '') + '">' + strVal + '</code>';
+            }
+
+            if (window._LOOKUP_DATA && window._LOOKUP_DATA[key]) {
+                var lookupArr = window._LOOKUP_DATA[key];
+                var found = lookupArr.find(function(opt) { return String(opt.value) === strVal; });
+                if (found) return found.label;
+            }
+
+            if (this.STATUS_FIELDS.includes(key)) {
+                return '<span class="' + this._badgeClass(strVal) + '">' + strVal + '</span>';
+            }
+            if (key === 'presupuesto' || key === 'slo_objetivo') {
+                var num = parseFloat(strVal);
+                if (!isNaN(num)) return key === 'presupuesto' ? '$' + num.toLocaleString('es-MX') : num + '%';
+            }
+
+            return strVal.length > 60 ? strVal.substring(0, 58) + '…' : strVal;
+        },
+
+        _normalizeFields: function(entityName) {
+            var schemaDef = window.APP_SCHEMAS && window.APP_SCHEMAS[entityName];
+            if (!schemaDef) return null;
+            if (Array.isArray(schemaDef)) return schemaDef;
+            if (schemaDef.fields) return schemaDef.fields;
+            return Object.keys(schemaDef).map(function(k) { return Object.assign({ name: k }, schemaDef[k]); });
+        },
+
+        _labelFromKey: function(key, entityName) {
+            var ent = entityName || (this.cfg && this.cfg.entityName);
+            var fields = this._normalizeFields(ent);
+            if (fields) {
+                var field = fields.find(function(f) { return f.name === key; });
+                if (field && field.label) return field.label;
+            }
+            return window.formatLabelString ? window.formatLabelString(key) : key.replace(/_/g, ' ').replace(/\b\w/g, function(c) { return c.toUpperCase(); });
+        }
+    };
+</script>

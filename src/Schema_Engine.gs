@@ -5,6 +5,14 @@
  */
 
 const APP_SCHEMAS = {
+  _UI_CONFIG: {
+    badgeMap: {
+      'activo': 'activo', 'borrador': 'borrador', 'en-revis-n': 'en-revision', 'en-revision': 'en-revision',
+      'tier-1-cr-tico': 'tier-1-critico', 'tier-1-critico': 'tier-1-critico',
+      'tier-2-alto': 'tier-2-alto', 'tier-3-medio': 'tier-3-medio', 'tier-4-bajo': 'tier-4-bajo',
+      'saas': 'saas', 'marketplace': 'marketplace', 'b2b': 'b2b', 'b2c': 'b2c', 'transaccional': 'transaccional'
+    }
+  },
   Dominio: {
     primaryKey: "id_dominio",
     titleField: "n0_es",
@@ -49,6 +57,12 @@ const APP_SCHEMAS = {
       { section: "Datos Generales", name: "contexto_completo_analisis", type: "textarea", label: "Contexto Análisis", required: false, width: 12 },
       { section: "Datos Generales", name: "path_completo_es", type: "text", label: "Path Completo", required: false, width: 12 }
     ]
+  },
+  Equipo: {
+    businessRules: [
+      { trigger: 'onInput', action: 'sumPrefix', prefix: 'cant_', target: 'total_integrantes' }
+    ],
+    fields: [] // Fallback structure for schema logic
   }
 };
 

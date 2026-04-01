@@ -28,16 +28,16 @@
                 closeTop: function() {
                     if (stack.length > 0) {
                         const topModal = stack.pop();
-                        // Garantía fuerte de Garbage Collection (T16)
-                        topModal.dismiss().catch(() => {}).finally(() => {
-                            setTimeout(() => {
-                                // [S10.3] Teardown Agresivo: Destrucción topológica
-                                topModal.innerHTML = '';
-                                topModal.__onSaveSuccessFallback = null;
-                                topModal.remove();
-                            }, 300);
+                        // Garantía fuerte de Garbage Collection y S12.3: event listener optimístico
+                        topModal.addEventListener('ionModalDidDismiss', () => {
+                            // [S10.3] Teardown Agresivo: Destrucción topológica inmediata
+                            topModal.innerHTML = '';
+                            topModal.__onSaveSuccessFallback = null;
+                            topModal.remove();
                             console.log(`[GC] Modal Destruido. Nodos Vivos en Stack: ${stack.length}`);
-                        });
+                        }, { once: true });
+                        
+                        topModal.dismiss().catch(() => {});
                         
                         global.currentFormModal = stack.length > 0 ? stack[stack.length - 1] : null;
                         

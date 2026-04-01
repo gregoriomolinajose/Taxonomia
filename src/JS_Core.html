@@ -60,132 +60,9 @@
     }
   };
 
-  /* ── Dinamic Router (Regla UI §5 y §14) ──────────────── */
-  window.navigateTo = function(viewType, entityKey) {
-    if (typeof entityKey === 'undefined') entityKey = null;
-    var container   = document.getElementById('app-container');
-    var headerTitle = document.getElementById('main-header-title');
-    var backBtn     = document.getElementById('global-back-btn');
-    
-    // 1. Quitar la clase .active de todos los items
-    var navItems = document.querySelectorAll('.nav-item');
-    navItems.forEach(function(item) { item.classList.remove('active'); });
-    
-    if (viewType === 'dashboard') {
-      if (headerTitle) headerTitle.textContent = 'Plataforma de Gobernanza';
-      if (backBtn) { backBtn.style.display = 'none'; backBtn.onclick = null; }
-      
-      var oldPop = document.getElementById('dv-col-ion-popover');
-      if (oldPop) oldPop.remove();
-      
-      var homeBtn = document.getElementById('nav-item-dashboard');
-      if (homeBtn) homeBtn.classList.add('active');
-      
-      if (container && window.OriginalDashboardHTML) {
-        container.innerHTML = window.OriginalDashboardHTML;
-        if (typeof window.renderDashboard === 'function') window.renderDashboard();
-      }
-    } 
-    else if (viewType === 'dataview' && entityKey) {
-      if (headerTitle && window.ENTITY_META && window.ENTITY_META[entityKey]) {
-        headerTitle.textContent = window.ENTITY_META[entityKey].label;
-      }
-      
-      // Regla 5: Escape Routing
-      if (backBtn) {
-        backBtn.style.display = 'block';
-        backBtn.onclick = function() { window.navigateTo('dashboard'); };
-      }
-      
-      var entityBtn = document.getElementById('nav-item-' + entityKey);
-      if (entityBtn) entityBtn.classList.add('active');
-      
-      if (window.DataViewEngine && typeof window.DataViewEngine.render === 'function') {
-        window.DataViewEngine.render(entityKey, 'app-container');
-      }
-    } 
-    else if (viewType === 'designkit') {
-      if (headerTitle) headerTitle.textContent = 'Design System Kit';
-      if (backBtn) {
-        backBtn.style.display = 'block';
-        backBtn.onclick = function() { window.navigateTo('dashboard'); };
-      }
-      var settingsBtn = document.getElementById('nav-item-settings');
-      if (settingsBtn) settingsBtn.classList.add('active');
-      
-      if (container) {
-        var tmpl = document.getElementById('tmpl-designkit');
-        if (tmpl) {
-          container.innerHTML = tmpl.innerHTML;
-          if (typeof window.mountDesignKit === 'function') window.mountDesignKit();
-        }
-      }
-    } 
-    else if (viewType === 'domainmap') {
-      if (headerTitle) headerTitle.textContent = 'Mapa M/N: Dominios';
-      if (backBtn) {
-        backBtn.style.display = 'block';
-        backBtn.onclick = function() { window.navigateTo('dashboard'); };
-      }
-      
-      var mapBtn = document.getElementById('nav-item-domainmap');
-      if (mapBtn) mapBtn.classList.add('active');
-      
-      if (container && typeof window.renderDomainMap === 'function') {
-        window.renderDomainMap(container);
-      }
-    }
-  };
-
-  /* ── Sidebar Modes ───────────────────────────────────── */
-  window.renderMainNav = function() {
-    var navList  = document.getElementById('main-nav-list');
-    var formList = document.getElementById('sidebarList');
-    if (!navList || !formList) return;
-    navList.style.display = 'block';
-    formList.style.display = 'none';
-    
-    var headerPrincipal = '<div class="sidebar-heading"><span>PRINCIPAL</span></div>';
-    var homeItem = '<div class="nav-item" id="nav-item-dashboard" onclick="window.navigateTo(\'dashboard\')" title="Inicio">' +
-      '<ion-icon name="grid-outline"></ion-icon>' +
-      '<ion-label>Inicio</ion-label></div>';
-      
-    var headerEntidades = '<div class="sidebar-heading"><span>ENTIDADES</span></div>';
-    
-    var sorted = Object.entries(window.ENTITY_META).sort(function(a,b){ return a[1].order - b[1].order; });
-    var items = sorted.map(function(entry) {
-      var key = entry[0]; var meta = entry[1];
-      if(meta.hideFromMenu === true) return '';
-      return '<div class="nav-item" id="nav-item-' + key + '" onclick="window.navigateTo(\'dataview\', \'' + key + '\')" title="' + meta.label + '">' +
-        '<ion-icon name="' + meta.iconName + '"></ion-icon>' +
-        '<ion-label>' + meta.label + '</ion-label></div>';
-    }).join('');
-    
-    navList.innerHTML = headerPrincipal + homeItem + headerEntidades + items;
-  };
-
-  // Alias retrocompatibles para DataView_UI
-  window.showHomeSidebar = function() { window.renderMainNav(); };
-  window.showListSidebar = function(entityKey) {
-    window.renderMainNav();
-    var navItems = document.querySelectorAll('.nav-item');
-    navItems.forEach(function(item) { item.classList.remove('active'); });
-    var btn = document.getElementById('nav-item-' + entityKey);
-    if (btn) btn.classList.add('active');
-  };
-  window.returnToDashboard = function() { window.navigateTo('dashboard'); };
-
-  window.showFormSidebar = function(entityName) {
-    var navList  = document.getElementById('main-nav-list');
-    var formList = document.getElementById('sidebarList');
-    if (!navList || !formList) return;
-    navList.style.display  = 'none';
-    formList.style.display = 'block';
-    var homeItem = '<div class="nav-item" id="nav-item-dashboard" onclick="window.navigateTo(\'dashboard\')" title="Inicio">' +
-      '<ion-icon name="grid-outline"></ion-icon>' +
-      '<ion-label>Inicio</ion-label></div>';
-    formList.innerHTML = homeItem + '<div id="form-steps-container"></div>';
-  };
+  /* ── Dinamic Router (Movido a UI_Router.html en S12.2) ── */
+  
+  /* ── Sidebar Modes (Movido a UI_Router.html en S12.2) ── */
 
   /* ── Dashboard logic moved to Dashboard_UI.html ── */
 
@@ -369,8 +246,8 @@
     
     // Regla S11.1: EventBus Subscription para Router
     window.AppEventBus.subscribe('NAV::CHANGE', function(payload) {
-      if (payload && payload.viewType) {
-        window.navigateTo(payload.viewType, payload.entityKey);
+      if (payload.viewType && window.UI_Router) {
+        window.UI_Router.navigateTo(payload.viewType, payload.entityKey);
       }
     });
 
@@ -380,10 +257,12 @@
     var container = document.getElementById('app-container');
     if (container) window.OriginalDashboardHTML = container.innerHTML;
     setTimeout(function() {
-      window.showHomeSidebar();
-      // Forzar el estado inicial del enrutador para pintar la UI
-      if (typeof window.navigateTo === 'function') {
-        window.navigateTo('dashboard');
+      if (window.UI_Router) {
+        window.UI_Router.showHomeSidebar();
+      }
+      
+      if (window.UI_Router && typeof window.UI_Router.navigateTo === 'function') {
+        window.UI_Router.navigateTo('dashboard');
       }
       window.AuthManager.init();
     }, 100);
