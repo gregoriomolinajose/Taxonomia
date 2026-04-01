@@ -849,10 +849,6 @@
                 container.appendChild(noteContainer);
             }
 
-            // 8. Navegar al primer paso (Directiva 3.d)
-            if (typeof global.goToFormSection === 'function' && window.__CURRENT_WIZARD_STEPS) {
-                global.goToFormSection(window.__CURRENT_WIZARD_STEPS[0]);
-            }
         };
 
 

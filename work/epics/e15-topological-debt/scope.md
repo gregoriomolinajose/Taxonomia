@@ -17,7 +17,7 @@ Reduce the Topological and Structural technical debt accumulated up to Epic 14, 
 - New Next-Gen MDM functionalities (Optimistic Locking, RBAC).
 
 ## Stories Breakdown (3-10 Stories)
-1. **S15.1: Pipeline Validation & Bootstrapping Stability (L)**
+1. **[x] S15.1: Pipeline Validation & Bootstrapping Stability (L) ✓**
    - *Description:* Implement `acorn.parse` in `deploy.js`, add Error Boundaries to WSOD mitigating script, and normalize String Trimmings universally.
 2. **S15.2: Purge V8 Global Leaks & GC (M)**
    - *Description:* Deprecate `window.goToFormSection` and `window.getDominiosPadreOptions`, and swap Modal timers to native Ionic Event hooks to prevent screen flashes.
