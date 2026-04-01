@@ -27,9 +27,29 @@ try {
     let currentVersionMatch = currentConfigContent.match(/APP_VERSION:\s*['"](.*?)['"]/);
     let currentVersion = currentVersionMatch ? currentVersionMatch[1] : 'v1.0.0';
 
-    rl.question(`\n[Deploy] Current version in ${env}: ${currentVersion}\n[Deploy] Ingresa la nueva version (o presiona Enter para dejar la misma): `, (newVersion) => {
+    // Aislar la base de la versión (ej. 'v1.4.0' de 'v1.4.0 - 2603310930' o 'v1.4.0-stable')
+    let baseVersion = currentVersion.split(' - ')[0].replace(/-stable|-dev/gi, '').trim();
+
+    const now = new Date();
+    const yy = String(now.getFullYear()).slice(-2);
+    const mm = String(now.getMonth() + 1).padStart(2, '0');
+    const dd = String(now.getDate()).padStart(2, '0');
+    const hh = String(now.getHours()).padStart(2, '0');
+    const min = String(now.getMinutes()).padStart(2, '0');
+    const suffix = `${yy}${mm}${dd}${hh}${min}`;
+
+    const autoVersion = `${baseVersion} - ${suffix}`;
+
+    rl.question(`\n[Deploy] Current version in ${env}: ${currentVersion}\n[Deploy] Presiona Enter para auto-generar (${autoVersion}) o escribe una base nueva (ej. v1.5.0): `, (inputVersion) => {
         rl.close();
-        newVersion = newVersion.trim() || currentVersion;
+        
+        let finalBase = inputVersion.trim() || baseVersion;
+        // Si el usuario escribió la base manual (ej v1.5.0), le agregamos el sufijo igual.
+        // Si escribió todo completo, lo respetamos, pero asumimos que escribirá la base.
+        if (!finalBase.includes(' - ')) {
+            finalBase = `${finalBase} - ${suffix}`;
+        }
+        let newVersion = finalBase;
 
         // Si cambió la versión, modificamos el archivo Config original
         if (newVersion !== currentVersion && currentConfigContent) {
