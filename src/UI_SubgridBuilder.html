@@ -245,9 +245,8 @@ window.UI_SubgridBuilder = {
                         targetEntity: field.targetEntity,
                         onSuccess: onSubFormSuccess
                     });
-                } else if (typeof window.renderForm === 'function') {
-                    // Renderizamos Formulario Principal Anidado (Backward compatibility / Fallback)
-                    window.renderForm(field.targetEntity, null, onSubFormSuccess);
+                } else {
+                    console.warn(`[UI_SubgridBuilder] No EventBus provided. Cannot open subform for ${field.targetEntity}`);
                 }
             };
         };
