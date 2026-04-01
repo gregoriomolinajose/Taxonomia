@@ -165,15 +165,11 @@
         /* ────────────────────────────────────────────
            Búsqueda y Ordenación
         ───────────────────────────────────────────── */
+        /* ────────────────────────────────────────────
+           Búsqueda y Ordenación (Delegadas a DataEngine)
+        ───────────────────────────────────────────── */
         function _applyFilter(query) {
-            if (!query.trim()) {
-                _state.filtered = [..._state.data];
-            } else {
-                const q = query.toLowerCase();
-                _state.filtered = _state.data.filter(row =>
-                    Object.values(row).some(v => String(v).toLowerCase().includes(q))
-                );
-            }
+            _state.filtered = window.DataEngine.applyFilter(_state.data, query);
             _state.page = 1;
             _rerenderData(); // Solo datos — el toolbar/search box NO se toca
         }
@@ -185,22 +181,8 @@
                 _state.sortCol = colKey;
                 _state.sortDir = 'asc';
             }
-            _state.filtered.sort((a, b) => {
-                const extractVal = (val) => {
-                    if (Array.isArray(val) && val.length > 0) {
-                        const item = val[0];
-                        if (typeof item === 'object' && item !== null) {
-                            return item.nombre || item.name || item.label || item.nombre_producto || '';
-                        }
-                    }
-                    return String(val ?? '');
-                };
-                const av = extractVal(a[colKey]).toLowerCase();
-                const bv = extractVal(b[colKey]).toLowerCase();
-                const cmp = av.localeCompare(bv, 'es', { numeric: true });
-                return _state.sortDir === 'asc' ? cmp : -cmp;
-            });
-            _rerender();
+            _state.filtered = window.DataEngine.applySort(_state.filtered, colKey, _state.sortDir);
+            _rerenderData();
         }
 
         /* ────────────────────────────────────────────
@@ -678,147 +660,35 @@
         }
 
         /* ────────────────────────────────────────────
-           Universal Bulk Data Engine (CSV Import/Export)
+           Universal Bulk Data Engine (Delegado a DataEngine_UI)
         ───────────────────────────────────────────── */
         function _exportCSV() {
-            if (!_state.entityName || !_state.data || _state.data.length === 0) {
-                _showToast('No hay datos para exportar.', 'warning');
-                return;
-            }
-            
-            // 1. Obtener headers basados en el esquema
-            const fields = _normalizeFields(_state.entityName) || Object.keys(_state.data[0]).map(k => ({name: k, label: k}));
-            const exportHeaders = fields.map(f => f.name);
-            
-            // 2. Construir CSV escapando comillas y saltos de línea
-            let csvContent = exportHeaders.join(',') + '\n';
-            
-            _state.data.forEach(row => {
-                const rowArray = exportHeaders.map(header => {
-                    let val = row[header] === undefined || row[header] === null ? '' : String(row[header]);
-                    // Escapar comillas dobles y envolver en comillas si hay comas, comillas o saltos de línea
-                    if (val.includes(',') || val.includes('"') || val.includes('\n')) {
-                        val = '"' + val.replace(/"/g, '""') + '"';
-                    }
-                    return val;
-                });
-                csvContent += rowArray.join(',') + '\n';
-            });
-            
-            // 3. Descarga
-            const blob = new Blob([new Uint8Array([0xEF, 0xBB, 0xBF]), csvContent], { type: 'text/csv;charset=utf-8;' }); // BOM for UTF-8 Excel
-            const link = document.createElement("a");
-            const url = URL.createObjectURL(blob);
-            link.setAttribute("href", url);
-            link.setAttribute("download", `${_state.entityName}_Export.csv`);
-            link.style.visibility = 'hidden';
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            _showToast('Exportación iniciada.', 'success');
+            window.DataEngine.exportCSV(_state.entityName, _state.columns, _state.filtered);
         }
 
         function _importCSV(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const text = e.target.result;
-                
-                // Parser robusto con Regex para comillas
-                const regex = /(?!\s*$)\s*(?:'([^'\\]*(?:\\[\s\S][^'\\]*)*)'|"([^"\\]*(?:\\[\s\S][^"\\]*)*)"|([^,'"\s\\]*(?:\s+[^,'"\s\\]+)*))\s*(?:,|$)/g;
-                
-                const rawRows = text.split(/\r?\n/).filter(r => r.trim() !== '');
-                if (rawRows.length < 2) {
-                    _showToast('El CSV está vacío o no tiene datos.', 'danger');
-                    event.target.value = '';
-                    return;
-                }
-
-                // Parser iterativo por fila
-                const parsedRows = rawRows.map(rowStr => {
-                    let row = [];
-                    let match;
-                    regex.lastIndex = 0; // Reset
-                    while ((match = regex.exec(rowStr)) !== null) {
-                        let val = match[1] || match[2] || match[3] || '';
-                        // Unescape quotes if it was quoted
-                        if (match[2]) val = val.replace(/""/g, '"');
-                        row.push(val);
-                        // Stop if we matched the end
-                        if (match[0] === '' || !match[0].endsWith(',')) break;
-                    }
-                    // Limpieza simple en caso de que regex falle (fallback)
-                    if (row.length === 0) row = rowStr.split(',').map(s => s.trim());
-                    return row;
-                });
-
-                const headers = parsedRows.shift();
-                
-                const jsonArray = parsedRows.filter(r => r.length > 0).map(row => {
-                    let obj = {};
-                    headers.forEach((h, i) => {
-                        obj[h.trim()] = row[i] !== undefined ? row[i] : '';
-                    });
-                    return obj;
-                });
-
-                // Middleware de Cálculo Pre-Inserción (Declarativo / Config-Driven)
-                const rules = (window.APP_SCHEMAS && window.APP_SCHEMAS[_state.entityName] && window.APP_SCHEMAS[_state.entityName].businessRules) || [];
-                rules.forEach(rule => {
-                    if (rule.action === 'sumPrefix') {
-                        jsonArray.forEach(row => {
-                            let total = 0;
-                            Object.keys(row).forEach(key => {
-                                if (key.startsWith(rule.prefix) && !isNaN(parseInt(row[key], 10))) {
-                                    total += parseInt(row[key], 10);
-                                }
-                            });
-                            row[rule.target] = total;
-                        });
-                    }
-                });
-
-                if (confirm(`Se encontraron ${jsonArray.length} registros. ¿Deseas importarlos a la entidad '${_state.entityName}'?`)) {
+            window.DataEngine.importCSV(
+                event,
+                _state.entityName,
+                function onLoadingStart() {
                     const loading = document.createElement('ion-loading');
                     loading.message = 'Importando masivamente...';
+                    loading.id = 'dv-import-loading';
                     document.body.appendChild(loading);
                     loading.present();
-
-                    const isGAS = typeof google !== 'undefined' && google.script && google.script.run;
-                    if (isGAS) {
-                        google.script.run
-                            .withSuccessHandler(response => {
-                                loading.dismiss();
-                                if (response.status === 'success') {
-                                    _showToast(`Se importaron ${response.insertedCount} registros con éxito.`, 'success');
-                                    // Purgar caché y recargar
-                                    if (window.__APP_CACHE__) window.__APP_CACHE__[_state.entityName] = null;
-                                    render(_state.entityName, _state.containerId);
-                                } else {
-                                    alert("Error en carga masiva: " + response.message);
-                                }
-                                event.target.value = '';
-                            })
-                            .withFailureHandler(err => {
-                                loading.dismiss();
-                                alert("Error en carga masiva: " + err.message);
-                                event.target.value = '';
-                            })
-                            .bulkInsert(_state.entityName, jsonArray);
-                    } else {
-                        setTimeout(() => {
-                            loading.dismiss();
-                            _showToast('Mock: Importación exitosa.', 'success');
-                            event.target.value = '';
-                        }, 1000);
-                    }
-                } else {
-                    event.target.value = '';
+                },
+                function onSuccess(insertedCount) {
+                    const loading = document.getElementById('dv-import-loading');
+                    if (loading) loading.dismiss();
+                    _showToast(`Se importaron ${insertedCount} registros con éxito.`, 'success');
+                    render(_state.entityName, _state.containerId);
+                },
+                function onError(errMsg) {
+                    const loading = document.getElementById('dv-import-loading');
+                    if (loading) loading.dismiss();
+                    _showToast(`Error en carga masiva: ${errMsg}`, 'danger');
                 }
-            };
-            reader.readAsText(file);
+            );
         }
 
         /* API pública */
