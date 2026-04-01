@@ -59,7 +59,8 @@
     // [S8.5.1] Inyección Híbrida: Funciones Puras del Backend materializadas en el Frontend
     <?!= typeof _normalizeId !== 'undefined' ? _normalizeId.toString() : 'function _normalizeId(){}' ?>;
     <?!= typeof filterAvailableOptions !== 'undefined' ? filterAvailableOptions.toString() : 'function filterAvailableOptions(){return []}' ?>;
-    window.SubgridState = { _normalizeId, filterAvailableOptions };
+    <?!= typeof evaluateFieldState !== 'undefined' ? evaluateFieldState.toString() : 'function evaluateFieldState(){return "optional"}' ?>;
+    window.SubgridState = { _normalizeId, filterAvailableOptions, evaluateFieldState };
   </script>
 </head>
 <body>
