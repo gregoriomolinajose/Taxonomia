@@ -1,0 +1,37 @@
+artifact_type: story-design
+version: 1
+skill: rai-story-design
+created: '2026-04-01T15:47:00Z'
+story: 'S15.1'
+epic: 'E15'
+content:
+  summary: 'Resuelve dependencias críticas de robustez incluyendo parseo seguro AST pre-deployment (acorn), blindaje WSOD, y validación estricta trim().'
+  complexity: moderate
+  acceptance_criteria:
+    - id: AC1
+      description: 'deploy.js falla si el JS procesado no es válido sintácticamente.'
+      verifiable: true
+    - id: AC2
+      description: 'Bloque de UI WSOD se muestra renderizado y a salvo de self-XSS.'
+      verifiable: true
+    - id: AC3
+      description: 'FormSubmission detecta Strings de múltiples espacios como vacíos e invalida envíos.'
+      verifiable: true
+  integration_points:
+    - module: 'pipeline'
+      change_type: modification
+      files: ['deploy.js']
+    - module: 'core.ui'
+      change_type: modification
+      files: ['src/Index.html']
+    - module: 'form.submitter'
+      change_type: modification
+      files: ['src/UI_FormSubmitter.html']
+  decisions:
+    - id: D1
+      choice: 'Adopción de acorn parser en deploy.js en vez de Rollup'
+      rationale: 'Se prefiere la simplicidad de bloquear builds corruptos sin cambiar la cadena de compilación nativa CSS a corto plazo.'
+      alternatives_considered: ['Migrar pipeline completo a Rollup', 'Ignorar validation']
+refs:
+  epic_scope: 'work/epics/e15-topological-debt/scope.md'
+metadata: {}

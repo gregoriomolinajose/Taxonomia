@@ -64,6 +64,10 @@ _Nota: Todo el parking lot fundacional (Factory Components, Minifiers y QA Sandb
 * **Acción Causal:** Un error de sintaxis crudo (backslashes escapando Template Literals ES6 en `<script>`) en `UI_DataGrid.html` burló la validación del Node Deployer porque `deploy.js` sólo minifica `CSS_App`. Clasp inyectó el JS inválido a GAS causando un *White Screen of Death* silencioso y no recuperable en FrontEnd.
 * **Resolución Necesaria:** Es urgente ampliar el script de despliegue `deploy.js` añadiéndole bibliotecas como `acorn.parse()` o `esprima` que arranquen y verifiquen estáticamente el Abstract Syntax Tree (AST) de cada bloque de `<script>` que exista dentro de nuestros Módulos HTML *ANTES* de disparar el `clasp push`. Esto blindará contra Typos fatales en Producción.
 
+### 15. Compatibilidad V8 Acorn Parser (H8)
+* **Origen:** Arch Review Epic 15 (S15.1).
+* **Acción Causal:** Al implementar la validación AST en `deploy.js`, se configuró `ecmaVersion: 'latest'`. Si los desarrolladores introducen azucar sintáctico muy moderno que el Runtime V8 de Apps Script no soporte nativamente, la validación local pasará en el pipeline pero fallará en el servidor G-Suite. Evaluar si es prudente anclar el `ecmaVersion` a `2022` o similar en la próxima revisión del pipeline.
+
 ## 🚀 Next-Gen MDM Architecture (Post-Epic 14 / Roadmap)
 
 ### 14. Motor de Optimistic Locking
