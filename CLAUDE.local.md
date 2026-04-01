@@ -4,9 +4,9 @@
 
 ## Session
 
-- **Active Session**: E11-Close
-- **Last Summary**: Completed Epic E11 (Declarative UI & Topological Scaling). Delivered FormEngine modularity, EventBus, UI Modals, QA Stripping, and AST-safe Minification. `v1.2.6-stable` augmented with Zero-Trust principles.
-- **Next Focus**: Transition to Epic E12 (Parking Lot cleanup: ESBuild/Rollup pipelines, Theme/CSS Token refinement, FormEngine splitting).
+- **Active Session**: E14-Module Splitting
+- **Last Summary**: Completed Story S14.1. Extracted `UI_FormSubmitter` and `UI_FormStepper` out of `FormRenderer_UI`, migrating the architecture towards granular injection and protecting asynchronous variables like `currentEditId`.
+- **Next Focus**: Transition to Story S14.2 (Native CSS Bundler. Translate `CSS_App.html` to `assets/css`).
 
 ## Patterns
 
