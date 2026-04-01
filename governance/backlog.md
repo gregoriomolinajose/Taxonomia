@@ -15,6 +15,7 @@
 | E12| UI Modularization & Core Scaling                      | ✅ Complete  | Deconstrucción FormEngine, Routing, y Tooling CSS     | Muy Alta |
 | E13| The Cleaning Sprint (Arch & Tech Debt)                | ✅ Complete   | Extracción de Subgrids M:N, CSS Minifier y Rules      | Alta     |
 | E14| The Modularization Epoch (ES6 & Micro-Frontends)      | ✅ Complete  | Fraccionar FormRenderer, CSS Nativo y Template Literals| Max      |
+| E15| Topological Tech Debt (Cleaning Sprint)               | 🚧 In Prog   | Deuda técnica estructural (FormEngine, GC Modales, XSS)| Alta     |
 
 ## Parking Lot / Deuda Técnica (Post-Epic 11)
 

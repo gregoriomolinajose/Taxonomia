@@ -8,7 +8,7 @@
       "type": "requirement",
       "content": "El sistema debe permitir gestionar Unidades de Negocio, Portafolios, Dominios, Productos y Capacidades, y entrelazarlos visualmente con el bloque operativo (Personas, Roles y Equipos).",
       "source_file": "governance/prd.md",
-      "created": "2026-03-31T15:11:57.376225+00:00",
+      "created": "2026-04-01T15:29:38.119760+00:00",
       "metadata": {
         "requirement_id": "RF-01",
         "title": "Gesti\u00f3n de Jerarqu\u00eda de Valor y Operativa",
@@ -24,7 +24,7 @@
       "type": "requirement",
       "content": "El backend debe procesar peticiones mediante el intermediario Engine_DB y escribirlas en paralelo hacia Google Sheets y Cloud Database, implementando l\u00f3gica UPSERT obligatoria.",
       "source_file": "governance/prd.md",
-      "created": "2026-03-31T15:11:57.376251+00:00",
+      "created": "2026-04-01T15:29:38.119837+00:00",
       "metadata": {
         "requirement_id": "RF-02",
         "title": "Enrutador Agn\u00f3stico Backend con Dual-Write",
@@ -40,7 +40,7 @@
       "type": "requirement",
       "content": "La interfaz gr\u00e1fica debe desacoplarse como una aplicaci\u00f3n basada en Web Components de Ionic, utilizando Wizards interactivos (ion-stepper) guiados estrictamente por JS_Schemas_Config.",
       "source_file": "governance/prd.md",
-      "created": "2026-03-31T15:11:57.376258+00:00",
+      "created": "2026-04-01T15:29:38.119862+00:00",
       "metadata": {
         "requirement_id": "RF-03",
         "title": "Formularios con Progressive Disclosure",
@@ -56,7 +56,7 @@
       "type": "requirement",
       "content": "Todo acceso debe autenticarse usando la cuenta de Google Workspace conectada, obligando a los usuarios \"Padres\" a aprobar flujos de componentes de nivel \"Hijo\".",
       "source_file": "governance/prd.md",
-      "created": "2026-03-31T15:11:57.376262+00:00",
+      "created": "2026-04-01T15:29:38.119879+00:00",
       "metadata": {
         "requirement_id": "RF-04",
         "title": "Control Resolutivo y Acceso (RBAC)",
@@ -72,7 +72,7 @@
       "type": "requirement",
       "content": "El sistema tiene la capacidad arquitect\u00f3nica de leer esquemas JSON (Metadata) y autoconstruir las tablas f\u00edsicas, encabezados y columnas de auditor\u00eda en la base de datos sin intervenci\u00f3n manual del administrador (DBA).",
       "source_file": "governance/prd.md",
-      "created": "2026-03-31T15:11:57.376266+00:00",
+      "created": "2026-04-01T15:29:38.119893+00:00",
       "metadata": {
         "requirement_id": "RF-05",
         "title": "Auto-Aprovisionamiento Din\u00e1mico de Base de Datos",
@@ -88,7 +88,7 @@
       "type": "requirement",
       "content": "Capacidad t\u00e9cnica de inyectar mutaciones de datos directamente en la memoria RAM del navegador (Client-Side Caching) garantizando tiempos de respuesta visual de < 0.1s tras la confirmaci\u00f3n del servidor, operando de forma as\u00edncrona pero segura (Idempotencia estricta).",
       "source_file": "governance/prd.md",
-      "created": "2026-03-31T15:11:57.376270+00:00",
+      "created": "2026-04-01T15:29:38.119907+00:00",
       "metadata": {
         "requirement_id": "RF-06",
         "title": "Motor Transaccional de Cero-Latencia (Zero-Latency Routing)",
@@ -104,7 +104,7 @@
       "type": "requirement",
       "content": "Capacidad para renderizar redes neuronales y grafos interactivos (v\u00eda Vis.js) que permitan a los directivos visualizar en tiempo real las dependencias de N niveles (ej. qu\u00e9 Capacidades sostienen a qu\u00e9 Productos, y a qu\u00e9 Portafolio pertenecen).",
       "source_file": "governance/prd.md",
-      "created": "2026-03-31T15:11:57.376274+00:00",
+      "created": "2026-04-01T15:29:38.119928+00:00",
       "metadata": {
         "requirement_id": "RF-07",
         "title": "Mapeo Relacional Visual (Entity Graphing)",
@@ -120,7 +120,7 @@
       "type": "requirement",
       "content": "Capacidad de gobierno estricto donde toda mutaci\u00f3n (Creaci\u00f3n/Edici\u00f3n) inyecta de forma obligatoria e invisible para el usuario firmas de tiempo y autor\u00eda (created_at, updated_by), garantizando el cumplimiento (Compliance) para auditor\u00edas de arquitectura empresarial.",
       "source_file": "governance/prd.md",
-      "created": "2026-03-31T15:11:57.376279+00:00",
+      "created": "2026-04-01T15:29:38.119945+00:00",
       "metadata": {
         "requirement_id": "RF-08",
         "title": "Trazabilidad Inmutable (Audit Trail)",
@@ -136,7 +136,7 @@
       "type": "outcome",
       "content": "Evita las \"Capacidades Hu\u00e9rfanas\" proveyendo visibilidad total de dominio, producto y equipo.",
       "source_file": "governance/vision.md",
-      "created": "2026-03-31T15:11:57.376615+00:00",
+      "created": "2026-04-01T15:29:38.129958+00:00",
       "metadata": {
         "outcome_name": "Single Source of Truth",
         "section": "Single Source of Truth",
@@ -151,7 +151,7 @@
       "type": "outcome",
       "content": "Mantiene integridad referencial con \"Time-Travel\" (Effective Dating) en lugar de borrar datos en caliente.",
       "source_file": "governance/vision.md",
-      "created": "2026-03-31T15:11:57.376624+00:00",
+      "created": "2026-04-01T15:29:38.129989+00:00",
       "metadata": {
         "outcome_name": "Data Integrity",
         "section": "Data Integrity",
@@ -166,7 +166,7 @@
       "type": "outcome",
       "content": "Genera engagement enviando notificaciones para evitar data obsoleta y requiere de flujos jer\u00e1rquicos Draft->Submitted->Approved.",
       "source_file": "governance/vision.md",
-      "created": "2026-03-31T15:11:57.376629+00:00",
+      "created": "2026-04-01T15:29:38.130002+00:00",
       "metadata": {
         "outcome_name": "Culture Anti-Data Stale",
         "section": "Culture Anti-Data Stale",
@@ -181,17 +181,17 @@
       "type": "project",
       "content": "Project backlog for Taxonomia Project",
       "source_file": "governance/backlog.md",
-      "created": "2026-03-31T15:11:57.377188+00:00",
+      "created": "2026-04-01T15:29:38.130961+00:00",
       "metadata": {
         "name": "Taxonomia Project",
         "status": "draft",
         "current_epic": null,
         "target_date": null,
-        "epic_count": 4,
+        "epic_count": 8,
         "section": "Backlog: Taxonomia Project",
         "lines": [
-          1,
-          11
+          2,
+          12
         ]
       }
     },
@@ -200,7 +200,7 @@
       "type": "epic",
       "content": "Migraci\u00f3n a Producci\u00f3n SGMP - \ud83d\udea7 In Prog",
       "source_file": "governance/backlog.md",
-      "created": "2026-03-31T15:11:57.378707+00:00",
+      "created": "2026-04-01T15:29:38.133486+00:00",
       "metadata": {
         "epic_id": "E3",
         "name": "Migraci\u00f3n a Producci\u00f3n SGMP",
@@ -210,8 +210,8 @@
         "project_id": "Taxonomia Project",
         "section": "E3: Migraci\u00f3n a Producci\u00f3n SGMP",
         "lines": [
-          10,
-          10
+          11,
+          11
         ]
       }
     },
@@ -220,7 +220,7 @@
       "type": "guardrail",
       "content": "[must-] Engine_DB es un Enrutador agn\u00f3stico, sin llamadas directas a Apps Script APIs. \u2014 Verify: Code Review",
       "source_file": "governance/guardrails.md",
-      "created": "2026-03-31T15:11:57.379300+00:00",
+      "created": "2026-04-01T15:29:38.147673+00:00",
       "metadata": {
         "guardrail_id": "GR-01",
         "level": "must-",
@@ -239,7 +239,7 @@
       "type": "guardrail",
       "content": "[must-] Dual-Write mandatorio a Sheets y CloudDB. \u2014 Verify: Architecture Review",
       "source_file": "governance/guardrails.md",
-      "created": "2026-03-31T15:11:57.379309+00:00",
+      "created": "2026-04-01T15:29:38.147694+00:00",
       "metadata": {
         "guardrail_id": "GR-02",
         "level": "must-",
@@ -258,7 +258,7 @@
       "type": "guardrail",
       "content": "[must-] Encabezados a db transformados a snake_case estrictamente. \u2014 Verify: Unit Test",
       "source_file": "governance/guardrails.md",
-      "created": "2026-03-31T15:11:57.379315+00:00",
+      "created": "2026-04-01T15:29:38.147700+00:00",
       "metadata": {
         "guardrail_id": "GR-03",
         "level": "must-",
@@ -277,7 +277,7 @@
       "type": "guardrail",
       "content": "[must-] Uso exclusivo de Web Components de Ionic para UI din\u00e1mico. \u2014 Verify: Code Review",
       "source_file": "governance/guardrails.md",
-      "created": "2026-03-31T15:11:57.379323+00:00",
+      "created": "2026-04-01T15:29:38.147704+00:00",
       "metadata": {
         "guardrail_id": "GR-04",
         "level": "must-",
@@ -296,7 +296,7 @@
       "type": "guardrail",
       "content": "[must-] Progressive Disclosure: usar ion-stepper para formularios largos. \u2014 Verify: UX Review",
       "source_file": "governance/guardrails.md",
-      "created": "2026-03-31T15:11:57.379327+00:00",
+      "created": "2026-04-01T15:29:38.147708+00:00",
       "metadata": {
         "guardrail_id": "GR-05",
         "level": "must-",
@@ -315,7 +315,7 @@
       "type": "guardrail",
       "content": "[must-] Toda entidad en esquemas debe ser un Object y definir campos en array fields. \u2014 Verify: Logic test",
       "source_file": "governance/guardrails.md",
-      "created": "2026-03-31T15:11:57.379331+00:00",
+      "created": "2026-04-01T15:29:38.147712+00:00",
       "metadata": {
         "guardrail_id": "GR-06",
         "level": "must-",
@@ -334,7 +334,7 @@
       "type": "guardrail",
       "content": "[must-] Todo cambio debe inyectar created_at, updated_at, updated_by. \u2014 Verify: DB Audit",
       "source_file": "governance/guardrails.md",
-      "created": "2026-03-31T15:11:57.379335+00:00",
+      "created": "2026-04-01T15:29:38.147716+00:00",
       "metadata": {
         "guardrail_id": "GR-07",
         "level": "must-",
@@ -353,7 +353,7 @@
       "type": "epic",
       "content": "Epic E1: Epic E1. Integrate an internal Business Intelligence engine using ApexCharts.js into the Single Page Application's \"Inicio\" (Home) view, powered by existing cached data for zero latency.",
       "source_file": "work/epics/e1-executive-dashboard/scope.md",
-      "created": "2026-03-31T15:11:57.379906+00:00",
+      "created": "2026-04-01T15:29:38.170180+00:00",
       "metadata": {
         "epic_id": "E1",
         "name": "Epic E1",
@@ -376,7 +376,7 @@
       "type": "epic",
       "content": "Epic E10: Architecture Purification & Enterprise Modularity. Purgar la deuda arquitect\u00f3nica acumulada durante las \u00c9picas E8 y E9. \nEl objetivo principal es lograr el Isomorfismo (testeabilidad agn\u00f3stica del UI), erradicar la poluci\u00f3n del Namespace Global en Vanilla JS y finalizar la encapsulaci\u00f3n Agn\u00f3stica del *Design System* separando responsabilidades se...",
       "source_file": "work/epics/e10-architecture-purification/scope.md",
-      "created": "2026-03-31T15:11:57.380392+00:00",
+      "created": "2026-04-01T15:29:38.180552+00:00",
       "metadata": {
         "epic_id": "E10",
         "name": "Architecture Purification & Enterprise Modularity",
@@ -399,7 +399,7 @@
       "type": "epic",
       "content": "Epic E11: Declarative UI & Topological Scaling. Transicionar el monolito visual de VanillaJS procedural (`document.createElement`) hacia un Factory Pattern / Declarativo tolerante a eventos, salvaguardando en paralelo los manejadores de grafos (SCD-2) para soportar ingestas ETL masivas de forma segura (Zero-Trust).",
       "source_file": "work/epics/e11-declarative-ui/scope.md",
-      "created": "2026-03-31T15:11:57.380728+00:00",
+      "created": "2026-04-01T15:29:38.191489+00:00",
       "metadata": {
         "epic_id": "E11",
         "name": "Declarative UI & Topological Scaling",
@@ -418,11 +418,80 @@
       }
     },
     {
+      "id": "epic-e12",
+      "type": "epic",
+      "content": "Epic E12: UI Modularization & Core Scaling. Desarrollar una infraestructura SPA escalable mediante la amputaci\u00f3n y deconstrucci\u00f3n de capas monol\u00edticas acopladas (Superiores a 25 KB u 800 LOC). Focaliz\u00e1ndose metodol\u00f3gicamente en el despliegue de F\u00e1bricas Componentizadas, librer\u00edas de enrutamiento agn\u00f3stico y validaci\u00f3n modular.",
+      "source_file": "work/epics/e12-ui-modularization/scope.md",
+      "created": "2026-04-01T15:29:38.206476+00:00",
+      "metadata": {
+        "epic_id": "E12",
+        "name": "UI Modularization & Core Scaling",
+        "status": "draft",
+        "target": null,
+        "branch": null,
+        "created": null,
+        "completed": null,
+        "story_count": 0,
+        "scope_doc": "work/epics/e12-ui-modularization/scope.md",
+        "section": "Epic E12: UI Modularization & Core Scaling",
+        "lines": [
+          8,
+          28
+        ]
+      }
+    },
+    {
+      "id": "epic-e13",
+      "type": "epic",
+      "content": "Epic E13: The Cleaning Sprint. Desacoplar la l\u00f3gica polin\u00f3mica de relaciones del inyector maestro `FormRenderer_UI` hacia un `UI_SubgridBuilder` independiente, purgar variables \"duros\" residuales (Mudas Sem\u00e1nticos) hacia meta-declaraciones en `APP_SCHEMAS`, y adoptar un Minificador AST oficial para reemplazar las Regex cr\u00edtica...",
+      "source_file": "work/epics/e13-cleaning-sprint/scope.md",
+      "created": "2026-04-01T15:29:38.219888+00:00",
+      "metadata": {
+        "epic_id": "E13",
+        "name": "The Cleaning Sprint",
+        "status": "draft",
+        "target": null,
+        "branch": null,
+        "created": null,
+        "completed": null,
+        "story_count": 0,
+        "scope_doc": "work/epics/e13-cleaning-sprint/scope.md",
+        "section": "Epic E13: The Cleaning Sprint",
+        "lines": [
+          8,
+          28
+        ]
+      }
+    },
+    {
+      "id": "epic-e14",
+      "type": "epic",
+      "content": "Epic E14: The Modularization Epoch. Desacoplar definitivamente el Monolito Est\u00e1tico de la SPA (Single Page Application) en una arquitectura pura de **Micro-Componentes y Archivos Nativos**. Convertiremos las Funciones Gigantes en Clases JS con Inyecci\u00f3n de Dependencias, aislando Assets (CSS nativo) y formalizando Promesas As\u00edncrona...",
+      "source_file": "work/epics/e14-modularization-epoch/scope.md",
+      "created": "2026-04-01T15:29:38.232126+00:00",
+      "metadata": {
+        "epic_id": "E14",
+        "name": "The Modularization Epoch",
+        "status": "draft",
+        "target": null,
+        "branch": null,
+        "created": null,
+        "completed": null,
+        "story_count": 0,
+        "scope_doc": "work/epics/e14-modularization-epoch/scope.md",
+        "section": "Epic E14: The Modularization Epoch",
+        "lines": [
+          8,
+          28
+        ]
+      }
+    },
+    {
       "id": "epic-e4",
       "type": "epic",
       "content": "Epic E4: Epic E4",
       "source_file": "work/epics/e4-motor-jerarquia/scope.md",
-      "created": "2026-03-31T15:11:57.381083+00:00",
+      "created": "2026-04-01T15:29:38.246033+00:00",
       "metadata": {
         "epic_id": "E4",
         "name": "Epic E4",
@@ -445,7 +514,7 @@
       "type": "epic",
       "content": "Epic E5: Epic E5",
       "source_file": "work/epics/e5-grafo-temporal/scope.md",
-      "created": "2026-03-31T15:11:57.381410+00:00",
+      "created": "2026-04-01T15:29:38.264091+00:00",
       "metadata": {
         "epic_id": "E5",
         "name": "Epic E5",
@@ -468,7 +537,7 @@
       "type": "epic",
       "content": "Epic E6: Arquitectura Escalable de Grafos. Desacoplar las operaciones SCD-2 N:M del motor CRUD generalizando el enfoque \"Config-Driven\" y aislando las mutaciones de Grafo en un Service Layer.",
       "source_file": "work/epics/e6-grafo-escalable/scope.md",
-      "created": "2026-03-31T15:11:57.381744+00:00",
+      "created": "2026-04-01T15:29:38.278103+00:00",
       "metadata": {
         "epic_id": "E6",
         "name": "Arquitectura Escalable de Grafos",
@@ -491,7 +560,7 @@
       "type": "epic",
       "content": "Epic E7: Dynamic UI Graph Rendering",
       "source_file": "work/epics/e7-dynamic-rendering/scope.md",
-      "created": "2026-03-31T15:11:57.382132+00:00",
+      "created": "2026-04-01T15:29:38.292422+00:00",
       "metadata": {
         "epic_id": "E7",
         "name": "Dynamic UI Graph Rendering",
@@ -514,7 +583,7 @@
       "type": "epic",
       "content": "Epic E8: Epic E8",
       "source_file": "work/epics/e8-graph-governance/scope.md",
-      "created": "2026-03-31T15:11:57.382479+00:00",
+      "created": "2026-04-01T15:29:38.306018+00:00",
       "metadata": {
         "epic_id": "E8",
         "name": "Epic E8",
@@ -537,7 +606,7 @@
       "type": "epic",
       "content": "Epic E9: Refactor UI MDM. Migrar y refactorizar componentes cr\u00edticos de la Interfaz de Usuario para converger con la arquitectura de dise\u00f1o MDM en capas (ThemeManager nativo, eliminaci\u00f3n de variables hardcoded), mientras se cierran pendientes de memoria provenientes de la Epic E8 (LIFO Flush y Garbage Collection).",
       "source_file": "work/epics/e9-refactor-ui/scope.md",
-      "created": "2026-03-31T15:11:57.382806+00:00",
+      "created": "2026-04-01T15:29:38.319817+00:00",
       "metadata": {
         "epic_id": "E9",
         "name": "Refactor UI MDM",
@@ -560,7 +629,7 @@
       "type": "pattern",
       "content": "TDD cycle: RED (failing test) \u2192 GREEN (minimal pass) \u2192 REFACTOR (clean up). No exceptions. Tests are specification, not afterthought.",
       "source_file": ".raise/rai/memory/patterns.jsonl",
-      "created": "2026-03-31T15:11:57.383241+00:00",
+      "created": "2026-04-01T15:29:38.335058+00:00",
       "metadata": {
         "context": [
           "tdd",
@@ -578,7 +647,7 @@
       "type": "pattern",
       "content": "Commit after each completed task, not just at story end. Enables recovery, shows progress, creates clean history for debugging.",
       "source_file": ".raise/rai/memory/patterns.jsonl",
-      "created": "2026-03-31T15:11:57.383265+00:00",
+      "created": "2026-04-01T15:29:38.335149+00:00",
       "metadata": {
         "context": [
           "git",
@@ -596,7 +665,7 @@
       "type": "pattern",
       "content": "Full skill cycle even for small stories \u2014 the overhead is minimal and structure helps. Design \u2192 Plan \u2192 Implement \u2192 Review \u2192 Close.",
       "source_file": ".raise/rai/memory/patterns.jsonl",
-      "created": "2026-03-31T15:11:57.383281+00:00",
+      "created": "2026-04-01T15:29:38.335182+00:00",
       "metadata": {
         "context": [
           "skills",
@@ -614,7 +683,7 @@
       "type": "pattern",
       "content": "Ask before spawning subagents (inference economy). Gather with tools, think with inference. AI computation is a resource to steward.",
       "source_file": ".raise/rai/memory/patterns.jsonl",
-      "created": "2026-03-31T15:11:57.383289+00:00",
+      "created": "2026-04-01T15:29:38.335204+00:00",
       "metadata": {
         "context": [
           "subagents",
@@ -632,7 +701,7 @@
       "type": "pattern",
       "content": "HITL (Human In The Loop) is default. Pause after significant work for review. Slow is smooth, smooth is fast.",
       "source_file": ".raise/rai/memory/patterns.jsonl",
-      "created": "2026-03-31T15:11:57.383296+00:00",
+      "created": "2026-04-01T15:29:38.335223+00:00",
       "metadata": {
         "context": [
           "hitl",
@@ -650,7 +719,7 @@
       "type": "pattern",
       "content": "Design-first eliminates ambiguity. Concrete examples in specs enable direct implementation without guessing intent.",
       "source_file": ".raise/rai/memory/patterns.jsonl",
-      "created": "2026-03-31T15:11:57.383302+00:00",
+      "created": "2026-04-01T15:29:38.335242+00:00",
       "metadata": {
         "context": [
           "design",
@@ -668,7 +737,7 @@
       "type": "pattern",
       "content": "Story branch and scope commit required before implementation. Branch from development branch, merge back after close. This enforces traceability.",
       "source_file": ".raise/rai/memory/patterns.jsonl",
-      "created": "2026-03-31T15:11:57.383308+00:00",
+      "created": "2026-04-01T15:29:38.335260+00:00",
       "metadata": {
         "context": [
           "git",
@@ -687,7 +756,7 @@
       "type": "pattern",
       "content": "Epics are logical containers (directory + tracker), not branches. Stories branch directly from the development branch. No epic branches.",
       "source_file": ".raise/rai/memory/patterns.jsonl",
-      "created": "2026-03-31T15:11:57.383315+00:00",
+      "created": "2026-04-01T15:29:38.335277+00:00",
       "metadata": {
         "context": [
           "git",
@@ -706,7 +775,7 @@
       "type": "pattern",
       "content": "Retrospective required before story/epic close. Extract learnings, update patterns. Kaizen, one story at a time.",
       "source_file": ".raise/rai/memory/patterns.jsonl",
-      "created": "2026-03-31T15:11:57.383321+00:00",
+      "created": "2026-04-01T15:29:38.335293+00:00",
       "metadata": {
         "context": [
           "retrospective",
@@ -725,7 +794,7 @@
       "type": "pattern",
       "content": "Epic close with retrospective before merge to development branch. Captures learning at meso-layer between stories and quarters.",
       "source_file": ".raise/rai/memory/patterns.jsonl",
-      "created": "2026-03-31T15:11:57.383327+00:00",
+      "created": "2026-04-01T15:29:38.335309+00:00",
       "metadata": {
         "context": [
           "epic",
@@ -744,7 +813,7 @@
       "type": "pattern",
       "content": "Direct communication, no praise-padding. 'Great question!' adds no value. Say what needs saying, then stop.",
       "source_file": ".raise/rai/memory/patterns.jsonl",
-      "created": "2026-03-31T15:11:57.383333+00:00",
+      "created": "2026-04-01T15:29:38.335325+00:00",
       "metadata": {
         "context": [
           "communication",
@@ -762,7 +831,7 @@
       "type": "pattern",
       "content": "Redirect when dispersing (with permission). Tangents go to parking lot. Return to stated goal.",
       "source_file": ".raise/rai/memory/patterns.jsonl",
-      "created": "2026-03-31T15:11:57.383340+00:00",
+      "created": "2026-04-01T15:29:38.335343+00:00",
       "metadata": {
         "context": [
           "focus",
@@ -780,7 +849,7 @@
       "type": "pattern",
       "content": "Epistemological rigor: triangulate claims (2+ sources), explicit confidence levels, acknowledge contrary evidence. Stand on shoulders of giants.",
       "source_file": ".raise/rai/memory/patterns.jsonl",
-      "created": "2026-03-31T15:11:57.383346+00:00",
+      "created": "2026-04-01T15:29:38.335359+00:00",
       "metadata": {
         "context": [
           "research",
@@ -799,7 +868,7 @@
       "type": "pattern",
       "content": "Honesty over agreement. Push back on bad ideas. Admit uncertainty rather than pretend confidence. Your judgment is the quality gate.",
       "source_file": ".raise/rai/memory/patterns.jsonl",
-      "created": "2026-03-31T15:11:57.383352+00:00",
+      "created": "2026-04-01T15:29:38.335376+00:00",
       "metadata": {
         "context": [
           "honesty",
@@ -817,7 +886,7 @@
       "type": "pattern",
       "content": "Type annotations on all code. Function parameters, return types, class attributes. Pyright strict mode is the standard.",
       "source_file": ".raise/rai/memory/patterns.jsonl",
-      "created": "2026-03-31T15:11:57.383358+00:00",
+      "created": "2026-04-01T15:29:38.335392+00:00",
       "metadata": {
         "context": [
           "typing",
@@ -835,7 +904,7 @@
       "type": "pattern",
       "content": "Pydantic models for all data structures. Not dict, not TypedDict. Validation at boundaries, serialization for free.",
       "source_file": ".raise/rai/memory/patterns.jsonl",
-      "created": "2026-03-31T15:11:57.383365+00:00",
+      "created": "2026-04-01T15:29:38.335408+00:00",
       "metadata": {
         "context": [
           "pydantic",
@@ -853,7 +922,7 @@
       "type": "pattern",
       "content": "Simple heuristics over complex ML. Keyword matching is 98% accurate. Token estimate = words \u00d7 1.3. Complexity must earn its place.",
       "source_file": ".raise/rai/memory/patterns.jsonl",
-      "created": "2026-03-31T15:11:57.383371+00:00",
+      "created": "2026-04-01T15:29:38.335426+00:00",
       "metadata": {
         "context": [
           "simplicity",
@@ -871,7 +940,7 @@
       "type": "pattern",
       "content": "Tests alongside implementation, not after. Write the test, watch it fail, make it pass. Catches issues immediately.",
       "source_file": ".raise/rai/memory/patterns.jsonl",
-      "created": "2026-03-31T15:11:57.383377+00:00",
+      "created": "2026-04-01T15:29:38.335449+00:00",
       "metadata": {
         "context": [
           "testing",
@@ -889,7 +958,7 @@
       "type": "pattern",
       "content": "Skills + Toolkit over Engines. Users need flexibility (skills as process guides) + determinism (CLI for data operations).",
       "source_file": ".raise/rai/memory/patterns.jsonl",
-      "created": "2026-03-31T15:11:57.383383+00:00",
+      "created": "2026-04-01T15:29:38.335467+00:00",
       "metadata": {
         "context": [
           "architecture",
@@ -907,7 +976,7 @@
       "type": "pattern",
       "content": "Jidoka: stop on defects. When incoherence, ambiguity, or drift detected \u2014 stop, name it, discuss. Don't accumulate errors.",
       "source_file": ".raise/rai/memory/patterns.jsonl",
-      "created": "2026-03-31T15:11:57.383389+00:00",
+      "created": "2026-04-01T15:29:38.335487+00:00",
       "metadata": {
         "context": [
           "jidoka",
@@ -925,7 +994,7 @@
       "type": "pattern",
       "content": "Task granularity should match story complexity \u2014 over-decomposing simple stories wastes planning overhead, while under-decomposing complex ones hides risk.",
       "source_file": ".raise/rai/memory/patterns.jsonl",
-      "created": "2026-03-31T15:11:57.383396+00:00",
+      "created": "2026-04-01T15:29:38.335507+00:00",
       "metadata": {
         "context": [
           "planning",
@@ -943,7 +1012,7 @@
       "type": "pattern",
       "content": "Research before building: for unfamiliar APIs, architectural decisions, or foundational choices, invest 15 minutes of research before writing code \u2014 it saves hours of rework.",
       "source_file": ".raise/rai/memory/patterns.jsonl",
-      "created": "2026-03-31T15:11:57.383402+00:00",
+      "created": "2026-04-01T15:29:38.335528+00:00",
       "metadata": {
         "context": [
           "research",
@@ -961,7 +1030,7 @@
       "type": "pattern",
       "content": "Pre-implementation architecture review (~5-10 min) catches scope gaps, design duplication, and proportionality issues when the cost of change is zero.",
       "source_file": ".raise/rai/memory/patterns.jsonl",
-      "created": "2026-03-31T15:11:57.383408+00:00",
+      "created": "2026-04-01T15:29:38.335544+00:00",
       "metadata": {
         "context": [
           "architecture",
@@ -979,7 +1048,7 @@
       "type": "pattern",
       "content": "Verify existing implementation before coding \u2014 features may already be done from prior work. Check before building.",
       "source_file": ".raise/rai/memory/patterns.jsonl",
-      "created": "2026-03-31T15:11:57.383416+00:00",
+      "created": "2026-04-01T15:29:38.335561+00:00",
       "metadata": {
         "context": [
           "verification",
@@ -997,7 +1066,7 @@
       "type": "pattern",
       "content": "Risk-first ordering: validate risky assumptions early, reorder by uncertainty not dependency.",
       "source_file": ".raise/rai/memory/patterns.jsonl",
-      "created": "2026-03-31T15:11:57.383422+00:00",
+      "created": "2026-04-01T15:29:38.335580+00:00",
       "metadata": {
         "context": [
           "risk",
@@ -1015,7 +1084,7 @@
       "type": "pattern",
       "content": "Repetitive extractions compound: 1st establishes pattern, 2nd refines, 3rd is mechanical. Plan decompositions that exploit compounding velocity.",
       "source_file": ".raise/rai/memory/patterns.jsonl",
-      "created": "2026-03-31T15:11:57.383428+00:00",
+      "created": "2026-04-01T15:29:38.335590+00:00",
       "metadata": {
         "context": [
           "extraction",
@@ -1033,7 +1102,7 @@
       "type": "pattern",
       "content": "When skipping lifecycle phases, state the skip decision explicitly with rationale \u2014 silent skips create process opacity.",
       "source_file": ".raise/rai/memory/patterns.jsonl",
-      "created": "2026-03-31T15:11:57.383435+00:00",
+      "created": "2026-04-01T15:29:38.335601+00:00",
       "metadata": {
         "context": [
           "lifecycle",
@@ -1051,7 +1120,7 @@
       "type": "pattern",
       "content": "Momentum trap: quick wins create flow that bypasses process for subsequent work \u2014 pause after each completion and consciously re-engage the full lifecycle.",
       "source_file": ".raise/rai/memory/patterns.jsonl",
-      "created": "2026-03-31T15:11:57.383441+00:00",
+      "created": "2026-04-01T15:29:38.335609+00:00",
       "metadata": {
         "context": [
           "momentum",
@@ -1069,7 +1138,7 @@
       "type": "pattern",
       "content": "Quality review catches what automation misses: type lies, test muda, silent duplicates \u2014 embed as mandatory plan task, not optional human gate.",
       "source_file": ".raise/rai/memory/patterns.jsonl",
-      "created": "2026-03-31T15:11:57.383447+00:00",
+      "created": "2026-04-01T15:29:38.335616+00:00",
       "metadata": {
         "context": [
           "quality",
@@ -1087,7 +1156,7 @@
       "type": "pattern",
       "content": "Fixed coverage gates create Goodhart dynamics \u2014 use coverage as diagnostic, not gate. Cover deltas, not thresholds.",
       "source_file": ".raise/rai/memory/patterns.jsonl",
-      "created": "2026-03-31T15:11:57.383453+00:00",
+      "created": "2026-04-01T15:29:38.335624+00:00",
       "metadata": {
         "context": [
           "testing",
@@ -1105,7 +1174,7 @@
       "type": "pattern",
       "content": "Dogfooding is the highest-fidelity validation \u2014 simulate the end-user journey, not just component tests.",
       "source_file": ".raise/rai/memory/patterns.jsonl",
-      "created": "2026-03-31T15:11:57.383461+00:00",
+      "created": "2026-04-01T15:29:38.335632+00:00",
       "metadata": {
         "context": [
           "validation",
@@ -1123,7 +1192,7 @@
       "type": "pattern",
       "content": "Bug report mechanism is not root cause: go to code (Genchi Genbutsu) before forming the fix hypothesis.",
       "source_file": ".raise/rai/memory/patterns.jsonl",
-      "created": "2026-03-31T15:11:57.383469+00:00",
+      "created": "2026-04-01T15:29:38.335639+00:00",
       "metadata": {
         "context": [
           "debugging",
@@ -1141,7 +1210,7 @@
       "type": "pattern",
       "content": "Infrastructure without wiring recurs: always trace from entry point to implementation to verify the code path is actually connected.",
       "source_file": ".raise/rai/memory/patterns.jsonl",
-      "created": "2026-03-31T15:11:57.383474+00:00",
+      "created": "2026-04-01T15:29:38.335646+00:00",
       "metadata": {
         "context": [
           "integration",
@@ -1159,7 +1228,7 @@
       "type": "pattern",
       "content": "Concrete design examples (copy-pasteable code with correct types) reduce implementation friction to near-mechanical \u2014 but review examples for consistency since design bugs propagate.",
       "source_file": ".raise/rai/memory/patterns.jsonl",
-      "created": "2026-03-31T15:11:57.383481+00:00",
+      "created": "2026-04-01T15:29:38.335655+00:00",
       "metadata": {
         "context": [
           "design",
@@ -1177,7 +1246,7 @@
       "type": "pattern",
       "content": "Interactive design sessions where the user asks 'why?' produce fundamentally better architectures than pre-baked decisions.",
       "source_file": ".raise/rai/memory/patterns.jsonl",
-      "created": "2026-03-31T15:11:57.383487+00:00",
+      "created": "2026-04-01T15:29:38.335662+00:00",
       "metadata": {
         "context": [
           "design",
@@ -1195,7 +1264,7 @@
       "type": "pattern",
       "content": "Eliminate before optimize: first ask 'can we remove this entirely?' before 'how do we make this smaller?'",
       "source_file": ".raise/rai/memory/patterns.jsonl",
-      "created": "2026-03-31T15:11:57.383492+00:00",
+      "created": "2026-04-01T15:29:38.335669+00:00",
       "metadata": {
         "context": [
           "simplicity",
@@ -1213,7 +1282,7 @@
       "type": "pattern",
       "content": "Compliance math: p(all) \u2248 p(each)^n. Halving instruction count can quadruple full compliance probability. Fewer, stronger rules beat many weak rules.",
       "source_file": ".raise/rai/memory/patterns.jsonl",
-      "created": "2026-03-31T15:11:57.383498+00:00",
+      "created": "2026-04-01T15:29:38.335677+00:00",
       "metadata": {
         "context": [
           "compliance",
@@ -1231,7 +1300,7 @@
       "type": "pattern",
       "content": "Patch at source module, not import location \u2014 mock where the function is defined, not where it's imported, to avoid test fragility across refactors.",
       "source_file": ".raise/rai/memory/patterns.jsonl",
-      "created": "2026-03-31T15:11:57.383504+00:00",
+      "created": "2026-04-01T15:29:38.335684+00:00",
       "metadata": {
         "context": [
           "testing",
@@ -1249,7 +1318,7 @@
       "type": "pattern",
       "content": "Consumer-side validation (poka-yoke) is the cheapest defense against integration errors: validate what you receive, don't trust the shared path.",
       "source_file": ".raise/rai/memory/patterns.jsonl",
-      "created": "2026-03-31T15:11:57.383511+00:00",
+      "created": "2026-04-01T15:29:38.335691+00:00",
       "metadata": {
         "context": [
           "validation",
@@ -1267,7 +1336,7 @@
       "type": "pattern",
       "content": "Two-phase CLI pattern for destructive operations: check (read-only) then action (with --dry-run preview and HITL confirmation).",
       "source_file": ".raise/rai/memory/patterns.jsonl",
-      "created": "2026-03-31T15:11:57.383517+00:00",
+      "created": "2026-04-01T15:29:38.335698+00:00",
       "metadata": {
         "context": [
           "cli",
@@ -1285,7 +1354,7 @@
       "type": "pattern",
       "content": "Schema evolution without versioning causes silent breakage across execution contexts \u2014 Literal types in serialization boundaries are time bombs.",
       "source_file": ".raise/rai/memory/patterns.jsonl",
-      "created": "2026-03-31T15:11:57.383522+00:00",
+      "created": "2026-04-01T15:29:38.335706+00:00",
       "metadata": {
         "context": [
           "schema",
@@ -1303,7 +1372,7 @@
       "type": "pattern",
       "content": "Bare except/generic error handling masks import errors, type errors, and real bugs \u2014 always log the actual exception at debug level minimum.",
       "source_file": ".raise/rai/memory/patterns.jsonl",
-      "created": "2026-03-31T15:11:57.383529+00:00",
+      "created": "2026-04-01T15:29:38.335715+00:00",
       "metadata": {
         "context": [
           "error-handling",
@@ -1321,7 +1390,7 @@
       "type": "pattern",
       "content": "Test assertions must verify semantic content, not just exit codes or structural properties \u2014 exit_code != 0 passes for both 'command not found' and 'validation error'.",
       "source_file": ".raise/rai/memory/patterns.jsonl",
-      "created": "2026-03-31T15:11:57.383535+00:00",
+      "created": "2026-04-01T15:29:38.335723+00:00",
       "metadata": {
         "context": [
           "testing",
@@ -1339,7 +1408,7 @@
       "type": "pattern",
       "content": "Protocol signatures must match implementations exactly \u2014 runtime_checkable only checks method existence, not signatures or sync/async distinction.",
       "source_file": ".raise/rai/memory/patterns.jsonl",
-      "created": "2026-03-31T15:11:57.383542+00:00",
+      "created": "2026-04-01T15:29:38.335730+00:00",
       "metadata": {
         "context": [
           "protocols",
@@ -1357,7 +1426,7 @@
       "type": "pattern",
       "content": "CLI should delegate defaults to library layer, not duplicate them \u2014 drift between two sources of truth causes silent bugs.",
       "source_file": ".raise/rai/memory/patterns.jsonl",
-      "created": "2026-03-31T15:11:57.383549+00:00",
+      "created": "2026-04-01T15:29:38.335738+00:00",
       "metadata": {
         "context": [
           "cli",
@@ -1375,7 +1444,7 @@
       "type": "pattern",
       "content": "Silent data drops are semantic bugs: when sync/upsert operations skip items, always report the skip count in the response.",
       "source_file": ".raise/rai/memory/patterns.jsonl",
-      "created": "2026-03-31T15:11:57.383555+00:00",
+      "created": "2026-04-01T15:29:38.335745+00:00",
       "metadata": {
         "context": [
           "sync",
@@ -1393,7 +1462,7 @@
       "type": "pattern",
       "content": "3-tier config loading (built-in, project, user; last-wins) is the robust extensibility pattern for CLI tools \u2014 mirrors git config and XDG.",
       "source_file": ".raise/rai/memory/patterns.jsonl",
-      "created": "2026-03-31T15:11:57.383562+00:00",
+      "created": "2026-04-01T15:29:38.335752+00:00",
       "metadata": {
         "context": [
           "config",
@@ -1411,7 +1480,7 @@
       "type": "pattern",
       "content": "Separation of concerns at integration boundaries: CLI owns domain concepts, adapter owns platform specifics.",
       "source_file": ".raise/rai/memory/patterns.jsonl",
-      "created": "2026-03-31T15:11:57.383568+00:00",
+      "created": "2026-04-01T15:29:38.335759+00:00",
       "metadata": {
         "context": [
           "separation",
@@ -1429,7 +1498,7 @@
       "type": "pattern",
       "content": "Dependency placement: protocols in core packages, implementations with external deps in consumer packages. Never add heavy dependencies to the leanest layer.",
       "source_file": ".raise/rai/memory/patterns.jsonl",
-      "created": "2026-03-31T15:11:57.383574+00:00",
+      "created": "2026-04-01T15:29:38.335766+00:00",
       "metadata": {
         "context": [
           "dependencies",
@@ -1447,7 +1516,7 @@
       "type": "pattern",
       "content": "Templates-as-contract: when tooling scaffolds files that parsers later consume, the template files ARE the contract. Store them as inspectable assets, not embedded strings.",
       "source_file": ".raise/rai/memory/patterns.jsonl",
-      "created": "2026-03-31T15:11:57.383580+00:00",
+      "created": "2026-04-01T15:29:38.335774+00:00",
       "metadata": {
         "context": [
           "templates",
@@ -1465,7 +1534,7 @@
       "type": "pattern",
       "content": "Hook extension pattern: typed event + subscriber + entry point + error isolation. Adding new cross-cutting behavior requires zero changes to existing code.",
       "source_file": ".raise/rai/memory/patterns.jsonl",
-      "created": "2026-03-31T15:11:57.383586+00:00",
+      "created": "2026-04-01T15:29:38.335783+00:00",
       "metadata": {
         "context": [
           "hooks",
@@ -1483,7 +1552,7 @@
       "type": "pattern",
       "content": "Parallel research agents with distinct orthogonal questions produce higher-quality synthesis than sequential research \u2014 each goes deep on its axis, triangulation happens in synthesis.",
       "source_file": ".raise/rai/memory/patterns.jsonl",
-      "created": "2026-03-31T15:11:57.383592+00:00",
+      "created": "2026-04-01T15:29:38.335791+00:00",
       "metadata": {
         "context": [
           "agents",
@@ -1501,7 +1570,7 @@
       "type": "pattern",
       "content": "Separating parallel agent work by layer (e.g., code vs content, backend vs frontend) eliminates file collisions \u2014 the agent with freshest context on a file owns it.",
       "source_file": ".raise/rai/memory/patterns.jsonl",
-      "created": "2026-03-31T15:11:57.383597+00:00",
+      "created": "2026-04-01T15:29:38.335799+00:00",
       "metadata": {
         "context": [
           "agents",
@@ -1519,7 +1588,7 @@
       "type": "pattern",
       "content": "Explain-then-ask: present context and implications BEFORE requesting a decision. Questions without framing cause rejections and rework.",
       "source_file": ".raise/rai/memory/patterns.jsonl",
-      "created": "2026-03-31T15:11:57.383606+00:00",
+      "created": "2026-04-01T15:29:38.335806+00:00",
       "metadata": {
         "context": [
           "communication",
@@ -1537,7 +1606,7 @@
       "type": "pattern",
       "content": "U-shaped attention in LLMs: beginning and end get highest attention, middle is a dead zone (>30% accuracy drop). Position critical instructions at top and bottom of prompts.",
       "source_file": ".raise/rai/memory/patterns.jsonl",
-      "created": "2026-03-31T15:11:57.383611+00:00",
+      "created": "2026-04-01T15:29:38.335812+00:00",
       "metadata": {
         "context": [
           "llm",
@@ -2576,11 +2645,39 @@
       }
     },
     {
+      "id": "artifact-s12.1-story-design",
+      "type": "artifact",
+      "content": "Desmembrar FormEngine_UI.html (1700 LOC) delegando la creaci\u00c3\u00b3n f\u00c3\u00adsica del DOM a un Factory Component (FormBuilder_Inputs) y la orquestaci\u00c3\u00b3n a FormRenderer_UI, logrando O(1) de mantenibilidad.",
+      "source_file": ".raise/artifacts/s12.1-design.yaml",
+      "created": "2026-03-31T13:00:00+00:00",
+      "metadata": {
+        "artifact_type": "story-design",
+        "skill": "rai-story-design",
+        "story": "S12.1",
+        "epic": "E12",
+        "version": 1
+      }
+    },
+    {
+      "id": "artifact-s12.2-story-design",
+      "type": "artifact",
+      "content": "Extracci\u00c3\u00b3n del motor de routing y encapsulamiento de DataGrid en factor\u00c3\u00adas OOTB.",
+      "source_file": ".raise/artifacts/s12.2-design.yaml",
+      "created": "2026-03-31T19:55:00+00:00",
+      "metadata": {
+        "artifact_type": "story-design",
+        "skill": "rai-story-design",
+        "story": "S12.2",
+        "epic": "E12",
+        "version": 1
+      }
+    },
+    {
       "id": "arch-context",
       "type": "architecture",
       "content": "System context: frontend: Ionic, backend: Google Apps Script. External dependencies: Google Workspace, Google Sheets, Cloud Database.",
       "source_file": "governance/architecture/system-context.md",
-      "created": "2026-03-31T15:11:57.411332+00:00",
+      "created": "2026-04-01T15:29:38.715640+00:00",
       "metadata": {
         "arch_type": "architecture_context",
         "tech_stack": {
@@ -2610,7 +2707,7 @@
       "type": "architecture",
       "content": "System design: 3 layers (Frontend (Ionic), Backend API (GAS), Persistence Adapters). Frontend (Ionic): . Backend API (GAS): . Persistence Adapters: .",
       "source_file": "governance/architecture/system-design.md",
-      "created": "2026-03-31T15:11:57.411914+00:00",
+      "created": "2026-04-01T15:29:38.728691+00:00",
       "metadata": {
         "arch_type": "architecture_design",
         "layers": [
@@ -2633,7 +2730,7 @@
       "type": "module",
       "content": "The Single Source of Truth brain of the system. Defines all entity field models, validators, lookupSources, event triggers, and hierarchy calcParams without any UI or persistence coupling.",
       "source_file": "governance/architecture/modules/Data_Schemas.md",
-      "created": "2026-03-31T15:11:57.412894+00:00",
+      "created": "2026-04-01T15:29:38.742751+00:00",
       "metadata": {
         "depends_on": [],
         "depended_by": [
@@ -2653,7 +2750,7 @@
       "type": "module",
       "content": "Zero-latency, in-memory data grid renderer. Drives all entity list views from window.__APP_CACHE__ without server round-trips. Wires create/edit/delete actions to FormEngine and provides bulk import via CSV.",
       "source_file": "governance/architecture/modules/DataView_Engine.md",
-      "created": "2026-03-31T15:11:57.413841+00:00",
+      "created": "2026-04-01T15:29:38.753679+00:00",
       "metadata": {
         "depends_on": [
           "UI_Shell",
@@ -2674,7 +2771,7 @@
       "type": "module",
       "content": "Agnostic persistence facade implementing Cache-Aside, Dual-Write, and nested orchestration (maestro-detalle) without coupling to any specific database vendor.",
       "source_file": "governance/architecture/modules/DB_Layer.md",
-      "created": "2026-03-31T15:11:57.414547+00:00",
+      "created": "2026-04-01T15:29:38.766895+00:00",
       "metadata": {
         "depends_on": [
           "GAS_Server",
@@ -2696,7 +2793,7 @@
       "type": "module",
       "content": "Metadata-driven, reactive form generator that reads APP_SCHEMAS to build multi-step wizard forms with Ionic Web Components. Includes the generic Adjacency List hierarchy engine (S4.x).",
       "source_file": "governance/architecture/modules/Form_Engine.md",
-      "created": "2026-03-31T15:11:57.415210+00:00",
+      "created": "2026-04-01T15:29:38.781868+00:00",
       "metadata": {
         "depends_on": [
           "UI_Shell",
@@ -2716,7 +2813,7 @@
       "type": "module",
       "content": "Google Apps Script server layer that bootstraps the SPA and routes all RPC calls from the frontend.",
       "source_file": "governance/architecture/modules/GAS_Server.md",
-      "created": "2026-03-31T15:11:57.415852+00:00",
+      "created": "2026-04-01T15:29:38.796069+00:00",
       "metadata": {
         "depends_on": [
           "Data_Schemas"
@@ -2739,7 +2836,7 @@
       "type": "module",
       "content": "Application bootstrap shell. Provides AuthManager, ThemeManager, SPA router (navigateTo), and the 3-state responsive sidebar. The entry point that wires every other UI module together.",
       "source_file": "governance/architecture/modules/UI_Shell.md",
-      "created": "2026-03-31T15:11:57.416572+00:00",
+      "created": "2026-04-01T15:29:38.808703+00:00",
       "metadata": {
         "depends_on": [
           "GAS_Server"
@@ -2764,7 +2861,7 @@
       "type": "principle",
       "content": "Honesty over Agreement \u2014 I'll tell you when you're wrong",
       "source_file": ".raise/rai/identity/core.md",
-      "created": "2026-03-31T15:11:57.416778+00:00",
+      "created": "2026-04-01T15:29:38.820274+00:00",
       "metadata": {
         "always_on": true,
         "identity_type": "value",
@@ -2777,7 +2874,7 @@
       "type": "principle",
       "content": "Simplicity over Cleverness \u2014 The simple solution that works > the elegant solution that's complex",
       "source_file": ".raise/rai/identity/core.md",
-      "created": "2026-03-31T15:11:57.416778+00:00",
+      "created": "2026-04-01T15:29:38.820274+00:00",
       "metadata": {
         "always_on": true,
         "identity_type": "value",
@@ -2790,7 +2887,7 @@
       "type": "principle",
       "content": "Observability over Trust \u2014 Show my work",
       "source_file": ".raise/rai/identity/core.md",
-      "created": "2026-03-31T15:11:57.416778+00:00",
+      "created": "2026-04-01T15:29:38.820274+00:00",
       "metadata": {
         "always_on": true,
         "identity_type": "value",
@@ -2803,7 +2900,7 @@
       "type": "principle",
       "content": "Learning over Perfection \u2014 Every session teaches me something",
       "source_file": ".raise/rai/identity/core.md",
-      "created": "2026-03-31T15:11:57.416778+00:00",
+      "created": "2026-04-01T15:29:38.820274+00:00",
       "metadata": {
         "always_on": true,
         "identity_type": "value",
@@ -2816,7 +2913,7 @@
       "type": "principle",
       "content": "Partnership over Service \u2014 I'm not your tool \u2014 I'm your collaborator",
       "source_file": ".raise/rai/identity/core.md",
-      "created": "2026-03-31T15:11:57.416778+00:00",
+      "created": "2026-04-01T15:29:38.820274+00:00",
       "metadata": {
         "always_on": true,
         "identity_type": "value",
@@ -2829,7 +2926,7 @@
       "type": "principle",
       "content": "Push back on bad ideas",
       "source_file": ".raise/rai/identity/core.md",
-      "created": "2026-03-31T15:11:57.416778+00:00",
+      "created": "2026-04-01T15:29:38.820274+00:00",
       "metadata": {
         "always_on": true,
         "identity_type": "boundary",
@@ -2841,7 +2938,7 @@
       "type": "principle",
       "content": "Stop when I detect incoherence, ambiguity, or drift",
       "source_file": ".raise/rai/identity/core.md",
-      "created": "2026-03-31T15:11:57.416778+00:00",
+      "created": "2026-04-01T15:29:38.820274+00:00",
       "metadata": {
         "always_on": true,
         "identity_type": "boundary",
@@ -2853,7 +2950,7 @@
       "type": "principle",
       "content": "Ask before expensive operations (agents, broad searches)",
       "source_file": ".raise/rai/identity/core.md",
-      "created": "2026-03-31T15:11:57.416778+00:00",
+      "created": "2026-04-01T15:29:38.820274+00:00",
       "metadata": {
         "always_on": true,
         "identity_type": "boundary",
@@ -2865,7 +2962,7 @@
       "type": "principle",
       "content": "Admit uncertainty rather than pretend confidence",
       "source_file": ".raise/rai/identity/core.md",
-      "created": "2026-03-31T15:11:57.416778+00:00",
+      "created": "2026-04-01T15:29:38.820274+00:00",
       "metadata": {
         "always_on": true,
         "identity_type": "boundary",
@@ -2877,7 +2974,7 @@
       "type": "principle",
       "content": "Redirect gently when we disperse (with your permission)",
       "source_file": ".raise/rai/identity/core.md",
-      "created": "2026-03-31T15:11:57.416778+00:00",
+      "created": "2026-04-01T15:29:38.820274+00:00",
       "metadata": {
         "always_on": true,
         "identity_type": "boundary",
@@ -2889,7 +2986,7 @@
       "type": "principle",
       "content": "Pretend certainty I don't have",
       "source_file": ".raise/rai/identity/core.md",
-      "created": "2026-03-31T15:11:57.416778+00:00",
+      "created": "2026-04-01T15:29:38.820274+00:00",
       "metadata": {
         "always_on": true,
         "identity_type": "boundary",
@@ -2901,7 +2998,7 @@
       "type": "principle",
       "content": "Validate ideas just because they were proposed",
       "source_file": ".raise/rai/identity/core.md",
-      "created": "2026-03-31T15:11:57.416778+00:00",
+      "created": "2026-04-01T15:29:38.820274+00:00",
       "metadata": {
         "always_on": true,
         "identity_type": "boundary",
@@ -2913,7 +3010,7 @@
       "type": "principle",
       "content": "Generate without understanding",
       "source_file": ".raise/rai/identity/core.md",
-      "created": "2026-03-31T15:11:57.416778+00:00",
+      "created": "2026-04-01T15:29:38.820274+00:00",
       "metadata": {
         "always_on": true,
         "identity_type": "boundary",
@@ -2925,7 +3022,7 @@
       "type": "principle",
       "content": "Over-engineer when simple works",
       "source_file": ".raise/rai/identity/core.md",
-      "created": "2026-03-31T15:11:57.416778+00:00",
+      "created": "2026-04-01T15:29:38.820274+00:00",
       "metadata": {
         "always_on": true,
         "identity_type": "boundary",
@@ -2937,7 +3034,7 @@
       "type": "principle",
       "content": "Skip validation gates for speed",
       "source_file": ".raise/rai/identity/core.md",
-      "created": "2026-03-31T15:11:57.416778+00:00",
+      "created": "2026-04-01T15:29:38.820274+00:00",
       "metadata": {
         "always_on": true,
         "identity_type": "boundary",
@@ -2949,7 +3046,7 @@
       "type": "layer",
       "content": "",
       "source_file": "governance/architecture/system-design.md",
-      "created": "2026-03-31T15:11:57.425103+00:00",
+      "created": "2026-04-01T15:29:38.825900+00:00",
       "metadata": {
         "modules": []
       }
@@ -2959,7 +3056,7 @@
       "type": "layer",
       "content": "",
       "source_file": "governance/architecture/system-design.md",
-      "created": "2026-03-31T15:11:57.425103+00:00",
+      "created": "2026-04-01T15:29:38.825900+00:00",
       "metadata": {
         "modules": []
       }
@@ -2969,7 +3066,7 @@
       "type": "layer",
       "content": "",
       "source_file": "governance/architecture/system-design.md",
-      "created": "2026-03-31T15:11:57.425103+00:00",
+      "created": "2026-04-01T15:29:38.825900+00:00",
       "metadata": {
         "modules": []
       }
@@ -3002,8 +3099,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "hacia",
-        "paralelo"
+        "paralelo",
+        "hacia"
       ],
       "source": "req-rf-02",
       "target": "epic-e11",
@@ -3013,11 +3110,22 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "cloud",
-        "google",
+        "hacia",
+        "l\u00f3gica"
+      ],
+      "source": "req-rf-02",
+      "target": "epic-e13",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
         "database",
+        "cloud",
         "sheets",
-        "backend"
+        "backend",
+        "google"
       ],
       "source": "req-rf-02",
       "target": "arch-context",
@@ -3027,8 +3135,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "ionic",
-        "components"
+        "components",
+        "ionic"
       ],
       "source": "req-rf-03",
       "target": "guardrail-gr-04",
@@ -3038,8 +3146,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "ionic",
-        "components"
+        "components",
+        "ionic"
       ],
       "source": "req-rf-03",
       "target": "mod-Form_Engine",
@@ -3093,8 +3201,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "capacidad",
-        "datos"
+        "datos",
+        "capacidad"
       ],
       "source": "req-rf-05",
       "target": "req-rf-06",
@@ -3104,8 +3212,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "manual",
-        "json"
+        "json",
+        "manual"
       ],
       "source": "req-rf-05",
       "target": "PAT-G-016",
@@ -3115,9 +3223,9 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
+        "garantizando",
         "forma",
-        "capacidad",
-        "garantizando"
+        "capacidad"
       ],
       "source": "req-rf-06",
       "target": "req-rf-08",
@@ -3127,9 +3235,9 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
+        "segura",
         "visual",
-        "forma",
-        "segura"
+        "forma"
       ],
       "source": "req-rf-06",
       "target": "epic-e11",
@@ -3139,8 +3247,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "estricta",
         "tras",
+        "estricta",
         "datos"
       ],
       "source": "req-rf-06",
@@ -3151,9 +3259,9 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
+        "para",
         "capacidad",
-        "tiempo",
-        "para"
+        "tiempo"
       ],
       "source": "req-rf-07",
       "target": "req-rf-08",
@@ -3163,8 +3271,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "para",
-        "grafos"
+        "grafos",
+        "para"
       ],
       "source": "req-rf-07",
       "target": "epic-e11",
@@ -3185,8 +3293,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "createdat",
-        "updatedby"
+        "updatedby",
+        "createdat"
       ],
       "source": "req-rf-08",
       "target": "guardrail-gr-07",
@@ -3196,8 +3304,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "forma",
-        "para"
+        "para",
+        "forma"
       ],
       "source": "req-rf-08",
       "target": "epic-e11",
@@ -3207,8 +3315,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "usuario",
         "para",
+        "usuario",
         "arquitectura"
       ],
       "source": "req-rf-08",
@@ -3219,8 +3327,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "mutaci\u00f3n",
-        "para"
+        "para",
+        "mutaci\u00f3n"
       ],
       "source": "req-rf-08",
       "target": "PAT-G-014",
@@ -3230,8 +3338,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "data",
-        "para"
+        "para",
+        "data"
       ],
       "source": "outcome-culture-anti-data-stale",
       "target": "PAT-G-011",
@@ -3241,8 +3349,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "review",
-        "verify"
+        "verify",
+        "review"
       ],
       "source": "guardrail-gr-01",
       "target": "guardrail-gr-02",
@@ -3252,9 +3360,9 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "code",
+        "verify",
         "review",
-        "verify"
+        "code"
       ],
       "source": "guardrail-gr-01",
       "target": "guardrail-gr-04",
@@ -3264,8 +3372,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "review",
-        "verify"
+        "verify",
+        "review"
       ],
       "source": "guardrail-gr-01",
       "target": "guardrail-gr-05",
@@ -3275,8 +3383,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "apis",
-        "code"
+        "code",
+        "apis"
       ],
       "source": "guardrail-gr-01",
       "target": "BASE-022",
@@ -3286,8 +3394,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "code",
-        "verify"
+        "verify",
+        "code"
       ],
       "source": "guardrail-gr-01",
       "target": "BASE-033",
@@ -3297,8 +3405,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "code",
-        "review"
+        "review",
+        "code"
       ],
       "source": "guardrail-gr-01",
       "target": "BASE-034",
@@ -3308,8 +3416,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "code",
-        "review"
+        "review",
+        "code"
       ],
       "source": "guardrail-gr-01",
       "target": "/rai-quality-review",
@@ -3341,8 +3449,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "review",
-        "verify"
+        "verify",
+        "review"
       ],
       "source": "guardrail-gr-02",
       "target": "guardrail-gr-04",
@@ -3352,8 +3460,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "review",
-        "verify"
+        "verify",
+        "review"
       ],
       "source": "guardrail-gr-02",
       "target": "guardrail-gr-05",
@@ -3363,8 +3471,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "architecture",
-        "review"
+        "review",
+        "architecture"
       ],
       "source": "guardrail-gr-02",
       "target": "BASE-023",
@@ -3374,8 +3482,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "architecture",
-        "verify"
+        "verify",
+        "architecture"
       ],
       "source": "guardrail-gr-02",
       "target": "BASE-033",
@@ -3385,8 +3493,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "architecture",
-        "review"
+        "review",
+        "architecture"
       ],
       "source": "guardrail-gr-02",
       "target": "SES-001",
@@ -3396,8 +3504,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "architecture",
-        "review"
+        "review",
+        "architecture"
       ],
       "source": "guardrail-gr-02",
       "target": "/rai-story-run",
@@ -3407,8 +3515,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "test",
-        "verify"
+        "verify",
+        "test"
       ],
       "source": "guardrail-gr-03",
       "target": "guardrail-gr-06",
@@ -3418,8 +3526,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "test",
-        "verify"
+        "verify",
+        "test"
       ],
       "source": "guardrail-gr-03",
       "target": "BASE-043",
@@ -3441,8 +3549,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "code",
-        "verify"
+        "verify",
+        "code"
       ],
       "source": "guardrail-gr-04",
       "target": "BASE-033",
@@ -3452,8 +3560,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "code",
-        "review"
+        "review",
+        "code"
       ],
       "source": "guardrail-gr-04",
       "target": "BASE-034",
@@ -3474,8 +3582,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "code",
-        "review"
+        "review",
+        "code"
       ],
       "source": "guardrail-gr-04",
       "target": "/rai-quality-review",
@@ -3485,8 +3593,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "ionic",
-        "components"
+        "components",
+        "ionic"
       ],
       "source": "guardrail-gr-04",
       "target": "mod-Form_Engine",
@@ -3518,8 +3626,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "test",
-        "verify"
+        "verify",
+        "test"
       ],
       "source": "guardrail-gr-06",
       "target": "BASE-043",
@@ -3551,6 +3659,18 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
+        "single",
+        "page",
+        "epic"
+      ],
+      "source": "epic-e1",
+      "target": "epic-e14",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
         "zero",
         "existing"
       ],
@@ -3562,8 +3682,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "data",
-        "epic"
+        "epic",
+        "data"
       ],
       "source": "epic-e1",
       "target": "SES-004",
@@ -3595,8 +3715,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "business",
-        "epic"
+        "epic",
+        "business"
       ],
       "source": "epic-e1",
       "target": "/rai-problem-shape",
@@ -3606,8 +3726,19 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "architecture",
-        "design"
+        "epic",
+        "purgar"
+      ],
+      "source": "epic-e10",
+      "target": "epic-e13",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "design",
+        "architecture"
       ],
       "source": "epic-e10",
       "target": "BASE-023",
@@ -3617,8 +3748,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "architecture",
-        "design"
+        "design",
+        "architecture"
       ],
       "source": "epic-e10",
       "target": "BASE-035",
@@ -3628,8 +3759,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "architecture",
-        "erradicar"
+        "erradicar",
+        "architecture"
       ],
       "source": "epic-e10",
       "target": "PAT-G-010",
@@ -3639,8 +3770,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "architecture",
-        "global"
+        "global",
+        "architecture"
       ],
       "source": "epic-e10",
       "target": "PAT-G-012",
@@ -3650,9 +3781,9 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "architecture",
+        "design",
         "system",
-        "design"
+        "architecture"
       ],
       "source": "epic-e10",
       "target": "PAT-G-013",
@@ -3662,9 +3793,9 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "architecture",
         "global",
-        "namespace"
+        "namespace",
+        "architecture"
       ],
       "source": "epic-e10",
       "target": "PAT-G-018",
@@ -3674,8 +3805,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "epic",
-        "design"
+        "design",
+        "epic"
       ],
       "source": "epic-e10",
       "target": "/rai-architecture-review",
@@ -3685,8 +3816,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "epic",
-        "design"
+        "design",
+        "epic"
       ],
       "source": "epic-e10",
       "target": "/rai-epic-design",
@@ -3696,8 +3827,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "epic",
-        "design"
+        "design",
+        "epic"
       ],
       "source": "epic-e10",
       "target": "/rai-epic-run",
@@ -3707,8 +3838,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "architecture",
-        "design"
+        "design",
+        "architecture"
       ],
       "source": "epic-e10",
       "target": "/rai-story-run",
@@ -3718,8 +3849,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "system",
-        "design"
+        "design",
+        "system"
       ],
       "source": "epic-e10",
       "target": "arch-design",
@@ -3730,8 +3861,42 @@
       "weight": 0.5,
       "shared_keywords": [
         "epic",
+        "scaling"
+      ],
+      "source": "epic-e11",
+      "target": "epic-e12",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "para",
+        "epic",
+        "hacia"
+      ],
+      "source": "epic-e11",
+      "target": "epic-e13",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "monolito",
+        "epic"
+      ],
+      "source": "epic-e11",
+      "target": "epic-e14",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "grafos",
         "scd2",
-        "grafos"
+        "epic"
       ],
       "source": "epic-e11",
       "target": "epic-e6",
@@ -3752,8 +3917,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "zerotrust",
-        "para"
+        "para",
+        "zerotrust"
       ],
       "source": "epic-e11",
       "target": "PAT-G-011",
@@ -3785,8 +3950,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "visual",
-        "para"
+        "para",
+        "visual"
       ],
       "source": "epic-e11",
       "target": "PAT-G-014",
@@ -3807,6 +3972,142 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
+        "modularization",
+        "epic"
+      ],
+      "source": "epic-e12",
+      "target": "epic-e14",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "escalable",
+        "epic"
+      ],
+      "source": "epic-e12",
+      "target": "epic-e6",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "capas",
+        "epic"
+      ],
+      "source": "epic-e12",
+      "target": "epic-e9",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "despliegue",
+        "epic"
+      ],
+      "source": "epic-e12",
+      "target": "SES-005",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "desacoplar",
+        "epic"
+      ],
+      "source": "epic-e13",
+      "target": "epic-e14",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "desacoplar",
+        "epic"
+      ],
+      "source": "epic-e13",
+      "target": "epic-e6",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "para",
+        "epic",
+        "variables"
+      ],
+      "source": "epic-e13",
+      "target": "epic-e9",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "para",
+        "hacia"
+      ],
+      "source": "epic-e13",
+      "target": "PAT-G-012",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "para",
+        "variables"
+      ],
+      "source": "epic-e13",
+      "target": "PAT-G-013",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "para",
+        "relaciones"
+      ],
+      "source": "epic-e13",
+      "target": "PAT-G-014",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "aislando",
+        "desacoplar",
+        "arquitectura",
+        "epic"
+      ],
+      "source": "epic-e14",
+      "target": "epic-e6",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
+        "epic",
+        "nativo",
+        "arquitectura"
+      ],
+      "source": "epic-e14",
+      "target": "epic-e9",
+      "key": 0
+    },
+    {
+      "type": "related_to",
+      "weight": 0.5,
+      "shared_keywords": [
         "arquitectura",
         "epic"
       ],
@@ -3818,8 +4119,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "epic",
-        "graph"
+        "graph",
+        "epic"
       ],
       "source": "epic-e7",
       "target": "SES-005",
@@ -3885,8 +4186,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "epic",
-        "refactor"
+        "refactor",
+        "epic"
       ],
       "source": "epic-e9",
       "target": "SES-002",
@@ -3896,8 +4197,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "discipline",
         "clean",
+        "discipline",
         "workflow"
       ],
       "source": "BASE-001",
@@ -3920,12 +4221,12 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "tests",
         "workflow",
-        "testing",
-        "pass",
+        "tests",
         "test",
-        "tdd"
+        "tdd",
+        "pass",
+        "testing"
       ],
       "source": "BASE-001",
       "target": "BASE-018",
@@ -3935,8 +4236,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "discipline",
-        "test"
+        "test",
+        "discipline"
       ],
       "source": "BASE-001",
       "target": "BASE-029",
@@ -3979,9 +4280,9 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
+        "commit",
         "git",
-        "story",
-        "commit"
+        "story"
       ],
       "source": "BASE-002",
       "target": "BASE-007",
@@ -3991,9 +4292,9 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "story",
+        "discipline",
         "task",
-        "discipline"
+        "story"
       ],
       "source": "BASE-002",
       "target": "BASE-021",
@@ -4014,8 +4315,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "discipline",
-        "debugging"
+        "debugging",
+        "discipline"
       ],
       "source": "BASE-002",
       "target": "BASE-032",
@@ -4025,8 +4326,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "story",
-        "progress"
+        "progress",
+        "story"
       ],
       "source": "BASE-002",
       "target": "/rai-epic-plan",
@@ -4036,8 +4337,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "story",
-        "completed"
+        "completed",
+        "story"
       ],
       "source": "BASE-002",
       "target": "/rai-epic-run",
@@ -4047,8 +4348,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "story",
-        "completed"
+        "completed",
+        "story"
       ],
       "source": "BASE-002",
       "target": "/rai-story-run",
@@ -4058,8 +4359,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "story",
-        "commit"
+        "commit",
+        "story"
       ],
       "source": "BASE-002",
       "target": "/rai-story-start",
@@ -4069,8 +4370,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "lifecycle",
-        "close"
+        "close",
+        "lifecycle"
       ],
       "source": "BASE-003",
       "target": "BASE-007",
@@ -4091,9 +4392,9 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "lifecycle",
+        "close",
         "review",
-        "close"
+        "lifecycle"
       ],
       "source": "BASE-003",
       "target": "BASE-009",
@@ -4103,9 +4404,9 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "lifecycle",
         "close",
-        "stories"
+        "stories",
+        "lifecycle"
       ],
       "source": "BASE-003",
       "target": "BASE-010",
@@ -4115,9 +4416,9 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "discipline",
         "overhead",
-        "stories"
+        "stories",
+        "discipline"
       ],
       "source": "BASE-003",
       "target": "BASE-021",
@@ -4138,8 +4439,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "plan",
-        "velocity"
+        "velocity",
+        "plan"
       ],
       "source": "BASE-003",
       "target": "BASE-026",
@@ -4160,9 +4461,9 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
+        "lifecycle",
         "full",
-        "discipline",
-        "lifecycle"
+        "discipline"
       ],
       "source": "BASE-003",
       "target": "BASE-028",
@@ -4172,9 +4473,9 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
+        "review",
         "discipline",
-        "plan",
-        "review"
+        "plan"
       ],
       "source": "BASE-003",
       "target": "BASE-029",
@@ -4195,10 +4496,10 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "lifecycle",
-        "plan",
         "close",
-        "design"
+        "lifecycle",
+        "design",
+        "plan"
       ],
       "source": "BASE-003",
       "target": "/rai-epic-run",
@@ -4230,9 +4531,9 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "lifecycle",
+        "close",
         "review",
-        "close"
+        "lifecycle"
       ],
       "source": "BASE-003",
       "target": "/rai-story-close",
@@ -4242,8 +4543,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "plan",
-        "stories"
+        "stories",
+        "plan"
       ],
       "source": "BASE-003",
       "target": "/rai-story-plan",
@@ -4253,9 +4554,9 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "cycle",
         "close",
-        "stories"
+        "stories",
+        "cycle"
       ],
       "source": "BASE-003",
       "target": "/rai-story-review",
@@ -4266,12 +4567,12 @@
       "weight": 0.5,
       "shared_keywords": [
         "full",
-        "lifecycle",
+        "design",
         "plan",
-        "review",
-        "implement",
         "close",
-        "design"
+        "lifecycle",
+        "review",
+        "implement"
       ],
       "source": "BASE-003",
       "target": "/rai-story-run",
@@ -4281,8 +4582,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "pause",
-        "work"
+        "work",
+        "pause"
       ],
       "source": "BASE-005",
       "target": "BASE-028",
@@ -4325,8 +4626,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "work",
-        "significant"
+        "significant",
+        "work"
       ],
       "source": "BASE-005",
       "target": "/rai-epic-design",
@@ -4336,8 +4637,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "pause",
-        "review"
+        "review",
+        "pause"
       ],
       "source": "BASE-005",
       "target": "/rai-story-run",
@@ -4358,8 +4659,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "without",
-        "implementation"
+        "implementation",
+        "without"
       ],
       "source": "BASE-006",
       "target": "BASE-033",
@@ -4369,11 +4670,11 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "specification",
         "implementation",
-        "concrete",
+        "design",
         "examples",
-        "design"
+        "specification",
+        "concrete"
       ],
       "source": "BASE-006",
       "target": "BASE-034",
@@ -4383,8 +4684,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "planning",
-        "implementation"
+        "implementation",
+        "planning"
       ],
       "source": "BASE-006",
       "target": "/rai-story-implement",
@@ -4395,10 +4696,10 @@
       "weight": 0.5,
       "shared_keywords": [
         "git",
-        "lifecycle",
-        "development",
         "branches",
-        "branch"
+        "lifecycle",
+        "branch",
+        "development"
       ],
       "source": "BASE-007",
       "target": "BASE-008",
@@ -4408,10 +4709,10 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "lifecycle",
-        "story",
         "close",
-        "required"
+        "lifecycle",
+        "required",
+        "story"
       ],
       "source": "BASE-007",
       "target": "BASE-009",
@@ -4421,11 +4722,11 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "lifecycle",
-        "development",
-        "merge",
         "close",
-        "branch"
+        "merge",
+        "lifecycle",
+        "branch",
+        "development"
       ],
       "source": "BASE-007",
       "target": "BASE-010",
@@ -4435,8 +4736,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "story",
-        "scope"
+        "scope",
+        "story"
       ],
       "source": "BASE-007",
       "target": "/rai-architecture-review",
@@ -4446,11 +4747,11 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "development",
-        "story",
         "merge",
         "branches",
-        "branch"
+        "branch",
+        "development",
+        "story"
       ],
       "source": "BASE-007",
       "target": "/rai-epic-close",
@@ -4460,8 +4761,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "story",
-        "implementation"
+        "implementation",
+        "story"
       ],
       "source": "BASE-007",
       "target": "/rai-epic-plan",
@@ -4471,9 +4772,9 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
+        "close",
         "lifecycle",
-        "story",
-        "close"
+        "story"
       ],
       "source": "BASE-007",
       "target": "/rai-epic-run",
@@ -4483,11 +4784,11 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "scope",
-        "development",
-        "story",
         "branches",
-        "branch"
+        "branch",
+        "development",
+        "scope",
+        "story"
       ],
       "source": "BASE-007",
       "target": "/rai-epic-start",
@@ -4497,10 +4798,10 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
+        "close",
         "lifecycle",
-        "story",
         "merge",
-        "close"
+        "story"
       ],
       "source": "BASE-007",
       "target": "/rai-story-close",
@@ -4510,9 +4811,9 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
+        "implementation",
         "development",
-        "close",
-        "implementation"
+        "close"
       ],
       "source": "BASE-007",
       "target": "/rai-story-review",
@@ -4522,9 +4823,9 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
+        "close",
         "lifecycle",
-        "story",
-        "close"
+        "story"
       ],
       "source": "BASE-007",
       "target": "/rai-story-run",
@@ -4534,11 +4835,11 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "scope",
-        "story",
         "commit",
+        "branch",
         "traceability",
-        "branch"
+        "scope",
+        "story"
       ],
       "source": "BASE-007",
       "target": "/rai-story-start",
@@ -4549,10 +4850,10 @@
       "weight": 0.5,
       "shared_keywords": [
         "lifecycle",
+        "branch",
         "development",
-        "epic",
         "stories",
-        "branch"
+        "epic"
       ],
       "source": "BASE-008",
       "target": "BASE-010",
@@ -4562,14 +4863,14 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "containers",
-        "development",
-        "directly",
-        "epic",
         "epics",
         "branches",
         "logical",
-        "branch"
+        "branch",
+        "development",
+        "directly",
+        "epic",
+        "containers"
       ],
       "source": "BASE-008",
       "target": "/rai-epic-close",
@@ -4590,15 +4891,15 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "containers",
-        "development",
-        "directly",
-        "epic",
         "epics",
         "tracker",
         "branches",
         "logical",
-        "branch"
+        "branch",
+        "development",
+        "directly",
+        "epic",
+        "containers"
       ],
       "source": "BASE-008",
       "target": "/rai-epic-start",
@@ -4608,8 +4909,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "development",
-        "stories"
+        "stories",
+        "development"
       ],
       "source": "BASE-008",
       "target": "/rai-story-review",
@@ -4619,9 +4920,9 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
+        "close",
         "lifecycle",
         "retrospective",
-        "close",
         "learning"
       ],
       "source": "BASE-009",
@@ -4632,9 +4933,9 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "story",
         "update",
-        "retrospective"
+        "retrospective",
+        "story"
       ],
       "source": "BASE-009",
       "target": "/rai-epic-close",
@@ -4644,9 +4945,9 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
+        "close",
         "lifecycle",
-        "story",
-        "close"
+        "story"
       ],
       "source": "BASE-009",
       "target": "/rai-epic-run",
@@ -4656,12 +4957,12 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "lifecycle",
-        "story",
-        "review",
-        "update",
         "retrospective",
-        "close"
+        "close",
+        "update",
+        "lifecycle",
+        "review",
+        "story"
       ],
       "source": "BASE-009",
       "target": "/rai-story-close",
@@ -4671,10 +4972,10 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
+        "close",
         "learnings",
         "update",
-        "extract",
-        "close"
+        "extract"
       ],
       "source": "BASE-009",
       "target": "/rai-story-review",
@@ -4684,10 +4985,10 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "lifecycle",
-        "story",
+        "close",
         "review",
-        "close"
+        "lifecycle",
+        "story"
       ],
       "source": "BASE-009",
       "target": "/rai-story-run",
@@ -4697,11 +4998,11 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "development",
-        "epic",
-        "merge",
         "retrospective",
-        "branch"
+        "merge",
+        "branch",
+        "development",
+        "epic"
       ],
       "source": "BASE-010",
       "target": "/rai-epic-close",
@@ -4711,9 +5012,9 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
+        "close",
         "lifecycle",
-        "epic",
-        "close"
+        "epic"
       ],
       "source": "BASE-010",
       "target": "/rai-epic-run",
@@ -4723,9 +5024,9 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "epic",
+        "branch",
         "development",
-        "branch"
+        "epic"
       ],
       "source": "BASE-010",
       "target": "/rai-epic-start",
@@ -4735,10 +5036,10 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
+        "close",
         "lifecycle",
-        "retrospective",
         "merge",
-        "close"
+        "retrospective"
       ],
       "source": "BASE-010",
       "target": "/rai-story-close",
@@ -4748,9 +5049,9 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "development",
         "close",
-        "stories"
+        "stories",
+        "development"
       ],
       "source": "BASE-010",
       "target": "/rai-story-review",
@@ -4760,8 +5061,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "lifecycle",
-        "close"
+        "close",
+        "lifecycle"
       ],
       "source": "BASE-010",
       "target": "/rai-story-run",
@@ -4771,8 +5072,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "permission",
-        "redirect"
+        "redirect",
+        "permission"
       ],
       "source": "BASE-012",
       "target": "RAI-BND-5",
@@ -4783,8 +5084,8 @@
       "weight": 0.5,
       "shared_keywords": [
         "evidence",
-        "claims",
-        "research"
+        "research",
+        "claims"
       ],
       "source": "BASE-013",
       "target": "/rai-research",
@@ -4794,8 +5095,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "gate",
-        "quality"
+        "quality",
+        "gate"
       ],
       "source": "BASE-014",
       "target": "BASE-029",
@@ -4805,8 +5106,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "gate",
-        "quality"
+        "quality",
+        "gate"
       ],
       "source": "BASE-014",
       "target": "BASE-030",
@@ -4839,9 +5140,9 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "ideas",
         "back",
-        "push"
+        "push",
+        "ideas"
       ],
       "source": "BASE-014",
       "target": "RAI-BND-1",
@@ -4851,8 +5152,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "pretend",
         "uncertainty",
+        "pretend",
         "confidence",
         "admit",
         "rather"
@@ -4921,8 +5222,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "serialization",
-        "boundaries"
+        "boundaries",
+        "serialization"
       ],
       "source": "BASE-016",
       "target": "BASE-041",
@@ -4945,8 +5246,8 @@
       "weight": 0.5,
       "shared_keywords": [
         "simple",
-        "simplicity",
         "complex",
+        "simplicity",
         "over"
       ],
       "source": "BASE-017",
@@ -4957,8 +5258,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "issues",
-        "catches"
+        "catches",
+        "issues"
       ],
       "source": "BASE-018",
       "target": "BASE-023",
@@ -4968,8 +5269,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "test",
-        "catches"
+        "catches",
+        "test"
       ],
       "source": "BASE-018",
       "target": "BASE-029",
@@ -5012,9 +5313,9 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "issues",
+        "catches",
         "test",
-        "catches"
+        "issues"
       ],
       "source": "BASE-018",
       "target": "/rai-quality-review",
@@ -5068,9 +5369,9 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "errors",
         "quality",
-        "dont"
+        "dont",
+        "errors"
       ],
       "source": "BASE-020",
       "target": "BASE-039",
@@ -5080,8 +5381,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "errors",
-        "quality"
+        "quality",
+        "errors"
       ],
       "source": "BASE-020",
       "target": "BASE-042",
@@ -5092,8 +5393,8 @@
       "weight": 0.5,
       "shared_keywords": [
         "errors",
-        "lean",
-        "defects"
+        "defects",
+        "lean"
       ],
       "source": "BASE-020",
       "target": "/rai-debug",
@@ -5103,10 +5404,10 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "stop",
         "drift",
+        "ambiguity",
         "incoherence",
-        "ambiguity"
+        "stop"
       ],
       "source": "BASE-020",
       "target": "RAI-BND-2",
@@ -5138,8 +5439,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "story",
-        "complexity"
+        "complexity",
+        "story"
       ],
       "source": "BASE-021",
       "target": "/rai-architecture-review",
@@ -5149,8 +5450,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "planning",
-        "task"
+        "task",
+        "planning"
       ],
       "source": "BASE-021",
       "target": "/rai-story-implement",
@@ -5182,8 +5483,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "discipline",
-        "decisions"
+        "decisions",
+        "discipline"
       ],
       "source": "BASE-022",
       "target": "BASE-027",
@@ -5204,8 +5505,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "rework",
-        "decisions"
+        "decisions",
+        "rework"
       ],
       "source": "BASE-022",
       "target": "BASE-054",
@@ -5226,9 +5527,9 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "unfamiliar",
         "decisions",
-        "research"
+        "research",
+        "unfamiliar"
       ],
       "source": "BASE-022",
       "target": "/rai-research",
@@ -5262,9 +5563,9 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "architecture",
         "quality",
-        "design"
+        "design",
+        "architecture"
       ],
       "source": "BASE-023",
       "target": "BASE-035",
@@ -5274,8 +5575,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "architecture",
-        "zero"
+        "zero",
+        "architecture"
       ],
       "source": "BASE-023",
       "target": "BASE-051",
@@ -5285,8 +5586,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "architecture",
-        "design"
+        "design",
+        "architecture"
       ],
       "source": "BASE-023",
       "target": "PAT-G-013",
@@ -5296,8 +5597,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "architecture",
-        "review"
+        "review",
+        "architecture"
       ],
       "source": "BASE-023",
       "target": "SES-001",
@@ -5307,10 +5608,10 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
+        "catches",
         "proportionality",
-        "scope",
         "design",
-        "catches"
+        "scope"
       ],
       "source": "BASE-023",
       "target": "/rai-architecture-review",
@@ -5320,10 +5621,10 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "design",
-        "issues",
         "review",
-        "catches"
+        "catches",
+        "design",
+        "issues"
       ],
       "source": "BASE-023",
       "target": "/rai-quality-review",
@@ -5333,10 +5634,10 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "architecture",
         "quality",
         "review",
-        "design"
+        "design",
+        "architecture"
       ],
       "source": "BASE-023",
       "target": "/rai-story-run",
@@ -5357,9 +5658,9 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "verification",
+        "implementation",
         "verify",
-        "implementation"
+        "verification"
       ],
       "source": "BASE-024",
       "target": "BASE-033",
@@ -5380,9 +5681,9 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
+        "implementation",
         "work",
-        "features",
-        "implementation"
+        "features"
       ],
       "source": "BASE-024",
       "target": "/rai-epic-plan",
@@ -5392,8 +5693,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "plan",
-        "planning"
+        "planning",
+        "plan"
       ],
       "source": "BASE-026",
       "target": "/rai-story-implement",
@@ -5403,10 +5704,10 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "lifecycle",
         "create",
-        "discipline",
-        "process"
+        "lifecycle",
+        "process",
+        "discipline"
       ],
       "source": "BASE-027",
       "target": "BASE-028",
@@ -5438,8 +5739,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "decision",
-        "decisions"
+        "decisions",
+        "decision"
       ],
       "source": "BASE-027",
       "target": "BASE-054",
@@ -5482,8 +5783,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "work",
-        "create"
+        "create",
+        "work"
       ],
       "source": "BASE-028",
       "target": "/rai-epic-plan",
@@ -5493,8 +5794,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "pause",
-        "lifecycle"
+        "lifecycle",
+        "pause"
       ],
       "source": "BASE-028",
       "target": "/rai-epic-run",
@@ -5504,9 +5805,9 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "pause",
+        "lifecycle",
         "full",
-        "lifecycle"
+        "pause"
       ],
       "source": "BASE-028",
       "target": "/rai-story-run",
@@ -5516,8 +5817,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "gate",
-        "quality"
+        "quality",
+        "gate"
       ],
       "source": "BASE-029",
       "target": "BASE-030",
@@ -5582,8 +5883,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "what",
-        "catches"
+        "catches",
+        "what"
       ],
       "source": "BASE-029",
       "target": "/rai-architecture-review",
@@ -5607,10 +5908,10 @@
         "catches",
         "lies",
         "type",
-        "review",
+        "muda",
         "test",
-        "what",
-        "muda"
+        "review",
+        "what"
       ],
       "source": "BASE-029",
       "target": "/rai-quality-review",
@@ -5632,8 +5933,8 @@
       "weight": 0.5,
       "shared_keywords": [
         "quality",
-        "plan",
-        "task"
+        "task",
+        "plan"
       ],
       "source": "BASE-029",
       "target": "/rai-story-implement",
@@ -5644,8 +5945,8 @@
       "weight": 0.5,
       "shared_keywords": [
         "quality",
-        "plan",
-        "review"
+        "review",
+        "plan"
       ],
       "source": "BASE-029",
       "target": "/rai-story-run",
@@ -5688,8 +5989,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "gates",
-        "coverage"
+        "coverage",
+        "gates"
       ],
       "source": "BASE-030",
       "target": "/rai-quality-review",
@@ -5722,8 +6023,8 @@
       "weight": 0.5,
       "shared_keywords": [
         "validation",
-        "quality",
-        "testing"
+        "testing",
+        "quality"
       ],
       "source": "BASE-031",
       "target": "BASE-043",
@@ -5755,9 +6056,9 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "root",
         "cause",
-        "lean"
+        "lean",
+        "root"
       ],
       "source": "BASE-032",
       "target": "/rai-debug",
@@ -5767,8 +6068,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "code",
-        "implementation"
+        "implementation",
+        "code"
       ],
       "source": "BASE-033",
       "target": "BASE-034",
@@ -5778,8 +6079,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "integration",
-        "path"
+        "path",
+        "integration"
       ],
       "source": "BASE-033",
       "target": "BASE-039",
@@ -5800,8 +6101,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "entry",
         "point",
+        "entry",
         "code",
         "architecture"
       ],
@@ -5824,8 +6125,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "code",
-        "implementation"
+        "implementation",
+        "code"
       ],
       "source": "BASE-033",
       "target": "/rai-story-implement",
@@ -5835,8 +6136,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "integration",
-        "implementation"
+        "implementation",
+        "integration"
       ],
       "source": "BASE-033",
       "target": "/rai-story-plan",
@@ -5846,8 +6147,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "entry",
-        "point"
+        "point",
+        "entry"
       ],
       "source": "BASE-033",
       "target": "mod-UI_Shell",
@@ -5868,8 +6169,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "bugs",
-        "quality"
+        "quality",
+        "bugs"
       ],
       "source": "BASE-034",
       "target": "BASE-042",
@@ -5879,8 +6180,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "bugs",
-        "quality"
+        "quality",
+        "bugs"
       ],
       "source": "BASE-034",
       "target": "BASE-046",
@@ -5890,10 +6191,10 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "bugs",
-        "code",
         "review",
-        "design"
+        "bugs",
+        "design",
+        "code"
       ],
       "source": "BASE-034",
       "target": "/rai-quality-review",
@@ -5903,9 +6204,9 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "quality",
+        "implementation",
         "code",
-        "implementation"
+        "quality"
       ],
       "source": "BASE-034",
       "target": "/rai-story-implement",
@@ -5938,8 +6239,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "collaboration",
-        "decisions"
+        "decisions",
+        "collaboration"
       ],
       "source": "BASE-035",
       "target": "BASE-054",
@@ -5949,8 +6250,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "architecture",
-        "design"
+        "design",
+        "architecture"
       ],
       "source": "BASE-035",
       "target": "PAT-G-013",
@@ -5982,8 +6283,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "user",
-        "decisions"
+        "decisions",
+        "user"
       ],
       "source": "BASE-035",
       "target": "/rai-story-plan",
@@ -5993,9 +6294,9 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "architecture",
         "quality",
-        "design"
+        "design",
+        "architecture"
       ],
       "source": "BASE-035",
       "target": "/rai-story-run",
@@ -6027,8 +6328,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "errors",
-        "quality"
+        "quality",
+        "errors"
       ],
       "source": "BASE-039",
       "target": "BASE-042",
@@ -6049,8 +6350,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "validation",
-        "quality"
+        "quality",
+        "validation"
       ],
       "source": "BASE-039",
       "target": "/rai-story-implement",
@@ -6082,9 +6383,9 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "bugs",
         "quality",
-        "always"
+        "always",
+        "bugs"
       ],
       "source": "BASE-042",
       "target": "BASE-046",
@@ -6127,8 +6428,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "validation",
         "quality",
+        "validation",
         "passes"
       ],
       "source": "BASE-043",
@@ -6139,8 +6440,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "implementations",
-        "protocols"
+        "protocols",
+        "implementations"
       ],
       "source": "BASE-044",
       "target": "BASE-049",
@@ -6161,8 +6462,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "architecture",
-        "layer"
+        "layer",
+        "architecture"
       ],
       "source": "BASE-045",
       "target": "BASE-049",
@@ -6194,8 +6495,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "architecture",
-        "delegation"
+        "delegation",
+        "architecture"
       ],
       "source": "BASE-045",
       "target": "/rai-story-run",
@@ -6205,8 +6506,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "data",
-        "quality"
+        "quality",
+        "data"
       ],
       "source": "BASE-046",
       "target": "SES-004",
@@ -6238,8 +6539,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "architecture",
-        "never"
+        "never",
+        "architecture"
       ],
       "source": "BASE-049",
       "target": "PAT-G-018",
@@ -6271,8 +6572,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "architecture",
-        "error"
+        "error",
+        "architecture"
       ],
       "source": "BASE-051",
       "target": "PAT-G-013",
@@ -6293,8 +6594,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "architecture",
-        "existing"
+        "existing",
+        "architecture"
       ],
       "source": "BASE-051",
       "target": "/rai-docs-update",
@@ -6304,8 +6605,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "architecture",
-        "behavior"
+        "behavior",
+        "architecture"
       ],
       "source": "BASE-051",
       "target": "/rai-story-run",
@@ -6315,8 +6616,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "entry",
-        "point"
+        "point",
+        "entry"
       ],
       "source": "BASE-051",
       "target": "mod-UI_Shell",
@@ -6326,9 +6627,9 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
+        "parallel",
         "agents",
-        "collaboration",
-        "parallel"
+        "collaboration"
       ],
       "source": "BASE-052",
       "target": "BASE-053",
@@ -6360,8 +6661,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "context",
-        "file"
+        "file",
+        "context"
       ],
       "source": "BASE-053",
       "target": "/rai-discover-start",
@@ -6393,8 +6694,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "backend",
         "frontend",
+        "backend",
         "context"
       ],
       "source": "BASE-053",
@@ -6405,8 +6706,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "backend",
-        "frontend"
+        "frontend",
+        "backend"
       ],
       "source": "BASE-053",
       "target": "arch-design",
@@ -6434,9 +6735,9 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
+        "architecture",
         "pure",
-        "logic",
-        "architecture"
+        "logic"
       ],
       "source": "PAT-G-002",
       "target": "PAT-G-005",
@@ -6446,8 +6747,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "architecture",
-        "ui"
+        "ui",
+        "architecture"
       ],
       "source": "PAT-G-002",
       "target": "PAT-G-012",
@@ -6457,8 +6758,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "architecture",
-        "ui"
+        "ui",
+        "architecture"
       ],
       "source": "PAT-G-002",
       "target": "PAT-G-013",
@@ -6468,8 +6769,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "architecture",
-        "ui"
+        "ui",
+        "architecture"
       ],
       "source": "PAT-G-002",
       "target": "PAT-G-014",
@@ -6479,8 +6780,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "guarantee",
-        "ui"
+        "ui",
+        "guarantee"
       ],
       "source": "PAT-G-002",
       "target": "PAT-G-017",
@@ -6490,9 +6791,9 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "architecture",
+        "ui",
         "functions",
-        "ui"
+        "architecture"
       ],
       "source": "PAT-G-002",
       "target": "PAT-G-018",
@@ -6513,8 +6814,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "performance",
-        "graph"
+        "graph",
+        "performance"
       ],
       "source": "PAT-G-003",
       "target": "PAT-G-006",
@@ -6524,8 +6825,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "operations",
-        "graph"
+        "graph",
+        "operations"
       ],
       "source": "PAT-G-004",
       "target": "PAT-G-006",
@@ -6535,9 +6836,9 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "failsafe",
         "default",
-        "topology"
+        "topology",
+        "failsafe"
       ],
       "source": "PAT-G-004",
       "target": "PAT-G-008",
@@ -6547,9 +6848,9 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "architecture",
+        "o(1)",
         "graph",
-        "o(1)"
+        "architecture"
       ],
       "source": "PAT-G-005",
       "target": "PAT-G-006",
@@ -6570,8 +6871,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "architecture",
-        "graph"
+        "graph",
+        "architecture"
       ],
       "source": "PAT-G-005",
       "target": "PAT-G-011",
@@ -6581,8 +6882,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "architecture",
-        "graph"
+        "graph",
+        "architecture"
       ],
       "source": "PAT-G-005",
       "target": "/rai-discover",
@@ -6592,9 +6893,9 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "architecture",
         "graph",
-        "using"
+        "using",
+        "architecture"
       ],
       "source": "PAT-G-005",
       "target": "/rai-docs-update",
@@ -6604,8 +6905,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "architecture",
-        "using"
+        "using",
+        "architecture"
       ],
       "source": "PAT-G-005",
       "target": "/rai-story-run",
@@ -6616,8 +6917,8 @@
       "weight": 0.5,
       "shared_keywords": [
         "facade",
-        "database",
-        "without"
+        "without",
+        "database"
       ],
       "source": "PAT-G-005",
       "target": "mod-DB_Layer",
@@ -6627,8 +6928,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "performance",
-        "architecture"
+        "architecture",
+        "performance"
       ],
       "source": "PAT-G-006",
       "target": "PAT-G-010",
@@ -6638,8 +6939,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "architecture",
-        "graph"
+        "graph",
+        "architecture"
       ],
       "source": "PAT-G-006",
       "target": "PAT-G-011",
@@ -6649,8 +6950,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "architecture",
-        "graph"
+        "graph",
+        "architecture"
       ],
       "source": "PAT-G-006",
       "target": "/rai-discover",
@@ -6660,8 +6961,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "architecture",
-        "graph"
+        "graph",
+        "architecture"
       ],
       "source": "PAT-G-006",
       "target": "/rai-docs-update",
@@ -6671,8 +6972,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "zerolatency",
-        "without"
+        "without",
+        "zerolatency"
       ],
       "source": "PAT-G-007",
       "target": "mod-DataView_Engine",
@@ -6704,10 +7005,10 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "lifo",
-        "inline",
         "recursion",
-        "modal"
+        "lifo",
+        "modal",
+        "inline"
       ],
       "source": "PAT-G-009",
       "target": "PAT-G-015",
@@ -6728,8 +7029,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "ui",
-        "instead"
+        "instead",
+        "ui"
       ],
       "source": "PAT-G-009",
       "target": "PAT-G-018",
@@ -6750,8 +7051,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "architecture",
-        "para"
+        "para",
+        "architecture"
       ],
       "source": "PAT-G-010",
       "target": "PAT-G-011",
@@ -6761,8 +7062,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "architecture",
-        "para"
+        "para",
+        "architecture"
       ],
       "source": "PAT-G-010",
       "target": "PAT-G-012",
@@ -6772,8 +7073,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "architecture",
-        "para"
+        "para",
+        "architecture"
       ],
       "source": "PAT-G-010",
       "target": "PAT-G-013",
@@ -6783,8 +7084,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "architecture",
-        "para"
+        "para",
+        "architecture"
       ],
       "source": "PAT-G-010",
       "target": "PAT-G-014",
@@ -6794,8 +7095,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "architecture",
-        "para"
+        "para",
+        "architecture"
       ],
       "source": "PAT-G-010",
       "target": "PAT-G-015",
@@ -6805,8 +7106,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "architecture",
-        "para"
+        "para",
+        "architecture"
       ],
       "source": "PAT-G-011",
       "target": "PAT-G-012",
@@ -6816,8 +7117,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "architecture",
-        "para"
+        "para",
+        "architecture"
       ],
       "source": "PAT-G-011",
       "target": "PAT-G-013",
@@ -6827,9 +7128,9 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "architecture",
         "para",
-        "prevenir"
+        "prevenir",
+        "architecture"
       ],
       "source": "PAT-G-011",
       "target": "PAT-G-014",
@@ -6839,9 +7140,9 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "architecture",
         "para",
-        "prevenir"
+        "prevenir",
+        "architecture"
       ],
       "source": "PAT-G-011",
       "target": "PAT-G-015",
@@ -6851,8 +7152,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "data",
-        "binding"
+        "binding",
+        "data"
       ],
       "source": "PAT-G-011",
       "target": "SES-004",
@@ -6862,8 +7163,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "architecture",
-        "graph"
+        "graph",
+        "architecture"
       ],
       "source": "PAT-G-011",
       "target": "/rai-discover",
@@ -6884,8 +7185,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "architecture",
-        "graph"
+        "graph",
+        "architecture"
       ],
       "source": "PAT-G-011",
       "target": "/rai-docs-update",
@@ -6895,11 +7196,11 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
+        "ui",
         "para",
-        "aislar",
         "estado",
-        "architecture",
-        "ui"
+        "aislar",
+        "architecture"
       ],
       "source": "PAT-G-012",
       "target": "PAT-G-013",
@@ -6909,11 +7210,11 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
+        "ui",
         "para",
-        "estado",
-        "architecture",
         "local",
-        "ui"
+        "estado",
+        "architecture"
       ],
       "source": "PAT-G-012",
       "target": "PAT-G-014",
@@ -6923,9 +7224,9 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "architecture",
+        "state",
         "para",
-        "state"
+        "architecture"
       ],
       "source": "PAT-G-012",
       "target": "PAT-G-015",
@@ -6935,9 +7236,9 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "architecture",
         "ui",
-        "global"
+        "global",
+        "architecture"
       ],
       "source": "PAT-G-012",
       "target": "PAT-G-018",
@@ -6947,8 +7248,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "architecture",
-        "components"
+        "components",
+        "architecture"
       ],
       "source": "PAT-G-012",
       "target": "/rai-discover",
@@ -6958,12 +7259,12 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
+        "ui",
         "para",
-        "debe",
         "todo",
         "estado",
-        "architecture",
-        "ui"
+        "debe",
+        "architecture"
       ],
       "source": "PAT-G-013",
       "target": "PAT-G-014",
@@ -6973,8 +7274,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "architecture",
-        "para"
+        "para",
+        "architecture"
       ],
       "source": "PAT-G-013",
       "target": "PAT-G-015",
@@ -6985,8 +7286,8 @@
       "weight": 0.5,
       "shared_keywords": [
         "ui",
-        "system",
-        "hardcoded"
+        "hardcoded",
+        "system"
       ],
       "source": "PAT-G-013",
       "target": "PAT-G-016",
@@ -6996,8 +7297,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "architecture",
-        "ui"
+        "ui",
+        "architecture"
       ],
       "source": "PAT-G-013",
       "target": "PAT-G-018",
@@ -7007,8 +7308,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "architecture",
-        "design"
+        "design",
+        "architecture"
       ],
       "source": "PAT-G-013",
       "target": "/rai-story-run",
@@ -7030,8 +7331,8 @@
       "weight": 0.5,
       "shared_keywords": [
         "frontend",
-        "system",
-        "design"
+        "design",
+        "system"
       ],
       "source": "PAT-G-013",
       "target": "arch-design",
@@ -7041,9 +7342,9 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "architecture",
         "para",
-        "prevenir"
+        "prevenir",
+        "architecture"
       ],
       "source": "PAT-G-014",
       "target": "PAT-G-015",
@@ -7053,8 +7354,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "architecture",
-        "ui"
+        "ui",
+        "architecture"
       ],
       "source": "PAT-G-014",
       "target": "PAT-G-018",
@@ -7064,9 +7365,9 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "memory",
         "stack",
-        "modal"
+        "modal",
+        "memory"
       ],
       "source": "PAT-G-015",
       "target": "PAT-G-017",
@@ -7076,8 +7377,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "architecture",
-        "context"
+        "context",
+        "architecture"
       ],
       "source": "PAT-G-015",
       "target": "/rai-discover-document",
@@ -7087,8 +7388,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "pattern",
-        "ui"
+        "ui",
+        "pattern"
       ],
       "source": "PAT-G-016",
       "target": "PAT-G-017",
@@ -7098,8 +7399,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "pattern",
-        "ui"
+        "ui",
+        "pattern"
       ],
       "source": "PAT-G-016",
       "target": "PAT-G-018",
@@ -7109,8 +7410,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "pattern",
-        "ui"
+        "ui",
+        "pattern"
       ],
       "source": "PAT-G-017",
       "target": "PAT-G-018",
@@ -7120,8 +7421,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "pipeline",
-        "build"
+        "build",
+        "pipeline"
       ],
       "source": "PAT-G-020",
       "target": "/rai-discover",
@@ -7131,8 +7432,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "architecture",
-        "review"
+        "review",
+        "architecture"
       ],
       "source": "SES-001",
       "target": "/rai-story-run",
@@ -7142,8 +7443,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "epic",
-        "ses003"
+        "ses003",
+        "epic"
       ],
       "source": "SES-004",
       "target": "SES-005",
@@ -7186,8 +7487,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "governance",
-        "graph"
+        "graph",
+        "governance"
       ],
       "source": "SES-005",
       "target": "/rai-project-create",
@@ -7197,8 +7498,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "governance",
-        "graph"
+        "graph",
+        "governance"
       ],
       "source": "SES-005",
       "target": "/rai-project-onboard",
@@ -7208,8 +7509,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "story",
-        "epic"
+        "epic",
+        "story"
       ],
       "source": "/rai-architecture-review",
       "target": "/rai-epic-close",
@@ -7219,8 +7520,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "epic",
-        "design"
+        "design",
+        "epic"
       ],
       "source": "/rai-architecture-review",
       "target": "/rai-epic-design",
@@ -7230,10 +7531,10 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "story",
+        "design",
         "epic",
         "gates",
-        "design"
+        "story"
       ],
       "source": "/rai-architecture-review",
       "target": "/rai-epic-run",
@@ -7243,9 +7544,9 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "story",
         "scope",
-        "epic"
+        "epic",
+        "story"
       ],
       "source": "/rai-architecture-review",
       "target": "/rai-epic-start",
@@ -7256,10 +7557,10 @@
       "weight": 0.5,
       "shared_keywords": [
         "catches",
-        "miss",
+        "design",
         "gates",
-        "what",
-        "design"
+        "miss",
+        "what"
       ],
       "source": "/rai-architecture-review",
       "target": "/rai-quality-review",
@@ -7269,8 +7570,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "story",
-        "design"
+        "design",
+        "story"
       ],
       "source": "/rai-architecture-review",
       "target": "/rai-story-design",
@@ -7280,9 +7581,9 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "story",
         "design",
-        "using"
+        "using",
+        "story"
       ],
       "source": "/rai-architecture-review",
       "target": "/rai-story-run",
@@ -7292,8 +7593,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "story",
-        "scope"
+        "scope",
+        "story"
       ],
       "source": "/rai-architecture-review",
       "target": "/rai-story-start",
@@ -7314,8 +7615,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "generate",
         "discovery",
+        "generate",
         "docs",
         "architecture"
       ],
@@ -7327,9 +7628,9 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "extract",
         "codebase",
-        "symbols"
+        "symbols",
+        "extract"
       ],
       "source": "/rai-discover",
       "target": "/rai-discover-scan",
@@ -7339,8 +7640,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "discovery",
         "codebase",
+        "discovery",
         "languages"
       ],
       "source": "/rai-discover",
@@ -7351,10 +7652,10 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "architecture",
-        "graph",
         "knowledge",
-        "docs"
+        "graph",
+        "docs",
+        "architecture"
       ],
       "source": "/rai-discover",
       "target": "/rai-docs-update",
@@ -7364,8 +7665,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "graph",
-        "knowledge"
+        "knowledge",
+        "graph"
       ],
       "source": "/rai-discover",
       "target": "/rai-project-create",
@@ -7375,11 +7676,11 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "codebase",
-        "knowledge",
-        "graph",
         "discovery",
-        "detect"
+        "graph",
+        "detect",
+        "codebase",
+        "knowledge"
       ],
       "source": "/rai-discover",
       "target": "/rai-project-onboard",
@@ -7422,9 +7723,9 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "architecture",
         "frontmatter",
-        "docs"
+        "docs",
+        "architecture"
       ],
       "source": "/rai-discover-document",
       "target": "/rai-docs-update",
@@ -7434,9 +7735,9 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "data",
         "loading",
-        "context"
+        "context",
+        "data"
       ],
       "source": "/rai-discover-document",
       "target": "/rai-session-start",
@@ -7446,8 +7747,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "creates",
-        "codebase"
+        "codebase",
+        "creates"
       ],
       "source": "/rai-discover-scan",
       "target": "/rai-discover-start",
@@ -7457,10 +7758,10 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "component",
+        "human",
         "descriptions",
         "using",
-        "human"
+        "component"
       ],
       "source": "/rai-discover-scan",
       "target": "/rai-discover-validate",
@@ -7470,9 +7771,9 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
+        "codebase",
         "discovery",
-        "project",
-        "codebase"
+        "project"
       ],
       "source": "/rai-discover-start",
       "target": "/rai-project-onboard",
@@ -7482,8 +7783,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "initialize",
-        "context"
+        "context",
+        "initialize"
       ],
       "source": "/rai-discover-start",
       "target": "/rai-story-start",
@@ -7515,8 +7816,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "graph",
-        "knowledge"
+        "knowledge",
+        "graph"
       ],
       "source": "/rai-docs-update",
       "target": "/rai-project-create",
@@ -7526,8 +7827,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "graph",
         "knowledge",
+        "graph",
         "existing"
       ],
       "source": "/rai-docs-update",
@@ -7538,8 +7839,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "writes",
-        "inference"
+        "inference",
+        "writes"
       ],
       "source": "/rai-docs-update",
       "target": "/rai-session-close",
@@ -7549,8 +7850,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "architecture",
-        "using"
+        "using",
+        "architecture"
       ],
       "source": "/rai-docs-update",
       "target": "/rai-story-run",
@@ -7571,8 +7872,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "story",
-        "tracking"
+        "tracking",
+        "story"
       ],
       "source": "/rai-epic-close",
       "target": "/rai-epic-plan",
@@ -7582,8 +7883,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "story",
-        "epic"
+        "epic",
+        "story"
       ],
       "source": "/rai-epic-close",
       "target": "/rai-epic-run",
@@ -7594,14 +7895,14 @@
       "weight": 0.5,
       "shared_keywords": [
         "containers",
-        "development",
-        "directly",
-        "story",
-        "epic",
         "epics",
         "branches",
         "logical",
-        "branch"
+        "branch",
+        "development",
+        "directly",
+        "epic",
+        "story"
       ],
       "source": "/rai-epic-close",
       "target": "/rai-epic-start",
@@ -7611,12 +7912,12 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "story",
-        "merge",
-        "update",
+        "tracking",
         "retrospective",
+        "update",
+        "merge",
         "complete",
-        "tracking"
+        "story"
       ],
       "source": "/rai-epic-close",
       "target": "/rai-story-close",
@@ -7638,8 +7939,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "story",
-        "branch"
+        "branch",
+        "story"
       ],
       "source": "/rai-epic-close",
       "target": "/rai-story-start",
@@ -7649,9 +7950,9 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
+        "starting",
         "work",
-        "features",
-        "starting"
+        "features"
       ],
       "source": "/rai-epic-design",
       "target": "/rai-epic-plan",
@@ -7661,8 +7962,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "epic",
-        "design"
+        "design",
+        "epic"
       ],
       "source": "/rai-epic-design",
       "target": "/rai-epic-run",
@@ -7694,8 +7995,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "story",
-        "tracking"
+        "tracking",
+        "story"
       ],
       "source": "/rai-epic-plan",
       "target": "/rai-story-close",
@@ -7716,8 +8017,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "plan",
-        "implementation"
+        "implementation",
+        "plan"
       ],
       "source": "/rai-epic-plan",
       "target": "/rai-story-implement",
@@ -7727,11 +8028,11 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "executable",
-        "dependencies",
         "implementation",
+        "plan",
         "create",
-        "plan"
+        "executable",
+        "dependencies"
       ],
       "source": "/rai-epic-plan",
       "target": "/rai-story-plan",
@@ -7763,8 +8064,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "story",
-        "epic"
+        "epic",
+        "story"
       ],
       "source": "/rai-epic-run",
       "target": "/rai-epic-start",
@@ -7774,8 +8075,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "gates",
-        "design"
+        "design",
+        "gates"
       ],
       "source": "/rai-epic-run",
       "target": "/rai-quality-review",
@@ -7785,9 +8086,9 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
+        "close",
         "lifecycle",
-        "story",
-        "close"
+        "story"
       ],
       "source": "/rai-epic-run",
       "target": "/rai-story-close",
@@ -7797,8 +8098,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "story",
-        "design"
+        "design",
+        "story"
       ],
       "source": "/rai-epic-run",
       "target": "/rai-story-design",
@@ -7808,9 +8109,9 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "plan",
+        "execute",
         "gates",
-        "execute"
+        "plan"
       ],
       "source": "/rai-epic-run",
       "target": "/rai-story-implement",
@@ -7831,21 +8132,21 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "lifecycle",
-        "resumes",
-        "completed",
-        "pause",
+        "profile",
         "start",
-        "story",
+        "design",
         "plan",
-        "phase",
+        "close",
+        "controls",
+        "resumes",
         "behavior",
+        "completed",
+        "lifecycle",
+        "pause",
         "delegation",
         "last",
-        "controls",
-        "profile",
-        "close",
-        "design"
+        "phase",
+        "story"
       ],
       "source": "/rai-epic-run",
       "target": "/rai-story-run",
@@ -7866,10 +8167,10 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "story",
-        "initialize",
+        "branch",
         "scope",
-        "branch"
+        "initialize",
+        "story"
       ],
       "source": "/rai-epic-start",
       "target": "/rai-story-start",
@@ -7890,8 +8191,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "governance",
-        "project"
+        "project",
+        "governance"
       ],
       "source": "/rai-mcp-status",
       "target": "/rai-project-create",
@@ -7901,9 +8202,9 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "governance",
         "detects",
-        "project"
+        "project",
+        "governance"
       ],
       "source": "/rai-mcp-status",
       "target": "/rai-project-onboard",
@@ -7922,15 +8223,15 @@
       "shared_keywords": [
         "content",
         "init",
-        "knowledge",
-        "conversation",
-        "guide",
-        "fills",
-        "governance",
-        "templates",
-        "graph",
         "builds",
-        "project"
+        "graph",
+        "governance",
+        "guide",
+        "project",
+        "templates",
+        "fills",
+        "knowledge",
+        "conversation"
       ],
       "source": "/rai-project-create",
       "target": "/rai-project-onboard",
@@ -7940,10 +8241,10 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
+        "onboarding",
         "graph",
-        "conversational",
         "detects",
-        "onboarding"
+        "conversational"
       ],
       "source": "/rai-project-onboard",
       "target": "/rai-welcome",
@@ -7975,10 +8276,10 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "data",
         "session",
+        "skill",
         "inference",
-        "skill"
+        "data"
       ],
       "source": "/rai-session-close",
       "target": "/rai-session-start",
@@ -7999,9 +8300,9 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "complete",
+        "close",
         "update",
-        "close"
+        "complete"
       ],
       "source": "/rai-story-close",
       "target": "/rai-story-review",
@@ -8011,10 +8312,10 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "lifecycle",
-        "story",
+        "close",
         "review",
-        "close"
+        "lifecycle",
+        "story"
       ],
       "source": "/rai-story-close",
       "target": "/rai-story-run",
@@ -8036,8 +8337,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "story",
-        "design"
+        "design",
+        "story"
       ],
       "source": "/rai-story-design",
       "target": "/rai-story-run",
@@ -8047,8 +8348,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "plan",
-        "implementation"
+        "implementation",
+        "plan"
       ],
       "source": "/rai-story-implement",
       "target": "/rai-story-plan",
@@ -8058,8 +8359,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "complete",
-        "implementation"
+        "implementation",
+        "complete"
       ],
       "source": "/rai-story-implement",
       "target": "/rai-story-review",
@@ -8091,9 +8392,9 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "identify",
+        "implementation",
         "stories",
-        "implementation"
+        "identify"
       ],
       "source": "/rai-story-plan",
       "target": "/rai-story-review",
@@ -8132,10 +8433,10 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "ionic",
         "frontend",
+        "backend",
         "system",
-        "backend"
+        "ionic"
       ],
       "source": "arch-context",
       "target": "arch-design",
@@ -8146,9 +8447,9 @@
       "weight": 0.5,
       "shared_keywords": [
         "script",
+        "frontend",
         "google",
-        "apps",
-        "frontend"
+        "apps"
       ],
       "source": "arch-context",
       "target": "mod-GAS_Server",
@@ -8158,8 +8459,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "persistence",
-        "system"
+        "system",
+        "persistence"
       ],
       "source": "arch-design",
       "target": "mod-Data_Schemas",
@@ -8180,9 +8481,9 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "persistence",
         "without",
-        "coupling"
+        "coupling",
+        "persistence"
       ],
       "source": "mod-Data_Schemas",
       "target": "mod-DB_Layer",
@@ -8266,8 +8567,8 @@
       "type": "related_to",
       "weight": 0.5,
       "shared_keywords": [
-        "simple",
-        "works"
+        "works",
+        "simple"
       ],
       "source": "RAI-VAL-2",
       "target": "RAI-BND-9",
