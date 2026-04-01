@@ -7,7 +7,7 @@ Refactorización Arquitectural Exhaustiva: DataGrid Minimalism, Visibility Flags
 
 1. **[x] S16.1: Governance SSOT & Visibility Flags (S) ✓**
    - *Description:* Mover meta-datos de visualización UI (`showInMenu`, `iconName`) desde `Index.html` (Front) hacia `APP_SCHEMAS.METADATA` (Backend) garantizando una única fuente de verdad topológica.
-2. **[ ] S16.2: Action Router Purification (M)**
+2. **[x] S16.2: Action Router Purification (M) ✓**
    - *Description:* Fragmentar la complejidad de `API_Universal.gs` (>500 LOC) transformándolo en un enrutador ligero que delegue llamados a Action Controllers puros.
 3. **[ ] S16.3: DataGrid Minimalism & Layout Extraction (L)**
    - *Description:* Extraer el motor de búsqueda en-memoria fuera de `DataView_UI.html` hacia su propio módulo, limpiando el `UI_DataGrid` para que sea una interfaz 100% "tonta" enfocada solo en pintado masivo de filas.
