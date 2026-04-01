@@ -4,9 +4,9 @@
 
 ## Session
 
-- **Active Session**: E14-Module Splitting
-- **Last Summary**: Completed Story S14.3. Inverted dependency between SubgridBuilder and FormRenderer_UI using LocalEventBus Publish/Subscribe pattern, eliminating tight coupling and global DOM searches.
-- **Next Focus**: Transition to Story S14.4 (ES6 Syntactic Purity. Template Literals for DataGrid & Promesas para Ionic Modals).
+- **Active Session**: E14-Module Splitting (COMPLETED)
+- **Last Summary**: Completed Story S14.4 (ES6 Syntactic Purity). Upgraded `UI_DataGrid.html` to fully use Template Literals and Arrow Functions, eradicating ES5 `var` and concatenations. Rewrote `UI_ModalManager.html`'s GC pattern to use `try/finally` with `async/await` for foolproof event loop immunity. Epic E14 is fully finalized.
+- **Next Focus**: Transition to a new Epic or close the current session.
 
 ## Patterns
 

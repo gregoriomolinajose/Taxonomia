@@ -54,3 +54,7 @@ _Nota: Todo el parking lot fundacional (Factory Components, Minifiers y QA Sandb
 ### 12. Fallback Defensivo en UI_SubgridBuilder (H2)
 * **Origen:** Arch Review Epic 14 (S14.3).
 * **Acción Causal:** En `UI_SubgridBuilder.html` se ha implementado el Pub/Sub con el LocalEventBus, pero se dejó expuesto un fallback (`else if (typeof window.renderForm)`) protector hacia la macro-función global por retro-compatibilidad. Al estabilizar todos los Componentes e implementarse ES6 estricto, erradicar este amortiguador para forzar obligatoriamente el aprovisionamiento del Hub de Eventos o fallar limpiamente.
+
+### 13. Granularidad Múltiple en DataGrid (H4)
+* **Origen:** Arch Review Epic 14 (S14.4).
+* **Acción Causal:** Tras la migración a ES6 Template Literals, `UI_DataGrid` ha ganado muchísima legibilidad pero retiene gran tamaño (>280 líneas HTML). Evaluar si justificar la fragmentación de sus renderizadores en micro-módulos (`UI_DataGrid_Table.html` y `UI_DataGrid_Grid.html`) excede la directiva de Keep It Simple (KISS) o si aporta valor a futuro para mantenimientos específicos.

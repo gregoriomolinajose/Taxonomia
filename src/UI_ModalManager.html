@@ -25,25 +25,26 @@
                     global.currentFormModal = modalNode;
                     return true;
                 },
-                closeTop: function() {
+                closeTop: async function() {
                     if (stack.length > 0) {
                         const topModal = stack.pop();
-                        // Garantía fuerte de Garbage Collection y S12.3: event listener optimístico
-                        topModal.addEventListener('ionModalDidDismiss', () => {
-                            // [S10.3] Teardown Agresivo: Destrucción topológica inmediata
+                        try {
+                            await topModal.dismiss();
+                        } catch (e) {
+                            // Error silencioso si el modal ya estaba desmontado parcialmente
+                        } finally {
+                            // [S10.3] Teardown Agresivo ahora bloqueado nativamente por la promesa (S14.4)
                             topModal.innerHTML = '';
                             topModal.__onSaveSuccessFallback = null;
                             topModal.remove();
                             console.log(`[GC] Modal Destruido. Nodos Vivos en Stack: ${stack.length}`);
-                        }, { once: true });
-                        
-                        topModal.dismiss().catch(() => {});
-                        
-                        global.currentFormModal = stack.length > 0 ? stack[stack.length - 1] : null;
-                        
-                        // Mutación de estado global (T15)
-                        if (stack.length === 0) {
-                            global.currentEditId = null;
+                            
+                            global.currentFormModal = stack.length > 0 ? stack[stack.length - 1] : null;
+                            
+                            // Mutación de estado global (T15)
+                            if (stack.length === 0) {
+                                global.currentEditId = null;
+                            }
                         }
                     }
                 },
