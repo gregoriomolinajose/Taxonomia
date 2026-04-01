@@ -5,8 +5,8 @@
 ## Session
 
 - **Active Session**: E14-Module Splitting
-- **Last Summary**: Completed Story S14.1. Extracted `UI_FormSubmitter` and `UI_FormStepper` out of `FormRenderer_UI`, migrating the architecture towards granular injection and protecting asynchronous variables like `currentEditId`.
-- **Next Focus**: Transition to Story S14.2 (Native CSS Bundler. Translate `CSS_App.html` to `assets/css`).
+- **Last Summary**: Completed Story S14.2. Extracted CSS logic from HTML into native CSS files (`assets/css/app.css`, `assets/css/design-system.css`) and upgraded `deploy.js` to act as a JIT bundler via CleanCSS, protecting the GAS zero-touch integration. Escaped Theme Manager scripts into `UI_ThemeManager.html`.
+- **Next Focus**: Transition to Story S14.3 (PubSub Topológico. Invertir las dependencias del SubgridBuilder y FormBuilder).
 
 ## Patterns
 
