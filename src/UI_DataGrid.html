@@ -224,7 +224,7 @@
         _badgeClass: function(value) {
             const slug = this._slugify(String(value));
             const map = (window.APP_SCHEMAS && window.APP_SCHEMAS._UI_CONFIG && window.APP_SCHEMAS._UI_CONFIG.badgeMap) || {};
-            return \`dv-badge dv-badge-$\{map[slug] || 'default'}\`;
+            return `dv-badge dv-badge-${map[slug] || 'default'}`;
         },
 
         _formatValue: function(key, value) {
