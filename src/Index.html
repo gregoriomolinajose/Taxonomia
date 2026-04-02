@@ -17,6 +17,12 @@
   <script>
     function triggerWSOD(errDetail) {
       if (!document.body) return; // Prevent before body is ready
+      
+      // S19.4 Telemetry Injection (Fire and Forget)
+      if (window.Telemetry && typeof window.Telemetry.track === 'function') {
+        window.Telemetry.track('SYSTEM_WSOD_FATAL', errDetail, 'FATAL');
+      }
+
       var template = document.getElementById('wsod-mitigator');
       if (template) {
         var clone = template.content.cloneNode(true);
