@@ -22,13 +22,15 @@ function doGet(e) {
   var email = "";
   try {
     if (typeof Session !== 'undefined') email = Session.getActiveUser().getEmail();
-  } catch(e) {}
+  } catch(e) {
+    console.warn("API_Auth: No se pudo resolver la sesión activa.", e);
+  }
   
   var abacContext = typeof Engine_ABAC !== 'undefined' 
       ? Engine_ABAC.resolveTopologyFor(email) 
       : { ownerOf: [], memberOf: [] };
       
-  template.__ABAC_CONTEXT__ = JSON.stringify(abacContext);
+  template.__ABAC_CONTEXT__ = JSON.stringify(abacContext).replace(/</g, '\\u003c');
 
   return template.evaluate()
     .setTitle('Gobierno de Modelo de Producto — EPT OMR')
