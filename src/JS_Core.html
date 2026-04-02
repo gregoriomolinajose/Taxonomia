@@ -26,6 +26,36 @@
     }
   };
 
+  /* ── Telemetry (S19.3 Telemetría y Límites) ──────────── */
+  window.Telemetry = {
+    track: function(action, payload, level) {
+      setTimeout(function() { // Fire and forget para no degradar UI Thread
+        var safeLevel = level || 'INFO';
+        var packet = {
+          timestamp: new Date().toISOString(),
+          level: safeLevel,
+          action: action,
+          payload: payload || {}
+        };
+        
+        // 1. Integración con consola local de desarrollo (Coloreado)
+        if (safeLevel === 'ERROR' || safeLevel === 'FATAL') {
+          console.error('[Telemetry|' + safeLevel + '] ' + action, payload);
+        } else if (safeLevel === 'WARN') {
+          console.warn('[Telemetry|WARN] ' + action, payload);
+        } else {
+          console.info('[Telemetry|INFO] ' + action, payload);
+        }
+
+        // 2. Puerta de enlace con AppEventBus
+        if (window.AppEventBus) {
+          window.AppEventBus.publish('TELEMETRY::TRACK', packet);
+        }
+      }, 0);
+    }
+  };
+
+
   /* ── Dinamic Router (Movido a UI_Router.html en S12.2) ── */
   
   /* ── Sidebar Modes (Movido a UI_Router.html en S12.2) ── */

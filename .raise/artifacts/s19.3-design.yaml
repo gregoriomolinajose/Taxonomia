@@ -1,0 +1,29 @@
+artifact_type: story-design
+version: 1
+skill: rai-story-design
+created: '2026-04-02T15:05:00Z'
+story: 'S19.3'
+epic: 'E19'
+content:
+  summary: 'AppEventBus Telemetry Foundation to standardize error and log routing globally without blocking the UI thread.'
+  complexity: simple
+  acceptance_criteria:
+    - id: AC1
+      description: 'window.Telemetry is safely initialized in JS_Core.html.'
+      verifiable: true
+    - id: AC2
+      description: 'Telemetry.track utilizes AppEventBus internally if available to route telemetry packets.'
+      verifiable: true
+  integration_points:
+    - module: 'app.core.telemetry'
+      change_type: modification
+      files: ['src/JS_Core.html']
+  decisions:
+    - id: D1
+      choice: 'Piggyback on existing window.AppEventBus'
+      rationale: 'Architecture Review revealed AppEventBus already exists in JS_Core.html. Creating a duplicate Pub/Sub specifically for Telemetry violates DRY.'
+      alternatives_considered: ['Create standalone PubSub array', 'Hook external library']
+refs:
+  backlog_item: 'E19-S19.3'
+  epic_scope: 'work/epics/e19-core-framework-resilience/scope.md'
+metadata: {}
