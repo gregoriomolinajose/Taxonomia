@@ -1,0 +1,28 @@
+artifact_type: story-design
+version: 1
+skill: rai-story-design
+created: '2026-04-02T16:02:40Z'
+story: 'S20.3'
+epic: 'E20'
+content:
+  summary: 'Refactorizar UI_ThemeManager para eliminar el "scripting global procedural" y acordonarlo tras un patrón de módulo `window.ThemeManager`. El boot se realizará on-demand vía JS_Core.html, no durante el parseo HTML.'
+  complexity: simple
+  acceptance_criteria:
+    - id: AC1
+      description: 'Ninguna linea de código llama proceduralmente a hydrateThemeConfig en la raiz del script UI_ThemeManager.html.'
+      verifiable: true
+    - id: AC2
+      description: 'El module wrapper `window.ThemeManager` existe y expone `init()`.'
+      verifiable: true
+  integration_points:
+    - module: 'UI_ThemeManager.html'
+      change_type: modification
+      files: ['src/UI_ThemeManager.html']
+  decisions:
+    - id: D1
+      choice: 'Utilizar un Object Literal local (Module Pattern)'
+      rationale: 'Para la etapa actual, compilarlo con esbuild anadiriá fricción si index.html ya injecta nativamente en run-time usando macro tags `<?!= include() ?>`. El Object literal pattern satisface las condiciones organizativas asíncronas.'
+refs:
+  backlog_item: 'E20'
+  epic_scope: 'work/epics/e20-pipeline-evolution/scope.md'
+metadata: {}
