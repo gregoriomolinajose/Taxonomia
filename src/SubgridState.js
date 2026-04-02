@@ -57,7 +57,8 @@ function filterAvailableOptions(allOptions, linkedRecords, pkField, rulesContext
     // [S8.5] UI Dumbness Guards (Topological Pre-Filters)
     if (rulesContext && rulesContext.topologyRules) {
         const rules = rulesContext.topologyRules;
-        const cLevel = Number(rulesContext.currentLevel) || 0;
+        const lvl = Number(rulesContext.currentLevel);
+        const cLevel = isNaN(lvl) ? 0 : lvl;
         const isHijo = rulesContext.relationType === 'hijo';
         const isPadre = rulesContext.relationType === 'padre';
 

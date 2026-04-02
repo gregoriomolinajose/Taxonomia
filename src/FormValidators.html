@@ -22,7 +22,7 @@
             let isValid = true;
 
             inputs.forEach(input => {
-                if (input.getAttribute('required') === 'true' && !input.value) {
+                if (input.getAttribute('required') === 'true' && (input.value === undefined || input.value === null || input.value === '')) {
                     isValid = false;
                     input.classList.add('ion-touched', 'ion-invalid');
                 } else {

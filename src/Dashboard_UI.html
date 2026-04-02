@@ -70,9 +70,11 @@
     var capacityData = [];
     equipos.forEach(function(eq) {
       dynamicFields.forEach(function(f) {
-        dynamicSums[f.name] += parseInt(eq[f.name]) || 0;
+        const parsedFV = parseInt(eq[f.name], 10);
+        dynamicSums[f.name] += isNaN(parsedFV) ? 0 : parsedFV;
       });
-      capacityData.push({ x: eq.nombre_equipo || 'Desconocido', y: parseInt(eq.total_integrantes) || 0 });
+      const capY = parseInt(eq.total_integrantes, 10);
+      capacityData.push({ x: eq.nombre_equipo || 'Desconocido', y: isNaN(capY) ? 0 : capY });
     });
     
     dynamicFields.forEach(function(f) {

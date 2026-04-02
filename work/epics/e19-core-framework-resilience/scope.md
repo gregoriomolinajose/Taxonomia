@@ -20,9 +20,9 @@ Enhance the Taxonomia SPA architecture by injecting defensive programming patter
 - **S19.4**: Global Error Boundaries & Fallback Graceful Degradation.
 
 ## Done Criteria
-- [ ] No warnings about unhandled promises when interacting with UI.
-- [ ] Validations strictly test for undefined/null rather than generic truthiness.
-- [ ] Architecture passes the `rai-quality-review` successfully.
+- [x] No warnings about unhandled promises when interacting with UI.
+- [x] Validations strictly test for undefined/null rather than generic truthiness.
+- [x] Architecture passes the `rai-quality-review` successfully.
 
 ## Implementation Plan & Sequencing
 
@@ -33,7 +33,7 @@ Enhance the Taxonomia SPA architecture by injecting defensive programming patter
 | **2.** | **S19.4: Global Error Boundaries** | ✅ Complete | S19.3 |
 | **3.** | **S19.5: Telemetry Payload Sanitization** | ✅ Complete | S19.3 |
 | **4.** | **S19.2: Defusing Floating Promises** | ✅ Complete | S19.4 |
-| **5.** | **S19.1: Truthiness Refactoring** | Value delivery. Resolves falsy coercion bugs in specific components. | None |
+| **5.** | **S19.1: Truthiness Refactoring** | ✅ Complete | None |
 
 ### Milestones
 - **M1: Core Observability (Walking Skeleton)**

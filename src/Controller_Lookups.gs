@@ -55,7 +55,7 @@ function getDominioOptions() {
         id: row.id_dominio,
         value: row.id_dominio,
         label: `[N${row.nivel_tipo}] ${row.n0_es}`, // UX: Mostrar nivel en el dropdown visualmente
-        nivel_tipo: Number(row.nivel_tipo) || 0,
+        nivel_tipo: isNaN(Number(row.nivel_tipo)) ? 0 : Number(row.nivel_tipo),
         hasActiveParent: !!hasActiveParentMap[row.id_dominio]
       }));
       
