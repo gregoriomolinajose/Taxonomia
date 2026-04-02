@@ -1,6 +1,6 @@
 # Epic 20: Pipeline Evolution & Native Tooling
 
-> **Status:** 🚧 In Progress
+> **Status:** ✅ Done
 > **Origen:** Consolidación de Deuda Técnica (Post-Epic 18)
 
 ## 📌 Contexto
@@ -20,7 +20,7 @@ La carga estructural en `deploy.js` es inostenible mediante abstracciones basada
    - Delegar control de exclusiones `.build/assets` directamente a `.claspignore`.
    - Mover la configuración `_UI_CONFIG` a repositorios localizados frontend.
 
-3. **[ ] S20.3: ES6 ThemeManager Evolution**
+3. **[x] S20.3: ES6 ThemeManager Evolution**
    - Mutar el comportamiento procedural en `hydrateThemeConfig()` hacia un módulo orquestado.
 
 ## Implementation Plan
@@ -45,4 +45,4 @@ La carga estructural en `deploy.js` es inostenible mediante abstracciones basada
 |-------|:----:|--------|--------|----------|-------|
 | S20.1 | S | Done | S | 100% | Esbuild integrated locally safely |
 | S20.2 | S | Done | S | 100% | UI_CONFIG moved locally, claspignore controls css |
-| S20.3 |  | Pending|  |  | |
+| S20.3 | S | Done | S | 100% | Procedural logic dropped |
