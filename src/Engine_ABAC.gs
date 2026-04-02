@@ -4,6 +4,24 @@
  */
 
 const Engine_ABAC = {
+  // Caché efímera que sobrevive únicamente durante el tiempo de ejecución de la petición actual
+  _requestCache: {},
+  
+  _getCachedData: function(entityName) {
+    if (!this._requestCache[entityName]) {
+      this._requestCache[entityName] = Engine_DB.readAll(entityName) || [];
+    }
+    return this._requestCache[entityName];
+  },
+
+  _getCachedTopology: function(email) {
+    const key = "topology_" + email;
+    if (!this._requestCache[key]) {
+      this._requestCache[key] = this.resolveTopologyFor(email);
+    }
+    return this._requestCache[key];
+  },
+
   /**
    * Procesa la Taxonomía para un email dado y devuelve los Nodos de los que es Dueño
    * o Miembro.
@@ -14,8 +32,8 @@ const Engine_ABAC = {
     if (!email) return { ownerOf: [], memberOf: [] };
     
     // 1. Obtener la Persona (Identidad) asociada al Correo
-    // Se extrae directamente de la base de datos o caché principal de 'Persona'
-    const personas = Engine_DB.readAll('Persona') || [];
+    // Se extrae desde la caché efímera
+    const personas = this._getCachedData('Persona');
     const _email = email.trim().toLowerCase();
     const persona = personas.find(p => (p.correo || "").toLowerCase() === _email);
     
@@ -34,8 +52,8 @@ const Engine_ABAC = {
     // 2. Extraer todos los Nodos posibles
     // Esto se mejoraría en S18.3 subiendo los árboles (Hierarchical Escalation).
     // Por ahora iteramos todos los Equipos y Trenes (S18.1: Nodos Principales)
-    const equipos = Engine_DB.readAll('Equipo') || [];
-    const trenes = Engine_DB.readAll('Tren') || [];
+    const equipos = this._getCachedData('Equipo');
+    const trenes = this._getCachedData('Tren');
     
     // Buscar pertenencia directa y propiedad:
     // a) Equipos
@@ -86,7 +104,7 @@ const Engine_ABAC = {
     // Ignorar sistema y lecturas para este Firewall de mutaciones
     if (action === 'read') return true;
     
-    const personas = Engine_DB.readAll('Persona') || [];
+    const personas = this._getCachedData('Persona');
     const _email = email.trim().toLowerCase();
     const persona = personas.find(p => (p.correo || "").toLowerCase() === _email);
     
@@ -101,7 +119,7 @@ const Engine_ABAC = {
     // Si la persona no tiene rol explícito asignado, opera el principio de Mínimo Privilegio (Solo Lectura)
     if (!roleId) return false;
     
-    const permisos = Engine_DB.readAll('Sys_Permissions') || [];
+    const permisos = this._getCachedData('Sys_Permissions');
     // Cruza exacto de ABAC
     const rule = permisos.find(p => p.id_rol === roleId && p.schema_destino === entityName);
     
@@ -120,7 +138,7 @@ const Engine_ABAC = {
     
     // Evaluaciones Topológicas de Frontera (ABAC Contextual)
     if (action === 'update' || action === 'delete') {
-      const topology = this.resolveTopologyFor(email);
+      const topology = this._getCachedTopology(email);
       
       if (nivel.startsWith("OWNER_ONLY")) {
         return topology.ownerOf.includes(targetId);
