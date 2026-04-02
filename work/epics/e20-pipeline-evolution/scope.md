@@ -16,7 +16,7 @@ La carga estructural en `deploy.js` es inostenible mediante abstracciones basada
    - Reemplazar regex en `deploy.js` por transpiladores estándar para el minificado CSS.
    - Separar el código nativo CSS del index de Gas.
 
-2. **[ ] S20.2: Arquitecturización de Asset Management**
+2. **[x] S20.2: Arquitecturización de Asset Management**
    - Delegar control de exclusiones `.build/assets` directamente a `.claspignore`.
    - Mover la configuración `_UI_CONFIG` a repositorios localizados frontend.
 
@@ -44,5 +44,5 @@ La carga estructural en `deploy.js` es inostenible mediante abstracciones basada
 | Story | Size | Status | Actual | Velocity | Notes |
 |-------|:----:|--------|--------|----------|-------|
 | S20.1 | S | Done | S | 100% | Esbuild integrated locally safely |
-| S20.2 |  | Pending|  |  | |
+| S20.2 | S | Done | S | 100% | UI_CONFIG moved locally, claspignore controls css |
 | S20.3 |  | Pending|  |  | |
