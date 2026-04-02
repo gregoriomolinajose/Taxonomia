@@ -4,6 +4,24 @@
  */
 
 const Engine_ABAC = {
+  // Caché efímera que sobrevive únicamente durante el tiempo de ejecución de la petición actual
+  _requestCache: {},
+  
+  _getCachedData: function(entityName) {
+    if (!this._requestCache[entityName]) {
+      this._requestCache[entityName] = Engine_DB.readAll(entityName) || [];
+    }
+    return this._requestCache[entityName];
+  },
+
+  _getCachedTopology: function(email) {
+    const key = "topology_" + email;
+    if (!this._requestCache[key]) {
+      this._requestCache[key] = this.resolveTopologyFor(email);
+    }
+    return this._requestCache[key];
+  },
+
   /**
    * Procesa la Taxonomía para un email dado y devuelve los Nodos de los que es Dueño
    * o Miembro.
@@ -14,8 +32,8 @@ const Engine_ABAC = {
     if (!email) return { ownerOf: [], memberOf: [] };
     
     // 1. Obtener la Persona (Identidad) asociada al Correo
-    // Se extrae directamente de la base de datos o caché principal de 'Persona'
-    const personas = Engine_DB.readAll('Persona') || [];
+    // Se extrae desde la caché efímera
+    const personas = this._getCachedData('Persona');
     const _email = email.trim().toLowerCase();
     const persona = personas.find(p => (p.correo || "").toLowerCase() === _email);
     
@@ -34,8 +52,8 @@ const Engine_ABAC = {
     // 2. Extraer todos los Nodos posibles
     // Esto se mejoraría en S18.3 subiendo los árboles (Hierarchical Escalation).
     // Por ahora iteramos todos los Equipos y Trenes (S18.1: Nodos Principales)
-    const equipos = Engine_DB.readAll('Equipo') || [];
-    const trenes = Engine_DB.readAll('Tren') || [];
+    const equipos = this._getCachedData('Equipo');
+    const trenes = this._getCachedData('Tren');
     
     // Buscar pertenencia directa y propiedad:
     // a) Equipos
@@ -67,6 +85,76 @@ const Engine_ABAC = {
     abacContext.memberOf = [...new Set(abacContext.memberOf)];
 
     return abacContext;
+  },
+
+  /**
+   * Middleware de Validación (Guard)
+   * Evalúa si un usuario tiene privilegios para realizar una acción CUD sobre una entidad.
+   * Depende jerárquicamente de las reglas dictadas en Sys_Permissions.
+   * 
+   * @param {string} email - Identidad del usuario
+   * @param {string} action - 'create', 'update', 'delete'
+   * @param {string} entityName - Nombre de la entidad (ej. 'Equipo', 'Grupo_Productos')
+   * @param {string} targetId - ID del registro que será mutado (en caso de update/delete)
+   * @returns {boolean} true si la acción está permitida, false abortará la I/O
+   */
+  validatePermission: function(email, action, entityName, targetId) {
+    if (!email) return false;
+    
+    // Ignorar sistema y lecturas para este Firewall de mutaciones
+    if (action === 'read') return true;
+    
+    const personas = this._getCachedData('Persona');
+    const _email = email.trim().toLowerCase();
+    const persona = personas.find(p => (p.correo || "").toLowerCase() === _email);
+    
+    // Usuario desconocido -> Fail Close estricto (Zero Match)
+    if (!persona) {
+      // Todo usuario debe tener representación en la BD para mutar.
+      return false;
+    }
+    
+    const roleId = persona.id_rol; 
+    
+    // Si la persona no tiene rol explícito asignado, opera el principio de Mínimo Privilegio (Solo Lectura)
+    if (!roleId) return false;
+    
+    const permisos = this._getCachedData('Sys_Permissions');
+    // Cruza exacto de ABAC
+    const rule = permisos.find(p => p.id_rol === roleId && p.schema_destino === entityName);
+    
+    // S18.2: Regla Opcional Bypass. Si no hay regla Matrix definida explícitamente para esta entidad, 
+    // somos tolerantes y permitimos el flujo clásico (Graceful Degradation de Gobernanza)
+    if (!rule) {
+      return true;
+    }
+    
+    const nivel = rule.nivel_acceso || "NONE (Denegado)";
+    
+    // Aserciones Directas Base
+    if (nivel.startsWith("ALL")) return true;
+    if (nivel.startsWith("NONE")) return false;
+    if (nivel.startsWith("READ_ONLY")) return false; 
+    
+    // Evaluaciones Topológicas de Frontera (ABAC Contextual)
+    if (action === 'update' || action === 'delete') {
+      const topology = this._getCachedTopology(email);
+      
+      if (nivel.startsWith("OWNER_ONLY")) {
+        return topology.ownerOf.includes(targetId);
+      }
+      if (nivel.startsWith("MEMBER_ONLY")) {
+        return topology.memberOf.includes(targetId) || topology.ownerOf.includes(targetId);
+      }
+    }
+    
+    // Para un CREATE topológico, basta que el rol dicte 'OWNER' o 'MEMBER' a nivel global estructural.
+    // (Ej. Un Scrum Master puede crear un equipo si es un "Owner").
+    if (action === 'create') {
+        if (nivel.startsWith("OWNER") || nivel.startsWith("MEMBER")) return true;
+    }
+    
+    return false; // Default safe closed
   }
 };
 

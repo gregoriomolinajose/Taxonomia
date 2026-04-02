@@ -6,11 +6,32 @@
  */
 
 /**
+ * _guardAbac (Middleware Interno)
+ * Dispara una Excepción 403 si Engine_ABAC resuelve que el usuario no tiene los privilegios
+ * topológicos correspondientes (OWNER, MEMBER).
+ */
+function _guardAbac(action, entityName, targetId) {
+  if (typeof Engine_ABAC === 'undefined') return;
+  let email = ""; // Cerrado por defecto (Fail-Close Security)
+  try {
+     if (typeof Session !== 'undefined') email = Session.getActiveUser().getEmail();
+  } catch(e) {
+     console.warn("[Gobernanza] Error resolviendo identidad activa.", e);
+  }
+  
+  const isAllowed = Engine_ABAC.validatePermission(email, action, entityName, targetId);
+  if (!isAllowed) {
+     throw new Error("ABAC_403_FORBIDDEN: Carece de privilegios gubernamentales («" + action + "» sobre " + entityName + "). Su rol de seguridad no le permite alterar este nodo.");
+  }
+}
+
+/**
  * _handleRead
  * Retorna todos los registros de una entidad desde Engine_DB.list.
  * @returns {{ headers: string[], rows: Object[] }}
  */
 function _handleRead(entityName) {
+  // Las lecturas son permitidas por defecto (Visibilidad completa del Grafo)
   return Engine_DB.list(entityName);
 }
 
@@ -19,7 +40,7 @@ function _handleRead(entityName) {
  * Llama a Engine_DB (la inyección de auditoría ocurre en Adapter_Sheets).
  */
 function _handleCreate(entityName, payload) {
-  // Llamar al motor agnóstico
+  _guardAbac('create', entityName, null);
   const result = Engine_DB.create(entityName, payload);
   return result;
 }
@@ -29,6 +50,7 @@ function _handleCreate(entityName, payload) {
  * Llama a Engine_DB (la inyección de auditoría ocurre en Adapter_Sheets).
  */
 function _handleUpdate(entityName, id, payload) {
+  _guardAbac('update', entityName, id);
   const result = Engine_DB.update(entityName, id, payload);
   return result;
 }
@@ -38,6 +60,7 @@ function _handleUpdate(entityName, id, payload) {
  * Llama a Engine_DB.delete() para un borrado logico.
  */
 function _handleDelete(entityName, id) {
+  _guardAbac('delete', entityName, id);
   const result = Engine_DB.delete(entityName, id);
   return result;
 }
@@ -208,6 +231,7 @@ function bulkInsert(entityName, recordsArray) {
         
         // Es un UPDATE
         if (recordId && existingMap.hasOwnProperty(recordId)) {
+            _guardAbac('update', entityName, recordId);
             const rowIndex = existingMap[recordId];
             
             // Mantener datos de creación originales
@@ -225,6 +249,7 @@ function bulkInsert(entityName, recordsArray) {
         } 
         // Es un INSERT
         else {
+            _guardAbac('create', entityName, null);
             const newId = recordId || _generateShortUUID(entityName);
             record[pkField] = newId; 
             record.created_at = timestamp;
