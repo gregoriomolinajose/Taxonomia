@@ -82,14 +82,25 @@
 
             // Header Nativo del Modal
             const header = document.createElement('ion-header');
-            header.innerHTML = `
-              <ion-toolbar>
-                <ion-title>Taxonomia: ${window.formatEntityName(entityName)}</ion-title>
-                <ion-buttons slot="end">
-                  <ion-button onclick="if(window.AppEventBus) { window.AppEventBus.publish('MODAL::CLOSE_REQUEST'); } else if(window._closeTopModal) { window._closeTopModal(); }">Cerrar</ion-button>
-                </ion-buttons>
-              </ion-toolbar>
-            `;
+            const toolbar = document.createElement('ion-toolbar');
+            
+            const title = document.createElement('ion-title');
+            title.textContent = `Taxonomia: ${window.formatEntityName(entityName)}`;
+            
+            const buttons = document.createElement('ion-buttons');
+            buttons.setAttribute('slot', 'end');
+            
+            const closeBtn = document.createElement('ion-button');
+            closeBtn.textContent = 'Cerrar';
+            closeBtn.addEventListener('click', () => {
+                if(window.AppEventBus) { window.AppEventBus.publish('MODAL::CLOSE_REQUEST'); } 
+                else if(window._closeTopModal) { window._closeTopModal(); }
+            });
+            
+            buttons.appendChild(closeBtn);
+            toolbar.appendChild(title);
+            toolbar.appendChild(buttons);
+            header.appendChild(toolbar);
             modal.appendChild(header);
 
             // Reemplazamos 'container' por el Content Nativo
@@ -221,15 +232,13 @@
 
             if (headerTitle) headerTitle.textContent = (global.currentEditId ? "Editar: " : "Nuevo: ") + window.formatEntityName(entityName);
             if (backBtn) {
-                backBtn.style.display = 'block';
+                backBtn.classList.remove('ion-hide');
                 // Enrutamiento de la Flecha de Retroceso (Back Button) -> DataView
                 backBtn.onclick = function() {
                     // Limpieza proactiva del formulario actual
-                    while (container.firstChild) container.removeChild(container.firstChild);
-                    if (window.DataViewEngine) {
-                        window.DataViewEngine.render(entityName, 'app-container');
-                    } else if (window.UI_Router && typeof window.UI_Router.returnToDashboard === 'function') {
-                        window.UI_Router.returnToDashboard();
+                    window.DOM.clear(container);
+                    if (window.AppEventBus) {
+                        window.AppEventBus.publish('NAV::CHANGE', {viewType: 'dataview', entityKey: entityName});
                     }
                 };
             }
@@ -261,18 +270,30 @@
             const btnPrev = document.createElement('ion-button');
             btnPrev.setAttribute('fill', 'clear');
             btnPrev.setAttribute('color', 'medium');
-            btnPrev.innerHTML = '<ion-icon slot="start" name="arrow-back-outline"></ion-icon> Anterior';
+            const iconPrev = document.createElement('ion-icon');
+            iconPrev.setAttribute('slot', 'start');
+            iconPrev.setAttribute('name', 'arrow-back-outline');
+            btnPrev.appendChild(iconPrev);
+            btnPrev.appendChild(document.createTextNode(' Anterior'));
 
             const btnNext = document.createElement('ion-button');
             btnNext.setAttribute('shape', 'round');
             btnNext.setAttribute('color', 'primary');
             btnNext.setAttribute('fill', 'outline');
-            btnNext.innerHTML = 'Siguiente <ion-icon slot="end" name="arrow-forward-outline"></ion-icon>';
+            btnNext.appendChild(document.createTextNode('Siguiente '));
+            const iconNext = document.createElement('ion-icon');
+            iconNext.setAttribute('slot', 'end');
+            iconNext.setAttribute('name', 'arrow-forward-outline');
+            btnNext.appendChild(iconNext);
 
             const submitBtn = document.createElement('ion-button');
             submitBtn.setAttribute('shape', 'round');
             submitBtn.setAttribute('color', 'primary');
-            submitBtn.innerHTML = '<ion-icon slot="start" name="save-outline"></ion-icon> Guardar ' + window.formatEntityName(entityName);
+            const iconSave = document.createElement('ion-icon');
+            iconSave.setAttribute('slot', 'start');
+            iconSave.setAttribute('name', 'save-outline');
+            submitBtn.appendChild(iconSave);
+            submitBtn.appendChild(document.createTextNode(' Guardar ' + window.formatEntityName(entityName)));
 
             // Progressive Disclosure (Rule 5.1)
             const extractedSections = [...new Set(fields.filter(f => f.section).map(f => f.section))];
@@ -379,12 +400,12 @@
             
             const colLeft = document.createElement('ion-col');
             colLeft.setAttribute('size', '6');
-            colLeft.style.display = 'flex';
+            colLeft.classList.remove('ion-hide');
             colLeft.style.justifyContent = 'flex-start';
             
             const colRight = document.createElement('ion-col');
             colRight.setAttribute('size', '6');
-            colRight.style.display = 'flex';
+            colRight.classList.remove('ion-hide');
             colRight.style.justifyContent = 'flex-end';
             colRight.style.gap = 'var(--spacing-3)';
 

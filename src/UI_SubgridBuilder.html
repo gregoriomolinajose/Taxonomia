@@ -2,6 +2,7 @@
 /**
  * Factoría dedicada a la inyección y ciclo de vida de Subgrids M:N interactivos.
  * Extraída de FormRenderer_UI.html en la S13.1 (SRP & Clean Code).
+ * S18.5 (Declarative): Migrado al paradigma PURE NODAL (cero innerHTML ni XSS persistente).
  */
 window.UI_SubgridBuilder = {
     /**
@@ -22,16 +23,26 @@ window.UI_SubgridBuilder = {
         const header = document.createElement('div');
         header.style.background = 'var(--ion-color-light)';
         header.style.padding = 'var(--spacing-2) var(--spacing-4)';
-        header.style.display = 'flex';
+        header.classList.remove('ion-hide');
         header.style.justifyContent = 'space-between';
         header.style.alignItems = 'center';
-        header.innerHTML = `<strong style="color:var(--ion-color-dark)">${field.label}</strong>`;
+        
+        const headerTitle = document.createElement('strong');
+        headerTitle.style.color = 'var(--ion-color-dark)';
+        headerTitle.textContent = field.label;
+        header.appendChild(headerTitle);
 
         const addBtn = document.createElement('ion-button');
         addBtn.setAttribute('size', 'small');
         addBtn.setAttribute('fill', 'clear');
-        addBtn.innerHTML = '<ion-icon slot="start" name="add-outline"></ion-icon> Agregar';
+        
+        const addIcon = document.createElement('ion-icon');
+        addIcon.setAttribute('slot', 'start');
+        addIcon.setAttribute('name', 'add-outline');
+        addBtn.appendChild(addIcon);
+        addBtn.appendChild(document.createTextNode(' Agregar'));
         header.appendChild(addBtn);
+        
         subgridDiv.appendChild(header);
 
         // Body (Lista)
@@ -43,8 +54,18 @@ window.UI_SubgridBuilder = {
         const emptyState = document.createElement('div');
         emptyState.style.padding = 'var(--spacing-5)';
         emptyState.style.textAlign = 'center';
-        emptyState.innerHTML = `<ion-icon name="layers-outline" color="medium" style="font-size:var(--sys-font-display)"></ion-icon><p style="color:var(--ion-color-medium); font-size:12px">Sin registros vinculados</p>`;
-        list.appendChild(emptyState);
+        
+        const emptyIcon = document.createElement('ion-icon');
+        emptyIcon.setAttribute('name', 'layers-outline');
+        emptyIcon.setAttribute('color', 'medium');
+        emptyIcon.style.fontSize = 'var(--sys-font-display)';
+        emptyState.appendChild(emptyIcon);
+        
+        const emptyText = document.createElement('p');
+        emptyText.style.color = 'var(--ion-color-medium)';
+        emptyText.style.fontSize = '12px';
+        emptyText.textContent = 'Sin registros vinculados';
+        emptyState.appendChild(emptyText);
 
         // Estado local del subgrid
         // Hydration check: if data[field.name] exists, use it
@@ -54,35 +75,47 @@ window.UI_SubgridBuilder = {
         window.__APP_CACHE__.nestedData[field.name] = childRecords;
 
         const _refreshList = () => {
-            list.innerHTML = '';
+            window.DOM.clear(list);
             if (childRecords.length === 0) {
                 list.appendChild(emptyState);
                 return;
             }
             childRecords.forEach((record, idx) => {
                 const item = document.createElement('ion-item');
-                item.innerHTML = `
-                    <ion-label>
-                        <h2>${record.nombre || 'Sin nombre'}</h2>
-                        <p>${record.estado || 'Nuevo'}</p>
-                    </ion-label>
-                    <ion-button slot="end" fill="clear" color="danger" id="del-${idx}">
-                        <ion-icon name="trash-outline"></ion-icon>
-                    </ion-button>
-                `;
-                list.appendChild(item);
-                item.querySelector(`#del-${idx}`).onclick = () => {
+                
+                const labelWrapper = document.createElement('ion-label');
+                const h2 = document.createElement('h2');
+                h2.textContent = record.nombre || 'Sin nombre';
+                const p = document.createElement('p');
+                p.textContent = record.estado || 'Nuevo';
+                labelWrapper.appendChild(h2);
+                labelWrapper.appendChild(p);
+                
+                const delBtn = document.createElement('ion-button');
+                delBtn.setAttribute('slot', 'end');
+                delBtn.setAttribute('fill', 'clear');
+                delBtn.setAttribute('color', 'danger');
+                
+                const delIcon = document.createElement('ion-icon');
+                delIcon.setAttribute('name', 'trash-outline');
+                delBtn.appendChild(delIcon);
+                
+                delBtn.addEventListener('click', () => {
                     childRecords.splice(idx, 1);
                     _refreshList();
-                };
+                });
+                
+                item.appendChild(labelWrapper);
+                item.appendChild(delBtn);
+                list.appendChild(item);
             });
         };
 
         // Initial hydration
         _refreshList();
 
-        addBtn.onclick = async () => {
-            // Optimized UX: Select OR Create
+        addBtn.addEventListener('click', async () => {
+            // Optimized UX: Select OR Create PURE NODAL MODAL
             const modal = document.createElement('ion-modal');
             const modalId = 'modal-' + field.name;
             modal.id = modalId;
@@ -136,41 +169,110 @@ window.UI_SubgridBuilder = {
 
             console.log(`[FormEngine] Sincronizando modal para ${field.targetEntity}. IDs vinculados: ${childRecords.length}. Disponibles: ${availableOptions.length}`);
 
-            modal.innerHTML = `
-                <ion-header>
-                    <ion-toolbar color="primary">
-                        <ion-title>Seleccionar ${field.label}</ion-title>
-                        <ion-buttons slot="end">
-                            <ion-button style="color: var(--ion-color-primary-contrast);" fill="clear" onclick="const m = document.getElementById('${modalId}'); m.dismiss().then(() => m.remove())">Cerrar</ion-button>
-                        </ion-buttons>
-                    </ion-toolbar>
-                </ion-header>
-                <ion-content>
-                    <ion-list>
-                        <ion-item button id="btn-create-new" lines="full" color="light">
-                            <ion-icon name="add-circle-outline" slot="start" color="primary"></ion-icon>
-                            <ion-label color="primary"><strong>+ Crear Nuevo ${field.label.replace(/s de /i, ' de ').replace(/s$/i, '').replace(/Grupos/i, 'Grupo')}</strong></ion-label>
-                        </ion-item>
-                        
-                        <ion-item-divider>
-                            <ion-label>Registros Existentes</ion-label>
-                        </ion-item-divider>
+            // NODAL MODAL ASSEMBLY
+            const mHeader = document.createElement('ion-header');
+            const mToolbar = document.createElement('ion-toolbar');
+            mToolbar.setAttribute('color', 'primary');
+            
+            const mTitle = document.createElement('ion-title');
+            mTitle.textContent = `Seleccionar ${field.label}`;
+            mToolbar.appendChild(mTitle);
+            
+            const mButtons = document.createElement('ion-buttons');
+            mButtons.setAttribute('slot', 'end');
+            
+            const btnClose = document.createElement('ion-button');
+            btnClose.style.color = 'var(--ion-color-primary-contrast)';
+            btnClose.setAttribute('fill', 'clear');
+            btnClose.textContent = 'Cerrar';
+            btnClose.addEventListener('click', () => {
+                modal.dismiss().then(() => modal.remove());
+            });
+            mButtons.appendChild(btnClose);
+            mToolbar.appendChild(mButtons);
+            mHeader.appendChild(mToolbar);
+            modal.appendChild(mHeader);
 
-                        ${availableOptions.length === 0 ? '<ion-item><ion-label color="medium">No hay más registros disponibles</ion-label></ion-item>' : ''}
-                               ${availableOptions.map(opt => `
-                            <ion-item button class="lookup-option" data-value="${opt.value}" data-label="${opt.label}" onclick="const cb = this.querySelector('ion-checkbox'); cb.checked = !cb.checked; this.dispatchEvent(new CustomEvent('selectionChange'))">
-                                <ion-label>${opt.label}</ion-label>
-                                <ion-checkbox slot="end"></ion-checkbox>
-                            </ion-item>
-                        `).join('')}
-                    </ion-list>
-                </ion-content>
-                <ion-footer>
-                    <ion-toolbar>
-                        <ion-button expand="block" id="btn-confirm-selection" disabled>Vincular Seleccionados (0)</ion-button>
-                    </ion-toolbar>
-                </ion-footer>
-            `;
+            const mContent = document.createElement('ion-content');
+            const mList = document.createElement('ion-list');
+            
+            const itemCreate = document.createElement('ion-item');
+            itemCreate.setAttribute('button', 'true');
+            itemCreate.id = 'btn-create-new';
+            itemCreate.setAttribute('lines', 'full');
+            itemCreate.setAttribute('color', 'light');
+            
+            const iconCreate = document.createElement('ion-icon');
+            iconCreate.setAttribute('name', 'add-circle-outline');
+            iconCreate.setAttribute('slot', 'start');
+            iconCreate.setAttribute('color', 'primary');
+            itemCreate.appendChild(iconCreate);
+            
+            const labelCreate = document.createElement('ion-label');
+            labelCreate.setAttribute('color', 'primary');
+            const strongCreate = document.createElement('strong');
+            strongCreate.textContent = `+ Crear Nuevo ${field.label.replace(/s de /i, ' de ').replace(/s$/i, '').replace(/Grupos/i, 'Grupo')}`;
+            labelCreate.appendChild(strongCreate);
+            itemCreate.appendChild(labelCreate);
+            
+            mList.appendChild(itemCreate);
+            
+            const divider = document.createElement('ion-item-divider');
+            const divLabel = document.createElement('ion-label');
+            divLabel.textContent = 'Registros Existentes';
+            divider.appendChild(divLabel);
+            mList.appendChild(divider);
+
+            if (availableOptions.length === 0) {
+                const itemEmpty = document.createElement('ion-item');
+                const labelEmpty = document.createElement('ion-label');
+                labelEmpty.setAttribute('color', 'medium');
+                labelEmpty.textContent = 'No hay más registros disponibles';
+                itemEmpty.appendChild(labelEmpty);
+                mList.appendChild(itemEmpty);
+            } else {
+                availableOptions.forEach(opt => {
+                    const itemOpt = document.createElement('ion-item');
+                    itemOpt.setAttribute('button', 'true');
+                    itemOpt.className = 'lookup-option';
+                    itemOpt.dataset.value = String(opt.value);
+                    itemOpt.dataset.label = String(opt.label);
+                    
+                    const lblOpt = document.createElement('ion-label');
+                    lblOpt.textContent = opt.label;
+                    itemOpt.appendChild(lblOpt);
+                    
+                    const cbOpt = document.createElement('ion-checkbox');
+                    cbOpt.setAttribute('slot', 'end');
+                    itemOpt.appendChild(cbOpt);
+                    
+                    itemOpt.addEventListener('click', (e) => {
+                        // Evitar que el checkbox nativo y nuestro click se pisen
+                        if (e.target.tagName !== 'ION-CHECKBOX') {
+                            cbOpt.checked = !cbOpt.checked;
+                        }
+                        itemOpt.dispatchEvent(new CustomEvent('selectionChange'));
+                    });
+                    
+                    mList.appendChild(itemOpt);
+                });
+            }
+            
+            mContent.appendChild(mList);
+            modal.appendChild(mContent);
+            
+            const mFooter = document.createElement('ion-footer');
+            const mfToolbar = document.createElement('ion-toolbar');
+            
+            const btnConfirm = document.createElement('ion-button');
+            btnConfirm.setAttribute('expand', 'block');
+            btnConfirm.id = 'btn-confirm-selection';
+            btnConfirm.disabled = true;
+            btnConfirm.textContent = 'Vincular Seleccionados (0)';
+            
+            mfToolbar.appendChild(btnConfirm);
+            mFooter.appendChild(mfToolbar);
+            modal.appendChild(mFooter);
 
             document.body.appendChild(modal);
             
@@ -183,27 +285,22 @@ window.UI_SubgridBuilder = {
             await modal.present();
 
             // Logic for selection
-            const checkboxes = modal.querySelectorAll('ion-checkbox');
-            const confirmBtn = modal.querySelector('#btn-confirm-selection');
-            let selectedCount = 0;
-
             const optionsItems = modal.querySelectorAll('.lookup-option');
             optionsItems.forEach(item => {
                 item.addEventListener('selectionChange', () => {
                     const allCbs = Array.from(modal.querySelectorAll('ion-checkbox'));
                     const checked = allCbs.filter(c => c.checked).length;
-                    confirmBtn.innerText = `Vincular Seleccionados (${checked})`;
-                    confirmBtn.disabled = checked === 0;
+                    btnConfirm.textContent = `Vincular Seleccionados (${checked})`;
+                    btnConfirm.disabled = checked === 0;
                 });
             });
 
-            modal.querySelector('#btn-confirm-selection').onclick = () => {
-                const items = modal.querySelectorAll('.lookup-option');
-                items.forEach(item => {
+            btnConfirm.addEventListener('click', () => {
+                optionsItems.forEach(item => {
                     const cb = item.querySelector('ion-checkbox');
-                    if (cb.checked) {
-                        const val = item.getAttribute('data-value');
-                        const lab = item.getAttribute('data-label');
+                    if (cb && cb.checked) {
+                        const val = item.dataset.value;
+                        const lab = item.dataset.label;
                         
                         childRecords.push({
                             [childPK]: val,
@@ -214,9 +311,9 @@ window.UI_SubgridBuilder = {
                 });
                 _refreshList();
                 modal.dismiss().then(() => modal.remove());
-            };
+            });
 
-            modal.querySelector('#btn-create-new').onclick = async () => {
+            itemCreate.addEventListener('click', async () => {
                 // In-Line Creation via Modal Stack
                 // Desmontamos el Subgrid Picker
                 modal.dismiss().then(() => modal.remove());
@@ -248,9 +345,10 @@ window.UI_SubgridBuilder = {
                 } else {
                     console.warn(`[UI_SubgridBuilder] No EventBus provided. Cannot open subform for ${field.targetEntity}`);
                 }
-            };
-        };
+            });
+        });
 
+        // Aseguramos que antes de retornar el modal esté instanciado en el layout (esto sigue sin cambiar la refactorización purista)
         container.appendChild(subgridDiv);
     }
 };

@@ -43,7 +43,7 @@ window.UI_FormStepper = class UI_FormStepper {
         this.steps.forEach((stepName, index) => {
             const stepDiv = document.createElement('div');
             stepDiv.id = 'form-section-' + stepName.replace(/\s+/g, '-');
-            stepDiv.style.display = index === 0 ? 'block' : 'none';
+            stepDiv.classList.toggle('ion-hide', index !== 0);
             this.stepContainers[stepName] = stepDiv;
 
             if (this.sidebarSteps) {
@@ -121,7 +121,7 @@ window.UI_FormStepper = class UI_FormStepper {
         this.currentStepIndex = newIdx;
 
         Object.keys(this.stepContainers).forEach(key => {
-            this.stepContainers[key].style.display = (key === targetSectionName) ? 'block' : 'none';
+            this.stepContainers[key].classList.toggle('ion-hide', key !== targetSectionName);
         });
 
         if (this.sidebarSteps) {
@@ -146,16 +146,12 @@ window.UI_FormStepper = class UI_FormStepper {
         }
         
         if (this.btnPrev) {
-            this.btnPrev.style.display = this.currentStepIndex === 0 ? 'none' : 'block';
+            this.btnPrev.classList.toggle('ion-hide', this.currentStepIndex === 0);
         }
 
-        if (this.currentStepIndex === this.totalSteps - 1) {
-            if (this.btnNext) this.btnNext.style.display = 'none';
-            if (this.btnSubmit) this.btnSubmit.style.display = 'block';
-        } else {
-            if (this.btnNext) this.btnNext.style.display = 'block';
-            if (this.btnSubmit) this.btnSubmit.style.display = 'none';
-        }
+        const isLastStep = (this.currentStepIndex === this.totalSteps - 1);
+        if (this.btnNext) this.btnNext.classList.toggle('ion-hide', isLastStep);
+        if (this.btnSubmit) this.btnSubmit.classList.toggle('ion-hide', !isLastStep);
     }
 
     // Exponer Rows para que FormRenderer sepa donde inyectar inputs

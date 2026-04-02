@@ -3,18 +3,16 @@
        UI_DataGrid.html — Factoría Visual de Tablas y Cuadrículas
        Incluido via GAS: <?!= include('UI_DataGrid'); ?>
        
-       Módulo Puro: Sólo recibe datos de estado (config) y devuelve HTML.
+       Módulo V4 Puro: Devuelve exclusivamente DocumentFragments y Nodes.
+       Totalmente aséptico contra XSS persistente.
        ============================================================ */
 
     window.UI_DataGrid = {
         
         /* ── Constantes Estéticas ── */
-        HIDDEN_BY_DEFAULT: ['created_at', 'updated_by'],
-        STATUS_FIELDS: ['estado', 'nivel_criticalidad', 'modelo_negocio'],
-
         /* ── Punto de Entrada Central de la Factoría ── */
         buildLayout: function(config) {
-            this.cfg = config; // { view, entityName, filteredData, page, pageSize, sortCol, sortDir, columns }
+            this.cfg = config; 
             
             if (config.loading) return this._renderSkeleton();
             if (config.error) return this._renderErrorState(config.error);
@@ -24,113 +22,178 @@
                 return this._renderTableView();
             } else if (config.view === 'grid') {
                 return this._renderGridView();
+            } else {
+                return this._renderEmpty();
             }
-            return this._renderEmpty();
         },
 
-        /* ── Renderers Estructurales ── */
-        _renderSkeleton: function() {
-            let rows = '';
-            for (let i = 0; i < 5; i++) {
-                const widths = [80, 160, 120, 100, 90];
-                const cells = widths.map(w => `<div class="dv-skeleton-cell" style="width:${w}px;"></div>`).join('');
-                rows += `<div class="dv-skeleton-row">${cells}</div>`;
+        /* ── Helper de Invocación Config-Driven ── */
+        _invoke: function(callbackStr, ...args) {
+            if (!callbackStr) return;
+            const parts = callbackStr.split('.');
+            let context = window;
+            for(let i=0; i<parts.length-1; i++) {
+                if (parts[i] === 'window') continue;
+                context = context[parts[i]];
+                if (!context) return;
             }
-            return `<div class="dv-card dv-card-skel">${rows}</div>`;
+            const funcName = parts[parts.length-1];
+            if (context && typeof context[funcName] === 'function') {
+                context[funcName].apply(context, args);
+            }
+        },
+
+        /* ── Renderers Estructurales Estáticos ── */
+        _renderSkeleton: function() {
+            const tmpl = document.getElementById('tmpl-datagrid-skeleton');
+            return tmpl ? tmpl.content.cloneNode(true) : document.createDocumentFragment();
         },
 
         _renderErrorState: function(error) {
-            return `
-                <div class="dv-card">
-                    <div class="dv-empty">
-                        <div class="dv-empty-icon">⚠️</div>
-                        <h3 class="dv-error-title">No pudimos cargar la información.</h3>
-                        <p>Por favor, refresca la página para intentar de nuevo.</p>
-                        <p class="dv-error-desc">(Detalle: ${error ? error.message : 'Error de red'})</p>
-                    </div>
-                </div>`;
+            const tmpl = document.getElementById('tmpl-datagrid-error');
+            if (!tmpl) return document.createDocumentFragment();
+            const clone = tmpl.content.cloneNode(true);
+            const errNode = clone.querySelector('[data-errormsg]');
+            if (errNode) errNode.textContent = '(Detalle: ' + (error ? error.message : 'Error de red') + ')';
+            return clone;
         },
 
         _renderEmpty: function() {
-            return `
-                <div class="dv-card">
-                    <div class="dv-empty">
-                        <div class="dv-empty-icon">
-                            <ion-icon class="dv-folder-icon" name="folder-open-outline"></ion-icon>
-                        </div>
-                        <h3>Sin resultados</h3>
-                        <p>No se encontraron registros. Prueba con otros términos de búsqueda o crea un nuevo registro.</p>
-                    </div>
-                </div>`;
+            const tmpl = document.getElementById('tmpl-datagrid-empty');
+            return tmpl ? tmpl.content.cloneNode(true) : document.createDocumentFragment();
         },
 
+        /* ── Renderers Nodales Dinámicos V4 ── */
         _renderTableView: function() {
             const visibleCols = this.cfg.columns.filter(c => c.visible);
             const rows = this._getPageData();
             
             if (visibleCols.length === 0 || rows.length === 0) return this._renderEmpty();
 
-            const thead = visibleCols.map(col => {
+            const docFrag = document.createDocumentFragment();
+            
+            const card = document.createElement('div');
+            card.className = 'dv-card';
+            
+            const tableWrap = document.createElement('div');
+            tableWrap.className = 'dv-table-wrap';
+            
+            const table = document.createElement('table');
+            table.className = 'dv-table';
+            
+            // Thead
+            const thead = document.createElement('thead');
+            const trHead = document.createElement('tr');
+            
+            const thNum = document.createElement('th');
+            thNum.className = 'dv-th-num';
+            thNum.textContent = '#';
+            trHead.appendChild(thNum);
+            
+            visibleCols.forEach((col) => {
                 const colIdx = this.cfg.columns.indexOf(col);
                 const isSorted = this.cfg.sortCol === col.key;
-                const arrow = isSorted
-                    ? `<span class="dv-sort-icon active">${this.cfg.sortDir === 'asc' ? '↑' : '↓'}</span>`
-                    : `<span class="dv-sort-icon">↕</span>`;
                 
-                return `
-                    <th class="${isSorted ? 'sorted' : ''}" data-colidx="${colIdx}" 
-                        draggable="true" 
-                        onclick="${this.cfg.onSort ? `${this.cfg.onSort}('${col.key}')` : ''}" 
-                        ondragstart="${this.cfg.onDragStart ? `${this.cfg.onDragStart}(${colIdx}, event)` : ''}" 
-                        ondragover="${this.cfg.onDragOver ? `${this.cfg.onDragOver}(${colIdx}, event)` : ''}" 
-                        ondragleave="${this.cfg.onDragLeave ? `${this.cfg.onDragLeave}(event)` : ''}" 
-                        ondrop="${this.cfg.onDrop ? `${this.cfg.onDrop}(${colIdx}, event)` : ''}" 
-                        ondragend="${this.cfg.onDragEnd ? `${this.cfg.onDragEnd}(event)` : ''}">
-                        ${col.label} ${arrow} <span class="dv-drag-handle" title="Arrastra para reordenar">⣿</span>
-                    </th>`;
-            }).join('');
-
-            return `
-                <div class="dv-card">
-                    <div class="dv-table-wrap">
-                        <table class="dv-table">
-                            <thead>
-                                <tr>
-                                    <th class="dv-th-num">#</th>
-                                    ${thead}
-                                    <th class="dv-th-action"></th>
-                                </tr>
-                            </thead>
-                            <tbody>${this._renderTableBody(rows, visibleCols)}</tbody>
-                        </table>
-                    </div>
-                    ${this._renderPaginationHTML()}
-                </div>`;
+                const th = document.createElement('th');
+                if (isSorted) th.classList.add('sorted');
+                th.dataset.colidx = colIdx;
+                th.draggable = true;
+                
+                // Eventos Drag and Drop (Nativos DOM2)
+                if (this.cfg.onDragStart) th.addEventListener('dragstart', (e) => this._invoke(this.cfg.onDragStart, colIdx, e));
+                if (this.cfg.onDragOver) th.addEventListener('dragover', (e) => this._invoke(this.cfg.onDragOver, colIdx, e));
+                if (this.cfg.onDragLeave) th.addEventListener('dragleave', (e) => this._invoke(this.cfg.onDragLeave, e));
+                if (this.cfg.onDrop) th.addEventListener('drop', (e) => this._invoke(this.cfg.onDrop, colIdx, e));
+                if (this.cfg.onDragEnd) th.addEventListener('dragend', (e) => this._invoke(this.cfg.onDragEnd, e));
+                
+                // Evento Click Sort
+                if (this.cfg.onSort) th.addEventListener('click', () => this._invoke(this.cfg.onSort, col.key));
+                
+                th.appendChild(document.createTextNode(col.label + ' '));
+                
+                const arrow = document.createElement('span');
+                arrow.className = isSorted ? 'dv-sort-icon active' : 'dv-sort-icon';
+                arrow.textContent = isSorted ? (this.cfg.sortDir === 'asc' ? '↑' : '↓') : '↕';
+                th.appendChild(arrow);
+                
+                th.appendChild(document.createTextNode(' '));
+                
+                const handle = document.createElement('span');
+                handle.className = 'dv-drag-handle';
+                handle.title = 'Arrastra para reordenar';
+                handle.textContent = '⣿';
+                th.appendChild(handle);
+                
+                trHead.appendChild(th);
+            });
+            
+            const thAction = document.createElement('th');
+            thAction.className = 'dv-th-action';
+            trHead.appendChild(thAction);
+            
+            thead.appendChild(trHead);
+            table.appendChild(thead);
+            
+            // Tbody
+            const tbody = document.createElement('tbody');
+            tbody.appendChild(this._renderTableBodyNodes(rows, visibleCols));
+            table.appendChild(tbody);
+            
+            tableWrap.appendChild(table);
+            card.appendChild(tableWrap);
+            
+            // Paginación
+            card.appendChild(this._renderPaginationNodes());
+            docFrag.appendChild(card);
+            
+            return docFrag;
         },
 
-        _renderTableBody: function(rows, visibleCols) {
+        _renderTableBodyNodes: function(rows, visibleCols) {
+            const frag = document.createDocumentFragment();
             const startIdx = (this.cfg.page - 1) * this.cfg.pageSize;
             
-            return rows.map((row, idx) => {
-                const rowNum = startIdx + idx + 1;
-                const indexCell = `<td class="dv-td-num">${rowNum}</td>`;
-
-                const cells = visibleCols.map(col => {
+            rows.forEach((row, idx) => {
+                const tr = document.createElement('tr');
+                
+                const tdNum = document.createElement('td');
+                tdNum.className = 'dv-td-num';
+                tdNum.textContent = String(startIdx + idx + 1);
+                tr.appendChild(tdNum);
+                
+                visibleCols.forEach((col) => {
+                    const td = document.createElement('td');
                     const val = typeof row[col.key] !== "undefined" ? String(row[col.key]) : '';
-                    return `<td title="${val}">${this._formatValue(col.key, row[col.key])}</td>`;
-                }).join('');
-
+                    td.title = val;
+                    td.appendChild(this._formatValueNode(col.key, row[col.key], col));
+                    tr.appendChild(td);
+                });
+                
                 const meta = (window.ENTITY_META && window.ENTITY_META[this.cfg.entityName]) || { idField: 'id' };
                 const id = row[meta.idField] || '';
-                const actionCell = `
-                    <td class="dv-td-action">
-                        <button class="dv-btn-icon dv-btn-danger" onclick="event.stopPropagation(); ${this.cfg.onDelete ? `${this.cfg.onDelete}('${id}')` : ''}" title="Eliminar">
-                            <ion-icon name="trash"></ion-icon>
-                        </button>
-                    </td>`;
-
-                return `<tr>${indexCell}${cells}${actionCell}</tr>`;
-            }).join('');
+                
+                const tdAction = document.createElement('td');
+                tdAction.className = 'dv-td-action';
+                
+                const btnDel = document.createElement('button');
+                btnDel.className = 'dv-btn-icon dv-btn-danger';
+                btnDel.title = 'Eliminar';
+                btnDel.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    this._invoke(this.cfg.onDelete, id);
+                });
+                
+                const iconDel = document.createElement('ion-icon');
+                iconDel.setAttribute('name', 'trash');
+                btnDel.appendChild(iconDel);
+                
+                tdAction.appendChild(btnDel);
+                tr.appendChild(tdAction);
+                
+                frag.appendChild(tr);
+            });
+            
+            return frag;
         },
 
         _renderGridView: function() {
@@ -140,78 +203,173 @@
             const meta = (window.ENTITY_META && window.ENTITY_META[this.cfg.entityName]) || { titleField: 'nombre', idField: 'id', fkField: null };
             const MAX_ATTRS = 5;
 
-            const cols = rows.map(row => {
-                const title = row[meta.titleField] || row[meta.idField] || '—';
-                const id = row[meta.idField] || '';
-
-                const fkChip = meta.fkField && row[meta.fkField.key]
-                    ? `<ion-badge class="dv-fk-badge">🔗 ${meta.fkField.label}: ${row[meta.fkField.key]}</ion-badge>`
-                    : '';
-
+            const frag = document.createDocumentFragment();
+            const grid = document.createElement('ion-grid');
+            grid.className = 'dv-ionic-grid';
+            const rowEl = document.createElement('ion-row');
+            
+            rows.forEach(row => {
+                const titleStr = row[meta.titleField] || row[meta.idField] || '—';
+                const idStr = String(row[meta.idField] || '');
+                
+                const colEl = document.createElement('ion-col');
+                colEl.setAttribute('size', '12');
+                colEl.setAttribute('size-sm', '6');
+                colEl.setAttribute('size-md', '4');
+                colEl.setAttribute('size-xl', '3');
+                colEl.className = 'dv-grid-col';
+                
+                const cardEl = document.createElement('ion-card');
+                cardEl.className = 'dv-ion-card';
+                
+                const headerEl = document.createElement('ion-card-header');
+                headerEl.className = 'dv-card-header-flex';
+                
+                const headerTextWrap = document.createElement('div');
+                
+                const subtitle = document.createElement('ion-card-subtitle');
+                subtitle.className = 'dv-code-link';
+                subtitle.textContent = idStr;
+                subtitle.addEventListener('click', () => this._invoke(this.cfg.onEdit, idStr));
+                
+                const title = document.createElement('ion-card-title');
+                title.className = 'dv-card-title-clamp';
+                title.title = titleStr;
+                title.textContent = titleStr;
+                
+                headerTextWrap.appendChild(subtitle);
+                headerTextWrap.appendChild(title);
+                headerEl.appendChild(headerTextWrap);
+                
+                const btnDel = document.createElement('button');
+                btnDel.className = 'dv-btn-icon dv-btn-danger-lite';
+                btnDel.title = 'Eliminar';
+                btnDel.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    this._invoke(this.cfg.onDelete, idStr);
+                });
+                const iconDel = document.createElement('ion-icon');
+                iconDel.setAttribute('name', 'trash');
+                btnDel.appendChild(iconDel);
+                headerEl.appendChild(btnDel);
+                cardEl.appendChild(headerEl);
+                
+                const contentEl = document.createElement('ion-card-content');
+                const attrsWrap = document.createElement('div');
+                attrsWrap.className = 'dv-card-item-attrs';
+                
                 const attrKeys = Object.keys(row).filter(k => {
                     return k !== meta.titleField && k !== meta.idField &&
                            !(meta.fkField && k === meta.fkField.key) &&
                            !this.HIDDEN_BY_DEFAULT.includes(k);
                 }).slice(0, MAX_ATTRS);
-
-                const attrs = attrKeys.map(k => `
-                    <div class="dv-card-item-attr">
-                        <span class="dv-card-item-attr-key">${this._labelFromKey(k)}</span>
-                        <span class="dv-card-item-attr-val">${this._formatValue(k, row[k])}</span>
-                    </div>`).join('');
-
-                return `
-                    <ion-col size="12" size-sm="6" size-md="4" size-xl="3" class="dv-grid-col">
-                        <ion-card class="dv-ion-card">
-                            <ion-card-header class="dv-card-header-flex">
-                                <div>
-                                    <ion-card-subtitle onclick="${this.cfg.onEdit ? `${this.cfg.onEdit}('${id.replace(/'/g, "\\'")}')` : ''}" class="dv-code-link">${id}</ion-card-subtitle>
-                                    <ion-card-title class="dv-card-title-clamp" title="${title}">${title}</ion-card-title>
-                                </div>
-                                <button class="dv-btn-icon dv-btn-danger-lite" onclick="event.stopPropagation(); ${this.cfg.onDelete ? `${this.cfg.onDelete}('${id}')` : ''}" title="Eliminar">
-                                    <ion-icon name="trash"></ion-icon>
-                                </button>
-                            </ion-card-header>
-                            <ion-card-content>
-                                <div class="dv-card-item-attrs">${attrs}</div>
-                                ${fkChip}
-                            </ion-card-content>
-                        </ion-card>
-                    </ion-col>`;
-            }).join('');
-
-            return `
-                <ion-grid class="dv-ionic-grid"><ion-row>${cols}</ion-row></ion-grid>
-                <div class="dv-card-footer">${this._renderPaginationHTML()}</div>`;
+                
+                attrKeys.forEach(k => {
+                    const attrItem = document.createElement('div');
+                    attrItem.className = 'dv-card-item-attr';
+                    
+                    const attrKey = document.createElement('span');
+                    attrKey.className = 'dv-card-item-attr-key';
+                    attrKey.textContent = this._labelFromKey(k);
+                    
+                    const attrVal = document.createElement('span');
+                    attrVal.className = 'dv-card-item-attr-val';
+                    attrVal.appendChild(this._formatValueNode(k, row[k], this.cfg.columns.find(c => c.key === k)));
+                    
+                    attrItem.appendChild(attrKey);
+                    attrItem.appendChild(attrVal);
+                    attrsWrap.appendChild(attrItem);
+                });
+                
+                contentEl.appendChild(attrsWrap);
+                
+                if (meta.fkField && row[meta.fkField.key]) {
+                    const badge = document.createElement('ion-badge');
+                    badge.className = 'dv-fk-badge';
+                    badge.textContent = `🔗 ${meta.fkField.label}: ${row[meta.fkField.key]}`;
+                    contentEl.appendChild(badge);
+                }
+                
+                cardEl.appendChild(contentEl);
+                colEl.appendChild(cardEl);
+                rowEl.appendChild(colEl);
+            });
+            
+            grid.appendChild(rowEl);
+            frag.appendChild(grid);
+            
+            const footer = document.createElement('div');
+            footer.className = 'dv-card-footer';
+            footer.appendChild(this._renderPaginationNodes());
+            frag.appendChild(footer);
+            
+            return frag;
         },
 
-        _renderPaginationHTML: function() {
+        _renderPaginationNodes: function() {
+            const frag = document.createDocumentFragment();
             const total = this.cfg.filteredData.length;
             const start = total === 0 ? 0 : (this.cfg.page - 1) * this.cfg.pageSize + 1;
             const end = Math.min(this.cfg.page * this.cfg.pageSize, total);
             const tPages = Math.max(1, Math.ceil(total / this.cfg.pageSize));
             
-            const sizes = [10, 25, 50, 100].map(s => {
-                return `<option value="${s}" ${s === this.cfg.pageSize ? 'selected' : ''}>${s}</option>`;
-            }).join('');
-
-            return `
-                <div class="dv-pagination">
-                    <div class="dv-flex-group">
-                        <span class="dv-pagination-info">Mostrando <strong>${start}–${end}</strong> de <strong>${total}</strong></span>
-                        <select class="dv-page-size-select" onchange="${this.cfg.onPageSize ? `${this.cfg.onPageSize}(this.value)` : ''}">${sizes}</select>
-                    </div>
-                    <div class="dv-pagination-controls">
-                        <button class="dv-page-btn" title="Primera" onclick="${this.cfg.onPage ? `${this.cfg.onPage}(1)` : ''}" ${this.cfg.page === 1 ? 'disabled' : ''}>«</button>
-                        <button class="dv-page-btn" title="Anterior" onclick="${this.cfg.onPage ? `${this.cfg.onPage}(${this.cfg.page - 1})` : ''}" ${this.cfg.page === 1 ? 'disabled' : ''}>‹</button>
-                        <span class="dv-page-info">Pág. ${this.cfg.page} / ${tPages}</span>
-                        <button class="dv-page-btn" title="Siguiente" onclick="${this.cfg.onPage ? `${this.cfg.onPage}(${this.cfg.page + 1})` : ''}" ${this.cfg.page >= tPages ? 'disabled' : ''}>›</button>
-                        <button class="dv-page-btn" title="Última" onclick="${this.cfg.onPage ? `${this.cfg.onPage}(${tPages})` : ''}" ${this.cfg.page >= tPages ? 'disabled' : ''}>»</button>
-                    </div>
-                </div>`;
+            const wrapper = document.createElement('div');
+            wrapper.className = 'dv-pagination';
+            
+            const flexGroup = document.createElement('div');
+            flexGroup.className = 'dv-flex-group';
+            
+            const info = window.DOM.create('span', { class: 'dv-pagination-info' }, [
+                'Mostrando ',
+                window.DOM.create('strong', null, `${start}–${end}`),
+                ' de ',
+                window.DOM.create('strong', null, `${total}`)
+            ]);
+            flexGroup.appendChild(info);
+            
+            const select = document.createElement('select');
+            select.className = 'dv-page-size-select';
+            [10, 25, 50, 100].forEach(s => {
+                const opt = document.createElement('option');
+                opt.value = String(s);
+                opt.textContent = String(s);
+                if (s === this.cfg.pageSize) opt.selected = true;
+                select.appendChild(opt);
+            });
+            select.addEventListener('change', (e) => this._invoke(this.cfg.onPageSize, e.target.value));
+            flexGroup.appendChild(select);
+            wrapper.appendChild(flexGroup);
+            
+            const controls = document.createElement('div');
+            controls.className = 'dv-pagination-controls';
+            
+            const buildBtn = (title, text, targetPage, disabled) => {
+                const btn = document.createElement('button');
+                btn.className = 'dv-page-btn';
+                btn.title = title;
+                btn.textContent = text;
+                if (disabled) btn.disabled = true;
+                btn.addEventListener('click', () => this._invoke(this.cfg.onPage, targetPage));
+                return btn;
+            };
+            
+            controls.appendChild(buildBtn('Primera', '«', 1, this.cfg.page === 1));
+            controls.appendChild(buildBtn('Anterior', '‹', this.cfg.page - 1, this.cfg.page === 1));
+            
+            const spanInfo = document.createElement('span');
+            spanInfo.className = 'dv-page-info';
+            spanInfo.textContent = `Pág. ${this.cfg.page} / ${tPages}`;
+            controls.appendChild(spanInfo);
+            
+            controls.appendChild(buildBtn('Siguiente', '›', this.cfg.page + 1, this.cfg.page >= tPages));
+            controls.appendChild(buildBtn('Última', '»', tPages, this.cfg.page >= tPages));
+            
+            wrapper.appendChild(controls);
+            frag.appendChild(wrapper);
+            return frag;
         },
 
-        /* ── Helpers y Formateadores (Extirpados de DataView_UI) ── */
+        /* ── Helpers y Formateadores Nodales ── */
         _getPageData: function() {
             const start = (this.cfg.page - 1) * this.cfg.pageSize;
             return this.cfg.filteredData.slice(start, start + this.cfg.pageSize);
@@ -227,58 +385,94 @@
             return `dv-badge dv-badge-${map[slug] || 'default'}`;
         },
 
-        _formatValue: function(key, value) {
-            if (value === null || value === undefined || value === '') return `<span class="dv-empty-text">—</span>`;
+        _formatValueNode: function(key, value, explicitColConfig) {
+    const makeEmpty = () => window.DOM.create('span', { class: 'dv-empty-text' }, '—');
 
-            if (Array.isArray(value)) {
-                if (value.length === 0) return `<span class="dv-empty-text">—</span>`;
-                const labels = value.map(item => {
-                    if (typeof item === 'object' && item !== null) {
-                        return item.nombre || item.name || item.label || item.nombre_producto
-                            || Object.values(item).find(v => typeof v === 'string' && !String(v).startsWith('id_') && v.length > 0)
-                            || '—';
+    if (value === null || value === undefined || value === '') {
+        return makeEmpty();
+    }
+
+    if (Array.isArray(value)) {
+        if (value.length === 0) return makeEmpty();
+        const frag = document.createDocumentFragment();
+        
+        // OCP: Resolver labelField dinámicamente desde el Schema_Engine
+        let dynLabel = null;
+        if (this.cfg && this.cfg.entityName && window.APP_SCHEMAS) {
+            const schema = window.APP_SCHEMAS[this.cfg.entityName];
+            if (schema && schema.fields) {
+                const f = schema.fields.find(field => field.name === key);
+                if (f) {
+                    if (f.labelField) {
+                        dynLabel = f.labelField;
+                    } else if (f.targetEntity && window.APP_SCHEMAS[f.targetEntity]) {
+                        dynLabel = window.APP_SCHEMAS[f.targetEntity].titleField;
                     }
-                    return String(item);
-                });
-                return labels.map(l => `<span class="dv-chip">${l}</span>`).join(' ');
-            }
-
-            const strVal = String(value);
-            let isPrimaryKey = false;
-
-            if (this.cfg && this.cfg.entityName && window.APP_SCHEMAS) {
-                const schemaDef = window.APP_SCHEMAS[this.cfg.entityName];
-                let fieldsArray = [];
-                if (schemaDef) {
-                    if (Array.isArray(schemaDef)) fieldsArray = schemaDef;
-                    else if (schemaDef.fields) fieldsArray = schemaDef.fields;
-                    else fieldsArray = Object.keys(schemaDef).map(k => Object.assign({ name: k }, schemaDef[k]));
-                    
-                    const f = fieldsArray.find(field => field.name === key);
-                    if (f && f.primaryKey) isPrimaryKey = true;
                 }
             }
+        }
 
-            if (isPrimaryKey) {
-                // Return link format - notice we escape the quotes
-                return `<code class="dv-pk-code" onclick="${this.cfg && this.cfg.onEdit ? `${this.cfg.onEdit}('${strVal.replace(/'/g, "\\'")}')` : ''}">${strVal}</code>`;
+        value.forEach(item => {
+            let text = String(item);
+            if (typeof item === 'object' && item !== null) {
+                if (dynLabel && item[dynLabel] !== undefined) {
+                    text = item[dynLabel];
+                } else {
+                    // Fallback Universal (Agnóstico, OCP)
+                    text = item.title || item.name || item.label || Object.values(item).find(v => typeof v === 'string' && !String(v).startsWith('id_') && String(v).length > 0) || '—';
+                }
             }
+            frag.appendChild(window.DOM.create('span', { class: 'dv-chip' }, text));
+            frag.appendChild(document.createTextNode(' '));
+        });
+        return frag;
+    }
 
-            if (window._LOOKUP_DATA && window._LOOKUP_DATA[key]) {
-                const lookupArr = window._LOOKUP_DATA[key];
-                const found = lookupArr.find(opt => String(opt.value) === strVal);
-                if (found) return found.label;
-            }
+    const strVal = String(value);
+    let uiType = explicitColConfig ? explicitColConfig.uiType : 'text';
+    let isPrimaryKey = explicitColConfig ? explicitColConfig.primaryKey : false;
 
-            if (this.STATUS_FIELDS.includes(key)) {
-                return `<span class="${this._badgeClass(strVal)}">${strVal}</span>`;
-            }
-            if (key === 'presupuesto' || key === 'slo_objetivo') {
-                const num = parseFloat(strVal);
-                if (!isNaN(num)) return key === 'presupuesto' ? `$${num.toLocaleString('es-MX')}` : `${num}%`;
-            }
+    // Fallback if colConfig wasn't directly provided
+    if (!explicitColConfig && this.cfg && this.cfg.columns) {
+        const col = this.cfg.columns.find(c => c.key === key);
+        if (col) {
+            uiType = col.uiType || 'text';
+            isPrimaryKey = col.primaryKey || false;
+        }
+    }
 
-            return strVal.length > 60 ? `${strVal.substring(0, 58)}…` : strVal;
+    // Heuristic fallback
+    if (key.startsWith('id_') && isPrimaryKey === false) isPrimaryKey = true;
+
+    if (isPrimaryKey) {
+        return window.DOM.create('code', { 
+            class: 'dv-pk-code',
+            onclick: () => this._invoke(this.cfg.onEdit, strVal)
+        }, strVal);
+    }
+
+    if (window._LOOKUP_DATA && window._LOOKUP_DATA[key]) {
+        const lookupArr = window._LOOKUP_DATA[key];
+        const found = lookupArr.find(opt => String(opt.value) === strVal);
+        if (found) return document.createTextNode(found.label);
+    }
+
+    if (uiType === 'badge') {
+        return window.DOM.create('span', { class: this._badgeClass(strVal) }, strVal);
+    }
+
+    if (uiType === 'currency') {
+        const num = parseFloat(strVal);
+        if (!isNaN(num)) return document.createTextNode(`${num.toLocaleString('es-MX')}`);
+    }
+
+    if (uiType === 'percentage') {
+        const num = parseFloat(strVal);
+        if (!isNaN(num)) return document.createTextNode(`${num}%`);
+    }
+
+    const outStr = strVal.length > 60 ? `${strVal.substring(0, 58)}…` : strVal;
+    return document.createTextNode(outStr);
         },
 
         _normalizeFields: function(entityName) {

@@ -5,6 +5,20 @@
  * Colección de Helper puros sin side-effects en el DOM general,
  * desprendida del histórico FormEngine para cumplir Single Responsibility.
  */
+
+/* ── Formatters Universales ────────────────────────────── */
+window.formatLabelString = function(str) {
+  return (str || '').replace(/_/g, ' ').replace(/\b\w/g, function(c) { return c.toUpperCase(); });
+};
+window.formatEntityName = window.formatLabelString;
+window.formatUserName = function(emailStr) {
+  if (!emailStr) return 'Usuario';
+  var local = emailStr.split('@')[0];
+  var first = local.split(/[\._-]/)[0];
+  if (!first) return 'Usuario';
+  return first.charAt(0).toUpperCase() + first.slice(1).toLowerCase();
+};
+
 window.UI_FormUtils = (function () {
 
     /**

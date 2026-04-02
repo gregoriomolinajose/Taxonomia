@@ -69,30 +69,36 @@
             }
 
             return keys.map(key => {
-                let isHidden = window.UI_DataGrid && window.UI_DataGrid.HIDDEN_BY_DEFAULT ? window.UI_DataGrid.HIDDEN_BY_DEFAULT.includes(key) : ['created_at', 'updated_by'].includes(key);
-                let isPrimaryKey = false;
+    let isHidden = false;
+    let isPrimaryKey = false;
+    let uiType = 'text';
 
-                if (fields) {
-                    const f = fields.find(field => field.name === key);
-                    if (f) {
-                        if (f.primaryKey) isPrimaryKey = true;
-                        if (f.type === 'hidden' && !f.primaryKey) isHidden = true;
-                        if (f.showInList === false) isHidden = true;
-                    }
-                }
+    if (fields) {
+        const f = fields.find(field => field.name === key);
+        if (f) {
+            if (f.primaryKey) isPrimaryKey = true;
+            if (f.type === 'hidden' && !f.primaryKey) isHidden = true;
+            if (f.showInList !== undefined) isHidden = !f.showInList;
+            uiType = f.uiDisplay || f.type || 'text';
+        } else {
+            if (['created_at', 'updated_at', 'updated_by'].includes(key)) isHidden = true;
+        }
+    } else {
+        if (['created_at', 'updated_at', 'updated_by'].includes(key)) isHidden = true;
+    }
 
-                // Heurística de respaldo para llaves primarias
-                if (key.startsWith('id_')) {
-                    isPrimaryKey = true;
-                }
-                
-                return {
-                    key,
-                    label: window.UI_DataGrid && window.UI_DataGrid._labelFromKey ? window.UI_DataGrid._labelFromKey(key, entityName) : key,
-                    visible: isPrimaryKey ? true : !isHidden,
-                    sortable: true
-                };
-            });
+    if (key.startsWith('id_')) {
+        isPrimaryKey = true;
+    }
+    
+    return {
+        key,
+        label: window.UI_DataGrid && window.UI_DataGrid._labelFromKey ? window.UI_DataGrid._labelFromKey(key, entityName) : key,
+        visible: isPrimaryKey ? true : !isHidden,
+        sortable: true,
+        uiType: uiType
+    };
+});
         }
 
         /* ────────────────────────────────────────────
@@ -100,13 +106,17 @@
         ───────────────────────────────────────────── */
         function _showLoadingState() {
             const zone = document.getElementById('dv-data-zone');
-            if (zone && window.UI_DataGrid) zone.innerHTML = window.UI_DataGrid.buildLayout({ loading: true });
+            if (zone && window.UI_DataGrid) {
+                zone.innerHTML = '';
+                zone.appendChild(window.UI_DataGrid.buildLayout({ loading: true }));
+            }
         }
 
         function _showErrorState(error) {
             const zone = document.getElementById('dv-data-zone');
             if (zone && window.UI_DataGrid) {
-                zone.innerHTML = window.UI_DataGrid.buildLayout({ error: error });
+                zone.innerHTML = '';
+                zone.appendChild(window.UI_DataGrid.buildLayout({ error: error }));
             }
         }
 
@@ -192,27 +202,42 @@
            — Renderiza un <ion-popover> en el body para garantizar que
              Ionic lo posicione sin desbordamiento en móvil ni en desktop.
         ───────────────────────────────────────────── */
-        function _renderColPopoverContentHTML() {
-            const items = _state.columns.map((col, i) => `
-                <ion-item class="dv-popover-item" lines="none">
-                    <ion-checkbox
-                        slot="start"
-                        data-colidx="${i}"
-                        ${col.visible ? 'checked' : ''}
-                        class="dv-popover-checkbox">
-                    </ion-checkbox>
-                    <ion-label class="dv-popover-label">${col.label}</ion-label>
-                </ion-item>`).join('');
-
-            return `
-                <ion-content class="dv-popover-content">
-                    <ion-list-header class="dv-popover-header">
-                        <ion-label class="dv-sub-label">
-                            Columnas visibles
-                        </ion-label>
-                    </ion-list-header>
-                    <ion-list lines="none">${items}</ion-list>
-                </ion-content>`;
+        function _buildColPopoverContentHTML() {
+            const content = document.createElement('ion-content');
+            content.className = 'dv-popover-content';
+            
+            const header = document.createElement('ion-list-header');
+            header.className = 'dv-popover-header';
+            const labelContent = document.createElement('ion-label');
+            labelContent.className = 'dv-sub-label';
+            labelContent.textContent = 'Columnas visibles';
+            header.appendChild(labelContent);
+            content.appendChild(header);
+            
+            const list = document.createElement('ion-list');
+            list.setAttribute('lines', 'none');
+            
+            _state.columns.forEach((col, i) => {
+                const item = document.createElement('ion-item');
+                item.className = 'dv-popover-item';
+                item.setAttribute('lines', 'none');
+                
+                const cb = document.createElement('ion-checkbox');
+                cb.setAttribute('slot', 'start');
+                cb.dataset.colidx = i;
+                cb.checked = col.visible;
+                cb.className = 'dv-popover-checkbox';
+                item.appendChild(cb);
+                
+                const lbl = document.createElement('ion-label');
+                lbl.className = 'dv-popover-label';
+                lbl.textContent = col.label;
+                item.appendChild(lbl);
+                
+                list.appendChild(item);
+            });
+            content.appendChild(list);
+            return content;
         }
 
         function _ensureColPopover() {
@@ -233,7 +258,7 @@
             pop.setAttribute('show-backdrop', 'false');
             document.body.appendChild(pop);
             // Actualizar contenido (sincroniza estado de checkboxes)
-            pop.innerHTML = _renderColPopoverContentHTML();
+            pop.appendChild(_buildColPopoverContentHTML());
 
             // Adjuntar ionChange a cada ion-checkbox (lo necesita el web component de Ionic)
             pop.querySelectorAll('ion-checkbox').forEach(function (cb) {
@@ -244,42 +269,69 @@
             });
         }
 
-        function _renderToolbarHTML() {
-            return `
-        <div class="dv-toolbar">
-          <div class="dv-toolbar-left">
-            <div class="dv-search-wrap">
-              <!-- ion-searchbar nativo de Ionic: posiciona su propio icono y maneja a11y -->
-              <ion-searchbar
-                id="dv-search-input"
-                placeholder="Buscar en todos los campos…"
-                animated="true"
-                show-clear-button="focus"
-                debounce="120">
-              </ion-searchbar>
-            </div>
-          </div>
-          <div class="dv-toolbar-right">
-            <!-- Trigger del ion-popover nativo — Ionic calcula la posición sin desbordamiento -->
-            <button class="dv-btn dv-btn-ghost" id="dv-col-trigger-btn" title="Configurar columnas">
-              <ion-icon class="dv-options-icon" name="options-outline" slot="start"></ion-icon> Columnas
-            </button>
-            <button class="dv-btn-icon ${_state.view === 'table' ? 'active' : ''}" id="dv-view-table-btn"
-              onclick="window.DataViewEngine._onViewToggle('table')" title="Vista de lista">
-              ☰
-            </button>
-            <button class="dv-btn-icon ${_state.view === 'grid' ? 'active' : ''}" id="dv-view-grid-btn"
-              onclick="window.DataViewEngine._onViewToggle('grid')" title="Vista de cuadrícula">
-              ⊞
-            </button>
-            ${_state.entityName === 'Dominio' ? `
-            <button class="dv-btn-icon ${_state.view === 'map' ? 'active' : ''}" id="dv-view-map-btn"
-              onclick="window.DataViewEngine._onViewToggle('map')" title="Formato Mapa (Treemap)">
-              <ion-icon name="git-network-outline"></ion-icon>
-            </button>
-            ` : ''}
-          </div>
-        </div>`;
+        function _buildToolbarHTML() {
+            const toolbar = document.createElement('div');
+            toolbar.className = 'dv-toolbar';
+            
+            const left = document.createElement('div');
+            left.className = 'dv-toolbar-left';
+            const searchWrap = document.createElement('div');
+            searchWrap.className = 'dv-search-wrap';
+            const sb = document.createElement('ion-searchbar');
+            sb.id = 'dv-search-input';
+            sb.placeholder = 'Buscar en todos los campos…';
+            sb.setAttribute('animated', 'true');
+            sb.setAttribute('show-clear-button', 'focus');
+            sb.setAttribute('debounce', '120');
+            searchWrap.appendChild(sb);
+            left.appendChild(searchWrap);
+            
+            const right = document.createElement('div');
+            right.className = 'dv-toolbar-right';
+            
+            const btnCols = document.createElement('button');
+            btnCols.className = 'dv-btn dv-btn-ghost';
+            btnCols.id = 'dv-col-trigger-btn';
+            btnCols.title = 'Configurar columnas';
+            const colIcon = document.createElement('ion-icon');
+            colIcon.className = 'dv-options-icon';
+            colIcon.setAttribute('name', 'options-outline');
+            colIcon.setAttribute('slot', 'start');
+            btnCols.appendChild(colIcon);
+            btnCols.appendChild(document.createTextNode(' Columnas'));
+            right.appendChild(btnCols);
+            
+            const btnTable = document.createElement('button');
+            btnTable.className = 'dv-btn-icon ' + (_state.view === 'table' ? 'active' : '');
+            btnTable.id = 'dv-view-table-btn';
+            btnTable.title = 'Vista de lista';
+            btnTable.textContent = '☰';
+            btnTable.addEventListener('click', () => window.DataViewEngine._onViewToggle('table'));
+            right.appendChild(btnTable);
+            
+            const btnGrid = document.createElement('button');
+            btnGrid.className = 'dv-btn-icon ' + (_state.view === 'grid' ? 'active' : '');
+            btnGrid.id = 'dv-view-grid-btn';
+            btnGrid.title = 'Vista de cuadrícula';
+            btnGrid.textContent = '⊞';
+            btnGrid.addEventListener('click', () => window.DataViewEngine._onViewToggle('grid'));
+            right.appendChild(btnGrid);
+            
+            if (_state.entityName === 'Dominio') {
+                const btnMap = document.createElement('button');
+                btnMap.className = 'dv-btn-icon ' + (_state.view === 'map' ? 'active' : '');
+                btnMap.id = 'dv-view-map-btn';
+                btnMap.title = 'Formato Mapa (Treemap)';
+                const iconMap = document.createElement('ion-icon');
+                iconMap.setAttribute('name', 'git-network-outline');
+                btnMap.appendChild(iconMap);
+                btnMap.addEventListener('click', () => window.DataViewEngine._onViewToggle('map'));
+                right.appendChild(btnMap);
+            }
+            
+            toolbar.appendChild(left);
+            toolbar.appendChild(right);
+            return toolbar;
         }
 
         /* Adjunta el listener ionInput al ion-searchbar tras cada re-render del toolbar.
@@ -293,29 +345,76 @@
             }
         }
 
-        function _renderHeader() {
+        function _buildHeader() {
             const meta = ENTITY_META[_state.entityName] || { iconName: 'document-text-outline', color: 'medium', label: window.formatEntityName(_state.entityName) };
             const total = _state.data.length;
             const displayLabel = window.formatEntityName(meta.label);
-            return `
-        <div class="dv-header">
-          <div class="dv-header-left">
-            <h2><ion-icon class="dv-title-icon" name="${meta.iconName}"></ion-icon> ${displayLabel}</h2>
-            <p>${total} registro${total !== 1 ? 's' : ''} en total</p>
-          </div>
-          <div class="dv-header-actions">
-            <input type="file" id="dv-bulk-upload-input" accept=".csv" class="dv-hidden" onchange="window.DataViewEngine._importCSV(event)">
-            <button class="dv-btn dv-btn-ghost" onclick="window.DataViewEngine._exportCSV()">
-              <ion-icon name="download-outline" slot="start"></ion-icon> Exportar CSV
-            </button>
-            <button class="dv-btn dv-btn-ghost" onclick="document.getElementById('dv-bulk-upload-input').click()">
-              <ion-icon name="cloud-upload-outline" slot="start"></ion-icon> Importar CSV
-            </button>
-            <button class="dv-btn dv-btn-outline" onclick="renderForm('${_state.entityName}')">
-              <ion-icon name="add-outline" slot="start"></ion-icon> Crear ${displayLabel.replace(/s$/, '')}
-            </button>
-          </div>
-        </div>`;
+            
+            const headerDiv = document.createElement('div');
+            headerDiv.className = 'dv-header';
+            
+            const leftDiv = document.createElement('div');
+            leftDiv.className = 'dv-header-left';
+            
+            const h2 = document.createElement('h2');
+            const icon = document.createElement('ion-icon');
+            icon.className = 'dv-title-icon';
+            icon.setAttribute('name', meta.iconName);
+            h2.appendChild(icon);
+            h2.appendChild(document.createTextNode(' ' + displayLabel));
+            
+            const p = document.createElement('p');
+            p.textContent = `${total} registro${total !== 1 ? 's' : ''} en total`;
+            
+            leftDiv.appendChild(h2);
+            leftDiv.appendChild(p);
+            
+            const rightDiv = document.createElement('div');
+            rightDiv.className = 'dv-header-actions';
+            
+            const input = document.createElement('input');
+            input.setAttribute('type', 'file');
+            input.id = 'dv-bulk-upload-input';
+            input.setAttribute('accept', '.csv');
+            input.className = 'dv-hidden';
+            input.addEventListener('change', window.DataViewEngine._importCSV);
+            
+            const btnExp = document.createElement('button');
+            btnExp.className = 'dv-btn dv-btn-ghost';
+            btnExp.addEventListener('click', window.DataViewEngine._exportCSV);
+            const iconExp = document.createElement('ion-icon');
+            iconExp.setAttribute('name', 'download-outline');
+            iconExp.setAttribute('slot', 'start');
+            btnExp.appendChild(iconExp);
+            btnExp.appendChild(document.createTextNode(' Exportar CSV'));
+            
+            const btnImp = document.createElement('button');
+            btnImp.className = 'dv-btn dv-btn-ghost';
+            btnImp.addEventListener('click', () => document.getElementById('dv-bulk-upload-input').click());
+            const iconImp = document.createElement('ion-icon');
+            iconImp.setAttribute('name', 'cloud-upload-outline');
+            iconImp.setAttribute('slot', 'start');
+            btnImp.appendChild(iconImp);
+            btnImp.appendChild(document.createTextNode(' Importar CSV'));
+            
+            const btnAdd = document.createElement('button');
+            btnAdd.className = 'dv-btn dv-btn-outline';
+            btnAdd.addEventListener('click', () => renderForm(_state.entityName));
+            const iconAdd = document.createElement('ion-icon');
+            iconAdd.setAttribute('name', 'add-outline');
+            iconAdd.setAttribute('slot', 'start');
+            btnAdd.appendChild(iconAdd);
+            btnAdd.appendChild(document.createTextNode(` Crear ${displayLabel.replace(/s$/, '')}`));
+            
+            rightDiv.appendChild(input);
+            rightDiv.appendChild(btnExp);
+            rightDiv.appendChild(btnImp);
+            rightDiv.appendChild(btnAdd);
+            
+            headerDiv.appendChild(leftDiv);
+            headerDiv.appendChild(rightDiv);
+            
+            return headerDiv;
         }
 
         /* ────────────────────────────────────────────
@@ -330,11 +429,14 @@
                 if (window.renderDomainMap) {
                     window.renderDomainMap(dataZone);
                 } else {
-                    dataZone.innerHTML = '<div class="dv-empty">Motor de Mapa no disponible.</div>';
+                    const errNode = document.createElement('div');
+                    errNode.className = 'dv-empty';
+                    errNode.textContent = 'Motor de Mapa no disponible.';
+                    dataZone.appendChild(errNode);
                 }
             } else if (window.UI_DataGrid) {
                 // Inyectamos estado hacia la factoría pura:
-                dataZone.innerHTML = window.UI_DataGrid.buildLayout({
+                const layoutFrag = window.UI_DataGrid.buildLayout({
                     view: _state.view,
                     entityName: _state.entityName,
                     filteredData: _state.filtered,
@@ -354,6 +456,8 @@
                     onPage: 'window.DataViewEngine._onPage',
                     onEdit: 'window.openEditForm'
                 });
+                dataZone.innerHTML = '';
+                dataZone.appendChild(layoutFrag);
             }
         }
 
@@ -363,7 +467,7 @@
         /* Re-render sólo el toolbar (toggle de columnas / vista) */
         function _rerenderToolbar() {
             const zone = document.getElementById('dv-toolbar-zone');
-            if (zone) zone.innerHTML = _renderToolbarHTML();
+            if (zone) { window.DOM.clear(zone); zone.appendChild(_buildToolbarHTML()); }
             // ion-searchbar: adjuntar ionInput tras re-render
             _attachSearchHandler();
             // Sincronizar ion-popover con el nuevo estado de columnas
@@ -395,12 +499,21 @@
             // Estructura inicial: header + toolbar (permanente) + skeleton de datos
             // #dv-toolbar-zone: NUNCA se destruye durante búsqueda/sort/pagina
             // #dv-data-zone:    se reemplaza en cada operación de datos
-            container.innerHTML = `
-        <div class="dv-root" id="dv-root">
-          <div id="dv-header-zone">${_renderHeader()}</div>
-          <div id="dv-toolbar-zone"></div>
-          <div id="dv-data-zone">${window.UI_DataGrid ? window.UI_DataGrid.buildLayout({ loading: true }) : ''}</div>
-        </div>`;
+            window.DOM.clear(container);
+                const root = document.createElement('div');
+            root.className = 'dv-root'; root.id = 'dv-root';
+            const hZone = document.createElement('div'); hZone.id = 'dv-header-zone';
+            hZone.appendChild(_buildHeader());
+            const tZone = document.createElement('div'); tZone.id = 'dv-toolbar-zone';
+            const dZone = document.createElement('div'); dZone.id = 'dv-data-zone';
+            root.appendChild(hZone); root.appendChild(tZone); root.appendChild(dZone);
+            container.appendChild(root);
+
+            // Inyectar Safely el skeleton estático convertido a fragmento
+            const dataZone = document.getElementById('dv-data-zone');
+            if (dataZone && window.UI_DataGrid) {
+                dataZone.appendChild(window.UI_DataGrid.buildLayout({ loading: true }));
+            }
 
             // Actualizar título global del header de Ionic
             const headerTitle = document.getElementById('main-header-title');
@@ -409,7 +522,7 @@
                 headerTitle.textContent = meta.label;
             }
             const backBtn = document.getElementById('global-back-btn');
-            if (backBtn) backBtn.style.display = 'none'; // Vista raíz del módulo: ocultar botón atrás
+            if (backBtn) backBtn.classList.add('ion-hide'); // Vista raíz del módulo: ocultar botón atrás
 
             // Fetch
             _fetchData(entityName, function (err, rows) {
@@ -424,11 +537,11 @@
 
                 // Actualizar header con total real
                 const headerZone = document.getElementById('dv-header-zone');
-                if (headerZone) headerZone.innerHTML = _renderHeader();
+                if (headerZone) { window.DOM.clear(headerZone); headerZone.appendChild(_buildHeader()); }
 
                 // Renderizar toolbar (una sola vez; luego _rerenderToolbar lo actualiza)
                 const toolbarZone = document.getElementById('dv-toolbar-zone');
-                if (toolbarZone) toolbarZone.innerHTML = _renderToolbarHTML();
+                if (toolbarZone) { window.DOM.clear(toolbarZone); toolbarZone.appendChild(_buildToolbarHTML()); }
 
                 // ion-searchbar: adjuntar listener ionInput
                 _attachSearchHandler();
@@ -492,7 +605,8 @@
             // Actualizar solo el contenido del ion-popover (sin cerrarlo ni destruir el toolbar)
             const pop = document.getElementById('dv-col-ion-popover');
             if (pop) {
-                pop.innerHTML = _renderColPopoverContentHTML();
+                window.DOM.clear(pop);
+                pop.appendChild(_buildColPopoverContentHTML());
                 pop.querySelectorAll('ion-checkbox').forEach(function (cb) {
                     const i = parseInt(cb.getAttribute('data-colidx'), 10);
                     cb.addEventListener('ionChange', function (e) {

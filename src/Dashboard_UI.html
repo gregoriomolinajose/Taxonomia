@@ -19,9 +19,17 @@
     if (portfolioSel) {
       if (!portfolioSel.dataset.populated) {
         var portafolios = window.__APP_CACHE__['Portafolio'] || [];
-        var htmlOpts = '<ion-select-option value="all">TODOS LOS PORTAFOLIOS</ion-select-option>';
-        portafolios.forEach(function(p) { htmlOpts += '<ion-select-option value="' + p.id_portafolio + '">' + p.nombre + '</ion-select-option>'; });
-        portfolioSel.innerHTML = htmlOpts;
+        window.DOM.clear(portfolioSel);
+        var optAll = document.createElement('ion-select-option');
+        optAll.value = 'all';
+        optAll.textContent = 'TODOS LOS PORTAFOLIOS';
+        portfolioSel.appendChild(optAll);
+        portafolios.forEach(function(p) { 
+           var opt = document.createElement('ion-select-option');
+           opt.value = p.id_portafolio;
+           opt.textContent = p.nombre;
+           portfolioSel.appendChild(opt);
+        });
         portfolioSel.value = 'all';
         portfolioSel.dataset.populated = 'true';
         portfolioSel.addEventListener('ionChange', function() { window.renderDashboard(true); });
@@ -40,8 +48,8 @@
       });
     }
     
-    if (filterContainer) filterContainer.style.display = 'flex';
-    container.style.display = 'flex';
+    if (filterContainer) filterContainer.classList.remove('ion-hide');
+    container.classList.remove('ion-hide');
     
     // Extraccion Dinamica de Capacidades desde Metadata (Regla Metadata-Driven)
     // Sin "hardcoding"
@@ -104,17 +112,35 @@
     if (!container) return;
     container.innerHTML = '';
     var sorted = window.getEntitiesByMetaFlag('showInDashboard');
-    container.innerHTML = sorted.map(function(entry) {
+    var tmpl = document.getElementById('tmpl-dashboard-card');
+    if (!tmpl) return;
+
+    sorted.forEach(function(entry) {
       var key = entry[0]; var meta = entry[1];
-      return '<ion-col size="12" size-md="6" size-xl="4"><ion-card>' +
-        '<ion-card-header class="ion-text-center">' +
-        '<ion-icon name="' + meta.iconName + '" color="' + meta.color + '" style="font-size:48px;margin-bottom:10px;"></ion-icon>' +
-        '<ion-card-title>' + meta.label + '</ion-card-title></ion-card-header><ion-card-content>' +
-        '<ion-button expand="block" shape="round" color="' + meta.color + '" onclick="renderForm(\'' + key + '\')">' +
-        '<ion-icon slot="start" name="add-circle-outline"></ion-icon> Crear Nuevo</ion-button>' +
-        '<ion-button expand="block" shape="round" color="' + meta.color + '" fill="outline" style="margin-top:8px;" onclick="window.DataViewEngine.render(\'' + key + '\',\'app-container\')">' +
-        '<ion-icon slot="start" name="list-outline"></ion-icon> Ver Listado</ion-button>' +
-        '</ion-card-content></ion-card></ion-col>';
-    }).join('');
+      var clone = tmpl.content.cloneNode(true);
+      
+      var iconEl = clone.querySelector('[data-dsh-icon]');
+      var titleEl = clone.querySelector('[data-dsh-title]');
+      var btnCreate = clone.querySelector('[data-btn-create]');
+      var btnList = clone.querySelector('[data-btn-list]');
+      
+      if (iconEl) {
+        iconEl.setAttribute('name', meta.iconName);
+        iconEl.setAttribute('color', meta.color);
+      }
+      if (titleEl) {
+        titleEl.textContent = meta.label;
+      }
+      if (btnCreate) {
+        btnCreate.setAttribute('color', meta.color);
+        btnCreate.onclick = function() { window.renderForm(key); };
+      }
+      if (btnList) {
+        btnList.setAttribute('color', meta.color);
+        btnList.onclick = function() { window.AppEventBus.publish('NAV::CHANGE', {viewType: 'dataview', entityKey: key}); };
+      }
+      
+      container.appendChild(clone);
+    });
   };
 </script>

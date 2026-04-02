@@ -20,7 +20,7 @@ const strategy_1toN = function(incomingEdges, currentActiveEdges) {
     
     // Helper de resiliencia Topo lógica para evitar hardcoding
     const getActive = function(edges) {
-        if (typeof window !== 'undefined' && window.TopologyGuard) return window.TopologyGuard.getActiveEdges(edges);
+        if (typeof window !== 'undefined' && window.Math_Engine && window.Math_Engine.TopologyGuard) return window.Math_Engine.TopologyGuard.getActiveEdges(edges);
         // Fallback para ejecución en V8 Apps Script puro
         return edges.filter(e => e.es_version_actual !== false && String(e.es_version_actual).toUpperCase() !== 'FALSE');
     };
@@ -51,7 +51,7 @@ const strategy_MtoN = function(incomingEdges, currentActiveEdges) {
     });
 
     const getActive = function(edges) {
-        if (typeof window !== 'undefined' && window.TopologyGuard) return window.TopologyGuard.getActiveEdges(edges);
+        if (typeof window !== 'undefined' && window.Math_Engine && window.Math_Engine.TopologyGuard) return window.Math_Engine.TopologyGuard.getActiveEdges(edges);
         return edges.filter(e => e.es_version_actual !== false && String(e.es_version_actual).toUpperCase() !== 'FALSE');
     };
 

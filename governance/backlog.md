@@ -17,6 +17,8 @@
 | E14| The Modularization Epoch (ES6 & Micro-Frontends)      | ✅ Complete  | Fraccionar FormRenderer, CSS Nativo y Template Literals| Max      |
 | E15| Topological Tech Debt (Cleaning Sprint)               | ✅ Complete  | Deuda técnica estructural (FormEngine, GC Modales, XSS)| Alta     |
 | E16| Blueprint V4 Audit & Refactoring                      | 🚧 To Do     | Refactorización Arquitectural: DataGrid Minimalism, Visibility Flags, Topology| Alta     |
+| E17| Core Initialization Purification                      | ✅ Complete  | Desacoplar JS_Core.html, ThemeManager, Auth UI y Math Logic | Max      |
+| E18| Declarative UI Rendering                              | ✅ Complete  | Evitar FOUC y Memory Leaks mediante <template> y EventBus en todo el SPA | Max      |
 
 ## Parking Lot / Deuda Técnica (Post-Epic 11)
 
@@ -40,3 +42,4 @@
 | **_UI_CONFIG Localization** | Arch Review S13.2 (H8) | El objeto `_UI_CONFIG` para el `badgeMap` fue colocado en `Schema_Engine.gs` (Capa de Persistencia). A futuro debería moverse a una constante global inyectable en `CSS_DesignSystem` si la arquitectura SPA madura a WebComponents orgánicos. | Low | Diferido |
 | **sumPrefix Logic Duplication** | Arch Review S13.2 (Q1) | La semántica matemática explícita de `sumPrefix` se encuentra iterativamente duplicada en 2 interfaces separadas: para DOM (`FormValidators.html`) y para Data-objects puras (`DataView_UI.html`). Puede abstraerse a un `rule.evaluate(payload)` neutro en `FormEngine_Core`. | Low | Diferido |
 | **Native CSS Abstraction** | Arch Review S13.4 (Q1) | El script de Node `deploy.js` compila hojas CSS parseando HTML en memoria (`CSS_App.html`). Al madurar, separar el código fuente en `.css` puro y concatenarlo estáticamente aliviará falsos positivos en los Linting tools del IDE. | Low | Diferido |
+| **AppEventBus Telemetry** | Arch Review S18.1 (H6) | Al enrutar interacciones globales hacia `NAV::CHANGE`, se pierden los stacktraces directos de UI en caso de error. Se recomienda inyectar `console.info` en `JS_Core` para tener trazabilidad de subscripciones asíncronas fallidas en DevTools. | Medium | S18.X / Escalable |

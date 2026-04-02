@@ -1,0 +1,75 @@
+<script>
+  /* ═══════════════════════════════════════════════════════
+     Theme_Engine.html — Motor Visual y Modo Oscuro
+     Encargado de modificar las variables nativas CSS de la App.
+  ═══════════════════════════════════════════════════════ */
+
+  window.ThemeManager = {
+    themeIcons: {
+      'light': 'moon-outline',
+      'dark': 'sunny-outline',
+      'ocean': 'water-outline',
+      'high-contrast': 'contrast-outline'
+    },
+    get availableThemes() {
+      return Object.keys(this.themeIcons);
+    },
+    currentTheme: 'light',
+
+    init: function() {
+      var savedTheme = localStorage.getItem('app_theme') || 'light';
+      this.setTheme(savedTheme);
+    },
+
+    setTheme: function(themeName) {
+      if (!this.availableThemes.includes(themeName)) return;
+
+      var self = this;
+      this.availableThemes.forEach(function(t) {
+        if (t !== 'light') document.body.classList.remove(t);
+      });
+
+      if (themeName !== 'light') {
+        document.body.classList.add(themeName);
+      }
+
+      this.currentTheme = themeName;
+      localStorage.setItem('app_theme', themeName);
+      this.updateIcon();
+
+      // Actualizacion dinamica de ApexCharts (Golden Pattern Direct-Instance & ForeColor)
+      var isDark = themeName === 'dark';
+      var chartOptionsUpdate = { 
+        theme: { mode: isDark ? 'dark' : 'light' },
+        chart: { 
+          foreColor: isDark ? '#FFFFFF' : '#081754',
+          background: 'transparent'
+        }
+      };
+      if (typeof window.chartTopology !== 'undefined' && window.chartTopology) {
+        window.chartTopology.updateOptions(chartOptionsUpdate);
+      }
+      if (typeof window.chartCapacity !== 'undefined' && window.chartCapacity) {
+        window.chartCapacity.updateOptions(chartOptionsUpdate);
+      }
+
+      // Golden Pattern 6: Reflow mandatory after CSS token switch
+      setTimeout(function() {
+        window.dispatchEvent(new Event('resize'));
+      }, 350);
+    },
+
+    cycleTheme: function() {
+      var activeThemes = ['light', 'dark']; // Active scaling
+      var currentIndex = activeThemes.indexOf(this.currentTheme);
+      var nextIndex = (currentIndex + 1) % activeThemes.length;
+      this.setTheme(activeThemes[nextIndex]);
+    },
+
+    updateIcon: function() {
+      var icon = document.getElementById('theme-toggle-icon');
+      if (!icon) return;
+      icon.name = this.themeIcons[this.currentTheme] || 'moon-outline';
+    }
+  };
+</script>

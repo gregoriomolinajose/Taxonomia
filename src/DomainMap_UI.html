@@ -26,30 +26,61 @@
 
   window.renderDomainMap = function(containerEl) {
     // 1. Limpiar contenedor principal y armar envoltorio
-    containerEl.innerHTML = `
-      <ion-grid class="ion-no-padding">
-        <ion-row class="ion-no-padding">
-          <ion-col size="12" class="ion-no-padding">
-            <ion-card style="height: calc(100vh - 230px); margin: 6px; border-radius: 12px; display: flex; flex-direction: column;">
-              <ion-card-header>
-                <ion-card-title>Mapa de Relaciones: Dominios</ion-card-title>
-                <ion-card-subtitle>Jerarquía Treemap (Clic para explorar rama. Mantén pulsado o usa Clic Derecho para configurar)</ion-card-subtitle>
-              </ion-card-header>
-              <ion-card-content class="ion-no-padding" style="flex: 1;">
-                <div id="domain-treemap-container" style="width: 100%; height: 100%;"></div>
-              </ion-card-content>
-            </ion-card>
-          </ion-col>
-        </ion-row>
-      </ion-grid>
-    `;
+    window.DOM.clear(containerEl);
+    var grid = document.createElement('ion-grid');
+    grid.className = 'ion-no-padding';
+    
+    var row = document.createElement('ion-row');
+    row.className = 'ion-no-padding';
+    
+    var col = document.createElement('ion-col');
+    col.setAttribute('size', '12');
+    col.className = 'ion-no-padding';
+    
+    var card = document.createElement('ion-card');
+    card.style.height = 'calc(100vh - 230px)';
+    card.style.margin = '6px';
+    card.style.borderRadius = '12px';
+    card.style.display = 'flex';
+    card.style.flexDirection = 'column';
+    
+    var header = document.createElement('ion-card-header');
+    
+    var title = document.createElement('ion-card-title');
+    title.textContent = 'Mapa de Relaciones: Dominios';
+    var subtitle = document.createElement('ion-card-subtitle');
+    subtitle.textContent = 'Jerarquía Treemap (Clic para explorar rama. Mantén pulsado o usa Clic Derecho para configurar)';
+    
+    header.appendChild(title);
+    header.appendChild(subtitle);
+    
+    var content = document.createElement('ion-card-content');
+    content.className = 'ion-no-padding';
+    content.style.flex = '1';
+    
+    var divContent = document.createElement('div');
+    divContent.id = 'domain-treemap-container';
+    divContent.style.width = '100%';
+    divContent.style.height = '100%';
+    
+    content.appendChild(divContent);
+    card.appendChild(header);
+    card.appendChild(content);
+    col.appendChild(card);
+    row.appendChild(col);
+    grid.appendChild(row);
+    containerEl.appendChild(grid);
 
     // 2. Extraer datos procesados anidados via O(N) HashMap
-    var graphData = window.Cache_Utils.buildEChartsTreemapData();
+    var graphData = window.Math_Engine.buildEChartsTreemapData(window.__APP_CACHE__);
     var treemapContainer = document.getElementById('domain-treemap-container');
 
     if (!graphData || graphData.length === 0) {
-      treemapContainer.innerHTML = '<div style="padding: 20px; text-align: center;">No hay datos de Dominios para graficar.</div>';
+      var errText = document.createElement('div');
+      errText.style.padding = '20px';
+      errText.style.textAlign = 'center';
+      errText.textContent = 'No hay datos de Dominios para graficar.';
+      treemapContainer.appendChild(errText);
       return;
     }
 

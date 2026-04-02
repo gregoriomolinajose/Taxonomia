@@ -131,7 +131,7 @@
             const chipContainer = document.createElement('div');
             chipContainer.className = 'chip-container';
             chipContainer.setAttribute('data-chip-name', field.name);
-            chipContainer.style.display = 'flex';
+            chipContainer.classList.remove('ion-hide');
             chipContainer.style.flexWrap = 'wrap';
             chipContainer.style.gap = 'var(--spacing-2)';
 
@@ -191,7 +191,11 @@
             const addBtn = document.createElement('ion-button');
             addBtn.setAttribute('fill', 'outline');
             addBtn.setAttribute('size', 'small');
-            addBtn.innerHTML = `<ion-icon slot="start" name="add"></ion-icon> Agregar`;
+            const addIcon = document.createElement('ion-icon');
+            addIcon.setAttribute('slot', 'start');
+            addIcon.setAttribute('name', 'add');
+            addBtn.appendChild(addIcon);
+            addBtn.appendChild(document.createTextNode(' Agregar'));
             
             let initialData = [];
             if (data && data[field.name]) {
@@ -243,7 +247,9 @@
                 const delBtn = document.createElement('ion-button');
                 delBtn.setAttribute('color', 'danger');
                 delBtn.setAttribute('fill', 'clear');
-                delBtn.innerHTML = '<ion-icon name="trash-outline"></ion-icon>';
+                const delIcon = document.createElement('ion-icon');
+                delIcon.setAttribute('name', 'trash-outline');
+                delBtn.appendChild(delIcon);
                 delBtn.onclick = () => row.remove();
                 
                 delCol.appendChild(delBtn);
@@ -265,7 +271,9 @@
         global.UI_Factory.drawChip = function(id, labelText, onRemoveCallback) {
             const chip = document.createElement('ion-chip');
             chip.color = 'primary';
-            chip.innerHTML = `<ion-label>${labelText}</ion-label>`;
+            const lbl = document.createElement('ion-label');
+            lbl.textContent = labelText;
+            chip.appendChild(lbl);
             if (typeof onRemoveCallback === 'function') {
                 const icon = document.createElement('ion-icon');
                 icon.name = 'close-circle';
@@ -292,7 +300,7 @@
             visualWrapper.style.marginBottom = '16px';
             
             const headerRow = document.createElement('div');
-            headerRow.style.display = 'flex';
+            headerRow.classList.remove('ion-hide');
             headerRow.style.justifyContent = 'space-between';
             headerRow.style.alignItems = 'center';
             headerRow.style.width = '100%';
@@ -307,13 +315,17 @@
             const addBtn = document.createElement('ion-button');
             addBtn.fill = 'clear';
             addBtn.size = 'small';
-            addBtn.innerHTML = '<ion-icon name="add" slot="start"></ion-icon> AGREGAR';
+            const addIco2 = document.createElement('ion-icon');
+            addIco2.setAttribute('name', 'add');
+            addIco2.setAttribute('slot', 'start');
+            addBtn.appendChild(addIco2);
+            addBtn.appendChild(document.createTextNode(' AGREGAR'));
 
             headerRow.appendChild(label);
             headerRow.appendChild(addBtn);
 
             const chipsBox = document.createElement('div');
-            chipsBox.style.display = 'flex';
+            chipsBox.classList.remove('ion-hide');
             chipsBox.style.flexWrap = 'wrap';
             chipsBox.style.gap = '8px';
             chipsBox.style.minHeight = '32px';
@@ -371,7 +383,7 @@
                 searchbar.debounce = 100;
 
                 const draftChipsBox = document.createElement('div');
-                draftChipsBox.style.display = 'flex';
+                draftChipsBox.classList.remove('ion-hide');
                 draftChipsBox.style.flexWrap = 'wrap';
                 draftChipsBox.style.gap = '8px';
                 draftChipsBox.style.marginBottom = '16px';
@@ -430,12 +442,28 @@
                 hidden.value = JSON.stringify(selectedIds);
                 
                 if (selectedIds.length === 0) {
-                    chipsBox.innerHTML = `
-                        <div style="width: 100%; text-align: center; color: var(--ion-color-medium); padding: 16px; border: 1px dashed var(--ion-color-step-300, #c8c7cc); border-radius: 8px;">
-                            <ion-icon name="layers-outline" style="font-size: 24px;"></ion-icon>
-                            <div style="font-size: 14px; margin-top: 8px;">Sin registros vinculados</div>
-                        </div>
-                    `;
+                    const emptyNode = document.createElement('div');
+                    emptyNode.style.width = '100%';
+                    emptyNode.style.textAlign = 'center';
+                    emptyNode.style.color = 'var(--ion-color-medium)';
+                    emptyNode.style.padding = '16px';
+                    emptyNode.style.border = '1px dashed var(--ion-color-step-300, #c8c7cc)';
+                    emptyNode.style.borderRadius = '8px';
+                    
+                    const emptyIcon = document.createElement('ion-icon');
+                    emptyIcon.setAttribute('name', 'layers-outline');
+                    emptyIcon.style.fontSize = '24px';
+                    
+                    const emptyText = document.createElement('div');
+                    emptyText.style.fontSize = '14px';
+                    emptyText.style.marginTop = '8px';
+                    emptyText.textContent = 'Sin registros vinculados';
+                    
+                    emptyNode.appendChild(emptyIcon);
+                    emptyNode.appendChild(emptyText);
+                    
+                    window.DOM.clear(chipsBox);
+                    chipsBox.appendChild(emptyNode);
                     return;
                 }
 
@@ -637,7 +665,12 @@
             } catch (err) {
                 console.error("[UI_Factory] Error construyendo FieldNode para:", field.name, err);
                 const errDiv = document.createElement('div');
-                errDiv.innerHTML = `<ion-text color="danger"><small>⚠ Error UI: ${field.name}</small></ion-text>`;
+                const errText = document.createElement('ion-text');
+                errText.setAttribute('color', 'danger');
+                const errSmall = document.createElement('small');
+                errSmall.textContent = `⚠ Error UI: ${field.name}`;
+                errText.appendChild(errSmall);
+                errDiv.appendChild(errText);
                 return errDiv;
             }
         };

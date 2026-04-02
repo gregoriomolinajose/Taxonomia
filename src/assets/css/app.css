@@ -1,4 +1,4 @@
-﻿  /* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+  /* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
      CSS_App.html â€” Motor Estructural (Regla UI Â§14)
      EXCLUSIVO: Sidebar 3-State, Grid, Bento Box, UI Components
      Z-INDEX GOVERNANCE (Regla UI Â§14.2):
@@ -509,9 +509,9 @@
     /* â”€â”€ Card principal â€” ElevaciÃ³n Enterprise â”€â”€ */
     .dv-card {
         background: var(--dv-bg);
-        border: 1px solid var(--dv-border);
-        border-radius: 8px;
-        box-shadow: var(--dv-shadow);
+        border: none;
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.05);
         overflow: hidden;
     }
 
@@ -553,14 +553,14 @@
     }
 
     .dv-table th {
-        padding: 11px 14px;
+        padding: 14px 20px;
         text-align: left;
         font-weight: 600;
         font-size: var(--sys-font-small);
         text-transform: uppercase;
-        letter-spacing: .04em;
+        letter-spacing: .02em;
         color: var(--dv-text-secondary);
-        border-bottom: 2px solid var(--dv-border);
+        border-bottom: 1px solid rgba(128,128,128,0.15);
         border-left: none;
         border-right: none;
         white-space: nowrap;
@@ -591,8 +591,8 @@
     }
 
     .dv-table td {
-        padding: 16px 14px;
-        border-bottom: 1px solid var(--dv-border);
+        padding: 18px 20px;
+        border-bottom: 1px solid rgba(128,128,128,0.1);
         border-left: none;
         border-right: none;
         color: var(--dv-text-primary);
@@ -941,7 +941,5 @@
         border-bottom-left-radius: var(--dv-radius);
         border-bottom-right-radius: var(--dv-radius);
     }
-    .dv-table tbody tr:nth-child(even) {
-        background: rgba(var(--ion-text-color-rgb, 8, 23, 84), 0.03); 
-    }
+    /* Removed zebra striping for minimalism */
 

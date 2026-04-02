@@ -25,14 +25,18 @@ window.UI_FormSubmitter = class UI_FormSubmitter {
             this.isSaving = true;
             this.submitBtn.disabled = true;
 
-            const originalText = this.submitBtn.innerHTML;
-            this.submitBtn.innerHTML = '<ion-spinner name="crescent"></ion-spinner> &nbsp; Guardando...';
+            this.originalBtnChildren = Array.from(this.submitBtn.childNodes);
+            window.DOM.clear(this.submitBtn);
+            
+            this.submitBtn.appendChild(window.DOM.create('ion-spinner', { name: 'crescent' }));
+            this.submitBtn.appendChild(document.createTextNode(' \u00a0 Guardando...'));
 
             // --- UI Blocking (Zero-Latency Rule) ---
-            const loading = document.createElement('ion-loading');
-            loading.backdropDismiss = false; 
-            loading.message = 'Guardando registro...';
-            loading.spinner = 'crescent';
+            const loading = window.DOM.create('ion-loading', {
+                backdropDismiss: false,
+                message: 'Guardando registro...',
+                spinner: 'crescent'
+            });
             document.body.appendChild(loading);
             await loading.present();
 
@@ -142,39 +146,42 @@ window.UI_FormSubmitter = class UI_FormSubmitter {
                             this._patchFrontendCache(this.entityName, response, payload);
                             const itemName = (response.data && response.data.Entity) ? response.data.Entity : this.entityName;
                             this._showToast('¡' + itemName + ' guardado con éxito!', 'success');
-                            this._performSuccessCleanup(response, originalText);
+                            this._performSuccessCleanup(response);
                         } else {
                             this._showToast('Error: ' + (response ? response.message : 'Error desconocido'), 'danger');
-                            this._revertButtonState(originalText);
+                            this._revertButtonState();
                         }
                     } catch (e) {
                         console.error('[FormSubmitter] Error UI:', e);
                         this._showToast('Error en la interfaz local', 'warning');
-                        this._revertButtonState(originalText);
+                        this._revertButtonState();
                     }
                 })
                 .withFailureHandler(async (err) => {
                     await loading.dismiss();
-                    this._revertButtonState(originalText);
+                    this._revertButtonState();
                     this._showToast('Error de Servidor: ' + err.message, 'danger');
                 })
                 .API_Universal_Router(action, this.entityName, safePayload);
         });
     }
 
-    _revertButtonState(originalText) {
+    _revertButtonState() {
         this.isSaving = false;
         this.submitBtn.disabled = false;
-        this.submitBtn.innerHTML = originalText;
+        window.DOM.clear(this.submitBtn);
+        if (this.originalBtnChildren) {
+            this.originalBtnChildren.forEach(node => this.submitBtn.appendChild(node));
+        }
     }
 
-    _onSuccessMock(originalText) {
+    _onSuccessMock() {
         this._showToast('[MOCK] ¡' + this.entityName + ' guardado con éxito!', 'success');
-        this._performSuccessCleanup({ status: 'success' }, originalText);
+        this._performSuccessCleanup({ status: 'success' });
     }
 
-    _performSuccessCleanup(response, originalText) {
-        this._revertButtonState(originalText);
+    _performSuccessCleanup(response) {
+        this._revertButtonState();
         window.currentEditId = null;
         this._internalRetryId = null; // Liberar caché de reintentos
 
@@ -195,8 +202,8 @@ window.UI_FormSubmitter = class UI_FormSubmitter {
         if (inlineCallback) {
             inlineCallback(response);
         } else if (!window.ModalStackController || window.ModalStackController.getDepth() === 0) {
-            if (window.DataViewEngine) {
-                window.DataViewEngine.render(this.entityName, 'app-container');
+            if (window.AppEventBus) {
+                window.AppEventBus.publish('NAV::CHANGE', {viewType: 'dataview', entityKey: this.entityName});
             } else if (window.onSaveSuccessCallback) {
                 window.onSaveSuccessCallback();
             }
