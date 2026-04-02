@@ -85,7 +85,35 @@
     window.SubgridState = { _normalizeId, filterAvailableOptions, evaluateFieldState, isNewRecord };
 
     // [E18 - S18.1] Gobernanza Topológica (ABAC Context)
-    window.__ABAC_CONTEXT__ = <?!= typeof __ABAC_CONTEXT__ !== 'undefined' ? __ABAC_CONTEXT__ : '{"ownerOf":[],"memberOf":[]}' ?>;
+    window.__ABAC_CONTEXT__ = <?!= typeof __ABAC_CONTEXT__ !== 'undefined' ? __ABAC_CONTEXT__ : '{"ownerOf":[],"memberOf":[],"permissions":{}}' ?>;
+    
+    // [E18 - S18.4] ABAC Client-Side Helper
+    window.ABAC = {
+        context: window.__ABAC_CONTEXT__,
+        can: function(action, entityName, targetId) {
+            if (action === 'read') return true;
+            
+            const permissions = this.context.permissions || {};
+            // Graceful Degradation si no hay regla en matriz (igual que el backend)
+            if (!permissions.hasOwnProperty(entityName)) return true;
+            
+            const nivel = permissions[entityName] || "NONE";
+            
+            if (nivel.startsWith("ALL")) return true;
+            if (nivel.startsWith("NONE") || nivel.startsWith("READ_ONLY")) return false;
+            
+            if (action === 'update' || action === 'delete') {
+                if (nivel.startsWith("OWNER_ONLY")) return this.context.ownerOf.includes(targetId);
+                if (nivel.startsWith("MEMBER_ONLY")) return this.context.memberOf.includes(targetId) || this.context.ownerOf.includes(targetId);
+            }
+            
+            if (action === 'create') {
+                if (nivel.startsWith("OWNER") || nivel.startsWith("MEMBER")) return true;
+            }
+            
+            return false;
+        }
+    };
   </script>
 </head>
 <body>
@@ -114,6 +142,19 @@
             <ion-icon name="settings-outline"></ion-icon>
             <ion-label>Ajustes</ion-label>
           </div>
+          
+          <!-- S18.5 Governance Admin Panel Access (Blindado) -->
+          <div class="nav-item" id="nav-item-governance" onclick="window.AppEventBus.publish('NAV::CHANGE', {viewType: 'governance'})" title="Gobernanza ABAC">
+            <ion-icon name="shield-checkmark-outline"></ion-icon>
+            <ion-label>Gobernanza ABAC</ion-label>
+          </div>
+          <script>
+            // Hiding Agresivo inmediato para no-admins orgánicos
+            if (window.ABAC && !window.ABAC.can('update', 'Sys_Permissions')) {
+              var btnGov = document.getElementById('nav-item-governance');
+              if (btnGov) btnGov.style.display = 'none';
+            }
+          </script>
           <div class="nav-item" id="nav-item-profile" onclick="window.showToast('Módulo en construcción')" title="Mi Perfil">
             <ion-icon name="person-circle-outline"></ion-icon>
             <ion-label>Mi Perfil</ion-label>
@@ -272,6 +313,7 @@
   <?!= include('Dashboard_UI'); ?>
   <?!= include('DomainMap_UI'); ?>
   <?!= include('DesignKit_UI'); ?>
+  <?!= include('Governance_Admin_UI'); ?>
   <?!= include('Theme_Engine'); ?>
   <?!= include('Auth_UI'); ?>
   <?!= include('JS_Core'); ?>

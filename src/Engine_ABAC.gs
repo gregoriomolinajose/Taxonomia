@@ -44,8 +44,18 @@ const Engine_ABAC = {
     
     let abacContext = {
       ownerOf: [],
-      memberOf: []
+      memberOf: [],
+      permissions: {}
     };
+    
+    // Inyección del diccionario CUD de la matriz para el Frontend (S18.4)
+    if (persona.id_rol) {
+      const permisos = this._getCachedData('Sys_Permissions');
+      const misReglas = permisos.filter(p => p.id_rol === persona.id_rol);
+      misReglas.forEach(r => {
+        abacContext.permissions[r.schema_destino] = r.nivel_acceso;
+      });
+    }
     
     const personaId = persona.id;
 

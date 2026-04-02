@@ -682,6 +682,70 @@
             // Reason (Principio DRY): UI_Components gestiona esta hidratación activamente
             // al ser instanciados con `window._buildSearchableMulti(...)` en el switch parent.
 
+            // S18.4 - ABAC Passive Hiding & HelpDesk Mitigation (Educative Zero-Trust)
+            const canEdit = !window.ABAC || window.ABAC.can('update', entityName, id);
+            if (!canEdit) {
+                const cardNode = container.querySelector('ion-card');
+                if (cardNode) {
+                    const banner = document.createElement('div');
+                    banner.style.backgroundColor = 'var(--ion-color-light, #f4f5f8)';
+                    banner.style.color = 'var(--ion-color-medium, #5a5a5a)';
+                    banner.style.padding = '12px 16px';
+                    banner.style.borderBottom = '1px solid #dcdcdc';
+                    banner.style.borderTopLeftRadius = 'var(--rounded-md)';
+                    banner.style.borderTopRightRadius = 'var(--rounded-md)';
+                    banner.style.fontSize = '0.9rem';
+                    
+                    const icon = document.createElement('ion-icon');
+                    icon.setAttribute('name', 'lock-closed');
+                    icon.style.fontSize = '1.2em';
+                    icon.style.verticalAlign = 'middle';
+                    
+                    const span = document.createElement('span');
+                    span.style.verticalAlign = 'middle';
+                    span.style.marginLeft = '8px';
+                    
+                    const strong = document.createElement('strong');
+                    strong.appendChild(document.createTextNode('Modo de Solo Lectura. '));
+                    
+                    span.appendChild(strong);
+                    span.appendChild(document.createTextNode('Contacta al Administrador para solicitar accesos de edición sobre este nodo.'));
+                    
+                    banner.appendChild(icon);
+                    banner.appendChild(span);
+                    
+                    cardNode.insertBefore(banner, cardNode.firstChild);
+                }
+                
+                // Inutilizar inputs de manera segura (manteniendo legibilidad)
+                inputs.forEach(input => {
+                    const tag = input.tagName.toLowerCase();
+                    if (tag === 'ion-input' || tag === 'ion-textarea' || tag === 'ion-select') {
+                        input.setAttribute('readonly', 'true');
+                        input.setAttribute('disabled', 'true');
+                        input.style.pointerEvents = 'none';
+                        input.style.opacity = '0.8'; // Menos difuminado para lectura
+                    }
+                });
+                
+                // Mute de Subgrids y elementos interactivos complejos
+                const customInputs = container.querySelectorAll('.dv-chip, ion-button[fill="clear"]');
+                customInputs.forEach(i => {
+                    i.style.pointerEvents = 'none';
+                    i.style.opacity = '0.6';
+                });
+                
+                // Apagar rigurosamente el botón de Guardado principal del Layout
+                const btns = container.querySelectorAll('ion-button');
+                btns.forEach(btn => {
+                    if (btn.textContent.includes('Guardar') || btn.querySelector('ion-icon[name="save-outline"]')) {
+                        btn.setAttribute('disabled', 'true');
+                        btn.style.opacity = '0.4';
+                        btn.title = "No tienes permisos de edición en este nodo";
+                    }
+                });
+            }
+
             // 7. Agregar Audit Trail (Directiva del Product Architect)
             if (record.updated_at && record.updated_by) {
                 let formattedDate = record.updated_at;

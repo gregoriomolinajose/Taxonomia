@@ -123,7 +123,8 @@ const APP_SCHEMAS = {
       'activo': 'activo', 'borrador': 'borrador', 'en-revis-n': 'en-revision', 'en-revision': 'en-revision',
       'tier-1-cr-tico': 'tier-1-critico', 'tier-1-critico': 'tier-1-critico',
       'tier-2-alto': 'tier-2-alto', 'tier-3-medio': 'tier-3-medio', 'tier-4-bajo': 'tier-4-bajo',
-      'saas': 'saas', 'marketplace': 'marketplace', 'b2b': 'b2b', 'b2c': 'b2c', 'transaccional': 'transaccional'
+      'saas': 'saas', 'marketplace': 'marketplace', 'b2b': 'b2b', 'b2c': 'b2c', 'transaccional': 'transaccional',
+      'all-admin-total': 'danger', 'owner-only-solo-propios': 'primary', 'member-only-siendo-miembro': 'secondary', 'read-only-solo-lectura': 'medium', 'none-denegado': 'light'
     }
   }
 };

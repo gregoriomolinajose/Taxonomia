@@ -409,7 +409,11 @@
             rightDiv.appendChild(input);
             rightDiv.appendChild(btnExp);
             rightDiv.appendChild(btnImp);
-            rightDiv.appendChild(btnAdd);
+            
+            // S18.4 Hiding Agresivo (Botón Crear Nuevo)
+            if (!window.ABAC || window.ABAC.can('create', _state.entityName)) {
+                rightDiv.appendChild(btnAdd);
+            }
             
             headerDiv.appendChild(leftDiv);
             headerDiv.appendChild(rightDiv);
