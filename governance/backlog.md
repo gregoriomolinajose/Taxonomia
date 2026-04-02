@@ -37,10 +37,12 @@
 | **WSOD Local XSS Risk** | Quality Rev. S12.3 | ✅ [E15] Sanitización global nativa con Template Isolation V4. |
 | **Subgrid Lookup Implicit Fetch** | Arch Review S13.1 (H8) | ✅ [E13] Desacoplamientos realizados en S13 sobre el Componente base. |
 | **sumPrefix Logic Duplication** | Arch Review S13.2 (Q1) | ✅ [E13] Unificado de manera DRY a reglas OCP del framework de validación. |
+| **Validators Truthiness Bugs** | Quality Rev. S18.2 | ✅ [E19] Refactorización estricta de coerciones asimétricas y parsers `isNaN()`. |
+| **Ionic Floating Promises Risks** | Arch Review S18.3 | ✅ [E19] Componentes `PresentSafe` global en Zero-Trust UI Framework. |
+| **JSON Parse Swallows & WSOD** | App Event Bus Init | ✅ [E19] Telemetría Global Boundaries con inyección Safe. |
 
 ### 🚧 Deuda Activa (Backlog Técnico)
 
 > **[INFO]** Toda la Deuda Técnica Activa devuelta por Quality y Architecture Reviews ha sido formalmente agrupada y escalada a las siguientes Épicas en el Roadmap (To-Do):
-> - **[E19] Core Framework Resilience:** Bugs lógicos (`Validator Truthiness`, `JSON Parse Swallows`), Promises (`Ionic`), Concatenaciones ES5, Tests Mudos, y Profiling Mágico.
 > - **[E20] Pipeline Evolution:** `Esbuild/Rollup` Integration, `Localización UI_CONFIG`, y Modularización formal ES6 del `ThemeManager`.
 > - **[E21] Next-Gen MDM data Layer:** `Optimistic Locking`, Búsqueda Asíncrona (Debounce/Typeahead), y `Soft-Delete` Graph Cleanup.
