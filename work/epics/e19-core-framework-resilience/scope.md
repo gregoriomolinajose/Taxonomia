@@ -22,5 +22,28 @@ Enhance the Taxonomia SPA architecture by injecting defensive programming patter
 ## Done Criteria
 - [ ] No warnings about unhandled promises when interacting with UI.
 - [ ] Validations strictly test for undefined/null rather than generic truthiness.
-- [ ] Telemetry logs components initialization and state transitions.
 - [ ] Architecture passes the `rai-quality-review` successfully.
+
+## Implementation Plan & Sequencing
+
+### Story Execution Order
+| Sequence | Story | Rationale / Strategy | Dependencies |
+|----------|-------|----------------------|--------------|
+| **1.** | **S19.3: AppEventBus Telemetry** | Foundation (Walking Skeleton). Required before creating error handlers. | None |
+| **2.** | **S19.4: Global Error Boundaries** | Risk-first. Establishes the safety net (Catch-all) to prevent WSOD. | S19.3 |
+| **3.** | **S19.2: Defusing Floating Promises** | Quick Wins. Eliminates asynchronous unhandled exceptions in UI hooks. | Soft: S19.4 |
+| **4.** | **S19.1: Truthiness Refactoring** | Value delivery. Resolves falsy coercion bugs in specific components. | None |
+
+### Milestones
+- **M1: Core Observability (Walking Skeleton)**
+  - Scope: S19.3 + S19.4
+  - Criteria: System catches fatal rendering errors and outputs telemetry logs without breaking the DOM.
+- **M2: UI Asynchronous Safety**
+  - Scope: S19.2
+  - Criteria: All Ionic promises are properly blocked with `await` and error-checked.
+- **M3: Data Determinism (Feature Complete)**
+  - Scope: S19.1
+  - Criteria: Form validations allow values like `0` to pass accurately. Epic complete.
+
+### Sequencing Risks
+- Relying on `try/catch` wrappers requires diligence across all asynchronous boundaries; manual testing is required for UI Edge cases.
