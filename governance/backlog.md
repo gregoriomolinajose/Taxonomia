@@ -16,9 +16,9 @@
 | E13| The Cleaning Sprint (Arch & Tech Debt)                | ✅ Complete   | Extracción de Subgrids M:N, CSS Minifier y Rules      | Alta     |
 | E14| The Modularization Epoch (ES6 & Micro-Frontends)      | ✅ Complete  | Fraccionar FormRenderer, CSS Nativo y Template Literals| Max      |
 | E15| Topological Tech Debt (Cleaning Sprint)               | ✅ Complete  | Deuda técnica estructural (FormEngine, GC Modales, XSS)| Alta     |
-| E16| Blueprint V4 Audit & Refactoring                      | 🚧 To Do     | Refactorización Arquitectural: DataGrid Minimalism, Visibility Flags, Topology| Alta     |
+| E16| Blueprint V4 Audit & Refactoring                      | ✅ Complete  | Refactorización Arquitectural: DataGrid Minimalism, Visibility Flags, Topology| Alta     |
 | E17| Core Initialization Purification                      | ✅ Complete  | Desacoplar JS_Core.html, ThemeManager, Auth UI y Math Logic | Max      |
-| E18| Declarative UI Rendering                              | 🏃 In Progress| Evitar FOUC y Memory Leaks mediante <template> y EventBus en todo el SPA | Max      |
+| E18| Gobernanza Topológica y Seguridad Contextual (ABAC) | 🏃 In Progress| Micro-gobernanza, Segregation of Duties y Accesos basados en contexto SAFe | Max      |
 
 ## Parking Lot / Deuda Técnica (Post-Epic 11)
 
