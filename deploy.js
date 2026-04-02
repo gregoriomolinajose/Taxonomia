@@ -128,7 +128,8 @@ try {
                     minified = output.styles;
                 }
             } catch (e) {
-                console.error(`\x1b[31m[Deploy-Error] Excepción Crítica compilando CSS en ${file.source}:\x1b[0m`, e);
+                console.error(`\x1b[31m[Deploy-Error] Excepción Crítica compilando CSS con Esbuild en ${file.source}:\x1b[0m`, e);
+                process.exit(1);
             }
             
             const htmlWrapped = `<style>\n${minified}\n</style>`;
