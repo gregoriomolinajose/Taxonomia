@@ -282,7 +282,7 @@ window.UI_SubgridBuilder = {
                 if (el) el.remove();
             });
             
-            await modal.present();
+            await window.PresentSafe(modal);
 
             // Logic for selection
             const optionsItems = modal.querySelectorAll('.lookup-option');

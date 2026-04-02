@@ -45,7 +45,7 @@
       loading.message = 'Verificando identidad...';
       loading.spinner = 'crescent';
       document.body.appendChild(loading);
-      await loading.present();
+      await window.PresentSafe(loading);
       
       // Ocultar sin destruir el DOM interno para preservar Listeners
       if (appContainer) appContainer.classList.add('ion-hide');
@@ -132,7 +132,7 @@
       toast.message  = 'Sincronizando plataforma...';
       toast.position = 'bottom'; toast.color = 'dark'; toast.icon = 'sync-outline';
       document.body.appendChild(toast);
-      await toast.present();
+      await window.PresentSafe(toast);
       
       var onSuccess = async function(res) {
         await toast.dismiss();
@@ -147,7 +147,7 @@
         } else {
           newToast.message = 'Error en sincronización.'; newToast.color = 'danger'; newToast.duration = 3000;
         }
-        document.body.appendChild(newToast); await newToast.present();
+        document.body.appendChild(newToast); await window.PresentSafe(newToast);
       };
       
       if (typeof google !== 'undefined' && google.script && google.script.run) {
@@ -161,7 +161,7 @@
           var newToast = document.createElement('ion-toast');
           newToast.position = 'bottom'; newToast.message = 'Mock: Plataforma sincronizada.';
           newToast.color = 'success'; newToast.duration = 2000;
-          document.body.appendChild(newToast); await newToast.present();
+          document.body.appendChild(newToast); await window.PresentSafe(newToast);
         }, 1000);
       }
     },
@@ -176,7 +176,7 @@
         
         var t = document.createElement('ion-toast');
         t.message = 'Desconectado de forma segura.'; t.duration = 3000; t.color = 'dark';
-        document.body.appendChild(t); await t.present();
+        document.body.appendChild(t); await window.PresentSafe(t);
       }
     }
   };

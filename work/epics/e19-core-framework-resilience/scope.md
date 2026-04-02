@@ -29,15 +29,17 @@ Enhance the Taxonomia SPA architecture by injecting defensive programming patter
 ### Story Execution Order
 | Sequence | Story | Rationale / Strategy | Dependencies |
 |----------|-------|----------------------|--------------|
-| **1.** | **S19.3: AppEventBus Telemetry** | Foundation (Walking Skeleton). Required before creating error handlers. | None |
-| **2.** | **S19.4: Global Error Boundaries** | Risk-first. Establishes the safety net (Catch-all) to prevent WSOD. | S19.3 |
-| **3.** | **S19.2: Defusing Floating Promises** | Quick Wins. Eliminates asynchronous unhandled exceptions in UI hooks. | Soft: S19.4 |
-| **4.** | **S19.1: Truthiness Refactoring** | Value delivery. Resolves falsy coercion bugs in specific components. | None |
+| **1.** | **S19.3: AppEventBus Telemetry** | ✅ Complete | None |
+| **2.** | **S19.4: Global Error Boundaries** | ✅ Complete | S19.3 |
+| **3.** | **S19.5: Telemetry Payload Sanitization** | ✅ Complete | S19.3 |
+| **4.** | **S19.2: Defusing Floating Promises** | ✅ Complete | S19.4 |
+| **5.** | **S19.1: Truthiness Refactoring** | Value delivery. Resolves falsy coercion bugs in specific components. | None |
 
 ### Milestones
 - **M1: Core Observability (Walking Skeleton)**
-  - Scope: S19.3 + S19.4
-  - Criteria: System catches fatal rendering errors and outputs telemetry logs without breaking the DOM.
+  - Implementación base de Telemetría + Global Boundaries (WSOD mitigators). ✅ Completado.
+- **M2: Quick Wins (Floating Exceptions)**
+  - Blindaje progresivo de llamados UI y promesas asíncronas en componentes débiles. ✅ Completado.
 - **M2: UI Asynchronous Safety**
   - Scope: S19.2
   - Criteria: All Ionic promises are properly blocked with `await` and error-checked.

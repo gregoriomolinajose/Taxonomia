@@ -172,7 +172,7 @@
                 loading.message = 'Cargando opciones...';
                 loading.spinner = 'crescent';
                 document.body.appendChild(loading);
-                await loading.present();
+                await window.PresentSafe(loading);
 
                 try {
                     const promises = fieldsWithLookup.map(field => new Promise((resolve) => {
@@ -525,7 +525,7 @@
 
             modal.appendChild(footerContainer);
             document.body.appendChild(modal);
-            await modal.present();
+            await window.PresentSafe(modal);
         };
 
         /**
@@ -581,7 +581,7 @@
             const loading = document.createElement('ion-loading');
             loading.message = 'Hidratando registro...';
             document.body.appendChild(loading);
-            await loading.present();
+            await window.PresentSafe(loading);
 
             let fullRecord = record;
             try {

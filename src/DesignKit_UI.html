@@ -429,7 +429,7 @@
 
   window.openTestModal = function() {
     var modal = document.getElementById('enterpriseModalTest');
-    if (modal) modal.present();
+    if (modal) window.PresentSafe(modal);
   };
 
   // Helper: Hex to RGB Converter

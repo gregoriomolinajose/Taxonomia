@@ -44,7 +44,7 @@ window.GovernanceEngine = {
         loading.message = 'Calculando Intersecciones ABAC...';
         loading.spinner = 'dots';
         document.body.appendChild(loading);
-        await loading.present();
+        await window.PresentSafe(loading);
 
         try {
             if (window.__APP_CACHE__) {

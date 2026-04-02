@@ -107,6 +107,20 @@
     }
   };
 
+  /* ── Ionic UI Safe Wrappers (S19.2) ──────────────────── */
+  window.PresentSafe = function(ionicElement) {
+    if (!ionicElement || typeof ionicElement.present !== 'function') {
+      return Promise.resolve();
+    }
+    return ionicElement.present().catch(function(err) {
+      var errDetail = err ? (err.message || String(err)) : 'Unknown Promise Rejection';
+      if (window.Telemetry && window.Telemetry.track) {
+        window.Telemetry.track('IONIC_ANIMATION_WARN', errDetail, 'WARN');
+      } else {
+        console.warn('[PresentSafe] Cancelled present:', errDetail);
+      }
+    });
+  };
 
   /* ── Dinamic Router (Movido a UI_Router.html en S12.2) ── */
   

@@ -644,7 +644,7 @@
                                 { text: 'Sí, reubicar rama', handler: () => originalVal = newVal }
                             ];
                             document.body.appendChild(alert);
-                            await alert.present();
+                            await window.PresentSafe(alert);
                         } else if (!originalVal || originalVal === "") {
                             originalVal = newVal;
                         }

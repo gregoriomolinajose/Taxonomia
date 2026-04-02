@@ -711,7 +711,7 @@
                 }
             ];
             document.body.appendChild(alert);
-            return alert.present();
+            return window.PresentSafe(alert);
         }
 
         function _executeSoftDelete(id) {
@@ -730,7 +730,7 @@
             const loading = document.createElement('ion-loading');
             loading.message = 'Borrando...';
             document.body.appendChild(loading);
-            loading.present();
+            window.PresentSafe(loading);
 
             const isGAS = typeof google !== 'undefined' && google.script && google.script.run;
             if (isGAS) {
@@ -774,7 +774,7 @@
             toast.duration = 2500;
             toast.color = color || 'success';
             document.body.appendChild(toast);
-            return toast.present();
+            return window.PresentSafe(toast);
         }
 
         /* ────────────────────────────────────────────
@@ -793,7 +793,7 @@
                     loading.message = 'Importando masivamente...';
                     loading.id = 'dv-import-loading';
                     document.body.appendChild(loading);
-                    loading.present();
+                    window.PresentSafe(loading);
                 },
                 function onSuccess(insertedCount) {
                     const loading = document.getElementById('dv-import-loading');

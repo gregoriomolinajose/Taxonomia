@@ -16,12 +16,14 @@
   </template>
   <script>
     function triggerWSOD(errDetail) {
-      if (!document.body) return; // Prevent before body is ready
-      
-      // S19.4 Telemetry Injection (Fire and Forget)
+      // 1. S19.4 Telemetry Injection (Fire and Forget)
+      // Ejecutado ANTES de la validación del DOM para atrapar errores pre-render
       if (window.Telemetry && typeof window.Telemetry.track === 'function') {
         window.Telemetry.track('SYSTEM_WSOD_FATAL', errDetail, 'FATAL');
       }
+
+      // 2. Abortar UI de error si aún no inicializa el DOM (evita excepciones adicionales)
+      if (!document.body) return; 
 
       var template = document.getElementById('wsod-mitigator');
       if (template) {
