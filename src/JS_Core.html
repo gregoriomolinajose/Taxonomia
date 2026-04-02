@@ -28,25 +28,42 @@
 
   /* ── Telemetry (S19.3 Telemetría y Límites) ──────────── */
   window.Telemetry = {
+    _isTrackingFatal: false, // Prevents infinite recursion on WSOD
+    
+    /**
+     * Registra un evento en el bus asíncrono y en consola local.
+     * @param {string} action Nombre/Tag del evento
+     * @param {any} [payload={}] Objeto con metadata
+     * @param {"INFO"|"WARN"|"ERROR"|"FATAL"|"METRIC"} [level="INFO"] Severidad
+     */
     track: function(action, payload, level) {
+      if (level === 'FATAL') {
+        if (this._isTrackingFatal) return; // Rompe el loop de window.onerror
+        this._isTrackingFatal = true;
+      }
+      
       setTimeout(function() { // Fire and forget para no degradar UI Thread
         var safeLevel = level || 'INFO';
+        var safeAction = action || 'UNKNOWN';
         var safePayload = window.Telemetry._sanitize(payload);
         var packet = {
           timestamp: new Date().toISOString(),
           level: safeLevel,
-          action: action,
+          action: safeAction,
           payload: safePayload || {}
         };
         
         // 1. Integración con consola local de desarrollo (Coloreado)
         if (safeLevel === 'ERROR' || safeLevel === 'FATAL') {
-          console.error('[Telemetry|' + safeLevel + '] ' + action, safePayload);
+          console.error('[Telemetry|' + safeLevel + '] ' + safeAction, safePayload);
         } else if (safeLevel === 'WARN') {
-          console.warn('[Telemetry|WARN] ' + action, payload);
+          console.warn('[Telemetry|WARN] ' + safeAction, safePayload);
         } else {
-          console.info('[Telemetry|INFO] ' + action, payload);
+          console.info('[Telemetry|INFO] ' + safeAction, safePayload);
         }
+
+        // Liberar flag si era fatal (en caso de recuperación)
+        if (safeLevel === 'FATAL') window.Telemetry._isTrackingFatal = false;
 
         // 2. Puerta de enlace con AppEventBus
         if (window.AppEventBus) {
