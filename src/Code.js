@@ -18,6 +18,18 @@ function doGet(e) {
     ? CONFIG.APP_VERSION
     : 'v1.0.39';
 
+  // ABAC Resolver: Cálculo de Topología O(n) al vuelo para proveer Contexto Seguro en Frontend
+  var email = "";
+  try {
+    if (typeof Session !== 'undefined') email = Session.getActiveUser().getEmail();
+  } catch(e) {}
+  
+  var abacContext = typeof Engine_ABAC !== 'undefined' 
+      ? Engine_ABAC.resolveTopologyFor(email) 
+      : { ownerOf: [], memberOf: [] };
+      
+  template.__ABAC_CONTEXT__ = JSON.stringify(abacContext);
+
   return template.evaluate()
     .setTitle('Gobierno de Modelo de Producto — EPT OMR')
     .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL)
