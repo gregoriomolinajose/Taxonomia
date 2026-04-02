@@ -1,0 +1,46 @@
+artifact_type: story-design
+version: 1
+skill: rai-story-design
+created: '2026-04-01T20:30:00Z'
+story: 'S18.4'
+epic: 'E18'
+content:
+  summary: 'Extraer y modularizar FormBuilder_Inputs_*.html y aislar la creación de Modales en UI_ModalController para diseño DRY.'
+  complexity: moderate
+  acceptance_criteria:
+    - id: AC1
+      description: 'Splits FormBuilder_Inputs into Base, Complex, and Router components.'
+      verifiable: true
+    - id: AC2
+      description: 'Index.html contains included fragments in the correct DI order.'
+      verifiable: true
+    - id: AC3
+      description: 'UI_ModalController handles all template cloning and null boundary checks.'
+      verifiable: true
+    - id: AC4
+      description: 'FormRenderer_UI y UI_SubgridBuilder se integran a UI_ModalController.'
+      verifiable: true
+  integration_points:
+    - module: 'UI_ModalController'
+      change_type: new
+      files: ['src/UI_ModalController.html']
+    - module: 'FormBuilder_Inputs'
+      change_type: modification
+      files: ['src/FormBuilder_Inputs.html', 'src/FormBuilder_Inputs_Base.html', 'src/FormBuilder_Inputs_Complex.html', 'src/Index.html']
+    - module: 'FormRenderer_UI'
+      change_type: modification
+      files: ['src/FormRenderer_UI.html']
+    - module: 'UI_SubgridBuilder'
+      change_type: modification
+      files: ['src/UI_SubgridBuilder.html']
+  decisions:
+    - id: D1
+      choice: 'Crear componente genérico UI_ModalController'
+      rationale: 'Concentrar los null checks repetitivos y el Template Cloning para respetar DRY y el Parking Lot H10.'
+      alternatives_considered: ['WebComponents V8', 'CustomElements directos']
+    - id: D2
+      choice: 'Diseccionar FormBuilder usando refactor_fb.js'
+      rationale: 'Aprovechar scripts temporales de migración previos para partir 400+ lineas sin afectar regresiones.'
+      alternatives_considered: ['Partirlo manualmente']
+refs:
+  epic_scope: 'work/epics/e18-declarative-ui-rendering/scope.md'

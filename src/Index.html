@@ -83,6 +83,9 @@
     <?!= typeof evaluateFieldState !== 'undefined' ? evaluateFieldState.toString() : 'function evaluateFieldState(){return "optional"}' ?>;
     <?!= typeof isNewRecord !== 'undefined' ? isNewRecord.toString() : 'function isNewRecord(){return true}' ?>;
     window.SubgridState = { _normalizeId, filterAvailableOptions, evaluateFieldState, isNewRecord };
+
+    // [E18 - S18.1] Gobernanza Topológica (ABAC Context)
+    window.__ABAC_CONTEXT__ = <?!= typeof __ABAC_CONTEXT__ !== 'undefined' ? __ABAC_CONTEXT__ : '{"ownerOf":[],"memberOf":[]}' ?>;
   </script>
 </head>
 <body>
