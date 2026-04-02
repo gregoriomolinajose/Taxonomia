@@ -48,5 +48,5 @@ En lugar de fallar en servidor mediante un mensaje frustrante de "Acceso Denegad
 - `[x]` S18.1: Session Topology Resolver (XS)
 - `[x]` S18.2: Rule Evaluator Engine (DB-Driven) (M)
 - `[x]` S18.4: Contextual UI Renderer (M)
-- `[ ]` S18.3: Hierarchical Escalation (L)
+- `[x]` S18.3: Hierarchical Escalation (L)
 - `[x]` S18.5: Governance Admin Panel (Zero-Code UI) (XL)

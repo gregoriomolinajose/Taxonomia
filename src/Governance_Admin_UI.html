@@ -53,8 +53,11 @@ window.GovernanceEngine = {
 
             if (!rolesRes || !permsRes) throw new Error("Fallo en la recepción del Topográfico de Permisos.");
 
-            this.roles = typeof rolesRes === 'string' ? JSON.parse(rolesRes) : rolesRes;
-            this.perms = typeof permsRes === 'string' ? JSON.parse(permsRes) : permsRes;
+            let rawRoles = typeof rolesRes === 'string' ? JSON.parse(rolesRes) : rolesRes;
+            this.roles = Array.isArray(rawRoles) ? rawRoles : (rawRoles.rows || []);
+
+            let rawPerms = typeof permsRes === 'string' ? JSON.parse(permsRes) : permsRes;
+            this.perms = Array.isArray(rawPerms) ? rawPerms : (rawPerms.rows || []);
 
             this._buildTable();
         } catch(e) {

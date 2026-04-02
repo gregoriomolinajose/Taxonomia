@@ -11,6 +11,11 @@ const APP_SCHEMAS = {
   },
   Portafolio: {
     metadata: { showInMenu: true, showInDashboard: false, order:2, iconName:'briefcase-outline', color:'primary', label:'Portafolios', titleField:'nombre', idField:'id_portafolio', fkField:null },
+    topological_metadata: {
+        ownerFields: ["director_id", "vp_id"],
+        parentEntity: null,
+        parentField: null
+    },
     fields: []
   },
   Dominio: {
@@ -44,6 +49,11 @@ const APP_SCHEMAS = {
   },
   Grupo_Productos: {
     metadata: { showInMenu: true, showInDashboard: false, order:4, iconName:'layers-outline', color:'secondary', label:'Grupos de Producto', titleField:'nombre', idField:'id_grupo_producto', fkField:{ key:'id_portafolio', label:'Portafolio' } },
+    topological_metadata: {
+        ownerFields: ["group_manager_id"],
+        parentEntity: "Portafolio",
+        parentField: "id_portafolio"
+    },
     steps: ["Datos Generales", "Estrategia de Negocio"],
     primaryKey: "id_grupo_producto",
     titleField: "nombre",
@@ -58,6 +68,11 @@ const APP_SCHEMAS = {
   },
   Producto: {
     metadata: { showInMenu: true, showInDashboard: false, order:5, iconName:'cube-outline', color:'tertiary', label:'Productos', titleField:'nombre_producto', idField:'id_producto', fkField:{ key:'id_grupo_producto', label:'Grupo' } },
+    topological_metadata: {
+        ownerFields: ["rte_id", "pm_id", "agile_coach_id"],
+        parentEntity: "Grupo_Productos",
+        parentField: "id_grupo_producto"
+    },
     fields: []
   },
   Capacidad: {
@@ -80,6 +95,11 @@ const APP_SCHEMAS = {
   },
   Equipo: {
     metadata: { showInMenu: true, showInDashboard: false, order:7, iconName:'people-outline', color:'dark', label:'Equipos', titleField:'nombre_equipo', idField:'id_equipo', fkField:{ key:'id_producto', label:'Producto' } },
+    topological_metadata: {
+        ownerFields: ["scrum_master_id", "product_owner_id"],
+        parentEntity: "Producto",
+        parentField: "id_producto"
+    },
     businessRules: [
       { trigger: 'onInput', action: 'sumPrefix', prefix: 'cant_', target: 'total_integrantes' }
     ],
