@@ -87,11 +87,36 @@ const APP_SCHEMAS = {
   },
   Persona: {
     metadata: { showInMenu: true, showInDashboard: false, order:8, iconName:'person-outline', color:'medium', label:'Personas', titleField:'nombre_completo', idField:'id_persona', fkField:null },
-    fields: []
+    primaryKey: "id_persona",
+    fields: [
+      { name: "id_persona", type: "text", primaryKey: true, readonly: true, label: "ID Persona", width: 6 },
+      { name: "nombre_completo", type: "text", label: "Nombre Completo", required: true, width: 6 },
+      { name: "correo", type: "text", label: "Correo Corporativo", required: true, width: 6 },
+      { name: "id_rol", type: "select", label: "Rol de Autorización (ABAC)", required: false, width: 6, lookupSource: "getSysRolesOptions" }
+    ]
   },
   Relacion_Dominios: {
     metadata: { order:9, iconName:'git-network-outline', color:'primary', label:'Conexiones Topológicas', titleField:'tipo_relacion', idField:'id_relacion', fkField:{ key:'id_nodo_padre', label:'Dominio' } },
     fields: []
+  },
+  Sys_Roles: {
+    metadata: { showInMenu: true, showInDashboard: false, order:90, iconName:'shield-half-outline', color:'danger', label:'Seguridad: Roles', titleField:'nombre_rol', idField:'id_rol', fkField:null },
+    primaryKey: "id_rol",
+    fields: [
+      { name: "id_rol", type: "text", primaryKey: true, readonly: true, label: "ID Rol", width: 12 },
+      { name: "nombre_rol", type: "text", label: "Nombre de Rol", required: true, width: 6 },
+      { name: "descripcion", type: "textarea", label: "Descripción", required: false, width: 12, showInList: false }
+    ]
+  },
+  Sys_Permissions: {
+    metadata: { showInMenu: true, showInDashboard: false, order:91, iconName:'key-outline', color:'danger', label:'Seguridad: Permisos ABAC', titleField:'schema_destino', idField:'id_permiso', fkField:{ key:'id_rol', label:'Rol Base' } },
+    primaryKey: "id_permiso",
+    fields: [
+      { name: "id_permiso", type: "text", primaryKey: true, readonly: true, label: "ID Permiso", width: 12 },
+      { name: "id_rol", type: "select", label: "Rol Organizacional", required: true, width: 6, lookupSource: "getSysRolesOptions" },
+      { name: "schema_destino", type: "select", label: "Entidad del Sistema", required: true, width: 6, options: ["Portafolio", "Dominio", "Grupo_Productos", "Producto", "Capacidad", "Equipo", "Persona", "Relacion_Dominios", "Sys_Roles", "Sys_Permissions"] },
+      { name: "nivel_acceso", type: "select", label: "Nivel de Acceso", required: true, width: 12, options: ["ALL (Admin Total)", "OWNER_ONLY (Solo propios)", "MEMBER_ONLY (Siendo Miembro)", "READ_ONLY (Solo lectura)", "NONE (Denegado)"] }
+    ]
   },
   _UI_CONFIG: {
     badgeMap: {
