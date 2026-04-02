@@ -30,11 +30,11 @@
 | Item | Origen | Resolución |
 |------|--------|------------|
 | **Hardcoded Taxonomia Rules** | Arch Review (H8, H11) | ✅ [E13] Migrado a APP_SCHEMAS.businessRules dinámicamente. |
-| **Orphaned Factory Repaint** | Arch Review (H13) | ✅ [E18] Absorbido por la inyección de `LocalEventBus`. |
+| **Orphaned Factory Repaint** | Arch Review (H13) | ✅ [E15] Absorbido por la inyección de `LocalEventBus`. |
 | **UI_Router Global Aliases** | Arch Review S12.2 (H2) | ✅ [E13] Enrutado refactorizado y saneado de la interfaz global. |
 | **Grid Status Tokens** | Arch Review S12.2 (H9) | ✅ [E13] Status class generalizado sin semánticas repetitivas. |
 | **Grid Pagination Slicing** | Arch Review S12.2 (Q1) | ✅ [E13] Decisión: DataGrid preserva estado para mitigar caching overhead. |
-| **WSOD Local XSS Risk** | Quality Rev. S12.3 | ✅ [E18] Sanitización global nativa con Template Isolation V4. |
+| **WSOD Local XSS Risk** | Quality Rev. S12.3 | ✅ [E15] Sanitización global nativa con Template Isolation V4. |
 | **Subgrid Lookup Implicit Fetch** | Arch Review S13.1 (H8) | ✅ [E13] Desacoplamientos realizados en S13 sobre el Componente base. |
 | **sumPrefix Logic Duplication** | Arch Review S13.2 (Q1) | ✅ [E13] Unificado de manera DRY a reglas OCP del framework de validación. |
 

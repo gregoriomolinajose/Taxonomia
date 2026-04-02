@@ -6,7 +6,7 @@ Este documento condensa la Deuda Técnica material devuelta por los heurísticos
 
 ### ✓ FormContext Object Injection (H8)
 * **Origen:** Arch Review Epic 14 (S14.1).
-* **Resolución:** [E18] La arquitectura FormBuilder_Inputs fue desmantelada e invertida por Factory patterns orgánicos.
+* **Resolución:** [E14] La arquitectura FormBuilder_Inputs fue desmantelada e invertida por Factory patterns orgánicos.
 
 ### ✓ Granularidad Múltiple en DataGrid (H4)
 * **Origen:** Arch Review Epic 14 (S14.4).
@@ -18,7 +18,7 @@ Este documento condensa la Deuda Técnica material devuelta por los heurísticos
 
 ### ✓ Decoupled Pub/Sub en Vistas Recursivas (AppEventBus)
 * **Origen:** Sesión de Diseño S14.5 (Edge Cases MDM).
-* **Resolución:** [E18] El SPA implementó `LocalEventBus` encapsulado por FormRenderer mitigando fugas orgánicamente en S18.3.
+* **Resolución:** [E15] El SPA implementó `LocalEventBus` mitigando fugas orgánicamente durante el Cleaning Sprint.
 
 
 ## 🏗️ Deuda Topológica y Estructural Activa
