@@ -74,9 +74,86 @@ function buildPathName(formStateObj, params, cache) {
     return `PATH: ${cleanParentPath} > ${nombre}`;
 }
 
+function buildEChartsTreemapData(cacheObject) {
+    var rawData = [];
+    if (cacheObject && Array.isArray(cacheObject['Dominio'])) {
+        rawData = cacheObject['Dominio'];
+    }
+    
+    if (!rawData || rawData.length === 0) return [];
+    
+    var mapData = {};
+    var rootNodes = [];
+    var hasParentMap = {};
+    
+    // Configuration over Convention
+    var PRIMARY_RELATION_TYPE = "Militar_Directa";
+    
+    // 1. Create O(1) Lookup Map and deep copy nodes
+    rawData.forEach(function(row) {
+        mapData[row.id_dominio] = {
+            id: row.id_dominio,
+            name: (row.n0_es || '').replace(/[▶►▸>]/g, '').trim(),
+            path: (row.path_completo_es || '').replace(/[▶►▸>]/g, '').trim(), 
+            value: 1, 
+            _record: row
+        };
+    });
+    
+    // 2. Temporal Interceptor (Bridge Table Edges)
+    var relationData = (cacheObject && Array.isArray(cacheObject['Relacion_Dominios'])) ? cacheObject['Relacion_Dominios'] : [];
+
+    if (relationData.length > 0) {
+        var activeEdges = relationData.filter(function(edge) {
+            var isCurrent = (edge.es_version_actual === true || edge.es_version_actual === "TRUE" || edge.es_version_actual === "true");
+            var isDirect = (edge.tipo_relacion === PRIMARY_RELATION_TYPE);
+            return isCurrent && isDirect;
+        });
+
+        activeEdges.forEach(function(edge) {
+            var parentNode = mapData[edge.id_nodo_padre];
+            var childNode = mapData[edge.id_nodo_hijo];
+            if (parentNode && childNode && edge.id_nodo_padre !== edge.id_nodo_hijo) {
+                if (!parentNode.children) parentNode.children = [];
+                parentNode.children.push(childNode);
+                hasParentMap[edge.id_nodo_hijo] = true;
+            }
+        });
+    } else {
+        rawData.forEach(function(row) {
+            if (row.id_dominio_padre && String(row.id_dominio_padre).trim() !== '' && mapData[row.id_dominio_padre]) {
+                var parentNode = mapData[row.id_dominio_padre];
+                var node = mapData[row.id_dominio];
+                if (!parentNode.children) parentNode.children = [];
+                parentNode.children.push(node);
+                hasParentMap[row.id_dominio] = true;
+            }
+        });
+    }
+
+    // 3. Root Node Resolution
+    rawData.forEach(function(row) {
+        if (!hasParentMap[row.id_dominio]) {
+            rootNodes.push(mapData[row.id_dominio]);
+        }
+    });
+    
+    return rootNodes;
+}
+
+/* ── TopologyGuard (S11.2 Edge Resolver) ────────────── */
+const TopologyGuard = {
+    getActiveEdges: function(graphData) {
+        if (!Array.isArray(graphData)) return [];
+        return graphData.filter(function(e) {
+            return e.es_version_actual !== false && String(e.es_version_actual).toUpperCase() !== 'FALSE';
+        });
+    }
+};
+
 // Universal Wrapper
 if (typeof module !== 'undefined' && module.exports) {
-    module.exports = { buildOrdenPath, buildPathName };
+    module.exports = { buildOrdenPath, buildPathName, buildEChartsTreemapData, TopologyGuard };
 } else if (typeof window !== 'undefined') {
-    window.Math_Engine = { buildOrdenPath, buildPathName };
+    window.Math_Engine = { buildOrdenPath, buildPathName, buildEChartsTreemapData, TopologyGuard };
 }

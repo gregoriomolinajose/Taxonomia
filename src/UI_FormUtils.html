@@ -1,0 +1,88 @@
+<script>
+/**
+ * UI_FormUtils.html (S14.1)
+ *
+ * Colección de Helper puros sin side-effects en el DOM general,
+ * desprendida del histórico FormEngine para cumplir Single Responsibility.
+ */
+
+/* ── Formatters Universales ────────────────────────────── */
+window.formatLabelString = function(str) {
+  return (str || '').replace(/_/g, ' ').replace(/\b\w/g, function(c) { return c.toUpperCase(); });
+};
+window.formatEntityName = window.formatLabelString;
+window.formatUserName = function(emailStr) {
+  if (!emailStr) return 'Usuario';
+  var local = emailStr.split('@')[0];
+  var first = local.split(/[\._-]/)[0];
+  if (!first) return 'Usuario';
+  return first.charAt(0).toUpperCase() + first.slice(1).toLowerCase();
+};
+
+window.UI_FormUtils = (function () {
+
+    /**
+     * Resolutor de opciones genérico para Dominios completos
+     * (Requerido por M:N Subgrid en N-Dimensional Graph)
+     */
+    function getDominioOptions(formCurrentState) {
+        const cache = (window.__APP_CACHE__ && window.__APP_CACHE__['Dominio']) ? window.__APP_CACHE__['Dominio'] : [];
+        const active = cache.filter(r => r.estado !== 'Eliminado');
+        return active.map(p => ({
+            value: p.id_dominio || p.id_registro,
+            label: `[Nivel ${p.nivel_tipo}] ${p.nombre_ingles || p.n0_es || p.nombre || p.id_registro}`
+        }));
+    }
+
+    /**
+     * Resolutor de opciones (Limitado) para "Dominio Padre"
+     */
+    function getDominiosPadreOptions(formCurrentState) {
+        if (!formCurrentState) {
+            const activeForm = document.querySelector('ion-modal');
+            if (activeForm) {
+                const inputs = activeForm.querySelectorAll('ion-input, ion-select');
+                formCurrentState = Array.from(inputs).map(inp => ({ name: inp.name, value: inp.value }));
+            } else {
+                formCurrentState = [];
+            }
+        }
+
+        const nivelObj = formCurrentState.find(c => c.name === 'nivel_tipo');
+        if (!nivelObj || !nivelObj.value) return [];
+        
+        const currentNivel = parseInt(nivelObj.value, 10);
+        if (isNaN(currentNivel) || currentNivel <= 0) return []; // Strict N>0
+        
+        const cache = (window.__APP_CACHE__ && window.__APP_CACHE__['Dominio']) ? window.__APP_CACHE__['Dominio'] : [];
+        const validParents = cache.filter(r => parseInt(r.nivel_tipo, 10) === currentNivel - 1 && r.estado !== 'Eliminado');
+        
+        return validParents.map(p => ({
+            value: p.id_dominio || p.id_registro,
+            label: `[Nivel ${p.nivel_tipo}] ${p.nombre_ingles || p.n0_es || p.nombre || p.id_registro}`
+        }));
+    }
+
+    /**
+     * Normaliza un ID de registro: trim + uppercase.
+     */
+    function normalizeId(id) {
+        return String(id || '').trim().toUpperCase();
+    }
+
+    /**
+     * Función pura: devuelve true si recordId ya está en la lista vinculada.
+     */
+    function isRecordLinked(recordId, linkedRecords, pkField) {
+        const normalizedCandidate = normalizeId(recordId);
+        return (linkedRecords || []).some(r => normalizeId(r[pkField]) === normalizedCandidate);
+    }
+
+    return {
+        getDominioOptions,
+        getDominiosPadreOptions,
+        normalizeId,
+        isRecordLinked
+    };
+})();
+</script>

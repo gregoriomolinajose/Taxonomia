@@ -6,15 +6,32 @@
   <title>Taxonomia Project - EPT OMR</title>
 
   <!-- Fail-Fast WSOD Mitigation (System Error Interceptor) -->
+  <template id="wsod-mitigator">
+    <div style="background:#fff3f3;color:#8a0000;padding:2rem;font-family:sans-serif;height:100vh;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;">
+      <h1 style="font-size:3rem;margin-bottom:0.5rem">⚠️</h1><h2>Error de Sistema</h2>
+      <p style="max-width:500px">Fallo crítico durante la inicialización de la plataforma (SyntaxError o ReferenceError asíncrono). La ejecución ha sido bloqueada (API Fail-Fast).</p>
+      <pre id="wsod-error-detail" style="background:#fbe9e9;padding:1rem;border-radius:6px;width:100%;max-width:600px;overflow-x:auto;text-align:left;font-size:0.85rem;border:1px solid #ecc;"></pre>
+      <button onclick="location.reload()" style="margin-top:1.5rem;padding:0.75rem 1.5rem;background:#cc0000;color:white;border:none;border-radius:6px;cursor:pointer;font-weight:600;">Regresar al Inicio</button>
+    </div>
+  </template>
   <script>
-    window.addEventListener('error', function(e) {
+    function triggerWSOD(errDetail) {
       if (!document.body) return; // Prevent before body is ready
-      var errDetail = e.error ? (e.error.stack || e.error.message) : e.message;
-      document.body.innerHTML = '<div style="background:#fff3f3;color:#8a0000;padding:2rem;font-family:sans-serif;height:100vh;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;">' +
-        '<h1 style="font-size:3rem;margin-bottom:0.5rem">⚠️</h1><h2>Error de Sistema</h2>' +
-        '<p style="max-width:500px">Fallo crítico durante la inicialización de la plataforma (SyntaxError o ReferenceError asíncrono). La ejecución ha sido bloqueada (API Fail-Fast).</p>' +
-        '<pre style="background:#fbe9e9;padding:1rem;border-radius:6px;width:100%;max-width:600px;overflow-x:auto;text-align:left;font-size:0.85rem;border:1px solid #ecc;">' + errDetail + '</pre>' +
-        '<button onclick="location.reload()" style="margin-top:1.5rem;padding:0.75rem 1.5rem;background:#cc0000;color:white;border:none;border-radius:6px;cursor:pointer;font-weight:600;">Regresar al Inicio</button></div>';
+      var template = document.getElementById('wsod-mitigator');
+      if (template) {
+        var clone = template.content.cloneNode(true);
+        clone.getElementById('wsod-error-detail').textContent = errDetail;
+        document.body.innerHTML = '';
+        document.body.appendChild(clone);
+      }
+    }
+    window.addEventListener('error', function(e) {
+      triggerWSOD(e.error ? (e.error.stack || e.error.message) : e.message);
+    });
+    window.addEventListener('unhandledrejection', function(e) {
+      var reason = e.reason;
+      var detail = (reason && reason.stack) ? reason.stack : String(reason);
+      triggerWSOD('Unhandled Promise Rejection: ' + detail);
     });
   </script>
 
@@ -34,6 +51,7 @@
   <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
 
   <!-- MOTOR DE DISENO (Regla UI §14) -->
+  <?!= include('UI_ThemeManager'); ?>
   <?!= include('CSS_DesignSystem'); ?>
   <?!= include('CSS_App'); ?>
 
@@ -43,22 +61,59 @@
   <script>
     window.APP_SCHEMAS = <?!= JSON.stringify(getAppSchema()) ?>;
     window.__APP_CACHE__ = {};
-    window.ENTITY_META = {
-      Unidad_Negocio:  { order:1, iconName:'business-outline',   color:'primary',  label:'Unidades de Negocio',   titleField:'nombre',          idField:'id_unidad_negocio',  fkField:null },
-      Portafolio:      { order:2, iconName:'briefcase-outline',   color:'primary',  label:'Portafolios',            titleField:'nombre',          idField:'id_portafolio',      fkField:null },
-      Dominio:         { order:3, iconName:'globe-outline',       color:'secondary',label:'Dominios',               titleField:'n0_es',           idField:'id_dominio',         fkField:null },
-      Grupo_Productos: { order:4, iconName:'layers-outline',      color:'secondary',label:'Grupos de Producto',     titleField:'nombre',          idField:'id_grupo_producto',  fkField:{ key:'id_portafolio',     label:'Portafolio' } },
-      Producto:        { order:5, iconName:'cube-outline',        color:'tertiary', label:'Productos',              titleField:'nombre_producto', idField:'id_producto',        fkField:{ key:'id_grupo_producto', label:'Grupo' } },
-      Capacidad:       { order:6, iconName:'layers-outline',      color:'warning',  label:'Capacidades',            titleField:'macrocapacidad',  idField:'id_capacidad',       fkField:null },
-      Equipo:          { order:7, iconName:'people-outline',      color:'dark',     label:'Equipos',                titleField:'nombre_equipo',   idField:'id_equipo',          fkField:{ key:'id_producto',       label:'Producto' } },
-      Persona:         { order:8, iconName:'person-outline',      color:'medium',   label:'Personas',               titleField:'nombre_completo', idField:'id_persona',         fkField:null },
-      Relacion_Dominios:{ order:9, iconName:'git-network-outline', color:'primary',  label:'Conexiones Topológicas', titleField:'tipo_relacion',   idField:'id_relacion',        fkField:{ key:'id_nodo_padre',     label:'Dominio' } }
+    window.getEntitiesByMetaFlag = function(flagName) {
+      if (!window.APP_SCHEMAS) return [];
+      var items = Object.keys(window.APP_SCHEMAS).reduce((acc, k) => { 
+        var meta = window.APP_SCHEMAS[k].metadata;
+        // Convención Opt-in: Asumir false a menos que sea explícitamente true
+        if (meta && meta[flagName] === true) acc[k] = meta; 
+        return acc; 
+      }, {});
+      return Object.entries(items).sort(function(a,b){ return (a[1].order || 999) - (b[1].order || 999); });
     };
+
+    window.ENTITY_META = Object.keys(window.APP_SCHEMAS).reduce((acc, key) => {
+      if (key !== '_UI_CONFIG' && window.APP_SCHEMAS[key].metadata) acc[key] = window.APP_SCHEMAS[key].metadata;
+      return acc;
+    }, {});
 
     // [S8.5.1] Inyección Híbrida: Funciones Puras del Backend materializadas en el Frontend
     <?!= typeof _normalizeId !== 'undefined' ? _normalizeId.toString() : 'function _normalizeId(){}' ?>;
     <?!= typeof filterAvailableOptions !== 'undefined' ? filterAvailableOptions.toString() : 'function filterAvailableOptions(){return []}' ?>;
-    window.SubgridState = { _normalizeId, filterAvailableOptions };
+    <?!= typeof evaluateFieldState !== 'undefined' ? evaluateFieldState.toString() : 'function evaluateFieldState(){return "optional"}' ?>;
+    <?!= typeof isNewRecord !== 'undefined' ? isNewRecord.toString() : 'function isNewRecord(){return true}' ?>;
+    window.SubgridState = { _normalizeId, filterAvailableOptions, evaluateFieldState, isNewRecord };
+
+    // [E18 - S18.1] Gobernanza Topológica (ABAC Context)
+    window.__ABAC_CONTEXT__ = <?!= typeof __ABAC_CONTEXT__ !== 'undefined' ? __ABAC_CONTEXT__ : '{"ownerOf":[],"memberOf":[],"permissions":{}}' ?>;
+    
+    // [E18 - S18.4] ABAC Client-Side Helper
+    window.ABAC = {
+        context: window.__ABAC_CONTEXT__,
+        can: function(action, entityName, targetId) {
+            if (action === 'read') return true;
+            
+            const permissions = this.context.permissions || {};
+            // Graceful Degradation si no hay regla en matriz (igual que el backend)
+            if (!permissions.hasOwnProperty(entityName)) return true;
+            
+            const nivel = permissions[entityName] || "NONE";
+            
+            if (nivel.startsWith("ALL")) return true;
+            if (nivel.startsWith("NONE") || nivel.startsWith("READ_ONLY")) return false;
+            
+            if (action === 'update' || action === 'delete') {
+                if (nivel.startsWith("OWNER_ONLY")) return this.context.ownerOf.includes(targetId);
+                if (nivel.startsWith("MEMBER_ONLY")) return this.context.memberOf.includes(targetId) || this.context.ownerOf.includes(targetId);
+            }
+            
+            if (action === 'create') {
+                if (nivel.startsWith("OWNER") || nivel.startsWith("MEMBER")) return true;
+            }
+            
+            return false;
+        }
+    };
   </script>
 </head>
 <body>
@@ -79,14 +134,27 @@
         </ion-header>
         <ion-content>
           <ion-list id="main-nav-list" lines="none" style="display:block;"></ion-list>
-          <ion-list id="sidebarList"   lines="none" style="display:none;"></ion-list>
+          <ion-list id="sidebarList"   lines="none" class="ion-hide"></ion-list>
         </ion-content>
         <ion-footer class="ion-no-border" style="background: transparent;">
           <div class="sidebar-heading"><span>SISTEMA</span></div>
-          <div class="nav-item" id="nav-item-settings" onclick="window.UI_Router.navigateTo('designkit')" title="Ajustes">
+          <div class="nav-item" id="nav-item-settings" onclick="window.AppEventBus.publish('NAV::CHANGE', {viewType: 'designkit'})" title="Ajustes">
             <ion-icon name="settings-outline"></ion-icon>
             <ion-label>Ajustes</ion-label>
           </div>
+          
+          <!-- S18.5 Governance Admin Panel Access (Blindado) -->
+          <div class="nav-item" id="nav-item-governance" onclick="window.AppEventBus.publish('NAV::CHANGE', {viewType: 'governance'})" title="Gobernanza ABAC">
+            <ion-icon name="shield-checkmark-outline"></ion-icon>
+            <ion-label>Gobernanza ABAC</ion-label>
+          </div>
+          <script>
+            // Hiding Agresivo inmediato para no-admins orgánicos
+            if (window.ABAC && !window.ABAC.can('update', 'Sys_Permissions')) {
+              var btnGov = document.getElementById('nav-item-governance');
+              if (btnGov) btnGov.style.display = 'none';
+            }
+          </script>
           <div class="nav-item" id="nav-item-profile" onclick="window.showToast('Módulo en construcción')" title="Mi Perfil">
             <ion-icon name="person-circle-outline"></ion-icon>
             <ion-label>Mi Perfil</ion-label>
@@ -110,7 +178,7 @@
               <ion-button class="hide-on-mobile" fill="clear" onclick="window.toggleDesktopMenu()">
                 <ion-icon slot="icon-only" name="menu-outline"></ion-icon>
               </ion-button>
-              <ion-button id="global-back-btn" color="primary" fill="clear" style="display:none;" onclick="window.UI_Router.returnToDashboard()">
+              <ion-button id="global-back-btn" color="primary" fill="clear" class="ion-hide" onclick="window.AppEventBus.publish('NAV::CHANGE', {viewType: 'dashboard'})">
                 <ion-icon slot="icon-only" name="arrow-back-outline"></ion-icon>
               </ion-button>
             </ion-buttons>
@@ -144,7 +212,7 @@
                 </ion-col>
               </ion-row>
               <!-- Filtro Portafolio -->
-              <ion-row id="dashboard-filter-container" class="ion-justify-content-end ion-padding-horizontal" style="display:none;">
+              <ion-row id="dashboard-filter-container" class="ion-justify-content-end ion-padding-horizontal ion-hide">
                 <ion-col size="12" size-md="4" class="ion-padding-bottom">
                   <ion-item lines="none" class="ion-no-padding" style="--background:transparent;">
                     <ion-select id="dashboard-portfolio-filter" interface="popover" placeholder="Todos los Portafolios"
@@ -155,7 +223,7 @@
                 </ion-col>
               </ion-row>
               <!-- Charts -->
-              <ion-row id="dashboard-charts-container" style="display:none;">
+              <ion-row id="dashboard-charts-container" class="ion-hide">
                 <ion-col size="12" size-md="6" class="ion-padding-bottom">
                   <ion-card style="height:100%;"><ion-card-header><ion-card-title>Especialidades</ion-card-title></ion-card-header>
                     <ion-card-content><div id="chart-topology"></div></ion-card-content></ion-card>
@@ -175,6 +243,59 @@
     </ion-split-pane>
   </ion-app>
 
+  <!-- V4 Declarative Templates -->
+  <template id="tmpl-datagrid-skeleton">
+    <div class="dv-card dv-card-skel">
+      <div class="dv-skeleton-row"><div class="dv-skeleton-cell" style="width:80px;"></div><div class="dv-skeleton-cell" style="width:160px;"></div><div class="dv-skeleton-cell" style="width:120px;"></div><div class="dv-skeleton-cell" style="width:100px;"></div><div class="dv-skeleton-cell" style="width:90px;"></div></div>
+      <div class="dv-skeleton-row"><div class="dv-skeleton-cell" style="width:80px;"></div><div class="dv-skeleton-cell" style="width:160px;"></div><div class="dv-skeleton-cell" style="width:120px;"></div><div class="dv-skeleton-cell" style="width:100px;"></div><div class="dv-skeleton-cell" style="width:90px;"></div></div>
+      <div class="dv-skeleton-row"><div class="dv-skeleton-cell" style="width:80px;"></div><div class="dv-skeleton-cell" style="width:160px;"></div><div class="dv-skeleton-cell" style="width:120px;"></div><div class="dv-skeleton-cell" style="width:100px;"></div><div class="dv-skeleton-cell" style="width:90px;"></div></div>
+      <div class="dv-skeleton-row"><div class="dv-skeleton-cell" style="width:80px;"></div><div class="dv-skeleton-cell" style="width:160px;"></div><div class="dv-skeleton-cell" style="width:120px;"></div><div class="dv-skeleton-cell" style="width:100px;"></div><div class="dv-skeleton-cell" style="width:90px;"></div></div>
+      <div class="dv-skeleton-row"><div class="dv-skeleton-cell" style="width:80px;"></div><div class="dv-skeleton-cell" style="width:160px;"></div><div class="dv-skeleton-cell" style="width:120px;"></div><div class="dv-skeleton-cell" style="width:100px;"></div><div class="dv-skeleton-cell" style="width:90px;"></div></div>
+    </div>
+  </template>
+
+  <template id="tmpl-datagrid-error">
+    <div class="dv-card">
+      <div class="dv-empty">
+        <div class="dv-empty-icon">⚠️</div>
+        <h3 class="dv-error-title">No pudimos cargar la información.</h3>
+        <p>Por favor, refresca la página para intentar de nuevo.</p>
+        <p class="dv-error-desc" data-errormsg></p>
+      </div>
+    </div>
+  </template>
+
+  <template id="tmpl-datagrid-empty">
+    <div class="dv-card">
+      <div class="dv-empty">
+        <div class="dv-empty-icon">
+          <ion-icon class="dv-folder-icon" name="folder-open-outline"></ion-icon>
+        </div>
+        <h3>Sin resultados</h3>
+        <p>No se encontraron registros. Prueba con otros términos de búsqueda o crea un nuevo registro.</p>
+      </div>
+    </div>
+  </template>
+
+  <template id="tmpl-dashboard-card">
+    <ion-col size="12" size-md="6" size-xl="4">
+      <ion-card>
+        <ion-card-header class="ion-text-center">
+          <ion-icon data-dsh-icon style="font-size:48px;margin-bottom:10px;"></ion-icon>
+          <ion-card-title data-dsh-title></ion-card-title>
+        </ion-card-header>
+        <ion-card-content>
+          <ion-button data-btn-create expand="block" shape="round">
+            <ion-icon slot="start" name="add-circle-outline"></ion-icon> Crear Nuevo
+          </ion-button>
+          <ion-button data-btn-list expand="block" shape="round" fill="outline" style="margin-top:8px;">
+            <ion-icon slot="start" name="list-outline"></ion-icon> Ver Listado
+          </ion-button>
+        </ion-card-content>
+      </ion-card>
+    </ion-col>
+  </template>
+
   <!-- MOTORES LOGICOS (Regla UI §14) -->
   <?!= include('UI_Router'); ?>
   <?!= include('UI_DataGrid'); ?>
@@ -183,11 +304,18 @@
   <?!= include('FormBuilder_Inputs'); ?>
   <?!= include('FormValidators'); ?>
   <?!= include('UI_SubgridBuilder'); ?>
+  <?!= include('UI_FormUtils'); ?>
+  <?!= include('UI_FormStepper'); ?>
+  <?!= include('UI_FormSubmitter'); ?>
   <?!= include('FormRenderer_UI'); ?>
+  <?!= include('DataEngine_UI'); ?>
   <?!= include('DataView_UI'); ?>
   <?!= include('Dashboard_UI'); ?>
   <?!= include('DomainMap_UI'); ?>
   <?!= include('DesignKit_UI'); ?>
+  <?!= include('Governance_Admin_UI'); ?>
+  <?!= include('Theme_Engine'); ?>
+  <?!= include('Auth_UI'); ?>
   <?!= include('JS_Core'); ?>
 
   <!-- [QA_MODULE_START] -->

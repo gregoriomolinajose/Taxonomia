@@ -23,10 +23,10 @@ Desacoplar definitivamente el Monolito Estático de la SPA (Single Page Applicat
 - Cambios drásticos a la UI Visual. Esta es una refactorización de Pureza de Código (Code Purity).
 
 ## Planned Stories
-- **[ ] S14.1:** FormEngine Splitting. Partir `FormRenderer_UI` con Patrón Factoría Modular.
-- **[ ] S14.2:** Native CSS Bundler. Trasladar `CSS_App.html` a `assets/css` y enlazar en `deploy.js`.
-- **[ ] S14.3:** PubSub Topológico. Invertir las dependencias del `SubgridBuilder` y `FormBuilder`.
-- **[ ] S14.4:** ES6 Syntactic Purity. Template Literals for DataGrid & Promesas para Ionic Modals.
+- **[x] S14.1:** FormEngine Splitting. Partir `FormRenderer_UI` con Patrón Factoría Modular. ✓
+- **[x] S14.2:** Native CSS Bundler. Trasladar `CSS_App.html` a `assets/css` y enlazar en `deploy.js`. ✓
+- **[x] S14.3:** PubSub Topológico. Invertir las dependencias del `SubgridBuilder` y `FormBuilder`. ✓
+- **[x] S14.4:** ES6 Syntactic Purity. Template Literals for DataGrid & Promesas para Ionic Modals. ✓
 
 ## Done Criteria
 - [ ] `FormRenderer_UI.html` destruido o refactorizado en Clases de menos de 400 líneas.
@@ -40,7 +40,7 @@ Desacoplar definitivamente el Monolito Estático de la SPA (Single Page Applicat
 
 | ID | Story Name | Status | Size | Deps | Rationale |
 |----|------------|--------|------|------|-----------|
-| S14.1 | FormEngine Splitting | Pending | L | None | El escollo principal. Destruir el monolito es el primer paso vital para garantizar el manejo ES6. |
-| S14.2 | Native CSS Bundler | Pending | M | None | Se puede ejecutar en paralelo. Ayudará drásticamente a la "Developer Experience" (DX) aislada. |
-| S14.3 | PubSub Topológico | Pending | M | S14.1 | Requiere que el FormEngine base ya sea modular para inyectarle Eventos. |
-| S14.4 | ES6 Syntactic Purity | Pending | S | S14.1 | Purgar los sobrantes de ES5 en `UI_DataGrid` y Promesas asíncronas para el manejo Final y Pulcro. |
+| S14.1 | FormEngine Splitting | Done | L | None | El escollo principal. Destruir el monolito es el primer paso vital para garantizar el manejo ES6. |
+| S14.2 | Native CSS Bundler | Done | M | None | Se puede ejecutar en paralelo. Ayudará drásticamente a la "Developer Experience" (DX) aislada. |
+| S14.3 | PubSub Topológico | Done | M | S14.1 | Requiere que el FormEngine base ya sea modular para inyectarle Eventos. |
+| S14.4 | ES6 Syntactic Purity | Done | S | S14.1 | Purgar los sobrantes de ES5 en `UI_DataGrid` y Promesas asíncronas para el manejo Final y Pulcro. |

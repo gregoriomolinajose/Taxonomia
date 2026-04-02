@@ -2,7 +2,28 @@
     /* ============================================================
        UI_Router.html — Motor Lógico de Navegación y Vistas
        Incluido via GAS: <?!= include('UI_Router'); ?>
+       S18.6 Refactor: 100% Nodal Assembly
        ============================================================ */
+    /* ── Sidebar Desktop (3-State §13) ──────────────────── */
+    window.sidebarState = 0;
+
+    window.applySidebarState = function() {
+        var splitPane = document.querySelector('ion-split-pane');
+        if (!splitPane) return;
+        var state = localStorage.getItem('sidebar_state') || '0';
+        splitPane.classList.remove('shell-mini', 'shell-hidden');
+        if (state === '1') splitPane.classList.add('shell-mini');
+        if (state === '2') splitPane.setAttribute('when', 'false');
+        else splitPane.setAttribute('when', 'lg');
+        setTimeout(function() { window.dispatchEvent(new Event('resize')); }, 350);
+    };
+
+    window.toggleDesktopMenu = function() {
+        if (window.innerWidth < 992) return;
+        window.sidebarState = (window.sidebarState + 1) % 3;
+        localStorage.setItem('sidebar_state', window.sidebarState);
+        window.applySidebarState();
+    };
 
     window.UI_Router = {
         navigateTo: function(viewType, entityKey) {
@@ -17,7 +38,7 @@
             
             if (viewType === 'dashboard') {
                 if (headerTitle) headerTitle.textContent = 'Plataforma de Gobernanza';
-                if (backBtn) { backBtn.style.display = 'none'; backBtn.onclick = null; }
+                if (backBtn) { backBtn.classList.add('ion-hide'); backBtn.onclick = null; }
                 
                 var oldPop = document.getElementById('dv-col-ion-popover');
                 if (oldPop) oldPop.remove();
@@ -25,8 +46,9 @@
                 var homeBtn = document.getElementById('nav-item-dashboard');
                 if (homeBtn) homeBtn.classList.add('active');
                 
-                if (container && window.OriginalDashboardHTML) {
-                    container.innerHTML = window.OriginalDashboardHTML;
+                if (container && window.OriginalDashboardNode) {
+                    window.DOM.clear(container);
+                    container.appendChild(window.OriginalDashboardNode.cloneNode(true));
                     if (typeof window.renderDashboard === 'function') window.renderDashboard();
                 }
             } 
@@ -37,8 +59,8 @@
                 
                 // Regla 5: Escape Routing
                 if (backBtn) {
-                    backBtn.style.display = 'block';
-                    backBtn.onclick = function() { window.UI_Router.navigateTo('dashboard'); };
+                    backBtn.classList.remove('ion-hide');
+                    backBtn.onclick = function() { window.AppEventBus.publish('NAV::CHANGE', {viewType: 'dashboard'}); };
                 }
                 
                 var entityBtn = document.getElementById('nav-item-' + entityKey);
@@ -51,8 +73,8 @@
             else if (viewType === 'designkit') {
                 if (headerTitle) headerTitle.textContent = 'Design System Kit';
                 if (backBtn) {
-                    backBtn.style.display = 'block';
-                    backBtn.onclick = function() { window.UI_Router.navigateTo('dashboard'); };
+                    backBtn.classList.remove('ion-hide');
+                    backBtn.onclick = function() { window.AppEventBus.publish('NAV::CHANGE', {viewType: 'dashboard'}); };
                 }
                 var settingsBtn = document.getElementById('nav-item-settings');
                 if (settingsBtn) settingsBtn.classList.add('active');
@@ -60,16 +82,37 @@
                 if (container) {
                     var tmpl = document.getElementById('tmpl-designkit');
                     if (tmpl) {
-                        container.innerHTML = tmpl.innerHTML;
+                        window.DOM.clear(container);
+                        container.appendChild(tmpl.content.cloneNode(true));
                         if (typeof window.mountDesignKit === 'function') window.mountDesignKit();
+                    }
+                }
+            } 
+            else if (viewType === 'governance') {
+                if (headerTitle) headerTitle.textContent = 'Centro de Mando: Matriz ABAC';
+                if (backBtn) {
+                    backBtn.classList.remove('ion-hide');
+                    backBtn.onclick = function() { window.AppEventBus.publish('NAV::CHANGE', {viewType: 'dashboard'}); };
+                }
+                var govBtn = document.getElementById('nav-item-governance');
+                if (govBtn) govBtn.classList.add('active');
+                
+                if (container) {
+                    var tmpl = document.getElementById('tmpl-governance-admin');
+                    if (tmpl) {
+                        window.DOM.clear(container);
+                        container.appendChild(tmpl.content.cloneNode(true));
+                        if (typeof window.GovernanceEngine !== 'undefined') {
+                            window.GovernanceEngine.renderMatrix(container);
+                        }
                     }
                 }
             } 
             else if (viewType === 'domainmap') {
                 if (headerTitle) headerTitle.textContent = 'Mapa M/N: Dominios';
                 if (backBtn) {
-                    backBtn.style.display = 'block';
-                    backBtn.onclick = function() { window.UI_Router.navigateTo('dashboard'); };
+                    backBtn.classList.remove('ion-hide');
+                    backBtn.onclick = function() { window.AppEventBus.publish('NAV::CHANGE', {viewType: 'dashboard'}); };
                 }
                 
                 var mapBtn = document.getElementById('nav-item-domainmap');
@@ -85,26 +128,57 @@
             var navList  = document.getElementById('main-nav-list');
             var formList = document.getElementById('sidebarList');
             if (!navList || !formList) return;
-            navList.style.display = 'block';
-            formList.style.display = 'none';
+            navList.classList.remove('ion-hide');
+            formList.classList.add('ion-hide');
             
-            var headerPrincipal = '<div class="sidebar-heading"><span>PRINCIPAL</span></div>';
-            var homeItem = '<div class="nav-item" id="nav-item-dashboard" onclick="window.UI_Router.navigateTo(\'dashboard\')" title="Inicio">' +
-                '<ion-icon name="grid-outline"></ion-icon>' +
-                '<ion-label>Inicio</ion-label></div>';
+            window.DOM.clear(navList);
+            var headerPrincipal = document.createElement('div');
+            headerPrincipal.className = 'sidebar-heading';
+            var spanPrincipal = document.createElement('span');
+            spanPrincipal.textContent = 'PRINCIPAL';
+            headerPrincipal.appendChild(spanPrincipal);
+            navList.appendChild(headerPrincipal);
+            
+            var homeItem = document.createElement('div');
+            homeItem.className = 'nav-item';
+            homeItem.id = 'nav-item-dashboard';
+            homeItem.title = 'Inicio';
+            homeItem.addEventListener('click', function() { window.AppEventBus.publish('NAV::CHANGE', {viewType: 'dashboard'}); });
+            var homeIcon = document.createElement('ion-icon');
+            homeIcon.setAttribute('name', 'grid-outline');
+            var homeLabel = document.createElement('ion-label');
+            homeLabel.textContent = 'Inicio';
+            homeItem.appendChild(homeIcon);
+            homeItem.appendChild(homeLabel);
+            navList.appendChild(homeItem);
                 
-            var headerEntidades = '<div class="sidebar-heading"><span>ENTIDADES</span></div>';
+            var headerEntidades = document.createElement('div');
+            headerEntidades.className = 'sidebar-heading';
+            var spanEntidades = document.createElement('span');
+            spanEntidades.textContent = 'ENTIDADES';
+            headerEntidades.appendChild(spanEntidades);
+            navList.appendChild(headerEntidades);
             
-            var sorted = Object.entries(window.ENTITY_META).sort(function(a,b){ return a[1].order - b[1].order; });
-            var items = sorted.map(function(entry) {
+            var sorted = window.getEntitiesByMetaFlag('showInMenu');
+            sorted.forEach(function(entry) {
                 var key = entry[0]; var meta = entry[1];
-                if(meta.hideFromMenu === true) return '';
-                return '<div class="nav-item" id="nav-item-' + key + '" onclick="window.UI_Router.navigateTo(\'dataview\', \'' + key + '\')" title="' + meta.label + '">' +
-                    '<ion-icon name="' + meta.iconName + '"></ion-icon>' +
-                    '<ion-label>' + meta.label + '</ion-label></div>';
-            }).join('');
-            
-            navList.innerHTML = headerPrincipal + homeItem + headerEntidades + items;
+                if(meta.hideFromMenu === true) return;
+                
+                var item = document.createElement('div');
+                item.className = 'nav-item';
+                item.id = 'nav-item-' + key;
+                item.title = meta.label;
+                item.addEventListener('click', function() { window.AppEventBus.publish('NAV::CHANGE', {viewType: 'dataview', entityKey: key}); });
+                
+                var icon = document.createElement('ion-icon');
+                icon.setAttribute('name', meta.iconName);
+                var label = document.createElement('ion-label');
+                label.textContent = meta.label;
+                item.appendChild(icon);
+                item.appendChild(label);
+                
+                navList.appendChild(item);
+            });
         },
 
         showHomeSidebar: function() { 
@@ -127,12 +201,27 @@
             var navList  = document.getElementById('main-nav-list');
             var formList = document.getElementById('sidebarList');
             if (!navList || !formList) return;
-            navList.style.display  = 'none';
-            formList.style.display = 'block';
-            var homeItem = '<div class="nav-item" id="nav-item-dashboard" onclick="window.UI_Router.navigateTo(\'dashboard\')" title="Inicio">' +
-                '<ion-icon name="grid-outline"></ion-icon>' +
-                '<ion-label>Inicio</ion-label></div>';
-            formList.innerHTML = homeItem + '<div id="form-steps-container"></div>';
+            navList.classList.add('ion-hide');
+            formList.classList.remove('ion-hide');
+            
+            window.DOM.clear(formList);
+            var homeItem = document.createElement('div');
+            homeItem.className = 'nav-item';
+            homeItem.id = 'nav-item-dashboard';
+            homeItem.title = 'Inicio';
+            homeItem.addEventListener('click', function() { window.AppEventBus.publish('NAV::CHANGE', {viewType: 'dashboard'}); });
+            var homeIcon = document.createElement('ion-icon');
+            homeIcon.setAttribute('name', 'grid-outline');
+            var homeLabel = document.createElement('ion-label');
+            homeLabel.textContent = 'Inicio';
+            homeItem.appendChild(homeIcon);
+            homeItem.appendChild(homeLabel);
+            
+            var formStepsContainer = document.createElement('div');
+            formStepsContainer.id = 'form-steps-container';
+            
+            formList.appendChild(homeItem);
+            formList.appendChild(formStepsContainer);
         }
     };
 

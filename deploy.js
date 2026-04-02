@@ -3,6 +3,7 @@ const path = require('path');
 const { execSync } = require('child_process');
 const readline = require('readline');
 const CleanCSS = require('clean-css');
+const acorn = require('acorn');
 
 const env = process.argv[2];
 
@@ -79,30 +80,67 @@ try {
             }
         }
 
-        // Safe CSS Minification (AST-Like RegExp)
-        ['CSS_App.html', 'CSS_DesignSystem.html'].forEach(filename => {
-            const filepath = `${buildDir}/${filename}`;
-            if (!fs.existsSync(filepath)) return;
-            let fileContent = fs.readFileSync(filepath, 'utf8');
+        // Validate JS AST in HTML files (S15.1)
+        console.log(`[Deploy] Validating JavaScript AST in all HTML modules...`);
+        const files = fs.readdirSync(buildDir);
+        for (const file of files) {
+            if (!file.endsWith('.html')) continue;
+            const filePath = path.join(buildDir, file);
+            const content = fs.readFileSync(filePath, 'utf8');
             
-            // Reemplazar de forma segura y basada en AST (AST Minify) el contenido del Style
-            fileContent = fileContent.replace(/<style>([\s\S]*?)<\/style>/gi, (match, p1) => {
-                let minified = p1;
+            const scriptRegex = /<script\b[^>]*>([\s\S]*?)<\/script>/gi;
+            let match;
+            while ((match = scriptRegex.exec(content)) !== null) {
+                const scriptContent = match[1].trim();
+                // Omitir templates de EJS / App Script directivos cortos si fallan, priorizamos pure JS logs.
+                if (!scriptContent || scriptContent.includes('<?!=')) continue;
+                
                 try {
-                    const output = new CleanCSS({ level: 1 }).minify(p1);
-                    if (output.errors.length > 0) {
-                        console.error(`\x1b[31m[Deploy-Error] Fallo CSS AST Minifier en ${filename}:\x1b[0m`, output.errors);
-                    } else {
-                        minified = output.styles;
-                    }
+                    acorn.parse(scriptContent, { ecmaVersion: 'latest', sourceType: 'script' });
                 } catch (e) {
-                    console.error(`\x1b[31m[Deploy-Error] Excepción Crítica compilando CSS en ${filename}:\x1b[0m`, e);
+                    console.error(`\x1b[31m[Deploy-Error] SyntaxError in ${file} at line ${e.loc ? e.loc.line : 'unknown'}:\x1b[0m ${e.message}`);
+                    process.exit(1);
                 }
-                return `<style>\n${minified}\n</style>`;
-            });
-            fs.writeFileSync(filepath, fileContent, 'utf8');
+            }
+        }
+        console.log(`[Deploy] AST Validation passed.`);
+
+        // Native CSS Bundler (S14.2)
+        const cssFiles = [
+            { source: 'assets/css/app.css', target: 'CSS_App.html' },
+            { source: 'assets/css/design-system.css', target: 'CSS_DesignSystem.html' }
+        ];
+
+        cssFiles.forEach(file => {
+            const sourcePath = `${buildDir}/${file.source}`;
+            const targetPath = `${buildDir}/${file.target}`;
+            
+            if (!fs.existsSync(sourcePath)) return;
+            
+            let cssContent = fs.readFileSync(sourcePath, 'utf8');
+            let minified = cssContent;
+            
+            try {
+                const output = new CleanCSS({ level: 1 }).minify(cssContent);
+                if (output.errors.length > 0) {
+                    console.error(`\x1b[31m[Deploy-Error] Fallo CSS AST Minifier en ${file.source}:\x1b[0m`, output.errors);
+                } else {
+                    minified = output.styles;
+                }
+            } catch (e) {
+                console.error(`\x1b[31m[Deploy-Error] Excepción Crítica compilando CSS en ${file.source}:\x1b[0m`, e);
+            }
+            
+            const htmlWrapped = `<style>\n${minified}\n</style>`;
+            fs.writeFileSync(targetPath, htmlWrapped, 'utf8');
         });
-        console.log(`[Deploy] Minified ${buildDir}/CSS_App.html and CSS_DesignSystem.html`);
+
+        // Cleanup assets/css to prevent Clasp from pushing unsupported standalone CSS natively
+        const assetsCssDir = `${buildDir}/assets/css`;
+        if (fs.existsSync(assetsCssDir)) {
+            fs.rmSync(assetsCssDir, { recursive: true, force: true });
+        }
+        console.log(`[Deploy] Bundled native CSS files into virtual HTML styles`);
 
         // Swap Config.js in .build
         const targetConfig = `${buildDir}/Global_Config.js`;

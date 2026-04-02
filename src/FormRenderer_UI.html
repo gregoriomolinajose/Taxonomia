@@ -13,154 +13,19 @@
         // Estado Global de Edición (Directiva 1)
         global.currentEditId = null;
 
-        /**
-         * Resolutor de opciones genérico para Dominios completos
-         * (Requerido por M:N Subgrid en N-Dimensional Graph)
-         */
-        global.getDominioOptions = function(formCurrentState) {
-            const cache = (window.__APP_CACHE__ && window.__APP_CACHE__['Dominio']) ? window.__APP_CACHE__['Dominio'] : [];
-            const active = cache.filter(r => r.estado !== 'Eliminado');
-            return active.map(p => ({
-                value: p.id_dominio || p.id_registro,
-                label: `[Nivel ${p.nivel_tipo}] ${p.nombre_ingles || p.n0_es || p.nombre || p.id_registro}`
-            }));
-        };
-
-        /**
-         * Resolutor de opciones (Limitado) para "Dominio Padre"
-         * Usado por reliquias planas o vistas restrictivas.
-         * Filtra desde el caché 100% Zero-Latency.
-         */
-        global.getDominiosPadreOptions = function(formCurrentState) {
-            if (!formCurrentState) {
-                const activeForm = document.querySelector('ion-modal');
-                if (activeForm) {
-                    const inputs = activeForm.querySelectorAll('ion-input, ion-select');
-                    formCurrentState = Array.from(inputs).map(inp => ({ name: inp.name, value: inp.value }));
-                } else {
-                    formCurrentState = [];
-                }
-            }
-
-            const nivelObj = formCurrentState.find(c => c.name === 'nivel_tipo');
-            if (!nivelObj || !nivelObj.value) return [];
-            
-            const currentNivel = parseInt(nivelObj.value, 10);
-            if (isNaN(currentNivel) || currentNivel <= 0) return []; // Strict N>0
-            
-            const cache = (window.__APP_CACHE__ && window.__APP_CACHE__['Dominio']) ? window.__APP_CACHE__['Dominio'] : [];
-            const validParents = cache.filter(r => parseInt(r.nivel_tipo, 10) === currentNivel - 1 && r.estado !== 'Eliminado');
-            
-            return validParents.map(p => ({
-                value: p.id_dominio || p.id_registro,
-                label: `[Nivel ${p.nivel_tipo}] ${p.nombre_ingles || p.n0_es || p.nombre || p.id_registro}`
-            }));
-        };
-
         /* ─────────────────────────────────────────────────────────────────
-           NOTA ARQUITECTURA (S7.1): Component Factory _buildSearchableMulti 
-           fue extraída a UI_Components.html para cumplir reglas SOLID/H11.
+           NOTA ARQUITECTURA (S14.1):
+           Las utilidades globales de este módulo fueron extraídas a:
+           - UI_FormUtils.html (normalizeId, resolutores de diccionarios puros)
+           - UI_FormSubmitter.html (_patchFrontendCache)
            ─────────────────────────────────────────────────────────────── */
-
-        /* ─────────────────────────────────────────────────────────────────
-           PURE UTILITY FUNCTIONS (no side-effects, fully testable)
-           ─────────────────────────────────────────────────────────────── */
-
-        /**
-         * Normaliza un ID de registro: trim + uppercase.
-         * Garantiza comparaciones robustas con IDs sucios (espacios u otro case).
-         */
-        function _normalizeId(id) {
-            return String(id || '').trim().toUpperCase();
-        }
-
-        /**
-         * isRecordLinked(recordId, linkedRecordsArray, pkField)
-         * Función pura: devuelve true si recordId ya está en la lista vinculada.
-         * Maneja IDs sucios (espacios, diferencias de mayúsculas).
-         *
-         * @param {string} recordId       - ID del registro candidato a vincular.
-         * @param {Array}  linkedRecords  - Arreglo de registros ya vinculados.
-         * @param {string} pkField        - Campo PK dentro de linkedRecords.
-         * @returns {boolean}
-         */
-        function isRecordLinked(recordId, linkedRecords, pkField) {
-            const normalizedCandidate = _normalizeId(recordId);
-            return (linkedRecords || []).some(r => _normalizeId(r[pkField]) === normalizedCandidate);
-        }
-
-        /**
-         * _patchFrontendCache (H11 Simplification)
-         * Inyección limpia en caché local post-Server Confirmation.
-         */
-        function _patchFrontendCache(entityName, response, payload) {
-            if (!window.__APP_CACHE__) return;
-
-            // 1. Root Entity Injection
-            if (window.__APP_CACHE__[entityName] && Array.isArray(window.__APP_CACHE__[entityName])) {
-                let pkField = response.pk;
-                let pkValue = response.pkValue;
-
-                if (!pkField || !pkValue) {
-                    pkField = Object.keys(payload).find(k => k.startsWith('id_'));
-                    pkValue = pkField ? payload[pkField] : null;
-                }
-
-                if (!pkField || !pkValue) {
-                    const meta = (window.DataViewEngine && typeof window.DataViewEngine._getState === 'function')
-                        ? window.DataViewEngine._getState().entityMeta
-                        : null;
-                    pkField = meta && meta.idField ? meta.idField : pkField;
-                    pkValue = pkField ? payload[pkField] : null;
-                }
-
-                if (pkField && pkValue) {
-                    const cleanRecord = { ...payload, [pkField]: pkValue };
-                    const liveData = window.__APP_CACHE__[entityName];
-                    const existingIdx = liveData.findIndex(r => _normalizeId(r[pkField]) === _normalizeId(pkValue));
-
-                    window.__APP_CACHE__[entityName] = existingIdx !== -1
-                        ? [...liveData.slice(0, existingIdx), cleanRecord, ...liveData.slice(existingIdx + 1)]
-                        : [cleanRecord, ...liveData];
-
-                    console.log(`[Cache] ${existingIdx !== -1 ? 'UPDATE' : 'INSERT'} para: ${entityName} [${pkField}=${pkValue}]. Total: ${window.__APP_CACHE__[entityName].length}`);
-                } else {
-                    console.warn(`[Cache] No se pudo resolver pkField/pkValue para ${entityName}. Cache no actualizado.`);
-                }
-            }
-
-            // 2. Inyección Dinámica para Entidades Anidadas (Subgrids 0.0s latency)
-            if (response.data && response.data.orchestratedChildren) {
-                const orch = response.data.orchestratedChildren;
-                Object.keys(orch).forEach(childEntity => {
-                    if (Array.isArray(window.__APP_CACHE__[childEntity])) {
-                        const freshChildren = orch[childEntity] || [];
-                        const childPkField = 'id_' + childEntity.toLowerCase().replace(/s$/, '').replace(/es$/, '');
-                        
-                        let currentCache = [...window.__APP_CACHE__[childEntity]];
-                        freshChildren.forEach(newChild => {
-                            const cid = newChild[childPkField] || newChild['id_' + childEntity.toLowerCase()];
-                            const idx = currentCache.findIndex(c => (c[childPkField] === cid) || (c['id_' + childEntity.toLowerCase()] === cid));
-                            if (idx !== -1) {
-                                currentCache = [...currentCache.slice(0, idx), newChild, ...currentCache.slice(idx + 1)];
-                            } else {
-                                currentCache = [newChild, ...currentCache]; // prepend
-                            }
-                        });
-                        window.__APP_CACHE__[childEntity] = currentCache;
-                        console.log(`[Cache] Inyectados ${freshChildren.length} registros anidados en caché de ${childEntity}`);
-                    }
-                });
-            }
-        }
 
         // [S10.1] Architecture Purification: UI_Factory Namespace
         // Toda la lógica DOM fue abstraída a src/FormBuilder_Inputs.html (S12.1)
         window.UI_Factory = window.UI_Factory || {};
 
-        // Exponer para pruebas unitarias (solo en entornos sin google.script)
         if (typeof module !== 'undefined' && module.exports) {
-            module.exports = { isRecordLinked, _normalizeId, _patchFrontendCache };
+            module.exports = {};
         }
 
         // [S11.2] Modal Stack Controller moved to UI_ModalManager.html
@@ -191,6 +56,14 @@
                 }
             };
 
+            // S14.3: Topological PubSub Inversion (Listening to child intents)
+            LocalEventBus.subscribe('UI::REQUEST_SUBFORM_OPEN', (ev) => {
+                const { targetEntity, onSuccess } = ev.detail;
+                if (typeof global.renderForm === 'function') {
+                    global.renderForm(targetEntity, null, onSuccess);
+                }
+            });
+
             // Asegurar reset de estado al abrir formulario nuevo (Directiva 1)
             // Ya no lo hacemos incondicionalmente, solo si es la capa raíz
             if (global.ModalStackController.getDepth() === 0) {
@@ -209,14 +82,25 @@
 
             // Header Nativo del Modal
             const header = document.createElement('ion-header');
-            header.innerHTML = `
-              <ion-toolbar>
-                <ion-title>Taxonomia: ${window.formatEntityName(entityName)}</ion-title>
-                <ion-buttons slot="end">
-                  <ion-button onclick="if(window.AppEventBus) { window.AppEventBus.publish('MODAL::CLOSE_REQUEST'); } else if(window._closeTopModal) { window._closeTopModal(); }">Cerrar</ion-button>
-                </ion-buttons>
-              </ion-toolbar>
-            `;
+            const toolbar = document.createElement('ion-toolbar');
+            
+            const title = document.createElement('ion-title');
+            title.textContent = `Taxonomia: ${window.formatEntityName(entityName)}`;
+            
+            const buttons = document.createElement('ion-buttons');
+            buttons.setAttribute('slot', 'end');
+            
+            const closeBtn = document.createElement('ion-button');
+            closeBtn.textContent = 'Cerrar';
+            closeBtn.addEventListener('click', () => {
+                if(window.AppEventBus) { window.AppEventBus.publish('MODAL::CLOSE_REQUEST'); } 
+                else if(window._closeTopModal) { window._closeTopModal(); }
+            });
+            
+            buttons.appendChild(closeBtn);
+            toolbar.appendChild(title);
+            toolbar.appendChild(buttons);
+            header.appendChild(toolbar);
             modal.appendChild(header);
 
             // Reemplazamos 'container' por el Content Nativo
@@ -348,15 +232,13 @@
 
             if (headerTitle) headerTitle.textContent = (global.currentEditId ? "Editar: " : "Nuevo: ") + window.formatEntityName(entityName);
             if (backBtn) {
-                backBtn.style.display = 'block';
+                backBtn.classList.remove('ion-hide');
                 // Enrutamiento de la Flecha de Retroceso (Back Button) -> DataView
                 backBtn.onclick = function() {
                     // Limpieza proactiva del formulario actual
-                    while (container.firstChild) container.removeChild(container.firstChild);
-                    if (window.DataViewEngine) {
-                        window.DataViewEngine.render(entityName, 'app-container');
-                    } else if (window.UI_Router && typeof window.UI_Router.returnToDashboard === 'function') {
-                        window.UI_Router.returnToDashboard();
+                    window.DOM.clear(container);
+                    if (window.AppEventBus) {
+                        window.AppEventBus.publish('NAV::CHANGE', {viewType: 'dataview', entityKey: entityName});
                     }
                 };
             }
@@ -384,28 +266,41 @@
             cardContent.style.padding = 'var(--spacing-6)';
             card.appendChild(cardContent);
 
-            // Progressive Disclosure (Rule 5.1) - Contenedores Lógicos
-            let stepContainers = {};
-            let menuItems = {};
-            const semanticIcons = {
-                'Datos Personales': 'person-outline',
-                'Ubicación': 'location-outline',
-                'Corporativo': 'business-outline',
-                'Operativa': 'briefcase-outline'
-            };
-            const defaultIcons = ['folder-open-outline', 'list-outline', 'options-outline', 'analytics-outline'];
+            // S14.1: Delegación SRP a UI_FormStepper
+            const btnPrev = document.createElement('ion-button');
+            btnPrev.setAttribute('fill', 'clear');
+            btnPrev.setAttribute('color', 'medium');
+            const iconPrev = document.createElement('ion-icon');
+            iconPrev.setAttribute('slot', 'start');
+            iconPrev.setAttribute('name', 'arrow-back-outline');
+            btnPrev.appendChild(iconPrev);
+            btnPrev.appendChild(document.createTextNode(' Anterior'));
 
-            // 1. Extracción Dinámica de Menú (Secciones)
+            const btnNext = document.createElement('ion-button');
+            btnNext.setAttribute('shape', 'round');
+            btnNext.setAttribute('color', 'primary');
+            btnNext.setAttribute('fill', 'outline');
+            btnNext.appendChild(document.createTextNode('Siguiente '));
+            const iconNext = document.createElement('ion-icon');
+            iconNext.setAttribute('slot', 'end');
+            iconNext.setAttribute('name', 'arrow-forward-outline');
+            btnNext.appendChild(iconNext);
+
+            const submitBtn = document.createElement('ion-button');
+            submitBtn.setAttribute('shape', 'round');
+            submitBtn.setAttribute('color', 'primary');
+            const iconSave = document.createElement('ion-icon');
+            iconSave.setAttribute('slot', 'start');
+            iconSave.setAttribute('name', 'save-outline');
+            submitBtn.appendChild(iconSave);
+            submitBtn.appendChild(document.createTextNode(' Guardar ' + window.formatEntityName(entityName)));
+
+            // Progressive Disclosure (Rule 5.1)
             const extractedSections = [...new Set(fields.filter(f => f.section).map(f => f.section))];
             if (extractedSections.length > 0) steps = extractedSections;
             if (!steps || steps.length === 0) steps = ['Configuración General'];
 
-            // Estado y Linear Wizard
-            let currentStepIndex = 0;
-            const totalSteps = steps.length;
-
-            // Indicador de Progreso
-            let progressLabel = document.createElement('h3');
+            const progressLabel = document.createElement('h3');
             progressLabel.style.color = 'var(--ion-color-medium)';
             progressLabel.style.fontSize = 'var(--sys-font-small)';
             progressLabel.style.marginTop = '0';
@@ -413,73 +308,18 @@
             progressLabel.style.fontWeight = '600';
             progressLabel.style.textTransform = 'uppercase';
             progressLabel.style.letterSpacing = '0.05em';
-            cardContent.appendChild(progressLabel);
-
-            // 2. Renderizado del Menú Lateral y Contenedores
-            if (sidebarSteps) sidebarSteps.innerHTML = ''; // Vaciar contenedor lateral por seguridad
-
-            steps.forEach((stepName, index) => {
-                const stepDiv = document.createElement('div');
-                stepDiv.id = 'form-section-' + stepName.replace(/\s+/g, '-');
-                stepDiv.style.display = index === 0 ? 'block' : 'none';
-                stepContainers[stepName] = stepDiv;
-
-                if (sidebarSteps) {
-                    const item = document.createElement('ion-item');
-                    item.button = true; // Efecto Ripple interactivo
-                    item.setAttribute('lines', 'none');
-                    item.style.borderRadius = 'var(--rounded-sm)';
-                    item.style.margin = 'var(--spacing-1) var(--spacing-3)';
-                    item.style.setProperty('--min-height', '44px');
-                    if (index === 0) item.style.setProperty('--background', 'var(--ion-color-step-100)');
-                    
-                    item.onclick = () => {
-                        window.goToFormSection(stepName);
-                        // Al estar en el listener, window.goToFormSection ya se encargará de sincronizar el currentStepIndex
-                    };
-
-                    const icon = document.createElement('ion-icon');
-                    const iconName = semanticIcons[stepName] || defaultIcons[index % defaultIcons.length];
-                    icon.setAttribute('name', iconName);
-                    icon.setAttribute('slot', 'start');
-                    if (index === 0) icon.setAttribute('color', 'primary');
-
-                    const label = document.createElement('ion-label');
-                    label.textContent = stepName;
-                    label.style.fontWeight = '500';
-                    if (index === 0) label.setAttribute('color', 'primary');
-
-                    item.appendChild(icon);
-                    item.appendChild(label);
-                    sidebarSteps.appendChild(item);
-
-                    menuItems[stepName] = { item, icon, label };
-                }
-
-                cardContent.appendChild(stepDiv);
+            
+            const stepper = new window.UI_FormStepper({
+                steps: steps,
+                cardContent: cardContent,
+                sidebarSteps: sidebarSteps,
+                btnPrev: btnPrev,
+                btnNext: btnNext,
+                btnSubmit: submitBtn,
+                progressLabel: progressLabel
             });
 
-            // Iniciar Grillas Responsivas (Rule 5.2) por contenedor lógico
-            const rows = {};
-            Object.keys(stepContainers).forEach(key => {
-                // Título de sección dentro del card
-                const sectionTitle = document.createElement('h2');
-                sectionTitle.textContent = (key === 'default' ? 'Configuración General' : key);
-                sectionTitle.style.color = 'var(--ion-text-color)';
-                sectionTitle.style.fontSize = 'var(--sys-font-h3)';
-                sectionTitle.style.fontWeight = '600';
-                sectionTitle.style.marginTop = '0';
-                sectionTitle.style.marginBottom = 'var(--spacing-5)';
-                stepContainers[key].appendChild(sectionTitle);
-
-                const grid = document.createElement('ion-grid');
-                grid.style.padding = 'var(--spacing-0)';
-                const row = document.createElement('ion-row');
-                grid.appendChild(row);
-
-                stepContainers[key].appendChild(grid);
-                rows[key] = row; // Referencia rápida para inyectar las columnas (fields)
-            });
+            const rows = stepper.getRows();
 
             // Generación Segura de Componentes con Theming Activo
             fields.forEach(field => {
@@ -526,171 +366,7 @@
 
                 // Usamos ion-input nativo pero configurando su "fill" y "label-placement"
                 // para emular el Figma (label arriba transparente, caja contorno)
-                let inputEl;
-
-                let isComplex = false;
-
-                switch (field.type) {
-                    case 'relation':
-                        inputEl = document.createElement('div');
-                        inputEl.setAttribute('data-relation-type', field.relationType || 'relacionado');
-                        inputEl.style.width = '100%';
-                        inputEl.style.marginBottom = 'var(--spacing-2)';
-                        
-                        const liveData = (window.__APP_CACHE__ && window.__APP_CACHE__[field.targetEntity]) ? window.__APP_CACHE__[field.targetEntity] : [];
-                        const activeData = liveData.filter(d => d.estado !== 'Eliminado' && typeof d === 'object');
-                        
-                        let initialValues = [];
-                        
-                        // UAT Point 3: Auto-populate existing relation records using Zero-Latency Graph resolution
-                        if (field.isTemporalGraph && field.graphEntity && window.__APP_CACHE__ && window.__APP_CACHE__[field.graphEntity]) {
-                            const currentPK = data ? (data.id_dominio || data.id_registro) : null;
-                            if (currentPK) {
-                                const aristas = window.__APP_CACHE__[field.graphEntity].filter(e => e.es_version_actual !== false);
-                                if (field.relationType === 'padre') {
-                                    // Mis padres (mi PK está en id_nodo_hijo)
-                                    initialValues = aristas.filter(e => _normalizeId(e.id_nodo_hijo) === _normalizeId(currentPK)).map(e => _normalizeId(e.id_nodo_padre));
-                                } else if (field.relationType === 'hijo') {
-                                    // Mis hijos (mi PK está en id_nodo_padre)
-                                    initialValues = aristas.filter(e => _normalizeId(e.id_nodo_padre) === _normalizeId(currentPK)).map(e => _normalizeId(e.id_nodo_hijo));
-                                }
-                            }
-                        } else if (data && data[field.name]) {
-                            try {
-                                initialValues = Array.isArray(data[field.name]) ? data[field.name] : JSON.parse(data[field.name]);
-                            } catch(e) { initialValues = (typeof data[field.name] === 'string') ? [data[field.name]] : []; } // fallback
-                        }
-                        if (field.uiComponent === 'searchable_multi') {
-                            isComplex = true;
-                            // Constructor del Componente Searchable+Chips Modal-like Inline
-                            const multiNodes = global.UI_Factory.buildSearchableMulti(field, activeData, initialValues, LocalEventBus);
-                            inputEl.appendChild(multiNodes);
-                        } else if (field.uiComponent === 'select_single') {
-                            const basicSel = document.createElement('ion-select');
-                            basicSel.setAttribute('interface', window.innerWidth < 768 ? 'action-sheet' : 'popover');
-                            basicSel.setAttribute('name', field.name);
-                            basicSel.setAttribute('label', field.label);
-                            basicSel.setAttribute('label-placement', 'stacked');
-                            basicSel.setAttribute('fill', 'outline');
-                            
-                            // Prevent overlapping by adding a tiny margin
-                            basicSel.style.marginBottom = 'var(--spacing-3)';
-
-                            // Empty Default 'Ninguno'
-                            const emptyOpt = document.createElement('ion-select-option');
-                            emptyOpt.value = "";
-                            emptyOpt.textContent = "— Sin asignar —";
-                            basicSel.appendChild(emptyOpt);
-
-                            // Set initial value for single select
-                            if (initialValues.length > 0) {
-                                basicSel.value = initialValues[0];
-                            }
-                            
-                            // [S8.5] UI Dumbness Guards (Single Select Hierarchy filter)
-                            let filteredActiveData = activeData;
-                            const rules = global.APP_SCHEMAS[entityName]?.topologyRules;
-                            
-                            // Asumimos Nivel 1 si es un nuevo registro
-                            const cLevel = Number(data ? (data.nivel_tipo || 1) : 1);
-                            
-                            if (rules) {
-                                // Isomorphic State Resolution
-                                const uiStateInit = window.SubgridState ? 
-                                    window.SubgridState.evaluateFieldState(rules, cLevel, field.relationType) : 
-                                    { isDisabled: false, opacity: '1', placeholder: '— Sin asignar —' };
-                                
-                                if (uiStateInit.isDisabled) {
-                                    basicSel.setAttribute('disabled', 'true');
-                                }
-                                basicSel.style.opacity = uiStateInit.opacity;
-                                emptyOpt.textContent = uiStateInit.placeholder;
-
-                                if (rules.levelFiltering === true && rules.strictLevelJumps === true && field.relationType === 'padre') {
-                                    // Regla Topológica: El Padre siempre debe estar 1 nivel por encima
-                                    filteredActiveData = activeData.filter(d => Number(d.nivel_tipo) === cLevel - 1);
-                                }
-                                
-                                if (rules.rootRequiresNoParent === true && cLevel === 1 && field.relationType === 'padre') {
-                                    filteredActiveData = []; // Eliminar opciones
-                                }
-                            }
-                            
-                            // Inyección DRY Inicial Isomórfica
-                            window.UI_Factory.populateSelectOptions(basicSel, filteredActiveData, field);
-
-                            // --- S8.7.2/S10.1: EVENT LISTENER DE REPAINT BINDING ---
-                            window.UI_Factory.bindLevelChangeRepaint(basicSel, activeData, field, emptyOpt, LocalEventBus);
-
-                            // [S8.7] Branch Shifting Interceptor
-                            if (field.isTemporalGraph && field.relationType === 'padre') {
-                                // Wait for the component to attach to grab initial value later, or just use initialValues[0]
-                                let originalVal = initialValues.length > 0 ? initialValues[0] : "";
-                                
-                                basicSel.addEventListener('ionChange', async (ev) => {
-                                    const newVal = ev.detail.value;
-                                    const isNewContext = { currentEditId: global.currentEditId, data: data };
-                                    const isNewRecord = window.SubgridState ? window.SubgridState.isNewRecord(isNewContext) : (!global.currentEditId && (!data || !data.id_registro));
-                                    // Detonar alerta si ya existía un padre y ahora se seleccionó algo distinto al origin (Branch Shift)
-                                    if (!isNewRecord && originalVal && originalVal !== "" && newVal !== originalVal) {
-                                        const alert = document.createElement('ion-alert');
-                                        alert.header = 'Cambio de Jerarquía Detectado';
-                                        alert.message = 'Estás reasignando el nodo padre. Si guardas este cambio, este registro y todos sus descendientes (toda la rama) se trasladarán a la nueva ubicación. ¿Estás seguro de continuar con el re-emplazamiento?';
-                                        alert.buttons = [
-                                            { 
-                                                text: 'Cancelar', 
-                                                role: 'cancel',
-                                                handler: () => {
-                                                    // Rollback dinámico
-                                                    basicSel.value = originalVal;
-                                                }
-                                            },
-                                            { 
-                                                text: 'Sí, reubicar rama',
-                                                handler: () => {
-                                                    originalVal = newVal; // Confirmamos el cambio
-                                                }
-                                            }
-                                        ];
-                                        document.body.appendChild(alert);
-                                        await alert.present();
-                                    } else if (!originalVal || originalVal === "") {
-                                        // Si no tenía padre antes, el cambio se acepta directamente
-                                        originalVal = newVal;
-                                    }
-                                });
-                            }
-
-                            inputEl.appendChild(basicSel);
-                        }
-                        break;
-
-                    case 'text':
-                    case 'number':
-                    case 'date':
-                        inputEl = global.UI_Factory.buildInput(field, entityName);
-                        break;
-                    case 'textarea':
-                        inputEl = global.UI_Factory.buildTextarea(field);
-                        break;
-                    case 'select':
-                        inputEl = global.UI_Factory.buildSelect(field);
-                        break;
-                    case 'dynamic_list': {
-                        isComplex = true;
-                        inputEl = global.UI_Factory.buildDynamicList(field, data);
-                        break;
-                    }
-                    case 'lookup':
-                        inputEl = global.UI_Factory.buildLookup(field);
-                        break;
-                    case 'chip-input':
-                        isComplex = true;
-                        inputEl = global.UI_Factory.buildChipInput(field);
-                        break;
-                    default:
-                        inputEl = global.UI_Factory.buildInput(field, entityName);
-                }
+                const inputEl = global.UI_Factory.buildFieldNode(field, entityName, data, LocalEventBus, global.currentEditId);
 
                 ionCol.appendChild(inputEl);
                 targetRow.appendChild(ionCol);
@@ -706,7 +382,8 @@
                     subCol.setAttribute('size', '12');
                     
                     // S13.1 Delegación Arquitectónica Pura SRP
-                    await window.UI_SubgridBuilder.build(field, subCol, data, entityName);
+                    // S14.3 Topological PubSub Dependency Injection
+                    await window.UI_SubgridBuilder.build(field, subCol, data, entityName, LocalEventBus, modal);
                     
                     targetRow.appendChild(subCol);
                 }
@@ -723,31 +400,16 @@
             
             const colLeft = document.createElement('ion-col');
             colLeft.setAttribute('size', '6');
-            colLeft.style.display = 'flex';
+            colLeft.classList.remove('ion-hide');
             colLeft.style.justifyContent = 'flex-start';
             
             const colRight = document.createElement('ion-col');
             colRight.setAttribute('size', '6');
-            colRight.style.display = 'flex';
+            colRight.classList.remove('ion-hide');
             colRight.style.justifyContent = 'flex-end';
             colRight.style.gap = 'var(--spacing-3)';
 
-            const btnPrev = document.createElement('ion-button');
-            btnPrev.setAttribute('fill', 'clear');
-            btnPrev.setAttribute('color', 'medium');
-            btnPrev.innerHTML = '<ion-icon slot="start" name="arrow-back-outline"></ion-icon> Anterior';
-
-            const btnNext = document.createElement('ion-button');
-            btnNext.setAttribute('shape', 'round');
-            btnNext.setAttribute('color', 'primary');
-            btnNext.setAttribute('fill', 'outline');
-            btnNext.innerHTML = 'Siguiente <ion-icon slot="end" name="arrow-forward-outline"></ion-icon>';
-
-            const submitBtn = document.createElement('ion-button');
-            submitBtn.setAttribute('shape', 'round');
-            submitBtn.setAttribute('color', 'primary');
-            submitBtn.innerHTML = '<ion-icon slot="start" name="save-outline"></ion-icon> Guardar ' + window.formatEntityName(entityName);
-
+            // Buttons fall down from Stepper init
             colLeft.appendChild(btnPrev);
             colRight.appendChild(btnNext);
             colRight.appendChild(submitBtn);
@@ -757,62 +419,8 @@
             btnGrid.appendChild(btnRow);
             footerContainer.appendChild(btnGrid);
 
-            window.__CURRENT_WIZARD_STEPS = steps;
-
-            // Funcionalidad Stepper Lineal Dinámico (Wizard Handler)
-            window.goToFormSection = function(targetSectionName) {
-                currentStepIndex = steps.indexOf(targetSectionName);
-                if (currentStepIndex === -1) currentStepIndex = 0;
-
-                Object.keys(stepContainers).forEach(key => {
-                    stepContainers[key].style.display = (key === targetSectionName) ? 'block' : 'none';
-                });
-
-                if (sidebarSteps) {
-                    steps.forEach((stepName, idx) => {
-                        const mi = menuItems[stepName];
-                        if (!mi) return;
-                        mi.item.style.setProperty('--background', 'transparent');
-                        mi.icon.setAttribute('color', 'medium');
-                        mi.label.setAttribute('color', 'medium');
-
-                        if (idx === currentStepIndex) {
-                            mi.item.style.setProperty('--background', 'var(--ion-color-step-100)');
-                            mi.icon.setAttribute('color', 'primary');
-                            mi.label.setAttribute('color', 'primary');
-                        }
-                    });
-                }
-
-                progressLabel.textContent = `PASO ${currentStepIndex + 1} DE ${totalSteps}: ${targetSectionName.toUpperCase()}`;
-                
-                btnPrev.style.display = currentStepIndex === 0 ? 'none' : 'block';
-
-                if (currentStepIndex === totalSteps - 1) {
-                    btnNext.style.display = 'none';
-                    submitBtn.style.display = 'block';
-                } else {
-                    btnNext.style.display = 'block';
-                    submitBtn.style.display = 'none';
-                }
-            };
-
-            btnPrev.addEventListener('click', () => {
-                if (currentStepIndex > 0) window.goToFormSection(steps[currentStepIndex - 1]);
-            });
-
-            btnNext.addEventListener('click', () => {
-                // Validación delegada a UI_Validators
-                const currentContainer = stepContainers[steps[currentStepIndex]];
-                const isValid = global.UI_Validators ? global.UI_Validators.validateRequiredFields(currentContainer) : true;
-
-                if (isValid && currentStepIndex < totalSteps - 1) {
-                    window.goToFormSection(steps[currentStepIndex + 1]);
-                }
-            });
-
-            // Auto-arranque mostrando la primera sección
-            window.goToFormSection(steps[0]);
+            // Auto-arranque de Stepper UI_FormStepper
+            stepper.start();
 
             // --- Delegación de Business Rules UI_Validators ---
             if (global.UI_Validators && typeof global.UI_Validators.attachBusinessRulesListeners === 'function') {
@@ -835,195 +443,12 @@
             });
             // --------------------------------------------------------------------
 
-            let isSaving = false; // Bloqueo de Reentrada
-
-            submitBtn.addEventListener('click', async () => {
-                if (isSaving) return; // Abortar si ya está guardando
-                isSaving = true;
-                submitBtn.disabled = true; // Deshabilitar botón
-
-                // Mostrar Spinner Nativo en el botón
-                submitBtn.innerHTML = '<ion-spinner name="crescent"></ion-spinner> &nbsp; Guardando...';
-
-                // --- UI Blocking (Zero-Latency Rule & UI Idempotency) ---
-                const loading = document.createElement('ion-loading');
-                loading.backdropDismiss = false; // Bloqueo irrompible
-                loading.message = 'Guardando registro...';
-                loading.spinner = 'crescent';
-                document.body.appendChild(loading);
-                await loading.present();
-
-                // --- LECTURA FRESCA JIT (Evita Detached Nodes) ---
-                const activeForm = global.currentFormModal || document.getElementById('app-container');
-                const freshInputs = activeForm.querySelectorAll('ion-input, ion-textarea, ion-select, input[type="hidden"]');
-                const payload = {};
-                freshInputs.forEach(input => {
-                    const name = input.getAttribute('name');
-                    if (name && !input.closest('[data-dynamic-list]')) {
-                        let val = input.value;
-                        
-                        // S7.2 Intercepción MDM (Safe Payload Serialization & OCP H8 Fix)
-                        const schemaField = fields ? fields.find(f => f.name === name) : null;
-                        
-                        if (input.dataset.parser === 'json_array') {
-                            // Regla 1: Parseo Defensivo Safe Parse (Contrato DOM OCP)
-                            try {
-                                let parsed = JSON.parse(val);
-                                payload[name] = Array.isArray(parsed) ? parsed.filter(i => Boolean(i) && String(i).trim() !== "") : [];
-                            } catch(e) { 
-                                payload[name] = []; 
-                            }
-                        } else if (schemaField) {
-                            if (schemaField.type === 'relation' || schemaField.uiComponent === 'select_single') {
-                                // Regla 2: Coerción Segura (1:1)
-                                let strVal = (val === null || val === undefined) ? "" : String(val).trim();
-                                if (strVal.toLowerCase() === "null" || strVal.toLowerCase() === "undefined") strVal = "";
-                                payload[name] = strVal;
-                            } else {
-                                payload[name] = val; // Default nativo
-                            }
-                        } else {
-                            payload[name] = val; // Fallback libre
-                        }
-                    }
-                });
-
-                // Extractor JIT para Dynamic Lists
-                const dynamicLists = activeForm.querySelectorAll('[data-dynamic-list]');
-                dynamicLists.forEach(list => {
-                    const fieldName = list.getAttribute('data-dynamic-list');
-                    const rows = list.querySelectorAll('.dynamic-list-row');
-                    const jsonArray = [];
-                    
-                    rows.forEach(row => {
-                        const rowData = {};
-                        const rowInputs = row.querySelectorAll('ion-input, ion-select');
-                        rowInputs.forEach(inp => {
-                            if (inp.name) rowData[inp.name] = inp.value;
-                        });
-                        jsonArray.push(rowData);
-                    });
-                    
-                    payload[fieldName] = JSON.stringify(jsonArray);
-                });
-
-
-                const freshChipContainers = activeForm.querySelectorAll('.chip-container');
-                freshChipContainers.forEach(cc => {
-                    const name = cc.getAttribute('data-chip-name');
-                    if (name) {
-                        const chips = cc.querySelectorAll('ion-label');
-                        const arr = [];
-                        chips.forEach(l => arr.push(l.textContent));
-                        payload[name] = arr.join(', ');
-                    }
-                });
-
-                // --- CAPTURAR PAYLOAD ANIDADO (Regla 15) ---
-                if (window.__APP_CACHE__ && window.__APP_CACHE__.nestedData) {
-                    Object.keys(window.__APP_CACHE__.nestedData).forEach(key => {
-                        payload[key] = window.__APP_CACHE__.nestedData[key];
-                    });
-                }
-
-                // Función auxiliar para mostrar Ionic Toast alineado al estándar
-                const showToast = async (msg, color) => {
-                    const toast = document.createElement('ion-toast');
-                    toast.message = msg;
-                    toast.duration = 3000;
-                    toast.position = 'bottom';
-                    toast.color = color; // Usa la paleta nativa var(--ion-color-[color])
-
-                    // Atamos el toast al body para que Ionic pueda destruirlo limpiamente (Evita TypeError: Cannot read properties of null)
-                    document.body.appendChild(toast);
-
-                    // Esperar a que el componente Ionic esté listo en el DOM
-                    await toast.componentOnReady();
-                    await toast.present();
-                };
-                // --- Sanitización de Auditoría (Directiva Product Architect) ---
-                // El frontend NUNCA debe enviar datos de auditoría en el payload.
-                delete payload.created_at;
-                delete payload.created_by;
-                delete payload.updated_at;
-                delete payload.updated_by;
-
-                // Llamada nativa hacia Apps Script (API Real)
-                // CRÍTICO: Resolver acción y limpiar ID ANTES de cualquier await
-                const action = global.currentEditId ? 'update' : 'create';
-                global.currentEditId = null; // Reset inmediato antes del async
-
-                // El Loading ya se inició en el momento 0 (Idempotencia).
-
-                // SANITIZACION DE PAYLOAD (Evitar Detached Nodes y Proxies a GAS)
-                const safePayload = JSON.parse(JSON.stringify(payload));
-
-                google.script.run
-                    .withSuccessHandler(async (rawResponse) => {
-                        await loading.dismiss();
-                        try {
-                            const response = typeof rawResponse === 'string' ? JSON.parse(rawResponse) : rawResponse;
-                            if (response && response.status === 'success') {
-                                 // ── Server-Confirmed Frontend Cache Injection (Immutable · Zero-Latency) ──
-                                 _patchFrontendCache(entityName, response, payload);
-
-                                 const itemName = (response.data && response.data.Entity) ? response.data.Entity : entityName;
-                                 showToast('¡' + itemName + ' guardado con éxito!', 'success');
-
-                                // ── Soft Reset Post-Guardado (Anti Stale-State) ──
-                                 // CRÍTICO: liberar el guard y null-ear ID ANTES de render()
-                                 isSaving = false;
-                                 submitBtn.disabled = false;
-                                 submitBtn.innerHTML = '<ion-icon slot="start" name="save-outline"></ion-icon> Guardar ' + window.formatEntityName(entityName);
-                                 global.currentEditId = null;
-
-                                 if (window.__APP_CACHE__ && window.__APP_CACHE__.nestedData) window.__APP_CACHE__.nestedData = {};
-
-                                 // Obtener callback si es un Modal anidado (In-line Creation)
-                                 let inlineCallback = null;
-                                 if (global.currentFormModal && global.currentFormModal.__onSaveSuccessFallback) {
-                                     inlineCallback = global.currentFormModal.__onSaveSuccessFallback;
-                                 }
-
-                                 // Cerramos el Modal (ahora usando Stack)
-                                 if (global._closeTopModal) {
-                                     global._closeTopModal();
-                                 }
-
-                                 // Enrutamiento post-Guardado Inmediato
-                                 if (inlineCallback) {
-                                     inlineCallback(response); // Notificamos al picker que solicitó la creación
-                                 } else if (!global.ModalStackController || global.ModalStackController.getDepth() === 0) {
-                                     // Solo recargar DataView si era el Formulario Principal
-                                     if (window.DataViewEngine) {
-                                         window.DataViewEngine.render(entityName, 'app-container');
-                                     } else if (global.onSaveSuccessCallback) {
-                                         global.onSaveSuccessCallback();
-                                     }
-                                 }
-                            } else {
-                                // Error Controlado desde el Servidor
-                                showToast('Error: ' + (response ? response.message : 'Error desconocido'), 'danger');
-                            }
-                        } catch (e) {
-                            console.error('[FormEngine] Error UI:', e);
-                            showToast('Error en la interfaz local', 'warning');
-                        } finally {
-                            loading.dismiss();
-                            isSaving = false;
-                            submitBtn.disabled = false;
-                            submitBtn.innerHTML = '<ion-icon slot="start" name="save-outline"></ion-icon> Guardar ' + window.formatEntityName(entityName);
-                        }
-                    })
-                    .withFailureHandler(async (err) => {
-                        await loading.dismiss();
-                        isSaving = false;
-                        submitBtn.disabled = false;
-                        submitBtn.innerHTML = '<ion-icon slot="start" name="save-outline"></ion-icon> Guardar ' + window.formatEntityName(entityName);
-
-                        showToast('Error de Servidor: ' + err.message, 'danger');
-                    })
-                    .API_Universal_Router(action, entityName, safePayload);
+            // S14.1 Delegación Submitter Object
+            new window.UI_FormSubmitter({
+                entityName: entityName,
+                fields: fields,
+                submitBtn: submitBtn,
+                modal: modal
             });
 
             container.appendChild(card);
@@ -1257,6 +682,70 @@
             // Reason (Principio DRY): UI_Components gestiona esta hidratación activamente
             // al ser instanciados con `window._buildSearchableMulti(...)` en el switch parent.
 
+            // S18.4 - ABAC Passive Hiding & HelpDesk Mitigation (Educative Zero-Trust)
+            const canEdit = !window.ABAC || window.ABAC.can('update', entityName, id);
+            if (!canEdit) {
+                const cardNode = container.querySelector('ion-card');
+                if (cardNode) {
+                    const banner = document.createElement('div');
+                    banner.style.backgroundColor = 'var(--ion-color-light, #f4f5f8)';
+                    banner.style.color = 'var(--ion-color-medium, #5a5a5a)';
+                    banner.style.padding = '12px 16px';
+                    banner.style.borderBottom = '1px solid #dcdcdc';
+                    banner.style.borderTopLeftRadius = 'var(--rounded-md)';
+                    banner.style.borderTopRightRadius = 'var(--rounded-md)';
+                    banner.style.fontSize = '0.9rem';
+                    
+                    const icon = document.createElement('ion-icon');
+                    icon.setAttribute('name', 'lock-closed');
+                    icon.style.fontSize = '1.2em';
+                    icon.style.verticalAlign = 'middle';
+                    
+                    const span = document.createElement('span');
+                    span.style.verticalAlign = 'middle';
+                    span.style.marginLeft = '8px';
+                    
+                    const strong = document.createElement('strong');
+                    strong.appendChild(document.createTextNode('Modo de Solo Lectura. '));
+                    
+                    span.appendChild(strong);
+                    span.appendChild(document.createTextNode('Contacta al Administrador para solicitar accesos de edición sobre este nodo.'));
+                    
+                    banner.appendChild(icon);
+                    banner.appendChild(span);
+                    
+                    cardNode.insertBefore(banner, cardNode.firstChild);
+                }
+                
+                // Inutilizar inputs de manera segura (manteniendo legibilidad)
+                inputs.forEach(input => {
+                    const tag = input.tagName.toLowerCase();
+                    if (tag === 'ion-input' || tag === 'ion-textarea' || tag === 'ion-select') {
+                        input.setAttribute('readonly', 'true');
+                        input.setAttribute('disabled', 'true');
+                        input.style.pointerEvents = 'none';
+                        input.style.opacity = '0.8'; // Menos difuminado para lectura
+                    }
+                });
+                
+                // Mute de Subgrids y elementos interactivos complejos
+                const customInputs = container.querySelectorAll('.dv-chip, ion-button[fill="clear"]');
+                customInputs.forEach(i => {
+                    i.style.pointerEvents = 'none';
+                    i.style.opacity = '0.6';
+                });
+                
+                // Apagar rigurosamente el botón de Guardado principal del Layout
+                const btns = container.querySelectorAll('ion-button');
+                btns.forEach(btn => {
+                    if (btn.textContent.includes('Guardar') || btn.querySelector('ion-icon[name="save-outline"]')) {
+                        btn.setAttribute('disabled', 'true');
+                        btn.style.opacity = '0.4';
+                        btn.title = "No tienes permisos de edición en este nodo";
+                    }
+                });
+            }
+
             // 7. Agregar Audit Trail (Directiva del Product Architect)
             if (record.updated_at && record.updated_by) {
                 let formattedDate = record.updated_at;
@@ -1281,10 +770,6 @@
                 container.appendChild(noteContainer);
             }
 
-            // 8. Navegar al primer paso (Directiva 3.d)
-            if (typeof global.goToFormSection === 'function' && window.__CURRENT_WIZARD_STEPS) {
-                global.goToFormSection(window.__CURRENT_WIZARD_STEPS[0]);
-            }
         };
 
 

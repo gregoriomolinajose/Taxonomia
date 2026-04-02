@@ -1,0 +1,183 @@
+<!-- src/Auth_UI.html -->
+<template id="tmpl-auth-denied">
+  <ion-grid>
+    <ion-row class="ion-justify-content-center" style="margin-top:50px;">
+      <ion-col size="12" size-md="8" size-lg="6">
+        <ion-card color="danger">
+          <ion-card-header>
+            <ion-icon name="lock-closed-outline" style="font-size:64px;display:block;margin:0 auto;padding-bottom:20px;"></ion-icon>
+            <ion-card-title class="ion-text-center">Acceso Denegado</ion-card-title>
+          </ion-card-header>
+          <ion-card-content class="ion-text-center">
+            <h3 class="auth-reason"></h3>
+            <div class="auth-email"></div>
+          </ion-card-content>
+        </ion-card>
+      </ion-col>
+    </ion-row>
+  </ion-grid>
+</template>
+
+<template id="tmpl-auth-logout">
+  <ion-content class="ion-padding">
+    <ion-grid style="height:100%;">
+      <ion-row class="ion-justify-content-center ion-align-items-center" style="height:100%;">
+        <ion-col size="12" class="ion-text-center">
+          <ion-icon name="shield-checkmark-outline" color="success" style="font-size:80px;"></ion-icon>
+          <h2 style="margin-top:20px;">Sesión cerrada por seguridad</h2>
+          <p>Por favor, cierra esta pestaña del navegador.</p>
+        </ion-col>
+      </ion-row>
+    </ion-grid>
+  </ion-content>
+</template>
+
+<script>
+  /* ═══════════════════════════════════════════════════════
+     Auth_UI.html — Capa de Seguridad y Despliegue de Bloqueos
+     (Refactor Blueprint V4: Declarative & Non-Destructive)
+  ═══════════════════════════════════════════════════════ */
+  window.AuthManager = {
+    init: async function() {
+      var appContainer = document.getElementById('app-container');
+      
+      var loading = document.createElement('ion-loading');
+      loading.message = 'Verificando identidad...';
+      loading.spinner = 'crescent';
+      document.body.appendChild(loading);
+      await loading.present();
+      
+      // Ocultar sin destruir el DOM interno para preservar Listeners
+      if (appContainer) appContainer.classList.add('ion-hide');
+
+      if (typeof google !== 'undefined' && google.script && google.script.run) {
+        google.script.run
+          .withSuccessHandler(async function(response) {
+            await loading.dismiss();
+            window.AuthManager.handleAuthResponse(response, appContainer);
+          })
+          .withFailureHandler(async function(error) {
+            await loading.dismiss();
+            window.AuthManager.renderAccessDenied(appContainer, 'Error de conexión con el servidor.');
+          })
+          .getUserIdentity();
+      } else {
+        setTimeout(async function() {
+          await loading.dismiss();
+          window.AuthManager.handleAuthResponse({ authorized:true, email:'local@gmail.com' }, appContainer);
+        }, 800);
+      }
+    },
+    
+    handleAuthResponse: function(response, container) {
+      if (response.authorized) {
+        if (container) container.classList.remove('ion-hide');
+        var greetingEl = document.getElementById('user-greeting-name');
+        if (greetingEl) greetingEl.textContent = window.formatUserName(response.email);
+        
+        this.runAppBootstrap();
+      } else {
+        this.renderAccessDenied(container, 'Dominio no autorizado', response.email);
+      }
+    },
+    
+    renderAccessDenied: function(container, reason, email) {
+      if (container) container.classList.add('ion-hide'); // Ensure hidden SPA
+
+      // Crear un Auth Overlay absoluto para no romper el layout principal jamás
+      var overlay = document.getElementById('auth-overlay');
+      if (!overlay) {
+        overlay = document.createElement('div');
+        overlay.id = 'auth-overlay';
+        overlay.style.position = 'absolute';
+        overlay.style.top = '0'; overlay.style.left = '0';
+        overlay.style.width = '100%'; overlay.style.height = '100%';
+        overlay.style.backgroundColor = 'var(--color-bg-body, #f4f5f8)';
+        overlay.style.zIndex = '9999';
+        document.body.appendChild(overlay);
+      }
+
+      var tmpl = document.getElementById('tmpl-auth-denied');
+      if (tmpl) {
+        overlay.innerHTML = '';
+        var clone = tmpl.content.cloneNode(true);
+        clone.querySelector('.auth-reason').textContent = reason;
+        if (email) {
+          const authEmail = clone.querySelector('.auth-email');
+          const p = document.createElement('p');
+          p.textContent = 'La cuenta ';
+          const strong = document.createElement('strong');
+          strong.textContent = email;
+          p.appendChild(strong);
+          p.appendChild(document.createTextNode(' no tiene permisos.'));
+          authEmail.appendChild(p);
+        }
+        overlay.appendChild(clone);
+      } else {
+         const h1 = document.createElement('h1');
+         h1.style.textAlign = 'center'; 
+         h1.style.marginTop = '20%'; 
+         h1.textContent = 'Acceso Denegado';
+         const p = document.createElement('p');
+         p.style.textAlign = 'center'; 
+         p.textContent = reason;
+         overlay.appendChild(h1); 
+         overlay.appendChild(p);
+      }
+    },
+    
+    runAppBootstrap: async function() {
+      // Usar Node Injection pura en el Body
+      var toast = document.createElement('ion-toast');
+      toast.message  = 'Sincronizando plataforma...';
+      toast.position = 'bottom'; toast.color = 'dark'; toast.icon = 'sync-outline';
+      document.body.appendChild(toast);
+      await toast.present();
+      
+      var onSuccess = async function(res) {
+        await toast.dismiss();
+        var newToast = document.createElement('ion-toast');
+        newToast.position = 'bottom';
+        if (res && res.status === 'success') {
+          var data = res.data;
+          for (var entity in data) { window.__APP_CACHE__[entity] = data[entity]; }
+          if (typeof window.renderDashboard === 'function') window.renderDashboard();
+          newToast.message = 'Plataforma sincronizada.'; newToast.icon = 'checkmark-circle-outline';
+          newToast.color = 'success'; newToast.duration = 2000;
+        } else {
+          newToast.message = 'Error en sincronización.'; newToast.color = 'danger'; newToast.duration = 3000;
+        }
+        document.body.appendChild(newToast); await newToast.present();
+      };
+      
+      if (typeof google !== 'undefined' && google.script && google.script.run) {
+        google.script.run.withSuccessHandler(onSuccess).withFailureHandler(async function() {
+          await toast.dismiss();
+        }).getAppBootstrapPayload();
+      } else {
+        setTimeout(async function() {
+          await toast.dismiss();
+          if (typeof window.renderDashboard === 'function') window.renderDashboard();
+          var newToast = document.createElement('ion-toast');
+          newToast.position = 'bottom'; newToast.message = 'Mock: Plataforma sincronizada.';
+          newToast.color = 'success'; newToast.duration = 2000;
+          document.body.appendChild(newToast); await newToast.present();
+        }, 1000);
+      }
+    },
+    
+    logout: async function() {
+      var ionApp = document.querySelector('ion-app');
+      var tmpl = document.getElementById('tmpl-auth-logout');
+      
+      if (ionApp && tmpl) {
+        ionApp.innerHTML = '';
+        ionApp.appendChild(tmpl.content.cloneNode(true));
+        
+        var t = document.createElement('ion-toast');
+        t.message = 'Desconectado de forma segura.'; t.duration = 3000; t.color = 'dark';
+        document.body.appendChild(t); await t.present();
+      }
+    }
+  };
+</script>

@@ -1,0 +1,222 @@
+<template id="tmpl-governance-admin">
+    <ion-grid>
+        <ion-row>
+            <ion-col size="12">
+                <ion-card class="dv-card" style="box-shadow: var(--shadow-floating);">
+                   <ion-card-header>
+                       <ion-card-title>
+                           <ion-icon name="shield-checkmark-outline" style="vertical-align:middle;"></ion-icon>
+                           Matriz Dinámica: Control de Acceso (ABAC)
+                       </ion-card-title>
+                   </ion-card-header>
+                   <ion-card-content id="governance-matrix-container" style="padding: 1rem; overflow-x: auto;">
+                       <!-- DataGrid Native inside Ionic -->
+                       <div class="dv-table-wrap">
+                          <table class="dv-table" id="gov-abac-table">
+                             <thead id="gov-abac-thead"></thead>
+                             <tbody id="gov-abac-tbody"></tbody>
+                          </table>
+                       </div>
+                   </ion-card-content>
+                </ion-card>
+            </ion-col>
+        </ion-row>
+    </ion-grid>
+</template>
+
+<script>
+window.GovernanceEngine = {
+    renderMatrix: async function(container) {
+        // Guardrail S18.5: Hiding Agresivo Total de la Vista
+        if (window.ABAC && !window.ABAC.can('update', 'Sys_Permissions')) {
+            window.DOM.clear(container);
+            const err = document.createElement('div');
+            err.innerHTML = '<div style="padding:2rem;text-align:center;"><ion-icon name="alert-circle" style="font-size:4rem;color:var(--ion-color-danger);"></ion-icon><h2 style="color:var(--ion-color-danger);">Acceso Bloqueado</h2><p>No posees privilegios de administrador para alterar la matriz estructural ABAC.</p></div>';
+            container.appendChild(err);
+            return;
+        }
+
+        const tContainer = document.getElementById('governance-matrix-container');
+        if (!tContainer) return;
+        
+        // Modalidad Ionic Loading (Esperamos Fetch Completo)
+        const loading = document.createElement('ion-loading');
+        loading.message = 'Calculando Intersecciones ABAC...';
+        loading.spinner = 'dots';
+        document.body.appendChild(loading);
+        await loading.present();
+
+        try {
+            // Hydrate Data via Universal API
+            const rolesRes = await this._fetchTable('Sys_Roles');
+            const permsRes = await this._fetchTable('Sys_Permissions');
+
+            if (!rolesRes || !permsRes) throw new Error("Fallo en la recepción del Topográfico de Permisos.");
+
+            this.roles = typeof rolesRes === 'string' ? JSON.parse(rolesRes) : rolesRes;
+            this.perms = typeof permsRes === 'string' ? JSON.parse(permsRes) : permsRes;
+
+            this._buildTable();
+        } catch(e) {
+            console.error(e);
+            tContainer.innerHTML = '<p style="color:red;">Error cargando Matriz: ' + e.message + '</p>';
+        } finally {
+            loading.dismiss();
+        }
+    },
+
+    _fetchTable: function(table) {
+        return new Promise((resolve, reject) => {
+            if (typeof google === 'undefined') {
+                resolve([]);
+                return;
+            }
+            google.script.run
+                .withSuccessHandler(res => {
+                    const json = typeof res === 'string' ? JSON.parse(res) : res;
+                    if (json && json.status === 'success') resolve(json.data);
+                    else resolve([]);
+                })
+                .withFailureHandler(reject)
+                .API_Universal_Router('read', table, {pageSize: 1000}); // Truncamos al max para traer TODO
+        });
+    },
+
+    _buildTable: function() {
+        const thead = document.getElementById('gov-abac-thead');
+        const tbody = document.getElementById('gov-abac-tbody');
+        window.DOM.clear(thead);
+        window.DOM.clear(tbody);
+
+        // Extraccion de opciones seguras del schema SSR
+        const schemaDef = window.APP_SCHEMAS['Sys_Permissions'];
+        const schemaField = schemaDef.fields.find(f => f.name === 'schema_destino');
+        const entityList = schemaField.options || [];
+
+        const levelField = schemaDef.fields.find(f => f.name === 'nivel_acceso');
+        const defaultLevels = ["ALL (Admin Total)", "OWNER_ONLY (Solo propios)", "MEMBER_ONLY (Siendo Miembro)", "READ_ONLY (Solo lectura)", "NONE (Denegado)"];
+        const levelOptions = levelField.options || defaultLevels;
+
+        // Build THEAD
+        const trH = document.createElement('tr');
+        const thRol = document.createElement('th');
+        thRol.textContent = 'ROLES (Topología OMR)';
+        thRol.style.textAlign = 'left';
+        thRol.style.width = '200px';
+        trH.appendChild(thRol);
+
+        entityList.forEach(ent => {
+            const th = document.createElement('th');
+            th.textContent = window.APP_SCHEMAS[ent]?.metadata?.label || ent;
+            th.style.textAlign = 'center';
+            th.style.minWidth = '130px';
+            trH.appendChild(th);
+        });
+        thead.appendChild(trH);
+
+        // Build TBODY (Matriz 2D)
+        this.roles.forEach(rol => {
+            const tr = document.createElement('tr');
+            
+            const tdName = document.createElement('td');
+            tdName.style.fontWeight = 'bold';
+            tdName.style.color = 'var(--ion-color-dark)';
+            tdName.textContent = rol.nombre_rol || rol.id_rol;
+            tr.appendChild(tdName);
+
+            entityList.forEach(ent => {
+                const td = document.createElement('td');
+                td.style.textAlign = 'center';
+                
+                const permSearch = this.perms.find(p => p.id_rol === rol.id_rol && p.schema_destino === ent);
+                
+                const select = document.createElement('select');
+                select.className = 'dv-page-size-select'; // Reutilizando select minimalista V4
+                select.style.width = '100%';
+                select.style.cursor = 'pointer';
+                select.style.fontWeight = '600';
+                
+                // Track state
+                select.dataset.permId = permSearch ? permSearch.id_permiso : '';
+                select.dataset.rolId = rol.id_rol;
+                select.dataset.entName = ent;
+
+                const currentVal = permSearch ? permSearch.nivel_acceso : "NONE (Denegado)";
+
+                // Utilizar dinámicamente badgeMap global sin hardcodear colores
+                const getColorFromConfig = (valStr) => {
+                    if (!valStr) return 'var(--ion-color-light-shade, #ccc)';
+                    const slug = (valStr || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+                    const map = (window.APP_SCHEMAS && window.APP_SCHEMAS._UI_CONFIG && window.APP_SCHEMAS._UI_CONFIG.badgeMap) || {};
+                    const badgeType = map[slug] || 'light';
+                    // Convertir tipo (e.g., primary, danger) a variable CSS nativa de Ionic
+                    return `var(--ion-color-${badgeType})`;
+                };
+
+                levelOptions.forEach(opt => {
+                    const option = document.createElement('option');
+                    option.value = opt;
+                    option.textContent = opt.split(' ')[0]; // Display corto
+                    if (opt === currentVal) option.selected = true;
+                    select.appendChild(option);
+                });
+
+                select.style.color = getColorFromConfig(currentVal);
+
+                select.addEventListener('change', (e) => this._onCellChange(e.target, getColorFromConfig));
+
+                td.appendChild(select);
+                tr.appendChild(td);
+            });
+
+            tbody.appendChild(tr);
+        });
+    },
+
+    _onCellChange: function(selectEl, getColorFromConfig) {
+        const permId = selectEl.dataset.permId;
+        const rolId = selectEl.dataset.rolId;
+        const entName = selectEl.dataset.entName;
+        const newVal = selectEl.value;
+
+        // Visual Optimistic Update
+        selectEl.disabled = true;
+        selectEl.style.opacity = '0.5';
+        selectEl.style.color = getColorFromConfig(newVal);
+
+        const record = {
+            id_rol: rolId,
+            schema_destino: entName,
+            nivel_acceso: newVal,
+            _forceAbac: true // Parameter sent to bypass logic if needed
+        };
+
+        const action = permId ? 'update' : 'create';
+        if (permId) record.id_permiso = permId;
+
+        // Transaction call
+        google.script.run
+            .withSuccessHandler(res => {
+                const parsed = typeof res === 'string' ? JSON.parse(res) : res;
+                selectEl.disabled = false;
+                selectEl.style.opacity = '1';
+                
+                if (parsed && parsed.status === 'success') {
+                    if (action === 'create' && parsed.data && parsed.data.length > 0) {
+                        selectEl.dataset.permId = parsed.data[0].id_permiso;
+                    }
+                    if (window.showToast) window.showToast(`Permiso en ${entName} concedido con éxito.`, 'success');
+                } else {
+                    if (window.showToast) window.showToast('Rechazo ABAC: ' + (parsed.message || ''), 'danger');
+                    // Idealmente revertiríamos el change si falla
+                }
+            })
+            .withFailureHandler(err => {
+                selectEl.disabled = false;
+                selectEl.style.opacity = '1';
+                if (window.showToast) window.showToast('Error de red ABAC.', 'danger');
+            })
+            .API_Universal_Router(action, 'Sys_Permissions', record);
+    }
+};
+</script>

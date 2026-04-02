@@ -131,7 +131,7 @@
             const chipContainer = document.createElement('div');
             chipContainer.className = 'chip-container';
             chipContainer.setAttribute('data-chip-name', field.name);
-            chipContainer.style.display = 'flex';
+            chipContainer.classList.remove('ion-hide');
             chipContainer.style.flexWrap = 'wrap';
             chipContainer.style.gap = 'var(--spacing-2)';
 
@@ -191,7 +191,11 @@
             const addBtn = document.createElement('ion-button');
             addBtn.setAttribute('fill', 'outline');
             addBtn.setAttribute('size', 'small');
-            addBtn.innerHTML = `<ion-icon slot="start" name="add"></ion-icon> Agregar`;
+            const addIcon = document.createElement('ion-icon');
+            addIcon.setAttribute('slot', 'start');
+            addIcon.setAttribute('name', 'add');
+            addBtn.appendChild(addIcon);
+            addBtn.appendChild(document.createTextNode(' Agregar'));
             
             let initialData = [];
             if (data && data[field.name]) {
@@ -243,7 +247,9 @@
                 const delBtn = document.createElement('ion-button');
                 delBtn.setAttribute('color', 'danger');
                 delBtn.setAttribute('fill', 'clear');
-                delBtn.innerHTML = '<ion-icon name="trash-outline"></ion-icon>';
+                const delIcon = document.createElement('ion-icon');
+                delIcon.setAttribute('name', 'trash-outline');
+                delBtn.appendChild(delIcon);
                 delBtn.onclick = () => row.remove();
                 
                 delCol.appendChild(delBtn);
@@ -265,7 +271,9 @@
         global.UI_Factory.drawChip = function(id, labelText, onRemoveCallback) {
             const chip = document.createElement('ion-chip');
             chip.color = 'primary';
-            chip.innerHTML = `<ion-label>${labelText}</ion-label>`;
+            const lbl = document.createElement('ion-label');
+            lbl.textContent = labelText;
+            chip.appendChild(lbl);
             if (typeof onRemoveCallback === 'function') {
                 const icon = document.createElement('ion-icon');
                 icon.name = 'close-circle';
@@ -292,7 +300,7 @@
             visualWrapper.style.marginBottom = '16px';
             
             const headerRow = document.createElement('div');
-            headerRow.style.display = 'flex';
+            headerRow.classList.remove('ion-hide');
             headerRow.style.justifyContent = 'space-between';
             headerRow.style.alignItems = 'center';
             headerRow.style.width = '100%';
@@ -307,13 +315,17 @@
             const addBtn = document.createElement('ion-button');
             addBtn.fill = 'clear';
             addBtn.size = 'small';
-            addBtn.innerHTML = '<ion-icon name="add" slot="start"></ion-icon> AGREGAR';
+            const addIco2 = document.createElement('ion-icon');
+            addIco2.setAttribute('name', 'add');
+            addIco2.setAttribute('slot', 'start');
+            addBtn.appendChild(addIco2);
+            addBtn.appendChild(document.createTextNode(' AGREGAR'));
 
             headerRow.appendChild(label);
             headerRow.appendChild(addBtn);
 
             const chipsBox = document.createElement('div');
-            chipsBox.style.display = 'flex';
+            chipsBox.classList.remove('ion-hide');
             chipsBox.style.flexWrap = 'wrap';
             chipsBox.style.gap = '8px';
             chipsBox.style.minHeight = '32px';
@@ -371,7 +383,7 @@
                 searchbar.debounce = 100;
 
                 const draftChipsBox = document.createElement('div');
-                draftChipsBox.style.display = 'flex';
+                draftChipsBox.classList.remove('ion-hide');
                 draftChipsBox.style.flexWrap = 'wrap';
                 draftChipsBox.style.gap = '8px';
                 draftChipsBox.style.marginBottom = '16px';
@@ -430,12 +442,28 @@
                 hidden.value = JSON.stringify(selectedIds);
                 
                 if (selectedIds.length === 0) {
-                    chipsBox.innerHTML = `
-                        <div style="width: 100%; text-align: center; color: var(--ion-color-medium); padding: 16px; border: 1px dashed var(--ion-color-step-300, #c8c7cc); border-radius: 8px;">
-                            <ion-icon name="layers-outline" style="font-size: 24px;"></ion-icon>
-                            <div style="font-size: 14px; margin-top: 8px;">Sin registros vinculados</div>
-                        </div>
-                    `;
+                    const emptyNode = document.createElement('div');
+                    emptyNode.style.width = '100%';
+                    emptyNode.style.textAlign = 'center';
+                    emptyNode.style.color = 'var(--ion-color-medium)';
+                    emptyNode.style.padding = '16px';
+                    emptyNode.style.border = '1px dashed var(--ion-color-step-300, #c8c7cc)';
+                    emptyNode.style.borderRadius = '8px';
+                    
+                    const emptyIcon = document.createElement('ion-icon');
+                    emptyIcon.setAttribute('name', 'layers-outline');
+                    emptyIcon.style.fontSize = '24px';
+                    
+                    const emptyText = document.createElement('div');
+                    emptyText.style.fontSize = '14px';
+                    emptyText.style.marginTop = '8px';
+                    emptyText.textContent = 'Sin registros vinculados';
+                    
+                    emptyNode.appendChild(emptyIcon);
+                    emptyNode.appendChild(emptyText);
+                    
+                    window.DOM.clear(chipsBox);
+                    chipsBox.appendChild(emptyNode);
                     return;
                 }
 
@@ -507,6 +535,143 @@
                     
                     global.UI_Factory.populateSelectOptions(selectEl, freshFiltered, field);
                 });
+            }
+        };
+
+        // ==========================================
+        // [S16.4] Inversion of Control: Input Builder Registry
+        // ==========================================
+        global.UI_Factory.BuilderRegistry = {};
+        
+        global.UI_Factory.registerBuilder = function(type, builderFn) {
+            this.BuilderRegistry[type] = builderFn;
+        };
+
+        // --- Core Builders Automatic Registration ---
+        global.UI_Factory.registerBuilder('text', (f, e) => global.UI_Factory.buildInput(f, e));
+        global.UI_Factory.registerBuilder('number', (f, e) => global.UI_Factory.buildInput(f, e));
+        global.UI_Factory.registerBuilder('date', (f, e) => global.UI_Factory.buildInput(f, e));
+        global.UI_Factory.registerBuilder('textarea', (f) => global.UI_Factory.buildTextarea(f));
+        global.UI_Factory.registerBuilder('select', (f) => global.UI_Factory.buildSelect(f));
+        global.UI_Factory.registerBuilder('dynamic_list', (f, e, d) => global.UI_Factory.buildDynamicList(f, d));
+        global.UI_Factory.registerBuilder('lookup', (f) => global.UI_Factory.buildLookup(f));
+        global.UI_Factory.registerBuilder('chip-input', (f) => global.UI_Factory.buildChipInput(f));
+
+        // --- Specialized Builders Registration ---
+        global.UI_Factory.registerBuilder('relation', function(field, entityName, data, localEventBus, currentEditId) {
+            const inputEl = document.createElement('div');
+            inputEl.setAttribute('data-relation-type', field.relationType || 'relacionado');
+            inputEl.style.width = '100%';
+            inputEl.style.marginBottom = 'var(--spacing-2)';
+            
+            const liveData = (window.__APP_CACHE__ && window.__APP_CACHE__[field.targetEntity]) ? window.__APP_CACHE__[field.targetEntity] : [];
+            const activeData = liveData.filter(d => d.estado !== 'Eliminado' && typeof d === 'object');
+            
+            let initialValues = [];
+            
+            // UAT Point 3: Auto-populate existing relation records using Zero-Latency Graph resolution
+            if (field.isTemporalGraph && field.graphEntity && window.__APP_CACHE__ && window.__APP_CACHE__[field.graphEntity]) {
+                const currentPK = data ? (data.id_dominio || data.id_registro) : null;
+                if (currentPK) {
+                    const aristas = window.__APP_CACHE__[field.graphEntity].filter(e => e.es_version_actual !== false);
+                    if (field.relationType === 'padre') {
+                        initialValues = aristas.filter(e => window.UI_FormUtils.normalizeId(e.id_nodo_hijo) === window.UI_FormUtils.normalizeId(currentPK)).map(e => window.UI_FormUtils.normalizeId(e.id_nodo_padre));
+                    } else if (field.relationType === 'hijo') {
+                        initialValues = aristas.filter(e => window.UI_FormUtils.normalizeId(e.id_nodo_padre) === window.UI_FormUtils.normalizeId(currentPK)).map(e => window.UI_FormUtils.normalizeId(e.id_nodo_hijo));
+                    }
+                }
+            } else if (data && data[field.name]) {
+                try {
+                    initialValues = Array.isArray(data[field.name]) ? data[field.name] : JSON.parse(data[field.name]);
+                } catch(e) { initialValues = (typeof data[field.name] === 'string') ? [data[field.name]] : []; } // fallback
+            }
+
+            if (field.uiComponent === 'searchable_multi') {
+                const multiNodes = global.UI_Factory.buildSearchableMulti(field, activeData, initialValues, localEventBus);
+                inputEl.appendChild(multiNodes);
+            } else if (field.uiComponent === 'select_single') {
+                const basicSel = document.createElement('ion-select');
+                basicSel.setAttribute('interface', window.innerWidth < 768 ? 'action-sheet' : 'popover');
+                basicSel.setAttribute('name', field.name);
+                basicSel.setAttribute('label', field.label);
+                basicSel.setAttribute('label-placement', 'stacked');
+                basicSel.setAttribute('fill', 'outline');
+                basicSel.style.marginBottom = 'var(--spacing-3)';
+
+                const emptyOpt = document.createElement('ion-select-option');
+                emptyOpt.value = "";
+                emptyOpt.textContent = "— Sin asignar —";
+                basicSel.appendChild(emptyOpt);
+
+                if (initialValues.length > 0) basicSel.value = initialValues[0];
+                
+                let filteredActiveData = activeData;
+                const rules = window.APP_SCHEMAS && window.APP_SCHEMAS[entityName] ? window.APP_SCHEMAS[entityName].topologyRules : null;
+                const cLevel = Number(data ? (data.nivel_tipo || 1) : 1);
+                
+                if (rules) {
+                    const uiStateInit = window.SubgridState ? 
+                        window.SubgridState.evaluateFieldState(rules, cLevel, field.relationType) : 
+                        { isDisabled: false, opacity: '1', placeholder: '— Sin asignar —' };
+                    
+                    if (uiStateInit.isDisabled) basicSel.setAttribute('disabled', 'true');
+                    basicSel.style.opacity = uiStateInit.opacity;
+                    emptyOpt.textContent = uiStateInit.placeholder;
+
+                    if (rules.levelFiltering === true && rules.strictLevelJumps === true && field.relationType === 'padre') {
+                        filteredActiveData = activeData.filter(d => Number(d.nivel_tipo) === cLevel - 1);
+                    }
+                    if (rules.rootRequiresNoParent === true && cLevel === 1 && field.relationType === 'padre') {
+                        filteredActiveData = []; 
+                    }
+                }
+                
+                global.UI_Factory.populateSelectOptions(basicSel, filteredActiveData, field);
+                global.UI_Factory.bindLevelChangeRepaint(basicSel, activeData, field, emptyOpt, localEventBus);
+
+                if (field.isTemporalGraph && field.relationType === 'padre') {
+                    let originalVal = initialValues.length > 0 ? initialValues[0] : "";
+                    basicSel.addEventListener('ionChange', async (ev) => {
+                        const newVal = ev.detail.value;
+                        const isNewContext = { currentEditId: currentEditId, data: data };
+                        const isNewRecord = window.SubgridState ? window.SubgridState.isNewRecord(isNewContext) : (!currentEditId && (!data || !data.id_registro));
+                        if (!isNewRecord && originalVal && originalVal !== "" && newVal !== originalVal) {
+                            const alert = document.createElement('ion-alert');
+                            alert.header = 'Cambio de Jerarquía Detectado';
+                            alert.message = 'Estás reasignando el nodo padre. Si guardas este cambio, toda la rama se trasladará a la nueva ubicación. ¿Estás seguro de continuar?';
+                            alert.buttons = [
+                                { text: 'Cancelar', role: 'cancel', handler: () => basicSel.value = originalVal },
+                                { text: 'Sí, reubicar rama', handler: () => originalVal = newVal }
+                            ];
+                            document.body.appendChild(alert);
+                            await alert.present();
+                        } else if (!originalVal || originalVal === "") {
+                            originalVal = newVal;
+                        }
+                    });
+                }
+                inputEl.appendChild(basicSel);
+            }
+            return inputEl;
+        });
+
+        // ==========================================
+        // [S16.4] THE DISMANTLED ROUTER
+        // ==========================================
+        global.UI_Factory.buildFieldNode = function(field, entityName, data, localEventBus, currentEditId) {
+            try {
+                const builder = global.UI_Factory.BuilderRegistry[field.type] || global.UI_Factory.BuilderRegistry['text'];
+                return builder(field, entityName, data, localEventBus, currentEditId);
+            } catch (err) {
+                console.error("[UI_Factory] Error construyendo FieldNode para:", field.name, err);
+                const errDiv = document.createElement('div');
+                const errText = document.createElement('ion-text');
+                errText.setAttribute('color', 'danger');
+                const errSmall = document.createElement('small');
+                errSmall.textContent = `⚠ Error UI: ${field.name}`;
+                errText.appendChild(errSmall);
+                errDiv.appendChild(errText);
+                return errDiv;
             }
         };
 
