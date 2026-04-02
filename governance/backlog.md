@@ -19,6 +19,9 @@
 | E16| Blueprint V4 Audit & Refactoring                      | ✅ Complete  | Refactorización Arquitectural: DataGrid Minimalism, Visibility Flags, Topology| Alta     |
 | E17| Core Initialization Purification                      | ✅ Complete  | Desacoplar JS_Core.html, ThemeManager, Auth UI y Math Logic | Max      |
 | E18| Gobernanza Topológica y Seguridad Contextual (ABAC) | 🏃 In Progress| Micro-gobernanza, Segregation of Duties y Accesos basados en contexto SAFe | Max      |
+| E19| Core Framework Resilience & Strictness                | 🚧 To Do     | Validator Truthiness, Ionic Promises, AppEventBus Telemetry, Error Bounds | Alta     |
+| E20| Pipeline Evolution & Native Tooling                   | 🚧 To Do     | AST Config, Esbuild/Rollup, Pure CSS Extraction, ThemeManager Modularization | Media    |
+| E21| Next-Gen MDM & Concurrency Data Layer                 | 🚧 To Do     | Optimistic Locking, Typeahead Selects BigData, Soft-Delete Graphs | Muy Alta |
 
 ## Parking Lot / Deuda Técnica (Post-Epic 11)
 
@@ -37,16 +40,7 @@
 
 ### 🚧 Deuda Activa (Backlog Técnico)
 
-| Item | Origen | Descripción | Severidad | Prioridad |
-|------|--------|-------------|-----------|-----------|
-| **AST RegExp CSS Minifier** | Arch Review (H14) | Considerar integración oficial de _Rollup_ o _Esbuild_ al pipeline Node.js, evaluando abandonar la minificación Regex manual (en `deploy.js`) si la densidad de tokens/alias CSS crece exponencialmente. | Low | Diferido |
-| **Profilers Magic Literals** | Quality Rev. | Estandarizar exigencia de Delta = 0 para el test de fuga de memoria E2E en `TEST_Suite_UI.html` (removiendo umbral tolerante `±5`). Documentar causas nativas si persisten nodos huérfanos de Ionic (e.g., Ion-Backdrops). | Low | Diferido |
-| **Validator Truthiness Trap** | Quality Rev. | `!input.value` en `validateRequiredFields` reporta los valores "0" numéricos (ej. Presupuestos = 0) como vacíos o nulos, bloqueando el form. Se debe usar check estricto: `=== '' \|\| === null`. | Critica | Eléctrico |
-| **JSON Parse Swallows Error** | Quality Rev. | El `try-catch` del parser inicial en *Dynamic Lists* captura cualquier excepción y la ignora, ocultando Data Corruption en BD. Se debe agregar `console.warn`. | Low | Diferido |
-| **Test Suites Mudos (Muda)** | Quality Rev. | Los archivos de test migrados contienen `describe.skip(...)`. Representan desperdicio porque no proveen mutability safety ni evalúan nada. Deberían borrarse o revivirse en E2E real. | Low | Diferido |
-| **ES5 String Concatenation** | Quality Rev. S12.2 | La factoría `UI_DataGrid` concatena cadenas de manera masiva en formato ES5 puro. Si Google Apps Script implementa API V8, migrar a Template Literals. | Low | Evolutivo |
-| **WSOD Inline Styles** | Arch Review S12.3 (H4) | Eliminar macro-concatenación estática del Template HTML dentro del Catch Central y refugiarlo nativamente usando la etiqueta `<template id="wsod-mitigator">` destapable vía JS. | Low | Diferido |
-| **Ionic Modal Promises** | Quality Rev. S12.3 | Transicionar los *Native Event Listeners* asíncronos a *Promesas Estrictas* (`modal.onDidDismiss().then()`) para alinearse a Stencil mitigando Cancellation Bugs. | Low | Diferido |
-| **_UI_CONFIG Localization** | Arch Review S13.2 (H8) | Objeto `_UI_CONFIG` fue colocado en `Schema_Engine.gs`. A futuro debería moverse a una constante global inyectable. | Low | Diferido |
-| **Native CSS Abstraction** | Arch Review S13.4 | Separar el código fuente en `.css` puro y concatenarlo aliviará falsos positivos en Linting. | Low | Diferido |
-| **AppEventBus Telemetry** | Arch Review S18.1 (H6) | Se pierden los stacktraces directos de UI en caso de error. Se recomienda inyectar `console.info` para tener trazabilidad. | Medium | S18.X |
+> **[INFO]** Toda la Deuda Técnica Activa devuelta por Quality y Architecture Reviews ha sido formalmente agrupada y escalada a las siguientes Épicas en el Roadmap (To-Do):
+> - **[E19] Core Framework Resilience:** Bugs lógicos (`Validator Truthiness`, `JSON Parse Swallows`), Promises (`Ionic`), Concatenaciones ES5, Tests Mudos, y Profiling Mágico.
+> - **[E20] Pipeline Evolution:** `Esbuild/Rollup` Integration, `Localización UI_CONFIG`, y Modularización formal ES6 del `ThemeManager`.
+> - **[E21] Next-Gen MDM data Layer:** `Optimistic Locking`, Búsqueda Asíncrona (Debounce/Typeahead), y `Soft-Delete` Graph Cleanup.
