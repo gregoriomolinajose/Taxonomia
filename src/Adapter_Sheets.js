@@ -19,13 +19,16 @@ const Adapter_Sheets = {
     upsert: function (tableName, payload, config) {
         // 1. Determinar PK con soporte para entidades plurales (ej. Grupo_Productos → id_grupo_producto)
         //    Prueba: id_<tableName> → id_<singular> → find(startsWith('id_'))
-        const tableKey = tableName.toLowerCase();
-        // R-02: Handle Spanish -es suffix (e.g. capacidades→capacidad) before generic -s
-        const singularKey = tableKey.endsWith('es') ? tableKey.slice(0, -2)
-            : tableKey.endsWith('s') ? tableKey.slice(0, -1) : tableKey;
-        const primaryKeyField = payload.hasOwnProperty('id_' + tableKey) ? 'id_' + tableKey
-            : payload.hasOwnProperty('id_' + singularKey) ? 'id_' + singularKey
-                : Object.keys(payload).find(key => key.startsWith('id_'));
+        const schema = (typeof APP_SCHEMAS !== 'undefined') ? APP_SCHEMAS[tableName] : null;
+        let primaryKeyField = schema && schema.primaryKey ? schema.primaryKey : null;
+        
+        if (!primaryKeyField) {
+            const tableKey = tableName.toLowerCase();
+            const singularKey = tableKey.endsWith('es') ? tableKey.slice(0, -2) : tableKey.endsWith('s') ? tableKey.slice(0, -1) : tableKey;
+            primaryKeyField = payload.hasOwnProperty('id_' + tableKey) ? 'id_' + tableKey
+                : payload.hasOwnProperty('id_' + singularKey) ? 'id_' + singularKey
+                    : Object.keys(payload).find(key => key.startsWith('id_'));
+        }
 
         if (!primaryKeyField || !payload[primaryKeyField]) {
             throw new Error(`Primary Key requerida. No se encontró 'id_${tableKey}' ni 'id_${singularKey}' en el payload.`);
@@ -137,14 +140,17 @@ const Adapter_Sheets = {
     upsertBatch: function (tableName, items, config) {
         if (!Array.isArray(items) || items.length === 0) return { status: 'success', count: 0 };
         
-        const tableKey = tableName.toLowerCase();
-        // R-02: Handle Spanish -es suffix
-        const singularKey = tableKey.endsWith('es') ? tableKey.slice(0, -2)
-            : tableKey.endsWith('s') ? tableKey.slice(0, -1) : tableKey;
+        const schema = (typeof APP_SCHEMAS !== 'undefined') ? APP_SCHEMAS[tableName] : null;
         const firstItem = items[0];
-        const primaryKeyField = firstItem.hasOwnProperty('id_' + tableKey) ? 'id_' + tableKey
-            : firstItem.hasOwnProperty('id_' + singularKey) ? 'id_' + singularKey
-                : Object.keys(firstItem).find(key => key.startsWith('id_'));
+        let primaryKeyField = schema && schema.primaryKey ? schema.primaryKey : null;
+
+        if (!primaryKeyField) {
+            const tableKey = tableName.toLowerCase();
+            const singularKey = tableKey.endsWith('es') ? tableKey.slice(0, -2) : tableKey.endsWith('s') ? tableKey.slice(0, -1) : tableKey;
+            primaryKeyField = firstItem.hasOwnProperty('id_' + tableKey) ? 'id_' + tableKey
+                : firstItem.hasOwnProperty('id_' + singularKey) ? 'id_' + singularKey
+                    : Object.keys(firstItem).find(key => key.startsWith('id_'));
+        }
                 
         if (!primaryKeyField) {
             throw new Error(`Primary Key requerida para upsertBatch.`);
@@ -235,10 +241,15 @@ const Adapter_Sheets = {
         const headers = headersRange.getValues()[0];
         const normalizedHeaders = headers.map(h => _normalizeHeader(h));
 
-        const tableKey = tableName.toLowerCase();
-        const singularKey = tableKey.endsWith('s') ? tableKey.slice(0, -1) : tableKey;
-        const pkCandidates = ['id_' + tableKey, 'id_' + singularKey].filter(k => normalizedHeaders.includes(k));
-        const pkField = pkCandidates.length > 0 ? pkCandidates[0] : normalizedHeaders.find(h => h.startsWith('id_'));
+        const schema = (typeof APP_SCHEMAS !== 'undefined') ? APP_SCHEMAS[tableName] : null;
+        let pkField = schema && schema.primaryKey ? schema.primaryKey : null;
+
+        if (!pkField) {
+            const tableKey = tableName.toLowerCase();
+            const singularKey = tableKey.endsWith('s') ? tableKey.slice(0, -1) : tableKey;
+            const pkCandidates = ['id_' + tableKey, 'id_' + singularKey].filter(k => normalizedHeaders.includes(k));
+            pkField = pkCandidates.length > 0 ? pkCandidates[0] : normalizedHeaders.find(h => h.startsWith('id_'));
+        }
 
         if (!pkField) throw new Error("No se pudo determinar la Primary Key en los encabezados para el Soft Delete.");
 

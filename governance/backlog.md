@@ -19,7 +19,7 @@
 | E16| Blueprint V4 Audit & Refactoring                      | ✅ Complete  | Refactorización Arquitectural: DataGrid Minimalism, Visibility Flags, Topology| Alta     |
 | E17| Core Initialization Purification                      | ✅ Complete  | Desacoplar JS_Core.html, ThemeManager, Auth UI y Math Logic | Max      |
 | E18| Gobernanza Topológica y Seguridad Contextual (ABAC) | ✅ Complete  | Micro-gobernanza, Segregation of Duties y Accesos basados en contexto SAFe | Max      |
-| E19| Core Framework Resilience & Strictness                | 🚧 To Do     | Validator Truthiness, Ionic Promises, AppEventBus Telemetry, Error Bounds | Alta     |
+| E19| Core Framework Resilience & Strictness                | 🏃 In Progress | Validator Truthiness, Ionic Promises, AppEventBus Telemetry, Error Bounds | Alta     |
 | E20| Pipeline Evolution & Native Tooling                   | 🚧 To Do     | AST Config, Esbuild/Rollup, Pure CSS Extraction, ThemeManager Modularization | Media    |
 | E21| Next-Gen MDM & Concurrency Data Layer                 | 🚧 To Do     | Optimistic Locking, Typeahead Selects BigData, Soft-Delete Graphs | Muy Alta |
 

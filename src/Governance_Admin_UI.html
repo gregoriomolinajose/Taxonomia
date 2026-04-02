@@ -47,7 +47,10 @@ window.GovernanceEngine = {
         await loading.present();
 
         try {
-            // Hydrate Data via Universal API
+            if (window.__APP_CACHE__) {
+                delete window.__APP_CACHE__['Sys_Permissions'];
+                delete window.__APP_CACHE__['Sys_Roles'];
+            }
             const rolesRes = await this._fetchTable('Sys_Roles');
             const permsRes = await this._fetchTable('Sys_Permissions');
 
@@ -148,11 +151,13 @@ window.GovernanceEngine = {
 
                 // Utilizar dinámicamente badgeMap global sin hardcodear colores
                 const getColorFromConfig = (valStr) => {
-                    if (!valStr) return 'var(--ion-color-light-shade, #ccc)';
+                    if (!valStr) return 'var(--ion-color-medium, #92949c)';
                     const slug = (valStr || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
                     const map = (window.APP_SCHEMAS && window.APP_SCHEMAS._UI_CONFIG && window.APP_SCHEMAS._UI_CONFIG.badgeMap) || {};
-                    const badgeType = map[slug] || 'light';
-                    // Convertir tipo (e.g., primary, danger) a variable CSS nativa de Ionic
+                    let badgeType = map[slug] || 'medium';
+                    // Evitar texto ilegible (blanco sobre blanco)
+                    if (badgeType === 'light') badgeType = 'medium';
+                    // Convertir tipo a variable CSS nativa de Ionic
                     return `var(--ion-color-${badgeType})`;
                 };
 
@@ -161,6 +166,9 @@ window.GovernanceEngine = {
                     option.value = opt;
                     option.textContent = opt.split(' ')[0]; // Display corto
                     if (opt === currentVal) option.selected = true;
+                    // Resetear para que las opciones del sistema nativo siempre sean legibles (Contraste)
+                    option.style.color = 'var(--ion-text-color, #000)';
+                    option.style.backgroundColor = 'var(--ion-background-color, #fff)';
                     select.appendChild(option);
                 });
 
@@ -205,8 +213,8 @@ window.GovernanceEngine = {
                 selectEl.style.opacity = '1';
                 
                 if (parsed && parsed.status === 'success') {
-                    if (action === 'create' && parsed.data && parsed.data.length > 0) {
-                        selectEl.dataset.permId = parsed.data[0].id_permiso;
+                    if (action === 'create' && parsed.pkValue) {
+                        selectEl.dataset.permId = parsed.pkValue;
                     }
                     if (window.showToast) window.showToast(`Permiso en ${entName} concedido con éxito.`, 'success');
                 } else {

@@ -115,6 +115,13 @@ function getUnidadesNegocioOptions() { return getGenericOptions('Unidad_Negocio'
 function getEquiposOptions() { return getGenericOptions('Equipo', 'id_equipo', 'nombre_equipo'); }
 
 /**
+ * getSysRolesOptions
+ * Devuelve [{value: id_rol, label: nombre_rol}] desde DB_Sys_Roles.
+ * Requerido para Bindings de Seguridad ABAC.
+ */
+function getSysRolesOptions() { return getGenericOptions('Sys_Roles', 'id_rol', 'nombre_rol'); }
+
+/**
  * getGenericOptions
  * Generador abstracto unificado por la "Regla de 3" (S16.2 Refactor)
  * Extrae colecciones estándar donde el label es meramente un campo string.

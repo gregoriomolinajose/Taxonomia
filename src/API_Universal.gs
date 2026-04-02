@@ -52,14 +52,16 @@ function API_Universal_Router(action, entityName, payload) {
   try {
     let responseData = null;
 
-    if (action === 'create') {
-      let pkField = Object.keys(payload).find(k => k.startsWith('id_'));
-      if (!pkField) {
-        const tableKey = entityName.toLowerCase();
-        const singularKey = tableKey.endsWith('s') ? tableKey.slice(0, -1) : tableKey;
-        pkField = 'id_' + singularKey;
-      }
+    const schema = (typeof getAppSchema === 'function') ? getAppSchema(entityName) : null;
+    let pkField = schema && schema.primaryKey ? schema.primaryKey : null;
 
+    if (!pkField) {
+      const tableKey = entityName.toLowerCase();
+      const singularKey = tableKey.endsWith('es') ? tableKey.slice(0, -2) : (tableKey.endsWith('s') ? tableKey.slice(0, -1) : tableKey);
+      pkField = 'id_' + singularKey;
+    }
+
+    if (action === 'create') {
       if (!payload[pkField] || String(payload[pkField]).trim() === '') {
         payload[pkField] = _generateShortUUID(entityName);
       }
@@ -81,19 +83,18 @@ function API_Universal_Router(action, entityName, payload) {
       }));
       return sanitizedReturn;
     } else if (action === 'read') {
-      const id = (typeof payload === 'object') ? payload[Object.keys(payload).find(k => k.startsWith('id_'))] || payload.id : payload;
+      const id = (typeof payload === 'object') ? payload[pkField] || payload.id : payload;
       if (id) {
         responseData = Engine_DB.readFull(entityName, id);
       } else {
         responseData = _handleRead(entityName);
       }
     } else if (action === 'update') {
-      const idField = Object.keys(payload).find(k => k.startsWith('id_'));
-      const id = payload[idField];
+      const id = payload[pkField];
       responseData = _handleUpdate(entityName, id, payload);
     } else if (action === 'delete') {
       // Para delete, el payload puede ser solo el ID como string o un obj {id: ...}
-      const id = (typeof payload === 'object') ? payload[Object.keys(payload).find(k => k.startsWith('id_'))] || payload.id : payload;
+      const id = (typeof payload === 'object') ? payload[pkField] || payload.id : payload;
       responseData = _handleDelete(entityName, id);
     } else {
       throw new Error(`Action '${action}' not supported yet.`);
