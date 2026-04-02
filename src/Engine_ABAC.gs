@@ -108,9 +108,9 @@ const Engine_ABAC = {
     const _email = email.trim().toLowerCase();
     const persona = personas.find(p => (p.correo || "").toLowerCase() === _email);
     
-    // Usuario desconocido -> Fail Close (A menos que sea admin db)
+    // Usuario desconocido -> Fail Close estricto (Zero Match)
     if (!persona) {
-      if (email.includes('@humansys.ai') || email.includes('admin')) return true; 
+      // Todo usuario debe tener representación en la BD para mutar.
       return false;
     }
     

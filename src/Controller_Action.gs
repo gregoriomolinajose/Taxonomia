@@ -12,10 +12,12 @@
  */
 function _guardAbac(action, entityName, targetId) {
   if (typeof Engine_ABAC === 'undefined') return;
-  let email = "admin@humansys.ai"; // Fallback development
+  let email = ""; // Cerrado por defecto (Fail-Close Security)
   try {
      if (typeof Session !== 'undefined') email = Session.getActiveUser().getEmail();
-  } catch(e) {}
+  } catch(e) {
+     console.warn("[Gobernanza] Error resolviendo identidad activa.", e);
+  }
   
   const isAllowed = Engine_ABAC.validatePermission(email, action, entityName, targetId);
   if (!isAllowed) {
