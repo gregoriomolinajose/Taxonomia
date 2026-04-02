@@ -1,25 +1,23 @@
-# Epic Scope: E18 - Declarative UI Rendering
+# Scope E18: Declarative UI Rendering
 
-**Objective:**
-Reemplazar los patrones imperativos de renderizado V3 (Inyección destructiva `innerHTML = ''`, estilización hardcodeada `.style.display='none'`, e invocaciones directas al Orquestador) con el framework 100% Declarativo V4: `<template>` Cloning nativo, clases WebComponents (`ion-hide`), y el Bus Reactivo `window.AppEventBus`.
+## Objective
+Instituir un modelo de renderizado UI absolutamente declarativo, apoyado de `<template>` HTML puro para prevenir Memory Leaks y XSS.
 
 ## In Scope
-- Erradicación de `onclick="window.DataViewEngine.render()"` a favor de `AppEventBus.publish('NAV::CHANGE')` en Dashboard y DataView.
-- Reemplazo absoluto de asignaciones `.style.display` a lo largo del codebase a favor de listados `.classList.toggle('ion-hide')`.
-- Migración gradual de Builders de Strings HTML Crudos (`UI_SubgridBuilder.html`, `FormRenderer_UI.html`) hacia Cloned DocumentFragments encapsulando las plantillas de `Index.html` dentro de constructos `<template id="...">`.
+- Refactorizar `JS_Core.html`, `UI_Router`, `Auth_UI` y unificar los factories vía `<template>`.
+- Fragmentar y trasladar los sub-componentes masivos de `FormBuilder_Inputs` y `DataView_UI` a vistas plantilla inyectadas nativamente en `Index.html`.
+- Migración plena de todos los ciclos de vista hacia el uso estricto del patrón `window.DOM`.
 
 ## Out of Scope
-- Migrar el Engine Backend a TypeScript.
-- Re-arreglos Topológicos (Todo el Engine DOM/Math_Engine queda libre; nos enfocaremos únicamente en UI).
-- Crear un CSS Bundler de NodeJS local (La minificación de CSSRegExp de `deploy.js` es suficiente por esta Épica).
+- Migración de dependencias hacia WebComponents externos.
+- Operaciones del motor Backend `Engine_DB.gs`.
 
 ## Planned Stories
-1. **[ ] S18.1: AppEventBus Total Adoption (S)**
-2. **[ ] S18.2: CSS Declarative Visibility (M)**
-3. **[ ] S18.3: Template Isolation (Views) (L)**
-4. **[ ] S18.4: FormRenderer Factory Extraction (L)**
+- **S18.1**: Decoupling Core y Framework Declarativo Básico (`JS_Core`, `ThemeEngine`).
+- **S18.2**: Refactorización Nodal de Router y DataView.
+- **S18.3**: Aislamiento y Migración a Templates del `FormBuilder_Inputs` y Componentes Avanzados.
 
-## Done Criteria
-1. Búsquedas via `grep 'innerHTML ='` del código visual deben rendir cercanos a cero hallazgos directos procedimentales.
-2. Búsquedas locales de `style.display` no deben retornar incidencias.
-3. El frontend compila (Node deploy), sin disrupción visual ni pérdida del ciclo de vida de Web Components Ionic.
+## Definition of Done
+- Los templates `tmpl-*` están declarados apropiadamente en `Index.html`.
+- Todo el SPA utiliza `window.DOM.create`.
+- Verificación exitosa en herramientas de Profiler del navegador (0 nodos DOM huérfanos desangrados tras transiciones masivas).

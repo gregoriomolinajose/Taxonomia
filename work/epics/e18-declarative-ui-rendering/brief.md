@@ -1,17 +1,16 @@
-# Problem Brief: Epic 18 - Declarative UI Rendering
+# Epic E18: Declarative UI Rendering
 
-**Context:** El SPA actual utiliza patrones heredados de "concatenación destructiva" (`innerHTML = '<div>' + dynamic + '</div>'`) para generar las vistas masivas (DataGrid, FormRenderer, Dashboard). Esto genera fragmentación de memoria en V8 (desperdicio de garbage collector), pérdida temporal de estilos (FOUC) y acoplamiento estructural.
+## Hypothesis
+Si convertimos la construcción procedimental de componentes pesados (e.g., `document.createElement` múltiple) hacia un modelo puramente declarativo basado en etiquetas `<template>`, conseguiremos eliminar los efectos de FOUC (parpadeo visual), sellaremos al 100% cualquier riesgo de XSS y eliminaremos de raíz las fugas de memoria (Memory Leaks) en la manipulación intensiva que sufre nuestro SPA. 
 
-**Objective:** Implementar Rendering Declarativo utilizando DocumentFragments, `<template>`, clones nativos y el Patrón Pub/Sub (EventBus), logrando que la manipulación del DOM sea atómica, no-destructiva y segura.
+## Success Metrics
+- 0 FOUC en transiciones y aperturas de vistas (formularios y grillas).
+- Delta = 0 para instancias huérfanas en perfiles de uso contínuo de Chrome DevTools (Test de memoria end-to-end).
+- 0 `innerHTML` en flujos dinámicos; migración absoluta hacia `window.DOM.create` e `importNode`.
 
-**Appetite:** ~4 historias (S18.1 a S18.4) enfocadas exclusivamente en la UI y el Ruteo. No alterar base de datos.
+## Appetite
+1 semana (Sprint Enfocado).
 
-**Success Metrics:**
-1. Cero (0) ocurrencias procedimentales de `.innerHTML =` directos en DataGrid y Subgrids.
-2. Cero ocurrencias referenciales del enrutador estático (Ej. `.navigateTo()`) forzando en su lugar el uso de `window.AppEventBus`.
-3. Cero estilos inyectados duros (`.style.display = 'none'`) en beneficio de clases de CSS/Ionic nativas (`ion-hide`).
-
-**Rabbit Holes (A evitar):**
-- Reescribir todo Ionic Framework en WebComponents nativos.
-- Intentar usar pre-compiladores JSX o VirtualDOM de React.
-- Extraer motores que no correspondan a Frontend puro.
+## Rabbit Holes
+- **Topología de Formularios:** Abstraer inputs multifase como Master-Detail o Dynamic Lists a `<template>` requiere re-anclar correctamente los event listeners (PubSub).
+- **Inyección de Index.html:** Los templates deben residir obligatoriamente en `Index.html` bajo etiquetas ocultas nativas en lugar de ser construidos on-the-fly en JavaScript puro.

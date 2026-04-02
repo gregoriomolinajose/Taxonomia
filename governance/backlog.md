@@ -18,7 +18,7 @@
 | E15| Topological Tech Debt (Cleaning Sprint)               | ✅ Complete  | Deuda técnica estructural (FormEngine, GC Modales, XSS)| Alta     |
 | E16| Blueprint V4 Audit & Refactoring                      | 🚧 To Do     | Refactorización Arquitectural: DataGrid Minimalism, Visibility Flags, Topology| Alta     |
 | E17| Core Initialization Purification                      | ✅ Complete  | Desacoplar JS_Core.html, ThemeManager, Auth UI y Math Logic | Max      |
-| E18| Declarative UI Rendering                              | ✅ Complete  | Evitar FOUC y Memory Leaks mediante <template> y EventBus en todo el SPA | Max      |
+| E18| Declarative UI Rendering                              | 🏃 In Progress| Evitar FOUC y Memory Leaks mediante <template> y EventBus en todo el SPA | Max      |
 
 ## Parking Lot / Deuda Técnica (Post-Epic 11)
 
