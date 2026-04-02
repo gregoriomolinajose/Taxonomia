@@ -31,16 +31,17 @@
     track: function(action, payload, level) {
       setTimeout(function() { // Fire and forget para no degradar UI Thread
         var safeLevel = level || 'INFO';
+        var safePayload = window.Telemetry._sanitize(payload);
         var packet = {
           timestamp: new Date().toISOString(),
           level: safeLevel,
           action: action,
-          payload: payload || {}
+          payload: safePayload || {}
         };
         
         // 1. Integración con consola local de desarrollo (Coloreado)
         if (safeLevel === 'ERROR' || safeLevel === 'FATAL') {
-          console.error('[Telemetry|' + safeLevel + '] ' + action, payload);
+          console.error('[Telemetry|' + safeLevel + '] ' + action, safePayload);
         } else if (safeLevel === 'WARN') {
           console.warn('[Telemetry|WARN] ' + action, payload);
         } else {
@@ -52,6 +53,40 @@
           window.AppEventBus.publish('TELEMETRY::TRACK', packet);
         }
       }, 0);
+    },
+    /**
+     * Sanitiza objetos truncando strings largos, omitiendo Node Elements, 
+     * y rompiendo loops circulares para evitar colapso del EventBus.
+     * @param {any} obj Payload original
+     * @returns {any} Objeto puro JSON serializable
+     */
+    _sanitize: function(obj, maxDepth = 3) {
+      if (obj === null || typeof obj !== 'object') return obj;
+      if (obj instanceof Node) return '<DOM Element: ' + obj.tagName + '>';
+      if (obj instanceof Error) return { message: obj.message, stack: obj.stack, name: obj.name };
+      
+      const seen = new WeakSet();
+      function prune(value, depth) {
+        if (value === null || typeof value !== 'object') return value;
+        if (value instanceof Node) return '<DOM Element: ' + value.tagName + '>';
+        if (value instanceof Error) return { message: value.message };
+        if (depth <= 0) return '[Max Depth Reached]';
+        
+        if (seen.has(value)) return '[Circular Reference]';
+        seen.add(value);
+        
+        let result = Array.isArray(value) ? [] : {};
+        for (let key in value) {
+          // Object.prototype.hasOwnProperty protection for safety
+          if (Object.prototype.hasOwnProperty.call(value, key)) {
+            try {
+              result[key] = prune(value[key], depth - 1);
+            } catch(e) { result[key] = '[Access Denied]'; }
+          }
+        }
+        return result;
+      }
+      return prune(obj, maxDepth);
     }
   };
 
