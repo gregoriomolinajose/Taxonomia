@@ -241,19 +241,19 @@
 
           // [S22.1] Profile Avatar & Dropdown Hydration
           try {
-            var currentUser = (window.AuthManager && window.AuthManager.currentUser) ? window.AuthManager.currentUser : null;
-            var userEmail = currentUser ? currentUser.email : '';
-            var userName = (currentUser && currentUser.name) ? currentUser.name : (userEmail ? (typeof window.formatUserName === 'function' ? window.formatUserName(userEmail) : userEmail) : 'Usuario');
-            var initChar = userName !== 'Usuario' ? userName.charAt(0).toUpperCase() : '?';
-            var avatarBtn = document.getElementById('topbar-avatar');
-            var avatarPop = document.getElementById('popover-avatar');
-            var namePop = document.getElementById('popover-user-name');
-            var rolePop = document.getElementById('popover-user-role');
+            const currentUser = (window.AuthManager && window.AuthManager.currentUser) ? window.AuthManager.currentUser : null;
+            const userEmail = currentUser ? currentUser.email : '';
+            const userName = (currentUser && currentUser.name) ? currentUser.name : (userEmail ? (typeof window.formatUserName === 'function' ? window.formatUserName(userEmail) : userEmail) : 'Usuario');
+            const initChar = userName !== 'Usuario' ? userName.charAt(0).toUpperCase() : '?';
+            const avatarBtn = document.getElementById('topbar-avatar');
+            const avatarPop = document.getElementById('popover-avatar');
+            const namePop = document.getElementById('popover-user-name');
+            const rolePop = document.getElementById('popover-user-role');
             
-            var picture = currentUser ? currentUser.picture : null;
+            const picture = currentUser ? currentUser.picture : null;
             
             if (picture) {
-                var imgHtm = '<img src="' + picture + '" style="width:100%; height:100%; border-radius:50%; object-fit:cover;" />';
+                const imgHtm = `<img src="${picture}" style="width:100%; height:100%; border-radius:50%; object-fit:cover;" />`;
                 if (avatarBtn) { avatarBtn.innerHTML = imgHtm; avatarBtn.style.background = 'transparent'; }
                 if (avatarPop) { avatarPop.innerHTML = imgHtm; avatarPop.style.background = 'transparent'; }
             } else {
