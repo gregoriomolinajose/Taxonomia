@@ -24,7 +24,7 @@ El proyecto Taxonomia ha estabilizado su infraestructura y su Pipeline UI (E19 y
 
 ## 📝 Planned Stories
 1. **[x] S21.1: Optimistic Locking Pipeline**
-2. **[ ] S21.2: Asynchronous Bus Debouncing & Typeahead Filters**
+2. **[x] S21.2: Asynchronous Bus Debouncing & Typeahead Filters** ✓
 3. **[x] S21.3: Soft-Delete Topological Integrity Implementation**
 4. **[ ] S21.4: Refactor - ES5 Concats & Silent Tests Mutation**
 
