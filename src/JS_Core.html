@@ -107,6 +107,24 @@
     }
   };
 
+  /* ── Core Utilities (S21.2) ──────────────────────────── */
+  /**
+   * Global Debounce utility for non-blocking UI interactions.
+   * Prevents rapid consecutive executions of heavy operations (like filtering).
+   */
+  window.debounce = function(func, delay) {
+    var timeoutId;
+    var threshold = delay || 300;
+    return function() {
+      var context = this;
+      var args = arguments;
+      if (timeoutId) clearTimeout(timeoutId);
+      timeoutId = setTimeout(function() {
+        func.apply(context, args);
+      }, threshold);
+    };
+  };
+
   /* ── Ionic UI Safe Wrappers (S19.2) ──────────────────── */
   window.PresentSafe = function(ionicElement) {
     if (!ionicElement || typeof ionicElement.present !== 'function') {

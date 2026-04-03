@@ -44,6 +44,8 @@ window.addEventListener('DOMContentLoaded', function() {
 
   if (!omnibarInput || !resultsList) return;
 
+  var executeSearchDebounced = null;
+
   function handleSearch(ev) {
     var rawValue = ev.target.value || '';
     var term = rawValue.toLowerCase().trim();
@@ -52,10 +54,10 @@ window.addEventListener('DOMContentLoaded', function() {
       popover.present();
     }
 
-    if (debounceTimer) clearTimeout(debounceTimer);
-    debounceTimer = setTimeout(function() {
-      executeSearch(term);
-    }, 250);
+    if (!executeSearchDebounced) {
+        executeSearchDebounced = (window.debounce || function(f){return f;})(executeSearch, 300);
+    }
+    executeSearchDebounced(term);
   }
 
   function executeSearch(term) {
