@@ -144,6 +144,7 @@
           if (typeof window.renderDashboard === 'function') window.renderDashboard();
           newToast.message = 'Plataforma sincronizada.'; newToast.icon = 'checkmark-circle-outline';
           newToast.color = 'success'; newToast.duration = 2000;
+          if (window.AppEventBus) window.AppEventBus.publish('APP::READY');
         } else {
           newToast.message = 'Error en sincronización.'; newToast.color = 'danger'; newToast.duration = 3000;
         }
@@ -162,6 +163,7 @@
           newToast.position = 'bottom'; newToast.message = 'Mock: Plataforma sincronizada.';
           newToast.color = 'success'; newToast.duration = 2000;
           document.body.appendChild(newToast); await window.PresentSafe(newToast);
+          if (window.AppEventBus) window.AppEventBus.publish('APP::READY');
         }, 1000);
       }
     },
