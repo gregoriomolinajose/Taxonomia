@@ -321,13 +321,15 @@ const Adapter_Sheets = {
 
     /**
      * Evalúa centralizadamente si un nodo está marcado como Soft-Deleted.
-     * Soporta tanto banderas de auditoría (deleted_at) como de esquema funcional (estado).
+     * Evalúa las banderas técnicas (deleted_at, _isDeleted) y de esquema de negocio (estado).
      */
     _isNodeLogicallyDeleted: function(headers, rowData) {
         const idxDeletedAt = headers.indexOf('deleted_at');
+        const idxIsDeleted = headers.indexOf('_isDeleted');
         const idxEstado = headers.indexOf('estado');
         return (idxDeletedAt > -1 && rowData[idxDeletedAt]) || 
-               (idxEstado > -1 && rowData[idxEstado] === 'Eliminado');
+               (idxIsDeleted > -1 && Boolean(rowData[idxIsDeleted]) === true) ||
+               (idxEstado > -1 && String(rowData[idxEstado]).trim().toLowerCase() === 'eliminado');
     },
 
     _normalizeHeader: _normalizeHeader,
