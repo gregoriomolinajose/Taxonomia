@@ -196,6 +196,48 @@
         window.UI_Router.navigateTo('dashboard');
       }
       window.AuthManager.init();
+      
+      // [S22.1] Profile Avatar & Dropdown Hydration
+      try {
+        var userNameEl = document.getElementById('user-greeting-name');
+        var userName = userNameEl ? userNameEl.innerText : 'Usuario';
+        var initChar = userName && userName !== 'Usuario' ? userName.charAt(0).toUpperCase() : '?';
+        var avatarBtn = document.getElementById('topbar-avatar');
+        var avatarPop = document.getElementById('popover-avatar');
+        var namePop = document.getElementById('popover-user-name');
+        var rolePop = document.getElementById('popover-user-role');
+        
+        if (avatarBtn) avatarBtn.innerText = initChar;
+        if (avatarPop) avatarPop.innerText = initChar;
+        if (namePop) namePop.innerText = userName;
+
+        if (window.ABAC && window.ABAC.context && rolePop) {
+          var ctx = window.ABAC.context;
+          var uiConfig = window._UI_CONFIG || (window.APP_SCHEMAS && window.APP_SCHEMAS._UI_CONFIG);
+          var bMap = (uiConfig && uiConfig.badgeMap) ? uiConfig.badgeMap : {};
+
+          if (window.ABAC.can('update', 'Sys_Permissions')) {
+             rolePop.innerText = 'Rol: Administrador';
+             var cAdmin = bMap.SYS_ADMIN || '#eb445a';
+             if(avatarBtn) avatarBtn.style.background = cAdmin;
+             if(avatarPop) avatarPop.style.background = cAdmin;
+          } else if (ctx.ownerOf && ctx.ownerOf.length > 0) {
+             rolePop.innerText = 'Rol: Propietario';
+             var cOwner = bMap.OWNER || '#2dd36f';
+             if(avatarBtn) avatarBtn.style.background = cOwner;
+             if(avatarPop) avatarPop.style.background = cOwner;
+          } else if (ctx.memberOf && ctx.memberOf.length > 0) {
+             rolePop.innerText = 'Rol: Miembro';
+             var cMem = bMap.MEMBER || '#3880ff';
+             if(avatarBtn) avatarBtn.style.background = cMem;
+             if(avatarPop) avatarPop.style.background = cMem;
+          } else {
+             rolePop.innerText = 'Rol: Lector (Básico)';
+          }
+        }
+      } catch(e) {
+        console.warn && console.warn('[S22.1] Error hydrating Profile Dropdown:', e);
+      }
     }, 100);
   });
 
