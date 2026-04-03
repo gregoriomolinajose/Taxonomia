@@ -134,8 +134,12 @@
         titleEl.textContent = meta.label;
       }
       if (btnCreate) {
-        btnCreate.setAttribute('color', meta.color);
-        btnCreate.onclick = function() { window.renderForm(key); };
+        if (window.ABAC && !window.ABAC.can('create', key)) {
+          btnCreate.style.display = 'none';
+        } else {
+          btnCreate.setAttribute('color', meta.color);
+          btnCreate.onclick = function() { window.renderForm(key); };
+        }
       }
       if (btnList) {
         btnList.setAttribute('color', meta.color);
