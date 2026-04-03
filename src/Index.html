@@ -11,7 +11,7 @@
       <h1 style="font-size:3rem;margin-bottom:0.5rem">⚠️</h1><h2>Error de Sistema</h2>
       <p style="max-width:500px">Fallo crítico durante la inicialización de la plataforma (SyntaxError o ReferenceError asíncrono). La ejecución ha sido bloqueada (API Fail-Fast).</p>
       <pre id="wsod-error-detail" style="background:#fbe9e9;padding:1rem;border-radius:6px;width:100%;max-width:600px;overflow-x:auto;text-align:left;font-size:0.85rem;border:1px solid #ecc;"></pre>
-      <button onclick="location.reload()" style="margin-top:1.5rem;padding:0.75rem 1.5rem;background:#cc0000;color:white;border:none;border-radius:6px;cursor:pointer;font-weight:600;">Regresar al Inicio</button>
+      <button data-action="nav:reload" style="margin-top:1.5rem;padding:0.75rem 1.5rem;background:#cc0000;color:white;border:none;border-radius:6px;cursor:pointer;font-weight:600;">Regresar al Inicio</button>
     </div>
   </template>
   <script>
@@ -163,10 +163,10 @@
           <ion-toolbar>
             <ion-buttons slot="start">
               <ion-menu-button class="hide-on-desktop"></ion-menu-button>
-              <ion-button class="hide-on-mobile" fill="clear" onclick="window.toggleDesktopMenu()">
+              <ion-button class="hide-on-mobile" fill="clear" data-action="nav:toggle-menu">
                 <ion-icon slot="icon-only" name="menu-outline"></ion-icon>
               </ion-button>
-              <ion-button id="global-back-btn" color="primary" fill="clear" class="ion-hide" onclick="window.AppEventBus.publish('NAV::CHANGE', {viewType: 'dashboard'})">
+              <ion-button id="global-back-btn" color="primary" fill="clear" class="ion-hide" data-action="nav:dashboard">
                 <ion-icon slot="icon-only" name="arrow-back-outline"></ion-icon>
               </ion-button>
             </ion-buttons>
@@ -178,7 +178,7 @@
             </div>
             
             <ion-buttons slot="end">
-              <ion-button fill="clear" onclick="window.ThemeManager.cycleTheme()" title="Cambiar Tema">
+              <ion-button fill="clear" data-action="theme:cycle" title="Cambiar Tema">
                 <ion-icon id="theme-toggle-icon" slot="icon-only" name="moon-outline"></ion-icon>
               </ion-button>
               <!-- Botón Avatar de Perfil -->
@@ -200,22 +200,22 @@
                   </ion-label>
                 </ion-item>
                 
-                <ion-item button onclick="document.querySelector('#profile-popover').dismiss(); window.showToast('Módulo Perfil en construcción');">
+                <ion-item button data-dismiss="#profile-popover" data-action="profile:wip">
                   <ion-icon name="person-circle-outline" slot="start"></ion-icon>
                   <ion-label>Mi Perfil</ion-label>
                 </ion-item>
-                <ion-item button onclick="document.querySelector('#profile-popover').dismiss(); window.AppEventBus.publish('NAV::CHANGE', {viewType: 'designkit'});">
+                <ion-item button data-dismiss="#profile-popover" data-action="nav:designkit">
                   <ion-icon name="settings-outline" slot="start"></ion-icon>
                   <ion-label>Ajustes de Sistema</ion-label>
                 </ion-item>
                 
                 <!-- S18.5 Governance Admin Panel Access (Blindado) -->
-                <ion-item button id="popover-btn-governance" onclick="document.querySelector('#profile-popover').dismiss(); window.AppEventBus.publish('NAV::CHANGE', {viewType: 'governance'});">
+                <ion-item button id="popover-btn-governance" data-dismiss="#profile-popover" data-action="nav:governance">
                   <ion-icon name="shield-checkmark-outline" slot="start"></ion-icon>
                   <ion-label>Gobernanza ABAC</ion-label>
                 </ion-item>
                 
-                <ion-item button lines="none" detail="false" onclick="document.querySelector('#profile-popover').dismiss(); window.AuthManager.logout();" style="--color: var(--ion-color-danger);">
+                <ion-item button lines="none" detail="false" data-dismiss="#profile-popover" data-action="auth:logout" style="--color: var(--ion-color-danger);">
                   <ion-icon name="log-out-outline" slot="start" color="danger"></ion-icon>
                   <ion-label color="danger">Cerrar Sesión</ion-label>
                 </ion-item>

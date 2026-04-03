@@ -188,6 +188,59 @@
   document.addEventListener('DOMContentLoaded', function() {
     if (window.ThemeManager) window.ThemeManager.init();
     
+    // [S24.5] Universal Event Delegator (Migrated from inline window literals)
+    document.addEventListener('click', function(e) {
+      var actionEl = e.target.closest('[data-action]');
+      
+      // Auto-dismiss logic based on data-dismiss attribute
+      var dismissEl = e.target.closest('[data-dismiss]');
+      if (dismissEl) {
+        var dismissTarget = dismissEl.getAttribute('data-dismiss');
+        if (dismissTarget) {
+          var popup = document.querySelector(dismissTarget);
+          if (popup && typeof popup.dismiss === 'function') popup.dismiss();
+        }
+      }
+
+      if (!actionEl) return;
+      var action = actionEl.getAttribute('data-action');
+      
+      /**
+       * [ARCHITECTURAL RULE - S24.5]
+       * Este Switch map es EXCLUSIVO para Comandos Mundanos de la Application Shell
+       * (Navegación top-level, Modales Globales y Fallbacks). 
+       * PROHIBIDO registrar Módulos de Dominio aquí. Cualquier módulo debe subscribirse 
+       * al 'DOM::CLICK_ACTION' vía window.AppEventBus para interceptar sus propios data-actions.
+       */
+      switch(action) {
+        // Core Navigation & Shell
+        case 'nav:reload': location.reload(); break;
+        case 'nav:toggle-menu': if (typeof window.toggleDesktopMenu === 'function') window.toggleDesktopMenu(); break;
+        case 'nav:dashboard': window.AppEventBus.publish('NAV::CHANGE', {viewType: 'dashboard'}); break;
+        case 'nav:designkit': window.AppEventBus.publish('NAV::CHANGE', {viewType: 'designkit'}); break;
+        case 'nav:governance': window.AppEventBus.publish('NAV::CHANGE', {viewType: 'governance'}); break;
+        
+        // Theme & Session
+        case 'theme:cycle': if (window.ThemeManager) window.ThemeManager.cycleTheme(); break;
+        case 'theme:reset': if (typeof window.resetThemeEngine === 'function') window.resetThemeEngine(); break;
+        case 'auth:logout': if (window.AuthManager) window.AuthManager.logout(); break;
+        
+        // Forms & Modals
+        case 'form:cancel': if (typeof window.cancelForm === 'function') window.cancelForm(); break;
+        case 'form:save': if (typeof window.saveForm === 'function') window.saveForm(); break;
+        case 'modal:close': if (typeof window.closeModal === 'function') window.closeModal(); break;
+        case 'test:modal': if (typeof window.openTestModal === 'function') window.openTestModal(); break;
+        case 'test:modal-close': var el = document.getElementById('enterpriseModalTest'); if(el) el.dismiss(); break;
+
+        // Tooltips & Specific Entities
+        case 'profile:wip': window.showToast('Módulo Perfil en construcción'); break;
+        
+        default: 
+          window.AppEventBus.publish('DOM::CLICK_ACTION', { action: action, element: actionEl });
+          break;
+      }
+    });
+
     // Regla S11.1: EventBus Subscription para Router
     window.AppEventBus.subscribe('NAV::CHANGE', function(payload) {
       if (payload.viewType && window.UI_Router) {

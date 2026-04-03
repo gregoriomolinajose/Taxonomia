@@ -24,6 +24,17 @@
       });
   };
 
+  // [S24.5] Domain Module Event Subscription (Decoupled from Global Router)
+  document.addEventListener('DOMContentLoaded', function() {
+      if (window.AppEventBus) {
+          window.AppEventBus.subscribe('DOM::CLICK_ACTION', function(payload) {
+              if (payload && payload.action === 'domain:edit') {
+                  window.triggerDomainEditFromTooltip();
+              }
+          });
+      }
+  });
+
   window.renderDomainMap = function(containerEl) {
     // 1. Limpiar contenedor principal y armar envoltorio
     window.DOM.clear(containerEl);
@@ -127,7 +138,7 @@
                                 '<span>Densidad: <b style="color:#4a8bff;">' + percentage + '%</b></span>' +
                             '</div>' +
                             '<div style="text-align:center;">' +
-                                '<button onclick="window.triggerDomainEditFromTooltip()" style="width:100%; padding:8px; background:#3b5998; color:white; border:none; border-radius:4px; cursor:pointer; font-weight:bold; font-size:13px; box-shadow: 0 2px 4px rgba(0,0,0,0.3); transition: 0.2s;">' +
+                                '<button data-action="domain:edit" style="width:100%; padding:8px; background:#3b5998; color:white; border:none; border-radius:4px; cursor:pointer; font-weight:bold; font-size:13px; box-shadow: 0 2px 4px rgba(0,0,0,0.3); transition: 0.2s;">' +
                                     '<ion-icon name="create-outline" style="vertical-align:middle; margin-right:5px;"></ion-icon>Configurar Dominio' +
                                 '</button>' +
                             '</div>' +
