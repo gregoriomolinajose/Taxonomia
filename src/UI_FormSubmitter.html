@@ -148,7 +148,11 @@ window.UI_FormSubmitter = class UI_FormSubmitter {
                             this._showToast('¡' + itemName + ' guardado con éxito!', 'success');
                             this._performSuccessCleanup(response);
                         } else {
-                            this._showToast('Error: ' + (response ? response.message : 'Error desconocido'), 'danger');
+                            if (response && response.errorType === 'CONCURRENCY') {
+                                this._showToast('⚠️ Colisión: Los datos fueron modificados por otro usuario mientras los editabas. Por favor extrae la información fresca.', 'danger');
+                            } else {
+                                this._showToast('Error: ' + (response ? response.message : 'Error desconocido'), 'danger');
+                            }
                             this._revertButtonState();
                         }
                     } catch (e) {

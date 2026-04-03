@@ -23,7 +23,7 @@ El proyecto Taxonomia ha estabilizado su infraestructura y su Pipeline UI (E19 y
 - WebSockets o Time-Real updates (mantendremos HTTP Requests puras).
 
 ## 📝 Planned Stories
-1. **[ ] S21.1: Optimistic Locking Engine & UI Catch**
+1. **[x] S21.1: Optimistic Locking Pipeline**
 2. **[ ] S21.2: Asynchronous Bus Debouncing & Typeahead Filters**
 3. **[ ] S21.3: Soft-Delete Topological Integrity Implementation**
 4. **[ ] S21.4: Refactor - ES5 Concats & Silent Tests Mutation**
@@ -48,12 +48,13 @@ El proyecto Taxonomia ha estabilizado su infraestructura y su Pipeline UI (E19 y
 ### Progress Tracking
 | Story | Size | Status | Actual | Velocity | Notes |
 |-------|:----:|--------|--------|----------|-------|
-| S21.1 | M    | Pending|        |          | Risk-First (Backend) |
+| S21.1 | M    | ✅ Done | 1d     | Normal   | Risk-First (Backend) |
 | S21.3 | M    | Pending|        |          | Configuración de Borrado Logico |
 | S21.2 | S    | Pending|        |          | Debouncing UI |
 | S21.4 | XS   | Pending|        |          | Polish |
 
 ### Tracking Table
+- [x] S21.1: Optimistic Locking Pipeline
 - [ ] M1: Data Integrity
 - [ ] M2: UI Fluency
 - [ ] M3: Quality E2E

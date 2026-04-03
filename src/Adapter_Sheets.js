@@ -87,6 +87,17 @@ const Adapter_Sheets = {
         let existingRow = [];
         if (foundRowIndex > -1) {
             existingRow = sheet.getRange(foundRowIndex, 1, 1, normalizedHeaders.length).getValues()[0];
+            const idxVersion = normalizedHeaders.indexOf('_version');
+            if (idxVersion > -1) {
+                const currentDbVersion = Number(existingRow[idxVersion]) || 1;
+                const incomingVersion = Number(payload._version) || 1;
+                if (currentDbVersion !== incomingVersion) {
+                    throw new Error("ERROR_CONCURRENCY: La entidad '" + primaryKeyValue + "' ha sido modificada por otro usuario recientemente. Por favor, recargue e intente nuevamente.");
+                }
+                payload._version = currentDbVersion + 1;
+            }
+        } else {
+            payload._version = 1;
         }
 
         for (let i = 0; i < normalizedHeaders.length; i++) {
@@ -320,7 +331,7 @@ const Adapter_Sheets = {
             }
             
             // Regla 4 de DB
-            const auditFields = ['created_at', 'created_by', 'updated_at', 'updated_by', 'deleted_at', 'deleted_by'];
+            const auditFields = ['created_at', 'created_by', 'updated_at', 'updated_by', 'deleted_at', 'deleted_by', '_version'];
             const allHeaders = [...schemaFields, ...auditFields];
             
             sheet.getRange(1, 1, 1, allHeaders.length).setValues([allHeaders]);
