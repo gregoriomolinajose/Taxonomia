@@ -29,4 +29,31 @@ El proyecto Taxonomia ha estabilizado su infraestructura y su Pipeline UI (E19 y
 4. **[ ] S21.4: Refactor - ES5 Concats & Silent Tests Mutation**
 
 ## Implementation Plan
-*Pendiente de /rai-epic-design*
+
+### Sequencing Rationale
+1. **S21.1: Optimistic Locking Pipeline** (Risk-First)
+   - Fundamental de arquitectura backend. Sin el Lock, cualquier otro cambio MDM es inseguro.
+2. **S21.3: Soft-Delete Topological Integrity** (Dependency-Driven)
+   - Va después del Lock porque ambos tocan el root de `Engine_DB.gs`. Completamos el backend primero.
+3. **S21.2: Asynchronous Bus Debouncing & Typeahead** (Quick Win / UX)
+   - Independiente del DB Engine, enfocado puramente en el `UI_DataGrid` y Client-side JS event bus.
+4. **S21.4: Refactor - ES5 Concats & Silent Tests Mutation** (Polish)
+   - Limpieza tras consumar toda la lógica.
+
+### Milestones
+- **M1: Data Integrity (S21.1, S21.3)**: El Backend previene carreras de sobreescritura y borrados huérfanos.
+- **M2: UI Fluency (S21.2)**: Reducción del Thread Freeze en búsquedas.
+- **M3: Quality E2E (S21.4)**: QA de todas las transacciones pasadas y código sin ES5 concats.
+
+### Progress Tracking
+| Story | Size | Status | Actual | Velocity | Notes |
+|-------|:----:|--------|--------|----------|-------|
+| S21.1 | M    | Pending|        |          | Risk-First (Backend) |
+| S21.3 | M    | Pending|        |          | Configuración de Borrado Logico |
+| S21.2 | S    | Pending|        |          | Debouncing UI |
+| S21.4 | XS   | Pending|        |          | Polish |
+
+### Tracking Table
+- [ ] M1: Data Integrity
+- [ ] M2: UI Fluency
+- [ ] M3: Quality E2E
