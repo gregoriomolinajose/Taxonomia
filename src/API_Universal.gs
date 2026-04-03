@@ -114,6 +114,7 @@ function API_Universal_Router(action, entityName, payload) {
     const sanitizedReturn = JSON.parse(JSON.stringify({
       status: "error",
       success: false,
+      errorType: (error.message && error.message.indexOf('ERROR_CONCURRENCY') !== -1) ? 'CONCURRENCY' : 'GENERAL',
       message: error.message
     }));
     return sanitizedReturn;

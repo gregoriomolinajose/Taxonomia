@@ -264,6 +264,14 @@
 
             const cardContent = document.createElement('ion-card-content');
             cardContent.style.padding = 'var(--spacing-6)';
+            
+            // S21.1: Optimistic Locking Hidden Metadata
+            const versionInput = document.createElement('input');
+            versionInput.type = 'hidden';
+            versionInput.name = '_version';
+            versionInput.value = data._version || 1;
+            cardContent.appendChild(versionInput);
+            
             card.appendChild(cardContent);
 
             // S14.1: Delegación SRP a UI_FormStepper
