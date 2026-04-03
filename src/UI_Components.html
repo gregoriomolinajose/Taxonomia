@@ -34,8 +34,8 @@
     <div class="form-sticky-footer">
       <ion-toolbar>
         <ion-buttons slot="end">
-          <ion-button color="medium" onclick="cancelForm()">Cancelar</ion-button>
-          <ion-button color="primary" fill="solid" onclick="saveForm()">Guardar</ion-button>
+          <ion-button color="medium" data-action="form:cancel">Cancelar</ion-button>
+          <ion-button color="primary" fill="solid" data-action="form:save">Guardar</ion-button>
         </ion-buttons>
       </ion-toolbar>
     </div>
@@ -85,7 +85,7 @@
       <ion-toolbar color="primary">
         <ion-title>Título del Modal</ion-title>
         <ion-buttons slot="end">
-          <ion-button onclick="closeModal()">
+          <ion-button data-action="modal:close">
             <ion-icon name="close-outline"></ion-icon>
           </ion-button>
         </ion-buttons>
