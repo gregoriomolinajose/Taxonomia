@@ -40,3 +40,11 @@ Todo el renderizado consumirá exclusivamente los tokens del Sistema de Diseño 
 - *Top KPIs (Zona 1):* Tarjetas numéricas que muestran conteos relevantes.
 - *Mi Ecosistema (Zona 2):* Tarjetas dinámicas filtradas por propiedad (`ABAC.can()`).
 - *Empty States Educativos:* Ilustraciones tenues si el usuario no tiene alcance operativo.
+
+### 🎟️ S22.5: Bottom Tab Bar (Navegación Móvil)
+**Descripción:** Implementar una Barra de Navegación Inferior exclusiva para pantallas móviles (< 768px). Esta barra centraliza la navegación en la "Thumb Zone", emulando la experiencia de apps nativas y ocultando simultáneamente el menú lateral.
+**Acceptance Criteria:**
+- *Renderizado Condicional (Breakpoints):* Inyección/visibilidad de la barra exclusiva en vistas móviles, y ocultamiento automático del Sidebar.
+- *Consumo del Design System:* Empleo estricto de `ion-tab-bar` y `ion-tab-button` vía `window.DOM.create()`. Prohibición de CSS posicional hardcodeado.
+- *Jerarquía Táctil de 4 Ítems:* "Inicio" (Dashboard), "Buscar" (Omnibar en Fullscreen Modal), "Explorar" (entidades SAFe) y "Perfil" (Dropdown Settings/ABAC/Logout).
+- *Safe Area Padding:* Pleno respeto al Safe Area Inferior para dispositivos iOS modernos.
