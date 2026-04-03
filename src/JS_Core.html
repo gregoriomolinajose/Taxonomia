@@ -199,6 +199,28 @@
       
       if (window.AppEventBus) {
         window.AppEventBus.subscribe('APP::READY', function() {
+          // [S22.5] Bottom Tab Bar Mobile Hydration (Zero-XSS)
+          try {
+            var tabBar = document.getElementById('mobile-tab-bar');
+            if (tabBar) {
+              var thumbZoneConfig = [
+                { icon: 'home-outline', label: 'Inicio', action: function() { window.AppEventBus.publish('NAV::CHANGE', {viewType: 'dashboard'}); } },
+                { icon: 'search-outline', label: 'Buscar', action: function() { var o = document.getElementById('global-omnibar'); if(o) o.setFocus(); } },
+                { icon: 'apps-outline', label: 'Catálogo', action: function() { var m = document.querySelector('ion-menu'); if(m) m.open(); } },
+                { icon: 'person-circle-outline', label: 'Perfil', action: function() { var p = document.getElementById('profile-popover'); if(p) p.present(); } }
+              ];
+              thumbZoneConfig.forEach(function(item) {
+                var btn = window.DOM.create('ion-tab-button', { onclick: item.action }, [
+                  window.DOM.create('ion-icon', { name: item.icon }),
+                  window.DOM.create('ion-label', null, item.label)
+                ]);
+                tabBar.appendChild(btn);
+              });
+            }
+          } catch(e) {
+            console.warn('[S22.5] Error hydrating Bottom Tab Bar:', e);
+          }
+
           // [S22.1] Profile Avatar & Dropdown Hydration
           try {
             var userNameEl = document.getElementById('user-greeting-name');

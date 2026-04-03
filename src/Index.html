@@ -257,34 +257,9 @@
         <!-- S22.5 Bottom Tab Bar Mobile (Thumb Zone) -->
         <ion-footer class="ion-no-border hide-on-desktop">
           <ion-tab-bar slot="bottom" id="mobile-tab-bar" style="--background: var(--ion-color-step-50, #f4f5f8);">
-            <!-- Renderizado Dinámico vía UI_Router_Schema -->
+            <!-- Renderizado Dinámico vía UI_Router_Schema / JS_Core -->
           </ion-tab-bar>
         </ion-footer>
-        <script>
-          document.addEventListener('DOMContentLoaded', function() {
-            var tabBar = document.getElementById('mobile-tab-bar');
-            if(!tabBar) return;
-            
-            var thumbZoneConfig = [
-              { icon: 'home-outline', label: 'Inicio', action: function() { window.AppEventBus.publish('NAV::CHANGE', {viewType: 'dashboard'}); } },
-              { icon: 'search-outline', label: 'Buscar', action: function() { var o = document.getElementById('global-omnibar'); if(o) o.setFocus(); } },
-              { icon: 'apps-outline', label: 'Catálogo', action: function() { var m = document.querySelector('ion-menu'); if(m) m.open(); } },
-              { icon: 'person-circle-outline', label: 'Perfil', action: function() { var p = document.getElementById('profile-popover'); if(p) p.present(); } }
-            ];
-
-            thumbZoneConfig.forEach(function(item) {
-              var btn = document.createElement('ion-tab-button');
-              btn.onclick = item.action;
-              var icon = document.createElement('ion-icon');
-              icon.name = item.icon;
-              var label = document.createElement('ion-label');
-              label.textContent = item.label;
-              btn.appendChild(icon);
-              btn.appendChild(label);
-              tabBar.appendChild(btn);
-            });
-          });
-        </script>
       </div><!-- /main-content -->
 
     </ion-split-pane>
