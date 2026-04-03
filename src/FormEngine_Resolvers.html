@@ -1,0 +1,88 @@
+<script>
+    /**
+     * FormEngine_Resolvers.html
+     *
+     * Abstracción de orquestación de datos de catálogo (Lookups).
+     * Aisla la lógica de inicialización en paralelo para selects desplegables.
+     */
+    (function(global) {
+        
+        const EngineResolvers = {
+            /**
+             * Escanea el schema en busca de campos con `lookupSource`.
+             * Llama en paralelo a cada función backend y rellena field.options de mutación directa.
+             * Muestra ion-loading mientras resuelve; non-fatal si un lookup falla.
+             */
+            hydrateLookupSources: async function(fields) {
+                const fieldsWithLookup = [];
+                fields.forEach(f => {
+                    if (f.lookupSource || (f.type === 'relation' && f.targetEntity)) {
+                        fieldsWithLookup.push(f);
+                    }
+                    if (f.type === 'dynamic_list' && f.subFields) {
+                        f.subFields.forEach(sub => {
+                            if (sub.lookupSource) fieldsWithLookup.push(sub);
+                        });
+                    }
+                });
+                
+                if (fieldsWithLookup.length === 0) return;
+
+                const loading = document.createElement('ion-loading');
+                loading.message = 'Cargando opciones...';
+                loading.spinner = 'crescent';
+                document.body.appendChild(loading);
+                await window.PresentSafe(loading);
+
+                try {
+                    const promises = fieldsWithLookup.map(field => new Promise((resolve) => {
+                        // Intercepción Local (Zero-Latency)
+                        const localResolver = window[field.lookupSource] || global[field.lookupSource];
+                        if (field.lookupSource && typeof localResolver === 'function') {
+                            const result = localResolver();
+                            if (result instanceof Promise) {
+                                result.then(opts => { field.options = opts || []; resolve(); })
+                                      .catch(() => { field.options = []; resolve(); });
+                            } else {
+                                field.options = result || [];
+                                resolve();
+                            }
+                            return;
+                        }
+
+                        // Intersección Backend (Apps Script)
+                        if (typeof google !== 'undefined' && google.script && google.script.run) {
+                            const handler = google.script.run
+                                .withSuccessHandler(opts => { field.options = opts || []; resolve(); })
+                                .withFailureHandler(err => {
+                                    console.error(`[FormEngine_Resolvers] lookupSource falló:`, err);
+                                    resolve(); 
+                                });
+                            
+                            if (field.lookupSource) {
+                                handler[field.lookupSource]();
+                            } else if (field.type === 'relation' && field.targetEntity) {
+                                // Dynamic lookup for relations
+                                handler.getInitialPayload(field.targetEntity);
+                            }
+                        } else {
+                            // Dev fallback
+                            field.options = [{ value: 'MOCK-1', label: `Mock: ${field.lookupSource || field.targetEntity}` }];
+                            resolve();
+                        }
+                    }));
+                    await Promise.all(promises);
+                } finally {
+                    try {
+                        await loading.dismiss();
+                    } catch (_) {
+                        if (loading.parentNode) loading.parentNode.removeChild(loading);
+                    }
+                }
+            }
+        };
+
+        global.FormEngine_Resolvers = EngineResolvers;
+
+    })(typeof window !== 'undefined' ? window : this);
+</script>
