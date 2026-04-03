@@ -89,10 +89,7 @@ const Adapter_Sheets = {
             existingRow = sheet.getRange(foundRowIndex, 1, 1, normalizedHeaders.length).getValues()[0];
             
             // [S21.3 Soft-Delete] Bloquear updates en nodos lógicamente eliminados
-            const chkIdxDeletedAt = normalizedHeaders.indexOf('deleted_at');
-            const chkIdxEstado = normalizedHeaders.indexOf('estado');
-            if ((chkIdxDeletedAt > -1 && existingRow[chkIdxDeletedAt]) || 
-                (chkIdxEstado > -1 && existingRow[chkIdxEstado] === 'Eliminado')) {
+            if (this._isNodeLogicallyDeleted(normalizedHeaders, existingRow)) {
                 throw new Error("ERROR_ARCHIVED: No se puede modificar una entidad eliminada lógicamente.");
             }
 
@@ -215,10 +212,7 @@ const Adapter_Sheets = {
                 const existingRow = originalData[rowIndex];
 
                 // [S21.3 Soft-Delete] Bloquear updates en nodos lógicamente eliminados
-                const chkIdxDeletedAt = normalizedHeaders.indexOf('deleted_at');
-                const chkIdxEstado = normalizedHeaders.indexOf('estado');
-                if ((chkIdxDeletedAt > -1 && existingRow[chkIdxDeletedAt]) || 
-                    (chkIdxEstado > -1 && existingRow[chkIdxEstado] === 'Eliminado')) {
+                if (this._isNodeLogicallyDeleted(normalizedHeaders, existingRow)) {
                     throw new Error(`ERROR_ARCHIVED: No se puede modificar la entidad con ID '${primaryKeyValue}' por estar eliminada lógicamente.`);
                 }
 
@@ -324,6 +318,18 @@ const Adapter_Sheets = {
         sheet.getRange(foundRowIndex, 1, 1, rowToUpdate.length).setValues([rowToUpdate]);
         return { status: 'success', action: 'deleted', pk: pkField, val: id };
     },
+
+    /**
+     * Evalúa centralizadamente si un nodo está marcado como Soft-Deleted.
+     * Soporta tanto banderas de auditoría (deleted_at) como de esquema funcional (estado).
+     */
+    _isNodeLogicallyDeleted: function(headers, rowData) {
+        const idxDeletedAt = headers.indexOf('deleted_at');
+        const idxEstado = headers.indexOf('estado');
+        return (idxDeletedAt > -1 && rowData[idxDeletedAt]) || 
+               (idxEstado > -1 && rowData[idxEstado] === 'Eliminado');
+    },
+
     _normalizeHeader: _normalizeHeader,
 
     _ensureSheetExists: function(ss, tableName) {
@@ -415,17 +421,12 @@ const Adapter_Sheets = {
 
         const rows = [];
         const isTuples = (format === 'tuples');
-        
-        // [S21.3 Soft-Delete] Identificar índices de banderas de eliminación
-        const chkIdxDeletedAt = headers.indexOf('deleted_at');
-        const chkIdxEstado = headers.indexOf('estado');
 
         for (let i = 1; i < data.length; i++) {
             const rowData = data[i];
 
             // Excluir nodos eliminados globalmente de Cache y UI
-            if ((chkIdxDeletedAt > -1 && rowData[chkIdxDeletedAt]) || 
-                (chkIdxEstado > -1 && rowData[chkIdxEstado] === 'Eliminado')) {
+            if (this._isNodeLogicallyDeleted(headers, rowData)) {
                 continue;
             }
 
