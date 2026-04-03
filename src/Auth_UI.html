@@ -72,6 +72,7 @@
     handleAuthResponse: function(response, container) {
       if (response.authorized) {
         if (container) container.classList.remove('ion-hide');
+        window.AuthManager.currentUser = response;
         var greetingEl = document.getElementById('user-greeting-name');
         if (greetingEl) greetingEl.textContent = window.formatUserName(response.email);
         

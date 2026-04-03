@@ -241,9 +241,9 @@
 
           // [S22.1] Profile Avatar & Dropdown Hydration
           try {
-            var userNameEl = document.getElementById('user-greeting-name');
-            var userName = userNameEl ? userNameEl.innerText : 'Usuario';
-            var initChar = userName && userName !== 'Usuario' ? userName.charAt(0).toUpperCase() : '?';
+            var userEmail = (window.AuthManager && window.AuthManager.currentUser) ? window.AuthManager.currentUser.email : '';
+            var userName = userEmail ? (typeof window.formatUserName === 'function' ? window.formatUserName(userEmail) : userEmail) : 'Usuario';
+            var initChar = userName !== 'Usuario' ? userName.charAt(0).toUpperCase() : '?';
             var avatarBtn = document.getElementById('topbar-avatar');
             var avatarPop = document.getElementById('popover-avatar');
             var namePop = document.getElementById('popover-user-name');

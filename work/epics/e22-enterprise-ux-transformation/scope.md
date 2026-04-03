@@ -48,3 +48,10 @@ Todo el renderizado consumir√° exclusivamente los tokens del Sistema de Dise√±o 
 - *Consumo del Design System:* Empleo estricto de `ion-tab-bar` y `ion-tab-button` v√≠a `window.DOM.create()`. Prohibici√≥n de CSS posicional hardcodeado.
 - *Jerarqu√≠a T√°ctil de 4 √çtems:* "Inicio" (Dashboard), "Buscar" (Omnibar en Fullscreen Modal), "Explorar" (entidades SAFe) y "Perfil" (Dropdown Settings/ABAC/Logout).
 - *Safe Area Padding:* Pleno respeto al Safe Area Inferior para dispositivos iOS modernos.
+
+## Progress Tracking
+- [x] S22.1: Top App Bar & ReubicaciÛn de Perfil Din·mico
+- [ ] S22.2: Omnibar (B˙squeda Global)
+- [ ] S22.3: Limpieza de UI & Ocultamiento de Tablas de Sistema
+- [ ] S22.4: Contextual Dashboard (Widgets ABAC-Aware)
+- [ ] S22.5: Bottom Tab Bar (NavegaciÛn MÛvil)
