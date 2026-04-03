@@ -588,7 +588,16 @@
         /* ────────────────────────────────────────────
            Event handlers (accesibles desde HTML inline)
         ───────────────────────────────────────────── */
-        function _onSearch(query) { _applyFilter(query); }
+        var _onDebouncedFilter = null;
+        function _onSearch(query) { 
+            if (!_onDebouncedFilter) {
+                // Instanciar lazy-load del S21.2 Debounce (Z-Blocking) 300ms
+                _onDebouncedFilter = (window.debounce || function(f){return f;})(function(q) {
+                    _applyFilter(q);
+                }, 300);
+            }
+            _onDebouncedFilter(query);
+        }
 
         function _onSort(colKey) { _applySort(colKey); }
 
