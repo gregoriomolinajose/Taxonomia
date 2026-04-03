@@ -105,11 +105,16 @@ try {
         }
         console.log(`[Deploy] AST Validation passed.`);
 
-        // Native CSS Bundler (S14.2)
-        const cssFiles = [
-            { source: 'assets/css/app.css', target: 'CSS_App.html' },
-            { source: 'assets/css/design-system.css', target: 'CSS_DesignSystem.html' }
-        ];
+        // Native CSS Bundler (S14.2 & S24.4 Atomic Stylesheets)
+        const assetsCssPath = `${buildDir}/assets/css`;
+        const assetsCssDirList = fs.existsSync(assetsCssPath) ? fs.readdirSync(assetsCssPath) : [];
+        const cssFiles = assetsCssDirList
+            .filter(f => f.endsWith('.css'))
+            .map(f => {
+                const baseName = path.basename(f, '.css');
+                const pascalCase = baseName.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join('');
+                return { source: `assets/css/${f}`, target: `CSS_${pascalCase}.html` };
+            });
 
         cssFiles.forEach(file => {
             const sourcePath = `${buildDir}/${file.source}`;

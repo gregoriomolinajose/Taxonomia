@@ -1,0 +1,162 @@
+﻿node.exe : FAIL __tests__
+/Debounce_UI.test.js
+En línea: 1 Carácter: 1
++ & "C:\Program 
+Files\nodejs/node.exe" 
+"C:\Program 
+Files\nodejs/node_mo ...
++ ~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo       
+       : NotSpecified:   
+  (FAIL __tests__/Debo   
+ unce_UI.test.js:Stri    
+ng) [], RemoteExcept    
+ion
+    + FullyQualifiedErro 
+   rId : NativeCommandE  
+  rror
+ 
+  JS_Core.html - 
+Debounce Truthiness Trap 
+(S21.2)
+    ├ù 1. Funciona 
+correctamente con delay 
+positivo (1 ms)
+    ├ù 2. Funciona 
+correctamente usando el 
+default delay
+    ├ù 3. Truthiness 
+Trap: Permite delay = 0 
+(Macro-task defer) 
+expl├¡cito
+
+  ÔùÅ JS_Core.html - 
+Debounce Truthiness Trap 
+(S21.2) ÔÇ║ 1. Funciona 
+correctamente con delay 
+positivo
+
+    SyntaxError: 
+Unexpected end of input
+
+    [0m [90m 26 |[39m 
+        [90m// Evaluate 
+the extracted function 
+into 
+global.window.debounce 
+safely[39m
+     [90m 27 |[39m     
+    [90m// Agregamos 
+var timeoutId para que 
+coincida con el scope y 
+se evale[39m
+    [31m[1m>[22m[39m
+[90m 28 |[39m         ev
+al(match[[35m0[39m])[3
+3m;[39m
+     [90m    |[39m     
+              
+[31m[1m^[22m[39m
+     [90m 29 |[39m     
+})[33m;[39m
+     [90m 30 |[39m
+     [90m 31 |[39m     
+beforeEach(() 
+[33m=>[39m {[0m
+
+      at 
+Object.<anonymous> (__tes
+ts__/Debounce_UI.test.js:
+28:19)
+
+  ÔùÅ JS_Core.html - 
+Debounce Truthiness Trap 
+(S21.2) ÔÇ║ 2. Funciona 
+correctamente usando el 
+default delay
+
+    SyntaxError: 
+Unexpected end of input
+
+    [0m [90m 26 |[39m 
+        [90m// Evaluate 
+the extracted function 
+into 
+global.window.debounce 
+safely[39m
+     [90m 27 |[39m     
+    [90m// Agregamos 
+var timeoutId para que 
+coincida con el scope y 
+se evale[39m
+    [31m[1m>[22m[39m
+[90m 28 |[39m         ev
+al(match[[35m0[39m])[3
+3m;[39m
+     [90m    |[39m     
+              
+[31m[1m^[22m[39m
+     [90m 29 |[39m     
+})[33m;[39m
+     [90m 30 |[39m
+     [90m 31 |[39m     
+beforeEach(() 
+[33m=>[39m {[0m
+
+      at 
+Object.<anonymous> (__tes
+ts__/Debounce_UI.test.js:
+28:19)
+
+  ÔùÅ JS_Core.html - 
+Debounce Truthiness Trap 
+(S21.2) ÔÇ║ 3. 
+Truthiness Trap: Permite 
+delay = 0 (Macro-task 
+defer) expl├¡cito
+
+    SyntaxError: 
+Unexpected end of input
+
+    [0m [90m 26 |[39m 
+        [90m// Evaluate 
+the extracted function 
+into 
+global.window.debounce 
+safely[39m
+     [90m 27 |[39m     
+    [90m// Agregamos 
+var timeoutId para que 
+coincida con el scope y 
+se evale[39m
+    [31m[1m>[22m[39m
+[90m 28 |[39m         ev
+al(match[[35m0[39m])[3
+3m;[39m
+     [90m    |[39m     
+              
+[31m[1m^[22m[39m
+     [90m 29 |[39m     
+})[33m;[39m
+     [90m 30 |[39m
+     [90m 31 |[39m     
+beforeEach(() 
+[33m=>[39m {[0m
+
+      at 
+Object.<anonymous> (__tes
+ts__/Debounce_UI.test.js:
+28:19)
+
+Test Suites: 1 failed, 1 
+total
+Tests:       3 failed, 3 
+total
+Snapshots:   0 total
+Time:        0.457 s, 
+estimated 1 s
+Ran all test suites 
+matching __tests__/Deboun
+ce_UI.test.js.

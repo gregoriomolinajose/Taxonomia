@@ -1,0 +1,27 @@
+                                                                               
+ Usage: rai session start [OPTIONS]                                            
+                                                                               
+ Start a new working session.                                                  
+                                                                               
+ Increments the session counter and sets active session state.                 
+ Checks for orphaned sessions (started but not closed) and warns if found.     
+ For first-time users, creates a new developer profile.                        
+                                                                               
+ With --context, outputs a token-optimized context bundle (~150 tokens)        
+ assembled from the developer profile, session state, and memory graph.        
+                                                                               
+ Examples:                                                                     
+     $ raise session start                    # Start session                  
+     $ raise session start --name "Alice"    # First-time setup                
+     $ raise session start --project /my/proj # Start with project path        
+     $ raise session start --project . --context  # Context bundle             
+                                                                               
+┌─ Options ───────────────────────────────────────────────────────────────────┐
+│ --name     -n      TEXT  Your name (required for first-time setup)          │
+│ --project  -p      TEXT  Project path to associate with this session        │
+│ --agent            TEXT  Agent type (e.g., claude-code, cursor). Default:   │
+│                          unknown                                            │
+│ --context                Output a context bundle for AI consumption         │
+│ --help                   Show this message and exit.                        │
+└─────────────────────────────────────────────────────────────────────────────┘
+

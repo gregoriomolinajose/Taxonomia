@@ -1,0 +1,143 @@
+﻿node.exe : FAIL __tests__/Optimist
+icLocking.test.js
+En línea: 1 Carácter: 1
++ & "C:\Program 
+Files\nodejs/node.exe" 
+"C:\Program Files\nodejs/node_mo 
+...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~
+    + CategoryInfo          : Not 
+   Specified: (FAIL __tests__/Op  
+  timisticLocking.test.js:Strin   
+ g) [], RemoteException
+    + FullyQualifiedErrorId : Nat 
+   iveCommandError
+ 
+  Optimistic Locking Control - 
+Adapter_Sheets.upsert
+    ├ù 1. Creation sets _version 
+to 1 automatically (4 ms)
+    ├ù 2. Update correctly 
+increments _version by 1 (Atomic 
+Bump) (1 ms)
+    ├ù 3. Hard Conflict throws 
+ERROR_CONCURRENCY when versions 
+mismatch
+
+  ÔùÅ Optimistic Locking Control 
+- Adapter_Sheets.upsert ÔÇ║ 1. 
+Creation sets _version to 1 
+automatically
+
+    
+expect(received).toBe(expected) 
+// Object.is equality
+
+    Expected: 1
+    Received: ""
+
+    [0m [90m 82 |[39m         
+     [90m 83 |[39m         
+[90m// _version is 1[39m
+    [31m[1m>[22m[39m[90m 84 
+|[39m         expect(savedRowData
+[[35m2[39m])[33m.[39mtoBe([35
+m1[39m)[33m;[39m
+     [90m    |[39m              
+                   
+[31m[1m^[22m[39m
+     [90m 85 |[39m     
+})[33m;[39m
+     [90m 86 |[39m
+     [90m 87 |[39m     
+test([32m'2. Update correctly 
+increments _version by 1 (Atomic 
+Bump)'[39m[33m,[39m () 
+[33m=>[39m {[0m
+
+      at Object.toBe (__tests__/Op
+timisticLocking.test.js:84:33)
+
+  ÔùÅ Optimistic Locking Control 
+- Adapter_Sheets.upsert ÔÇ║ 2. 
+Update correctly increments 
+_version by 1 (Atomic Bump)
+
+    
+expect(received).toBe(expected) 
+// Object.is equality
+
+    Expected: 4
+    Received: 3
+
+    [0m [90m  95 |[39m         
+     [90m  96 |[39m         
+[90m// The bumped version must 
+be 3 + 1 = 4[39m
+    [31m[1m>[22m[39m[90m  97 
+|[39m         expect(savedRowData
+[[35m2[39m])[33m.[39mtoBe([35
+m4[39m)[33m;[39m
+     [90m     |[39m             
+                    
+[31m[1m^[22m[39m
+     [90m  98 |[39m     
+})[33m;[39m
+     [90m  99 |[39m
+     [90m 100 |[39m     
+test([32m'3. Hard Conflict 
+throws ERROR_CONCURRENCY when 
+versions 
+mismatch'[39m[33m,[39m () 
+[33m=>[39m {[0m
+
+      at Object.toBe (__tests__/Op
+timisticLocking.test.js:97:33)
+
+  ÔùÅ Optimistic Locking Control 
+- Adapter_Sheets.upsert ÔÇ║ 3. 
+Hard Conflict throws 
+ERROR_CONCURRENCY when versions 
+mismatch
+
+    
+expect(received).toThrow(expected)
+
+    Expected pattern: 
+/ERROR_CONCURRENCY/
+
+    Received function did not 
+throw
+
+    [0m [90m 105 |[39m         
+}[33m;[39m
+     [90m 106 |[39m         
+    [31m[1m>[22m[39m[90m 107 
+|[39m         expect(updateAttemp
+t)[33m.[39mtoThrow([35m/ERROR_C
+ONCURRENCY/[39m)[33m;[39m
+     [90m     |[39m             
+                  
+[31m[1m^[22m[39m
+     [90m 108 |[39m         
+[90m// Ensure no writes were 
+performed[39m
+     [90m 109 |[39m         expe
+ct(mockSetValues)[33m.[39mtoHave
+BeenCalledTimes([35m0[39m)[33m;
+[39m
+     [90m 110 |[39m     
+})[33m;[39m[0m
+
+      at Object.toThrow (__tests__
+/OptimisticLocking.test.js:107:31)
+
+Test Suites: 1 failed, 1 total
+Tests:       3 failed, 3 total
+Snapshots:   0 total
+Time:        0.466 s, estimated 1 
+s
+Ran all test suites matching __tes
+ts__/OptimisticLocking.test.js.

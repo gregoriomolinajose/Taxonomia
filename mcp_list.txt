@@ -1,0 +1,9 @@
+                           MCP Servers (.raise/mcp/)                           
+┌────────┬─────────────┬──────────────────────────────────────────────────────┐
+│ Name   │ Description │ Command                                              │
+├────────┼─────────────┼──────────────────────────────────────────────────────┤
+│ fetch  │             │ npx -y mcp-fetch-server                              │
+│ github │             │ npx -y @modelcontextprotocol/server-github           │
+│ jira   │             │ npx -y cross-env                                     │
+│        │             │ JIRA_INSTANCE_URL=https://gregori...                 │
+└────────┴─────────────┴──────────────────────────────────────────────────────┘

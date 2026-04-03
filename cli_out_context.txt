@@ -1,0 +1,50 @@
+Error: Multiple PM adapters found: filesystem, jira.
+Use --adapter <name> to select.
+# Session Context
+
+Developer: Gregorio (shu)
+Communication: language: es, style: direct, redirect_when_dispersing
+
+Session: SES-007
+
+Story: S18.5 [review]
+Epic: E18
+Branch: develop
+⚠ Backlog adapter unavailable — showing cached state
+
+Last: SES-006 (2026-04-01, Gregorio) — SES-9704: E18 Auditoría de Gobernanza ABAC y limpieza Topológica profunda de deuda E14/E15
+
+Recent:
+- SES-006: SES-9704: E18 Auditoría de Gobernanza ABAC y limpieza Topológica profunda de ...
+- SES-005: SES-003: Epic E8 Graph Governance Completa + Despliegue v1.2.6
+- SES-004: SES-003: Epic E8 completada al 100% + O(1) Data Binding & UAT Quality Gates e...
+
+# Session Narrative
+(Captured at session close on 2026-04-01. Git/branch state may be stale — verify before acting.)
+## Decisions
+- Separar Deuda Activa de Resuelta en el Parking Lot para desinfoxicar la lectura.
+- Partir los esfuerzos de UI Resilience y Async Rendering en Epopeyas formales (E19-E21).
+## Research
+- Análisis a pie de LOC/Peso de todo el árbol origen revelando que `DataView_UI` necesita subdivisión.
+## Artifacts
+- Creación de `artifacts/src_modules_audit_v3.md` detallando LOC y semáforo arquitectónico.
+
+
+# Next Session Prompt
+(Captured at session close on 2026-04-01. Git/branch state may be stale — verify before acting.)
+Presta atención a los reportes de módulos. El `DataView_UI.html` es masivo (828 LOC) y `FormRenderer_UI` va por el mismo camino. Toma este conocimiento para no seguir inyectándole responsabilidad pasiva a menos que se divida en micro-frontends (Renderer/Engine/Helpers). Sigue la historia de Gobernanza con calma.
+
+
+# Pending
+Decisions:
+- ¿Iniciar refactor de DataView_UI (Crítico) vs FormRenderer?
+Next:
+- Comprometer archivos generados localmente
+- Empujar S18.5 Panel Admin ABAC
+
+# Available Context
+- governance: 0 items
+- behavioral: 0 items
+- coaching: 1 items (~80 tokens)
+- deadlines: 0 items
+- progress: 0 items

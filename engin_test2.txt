@@ -1,0 +1,295 @@
+﻿node.exe : FAIL __tes
+ts__/Engine_DB_Orches
+tration.test.js
+En línea: 1 
+Carácter: 1
++ & "C:\Program Files
+\nodejs/node.exe" 
+"C:\Program 
+Files\nodejs/node_mo 
+...
++ ~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~
+    + CategoryInfo   
+       : 
+NotSpecified: (FAIL 
+__tests__/...tration 
+   .test.js:String) 
+[], RemoteException
+    + FullyQualifiedE
+rrorId : 
+NativeCommandError
+ 
+  Engine_DB 
+Orchestration & DAG 
+SCD-2
+    SCD-2 
+_updateGraphEdges
+      ÔêÜ should 
+expire active edge 
+and spawn new edge 
+when parent changes 
+(2 ms)
+      ÔêÜ should do 
+nothing if parent 
+has not changed
+    Engine_DB.delete 
+(Unit of Work 
+Orchestrations)
+      ├ù should 
+execute ORPHAN 
+cascading logic 
+using Graph.buildDele
+tionPatch (5 ms)
+      ├ù should 
+execute standard 
+deletion if strictly 
+FLAT topology
+
+  ÔùÅ Engine_DB 
+Orchestration & DAG 
+SCD-2 ÔÇ║ 
+Engine_DB.delete 
+(Unit of Work 
+Orchestrations) ÔÇ║ 
+should execute 
+ORPHAN cascading 
+logic using Graph.bui
+ldDeletionPatch
+
+    expect(jest.fn())
+.toHaveBeenCalledWith
+(...expected)
+
+    Expected: 
+"Relacion_Dominios", 
+Any<Array>, 
+{"useSheets": true}
+    Received
+           1
+              
+"Relacion_Dominios",
+              [{"es_v
+ersion_actual": 
+false, 
+"id_relacion": "R1", 
+"updated_at": "2026-0
+4-03T21:50:14.128Z", 
+"valido_hasta": "2026
+-04-03T21:50:14.128Z"
+}, {"created_at": "20
+26-04-03T21:50:14.128
+Z", "created_by": "DA
+G_DELETION_ORPHAN", 
+"es_version_actual": 
+true, 
+"id_nodo_hijo": 
+"ORPHANED_NODE", 
+"id_nodo_padre": 
+"GLOBAL_NULL", 
+"id_relacion": 
+"RELA-11223344", 
+"peso_influencia": 
+1, "tipo_relacion": 
+"Militar_Directa", 
+"valido_desde": "2026
+-04-03T21:50:14.128Z"
+, "valido_hasta": 
+""}],
+              Object 
+{
+            +   
+"SPREADSHEET_ID_DB": 
+"test-spreadsheet-id"
+,
+            +   
+"useCloudDB": false,
+                
+"useSheets": true,
+              },
+           2
+              
+"EntidadMagica",
+              
+[{"deleted_at": "2026
+-04-03T21:50:14.128Z"
+, "deleted_by": 
+"test-user@local", 
+"estado": 
+"Eliminado", 
+"id_entidadmagica": 
+"TARGET"}],
+              Object 
+{
+            +   
+"SPREADSHEET_ID_DB": 
+"test-spreadsheet-id"
+,
+            +   
+"useCloudDB": false,
+                
+"useSheets": true,
+              },
+
+    Number of calls: 
+2
+
+    [0m [90m 131 
+|[39m             ex
+pect(global[33m.[39
+m[33mEngine_Graph[3
+9m[33m.[39mbuildDel
+etionPatch)[33m.[39
+mtoHaveBeenCalledWith
+([32m'TARGET'[39m[
+33m,[39m [32m'ORPHA
+N'[39m[33m,[39m ac
+tiveGraphMock)[33m;
+[39m
+     [90m 132 |[39m
+    [31m[1m>[22m[
+39m[90m 133 |[39m  
+           expect([3
+3mEngine_DB[39m[33m
+.[39mupsertBatch)[3
+3m.[39mtoHaveBeenCal
+ledWith([32m'Relacio
+n_Dominios'[39m[33m
+,[39m expect[33m.[
+39many([33mArray[39
+m)[33m,[39m 
+config)[33m;[39m
+     [90m     
+|[39m               
+                     
+       
+[31m[1m^[22m[39m
+     [90m 134 
+|[39m             
+[36mconst[39m 
+edgeBatch 
+[33m=[39m [33mEngi
+ne_DB[39m[33m.[39m
+upsertBatch[33m.[39
+mmock[33m.[39mcalls
+[[35m0[39m][[35m1
+[39m][33m;[39m
+     [90m 135 
+|[39m             ex
+pect(edgeBatch[33m.
+[39mlength)[33m.[39
+mtoBe([35m2[39m)[3
+3m;[39m
+     [90m 136 
+|[39m             ex
+pect(edgeBatch[[35m0
+[39m][33m.[39mid_r
+elacion)[33m.[39mto
+Be([32m'R1'[39m)[3
+3m;[39m[0m
+
+      at Object.toHav
+eBeenCalledWith (__te
+sts__/Engine_DB_Orche
+stration.test.js:133:
+43)
+
+  ÔùÅ Engine_DB 
+Orchestration & DAG 
+SCD-2 ÔÇ║ 
+Engine_DB.delete 
+(Unit of Work 
+Orchestrations) ÔÇ║ 
+should execute 
+standard deletion if 
+strictly FLAT 
+topology
+
+    expect(jest.fn())
+.toHaveBeenCalledWith
+(...expected)
+
+    - Expected
+    + Received
+
+      
+"CatalogoPlano",
+      "ID-123",
+      Object {
+    +   
+"SPREADSHEET_ID_DB": 
+"test-spreadsheet-id"
+,
+    +   
+"useCloudDB": false,
+        "useSheets": 
+true,
+      },
+
+    Number of calls: 
+1
+
+    [0m [90m 159 
+|[39m             
+[36mconst[39m 
+result [33m=[39m [
+33mEngine_DB[39m[33
+m.[39m[36mdelete[3
+9m([32m'CatalogoPlan
+o'[39m[33m,[39m [
+32m'ID-123'[39m)[33
+m;[39m
+     [90m 160 |[39m
+    [31m[1m>[22m[
+39m[90m 161 |[39m  
+           expect([3
+3mAdapter_Sheets[39m
+[33m.[39mremove)[3
+3m.[39mtoHaveBeenCal
+ledWith([32m'Catalog
+oPlano'[39m[33m,[3
+9m [32m'ID-123'[39m
+[33m,[39m 
+config)[33m;[39m
+     [90m     
+|[39m               
+                     
+       
+[31m[1m^[22m[39m
+     [90m 162 
+|[39m             ex
+pect([33mEngine_DB[
+39m[33m.[39mupsertB
+atch)[33m.[39mnot[
+33m.[39mtoHaveBeenCa
+lled()[33m;[39m
+     [90m 163 
+|[39m             ex
+pect(result[33m.[39
+msuccess)[33m.[39mt
+oBe([36mtrue[39m)[
+33m;[39m
+     [90m 164 
+|[39m         
+})[33m;[39m[0m
+
+      at Object.toHav
+eBeenCalledWith (__te
+sts__/Engine_DB_Orche
+stration.test.js:161:
+43)
+
+Test Suites: 1 
+failed, 1 total
+Tests:       2 
+failed, 2 passed, 4 
+total
+Snapshots:   0 total
+Time:        0.482 
+s, estimated 1 s
+Ran all test suites 
+matching __tests__/En
+gine_DB_Orchestration
+.test.js.

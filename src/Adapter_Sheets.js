@@ -31,7 +31,8 @@ const Adapter_Sheets = {
         }
 
         if (!primaryKeyField || !payload[primaryKeyField]) {
-            throw new Error(`Primary Key requerida. No se encontró 'id_${tableKey}' ni 'id_${singularKey}' en el payload.`);
+            const expectedKey = primaryKeyField || `id_${tableName.toLowerCase()}`;
+            throw new Error(`Primary Key requerida. No se encontró '${expectedKey}' en el payload para la tabla ${tableName}.`);
         }
 
 
@@ -93,16 +94,18 @@ const Adapter_Sheets = {
                 throw new Error("ERROR_ARCHIVED: No se puede modificar una entidad eliminada lógicamente.");
             }
 
-            const idxVersion = normalizedHeaders.indexOf('_version');
+            const idxVersion = normalizedHeaders.indexOf('version');
             if (idxVersion > -1) {
                 const currentDbVersion = Number(existingRow[idxVersion]) || 1;
-                const incomingVersion = Number(payload._version) || 1;
+                const incomingVersion = Number(payload.version) || Number(payload._version) || 1;
                 if (currentDbVersion !== incomingVersion) {
                     throw new Error("ERROR_CONCURRENCY: La entidad '" + primaryKeyValue + "' ha sido modificada por otro usuario recientemente. Por favor, recargue e intente nuevamente.");
                 }
-                payload._version = currentDbVersion + 1;
+                payload.version = currentDbVersion + 1;
+                payload._version = payload.version; // Compatibilidad hacia atrás
             }
         } else {
+            payload.version = 1;
             payload._version = 1;
         }
 

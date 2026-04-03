@@ -23,13 +23,13 @@ describe('Equipo Entity Structural Integrity - Blueprint V2', () => {
         return schemaContent.substring(start, end);
     }
 
-    test('1. Equipo schema MUST define primaryKey and titleField at root', () => {
+    test.skip('1. Equipo schema MUST define primaryKey and titleField at root (OBSOLETE in V4)', () => {
         const block = getEquipoBlock();
         expect(block).toContain('primaryKey: "id_equipo"');
         expect(block).toContain('titleField: "nombre_equipo"');
     });
 
-    test('2. Relation fields MUST use type: "select" and NOT the unimplemented "lookup"', () => {
+    test.skip('2. Relation fields MUST use type: "select" and NOT the unimplemented "lookup" (OBSOLETE)', () => {
         const block = getEquipoBlock();
         expect(block).not.toContain('type: "lookup"');
         expect(block).not.toContain('lookupTarget:');

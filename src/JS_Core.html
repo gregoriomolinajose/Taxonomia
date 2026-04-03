@@ -114,7 +114,7 @@
    */
   window.debounce = function(func, delay) {
     var timeoutId;
-    var threshold = delay || 300;
+    var threshold = (delay !== undefined) ? delay : 300;
     return function() {
       var context = this;
       var args = arguments;

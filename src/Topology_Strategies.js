@@ -5,7 +5,6 @@
 
 const strategy_1toN = function(incomingEdges, currentActiveEdges) {
     if (!Array.isArray(incomingEdges) || incomingEdges.length === 0) return { edgesToClose: [] };
-    if (!Array.isArray(currentActiveEdges) || currentActiveEdges.length === 0) return { edgesToClose: [] };
 
     const incomingChildSet = new Set();
     incomingEdges.forEach(e => {
@@ -17,6 +16,8 @@ const strategy_1toN = function(incomingEdges, currentActiveEdges) {
         }
         incomingChildSet.add(childId);
     });
+
+    if (!Array.isArray(currentActiveEdges) || currentActiveEdges.length === 0) return { edgesToClose: [] };
     
     // Helper de resiliencia Topo lógica para evitar hardcoding
     const getActive = function(edges) {

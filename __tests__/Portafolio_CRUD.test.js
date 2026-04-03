@@ -24,6 +24,13 @@ const API_Universal = require('../src/API_Universal.gs');
 
 describe('Portafolio CRUD - Capa de Servicio API_Universal', () => {
 
+    beforeAll(() => {
+        global._generateShortUUID = jest.fn(() => 'SHORT-1234');
+        global._handleCreate = jest.fn((entityName, payload) => {
+            return global.Engine_DB.create(entityName, payload);
+        });
+    });
+
     beforeEach(() => {
         jest.clearAllMocks();
     });
@@ -52,8 +59,8 @@ describe('Portafolio CRUD - Capa de Servicio API_Universal', () => {
 
         // 2. Act
         // Llamar directamente al método interno de la API que orquesta el Create o al doPost principal si expone la lógica
-        // Para no complicar la simulación de HTTP de doPost, usamos una función de servicio invocable internamente que API_Universal debe exportar
-        API_Universal._handleCreate('Portafolio', mockFrontendPayload);
+        // Llamar directamente al router, que es la interfaz exportada actual
+        API_Universal.API_Universal_Router('create', 'Portafolio', mockFrontendPayload);
 
         // 3. Assert
         // Validamos que Engine_DB_Mock.create fue llamado 1 sola vez

@@ -1,0 +1,332 @@
+﻿diff --git a/environments/Config.dev.js b/environments/Config.dev.js
+index b1f276c7..0e0280e4 100644
+--- a/environments/Config.dev.js
++++ b/environments/Config.dev.js
+@@ -1,5 +1,5 @@
+ const CONFIG = {
+-    APP_VERSION: 'v1.5.0\n - 2604020829',
++    APP_VERSION: '\n - 2604031409',
+     // TODO: Reemplazar con el ID real de Desarrollo
+     SPREADSHEET_ID_DB: '1tMyYBLPr0HJnJwbhFpCVoM4U8k1EVGycBDBjEnUGDts',
+     ALLOWED_DOMAINS: ['@gmail.com', '@bellfy.app', '@coppel.com', '@bancoppel.com'],
+diff --git a/src/Auth_UI.html b/src/Auth_UI.html
+index 40d5a430..cd2c5af9 100644
+--- a/src/Auth_UI.html
++++ b/src/Auth_UI.html
+@@ -72,6 +72,7 @@
+     handleAuthResponse: function(response, container) {
+       if (response.authorized) {
+         if (container) container.classList.remove('ion-hide');
++        window.AuthManager.currentUser = response;
+         var greetingEl = document.getElementById('user-greeting-name');
+         if (greetingEl) greetingEl.textContent = window.formatUserName(response.email);
+         
+diff --git a/src/DataView_UI.html b/src/DataView_UI.html
+index e2638e20..715b325d 100644
+--- a/src/DataView_UI.html
++++ b/src/DataView_UI.html
+@@ -302,7 +302,7 @@
+             right.appendChild(btnCols);
+             
+             const btnTable = document.createElement('button');
+-            btnTable.className = 'dv-btn-icon ' + (_state.view === 'table' ? 'active' : '');
++            btnTable.className = `dv-btn-icon ${_state.view === 'table' ? 'active' : ''}`;
+             btnTable.id = 'dv-view-table-btn';
+             btnTable.title = 'Vista de lista';
+             btnTable.textContent = 'Ôÿ░';
+@@ -310,7 +310,7 @@
+             right.appendChild(btnTable);
+             
+             const btnGrid = document.createElement('button');
+-            btnGrid.className = 'dv-btn-icon ' + (_state.view === 'grid' ? 'active' : '');
++            btnGrid.className = `dv-btn-icon ${_state.view === 'grid' ? 'active' : ''}`;
+             btnGrid.id = 'dv-view-grid-btn';
+             btnGrid.title = 'Vista de cuadr├¡cula';
+             btnGrid.textContent = 'Ôè×';
+@@ -319,7 +319,7 @@
+             
+             if (_state.entityName === 'Dominio') {
+                 const btnMap = document.createElement('button');
+-                btnMap.className = 'dv-btn-icon ' + (_state.view === 'map' ? 'active' : '');
++                btnMap.className = `dv-btn-icon ${_state.view === 'map' ? 'active' : ''}`;
+                 btnMap.id = 'dv-view-map-btn';
+                 btnMap.title = 'Formato Mapa (Treemap)';
+                 const iconMap = document.createElement('ion-icon');
+@@ -588,7 +588,16 @@
+         /* ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
+            Event handlers (accesibles desde HTML inline)
+         ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ */
+-        function _onSearch(query) { _applyFilter(query); }
++        var _onDebouncedFilter = null;
++        function _onSearch(query) { 
++            if (!_onDebouncedFilter) {
++                // Instanciar lazy-load del S21.2 Debounce (Z-Blocking) 300ms
++                _onDebouncedFilter = (window.debounce || function(f){return f;})(function(q) {
++                    _applyFilter(q);
++                }, 300);
++            }
++            _onDebouncedFilter(query);
++        }
+ 
+         function _onSort(colKey) { _applySort(colKey); }
+ 
+diff --git a/src/Index.html b/src/Index.html
+index 16ab4dab..347ba01f 100644
+--- a/src/Index.html
++++ b/src/Index.html
+@@ -39,7 +39,7 @@
+     window.addEventListener('unhandledrejection', function(e) {
+       var reason = e.reason;
+       var detail = (reason && reason.stack) ? reason.stack : String(reason);
+-      triggerWSOD('Unhandled Promise Rejection: ' + detail);
++      triggerWSOD(`Unhandled Promise Rejection: ${detail}`);
+     });
+   </script>
+ 
+@@ -257,34 +257,9 @@
+         <!-- S22.5 Bottom Tab Bar Mobile (Thumb Zone) -->
+         <ion-footer class="ion-no-border hide-on-desktop">
+           <ion-tab-bar slot="bottom" id="mobile-tab-bar" style="--background: var(--ion-color-step-50, #f4f5f8);">
+-            <!-- Renderizado Din├ímico v├¡a UI_Router_Schema -->
++            <!-- Renderizado Din├ímico v├¡a UI_Router_Schema / JS_Core -->
+           </ion-tab-bar>
+         </ion-footer>
+-        <script>
+-          document.addEventListener('DOMContentLoaded', function() {
+-            var tabBar = document.getElementById('mobile-tab-bar');
+-            if(!tabBar) return;
+-            
+-            var thumbZoneConfig = [
+-              { icon: 'home-outline', label: 'Inicio', action: function() { window.AppEventBus.publish('NAV::CHANGE', {viewType: 'dashboard'}); } },
+-              { icon: 'search-outline', label: 'Buscar', action: function() { var o = document.getElementById('global-omnibar'); if(o) o.setFocus(); } },
+-              { icon: 'apps-outline', label: 'Cat├ílogo', action: function() { var m = document.querySelector('ion-menu'); if(m) m.open(); } },
+-              { icon: 'person-circle-outline', label: 'Perfil', action: function() { var p = document.getElementById('profile-popover'); if(p) p.present(); } }
+-            ];
+-
+-            thumbZoneConfig.forEach(function(item) {
+-              var btn = document.createElement('ion-tab-button');
+-              btn.onclick = item.action;
+-              var icon = document.createElement('ion-icon');
+-              icon.name = item.icon;
+-              var label = document.createElement('ion-label');
+-              label.textContent = item.label;
+-              btn.appendChild(icon);
+-              btn.appendChild(label);
+-              tabBar.appendChild(btn);
+-            });
+-          });
+-        </script>
+       </div><!-- /main-content -->
+ 
+     </ion-split-pane>
+@@ -364,10 +339,7 @@
+   <?!= include('DomainMap_UI'); ?>
+   <?!= include('DesignKit_UI'); ?>
+   <?!= include('Governance_Admin_UI'); ?>
+-  <?!= include('Theme_Engine'); ?>
+   <?!= include('Auth_UI'); ?>
+-  <?!= include('JS_Core'); ?>
+-
+   <!-- [QA_MODULE_START] -->
+   <?!= include('TEST_Suite_UI'); ?>
+   <!-- [QA_MODULE_END] -->
+diff --git a/src/JS_Core.html b/src/JS_Core.html
+index 9999fbf3..60b30334 100644
+--- a/src/JS_Core.html
++++ b/src/JS_Core.html
+@@ -55,11 +55,11 @@
+         
+         // 1. Integraci├│n con consola local de desarrollo (Coloreado)
+         if (safeLevel === 'ERROR' || safeLevel === 'FATAL') {
+-          console.error('[Telemetry|' + safeLevel + '] ' + safeAction, safePayload);
++          console.error(`[Telemetry|${safeLevel}] ${safeAction}`, safePayload);
+         } else if (safeLevel === 'WARN') {
+-          console.warn('[Telemetry|WARN] ' + safeAction, safePayload);
++          console.warn(`[Telemetry|WARN] ${safeAction}`, safePayload);
+         } else {
+-          console.info('[Telemetry|INFO] ' + safeAction, safePayload);
++          console.info(`[Telemetry|INFO] ${safeAction}`, safePayload);
+         }
+ 
+         // Liberar flag si era fatal (en caso de recuperaci├│n)
+@@ -107,6 +107,24 @@
+     }
+   };
+ 
++  /* ÔöÇÔöÇ Core Utilities (S21.2) ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ */
++  /**
++   * Global Debounce utility for non-blocking UI interactions.
++   * Prevents rapid consecutive executions of heavy operations (like filtering).
++   */
++  window.debounce = function(func, delay) {
++    var timeoutId;
++    var threshold = delay || 300;
++    return function() {
++      var context = this;
++      var args = arguments;
++      if (timeoutId) clearTimeout(timeoutId);
++      timeoutId = setTimeout(function() {
++        func.apply(context, args);
++      }, threshold);
++    };
++  };
++
+   /* ÔöÇÔöÇ Ionic UI Safe Wrappers (S19.2) ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ */
+   window.PresentSafe = function(ionicElement) {
+     if (!ionicElement || typeof ionicElement.present !== 'function') {
+@@ -199,18 +217,49 @@
+       
+       if (window.AppEventBus) {
+         window.AppEventBus.subscribe('APP::READY', function() {
++          // [S22.5] Bottom Tab Bar Mobile Hydration (Zero-XSS)
++          try {
++            var tabBar = document.getElementById('mobile-tab-bar');
++            if (tabBar) {
++              var thumbZoneConfig = [
++                { icon: 'home-outline', label: 'Inicio', action: function() { window.AppEventBus.publish('NAV::CHANGE', {viewType: 'dashboard'}); } },
++                { icon: 'search-outline', label: 'Buscar', action: function() { var o = document.getElementById('global-omnibar'); if(o) o.setFocus(); } },
++                { icon: 'apps-outline', label: 'Cat├ílogo', action: function() { var m = document.querySelector('ion-menu'); if(m) m.open(); } },
++                { icon: 'person-circle-outline', label: 'Perfil', action: function() { var p = document.getElementById('profile-popover'); if(p) p.present(); } }
++              ];
++              thumbZoneConfig.forEach(function(item) {
++                var btn = window.DOM.create('ion-tab-button', { onclick: item.action }, [
++                  window.DOM.create('ion-icon', { name: item.icon }),
++                  window.DOM.create('ion-label', null, item.label)
++                ]);
++                tabBar.appendChild(btn);
++              });
++            }
++          } catch(e) {
++            console.warn('[S22.5] Error hydrating Bottom Tab Bar:', e);
++          }
++
+           // [S22.1] Profile Avatar & Dropdown Hydration
+           try {
+-            var userNameEl = document.getElementById('user-greeting-name');
+-            var userName = userNameEl ? userNameEl.innerText : 'Usuario';
+-            var initChar = userName && userName !== 'Usuario' ? userName.charAt(0).toUpperCase() : '?';
+-            var avatarBtn = document.getElementById('topbar-avatar');
+-            var avatarPop = document.getElementById('popover-avatar');
+-            var namePop = document.getElementById('popover-user-name');
+-            var rolePop = document.getElementById('popover-user-role');
++            const currentUser = (window.AuthManager && window.AuthManager.currentUser) ? window.AuthManager.currentUser : null;
++            const userEmail = currentUser ? currentUser.email : '';
++            const userName = (currentUser && currentUser.name) ? currentUser.name : (userEmail ? (typeof window.formatUserName === 'function' ? window.formatUserName(userEmail) : userEmail) : 'Usuario');
++            const initChar = userName !== 'Usuario' ? userName.charAt(0).toUpperCase() : '?';
++            const avatarBtn = document.getElementById('topbar-avatar');
++            const avatarPop = document.getElementById('popover-avatar');
++            const namePop = document.getElementById('popover-user-name');
++            const rolePop = document.getElementById('popover-user-role');
++            
++            const picture = currentUser ? currentUser.picture : null;
+             
+-            if (avatarBtn) avatarBtn.innerText = initChar;
+-            if (avatarPop) avatarPop.innerText = initChar;
++            if (picture) {
++                const imgHtm = `<img src="${picture}" style="width:100%; height:100%; border-radius:50%; object-fit:cover;" />`;
++                if (avatarBtn) { avatarBtn.innerHTML = imgHtm; avatarBtn.style.background = 'transparent'; }
++                if (avatarPop) { avatarPop.innerHTML = imgHtm; avatarPop.style.background = 'transparent'; }
++            } else {
++                if (avatarBtn) { avatarBtn.innerText = initChar; avatarBtn.style.background = ''; }
++                if (avatarPop) { avatarPop.innerText = initChar; avatarPop.style.background = ''; }
++            }
+             if (namePop) namePop.innerText = userName;
+ 
+             if (window.ABAC && window.ABAC.context && rolePop) {
+@@ -248,9 +297,10 @@
+           }
+         });
+       }
+-    });
++    }); // Close setTimeout
+ 
+-  /* ÔöÇÔöÇ Modulos Transversales y Utils (S6.3) ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ */
++  }); // Close DOMContentLoaded
+ 
++  /* ÔöÇÔöÇ Modulos Transversales y Utils (S6.3) ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ */
+ 
+ </script>
+diff --git a/src/Omnibar_UI.html b/src/Omnibar_UI.html
+index f44c8ee8..acbf285b 100644
+--- a/src/Omnibar_UI.html
++++ b/src/Omnibar_UI.html
+@@ -44,6 +44,8 @@ window.addEventListener('DOMContentLoaded', function() {
+ 
+   if (!omnibarInput || !resultsList) return;
+ 
++  var executeSearchDebounced = null;
++
+   function handleSearch(ev) {
+     var rawValue = ev.target.value || '';
+     var term = rawValue.toLowerCase().trim();
+@@ -52,10 +54,10 @@ window.addEventListener('DOMContentLoaded', function() {
+       popover.present();
+     }
+ 
+-    if (debounceTimer) clearTimeout(debounceTimer);
+-    debounceTimer = setTimeout(function() {
+-      executeSearch(term);
+-    }, 250);
++    if (!executeSearchDebounced) {
++        executeSearchDebounced = (window.debounce || function(f){return f;})(executeSearch, 300);
++    }
++    executeSearchDebounced(term);
+   }
+ 
+   function executeSearch(term) {
+diff --git a/src/UI_FormSubmitter.html b/src/UI_FormSubmitter.html
+index a68f2d8d..90918bf2 100644
+--- a/src/UI_FormSubmitter.html
++++ b/src/UI_FormSubmitter.html
+@@ -128,11 +128,10 @@ window.UI_FormSubmitter = class UI_FormSubmitter {
+             const safePayload = JSON.parse(JSON.stringify(payload));
+ 
+             if (typeof google === 'undefined' || !google.script) {
+-                console.log("[MOCK SAVE]", action, this.entityName, safePayload);
+-                setTimeout(async () => {
+-                    await loading.dismiss();
+-                    this._onSuccessMock(originalText);
+-                }, 1000);
++                loading.dismiss();
++                console.error("[Environment] Cannot save without Google Apps Script context");
++                this._showToast('No se puede guardar: Entorno local detectado (GAS ausente)', 'warning');
++                this._revertButtonState();
+                 return;
+             }
+ 
+@@ -145,13 +144,13 @@ window.UI_FormSubmitter = class UI_FormSubmitter {
+                         if (response && response.status === 'success') {
+                             this._patchFrontendCache(this.entityName, response, payload);
+                             const itemName = (response.data && response.data.Entity) ? response.data.Entity : this.entityName;
+-                            this._showToast('┬í' + itemName + ' guardado con ├®xito!', 'success');
++                            this._showToast(`┬í${itemName} guardado con ├®xito!`, 'success');
+                             this._performSuccessCleanup(response);
+                         } else {
+                             if (response && response.errorType === 'CONCURRENCY') {
+                                 this._showToast('ÔÜá´©Å Colisi├│n: Los datos fueron modificados por otro usuario mientras los editabas. Por favor extrae la informaci├│n fresca.', 'danger');
+                             } else {
+-                                this._showToast('Error: ' + (response ? response.message : 'Error desconocido'), 'danger');
++                                this._showToast(`Error: ${response ? response.message : 'Error desconocido'}`, 'danger');
+                             }
+                             this._revertButtonState();
+                         }
+@@ -164,7 +163,7 @@ window.UI_FormSubmitter = class UI_FormSubmitter {
+                 .withFailureHandler(async (err) => {
+                     await loading.dismiss();
+                     this._revertButtonState();
+-                    this._showToast('Error de Servidor: ' + err.message, 'danger');
++                    this._showToast(`Error de Servidor: ${err.message}`, 'danger');
+                 })
+                 .API_Universal_Router(action, this.entityName, safePayload);
+         });
+@@ -179,10 +178,6 @@ window.UI_FormSubmitter = class UI_FormSubmitter {
+         }
+     }
+ 
+-    _onSuccessMock() {
+-        this._showToast('[MOCK] ┬í' + this.entityName + ' guardado con ├®xito!', 'success');
+-        this._performSuccessCleanup({ status: 'success' });
+-    }
+ 
+     _performSuccessCleanup(response) {
+         this._revertButtonState();
