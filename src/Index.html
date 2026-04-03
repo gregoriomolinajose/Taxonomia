@@ -168,7 +168,13 @@
                 <ion-icon slot="icon-only" name="arrow-back-outline"></ion-icon>
               </ion-button>
             </ion-buttons>
-            <ion-title id="main-header-title">Taxonomia Operativa</ion-title>
+            <ion-title id="main-header-title" class="hide-on-mobile" style="max-width: 250px;">Taxonomia Operativa</ion-title>
+            
+            <!-- S22.2 Omnibar Búsqueda Global -->
+            <div style="flex: 1; display: flex; justify-content: center; align-items: center; max-width: 600px;">
+              <ion-searchbar id="global-omnibar" class="hide-on-mobile" placeholder="Buscar en Plataforma..." mode="ios" show-clear-button="focus" style="--border-radius: 8px; --box-shadow: none; --background: var(--ion-color-step-50, #f4f5f8);"></ion-searchbar>
+            </div>
+            
             <ion-buttons slot="end">
               <ion-button fill="clear" onclick="window.ThemeManager.cycleTheme()" title="Cambiar Tema">
                 <ion-icon id="theme-toggle-icon" slot="icon-only" name="moon-outline"></ion-icon>
@@ -318,6 +324,9 @@
   </template>
 
   <!-- MOTORES LOGICOS (Regla UI §14) -->
+  <?!= include('Theme_Engine'); ?>
+  <?!= include('JS_Core'); ?>
+  <?!= include('Omnibar_UI'); ?>
   <?!= include('UI_Router'); ?>
   <?!= include('UI_DataGrid'); ?>
   <?!= include('UI_Components'); ?>

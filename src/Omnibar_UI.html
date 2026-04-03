@@ -1,0 +1,154 @@
+<!-- src/Omnibar_UI.html -->
+<style>
+/* Estilos para el Popover Omnibar */
+ion-popover.omnibar-popover {
+  --width: 480px;
+  --max-height: 60vh;
+}
+.omnibar-highlight {
+  font-weight: 700;
+  color: var(--ion-color-primary, #3880ff);
+  background: rgba(56, 128, 255, 0.1);
+  padding: 0 2px;
+  border-radius: 3px;
+}
+.omnibar-empty {
+  padding: 30px;
+  text-align: center;
+  color: var(--ion-color-medium);
+}
+</style>
+
+<!-- Popover Global de Resultados -->
+<ion-popover id="omnibar-results-popover" trigger="global-omnibar" trigger-action="click" alignment="center" side="bottom" keyboard-close="false" class="omnibar-popover">
+  <ion-content>
+    <ion-list id="omnibar-results-list" lines="full">
+      <div class="omnibar-empty">
+        <ion-icon name="search-outline" style="font-size: 32px; display: block; margin: 0 auto 10px;"></ion-icon>
+        Escribe para buscar entidades empresariales...
+      </div>
+    </ion-list>
+  </ion-content>
+</ion-popover>
+
+<script>
+/* ═══════════════════════════════════════════════════════
+   Omnibar_UI.html — Motor de Búsqueda Global (S22.2)
+   Funciona 100% Client-Side barriendo window.__APP_CACHE__
+═══════════════════════════════════════════════════════ */
+window.addEventListener('DOMContentLoaded', function() {
+  var omnibarInput = document.getElementById('global-omnibar');
+  var resultsList = document.getElementById('omnibar-results-list');
+  var popover = document.getElementById('omnibar-results-popover');
+  var debounceTimer = null;
+
+  if (!omnibarInput || !resultsList) return;
+
+  function handleSearch(ev) {
+    var rawValue = ev.target.value || '';
+    var term = rawValue.toLowerCase().trim();
+    
+    if (term.length > 0 && popover && !popover.isOpen) {
+      popover.present();
+    }
+
+    if (debounceTimer) clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(function() {
+      executeSearch(term);
+    }, 250);
+  }
+
+  function executeSearch(term) {
+    resultsList.innerHTML = '';
+    
+    // Early exit
+    if (term.length < 2) {
+      if (term.length === 0) {
+        popover && popover.dismiss();
+      } else {
+        resultsList.innerHTML = '<div class="omnibar-empty">Sigue escribiendo...</div>';
+      }
+      return;
+    }
+
+    var cache = window.__APP_CACHE__ || {};
+    var schemas = window.APP_SCHEMAS || {};
+    var count = 0;
+    var maxResults = 15;
+    
+    var fragment = document.createDocumentFragment();
+
+    for (var entityName in cache) {
+      if (count >= maxResults) break;
+      
+      // [Regla S22.2] Ignorar entidades de Sistema (que no deben verse en Sidebar comercial)
+      if (entityName.startsWith('Sys_') || entityName === 'Relacion_Dominios') continue;
+      
+      var sMeta = schemas[entityName];
+      if (sMeta && sMeta.metadata && sMeta.metadata.showInMenu === false) continue;
+      
+      var rows = cache[entityName] || [];
+      var titleField = (sMeta && sMeta.metadata) ? sMeta.metadata.titleField : 'nombre';
+      var idField = (sMeta && sMeta.metadata) ? sMeta.metadata.idField : 'id';
+      var icon = (sMeta && sMeta.metadata) ? sMeta.metadata.iconName : 'search-outline';
+      var color = (sMeta && sMeta.metadata) ? sMeta.metadata.color : 'primary';
+      
+      for (var i = 0; i < rows.length; i++) {
+        if (count >= maxResults) break;
+        var row = rows[i];
+        
+        // Scan general del objeto 1 nivel
+        var hasMatch = false;
+        var mappedTitle = String(row[titleField] || ('['+entityName+' Sin Título]')).trim();
+        
+        for (var f in row) {
+          if (String(row[f]).toLowerCase().indexOf(term) !== -1) {
+            hasMatch = true;
+            break;
+          }
+        }
+        
+        if (hasMatch) {
+          var recordId = row[idField] || row['id'];
+          var item = document.createElement('ion-item');
+          item.button = true;
+          item.setAttribute('detail', 'true');
+          
+          // Callback estricto atado al scope
+          (function(navEntity, navId, rawLabel) {
+             item.onclick = function() {
+               popover.dismiss();
+               omnibarInput.value = ''; // limpiar tras navegar
+               window.AppEventBus.publish('NAV::CHANGE', {viewType: navEntity, entityKey: navId});
+             };
+             
+             // Remarcar coincidencia 
+             var regex = new RegExp('(' + term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'gi');
+             var highlightedLabel = rawLabel.replace(regex, '<span class="omnibar-highlight">$1</span>');
+
+             item.innerHTML = `
+               <ion-icon name="${icon}" slot="start" color="${color}"></ion-icon>
+               <ion-label>
+                 <h2>${highlightedLabel}</h2>
+                 <p style="font-size: 0.7em; letter-spacing: 0.5px; text-transform: uppercase;">${navEntity}</p>
+               </ion-label>
+             `;
+          })(entityName, recordId, mappedTitle);
+          
+          fragment.appendChild(item);
+          count++;
+        }
+      }
+    }
+
+    if (count === 0) {
+      resultsList.innerHTML = '<div class="omnibar-empty"><ion-icon name="sad-outline" style="font-size:32px; display:block; margin:0 auto 10px;"></ion-icon>No se hallaron resultados para "'+term+'"</div>';
+    } else {
+      resultsList.appendChild(fragment);
+    }
+  }
+
+  // Bind key events
+  omnibarInput.addEventListener('ionInput', handleSearch);
+});
+</script>
