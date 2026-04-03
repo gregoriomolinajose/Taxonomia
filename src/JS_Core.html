@@ -221,18 +221,24 @@
              var cAdmin = bMap.SYS_ADMIN || '#eb445a';
              if(avatarBtn) avatarBtn.style.background = cAdmin;
              if(avatarPop) avatarPop.style.background = cAdmin;
-          } else if (ctx.ownerOf && ctx.ownerOf.length > 0) {
-             rolePop.innerText = 'Rol: Propietario';
-             var cOwner = bMap.OWNER || '#2dd36f';
-             if(avatarBtn) avatarBtn.style.background = cOwner;
-             if(avatarPop) avatarPop.style.background = cOwner;
-          } else if (ctx.memberOf && ctx.memberOf.length > 0) {
-             rolePop.innerText = 'Rol: Miembro';
-             var cMem = bMap.MEMBER || '#3880ff';
-             if(avatarBtn) avatarBtn.style.background = cMem;
-             if(avatarPop) avatarPop.style.background = cMem;
           } else {
-             rolePop.innerText = 'Rol: Lector (Básico)';
+             // Securing Governance Node Visibility 
+             var btnGov = document.getElementById('popover-btn-governance');
+             if (btnGov) btnGov.style.display = 'none';
+             
+             if (ctx.ownerOf && ctx.ownerOf.length > 0) {
+               rolePop.innerText = 'Rol: Propietario';
+               var cOwner = bMap.OWNER || '#2dd36f';
+               if(avatarBtn) avatarBtn.style.background = cOwner;
+               if(avatarPop) avatarPop.style.background = cOwner;
+             } else if (ctx.memberOf && ctx.memberOf.length > 0) {
+               rolePop.innerText = 'Rol: Miembro';
+               var cMem = bMap.MEMBER || '#3880ff';
+               if(avatarBtn) avatarBtn.style.background = cMem;
+               if(avatarPop) avatarPop.style.background = cMem;
+             } else {
+               rolePop.innerText = 'Rol: Lector (Básico)';
+             }
           }
         }
       } catch(e) {

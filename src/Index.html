@@ -174,7 +174,7 @@
                 <ion-icon id="theme-toggle-icon" slot="icon-only" name="moon-outline"></ion-icon>
               </ion-button>
               <!-- Botón Avatar de Perfil -->
-              <ion-button id="user-profile-btn" fill="clear" onclick="window.openProfileMenu(event)">
+              <ion-button id="user-profile-btn" fill="clear">
                 <div id="topbar-avatar" style="width: 32px; height: 32px; border-radius: 50%; background: var(--ion-color-primary); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px;">?</div>
               </ion-button>
             </ion-buttons>
@@ -207,20 +207,6 @@
                   <ion-label>Gobernanza ABAC</ion-label>
                 </ion-item>
                 
-                <script>
-                  window.openProfileMenu = function(e) {
-                    const popover = document.querySelector('#profile-popover');
-                    popover.event = e;
-                    popover.present();
-                  };
-                  
-                  // Hiding Agresivo inmediato para no-admins orgánicos
-                  if (window.ABAC && !window.ABAC.can('update', 'Sys_Permissions')) {
-                    var btnGov = document.getElementById('popover-btn-governance');
-                    if (btnGov) btnGov.style.display = 'none';
-                  }
-                </script>
-
                 <ion-item button lines="none" detail="false" onclick="document.querySelector('#profile-popover').dismiss(); window.AuthManager.logout();" style="--color: var(--ion-color-danger);">
                   <ion-icon name="log-out-outline" slot="start" color="danger"></ion-icon>
                   <ion-label color="danger">Cerrar Sesión</ion-label>
