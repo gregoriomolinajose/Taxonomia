@@ -302,7 +302,7 @@
             right.appendChild(btnCols);
             
             const btnTable = document.createElement('button');
-            btnTable.className = 'dv-btn-icon ' + (_state.view === 'table' ? 'active' : '');
+            btnTable.className = `dv-btn-icon ${_state.view === 'table' ? 'active' : ''}`;
             btnTable.id = 'dv-view-table-btn';
             btnTable.title = 'Vista de lista';
             btnTable.textContent = '☰';
@@ -310,7 +310,7 @@
             right.appendChild(btnTable);
             
             const btnGrid = document.createElement('button');
-            btnGrid.className = 'dv-btn-icon ' + (_state.view === 'grid' ? 'active' : '');
+            btnGrid.className = `dv-btn-icon ${_state.view === 'grid' ? 'active' : ''}`;
             btnGrid.id = 'dv-view-grid-btn';
             btnGrid.title = 'Vista de cuadrícula';
             btnGrid.textContent = '⊞';
@@ -319,7 +319,7 @@
             
             if (_state.entityName === 'Dominio') {
                 const btnMap = document.createElement('button');
-                btnMap.className = 'dv-btn-icon ' + (_state.view === 'map' ? 'active' : '');
+                btnMap.className = `dv-btn-icon ${_state.view === 'map' ? 'active' : ''}`;
                 btnMap.id = 'dv-view-map-btn';
                 btnMap.title = 'Formato Mapa (Treemap)';
                 const iconMap = document.createElement('ion-icon');

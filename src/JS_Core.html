@@ -55,11 +55,11 @@
         
         // 1. Integración con consola local de desarrollo (Coloreado)
         if (safeLevel === 'ERROR' || safeLevel === 'FATAL') {
-          console.error('[Telemetry|' + safeLevel + '] ' + safeAction, safePayload);
+          console.error(`[Telemetry|${safeLevel}] ${safeAction}`, safePayload);
         } else if (safeLevel === 'WARN') {
-          console.warn('[Telemetry|WARN] ' + safeAction, safePayload);
+          console.warn(`[Telemetry|WARN] ${safeAction}`, safePayload);
         } else {
-          console.info('[Telemetry|INFO] ' + safeAction, safePayload);
+          console.info(`[Telemetry|INFO] ${safeAction}`, safePayload);
         }
 
         // Liberar flag si era fatal (en caso de recuperación)
