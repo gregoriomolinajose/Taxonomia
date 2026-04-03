@@ -55,11 +55,11 @@
         
         // 1. Integración con consola local de desarrollo (Coloreado)
         if (safeLevel === 'ERROR' || safeLevel === 'FATAL') {
-          console.error('[Telemetry|' + safeLevel + '] ' + safeAction, safePayload);
+          console.error(`[Telemetry|${safeLevel}] ${safeAction}`, safePayload);
         } else if (safeLevel === 'WARN') {
-          console.warn('[Telemetry|WARN] ' + safeAction, safePayload);
+          console.warn(`[Telemetry|WARN] ${safeAction}`, safePayload);
         } else {
-          console.info('[Telemetry|INFO] ' + safeAction, safePayload);
+          console.info(`[Telemetry|INFO] ${safeAction}`, safePayload);
         }
 
         // Liberar flag si era fatal (en caso de recuperación)
@@ -241,16 +241,25 @@
 
           // [S22.1] Profile Avatar & Dropdown Hydration
           try {
-            var userEmail = (window.AuthManager && window.AuthManager.currentUser) ? window.AuthManager.currentUser.email : '';
-            var userName = userEmail ? (typeof window.formatUserName === 'function' ? window.formatUserName(userEmail) : userEmail) : 'Usuario';
-            var initChar = userName !== 'Usuario' ? userName.charAt(0).toUpperCase() : '?';
-            var avatarBtn = document.getElementById('topbar-avatar');
-            var avatarPop = document.getElementById('popover-avatar');
-            var namePop = document.getElementById('popover-user-name');
-            var rolePop = document.getElementById('popover-user-role');
+            const currentUser = (window.AuthManager && window.AuthManager.currentUser) ? window.AuthManager.currentUser : null;
+            const userEmail = currentUser ? currentUser.email : '';
+            const userName = (currentUser && currentUser.name) ? currentUser.name : (userEmail ? (typeof window.formatUserName === 'function' ? window.formatUserName(userEmail) : userEmail) : 'Usuario');
+            const initChar = userName !== 'Usuario' ? userName.charAt(0).toUpperCase() : '?';
+            const avatarBtn = document.getElementById('topbar-avatar');
+            const avatarPop = document.getElementById('popover-avatar');
+            const namePop = document.getElementById('popover-user-name');
+            const rolePop = document.getElementById('popover-user-role');
             
-            if (avatarBtn) avatarBtn.innerText = initChar;
-            if (avatarPop) avatarPop.innerText = initChar;
+            const picture = currentUser ? currentUser.picture : null;
+            
+            if (picture) {
+                const imgHtm = `<img src="${picture}" style="width:100%; height:100%; border-radius:50%; object-fit:cover;" />`;
+                if (avatarBtn) { avatarBtn.innerHTML = imgHtm; avatarBtn.style.background = 'transparent'; }
+                if (avatarPop) { avatarPop.innerHTML = imgHtm; avatarPop.style.background = 'transparent'; }
+            } else {
+                if (avatarBtn) { avatarBtn.innerText = initChar; avatarBtn.style.background = ''; }
+                if (avatarPop) { avatarPop.innerText = initChar; avatarPop.style.background = ''; }
+            }
             if (namePop) namePop.innerText = userName;
 
             if (window.ABAC && window.ABAC.context && rolePop) {

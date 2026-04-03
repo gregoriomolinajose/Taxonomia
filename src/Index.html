@@ -39,7 +39,7 @@
     window.addEventListener('unhandledrejection', function(e) {
       var reason = e.reason;
       var detail = (reason && reason.stack) ? reason.stack : String(reason);
-      triggerWSOD('Unhandled Promise Rejection: ' + detail);
+      triggerWSOD(`Unhandled Promise Rejection: ${detail}`);
     });
   </script>
 
