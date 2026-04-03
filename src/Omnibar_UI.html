@@ -81,10 +81,8 @@ window.addEventListener('DOMContentLoaded', function() {
     for (var entityName in cache) {
       if (count >= maxResults) break;
       
-      // [Regla S22.2] Ignorar entidades de Sistema (que no deben verse en Sidebar comercial)
-      if (entityName.startsWith('Sys_') || entityName === 'Relacion_Dominios') continue;
-      
       var sMeta = schemas[entityName];
+      // Filtrar todas las entidades que no expongan visibilidad explícita comercial
       if (sMeta && sMeta.metadata && sMeta.metadata.showInMenu === false) continue;
       
       var rows = cache[entityName] || [];

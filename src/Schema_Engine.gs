@@ -116,11 +116,11 @@ const APP_SCHEMAS = {
     ]
   },
   Relacion_Dominios: {
-    metadata: { order:9, iconName:'git-network-outline', color:'primary', label:'Conexiones Topológicas', titleField:'tipo_relacion', idField:'id_relacion', fkField:{ key:'id_nodo_padre', label:'Dominio' } },
+    metadata: { showInMenu: false, order:9, iconName:'git-network-outline', color:'primary', label:'Conexiones Topológicas', titleField:'tipo_relacion', idField:'id_relacion', fkField:{ key:'id_nodo_padre', label:'Dominio' } },
     fields: []
   },
   Sys_Roles: {
-    metadata: { showInMenu: true, showInDashboard: false, order:90, iconName:'shield-half-outline', color:'danger', label:'Seguridad: Roles', titleField:'nombre_rol', idField:'id_rol', fkField:null },
+    metadata: { showInMenu: false, showInDashboard: false, order:90, iconName:'shield-half-outline', color:'danger', label:'Seguridad: Roles', titleField:'nombre_rol', idField:'id_rol', fkField:null },
     primaryKey: "id_rol",
     fields: [
       { name: "id_rol", type: "text", primaryKey: true, readonly: true, label: "ID Rol", width: 12 },
@@ -129,7 +129,7 @@ const APP_SCHEMAS = {
     ]
   },
   Sys_Permissions: {
-    metadata: { showInMenu: true, showInDashboard: false, order:91, iconName:'key-outline', color:'danger', label:'Seguridad: Permisos ABAC', titleField:'schema_destino', idField:'id_permiso', fkField:{ key:'id_rol', label:'Rol Base' } },
+    metadata: { showInMenu: false, showInDashboard: false, order:91, iconName:'key-outline', color:'danger', label:'Seguridad: Permisos ABAC', titleField:'schema_destino', idField:'id_permiso', fkField:{ key:'id_rol', label:'Rol Base' } },
     primaryKey: "id_permiso",
     fields: [
       { name: "id_permiso", type: "text", primaryKey: true, readonly: true, label: "ID Permiso", width: 12 },
