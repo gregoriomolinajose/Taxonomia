@@ -23,6 +23,7 @@
 | E21| Next-Gen MDM & Concurrency Data Layer                 | ✅ Complete   | Optimistic Locking, Soft-Delete, ES5 Concats, Tests Mudos, Profiling | Muy Alta |
 | E22| Enterprise B2B UX Transformation                      | ✅ Complete   | Top App Bar, Omnibar, Contextual ABAC Dashboard, Design System Purity| Max      |
 | E23| Enterprise Identity & Zero-Trust SSO                  | 🚧 To Do     | Admin SDK Directory API integration para Avatares Reales y Perfiles  | Media    |
+| E24| Frontend God Objects Decomposition                    | ⏳ In Prog   | Split DataView_UI, FormRenderer, FormBuilder_Inputs, app.css         | Alta     |
 
 ## Parking Lot / Deuda Técnica (Post-Epic 11)
 
