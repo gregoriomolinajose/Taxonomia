@@ -20,7 +20,7 @@
 | E18| Gobernanza Topológica y Seguridad Contextual (ABAC) | ✅ Complete  | Micro-gobernanza, Segregation of Duties y Accesos basados en contexto SAFe | Max      |
 | E19| Core Framework Resilience & Strictness                | ✅ Complete    | Validator Truthiness, Ionic Promises, AppEventBus Telemetry, Error Bounds | Alta     |
 | E20| Pipeline Evolution & Native Tooling                   | ✅ Complete   | AST Config, Esbuild/Rollup, Pure CSS Extraction, ThemeManager Modularization | Media    |
-| E21| Next-Gen MDM & Concurrency Data Layer                 | 🚧 To Do     | Optimistic Locking, Soft-Delete, ES5 Concats, Tests Mudos, Profiling | Muy Alta |
+| E21| Next-Gen MDM & Concurrency Data Layer                 | ✅ Complete   | Optimistic Locking, Soft-Delete, ES5 Concats, Tests Mudos, Profiling | Muy Alta |
 | E22| Enterprise B2B UX Transformation                      | ✅ Complete   | Top App Bar, Omnibar, Contextual ABAC Dashboard, Design System Purity| Max      |
 | E23| Enterprise Identity & Zero-Trust SSO                  | 🚧 To Do     | Admin SDK Directory API integration para Avatares Reales y Perfiles  | Media    |
 
@@ -46,5 +46,5 @@
 ### 🚧 Deuda Activa (Backlog Técnico)
 
 > **[INFO]** Toda la Deuda Técnica Activa devuelta por Quality y Architecture Reviews ha sido formalmente agrupada y escalada a las siguientes Épicas en el Roadmap (To-Do):
-> - **[E21] Next-Gen MDM data Layer:** `Optimistic Locking`, Búsqueda Asíncrona (Debounce/Typeahead), `Soft-Delete` Graph Cleanup, `Concatenaciones ES5`, `Tests Mudos`, y `Profiling Mágico`.
+> - **[E21] Next-Gen MDM data Layer:** (Migrada al Historial Resuelto)
 > - **[E23] Enterprise Identity & SSO:** `Admin SDK Directory`, Google Profile Photo Hydration, Identity Fallbacks funcionales integrados y manejo de Scopes de Workspace nativos.
