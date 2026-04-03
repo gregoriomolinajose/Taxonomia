@@ -46,5 +46,8 @@
 ### 🚧 Deuda Activa (Backlog Técnico)
 
 > **[INFO]** Toda la Deuda Técnica Activa devuelta por Quality y Architecture Reviews ha sido formalmente agrupada y escalada a las siguientes Épicas en el Roadmap (To-Do):
-> - **[E21] Next-Gen MDM data Layer:** (Migrada al Historial Resuelto)
-> - **[E23] Enterprise Identity & SSO:** `Admin SDK Directory`, Google Profile Photo Hydration, Identity Fallbacks funcionales integrados y manejo de Scopes de Workspace nativos.
+> - **[E21] Next-Gen MDM data Layer:** `Optimistic Locking`, Búsqueda Asíncrona (Debounce/Typeahead), `Soft-Delete` Graph Cleanup, `Concatenaciones ES5`, `Tests Mudos`, y `Profiling Mágico`.
+> - **[E23] Enterprise Identity, SSO & Tech Debt (E21 AR/QR):** 
+>   - *Identity*: `Admin SDK Directory`, Google Profile Photo Hydration, Identity Fallbacks y Scopes de Workspace.
+>   - *Arch Review (E21)*: Absorber auto-debouncing nativamente dentro del Dispatcher de `AppEventBus` y formalizar la obsolescencia de los Mocks Locales.
+>   - *Quality Review (E21)*: Validar estrictamente el type paraméntrico en `window.debounce` (`typeof delay === 'number'`) y normalizar rastros de `console.error` en despliegues sin script (`UI_FormSubmitter`).
