@@ -123,7 +123,7 @@
         /* ────────────────────────────────────────────
            Fetch data (GAS o Mock)
         ───────────────────────────────────────────── */
-        function _fetchData(entityName, cb) {
+        async function _fetchData(entityName, cb) {
             _showLoadingState();
             // Check Frontend Cache first (Directiva Arquitectónica: 0.0s latency)
             if (window.__APP_CACHE__ && window.__APP_CACHE__[entityName]) {
@@ -134,41 +134,42 @@
                 return;
             }
 
-            const isGAS = typeof google !== 'undefined' && google.script && google.script.run;
-            if (isGAS) {
+            try {
                 console.time('[Perf] Single RPC Hydration');
-                google.script.run
-                    .withSuccessHandler(function (response) {
-                        console.timeEnd('[Perf] Single RPC Hydration');
-                        if (response && response.status === 'success') {
-                            // Guardar lookups para el formateador
-                            window._LOOKUP_DATA = response.lookups || {};
-                            
-                            // Inflar Tuplas a Objetos (Data Compression)
-                            const headers = response.data.headers;
-                            const rows = response.data.rows.map(tuple => {
-                                const obj = {};
-                                headers.forEach((h, i) => obj[h] = tuple[i]);
-                                return obj;
-                            });
+                const rawResponse = await window.DataAPI.call('getInitialPayload', entityName);
+                console.timeEnd('[Perf] Single RPC Hydration');
+                
+                const response = typeof rawResponse === 'string' ? JSON.parse(rawResponse) : rawResponse;
+                
+                if (response && response.status === 'success') {
+                    // Guardar lookups para el formateador
+                    window._LOOKUP_DATA = response.lookups || {};
+                    
+                    // Inflar Tuplas a Objetos (Data Compression) si vienen en formato tupla
+                    let rows = [];
+                    if (response.data && response.data.headers && response.data.rows) {
+                        const headers = response.data.headers;
+                        rows = response.data.rows.map(tuple => {
+                            const obj = {};
+                            headers.forEach((h, i) => obj[h] = tuple[i]);
+                            return obj;
+                        });
+                    } else if (response.data && Array.isArray(response.data)) {
+                        rows = response.data;
+                    }
 
-                            // Store in Frontend Cache for 0.0s subsequent transitions
-                            if (window.__APP_CACHE__) {
-                                window.__APP_CACHE__[entityName] = rows;
-                            }
+                    // Store in Frontend Cache for 0.0s subsequent transitions
+                    if (window.__APP_CACHE__) {
+                        window.__APP_CACHE__[entityName] = rows;
+                    }
 
-                            const activeRows = rows.filter(r => r.estado !== 'Eliminado' && r.estado !== 'eliminado');
-                            cb(null, activeRows);
-                        } else {
-                            cb(new Error(response ? response.message : 'Error desconocido'));
-                        }
-                    })
-                    .withFailureHandler(function (err) {
-                        cb(err || new Error('Error de comunicación con el servidor'));
-                    })
-                    .getInitialPayload(entityName);
-            } else {
-                cb(new Error('Se requiere el entorno de producción de Google (Los datos mock fueron removidos)'));
+                    const activeRows = rows.filter(r => r.estado !== 'Eliminado' && r.estado !== 'eliminado');
+                    cb(null, activeRows);
+                } else {
+                    cb(new Error(response ? response.message : 'Error desconocido'));
+                }
+            } catch (err) {
+                cb(err || new Error('Error de comunicación con el servidor'));
             }
         }
 
@@ -507,7 +508,7 @@
             return window.PresentSafe(alert);
         }
 
-        function _executeSoftDelete(id) {
+        async function _executeSoftDelete(id) {
             // Optimistic UI update (Local state)
             const meta = ENTITY_META[_state.entityName] || { idField: 'id' };
             const idField = meta.idField;
@@ -525,39 +526,30 @@
             document.body.appendChild(loading);
             window.PresentSafe(loading);
 
-            const isGAS = typeof google !== 'undefined' && google.script && google.script.run;
-            if (isGAS) {
-                google.script.run
-                    .withSuccessHandler(function (rawResponse) {
-                        const response = typeof rawResponse === 'string' ? JSON.parse(rawResponse) : rawResponse;
-                        loading.dismiss();
-                        if (response && response.status === 'success') {
-                            // Purgar de la RAM local
-                            if (window.__APP_CACHE__ && window.__APP_CACHE__[_state.entityName]) {
-                                const idField = (ENTITY_META[_state.entityName] || { idField: 'id' }).idField;
-                                window.__APP_CACHE__[_state.entityName] = window.__APP_CACHE__[_state.entityName].filter(row => row[idField] !== id);
-                            }
+            try {
+                const rawResponse = await window.DataAPI.call('API_Universal_Router', 'delete', _state.entityName, id);
+                const response = typeof rawResponse === 'string' ? JSON.parse(rawResponse) : rawResponse;
+                loading.dismiss();
+                
+                if (response && response.status === 'success') {
+                    // Purgar de la RAM local
+                    if (window.__APP_CACHE__ && window.__APP_CACHE__[_state.entityName]) {
+                        const idField = (ENTITY_META[_state.entityName] || { idField: 'id' }).idField;
+                        window.__APP_CACHE__[_state.entityName] = window.__APP_CACHE__[_state.entityName].filter(row => row[idField] !== id);
+                    }
 
-                            // Forzar re-renderización de la vista actual desde el caché actualizado
-                            _rerenderData();
+                    // Forzar re-renderización de la vista actual desde el caché actualizado
+                    _rerenderData();
 
-                            _showToast('Registro borrado con éxito.', 'success');
-                        } else {
-                            _showToast('Error al borrar: ' + (response ? response.message : ''), 'danger');
-                            render(_state.entityName, _state.containerId);
-                        }
-                    })
-                    .withFailureHandler(function (err) {
-                        loading.dismiss();
-                        _showToast('Error de red al borrar', 'danger');
-                        render(_state.entityName, _state.containerId);
-                    })
-                    .API_Universal_Router('delete', _state.entityName, id);
-            } else {
-                setTimeout(() => {
-                    loading.dismiss();
-                    _showToast('Mock: Registro borrado con éxito.', 'success');
-                }, 500);
+                    _showToast('Registro borrado con éxito.', 'success');
+                } else {
+                    _showToast('Error al borrar: ' + (response ? response.message : ''), 'danger');
+                    render(_state.entityName, _state.containerId);
+                }
+            } catch (err) {
+                loading.dismiss();
+                _showToast('Error de red al borrar', 'danger');
+                render(_state.entityName, _state.containerId);
             }
         }
 

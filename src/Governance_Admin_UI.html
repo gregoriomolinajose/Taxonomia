@@ -71,21 +71,16 @@ window.GovernanceEngine = {
         }
     },
 
-    _fetchTable: function(table) {
-        return new Promise((resolve, reject) => {
-            if (typeof google === 'undefined') {
-                resolve([]);
-                return;
-            }
-            google.script.run
-                .withSuccessHandler(res => {
-                    const json = typeof res === 'string' ? JSON.parse(res) : res;
-                    if (json && json.status === 'success') resolve(json.data);
-                    else resolve([]);
-                })
-                .withFailureHandler(reject)
-                .API_Universal_Router('read', table, {pageSize: 1000}); // Truncamos al max para traer TODO
-        });
+    _fetchTable: async function(table) {
+        try {
+            const res = await window.DataAPI.call('API_Universal_Router', 'read', table, {pageSize: 1000}); // Truncamos al max para traer TODO
+            const json = typeof res === 'string' ? JSON.parse(res) : res;
+            if (json && json.status === 'success') return json.data;
+            return [];
+        } catch(err) {
+            console.error('Network Error fetching table:', err);
+            return [];
+        }
     },
 
     _buildTable: function() {
@@ -184,7 +179,7 @@ window.GovernanceEngine = {
         });
     },
 
-    _onCellChange: function(selectEl, getColorFromConfig) {
+    _onCellChange: async function(selectEl, getColorFromConfig) {
         const permId = selectEl.dataset.permId;
         const rolId = selectEl.dataset.rolId;
         const entName = selectEl.dataset.entName;
@@ -206,28 +201,26 @@ window.GovernanceEngine = {
         if (permId) record.id_permiso = permId;
 
         // Transaction call
-        google.script.run
-            .withSuccessHandler(res => {
-                const parsed = typeof res === 'string' ? JSON.parse(res) : res;
-                selectEl.disabled = false;
-                selectEl.style.opacity = '1';
-                
-                if (parsed && parsed.status === 'success') {
-                    if (action === 'create' && parsed.pkValue) {
-                        selectEl.dataset.permId = parsed.pkValue;
-                    }
-                    if (window.showToast) window.showToast(`Permiso en ${entName} concedido con éxito.`, 'success');
-                } else {
-                    if (window.showToast) window.showToast('Rechazo ABAC: ' + (parsed.message || ''), 'danger');
-                    // Idealmente revertiríamos el change si falla
+        try {
+            const res = await window.DataAPI.call('API_Universal_Router', action, 'Sys_Permissions', record);
+            const parsed = typeof res === 'string' ? JSON.parse(res) : res;
+            selectEl.disabled = false;
+            selectEl.style.opacity = '1';
+            
+            if (parsed && parsed.status === 'success') {
+                if (action === 'create' && parsed.pkValue) {
+                    selectEl.dataset.permId = parsed.pkValue;
                 }
-            })
-            .withFailureHandler(err => {
-                selectEl.disabled = false;
-                selectEl.style.opacity = '1';
-                if (window.showToast) window.showToast('Error de red ABAC.', 'danger');
-            })
-            .API_Universal_Router(action, 'Sys_Permissions', record);
+                if (window.showToast) window.showToast(`Permiso en ${entName} concedido con éxito.`, 'success');
+            } else {
+                if (window.showToast) window.showToast('Rechazo ABAC: ' + (parsed.message || ''), 'danger');
+                // Idealmente revertiríamos el change si falla
+            }
+        } catch(err) {
+            selectEl.disabled = false;
+            selectEl.style.opacity = '1';
+            if (window.showToast) window.showToast('Error de red ABAC.', 'danger');
+        }
     }
 };
 </script>

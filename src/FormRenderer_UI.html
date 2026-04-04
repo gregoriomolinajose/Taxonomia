@@ -460,20 +460,16 @@
 
             let fullRecord = record;
             try {
-                if (typeof google !== 'undefined' && google.script && google.script.run) {
-                    fullRecord = await new Promise((resolve, reject) => {
-                        google.script.run
-                            .withSuccessHandler(rawRes => {
-                                const res = typeof rawRes === 'string' ? JSON.parse(rawRes) : rawRes;
-                                if (res && res.status === 'success') {
-                                    resolve(res.data);
-                                } else {
-                                    reject(new Error(res ? res.message : 'Respuesta inválida'));
-                                }
-                            })
-                            .withFailureHandler(err => reject(err))
-                            .API_Universal_Router('read', entityName, { id: id });
-                    });
+                try {
+                    const rawRes = await window.DataAPI.call('API_Universal_Router', 'read', entityName, { id: id });
+                    const res = typeof rawRes === 'string' ? JSON.parse(rawRes) : rawRes;
+                    if (res && res.status === 'success') {
+                        fullRecord = res.data;
+                    } else {
+                        throw new Error(res ? res.message : 'Respuesta inválida');
+                    }
+                } catch (apiErr) {
+                    throw apiErr;
                 }
             } catch (e) {
                 console.warn("[FormEngine] Falló hidratación profunda, usando cache local:", e);

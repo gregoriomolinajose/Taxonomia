@@ -117,7 +117,7 @@
             if (!file) return;
 
             const reader = new FileReader();
-            reader.onload = function(e) {
+            reader.onload = async function(e) {
                 const text = e.target.result;
                 
                 // Parser robusto con Regex para comillas
@@ -173,27 +173,16 @@
                 if (confirm(`Se encontraron ${jsonArray.length} registros. ¿Deseas importarlos a la entidad '${entityName}'?`)) {
                     if (onLoadingStart) onLoadingStart();
 
-                    const isGAS = typeof google !== 'undefined' && google.script && google.script.run;
-                    if (isGAS) {
-                        google.script.run
-                            .withSuccessHandler(response => {
-                                if (response.status === 'success') {
-                                    // Purgar caché explícitamente y ejecutar
-                                    if (window.__APP_CACHE__) window.__APP_CACHE__[entityName] = null;
-                                    if (onSuccess) onSuccess(response.insertedCount);
-                                } else {
-                                    if (onError) onError(response.message);
-                                }
-                            })
-                            .withFailureHandler(err => {
-                                if (onError) onError(err.message || 'Error de red');
-                            })
-                            .bulkInsert(entityName, jsonArray);
-                    } else {
-                        setTimeout(() => {
+                    try {
+                        const response = await window.DataAPI.call('bulkInsert', entityName, jsonArray);
+                        if (response && response.status === 'success') {
                             if (window.__APP_CACHE__) window.__APP_CACHE__[entityName] = null;
-                            if (onSuccess) onSuccess(jsonArray.length);
-                        }, 500);
+                            if (onSuccess) onSuccess(response.insertedCount || jsonArray.length);
+                        } else {
+                            if (onError) onError((response && response.message) ? response.message : 'Respuesta desconocida');
+                        }
+                    } catch (err) {
+                        if (onError) onError(err.message || 'Error de red');
                     }
                 }
                 event.target.value = ''; // Reset input

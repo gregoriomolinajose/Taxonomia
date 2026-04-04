@@ -148,6 +148,23 @@ try {
         }
         console.log(`[Deploy] Bundled native CSS files into virtual HTML styles`);
 
+        // Native JS Frontend Bundler (S24.6 Client JS Decoupling)
+        const jsFiles = fs.readdirSync(buildDir).filter(f => f.endsWith('.client.js'));
+        jsFiles.forEach(file => {
+            const sourcePath = `${buildDir}/${file}`;
+            const targetPath = `${buildDir}/${file.replace('.client.js', '.html')}`;
+            
+            let jsContent = fs.readFileSync(sourcePath, 'utf8');
+            const htmlWrapped = `<script>\n${jsContent}\n</script>`;
+            fs.writeFileSync(targetPath, htmlWrapped, 'utf8');
+            
+            // Delete the original to prevent Clasp from pushing it as a backend script
+            fs.unlinkSync(sourcePath);
+        });
+        if (jsFiles.length > 0) {
+            console.log(`[Deploy] Bundled ${jsFiles.length} native .client.js files into virtual HTML scripts`);
+        }
+
         // Swap Config.js in .build
         const targetConfig = `${buildDir}/Global_Config.js`;
         if (fs.existsSync(configFile)) {

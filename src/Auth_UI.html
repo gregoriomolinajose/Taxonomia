@@ -50,22 +50,13 @@
       // Ocultar sin destruir el DOM interno para preservar Listeners
       if (appContainer) appContainer.classList.add('ion-hide');
 
-      if (typeof google !== 'undefined' && google.script && google.script.run) {
-        google.script.run
-          .withSuccessHandler(async function(response) {
-            await loading.dismiss();
-            window.AuthManager.handleAuthResponse(response, appContainer);
-          })
-          .withFailureHandler(async function(error) {
-            await loading.dismiss();
-            window.AuthManager.renderAccessDenied(appContainer, 'Error de conexión con el servidor.');
-          })
-          .getUserIdentity();
-      } else {
-        setTimeout(async function() {
-          await loading.dismiss();
-          window.AuthManager.handleAuthResponse({ authorized:true, email:'local@gmail.com' }, appContainer);
-        }, 800);
+      try {
+        const response = await window.DataAPI.call('getUserIdentity');
+        await loading.dismiss();
+        window.AuthManager.handleAuthResponse(response, appContainer);
+      } catch (error) {
+        await loading.dismiss();
+        window.AuthManager.renderAccessDenied(appContainer, 'Error de conexión con el servidor.');
       }
     },
     
@@ -135,8 +126,10 @@
       document.body.appendChild(toast);
       await window.PresentSafe(toast);
       
-      var onSuccess = async function(res) {
+      try {
+        const res = await window.DataAPI.call('getAppBootstrapPayload');
         await toast.dismiss();
+        
         var newToast = document.createElement('ion-toast');
         newToast.position = 'bottom';
         if (res && res.status === 'success') {
@@ -150,22 +143,9 @@
           newToast.message = 'Error en sincronización.'; newToast.color = 'danger'; newToast.duration = 3000;
         }
         document.body.appendChild(newToast); await window.PresentSafe(newToast);
-      };
-      
-      if (typeof google !== 'undefined' && google.script && google.script.run) {
-        google.script.run.withSuccessHandler(onSuccess).withFailureHandler(async function() {
-          await toast.dismiss();
-        }).getAppBootstrapPayload();
-      } else {
-        setTimeout(async function() {
-          await toast.dismiss();
-          if (typeof window.renderDashboard === 'function') window.renderDashboard();
-          var newToast = document.createElement('ion-toast');
-          newToast.position = 'bottom'; newToast.message = 'Mock: Plataforma sincronizada.';
-          newToast.color = 'success'; newToast.duration = 2000;
-          document.body.appendChild(newToast); await window.PresentSafe(newToast);
-          if (window.AppEventBus) window.AppEventBus.publish('APP::READY');
-        }, 1000);
+        
+      } catch (err) {
+        await toast.dismiss();
       }
     },
     

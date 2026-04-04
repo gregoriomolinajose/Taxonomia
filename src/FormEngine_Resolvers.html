@@ -50,24 +50,28 @@
                             return;
                         }
 
-                        // Intersección Backend (Apps Script)
-                        if (typeof google !== 'undefined' && google.script && google.script.run) {
-                            const handler = google.script.run
-                                .withSuccessHandler(opts => { field.options = opts || []; resolve(); })
-                                .withFailureHandler(err => {
-                                    console.error(`[FormEngine_Resolvers] lookupSource falló:`, err);
+                        // Intersección Backend (Apps Script vía DataAPI)
+                        let apiMethod = field.lookupSource;
+                        let apiArgs = [];
+                        
+                        if (!apiMethod && field.type === 'relation' && field.targetEntity) {
+                            apiMethod = 'getInitialPayload';
+                            apiArgs = [field.targetEntity];
+                        }
+
+                        if (apiMethod) {
+                            window.DataAPI.call(apiMethod, ...apiArgs)
+                                .then(opts => {
+                                    field.options = Array.isArray(opts) ? opts : (opts && opts.data ? opts.data : []); 
+                                    resolve();
+                                })
+                                .catch(err => {
+                                    console.error(`[FormEngine_Resolvers] DataAPI falló para ${apiMethod}:`, err);
                                     resolve(); 
                                 });
-                            
-                            if (field.lookupSource) {
-                                handler[field.lookupSource]();
-                            } else if (field.type === 'relation' && field.targetEntity) {
-                                // Dynamic lookup for relations
-                                handler.getInitialPayload(field.targetEntity);
-                            }
                         } else {
                             // Dev fallback
-                            field.options = [{ value: 'MOCK-1', label: `Mock: ${field.lookupSource || field.targetEntity}` }];
+                            field.options = [{ value: 'MOCK-1', label: `Mock: ${field.targetEntity}` }];
                             resolve();
                         }
                     }));
