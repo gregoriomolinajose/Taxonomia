@@ -1,0 +1,99 @@
+﻿node.exe : FAIL __tests__/Engine_DB_Orchestration.test.js
+En línea: 1 Carácter: 1
++ & "C:\Program Files\nodejs/node.exe" "C:\Program 
+Files\nodejs/node_mo ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (FAIL __tests__/...tration 
+   .test.js:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+  Engine_DB Orchestration & DAG SCD-2
+    SCD-2 _updateGraphEdges
+      ÔêÜ should expire active edge and spawn new edge when parent 
+changes (5 ms)
+      ÔêÜ should do nothing if parent has not changed
+    Engine_DB.delete (Unit of Work Orchestrations)
+      ├ù should execute ORPHAN cascading logic using 
+Graph.buildDeletionPatch (4 ms)
+      ├ù should execute standard deletion if strictly FLAT topology (1 
+ms)
+
+  ÔùÅ Engine_DB Orchestration & DAG SCD-2 ÔÇ║ Engine_DB.delete (Unit 
+of Work Orchestrations) ÔÇ║ should execute ORPHAN cascading logic 
+using Graph.buildDeletionPatch
+
+    expect(jest.fn()).toHaveBeenCalledWith(...expected)
+
+    - Expected
+    + Received
+
+      "TARGET",
+      "ORPHAN",
+      Array [
+        Object {
+    -     "es_version_actual": true,
+    -     "id_nodo_hijo": "TARGET",
+    -     "id_nodo_padre": "X",
+    -     "id_relacion": "R1",
+    +     "estado": "Activo",
+    +     "id_grupo_producto": "GRUP-01",
+    +     "id_user": "USER-123",
+    +   },
+    +   Object {
+    +     "estado": "Activo",
+    +     "id_grupo_producto": "GRUP-02",
+    +     "id_user": "USER-456",
+        },
+      ],
+
+    Number of calls: 1
+
+    [0m [90m 141 |[39m             
+     [90m 142 |[39m             [90m// Llama a 
+Engine_Graph.buildDeletionPatch[39m
+    [31m[1m>[22m[39m[90m 143 |[39m             expect(global[33m
+.[39m[33mEngine_Graph[39m[33m.[39mbuildDeletionPatch)[33m.[39mto
+HaveBeenCalledWith([32m'TARGET'[39m[33m,[39m 
+[32m'ORPHAN'[39m[33m,[39m activeGraphMock)[33m;[39m
+     [90m     |[39m                                                  
+          [31m[1m^[22m[39m
+     [90m 144 |[39m
+     [90m 145 |[39m             [90m// Hace el upsertBatch de 
+aristas[39m
+     [90m 146 |[39m             expect([33mEngine_DB[39m[33m.[39m
+upsertBatch)[33m.[39mtoHaveBeenCalledWith([32m'Relacion_Dominios'[3
+9m[33m,[39m expect[33m.[39many([33mArray[39m)[33m,[39m 
+config)[33m;[39m[0m
+
+      at Object.toHaveBeenCalledWith 
+(__tests__/Engine_DB_Orchestration.test.js:143:60)
+
+  ÔùÅ Engine_DB Orchestration & DAG SCD-2 ÔÇ║ Engine_DB.delete (Unit 
+of Work Orchestrations) ÔÇ║ should execute standard deletion if 
+strictly FLAT topology
+
+    No se pudo determinar la Primary Key en los encabezados para el 
+Soft Delete.
+
+    [0m [90m 278 |[39m         }
+     [90m 279 |[39m
+    [31m[1m>[22m[39m[90m 280 |[39m         [36mif[39m 
+([33m![39mpkField) [36mthrow[39m [36mnew[39m 
+[33mError[39m([32m"No se pudo determinar la Primary Key en los 
+encabezados para el Soft Delete."[39m)[33m;[39m
+     [90m     |[39m                             [31m[1m^[22m[39m
+     [90m 281 |[39m
+     [90m 282 |[39m         [36mconst[39m pkIndex [33m=[39m 
+normalizedHeaders[33m.[39mindexOf(pkField)[33m;[39m
+     [90m 283 |[39m[0m
+
+      at Object.remove (src/Adapter_Sheets.js:280:29)
+      at Object.remove (src/Engine_DB.js:527:50)
+      at Object.<anonymous> 
+(__tests__/Engine_DB_Orchestration.test.js:173:44)
+
+Test Suites: 1 failed, 1 total
+Tests:       2 failed, 2 passed, 4 total
+Snapshots:   0 total
+Time:        0.458 s, estimated 1 s
+Ran all test suites matching __tests__/Engine_DB_Orchestration.test.js.

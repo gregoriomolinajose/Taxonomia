@@ -127,16 +127,24 @@
                 trHead.appendChild(th);
             });
             
-            const thAction = document.createElement('th');
-            thAction.className = 'dv-th-action';
-            trHead.appendChild(thAction);
+            let hideActionColumn = false;
+            if (window.ABAC) {
+                // S18.4 Fix (QR): Encapsulation Leak (Semantic Bug)
+                hideActionColumn = !(window.ABAC.can('update', this.cfg.entityName) || window.ABAC.can('delete', this.cfg.entityName));
+            }
+
+            if (!hideActionColumn) {
+                const thAction = document.createElement('th');
+                thAction.className = 'dv-th-action';
+                trHead.appendChild(thAction);
+            }
             
             thead.appendChild(trHead);
             table.appendChild(thead);
             
             // Tbody
             const tbody = document.createElement('tbody');
-            tbody.appendChild(this._renderTableBodyNodes(rows, visibleCols));
+            tbody.appendChild(this._renderTableBodyNodes(rows, visibleCols, hideActionColumn));
             table.appendChild(tbody);
             
             tableWrap.appendChild(table);
@@ -149,7 +157,7 @@
             return docFrag;
         },
 
-        _renderTableBodyNodes: function(rows, visibleCols) {
+        _renderTableBodyNodes: function(rows, visibleCols, hideActionColumn) {
             const frag = document.createDocumentFragment();
             const startIdx = (this.cfg.page - 1) * this.cfg.pageSize;
             
@@ -172,23 +180,28 @@
                 const meta = (window.ENTITY_META && window.ENTITY_META[this.cfg.entityName]) || { idField: 'id' };
                 const id = row[meta.idField] || '';
                 
-                const tdAction = document.createElement('td');
-                tdAction.className = 'dv-td-action';
-                
-                const btnDel = document.createElement('button');
-                btnDel.className = 'dv-btn-icon dv-btn-danger';
-                btnDel.title = 'Eliminar';
-                btnDel.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    this._invoke(this.cfg.onDelete, id);
-                });
-                
-                const iconDel = document.createElement('ion-icon');
-                iconDel.setAttribute('name', 'trash');
-                btnDel.appendChild(iconDel);
-                
-                tdAction.appendChild(btnDel);
-                tr.appendChild(tdAction);
+                if (!hideActionColumn) {
+                    const tdAction = document.createElement('td');
+                    tdAction.className = 'dv-td-action';
+                    
+                    // S18.4 - Hiding Agresivo por Fila (Evaluación Record-Aware)
+                    if (!window.ABAC || window.ABAC.can('delete', this.cfg.entityName, id)) {
+                        const btnDel = document.createElement('button');
+                        btnDel.className = 'dv-btn-icon dv-btn-danger';
+                        btnDel.title = 'Eliminar';
+                        btnDel.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            this._invoke(this.cfg.onDelete, id);
+                        });
+                        
+                        const iconDel = document.createElement('ion-icon');
+                        iconDel.setAttribute('name', 'trash');
+                        btnDel.appendChild(iconDel);
+                        
+                        tdAction.appendChild(btnDel);
+                    }
+                    tr.appendChild(tdAction);
+                }
                 
                 frag.appendChild(tr);
             });
@@ -241,17 +254,20 @@
                 headerTextWrap.appendChild(title);
                 headerEl.appendChild(headerTextWrap);
                 
-                const btnDel = document.createElement('button');
-                btnDel.className = 'dv-btn-icon dv-btn-danger-lite';
-                btnDel.title = 'Eliminar';
-                btnDel.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    this._invoke(this.cfg.onDelete, idStr);
-                });
-                const iconDel = document.createElement('ion-icon');
-                iconDel.setAttribute('name', 'trash');
-                btnDel.appendChild(iconDel);
-                headerEl.appendChild(btnDel);
+                // S18.4 - Hiding Agresivo (Cards Grid)
+                if (!window.ABAC || window.ABAC.can('delete', this.cfg.entityName, idStr)) {
+                    const btnDel = document.createElement('button');
+                    btnDel.className = 'dv-btn-icon dv-btn-danger-lite';
+                    btnDel.title = 'Eliminar';
+                    btnDel.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        this._invoke(this.cfg.onDelete, idStr);
+                    });
+                    const iconDel = document.createElement('ion-icon');
+                    iconDel.setAttribute('name', 'trash');
+                    btnDel.appendChild(iconDel);
+                    headerEl.appendChild(btnDel);
+                }
                 cardEl.appendChild(headerEl);
                 
                 const contentEl = document.createElement('ion-card-content');

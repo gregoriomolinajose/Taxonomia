@@ -148,81 +148,12 @@
                 return window.Math_Engine ? window.Math_Engine.buildPathName(formStateObj, params, cache) : '';
             };
 
-            // --- DEPENDENCY RESOLVER: lookupSource Universal (Metadata-Driven) ---
-            /**
-             * Escanea el schema en busca de campos con `lookupSource`.
-             * Llama en paralelo a cada función backend y rellena field.options.
-             * Muestra ion-loading mientras resuelve; non-fatal si un lookup falla.
-             */
-            async function _resolveLookupSources(fields) {
-                const fieldsWithLookup = [];
-                fields.forEach(f => {
-                    if (f.lookupSource || (f.type === 'relation' && f.targetEntity)) {
-                        fieldsWithLookup.push(f);
-                    }
-                    if (f.type === 'dynamic_list' && f.subFields) {
-                        f.subFields.forEach(sub => {
-                            if (sub.lookupSource) fieldsWithLookup.push(sub);
-                        });
-                    }
-                });
-                if (fieldsWithLookup.length === 0) return;
-
-                const loading = document.createElement('ion-loading');
-                loading.message = 'Cargando opciones...';
-                loading.spinner = 'crescent';
-                document.body.appendChild(loading);
-                await loading.present();
-
-                try {
-                    const promises = fieldsWithLookup.map(field => new Promise((resolve) => {
-                        // REGLA SGMP (Bugfix): Intercepción Local (Zero-Latency)
-                        const localResolver = window[field.lookupSource] || global[field.lookupSource];
-                        if (field.lookupSource && typeof localResolver === 'function') {
-                            const result = localResolver();
-                            if (result instanceof Promise) {
-                                result.then(opts => { field.options = opts || []; resolve(); }).catch(() => { field.options = []; resolve(); });
-                            } else {
-                                field.options = result || [];
-                                resolve();
-                            }
-                            return; // Salir prematuramente, no llamar al backend
-                        }
-
-                        if (typeof google !== 'undefined' && google.script && google.script.run) {
-                            const handler = google.script.run
-                                .withSuccessHandler(opts => { field.options = opts || []; resolve(); })
-                                .withFailureHandler(err => {
-                                    console.error(`[FormEngine] lookupSource falló:`, err);
-                                    resolve(); 
-                                });
-                            
-                            if (field.lookupSource) {
-                                handler[field.lookupSource]();
-                            } else if (field.type === 'relation' && field.targetEntity) {
-                                // Dynamic lookup for relations (Rules 15)
-                                handler.getInitialPayload(field.targetEntity);
-                            }
-                        } else {
-                            // Modo dev local
-                            field.options = [{ value: 'MOCK-1', label: `Mock: ${field.lookupSource || field.targetEntity}` }];
-                            resolve();
-                        }
-                    }));
-                    await Promise.all(promises);
-                } finally {
-                    try {
-                        await loading.dismiss();
-                    } catch (_) {
-                        // Race condition: Ionic overlay ya fue desreferenciado por mutación del DOM.
-                        // Fallback: eliminar el elemento directamente.
-                        if (loading.parentNode) loading.parentNode.removeChild(loading);
-                    }
-                }
+            // --- DEPENDENCY RESOLVER: Abstracted to FormEngine_Resolvers ---
+            if (window.FormEngine_Resolvers) {
+                await window.FormEngine_Resolvers.hydrateLookupSources(fields);
+            } else {
+                console.warn("[FormEngine] ALERTA: FormEngine_Resolvers no está cargado.");
             }
-            // -----------------------------------------------------------------
-
-            await _resolveLookupSources(fields);
 
 
 
@@ -264,6 +195,14 @@
 
             const cardContent = document.createElement('ion-card-content');
             cardContent.style.padding = 'var(--spacing-6)';
+            
+            // S21.1: Optimistic Locking Hidden Metadata
+            const versionInput = document.createElement('input');
+            versionInput.type = 'hidden';
+            versionInput.name = '_version';
+            versionInput.value = data._version || 1;
+            cardContent.appendChild(versionInput);
+            
             card.appendChild(cardContent);
 
             // S14.1: Delegación SRP a UI_FormStepper
@@ -454,78 +393,14 @@
             container.appendChild(card);
             
             // --- Metadata-Driven Dependency Injection (Zero-Touch UI) ---
-            let debounceTimer; // S4.3: Debounce logic para blindar Event Loop
-            ['ionChange', 'ionInput'].forEach(eventType => {
-                modal.addEventListener(eventType, (e) => {
-                    const triggerInput = e.target;
-                    const fieldName = triggerInput.name;
-                    if (!fieldName || !fields) return;
-
-                    const schemaField = fields.find(f => f.name === fieldName);
-                    if (schemaField && Array.isArray(schemaField.triggers_refresh_of)) {
-                        
-                        // Limpiar timer previo (Debouncing)
-                        clearTimeout(debounceTimer);
-                        
-                        debounceTimer = setTimeout(async () => {
-                            // Recopilar formStateObj JIT (Diccionario Puro)
-                            const currentInputs = modal.querySelectorAll('ion-input, ion-select');
-                            const formStateObj = Array.from(currentInputs).reduce((acc, inp) => {
-                                acc[inp.name] = inp.value;
-                                return acc;
-                            }, {});
-                            const formCurrentStateArr = Object.keys(formStateObj).map(k => ({name: k, value: formStateObj[k]}));
-
-                            // Procesar cada target
-                            for (const targetName of schemaField.triggers_refresh_of) {
-                                const targetSchema = fields.find(f => f.name === targetName);
-                                if (!targetSchema) continue;
-
-                                // 1. Caso lookupSource (Dropdowns)
-                                if (targetSchema.lookupSource) {
-                                    const targetComponent = modal.querySelector(`ion-select[name="${targetName}"]`);
-                                    if (!targetComponent || eventType === 'ionInput') continue; // Lookup solo reacciona a ionChange por rendimiento
-
-                                    targetComponent.disabled = true;
-                                    targetComponent.innerHTML = '';
-                                    targetComponent.value = null;
-
-                                    const resolver = window[targetSchema.lookupSource] || global[targetSchema.lookupSource];
-                                    if (typeof resolver === 'function') {
-                                        const newOptions = await resolver(formCurrentStateArr);
-                                        
-                                        if (newOptions && Array.isArray(newOptions)) {
-                                            newOptions.forEach(opt => {
-                                                const ionOpt = document.createElement('ion-select-option');
-                                                ionOpt.value = opt.value;
-                                                ionOpt.textContent = opt.label;
-                                                targetComponent.appendChild(ionOpt);
-                                            });
-                                            // C-02: Guard inside Array.isArray to prevent null.length crash
-                                            if (newOptions.length > 0) targetComponent.disabled = false;
-                                        }
-                                    }
-                                }
-
-                                // 2. Caso calculatedValue (Campos Matemáticos reactivos)
-                                if (targetSchema.calculatedValue) {
-                                    const calculator = window[targetSchema.calculatedValue] || global[targetSchema.calculatedValue];
-                                    if (typeof calculator === 'function') {
-                                        const newVal = calculator(formStateObj, targetSchema.calcParams || {});
-                                        const targetInput = modal.querySelector(`ion-input[name="${targetName}"], ion-textarea[name="${targetName}"]`);
-                                        if (targetInput) targetInput.value = newVal;
-                                    }
-                                }
-                            }
-                        }, 300); // 300ms espera antes de calcular jerarquía pesada
-                    }
-                });
-            });
+            if (window.UI_FormDependencies) {
+                window.UI_FormDependencies.attachListeners(modal, fields);
+            }
             // ------------------------------------------------------------
 
             modal.appendChild(footerContainer);
             document.body.appendChild(modal);
-            await modal.present();
+            await window.PresentSafe(modal);
         };
 
         /**
@@ -581,24 +456,20 @@
             const loading = document.createElement('ion-loading');
             loading.message = 'Hidratando registro...';
             document.body.appendChild(loading);
-            await loading.present();
+            await window.PresentSafe(loading);
 
             let fullRecord = record;
             try {
-                if (typeof google !== 'undefined' && google.script && google.script.run) {
-                    fullRecord = await new Promise((resolve, reject) => {
-                        google.script.run
-                            .withSuccessHandler(rawRes => {
-                                const res = typeof rawRes === 'string' ? JSON.parse(rawRes) : rawRes;
-                                if (res && res.status === 'success') {
-                                    resolve(res.data);
-                                } else {
-                                    reject(new Error(res ? res.message : 'Respuesta inválida'));
-                                }
-                            })
-                            .withFailureHandler(err => reject(err))
-                            .API_Universal_Router('read', entityName, { id: id });
-                    });
+                try {
+                    const rawRes = await window.DataAPI.call('API_Universal_Router', 'read', entityName, { id: id });
+                    const res = typeof rawRes === 'string' ? JSON.parse(rawRes) : rawRes;
+                    if (res && res.status === 'success') {
+                        fullRecord = res.data;
+                    } else {
+                        throw new Error(res ? res.message : 'Respuesta inválida');
+                    }
+                } catch (apiErr) {
+                    throw apiErr;
                 }
             } catch (e) {
                 console.warn("[FormEngine] Falló hidratación profunda, usando cache local:", e);
@@ -681,6 +552,15 @@
             // S7.3 - El "Pre-llenado de Chip Components" nativo fue removido. 
             // Reason (Principio DRY): UI_Components gestiona esta hidratación activamente
             // al ser instanciados con `window._buildSearchableMulti(...)` en el switch parent.
+
+            // S18.4 - ABAC Passive Hiding & HelpDesk Mitigation (Educative Zero-Trust)
+            const canEdit = !window.ABAC || window.ABAC.can('update', entityName, id);
+            if (!canEdit) {
+                // S24.2 Delega ABAC al servicio utilitario puro
+                if (window.UI_FormUtils && window.UI_FormUtils.applyReadOnlyLock) {
+                    window.UI_FormUtils.applyReadOnlyLock(container, null, null, true);
+                }
+            }
 
             // 7. Agregar Audit Trail (Directiva del Product Architect)
             if (record.updated_at && record.updated_by) {

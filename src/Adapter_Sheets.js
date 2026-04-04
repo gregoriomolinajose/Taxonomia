@@ -19,16 +19,20 @@ const Adapter_Sheets = {
     upsert: function (tableName, payload, config) {
         // 1. Determinar PK con soporte para entidades plurales (ej. Grupo_Productos → id_grupo_producto)
         //    Prueba: id_<tableName> → id_<singular> → find(startsWith('id_'))
-        const tableKey = tableName.toLowerCase();
-        // R-02: Handle Spanish -es suffix (e.g. capacidades→capacidad) before generic -s
-        const singularKey = tableKey.endsWith('es') ? tableKey.slice(0, -2)
-            : tableKey.endsWith('s') ? tableKey.slice(0, -1) : tableKey;
-        const primaryKeyField = payload.hasOwnProperty('id_' + tableKey) ? 'id_' + tableKey
-            : payload.hasOwnProperty('id_' + singularKey) ? 'id_' + singularKey
-                : Object.keys(payload).find(key => key.startsWith('id_'));
+        const schema = (typeof APP_SCHEMAS !== 'undefined') ? APP_SCHEMAS[tableName] : null;
+        let primaryKeyField = schema && schema.primaryKey ? schema.primaryKey : null;
+        
+        if (!primaryKeyField) {
+            const tableKey = tableName.toLowerCase();
+            const singularKey = tableKey.endsWith('es') ? tableKey.slice(0, -2) : tableKey.endsWith('s') ? tableKey.slice(0, -1) : tableKey;
+            primaryKeyField = payload.hasOwnProperty('id_' + tableKey) ? 'id_' + tableKey
+                : payload.hasOwnProperty('id_' + singularKey) ? 'id_' + singularKey
+                    : Object.keys(payload).find(key => key.startsWith('id_'));
+        }
 
         if (!primaryKeyField || !payload[primaryKeyField]) {
-            throw new Error(`Primary Key requerida. No se encontró 'id_${tableKey}' ni 'id_${singularKey}' en el payload.`);
+            const expectedKey = primaryKeyField || `id_${tableName.toLowerCase()}`;
+            throw new Error(`Primary Key requerida. No se encontró '${expectedKey}' en el payload para la tabla ${tableName}.`);
         }
 
 
@@ -84,6 +88,25 @@ const Adapter_Sheets = {
         let existingRow = [];
         if (foundRowIndex > -1) {
             existingRow = sheet.getRange(foundRowIndex, 1, 1, normalizedHeaders.length).getValues()[0];
+            
+            // [S21.3 Soft-Delete] Bloquear updates en nodos lógicamente eliminados
+            if (this._isNodeLogicallyDeleted(normalizedHeaders, existingRow)) {
+                throw new Error("ERROR_ARCHIVED: No se puede modificar una entidad eliminada lógicamente.");
+            }
+
+            const idxVersion = normalizedHeaders.indexOf('version');
+            if (idxVersion > -1) {
+                const currentDbVersion = Number(existingRow[idxVersion]) || 1;
+                const incomingVersion = Number(payload.version) || Number(payload._version) || 1;
+                if (currentDbVersion !== incomingVersion) {
+                    throw new Error("ERROR_CONCURRENCY: La entidad '" + primaryKeyValue + "' ha sido modificada por otro usuario recientemente. Por favor, recargue e intente nuevamente.");
+                }
+                payload.version = currentDbVersion + 1;
+                payload._version = payload.version; // Compatibilidad hacia atrás
+            }
+        } else {
+            payload.version = 1;
+            payload._version = 1;
         }
 
         for (let i = 0; i < normalizedHeaders.length; i++) {
@@ -137,14 +160,17 @@ const Adapter_Sheets = {
     upsertBatch: function (tableName, items, config) {
         if (!Array.isArray(items) || items.length === 0) return { status: 'success', count: 0 };
         
-        const tableKey = tableName.toLowerCase();
-        // R-02: Handle Spanish -es suffix
-        const singularKey = tableKey.endsWith('es') ? tableKey.slice(0, -2)
-            : tableKey.endsWith('s') ? tableKey.slice(0, -1) : tableKey;
+        const schema = (typeof APP_SCHEMAS !== 'undefined') ? APP_SCHEMAS[tableName] : null;
         const firstItem = items[0];
-        const primaryKeyField = firstItem.hasOwnProperty('id_' + tableKey) ? 'id_' + tableKey
-            : firstItem.hasOwnProperty('id_' + singularKey) ? 'id_' + singularKey
-                : Object.keys(firstItem).find(key => key.startsWith('id_'));
+        let primaryKeyField = schema && schema.primaryKey ? schema.primaryKey : null;
+
+        if (!primaryKeyField) {
+            const tableKey = tableName.toLowerCase();
+            const singularKey = tableKey.endsWith('es') ? tableKey.slice(0, -2) : tableKey.endsWith('s') ? tableKey.slice(0, -1) : tableKey;
+            primaryKeyField = firstItem.hasOwnProperty('id_' + tableKey) ? 'id_' + tableKey
+                : firstItem.hasOwnProperty('id_' + singularKey) ? 'id_' + singularKey
+                    : Object.keys(firstItem).find(key => key.startsWith('id_'));
+        }
                 
         if (!primaryKeyField) {
             throw new Error(`Primary Key requerida para upsertBatch.`);
@@ -187,6 +213,12 @@ const Adapter_Sheets = {
             
             if (rowIndex !== undefined) {
                 const existingRow = originalData[rowIndex];
+
+                // [S21.3 Soft-Delete] Bloquear updates en nodos lógicamente eliminados
+                if (this._isNodeLogicallyDeleted(normalizedHeaders, existingRow)) {
+                    throw new Error(`ERROR_ARCHIVED: No se puede modificar la entidad con ID '${primaryKeyValue}' por estar eliminada lógicamente.`);
+                }
+
                 for (let i = 0; i < normalizedHeaders.length; i++) {
                     const h = normalizedHeaders[i];
                     if (h === 'created_at' || h === 'created_by') {
@@ -235,10 +267,15 @@ const Adapter_Sheets = {
         const headers = headersRange.getValues()[0];
         const normalizedHeaders = headers.map(h => _normalizeHeader(h));
 
-        const tableKey = tableName.toLowerCase();
-        const singularKey = tableKey.endsWith('s') ? tableKey.slice(0, -1) : tableKey;
-        const pkCandidates = ['id_' + tableKey, 'id_' + singularKey].filter(k => normalizedHeaders.includes(k));
-        const pkField = pkCandidates.length > 0 ? pkCandidates[0] : normalizedHeaders.find(h => h.startsWith('id_'));
+        const schema = (typeof APP_SCHEMAS !== 'undefined') ? APP_SCHEMAS[tableName] : null;
+        let pkField = schema && schema.primaryKey ? schema.primaryKey : null;
+
+        if (!pkField) {
+            const tableKey = tableName.toLowerCase();
+            const singularKey = tableKey.endsWith('s') ? tableKey.slice(0, -1) : tableKey;
+            const pkCandidates = ['id_' + tableKey, 'id_' + singularKey].filter(k => normalizedHeaders.includes(k));
+            pkField = pkCandidates.length > 0 ? pkCandidates[0] : normalizedHeaders.find(h => h.startsWith('id_'));
+        }
 
         if (!pkField) throw new Error("No se pudo determinar la Primary Key en los encabezados para el Soft Delete.");
 
@@ -284,6 +321,20 @@ const Adapter_Sheets = {
         sheet.getRange(foundRowIndex, 1, 1, rowToUpdate.length).setValues([rowToUpdate]);
         return { status: 'success', action: 'deleted', pk: pkField, val: id };
     },
+
+    /**
+     * Evalúa centralizadamente si un nodo está marcado como Soft-Deleted.
+     * Evalúa las banderas técnicas (deleted_at, _isDeleted) y de esquema de negocio (estado).
+     */
+    _isNodeLogicallyDeleted: function(headers, rowData) {
+        const idxDeletedAt = headers.indexOf('deleted_at');
+        const idxIsDeleted = headers.indexOf('_isDeleted');
+        const idxEstado = headers.indexOf('estado');
+        return (idxDeletedAt > -1 && rowData[idxDeletedAt]) || 
+               (idxIsDeleted > -1 && Boolean(rowData[idxIsDeleted]) === true) ||
+               (idxEstado > -1 && String(rowData[idxEstado]).trim().toLowerCase() === 'eliminado');
+    },
+
     _normalizeHeader: _normalizeHeader,
 
     _ensureSheetExists: function(ss, tableName) {
@@ -309,7 +360,7 @@ const Adapter_Sheets = {
             }
             
             // Regla 4 de DB
-            const auditFields = ['created_at', 'created_by', 'updated_at', 'updated_by', 'deleted_at', 'deleted_by'];
+            const auditFields = ['created_at', 'created_by', 'updated_at', 'updated_by', 'deleted_at', 'deleted_by', '_version'];
             const allHeaders = [...schemaFields, ...auditFields];
             
             sheet.getRange(1, 1, 1, allHeaders.length).setValues([allHeaders]);
@@ -378,6 +429,11 @@ const Adapter_Sheets = {
 
         for (let i = 1; i < data.length; i++) {
             const rowData = data[i];
+
+            // Excluir nodos eliminados globalmente de Cache y UI
+            if (this._isNodeLogicallyDeleted(headers, rowData)) {
+                continue;
+            }
 
             if (isTuples) {
                 const tuple = [];

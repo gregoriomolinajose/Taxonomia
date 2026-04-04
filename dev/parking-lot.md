@@ -49,3 +49,15 @@ Este documento condensa la Deuda Técnica material devuelta por los heurísticos
 ### 16. Soft-Delete Unidireccional (Huérfanos Ocultos)
 * **Origen:** Sesión de Diseño S14.5 (Edge Cases MDM).
 * **Acción Causal:** El borrado lógico de un Padre (ej. Portafolio) NO debe mutar el estado de sus hijos físicos en la base de datos (se mantienen intactos). `Engine_Graph.js` asume la responsabilidad topológica in-line: si detecta al padre como eliminado, automáticamente omite del DOM a sus hijos por herencia de grafo.
+
+### 17. Robustez en Muteo Estructural de Componentes Relacionales (H10)
+* **Origen:** Arch Review Epic 18 (S18.4).
+* **Acción Causal:** El Hiding Pasivo en `FormRenderer_UI` utiliza selectores CSS ("catch-all" con `pointer-events: none`) para bloquear elementos exóticos y chips generados por `UI_SubgridBuilder`. Se propone inyectar a futuro un parámetro formal `readonly: true` vía *prop drilling* desde el inicializador del subgrid para que este se auto-restrinja desde su pipeline estructural nativo.
+
+### 18. Encapsulamiento del Motor ABAC en Frontend (H2)
+* **Origen:** Arch Review Epic 18 (S18.4).
+* **Acción Causal:** El Helper frontal `window.ABAC.can()` accede globalmente a `__ABAC_CONTEXT__`. A medida que el framework de Acceso crezca con atributos paramétricos (Attribute-Based Policies complejas), evaluar su migración de un "Namespace Helper/Diccionario Crudo" hacia una Clase Instanciada de ES6 con gestión activa de estado.
+
+### 19. Travesías ABAC M:N (parentStrategy: GRAPH)
+* **Origen:** Análisis Edge Cases (S18.3).
+* **Acción Causal:** El escalamiento jerárquico actualmente asume una travesía bottom-up 1:N por Llave Foránea matemática. Si en un futuro el negocio requiere heredar permisos mediante relaciones polimórficas (Grafo Temporal en `Relacion_Dominios`), introducir una propiedad `parentStrategy: "GRAPH"` en `topological_metadata` para invocar la recursión por medio de `Engine_Graph.js`.

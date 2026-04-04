@@ -55,7 +55,7 @@ function getDominioOptions() {
         id: row.id_dominio,
         value: row.id_dominio,
         label: `[N${row.nivel_tipo}] ${row.n0_es}`, // UX: Mostrar nivel en el dropdown visualmente
-        nivel_tipo: Number(row.nivel_tipo) || 0,
+        nivel_tipo: isNaN(Number(row.nivel_tipo)) ? 0 : Number(row.nivel_tipo),
         hasActiveParent: !!hasActiveParentMap[row.id_dominio]
       }));
       
@@ -113,6 +113,13 @@ function getUnidadesNegocioOptions() { return getGenericOptions('Unidad_Negocio'
  * Devuelve [{value: id_equipo, label: nombre_equipo}] desde DB_Equipo.
  */
 function getEquiposOptions() { return getGenericOptions('Equipo', 'id_equipo', 'nombre_equipo'); }
+
+/**
+ * getSysRolesOptions
+ * Devuelve [{value: id_rol, label: nombre_rol}] desde DB_Sys_Roles.
+ * Requerido para Bindings de Seguridad ABAC.
+ */
+function getSysRolesOptions() { return getGenericOptions('Sys_Roles', 'id_rol', 'nombre_rol'); }
 
 /**
  * getGenericOptions

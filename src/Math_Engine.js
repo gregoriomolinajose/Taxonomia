@@ -56,7 +56,7 @@ function buildPathName(formStateObj, params, cache) {
     if (!params || !params.entity || !params.parentField || !params.nameField || !params.pathField) return '';
     
     const nombre = formStateObj[params.nameField] || '';
-    const idPadre = formStateObj[parentField];
+    const idPadre = formStateObj[params.parentField];
     
     if (!idPadre || idPadre === '') {
         return `PATH: ${nombre}`;

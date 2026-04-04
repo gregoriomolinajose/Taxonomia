@@ -1,0 +1,160 @@
+﻿node.exe : FAIL 
+__tests__/Engine_ABAC.test.js
+En línea: 1 Carácter: 1
++ & "C:\Program 
+Files\nodejs/node.exe" 
+"C:\Program Files\nodejs/node_mo 
+...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~
+    + CategoryInfo          : Not 
+   Specified: (FAIL __tests__/En  
+  gine_ABAC.test.js:String) [],   
+  RemoteException
+    + FullyQualifiedErrorId : Nat 
+   iveCommandError
+ 
+  Engine_ABAC Authorization Rules
+    ÔêÜ 1. resolveTopologyFor 
+returns empty context for unknown 
+users (2 ms)
+    ÔêÜ 2. resolveTopologyFor 
+escalates topology for parent 
+owners (DAG BFS)
+    ├ù 3. hasPermission deniega 
+acceso a updates si el usuario no 
+es owner/miembro del registro 
+exacto (1 ms)
+    ├ù 4. hasPermission otorga 
+acceso total (bypass) a usuarios 
+tipo ADMIN
+    ├ù 5. hasPermission otorga 
+acceso update si el usuario es 
+owner (1 ms)
+
+  ÔùÅ Engine_ABAC Authorization 
+Rules ÔÇ║ 3. hasPermission 
+deniega acceso a updates si el 
+usuario no es owner/miembro del 
+registro exacto
+
+    TypeError: 
+Engine_ABAC.hasPermission is not 
+a function
+
+    [0m [90m 79 |[39m     
+test([32m'3. hasPermission 
+deniega acceso a updates si el 
+usuario no es owner/miembro del 
+registro exacto'[39m[33m,[39m 
+() [33m=>[39m {
+     [90m 80 |[39m         
+[90m// manager (USR-2) no tiene 
+que ver con PORT-B[39m
+    [31m[1m>[22m[39m[90m 81 
+|[39m         [36mconst[39m 
+allowed [33m=[39m [33mEngine_AB
+AC[39m[33m.[39mhasPermission([
+32m'manager@taxonomia.com'[39m[3
+3m,[39m 
+[32m'update'[39m[33m,[39m 
+[32m'Portafolio'[39m[33m,[39m 
+[32m'PORT-B'[39m)[33m;[39m
+     [90m    |[39m              
+                       
+[31m[1m^[22m[39m
+     [90m 82 |[39m         expec
+t(allowed)[33m.[39mtoBe([36mfal
+se[39m)[33m;[39m
+     [90m 83 |[39m     
+})[33m;[39m
+     [90m 84 |[39m[0m
+
+      at Object.hasPermission (__t
+ests__/Engine_ABAC.test.js:81:37)
+
+  ÔùÅ Engine_ABAC Authorization 
+Rules ÔÇ║ 4. hasPermission otorga 
+acceso total (bypass) a usuarios 
+tipo ADMIN
+
+    TypeError: 
+Engine_ABAC.hasPermission is not 
+a function
+
+    [0m [90m 84 |[39m
+     [90m 85 |[39m     
+test([32m'4. hasPermission 
+otorga acceso total (bypass) a 
+usuarios tipo 
+ADMIN'[39m[33m,[39m () 
+[33m=>[39m {
+    [31m[1m>[22m[39m[90m 86 
+|[39m         [36mconst[39m 
+allowed [33m=[39m [33mEngine_AB
+AC[39m[33m.[39mhasPermission([
+32m'admin@taxonomia.com'[39m[33m
+,[39m 
+[32m'delete'[39m[33m,[39m 
+[32m'Portafolio'[39m[33m,[39m 
+[32m'PORT-B'[39m)[33m;[39m
+     [90m    |[39m              
+                       
+[31m[1m^[22m[39m
+     [90m 87 |[39m         expec
+t(allowed)[33m.[39mtoBe([36mtru
+e[39m)[33m;[39m
+     [90m 88 |[39m     
+})[33m;[39m
+     [90m 89 |[39m[0m
+
+      at Object.hasPermission (__t
+ests__/Engine_ABAC.test.js:86:37)
+
+  ÔùÅ Engine_ABAC Authorization 
+Rules ÔÇ║ 5. hasPermission otorga 
+acceso update si el usuario es 
+owner
+
+    TypeError: 
+Engine_ABAC.hasPermission is not 
+a function
+
+    [0m [90m 89 |[39m
+     [90m 90 |[39m     
+test([32m'5. hasPermission 
+otorga acceso update si el 
+usuario es owner'[39m[33m,[39m 
+() [33m=>[39m {
+    [31m[1m>[22m[39m[90m 91 
+|[39m         [36mconst[39m 
+allowed [33m=[39m [33mEngine_AB
+AC[39m[33m.[39mhasPermission([
+32m'manager@taxonomia.com'[39m[3
+3m,[39m 
+[32m'update'[39m[33m,[39m [32
+m'Grupo_Productos'[39m[33m,[39m
+ [32m'GRP-2'[39m)[33m;[39m
+     [90m    |[39m              
+                       
+[31m[1m^[22m[39m
+     [90m 92 |[39m         expec
+t(allowed)[33m.[39mtoBe([36mtru
+e[39m)[33m;[39m
+     [90m 93 |[39m     
+})[33m;[39m
+     [90m 94 |[39m 
+})[33m;[39m[0m
+
+      at Object.hasPermission (__t
+ests__/Engine_ABAC.test.js:91:37)
+
+Test Suites: 1 failed, 1 total
+Tests:       3 failed, 2 passed, 
+5 total
+Snapshots:   0 total
+Time:        0.447 s, estimated 1 
+s
+Ran all test suites matching 
+__tests__/Engine_ABAC.test.js.

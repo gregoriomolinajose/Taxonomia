@@ -11,6 +11,11 @@ const APP_SCHEMAS = {
   },
   Portafolio: {
     metadata: { showInMenu: true, showInDashboard: false, order:2, iconName:'briefcase-outline', color:'primary', label:'Portafolios', titleField:'nombre', idField:'id_portafolio', fkField:null },
+    topological_metadata: {
+        ownerFields: ["director_id", "vp_id"],
+        parentEntity: null,
+        parentField: null
+    },
     fields: []
   },
   Dominio: {
@@ -44,6 +49,11 @@ const APP_SCHEMAS = {
   },
   Grupo_Productos: {
     metadata: { showInMenu: true, showInDashboard: false, order:4, iconName:'layers-outline', color:'secondary', label:'Grupos de Producto', titleField:'nombre', idField:'id_grupo_producto', fkField:{ key:'id_portafolio', label:'Portafolio' } },
+    topological_metadata: {
+        ownerFields: ["group_manager_id"],
+        parentEntity: "Portafolio",
+        parentField: "id_portafolio"
+    },
     steps: ["Datos Generales", "Estrategia de Negocio"],
     primaryKey: "id_grupo_producto",
     titleField: "nombre",
@@ -58,6 +68,11 @@ const APP_SCHEMAS = {
   },
   Producto: {
     metadata: { showInMenu: true, showInDashboard: false, order:5, iconName:'cube-outline', color:'tertiary', label:'Productos', titleField:'nombre_producto', idField:'id_producto', fkField:{ key:'id_grupo_producto', label:'Grupo' } },
+    topological_metadata: {
+        ownerFields: ["rte_id", "pm_id", "agile_coach_id"],
+        parentEntity: "Grupo_Productos",
+        parentField: "id_grupo_producto"
+    },
     fields: []
   },
   Capacidad: {
@@ -80,6 +95,11 @@ const APP_SCHEMAS = {
   },
   Equipo: {
     metadata: { showInMenu: true, showInDashboard: false, order:7, iconName:'people-outline', color:'dark', label:'Equipos', titleField:'nombre_equipo', idField:'id_equipo', fkField:{ key:'id_producto', label:'Producto' } },
+    topological_metadata: {
+        ownerFields: ["scrum_master_id", "product_owner_id"],
+        parentEntity: "Producto",
+        parentField: "id_producto"
+    },
     businessRules: [
       { trigger: 'onInput', action: 'sumPrefix', prefix: 'cant_', target: 'total_integrantes' }
     ],
@@ -96,11 +116,11 @@ const APP_SCHEMAS = {
     ]
   },
   Relacion_Dominios: {
-    metadata: { order:9, iconName:'git-network-outline', color:'primary', label:'Conexiones Topológicas', titleField:'tipo_relacion', idField:'id_relacion', fkField:{ key:'id_nodo_padre', label:'Dominio' } },
+    metadata: { showInMenu: false, order:9, iconName:'git-network-outline', color:'primary', label:'Conexiones Topológicas', titleField:'tipo_relacion', idField:'id_relacion', fkField:{ key:'id_nodo_padre', label:'Dominio' } },
     fields: []
   },
   Sys_Roles: {
-    metadata: { showInMenu: true, showInDashboard: false, order:90, iconName:'shield-half-outline', color:'danger', label:'Seguridad: Roles', titleField:'nombre_rol', idField:'id_rol', fkField:null },
+    metadata: { showInMenu: false, showInDashboard: false, order:90, iconName:'shield-half-outline', color:'danger', label:'Seguridad: Roles', titleField:'nombre_rol', idField:'id_rol', fkField:null },
     primaryKey: "id_rol",
     fields: [
       { name: "id_rol", type: "text", primaryKey: true, readonly: true, label: "ID Rol", width: 12 },
@@ -109,7 +129,7 @@ const APP_SCHEMAS = {
     ]
   },
   Sys_Permissions: {
-    metadata: { showInMenu: true, showInDashboard: false, order:91, iconName:'key-outline', color:'danger', label:'Seguridad: Permisos ABAC', titleField:'schema_destino', idField:'id_permiso', fkField:{ key:'id_rol', label:'Rol Base' } },
+    metadata: { showInMenu: false, showInDashboard: false, order:91, iconName:'key-outline', color:'danger', label:'Seguridad: Permisos ABAC', titleField:'schema_destino', idField:'id_permiso', fkField:{ key:'id_rol', label:'Rol Base' } },
     primaryKey: "id_permiso",
     fields: [
       { name: "id_permiso", type: "text", primaryKey: true, readonly: true, label: "ID Permiso", width: 12 },
@@ -123,7 +143,8 @@ const APP_SCHEMAS = {
       'activo': 'activo', 'borrador': 'borrador', 'en-revis-n': 'en-revision', 'en-revision': 'en-revision',
       'tier-1-cr-tico': 'tier-1-critico', 'tier-1-critico': 'tier-1-critico',
       'tier-2-alto': 'tier-2-alto', 'tier-3-medio': 'tier-3-medio', 'tier-4-bajo': 'tier-4-bajo',
-      'saas': 'saas', 'marketplace': 'marketplace', 'b2b': 'b2b', 'b2c': 'b2c', 'transaccional': 'transaccional'
+      'saas': 'saas', 'marketplace': 'marketplace', 'b2b': 'b2b', 'b2c': 'b2c', 'transaccional': 'transaccional',
+      'all-admin-total': 'danger', 'owner-only-solo-propios': 'primary', 'member-only-siendo-miembro': 'secondary', 'read-only-solo-lectura': 'medium', 'none-denegado': 'light'
     }
   }
 };

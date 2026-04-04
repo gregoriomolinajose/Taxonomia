@@ -123,7 +123,7 @@
         /* ────────────────────────────────────────────
            Fetch data (GAS o Mock)
         ───────────────────────────────────────────── */
-        function _fetchData(entityName, cb) {
+        async function _fetchData(entityName, cb) {
             _showLoadingState();
             // Check Frontend Cache first (Directiva Arquitectónica: 0.0s latency)
             if (window.__APP_CACHE__ && window.__APP_CACHE__[entityName]) {
@@ -134,41 +134,42 @@
                 return;
             }
 
-            const isGAS = typeof google !== 'undefined' && google.script && google.script.run;
-            if (isGAS) {
+            try {
                 console.time('[Perf] Single RPC Hydration');
-                google.script.run
-                    .withSuccessHandler(function (response) {
-                        console.timeEnd('[Perf] Single RPC Hydration');
-                        if (response && response.status === 'success') {
-                            // Guardar lookups para el formateador
-                            window._LOOKUP_DATA = response.lookups || {};
-                            
-                            // Inflar Tuplas a Objetos (Data Compression)
-                            const headers = response.data.headers;
-                            const rows = response.data.rows.map(tuple => {
-                                const obj = {};
-                                headers.forEach((h, i) => obj[h] = tuple[i]);
-                                return obj;
-                            });
+                const rawResponse = await window.DataAPI.call('getInitialPayload', entityName);
+                console.timeEnd('[Perf] Single RPC Hydration');
+                
+                const response = typeof rawResponse === 'string' ? JSON.parse(rawResponse) : rawResponse;
+                
+                if (response && response.status === 'success') {
+                    // Guardar lookups para el formateador
+                    window._LOOKUP_DATA = response.lookups || {};
+                    
+                    // Inflar Tuplas a Objetos (Data Compression) si vienen en formato tupla
+                    let rows = [];
+                    if (response.data && response.data.headers && response.data.rows) {
+                        const headers = response.data.headers;
+                        rows = response.data.rows.map(tuple => {
+                            const obj = {};
+                            headers.forEach((h, i) => obj[h] = tuple[i]);
+                            return obj;
+                        });
+                    } else if (response.data && Array.isArray(response.data)) {
+                        rows = response.data;
+                    }
 
-                            // Store in Frontend Cache for 0.0s subsequent transitions
-                            if (window.__APP_CACHE__) {
-                                window.__APP_CACHE__[entityName] = rows;
-                            }
+                    // Store in Frontend Cache for 0.0s subsequent transitions
+                    if (window.__APP_CACHE__) {
+                        window.__APP_CACHE__[entityName] = rows;
+                    }
 
-                            const activeRows = rows.filter(r => r.estado !== 'Eliminado' && r.estado !== 'eliminado');
-                            cb(null, activeRows);
-                        } else {
-                            cb(new Error(response ? response.message : 'Error desconocido'));
-                        }
-                    })
-                    .withFailureHandler(function (err) {
-                        cb(err || new Error('Error de comunicación con el servidor'));
-                    })
-                    .getInitialPayload(entityName);
-            } else {
-                cb(new Error('Se requiere el entorno de producción de Google (Los datos mock fueron removidos)'));
+                    const activeRows = rows.filter(r => r.estado !== 'Eliminado' && r.estado !== 'eliminado');
+                    cb(null, activeRows);
+                } else {
+                    cb(new Error(response ? response.message : 'Error desconocido'));
+                }
+            } catch (err) {
+                cb(err || new Error('Error de comunicación con el servidor'));
             }
         }
 
@@ -202,136 +203,17 @@
            — Renderiza un <ion-popover> en el body para garantizar que
              Ionic lo posicione sin desbordamiento en móvil ni en desktop.
         ───────────────────────────────────────────── */
-        function _buildColPopoverContentHTML() {
-            const content = document.createElement('ion-content');
-            content.className = 'dv-popover-content';
-            
-            const header = document.createElement('ion-list-header');
-            header.className = 'dv-popover-header';
-            const labelContent = document.createElement('ion-label');
-            labelContent.className = 'dv-sub-label';
-            labelContent.textContent = 'Columnas visibles';
-            header.appendChild(labelContent);
-            content.appendChild(header);
-            
-            const list = document.createElement('ion-list');
-            list.setAttribute('lines', 'none');
-            
-            _state.columns.forEach((col, i) => {
-                const item = document.createElement('ion-item');
-                item.className = 'dv-popover-item';
-                item.setAttribute('lines', 'none');
-                
-                const cb = document.createElement('ion-checkbox');
-                cb.setAttribute('slot', 'start');
-                cb.dataset.colidx = i;
-                cb.checked = col.visible;
-                cb.className = 'dv-popover-checkbox';
-                item.appendChild(cb);
-                
-                const lbl = document.createElement('ion-label');
-                lbl.className = 'dv-popover-label';
-                lbl.textContent = col.label;
-                item.appendChild(lbl);
-                
-                list.appendChild(item);
-            });
-            content.appendChild(list);
-            return content;
-        }
-
         function _ensureColPopover() {
-            // Eliminar popover existente para forzar re-bind del trigger a nivel de Ionic
-            // Esto soluciona el problema donde el botón se destruye al cambiar de vista
-            let pop = document.getElementById('dv-col-ion-popover');
-            if (pop) {
-                pop.remove();
+            if (window.UI_DataView_Toolbar) {
+                window.UI_DataView_Toolbar.ensureColPopover(_state.columns, _onColToggle);
             }
-
-            pop = document.createElement('ion-popover');
-            pop.id = 'dv-col-ion-popover';
-            pop.setAttribute('trigger', 'dv-col-trigger-btn');
-            pop.setAttribute('trigger-action', 'click');
-            pop.setAttribute('dismiss-on-select', 'false');
-            pop.setAttribute('side', 'bottom');
-            pop.setAttribute('alignment', 'end');
-            pop.setAttribute('show-backdrop', 'false');
-            document.body.appendChild(pop);
-            // Actualizar contenido (sincroniza estado de checkboxes)
-            pop.appendChild(_buildColPopoverContentHTML());
-
-            // Adjuntar ionChange a cada ion-checkbox (lo necesita el web component de Ionic)
-            pop.querySelectorAll('ion-checkbox').forEach(function (cb) {
-                const idx = parseInt(cb.getAttribute('data-colidx'), 10);
-                cb.addEventListener('ionChange', function (e) {
-                    window.DataViewEngine._onColToggle(idx, e.detail.checked);
-                });
-            });
         }
 
         function _buildToolbarHTML() {
-            const toolbar = document.createElement('div');
-            toolbar.className = 'dv-toolbar';
-            
-            const left = document.createElement('div');
-            left.className = 'dv-toolbar-left';
-            const searchWrap = document.createElement('div');
-            searchWrap.className = 'dv-search-wrap';
-            const sb = document.createElement('ion-searchbar');
-            sb.id = 'dv-search-input';
-            sb.placeholder = 'Buscar en todos los campos…';
-            sb.setAttribute('animated', 'true');
-            sb.setAttribute('show-clear-button', 'focus');
-            sb.setAttribute('debounce', '120');
-            searchWrap.appendChild(sb);
-            left.appendChild(searchWrap);
-            
-            const right = document.createElement('div');
-            right.className = 'dv-toolbar-right';
-            
-            const btnCols = document.createElement('button');
-            btnCols.className = 'dv-btn dv-btn-ghost';
-            btnCols.id = 'dv-col-trigger-btn';
-            btnCols.title = 'Configurar columnas';
-            const colIcon = document.createElement('ion-icon');
-            colIcon.className = 'dv-options-icon';
-            colIcon.setAttribute('name', 'options-outline');
-            colIcon.setAttribute('slot', 'start');
-            btnCols.appendChild(colIcon);
-            btnCols.appendChild(document.createTextNode(' Columnas'));
-            right.appendChild(btnCols);
-            
-            const btnTable = document.createElement('button');
-            btnTable.className = 'dv-btn-icon ' + (_state.view === 'table' ? 'active' : '');
-            btnTable.id = 'dv-view-table-btn';
-            btnTable.title = 'Vista de lista';
-            btnTable.textContent = '☰';
-            btnTable.addEventListener('click', () => window.DataViewEngine._onViewToggle('table'));
-            right.appendChild(btnTable);
-            
-            const btnGrid = document.createElement('button');
-            btnGrid.className = 'dv-btn-icon ' + (_state.view === 'grid' ? 'active' : '');
-            btnGrid.id = 'dv-view-grid-btn';
-            btnGrid.title = 'Vista de cuadrícula';
-            btnGrid.textContent = '⊞';
-            btnGrid.addEventListener('click', () => window.DataViewEngine._onViewToggle('grid'));
-            right.appendChild(btnGrid);
-            
-            if (_state.entityName === 'Dominio') {
-                const btnMap = document.createElement('button');
-                btnMap.className = 'dv-btn-icon ' + (_state.view === 'map' ? 'active' : '');
-                btnMap.id = 'dv-view-map-btn';
-                btnMap.title = 'Formato Mapa (Treemap)';
-                const iconMap = document.createElement('ion-icon');
-                iconMap.setAttribute('name', 'git-network-outline');
-                btnMap.appendChild(iconMap);
-                btnMap.addEventListener('click', () => window.DataViewEngine._onViewToggle('map'));
-                right.appendChild(btnMap);
+            if (window.UI_DataView_Toolbar) {
+                return window.UI_DataView_Toolbar.buildToolbarHTML(_state.view, _state.entityName, _onViewToggle);
             }
-            
-            toolbar.appendChild(left);
-            toolbar.appendChild(right);
-            return toolbar;
+            return document.createElement('div');
         }
 
         /* Adjunta el listener ionInput al ion-searchbar tras cada re-render del toolbar.
@@ -346,75 +228,19 @@
         }
 
         function _buildHeader() {
-            const meta = ENTITY_META[_state.entityName] || { iconName: 'document-text-outline', color: 'medium', label: window.formatEntityName(_state.entityName) };
-            const total = _state.data.length;
-            const displayLabel = window.formatEntityName(meta.label);
-            
-            const headerDiv = document.createElement('div');
-            headerDiv.className = 'dv-header';
-            
-            const leftDiv = document.createElement('div');
-            leftDiv.className = 'dv-header-left';
-            
-            const h2 = document.createElement('h2');
-            const icon = document.createElement('ion-icon');
-            icon.className = 'dv-title-icon';
-            icon.setAttribute('name', meta.iconName);
-            h2.appendChild(icon);
-            h2.appendChild(document.createTextNode(' ' + displayLabel));
-            
-            const p = document.createElement('p');
-            p.textContent = `${total} registro${total !== 1 ? 's' : ''} en total`;
-            
-            leftDiv.appendChild(h2);
-            leftDiv.appendChild(p);
-            
-            const rightDiv = document.createElement('div');
-            rightDiv.className = 'dv-header-actions';
-            
-            const input = document.createElement('input');
-            input.setAttribute('type', 'file');
-            input.id = 'dv-bulk-upload-input';
-            input.setAttribute('accept', '.csv');
-            input.className = 'dv-hidden';
-            input.addEventListener('change', window.DataViewEngine._importCSV);
-            
-            const btnExp = document.createElement('button');
-            btnExp.className = 'dv-btn dv-btn-ghost';
-            btnExp.addEventListener('click', window.DataViewEngine._exportCSV);
-            const iconExp = document.createElement('ion-icon');
-            iconExp.setAttribute('name', 'download-outline');
-            iconExp.setAttribute('slot', 'start');
-            btnExp.appendChild(iconExp);
-            btnExp.appendChild(document.createTextNode(' Exportar CSV'));
-            
-            const btnImp = document.createElement('button');
-            btnImp.className = 'dv-btn dv-btn-ghost';
-            btnImp.addEventListener('click', () => document.getElementById('dv-bulk-upload-input').click());
-            const iconImp = document.createElement('ion-icon');
-            iconImp.setAttribute('name', 'cloud-upload-outline');
-            iconImp.setAttribute('slot', 'start');
-            btnImp.appendChild(iconImp);
-            btnImp.appendChild(document.createTextNode(' Importar CSV'));
-            
-            const btnAdd = document.createElement('button');
-            btnAdd.className = 'dv-btn dv-btn-outline';
-            btnAdd.addEventListener('click', () => renderForm(_state.entityName));
-            const iconAdd = document.createElement('ion-icon');
-            iconAdd.setAttribute('name', 'add-outline');
-            iconAdd.setAttribute('slot', 'start');
-            btnAdd.appendChild(iconAdd);
-            btnAdd.appendChild(document.createTextNode(` Crear ${displayLabel.replace(/s$/, '')}`));
-            
-            rightDiv.appendChild(input);
-            rightDiv.appendChild(btnExp);
-            rightDiv.appendChild(btnImp);
-            rightDiv.appendChild(btnAdd);
-            
-            headerDiv.appendChild(leftDiv);
-            headerDiv.appendChild(rightDiv);
-            
-            return headerDiv;
+            if (window.UI_DataView_Toolbar) {
+                const canCreate = !window.ABAC || window.ABAC.can('create', _state.entityName);
+                const onAddClick = () => renderForm(_state.entityName);
+                return window.UI_DataView_Toolbar.buildHeader(
+                    _state.entityName, 
+                    _state.data.length, 
+                    canCreate, 
+                    _exportCSV, 
+                    function(e) { window.DataViewEngine._importCSV(e); }, 
+                    onAddClick
+                );
+            }
+            return document.createElement('div');
         }
 
         /* ────────────────────────────────────────────
@@ -446,11 +272,11 @@
                     sortDir: _state.sortDir,
                     columns: _state.columns,
                     onSort: 'window.DataViewEngine._onSort',
-                    onDragStart: 'window.DataViewEngine._onDragStart',
-                    onDragOver: 'window.DataViewEngine._onDragOver',
-                    onDragLeave: 'window.DataViewEngine._onDragLeave',
-                    onDrop: 'window.DataViewEngine._onDrop',
-                    onDragEnd: 'window.DataViewEngine._onDragEnd',
+                    onDragStart: 'window.DataView_DragDrop.onDragStart',
+                    onDragOver: 'window.DataView_DragDrop.onDragOver',
+                    onDragLeave: 'window.DataView_DragDrop.onDragLeave',
+                    onDrop: 'window.DataView_DragDrop.onDrop',
+                    onDragEnd: 'window.DataView_DragDrop.onDragEnd',
                     onDelete: 'window.DataViewEngine._confirmDelete',
                     onPageSize: 'window.DataViewEngine._onPageSize',
                     onPage: 'window.DataViewEngine._onPage',
@@ -495,6 +321,11 @@
 
             const container = document.getElementById(containerId);
             if (!container) return;
+            
+            // Inicializar handler central de reordenamiento de DataView_DragDrop
+            if (window.DataView_DragDrop) {
+                window.DataView_DragDrop.init(_reorderColumns);
+            }
 
             // Estructura inicial: header + toolbar (permanente) + skeleton de datos
             // #dv-toolbar-zone: NUNCA se destruye durante búsqueda/sort/pagina
@@ -584,7 +415,16 @@
         /* ────────────────────────────────────────────
            Event handlers (accesibles desde HTML inline)
         ───────────────────────────────────────────── */
-        function _onSearch(query) { _applyFilter(query); }
+        var _onDebouncedFilter = null;
+        function _onSearch(query) { 
+            if (!_onDebouncedFilter) {
+                // Instanciar lazy-load del S21.2 Debounce (Z-Blocking) 300ms
+                _onDebouncedFilter = (window.debounce || function(f){return f;})(function(q) {
+                    _applyFilter(q);
+                }, 300);
+            }
+            _onDebouncedFilter(query);
+        }
 
         function _onSort(colKey) { _applySort(colKey); }
 
@@ -604,9 +444,9 @@
             _state.columns[idx].visible = visible;
             // Actualizar solo el contenido del ion-popover (sin cerrarlo ni destruir el toolbar)
             const pop = document.getElementById('dv-col-ion-popover');
-            if (pop) {
+            if (pop && window.UI_DataView_Toolbar) {
                 window.DOM.clear(pop);
-                pop.appendChild(_buildColPopoverContentHTML());
+                pop.appendChild(window.UI_DataView_Toolbar.buildColPopoverContentHTML(_state.columns));
                 pop.querySelectorAll('ion-checkbox').forEach(function (cb) {
                     const i = parseInt(cb.getAttribute('data-colidx'), 10);
                     cb.addEventListener('ionChange', function (e) {
@@ -630,54 +470,12 @@
         /* ────────────────────────────────────────────
            Drag & Drop — reordenar columnas (HTML5 nativo, sin librerías)
         ───────────────────────────────────────────── */
-        function _onDragStart(idx, ev) {
-            _dragSrcIdx = idx;
-            ev.dataTransfer.effectAllowed = 'move';
-            ev.dataTransfer.setData('text/plain', String(idx)); // requerido en Firefox
-            // Marcar la columna origen con clase visual (con retardo para que el ghost se calcule primero)
-            requestAnimationFrame(() => {
-                const th = document.querySelector(`.dv-table th[data-colidx="${idx}"]`);
-                if (th) th.classList.add('dv-th-dragging');
-            });
-        }
-
-        function _onDragOver(targetIdx, ev) {
-            if (_dragSrcIdx === -1 || targetIdx === _dragSrcIdx) return;
-            ev.preventDefault(); // habilita el drop
-            ev.dataTransfer.dropEffect = 'move';
-            // Quitar clase de todas las th y añadir solo a la target
-            document.querySelectorAll('.dv-table th').forEach(th => th.classList.remove('dv-th-drag-over'));
-            const th = document.querySelector(`.dv-table th[data-colidx="${targetIdx}"]`);
-            if (th) th.classList.add('dv-th-drag-over');
-        }
-
-        function _onDragLeave(ev) {
-            const th = ev.target.closest('th');
-            if (th) th.classList.remove('dv-th-drag-over');
-        }
-
-        function _onDrop(targetIdx, ev) {
-            ev.preventDefault();
-            if (_dragSrcIdx === -1 || _dragSrcIdx === targetIdx) {
-                _dragSrcIdx = -1;
-                return;
-            }
-            // Reordenar: extraer la columna origen e insertarla en la posición destino
+        function _reorderColumns(srcIdx, targetIdx) {
             const cols = _state.columns;
-            const [moved] = cols.splice(_dragSrcIdx, 1);
+            const [moved] = cols.splice(srcIdx, 1);
             cols.splice(targetIdx, 0, moved);
-            _dragSrcIdx = -1;
-            _rerenderToolbar(); // sincronizar checkboxes con el nuevo orden
+            _rerenderToolbar();
             _rerenderData();
-        }
-
-        function _onDragEnd(ev) {
-            _dragSrcIdx = -1;
-            // Limpiar clases drag de todos los th aunque haya sido cancelled
-            document.querySelectorAll('.dv-table th').forEach(th => {
-                th.classList.remove('dv-th-dragging');
-                th.classList.remove('dv-th-drag-over');
-            });
         }
 
         /* Cerrar popover al hacer click fuera */
@@ -707,10 +505,10 @@
                 }
             ];
             document.body.appendChild(alert);
-            return alert.present();
+            return window.PresentSafe(alert);
         }
 
-        function _executeSoftDelete(id) {
+        async function _executeSoftDelete(id) {
             // Optimistic UI update (Local state)
             const meta = ENTITY_META[_state.entityName] || { idField: 'id' };
             const idField = meta.idField;
@@ -726,41 +524,32 @@
             const loading = document.createElement('ion-loading');
             loading.message = 'Borrando...';
             document.body.appendChild(loading);
-            loading.present();
+            window.PresentSafe(loading);
 
-            const isGAS = typeof google !== 'undefined' && google.script && google.script.run;
-            if (isGAS) {
-                google.script.run
-                    .withSuccessHandler(function (rawResponse) {
-                        const response = typeof rawResponse === 'string' ? JSON.parse(rawResponse) : rawResponse;
-                        loading.dismiss();
-                        if (response && response.status === 'success') {
-                            // Purgar de la RAM local
-                            if (window.__APP_CACHE__ && window.__APP_CACHE__[_state.entityName]) {
-                                const idField = (ENTITY_META[_state.entityName] || { idField: 'id' }).idField;
-                                window.__APP_CACHE__[_state.entityName] = window.__APP_CACHE__[_state.entityName].filter(row => row[idField] !== id);
-                            }
+            try {
+                const rawResponse = await window.DataAPI.call('API_Universal_Router', 'delete', _state.entityName, id);
+                const response = typeof rawResponse === 'string' ? JSON.parse(rawResponse) : rawResponse;
+                loading.dismiss();
+                
+                if (response && response.status === 'success') {
+                    // Purgar de la RAM local
+                    if (window.__APP_CACHE__ && window.__APP_CACHE__[_state.entityName]) {
+                        const idField = (ENTITY_META[_state.entityName] || { idField: 'id' }).idField;
+                        window.__APP_CACHE__[_state.entityName] = window.__APP_CACHE__[_state.entityName].filter(row => row[idField] !== id);
+                    }
 
-                            // Forzar re-renderización de la vista actual desde el caché actualizado
-                            _rerenderData();
+                    // Forzar re-renderización de la vista actual desde el caché actualizado
+                    _rerenderData();
 
-                            _showToast('Registro borrado con éxito.', 'success');
-                        } else {
-                            _showToast('Error al borrar: ' + (response ? response.message : ''), 'danger');
-                            render(_state.entityName, _state.containerId);
-                        }
-                    })
-                    .withFailureHandler(function (err) {
-                        loading.dismiss();
-                        _showToast('Error de red al borrar', 'danger');
-                        render(_state.entityName, _state.containerId);
-                    })
-                    .API_Universal_Router('delete', _state.entityName, id);
-            } else {
-                setTimeout(() => {
-                    loading.dismiss();
-                    _showToast('Mock: Registro borrado con éxito.', 'success');
-                }, 500);
+                    _showToast('Registro borrado con éxito.', 'success');
+                } else {
+                    _showToast('Error al borrar: ' + (response ? response.message : ''), 'danger');
+                    render(_state.entityName, _state.containerId);
+                }
+            } catch (err) {
+                loading.dismiss();
+                _showToast('Error de red al borrar', 'danger');
+                render(_state.entityName, _state.containerId);
             }
         }
 
@@ -770,7 +559,7 @@
             toast.duration = 2500;
             toast.color = color || 'success';
             document.body.appendChild(toast);
-            return toast.present();
+            return window.PresentSafe(toast);
         }
 
         /* ────────────────────────────────────────────
@@ -789,7 +578,7 @@
                     loading.message = 'Importando masivamente...';
                     loading.id = 'dv-import-loading';
                     document.body.appendChild(loading);
-                    loading.present();
+                    window.PresentSafe(loading);
                 },
                 function onSuccess(insertedCount) {
                     const loading = document.getElementById('dv-import-loading');
@@ -817,7 +606,6 @@
             _exportCSV, _importCSV,
             _onSearch, _onSort, _onPage, _onPageSize,
             _onColToggle, _toggleColPopover, _onViewToggle,
-            _onDragStart, _onDragOver, _onDragLeave, _onDrop, _onDragEnd,
             _confirmDelete
         };
     })();

@@ -9,7 +9,8 @@ const Engine_ABAC = {
   
   _getCachedData: function(entityName) {
     if (!this._requestCache[entityName]) {
-      this._requestCache[entityName] = Engine_DB.readAll(entityName) || [];
+      const dbResponse = Engine_DB.list(entityName, 'objects');
+      this._requestCache[entityName] = (dbResponse && dbResponse.rows) ? dbResponse.rows : [];
     }
     return this._requestCache[entityName];
   },
@@ -44,45 +45,90 @@ const Engine_ABAC = {
     
     let abacContext = {
       ownerOf: [],
-      memberOf: []
+      memberOf: [],
+      permissions: {}
     };
     
-    const personaId = persona.id;
-
-    // 2. Extraer todos los Nodos posibles
-    // Esto se mejoraría en S18.3 subiendo los árboles (Hierarchical Escalation).
-    // Por ahora iteramos todos los Equipos y Trenes (S18.1: Nodos Principales)
-    const equipos = this._getCachedData('Equipo');
-    const trenes = this._getCachedData('Tren');
+    // Inyección del diccionario CUD de la matriz para el Frontend (S18.4)
+    if (persona.id_rol) {
+      const permisos = this._getCachedData('Sys_Permissions');
+      const misReglas = permisos.filter(p => p.id_rol === persona.id_rol);
+      misReglas.forEach(r => {
+        abacContext.permissions[r.schema_destino] = r.nivel_acceso;
+      });
+    }
     
-    // Buscar pertenencia directa y propiedad:
-    // a) Equipos
-    equipos.forEach(eq => {
-      // Scrum Master es en este diseño el "Owner" del Nodo
-      if (eq.scrum_master_id === personaId) {
-        abacContext.ownerOf.push(eq.id);
-        abacContext.memberOf.push(eq.id); // Si soy dueño, soy miembro implicito
-      } else if (eq.product_owner_id === personaId) {
-        // El PO también funge como Owner del Equipo
-        abacContext.ownerOf.push(eq.id);
-        abacContext.memberOf.push(eq.id);
-      }
-    });
+    const personaId = persona.id_persona || persona.id;
+    if (!personaId) return abacContext;
 
-    // b) Trenes
-    trenes.forEach(tren => {
-      if (tren.rte_id === personaId) {
-        abacContext.ownerOf.push(tren.id);
-        abacContext.memberOf.push(tren.id);
-      } else if (tren.pm_id === personaId) {
-        abacContext.ownerOf.push(tren.id);
-        abacContext.memberOf.push(tren.id);
-      }
-    });
-    
-    // Limpiar duplicados por precaución
-    abacContext.ownerOf = [...new Set(abacContext.ownerOf)];
-    abacContext.memberOf = [...new Set(abacContext.memberOf)];
+    // --- S18.3: HIERARCHICAL ESCALATION MODULE (Top-Down BFS) ---
+    // Mantenemos un Set 'ownerSet' como registro de visitados y escudo anti-ciclos.
+    let ownerSet = new Set();
+    let bfsQueue = [];
+
+    const getPkField = (schema, entName) => schema.primaryKey || (schema.metadata && schema.metadata.idField) || `id_${entName.toLowerCase()}`;
+
+    // Paso 1: Base Ownership (¿Dónde soy dueño directo de manera explícita?)
+    if (typeof APP_SCHEMAS !== 'undefined') {
+        Object.keys(APP_SCHEMAS).forEach(entName => {
+            const schema = APP_SCHEMAS[entName];
+            if (schema.topological_metadata && Array.isArray(schema.topological_metadata.ownerFields)) {
+                const pkField = getPkField(schema, entName);
+                const rows = this._getCachedData(entName) || [];
+                
+                rows.forEach(row => {
+                    const isOwner = schema.topological_metadata.ownerFields.some(f => row[f] && row[f] === personaId);
+                    if (isOwner) {
+                        const rowId = String(row[pkField]);
+                        if (rowId && rowId !== 'undefined' && !ownerSet.has(rowId)) {
+                            ownerSet.add(rowId);
+                            bfsQueue.push({ entity: entName, id: rowId });
+                        }
+                    }
+                });
+            }
+        });
+
+        // Paso 2: Cascaded Ownership (Travesía en Anchura para descender por el árbol FK)
+        let safeLoopBrake = 0;
+        
+        while (bfsQueue.length > 0 && safeLoopBrake < 50000) {
+            safeLoopBrake++;
+            const current = bfsQueue.shift();
+            
+            Object.keys(APP_SCHEMAS).forEach(childEntName => {
+                const childSchema = APP_SCHEMAS[childEntName];
+                // Buscamos hijos que declaren formalmente a nuestra Entidad Actual como Padre
+                if (childSchema.topological_metadata && childSchema.topological_metadata.parentEntity === current.entity) {
+                    const parentField = childSchema.topological_metadata.parentField;
+                    if (!parentField) return;
+
+                    const childPkField = getPkField(childSchema, childEntName);
+                    const childRows = this._getCachedData(childEntName) || [];
+                    
+                    childRows.forEach(childRow => {
+                        if (String(childRow[parentField]) === current.id) {
+                            const childId = String(childRow[childPkField]);
+                            // Shield: Detección de Ciclo O(1). Si el nodo ya fue visitado en la cascada, lo ignora (Rompe los infinite loops).
+                            if (childId && childId !== 'undefined' && !ownerSet.has(childId)) {
+                                ownerSet.add(childId);
+                                bfsQueue.push({ entity: childEntName, id: childId });
+                            }
+                        }
+                    });
+                }
+            });
+        }
+        
+        if (safeLoopBrake >= 50000 && typeof Logger !== 'undefined') {
+            Logger.log("[Engine_ABAC] Alarma Topológica: Ruptura de seguridad (timeout brake) activada en cascada BFS.");
+        }
+    }
+
+    // Convertir de regreso a arreglos serializables.
+    // Propiedades explícitas o por herencia topológica garantizan estatus CUD
+    abacContext.ownerOf = Array.from(ownerSet);
+    abacContext.memberOf = Array.from(ownerSet);
 
     return abacContext;
   },

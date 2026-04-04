@@ -11,12 +11,20 @@
       <h1 style="font-size:3rem;margin-bottom:0.5rem">⚠️</h1><h2>Error de Sistema</h2>
       <p style="max-width:500px">Fallo crítico durante la inicialización de la plataforma (SyntaxError o ReferenceError asíncrono). La ejecución ha sido bloqueada (API Fail-Fast).</p>
       <pre id="wsod-error-detail" style="background:#fbe9e9;padding:1rem;border-radius:6px;width:100%;max-width:600px;overflow-x:auto;text-align:left;font-size:0.85rem;border:1px solid #ecc;"></pre>
-      <button onclick="location.reload()" style="margin-top:1.5rem;padding:0.75rem 1.5rem;background:#cc0000;color:white;border:none;border-radius:6px;cursor:pointer;font-weight:600;">Regresar al Inicio</button>
+      <button data-action="nav:reload" style="margin-top:1.5rem;padding:0.75rem 1.5rem;background:#cc0000;color:white;border:none;border-radius:6px;cursor:pointer;font-weight:600;">Regresar al Inicio</button>
     </div>
   </template>
   <script>
     function triggerWSOD(errDetail) {
-      if (!document.body) return; // Prevent before body is ready
+      // 1. S19.4 Telemetry Injection (Fire and Forget)
+      // Ejecutado ANTES de la validación del DOM para atrapar errores pre-render
+      if (window.Telemetry && typeof window.Telemetry.track === 'function') {
+        window.Telemetry.track('SYSTEM_WSOD_FATAL', errDetail, 'FATAL');
+      }
+
+      // 2. Abortar UI de error si aún no inicializa el DOM (evita excepciones adicionales)
+      if (!document.body) return; 
+
       var template = document.getElementById('wsod-mitigator');
       if (template) {
         var clone = template.content.cloneNode(true);
@@ -31,7 +39,7 @@
     window.addEventListener('unhandledrejection', function(e) {
       var reason = e.reason;
       var detail = (reason && reason.stack) ? reason.stack : String(reason);
-      triggerWSOD('Unhandled Promise Rejection: ' + detail);
+      triggerWSOD(`Unhandled Promise Rejection: ${detail}`);
     });
   </script>
 
@@ -53,8 +61,10 @@
   <!-- MOTOR DE DISENO (Regla UI §14) -->
   <?!= include('UI_ThemeManager'); ?>
   <?!= include('CSS_DesignSystem'); ?>
-  <?!= include('CSS_App'); ?>
-
+  <?!= include('CSS_Sidebar'); ?>
+  <?!= include('CSS_DataView'); ?>
+  <?!= include('CSS_Dashboard'); ?>
+  <?!= include('CSS_Utilities'); ?>
 
 
   <!-- DATA LAYER: Schemas y Estado Global (inyectados por GAS antes del DOM) -->
@@ -85,7 +95,35 @@
     window.SubgridState = { _normalizeId, filterAvailableOptions, evaluateFieldState, isNewRecord };
 
     // [E18 - S18.1] Gobernanza Topológica (ABAC Context)
-    window.__ABAC_CONTEXT__ = <?!= typeof __ABAC_CONTEXT__ !== 'undefined' ? __ABAC_CONTEXT__ : '{"ownerOf":[],"memberOf":[]}' ?>;
+    window.__ABAC_CONTEXT__ = <?!= typeof __ABAC_CONTEXT__ !== 'undefined' ? __ABAC_CONTEXT__ : '{"ownerOf":[],"memberOf":[],"permissions":{}}' ?>;
+    
+    // [E18 - S18.4] ABAC Client-Side Helper
+    window.ABAC = {
+        context: window.__ABAC_CONTEXT__,
+        can: function(action, entityName, targetId) {
+            if (action === 'read') return true;
+            
+            const permissions = this.context.permissions || {};
+            // Graceful Degradation si no hay regla en matriz (igual que el backend)
+            if (!permissions.hasOwnProperty(entityName)) return true;
+            
+            const nivel = permissions[entityName] || "NONE";
+            
+            if (nivel.startsWith("ALL")) return true;
+            if (nivel.startsWith("NONE") || nivel.startsWith("READ_ONLY")) return false;
+            
+            if (action === 'update' || action === 'delete') {
+                if (nivel.startsWith("OWNER_ONLY")) return this.context.ownerOf.includes(targetId);
+                if (nivel.startsWith("MEMBER_ONLY")) return this.context.memberOf.includes(targetId) || this.context.ownerOf.includes(targetId);
+            }
+            
+            if (action === 'create') {
+                if (nivel.startsWith("OWNER") || nivel.startsWith("MEMBER")) return true;
+            }
+            
+            return false;
+        }
+    };
   </script>
 </head>
 <body>
@@ -109,16 +147,7 @@
           <ion-list id="sidebarList"   lines="none" class="ion-hide"></ion-list>
         </ion-content>
         <ion-footer class="ion-no-border" style="background: transparent;">
-          <div class="sidebar-heading"><span>SISTEMA</span></div>
-          <div class="nav-item" id="nav-item-settings" onclick="window.AppEventBus.publish('NAV::CHANGE', {viewType: 'designkit'})" title="Ajustes">
-            <ion-icon name="settings-outline"></ion-icon>
-            <ion-label>Ajustes</ion-label>
-          </div>
-          <div class="nav-item" id="nav-item-profile" onclick="window.showToast('Módulo en construcción')" title="Mi Perfil">
-            <ion-icon name="person-circle-outline"></ion-icon>
-            <ion-label>Mi Perfil</ion-label>
-          </div>
-          <div class="build-tracker">
+          <div class="build-tracker" style="padding: 10px 15px; border-top: 1px solid var(--ion-color-step-100, #eee);">
             <span class="build-version">
               <ion-icon name="git-branch-outline" style="vertical-align:middle;font-size:11px;margin-right:4px;"></ion-icon>
               <?= APP_VERSION ?>
@@ -134,42 +163,71 @@
           <ion-toolbar>
             <ion-buttons slot="start">
               <ion-menu-button class="hide-on-desktop"></ion-menu-button>
-              <ion-button class="hide-on-mobile" fill="clear" onclick="window.toggleDesktopMenu()">
+              <ion-button class="hide-on-mobile" fill="clear" data-action="nav:toggle-menu">
                 <ion-icon slot="icon-only" name="menu-outline"></ion-icon>
               </ion-button>
-              <ion-button id="global-back-btn" color="primary" fill="clear" class="ion-hide" onclick="window.AppEventBus.publish('NAV::CHANGE', {viewType: 'dashboard'})">
+              <ion-button id="global-back-btn" color="primary" fill="clear" class="ion-hide" data-action="nav:dashboard">
                 <ion-icon slot="icon-only" name="arrow-back-outline"></ion-icon>
               </ion-button>
             </ion-buttons>
-            <ion-title id="main-header-title">Taxonomia Operativa</ion-title>
+            <ion-title id="main-header-title" class="hide-on-mobile" style="max-width: 250px;">Taxonomia Operativa</ion-title>
+            
+            <!-- S22.2 Omnibar Búsqueda Global -->
+            <div style="flex: 1; display: flex; justify-content: center; align-items: center; max-width: 600px;">
+              <ion-searchbar id="global-omnibar" class="hide-on-mobile" placeholder="Buscar en Plataforma..." mode="ios" show-clear-button="focus" style="--border-radius: 8px; --box-shadow: none; --background: var(--ion-color-step-50, #f4f5f8);"></ion-searchbar>
+            </div>
+            
             <ion-buttons slot="end">
-              <ion-button fill="clear" onclick="window.ThemeManager.cycleTheme()" title="Cambiar Tema">
+              <ion-button fill="clear" data-action="theme:cycle" title="Cambiar Tema">
                 <ion-icon id="theme-toggle-icon" slot="icon-only" name="moon-outline"></ion-icon>
               </ion-button>
-              <ion-button id="btn-logout" color="danger" fill="clear" onclick="window.AuthManager.logout()">
-                <ion-icon slot="start" name="log-out-outline"></ion-icon>
-                <span class="hide-on-mobile">Cerrar Sesion</span>
+              <!-- Botón Avatar de Perfil -->
+              <ion-button id="user-profile-btn" fill="clear">
+                <div id="topbar-avatar" style="width: 32px; height: 32px; border-radius: 50%; background: var(--ion-color-primary); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px;">?</div>
               </ion-button>
             </ion-buttons>
           </ion-toolbar>
+
+          <!-- Popover del Perfil -->
+          <ion-popover id="profile-popover" trigger="user-profile-btn" trigger-action="click" dismiss-on-select="true">
+            <ion-content>
+              <ion-list lines="full">
+                <ion-item>
+                  <ion-avatar slot="start"><div id="popover-avatar" style="width:100%;height:100%;background:var(--ion-color-primary);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:20px;">?</div></ion-avatar>
+                  <ion-label>
+                    <h2 id="popover-user-name" style="font-weight:600;">Usuario</h2>
+                    <p id="popover-user-role" style="font-size: 0.85em; color: var(--ion-color-medium); text-transform: uppercase;">Rol: Consultando</p>
+                  </ion-label>
+                </ion-item>
+                
+                <ion-item button data-dismiss="#profile-popover" data-action="profile:wip">
+                  <ion-icon name="person-circle-outline" slot="start"></ion-icon>
+                  <ion-label>Mi Perfil</ion-label>
+                </ion-item>
+                <ion-item button data-dismiss="#profile-popover" data-action="nav:designkit">
+                  <ion-icon name="settings-outline" slot="start"></ion-icon>
+                  <ion-label>Ajustes de Sistema</ion-label>
+                </ion-item>
+                
+                <!-- S18.5 Governance Admin Panel Access (Blindado) -->
+                <ion-item button id="popover-btn-governance" data-dismiss="#profile-popover" data-action="nav:governance">
+                  <ion-icon name="shield-checkmark-outline" slot="start"></ion-icon>
+                  <ion-label>Gobernanza ABAC</ion-label>
+                </ion-item>
+                
+                <ion-item button lines="none" detail="false" data-dismiss="#profile-popover" data-action="auth:logout" style="--color: var(--ion-color-danger);">
+                  <ion-icon name="log-out-outline" slot="start" color="danger"></ion-icon>
+                  <ion-label color="danger">Cerrar Sesión</ion-label>
+                </ion-item>
+              </ion-list>
+            </ion-content>
+          </ion-popover>
         </ion-header>
 
         <ion-content class="ion-padding">
           <div id="app-container">
             <ion-grid>
-              <ion-row class="ion-align-items-center">
-                <ion-col size="12" class="ion-padding-bottom">
-                  <ion-text>
-                    <h1 style="font-weight:700;">Plataforma de Gobernanza</h1>
-                  </ion-text>
-                  <ion-text color="medium">
-                    <p style="margin-top:0;font-size:1.1rem;">
-                      <ion-icon name="person-circle-outline" style="vertical-align:middle;"></ion-icon>
-                      Hola, <span id="user-greeting-name">Usuario</span>. Gestion Centralizada de Modelo de Producto.
-                    </p>
-                  </ion-text>
-                </ion-col>
-              </ion-row>
+              <!-- Welcome Removed by S22.3 -->
               <!-- Filtro Portafolio -->
               <ion-row id="dashboard-filter-container" class="ion-justify-content-end ion-padding-horizontal ion-hide">
                 <ion-col size="12" size-md="4" class="ion-padding-bottom">
@@ -197,6 +255,13 @@
             </ion-grid>
           </div>
         </ion-content>
+
+        <!-- S22.5 Bottom Tab Bar Mobile (Thumb Zone) -->
+        <ion-footer class="ion-no-border hide-on-desktop">
+          <ion-tab-bar slot="bottom" id="mobile-tab-bar" style="--background: var(--ion-color-step-50, #f4f5f8);">
+            <!-- Renderizado Dinámico vía UI_Router_Schema / JS_Core -->
+          </ion-tab-bar>
+        </ion-footer>
       </div><!-- /main-content -->
 
     </ion-split-pane>
@@ -256,26 +321,35 @@
   </template>
 
   <!-- MOTORES LOGICOS (Regla UI §14) -->
+  <?!= include('DataAPI'); ?>
+  <?!= include('Theme_Engine'); ?>
+  <?!= include('JS_Core'); ?>
+  <?!= include('Omnibar_UI'); ?>
   <?!= include('UI_Router'); ?>
   <?!= include('UI_DataGrid'); ?>
   <?!= include('UI_Components'); ?>
   <?!= include('UI_ModalManager'); ?>
   <?!= include('FormBuilder_Inputs'); ?>
+  <?!= include('UI_Component_DynamicList'); ?>
+  <?!= include('UI_Component_SearchableMulti'); ?>
+  <?!= include('UI_Component_RelationBuilder'); ?>
   <?!= include('FormValidators'); ?>
-  <?!= include('UI_SubgridBuilder'); ?>
+  <?!= include('Math_Engine'); ?>
   <?!= include('UI_FormUtils'); ?>
+  <?!= include('FormEngine_Resolvers'); ?>
+  <?!= include('UI_FormDependencies'); ?>
   <?!= include('UI_FormStepper'); ?>
   <?!= include('UI_FormSubmitter'); ?>
   <?!= include('FormRenderer_UI'); ?>
   <?!= include('DataEngine_UI'); ?>
+  <?!= include('UI_DataView_Toolbar'); ?>
+  <?!= include('DataView_DragDrop'); ?>
   <?!= include('DataView_UI'); ?>
   <?!= include('Dashboard_UI'); ?>
   <?!= include('DomainMap_UI'); ?>
   <?!= include('DesignKit_UI'); ?>
-  <?!= include('Theme_Engine'); ?>
+  <?!= include('Governance_Admin_UI'); ?>
   <?!= include('Auth_UI'); ?>
-  <?!= include('JS_Core'); ?>
-
   <!-- [QA_MODULE_START] -->
   <?!= include('TEST_Suite_UI'); ?>
   <!-- [QA_MODULE_END] -->

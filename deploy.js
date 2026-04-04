@@ -105,11 +105,16 @@ try {
         }
         console.log(`[Deploy] AST Validation passed.`);
 
-        // Native CSS Bundler (S14.2)
-        const cssFiles = [
-            { source: 'assets/css/app.css', target: 'CSS_App.html' },
-            { source: 'assets/css/design-system.css', target: 'CSS_DesignSystem.html' }
-        ];
+        // Native CSS Bundler (S14.2 & S24.4 Atomic Stylesheets)
+        const assetsCssPath = `${buildDir}/assets/css`;
+        const assetsCssDirList = fs.existsSync(assetsCssPath) ? fs.readdirSync(assetsCssPath) : [];
+        const cssFiles = assetsCssDirList
+            .filter(f => f.endsWith('.css'))
+            .map(f => {
+                const baseName = path.basename(f, '.css');
+                const pascalCase = baseName.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join('');
+                return { source: `assets/css/${f}`, target: `CSS_${pascalCase}.html` };
+            });
 
         cssFiles.forEach(file => {
             const sourcePath = `${buildDir}/${file.source}`;
@@ -128,7 +133,8 @@ try {
                     minified = output.styles;
                 }
             } catch (e) {
-                console.error(`\x1b[31m[Deploy-Error] Excepción Crítica compilando CSS en ${file.source}:\x1b[0m`, e);
+                console.error(`\x1b[31m[Deploy-Error] Excepción Crítica compilando CSS con Esbuild en ${file.source}:\x1b[0m`, e);
+                process.exit(1);
             }
             
             const htmlWrapped = `<style>\n${minified}\n</style>`;
@@ -141,6 +147,23 @@ try {
             fs.rmSync(assetsCssDir, { recursive: true, force: true });
         }
         console.log(`[Deploy] Bundled native CSS files into virtual HTML styles`);
+
+        // Native JS Frontend Bundler (S24.6 Client JS Decoupling)
+        const jsFiles = fs.readdirSync(buildDir).filter(f => f.endsWith('.client.js'));
+        jsFiles.forEach(file => {
+            const sourcePath = `${buildDir}/${file}`;
+            const targetPath = `${buildDir}/${file.replace('.client.js', '.html')}`;
+            
+            let jsContent = fs.readFileSync(sourcePath, 'utf8');
+            const htmlWrapped = `<script>\n${jsContent}\n</script>`;
+            fs.writeFileSync(targetPath, htmlWrapped, 'utf8');
+            
+            // Delete the original to prevent Clasp from pushing it as a backend script
+            fs.unlinkSync(sourcePath);
+        });
+        if (jsFiles.length > 0) {
+            console.log(`[Deploy] Bundled ${jsFiles.length} native .client.js files into virtual HTML scripts`);
+        }
 
         // Swap Config.js in .build
         const targetConfig = `${buildDir}/Global_Config.js`;

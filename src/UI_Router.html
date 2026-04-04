@@ -88,6 +88,26 @@
                     }
                 }
             } 
+            else if (viewType === 'governance') {
+                if (headerTitle) headerTitle.textContent = 'Centro de Mando: Matriz ABAC';
+                if (backBtn) {
+                    backBtn.classList.remove('ion-hide');
+                    backBtn.onclick = function() { window.AppEventBus.publish('NAV::CHANGE', {viewType: 'dashboard'}); };
+                }
+                var govBtn = document.getElementById('nav-item-governance');
+                if (govBtn) govBtn.classList.add('active');
+                
+                if (container) {
+                    var tmpl = document.getElementById('tmpl-governance-admin');
+                    if (tmpl) {
+                        window.DOM.clear(container);
+                        container.appendChild(tmpl.content.cloneNode(true));
+                        if (typeof window.GovernanceEngine !== 'undefined') {
+                            window.GovernanceEngine.renderMatrix(container);
+                        }
+                    }
+                }
+            } 
             else if (viewType === 'domainmap') {
                 if (headerTitle) headerTitle.textContent = 'Mapa M/N: Dominios';
                 if (backBtn) {

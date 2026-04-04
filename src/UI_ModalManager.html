@@ -18,7 +18,7 @@
                         alert.message = 'Has rebasado la profundidad máxima para la creación In-line. Por favor, finaliza o cancela primero los formularios pendientes para proteger la estabilidad visual.';
                         alert.buttons = ['Entendido'];
                         document.body.appendChild(alert);
-                        alert.present();
+                        window.PresentSafe(alert);
                         return false; // Deny push
                     }
                     stack.push(modalNode);

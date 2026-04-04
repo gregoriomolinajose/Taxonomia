@@ -1,0 +1,785 @@
+﻿node.exe : PASS __tests
+__/Persona_CRUD.test.js
+En línea: 1 Carácter: 1
++ & "C:\Program 
+Files\nodejs/node.exe" 
+"C:\Program 
+Files\nodejs/node_mo 
+...
++ ~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~
+~~
+    + CategoryInfo     
+         : 
+NotSpecified:     
+(PASS __tests__/Pers   
+ ona_CRUD.test.js:Str  
+  ing) [], RemoteExcep 
+   tion
+    + 
+FullyQualifiedErro    
+rId : NativeCommandE   
+ rror
+ 
+  Persona CRUD - 
+Blueprint V2 
+Verification
+    ÔêÜ Step 1: 
+Document Schema - 
+Should verify schema 
+existence in 
+Schema_Engine.gs (6 ms)
+    ÔêÜ Step 4: Output 
+Sanitization - API 
+should return JSON 
+sanitized data (2 ms)
+    ÔêÜ Step 6: Build 
+Tracking - APP_VERSION 
+should be bumped (3 ms)
+    Ôùï skipped Step 2 
+& 5: UI Routing & 
+Zero-Touch - Should 
+verify ENTITY_META 
+registration in 
+Index.html (OBSOLETE 
+in V4)
+
+PASS __tests__/Adapter_
+Sheets.upsert.test.js
+  Adapter_Sheets.upsert
+() ÔÇö AC2: Audit Trail
+    ÔêÜ Create path: 
+injects all 4 audit 
+fields automatically 
+(12 ms)
+    ÔêÜ Update path: 
+created_at and 
+created_by are 
+IMMUTABLE (2 ms)
+    ÔêÜ Missing PK 
+throws with 
+descriptive error (29 
+ms)
+    ÔêÜ Return value: 
+create action returns 
+status success and 
+action created (1 ms)
+    ÔêÜ Return value: 
+update action returns 
+status success and 
+action updated (2 ms)
+
+PASS __tests__/Equipo_C
+RUD_Fix.test.js
+  Equipo Entity 
+Structural Integrity - 
+Blueprint V2
+    ÔêÜ 3. Must 
+contain explicitly the 
+estado hidden field 
+for soft delete engine 
+(6 ms)
+    Ôùï skipped 1. 
+Equipo schema MUST 
+define primaryKey and 
+titleField at root 
+(OBSOLETE in V4)
+    Ôùï skipped 2. 
+Relation fields MUST 
+use type: "select" and 
+NOT the unimplemented 
+"lookup" (OBSOLETE)
+
+PASS __tests__/Adapter_
+Sheets.list.test.js
+  
+Adapter_Sheets.list() 
+ÔÇö AC1
+    ÔêÜ Normal 
+listing: audit columns 
+stripped by default 
+(21 ms)
+    ÔêÜ 
+includeAudit=true: 
+audit columns present 
+in result (R-01) (10 
+ms)
+    ÔêÜ Empty sheet 
+(headers only): 
+returns empty rows 
+array (4 ms)
+    ÔêÜ 
+format='tuples': rows 
+are arrays not objects 
+(2 ms)
+    ÔêÜ Serialization: 
+returned rows contain 
+no native Date objects 
+(5 ms)
+
+PASS __tests__/Engine_G
+raph.test.js
+  S6.5: Diccionario de 
+Topolog├¡as 
+Polim├│rfico (Strategy 
+Pattern + Auto-Close)
+    ÔêÜ Escenario 1: 
+Hard Error - Strategy 
+1:N (Lineal) rechaza 
+payload malicioso que 
+excede l├¡mite (38 ms)
+    ÔêÜ Escenario 2: 
+Auto-Close - Strategy 
+eval├║a transacci├│n 
+exitosa de reemplazo 
+(2 ms)
+    ÔêÜ Strategy M:N 
+(Matricial/Proyectos) 
+admite m├║ltiples 
+padres y solo cierra 
+disidentes (1 ms)
+
+PASS __tests__/API_Univ
+ersal.contract.test.js
+  API_Universal 
+Serialization Contract 
+ÔÇö AC4
+    ÔêÜ Contract 1: 
+Adapter_Sheets.list() 
+output survives JSON 
+round-trip even with 
+native Date rows (11 
+ms)
+    ÔêÜ Contract 2: 
+Engine_DB.list() 
+response is 
+serializable (1 ms)
+    ÔêÜ Contract 3: 
+upsert() result is 
+serializable (no Date 
+objects in return 
+value) (2 ms)
+    ÔêÜ Contract 4: 
+Response envelope 
+matches expected 
+structure (1 ms)
+
+PASS __tests__/Unidad_N
+egocio_CRUD.test.js
+  Unidad_Negocio CRUD 
+- Verification
+    ÔêÜ Should handle 
+"Unidad_Negocio" 
+creation via 
+API_Universal (21 ms)
+    ÔêÜ Should 
+generate a short UUID 
+(UNID-XXXXX) if 
+id_unidad_negocio is 
+missing in Router (2 
+ms)
+    Ôùï skipped Should 
+verify schema 
+existence in 
+Schema_Engine.gs
+
+PASS __tests__/MasterDe
+tail_Corruption.test.js
+  Master-Detail Data 
+Integrity & Hydration
+    ÔêÜ Bug 1: 
+Children should 
+receive unique IDs if 
+missing (9 ms)
+    ÔêÜ Bug 2: Batch 
+saving should not 
+overwrite (verified 
+via call count) (2 ms)
+    ÔêÜ Bug 3: Read 
+single should hydrate 
+relations (8 ms)
+
+  console.log
+    [QA Stress] Processed 1,000 records in 5ms (Mocked Sheets)
+
+      at Object.log (__tests__/performance_stress.test.js:42:13)
+
+PASS __tests__/Portafol
+io_CRUD.test.js
+  Portafolio CRUD - 
+Capa de Servicio 
+API_Universal
+    ÔêÜ POST (Create) 
+inyecta campos de 
+auditor├¡a (created_at 
+y updated_by) 
+correctamente antes de 
+invocar Engine_DB (11 
+ms)
+
+PASS __tests__/Capacida
+d_Provisioning.test.js
+  Red Phase - 
+Auto-Aprovisionamiento 
+DB y Schema: Capacidad
+    ÔêÜ Debe 
+interceptar, crear la 
+hoja Capacidad e 
+inyectarle los 
+encabezados planos + 
+auditor├¡a (20 ms)
+
+PASS __tests__/performa
+nce_stress.test.js
+  Performance Stress 
+Regression Test (1K 
+Records)
+    ÔêÜ Engine_DB.list 
+should process 1,000 
+records as tuples 
+without memory issues 
+(62 ms)
+    ÔêÜ Engine_DB.list 
+should cache the 
+result to achieve < 
+1.5s SLA (Rule 11/12) 
+(10 ms)
+
+PASS __tests__/Engine_D
+B.test.js
+  Engine_DB Facade ÔÇö 
+Integration with real 
+Adapter_Sheets (QA-7)
+    ÔêÜ 1. Save ÔåÆ 
+creates record with 
+audit trail in real 
+sheet (11 ms)
+    ÔêÜ 2. 
+Idempotency: Second 
+save with same PK 
+updates, does not 
+duplicate (1 ms)
+    ÔêÜ 3. 
+Resiliencia: CloudDB 
+failure does not block 
+Sheets write (1 ms)
+  Adapter_Sheets._norma
+lizeHeader (Regla 4.7 
+ÔÇö pure function)
+    ÔêÜ converts 
+spaces and special 
+chars to snake_case (1 
+ms)
+    ÔêÜ strips accents 
+and tildes
+    ÔêÜ trims trailing 
+symbols that collapse 
+to underscores
+
+PASS __tests__/Dominio_
+Provisioning.test.js
+  
+Auto-Aprovisionamiento 
+DB y Schema Dominio
+    ÔêÜ Debe crear la 
+hoja Dominio 
+autom├íticamente e 
+inyectarle los 
+encabezados del 
+esquema + auditor├¡a 
+(10 ms)
+
+PASS __tests__/API_Auth
+.test.js
+  API_Auth: Capa de 
+Identidad y Seguridad
+    ÔêÜ Debe autorizar 
+a un usuario con 
+dominio @gmail.com (1 
+ms)
+    ÔêÜ Debe autorizar 
+a un usuario con 
+dominio @bellfy.app
+    ÔêÜ Debe rechazar 
+a un usuario con 
+dominio no autorizado 
+(@hotmail.com) (1 ms)
+    ÔêÜ Debe manejar 
+correos con 
+may├║sculas y espacios 
+correctamente (1 ms)
+    ÔêÜ Debe rechazar 
+el acceso si no se 
+provee correo (sesi├│n 
+no disponible)
+
+PASS __tests__/Subgrid_
+Lifecycle.test.js
+  Test 1 ÔÇö Hydration 
+Test (initSubgridState)
+    ÔêÜ Padre con 2 
+hijos debe inicializar 
+el estado del subgrid 
+con exactamente 2 
+registros (34 ms)
+    ÔêÜ Hydration 
+produce una COPIA (no 
+la referencia 
+original) (4 ms)
+    ÔêÜ Padre sin 
+hijos inicializa el 
+estado como arreglo 
+vac├¡o (41 ms)
+    ÔêÜ parentData 
+null inicializa el 
+estado como arreglo 
+vac├¡o (1 ms)
+  Test 2 ÔÇö Modal 
+Exclusion Test (filterA
+vailableOptions)
+    ÔêÜ Cat├ílogo de 
+5, subgrid con 2 ÔåÆ 
+modal debe mostrar 
+exactamente 3 opciones 
+(14 ms)
+    ÔêÜ Los 3 
+disponibles NO 
+contienen elementos ya 
+vinculados (1 ms)
+    ÔêÜ Filtra 
+correctamente aunque 
+el ID del subgrid 
+tenga diferente 
+capitalizaci├│n (1 ms)
+    ÔêÜ Con subgrid 
+vac├¡o, el modal debe 
+mostrar TODOS los 
+disponibles (5)
+  Test 3 ÔÇö Link Test 
+(linkRecord)
+    ÔêÜ A├▒adir un 
+NUEVO registro al 
+subgrid crece el 
+estado a 3 elementos
+    ÔêÜ El payload de 
+guardado incluye la FK 
+correcta para los 3 
+hijos (1 ms)
+    ÔêÜ linkRecord es 
+inmutable: el arreglo 
+original no se muta (1 
+ms)
+    ÔêÜ linkRecord es 
+idempotente: no agrega 
+duplicados
+  Test 4 ÔÇö Unlink 
+Test (unlinkRecord)
+    ÔêÜ Eliminar un 
+elemento del subgrid 
+reduce el estado a 1
+    ÔêÜ El elemento 
+eliminado es reportado 
+en "removed" para que 
+el backend haga 
+diffing (3 ms)
+    ÔêÜ unlinkRecord 
+es inmutable: el 
+arreglo original no se 
+muta
+    ÔêÜ Eliminar un ID 
+que NO existe devuelve 
+el mismo estado y 
+removed = null
+    ÔêÜ Eliminar con 
+ID sucio (espacios + 
+lowercase) funciona 
+correctamente (1 ms)
+  Test 5 ÔÇö 
+Topological Guards in 
+filterAvailableOptions
+    ÔêÜ Falta de 
+Contexto (Legacy FLAT) 
+omite las validaciones
+    ÔêÜ Orphan 
+Stealing Ban remueve 
+opciones con 
+hasActiveParent 
+(isHijo, 
+allowOrphanStealing: 
+false) (1 ms)
+    ÔêÜ Saltos 
+Estrictos 
+(strictLevelJumps: 
+true) para relaci├│n 
+HIJO exige Nivel 
+Objetivo = cLevel + 1 
+(1 ms)
+    ÔêÜ Saltos 
+Estrictos 
+(strictLevelJumps: 
+true) para relaci├│n 
+PADRE exige Nivel 
+Objetivo = cLevel - 1
+    ÔêÜ Saltos Laxos 
+(strictLevelJumps: 
+false) para relaci├│n 
+HIJO permite cualquier 
+Nivel Objetivo > 
+cLevel (1 ms)
+    ÔêÜ Saltos Laxos 
+(strictLevelJumps: 
+false) para relaci├│n 
+PADRE permite 
+cualquier Nivel 
+Objetivo < cLevel
+    ÔêÜ Protecci├│n de 
+Root 
+(rootRequiresNoParent: 
+true) (1 ms)
+
+PASS __tests__/Integrit
+yRefactor.test.js
+  Mandato A: Capa de 
+Datos (Backend)
+    ÔêÜ A.1: Debe 
+existir una rutina de 
+Upsert Idempotente que 
+no use appendRow() (13 
+ms)
+    ÔêÜ A.2: 
+Sanitizaci├│n 
+Obligatoria de Salida 
+(Regla de postMessage) 
+(17 ms)
+    ÔêÜ A.3: 
+Auditor├¡a Silenciosa 
+en el Backend (22 ms)
+    ÔêÜ A.4: 
+Integridad de 
+Soft-Delete (Regla 3 
+DB) (2 ms)
+  Mandato B: Capa de 
+Memoria y UI (Frontend)
+    ÔêÜ B.1: 
+Saneamiento de Strings 
+(Anti-Snake-Case) (1 
+ms)
+    ÔêÜ B.2: 
+Inyecci├│n Inmutable 
+en RAM y Cero 
+Re-fetching (45 ms)
+
+PASS __tests__/Adapter_
+Sheets.delete.test.js
+  Soft Delete: 
+Adapter_Sheets 
+Inmutabilidad en Delete
+    ÔêÜ Debe realizar 
+Soft Delete cambiando 
+el estado a Eliminado 
+y actualizando la 
+Auditor├¡a (8 ms)
+
+PASS __tests__/Dominio_
+Hierarchy.test.js
+  TDD: Jerarqu├¡a 
+Recursiva Din├ímica 
+(Zero-Touch Trigger)
+    ÔêÜ El esquema 
+Dominio debe usar el 
+subgrid 
+relaciones_padre (E5 
+refactor) (2 ms)
+    
+getGenericOrdenPath 
+ÔÇö behavioral 
+coverage (O-01)
+      ÔêÜ Nivel 0 
+(ra├¡z): primer 
+dominio recibe "01" (1 
+ms)
+      ÔêÜ Nivel 0: 
+segundo dominio ra├¡z 
+recibe "02" cuando ya 
+existe "01" (1 ms)
+      ÔêÜ Nivel 1 
+(hijo): primer hijo de 
+"01" recibe "01.01" (2 
+ms)
+      ÔêÜ Nivel 1: 
+segundo hijo de "01" 
+recibe "01.02" cuando 
+ya existe "01.01" (1 
+ms)
+      ÔêÜ Nivel 2 
+(nieto): primer nieto 
+de "01.01" recibe 
+"01.01.01" (2 ms)
+      ÔêÜ Defensivo: 
+Sheets castea 
+orden_path integer 2 
+ÔåÆ path debe padear a 
+"02"
+      ÔêÜ Edge: 
+nivel_tipo vac├¡o 
+devuelve string vac├¡o
+      ÔêÜ Edge: nivel 
+>= 1 sin FK padre 
+devuelve string vac├¡o 
+(bloqueo de seguridad)
+
+PASS __tests__/Debounce
+_UI.test.js
+  JS_Core.html - 
+Debounce Truthiness 
+Trap (S21.2)
+    ÔêÜ 1. Funciona 
+correctamente con 
+delay positivo (5 ms)
+    ÔêÜ 2. Funciona 
+correctamente usando 
+el default delay (2 ms)
+    ÔêÜ 3. Truthiness 
+Trap: Permite delay = 
+0 (Macro-task defer) 
+expl├¡cito (1 ms)
+
+PASS __tests__/FormRend
+erer_UI_List.test.js
+  Frontend (Listado): 
+Filtro de Soft Delete
+    ÔêÜ Debe excluir 
+del DataGrid los 
+registros con estado 
+Eliminado (1 ms)
+
+PASS __tests__/adapter_
+sheets.update.test.js
+  Audit Trail: 
+Adapter_Sheets 
+Inmutabilidad en Update
+    ÔêÜ Debe preservar 
+created_at de ayer y 
+actualizar updated_at 
+ignorando llaves 
+sucias del Frontend (6 
+ms)
+
+PASS __tests__/Engine_G
+raph_Topology.test.js
+  Engine_Graph - 
+Topology Defenses 
+(S8.2)
+    ÔêÜ Should allow 
+valid edges with FLAT 
+topology (fallback) (3 
+ms)
+    ÔêÜ Should prevent 
+Sibling Collisions 
+(duplicate active 
+edge) (34 ms)
+    ÔêÜ Should prevent 
+Cycles (DAG) (2 ms)
+    ÔêÜ Should detect 
+and prevent Max Depth 
+violations (1 ms)
+    ÔêÜ Should deny 
+orphan stealing if 
+disabled in 1:N 
+hierarchy (1 ms)
+    ÔêÜ Should ALLOW 
+orphan stealing if 
+enabled in 1:N 
+hierarchy (1 ms)
+    ÔêÜ Should ALWAYS 
+allow multiple parents 
+in M:N topologies (No 
+stealing)
+    ÔêÜ 
+analyzeTopology should 
+extract stolen edges 
+to close for 1:N 
+hierarchies in O(1)
+    ÔêÜ 
+analyzeTopology should 
+return EMPTY 
+stolenEdges in M:N 
+topology because 
+stealing is bypassed 
+(1 ms)
+    ÔêÜ Should allow 
+valid multi-parent 
+traversal in M:N 
+topology (Poly-Tree)
+    ÔêÜ Should prevent 
+Cycles (DAG) via BFS 
+in M:N topology when a 
+secondary lineage 
+forms a cycle (1 ms)
+    Engine_Graph - 
+S8.4 Deletion 
+Strategies Unit of Work
+      ÔêÜ Should 
+isolate exact edges in 
+ORPHAN strategy 
+without cascading 
+nodes (2 ms)
+      ÔêÜ Should 
+CASCADE strictly if 
+the child has NO other 
+active parents (1 ms)
+      ÔêÜ Should 
+PRESERVE child in 
+CASCADE if it holds 
+M:N co-parentage 
+(Reference Counting) 
+(1 ms)
+      ÔêÜ Should 
+perform NxM Cartesian 
+Spawning for 
+GRANDPARENT strategy 
+(2 ms)
+
+PASS __tests__/MasterDe
+tail_Regression.test.js
+  Test 1 ÔÇö Motor de 
+Reconciliaci├│n 
+(Orphan Cleanup)
+    ÔêÜ Padre con 3 
+hijos guardado con 
+solo 2: debe 
+desvincular el 
+hu├®rfano (FK = "") (3 
+ms)
+  Test 2 ÔÇö 
+Aislamiento de Cach├® 
+(Inmutabilidad de 
+Estado)
+    ÔêÜ Inyectar un 
+nuevo registro no debe 
+mutar el arreglo 
+original del cach├® (2 
+ms)
+    ÔêÜ Actualizar un 
+registro existente 
+tampoco debe mutar el 
+arreglo original (1 ms)
+  Test 3 ÔÇö 
+Saneamiento de Filtro 
+(isRecordLinked con 
+IDs sucios)
+    ÔêÜ Detecta un 
+registro vinculado con 
+ID limpio (caso base) 
+(1 ms)
+    ÔêÜ Detecta un 
+registro vinculado si 
+el candidato tiene 
+espacios extra
+    ÔêÜ Detecta un 
+registro vinculado si 
+el candidato est├í en 
+min├║sculas (2 ms)
+    ÔêÜ Combina 
+suciedad: espacios + 
+lowercase
+    ÔêÜ Retorna false 
+para un registro NO 
+vinculado
+    ÔêÜ Retorna false 
+si linkedRecords est├í 
+vac├¡o (11 ms)
+    ÔêÜ Retorna false 
+si linkedRecords es 
+null (robusto ante 
+estado no inicializado)
+
+PASS __tests__/Optimist
+icLocking.test.js
+  Optimistic Locking 
+Control - 
+Adapter_Sheets.upsert
+    ÔêÜ 1. Creation 
+sets _version to 1 
+automatically (3 ms)
+    ÔêÜ 2. Update 
+correctly increments 
+_version by 1 (Atomic 
+Bump) (1 ms)
+    ÔêÜ 3. Hard 
+Conflict throws 
+ERROR_CONCURRENCY when 
+versions mismatch (21 
+ms)
+
+PASS __tests__/Engine_A
+BAC.test.js
+  Engine_ABAC 
+Authorization Rules
+    ÔêÜ 1. 
+resolveTopologyFor 
+returns empty context 
+for unknown users (2 
+ms)
+    ÔêÜ 2. 
+resolveTopologyFor 
+escalates topology for 
+parent owners (DAG 
+BFS) (2 ms)
+    ÔêÜ 3. 
+validatePermission 
+deniega acceso a 
+updates si el usuario 
+no es owner/miembro 
+del registro exacto (1 
+ms)
+    ÔêÜ 4. 
+validatePermission 
+otorga acceso total 
+(bypass) a usuarios 
+tipo ADMIN (1 ms)
+    ÔêÜ 5. 
+validatePermission 
+otorga acceso update 
+si el usuario es owner 
+(1 ms)
+
+PASS __tests__/MasterDe
+tail_Orchestration.test
+.js
+  Engine_DB 
+Orchestration: 
+Master-Detail (nested 
+payloads)
+    ÔêÜ Should 
+orchestrate a nested 
+save: Parent first, 
+then inject PK into 
+Children (7 ms)
+
+------------------------|---------|----------|---------|---------|--------------------------------------------------------------
+File                    | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s                                            
+------------------------|---------|----------|---------|---------|--------------------------------------------------------------
+All files               |   67.66 |    49.57 |   72.97 |   71.11 |                                                              
+ API_Auth.js            |   76.47 |       60 |   66.66 |      75 | 16-18,50                                                     
+ API_Universal.gs       |   35.71 |    26.78 |      50 |   35.71 | 13-40,85-120                                                 
+ Adapter_CloudDB.js     |     100 |       50 |     100 |     100 | 10                                                           
+ Adapter_Sheets.js      |   85.96 |    63.84 |   88.23 |    89.2 | 60,94,168-172,176,190,215-235,242,245,299,359,435            
+ Engine_ABAC.gs         |    83.8 |    58.82 |     100 |   91.01 | 124,160,175,192-203                                          
+ Engine_DB.js           |   41.63 |    26.95 |      50 |   45.83 | 17-18,53-137,161-169,209-225,265-268,331-333,389-390,406-534 
+ Engine_Graph.js        |    87.7 |     72.9 |    90.9 |    89.8 | 45-47,99-114,174,308                                         
+ Math_Engine.js         |   40.59 |    29.46 |   41.17 |   39.28 | 56-141,147-149,157-158                                       
+ Schema_Engine.gs       |    37.5 |     12.5 |       0 |    37.5 | 153-167                                                      
+ SubgridState.js        |   81.25 |    62.82 |   89.47 |   79.24 | 91,169-186,193-195                                           
+ Topology_Strategies.js |   82.35 |    63.79 |     100 |     100 | 7-12,20-24,31-44,49-55,60-79                                 
+------------------------|---------|----------|---------|---------|--------------------------------------------------------------
+Test Suites: 26 
+passed, 26 total
+Tests:       4 
+skipped, 121 passed, 
+125 total
+Snapshots:   0 total
+Time:        1.922 s, 
+estimated 3 s
+Ran all test suites.

@@ -1,4 +1,3 @@
-
 # Backlog: Taxonomia Project
 
 > **Status**: Draft
@@ -18,10 +17,13 @@
 | E15| Topological Tech Debt (Cleaning Sprint)               | ✅ Complete  | Deuda técnica estructural (FormEngine, GC Modales, XSS)| Alta     |
 | E16| Blueprint V4 Audit & Refactoring                      | ✅ Complete  | Refactorización Arquitectural: DataGrid Minimalism, Visibility Flags, Topology| Alta     |
 | E17| Core Initialization Purification                      | ✅ Complete  | Desacoplar JS_Core.html, ThemeManager, Auth UI y Math Logic | Max      |
-| E18| Gobernanza Topológica y Seguridad Contextual (ABAC) | 🏃 In Progress| Micro-gobernanza, Segregation of Duties y Accesos basados en contexto SAFe | Max      |
-| E19| Core Framework Resilience & Strictness                | 🚧 To Do     | Validator Truthiness, Ionic Promises, AppEventBus Telemetry, Error Bounds | Alta     |
-| E20| Pipeline Evolution & Native Tooling                   | 🚧 To Do     | AST Config, Esbuild/Rollup, Pure CSS Extraction, ThemeManager Modularization | Media    |
-| E21| Next-Gen MDM & Concurrency Data Layer                 | 🚧 To Do     | Optimistic Locking, Typeahead Selects BigData, Soft-Delete Graphs | Muy Alta |
+| E18| Gobernanza Topológica y Seguridad Contextual (ABAC) | ✅ Complete  | Micro-gobernanza, Segregation of Duties y Accesos basados en contexto SAFe | Max      |
+| E19| Core Framework Resilience & Strictness                | ✅ Complete    | Validator Truthiness, Ionic Promises, AppEventBus Telemetry, Error Bounds | Alta     |
+| E20| Pipeline Evolution & Native Tooling                   | ✅ Complete   | AST Config, Esbuild/Rollup, Pure CSS Extraction, ThemeManager Modularization | Media    |
+| E21| Next-Gen MDM & Concurrency Data Layer                 | ✅ Complete   | Optimistic Locking, Soft-Delete, ES5 Concats, Tests Mudos, Profiling | Muy Alta |
+| E22| Enterprise B2B UX Transformation                      | ✅ Complete   | Top App Bar, Omnibar, Contextual ABAC Dashboard, Design System Purity| Max      |
+| E23| Enterprise Identity & Zero-Trust SSO                  | 🚧 To Do     | Admin SDK Directory API integration para Avatares Reales y Perfiles  | Media    |
+| E24| Frontend God Objects Decomposition                    | ⏳ In Prog   | Split DataView_UI, FormRenderer, FormBuilder_Inputs, app.css         | Alta     |
 
 ## Parking Lot / Deuda Técnica (Post-Epic 11)
 
@@ -37,10 +39,16 @@
 | **WSOD Local XSS Risk** | Quality Rev. S12.3 | ✅ [E15] Sanitización global nativa con Template Isolation V4. |
 | **Subgrid Lookup Implicit Fetch** | Arch Review S13.1 (H8) | ✅ [E13] Desacoplamientos realizados en S13 sobre el Componente base. |
 | **sumPrefix Logic Duplication** | Arch Review S13.2 (Q1) | ✅ [E13] Unificado de manera DRY a reglas OCP del framework de validación. |
+| **Validators Truthiness Bugs** | Quality Rev. S18.2 | ✅ [E19] Refactorización estricta de coerciones asimétricas y parsers `isNaN()`. |
+| **Ionic Floating Promises Risks** | Arch Review S18.3 | ✅ [E19] Componentes `PresentSafe` global en Zero-Trust UI Framework. |
+| **JSON Parse Swallows & WSOD** | App Event Bus Init | ✅ [E19] Telemetría Global Boundaries con inyección Safe. |
+| **Legacy ThemeManager.js Script** | Arch Review S20.3 | ✅ [E20] Mutación hacia ES6 Module Pattern orquestado, desterrando código procedural. |
 
 ### 🚧 Deuda Activa (Backlog Técnico)
 
 > **[INFO]** Toda la Deuda Técnica Activa devuelta por Quality y Architecture Reviews ha sido formalmente agrupada y escalada a las siguientes Épicas en el Roadmap (To-Do):
-> - **[E19] Core Framework Resilience:** Bugs lógicos (`Validator Truthiness`, `JSON Parse Swallows`), Promises (`Ionic`), Concatenaciones ES5, Tests Mudos, y Profiling Mágico.
-> - **[E20] Pipeline Evolution:** `Esbuild/Rollup` Integration, `Localización UI_CONFIG`, y Modularización formal ES6 del `ThemeManager`.
-> - **[E21] Next-Gen MDM data Layer:** `Optimistic Locking`, Búsqueda Asíncrona (Debounce/Typeahead), y `Soft-Delete` Graph Cleanup.
+> - **[E21] Next-Gen MDM data Layer:** `Optimistic Locking`, Búsqueda Asíncrona (Debounce/Typeahead), `Soft-Delete` Graph Cleanup, `Concatenaciones ES5`, `Tests Mudos`, y `Profiling Mágico`.
+> - **[E23] Enterprise Identity, SSO & Tech Debt (E21 AR/QR):** 
+>   - *Identity*: `Admin SDK Directory`, Google Profile Photo Hydration, Identity Fallbacks y Scopes de Workspace.
+>   - *Arch Review (E21)*: Absorber auto-debouncing nativamente dentro del Dispatcher de `AppEventBus` y formalizar la obsolescencia de los Mocks Locales.
+>   - *Quality Review (E21)*: Validar estrictamente el type paraméntrico en `window.debounce` (`typeof delay === 'number'`) y normalizar rastros de `console.error` en despliegues sin script (`UI_FormSubmitter`).

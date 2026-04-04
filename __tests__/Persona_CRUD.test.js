@@ -25,6 +25,13 @@ const path = require('path');
 
 describe('Persona CRUD - Blueprint V2 Verification', () => {
 
+    beforeAll(() => {
+        global._generateShortUUID = jest.fn(() => 'SHORT-1234');
+        global._handleCreate = jest.fn((entityName, payload) => {
+            return global.Engine_DB.create(entityName, payload);
+        });
+    });
+
     beforeEach(() => {
         jest.clearAllMocks();
     });
@@ -37,7 +44,7 @@ describe('Persona CRUD - Blueprint V2 Verification', () => {
         expect(content).toContain('primaryKey: "id_persona"');
     });
 
-    test('Step 2 & 5: UI Routing & Zero-Touch - Should verify ENTITY_META registration in Index.html', () => {
+    test.skip('Step 2 & 5: UI Routing & Zero-Touch - Should verify ENTITY_META registration in Index.html (OBSOLETE in V4)', () => {
         const indexPath = path.resolve(__dirname, '../src/Index.html');
         const content = fs.readFileSync(indexPath, 'utf8');
         

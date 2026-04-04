@@ -354,7 +354,7 @@
             <h3 class="text-h3" style="margin: 0;">Interactive Primary</h3>
             <div class="hex-display" id="primary-hex-display">Calculando...</div>
           </ion-label>
-          <ion-button fill="clear" color="medium" slot="end" onclick="window.resetThemeEngine()">
+          <ion-button fill="clear" color="medium" slot="end" data-action="theme:reset">
             <ion-icon name="refresh-outline" slot="start"></ion-icon> Restablecer
           </ion-button>
         </ion-item>
@@ -383,7 +383,7 @@
           
           <br>
           <h3 class="text-h3">Pattern 3: Enterprise Modal</h3>
-          <ion-button expand="block" onclick="window.openTestModal()">Abrir Modal de Prueba</ion-button>
+          <ion-button expand="block" data-action="test:modal">Abrir Modal de Prueba</ion-button>
           
         </ion-card-content>
       </ion-card>
@@ -398,7 +398,7 @@
     <ion-toolbar color="primary">
       <ion-title>Modal Enterprise</ion-title>
       <ion-buttons slot="end">
-        <ion-button onclick="document.getElementById('enterpriseModalTest').dismiss()">
+        <ion-button data-action="test:modal-close">
           <ion-icon name="close-outline"></ion-icon>
         </ion-button>
       </ion-buttons>
@@ -429,7 +429,7 @@
 
   window.openTestModal = function() {
     var modal = document.getElementById('enterpriseModalTest');
-    if (modal) modal.present();
+    if (modal) window.PresentSafe(modal);
   };
 
   // Helper: Hex to RGB Converter

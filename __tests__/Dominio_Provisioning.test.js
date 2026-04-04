@@ -88,7 +88,7 @@ describe('Auto-Aprovisionamiento DB y Schema Dominio', () => {
         const expectedHeaders = [
             'id_dominio', 'id_registro', 'nivel_tipo', 'orden_path', 'n0_es', 
             'nombre_ingles', 'definicion', 'abreviacion', 'path_completo_es',
-            'created_at', 'created_by', 'updated_at', 'updated_by', 'deleted_at', 'deleted_by'
+            'created_at', 'created_by', 'updated_at', 'updated_by', 'deleted_at', 'deleted_by', '_version'
         ];
         
         expect(injectedHeaders).toEqual(expectedHeaders);
