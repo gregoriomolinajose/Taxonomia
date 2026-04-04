@@ -18,9 +18,10 @@ Descomponer estructuralmente los 4 grandes God Files del frontend (archivos que 
 2. **[x] S24.2:** FormRenderer Dependency & Node Extraction.
 3. **[x] S24.3:** FormBuilder_Inputs Factory Atomization.
 4. **[x] S24.4:** `app.css` Deprecation & Atomic Stylesheets.
-5. **[ ] S24.5:** Event Delegation Migration (Migrar inyecciones de literales `window.Module` a manejadores nativos como `AppEventBus` o listeners delegados en constructores).
-6. **[ ] S24.6:** DataAPI Consolidation (Consolidar Resolvers y Fetches asíncronos en megaobjeto `DataAPI` para aislar el Event Loop del Global Scope).
-7. **[ ] S24.7:** UI Components Hardening (Añadir bloques defensivos try/catch en el parseo JSON del `initialSelection` dentro de `SearchableMulti` como recomendación del QR).
+5. **[x] S24.5:** Event Delegation Migration (Migrar inyecciones de literales `window.Module` a manejadores nativos como `AppEventBus` o listeners delegados en constructores).
+6. **[x] S24.6:** DataAPI Consolidation (Consolidar Resolvers y Fetches asíncronos en megaobjeto `DataAPI` para aislar el Event Loop del Global Scope).
+7. **[x] S24.7:** UI Components Hardening (Añadir bloques defensivos try/catch en el parseo JSON del `initialSelection` dentro de `SearchableMulti` como recomendación del QR).
+8. **[x] S24.8:** DataGrid Card View OCP Fix (Eliminar acoplamiento `HIDDEN_BY_DEFAULT` duplicado y forzar uso dinámico de `this.cfg.columns` en la vista en Tarjeta/Grid).
 
 ## Done Criteria
 Todos los archivos del frontend están dentro de tolerancias arquitecturales sanas (150-400 LOC). Los 4 God files dejan de existir bajo su nomenclatura monolítica. Los tests E2E y el renderizado reacciona idénticamente (Regression Tested).
