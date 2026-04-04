@@ -10,7 +10,21 @@
 
         global.UI_Factory.buildSearchableMulti = function(fieldDef, dataset, initialSelection, localEventBus) {
             const mainContainer = document.createElement('div');
-            let selectedIds = Array.isArray(initialSelection) ? [...initialSelection] : [];
+            
+            let selectedIds = [];
+            if (Array.isArray(initialSelection)) {
+                selectedIds = [...initialSelection];
+            } else if (typeof initialSelection === 'string') {
+                try {
+                    const parsed = JSON.parse(initialSelection);
+                    selectedIds = Array.isArray(parsed) ? parsed : [parsed];
+                } catch(e) {
+                    console.warn(`[SearchableMulti] Fallback parsing for ${fieldDef.name}`);
+                    selectedIds = initialSelection.trim() ? [initialSelection] : [];
+                }
+            } else if (initialSelection) {
+                selectedIds = [String(initialSelection)];
+            }
             
             const hidden = document.createElement('input');
             hidden.type = 'hidden';
