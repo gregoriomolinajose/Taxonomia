@@ -1,7 +1,7 @@
 const CONFIG = {
     APP_VERSION: 'v1.4.0 - 2604011813',
-    // Fallback por defecto si no se configura en PropertiesService (Base de Desarrollo)
-    SPREADSHEET_ID_DB: '1tMyYBLPr0HJnJwbhFpCVoM4U8k1EVGycBDBjEnUGDts',
+    // ID inyectado puramente por variable de entorno (ENV_CONFIG)
+    SPREADSHEET_ID_DB: '',
     ALLOWED_DOMAINS: ['@gmail.com', '@bellfy.app', '@coppel.com', '@bancoppel.com'],
     useSheets: true,
     useCloudDB: false
