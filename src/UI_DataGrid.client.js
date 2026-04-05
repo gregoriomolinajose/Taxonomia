@@ -173,7 +173,6 @@
                 const tdNum = document.createElement('td');
                 tdNum.className = 'dv-td-num';
                 tdNum.textContent = String(startIdx + idx + 1);
-                tdNum.addEventListener('click', (e) => e.stopPropagation()); // Prevent num click from triggering edit if not desired, though usually row click is requested. Let's not stop propagation so the whole row is clickable.
                 tr.appendChild(tdNum);
                 
                 visibleCols.forEach((col) => {

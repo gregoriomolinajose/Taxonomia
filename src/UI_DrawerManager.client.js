@@ -80,11 +80,11 @@
                     // Wait for CSS transition (350ms)
                     await new Promise(r => setTimeout(r, 350));
                     
-                    try {
+                    if (topDrawer && topDrawer.isConnected) {
                         topDrawer.innerHTML = '';
                         if(topDrawer.__onSaveSuccessFallback) topDrawer.__onSaveSuccessFallback = null;
                         topDrawer.remove();
-                    } catch (e) {}
+                    }
                     
                     global.currentFormDrawer = stack.length > 0 ? stack[stack.length - 1] : null;
                     
