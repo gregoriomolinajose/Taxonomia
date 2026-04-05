@@ -335,16 +335,11 @@
             
             const colLeft = document.createElement('ion-col');
             colLeft.setAttribute('size', '6');
-            colLeft.style.display = 'flex';
-            colLeft.style.justifyContent = 'flex-start';
-            colLeft.style.alignItems = 'center';
+            colLeft.className = 'drawer-footer-left';
             
             const colRight = document.createElement('ion-col');
             colRight.setAttribute('size', '6');
-            colRight.style.display = 'flex';
-            colRight.style.justifyContent = 'flex-end';
-            colRight.style.alignItems = 'center';
-            colRight.style.gap = 'var(--spacing-3)';
+            colRight.className = 'drawer-footer-right';
 
             // Buttons fall down from Stepper init
             colLeft.appendChild(btnPrev);
@@ -485,13 +480,13 @@
             const headerTitle = document.getElementById('main-header-title');
             if (headerTitle) headerTitle.textContent = "Editar: " + window.formatEntityName(entityName);
 
-            if (global.currentFormModal) {
-                const modalTitle = global.currentFormModal.querySelector('.drawer-title') || global.currentFormModal.querySelector('ion-title');
+            if (global.currentFormDrawer) {
+                const modalTitle = global.currentFormDrawer.querySelector('.drawer-title') || global.currentFormDrawer.querySelector('ion-title');
                 if (modalTitle) modalTitle.textContent = "Editar: " + window.formatEntityName(entityName);
             }
 
             // 5. Pre-llenado de campos (Directiva 3.c)
-            const container = global.currentFormModal || document.getElementById('app-container');
+            const container = global.currentFormDrawer || document.getElementById('app-container');
             const inputs = container.querySelectorAll('ion-input, ion-textarea, ion-select, input[type="hidden"]');
 
             // =========================================================================================

@@ -167,8 +167,20 @@ const APP_SCHEMAS = {
     fields: [
       { name: "id_permiso", type: "text", primaryKey: true, readonly: true, label: "ID Permiso", width: 12 },
       { name: "id_rol", type: "select", label: "Rol Organizacional", required: true, width: 6, lookupSource: "getSysRolesOptions" },
-      { name: "schema_destino", type: "select", label: "Entidad del Sistema", required: true, width: 6, options: ["Portafolio", "Dominio", "Grupo_Productos", "Producto", "Capacidad", "Equipo", "Persona", "Relacion_Dominios", "Sys_Roles", "Sys_Permissions", "Config_Typography"] },
+      { name: "schema_destino", type: "select", label: "Entidad del Sistema", required: true, width: 6, options: ["Portafolio", "Dominio", "Grupo_Productos", "Producto", "Capacidad", "Equipo", "Persona", "Relacion_Dominios", "Sys_Roles", "Sys_Permissions", "Config_Typography", "Config_Workspace"] },
       { name: "nivel_acceso", type: "select", label: "Nivel de Acceso", required: true, width: 12, options: ["ALL (Admin Total)", "OWNER_ONLY (Solo propios)", "MEMBER_ONLY (Siendo Miembro)", "READ_ONLY (Solo lectura)", "NONE (Denegado)"] }
+    ]
+  },
+  Config_Workspace: {
+    metadata: { showInMenu: false, showInDashboard: false, order:93, iconName:'business-outline', color:'primary', label:'Seguridad: Workspaces', titleField:'dominio_principal', idField:'id_workspace', fkField:null },
+    primaryKey: "id_workspace",
+    fields: [
+      { name: "id_workspace", type: "text", primaryKey: true, readonly: true, label: "ID Workspace", width: 12 },
+      { name: "estado", type: "hidden", defaultValue: "Activo" },
+      { section: "Datos de Enlace", name: "dominio_principal", type: "text", label: "Dominio Principal", required: true, width: 6, helpText: "Ejemplo: @coppel.com" },
+      { section: "Datos de Enlace", name: "alias_alternativos", type: "text", label: "Alias Soportados (CSV)", required: false, width: 6, helpText: "Ejemplo: @coppelmexico.com,@bancoppel.com" },
+      { section: "Integración OAuth", name: "auth_mode", type: "select", label: "Modo OAuth (M2M)", required: true, width: 12, options: ["USER_DEPLOYING (Global Default)", "SERVICE_ACCOUNT (Explicit)"], defaultValue: "USER_DEPLOYING (Global Default)" },
+      { section: "Seguridad Zero-Trust", name: "admin_contacto", type: "text", label: "Contacto IT (Email)", required: true, width: 12 }
     ]
   },
   _UI_CONFIG: {

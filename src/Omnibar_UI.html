@@ -44,7 +44,10 @@ window.addEventListener('DOMContentLoaded', function() {
 
   if (!omnibarInput || !resultsList) return;
 
-  var executeSearchDebounced = null;
+  // Escuchar el evento de busqueda mediante Bus Global (S23.3)
+  window.AppEventBus.subscribe('OMNIBAR::SEARCH', function(term) {
+    executeSearch(term);
+  });
 
   function handleSearch(ev) {
     var rawValue = ev.target.value || '';
@@ -54,10 +57,8 @@ window.addEventListener('DOMContentLoaded', function() {
       popover.present();
     }
 
-    if (!executeSearchDebounced) {
-        executeSearchDebounced = (window.debounce || function(f){return f;})(executeSearch, 300);
-    }
-    executeSearchDebounced(term);
+    // Delegamos al debouncer asíncrono nativo del AppEventBus
+    window.AppEventBus.publishDebounced('OMNIBAR::SEARCH', term, 300);
   }
 
   function executeSearch(term) {

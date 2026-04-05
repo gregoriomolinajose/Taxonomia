@@ -40,7 +40,7 @@ window.UI_FormSubmitter = class UI_FormSubmitter {
             await window.PresentSafe(loading);
 
             // LECTURA JIT (Evita Detached Nodes)
-            const activeForm = window.currentFormModal || document.getElementById('app-container');
+            const activeForm = window.currentFormDrawer || document.getElementById('app-container');
             const freshInputs = activeForm.querySelectorAll('ion-input, ion-textarea, ion-select, input[type="hidden"]');
             const payload = {};
             
@@ -149,7 +149,6 @@ window.UI_FormSubmitter = class UI_FormSubmitter {
                 await loading.dismiss();
                 this._revertButtonState();
                 this._showToast(`Error de Servidor: ${err.message}`, 'danger');
-                console.error('[FormSubmitter] Error DataAPI:', err);
             }
         });
     }

@@ -44,6 +44,12 @@
                 const root = getRootContainer();
                 root.classList.add('active');
                 
+                // Notificar que la profundidad de Drawers ha cambiado (Disable forms if max level approached)
+                if (window.AppEventBus) {
+                    window.AppEventBus.publish('DRAWER::DEPTH_CHANGED', stack.length + 1);
+                }
+                document.body.classList.toggle('drawer-max-depth', (stack.length + 1) >= MAX_DEPTH);
+                
                 const backdrop = document.getElementById('drawer-backdrop');
                 if(backdrop) backdrop.classList.add('active');
                 
@@ -61,7 +67,6 @@
                 
                 stack.push(drawerNode);
                 global.currentFormDrawer = drawerNode;
-                global.currentFormModal = drawerNode; // Compatibilidad Polyfill para validadores viejos
                 return true;
             },
             
@@ -82,7 +87,6 @@
                     } catch (e) {}
                     
                     global.currentFormDrawer = stack.length > 0 ? stack[stack.length - 1] : null;
-                    global.currentFormModal = global.currentFormDrawer;
                     
                     if (stack.length === 0) {
                         global.currentEditId = null;
@@ -91,6 +95,11 @@
                         const backdrop = document.getElementById('drawer-backdrop');
                         if(backdrop) backdrop.classList.remove('active');
                     }
+
+                    if (window.AppEventBus) {
+                        window.AppEventBus.publish('DRAWER::DEPTH_CHANGED', stack.length);
+                    }
+                    document.body.classList.toggle('drawer-max-depth', stack.length >= MAX_DEPTH);
                 }
             },
             getDepth: () => stack.length,
