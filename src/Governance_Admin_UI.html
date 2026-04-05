@@ -9,6 +9,10 @@
                                <ion-icon name="shield-checkmark-outline" style="vertical-align:middle;"></ion-icon>
                                Matriz Dinámica: Control de Acceso (ABAC)
                            </ion-card-title>
+                           <ion-button id="btn-nav-workspaces" slot="end" color="secondary" fill="outline" onclick="if(window.AppEventBus) window.AppEventBus.publish('NAV::CHANGE', {viewType: 'dataview', entityKey: 'Config_Workspace'});" style="margin-right:1rem; display:none;">
+                               <ion-icon name="business-outline" slot="start"></ion-icon>
+                               Workspaces (SSO)
+                           </ion-button>
                            <ion-button slot="end" color="primary" fill="outline" onclick="if(window.AppEventBus) window.AppEventBus.publish('NAV::CHANGE', {viewType: 'dataview', entityKey: 'Sys_Roles'});">
                                <ion-icon name="shield-half-outline" slot="start"></ion-icon>
                                Gestión de Roles
@@ -33,6 +37,12 @@
 <script>
 window.GovernanceEngine = {
     renderMatrix: async function(container) {
+        // [S23.2] Gatekeeper visual para Workspaces
+        const wsBtn = document.getElementById('btn-nav-workspaces');
+        if (wsBtn && window.ABAC && window.ABAC.can('read', 'Config_Workspace')) {
+            wsBtn.style.display = 'inline-block';
+        }
+
         // Guardrail S18.5: Hiding Agresivo Total de la Vista
         if (window.ABAC && !window.ABAC.can('update', 'Sys_Permissions')) {
             window.DOM.clear(container);
