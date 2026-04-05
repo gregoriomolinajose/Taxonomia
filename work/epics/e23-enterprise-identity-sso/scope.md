@@ -23,5 +23,5 @@ Implementar hidratación de identidades persistentes vía el *Admin SDK Director
 ## Done Criteria
 - [x] No existen mocks forzando el login; todo pasa genuinamente por el flujo Zero-Trust.
 - [x] Configurador Multi-Workspace existe y funciona via DataView.
-- [ ] Los Perfiles cargan visualmente Google Photos del Directory.
-- [ ] Todo input asíncrono tiene su debouncer delegado desde el EventBus transparentemente.
+- [x] Los Perfiles cargan visualmente Google Photos del Directory.
+- [x] Todo input asíncrono tiene su debouncer delegado desde el EventBus transparentemente.
