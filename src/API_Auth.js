@@ -7,12 +7,22 @@
 
 
 const API_Auth = {
-    getUserIdentity: function (mockEmail = null) {
+    getUserIdentity: function () {
         let email = "";
+        let authMode = "SSO";
 
-        // Usar mockEmail para testing, si no, usar Session (solo en entorno GAS)
-        if (mockEmail !== null) {
-            email = mockEmail;
+        if (typeof PropertiesService !== 'undefined') {
+            try {
+                const envStr = PropertiesService.getScriptProperties().getProperty('ENV_CONFIG');
+                if (envStr) authMode = JSON.parse(envStr).AuthMode || "SSO";
+            } catch(e) {}
+        } else if (typeof CONFIG !== 'undefined' && CONFIG.AuthMode) {
+             authMode = CONFIG.AuthMode;
+        }
+
+        // [S23.4] Dual Authentication System (Local Fallback vs SSO Zero-Trust)
+        if (authMode === 'LOCAL') {
+            email = "local.admin@system.com"; // Fallback autorizado para testing manual
         } else if (typeof Session !== 'undefined') {
             try {
                 email = Session.getActiveUser().getEmail();
@@ -31,9 +41,15 @@ const API_Auth = {
             };
         }
 
-        const domains = (typeof CONFIG !== 'undefined' && CONFIG.ALLOWED_DOMAINS)
-            ? CONFIG.ALLOWED_DOMAINS
-            : ['@coppel.com', '@bancoppel.com']; // Fallback seguro
+        let domains = ['@coppel.com', '@bancoppel.com']; 
+        if (typeof PropertiesService !== 'undefined') {
+            try {
+                const envStr = PropertiesService.getScriptProperties().getProperty('ENV_CONFIG');
+                if (envStr && JSON.parse(envStr).ALLOWED_DOMAINS) domains = JSON.parse(envStr).ALLOWED_DOMAINS;
+            } catch(e) {}
+        } else if (typeof CONFIG !== 'undefined' && CONFIG.ALLOWED_DOMAINS) {
+            domains = CONFIG.ALLOWED_DOMAINS;
+        }
 
         const isAuthorized = domains.some(domain => email.endsWith(domain.toLowerCase()));
 
