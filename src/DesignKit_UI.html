@@ -129,41 +129,142 @@
       <p>Pendiente de integración.</p>
     </div>
 
-    <!-- Tab: Tipografía -->
+      <!-- Tab: Tipografía -->
     <div id="dk-tab-typography" class="dk-tab-content active">
-      <ion-text color="primary"><h2 class="text-h2">Tipografía (Brand Fonts)</h2></ion-text>
-      
-      <!-- Configuration Dropdown (S24.5 White-Label) -->
-      <div id="typography-admin-panel" style="display: none; margin-bottom: var(--spacing-4);">
-        <ion-item lines="full" class="ion-no-padding">
-          <ion-select id="white-label-font-select" label="Paquete Tipográfico" label-placement="floating" interface="popover">
-            <ion-select-option value='{"bodyFont":"Poppins, sans-serif", "displayFont":"Playfair Display, serif"}'>Clásico (Cuerpo: Poppins, Títulos: Playfair)</ion-select-option>
-            <ion-select-option value='{"bodyFont":"Inter, sans-serif", "displayFont":"Inter, sans-serif"}'>Moderno (Inter)</ion-select-option>
-            <ion-select-option value='{"bodyFont":"Roboto, sans-serif", "displayFont":"Montserrat, sans-serif"}'>Corporativo (Cuerpo: Roboto, Títulos: Montserrat)</ion-select-option>
-            <ion-select-option value='{"bodyFont":"Montserrat, sans-serif", "displayFont":"Montserrat, sans-serif"}'>Vanguardista (Montserrat puro)</ion-select-option>
-            <ion-select-option value='{"bodyFont":"Roboto, sans-serif", "displayFont":"Roboto, sans-serif"}'>Minimalista (Roboto puro)</ion-select-option>
-          </ion-select>
-        </ion-item>
-        <div class="ion-text-right ion-margin-top" style="display: flex; gap: var(--spacing-3); justify-content: flex-end;">
-           <ion-button fill="outline" color="medium" onclick="_closeTopModal(); setTimeout(() => { if(window.AppEventBus) window.AppEventBus.publish('NAV::CHANGE', {viewType: 'dataview', entityKey: 'Config_Typography'}); }, 300)">Administrar Familias Tipográficas</ion-button>
-           <ion-button data-action="theme:save-typography">Aplicar Globalmente</ion-button>
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--spacing-4);">
+        <ion-text color="primary"><h2 class="text-h2" style="margin:0;">Tipografía (Variables Fluidas)</h2></ion-text>
+        <div id="typography-admin-panel" style="display: none;">
+          <!-- Botón movido al Detail Pane para contexto de lectura -->
         </div>
       </div>
+      
+      <!-- S24.8 Typography Master-Detail Layout -->
+      <ion-grid style="padding: 0;">
+        <ion-row style="height: calc(100vh - 150px); min-height: 500px; display: flex; align-items: stretch;">
+          <!-- MASTER VIEW: CRUD -->
+          <ion-col id="dk-typography-master" size="12" size-lg="12" style="transition: all 0.2s ease; height: 100%; overflow-y: auto; margin: 0; padding-right: 0;">
+            <p class="text-body" style="margin-bottom: 16px;">Directorio de Temas Tipográficos (Selecciona para ver)</p>
+            <div id="dk-typography-crud-container" style="height: auto;"></div>
+          </ion-col>
+          
+          <!-- DETAIL VIEW: Jira Style Flat Pane -->
+          <ion-col id="dk-typography-detail" size="12" size-lg="4" style="display: none; border-left: 1px solid var(--color-border); background: var(--color-surface); height: 100%; overflow-y: auto; padding: 0;">
+             <!-- Hidden proxy for saving -->
+             <input type="hidden" id="white-label-font-select-hidden" value="">
 
-      <ion-card class="design-kit-card">
-        <ion-card-content>
-          <div class="text-display"><span class="font-display-label">Playfair Display</span>: text-display</div>
-          <h1><span class="font-display-label">Playfair Display</span>: h1 tag</h1>
-          <div class="text-h2"><span class="font-body-label">Poppins</span>: text-h2</div>
-          <div class="text-h3"><span class="font-body-label">Poppins</span>: text-h3</div>
-          <div class="text-body"><span class="font-body-label">Poppins</span>: text-body (Body Content)</div>
-          <div class="text-sub"><span class="font-body-label">Poppins</span>: text-sub (Subheader)</div>
-          <div class="text-caption"><span class="font-body-label">Poppins</span>: text-caption</div>
-          <div class="text-mini"><span class="font-body-label">Poppins</span>: text-mini</div>
-        </ion-card-content>
-      </ion-card>
+             <!-- Flat Detail Pane Content -->
+             <div id="dk-typography-detail-pane" style="padding: var(--spacing-6); height: 100%;">
+                 
+                 <!-- Pane Header -->
+                 <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1px solid var(--color-border); padding-bottom: 16px; margin-bottom: 20px;">
+                     <div>
+                         <div class="text-mini" style="color: var(--color-text-soft); text-transform: uppercase; letter-spacing: 0.5px;">Panel de Inspección • Tipografía</div>
+                         <h3 class="text-h2" id="dk-typography-read-title" style="margin: 4px 0 0 0; color: var(--color-text);">Ninguna</h3>
+                     </div>
+                     <ion-button id="dk-btn-apply-typography" fill="solid" color="primary" data-action="theme:save-typography">
+                        <ion-icon slot="start" name="color-wand-outline"></ion-icon>
+                        Aplicar al Sistema
+                     </ion-button>
+                 </div>
+                 
+                 <!-- Read-Only Context Fields -->
+                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px; padding: 16px; background: var(--color-bg-0); border-radius: var(--rounded-sm);">
+                     <div>
+                         <div class="text-mini" style="color: var(--color-text-soft); margin-bottom: 4px;">Fuentes Asignadas</div>
+                         <div id="dk-typography-read-fonts" class="text-small" style="font-weight: 500; line-height: 1.5;"></div>
+                     </div>
+                     <div>
+                         <div class="text-mini" style="color: var(--color-text-soft); margin-bottom: 4px;">Configuración Escalar Base</div>
+                         <div id="dk-typography-read-scale" class="text-small" style="font-weight: 500; line-height: 1.5;"></div>
+                     </div>
+                 </div>
+
+                 <!-- Live Table Overlay -->
+                 <h4 class="text-h3" style="margin-bottom: 16px;">Simulación Dinámica (Cálculo CSS)</h4>
+                 <div id="typography-grid-container" style="width: 100%; overflow-x: auto; background: var(--color-surface); border-radius: var(--rounded-md); border: 1px solid var(--color-border);">
+                  <table style="width: 100%; text-align: left; border-collapse: collapse; min-width: 600px;">
+                    <thead>
+                      <tr style="border-bottom: 2px solid var(--color-border); background: var(--color-bg-0);">
+                        <th class="text-small" style="padding: 12px 16px; font-weight: 600; color: var(--color-text-soft); text-transform: uppercase;">Estilo Analizado</th>
+                        <th class="text-small" style="padding: 12px 16px; font-weight: 600; color: var(--color-text-soft); text-transform: uppercase;">Familia Resolvida</th>
+                        <th class="text-small" style="padding: 12px 16px; font-weight: 600; color: var(--color-text-soft); text-transform: uppercase;">Peso</th>
+                        <th class="text-small" style="padding: 12px 16px; font-weight: 600; color: var(--color-text-soft); text-transform: uppercase; text-align:right;">Tamaño Calculado</th>
+                        <th class="text-small" style="padding: 12px 16px; font-weight: 600; color: var(--color-text-soft); text-transform: uppercase;">Ref. Sistema</th>
+                      </tr>
+                    </thead>
+                    <tbody id="typography-metrics-tbody">
+                      <!-- Dynamic rows injected here -->
+                    </tbody>
+                  </table>
+                </div>
+             </div>
+          </ion-col>
+          
+        </ion-row>
+      </ion-grid>
     </div>
 
+    <!-- Tab: Colores -->
+    <div id="dk-tab-colors" class="dk-tab-content">
+      <ion-text color="primary"><h2 class="text-h2">Design System Colors</h2></ion-text>
+      
+      <h3 class="text-h3" style="margin-top: var(--spacing-4);">Interactivos</h3>
+      <ion-grid>
+        <ion-row>
+          <ion-col size="6" size-md="4" size-lg="3">
+            <div class="color-swatch">
+              <div class="color-swatch-color" style="background-color: var(--color-interactive-primary)"></div>
+              <div class="color-swatch-info"><div class="text-mini">--color-interactive-primary</div></div>
+            </div>
+          </ion-col>
+          <ion-col size="6" size-md="4" size-lg="3">
+            <div class="color-swatch">
+              <div class="color-swatch-color" style="background-color: var(--color-interactive-secondary)"></div>
+              <div class="color-swatch-info"><div class="text-mini">--color-interactive-secondary</div></div>
+            </div>
+          </ion-col>
+          <ion-col size="6" size-md="4" size-lg="3">
+            <div class="color-swatch">
+              <div class="color-swatch-color" style="background-color: var(--color-interactive-error)"></div>
+              <div class="color-swatch-info"><div class="text-mini">--color-interactive-error</div></div>
+            </div>
+          </ion-col>
+        </ion-row>
+      </ion-grid>
+
+      <h3 class="text-h3" style="margin-top: var(--spacing-4);">Texto</h3>
+      <ion-grid>
+        <ion-row>
+          <ion-col size="6" size-md="4" size-lg="3">
+            <div class="color-swatch">
+              <div class="color-swatch-color" style="background-color: var(--color-text)"></div>
+              <div class="color-swatch-info"><div class="text-mini">--color-text</div></div>
+            </div>
+          </ion-col>
+          <ion-col size="6" size-md="4" size-lg="3">
+            <div class="color-swatch">
+              <div class="color-swatch-color" style="background-color: var(--color-text-soft)"></div>
+              <div class="color-swatch-info"><div class="text-mini">--color-text-soft</div></div>
+            </div>
+          </ion-col>
+          <ion-col size="6" size-md="4" size-lg="3">
+            <div class="color-swatch">
+              <div class="color-swatch-color" style="background-color: var(--color-text-invert)"></div>
+              <div class="color-swatch-info"><div class="text-mini">--color-text-invert</div></div>
+            </div>
+          </ion-col>
+        </ion-row>
+      </ion-grid>
+
+      <h3 class="text-h3" style="margin-top: var(--spacing-4);">Fondos</h3>
+      <ion-grid>
+        <ion-row>
+          <ion-col size="6" size-md="4" size-lg="3">
+            <div class="color-swatch">
+              <div class="color-swatch-color" style="background-color: var(--color-bg-0)"></div>
+              <div class="color-swatch-info"><div class="text-mini">--color-bg-0</div></div>
+            </div>
+          </ion-col>
     <!-- Tab: Colores -->
     <div id="dk-tab-colors" class="dk-tab-content">
       <ion-text color="primary"><h2 class="text-h2">Design System Colors</h2></ion-text>
@@ -562,6 +663,101 @@
     });
 
     // 4. White-Label Typography Panel Initialization
+    window.refreshTypographyTable = function() {
+        var tbody = document.getElementById('typography-metrics-tbody');
+        if (!tbody) return;
+        window.DOM.clear(tbody);
+        
+        var testDiv = document.createElement('div');
+        testDiv.style.position = 'absolute';
+        testDiv.style.visibility = 'hidden';
+        testDiv.style.top = '-9999px';
+        document.body.appendChild(testDiv);
+        
+        var styles = [
+            { id: 'Display', cssClass: 'text-display' },
+            { id: 'Header.1', cssClass: 'text-h1' },
+            { id: 'Header.2', cssClass: 'text-h2' },
+            { id: 'Header.3', cssClass: 'text-h3' },
+            { id: 'SubHeader', cssClass: 'text-sub' },
+            { id: 'Body', cssClass: 'text-body' },
+            { id: 'Small', cssClass: 'text-small' },
+            { id: 'Caption', cssClass: 'text-caption' },
+            { id: 'Caption-mini', cssClass: 'text-mini' },
+            { id: 'Action', cssClass: 'text-action' }
+        ];
+
+        styles.forEach(function(s) {
+            var el = document.createElement('div');
+            el.className = s.cssClass;
+            el.textContent = 'Test';
+            testDiv.appendChild(el);
+            
+            var computed = window.getComputedStyle(el);
+            var fontFamily = (computed.fontFamily || '').split(',')[0].replace(/['"]/g, '');
+            var weight = computed.fontWeight;
+            var sizeRaw = computed.fontSize;
+            
+            // Format 2 decimals
+            var sizeNum = parseFloat(sizeRaw);
+            var sizeFormatted = sizeRaw;
+            if(!isNaN(sizeNum)) {
+                // Remove decimals if it's a perfect integer, otherwise 2 decimals
+                sizeFormatted = (sizeNum % 1 === 0 ? sizeNum : sizeNum.toFixed(2)) + 'px';
+            }
+
+            var lh = computed.lineHeight;
+            if (lh !== 'normal' && lh.indexOf('px') === -1 && lh.indexOf('%') === -1) {
+                lh = Math.round(parseFloat(lh) * 100) + '%';
+            }
+            if(lh.indexOf('px') > -1) {
+                let lhNum = parseFloat(lh);
+                if(!isNaN(lhNum)) lh = (lhNum % 1 === 0 ? lhNum : lhNum.toFixed(2)) + 'px';
+            }
+            
+            var pSpace = computed.marginBottom || '0px';
+            
+            var tr = document.createElement('tr');
+            tr.style.borderBottom = '1px solid var(--color-border)';
+            
+            var tdStyle = document.createElement('td');
+            tdStyle.style.padding = '16px 12px';
+            if(s.id.indexOf('Header') > -1 || s.id === 'Display') tdStyle.style.fontWeight = 'bold';
+            
+            var stylePreview = document.createElement('div');
+            stylePreview.className = s.cssClass;
+            stylePreview.style.margin = '0';
+            stylePreview.textContent = s.id;
+            if (s.id === 'Display' || s.id.indexOf('Header') > -1) {
+              stylePreview.style.fontSize = 'clamp(1rem, ' + sizeRaw + ', 2rem)';
+            }
+            tdStyle.appendChild(stylePreview);
+            
+            var tdFont = document.createElement('td'); tdFont.style.padding = '12px'; tdFont.textContent = fontFamily;
+            var tdWeight = document.createElement('td'); tdWeight.style.padding = '12px'; tdWeight.textContent = weight;
+            
+            var tdSize = document.createElement('td'); 
+            tdSize.style.padding = '12px';
+            tdSize.style.textAlign = 'right';
+            
+            var varTagStr = s.cssClass.replace('text-', 'font.size.');
+            if(s.cssClass === 'text-sub') varTagStr = 'font.size.subtitle';
+            
+            tdSize.innerHTML = `
+              <div style="font-weight: 500;">${sizeFormatted}</div>
+              <div style="font-size: 10px; color: var(--color-text-soft); font-family: monospace; margin-top: 4px;">--${varTagStr.replace(/\./g, '-')}</div>
+            `;
+            
+            var tdLH = document.createElement('td'); tdLH.style.padding = '12px'; tdLH.textContent = lh;
+            var tdSpace = document.createElement('td'); tdSpace.style.padding = '12px'; tdSpace.textContent = pSpace;
+            
+            tr.appendChild(tdStyle); tr.appendChild(tdFont); tr.appendChild(tdWeight);
+            tr.appendChild(tdSize); tr.appendChild(tdLH); tr.appendChild(tdSpace);
+            tbody.appendChild(tr);
+        });
+        document.body.removeChild(testDiv);
+    };
+
     try {
       const ctx = typeof window.__ABAC_CONTEXT__ === 'string' ? JSON.parse(window.__ABAC_CONTEXT__) : (window.__ABAC_CONTEXT__ || null);
       // Hardcode temporal bypass para que el config siempre se muestre a cualquiera con acceso a DesignKit
@@ -571,109 +767,156 @@
         const typographyAdmin = document.getElementById('typography-admin-panel');
         if (typographyAdmin) typographyAdmin.style.display = 'block';
         
-        const select = document.getElementById('white-label-font-select');
-        const labelsD = document.querySelectorAll('.font-display-label');
-        const labelsB = document.querySelectorAll('.font-body-label');
+        setTimeout(function() { window.refreshTypographyTable(); }, 150);
+        window.addEventListener('resize', function() { window.refreshTypographyTable(); });
         
-        // Cargar Diccionario Tipográfico Dinámico (CRUD)
-        if (select) {
-           select.innerHTML = '<ion-select-option value="">Cargando catálogo...</ion-select-option>';
-           google.script.run.withSuccessHandler(function(res) {
-               select.innerHTML = '';
-               
-               // Catálogo por Defecto (Escala 8-Campos)
-               let catalog = [
-                   { nombre_pack: "Clásico (Poppins + Playfair)", font_body: "Poppins, sans-serif", font_sub: "Poppins, sans-serif", font_caption: "Poppins, sans-serif", font_mini: "Poppins, sans-serif", font_display: "Playfair Display, serif", font_h1: "Playfair Display, serif", font_h2: "Poppins, sans-serif", font_h3: "Poppins, sans-serif" },
-                   { nombre_pack: "Moderno (Inter puro)", font_body: "Inter, sans-serif", font_sub: "Inter, sans-serif", font_caption: "Inter, sans-serif", font_mini: "Inter, sans-serif", font_display: "Inter, sans-serif", font_h1: "Inter, sans-serif", font_h2: "Inter, sans-serif", font_h3: "Inter, sans-serif" },
-                   { nombre_pack: "Corporativo (Roboto + Montserrat)", font_body: "Roboto, sans-serif", font_sub: "Roboto, sans-serif", font_caption: "Roboto, sans-serif", font_mini: "Roboto, sans-serif", font_display: "Montserrat, sans-serif", font_h1: "Montserrat, sans-serif", font_h2: "Montserrat, sans-serif", font_h3: "Montserrat, sans-serif" },
-                   { nombre_pack: "Vanguardista (Montserrat puro)", font_body: "Montserrat, sans-serif", font_sub: "Montserrat, sans-serif", font_caption: "Montserrat, sans-serif", font_mini: "Montserrat, sans-serif", font_display: "Montserrat, sans-serif", font_h1: "Montserrat, sans-serif", font_h2: "Montserrat, sans-serif", font_h3: "Montserrat, sans-serif" },
-                   { nombre_pack: "Minimalista (Roboto puro)", font_body: "Roboto, sans-serif", font_sub: "Roboto, sans-serif", font_caption: "Roboto, sans-serif", font_mini: "Roboto, sans-serif", font_display: "Roboto, sans-serif", font_h1: "Roboto, sans-serif", font_h2: "Roboto, sans-serif", font_h3: "Roboto, sans-serif" }
-               ];
+        // Initialize CRUD list locally natively without modal encapsulation
+        setTimeout(function() {
+            if(window.DataViewEngine) window.DataViewEngine.render('Config_Typography', 'dk-typography-crud-container');
+        }, 100);
+        
+        // Native Event Delegation for Master-Detail Selection
+        const crudContainer = document.getElementById('dk-typography-crud-container');
+        if (crudContainer) {
+            crudContainer.addEventListener('click', function(e) {
+                const tr = e.target.closest('tr');
+                if (!tr || !tr.parentNode || tr.parentNode.tagName !== 'TBODY') return; // only click bodies
+                
+                // Read row index mapping from the # column explicitly OR from NodeList
+                const tds = tr.querySelectorAll('td');
+                if (!tds || tds.length === 0) return;
+                
+                let idxRaw = tds[0].textContent.trim();
+                let idx = parseInt(idxRaw) - 1; // 1-based to 0-based
+                if (isNaN(idx) || idx < 0) return;
+                
+                // Paging offset fix: DVE keeps local state if loaded
+                if (window.DataViewEngine && typeof window.DataViewEngine._getState === 'function') {
+                    const engState = window.DataViewEngine._getState();
+                    if (!engState || !engState.filtered) return;
+                    
+                    const row = engState.filtered[idx];
+                    if (!row) return;
 
-               // Concatenar con los resultados del CRUD en la Base de Datos
-               if (res && res.data && res.data.rows && res.data.rows.length > 0) {
-                   catalog = catalog.concat(res.data.rows);
-               }
-               
-               catalog.forEach(function(row) {
-                   const opt = document.createElement('ion-select-option');
-                   const valObj = {
-                       font_body: row.font_body || row.body_font,
-                       font_sub: row.font_sub || row.body_font,
-                       font_caption: row.font_caption || row.body_font,
-                       font_mini: row.font_mini || row.body_font,
-                       font_display: row.font_display || row.display_font,
-                       font_h1: row.font_h1 || row.display_font,
-                       font_h2: row.font_h2 || row.display_font,
-                       font_h3: row.font_h3 || row.display_font
-                   };
-                   opt.value = JSON.stringify(valObj);
-                   opt.textContent = row.nombre_pack || 'Personalizada';
-                   select.appendChild(opt);
-               });
-               
-               // Initial binding
-               if (window.WHITE_LABEL) {
-                   select.value = JSON.stringify(window.WHITE_LABEL);
-                   const w = window.WHITE_LABEL;
-                   labelsD.forEach(el => el.textContent = w.font_display || w.displayFont);
-                   labelsB.forEach(el => el.textContent = w.font_body || w.bodyFont);
-               }
-           }).API_Universal_Router('read', 'Config_Typography', {});
-        }
-        
-        // Live preview on change
-        if (select) {
-          select.addEventListener('ionChange', function(e) {
-              if(!e.detail.value) return;
-              const val = JSON.parse(e.detail.value);
-              document.documentElement.style.setProperty('--font-body', val.font_body);
-              document.documentElement.style.setProperty('--font-sub', val.font_sub);
-              document.documentElement.style.setProperty('--font-caption', val.font_caption);
-              document.documentElement.style.setProperty('--font-mini', val.font_mini);
-              document.documentElement.style.setProperty('--font-display', val.font_display);
-              document.documentElement.style.setProperty('--font-h1', val.font_h1);
-              document.documentElement.style.setProperty('--font-h2', val.font_h2);
-              document.documentElement.style.setProperty('--font-h3', val.font_h3);
-              labelsD.forEach(el => el.textContent = val.font_display);
-              labelsB.forEach(el => el.textContent = val.font_body);
-          });
+                    const valObj = {
+                        font_body: row.font_body || row.body_font,
+                        font_sub: row.font_sub || row.body_font,
+                        font_caption: row.font_caption || row.body_font,
+                        font_mini: row.font_mini || row.body_font,
+                        font_action: row.font_action || row.body_font,
+                        font_display: row.font_display || row.display_font,
+                        font_h1: row.font_h1 || row.display_font,
+                        font_h2: row.font_h2 || row.display_font,
+                        font_h3: row.font_h3 || row.display_font,
+                        base_size: row.base_size || '16px',
+                        scale_ratio: row.scale_ratio || '1.25',
+                        heading_weight: row.heading_weight || '600',
+                        heading_transform: row.heading_transform || 'none'
+                    };
+
+                    // Guardar para el botón "Aplicar Globalmente"
+                    const hiddenInput = document.getElementById('white-label-font-select-hidden');
+                    if (hiddenInput) hiddenInput.value = JSON.stringify(valObj);
+
+                    // Llenado dinámico del Jira-Style Pane
+                    const titleEl = document.getElementById('dk-typography-read-title');
+                    if (titleEl) titleEl.textContent = row.nombre_pack || row.id || 'Pack Sin Nombre';
+                    
+                    const fontsEl = document.getElementById('dk-typography-read-fonts');
+                    if (fontsEl) fontsEl.innerHTML = `Display/Titulares: <span style="color:var(--color-interactive-primary)">${valObj.font_display}</span><br>Cuerpo/Lectura: <span style="color:var(--color-interactive-primary)">${valObj.font_body}</span>`;
+                    
+                    const scaleEl = document.getElementById('dk-typography-read-scale');
+                    if (scaleEl) scaleEl.innerHTML = `Base/Root: <strong>${valObj.base_size}</strong> <br>Proporción Áurea: <strong>x${valObj.scale_ratio}</strong> (${valObj.heading_weight})`;
+
+                    // Transformar Grid (Slide in Detail)
+                    const masterCol = document.getElementById('dk-typography-master');
+                    if (masterCol) {
+                        masterCol.setAttribute('size-lg', '8');
+                        masterCol.style.paddingRight = '16px';
+                    }
+                    const detailCol = document.getElementById('dk-typography-detail');
+                    if (detailCol) detailCol.style.display = 'block';
+
+                    // Modificar preview CSS (Live)
+                    document.documentElement.style.setProperty('--font-body', valObj.font_body);
+                    document.documentElement.style.setProperty('--font-sub', valObj.font_sub);
+                    document.documentElement.style.setProperty('--font-caption', valObj.font_caption);
+                    document.documentElement.style.setProperty('--font-mini', valObj.font_mini);
+                    document.documentElement.style.setProperty('--font-action', valObj.font_action);
+                    document.documentElement.style.setProperty('--font-display', valObj.font_display);
+                    document.documentElement.style.setProperty('--font-h1', valObj.font_h1);
+                    document.documentElement.style.setProperty('--font-h2', valObj.font_h2);
+                    document.documentElement.style.setProperty('--font-h3', valObj.font_h3);
+                    document.documentElement.style.setProperty('--wl-base-size', valObj.base_size);
+                    document.documentElement.style.setProperty('--wl-scale-ratio', parseFloat(valObj.scale_ratio) || 1.25);
+                    document.documentElement.style.setProperty('--wl-heading-weight', valObj.heading_weight);
+                    document.documentElement.style.setProperty('--wl-heading-transform', valObj.heading_transform);
+                   
+                    setTimeout(function() { window.refreshTypographyTable(); }, 100);
+                }
+            });
+            
+            // Cerrar el panel al hacer clic en un área externa
+            document.addEventListener('click', function(e) {
+                const detailCol = document.getElementById('dk-typography-detail');
+                const masterCol = document.getElementById('dk-typography-master');
+                
+                if (detailCol && detailCol.style.display === 'block') {
+                    const isClickInsideDetail = detailCol.contains(e.target);
+                    // Prevent closing if we are interacting with the crud list itself
+                    const isClickOnMasterNode = e.target.closest('#dk-typography-crud-container');
+                    
+                    if (!isClickInsideDetail && !isClickOnMasterNode) {
+                        detailCol.style.display = 'none';
+                        if (masterCol) {
+                            masterCol.setAttribute('size-lg', '12');
+                            masterCol.style.paddingRight = '0px';
+                        }
+                    }
+                }
+            });
         }
         
         // Save remote
-        const saveBtn = document.querySelector('[data-action="theme:save-typography"]');
-        if (saveBtn) {
-          saveBtn.addEventListener('click', function() {
-              if(!select.value) return;
-              const val = JSON.parse(select.value);
-              const btn = this;
-              btn.disabled = true;
-              btn.textContent = "Guardando...";
-              
-              google.script.run.withSuccessHandler(function(res) {
-                   window.WHITE_LABEL = val; // Mute active ref
-                   btn.disabled = false;
-                   btn.textContent = "Aplicar Globalmente";
-                   const toast = document.createElement('ion-toast');
-                   toast.message = 'Tipografía global actualizada para todos los usuarios.';
-                   toast.duration = 3000;
-                   toast.color = 'success';
-                   toast.position = 'top';
-                   document.body.appendChild(toast);
-                   toast.present();
-              }).withFailureHandler(function(err) {
-                   btn.disabled = false;
-                   btn.textContent = "Aplicar Globalmente";
-                   const toast = document.createElement('ion-toast');
-                   toast.message = 'Error de Permisos: ' + err.message;
-                   toast.duration = 4000;
-                   toast.color = 'danger';
-                   toast.position = 'top';
-                   document.body.appendChild(toast);
-                   toast.present();
-              }).API_UpdateGlobalConfig(val);
-          });
-        }
+        const saveBtns = document.querySelectorAll('[data-action="theme:save-typography"]');
+        saveBtns.forEach(function(saveBtn) {
+            saveBtn.addEventListener('click', function(btnTarget) {
+                const btn = btnTarget.currentTarget;
+                const val = document.getElementById('white-label-font-select-hidden').value;
+                if(!val) return;
+                
+                let parsedVal;
+                try {
+                    parsedVal = JSON.parse(val);
+                } catch(e) {
+                    console.error("Configuración tipográfica corrupta - Error de parseo JSON: ", e);
+                    return;
+                }
+                
+                btn.disabled = true;
+                btn.textContent = "Guardando...";
+                
+                google.script.run.withSuccessHandler(function() {
+                    btn.disabled = false;
+                    btn.textContent = "Aplicar al Sistema";
+                    const toast = document.createElement('ion-toast');
+                    toast.message = 'Tipografía global actualizada.';
+                    toast.duration = 3000;
+                    toast.color = 'success';
+                    document.body.appendChild(toast);
+                    toast.present();
+                }).withFailureHandler(function(err) {
+                    btn.disabled = false;
+                    btn.textContent = "Aplicar al Sistema";
+                    const toast = document.createElement('ion-toast');
+                    toast.message = 'Error: ' + err.message;
+                    toast.duration = 4000;
+                    toast.color = 'danger';
+                    document.body.appendChild(toast);
+                    toast.present();
+                }).API_UpdateGlobalConfig(parsedVal);
+            });
+        });
       }
     } catch(e) {
       console.warn("ABAC Parsing failed for Typography Panel: ", e);

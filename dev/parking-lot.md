@@ -61,3 +61,11 @@ Este documento condensa la Deuda Técnica material devuelta por los heurísticos
 ### 19. Travesías ABAC M:N (parentStrategy: GRAPH)
 * **Origen:** Análisis Edge Cases (S18.3).
 * **Acción Causal:** El escalamiento jerárquico actualmente asume una travesía bottom-up 1:N por Llave Foránea matemática. Si en un futuro el negocio requiere heredar permisos mediante relaciones polimórficas (Grafo Temporal en `Relacion_Dominios`), introducir una propiedad `parentStrategy: "GRAPH"` en `topological_metadata` para invocar la recursión por medio de `Engine_Graph.js`.
+
+### 20. Extracción de Layout Master-Detail (H10)
+* **Origen:** Arch Review Epic 24 (S24.8).
+* **Acción Causal:** El panel Sliding-Drawer Jira-Style salta iterativamente el renderizado dinámico modal del DataViewEngine. Cuando surja la demanda de usar Master-Detail en dominios de negocio, integrar dinámicamente un parámetro de template layout: 'split-pane' nativamente al Data Engine.
+
+### 21. Proxy DOM Pasivo a Estado Local (H6)
+* **Origen:** Arch Review Epic 24 (S24.8).
+* **Acción Causal:** La lógica reusa un input hidden inyectandole strings JSON como puente de eventos para su submit global. Planificar una refactorización para anclar la información seleccionada directamente al clousure en memoria efímera del módulo para evitar parseos O(N).
