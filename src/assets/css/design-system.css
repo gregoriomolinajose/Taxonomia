@@ -80,17 +80,34 @@
   --sys-font-family-sub:        var(--font-sub, 'Poppins, sans-serif');
   --sys-font-family-caption:    var(--font-caption, 'Poppins, sans-serif');
   --sys-font-family-mini:       var(--font-mini, 'Poppins, sans-serif');
+  --sys-font-family-action:     var(--font-action, 'Poppins, sans-serif');
   
   --ion-font-family:            var(--sys-font-family-body);
 
-  /* Font Scale */
-  --font-size-display: 40px; --font-size-display-mobile: 32px;
-  --font-size-h1:      32px; --font-size-h1-mobile:     26px;
-  --font-size-h2:      24px; --font-size-h2-mobile:     20px;
-  --font-size-h3:      20px; --font-size-h3-mobile:     18px;
-  --font-size-subheader: 16px; --font-size-subheader-mobile: 15px;
-  --font-size-body:    14px; --font-size-small:         12px;
-  --font-size-caption: 11px; --font-size-caption-mini:  10px;
+  /* Font Scale Roots */
+  --sys-base-size: var(--wl-base-size, 14px);
+  --sys-scale-ratio: var(--wl-scale-ratio, 1.20);
+  --sys-scale-ratio-mobile: calc(var(--sys-scale-ratio) - 0.08); /* Suavizar exponente en móvil */
+  --sys-heading-weight: var(--wl-heading-weight, 600);
+  --sys-heading-transform: var(--wl-heading-transform, none);
+
+  /* Font Computed Scale */
+  --font-size-body:    var(--sys-base-size); 
+  --font-size-small:   calc(var(--sys-base-size) * 0.85);
+  --font-size-caption: calc(var(--sys-base-size) * 0.75);
+  --font-size-caption-mini: calc(var(--sys-base-size) * 0.65);
+  
+  --font-size-subheader: calc(var(--font-size-body) * var(--sys-scale-ratio));
+  --font-size-h3:        calc(var(--font-size-subheader) * var(--sys-scale-ratio));
+  --font-size-h2:        calc(var(--font-size-h3) * var(--sys-scale-ratio));
+  --font-size-h1:        calc(var(--font-size-h2) * var(--sys-scale-ratio));
+  --font-size-display:   calc(var(--font-size-h1) * var(--sys-scale-ratio));
+
+  --font-size-subheader-mobile: calc(var(--font-size-body) * var(--sys-scale-ratio-mobile));
+  --font-size-h3-mobile:        calc(var(--font-size-subheader-mobile) * var(--sys-scale-ratio-mobile));
+  --font-size-h2-mobile:        calc(var(--font-size-h3-mobile) * var(--sys-scale-ratio-mobile));
+  --font-size-h1-mobile:        calc(var(--font-size-h2-mobile) * var(--sys-scale-ratio-mobile));
+  --font-size-display-mobile:   calc(var(--font-size-h1-mobile) * var(--sys-scale-ratio-mobile));
 
   /* Sidebar Blueprint — Regla UI §13 */
   --sidebar-width-mini:  72px;
@@ -129,14 +146,16 @@ body, ion-app, ion-content { font-size: var(--sys-font-body); color: var(--ion-t
 ion-content { --background: var(--ion-background-color); }
 
 h1, .text-display { font-family: var(--sys-font-family-display); }
-.text-display { font-size: var(--sys-font-display); line-height: 1.1; font-weight: 600; }
-.text-h1      { font-size: var(--sys-font-h1);      line-height: 1.2; font-weight: 600; font-family: var(--sys-font-family-h1); }
-.text-h2      { font-size: var(--sys-font-h2);      line-height: 1.25; font-weight: 600; font-family: var(--sys-font-family-h2); }
-.text-h3      { font-size: var(--sys-font-h3);      line-height: 1.3; font-weight: 600; font-family: var(--sys-font-family-h3); }
+.text-display { font-size: var(--sys-font-display); line-height: 1.1; font-weight: var(--sys-heading-weight); text-transform: var(--sys-heading-transform); }
+.text-h1      { font-size: var(--sys-font-h1);      line-height: 1.2; font-weight: var(--sys-heading-weight); text-transform: var(--sys-heading-transform); font-family: var(--sys-font-family-h1); }
+.text-h2      { font-size: var(--sys-font-h2);      line-height: 1.25; font-weight: var(--sys-heading-weight); text-transform: var(--sys-heading-transform); font-family: var(--sys-font-family-h2); }
+.text-h3      { font-size: var(--sys-font-h3);      line-height: 1.3; font-weight: var(--sys-heading-weight); text-transform: var(--sys-heading-transform); font-family: var(--sys-font-family-h3); }
 .text-sub     { font-size: var(--sys-font-subheader); font-weight: 500; font-family: var(--sys-font-family-sub); }
 .text-small   { font-size: var(--sys-font-small); }
 .text-caption { font-size: var(--sys-font-caption); font-family: var(--sys-font-family-caption); }
 .text-mini    { font-size: var(--sys-font-mini); text-transform: uppercase; letter-spacing: 0.05em; font-family: var(--sys-font-family-mini); }
+.text-action  { font-size: var(--sys-font-body); font-weight: 600; font-family: var(--sys-font-family-action); }
+ion-button    { font-family: var(--sys-font-family-action); }
 
 /* Forzado Tipográfico Absoluto en Modo Oscuro */
 body.dark h1, body.dark h2, body.dark h3, body.dark h4, body.dark h5, body.dark h6, 

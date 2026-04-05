@@ -22,6 +22,10 @@
                     inputEl.setAttribute('readonly', 'true');
                     inputEl.readonly = true;
                 }
+                
+                if (field.helpText) {
+                    inputEl.setAttribute('helper-text', field.helpText);
+                }
             }
         }
 
@@ -101,4 +105,31 @@
                 selectEl.appendChild(opt);
             });
         };
+
+        global.UI_Factory.buildDivider = function(field) {
+            const dividerEl = document.createElement('div');
+            dividerEl.style.width = '100%';
+            dividerEl.style.marginTop = 'var(--spacing-4)';
+            dividerEl.style.marginBottom = 'var(--spacing-4)';
+            
+            if (field.label) {
+                const title = document.createElement('h3');
+                title.style.margin = '0 0 var(--spacing-2) 0';
+                title.style.color = 'var(--ion-color-dark)';
+                title.style.fontSize = 'var(--sys-font-sub)';
+                title.style.fontWeight = '600';
+                title.style.letterSpacing = '0.02em';
+                title.textContent = field.label;
+                dividerEl.appendChild(title);
+            }
+            
+            const line = document.createElement('hr');
+            line.style.border = 'none';
+            line.style.borderTop = '1px solid var(--ion-color-step-300, #d7d8da)';
+            line.style.margin = '0';
+            dividerEl.appendChild(line);
+            
+            return dividerEl;
+        };
+
     })(window);

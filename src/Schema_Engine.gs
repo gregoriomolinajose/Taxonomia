@@ -135,14 +135,30 @@ const APP_SCHEMAS = {
       { name: "id_tipografia", type: "text", primaryKey: true, readonly: true, label: "ID Pack", width: 12 },
       { name: "estado", type: "hidden", defaultValue: "Activo" },
       { section: "Configuración Tipográfica", name: "nombre_pack", type: "text", label: "Nombre de Pack", required: true, width: 12 },
-      { section: "Configuración Tipográfica", name: "font_body", type: "select", label: "Texto Cuerpo (body)", required: true, width: 6, options: ["Poppins, sans-serif", "Playfair Display, serif", "Inter, sans-serif", "Roboto, sans-serif", "Montserrat, sans-serif"] },
-      { section: "Configuración Tipográfica", name: "font_sub", type: "select", label: "Subtítulos (.text-sub)", required: true, width: 6, options: ["Poppins, sans-serif", "Playfair Display, serif", "Inter, sans-serif", "Roboto, sans-serif", "Montserrat, sans-serif"] },
-      { section: "Configuración Tipográfica", name: "font_caption", type: "select", label: "Leyendas (.text-caption)", required: true, width: 6, options: ["Poppins, sans-serif", "Playfair Display, serif", "Inter, sans-serif", "Roboto, sans-serif", "Montserrat, sans-serif"] },
-      { section: "Configuración Tipográfica", name: "font_mini", type: "select", label: "Miniaturas (.text-mini)", required: true, width: 6, options: ["Poppins, sans-serif", "Playfair Display, serif", "Inter, sans-serif", "Roboto, sans-serif", "Montserrat, sans-serif"] },
-      { section: "Configuración Tipográfica", name: "font_display", type: "select", label: "Ultra Título (.text-display)", required: true, width: 6, options: ["Poppins, sans-serif", "Playfair Display, serif", "Inter, sans-serif", "Roboto, sans-serif", "Montserrat, sans-serif"] },
-      { section: "Configuración Tipográfica", name: "font_h1", type: "select", label: "Título Principal (h1)", required: true, width: 6, options: ["Poppins, sans-serif", "Playfair Display, serif", "Inter, sans-serif", "Roboto, sans-serif", "Montserrat, sans-serif"] },
-      { section: "Configuración Tipográfica", name: "font_h2", type: "select", label: "Título Secundario (h2)", required: true, width: 6, options: ["Poppins, sans-serif", "Playfair Display, serif", "Inter, sans-serif", "Roboto, sans-serif", "Montserrat, sans-serif"] },
-      { section: "Configuración Tipográfica", name: "font_h3", type: "select", label: "Título Terciario (h3)", required: true, width: 6, options: ["Poppins, sans-serif", "Playfair Display, serif", "Inter, sans-serif", "Roboto, sans-serif", "Montserrat, sans-serif"] }
+      { section: "Configuración Tipográfica", name: "font_display", type: "select", label: "Ultra Título (.text-display)", required: true, width: 6, options: ["Poppins, sans-serif", "Playfair Display, serif", "Inter, sans-serif", "Roboto, sans-serif", "Montserrat, sans-serif"], helpText: "El texto con el que representamos frases, conceptos o ideas urgentes o de gran importancia." },
+      
+      { section: "Configuración Tipográfica", name: "div_headers", type: "divider", label: "Headers 1, 2, 3", width: 12 },
+      { section: "Configuración Tipográfica", name: "font_h1", type: "select", label: "Título Principal (h1)", required: true, width: 6, options: ["Poppins, sans-serif", "Playfair Display, serif", "Inter, sans-serif", "Roboto, sans-serif", "Montserrat, sans-serif"], helpText: "El título más importante de una página o sección." },
+      { section: "Configuración Tipográfica", name: "font_h2", type: "select", label: "Título Secundario (h2)", required: true, width: 6, options: ["Poppins, sans-serif", "Playfair Display, serif", "Inter, sans-serif", "Roboto, sans-serif", "Montserrat, sans-serif"], helpText: "Un título de menor importancia que el título principal." },
+      { section: "Configuración Tipográfica", name: "font_h3", type: "select", label: "Título Terciario (h3)", required: true, width: 6, options: ["Poppins, sans-serif", "Playfair Display, serif", "Inter, sans-serif", "Roboto, sans-serif", "Montserrat, sans-serif"], helpText: "Un título de menor importancia que el título secundario." },
+      
+      { section: "Configuración Tipográfica", name: "div_subs", type: "divider", label: "SubHeaders", width: 12 },
+      { section: "Configuración Tipográfica", name: "font_sub", type: "select", label: "Subtítulos (.text-sub)", required: true, width: 6, options: ["Poppins, sans-serif", "Playfair Display, serif", "Inter, sans-serif", "Roboto, sans-serif", "Montserrat, sans-serif"], helpText: "Un texto breve que complementa y expande un título." },
+      
+      { section: "Configuración Tipográfica", name: "div_body", type: "divider", label: "Body & Small", width: 12 },
+      { section: "Configuración Tipográfica", name: "font_body", type: "select", label: "Texto Cuerpo (body)", required: true, width: 6, options: ["Poppins, sans-serif", "Playfair Display, serif", "Inter, sans-serif", "Roboto, sans-serif", "Montserrat, sans-serif"], helpText: "Párrafos largos, artículos, descripciones." },
+      { section: "Configuración Tipográfica", name: "font_mini", type: "select", label: "Miniaturas (.text-mini)", required: true, width: 6, options: ["Poppins, sans-serif", "Playfair Display, serif", "Inter, sans-serif", "Roboto, sans-serif", "Montserrat, sans-serif"], helpText: "Un texto de menor importancia que el texto principal." },
+      
+      { section: "Configuración Tipográfica", name: "div_caption", type: "divider", label: "Caption & Action", width: 12 },
+      { section: "Configuración Tipográfica", name: "font_caption", type: "select", label: "Leyendas (.text-caption)", required: true, width: 6, options: ["Poppins, sans-serif", "Playfair Display, serif", "Inter, sans-serif", "Roboto, sans-serif", "Montserrat, sans-serif"], helpText: "Un texto breve que describe una imagen, gráfico o tabla." },
+      { section: "Configuración Tipográfica", name: "font_action", type: "select", label: "Acciones (.text-action)", required: true, width: 6, options: ["Poppins, sans-serif", "Playfair Display, serif", "Inter, sans-serif", "Roboto, sans-serif", "Montserrat, sans-serif"], helpText: "Botones, enlaces y llamados a la acción." },
+      
+      { section: "Configuración Tipográfica", name: "div_math", type: "divider", label: "Escala y Proporciones", width: 12 },
+      
+      { section: "Configuración Tipográfica", name: "base_size", type: "select", label: "Tamaño Base (Body Px)", required: true, width: 6, options: ["12px", "14px", "16px", "18px"], defaultValue: "16px", helpText: "Impacta directamente el tamaño de los párrafos y textos base." },
+      { section: "Configuración Tipográfica", name: "scale_ratio", type: "select", label: "Multiplicador de Escala", required: true, width: 6, options: ["1.125 (Major Second)", "1.200 (Minor Third)", "1.250 (Major Third)", "1.333 (Perfect Fourth)", "1.618 (Golden Ratio)"], defaultValue: "1.250 (Major Third)", helpText: "Define qué tan rápido crecen los títulos en proporción al texto base." },
+      { section: "Configuración Tipográfica", name: "heading_weight", type: "select", label: "Peso de Títulos (Weight)", required: true, width: 6, options: ["400", "500", "600", "700", "800"], defaultValue: "600", helpText: "Controla el grosor global de todos los Títulos y Subtítulos." },
+      { section: "Configuración Tipográfica", name: "heading_transform", type: "select", label: "Mayúsculas/Minúsculas", required: true, width: 6, options: ["none", "uppercase", "capitalize", "lowercase"], defaultValue: "none", helpText: "Transforma automáticamente la capitalización de los títulos." }
     ]
   },
   Sys_Permissions: {

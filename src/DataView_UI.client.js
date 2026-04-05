@@ -337,14 +337,14 @@
                 dataZone.appendChild(window.UI_DataGrid.buildLayout({ loading: true }));
             }
 
-            // Actualizar título global del header de Ionic
+            // Actualizar título global del header de Ionic solo si estamos en la vista raíz
             const headerTitle = document.getElementById('main-header-title');
-            if (headerTitle) {
+            if (headerTitle && containerId === 'app-container') {
                 const meta = ENTITY_META[entityName] || { label: window.formatEntityName(entityName) };
                 headerTitle.textContent = meta.label;
             }
             const backBtn = document.getElementById('global-back-btn');
-            if (backBtn) backBtn.classList.add('ion-hide'); // Vista raíz del módulo: ocultar botón atrás
+            if (backBtn && containerId === 'app-container') backBtn.classList.add('ion-hide'); // Vista raíz del módulo: ocultar botón atrás
 
             // Fetch
             _fetchData(entityName, function (err, rows) {

@@ -13,7 +13,7 @@ describe('JS_Core.html - Debounce Truthiness Trap (S21.2)', () => {
     let debounceCode = '';
 
     beforeAll(() => {
-        const filePath = path.resolve(__dirname, '../src/JS_Core.html');
+        const filePath = path.resolve(__dirname, '../src/JS_Core.client.js');
         const content = fs.readFileSync(filePath, 'utf8');
         
         const startIdx = content.indexOf('window.debounce = function');

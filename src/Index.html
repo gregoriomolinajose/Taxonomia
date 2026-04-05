@@ -65,6 +65,13 @@
         if (window.WHITE_LABEL.font_sub) document.documentElement.style.setProperty('--font-sub', window.WHITE_LABEL.font_sub);
         if (window.WHITE_LABEL.font_caption) document.documentElement.style.setProperty('--font-caption', window.WHITE_LABEL.font_caption);
         if (window.WHITE_LABEL.font_mini) document.documentElement.style.setProperty('--font-mini', window.WHITE_LABEL.font_mini);
+        if (window.WHITE_LABEL.font_action) document.documentElement.style.setProperty('--font-action', window.WHITE_LABEL.font_action);
+        
+        // Fluid Scale Injections
+        if (window.WHITE_LABEL.base_size) document.documentElement.style.setProperty('--wl-base-size', window.WHITE_LABEL.base_size);
+        if (window.WHITE_LABEL.scale_ratio) document.documentElement.style.setProperty('--wl-scale-ratio', parseFloat(window.WHITE_LABEL.scale_ratio) || 1.25);
+        if (window.WHITE_LABEL.heading_weight) document.documentElement.style.setProperty('--wl-heading-weight', window.WHITE_LABEL.heading_weight);
+        if (window.WHITE_LABEL.heading_transform) document.documentElement.style.setProperty('--wl-heading-transform', window.WHITE_LABEL.heading_transform);
     }
   </script>
 
@@ -225,30 +232,20 @@
                   </ion-label>
                 </ion-item>
                 
+                <!-- Requested Minimal Menu -->
                 <ion-item button data-dismiss="#profile-popover" data-action="profile:wip">
                   <ion-icon name="person-circle-outline" slot="start"></ion-icon>
                   <ion-label>Mi Perfil</ion-label>
                 </ion-item>
+                
                 <ion-item button data-dismiss="#profile-popover" data-action="nav:designkit">
-                  <ion-icon name="color-palette-outline" slot="start"></ion-icon>
-                  <ion-label>Tema de Marca Blanca</ion-label>
+                  <ion-icon name="settings-outline" slot="start"></ion-icon>
+                  <ion-label>Configuración</ion-label>
                 </ion-item>
                 
-                <ion-item button data-dismiss="#profile-popover" onclick="setTimeout(() => { if(window.AppEventBus) window.AppEventBus.publish('NAV::CHANGE', {viewType: 'dataview', entityKey: 'Config_Typography'}); }, 300)">
-                  <ion-icon name="text-outline" slot="start"></ion-icon>
-                  <ion-label>Familias Tipográficas</ion-label>
-                </ion-item>
-                
-                <!-- S18.5 Governance Admin Panel Access (Blindado) -->
                 <ion-item button id="popover-btn-governance" data-dismiss="#profile-popover" data-action="nav:governance">
                   <ion-icon name="shield-checkmark-outline" slot="start"></ion-icon>
-                  <ion-label>Gobernanza ABAC</ion-label>
-                </ion-item>
-                
-                <!-- Gestión de Roles Directa -->
-                <ion-item button id="popover-btn-roles" data-dismiss="#profile-popover" onclick="setTimeout(() => { if(window.AppEventBus) window.AppEventBus.publish('NAV::CHANGE', {viewType: 'dataview', entityKey: 'Sys_Roles'}); }, 300)">
-                  <ion-icon name="shield-half-outline" slot="start"></ion-icon>
-                  <ion-label>Seguridad: Roles</ion-label>
+                  <ion-label>Seguridad</ion-label>
                 </ion-item>
                 
                 <ion-item button lines="none" detail="false" data-dismiss="#profile-popover" data-action="auth:logout" style="--color: var(--ion-color-danger);">

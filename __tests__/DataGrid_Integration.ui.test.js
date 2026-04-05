@@ -1,15 +1,16 @@
-/**
- * @jest-environment jsdom
- */
+import { describe, it, expect, beforeAll, beforeEach, vi } from 'vitest';
+import '@testing-library/jest-dom';
+import { screen } from '@testing-library/dom';
 
-require('@testing-library/jest-dom');
-const { screen } = require('@testing-library/dom');
+// --- CARGA DE LA FACTORÍA Y ORQUESTADOR ---
+import '../src/UI_DataGrid.client.js';
+import '../src/DataView_UI.client.js';
 
-describe('DataGrid Integration JSDOM (S24.8)', () => {
+describe('DataGrid Integration Browser (Vitest S24.8)', () => {
 
     beforeAll(() => {
         window.DataAPI = {
-            call: jest.fn().mockImplementation((method, entityName) => {
+            call: vi.fn().mockImplementation((method, entityName) => {
                 if (method === 'getInitialPayload') {
                     return Promise.resolve({
                         status: 'success',
@@ -28,45 +29,19 @@ describe('DataGrid Integration JSDOM (S24.8)', () => {
         window.__APP_CACHE__ = {};
         window.formatEntityName = (name) => name;
         
-        // Mocks Parciales (Solo Toolbar y Router, DataGrid es REAL)
         window.UI_DataView_Toolbar = { 
-            ensureColPopover: jest.fn(), 
-            buildToolbarHTML: jest.fn().mockImplementation(() => document.createElement('div')),
-            buildHeader: jest.fn().mockImplementation(() => document.createElement('h1'))
+            ensureColPopover: vi.fn(), 
+            buildToolbarHTML: vi.fn().mockImplementation(() => document.createElement('div')),
+            buildHeader: vi.fn().mockImplementation(() => document.createElement('h1'))
         };
-        window.DOM = { 
-            clear: (node) => { node.innerHTML = ''; },
-            create: (tag, attrs, content) => {
-                const el = document.createElement(tag);
-                if (attrs) {
-                    for (let k in attrs) {
-                        if (k !== 'class') {
-                            el.setAttribute(k, attrs[k]);
-                        }
-                    }
-                    if (attrs.class) el.className = attrs.class;
-                }
-                if (Array.isArray(content)) content.forEach(c => {
-                    if (typeof c === 'string') el.appendChild(document.createTextNode(c));
-                    else if (c instanceof Node) el.appendChild(c);
-                });
-                else if (typeof content === 'string') el.textContent = content;
-                else if (content instanceof Node) el.appendChild(content);
-                return el;
-            }
-        };
-        window.UI_Router = { showListSidebar: jest.fn() };
+        
+        window.UI_Router = { showListSidebar: vi.fn() };
     });
-
-    // --- CARGA DE LA FACTORÍA REAL ---
-    require('../src/UI_DataGrid.client.js');
-    // --- CARGA DEL ORQUESTADOR REAL ---
-    require('../src/DataView_UI.client.js');
 
     beforeEach(() => {
         document.body.innerHTML = '<div id="test-container"></div>';
         window.__APP_CACHE__ = {};
-        jest.clearAllMocks();
+        vi.clearAllMocks();
     });
 
     it('A. Renderiza vista Grid (Tarjetas) procesando this.cfg.columns dinamicamente sin crashear', async () => {
@@ -106,8 +81,6 @@ describe('DataGrid Integration JSDOM (S24.8)', () => {
         
         const cardKeys = Array.from(zone.querySelectorAll('.dv-card-item-attr-key')).map(n => n.textContent);
         
-        // ID es título (omitido), y created_at está oculto por defecto (no visible en state.columns).
-        // Así que solo debería imprimir 'estado'.
         expect(cardKeys.includes('Estado')).toBe(true);
         expect(cardKeys.includes('Created at')).toBe(false); // Oculto por _buildColumns SSOT
     });

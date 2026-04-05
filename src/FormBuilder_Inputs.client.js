@@ -28,6 +28,10 @@
                     inputEl.setAttribute('readonly', 'true');
                     inputEl.readonly = true;
                 }
+                
+                if (field.helpText && field.type !== 'select') {
+                    inputEl.setAttribute('helper-text', field.helpText);
+                }
             }
         }
 
@@ -87,6 +91,22 @@
                 });
             }
             _applyBaseAttributes(inputEl, field);
+            
+            if (field.helpText) {
+                const wrapper = document.createElement('div');
+                inputEl.style.marginBottom = '2px'; // Reducir margen original
+                
+                const note = document.createElement('div');
+                note.style.fontSize = '12px';
+                note.style.color = 'var(--ion-color-medium, #92949c)';
+                note.style.padding = '0 16px var(--spacing-4) 16px';
+                note.style.lineHeight = '1.2';
+                note.textContent = field.helpText;
+                
+                wrapper.appendChild(inputEl);
+                wrapper.appendChild(note);
+                return wrapper;
+            }
             return inputEl;
         };
 
@@ -169,6 +189,32 @@
             return inputEl;
         };
 
+        global.UI_Factory.buildDivider = function(field) {
+            const dividerEl = document.createElement('div');
+            dividerEl.style.width = '100%';
+            dividerEl.style.marginTop = 'var(--spacing-4)';
+            dividerEl.style.marginBottom = 'var(--spacing-4)';
+            
+            if (field.label) {
+                const title = document.createElement('h3');
+                title.style.margin = '0 0 var(--spacing-2) 0';
+                title.style.color = 'var(--ion-color-dark)';
+                title.style.fontSize = 'var(--sys-font-sub)';
+                title.style.fontWeight = '600';
+                title.style.letterSpacing = '0.02em';
+                title.textContent = field.label;
+                dividerEl.appendChild(title);
+            }
+            
+            const line = document.createElement('hr');
+            line.style.border = 'none';
+            line.style.borderTop = '1px solid var(--ion-color-step-300, #d7d8da)';
+            line.style.margin = '0';
+            dividerEl.appendChild(line);
+            
+            return dividerEl;
+        };
+
         // buildDynamicList extracted to UI_Component_DynamicList.html (Auto-registered Plugin)
 
         global.UI_Factory.drawChip = function(id, labelText, onRemoveCallback) {
@@ -205,6 +251,7 @@
         global.UI_Factory.registerBuilder('date', (f, e) => global.UI_Factory.buildInput(f, e));
         global.UI_Factory.registerBuilder('textarea', (f) => global.UI_Factory.buildTextarea(f));
         global.UI_Factory.registerBuilder('select', (f) => global.UI_Factory.buildSelect(f));
+        global.UI_Factory.registerBuilder('divider', (f) => global.UI_Factory.buildDivider(f));
         // Specialized builders registrations are now handled by isolated plugins
         // (UI_Component_RelationBuilder, UI_Component_DynamicList, etc.)
 
