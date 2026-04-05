@@ -22,7 +22,7 @@
 | E20| Pipeline Evolution & Native Tooling                   | ✅ Complete   | AST Config, Esbuild/Rollup, Pure CSS Extraction, ThemeManager Modularization | Media    |
 | E21| Next-Gen MDM & Concurrency Data Layer                 | ✅ Complete   | Optimistic Locking, Soft-Delete, ES5 Concats, Tests Mudos, Profiling | Muy Alta |
 | E22| Enterprise B2B UX Transformation                      | ✅ Complete   | Top App Bar, Omnibar, Contextual ABAC Dashboard, Design System Purity| Max      |
-| E23| Enterprise Identity & Zero-Trust SSO                  | 🚧 To Do     | Admin SDK Directory API integration para Avatares Reales y Perfiles  | Media    |
+| E23| Enterprise Identity & Zero-Trust SSO                  | 🏃 In Progress | Admin SDK Directory API integration para Avatares Reales y Perfiles  | Media    |
 | E24| Frontend God Objects Decomposition                    | ✅ Complete   | Split DataView_UI, FormRenderer, FormBuilder_Inputs, app.css         | Alta     |
 
 ## Parking Lot / Deuda Técnica (Post-Epic 11)
