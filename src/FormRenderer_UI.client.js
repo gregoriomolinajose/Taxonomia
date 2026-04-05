@@ -335,13 +335,15 @@
             
             const colLeft = document.createElement('ion-col');
             colLeft.setAttribute('size', '6');
-            colLeft.classList.remove('ion-hide');
+            colLeft.style.display = 'flex';
             colLeft.style.justifyContent = 'flex-start';
+            colLeft.style.alignItems = 'center';
             
             const colRight = document.createElement('ion-col');
             colRight.setAttribute('size', '6');
-            colRight.classList.remove('ion-hide');
+            colRight.style.display = 'flex';
             colRight.style.justifyContent = 'flex-end';
+            colRight.style.alignItems = 'center';
             colRight.style.gap = 'var(--spacing-3)';
 
             // Buttons fall down from Stepper init
