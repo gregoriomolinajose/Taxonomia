@@ -1,13 +1,27 @@
 // src/Config.prod.js
 const CONFIG = {
-    APP_VERSION: 'v1.2.6 - 2603312255',
-    SPREADSHEET_ID_DB: '1b15c9TylT8U5Z1eO8VjD0t-45YnI-K9LqV9x6G2K_pA',
+    APP_VERSION: 'v1.4.0 - 2604051240',
+    SPREADSHEET_ID_DB: '',
     ALLOWED_DOMAINS: ['@coppel.com', '@bancoppel.com', '@bellfy.app', '@gmail.com'],
     ENV: 'production',
     DEBUG: false,
     useSheets: true,
     useCloudDB: false
 };
+
+if (typeof PropertiesService !== 'undefined') {
+    try {
+        const envStr = PropertiesService.getScriptProperties().getProperty('ENV_CONFIG');
+        if (envStr) {
+            const envObj = JSON.parse(envStr);
+            if (envObj.SPREADSHEET_ID_DB) CONFIG.SPREADSHEET_ID_DB = envObj.SPREADSHEET_ID_DB;
+            if (envObj.ALLOWED_DOMAINS) CONFIG.ALLOWED_DOMAINS = envObj.ALLOWED_DOMAINS;
+            if (envObj.AuthMode) CONFIG.AuthMode = envObj.AuthMode;
+        }
+    } catch(e) {
+        console.error("Config: Fallo parseando ENV_CONFIG", e);
+    }
+}
 
 if (typeof module !== 'undefined') {
     module.exports = CONFIG;
