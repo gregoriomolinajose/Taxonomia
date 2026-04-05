@@ -22,7 +22,7 @@
 | E20| Pipeline Evolution & Native Tooling                   | ✅ Complete   | AST Config, Esbuild/Rollup, Pure CSS Extraction, ThemeManager Modularization | Media    |
 | E21| Next-Gen MDM & Concurrency Data Layer                 | ✅ Complete   | Optimistic Locking, Soft-Delete, ES5 Concats, Tests Mudos, Profiling | Muy Alta |
 | E22| Enterprise B2B UX Transformation                      | ✅ Complete   | Top App Bar, Omnibar, Contextual ABAC Dashboard, Design System Purity| Max      |
-| E23| Enterprise Identity & Zero-Trust SSO                  | 🏃 In Progress | Admin SDK Directory API integration para Avatares Reales y Perfiles  | Media    |
+| E23| Enterprise Identity & Zero-Trust SSO                  | ✅ Complete  | Admin SDK Directory API integration para Avatares Reales y Perfiles  | Media    |
 | E24| Frontend God Objects Decomposition                    | ✅ Complete   | Split DataView_UI, FormRenderer, FormBuilder_Inputs, app.css         | Alta     |
 
 ## Parking Lot / Deuda Técnica (Post-Epic 11)
@@ -43,15 +43,16 @@
 | **Ionic Floating Promises Risks** | Arch Review S18.3 | ✅ [E19] Componentes `PresentSafe` global en Zero-Trust UI Framework. |
 | **JSON Parse Swallows & WSOD** | App Event Bus Init | ✅ [E19] Telemetría Global Boundaries con inyección Safe. |
 | **Legacy ThemeManager.js Script** | Arch Review S20.3 | ✅ [E20] Mutación hacia ES6 Module Pattern orquestado, desterrando código procedural. |
+| **Admin SDK Profile Avatar** | E23 Scope | ✅ [E23] Integrado Admin Directory API con caché L2 multi-hora para avatares reales. |
+| **Debounce & EventBus** | Arch Review E21 | ✅ [E23] Absorbido de manera tipada y nativa en `AppEventBus.publishDebounced()`. |
+| **Mock Engine Fallback** | Arch Rev / Quality Rev E21 | ✅ [E23] Formalizado bajo el SRP de `ENV_CONFIG` forzando Zero-Trust sin WSOD. |
+| **Telemetry Leakage Clean** | Quality Review E21 | ✅ [E23] Desplazados `console.error` nativos hacia Capa UI oficial (Toasts). |
 
 ### 🚧 Deuda Activa (Backlog Técnico)
 
 > **[INFO]** Toda la Deuda Técnica Activa devuelta por Quality y Architecture Reviews ha sido formalmente agrupada y escalada a las siguientes Épicas en el Roadmap (To-Do):
 > - **[E21] Next-Gen MDM data Layer:** `Optimistic Locking`, Búsqueda Asíncrona (Debounce/Typeahead), `Soft-Delete` Graph Cleanup, `Concatenaciones ES5`, `Tests Mudos`, y `Profiling Mágico`.
-> - **[E23] Enterprise Identity, SSO & Tech Debt (E21 AR/QR):** 
->   - *Identity*: `Admin SDK Directory`, Google Profile Photo Hydration, Identity Fallbacks y Scopes de Workspace.
->   - *Arch Review (E21)*: Absorber auto-debouncing nativamente dentro del Dispatcher de `AppEventBus` y formalizar la obsolescencia de los Mocks Locales.
->   - *Quality Review (E21)*: Validar estrictamente el type paraméntrico en `window.debounce` (`typeof delay === 'number'`) y normalizar rastros de `console.error` en despliegues sin script (`UI_FormSubmitter`).
-> - **[E25] Fragmentation & Scaling (E24 AR/QR):**
+> - **[E25] Fragmentation & Scaling (E24/E23 AR/QR):**
+>   - *Arch Review (S23.3)*: Analizar colisiones potenciales: Evaluar necesidad futura de **debouncing polimórfico paramtetrizado por componente** vs el actual bloqueo en `AppEventBus` dictatorial por string del Evento.
 >   - *Arch Review*: Deshardcodear el umbral estático `MAX_ATTRS = 5` en Tarjetas `UI_DataGrid` para delegarlo a `UI_CONFIG` (Vistas Sensibles/Densas); monitorear métricas de Developer Experience (DX) tras pulverizar God Objects en micro-fragmentos de 150 líneas.
 >   - *Quality Review*: Evaluar seriamente incluir un paso constructivo formal de Transpilación vía Babel (ES6 a ES5) garantizando el Polyfill si las corporaciones clientes manejan Chrome obsoleto.
