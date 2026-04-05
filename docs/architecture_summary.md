@@ -7,6 +7,7 @@ Este documento condensa nuestro núcleo arquitectónico extraído de las leccion
 - **GP-1 (Linear Wizard Mobile-First):** Prohibidas las pestañas (`<ion-segment>`) para Múltiples Pasos en móvil. La decisión estructurada es usar Flujos Lineales (Botones Anterior/Siguiente) inyectados con un `Grid` dinámico.
 - **GP-3 (Soft Reset Global):** Tras un Post exitoso, está prohibido usar `window.location.reload()`. La decisión es limpiar el estado reseteando secuencialmente el índice del Wizard, el contenedor de Chips y forzando la re-generación de los UUIDs precargados.
 - **GP-5 y 6 (Aislamiento de Shadow DOM y Reflow):** Para forzar diseños inmutables como el "Mini Sidebar" y sobreponernos al Shadow DOM de Ionic, la arquitectura dicta forzar anulaciones bases (`!important`) y ejecutar desencadenadores artificiales asíncronos (`window.dispatchEvent(new Event('resize'))`) empacados a `>350ms` para obligar a librerías como ApexCharts a recalcular sus escalas responsivamente.
+- **GP-7 (Arquitectura Sliding Drawer):** Para flujos transaccionales y despliegue de formularios en lista, está estrictamente PROHIBIDO el uso concurrente de `<ion-modal>`. La arquitectura emplea un motor nativo *Off-Canvas* interconstruido llamado `DrawerStackController` para prevenir fugas de memoria en el *Shadow DOM* y proteger los recursos limitando el anidamiento (`MAX_DEPTH=3`).
 
 ## 2. Patrones de Topología y Persistencia (Backend)
 
