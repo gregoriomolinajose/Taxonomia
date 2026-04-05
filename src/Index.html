@@ -43,6 +43,31 @@
     });
   </script>
 
+  <!-- Google Fonts Preconnect & Extended Pack (White-Label) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Montserrat:wght@400;500;600;700&family=Playfair+Display:wght@500;600;700&family=Poppins:wght@400;500;600&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+
+  <script>
+    window.WHITE_LABEL = <?!= typeof WHITE_LABEL_CONFIG !== 'undefined' ? WHITE_LABEL_CONFIG : '{"bodyFont":"Poppins, sans-serif","displayFont":"Playfair Display, serif"}' ?>;
+    // UI Branding Rule (Zero-FOUC Injection)
+    if (window.WHITE_LABEL) {
+        // Legacy Support
+        const bodyF = window.WHITE_LABEL.font_body || window.WHITE_LABEL.bodyFont || window.WHITE_LABEL.body_font;
+        const dispF = window.WHITE_LABEL.font_display || window.WHITE_LABEL.displayFont || window.WHITE_LABEL.display_font;
+        
+        if (bodyF) document.documentElement.style.setProperty('--font-body', bodyF);
+        if (dispF) document.documentElement.style.setProperty('--font-display', dispF);
+        
+        if (window.WHITE_LABEL.font_h1) document.documentElement.style.setProperty('--font-h1', window.WHITE_LABEL.font_h1);
+        if (window.WHITE_LABEL.font_h2) document.documentElement.style.setProperty('--font-h2', window.WHITE_LABEL.font_h2);
+        if (window.WHITE_LABEL.font_h3) document.documentElement.style.setProperty('--font-h3', window.WHITE_LABEL.font_h3);
+        if (window.WHITE_LABEL.font_sub) document.documentElement.style.setProperty('--font-sub', window.WHITE_LABEL.font_sub);
+        if (window.WHITE_LABEL.font_caption) document.documentElement.style.setProperty('--font-caption', window.WHITE_LABEL.font_caption);
+        if (window.WHITE_LABEL.font_mini) document.documentElement.style.setProperty('--font-mini', window.WHITE_LABEL.font_mini);
+    }
+  </script>
+
   <!-- Ionic Framework CDN -->
   <script type="module" src="https://cdn.jsdelivr.net/npm/@ionic/core/dist/ionic/ionic.esm.js"></script>
   <script nomodule src="https://cdn.jsdelivr.net/npm/@ionic/core/dist/ionic/ionic.js"></script>
@@ -205,14 +230,25 @@
                   <ion-label>Mi Perfil</ion-label>
                 </ion-item>
                 <ion-item button data-dismiss="#profile-popover" data-action="nav:designkit">
-                  <ion-icon name="settings-outline" slot="start"></ion-icon>
-                  <ion-label>Ajustes de Sistema</ion-label>
+                  <ion-icon name="color-palette-outline" slot="start"></ion-icon>
+                  <ion-label>Tema de Marca Blanca</ion-label>
+                </ion-item>
+                
+                <ion-item button data-dismiss="#profile-popover" onclick="setTimeout(() => { if(window.AppEventBus) window.AppEventBus.publish('NAV::CHANGE', {viewType: 'dataview', entityKey: 'Config_Typography'}); }, 300)">
+                  <ion-icon name="text-outline" slot="start"></ion-icon>
+                  <ion-label>Familias Tipográficas</ion-label>
                 </ion-item>
                 
                 <!-- S18.5 Governance Admin Panel Access (Blindado) -->
                 <ion-item button id="popover-btn-governance" data-dismiss="#profile-popover" data-action="nav:governance">
                   <ion-icon name="shield-checkmark-outline" slot="start"></ion-icon>
                   <ion-label>Gobernanza ABAC</ion-label>
+                </ion-item>
+                
+                <!-- Gestión de Roles Directa -->
+                <ion-item button id="popover-btn-roles" data-dismiss="#profile-popover" onclick="setTimeout(() => { if(window.AppEventBus) window.AppEventBus.publish('NAV::CHANGE', {viewType: 'dataview', entityKey: 'Sys_Roles'}); }, 300)">
+                  <ion-icon name="shield-half-outline" slot="start"></ion-icon>
+                  <ion-label>Seguridad: Roles</ion-label>
                 </ion-item>
                 
                 <ion-item button lines="none" detail="false" data-dismiss="#profile-popover" data-action="auth:logout" style="--color: var(--ion-color-danger);">

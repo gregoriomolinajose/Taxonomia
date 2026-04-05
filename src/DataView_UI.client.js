@@ -1,12 +1,4 @@
-<!-- ============================================================
-     DataView_UI.html — Motor de Vista de Datos Universal
-     Incluido via GAS: <?!= include('DataView_UI'); ?>
-     
-     window.DataViewEngine.render(entityName, containerId)
-     ============================================================ -->
-
-<script>
-    /* ============================================================
+/* ============================================================
        window.DataViewEngine
        ============================================================ */
     window.DataViewEngine = (function () {
@@ -14,8 +6,7 @@
         /* ── Configuración de entidades (íconos, labels, campos FK) ── */
         const ENTITY_META = window.ENTITY_META || {};
 
-        /* ── Columnas excluidas de la tabla (campos de auditoría o muy largos) ── */
-        const HIDDEN_BY_DEFAULT = ['created_at', 'updated_by'];
+        /* ── Columnas excluidas de la tabla (Movido a UI_DataGrid) ── */
 
         /* ── Campos estatus para badges de color ── */
         const STATUS_FIELDS = ['estado', 'nivel_criticalidad', 'modelo_negocio'];
@@ -609,4 +600,3 @@
             _confirmDelete
         };
     })();
-</script>

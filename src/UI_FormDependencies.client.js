@@ -1,5 +1,4 @@
-<script>
-    /**
+/**
      * UI_FormDependencies.html
      *
      * Maneja las dependencias visuales e lógicas impulsadas por metadatos
@@ -88,4 +87,3 @@
         global.UI_FormDependencies = DependencyEngine;
 
     })(typeof window !== 'undefined' ? window : this);
-</script>

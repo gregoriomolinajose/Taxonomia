@@ -18,6 +18,30 @@ function doGet(e) {
     ? CONFIG.APP_VERSION
     : 'v1.0.39';
 
+  // White-Label Config Load (S24.5) - Refactorizado para Seguridad (WSOD Prevention)
+  var whiteLabel = null;
+  try {
+    var rawStr = PropertiesService.getScriptProperties().getProperty('WHITE_LABEL_CONFIG');
+    if (rawStr) {
+        var testObj = JSON.parse(rawStr);
+        if (testObj && testObj.bodyFont) {
+            whiteLabel = rawStr;
+        }
+    }
+  } catch(e) {
+    console.error("Corrupción de caché en WHITE_LABEL_CONFIG detectado. Reseteando a default seguro.");
+    whiteLabel = null;
+  }
+  
+  if (!whiteLabel) {
+    // Default system font pairing with safe generic fallbacks
+    whiteLabel = JSON.stringify({ 
+      bodyFont: "Poppins, sans-serif", 
+      displayFont: "Playfair Display, serif" 
+    });
+  }
+  template.WHITE_LABEL_CONFIG = whiteLabel;
+
   // ABAC Resolver: Cálculo de Topología O(n) al vuelo para proveer Contexto Seguro en Frontend
   var email = "";
   try {

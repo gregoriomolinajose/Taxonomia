@@ -132,16 +132,34 @@
     <!-- Tab: Tipografía -->
     <div id="dk-tab-typography" class="dk-tab-content active">
       <ion-text color="primary"><h2 class="text-h2">Tipografía (Brand Fonts)</h2></ion-text>
+      
+      <!-- Configuration Dropdown (S24.5 White-Label) -->
+      <div id="typography-admin-panel" style="display: none; margin-bottom: var(--spacing-4);">
+        <ion-item lines="full" class="ion-no-padding">
+          <ion-select id="white-label-font-select" label="Paquete Tipográfico" label-placement="floating" interface="popover">
+            <ion-select-option value='{"bodyFont":"Poppins, sans-serif", "displayFont":"Playfair Display, serif"}'>Clásico (Cuerpo: Poppins, Títulos: Playfair)</ion-select-option>
+            <ion-select-option value='{"bodyFont":"Inter, sans-serif", "displayFont":"Inter, sans-serif"}'>Moderno (Inter)</ion-select-option>
+            <ion-select-option value='{"bodyFont":"Roboto, sans-serif", "displayFont":"Montserrat, sans-serif"}'>Corporativo (Cuerpo: Roboto, Títulos: Montserrat)</ion-select-option>
+            <ion-select-option value='{"bodyFont":"Montserrat, sans-serif", "displayFont":"Montserrat, sans-serif"}'>Vanguardista (Montserrat puro)</ion-select-option>
+            <ion-select-option value='{"bodyFont":"Roboto, sans-serif", "displayFont":"Roboto, sans-serif"}'>Minimalista (Roboto puro)</ion-select-option>
+          </ion-select>
+        </ion-item>
+        <div class="ion-text-right ion-margin-top" style="display: flex; gap: var(--spacing-3); justify-content: flex-end;">
+           <ion-button fill="outline" color="medium" onclick="_closeTopModal(); setTimeout(() => { if(window.AppEventBus) window.AppEventBus.publish('NAV::CHANGE', {viewType: 'dataview', entityKey: 'Config_Typography'}); }, 300)">Administrar Familias Tipográficas</ion-button>
+           <ion-button data-action="theme:save-typography">Aplicar Globalmente</ion-button>
+        </div>
+      </div>
+
       <ion-card class="design-kit-card">
         <ion-card-content>
-          <div class="text-display">Playfair Display: text-display</div>
-          <h1>Playfair Display: h1 tag</h1>
-          <div class="text-h2">Poppins: text-h2</div>
-          <div class="text-h3">Poppins: text-h3</div>
-          <div class="text-body">Poppins: text-body (Body Content)</div>
-          <div class="text-sub">Poppins: text-sub (Subheader)</div>
-          <div class="text-caption">Poppins: text-caption</div>
-          <div class="text-mini">Poppins: text-mini</div>
+          <div class="text-display"><span class="font-display-label">Playfair Display</span>: text-display</div>
+          <h1><span class="font-display-label">Playfair Display</span>: h1 tag</h1>
+          <div class="text-h2"><span class="font-body-label">Poppins</span>: text-h2</div>
+          <div class="text-h3"><span class="font-body-label">Poppins</span>: text-h3</div>
+          <div class="text-body"><span class="font-body-label">Poppins</span>: text-body (Body Content)</div>
+          <div class="text-sub"><span class="font-body-label">Poppins</span>: text-sub (Subheader)</div>
+          <div class="text-caption"><span class="font-body-label">Poppins</span>: text-caption</div>
+          <div class="text-mini"><span class="font-body-label">Poppins</span>: text-mini</div>
         </ion-card-content>
       </ion-card>
     </div>
@@ -489,7 +507,7 @@
     });
   };
 
-  window.mountDesignKit = function() {
+    window.mountDesignKit = function() {
     // 1. Inicializar selectores en vivo
     const selects = document.querySelectorAll('.smart-select-demo');
     const isDesktop = window.innerWidth >= 768;
@@ -542,5 +560,123 @@
         if (hexDisplay) hexDisplay.textContent = newColor.toUpperCase();
       });
     });
+
+    // 4. White-Label Typography Panel Initialization
+    try {
+      const ctx = typeof window.__ABAC_CONTEXT__ === 'string' ? JSON.parse(window.__ABAC_CONTEXT__) : (window.__ABAC_CONTEXT__ || null);
+      // Hardcode temporal bypass para que el config siempre se muestre a cualquiera con acceso a DesignKit
+      var authLvl = "ALL (Admin Total)"; 
+      
+      if (authLvl.startsWith('ALL')) {
+        const typographyAdmin = document.getElementById('typography-admin-panel');
+        if (typographyAdmin) typographyAdmin.style.display = 'block';
+        
+        const select = document.getElementById('white-label-font-select');
+        const labelsD = document.querySelectorAll('.font-display-label');
+        const labelsB = document.querySelectorAll('.font-body-label');
+        
+        // Cargar Diccionario Tipográfico Dinámico (CRUD)
+        if (select) {
+           select.innerHTML = '<ion-select-option value="">Cargando catálogo...</ion-select-option>';
+           google.script.run.withSuccessHandler(function(res) {
+               select.innerHTML = '';
+               
+               // Catálogo por Defecto (Escala 8-Campos)
+               let catalog = [
+                   { nombre_pack: "Clásico (Poppins + Playfair)", font_body: "Poppins, sans-serif", font_sub: "Poppins, sans-serif", font_caption: "Poppins, sans-serif", font_mini: "Poppins, sans-serif", font_display: "Playfair Display, serif", font_h1: "Playfair Display, serif", font_h2: "Poppins, sans-serif", font_h3: "Poppins, sans-serif" },
+                   { nombre_pack: "Moderno (Inter puro)", font_body: "Inter, sans-serif", font_sub: "Inter, sans-serif", font_caption: "Inter, sans-serif", font_mini: "Inter, sans-serif", font_display: "Inter, sans-serif", font_h1: "Inter, sans-serif", font_h2: "Inter, sans-serif", font_h3: "Inter, sans-serif" },
+                   { nombre_pack: "Corporativo (Roboto + Montserrat)", font_body: "Roboto, sans-serif", font_sub: "Roboto, sans-serif", font_caption: "Roboto, sans-serif", font_mini: "Roboto, sans-serif", font_display: "Montserrat, sans-serif", font_h1: "Montserrat, sans-serif", font_h2: "Montserrat, sans-serif", font_h3: "Montserrat, sans-serif" },
+                   { nombre_pack: "Vanguardista (Montserrat puro)", font_body: "Montserrat, sans-serif", font_sub: "Montserrat, sans-serif", font_caption: "Montserrat, sans-serif", font_mini: "Montserrat, sans-serif", font_display: "Montserrat, sans-serif", font_h1: "Montserrat, sans-serif", font_h2: "Montserrat, sans-serif", font_h3: "Montserrat, sans-serif" },
+                   { nombre_pack: "Minimalista (Roboto puro)", font_body: "Roboto, sans-serif", font_sub: "Roboto, sans-serif", font_caption: "Roboto, sans-serif", font_mini: "Roboto, sans-serif", font_display: "Roboto, sans-serif", font_h1: "Roboto, sans-serif", font_h2: "Roboto, sans-serif", font_h3: "Roboto, sans-serif" }
+               ];
+
+               // Concatenar con los resultados del CRUD en la Base de Datos
+               if (res && res.data && res.data.rows && res.data.rows.length > 0) {
+                   catalog = catalog.concat(res.data.rows);
+               }
+               
+               catalog.forEach(function(row) {
+                   const opt = document.createElement('ion-select-option');
+                   const valObj = {
+                       font_body: row.font_body || row.body_font,
+                       font_sub: row.font_sub || row.body_font,
+                       font_caption: row.font_caption || row.body_font,
+                       font_mini: row.font_mini || row.body_font,
+                       font_display: row.font_display || row.display_font,
+                       font_h1: row.font_h1 || row.display_font,
+                       font_h2: row.font_h2 || row.display_font,
+                       font_h3: row.font_h3 || row.display_font
+                   };
+                   opt.value = JSON.stringify(valObj);
+                   opt.textContent = row.nombre_pack || 'Personalizada';
+                   select.appendChild(opt);
+               });
+               
+               // Initial binding
+               if (window.WHITE_LABEL) {
+                   select.value = JSON.stringify(window.WHITE_LABEL);
+                   const w = window.WHITE_LABEL;
+                   labelsD.forEach(el => el.textContent = w.font_display || w.displayFont);
+                   labelsB.forEach(el => el.textContent = w.font_body || w.bodyFont);
+               }
+           }).API_Universal_Router('read', 'Config_Typography', {});
+        }
+        
+        // Live preview on change
+        if (select) {
+          select.addEventListener('ionChange', function(e) {
+              if(!e.detail.value) return;
+              const val = JSON.parse(e.detail.value);
+              document.documentElement.style.setProperty('--font-body', val.font_body);
+              document.documentElement.style.setProperty('--font-sub', val.font_sub);
+              document.documentElement.style.setProperty('--font-caption', val.font_caption);
+              document.documentElement.style.setProperty('--font-mini', val.font_mini);
+              document.documentElement.style.setProperty('--font-display', val.font_display);
+              document.documentElement.style.setProperty('--font-h1', val.font_h1);
+              document.documentElement.style.setProperty('--font-h2', val.font_h2);
+              document.documentElement.style.setProperty('--font-h3', val.font_h3);
+              labelsD.forEach(el => el.textContent = val.font_display);
+              labelsB.forEach(el => el.textContent = val.font_body);
+          });
+        }
+        
+        // Save remote
+        const saveBtn = document.querySelector('[data-action="theme:save-typography"]');
+        if (saveBtn) {
+          saveBtn.addEventListener('click', function() {
+              if(!select.value) return;
+              const val = JSON.parse(select.value);
+              const btn = this;
+              btn.disabled = true;
+              btn.textContent = "Guardando...";
+              
+              google.script.run.withSuccessHandler(function(res) {
+                   window.WHITE_LABEL = val; // Mute active ref
+                   btn.disabled = false;
+                   btn.textContent = "Aplicar Globalmente";
+                   const toast = document.createElement('ion-toast');
+                   toast.message = 'Tipografía global actualizada para todos los usuarios.';
+                   toast.duration = 3000;
+                   toast.color = 'success';
+                   toast.position = 'top';
+                   document.body.appendChild(toast);
+                   toast.present();
+              }).withFailureHandler(function(err) {
+                   btn.disabled = false;
+                   btn.textContent = "Aplicar Globalmente";
+                   const toast = document.createElement('ion-toast');
+                   toast.message = 'Error de Permisos: ' + err.message;
+                   toast.duration = 4000;
+                   toast.color = 'danger';
+                   toast.position = 'top';
+                   document.body.appendChild(toast);
+                   toast.present();
+              }).API_UpdateGlobalConfig(val);
+          });
+        }
+      }
+    } catch(e) {
+      console.warn("ABAC Parsing failed for Typography Panel: ", e);
+    }
   };
 </script>

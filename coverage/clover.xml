@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<coverage generated="1775251669062" clover="3.2.0">
-  <project timestamp="1775251669062" name="All files">
-    <metrics statements="997" coveredstatements="709" conditionals="1055" coveredconditionals="523" methods="148" coveredmethods="108" elements="2200" coveredelements="1340" complexity="0" loc="997" ncloc="997" packages="1" files="11" classes="11"/>
+<coverage generated="1775261633627" clover="3.2.0">
+  <project timestamp="1775261633627" name="All files">
+    <metrics statements="997" coveredstatements="772" conditionals="1055" coveredconditionals="579" methods="148" coveredmethods="115" elements="2200" coveredelements="1466" complexity="0" loc="997" ncloc="997" packages="1" files="11" classes="11"/>
     <file name="API_Auth.js" path="C:\Users\grego\Antigravity\Taxonomia Project\src\API_Auth.js">
       <metrics statements="16" coveredstatements="12" conditionals="15" coveredconditionals="9" methods="3" coveredmethods="2"/>
       <line num="9" count="1" type="stmt"/>
@@ -22,7 +22,7 @@
       <line num="54" count="1" type="stmt"/>
     </file>
     <file name="API_Universal.gs" path="C:\Users\grego\Antigravity\Taxonomia Project\src\API_Universal.gs">
-      <metrics statements="56" coveredstatements="20" conditionals="56" coveredconditionals="15" methods="2" coveredmethods="1"/>
+      <metrics statements="56" coveredstatements="37" conditionals="56" coveredconditionals="36" methods="2" coveredmethods="1"/>
       <line num="13" count="0" type="stmt"/>
       <line num="14" count="0" type="stmt"/>
       <line num="15" count="0" type="stmt"/>
@@ -40,59 +40,59 @@
       <line num="31" count="0" type="stmt"/>
       <line num="34" count="0" type="stmt"/>
       <line num="40" count="0" type="stmt"/>
-      <line num="52" count="4" type="stmt"/>
-      <line num="53" count="4" type="stmt"/>
-      <line num="55" count="4" type="cond" truecount="1" falsecount="1"/>
-      <line num="56" count="4" type="cond" truecount="2" falsecount="2"/>
-      <line num="58" count="4" type="cond" truecount="1" falsecount="1"/>
-      <line num="59" count="4" type="stmt"/>
-      <line num="60" count="4" type="cond" truecount="2" falsecount="2"/>
-      <line num="61" count="4" type="stmt"/>
-      <line num="64" count="4" type="cond" truecount="1" falsecount="1"/>
-      <line num="65" count="4" type="cond" truecount="4" falsecount="0"/>
-      <line num="66" count="1" type="stmt"/>
-      <line num="68" count="4" type="stmt"/>
-      <line num="69" count="4" type="stmt"/>
-      <line num="73" count="4" type="stmt"/>
-      <line num="74" count="4" type="cond" truecount="3" falsecount="0"/>
-      <line num="75" count="4" type="stmt"/>
-      <line num="77" count="4" type="stmt"/>
-      <line num="84" count="4" type="stmt"/>
-      <line num="85" count="0" type="cond" truecount="0" falsecount="2"/>
-      <line num="86" count="0" type="cond" truecount="0" falsecount="4"/>
-      <line num="87" count="0" type="cond" truecount="0" falsecount="2"/>
-      <line num="88" count="0" type="stmt"/>
+      <line num="52" count="11" type="stmt"/>
+      <line num="53" count="11" type="stmt"/>
+      <line num="55" count="11" type="cond" truecount="1" falsecount="1"/>
+      <line num="56" count="11" type="cond" truecount="2" falsecount="2"/>
+      <line num="58" count="11" type="cond" truecount="1" falsecount="1"/>
+      <line num="59" count="11" type="stmt"/>
+      <line num="60" count="11" type="cond" truecount="3" falsecount="1"/>
+      <line num="61" count="11" type="stmt"/>
+      <line num="64" count="11" type="cond" truecount="2" falsecount="0"/>
+      <line num="65" count="5" type="cond" truecount="4" falsecount="0"/>
+      <line num="66" count="2" type="stmt"/>
+      <line num="68" count="5" type="stmt"/>
+      <line num="69" count="5" type="stmt"/>
+      <line num="73" count="5" type="stmt"/>
+      <line num="74" count="5" type="cond" truecount="3" falsecount="0"/>
+      <line num="75" count="5" type="stmt"/>
+      <line num="77" count="5" type="stmt"/>
+      <line num="84" count="5" type="stmt"/>
+      <line num="85" count="6" type="cond" truecount="2" falsecount="0"/>
+      <line num="86" count="3" type="cond" truecount="3" falsecount="1"/>
+      <line num="87" count="3" type="cond" truecount="1" falsecount="1"/>
+      <line num="88" count="3" type="stmt"/>
       <line num="90" count="0" type="stmt"/>
-      <line num="92" count="0" type="cond" truecount="0" falsecount="2"/>
-      <line num="93" count="0" type="stmt"/>
-      <line num="94" count="0" type="stmt"/>
-      <line num="95" count="0" type="cond" truecount="0" falsecount="2"/>
-      <line num="97" count="0" type="cond" truecount="0" falsecount="4"/>
-      <line num="98" count="0" type="stmt"/>
+      <line num="92" count="3" type="cond" truecount="2" falsecount="0"/>
+      <line num="93" count="1" type="stmt"/>
+      <line num="94" count="1" type="stmt"/>
+      <line num="95" count="2" type="cond" truecount="1" falsecount="1"/>
+      <line num="97" count="2" type="cond" truecount="3" falsecount="1"/>
+      <line num="98" count="2" type="stmt"/>
       <line num="100" count="0" type="stmt"/>
-      <line num="103" count="0" type="cond" truecount="0" falsecount="3"/>
-      <line num="104" count="0" type="stmt"/>
-      <line num="107" count="0" type="stmt"/>
-      <line num="111" count="0" type="stmt"/>
-      <line num="113" count="0" type="stmt"/>
-      <line num="114" count="0" type="stmt"/>
-      <line num="120" count="0" type="stmt"/>
-      <line num="125" count="3" type="cond" truecount="1" falsecount="1"/>
-      <line num="126" count="3" type="stmt"/>
+      <line num="103" count="4" type="cond" truecount="3" falsecount="0"/>
+      <line num="104" count="4" type="stmt"/>
+      <line num="107" count="4" type="stmt"/>
+      <line num="111" count="4" type="stmt"/>
+      <line num="113" count="2" type="stmt"/>
+      <line num="114" count="2" type="stmt"/>
+      <line num="120" count="2" type="stmt"/>
+      <line num="125" count="4" type="cond" truecount="1" falsecount="1"/>
+      <line num="126" count="4" type="stmt"/>
     </file>
     <file name="Adapter_CloudDB.js" path="C:\Users\grego\Antigravity\Taxonomia Project\src\Adapter_CloudDB.js">
       <metrics statements="4" coveredstatements="4" conditionals="2" coveredconditionals="1" methods="1" coveredmethods="1"/>
-      <line num="4" count="6" type="stmt"/>
+      <line num="4" count="7" type="stmt"/>
       <line num="6" count="1" type="stmt"/>
-      <line num="10" count="6" type="cond" truecount="1" falsecount="1"/>
-      <line num="11" count="6" type="stmt"/>
+      <line num="10" count="7" type="cond" truecount="1" falsecount="1"/>
+      <line num="11" count="7" type="stmt"/>
     </file>
     <file name="Adapter_Sheets.js" path="C:\Users\grego\Antigravity\Taxonomia Project\src\Adapter_Sheets.js">
       <metrics statements="250" coveredstatements="223" conditionals="213" coveredconditionals="136" methods="17" coveredmethods="15"/>
-      <line num="4" count="18" type="stmt"/>
+      <line num="4" count="19" type="stmt"/>
       <line num="7" count="142" type="cond" truecount="1" falsecount="1"/>
       <line num="9" count="142" type="stmt"/>
-      <line num="18" count="18" type="stmt"/>
+      <line num="18" count="19" type="stmt"/>
       <line num="22" count="14" type="cond" truecount="1" falsecount="1"/>
       <line num="23" count="14" type="cond" truecount="2" falsecount="2"/>
       <line num="25" count="14" type="cond" truecount="1" falsecount="1"/>
@@ -337,8 +337,8 @@
       <line num="452" count="1007" type="stmt"/>
       <line num="457" count="8" type="stmt"/>
       <line num="459" count="8" type="stmt"/>
-      <line num="463" count="18" type="cond" truecount="1" falsecount="1"/>
-      <line num="464" count="18" type="stmt"/>
+      <line num="463" count="19" type="cond" truecount="1" falsecount="1"/>
+      <line num="464" count="19" type="stmt"/>
     </file>
     <file name="Engine_ABAC.gs" path="C:\Users\grego\Antigravity\Taxonomia Project\src\Engine_ABAC.gs">
       <metrics statements="89" coveredstatements="81" conditionals="102" coveredconditionals="60" methods="15" coveredmethods="15"/>
@@ -433,20 +433,20 @@
       <line num="209" count="1" type="stmt"/>
     </file>
     <file name="Engine_DB.js" path="C:\Users\grego\Antigravity\Taxonomia Project\src\Engine_DB.js">
-      <metrics statements="240" coveredstatements="110" conditionals="256" coveredconditionals="69" methods="40" coveredmethods="20"/>
-      <line num="11" count="7" type="cond" truecount="1" falsecount="1"/>
-      <line num="13" count="7" type="stmt"/>
-      <line num="14" count="7" type="stmt"/>
+      <metrics statements="240" coveredstatements="151" conditionals="256" coveredconditionals="98" methods="40" coveredmethods="25"/>
+      <line num="11" count="8" type="cond" truecount="1" falsecount="1"/>
+      <line num="13" count="8" type="stmt"/>
+      <line num="14" count="8" type="stmt"/>
       <line num="17" count="0" type="stmt"/>
       <line num="18" count="0" type="stmt"/>
-      <line num="26" count="4" type="cond" truecount="1" falsecount="1"/>
-      <line num="27" count="4" type="stmt"/>
-      <line num="30" count="4" type="stmt"/>
-      <line num="33" count="4" type="stmt"/>
-      <line num="40" count="4" type="cond" truecount="1" falsecount="1"/>
+      <line num="26" count="7" type="cond" truecount="1" falsecount="1"/>
+      <line num="27" count="7" type="stmt"/>
+      <line num="30" count="7" type="stmt"/>
+      <line num="33" count="7" type="stmt"/>
+      <line num="40" count="7" type="cond" truecount="2" falsecount="0"/>
       <line num="41" count="4" type="stmt"/>
-      <line num="44" count="4" type="cond" truecount="1" falsecount="1"/>
-      <line num="51" count="7" type="stmt"/>
+      <line num="44" count="7" type="cond" truecount="1" falsecount="1"/>
+      <line num="51" count="8" type="stmt"/>
       <line num="53" count="0" type="cond" truecount="0" falsecount="2"/>
       <line num="54" count="0" type="cond" truecount="0" falsecount="6"/>
       <line num="55" count="0" type="cond" truecount="0" falsecount="2"/>
@@ -501,7 +501,7 @@
       <line num="133" count="0" type="stmt"/>
       <line num="134" count="0" type="cond" truecount="0" falsecount="2"/>
       <line num="137" count="0" type="stmt"/>
-      <line num="141" count="7" type="stmt"/>
+      <line num="141" count="8" type="stmt"/>
       <line num="143" count="7" type="stmt"/>
       <line num="146" count="7" type="cond" truecount="1" falsecount="1"/>
       <line num="149" count="7" type="stmt"/>
@@ -627,53 +627,53 @@
       <line num="410" count="0" type="stmt"/>
       <line num="413" count="0" type="stmt"/>
       <line num="415" count="0" type="stmt"/>
-      <line num="423" count="0" type="cond" truecount="0" falsecount="2"/>
-      <line num="424" count="0" type="cond" truecount="0" falsecount="2"/>
-      <line num="426" count="0" type="stmt"/>
-      <line num="429" count="0" type="stmt"/>
-      <line num="430" count="0" type="stmt"/>
-      <line num="431" count="0" type="cond" truecount="0" falsecount="2"/>
-      <line num="432" count="0" type="stmt"/>
-      <line num="434" count="0" type="cond" truecount="0" falsecount="5"/>
-      <line num="435" count="0" type="stmt"/>
-      <line num="436" count="0" type="cond" truecount="0" falsecount="2"/>
+      <line num="423" count="2" type="cond" truecount="1" falsecount="1"/>
+      <line num="424" count="2" type="cond" truecount="1" falsecount="1"/>
+      <line num="426" count="2" type="stmt"/>
+      <line num="429" count="2" type="stmt"/>
+      <line num="430" count="2" type="stmt"/>
+      <line num="431" count="2" type="cond" truecount="1" falsecount="1"/>
+      <line num="432" count="2" type="stmt"/>
+      <line num="434" count="2" type="cond" truecount="5" falsecount="0"/>
+      <line num="435" count="1" type="stmt"/>
+      <line num="436" count="1" type="cond" truecount="1" falsecount="1"/>
       <line num="440" count="0" type="cond" truecount="0" falsecount="2"/>
       <line num="441" count="0" type="stmt"/>
       <line num="442" count="0" type="stmt"/>
-      <line num="446" count="0" type="cond" truecount="0" falsecount="4"/>
-      <line num="453" count="0" type="stmt"/>
-      <line num="454" count="0" type="cond" truecount="0" falsecount="4"/>
-      <line num="457" count="0" type="stmt"/>
-      <line num="458" count="0" type="cond" truecount="0" falsecount="4"/>
-      <line num="459" count="0" type="stmt"/>
+      <line num="446" count="2" type="cond" truecount="4" falsecount="0"/>
+      <line num="453" count="1" type="stmt"/>
+      <line num="454" count="1" type="cond" truecount="3" falsecount="1"/>
+      <line num="457" count="1" type="stmt"/>
+      <line num="458" count="1" type="cond" truecount="3" falsecount="1"/>
+      <line num="459" count="1" type="stmt"/>
       <line num="461" count="0" type="cond" truecount="0" falsecount="2"/>
-      <line num="464" count="0" type="stmt"/>
-      <line num="465" count="0" type="cond" truecount="0" falsecount="2"/>
-      <line num="468" count="0" type="stmt"/>
-      <line num="475" count="0" type="cond" truecount="0" falsecount="2"/>
-      <line num="477" count="0" type="stmt"/>
-      <line num="478" count="0" type="stmt"/>
-      <line num="479" count="0" type="stmt"/>
-      <line num="493" count="0" type="stmt"/>
-      <line num="496" count="0" type="cond" truecount="0" falsecount="4"/>
-      <line num="497" count="0" type="stmt"/>
-      <line num="499" count="0" type="stmt"/>
-      <line num="500" count="0" type="stmt"/>
-      <line num="505" count="0" type="stmt"/>
-      <line num="506" count="0" type="stmt"/>
-      <line num="510" count="0" type="cond" truecount="0" falsecount="2"/>
-      <line num="511" count="0" type="cond" truecount="0" falsecount="2"/>
-      <line num="512" count="0" type="stmt"/>
-      <line num="515" count="0" type="cond" truecount="0" falsecount="2"/>
-      <line num="516" count="0" type="cond" truecount="0" falsecount="2"/>
-      <line num="517" count="0" type="stmt"/>
-      <line num="520" count="0" type="stmt"/>
-      <line num="526" count="0" type="cond" truecount="0" falsecount="2"/>
-      <line num="527" count="0" type="stmt"/>
-      <line num="532" count="0" type="stmt"/>
-      <line num="534" count="0" type="stmt"/>
-      <line num="542" count="7" type="cond" truecount="1" falsecount="1"/>
-      <line num="543" count="7" type="stmt"/>
+      <line num="464" count="1" type="stmt"/>
+      <line num="465" count="1" type="cond" truecount="1" falsecount="1"/>
+      <line num="468" count="1" type="stmt"/>
+      <line num="475" count="1" type="cond" truecount="1" falsecount="1"/>
+      <line num="477" count="1" type="stmt"/>
+      <line num="478" count="1" type="stmt"/>
+      <line num="479" count="1" type="stmt"/>
+      <line num="493" count="1" type="stmt"/>
+      <line num="496" count="1" type="cond" truecount="2" falsecount="2"/>
+      <line num="497" count="1" type="stmt"/>
+      <line num="499" count="1" type="stmt"/>
+      <line num="500" count="1" type="stmt"/>
+      <line num="505" count="1" type="stmt"/>
+      <line num="506" count="1" type="stmt"/>
+      <line num="510" count="1" type="cond" truecount="1" falsecount="1"/>
+      <line num="511" count="1" type="cond" truecount="1" falsecount="1"/>
+      <line num="512" count="1" type="stmt"/>
+      <line num="515" count="1" type="cond" truecount="1" falsecount="1"/>
+      <line num="516" count="1" type="cond" truecount="1" falsecount="1"/>
+      <line num="517" count="1" type="stmt"/>
+      <line num="520" count="1" type="stmt"/>
+      <line num="526" count="1" type="cond" truecount="1" falsecount="1"/>
+      <line num="527" count="1" type="stmt"/>
+      <line num="532" count="2" type="stmt"/>
+      <line num="534" count="2" type="stmt"/>
+      <line num="542" count="8" type="cond" truecount="1" falsecount="1"/>
+      <line num="543" count="8" type="stmt"/>
     </file>
     <file name="Engine_Graph.js" path="C:\Users\grego\Antigravity\Taxonomia Project\src\Engine_Graph.js">
       <metrics statements="157" coveredstatements="141" conditionals="155" coveredconditionals="113" methods="22" coveredmethods="20"/>
@@ -923,15 +923,15 @@
       <line num="158" count="0" type="stmt"/>
     </file>
     <file name="Schema_Engine.gs" path="C:\Users\grego\Antigravity\Taxonomia Project\src\Schema_Engine.gs">
-      <metrics statements="8" coveredstatements="3" conditionals="8" coveredconditionals="1" methods="2" coveredmethods="0"/>
-      <line num="7" count="2" type="stmt"/>
-      <line num="153" count="0" type="cond" truecount="0" falsecount="2"/>
-      <line num="162" count="0" type="stmt"/>
-      <line num="163" count="0" type="cond" truecount="0" falsecount="4"/>
-      <line num="164" count="0" type="stmt"/>
-      <line num="167" count="0" type="stmt"/>
-      <line num="181" count="2" type="cond" truecount="1" falsecount="1"/>
-      <line num="182" count="2" type="stmt"/>
+      <metrics statements="8" coveredstatements="8" conditionals="8" coveredconditionals="7" methods="2" coveredmethods="2"/>
+      <line num="7" count="3" type="stmt"/>
+      <line num="153" count="6" type="cond" truecount="2" falsecount="0"/>
+      <line num="162" count="3" type="stmt"/>
+      <line num="163" count="3" type="cond" truecount="4" falsecount="0"/>
+      <line num="164" count="1" type="stmt"/>
+      <line num="167" count="2" type="stmt"/>
+      <line num="181" count="3" type="cond" truecount="1" falsecount="1"/>
+      <line num="182" count="3" type="stmt"/>
     </file>
     <file name="SubgridState.js" path="C:\Users\grego\Antigravity\Taxonomia Project\src\SubgridState.js">
       <metrics statements="53" coveredstatements="42" conditionals="78" coveredconditionals="49" methods="19" coveredmethods="17"/>

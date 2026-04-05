@@ -1,5 +1,4 @@
-<script>
-    /**
+/**
      * UI_ModalManager.html
      *
      * Extracts ModalStackController (S11.2) for declarative pub/sub integration.
@@ -70,4 +69,3 @@
         });
 
     })(window);
-</script>

@@ -3,7 +3,7 @@
     EXCLUSIVO: Brand Tokens, Alias Tokens Ionic, Tipografía Fluida
     PROHIBIDO: clases estructurales, lógica de layout o sidebar
 ═══════════════════════════════════════════════════════ */
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600&family=Poppins:wght@400;500;600&display=swap');
+
 
 :root {
   /* NIVEL 2: ALIAS TOKENS IONIC (Mapeos a las variables inyectadas en $O(1)$) */
@@ -71,7 +71,17 @@
   --ion-tab-bar-background:     var(--color-bg-0);
   --ion-color-light:            var(--color-bg-0);
   --ion-color-dark:             var(--color-text);
-  --ion-font-family:            'Poppins', 'Segoe UI', sans-serif;
+  
+  --sys-font-family-display:    var(--font-display, 'Poppins, sans-serif');
+  --sys-font-family-h1:         var(--font-h1, 'Poppins, sans-serif');
+  --sys-font-family-h2:         var(--font-h2, 'Poppins, sans-serif');
+  --sys-font-family-h3:         var(--font-h3, 'Poppins, sans-serif');
+  --sys-font-family-body:       var(--font-body, 'Poppins, sans-serif');
+  --sys-font-family-sub:        var(--font-sub, 'Poppins, sans-serif');
+  --sys-font-family-caption:    var(--font-caption, 'Poppins, sans-serif');
+  --sys-font-family-mini:       var(--font-mini, 'Poppins, sans-serif');
+  
+  --ion-font-family:            var(--sys-font-family-body);
 
   /* Font Scale */
   --font-size-display: 40px; --font-size-display-mobile: 32px;
@@ -114,19 +124,19 @@
   }
 }
 
-html, body, ion-app { height: 100%; font-family: var(--ion-font-family); }
+html, body, ion-app { height: 100%; font-family: var(--sys-font-family-body); }
 body, ion-app, ion-content { font-size: var(--sys-font-body); color: var(--ion-text-color); }
 ion-content { --background: var(--ion-background-color); }
 
-h1, .text-display { font-family: 'Playfair Display', serif; }
+h1, .text-display { font-family: var(--sys-font-family-display); }
 .text-display { font-size: var(--sys-font-display); line-height: 1.1; font-weight: 600; }
-.text-h1      { font-size: var(--sys-font-h1);      line-height: 1.2; font-weight: 600; font-family: 'Playfair Display', serif; }
-.text-h2      { font-size: var(--sys-font-h2);      line-height: 1.25; font-weight: 600; }
-.text-h3      { font-size: var(--sys-font-h3);      line-height: 1.3; font-weight: 600; }
-.text-sub     { font-size: var(--sys-font-subheader); font-weight: 500; }
+.text-h1      { font-size: var(--sys-font-h1);      line-height: 1.2; font-weight: 600; font-family: var(--sys-font-family-h1); }
+.text-h2      { font-size: var(--sys-font-h2);      line-height: 1.25; font-weight: 600; font-family: var(--sys-font-family-h2); }
+.text-h3      { font-size: var(--sys-font-h3);      line-height: 1.3; font-weight: 600; font-family: var(--sys-font-family-h3); }
+.text-sub     { font-size: var(--sys-font-subheader); font-weight: 500; font-family: var(--sys-font-family-sub); }
 .text-small   { font-size: var(--sys-font-small); }
-.text-caption { font-size: var(--sys-font-caption); }
-.text-mini    { font-size: var(--sys-font-mini); text-transform: uppercase; letter-spacing: 0.05em; }
+.text-caption { font-size: var(--sys-font-caption); font-family: var(--sys-font-family-caption); }
+.text-mini    { font-size: var(--sys-font-mini); text-transform: uppercase; letter-spacing: 0.05em; font-family: var(--sys-font-family-mini); }
 
 /* Forzado Tipográfico Absoluto en Modo Oscuro */
 body.dark h1, body.dark h2, body.dark h3, body.dark h4, body.dark h5, body.dark h6, 

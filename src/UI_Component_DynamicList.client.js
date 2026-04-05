@@ -1,5 +1,4 @@
-<script>
-    /**
+/**
      * UI_Component_DynamicList.html
      * 
      * Constructor Atómico para Grid anidado de Formulario (Subformularios n-dimensionales).
@@ -118,4 +117,3 @@
         }
 
     })(typeof window !== 'undefined' ? window : this);
-</script>

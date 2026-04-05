@@ -1,5 +1,4 @@
-<script>
-    /* ============================================================
+/* ============================================================
        DataView_Builders_UI.html — UI Assembly Factoría (Micro-Frontend)
        Incluido via GAS: <?!= include('DataView_Builders_UI'); ?>
        S19.1 Refactor: Extrae constructores pesados de DataView_UI
@@ -207,4 +206,3 @@
             return headerDiv;
         }
     };
-</script>

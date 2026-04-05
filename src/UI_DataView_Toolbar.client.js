@@ -1,9 +1,3 @@
-<!-- ============================================================
-     UI_DataView_Toolbar.html
-     Factoría Gráfica pura (View) para el Header, Toolbar y Column Popover del DataView.
-     Incluido via GAS: <?!= include('UI_DataView_Toolbar'); ?>
-     ============================================================ -->
-<script>
 window.UI_DataView_Toolbar = (function () {
     const ENTITY_META = window.ENTITY_META || {};
 
@@ -50,19 +44,27 @@ window.UI_DataView_Toolbar = (function () {
 
     function ensureColPopover(columns, onColToggle) {
         let pop = document.getElementById('dv-col-ion-popover');
-        if (pop) { pop.remove(); } // Forzar re-bind a nivel de dom
-
-        pop = document.createElement('ion-popover');
-        pop.id = 'dv-col-ion-popover';
-        pop.setAttribute('trigger', 'dv-col-trigger-btn');
-        pop.setAttribute('trigger-action', 'click');
-        pop.setAttribute('dismiss-on-select', 'false');
-        pop.setAttribute('side', 'bottom');
-        pop.setAttribute('alignment', 'end');
-        pop.setAttribute('show-backdrop', 'false');
-        document.body.appendChild(pop);
         
-        pop.appendChild(buildColPopoverContentHTML(columns));
+        // S24.8 Fix (Rai-Debug): Ionic 'insertBefore' Crash on ViewChange
+        // Root Cause: Destruir un Overlay <ion-popover> usando .remove() brutalmente puentea el ciclo 
+        // de vida (disconnectedCallback) que llama internamente a B.dismiss(), crasheando el render de Ionic.
+        // Fix: Si ya existe, simplemente actualizamos su DOM interno en lugar de destruirlo.
+        if (pop) { 
+            pop.innerHTML = '';
+            pop.appendChild(buildColPopoverContentHTML(columns));
+        } else {
+            pop = document.createElement('ion-popover');
+            pop.id = 'dv-col-ion-popover';
+            pop.setAttribute('trigger', 'dv-col-trigger-btn');
+            pop.setAttribute('trigger-action', 'click');
+            pop.setAttribute('dismiss-on-select', 'false');
+            pop.setAttribute('side', 'bottom');
+            pop.setAttribute('alignment', 'end');
+            pop.setAttribute('show-backdrop', 'false');
+            document.body.appendChild(pop);
+            
+            pop.appendChild(buildColPopoverContentHTML(columns));
+        }
 
         pop.querySelectorAll('ion-checkbox').forEach(function (cb) {
             const idx = parseInt(cb.getAttribute('data-colidx'), 10);
@@ -226,4 +228,3 @@ window.UI_DataView_Toolbar = (function () {
         buildHeader
     };
 })();
-</script>

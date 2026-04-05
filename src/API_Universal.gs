@@ -127,3 +127,51 @@ if (typeof module !== 'undefined') {
     API_Universal_Router
   };
 }
+
+/**
+ * Persiste configuración global (White-Label) en las Script Properties.
+ * Protegido por validación Engine_ABAC sobre Config_Typography.
+ */
+function API_UpdateGlobalConfig(config) {
+  try {
+    var email = "";
+    if (typeof Session !== 'undefined') email = Session.getActiveUser().getEmail();
+    
+    // Authorization Check: Must be ALL for Config_Typography
+    var ctx = (typeof Engine_ABAC !== 'undefined') 
+        ? Engine_ABAC.resolveTopologyFor(email) 
+        : { permissions: {} };
+        
+    var authLvl = ctx.permissions['Config_Typography'] || "";
+    if (authLvl.startsWith('ALL')) {
+      // Basic Sanity Validation (No strict allowlist since CRUD manages it)
+      if (typeof config !== 'object') {
+          throw new Error("Estructura de payload inválida.");
+      }
+      
+      const sanitizeRegex = /^[\w\s\,\-\'\"\.]+$/i;
+      const cleanConfig = {};
+      
+      // Iterate over allowed fields to prevent arbitrary property injection
+      const allowedKeys = ['font_display', 'font_h1', 'font_h2', 'font_h3', 'font_body', 'font_sub', 'font_caption', 'font_mini', 'bodyFont', 'displayFont'];
+      
+      for (const key of Object.keys(config)) {
+          if (allowedKeys.indexOf(key) !== -1 && typeof config[key] === 'string') {
+              if (sanitizeRegex.test(config[key])) {
+                  cleanConfig[key] = config[key];
+              } else {
+                  throw new Error(`Security Exception: Tipografía solicitada en [${key}] contiene caracteres inválidos para CSS.`);
+              }
+          }
+      }
+      
+      PropertiesService.getScriptProperties().setProperty('WHITE_LABEL_CONFIG', JSON.stringify(cleanConfig));
+      
+      return { status: 'success', message: 'Configuración Global Actualizada' };
+    } else {
+      throw new Error("ABAC Error: Permisos insuficientes (Nivel ALL requerido en Config_Typography).");
+    }
+  } catch(e) {
+    throw new Error("ConfigError: " + e.message);
+  }
+}

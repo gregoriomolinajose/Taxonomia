@@ -1,6 +1,4 @@
-
-<script>
-    /**
+/**
      * FormEngine_UI.html
      *
      * Client-side logic for dynamic UI generation.
@@ -200,7 +198,7 @@
             const versionInput = document.createElement('input');
             versionInput.type = 'hidden';
             versionInput.name = '_version';
-            versionInput.value = data._version || 1;
+            versionInput.value = (data && data._version) ? data._version : 1;
             cardContent.appendChild(versionInput);
             
             card.appendChild(cardContent);
@@ -591,4 +589,3 @@
 
 
     })(typeof window !== 'undefined' ? window : this);
-</script>

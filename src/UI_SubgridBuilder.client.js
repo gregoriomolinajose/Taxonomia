@@ -1,4 +1,3 @@
-<script>
 /**
  * Factoría dedicada a la inyección y ciclo de vida de Subgrids M:N interactivos.
  * Extraída de FormRenderer_UI.html en la S13.1 (SRP & Clean Code).
@@ -352,4 +351,3 @@ window.UI_SubgridBuilder = {
         container.appendChild(subgridDiv);
     }
 };
-</script>

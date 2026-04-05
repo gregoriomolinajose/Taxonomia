@@ -1,5 +1,4 @@
-<script>
-    /**
+/**
      * UI_Component_RelationBuilder.html
      * 
      * Constructor Atómico para Relaciones N-Dimensionales (Aristas M:N, Jerarquías Padre-Hijo).
@@ -168,4 +167,3 @@
         }
 
     })(typeof window !== 'undefined' ? window : this);
-</script>

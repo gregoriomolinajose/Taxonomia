@@ -1,4 +1,3 @@
-<script>
 /**
  * UI_FormUtils.html (S14.1)
  *
@@ -154,4 +153,3 @@ window.UI_FormUtils = (function () {
         applyReadOnlyLock
     };
 })();
-</script>

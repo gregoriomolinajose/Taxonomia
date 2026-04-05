@@ -1,5 +1,4 @@
-<script>
-    /**
+/**
      * FormBuilder_Inputs.html
      * 
      * [S12.1] Architectural Splitting: Pure Factory Component
@@ -230,4 +229,3 @@
         };
 
     })(window);
-</script>

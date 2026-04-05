@@ -1,0 +1,37 @@
+artifact_type: story-design
+version: 1
+skill: rai-story-design
+created: '2026-04-03T19:40:00Z'
+story: 'S24.8'
+epic: 'E24'
+content:
+  summary: 'El UI_DataGrid debe prescindir del hardcoding HIDDEN_BY_DEFAULT y deducir sus columnas de la vista Grid leyendo `this.cfg.columns.filter(c => c.visible)` provisto por el componente Orquestador.'
+  complexity: simple
+  acceptance_criteria:
+    - id: AC1
+      description: 'El render de la vista Grid (Tarjetas) en `UI_DataGrid.client.js` debe iterar únicamente sobre las columnas marcadas como `visible: true` dentro de `this.cfg.columns`.'
+      verifiable: true
+    - id: AC2
+      description: 'Eliminar `HIDDEN_BY_DEFAULT` del interior de la factoría `UI_DataGrid.client.js` (Respetar OCP).'
+      verifiable: true
+    - id: AC3
+      description: 'Cualquier toggle de visibilidad disparado por el Popover de toolbar debe reflejarse sincrónicamente tanto en la Tabla como en la Tarjeta.'
+      verifiable: true
+    - id: AC4
+      description: 'Crear un Test de Integración JSDOM (`__tests__/DataGrid_Integration.ui.test.js`) que renderice la Cuadrícula sin mockear la factoría `UI_DataGrid.buildLayout` para certificar la supervivencia y prevenir falsos positivos (Quality Review Recommendation).'
+      verifiable: true
+  integration_points:
+    - module: 'frontend.generics.DataGrid'
+      change_type: modification
+      files: ['src/UI_DataGrid.client.js']
+    - module: 'frontend.generics.DataView'
+      change_type: modification
+      files: ['src/DataView_UI.client.js']
+  decisions:
+    - id: D1
+      choice: 'Filtrar iteración JSON de tarjetas referenciando this.cfg.columns.'
+      rationale: 'Se unifica la lógica de pintado con la vista de tabla eliminando el Bug Semántico H9 detectado durante revisión arquitectónica.'
+      alternatives_considered: ['Crear una directiva externa.']
+refs:
+  epic_scope: 'work/epics/e24-frontend-god-objects/scope.md'
+metadata: {}

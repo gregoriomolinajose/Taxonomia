@@ -144,7 +144,7 @@ describe('Engine_DB Orchestration & DAG SCD-2', () => {
             const nodeBatch = Engine_DB.upsertBatch.mock.calls[1][1];
             expect(nodeBatch.length).toBe(1);
             expect(nodeBatch[0].estado).toBe('Eliminado');
-            expect(nodeBatch[0].id_entidadmagico).toBe('TARGET'); 
+            expect(nodeBatch[0].id_entidadmagica).toBe('TARGET'); 
             
             expect(result.success).toBe(true);
         });
@@ -158,7 +158,7 @@ describe('Engine_DB Orchestration & DAG SCD-2', () => {
             const config = { useSheets: true };
             const result = Engine_DB.delete('CatalogoPlano', 'ID-123');
 
-            expect(Adapter_Sheets.remove).toHaveBeenCalledWith('CatalogoPlano', 'ID-123', config);
+            expect(Adapter_Sheets.remove).toHaveBeenCalledWith('CatalogoPlano', 'ID-123', expect.objectContaining({ useSheets: true }));
             expect(Engine_DB.upsertBatch).not.toHaveBeenCalled();
             expect(result.success).toBe(true);
         });

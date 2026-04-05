@@ -1,0 +1,61 @@
+﻿node.exe : FAIL __tests__/API_Universal_Router.test.js
+En línea: 1 Carácter: 1
++ & "C:\Program Files\nodejs/node.exe" "C:\Program 
+Files\nodejs/node_mo ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (FAIL __tests__/..._Router 
+   .test.js:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+  API_Universal Controller
+    Network Layer: doPost(e)
+      √ should return status success envelope for valid create payload 
+(2 ms)
+      √ should catch JSON parsing errors and return status error 
+envelope (1 ms)
+      √ should catch unsupported action error and return status error 
+envelope
+    Service Layer: API_Universal_Router()
+      √ should read entity cleanly using payload id (1 ms)
+      √ should update entity extracting pk using inferred pkField
+      √ should delete entity using flat string id (1 ms)
+      √ should delete entity extracting id from nested payload
+      √ should catch Errors natively and expose errorType CONCURRENCY 
+if present (8 ms)
+      √ should handle generic errors as GENERAL errorType (1 ms)
+      × should gracefully handle Missing Schema in 
+API_Universal_Router logic if create action drops inside _handleCreate 
+directly (1 ms)
+
+  ● API_Universal Controller › Service Layer: API_Universal_Router() › 
+should gracefully handle Missing Schema in API_Universal_Router logic 
+if create action drops inside _handleCreate directly
+
+    expect(jest.fn()).toHaveBeenCalled()
+
+    Expected number of calls: >= 1
+    Received number of calls:    0
+
+    [0m [90m 184 |[39m             [36mconst[39m result 
+[33m=[39m 
+[33mAPI_Universal_Router[39m([32m'create'[39m[33m,[39m 
+[32m'VirtualEntity'[39m[33m,[39m { field[33m:[39m [35m1[39m 
+})[33m;[39m
+     [90m 185 |[39m             
+    [31m[1m>[22m[39m[90m 186 |[39m             expect(global[33m
+.[39m_handleCreate)[33m.[39mtoHaveBeenCalled()[33m;[39m
+     [90m     |[39m                                          
+[31m[1m^[22m[39m
+     [90m 187 |[39m             expect(result[33m.[39mstatus)[33m.
+[39mtoBe([32m'success'[39m)[33m;[39m
+     [90m 188 |[39m         })[33m;[39m
+     [90m 189 |[39m     })[33m;[39m[0m
+
+      at Object.toHaveBeenCalled 
+(__tests__/API_Universal_Router.test.js:186:42)
+
+Test Suites: 1 failed, 1 total
+Tests:       1 failed, 9 passed, 10 total
+Snapshots:   0 total
+Time:        0.445 s, estimated 1 s
+Ran all test suites matching __tests__/API_Universal_Router.test.js.

@@ -1,5 +1,4 @@
-<script>
-    /* ============================================================
+/* ============================================================
        DataEngine_UI.html — Motor Matemático y E/S Masiva (CSV)
        Incluido via GAS: <?!= include('DataEngine_UI'); ?>
        
@@ -190,4 +189,3 @@
             reader.readAsText(file);
         }
     };
-</script>

@@ -128,13 +128,30 @@ const APP_SCHEMAS = {
       { name: "descripcion", type: "textarea", label: "Descripción", required: false, width: 12, showInList: false }
     ]
   },
+  Config_Typography: {
+    metadata: { showInMenu: false, showInDashboard: false, order:92, iconName:'text-outline', color:'medium', label:'Temas Tipográficos', titleField:'nombre_pack', idField:'id_tipografia', fkField:null },
+    primaryKey: "id_tipografia",
+    fields: [
+      { name: "id_tipografia", type: "text", primaryKey: true, readonly: true, label: "ID Pack", width: 12 },
+      { name: "estado", type: "hidden", defaultValue: "Activo" },
+      { section: "Configuración Tipográfica", name: "nombre_pack", type: "text", label: "Nombre de Pack", required: true, width: 12 },
+      { section: "Configuración Tipográfica", name: "font_body", type: "select", label: "Texto Cuerpo (body)", required: true, width: 6, options: ["Poppins, sans-serif", "Playfair Display, serif", "Inter, sans-serif", "Roboto, sans-serif", "Montserrat, sans-serif"] },
+      { section: "Configuración Tipográfica", name: "font_sub", type: "select", label: "Subtítulos (.text-sub)", required: true, width: 6, options: ["Poppins, sans-serif", "Playfair Display, serif", "Inter, sans-serif", "Roboto, sans-serif", "Montserrat, sans-serif"] },
+      { section: "Configuración Tipográfica", name: "font_caption", type: "select", label: "Leyendas (.text-caption)", required: true, width: 6, options: ["Poppins, sans-serif", "Playfair Display, serif", "Inter, sans-serif", "Roboto, sans-serif", "Montserrat, sans-serif"] },
+      { section: "Configuración Tipográfica", name: "font_mini", type: "select", label: "Miniaturas (.text-mini)", required: true, width: 6, options: ["Poppins, sans-serif", "Playfair Display, serif", "Inter, sans-serif", "Roboto, sans-serif", "Montserrat, sans-serif"] },
+      { section: "Configuración Tipográfica", name: "font_display", type: "select", label: "Ultra Título (.text-display)", required: true, width: 6, options: ["Poppins, sans-serif", "Playfair Display, serif", "Inter, sans-serif", "Roboto, sans-serif", "Montserrat, sans-serif"] },
+      { section: "Configuración Tipográfica", name: "font_h1", type: "select", label: "Título Principal (h1)", required: true, width: 6, options: ["Poppins, sans-serif", "Playfair Display, serif", "Inter, sans-serif", "Roboto, sans-serif", "Montserrat, sans-serif"] },
+      { section: "Configuración Tipográfica", name: "font_h2", type: "select", label: "Título Secundario (h2)", required: true, width: 6, options: ["Poppins, sans-serif", "Playfair Display, serif", "Inter, sans-serif", "Roboto, sans-serif", "Montserrat, sans-serif"] },
+      { section: "Configuración Tipográfica", name: "font_h3", type: "select", label: "Título Terciario (h3)", required: true, width: 6, options: ["Poppins, sans-serif", "Playfair Display, serif", "Inter, sans-serif", "Roboto, sans-serif", "Montserrat, sans-serif"] }
+    ]
+  },
   Sys_Permissions: {
     metadata: { showInMenu: false, showInDashboard: false, order:91, iconName:'key-outline', color:'danger', label:'Seguridad: Permisos ABAC', titleField:'schema_destino', idField:'id_permiso', fkField:{ key:'id_rol', label:'Rol Base' } },
     primaryKey: "id_permiso",
     fields: [
       { name: "id_permiso", type: "text", primaryKey: true, readonly: true, label: "ID Permiso", width: 12 },
       { name: "id_rol", type: "select", label: "Rol Organizacional", required: true, width: 6, lookupSource: "getSysRolesOptions" },
-      { name: "schema_destino", type: "select", label: "Entidad del Sistema", required: true, width: 6, options: ["Portafolio", "Dominio", "Grupo_Productos", "Producto", "Capacidad", "Equipo", "Persona", "Relacion_Dominios", "Sys_Roles", "Sys_Permissions"] },
+      { name: "schema_destino", type: "select", label: "Entidad del Sistema", required: true, width: 6, options: ["Portafolio", "Dominio", "Grupo_Productos", "Producto", "Capacidad", "Equipo", "Persona", "Relacion_Dominios", "Sys_Roles", "Sys_Permissions", "Config_Typography"] },
       { name: "nivel_acceso", type: "select", label: "Nivel de Acceso", required: true, width: 12, options: ["ALL (Admin Total)", "OWNER_ONLY (Solo propios)", "MEMBER_ONLY (Siendo Miembro)", "READ_ONLY (Solo lectura)", "NONE (Denegado)"] }
     ]
   },

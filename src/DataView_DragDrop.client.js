@@ -1,9 +1,3 @@
-<!-- ============================================================
-     DataView_DragDrop.html
-     Módulo puro para encapsular mecánicas de Reordenamiento (HTML5 Drag & Drop).
-     Incluido via GAS: <?!= include('DataView_DragDrop'); ?>
-     ============================================================ -->
-<script>
 window.DataView_DragDrop = (function () {
     let _dragSrcIdx = -1;
     let _onOrderChangeCallback = null;
@@ -73,4 +67,3 @@ window.DataView_DragDrop = (function () {
         onDragEnd
     };
 })();
-</script>

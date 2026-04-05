@@ -1,0 +1,49 @@
+﻿node.exe : FAIL __tests__/Engine_DB_Orchestration.test.js
+En línea: 1 Carácter: 1
++ & "C:\Program Files\nodejs/node.exe" "C:\Program 
+Files\nodejs/node_mo ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (FAIL __tests__/...tration 
+   .test.js:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+  Engine_DB Orchestration & DAG SCD-2
+    SCD-2 _updateGraphEdges
+      √ should expire active edge and spawn new edge when parent 
+changes (3 ms)
+      √ should do nothing if parent has not changed (1 ms)
+    Engine_DB.delete (Unit of Work Orchestrations)
+      × should execute ORPHAN cascading logic using 
+Graph.buildDeletionPatch (3 ms)
+      √ should execute standard deletion if strictly FLAT topology
+
+  ● Engine_DB Orchestration & DAG SCD-2 › Engine_DB.delete (Unit of 
+Work Orchestrations) › should execute ORPHAN cascading logic using 
+Graph.buildDeletionPatch
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: "TARGET"
+    Received: undefined
+
+    [0m [90m 145 |[39m             expect(nodeBatch[33m.[39mlength
+)[33m.[39mtoBe([35m1[39m)[33m;[39m
+     [90m 146 |[39m             expect(nodeBatch[[35m0[39m][33m.[
+39mestado)[33m.[39mtoBe([32m'Eliminado'[39m)[33m;[39m
+    [31m[1m>[22m[39m[90m 147 |[39m             expect(nodeBatch[
+[35m0[39m][33m.[39mid_entidadmagico)[33m.[39mtoBe([32m'TARGET'[3
+9m)[33m;[39m 
+     [90m     |[39m                                                  
+ [31m[1m^[22m[39m
+     [90m 148 |[39m             
+     [90m 149 |[39m             expect(result[33m.[39msuccess)[33m
+.[39mtoBe([36mtrue[39m)[33m;[39m
+     [90m 150 |[39m         })[33m;[39m[0m
+
+      at Object.toBe (__tests__/Engine_DB_Orchestration.test.js:147:51)
+
+Test Suites: 1 failed, 1 total
+Tests:       1 failed, 3 passed, 4 total
+Snapshots:   0 total
+Time:        0.457 s, estimated 1 s
+Ran all test suites matching __tests__/Engine_DB_Orchestration.test.js.

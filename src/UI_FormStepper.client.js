@@ -1,4 +1,3 @@
-<script>
 /**
  * UI_FormStepper.html (S14.1)
  *
@@ -163,4 +162,3 @@ window.UI_FormStepper = class UI_FormStepper {
         this.goToSection(this.steps[0]);
     }
 };
-</script>

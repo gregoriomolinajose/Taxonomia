@@ -3,7 +3,16 @@ const { APP_SCHEMAS } = require('../src/Schema_Engine.gs');
 // ─────────────────────────────────────────────────────────────────────────────
 // Helper: simulate getGenericOrdenPath with a mock cache
 // ─────────────────────────────────────────────────────────────────────────────
-const { buildOrdenPath } = require('../src/Math_Engine');
+const fs = require('fs');
+const path = require('path');
+const mathEnginePath = path.resolve(__dirname, '../src/Math_Engine.html');
+let mathEngineCode = fs.readFileSync(mathEnginePath, 'utf8').replace(/<script[^>]*>/i, '').replace(/<\/script>/i, '');
+const mathContext = {};
+eval(`
+    ${mathEngineCode}
+    mathContext.buildOrdenPath = typeof buildOrdenPath !== 'undefined' ? buildOrdenPath : null;
+`);
+const { buildOrdenPath } = mathContext;
 
 const CALC_PARAMS = {
     entity: 'Dominio',

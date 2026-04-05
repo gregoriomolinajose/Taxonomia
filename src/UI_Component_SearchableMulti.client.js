@@ -1,5 +1,4 @@
-<script>
-    /**
+/**
      * UI_Component_SearchableMulti.html
      * 
      * Implementa un modal buscador de catálogo para selecciones M:N (subgrids falsos).
@@ -231,4 +230,3 @@
         };
 
     })(typeof window !== 'undefined' ? window : this);
-</script>

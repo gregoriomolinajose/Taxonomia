@@ -1,5 +1,4 @@
-<script>
-    /**
+/**
      * FormEngine_Resolvers.html
      *
      * Abstracción de orquestación de datos de catálogo (Lookups).
@@ -89,4 +88,3 @@
         global.FormEngine_Resolvers = EngineResolvers;
 
     })(typeof window !== 'undefined' ? window : this);
-</script>

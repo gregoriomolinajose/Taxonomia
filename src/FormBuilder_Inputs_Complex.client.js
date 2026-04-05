@@ -1,6 +1,4 @@
-
-<script>
-    /* ============================================================
+/* ============================================================
        FormBuilder_Inputs_Complex.html
        Micro-Frontend: Componentes Estructurados y Compuestos
        ============================================================ */
@@ -193,4 +191,3 @@
 
         // global.UI_Factory.buildSearchableMulti has been extracted to UI_Component_SearchableMulti.html
     })(window);
-</script>

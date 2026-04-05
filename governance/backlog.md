@@ -23,7 +23,7 @@
 | E21| Next-Gen MDM & Concurrency Data Layer                 | ✅ Complete   | Optimistic Locking, Soft-Delete, ES5 Concats, Tests Mudos, Profiling | Muy Alta |
 | E22| Enterprise B2B UX Transformation                      | ✅ Complete   | Top App Bar, Omnibar, Contextual ABAC Dashboard, Design System Purity| Max      |
 | E23| Enterprise Identity & Zero-Trust SSO                  | 🚧 To Do     | Admin SDK Directory API integration para Avatares Reales y Perfiles  | Media    |
-| E24| Frontend God Objects Decomposition                    | ⏳ In Prog   | Split DataView_UI, FormRenderer, FormBuilder_Inputs, app.css         | Alta     |
+| E24| Frontend God Objects Decomposition                    | ✅ Complete   | Split DataView_UI, FormRenderer, FormBuilder_Inputs, app.css         | Alta     |
 
 ## Parking Lot / Deuda Técnica (Post-Epic 11)
 
@@ -52,3 +52,6 @@
 >   - *Identity*: `Admin SDK Directory`, Google Profile Photo Hydration, Identity Fallbacks y Scopes de Workspace.
 >   - *Arch Review (E21)*: Absorber auto-debouncing nativamente dentro del Dispatcher de `AppEventBus` y formalizar la obsolescencia de los Mocks Locales.
 >   - *Quality Review (E21)*: Validar estrictamente el type paraméntrico en `window.debounce` (`typeof delay === 'number'`) y normalizar rastros de `console.error` en despliegues sin script (`UI_FormSubmitter`).
+> - **[E25] Fragmentation & Scaling (E24 AR/QR):**
+>   - *Arch Review*: Deshardcodear el umbral estático `MAX_ATTRS = 5` en Tarjetas `UI_DataGrid` para delegarlo a `UI_CONFIG` (Vistas Sensibles/Densas); monitorear métricas de Developer Experience (DX) tras pulverizar God Objects en micro-fragmentos de 150 líneas.
+>   - *Quality Review*: Evaluar seriamente incluir un paso constructivo formal de Transpilación vía Babel (ES6 a ES5) garantizando el Polyfill si las corporaciones clientes manejan Chrome obsoleto.
