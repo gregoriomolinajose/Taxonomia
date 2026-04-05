@@ -69,41 +69,39 @@
                 window._lastSection = null; // Reset de secciones UI
             }
             
-            // Construcción del Modal de la Vista de Formularios (Keyboard-Aware Fix)
-            const modal = document.createElement('ion-modal');
-            if (!global.ModalStackController.push(modal)) {
+            // Construcción del Drawer de la Vista de Formularios (S25.2 Architecture)
+            const modal = document.createElement('div');
+            if (!global.DrawerStackController.push(modal)) {
                 return false; // Abort topological creation (Max Depth Guard triggered)
             }
             
             // Inyectar callback opcional (In-line Creation)
             modal.__onSaveSuccessFallback = injectedCallback;
 
-            // Header Nativo del Modal
-            const header = document.createElement('ion-header');
-            const toolbar = document.createElement('ion-toolbar');
+            // Header Custom del DrawerS25.2
+            const header = document.createElement('div');
+            header.className = 'drawer-header';
             
-            const title = document.createElement('ion-title');
+            const title = document.createElement('h2');
+            title.className = 'drawer-title';
             title.textContent = `Taxonomia: ${window.formatEntityName(entityName)}`;
             
-            const buttons = document.createElement('ion-buttons');
-            buttons.setAttribute('slot', 'end');
-            
             const closeBtn = document.createElement('ion-button');
-            closeBtn.textContent = 'Cerrar';
+            closeBtn.setAttribute('fill', 'clear');
+            closeBtn.setAttribute('color', 'medium');
+            closeBtn.innerHTML = '<ion-icon slot="icon-only" name="close-outline"></ion-icon>';
             closeBtn.addEventListener('click', () => {
                 if(window.AppEventBus) { window.AppEventBus.publish('MODAL::CLOSE_REQUEST'); } 
                 else if(window._closeTopModal) { window._closeTopModal(); }
             });
             
-            buttons.appendChild(closeBtn);
-            toolbar.appendChild(title);
-            toolbar.appendChild(buttons);
-            header.appendChild(toolbar);
+            header.appendChild(title);
+            header.appendChild(closeBtn);
             modal.appendChild(header);
 
-            // Reemplazamos 'container' por el Content Nativo
-            const container = document.createElement('ion-content');
-            container.className = 'ion-padding';
+            // Contenedor interno scrollable del Drawer
+            const container = document.createElement('div');
+            container.className = 'drawer-content ion-padding';
             modal.appendChild(container);
 
             const schemas = global.APP_SCHEMAS;
@@ -397,8 +395,8 @@
             // ------------------------------------------------------------
 
             modal.appendChild(footerContainer);
-            document.body.appendChild(modal);
-            await window.PresentSafe(modal);
+            // El insertion del Drawer ya fue manejado por DrawerStackController.push
+            // de forma síncrona arriba, no requiere document.body.appendChild.
         };
 
         /**
@@ -486,7 +484,7 @@
             if (headerTitle) headerTitle.textContent = "Editar: " + window.formatEntityName(entityName);
 
             if (global.currentFormModal) {
-                const modalTitle = global.currentFormModal.querySelector('ion-title');
+                const modalTitle = global.currentFormModal.querySelector('.drawer-title') || global.currentFormModal.querySelector('ion-title');
                 if (modalTitle) modalTitle.textContent = "Editar: " + window.formatEntityName(entityName);
             }
 
