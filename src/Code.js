@@ -37,10 +37,21 @@ function doGet(e) {
     // Default system font pairing with safe generic fallbacks
     whiteLabel = JSON.stringify({ 
       bodyFont: "Poppins, sans-serif", 
-      displayFont: "Playfair Display, serif" 
+      displayFont: "Playfair Display, serif"
     });
   }
   template.WHITE_LABEL_CONFIG = whiteLabel;
+
+  // Environment Config Load (S23.4) - SRP Separation
+  var envConfigStr = null;
+  try {
+    envConfigStr = PropertiesService.getScriptProperties().getProperty('ENV_CONFIG');
+  } catch(e) {}
+  
+  if (!envConfigStr) {
+    envConfigStr = JSON.stringify({ AuthMode: "SSO", ALLOWED_DOMAINS: ["@coppel.com", "@bancoppel.com"] });
+  }
+  template.ENV_CONFIG = envConfigStr;
 
   // ABAC Resolver: Cálculo de Topología O(n) al vuelo para proveer Contexto Seguro en Frontend
   var email = "";

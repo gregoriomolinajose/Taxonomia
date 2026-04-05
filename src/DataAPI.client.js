@@ -48,15 +48,27 @@
             return new Promise((resolve, reject) => {
                 // Modificador MOCK de Web IDE Local (No GAS Context)
                 if (typeof google === 'undefined' || !google.script || !google.script.run) {
-                    console.log(`[DataAPI] Local enviroment: Routing '${methodName}' to MockEngine.`);
-                    setTimeout(() => {
-                        try {
-                            const mockResponse = DataAPI.MockEngine.resolve(methodName, args);
-                            resolve(mockResponse);
-                        } catch (e) {
-                            reject(new Error(`Mock Engine Error (${methodName}): ${e.message}`));
-                        }
-                    }, 300); // Simulamos red realista
+                    let fallbackEnabled = false;
+                    try {
+                        let envConf = window.ENV_CONFIG;
+                        if (typeof envConf === 'string') envConf = JSON.parse(envConf);
+                        if (envConf && envConf.AuthMode === 'LOCAL') fallbackEnabled = true;
+                    } catch(e) {}
+
+                    if (fallbackEnabled) {
+                        console.warn(`[DataAPI] ALERTA DE SISTEMA: Operando en Fallback Local Mode (Desconectado de Bases de Datos Corporativas). Ruta simluada: '${methodName}'.`);
+                        setTimeout(() => {
+                            try {
+                                const mockResponse = DataAPI.MockEngine.resolve(methodName, args);
+                                resolve(mockResponse);
+                            } catch (e) {
+                                reject(new Error(`Mock Engine Error (${methodName}): ${e.message}`));
+                            }
+                        }, 300); // Simulamos red realista
+                    } else {
+                        // Enforcing Zero-Trust
+                        reject(new Error(`Entorno de seguridad estricto activado (Zero-Trust): Inviable simular respuestas mockeadas fuera de Google Workspace.`));
+                    }
                     return;
                 }
 
