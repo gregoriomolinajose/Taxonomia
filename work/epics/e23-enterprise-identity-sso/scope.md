@@ -18,10 +18,10 @@ Implementar hidratación de identidades persistentes vía el *Admin SDK Director
 - **[x] S23.1**: Admin SDK Connector & Avatar Hydration Cache
 - **[x] S23.2**: Multi-Workspace Configurations Panel UI
 - **[x] S23.3**: Event Dispatcher `auto-debouncing` Integration
-- **S23.4**: Mock Deprecation & Console Warning Cleanups
+- **[x] S23.4**: Mock Deprecation & Console Warning Cleanups
 
 ## Done Criteria
-- [ ] No existen mocks forzando el login; todo pasa genuinamente por el flujo Zero-Trust.
-- [ ] Configurador Multi-Workspace existe y funciona via DataView.
+- [x] No existen mocks forzando el login; todo pasa genuinamente por el flujo Zero-Trust.
+- [x] Configurador Multi-Workspace existe y funciona via DataView.
 - [ ] Los Perfiles cargan visualmente Google Photos del Directory.
 - [ ] Todo input asíncrono tiene su debouncer delegado desde el EventBus transparentemente.
