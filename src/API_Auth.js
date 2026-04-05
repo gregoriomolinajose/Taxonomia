@@ -42,12 +42,46 @@ const API_Auth = {
             authorized: isAuthorized,
             message: isAuthorized ? "Acceso concedido." : "Dominio no autorizado."
         };
+    },
+
+    getWorkspaceAvatar: function(email) {
+        if (!email) return null;
+        try {
+            if (typeof CacheService !== 'undefined') {
+                const cache = CacheService.getScriptCache();
+                const cachedAvatar = cache.get("AVATAR_" + email);
+                if (cachedAvatar) {
+                    return cachedAvatar === 'null' ? null : cachedAvatar;
+                }
+            }
+
+            let avatarUrl = null;
+            if (typeof AdminDirectory !== 'undefined') {
+                const user = AdminDirectory.Users.get(email, {projection: "basic", viewType: "domain_public"});
+                avatarUrl = user && user.thumbnailPhotoUrl ? user.thumbnailPhotoUrl : null;
+            }
+
+            if (typeof CacheService !== 'undefined') {
+                const cache = CacheService.getScriptCache();
+                // Persistimos en caché por 6 horas (21600s), incluso las respuestas vacías
+                cache.put("AVATAR_" + email, avatarUrl || 'null', 21600);
+            }
+
+            return avatarUrl;
+        } catch (e) {
+            console.error("API_Auth: Error hidratando avatar para " + email, e);
+            return null;
+        }
     }
 };
 
-// Función global expuesta para que google.script.run pueda llamarla desde el cliente
+// Funciones globales expuestas para google.script.run
 function getUserIdentity() {
     return API_Auth.getUserIdentity();
+}
+
+function getWorkspaceAvatar(email) {
+    return API_Auth.getWorkspaceAvatar(email);
 }
 
 if (typeof module !== 'undefined') {
