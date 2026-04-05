@@ -5,9 +5,10 @@
      Inyectado via: <?!= include('JS_Core'); ?>
   ═══════════════════════════════════════════════════════ */
 
-  /* ── EventBus (S11.1 Pub/Sub) ────────────────────────── */
+  /* ── EventBus (S11.1/S23.3 Pub/Sub con native Auto-Debounce) ────────────────────────── */
   window.AppEventBus = {
     events: {},
+    _cancellations: {},
     subscribe: function(event, callback) {
       if (!this.events[event]) this.events[event] = [];
       this.events[event].push(callback);
@@ -22,6 +23,18 @@
       this.events[event].forEach(function(callback) {
         try { callback(data); } catch(e) { console.error('AppEventBus Error [' + event + ']:', e); }
       });
+    },
+    publishDebounced: function(event, data, delayMs) {
+      var parsed = parseInt(delayMs, 10);
+      var threshold = (!isNaN(parsed) && parsed >= 0) ? parsed : 300;
+      if (this._cancellations[event]) {
+        clearTimeout(this._cancellations[event]);
+      }
+      var self = this;
+      this._cancellations[event] = setTimeout(function() {
+         self.publish(event, data);
+         delete self._cancellations[event];
+      }, threshold);
     }
   };
 
@@ -304,13 +317,37 @@
             
             const picture = currentUser ? currentUser.picture : null;
             
-            if (picture) {
-                const imgHtm = `<img src="${picture}" style="width:100%; height:100%; border-radius:50%; object-fit:cover;" />`;
+            function bindAvatar(picUrl) {
+                if (!picUrl || picUrl === 'pending') return;
+                const imgHtm = `<img src="${picUrl}" style="width:100%; height:100%; border-radius:50%; object-fit:cover;" />`;
                 if (avatarBtn) { avatarBtn.innerHTML = imgHtm; avatarBtn.style.background = 'transparent'; }
                 if (avatarPop) { avatarPop.innerHTML = imgHtm; avatarPop.style.background = 'transparent'; }
-            } else {
-                if (avatarBtn) { avatarBtn.innerText = initChar; avatarBtn.style.background = ''; }
-                if (avatarPop) { avatarPop.innerText = initChar; avatarPop.style.background = ''; }
+            }
+
+            // Fallback síncrono inicial
+            if (avatarBtn) { avatarBtn.innerText = initChar; avatarBtn.style.background = ''; }
+            if (avatarPop) { avatarPop.innerText = initChar; avatarPop.style.background = ''; }
+            
+            if (picture) {
+                bindAvatar(picture);
+            } else if (userEmail) {
+                if (!window.AvatarCache) window.AvatarCache = new Map();
+                if (window.AvatarCache.has(userEmail)) {
+                    bindAvatar(window.AvatarCache.get(userEmail));
+                } else {
+                    window.AvatarCache.set(userEmail, 'pending');
+                    if (typeof google !== 'undefined' && google.script && google.script.run) {
+                        google.script.run
+                            .withSuccessHandler(function(url) {
+                                window.AvatarCache.set(userEmail, url);
+                                bindAvatar(url);
+                            })
+                            .withFailureHandler(function() {
+                                window.AvatarCache.set(userEmail, null);
+                            })
+                            .getWorkspaceAvatar(userEmail);
+                    }
+                }
             }
             if (namePop) namePop.innerText = userName;
 

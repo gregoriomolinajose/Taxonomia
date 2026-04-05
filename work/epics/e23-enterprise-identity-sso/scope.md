@@ -17,7 +17,7 @@ Implementar hidratación de identidades persistentes vía el *Admin SDK Director
 ## Planned Stories
 - **[x] S23.1**: Admin SDK Connector & Avatar Hydration Cache
 - **[x] S23.2**: Multi-Workspace Configurations Panel UI
-- **S23.3**: Event Dispatcher `auto-debouncing` Integration
+- **[x] S23.3**: Event Dispatcher `auto-debouncing` Integration
 - **S23.4**: Mock Deprecation & Console Warning Cleanups
 
 ## Done Criteria
