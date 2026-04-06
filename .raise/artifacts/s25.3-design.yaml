@@ -1,0 +1,32 @@
+artifact_type: story-design
+version: 1
+skill: rai-story-design
+created: '2026-04-06T11:48:00Z'
+story: 'S25.3'
+epic: 'E25'
+content:
+  summary: 'Restaurar interacciones en el listado de DataGrid conectando el evento de click directo hacia Componente DrawerStack'
+  complexity: simple
+  acceptance_criteria:
+    - id: AC1
+      description: 'El evento click debe inyectar el Side Drawer sin DOM Hijacking'
+      verifiable: true
+    - id: AC2
+      description: 'Uncaught Promise Rejection debe prevenirse en la invocación Async'
+      verifiable: true
+  integration_points:
+    - module: 'UI_DataGrid'
+      change_type: modification
+      files: ['src/UI_DataGrid.client.js']
+    - module: 'FormEngine'
+      change_type: modification
+      files: ['src/FormRenderer_UI.client.js']
+  decisions:
+    - id: D1
+      choice: 'Descartar supuestas dependencias a AppController y conectar a DrawerStack'
+      rationale: 'AppController no es un patrón documentado para esta historia en SRC; esto soluciona el objetivo sin introducir cruces con otras arquitecturas'
+      alternatives_considered: ['Crear un AppController.js y englobar la lógica']
+refs:
+  backlog_item: 'S25.3'
+  epic_scope: 'work/epics/e25-zero-defect-hardening/scope.md'
+metadata: {}

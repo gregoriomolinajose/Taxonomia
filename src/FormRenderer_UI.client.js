@@ -374,8 +374,16 @@
          * Busca un registro en el cache local de DataViewEngine, pre-llena el formulario
          * y activa el modo UPDATE.
          */
+        global._isRenderingForm = false;
+
         global.openEditForm = async function (id) {
-            console.log("[FormEngine] Solicitud de edición recibida para ID:", id);
+            if (global._isRenderingForm) {
+                console.warn("[FormEngine] Race condition prevenida: ignorando click duplicado");
+                return;
+            }
+            global._isRenderingForm = true;
+            try {
+                console.log("[FormEngine] Solicitud de edición recibida para ID:", id);
 
             // 1. Obtener la entidad activa desde el DataViewEngine
             if (!window.DataViewEngine) {
@@ -582,6 +590,12 @@
 
                 noteContainer.appendChild(note);
                 container.appendChild(noteContainer);
+            }
+
+            } catch (err) {
+                console.error("[FormEngine] Error asíncrono abriendo Formulario:", err);
+            } finally {
+                global._isRenderingForm = false;
             }
 
         };
