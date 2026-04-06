@@ -11,9 +11,12 @@ const APP_SCHEMAS = {
     fields: [
       { name: "id_unidad_negocio", type: "hidden", primaryKey: true },
       { name: "estado", type: "hidden", defaultValue: "Activo" },
-      { section: "Datos Generales", name: "nombre", type: "text", label: "Nombre de Unidad", required: true, width: 12 },
-      { section: "Datos Generales", name: "descripcion", type: "textarea", label: "Descripción", required: false, width: 12 },
-      { section: "Datos Generales", name: "responsable", type: "text", label: "Responsable", required: false, width: 12 }
+      { name: "separator_0", type: "divider", label: "Datos Generales", width: 12 },
+      { name: "nombre", type: "text", label: "Nombre de Unidad", required: true, width: 12 },
+      { name: "descripcion", type: "textarea", label: "Descripción", required: false, width: 12 },
+      { name: "responsable", type: "text", label: "Responsable", required: false, width: 12 },
+      { name: "separator_grafo", type: "divider", label: "Topología (Grafo)", width: 12 },
+      { name: "portafolios_vinculados", type: "relation", relationType: "hijo", targetEntity: "Portafolio", graphEntity: "Sys_Graph_Edges", valueField: "id_portafolio", labelField: "nombre", uiBehavior: "subgrid", label: "Portafolios Asociados", isTemporalGraph: true, topologyCardinality: "1:N", width: 12 }
     ]
   },
   Portafolio: {
@@ -36,6 +39,8 @@ const APP_SCHEMAS = {
       { name: "flujos_valor", type: "textarea", label: "Flujos de Valor", required: false, width: 6 },
       { name: "clientes_segmentos", type: "textarea", label: "Clientes y Segmentos", required: false, width: 6 },
       { name: "producto_dominio", type: "text", label: "Producto / Dominio", required: false, width: 12 },
+      { name: "separator_grafo", type: "divider", label: "Pertenencia Topológica (Grafo)", width: 12 },
+      { name: "unidad_negocio_padre", type: "relation", relationType: "padre", targetEntity: "Unidad_Negocio", graphEntity: "Sys_Graph_Edges", valueField: "id_unidad_negocio", labelField: "nombre", uiBehavior: "select", label: "Unidad de Negocio (Padre)", isTemporalGraph: true, topologyCardinality: "1:N", width: 12 },
       { name: "separator_3", type: "divider", label: "Distribución de Capacidades (%)", width: 12 },
       { name: "capacidad_continuidad", type: "number", label: "Continuidad (BAU %)", required: false, width: 4 },
       { name: "capacidad_fundacional", type: "number", label: "Fundacional (%)", required: false, width: 4 },
