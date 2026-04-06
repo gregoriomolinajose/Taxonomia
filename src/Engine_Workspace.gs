@@ -24,8 +24,9 @@ function resolverDirectorioWorkspace(queryEmail) {
       throw new Error("AdminDirectory SDK no está inyectado o habilitado.");
     }
     
-    // Obtenemos el perfil completo desde Workspace
-    var user = AdminDirectory.Users.get(queryEmail, { projection: "full" });
+    // Obtenemos el perfil completo desde Workspace usando la vista pública del dominio
+    // Esto permite que usuarios Non-Admin puedan consultar perfiles de compañeros (Zero-Trust/Least Privilege)
+    var user = AdminDirectory.Users.get(queryEmail, { projection: "full", viewType: "domain_public" });
     if (!user) return null;
     
     // Mapeo defensivo de los Nodos del SDK hacia los Campos del UI (Schema_Engine)
