@@ -165,9 +165,20 @@
                 const meta = (window.ENTITY_META && window.ENTITY_META[this.cfg.entityName]) || { idField: 'id' };
                 const id = row[meta.idField] || '';
                 
-                // Bug fix: Row selection logic (S25.3)
-                tr.addEventListener('click', () => {
-                    if (id) this._invoke(this.cfg.onEdit, id);
+                // Bug fix: Row selection logic (S25.3) con captura proactiva de Unhandled Promises
+                tr.addEventListener('click', (e) => {
+                    // Evitar disparo si el evento vino de un boton (aunque tengan stopPropagation)
+                    if (e.target.closest('button')) return;
+                    if (id) {
+                        try {
+                            const result = this._invoke(this.cfg.onEdit, id);
+                            if (result && typeof result.catch === 'function') {
+                                result.catch(err => console.error('[UI_DataGrid] Async Error on row click:', err));
+                            }
+                        } catch (err) {
+                            console.error('[UI_DataGrid] Sync Error on row click:', err);
+                        }
+                    }
                 });
                 
                 const tdNum = document.createElement('td');
@@ -247,7 +258,6 @@
                 const subtitle = document.createElement('ion-card-subtitle');
                 subtitle.className = 'dv-code-link';
                 subtitle.textContent = idStr;
-                subtitle.addEventListener('click', () => this._invoke(this.cfg.onEdit, idStr));
                 
                 const title = document.createElement('ion-card-title');
                 title.className = 'dv-card-title-clamp';
@@ -313,6 +323,22 @@
                 }
                 
                 cardEl.appendChild(contentEl);
+                
+                // Bug fix: Card entire body selection logic (S25.3)
+                cardEl.addEventListener('click', (e) => {
+                    if (e.target.closest('button')) return;
+                    if (idStr) {
+                        try {
+                            const result = this._invoke(this.cfg.onEdit, idStr);
+                            if (result && typeof result.catch === 'function') {
+                                result.catch(err => console.error('[UI_DataGrid] Async Error on card click:', err));
+                            }
+                        } catch (err) {
+                            console.error('[UI_DataGrid] Sync Error on card click:', err);
+                        }
+                    }
+                });
+
                 colEl.appendChild(cardEl);
                 rowEl.appendChild(colEl);
             });
