@@ -135,6 +135,12 @@ const APP_SCHEMAS = {
   Persona: {
     metadata: { showInMenu: true, showInDashboard: false, order:8, iconName:'person-outline', color:'medium', label:'Personas', titleField:'email', idField:'numero_empleado', fkField:null },
     primaryKey: "numero_empleado",
+    topologyRules: {
+      topologyType: "JERARQUICA_ESTRICTA",
+      preventCycles: true,
+      scd2Enabled: true,
+      siblingCollisionCheck: false
+    },
     fields: [
       { name: "email", type: "email", label: "Correo Corporativo", required: true, width: 12, validators: ["regex:^[a-zA-Z0-9._%+-]+@(coppel\\.com|bancoppel\\.com|kairosds\\.com|nttdata\\.com)$"], triggers_workspace_resolve: true },
       
@@ -163,8 +169,19 @@ const APP_SCHEMAS = {
       { name: "rol_agil", type: "select", label: "Rol Ágil Asignado", options: ["Product Manager", "Product Owner", "Team Coach", "RTE", "Developer", "Tech Lead", "Tester", "N/A"], required: true, width: 6 },
       { name: "porcentaje_asignacion", type: "select", label: "Asignación", options: ["Full Time", "Part Time", "Por Proyecto"], width: 6 },
       { name: "separator_4", type: "divider", label: "Grafo de Liderazgo y Accesos", width: 12 },
-      { name: "lider_directo", type: "lookup", lookupTarget: "Personas", label: "Líder Directo", required: false, width: 12 },
+      { name: "lider_directo", type: "relation", relationType: "padre", targetEntity: "Persona", graphEntity: "Relacion_Liderazgo", valueField: "numero_empleado", labelField: "email", topologyCardinality: "1:N", isTemporalGraph: true, uiBehavior: "subgrid", label: "Líder Directo", required: false, width: 12 },
       { name: "id_rol", type: "select", label: "Rol de Autorización", required: false, width: 12, lookupSource: "getSysRolesOptions" }
+    ]
+  },
+  Relacion_Liderazgo: {
+    metadata: { showInMenu: false, order:9, iconName:'git-network-outline', color:'primary', label:'Grafo de Liderazgo', titleField:'tipo_relacion', idField:'id_relacion', fkField:{ key:'id_nodo_padre', label:'Persona' } },
+    primaryKey: "id_relacion",
+    fields: [
+      { name: "id_relacion", type: "hidden", primaryKey: true },
+      { name: "estado", type: "hidden", defaultValue: "Activo" },
+      { name: "id_nodo_padre", type: "text", required: true, width: 6 },
+      { name: "id_nodo_hijo", type: "text", required: true, width: 6 },
+      { name: "tipo_relacion", type: "text", required: true, width: 6, defaultValue: "LIDER_DIRECTO" }
     ]
   },
   Relacion_Dominios: {
