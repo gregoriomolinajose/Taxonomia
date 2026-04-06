@@ -1,5 +1,5 @@
 const CONFIG = {
-    APP_VERSION: 'v1.0.106 - 2604052345',
+    APP_VERSION: 'v1.0.106 - 2604060930',
     SPREADSHEET_ID_DB: '',
     ALLOWED_DOMAINS: ['@gmail.com', '@bellfy.app', '@coppel.com', '@bancoppel.com'],
     useSheets: true,
