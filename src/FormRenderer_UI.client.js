@@ -432,10 +432,32 @@
 
             // 5. Aplicar Skeleton/Loading local al Drawer mientras hidrata en background
             const formContainer = global.currentFormDrawer ? global.currentFormDrawer.querySelector('.drawer-content') : null;
+            let skeletonOverlay = null;
+            
             if (formContainer) {
-                formContainer.style.opacity = '0.6';
-                formContainer.style.pointerEvents = 'none';
-                formContainer.style.transition = 'opacity 0.2s ease';
+                formContainer.style.position = 'relative';
+                
+                skeletonOverlay = document.createElement('div');
+                skeletonOverlay.style.position = 'absolute';
+                skeletonOverlay.style.top = '0';
+                skeletonOverlay.style.left = '0';
+                skeletonOverlay.style.right = '0';
+                skeletonOverlay.style.bottom = '0';
+                skeletonOverlay.style.backgroundColor = 'var(--ion-background-color, #fff)';
+                skeletonOverlay.style.zIndex = '999';
+                skeletonOverlay.style.padding = '20px';
+                
+                let fakeHtml = '';
+                for(let i=0; i<6; i++) {
+                    fakeHtml += `
+                        <div style="margin-bottom: 24px;">
+                            <ion-skeleton-text animated style="width: 30%; height: 14px; margin-bottom: 8px; border-radius: 4px;"></ion-skeleton-text>
+                            <ion-skeleton-text animated style="width: 100%; height: 44px; border-radius: 8px;"></ion-skeleton-text>
+                        </div>
+                    `;
+                }
+                skeletonOverlay.innerHTML = fakeHtml;
+                formContainer.appendChild(skeletonOverlay);
             }
 
             // Actualizar Título del Drawer
@@ -461,9 +483,10 @@
             } catch (e) {
                 console.warn("[FormEngine] Falló hidratación profunda, usando cache local:", e);
             } finally {
-                if (formContainer) {
-                    formContainer.style.opacity = '1';
-                    formContainer.style.pointerEvents = 'auto';
+                if (skeletonOverlay) {
+                    skeletonOverlay.style.transition = 'opacity 0.25s ease';
+                    skeletonOverlay.style.opacity = '0';
+                    setTimeout(() => skeletonOverlay.remove(), 250);
                 }
             }
 
