@@ -381,14 +381,42 @@ const Engine_DB = {
             fields.forEach(f => {
                 if (f.type === 'relation') {
                     const targetEntity = f.targetEntity;
-                    const fkField = f.foreignKey;
-                    
-                    // Buscar hijos en la tabla destino
                     const config = (typeof CONFIG !== 'undefined') ? CONFIG : { useSheets: true };
-                    const allChildren = _Adapter_Sheets.list(targetEntity, config, 'objects');
                     
-                    // Filtrar por FK
-                    const matches = allChildren.rows.filter(child => child[fkField] == id);
+                    let matches = [];
+                    
+                    if (f.isTemporalGraph && f.graphEntity) {
+                        // Graph Edge Hydration
+                        const edgesContext = _Adapter_Sheets.list(f.graphEntity, config, 'objects');
+                        const activeEdges = (edgesContext && edgesContext.rows ? edgesContext.rows : []).filter(e => e.es_version_actual !== false && e.estado !== 'Eliminado');
+                        
+                        let matchedIds = [];
+                        if (f.relationType === 'padre') {
+                            // Si pido "el padre", busco aristas donde yo soy el hijo.
+                            matchedIds = activeEdges.filter(e => String(e.id_nodo_hijo) === String(id)).map(e => String(e.id_nodo_padre));
+                        } else {
+                            // Si pido "los hijos", busco aristas donde yo soy el padre.
+                            matchedIds = activeEdges.filter(e => String(e.id_nodo_padre) === String(id)).map(e => String(e.id_nodo_hijo));
+                        }
+                        
+                        const targetContext = _Adapter_Sheets.list(targetEntity, config, 'objects');
+                        const targetRows = targetContext && targetContext.rows ? targetContext.rows : [];
+                        
+                        // Infer PK based on targetEntity
+                        const singularTarget = targetEntity.toLowerCase().endsWith('es') ? targetEntity.slice(0, -2) : (targetEntity.toLowerCase().endsWith('s') ? targetEntity.slice(0, -1) : targetEntity.toLowerCase());
+                        const inferredPk = 'id_' + singularTarget;
+                        
+                        matches = targetRows.filter(c => matchedIds.includes(String(c[inferredPk] || c['id_registro'])));
+                    } else {
+                        // Legacy Direct FK Hydration
+                        const fkField = f.foreignKey;
+                        if (fkField) {
+                            const targetContext = _Adapter_Sheets.list(targetEntity, config, 'objects');
+                            const targetRows = targetContext && targetContext.rows ? targetContext.rows : [];
+                            matches = targetRows.filter(child => String(child[fkField]) === String(id));
+                        }
+                    }
+                    
                     mainRecord[f.name] = matches;
                     
                     if (typeof Logger !== 'undefined') {
