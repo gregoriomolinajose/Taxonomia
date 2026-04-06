@@ -40,7 +40,7 @@ const APP_SCHEMAS = {
       { name: "clientes_segmentos", type: "textarea", label: "Clientes y Segmentos", required: false, width: 6 },
       { name: "producto_dominio", type: "text", label: "Producto / Dominio", required: false, width: 12 },
       { name: "separator_grafo", type: "divider", label: "Pertenencia Topológica (Grafo)", width: 12 },
-      { name: "unidad_negocio_padre", type: "relation", relationType: "padre", targetEntity: "Unidad_Negocio", graphEntity: "Sys_Graph_Edges", valueField: "id_unidad_negocio", labelField: "nombre", uiBehavior: "subgrid", label: "Unidad de Negocio (Padre)", isTemporalGraph: true, topologyCardinality: "1:N", width: 12 },
+      { name: "unidad_negocio_padre", type: "relation", relationType: "padre", targetEntity: "Unidad_Negocio", graphEntity: "Sys_Graph_Edges", valueField: "id_unidad_negocio", labelField: "nombre", uiComponent: "select_single", label: "Unidad de Negocio (Padre)", isTemporalGraph: true, topologyCardinality: "1:N", width: 12 },
       { name: "separator_3", type: "divider", label: "Distribución de Capacidades (%)", width: 12 },
       { name: "capacidad_continuidad", type: "number", label: "Continuidad (BAU %)", required: false, width: 4 },
       { name: "capacidad_fundacional", type: "number", label: "Fundacional (%)", required: false, width: 4 },

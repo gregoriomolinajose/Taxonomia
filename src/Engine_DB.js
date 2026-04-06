@@ -194,8 +194,16 @@ const Engine_DB = {
         if (schema) {
             const fields = schema.fields || (typeof schema === 'object' ? Object.keys(schema).map(k => ({ name: k, ...schema[k] })) : []);
             fields.forEach(f => {
-                if (f.type === 'relation' && Array.isArray(payload[f.name])) {
-                    nestedData[f.name] = payload[f.name];
+                if (f.type === 'relation' && payload[f.name] !== undefined) {
+                    let relData = payload[f.name];
+                    
+                    // Normalización de escalares provenientes de uiComponent: 'select_single'
+                    if (!Array.isArray(relData)) {
+                        // Empaquetamos el string crudo en un array de objetos compatible con el motor de grafos
+                        relData = (relData && String(relData).trim() !== "") ? [{ id_registro: String(relData).trim() }] : [];
+                    }
+                    
+                    nestedData[f.name] = relData;
                     delete flatPayload[f.name];
                 }
             });
