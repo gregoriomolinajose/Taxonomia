@@ -85,17 +85,27 @@
                                             }
                                             
                                             if (dto) {
-                                                // Hidratar Formulario (Read-Only)
+                                                // Hidratar Formulario (Read-Only condicional)
                                                 Object.keys(dto).forEach(key => {
                                                     const autoInput = modal.querySelector(`ion-input[name="${key}"]`);
                                                     if (autoInput) {
-                                                        autoInput.value = dto[key];
-                                                        autoInput.setAttribute('readonly', 'true'); // Block imported inputs
-                                                        autoInput.readonly = true;
-                                                        // Visual cue
-                                                        autoInput.style.color = 'var(--ion-color-primary)';
+                                                        const fetchedValue = dto[key];
+                                                        autoInput.value = fetchedValue;
+                                                        
+                                                        // Solo bloquear y colorear si Workspace SI devolvió datos reales.
+                                                        // Si está vacío, permitimos la captura manual.
+                                                        if (fetchedValue && fetchedValue.toString().trim() !== '') {
+                                                            autoInput.setAttribute('readonly', 'true');
+                                                            autoInput.readonly = true;
+                                                            autoInput.style.color = 'var(--ion-color-primary)';
+                                                        } else {
+                                                            autoInput.removeAttribute('readonly');
+                                                            autoInput.readonly = false;
+                                                            autoInput.style.color = '';
+                                                        }
+                                                        
                                                         // Notify custom inputs
-                                                        autoInput.dispatchEvent(new CustomEvent('FormHydrated', { detail: dto[key] }));
+                                                        autoInput.dispatchEvent(new CustomEvent('FormHydrated', { detail: fetchedValue }));
                                                     }
                                                 });
                                             }

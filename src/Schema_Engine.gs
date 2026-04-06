@@ -137,16 +137,17 @@ const APP_SCHEMAS = {
     primaryKey: "numero_empleado",
     fields: [
       { name: "email", type: "email", label: "Correo Corporativo", required: true, width: 12, validators: ["regex:^[a-zA-Z0-9._%+-]+@(coppel\\.com|bancoppel\\.com|kairosds\\.com|nttdata\\.com)$"], triggers_workspace_resolve: true },
-      { name: "numero_empleado", type: "number", primaryKey: true, label: "Número de Empleado", required: true, width: 12, validators: ["regex:^\\d{8}$"] },
       
       { name: "separator_1", type: "divider", label: "Datos Personales y Contacto", width: 12 },
+      { name: "avatar", type: "avatar", label: "Fotografía", width: 12, readonly: true },
       { name: "nombre", type: "text", label: "Nombre(s)", required: true, width: 6 },
       { name: "apellidos", type: "text", label: "Apellidos", required: true, width: 6 },
       { name: "telefono", type: "tel", label: "Teléfono", required: false, width: 6 },
-      { name: "avatar", type: "avatar", label: "Fotografía", width: 6, readonly: true },
+      { name: "numero_empleado", type: "number", primaryKey: true, label: "Número de Empleado", required: true, width: 12, validators: ["regex:^\\d{8}$"] },
+
       
       { name: "separator_2", type: "divider", label: "Datos Contractuales y Logísticos", width: 12 },
-      { name: "organizacion", type: "text", label: "Organización", required: true, width: 12 },
+      { name: "unidad_negocio", type: "lookup", lookupTarget: "Unidad_Negocio", label: "Unidad de Negocio", required: true, width: 12 },
       { name: "departamento", type: "text", label: "Departamento", required: true, width: 6 },
       { name: "centro_costo", type: "text", label: "Centro de Costos", required: true, width: 6 },
       { name: "cargo", type: "text", label: "Cargo Oficial", required: true, width: 6 },

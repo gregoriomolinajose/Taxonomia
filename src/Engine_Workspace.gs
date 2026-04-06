@@ -67,7 +67,6 @@ function resolverDirectorioWorkspace(queryEmail) {
       apellidos: familyName,
       telefono: phone,
       avatar: avatar,
-      organizacion: orgName,
       departamento: dept,
       centro_costo: costCenter,
       cargo: title,
