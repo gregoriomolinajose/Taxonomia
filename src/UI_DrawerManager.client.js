@@ -52,6 +52,7 @@
                     window.AppEventBus.publish('DRAWER::DEPTH_CHANGED', stack.length + 1);
                 }
                 document.body.classList.toggle('drawer-max-depth', (stack.length + 1) >= MAX_DEPTH);
+                document.body.classList.toggle('drawer-open', true);
                 
                 const backdrop = document.getElementById('drawer-backdrop');
                 if(backdrop) backdrop.classList.add('active');
@@ -103,6 +104,7 @@
                         window.AppEventBus.publish('DRAWER::DEPTH_CHANGED', stack.length);
                     }
                     document.body.classList.toggle('drawer-max-depth', stack.length >= MAX_DEPTH);
+                    document.body.classList.toggle('drawer-open', stack.length > 0);
                 }
             },
             clearAllSync: function() {
@@ -120,6 +122,7 @@
                 root.classList.remove('active');
                 if (window.AppEventBus) window.AppEventBus.publish('DRAWER::DEPTH_CHANGED', 0);
                 document.body.classList.toggle('drawer-max-depth', false);
+                document.body.classList.toggle('drawer-open', false);
             },
             getDepth: () => stack.length,
             clearAll: function() {

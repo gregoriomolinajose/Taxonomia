@@ -14,9 +14,9 @@ ion-split-pane{--side-width:calc(240px + calc(var(--spacing-4) * 2))!important;-
     gap: var(--spacing-3, 12px);
 }
 
-/* S25.3: Proactive disabling of deep nesting */
-body.drawer-max-depth [data-action="form:new"],
-body.drawer-max-depth .dv-btn-primary:not([type="submit"]),
+/* S25.3: Proactive disabling of deep nesting and multi-drawer clashes */
+body.drawer-open .grid-header ion-button,
+body.drawer-open [data-action="form:new"],
 body.drawer-max-depth ion-button[onclick*="openForm"] {
     opacity: 0.5 !important;
     pointer-events: none !important;
@@ -32,6 +32,7 @@ body.drawer-max-depth ion-button[onclick*="openForm"] {
   z-index: 15000;
   pointer-events: none;
   display: flex;
+  flex-direction: row !important;
   justify-content: flex-end;
 }
 #drawer-root-container.active {
