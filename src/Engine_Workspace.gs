@@ -15,6 +15,11 @@
  */
 function resolverDirectorioWorkspace(queryEmail) {
   try {
+    // Zero-Touch CI/CD Environment flag guard
+    if (typeof CONFIG !== 'undefined' && CONFIG.WORKSPACE_INTEGRATION === false) {
+      Logger.log("Workspace API Bypassed: WORKSPACE_INTEGRATION is disabled in ENV_CONFIG");
+      return { __status: "DISABLED" };
+    }
     if (!AdminDirectory || !AdminDirectory.Users) {
       throw new Error("AdminDirectory SDK no está inyectado o habilitado.");
     }

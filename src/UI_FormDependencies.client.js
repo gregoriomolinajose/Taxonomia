@@ -56,16 +56,29 @@
                             // --- NUEVO: C) Smart API Lookup (Workspace Resolve) ---
                             if (schemaField.triggers_workspace_resolve && formStateObj[fieldName] && eventType === 'ionChange') {
                                 if (window.google && window.google.script && window.google.script.run) {
-                                    // Bloquear modal temporalmente (UX)
+                                    // Bloquear modal temporalmente con retraso p/evitar flash (UX)
                                     const loadingUI = document.createElement('ion-loading');
                                     loadingUI.message = 'Buscando en Directorio Corporativo...';
                                     loadingUI.duration = 5000;
                                     document.body.appendChild(loadingUI);
-                                    await loadingUI.present();
+                                    
+                                    let loadingPresented = false;
+                                    const loadingTimeout = setTimeout(async () => {
+                                        loadingPresented = true;
+                                        await loadingUI.present();
+                                    }, 250);
 
                                     window.google.script.run
                                         .withSuccessHandler((dto) => {
-                                            loadingUI.dismiss();
+                                            clearTimeout(loadingTimeout);
+                                            if (loadingPresented) loadingUI.dismiss();
+                                            else document.body.removeChild(loadingUI);
+                                            
+                                            if (dto && dto.__status === "DISABLED") {
+                                                console.log("[FormEngine] Workspace Lookup is disabled via ENV_CONFIG");
+                                                return; // Permitir al usuario avanzar manualmente
+                                            }
+                                            
                                             if (dto) {
                                                 // Hidratar Formulario (Read-Only)
                                                 Object.keys(dto).forEach(key => {
@@ -81,7 +94,9 @@
                                             }
                                         })
                                         .withFailureHandler((err) => {
-                                            loadingUI.dismiss();
+                                            clearTimeout(loadingTimeout);
+                                            if (loadingPresented) loadingUI.dismiss();
+                                            else document.body.removeChild(loadingUI);
                                             console.warn("Error en Workspace Resolve:", err);
                                         })
                                         .resolverDirectorioWorkspace(formStateObj[fieldName]);
