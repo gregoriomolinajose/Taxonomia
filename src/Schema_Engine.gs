@@ -133,13 +133,25 @@ const APP_SCHEMAS = {
     ]
   },
   Persona: {
-    metadata: { showInMenu: true, showInDashboard: false, order:8, iconName:'person-outline', color:'medium', label:'Personas', titleField:'nombre_completo', idField:'id_persona', fkField:null },
-    primaryKey: "id_persona",
+    metadata: { showInMenu: true, showInDashboard: false, order:8, iconName:'person-outline', color:'medium', label:'Personas', titleField:'nombre_completo', idField:'numero_empleado', fkField:null },
+    primaryKey: "numero_empleado",
     fields: [
-      { name: "id_persona", type: "text", primaryKey: true, readonly: true, label: "ID Persona", width: 6 },
-      { name: "nombre_completo", type: "text", label: "Nombre Completo", required: true, width: 6 },
-      { name: "correo", type: "text", label: "Correo Corporativo", required: true, width: 6 },
-      { name: "id_rol", type: "select", label: "Rol de Autorización (ABAC)", required: false, width: 6, lookupSource: "getSysRolesOptions" }
+      { section: "Identificadores", name: "numero_empleado", type: "number", primaryKey: true, readonly: true, label: "Número de Empleado", required: true, width: 6, validators: ["regex:^\\d{8}$"] },
+      { section: "Datos Personales y Contacto", name: "email", type: "email", label: "Correo Corporativo", required: true, width: 6, validators: ["regex:^[a-zA-Z0-9._%+-]+@(coppel\\.com|bancoppel\\.com|kairosds\\.com|nttdata\\.com)$"], triggers_workspace_resolve: true },
+      { section: "Datos Personales y Contacto", name: "nombre_completo", type: "text", label: "Nombre Completo", required: true, width: 6 },
+      { section: "Datos Personales y Contacto", name: "telefono", type: "tel", label: "Teléfono", required: false, width: 6 },
+      
+      { section: "Datos Contractuales y Logísticos", name: "esquema", type: "select", label: "Esquema Laboral", options: ["Interno", "Externo"], required: true, width: 6 },
+      { section: "Datos Contractuales y Logísticos", name: "empresa_proveedora", type: "text", label: "Empresa Proveedora", required: true, width: 6, dependencies: {"showIf": {"field": "esquema", "value": "Externo"}} },
+      { section: "Datos Contractuales y Logísticos", name: "modalidad", type: "select", label: "Modalidad", options: ["Presencial", "Virtual", "Híbrido"], required: true, width: 6 },
+      { section: "Datos Contractuales y Logísticos", name: "ubicacion", type: "text", label: "Ubicación Geográfica", required: false, width: 6 },
+      
+      { section: "Organización y Agilidad", name: "cargo", type: "text", label: "Cargo Oficial", required: true, width: 6 },
+      { section: "Organización y Agilidad", name: "rol_agil", type: "select", label: "Rol Ágil Asignado", options: ["Product Manager", "Product Owner", "Team Coach", "RTE", "Developer", "Tech Lead", "Tester", "N/A"], required: true, width: 6 },
+      { section: "Organización y Agilidad", name: "porcentaje_asignacion", type: "select", label: "Asignación", options: ["Full Time", "Part Time", "Por Proyecto"], width: 6 },
+      
+      { section: "Grafo de Liderazgo", name: "lider_directo", type: "lookup", lookupTarget: "Personas", label: "Líder Directo", required: false, width: 12 },
+      { section: "Roles (ABAC)", name: "id_rol", type: "select", label: "Rol de Autorización", required: false, width: 12, lookupSource: "getSysRolesOptions" }
     ]
   },
   Relacion_Dominios: {

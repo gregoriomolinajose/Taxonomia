@@ -29,6 +29,13 @@
                     inputEl.readonly = true;
                 }
                 
+                if (field.validators) {
+                    inputEl.setAttribute('data-validators', JSON.stringify(field.validators));
+                }
+                if (field.triggers_workspace_resolve) {
+                    inputEl.setAttribute('data-workspace-trigger', 'true');
+                }
+                
                 if (field.helpText && field.type !== 'select') {
                     inputEl.setAttribute('helper-text', field.helpText);
                 }

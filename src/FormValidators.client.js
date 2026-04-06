@@ -21,7 +21,34 @@
             let isValid = true;
 
             inputs.forEach(input => {
-                if (input.getAttribute('required') === 'true' && (input.value === undefined || input.value === null || input.value === '')) {
+                let fieldIsValid = true;
+                const reqAttr = input.getAttribute('required');
+                const valAttr = input.getAttribute('data-validators');
+                
+                // 1. Check Required
+                if (reqAttr === 'true' && (input.value === undefined || input.value === null || input.value === '')) {
+                    fieldIsValid = false;
+                }
+                
+                // 2. Check Regex Validators if Present and field is not empty
+                if (fieldIsValid && valAttr && input.value) {
+                    try {
+                        const validators = JSON.parse(valAttr);
+                        validators.forEach(rule => {
+                            if (rule.startsWith('regex:')) {
+                                const pattern = rule.split('regex:')[1];
+                                const re = new RegExp(pattern);
+                                if (!re.test(input.value)) {
+                                    fieldIsValid = false;
+                                }
+                            }
+                        });
+                    } catch (e) {
+                        console.warn('[Validators] Error parseando data-validators: ', e);
+                    }
+                }
+                
+                if (!fieldIsValid) {
                     isValid = false;
                     input.classList.add('ion-touched', 'ion-invalid');
                 } else {

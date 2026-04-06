@@ -23,20 +23,75 @@
                         if (!fieldName || !fields) return;
 
                         const schemaField = fields.find(f => f.name === fieldName);
-                        if (schemaField && Array.isArray(schemaField.triggers_refresh_of)) {
-                            
-                            clearTimeout(debounceTimer);
-                            
-                            debounceTimer = setTimeout(async () => {
-                                // 1. Recopilar formStateObj JIT Puro
-                                const currentInputs = modal.querySelectorAll('ion-input, ion-select, ion-textarea, input[type="hidden"]');
-                                const formStateObj = Array.from(currentInputs).reduce((acc, inp) => {
-                                    acc[inp.name] = inp.value;
-                                    return acc;
-                                }, {});
-                                const formCurrentStateArr = Object.keys(formStateObj).map(k => ({name: k, value: formStateObj[k]}));
+                        
+                        clearTimeout(debounceTimer);
+                        
+                        debounceTimer = setTimeout(async () => {
+                            // 1. Recopilar formStateObj JIT Puro
+                            const currentInputs = modal.querySelectorAll('ion-input, ion-select, ion-textarea, input[type="hidden"]');
+                            const formStateObj = Array.from(currentInputs).reduce((acc, inp) => {
+                                acc[inp.name] = inp.value;
+                                return acc;
+                            }, {});
+                            const formCurrentStateArr = Object.keys(formStateObj).map(k => ({name: k, value: formStateObj[k]}));
 
-                                // 2. Procesar cada nodo objetivo (dependiente)
+                            // --- NUEVO: Evaluación Global de Visibilidad Condicional (showIf) ---
+                            // Evaluamos todos los campos del form que tengan dependencies.showIf
+                            fields.forEach(f => {
+                                if (f.dependencies && f.dependencies.showIf) {
+                                    const conditionInfo = f.dependencies.showIf;
+                                    const colWrapper = modal.querySelector(`[name="${f.name}"]`)?.closest('ion-col');
+                                    if (colWrapper) {
+                                        if (formStateObj[conditionInfo.field] === conditionInfo.value) {
+                                            colWrapper.style.display = ''; // Show
+                                        } else {
+                                            colWrapper.style.display = 'none'; // Hide
+                                        }
+                                    }
+                                }
+                            });
+
+                            if (!schemaField) return;
+
+                            // --- NUEVO: C) Smart API Lookup (Workspace Resolve) ---
+                            if (schemaField.triggers_workspace_resolve && formStateObj[fieldName] && eventType === 'ionChange') {
+                                if (window.google && window.google.script && window.google.script.run) {
+                                    // Bloquear modal temporalmente (UX)
+                                    const loadingUI = document.createElement('ion-loading');
+                                    loadingUI.message = 'Buscando en Directorio Corporativo...';
+                                    loadingUI.duration = 5000;
+                                    document.body.appendChild(loadingUI);
+                                    await loadingUI.present();
+
+                                    window.google.script.run
+                                        .withSuccessHandler((dto) => {
+                                            loadingUI.dismiss();
+                                            if (dto) {
+                                                // Hidratar Formulario (Read-Only)
+                                                Object.keys(dto).forEach(key => {
+                                                    const autoInput = modal.querySelector(`ion-input[name="${key}"]`);
+                                                    if (autoInput) {
+                                                        autoInput.value = dto[key];
+                                                        autoInput.setAttribute('readonly', 'true'); // Block imported inputs
+                                                        autoInput.readonly = true;
+                                                        // Visual cue
+                                                        autoInput.style.color = 'var(--ion-color-primary)';
+                                                    }
+                                                });
+                                            }
+                                        })
+                                        .withFailureHandler((err) => {
+                                            loadingUI.dismiss();
+                                            console.warn("Error en Workspace Resolve:", err);
+                                        })
+                                        .resolverDirectorioWorkspace(formStateObj[fieldName]);
+                                } else {
+                                    console.log("[Dev Mode] Simulating Workspace Resolve for:", formStateObj[fieldName]);
+                                }
+                            }
+
+                            // 2. Procesar cada nodo objetivo (dependiente)
+                            if (Array.isArray(schemaField.triggers_refresh_of)) {
                                 for (const targetName of schemaField.triggers_refresh_of) {
                                     const targetSchema = fields.find(f => f.name === targetName);
                                     if (!targetSchema) continue;
@@ -77,8 +132,8 @@
                                         }
                                     }
                                 }
-                            }, 300); // 300ms de espera asíncrona
-                        }
+                            }
+                        }, 300); // 300ms de espera asíncrona
                     });
                 });
             }
