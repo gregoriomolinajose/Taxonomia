@@ -27,9 +27,26 @@ const APP_SCHEMAS = {
     fields: [
       { name: "id_portafolio", type: "hidden", primaryKey: true },
       { name: "estado", type: "hidden", defaultValue: "Activo" },
-      { section: "Datos Generales", name: "nombre", type: "text", label: "Nombre de Portafolio", required: true, width: 12 },
-      { section: "Datos Generales", name: "director_id", type: "text", label: "Director", required: false, width: 6 },
-      { section: "Datos Generales", name: "vp_id", type: "text", label: "VP", required: false, width: 6 }
+      { name: "separator_1", type: "divider", label: "Definición Estratégica", width: 12 },
+      { name: "nombre", type: "text", label: "Nombre de Portafolio", required: true, width: 12 },
+      { name: "proposito", type: "textarea", label: "Propósito", required: false, width: 12 },
+      { name: "objetivos_negocio", type: "textarea", label: "Objetivos de Negocio", required: false, width: 6 },
+      { name: "kpis_metricas", type: "textarea", label: "KPIs / Métricas", required: false, width: 6 },
+      { name: "separator_2", type: "divider", label: "Propuesta de Valor", width: 12 },
+      { name: "flujos_valor", type: "textarea", label: "Flujos de Valor", required: false, width: 6 },
+      { name: "clientes_segmentos", type: "textarea", label: "Clientes y Segmentos", required: false, width: 6 },
+      { name: "producto_dominio", type: "text", label: "Producto / Dominio", required: false, width: 12 },
+      { name: "separator_3", type: "divider", label: "Distribución de Capacidades (%)", width: 12 },
+      { name: "capacidad_continuidad", type: "number", label: "Continuidad (BAU %)", required: false, width: 4 },
+      { name: "capacidad_fundacional", type: "number", label: "Fundacional (%)", required: false, width: 4 },
+      { name: "capacidad_transformacion", type: "number", label: "Transformación (%)", required: false, width: 4 },
+      { name: "separator_4", type: "divider", label: "Presupuesto", width: 12 },
+      { name: "presupuesto_bau", type: "number", label: "Pto. BAU", required: false, width: 4 },
+      { name: "presupuesto_transformacion", type: "number", label: "Pto. Transformación", required: false, width: 4 },
+      { name: "presupuesto_estrategico", type: "number", label: "Pto. Estratégico", required: false, width: 4 },
+      { name: "separator_5", type: "divider", label: "Gobernanza y Actores", width: 12 },
+      { name: "gobierno_liderazgo", type: "textarea", label: "Gobierno y Liderazgo", required: false, width: 6 },
+      { name: "stakeholders", type: "textarea", label: "Stakeholders", required: false, width: 6 }
     ]
   },
   Dominio: {
