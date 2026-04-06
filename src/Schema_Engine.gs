@@ -57,8 +57,8 @@ const APP_SCHEMAS = {
       { section: "Datos Generales", name: "nombre_ingles", type: "text", label: "Nombre (EN)", required: false, width: 6 },
       { section: "Datos Generales", name: "abreviacion", type: "text", label: "Abreviación", required: false, width: 6 },
       { section: "Datos Generales", name: "definicion", type: "textarea", label: "Definición", required: true, width: 12, showInList: false },
-      { section: "Topología (Grafo)", width: 12, name: "relaciones_padre", type: "relation", relationType: "padre", targetEntity: "Dominio", graphEntity: "Relacion_Dominios", valueField: "id_dominio", labelField: "n0_es", uiBehavior: "subgrid", label: "Dominio Padre (1:1)", isTemporalGraph: true, topologyCardinality: "1:N" },
-      { section: "Topología (Grafo)", width: 12,name: "relaciones_hijo", type: "relation", relationType: "hijo", targetEntity: "Dominio", graphEntity: "Relacion_Dominios", valueField: "id_dominio", labelField: "n0_es", uiBehavior: "subgrid", label: "Dominios Subordinados (1:N)", isTemporalGraph: true, topologyCardinality: "1:N" }
+      { section: "Topología (Grafo)", width: 12, name: "relaciones_padre", type: "relation", relationType: "padre", targetEntity: "Dominio", graphEntity: "Sys_Graph_Edges", valueField: "id_dominio", labelField: "n0_es", uiBehavior: "subgrid", label: "Dominio Padre (1:1)", isTemporalGraph: true, topologyCardinality: "1:N" },
+      { section: "Topología (Grafo)", width: 12,name: "relaciones_hijo", type: "relation", relationType: "hijo", targetEntity: "Dominio", graphEntity: "Sys_Graph_Edges", valueField: "id_dominio", labelField: "n0_es", uiBehavior: "subgrid", label: "Dominios Subordinados (1:N)", isTemporalGraph: true, topologyCardinality: "1:N" }
     ]
   },
   Grupo_Productos: {
@@ -169,26 +169,16 @@ const APP_SCHEMAS = {
       { name: "rol_agil", type: "select", label: "Rol Ágil Asignado", options: ["Product Manager", "Product Owner", "Team Coach", "RTE", "Developer", "Tech Lead", "Tester", "N/A"], required: true, width: 6 },
       { name: "porcentaje_asignacion", type: "select", label: "Asignación", options: ["Full Time", "Part Time", "Por Proyecto"], width: 6 },
       { name: "separator_4", type: "divider", label: "Grafo de Liderazgo y Accesos", width: 12 },
-      { name: "lider_directo", type: "relation", relationType: "padre", targetEntity: "Persona", graphEntity: "Relacion_Liderazgo", valueField: "numero_empleado", labelField: "email", topologyCardinality: "1:N", isTemporalGraph: true, uiBehavior: "subgrid", label: "Líder Directo", required: false, width: 12 },
+      { name: "lider_directo", type: "relation", relationType: "padre", targetEntity: "Persona", graphEntity: "Sys_Graph_Edges", valueField: "numero_empleado", labelField: "email", topologyCardinality: "1:N", isTemporalGraph: true, uiBehavior: "subgrid", label: "Líder Directo", required: false, width: 12 },
       { name: "id_rol", type: "select", label: "Rol de Autorización", required: false, width: 12, lookupSource: "getSysRolesOptions" }
     ]
   },
-  Relacion_Liderazgo: {
-    metadata: { showInMenu: false, order:9, iconName:'git-network-outline', color:'primary', label:'Grafo de Liderazgo', titleField:'tipo_relacion', idField:'id_relacion', fkField:{ key:'id_nodo_padre', label:'Persona' } },
+  Sys_Graph_Edges: {
+    metadata: { showInMenu: false, order:9, iconName:'git-network-outline', color:'primary', label:'Grafo Universal Temporal', titleField:'tipo_relacion', idField:'id_relacion', fkField:{ key:'id_nodo_padre', label:'Nodo Padre' } },
     primaryKey: "id_relacion",
     fields: [
       { name: "id_relacion", type: "hidden", primaryKey: true },
       { name: "estado", type: "hidden", defaultValue: "Activo" },
-      { name: "id_nodo_padre", type: "text", required: true, width: 6 },
-      { name: "id_nodo_hijo", type: "text", required: true, width: 6 },
-      { name: "tipo_relacion", type: "text", required: true, width: 6, defaultValue: "LIDER_DIRECTO" }
-    ]
-  },
-  Relacion_Dominios: {
-    metadata: { showInMenu: false, order:9, iconName:'git-network-outline', color:'primary', label:'Conexiones Topológicas', titleField:'tipo_relacion', idField:'id_relacion', fkField:{ key:'id_nodo_padre', label:'Dominio' } },
-    primaryKey: "id_relacion",
-    fields: [
-      { name: "id_relacion", type: "hidden", primaryKey: true },
       { name: "id_nodo_padre", type: "text", required: true, width: 6 },
       { name: "id_nodo_hijo", type: "text", required: true, width: 6 },
       { name: "tipo_relacion", type: "text", required: true, width: 6 }
@@ -242,7 +232,7 @@ const APP_SCHEMAS = {
     fields: [
       { name: "id_permiso", type: "text", primaryKey: true, readonly: true, label: "ID Permiso", width: 12 },
       { name: "id_rol", type: "select", label: "Rol Organizacional", required: true, width: 6, lookupSource: "getSysRolesOptions" },
-      { name: "schema_destino", type: "select", label: "Entidad del Sistema", required: true, width: 6, options: ["Portafolio", "Dominio", "Grupo_Productos", "Producto", "Capacidad", "Equipo", "Persona", "Relacion_Dominios", "Sys_Roles", "Sys_Permissions", "Config_Typography", "Config_Workspace"] },
+      { name: "schema_destino", type: "select", label: "Entidad del Sistema", required: true, width: 6, options: ["Portafolio", "Dominio", "Grupo_Productos", "Producto", "Capacidad", "Unidad_Negocio", "Equipo", "Persona", "Sys_Graph_Edges", "Sys_Roles", "Sys_Permissions", "Config_Typography", "Config_Workspace"] },
       { name: "nivel_acceso", type: "select", label: "Nivel de Acceso", required: true, width: 12, options: ["ALL (Admin Total)", "OWNER_ONLY (Solo propios)", "MEMBER_ONLY (Siendo Miembro)", "READ_ONLY (Solo lectura)", "NONE (Denegado)"] }
     ]
   },
