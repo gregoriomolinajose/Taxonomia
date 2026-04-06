@@ -36,7 +36,7 @@ const Engine_ABAC = {
     // Se extrae desde la caché efímera
     const personas = this._getCachedData('Persona');
     const _email = email.trim().toLowerCase();
-    const persona = personas.find(p => (p.correo || "").toLowerCase() === _email);
+    const persona = personas.find(p => (p.email || p.correo || "").toLowerCase() === _email);
     
     if (!persona) {
       // Usuario no registrado en el grafo. Devuelve permisos nulos.
@@ -152,7 +152,7 @@ const Engine_ABAC = {
     
     const personas = this._getCachedData('Persona');
     const _email = email.trim().toLowerCase();
-    const persona = personas.find(p => (p.correo || "").toLowerCase() === _email);
+    const persona = personas.find(p => (p.email || p.correo || "").toLowerCase() === _email);
     
     // Usuario desconocido -> Fail Close estricto (Zero Match)
     if (!persona) {
