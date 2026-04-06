@@ -31,11 +31,15 @@ function resolverDirectorioWorkspace(queryEmail) {
     
     // Mapeo defensivo de los Nodos del SDK hacia los Campos del UI (Schema_Engine)
     // Extraemos de arrays debido a la estructura de Google (phones[], organizations[], etc)
-    var fullName = user.name ? user.name.fullName : "";
+    var givenName = user.name ? user.name.givenName : "";
+    var familyName = user.name ? user.name.familyName : "";
     var phone = (user.phones && user.phones.length > 0) ? user.phones[0].value : "";
     var title = (user.organizations && user.organizations.length > 0) ? user.organizations[0].title : "";
     var dept = (user.organizations && user.organizations.length > 0) ? user.organizations[0].department : "";
+    var orgName = (user.organizations && user.organizations.length > 0) ? user.organizations[0].name : "";
+    var costCenter = (user.organizations && user.organizations.length > 0) ? user.organizations[0].costCenter : "";
     var location = (user.locations && user.locations.length > 0) ? user.locations[0].deskCode : "";
+    var avatar = user.thumbnailPhotoUrl || "";
     
     // Extracción de ID de Empleado y Líder
     var numEmpleado = "";
@@ -59,9 +63,13 @@ function resolverDirectorioWorkspace(queryEmail) {
     }
     
     var dto = {
-      nombre_completo: fullName,
+      nombre: givenName,
+      apellidos: familyName,
       telefono: phone,
+      avatar: avatar,
+      organizacion: orgName,
       departamento: dept,
+      centro_costo: costCenter,
       cargo: title,
       ubicacion: location,
       numero_empleado: numEmpleado,

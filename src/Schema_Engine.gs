@@ -133,28 +133,34 @@ const APP_SCHEMAS = {
     ]
   },
   Persona: {
-    metadata: { showInMenu: true, showInDashboard: false, order:8, iconName:'person-outline', color:'medium', label:'Personas', titleField:'nombre_completo', idField:'numero_empleado', fkField:null },
+    metadata: { showInMenu: true, showInDashboard: false, order:8, iconName:'person-outline', color:'medium', label:'Personas', titleField:'email', idField:'numero_empleado', fkField:null },
     primaryKey: "numero_empleado",
     fields: [
       { name: "email", type: "email", label: "Correo Corporativo", required: true, width: 12, validators: ["regex:^[a-zA-Z0-9._%+-]+@(coppel\\.com|bancoppel\\.com|kairosds\\.com|nttdata\\.com)$"], triggers_workspace_resolve: true },
       { name: "numero_empleado", type: "number", primaryKey: true, label: "Número de Empleado", required: true, width: 12, validators: ["regex:^\\d{8}$"] },
       
       { name: "separator_1", type: "divider", label: "Datos Personales y Contacto", width: 12 },
-      { name: "nombre_completo", type: "text", label: "Nombre Completo", required: true, width: 6 },
+      { name: "nombre", type: "text", label: "Nombre(s)", required: true, width: 6 },
+      { name: "apellidos", type: "text", label: "Apellidos", required: true, width: 6 },
       { name: "telefono", type: "tel", label: "Teléfono", required: false, width: 6 },
+      { name: "avatar", type: "avatar", label: "Fotografía", width: 6, readonly: true },
       
       { name: "separator_2", type: "divider", label: "Datos Contractuales y Logísticos", width: 12 },
-      { name: "esquema", type: "select", label: "Esquema Laboral", options: ["Interno", "Externo"], required: true, width: 6 },
-      { name: "empresa_proveedora", type: "text", label: "Empresa Proveedora", required: true, width: 6, dependencies: {"showIf": {"field": "esquema", "value": "Externo"}} },
+      { name: "organizacion", type: "text", label: "Organización", required: true, width: 12 },
+      { name: "departamento", type: "text", label: "Departamento", required: true, width: 6 },
+      { name: "centro_costo", type: "text", label: "Centro de Costos", required: true, width: 6 },
+      { name: "cargo", type: "text", label: "Cargo Oficial", required: true, width: 6 },
+      { name: "proveedor", type: "text", label: "Proveedor", required: true, width: 6, dependencies: {"showIf": {"field": "esquema", "value": "Externo"}} },
       { name: "modalidad", type: "select", label: "Modalidad", options: ["Presencial", "Virtual", "Híbrido"], required: true, width: 6 },
       { name: "ubicacion", type: "text", label: "Ubicación Geográfica", required: false, width: 6 },
+      { name: "herradura", type: "text", label: "Herradura", required: true, width: 6 },
+      { name: "esquema", type: "select", label: "Esquema Laboral", options: ["Interno", "Externo"], required: true, width: 6 },
+      
       
       { name: "separator_3", type: "divider", label: "Organización y Agilidad", width: 12 },
-      { name: "departamento", type: "text", label: "Departamento (Org)", required: true, width: 12 },
-      { name: "cargo", type: "text", label: "Cargo Oficial", required: true, width: 6 },
+      { name: "equipo", type: "lookup", lookupTarget: "Equipas", label: "Equipo Asignado", required: false, width: 12 },
       { name: "rol_agil", type: "select", label: "Rol Ágil Asignado", options: ["Product Manager", "Product Owner", "Team Coach", "RTE", "Developer", "Tech Lead", "Tester", "N/A"], required: true, width: 6 },
       { name: "porcentaje_asignacion", type: "select", label: "Asignación", options: ["Full Time", "Part Time", "Por Proyecto"], width: 6 },
-      
       { name: "separator_4", type: "divider", label: "Grafo de Liderazgo y Accesos", width: 12 },
       { name: "lider_directo", type: "lookup", lookupTarget: "Personas", label: "Líder Directo", required: false, width: 12 },
       { name: "id_rol", type: "select", label: "Rol de Autorización", required: false, width: 12, lookupSource: "getSysRolesOptions" }

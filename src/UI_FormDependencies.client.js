@@ -94,6 +94,8 @@
                                                         autoInput.readonly = true;
                                                         // Visual cue
                                                         autoInput.style.color = 'var(--ion-color-primary)';
+                                                        // Notify custom inputs
+                                                        autoInput.dispatchEvent(new CustomEvent('FormHydrated', { detail: dto[key] }));
                                                     }
                                                 });
                                             }

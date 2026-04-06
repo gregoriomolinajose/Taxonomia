@@ -280,6 +280,47 @@
             this.BuilderRegistry[type] = builderFn;
         };
 
+        global.UI_Factory.buildAvatar = function(field) {
+            const container = document.createElement('div');
+            container.style.display = 'flex';
+            container.style.flexDirection = 'column';
+            container.style.alignItems = 'center';
+            container.style.justifyContent = 'center';
+            container.style.padding = 'var(--spacing-2)';
+            container.style.width = '100%';
+
+            const avatarWrapper = document.createElement('ion-avatar');
+            avatarWrapper.style.width = '72px';
+            avatarWrapper.style.height = '72px';
+            avatarWrapper.style.margin = '0 auto var(--spacing-2) auto';
+            avatarWrapper.style.border = '2px solid var(--ion-color-step-300)';
+
+            const img = document.createElement('img');
+            img.src = field.defaultValue || "https://ionicframework.com/docs/img/demos/avatar.svg";
+            avatarWrapper.appendChild(img);
+
+            const labelEl = document.createElement('ion-label');
+            labelEl.textContent = field.label;
+            labelEl.style.fontSize = 'var(--sys-font-small)';
+            labelEl.style.color = 'var(--ion-color-medium)';
+
+            const inputEl = document.createElement('ion-input');
+            inputEl.setAttribute('name', field.name);
+            inputEl.style.display = 'none';
+
+            inputEl.addEventListener('FormHydrated', (e) => {
+                if (e.detail) {
+                    img.src = e.detail;
+                }
+            });
+
+            container.appendChild(avatarWrapper);
+            container.appendChild(labelEl);
+            container.appendChild(inputEl);
+            
+            return container;
+        };
+
         // --- Core Builders Automatic Registration ---
         global.UI_Factory.registerBuilder('text', (f, e) => global.UI_Factory.buildInput(f, e));
         global.UI_Factory.registerBuilder('number', (f, e) => global.UI_Factory.buildInput(f, e));
@@ -287,6 +328,7 @@
         global.UI_Factory.registerBuilder('textarea', (f) => global.UI_Factory.buildTextarea(f));
         global.UI_Factory.registerBuilder('select', (f) => global.UI_Factory.buildSelect(f));
         global.UI_Factory.registerBuilder('divider', (f) => global.UI_Factory.buildDivider(f));
+        global.UI_Factory.registerBuilder('avatar', (f) => global.UI_Factory.buildAvatar(f));
         // Specialized builders registrations are now handled by isolated plugins
         // (UI_Component_RelationBuilder, UI_Component_DynamicList, etc.)
 
