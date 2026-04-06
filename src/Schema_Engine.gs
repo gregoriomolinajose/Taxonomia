@@ -136,8 +136,8 @@ const APP_SCHEMAS = {
     metadata: { showInMenu: true, showInDashboard: false, order:8, iconName:'person-outline', color:'medium', label:'Personas', titleField:'nombre_completo', idField:'numero_empleado', fkField:null },
     primaryKey: "numero_empleado",
     fields: [
-      { section: "Identificadores", name: "numero_empleado", type: "number", primaryKey: true, readonly: true, label: "Número de Empleado", required: true, width: 6, validators: ["regex:^\\d{8}$"] },
-      { section: "Datos Personales y Contacto", name: "email", type: "email", label: "Correo Corporativo", required: true, width: 6, validators: ["regex:^[a-zA-Z0-9._%+-]+@(coppel\\.com|bancoppel\\.com|kairosds\\.com|nttdata\\.com)$"], triggers_workspace_resolve: true },
+      { section: "Identificadores", name: "email", type: "email", label: "Correo Corporativo", required: true, width: 12, validators: ["regex:^[a-zA-Z0-9._%+-]+@(coppel\\.com|bancoppel\\.com|kairosds\\.com|nttdata\\.com)$"], triggers_workspace_resolve: true },
+      { section: "Identificadores", name: "numero_empleado", type: "number", primaryKey: true, label: "Número de Empleado", required: true, width: 12, validators: ["regex:^\\d{8}$"] },
       { section: "Datos Personales y Contacto", name: "nombre_completo", type: "text", label: "Nombre Completo", required: true, width: 6 },
       { section: "Datos Personales y Contacto", name: "telefono", type: "tel", label: "Teléfono", required: false, width: 6 },
       
