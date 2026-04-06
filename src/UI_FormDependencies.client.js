@@ -16,7 +16,7 @@
             attachListeners: function(modal, fields) {
                 let debounceTimer; // S4.3: Debounce logic
                 
-                ['ionChange', 'ionInput'].forEach(eventType => {
+                ['ionChange', 'ionInput', 'ionBlur'].forEach(eventType => {
                     modal.addEventListener(eventType, (e) => {
                         const triggerInput = e.target;
                         const fieldName = triggerInput.name;
@@ -54,7 +54,7 @@
                             if (!schemaField) return;
 
                             // --- NUEVO: C) Smart API Lookup (Workspace Resolve) ---
-                            if (schemaField.triggers_workspace_resolve && formStateObj[fieldName] && eventType === 'ionChange') {
+                            if (schemaField.triggers_workspace_resolve && formStateObj[fieldName] && (eventType === 'ionChange' || eventType === 'ionBlur')) {
                                 if (window.google && window.google.script && window.google.script.run) {
                                     // Bloquear modal temporalmente con retraso p/evitar flash (UX)
                                     const loadingUI = document.createElement('ion-loading');
