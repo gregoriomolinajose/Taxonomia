@@ -113,6 +113,29 @@ window.UI_SubgridBuilder = {
         // Initial hydration
         _refreshList();
 
+        if (window.AppEventBus) {
+            const unsubscribe = window.AppEventBus.subscribe('FormEngine::RecordHydrated', (data) => {
+                // Auto-cleanup memory leak if the subgrid is no longer in DOM
+                if (!document.body.contains(subgridDiv)) {
+                    unsubscribe();
+                    return;
+                }
+                const refreshedData = data;
+                if (refreshedData && Array.isArray(refreshedData[field.name])) {
+                    childRecords.length = 0;
+                    refreshedData[field.name].forEach(item => childRecords.push(item));
+                    _refreshList();
+                }
+            });
+
+            // Deterministic Cleanup: Prevenir memory leaks vinculando al ciclo de vida del DOM
+            if (modalContext) {
+                modalContext.addEventListener('ionModalDidDismiss', () => {
+                    unsubscribe();
+                });
+            }
+        }
+
         addBtn.addEventListener('click', async () => {
             // Optimized UX: Select OR Create PURE NODAL MODAL
             const modal = document.createElement('ion-modal');

@@ -16,7 +16,7 @@ const APP_SCHEMAS = {
       { name: "descripcion", type: "textarea", label: "Descripción", required: false, width: 12 },
       { name: "responsable", type: "text", label: "Responsable", required: false, width: 12 },
       { name: "separator_grafo", type: "divider", label: "Topología (Grafo)", width: 12 },
-      { name: "portafolios_vinculados", type: "relation", relationType: "hijo", targetEntity: "Portafolio", graphEntity: "Sys_Graph_Edges", valueField: "id_portafolio", labelField: "nombre", uiBehavior: "subgrid", label: "Portafolios Asociados", isTemporalGraph: true, topologyCardinality: "1:N", width: 12 }
+      { name: "portafolios_vinculados", type: "relation", relationType: "hijo", targetEntity: "Portafolio", graphEntity: "Sys_Graph_Edges", valueField: "id_portafolio", labelField: "nombre", uiBehavior: "subgrid", label: "Portafolios Asociados", isTemporalGraph: true, graphEdgeType: "UNIDAD_NEGOCIO_PORTAFOLIO", topologyCardinality: "1:N", width: 12 }
     ]
   },
   Portafolio: {
@@ -40,7 +40,7 @@ const APP_SCHEMAS = {
       { name: "clientes_segmentos", type: "textarea", label: "Clientes y Segmentos", required: false, width: 6 },
       { name: "producto_dominio", type: "text", label: "Producto / Dominio", required: false, width: 12 },
       { name: "separator_grafo", type: "divider", label: "Pertenencia Topológica (Grafo)", width: 12 },
-      { name: "unidad_negocio_padre", type: "relation", relationType: "padre", targetEntity: "Unidad_Negocio", graphEntity: "Sys_Graph_Edges", valueField: "id_unidad_negocio", labelField: "nombre", uiComponent: "select_single", label: "Unidad de Negocio (Padre)", isTemporalGraph: true, topologyCardinality: "1:N", width: 12 },
+      { name: "unidad_negocio_padre", type: "relation", relationType: "padre", targetEntity: "Unidad_Negocio", graphEntity: "Sys_Graph_Edges", valueField: "id_unidad_negocio", labelField: "nombre", uiComponent: "select_single", label: "Unidad de Negocio (Padre)", isTemporalGraph: true, graphEdgeType: "UNIDAD_NEGOCIO_PORTAFOLIO", topologyCardinality: "1:N", width: 12 },
       { name: "separator_3", type: "divider", label: "Distribución de Capacidades (%)", width: 12 },
       { name: "capacidad_continuidad", type: "number", label: "Continuidad (BAU %)", required: false, width: 4 },
       { name: "capacidad_fundacional", type: "number", label: "Fundacional (%)", required: false, width: 4 },
@@ -203,7 +203,10 @@ const APP_SCHEMAS = {
       { name: "estado", type: "hidden", defaultValue: "Activo" },
       { name: "id_nodo_padre", type: "text", required: true, width: 6 },
       { name: "id_nodo_hijo", type: "text", required: true, width: 6 },
-      { name: "tipo_relacion", type: "text", required: true, width: 6 }
+      { name: "tipo_relacion", type: "text", required: true, width: 6 },
+      { name: "valido_desde", type: "hidden" },
+      { name: "valido_hasta", type: "hidden" },
+      { name: "es_version_actual", type: "hidden", defaultValue: true }
     ]
   },
   Sys_Roles: {

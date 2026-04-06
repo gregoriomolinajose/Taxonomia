@@ -13,7 +13,7 @@ Sanear la deuda técnica UI/UX resultante de la Épica de descomposión de objet
 ## Planned Stories
 - **[x] S25.1**: Estilos del Sistema e Interfaz Core (Bugs 1 y 2) ✓
 - **[x] S25.2**: Arquitectura de Formularios "Mobile First Drawer" (Bugs 4, 5 y 6) ✓
-- **[ ] S25.3**: Restauración de Interacciones de DataGrid (Bug 3)
+- **[x] S25.3**: Restauración de Interacciones de DataGrid (Bug 3) ✓
 
 ## Done Criteria
 - Error *Unhandled Promise Rejection* en Modal Dismiss está extinguido estadísticamente.

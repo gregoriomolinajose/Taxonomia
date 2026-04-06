@@ -349,7 +349,9 @@ const Adapter_Sheets = {
             let schemaFields = [];
             if (typeof APP_SCHEMAS !== 'undefined' && APP_SCHEMAS[tableName]) {
                 if (APP_SCHEMAS[tableName].fields) {
-                    schemaFields = APP_SCHEMAS[tableName].fields.map(f => f.name);
+                    schemaFields = APP_SCHEMAS[tableName].fields
+                        .filter(f => f.type !== 'divider' && f.type !== 'html' && !f.isTemporalGraph)
+                        .map(f => f.name);
                 } else {
                     // Fallback para entidades planas (como Dominio o Portafolio)
                     schemaFields = Object.keys(APP_SCHEMAS[tableName]).filter(k => typeof APP_SCHEMAS[tableName][k] === 'object' && !['uiBehavior', 'relationType'].includes(k));

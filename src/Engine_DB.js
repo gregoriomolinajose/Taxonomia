@@ -224,14 +224,20 @@ const Engine_DB = {
                     const topologyResult = Engine_Graph.analyzeTopology(children, activeGraph, topologyRules);
                     const stolenEdges = topologyResult.stolenEdges || [];
                     
-                    const currentInDB = _Adapter_Sheets.list(f.targetEntity, config, 'objects') || { rows: [] };
-                    const orphanMatches = (currentInDB.rows || []).filter(c => c[f.foreignKey] == tempParentPK);
+                    const edgeName = (f.graphEdgeType || f.name).toUpperCase();
+                    let currentActiveEdgesForNode = [];
+                    if (f.relationType === 'padre') {
+                        currentActiveEdgesForNode = activeGraph.filter(e => String(e.id_nodo_hijo).trim() === String(tempParentPK).trim() && e.tipo_relacion === edgeName);
+                    } else {
+                        currentActiveEdgesForNode = activeGraph.filter(e => String(e.id_nodo_padre).trim() === String(tempParentPK).trim() && e.tipo_relacion === edgeName);
+                    }
                     
-                    const normalClose = Engine_Graph.patchSCD2Edges(children, orphanMatches, f.topologyCardinality) || [];
+                    const normalClose = Engine_Graph.patchSCD2Edges(children, currentActiveEdgesForNode, f.topologyCardinality) || [];
                     const stealClose = Engine_Graph.patchSCD2Edges([], stolenEdges, f.topologyCardinality) || [];
                     
                     precalculatedGraphContext[f.name] = { 
-                        orphansToProcess: normalClose.concat(stealClose) 
+                        orphansToProcess: normalClose.concat(stealClose),
+                        precalculatedEdgesForNode: currentActiveEdgesForNode
                     };
                 }
             });
@@ -272,6 +278,23 @@ const Engine_DB = {
                     if (f.isTemporalGraph) {
                         if (precalculatedGraphContext[f.name]) {
                             orphansToProcess = precalculatedGraphContext[f.name].orphansToProcess || [];
+                            
+                            // [Fix] Manejar la eliminación explícita desde el Subgrid
+                            const nodeEdges = precalculatedGraphContext[f.name].precalculatedEdgesForNode || [];
+                            const explicitlyRemovedEdges = nodeEdges.filter(e => {
+                                const relatedId = f.relationType === 'hijo' ? e.id_nodo_hijo : e.id_nodo_padre;
+                                return !incomingIds.includes(String(relatedId));
+                            });
+                            
+                            if (explicitlyRemovedEdges.length > 0) {
+                                const sysDate = new Date().toISOString();
+                                explicitlyRemovedEdges.forEach(e => {
+                                    e.es_version_actual = false;
+                                    e.valido_hasta = sysDate;
+                                    e.updated_at = sysDate;
+                                });
+                                orphansToProcess = orphansToProcess.concat(explicitlyRemovedEdges);
+                            }
                         } else {
                             if (typeof Logger !== 'undefined') Logger.log(`[WARN] GraphQL Context no precalculado para ${f.name}`);
                         }
@@ -297,7 +320,7 @@ const Engine_DB = {
                                 id_relacion: newId,
                                 id_nodo_padre: f.relationType === 'hijo' ? parentPK : (child[pkField] || child['id_registro']),
                                 id_nodo_hijo: f.relationType === 'hijo' ? (child[pkField] || child['id_registro']) : parentPK,
-                                tipo_relacion: f.name.toUpperCase(),
+                                tipo_relacion: (f.graphEdgeType || f.name).toUpperCase(),
                                 valido_desde: child.valido_desde || new Date().toISOString(),
                                 valido_hasta: child.valido_hasta || "",
                                 es_version_actual: child.es_version_actual !== undefined ? child.es_version_actual : true,
@@ -391,12 +414,13 @@ const Engine_DB = {
                         const activeEdges = (edgesContext && edgesContext.rows ? edgesContext.rows : []).filter(e => e.es_version_actual !== false && e.estado !== 'Eliminado');
                         
                         let matchedIds = [];
+                        const edgeName = (f.graphEdgeType || f.name).toUpperCase();
                         if (f.relationType === 'padre') {
                             // Si pido "el padre", busco aristas donde yo soy el hijo.
-                            matchedIds = activeEdges.filter(e => String(e.id_nodo_hijo) === String(id)).map(e => String(e.id_nodo_padre));
+                            matchedIds = activeEdges.filter(e => String(e.id_nodo_hijo).trim() === String(id).trim() && e.tipo_relacion === edgeName).map(e => String(e.id_nodo_padre).trim());
                         } else {
                             // Si pido "los hijos", busco aristas donde yo soy el padre.
-                            matchedIds = activeEdges.filter(e => String(e.id_nodo_padre) === String(id)).map(e => String(e.id_nodo_hijo));
+                            matchedIds = activeEdges.filter(e => String(e.id_nodo_padre).trim() === String(id).trim() && e.tipo_relacion === edgeName).map(e => String(e.id_nodo_hijo).trim());
                         }
                         
                         const targetContext = _Adapter_Sheets.list(targetEntity, config, 'objects');
@@ -406,7 +430,7 @@ const Engine_DB = {
                         const singularTarget = targetEntity.toLowerCase().endsWith('es') ? targetEntity.slice(0, -2) : (targetEntity.toLowerCase().endsWith('s') ? targetEntity.slice(0, -1) : targetEntity.toLowerCase());
                         const inferredPk = 'id_' + singularTarget;
                         
-                        matches = targetRows.filter(c => matchedIds.includes(String(c[inferredPk] || c['id_registro'])));
+                        matches = targetRows.filter(c => matchedIds.includes(String(c[inferredPk] || c['id_registro']).trim()));
                     } else {
                         // Legacy Direct FK Hydration
                         const fkField = f.foreignKey;

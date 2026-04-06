@@ -482,6 +482,7 @@
                     const res = typeof rawRes === 'string' ? JSON.parse(rawRes) : rawRes;
                     if (res && res.status === 'success') {
                         fullRecord = res.data;
+                        if (window.AppEventBus) window.AppEventBus.publish('FormEngine::RecordHydrated', fullRecord);
                     } else {
                         throw new Error(res ? res.message : 'Respuesta inválida');
                     }
