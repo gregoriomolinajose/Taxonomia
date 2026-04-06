@@ -134,6 +134,17 @@
             return inputEl;
         };
 
+        global.UI_Factory.populateSelectOptions = function(selectEl, dataArr, field) {
+            if (!Array.isArray(dataArr)) return;
+            
+            dataArr.forEach(d => {
+                const opt = document.createElement('ion-select-option');
+                opt.value = typeof d[field.valueField] !== 'undefined' ? d[field.valueField] : d.id_registro;
+                opt.textContent = `${opt.value} - ${typeof d[field.labelField] !== 'undefined' ? d[field.labelField] : d.nombre}`;
+                selectEl.appendChild(opt);
+            });
+        };
+
         global.UI_Factory.buildChipInput = function(field) {
             const inputEl = document.createElement('div');
             inputEl.style.marginBottom = 'var(--spacing-4)';

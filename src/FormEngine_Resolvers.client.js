@@ -10,6 +10,22 @@
             _cache: {},
 
             /**
+             * Invalida entradas específicas del caché por coincidencia de subcadena (ej. "Sys_Roles") 
+             * o purga el caché completo si no se envían argumentos. Útil para rehidratar tras mutaciones (CUD).
+             */
+            invalidateCache: function(keyPattern) {
+                if (!keyPattern) {
+                    this._cache = {};
+                    return;
+                }
+                Object.keys(this._cache).forEach(key => {
+                    if (key.includes(keyPattern)) {
+                        delete this._cache[key];
+                    }
+                });
+            },
+
+            /**
              * Escanea el schema en busca de campos con `lookupSource`.
              * Llama en paralelo a cada función backend y rellena field.options de mutación directa.
              * Utiliza un sistema agresivo de Caché para evitar tormentas de peticiones API.
