@@ -5,7 +5,7 @@ const CONFIG = {
     ALLOWED_DOMAINS: ['@gmail.com', '@bellfy.app', '@coppel.com', '@bancoppel.com'],
     useSheets: true,
     useCloudDB: false,
-    WORKSPACE_INTEGRATION: false // Disabled by default until set in ENV
+    WORKSPACE_INTEGRATION: true // Enabled by default now, can be disabled via ENV
 };
 
 // Override dinámico para entornos de Producción (Zero-Code CI/CD)
