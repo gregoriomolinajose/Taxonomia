@@ -58,7 +58,7 @@ const Engine_ABAC = {
       });
     }
     
-    const personaId = persona.id_persona || persona.id;
+    const personaId = persona.email || persona.numero_empleado || persona.id_persona || persona.id;
     if (!personaId) return abacContext;
 
     // --- S18.3: HIERARCHICAL ESCALATION MODULE (Top-Down BFS) ---

@@ -73,3 +73,59 @@ function runTaxonomiaInstall() {
     Logger.log("Operación completada con éxito. Registros hidratados.");
     return "Taxonomía Instanciada Correctamente.";
 }
+
+/**
+ * Seeder de Acceso para Super Administrador.
+ * Crea la identidad de la Persona ejecutando este script y lo enlaza al Rol SYSADMIN.
+ */
+function seedSuperAdminAccess() {
+    Logger.log("Iniciando inyección de acceso de Super Administrador...");
+    
+    const email = Session.getActiveUser().getEmail();
+    if (!email) {
+        Logger.log("Error: No se pudo resolver el email del usuario activo.");
+        return "Error: Verifica que corras el script con permisos del Workspace.";
+    }
+
+    const config = (typeof CONFIG !== 'undefined') ? CONFIG : { useSheets: true, useCloudDB: false };
+    
+    if (typeof Engine_DB !== 'undefined') {
+        Logger.log("Revisando si el usuario ya existe en Persona...");
+        const response = Engine_DB.list('Persona', 'objects');
+        let record = null;
+        
+        if (response && response.rows) {
+             record = response.rows.find(p => p.email === email || p.correo === email);
+        }
+
+        if (record) {
+             Logger.log("Usuario existente encontrado. Elevando a Super Admin (RO-SYSADMIN)...");
+             record.id_rol = "RO-SYSADMIN";
+             Engine_DB.upsertBatch("Persona", [record], config);
+             return "Usuario existente elevado a Super Admin (RO-SYSADMIN).";
+        } else {
+             Logger.log("No existe perfil para " + email + ". Creando identidad temporal...");
+             const newPersona = {
+                 numero_empleado: "99999999",
+                 nombre: "Super",
+                 apellidos: "Administrador",
+                 correo: email,
+                 email: email, 
+                 id_rol: "RO-SYSADMIN",
+                 unidad_negocio: "IT",
+                 departamento: "Sistemas",
+                 centro_costo: "DIR",
+                 cargo: "Super Admin",
+                 modalidad: "Virtual",
+                 esquema: "Interno",
+                 rol_agil: "N/A"
+             };
+             
+             Engine_DB.upsertBatch("Persona", [newPersona], config);
+             return "Nuevo usuario creado exitosamente y ligado a Super Admin.";
+        }
+    } else {
+        Logger.log("Error crítico: Engine_DB no está instanciado.");
+        return "Fallo CUD: Engine_DB Missing";
+    }
+}

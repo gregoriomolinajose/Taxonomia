@@ -133,8 +133,8 @@ const APP_SCHEMAS = {
     ]
   },
   Persona: {
-    metadata: { showInMenu: true, showInDashboard: false, order:8, iconName:'person-outline', color:'medium', label:'Personas', titleField:'email', idField:'numero_empleado', fkField:null },
-    primaryKey: "numero_empleado",
+    metadata: { showInMenu: true, showInDashboard: false, order:8, iconName:'person-outline', color:'medium', label:'Personas', titleField:'email', idField:'email', fkField:null },
+    primaryKey: "email",
     topologyRules: {
       topologyType: "JERARQUICA_ESTRICTA",
       preventCycles: true,
@@ -142,14 +142,14 @@ const APP_SCHEMAS = {
       siblingCollisionCheck: false
     },
     fields: [
-      { name: "email", type: "email", label: "Correo Corporativo", required: true, width: 12, validators: ["regex:^[a-zA-Z0-9._%+-]+@(coppel\\.com|bancoppel\\.com|kairosds\\.com|nttdata\\.com)$"], triggers_workspace_resolve: true },
+      { name: "email", type: "email", primaryKey: true, label: "Correo Corporativo", required: true, width: 12, validators: ["regex:^[a-zA-Z0-9._%+-]+@(coppel\\.com|bancoppel\\.com|kairosds\\.com|nttdata\\.com)$"], triggers_workspace_resolve: true },
       
       { name: "separator_1", type: "divider", label: "Datos Personales y Contacto", width: 12 },
       { name: "avatar", type: "avatar", label: "Fotografía", width: 12, readonly: true },
       { name: "nombre", type: "text", label: "Nombre(s)", required: true, width: 6 },
       { name: "apellidos", type: "text", label: "Apellidos", required: true, width: 6 },
       { name: "telefono", type: "tel", label: "Teléfono", required: false, width: 6 },
-      { name: "numero_empleado", type: "number", primaryKey: true, label: "Número de Empleado", required: true, width: 12, validators: ["regex:^\\d{8}$"] },
+      { name: "numero_empleado", type: "number", label: "Número de Empleado", required: true, width: 12, validators: ["regex:^\\d{8}$"] },
 
       
       { name: "separator_2", type: "divider", label: "Datos Contractuales y Logísticos", width: 12 },
@@ -169,7 +169,7 @@ const APP_SCHEMAS = {
       { name: "rol_agil", type: "select", label: "Rol Ágil Asignado", options: ["Product Manager", "Product Owner", "Team Coach", "RTE", "Developer", "Tech Lead", "Tester", "N/A"], required: true, width: 6 },
       { name: "porcentaje_asignacion", type: "select", label: "Asignación", options: ["Full Time", "Part Time", "Por Proyecto"], width: 6 },
       { name: "separator_4", type: "divider", label: "Grafo de Liderazgo y Accesos", width: 12 },
-      { name: "lider_directo", type: "relation", relationType: "padre", targetEntity: "Persona", graphEntity: "Sys_Graph_Edges", valueField: "numero_empleado", labelField: "email", topologyCardinality: "1:N", isTemporalGraph: true, uiBehavior: "subgrid", label: "Líder Directo", required: false, width: 12 },
+      { name: "lider_directo", type: "relation", relationType: "padre", targetEntity: "Persona", graphEntity: "Sys_Graph_Edges", valueField: "email", labelField: "email", topologyCardinality: "1:N", isTemporalGraph: true, uiBehavior: "subgrid", label: "Líder Directo", required: false, width: 12 },
       { name: "id_rol", type: "select", label: "Rol de Autorización", required: false, width: 12, lookupSource: "getSysRolesOptions" }
     ]
   },
