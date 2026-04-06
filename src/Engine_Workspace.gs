@@ -33,13 +33,38 @@ function resolverDirectorioWorkspace(queryEmail) {
     var fullName = user.name ? user.name.fullName : "";
     var phone = (user.phones && user.phones.length > 0) ? user.phones[0].value : "";
     var title = (user.organizations && user.organizations.length > 0) ? user.organizations[0].title : "";
+    var dept = (user.organizations && user.organizations.length > 0) ? user.organizations[0].department : "";
     var location = (user.locations && user.locations.length > 0) ? user.locations[0].deskCode : "";
+    
+    // Extracción de ID de Empleado y Líder
+    var numEmpleado = "";
+    if (user.externalIds) {
+      for (var i = 0; i < user.externalIds.length; i++) {
+        if (user.externalIds[i].type === "organization") {
+          numEmpleado = user.externalIds[i].value;
+          break;
+        }
+      }
+    }
+    
+    var manager = "";
+    if (user.relations) {
+      for (var j = 0; j < user.relations.length; j++) {
+        if (user.relations[j].type === "manager") {
+          manager = user.relations[j].value;
+          break;
+        }
+      }
+    }
     
     var dto = {
       nombre_completo: fullName,
       telefono: phone,
+      departamento: dept,
       cargo: title,
-      ubicacion: location
+      ubicacion: location,
+      numero_empleado: numEmpleado,
+      lider_directo: manager
     };
     
     Logger.log("Workspace Lookup Exitoso: " + queryEmail + " -> " + JSON.stringify(dto));

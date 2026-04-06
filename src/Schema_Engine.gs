@@ -150,6 +150,7 @@ const APP_SCHEMAS = {
       { name: "ubicacion", type: "text", label: "Ubicación Geográfica", required: false, width: 6 },
       
       { name: "separator_3", type: "divider", label: "Organización y Agilidad", width: 12 },
+      { name: "departamento", type: "text", label: "Departamento (Org)", required: true, width: 12 },
       { name: "cargo", type: "text", label: "Cargo Oficial", required: true, width: 6 },
       { name: "rol_agil", type: "select", label: "Rol Ágil Asignado", options: ["Product Manager", "Product Owner", "Team Coach", "RTE", "Developer", "Tech Lead", "Tester", "N/A"], required: true, width: 6 },
       { name: "porcentaje_asignacion", type: "select", label: "Asignación", options: ["Full Time", "Part Time", "Por Proyecto"], width: 6 },
