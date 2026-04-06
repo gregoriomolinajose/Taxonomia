@@ -72,6 +72,6 @@ function resolverDirectorioWorkspace(queryEmail) {
     
   } catch (e) {
     Logger.log("Workspace API Error [" + queryEmail + "]: " + e.message);
-    return null; // Silent catch para no romper la UI si el usuario no existe.
+    return { __status: "ERROR", message: e.message }; // Notificamos a la UI del fallo subyacente
   }
 }

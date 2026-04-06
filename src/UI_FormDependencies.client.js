@@ -78,6 +78,11 @@
                                                 console.log("[FormEngine] Workspace Lookup is disabled via ENV_CONFIG");
                                                 return; // Permitir al usuario avanzar manualmente
                                             }
+                                            if (dto && dto.__status === "ERROR") {
+                                                console.warn("[FormEngine] Workspace API Error:", dto.message);
+                                                window.PresentSafe && window.PresentSafe(Object.assign(document.createElement('ion-toast'), { message: 'Workspace Error: ' + dto.message, duration: 4000, color: 'warning' }));
+                                                return;
+                                            }
                                             
                                             if (dto) {
                                                 // Hidratar Formulario (Read-Only)
