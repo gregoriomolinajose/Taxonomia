@@ -146,34 +146,18 @@
 
             // --- DEPENDENCY RESOLVER: Abstracted to FormEngine_Resolvers ---
             if (window.FormEngine_Resolvers) {
-                await window.FormEngine_Resolvers.hydrateLookupSources(fields);
+                // S25.3: Pure UX Master-Detail (Non-Blocking Hydration)
+                // Lanza la hidratación en background sin trabar la UI.
+                window.FormEngine_Resolvers.hydrateLookupSources(fields).catch(e => console.warn(e));
             } else {
                 console.warn("[FormEngine] ALERTA: FormEngine_Resolvers no está cargado.");
             }
 
 
 
-            // Referencias al Split-Pane Layout
-            const headerTitle = document.getElementById('main-header-title');
-            const backBtn = document.getElementById('global-back-btn');
-
-            if (headerTitle) headerTitle.textContent = (global.currentEditId ? "Editar: " : "Nuevo: ") + window.formatEntityName(entityName);
-            if (backBtn) {
-                backBtn.classList.remove('ion-hide');
-                // Enrutamiento de la Flecha de Retroceso (Back Button) -> DataView
-                backBtn.onclick = function() {
-                    // Limpieza proactiva del formulario actual
-                    window.DOM.clear(container);
-                    if (window.AppEventBus) {
-                        window.AppEventBus.publish('NAV::CHANGE', {viewType: 'dataview', entityKey: entityName});
-                    }
-                };
-            }
-
-            // --- NUEVO: Switch Sidebar a modo Formulario ---
-            if (window.UI_Router && typeof window.UI_Router.showFormSidebar === 'function') {
-                window.UI_Router.showFormSidebar(entityName);
-            }
+            // --- REFERENCIAS AL MAIN SHELL ELIMINADAS (UX Master-Detail Puro) ---
+            // El Drawer ahora flota a la derecha de forma independiente. No manipulamos
+            // ni el sidebar principal ni el header central para no romper la navegación.
 
             // Reparación Crítica: Instanciar variable solicitada por el Stepper
             const sidebarList = document.getElementById('sidebarList');
@@ -184,22 +168,13 @@
                 console.error("[FormEngine] No se encontró el contenedor #sidebarList en el DOM.");
                 return;
             }
-
-            const card = document.createElement('ion-card');
-            card.style.borderRadius = 'var(--rounded-md)'; // Redondeo Figma
-            card.style.boxShadow = 'var(--shadow-floating)'; // Sombra suave Figma
-
-            const cardContent = document.createElement('ion-card-content');
-            cardContent.style.padding = 'var(--spacing-6)';
             
             // S21.1: Optimistic Locking Hidden Metadata
             const versionInput = document.createElement('input');
             versionInput.type = 'hidden';
             versionInput.name = '_version';
             versionInput.value = (data && data._version) ? data._version : 1;
-            cardContent.appendChild(versionInput);
-            
-            card.appendChild(cardContent);
+            container.appendChild(versionInput);
 
             // S14.1: Delegación SRP a UI_FormStepper
             const btnPrev = document.createElement('ion-button');
@@ -246,7 +221,7 @@
             
             const stepper = new window.UI_FormStepper({
                 steps: steps,
-                cardContent: cardContent,
+                cardContent: container, // Utilizando el drawer-content puro en vez del card
                 sidebarSteps: sidebarSteps,
                 btnPrev: btnPrev,
                 btnNext: btnNext,
@@ -324,12 +299,12 @@
                 }
             }
 
-            // --- PATRÓN MODAL: ION-FOOTER NATIVO (Keyboard-Aware) ---
-            const footerContainer = document.createElement('ion-footer');
-            footerContainer.className = 'ion-no-border';
+            // --- PATRÓN DRAWER: FOOTER NATIVO (Keyboard-Aware) ---
+            const footerContainer = document.createElement('div');
+            footerContainer.className = 'drawer-footer';
             
             const btnGrid = document.createElement('ion-grid');
-            btnGrid.style.padding = 'var(--spacing-2) var(--spacing-4)';
+            btnGrid.style.padding = 'var(--spacing-1) var(--spacing-2)';
             const btnRow = document.createElement('ion-row');
             btnRow.style.alignItems = 'center';
             
@@ -382,8 +357,6 @@
                 submitBtn: submitBtn,
                 modal: modal
             });
-
-            container.appendChild(card);
             
             // --- Metadata-Driven Dependency Injection (Zero-Touch UI) ---
             if (window.UI_FormDependencies) {
@@ -445,15 +418,36 @@
 
             console.log("[FormEngine] Registro encontrado:", record);
 
-            // 3. Obtener registro hidratado desde el Servidor (Regla 15)
-            const loading = document.createElement('ion-loading');
-            loading.message = 'Hidratando registro...';
-            document.body.appendChild(loading);
-            await window.PresentSafe(loading);
+            // [UX] Master-Detail Uninterrupted Swapping
+            if (global.DrawerStackController && global.DrawerStackController.getDepth() > 0) {
+                global.DrawerStackController.clearAllSync();
+            }
+
+            // 3. Activar modo edición Inmediato
+            global.currentEditId = id;
+            console.log("[FormEngine] currentEditId asignado:", global.currentEditId);
+
+            // 4. Renderizar el formulario base de la entidad AL INSTANTE (0ms) usando caché local
+            await global.renderForm(entityName, record);
+
+            // 5. Aplicar Skeleton/Loading local al Drawer mientras hidrata en background
+            const formContainer = global.currentFormDrawer ? global.currentFormDrawer.querySelector('.drawer-content') : null;
+            if (formContainer) {
+                formContainer.style.opacity = '0.6';
+                formContainer.style.pointerEvents = 'none';
+                formContainer.style.transition = 'opacity 0.2s ease';
+            }
+
+            // Actualizar Título del Drawer
+            if (global.currentFormDrawer) {
+                const modalTitle = global.currentFormDrawer.querySelector('.drawer-title') || global.currentFormDrawer.querySelector('ion-title');
+                if (modalTitle) modalTitle.textContent = "Editar: " + window.formatEntityName(entityName);
+            }
 
             let fullRecord = record;
             try {
                 try {
+                    // Hidratación Background Silenciosa
                     const rawRes = await window.DataAPI.call('API_Universal_Router', 'read', entityName, { id: id });
                     const res = typeof rawRes === 'string' ? JSON.parse(rawRes) : rawRes;
                     if (res && res.status === 'success') {
@@ -467,22 +461,10 @@
             } catch (e) {
                 console.warn("[FormEngine] Falló hidratación profunda, usando cache local:", e);
             } finally {
-                loading.dismiss();
-            }
-
-            // 4. Renderizar el formulario base de la entidad
-            await global.renderForm(entityName, fullRecord);
-
-            // 5. Activar modo edición
-            global.currentEditId = id;
-            console.log("[FormEngine] currentEditId asignado:", global.currentEditId);
-
-            const headerTitle = document.getElementById('main-header-title');
-            if (headerTitle) headerTitle.textContent = "Editar: " + window.formatEntityName(entityName);
-
-            if (global.currentFormDrawer) {
-                const modalTitle = global.currentFormDrawer.querySelector('.drawer-title') || global.currentFormDrawer.querySelector('ion-title');
-                if (modalTitle) modalTitle.textContent = "Editar: " + window.formatEntityName(entityName);
+                if (formContainer) {
+                    formContainer.style.opacity = '1';
+                    formContainer.style.pointerEvents = 'auto';
+                }
             }
 
             // 5. Pre-llenado de campos (Directiva 3.c)

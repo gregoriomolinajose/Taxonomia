@@ -71,19 +71,36 @@
             const inputEl = document.createElement('ion-select');
             inputEl.setAttribute('interface', window.innerWidth < 768 ? 'action-sheet' : 'popover');
             
-            if (field.options && Array.isArray(field.options)) {
-                field.options.forEach(opt => {
-                    const ionOption = document.createElement('ion-select-option');
-                    if (typeof opt === 'object' && opt !== null) {
-                        ionOption.value = opt.value;
-                        ionOption.textContent = opt.label;
-                    } else {
-                        ionOption.value = opt;
-                        ionOption.textContent = opt;
-                    }
-                    inputEl.appendChild(ionOption);
-                });
-            }
+            // Requerido firmemente para que CustomEvents atados a name="field.name" lo alcancen
+            inputEl.setAttribute('name', field.name);
+            
+            const renderOptions = (opts) => {
+                inputEl.innerHTML = '';
+                if (opts && Array.isArray(opts)) {
+                    opts.forEach(opt => {
+                        const ionOption = document.createElement('ion-select-option');
+                        if (typeof opt === 'object' && opt !== null) {
+                            ionOption.value = opt.value || opt.id_registro || 'N/A';
+                            ionOption.textContent = opt.label || opt.nombre || 'N/A';
+                        } else {
+                            ionOption.value = opt;
+                            ionOption.textContent = opt;
+                        }
+                        inputEl.appendChild(ionOption);
+                    });
+                }
+            };
+
+            renderOptions(field.options);
+
+            inputEl.addEventListener('LookupHydrated', (e) => {
+                const currentVal = inputEl.value; // Rescue binding state natively managed by Ionic
+                renderOptions(e.detail);
+                if (currentVal !== undefined && currentVal !== null) {
+                    inputEl.value = currentVal;
+                }
+            });
+
             _applyBaseAttributes(inputEl, field);
             return inputEl;
         };

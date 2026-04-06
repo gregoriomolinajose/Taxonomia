@@ -102,6 +102,22 @@
                     document.body.classList.toggle('drawer-max-depth', stack.length >= MAX_DEPTH);
                 }
             },
+            clearAllSync: function() {
+                while(stack.length > 0) {
+                    const topDrawer = stack.pop();
+                    if (topDrawer && topDrawer.isConnected) {
+                        topDrawer.innerHTML = '';
+                        if(topDrawer.__onSaveSuccessFallback) topDrawer.__onSaveSuccessFallback = null;
+                        topDrawer.remove();
+                    }
+                }
+                global.currentFormDrawer = null;
+                global.currentEditId = null;
+                const root = getRootContainer();
+                root.classList.remove('active');
+                if (window.AppEventBus) window.AppEventBus.publish('DRAWER::DEPTH_CHANGED', 0);
+                document.body.classList.toggle('drawer-max-depth', false);
+            },
             getDepth: () => stack.length,
             clearAll: function() {
                 while(stack.length > 0) {
@@ -121,6 +137,16 @@
                 global.DrawerStackController.closeTop();
             });
         }
+        setTimeout(() => {
+            if (window.AppEventBus && !window._drawerNavListenerAttached) {
+                window.AppEventBus.subscribe('NAV::CHANGE', function() {
+                    if (global.DrawerStackController && global.DrawerStackController.getDepth() > 0) {
+                        global.DrawerStackController.clearAllSync();
+                    }
+                });
+                window._drawerNavListenerAttached = true;
+            }
+        }, 1000);
     });
 
 })(typeof window !== 'undefined' ? window : this);

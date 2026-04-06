@@ -7,7 +7,14 @@
 const APP_SCHEMAS = {
   Unidad_Negocio: {
     metadata: { showInMenu: true, showInDashboard: false, order:1, iconName:'business-outline', color:'primary', label:'Unidades de Negocio', titleField:'nombre', idField:'id_unidad_negocio', fkField:null },
-    fields: []
+    primaryKey: "id_unidad_negocio",
+    fields: [
+      { name: "id_unidad_negocio", type: "hidden", primaryKey: true },
+      { name: "estado", type: "hidden", defaultValue: "Activo" },
+      { section: "Datos Generales", name: "nombre", type: "text", label: "Nombre de Unidad", required: true, width: 12 },
+      { section: "Datos Generales", name: "descripcion", type: "textarea", label: "Descripción", required: false, width: 12 },
+      { section: "Datos Generales", name: "responsable", type: "text", label: "Responsable", required: false, width: 12 }
+    ]
   },
   Portafolio: {
     metadata: { showInMenu: true, showInDashboard: false, order:2, iconName:'briefcase-outline', color:'primary', label:'Portafolios', titleField:'nombre', idField:'id_portafolio', fkField:null },
@@ -16,7 +23,14 @@ const APP_SCHEMAS = {
         parentEntity: null,
         parentField: null
     },
-    fields: []
+    primaryKey: "id_portafolio",
+    fields: [
+      { name: "id_portafolio", type: "hidden", primaryKey: true },
+      { name: "estado", type: "hidden", defaultValue: "Activo" },
+      { section: "Datos Generales", name: "nombre", type: "text", label: "Nombre de Portafolio", required: true, width: 12 },
+      { section: "Datos Generales", name: "director_id", type: "text", label: "Director", required: false, width: 6 },
+      { section: "Datos Generales", name: "vp_id", type: "text", label: "VP", required: false, width: 6 }
+    ]
   },
   Dominio: {
     metadata: { showInMenu: true, showInDashboard: false, order:3, iconName:'globe-outline', color:'secondary', label:'Dominios', titleField:'n0_es', idField:'id_dominio', fkField:null },
@@ -103,7 +117,20 @@ const APP_SCHEMAS = {
     businessRules: [
       { trigger: 'onInput', action: 'sumPrefix', prefix: 'cant_', target: 'total_integrantes' }
     ],
-    fields: []
+    primaryKey: "id_equipo",
+    fields: [
+      { name: "id_equipo", type: "hidden", primaryKey: true },
+      { name: "estado", type: "hidden", defaultValue: "Activo" },
+      { section: "Datos Generales", name: "id_producto", type: "relation", relationType: "hijo", targetEntity: "Producto", label: "Producto", required: true, width: 6 },
+      { section: "Datos Generales", name: "nombre_equipo", type: "text", label: "Nombre de Equipo", required: true, width: 6 },
+      { section: "Datos Generales", name: "seudonimo", type: "text", label: "Seudónimo", required: false, width: 6 },
+      { section: "Datos Generales", name: "metodologia", type: "select", label: "Metodología", required: true, width: 6, options: ["Scrum", "Kanban", "Híbrido"] },
+      { section: "Datos Generales", name: "proposito", type: "textarea", label: "Propósito", required: false, width: 12 },
+      { section: "Líderes", name: "scrum_master_id", type: "text", label: "Scrum Master", required: false, width: 6 },
+      { section: "Líderes", name: "product_owner_id", type: "text", label: "Product Owner", required: false, width: 6 },
+      { section: "Integrantes", name: "cant_team_coach", type: "number", label: "Cant. Team Coach", required: false, width: 6 },
+      { section: "Integrantes", name: "total_integrantes", type: "number", label: "Total Integrantes", required: false, width: 6 }
+    ]
   },
   Persona: {
     metadata: { showInMenu: true, showInDashboard: false, order:8, iconName:'person-outline', color:'medium', label:'Personas', titleField:'nombre_completo', idField:'id_persona', fkField:null },
@@ -117,7 +144,13 @@ const APP_SCHEMAS = {
   },
   Relacion_Dominios: {
     metadata: { showInMenu: false, order:9, iconName:'git-network-outline', color:'primary', label:'Conexiones Topológicas', titleField:'tipo_relacion', idField:'id_relacion', fkField:{ key:'id_nodo_padre', label:'Dominio' } },
-    fields: []
+    primaryKey: "id_relacion",
+    fields: [
+      { name: "id_relacion", type: "hidden", primaryKey: true },
+      { name: "id_nodo_padre", type: "text", required: true, width: 6 },
+      { name: "id_nodo_hijo", type: "text", required: true, width: 6 },
+      { name: "tipo_relacion", type: "text", required: true, width: 6 }
+    ]
   },
   Sys_Roles: {
     metadata: { showInMenu: false, showInDashboard: false, order:90, iconName:'shield-half-outline', color:'danger', label:'Seguridad: Roles', titleField:'nombre_rol', idField:'id_rol', fkField:null },
