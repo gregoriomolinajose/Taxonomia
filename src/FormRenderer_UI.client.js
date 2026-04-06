@@ -99,8 +99,8 @@
             header.appendChild(closeBtn);
             modal.appendChild(header);
 
-            // Contenedor interno scrollable del Drawer
-            const container = document.createElement('div');
+            // Contenedor interno scrollable del Drawer con soporte nativo para móvil
+            const container = document.createElement('ion-content');
             container.className = 'drawer-content ion-padding';
             modal.appendChild(container);
 

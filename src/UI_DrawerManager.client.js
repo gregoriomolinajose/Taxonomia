@@ -13,6 +13,7 @@
             if (!container) {
                 container = document.createElement('div');
                 container.id = 'drawer-root-container';
+                container.className = 'ion-page'; // Ensures proper global typography inheritance
                 
                 const backdrop = document.createElement('div');
                 backdrop.className = 'drawer-backdrop';
@@ -24,7 +25,9 @@
                     }
                 };
                 container.appendChild(backdrop);
-                document.body.appendChild(container);
+                
+                const appRoot = document.querySelector('ion-app') || document.body;
+                appRoot.appendChild(container);
             }
             return container;
         }
