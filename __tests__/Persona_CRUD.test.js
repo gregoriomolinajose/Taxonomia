@@ -41,7 +41,7 @@ describe('Persona CRUD - Blueprint V2 Verification', () => {
         const content = fs.readFileSync(schemaPath, 'utf8');
         
         expect(content).toContain('Persona:');
-        expect(content).toContain('primaryKey: "id_persona"');
+        expect(content).toContain('primaryKey: "numero_empleado"');
     });
 
     test.skip('Step 2 & 5: UI Routing & Zero-Touch - Should verify ENTITY_META registration in Index.html (OBSOLETE in V4)', () => {
@@ -50,12 +50,12 @@ describe('Persona CRUD - Blueprint V2 Verification', () => {
         
         expect(content).toMatch(/Persona:\s+\{/);
         expect(content).toMatch(/iconName:\s*'person-outline'/);
-        expect(content).toMatch(/idField:\s*'id_persona'/);
+        expect(content).toMatch(/idField:\s*'numero_empleado'/);
     });
 
     test('Step 4: Output Sanitization - API should return JSON sanitized data', () => {
         const mockPayload = {
-            id_persona: 'PERS-TEST',
+            numero_empleado: 'PERS-TEST',
             nombre_completo: 'Test User',
             email: 'test@example.com',
             rol: 'Scrum Master'

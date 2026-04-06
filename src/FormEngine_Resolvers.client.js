@@ -7,10 +7,28 @@
     (function(global) {
         
         const EngineResolvers = {
+            _cache: {},
+
+            /**
+             * Invalida entradas específicas del caché por coincidencia de subcadena (ej. "Sys_Roles") 
+             * o purga el caché completo si no se envían argumentos. Útil para rehidratar tras mutaciones (CUD).
+             */
+            invalidateCache: function(keyPattern) {
+                if (!keyPattern) {
+                    this._cache = {};
+                    return;
+                }
+                Object.keys(this._cache).forEach(key => {
+                    if (key.includes(keyPattern)) {
+                        delete this._cache[key];
+                    }
+                });
+            },
+
             /**
              * Escanea el schema en busca de campos con `lookupSource`.
              * Llama en paralelo a cada función backend y rellena field.options de mutación directa.
-             * Muestra ion-loading mientras resuelve; non-fatal si un lookup falla.
+             * Utiliza un sistema agresivo de Caché para evitar tormentas de peticiones API.
              */
             hydrateLookupSources: async function(fields) {
                 const fieldsWithLookup = [];
@@ -27,11 +45,13 @@
                 
                 if (fieldsWithLookup.length === 0) return;
 
-                const loading = document.createElement('ion-loading');
-                loading.message = 'Cargando opciones...';
-                loading.spinner = 'crescent';
-                document.body.appendChild(loading);
-                await window.PresentSafe(loading);
+                const dispatchHydration = (field, optionsArray) => {
+                    field.options = optionsArray;
+                    const domNodes = document.querySelectorAll(`[name="${field.name}"]`);
+                    domNodes.forEach(node => {
+                        node.dispatchEvent(new CustomEvent('LookupHydrated', { detail: field.options }));
+                    });
+                };
 
                 try {
                     const promises = fieldsWithLookup.map(field => new Promise((resolve) => {
@@ -40,10 +60,13 @@
                         if (field.lookupSource && typeof localResolver === 'function') {
                             const result = localResolver();
                             if (result instanceof Promise) {
-                                result.then(opts => { field.options = opts || []; resolve(); })
-                                      .catch(() => { field.options = []; resolve(); });
+                                result.then(opts => { 
+                                    dispatchHydration(field, opts || []);
+                                    resolve(); 
+                                })
+                                .catch(() => { dispatchHydration(field, []); resolve(); });
                             } else {
-                                field.options = result || [];
+                                dispatchHydration(field, result || []);
                                 resolve();
                             }
                             return;
@@ -59,28 +82,54 @@
                         }
 
                         if (apiMethod) {
-                            window.DataAPI.call(apiMethod, ...apiArgs)
-                                .then(opts => {
-                                    field.options = Array.isArray(opts) ? opts : (opts && opts.data ? opts.data : []); 
+                            const cacheKey = apiMethod + '::' + JSON.stringify(apiArgs);
+                            
+                            // 1. Cache Hit: Data is already resolved
+                            const cached = EngineResolvers._cache[cacheKey];
+                            if (cached && !(cached instanceof Promise)) {
+                                dispatchHydration(field, cached);
+                                return resolve();
+                            }
+                            
+                            // 2. Cache Hit: Data is currently being fetched (In-Flight Promise)
+                            if (cached instanceof Promise) {
+                                cached.then(cachedOpts => {
+                                    dispatchHydration(field, cachedOpts);
                                     resolve();
+                                }).catch(() => resolve());
+                                return;
+                            }
+
+                            // 3. Cache Miss: Execute and store the Promise
+                            const fetchPromise = window.DataAPI.call(apiMethod, ...apiArgs)
+                                .then(opts => {
+                                    // Mantener la estructura original (Soporte mixto para Arrays puros o Tuplas de Subgrid)
+                                    const finalData = opts; 
+                                    EngineResolvers._cache[cacheKey] = finalData; // Upgrade Promise to raw Data in Cache
+                                    dispatchHydration(field, finalData);
+                                    resolve();
+                                    return finalData;
                                 })
                                 .catch(err => {
                                     console.error(`[FormEngine_Resolvers] DataAPI falló para ${apiMethod}:`, err);
+                                    if (window.showToast) {
+                                        window.showToast(`Error de red parcial cargando catálogo de datos.`, 'warning');
+                                    }
+                                    EngineResolvers._cache[cacheKey] = null; // Clear bad cache
                                     resolve(); 
+                                    return null;
                                 });
+                                
+                            EngineResolvers._cache[cacheKey] = fetchPromise;
                         } else {
                             // Dev fallback
-                            field.options = [{ value: 'MOCK-1', label: `Mock: ${field.targetEntity}` }];
+                            dispatchHydration(field, [{ value: 'MOCK-1', label: `Mock: ${field.targetEntity}` }]);
                             resolve();
                         }
                     }));
                     await Promise.all(promises);
-                } finally {
-                    try {
-                        await loading.dismiss();
-                    } catch (_) {
-                        if (loading.parentNode) loading.parentNode.removeChild(loading);
-                    }
+                } catch(e) {
+                    console.warn('[FormEngine_Resolvers] Non-fatal exception during hydration', e);
                 }
             }
         };

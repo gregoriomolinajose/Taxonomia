@@ -162,6 +162,14 @@
             rows.forEach((row, idx) => {
                 const tr = document.createElement('tr');
                 
+                const meta = (window.ENTITY_META && window.ENTITY_META[this.cfg.entityName]) || { idField: 'id' };
+                const id = row[meta.idField] || '';
+                
+                // Bug fix: Row selection logic (S25.3)
+                tr.addEventListener('click', () => {
+                    if (id) this._invoke(this.cfg.onEdit, id);
+                });
+                
                 const tdNum = document.createElement('td');
                 tdNum.className = 'dv-td-num';
                 tdNum.textContent = String(startIdx + idx + 1);
@@ -175,9 +183,7 @@
                     tr.appendChild(td);
                 });
                 
-                const meta = (window.ENTITY_META && window.ENTITY_META[this.cfg.entityName]) || { idField: 'id' };
-                const id = row[meta.idField] || '';
-                
+                // Meta and ID extracted above
                 if (!hideActionColumn) {
                     const tdAction = document.createElement('td');
                     tdAction.className = 'dv-td-action';

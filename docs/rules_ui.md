@@ -16,6 +16,7 @@
 ## 2. Progressive Disclosure (Wizards) y Anclaje de Acciones
 - **Desglose Cognitivo:** PROHIBIDO renderizar formularios largos en una vista plana. Si hay `steps`, el motor DEBE renderizar un Wizard (`<ion-segment>` o `<ion-stepper>`). Todo componente visual de progreso DEBE ser interactivo.
 - **Ley de Anclaje de Acciones (Sticky Footer):** Los botones de mutación ("Guardar", "Siguiente", "Atrás", "Cancelar") NUNCA deben vivir dentro del flujo de scroll (`<ion-content>`). DEBEN estar aislados y anclados en la base de la pantalla utilizando estrictamente `<ion-footer>`.
+- **Arquitectura Drawer (Cero Modales):** PROHIBIDO usar `<ion-modal>` para inyectar formularios CRUD. Todo formulario de mutación anidado DEBE alojarse empleando la API nativa del `DrawerStackController`, respetando el límite estricto de memoria (`MAX_DEPTH = 3`).
 
 ## 3. Diseño Responsivo Nativo (Grid) y Patrón Bento Box
 - **Estructura Base:** El layout DEBE construirse sobre `<ion-grid>`, `<ion-row>` y `<ion-col>`. Todo input debe ser Mobile-First (`size="12"`). NUNCA uses CSS crudo para el layout.
@@ -53,7 +54,7 @@
 
 ## 10. Prohibición de Feedback Nativo (Alert/Confirm)
 - **Coherencia Visual:** PROHIBIDO el uso de `window.alert()`, `window.prompt()`, `window.confirm()` o modales nativos de HtmlService.
-- Toda interacción de feedback o confirmación DEBE usar componentes Ionic (`ion-modal`, `ion-alert`). Interfaces con diálogos nativos serán rechazadas en QA.
+- Toda interacción de feedback de alerta DEBE usar componentes Ionic (`ion-alert`). Interfaces con diálogos nativos serán rechazadas en QA. NUNCA uses `ion-modal` para flujos pesados.
 
 ## 11. Manipulación del DOM y Lectura JIT
 - **Prohibición de Nodos Fantasma:** PROHIBIDO capturar referencias a inputs del DOM en variables globales o closures fuera del evento de acción.
@@ -88,7 +89,7 @@ El código DEBE fragmentarse en archivos HTML que actúen como módulos puros, i
 Debido a la naturaleza modular del menú colapsable, los footers estáticos y los componentes de retroalimentación, se prohíbe el uso de `z-index` arbitrarios (ej. `z-index: 99999;`). El ecosistema se rige por esta escala absoluta:
 * `z-index: 10` - Sticky Footers (`<ion-footer>`).
 * `z-index: 50` - Overlay del Sidebar en versión móvil.
-* `z-index: 100` - Modales (`<ion-modal>`).
+* `z-index: 100` - Paneles Drawer (`.drawer-panel`, `.drawer-backdrop`).
 * `z-index: 9999` - Sistema de Toasts y Loaders (Máxima prioridad visual).
 
 ## 15. Renderizado Híbrido (Metadatos vs Datos de Negocio)

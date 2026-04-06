@@ -153,7 +153,7 @@ window.UI_SubgridBuilder = {
             const childPK = 'id_' + singularKey;
 
             // Delegación a SubgridState PURE Engine (Inyectado Híbridamente)
-            const rootDOMContext = modalContext || window.currentFormModal || document;
+            const rootDOMContext = modalContext || window.currentFormDrawer || document;
             const liveNivelInput = rootDOMContext.querySelector('ion-input[name="nivel_tipo"], ion-select[name="nivel_tipo"]');
             const val = liveNivelInput?.value;
             const liveLevel = (val !== undefined && val !== "") ? Number(val) : Number(data ? (data.nivel_tipo || 1) : 1);

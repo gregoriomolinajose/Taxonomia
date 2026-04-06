@@ -1,7 +1,7 @@
 /* ═══════════════════════════════════════════════════════
      THEME MANAGER $O(1)$ — JSON TOKENS HYDRATOR (Regla UI §14)
   ═══════════════════════════════════════════════════════ */
-  window.ThemeManager = {
+  window.ThemeManager = Object.assign(window.ThemeManager || {}, {
     tokens: {
       color: {
         interactive: {
@@ -89,7 +89,7 @@
       flattenObject(tokens);
     },
 
-    init: function() {
+    hydrateTokens: function() {
       this._hydrate(this.tokens);
     }
-  };
+  });

@@ -7,7 +7,14 @@
 const APP_SCHEMAS = {
   Unidad_Negocio: {
     metadata: { showInMenu: true, showInDashboard: false, order:1, iconName:'business-outline', color:'primary', label:'Unidades de Negocio', titleField:'nombre', idField:'id_unidad_negocio', fkField:null },
-    fields: []
+    primaryKey: "id_unidad_negocio",
+    fields: [
+      { name: "id_unidad_negocio", type: "hidden", primaryKey: true },
+      { name: "estado", type: "hidden", defaultValue: "Activo" },
+      { section: "Datos Generales", name: "nombre", type: "text", label: "Nombre de Unidad", required: true, width: 12 },
+      { section: "Datos Generales", name: "descripcion", type: "textarea", label: "Descripción", required: false, width: 12 },
+      { section: "Datos Generales", name: "responsable", type: "text", label: "Responsable", required: false, width: 12 }
+    ]
   },
   Portafolio: {
     metadata: { showInMenu: true, showInDashboard: false, order:2, iconName:'briefcase-outline', color:'primary', label:'Portafolios', titleField:'nombre', idField:'id_portafolio', fkField:null },
@@ -16,7 +23,14 @@ const APP_SCHEMAS = {
         parentEntity: null,
         parentField: null
     },
-    fields: []
+    primaryKey: "id_portafolio",
+    fields: [
+      { name: "id_portafolio", type: "hidden", primaryKey: true },
+      { name: "estado", type: "hidden", defaultValue: "Activo" },
+      { section: "Datos Generales", name: "nombre", type: "text", label: "Nombre de Portafolio", required: true, width: 12 },
+      { section: "Datos Generales", name: "director_id", type: "text", label: "Director", required: false, width: 6 },
+      { section: "Datos Generales", name: "vp_id", type: "text", label: "VP", required: false, width: 6 }
+    ]
   },
   Dominio: {
     metadata: { showInMenu: true, showInDashboard: false, order:3, iconName:'globe-outline', color:'secondary', label:'Dominios', titleField:'n0_es', idField:'id_dominio', fkField:null },
@@ -43,8 +57,8 @@ const APP_SCHEMAS = {
       { section: "Datos Generales", name: "nombre_ingles", type: "text", label: "Nombre (EN)", required: false, width: 6 },
       { section: "Datos Generales", name: "abreviacion", type: "text", label: "Abreviación", required: false, width: 6 },
       { section: "Datos Generales", name: "definicion", type: "textarea", label: "Definición", required: true, width: 12, showInList: false },
-      { section: "Topología (Grafo)", width: 12, name: "relaciones_padre", type: "relation", relationType: "padre", targetEntity: "Dominio", graphEntity: "Relacion_Dominios", valueField: "id_dominio", labelField: "n0_es", uiBehavior: "subgrid", label: "Dominio Padre (1:1)", isTemporalGraph: true, topologyCardinality: "1:N" },
-      { section: "Topología (Grafo)", width: 12,name: "relaciones_hijo", type: "relation", relationType: "hijo", targetEntity: "Dominio", graphEntity: "Relacion_Dominios", valueField: "id_dominio", labelField: "n0_es", uiBehavior: "subgrid", label: "Dominios Subordinados (1:N)", isTemporalGraph: true, topologyCardinality: "1:N" }
+      { section: "Topología (Grafo)", width: 12, name: "relaciones_padre", type: "relation", relationType: "padre", targetEntity: "Dominio", graphEntity: "Sys_Graph_Edges", valueField: "id_dominio", labelField: "n0_es", uiBehavior: "subgrid", label: "Dominio Padre (1:1)", isTemporalGraph: true, topologyCardinality: "1:N" },
+      { section: "Topología (Grafo)", width: 12,name: "relaciones_hijo", type: "relation", relationType: "hijo", targetEntity: "Dominio", graphEntity: "Sys_Graph_Edges", valueField: "id_dominio", labelField: "n0_es", uiBehavior: "subgrid", label: "Dominios Subordinados (1:N)", isTemporalGraph: true, topologyCardinality: "1:N" }
     ]
   },
   Grupo_Productos: {
@@ -103,21 +117,72 @@ const APP_SCHEMAS = {
     businessRules: [
       { trigger: 'onInput', action: 'sumPrefix', prefix: 'cant_', target: 'total_integrantes' }
     ],
-    fields: []
-  },
-  Persona: {
-    metadata: { showInMenu: true, showInDashboard: false, order:8, iconName:'person-outline', color:'medium', label:'Personas', titleField:'nombre_completo', idField:'id_persona', fkField:null },
-    primaryKey: "id_persona",
+    primaryKey: "id_equipo",
     fields: [
-      { name: "id_persona", type: "text", primaryKey: true, readonly: true, label: "ID Persona", width: 6 },
-      { name: "nombre_completo", type: "text", label: "Nombre Completo", required: true, width: 6 },
-      { name: "correo", type: "text", label: "Correo Corporativo", required: true, width: 6 },
-      { name: "id_rol", type: "select", label: "Rol de Autorización (ABAC)", required: false, width: 6, lookupSource: "getSysRolesOptions" }
+      { name: "id_equipo", type: "hidden", primaryKey: true },
+      { name: "estado", type: "hidden", defaultValue: "Activo" },
+      { section: "Datos Generales", name: "id_producto", type: "relation", relationType: "hijo", targetEntity: "Producto", label: "Producto", required: true, width: 6 },
+      { section: "Datos Generales", name: "nombre_equipo", type: "text", label: "Nombre de Equipo", required: true, width: 6 },
+      { section: "Datos Generales", name: "seudonimo", type: "text", label: "Seudónimo", required: false, width: 6 },
+      { section: "Datos Generales", name: "metodologia", type: "select", label: "Metodología", required: true, width: 6, options: ["Scrum", "Kanban", "Híbrido"] },
+      { section: "Datos Generales", name: "proposito", type: "textarea", label: "Propósito", required: false, width: 12 },
+      { section: "Líderes", name: "scrum_master_id", type: "text", label: "Scrum Master", required: false, width: 6 },
+      { section: "Líderes", name: "product_owner_id", type: "text", label: "Product Owner", required: false, width: 6 },
+      { section: "Integrantes", name: "cant_team_coach", type: "number", label: "Cant. Team Coach", required: false, width: 6 },
+      { section: "Integrantes", name: "total_integrantes", type: "number", label: "Total Integrantes", required: false, width: 6 }
     ]
   },
-  Relacion_Dominios: {
-    metadata: { showInMenu: false, order:9, iconName:'git-network-outline', color:'primary', label:'Conexiones Topológicas', titleField:'tipo_relacion', idField:'id_relacion', fkField:{ key:'id_nodo_padre', label:'Dominio' } },
-    fields: []
+  Persona: {
+    metadata: { showInMenu: true, showInDashboard: false, order:8, iconName:'person-outline', color:'medium', label:'Personas', titleField:'email', idField:'numero_empleado', fkField:null },
+    primaryKey: "numero_empleado",
+    topologyRules: {
+      topologyType: "JERARQUICA_ESTRICTA",
+      preventCycles: true,
+      scd2Enabled: true,
+      siblingCollisionCheck: false
+    },
+    fields: [
+      { name: "email", type: "email", label: "Correo Corporativo", required: true, width: 12, validators: ["regex:^[a-zA-Z0-9._%+-]+@(coppel\\.com|bancoppel\\.com|kairosds\\.com|nttdata\\.com)$"], triggers_workspace_resolve: true },
+      
+      { name: "separator_1", type: "divider", label: "Datos Personales y Contacto", width: 12 },
+      { name: "avatar", type: "avatar", label: "Fotografía", width: 12, readonly: true },
+      { name: "nombre", type: "text", label: "Nombre(s)", required: true, width: 6 },
+      { name: "apellidos", type: "text", label: "Apellidos", required: true, width: 6 },
+      { name: "telefono", type: "tel", label: "Teléfono", required: false, width: 6 },
+      { name: "numero_empleado", type: "number", primaryKey: true, label: "Número de Empleado", required: true, width: 12, validators: ["regex:^\\d{8}$"] },
+
+      
+      { name: "separator_2", type: "divider", label: "Datos Contractuales y Logísticos", width: 12 },
+      { name: "unidad_negocio", type: "lookup", lookupTarget: "Unidad_Negocio", label: "Unidad de Negocio", required: true, width: 12 },
+      { name: "departamento", type: "text", label: "Departamento", required: true, width: 6 },
+      { name: "centro_costo", type: "text", label: "Centro de Costos", required: true, width: 6 },
+      { name: "cargo", type: "text", label: "Cargo Oficial", required: true, width: 6 },
+      { name: "proveedor", type: "text", label: "Proveedor", required: true, width: 6, dependencies: {"showIf": {"field": "esquema", "value": "Externo"}} },
+      { name: "modalidad", type: "select", label: "Modalidad", options: ["Presencial", "Virtual", "Híbrido"], required: true, width: 6 },
+      { name: "ubicacion", type: "text", label: "Ubicación Geográfica", required: false, width: 6 },
+      { name: "herradura", type: "text", label: "Herradura", required: true, width: 6 },
+      { name: "esquema", type: "select", label: "Esquema Laboral", options: ["Interno", "Externo"], required: true, width: 6 },
+      
+      
+      { name: "separator_3", type: "divider", label: "Organización y Agilidad", width: 12 },
+      { name: "equipo", type: "lookup", lookupTarget: "Equipas", label: "Equipo Asignado", required: false, width: 12 },
+      { name: "rol_agil", type: "select", label: "Rol Ágil Asignado", options: ["Product Manager", "Product Owner", "Team Coach", "RTE", "Developer", "Tech Lead", "Tester", "N/A"], required: true, width: 6 },
+      { name: "porcentaje_asignacion", type: "select", label: "Asignación", options: ["Full Time", "Part Time", "Por Proyecto"], width: 6 },
+      { name: "separator_4", type: "divider", label: "Grafo de Liderazgo y Accesos", width: 12 },
+      { name: "lider_directo", type: "relation", relationType: "padre", targetEntity: "Persona", graphEntity: "Sys_Graph_Edges", valueField: "numero_empleado", labelField: "email", topologyCardinality: "1:N", isTemporalGraph: true, uiBehavior: "subgrid", label: "Líder Directo", required: false, width: 12 },
+      { name: "id_rol", type: "select", label: "Rol de Autorización", required: false, width: 12, lookupSource: "getSysRolesOptions" }
+    ]
+  },
+  Sys_Graph_Edges: {
+    metadata: { showInMenu: false, order:9, iconName:'git-network-outline', color:'primary', label:'Grafo Universal Temporal', titleField:'tipo_relacion', idField:'id_relacion', fkField:{ key:'id_nodo_padre', label:'Nodo Padre' } },
+    primaryKey: "id_relacion",
+    fields: [
+      { name: "id_relacion", type: "hidden", primaryKey: true },
+      { name: "estado", type: "hidden", defaultValue: "Activo" },
+      { name: "id_nodo_padre", type: "text", required: true, width: 6 },
+      { name: "id_nodo_hijo", type: "text", required: true, width: 6 },
+      { name: "tipo_relacion", type: "text", required: true, width: 6 }
+    ]
   },
   Sys_Roles: {
     metadata: { showInMenu: false, showInDashboard: false, order:90, iconName:'shield-half-outline', color:'danger', label:'Seguridad: Roles', titleField:'nombre_rol', idField:'id_rol', fkField:null },
@@ -167,8 +232,20 @@ const APP_SCHEMAS = {
     fields: [
       { name: "id_permiso", type: "text", primaryKey: true, readonly: true, label: "ID Permiso", width: 12 },
       { name: "id_rol", type: "select", label: "Rol Organizacional", required: true, width: 6, lookupSource: "getSysRolesOptions" },
-      { name: "schema_destino", type: "select", label: "Entidad del Sistema", required: true, width: 6, options: ["Portafolio", "Dominio", "Grupo_Productos", "Producto", "Capacidad", "Equipo", "Persona", "Relacion_Dominios", "Sys_Roles", "Sys_Permissions", "Config_Typography"] },
+      { name: "schema_destino", type: "select", label: "Entidad del Sistema", required: true, width: 6, options: ["Portafolio", "Dominio", "Grupo_Productos", "Producto", "Capacidad", "Unidad_Negocio", "Equipo", "Persona", "Sys_Graph_Edges", "Sys_Roles", "Sys_Permissions", "Config_Typography", "Config_Workspace"] },
       { name: "nivel_acceso", type: "select", label: "Nivel de Acceso", required: true, width: 12, options: ["ALL (Admin Total)", "OWNER_ONLY (Solo propios)", "MEMBER_ONLY (Siendo Miembro)", "READ_ONLY (Solo lectura)", "NONE (Denegado)"] }
+    ]
+  },
+  Config_Workspace: {
+    metadata: { showInMenu: false, showInDashboard: false, order:93, iconName:'business-outline', color:'primary', label:'Seguridad: Workspaces', titleField:'dominio_principal', idField:'id_workspace', fkField:null },
+    primaryKey: "id_workspace",
+    fields: [
+      { name: "id_workspace", type: "text", primaryKey: true, readonly: true, label: "ID Workspace", width: 12 },
+      { name: "estado", type: "hidden", defaultValue: "Activo" },
+      { section: "Datos de Enlace", name: "dominio_principal", type: "text", label: "Dominio Principal", required: true, width: 6, helpText: "Ejemplo: @coppel.com" },
+      { section: "Datos de Enlace", name: "alias_alternativos", type: "text", label: "Alias Soportados (CSV)", required: false, width: 6, helpText: "Ejemplo: @coppelmexico.com,@bancoppel.com" },
+      { section: "Integración OAuth", name: "auth_mode", type: "select", label: "Modo OAuth (M2M)", required: true, width: 12, options: ["USER_DEPLOYING (Global Default)", "SERVICE_ACCOUNT (Explicit)"], defaultValue: "USER_DEPLOYING (Global Default)" },
+      { section: "Seguridad Zero-Trust", name: "admin_contacto", type: "text", label: "Contacto IT (Email)", required: true, width: 12 }
     ]
   },
   _UI_CONFIG: {

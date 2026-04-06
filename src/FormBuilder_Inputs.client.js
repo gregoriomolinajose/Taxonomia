@@ -29,6 +29,13 @@
                     inputEl.readonly = true;
                 }
                 
+                if (field.validators) {
+                    inputEl.setAttribute('data-validators', JSON.stringify(field.validators));
+                }
+                if (field.triggers_workspace_resolve) {
+                    inputEl.setAttribute('data-workspace-trigger', 'true');
+                }
+                
                 if (field.helpText && field.type !== 'select') {
                     inputEl.setAttribute('helper-text', field.helpText);
                 }
@@ -77,19 +84,36 @@
             const inputEl = document.createElement('ion-select');
             inputEl.setAttribute('interface', window.innerWidth < 768 ? 'action-sheet' : 'popover');
             
-            if (field.options && Array.isArray(field.options)) {
-                field.options.forEach(opt => {
-                    const ionOption = document.createElement('ion-select-option');
-                    if (typeof opt === 'object' && opt !== null) {
-                        ionOption.value = opt.value;
-                        ionOption.textContent = opt.label;
-                    } else {
-                        ionOption.value = opt;
-                        ionOption.textContent = opt;
-                    }
-                    inputEl.appendChild(ionOption);
-                });
-            }
+            // Requerido firmemente para que CustomEvents atados a name="field.name" lo alcancen
+            inputEl.setAttribute('name', field.name);
+            
+            const renderOptions = (opts) => {
+                inputEl.innerHTML = '';
+                if (opts && Array.isArray(opts)) {
+                    opts.forEach(opt => {
+                        const ionOption = document.createElement('ion-select-option');
+                        if (typeof opt === 'object' && opt !== null) {
+                            ionOption.value = opt.value || opt.id_registro || 'N/A';
+                            ionOption.textContent = opt.label || opt.nombre || 'N/A';
+                        } else {
+                            ionOption.value = opt;
+                            ionOption.textContent = opt;
+                        }
+                        inputEl.appendChild(ionOption);
+                    });
+                }
+            };
+
+            renderOptions(field.options);
+
+            inputEl.addEventListener('LookupHydrated', (e) => {
+                const currentVal = inputEl.value; // Rescue binding state natively managed by Ionic
+                renderOptions(e.detail);
+                if (currentVal !== undefined && currentVal !== null) {
+                    inputEl.value = currentVal;
+                }
+            });
+
             _applyBaseAttributes(inputEl, field);
             
             if (field.helpText) {
@@ -115,6 +139,17 @@
             inputEl.setAttribute('readonly', 'true');
             _applyBaseAttributes(inputEl, field);
             return inputEl;
+        };
+
+        global.UI_Factory.populateSelectOptions = function(selectEl, dataArr, field) {
+            if (!Array.isArray(dataArr)) return;
+            
+            dataArr.forEach(d => {
+                const opt = document.createElement('ion-select-option');
+                opt.value = typeof d[field.valueField] !== 'undefined' ? d[field.valueField] : d.id_registro;
+                opt.textContent = `${opt.value} - ${typeof d[field.labelField] !== 'undefined' ? d[field.labelField] : d.nombre}`;
+                selectEl.appendChild(opt);
+            });
         };
 
         global.UI_Factory.buildChipInput = function(field) {
@@ -245,6 +280,47 @@
             this.BuilderRegistry[type] = builderFn;
         };
 
+        global.UI_Factory.buildAvatar = function(field) {
+            const container = document.createElement('div');
+            container.style.display = 'flex';
+            container.style.flexDirection = 'column';
+            container.style.alignItems = 'center';
+            container.style.justifyContent = 'center';
+            container.style.padding = 'var(--spacing-2)';
+            container.style.width = '100%';
+
+            const avatarWrapper = document.createElement('ion-avatar');
+            avatarWrapper.style.width = '72px';
+            avatarWrapper.style.height = '72px';
+            avatarWrapper.style.margin = '0 auto var(--spacing-2) auto';
+            avatarWrapper.style.border = '2px solid var(--ion-color-step-300)';
+
+            const img = document.createElement('img');
+            img.src = field.defaultValue || "https://ionicframework.com/docs/img/demos/avatar.svg";
+            avatarWrapper.appendChild(img);
+
+            const labelEl = document.createElement('ion-label');
+            labelEl.textContent = field.label;
+            labelEl.style.fontSize = 'var(--sys-font-small)';
+            labelEl.style.color = 'var(--ion-color-medium)';
+
+            const inputEl = document.createElement('ion-input');
+            inputEl.setAttribute('name', field.name);
+            inputEl.style.display = 'none';
+
+            inputEl.addEventListener('FormHydrated', (e) => {
+                if (e.detail) {
+                    img.src = e.detail;
+                }
+            });
+
+            container.appendChild(avatarWrapper);
+            container.appendChild(labelEl);
+            container.appendChild(inputEl);
+            
+            return container;
+        };
+
         // --- Core Builders Automatic Registration ---
         global.UI_Factory.registerBuilder('text', (f, e) => global.UI_Factory.buildInput(f, e));
         global.UI_Factory.registerBuilder('number', (f, e) => global.UI_Factory.buildInput(f, e));
@@ -252,6 +328,7 @@
         global.UI_Factory.registerBuilder('textarea', (f) => global.UI_Factory.buildTextarea(f));
         global.UI_Factory.registerBuilder('select', (f) => global.UI_Factory.buildSelect(f));
         global.UI_Factory.registerBuilder('divider', (f) => global.UI_Factory.buildDivider(f));
+        global.UI_Factory.registerBuilder('avatar', (f) => global.UI_Factory.buildAvatar(f));
         // Specialized builders registrations are now handled by isolated plugins
         // (UI_Component_RelationBuilder, UI_Component_DynamicList, etc.)
 

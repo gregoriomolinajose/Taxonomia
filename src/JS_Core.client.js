@@ -198,7 +198,8 @@
 
   /* ── DOMContentLoaded Bootstrap ─────────────────────── */
   document.addEventListener('DOMContentLoaded', function() {
-    if (window.ThemeManager) window.ThemeManager.init();
+    if (window.AuthManager) window.AuthManager.init();
+    if (window.ThemeManager && window.ThemeManager.initThemeManager) window.ThemeManager.initThemeManager();
     
     // [S24.5] Universal Event Delegator (Migrated from inline window literals)
     document.addEventListener('click', function(e) {

@@ -1,0 +1,1 @@
+Syntax error: SyntaxError: Unexpected identifier 'c' line: 2 file: Global_Config.gs

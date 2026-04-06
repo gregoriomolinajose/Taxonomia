@@ -121,7 +121,7 @@ function _updateGraphEdges(childId, newParentId, config) {
             if (h === "id_relacion") newEdge.push(rID);
             else if (h === "id_nodo_padre") newEdge.push(newParentId);
             else if (h === "id_nodo_hijo") newEdge.push(childId);
-            else if (h === "tipo_relacion") newEdge.push("Militar_Directa");
+            else if (h === "tipo_relacion") newEdge.push("SCD2_EDGE");
             else if (h === "peso_influencia") newEdge.push(1);
             else if (h === "valido_desde") newEdge.push(sysDate);
             else if (h === "valido_hasta") newEdge.push("");
@@ -277,26 +277,46 @@ const Engine_DB = {
 
                     if (orphansToProcess.length > 0) {
                         if (typeof Logger !== 'undefined') Logger.log(`[Diffing] Detectados ${orphansToProcess.length} huérfanos para desvincular.`);
-                        _Adapter_Sheets.upsertBatch(targetEntity, orphansToProcess, config);
+                        _Adapter_Sheets.upsertBatch(f.isTemporalGraph ? f.graphEntity : targetEntity, orphansToProcess, config);
                     }
 
-                    // Inyectar FK
-                    children.forEach(child => {
-                        child[fkField] = parentPK;
-                        
-                        // Si el registro es nuevo (no tiene PK), generarla
-                        if (!child[pkField]) {
-                            const prefix = targetEntity.substring(0, 4).toUpperCase();
-                            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-                            let suffix = '';
-                            for (let i = 0; i < 5; i++) suffix += chars.charAt(Math.floor(Math.random() * chars.length));
-                            child[pkField] = `${prefix}-${suffix}`;
+                    // Inyectar FK y Guardar Masivamente (Batch)
+                    if (f.isTemporalGraph) {
+                        const uuidFn = (typeof Utilities !== 'undefined') ? Utilities.getUuid : () => Math.random().toString(36).substring(2,10);
+                        const edgeRecords = children.map(child => {
+                            const newId = "RELA-" + uuidFn().substring(0, 8).toUpperCase();
+                            const edgePayload = {
+                                id_relacion: newId,
+                                id_nodo_padre: f.relationType === 'hijo' ? parentPK : (child[pkField] || child['id_registro']),
+                                id_nodo_hijo: f.relationType === 'hijo' ? (child[pkField] || child['id_registro']) : parentPK,
+                                tipo_relacion: f.name.toUpperCase(),
+                                valido_desde: child.valido_desde || new Date().toISOString(),
+                                valido_hasta: child.valido_hasta || "",
+                                es_version_actual: child.es_version_actual !== undefined ? child.es_version_actual : true,
+                                estado: "Activo"
+                            };
+                            return edgePayload;
+                        });
+                        if (config.useSheets && edgeRecords.length > 0) {
+                            _Adapter_Sheets.upsertBatch(f.graphEntity, edgeRecords, config);
                         }
-                    });
+                    } else {
+                        children.forEach(child => {
+                            child[fkField] = parentPK;
+                            
+                            // Si el registro es nuevo (no tiene PK), generarla
+                            if (!child[pkField]) {
+                                const prefix = targetEntity.substring(0, 4).toUpperCase();
+                                const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+                                let suffix = '';
+                                for (let i = 0; i < 5; i++) suffix += chars.charAt(Math.floor(Math.random() * chars.length));
+                                child[pkField] = `${prefix}-${suffix}`;
+                            }
+                        });
 
-                    // Guardar masivamente (Batch)
-                    if (config.useSheets) {
-                        _Adapter_Sheets.upsertBatch(targetEntity, children, config);
+                        if (config.useSheets) {
+                            _Adapter_Sheets.upsertBatch(targetEntity, children, config);
+                        }
                     }
                     if (config.useCloudDB) {
                         // Omitido para brevedad o implementado si el adapter soporta batch
@@ -480,7 +500,7 @@ const Engine_DB = {
                     id_relacion: rID,
                     id_nodo_padre: e.id_nodo_padre,
                     id_nodo_hijo: e.id_nodo_hijo,
-                    tipo_relacion: "Militar_Directa",
+                    tipo_relacion: e.tipo_relacion || "SCD2_EDGE",
                     peso_influencia: 1,
                     valido_desde: sysDate,
                     valido_hasta: "",

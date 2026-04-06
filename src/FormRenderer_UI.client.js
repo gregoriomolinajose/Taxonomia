@@ -69,41 +69,39 @@
                 window._lastSection = null; // Reset de secciones UI
             }
             
-            // Construcción del Modal de la Vista de Formularios (Keyboard-Aware Fix)
-            const modal = document.createElement('ion-modal');
-            if (!global.ModalStackController.push(modal)) {
+            // Construcción del Drawer de la Vista de Formularios (S25.2 Architecture)
+            const modal = document.createElement('div');
+            if (!global.DrawerStackController.push(modal)) {
                 return false; // Abort topological creation (Max Depth Guard triggered)
             }
             
             // Inyectar callback opcional (In-line Creation)
             modal.__onSaveSuccessFallback = injectedCallback;
 
-            // Header Nativo del Modal
-            const header = document.createElement('ion-header');
-            const toolbar = document.createElement('ion-toolbar');
+            // Header Custom del DrawerS25.2
+            const header = document.createElement('div');
+            header.className = 'drawer-header';
             
-            const title = document.createElement('ion-title');
+            const title = document.createElement('h2');
+            title.className = 'drawer-title';
             title.textContent = `Taxonomia: ${window.formatEntityName(entityName)}`;
             
-            const buttons = document.createElement('ion-buttons');
-            buttons.setAttribute('slot', 'end');
-            
             const closeBtn = document.createElement('ion-button');
-            closeBtn.textContent = 'Cerrar';
+            closeBtn.setAttribute('fill', 'clear');
+            closeBtn.setAttribute('color', 'medium');
+            closeBtn.innerHTML = '<ion-icon slot="icon-only" name="close-outline"></ion-icon>';
             closeBtn.addEventListener('click', () => {
                 if(window.AppEventBus) { window.AppEventBus.publish('MODAL::CLOSE_REQUEST'); } 
                 else if(window._closeTopModal) { window._closeTopModal(); }
             });
             
-            buttons.appendChild(closeBtn);
-            toolbar.appendChild(title);
-            toolbar.appendChild(buttons);
-            header.appendChild(toolbar);
+            header.appendChild(title);
+            header.appendChild(closeBtn);
             modal.appendChild(header);
 
-            // Reemplazamos 'container' por el Content Nativo
+            // Contenedor interno scrollable del Drawer con soporte nativo para móvil
             const container = document.createElement('ion-content');
-            container.className = 'ion-padding';
+            container.className = 'drawer-content ion-padding';
             modal.appendChild(container);
 
             const schemas = global.APP_SCHEMAS;
@@ -148,34 +146,18 @@
 
             // --- DEPENDENCY RESOLVER: Abstracted to FormEngine_Resolvers ---
             if (window.FormEngine_Resolvers) {
-                await window.FormEngine_Resolvers.hydrateLookupSources(fields);
+                // S25.3: Pure UX Master-Detail (Non-Blocking Hydration)
+                // Lanza la hidratación en background sin trabar la UI.
+                window.FormEngine_Resolvers.hydrateLookupSources(fields).catch(e => console.warn(e));
             } else {
                 console.warn("[FormEngine] ALERTA: FormEngine_Resolvers no está cargado.");
             }
 
 
 
-            // Referencias al Split-Pane Layout
-            const headerTitle = document.getElementById('main-header-title');
-            const backBtn = document.getElementById('global-back-btn');
-
-            if (headerTitle) headerTitle.textContent = (global.currentEditId ? "Editar: " : "Nuevo: ") + window.formatEntityName(entityName);
-            if (backBtn) {
-                backBtn.classList.remove('ion-hide');
-                // Enrutamiento de la Flecha de Retroceso (Back Button) -> DataView
-                backBtn.onclick = function() {
-                    // Limpieza proactiva del formulario actual
-                    window.DOM.clear(container);
-                    if (window.AppEventBus) {
-                        window.AppEventBus.publish('NAV::CHANGE', {viewType: 'dataview', entityKey: entityName});
-                    }
-                };
-            }
-
-            // --- NUEVO: Switch Sidebar a modo Formulario ---
-            if (window.UI_Router && typeof window.UI_Router.showFormSidebar === 'function') {
-                window.UI_Router.showFormSidebar(entityName);
-            }
+            // --- REFERENCIAS AL MAIN SHELL ELIMINADAS (UX Master-Detail Puro) ---
+            // El Drawer ahora flota a la derecha de forma independiente. No manipulamos
+            // ni el sidebar principal ni el header central para no romper la navegación.
 
             // Reparación Crítica: Instanciar variable solicitada por el Stepper
             const sidebarList = document.getElementById('sidebarList');
@@ -186,22 +168,13 @@
                 console.error("[FormEngine] No se encontró el contenedor #sidebarList en el DOM.");
                 return;
             }
-
-            const card = document.createElement('ion-card');
-            card.style.borderRadius = 'var(--rounded-md)'; // Redondeo Figma
-            card.style.boxShadow = 'var(--shadow-floating)'; // Sombra suave Figma
-
-            const cardContent = document.createElement('ion-card-content');
-            cardContent.style.padding = 'var(--spacing-6)';
             
             // S21.1: Optimistic Locking Hidden Metadata
             const versionInput = document.createElement('input');
             versionInput.type = 'hidden';
             versionInput.name = '_version';
             versionInput.value = (data && data._version) ? data._version : 1;
-            cardContent.appendChild(versionInput);
-            
-            card.appendChild(cardContent);
+            container.appendChild(versionInput);
 
             // S14.1: Delegación SRP a UI_FormStepper
             const btnPrev = document.createElement('ion-button');
@@ -248,7 +221,7 @@
             
             const stepper = new window.UI_FormStepper({
                 steps: steps,
-                cardContent: cardContent,
+                cardContent: container, // Utilizando el drawer-content puro en vez del card
                 sidebarSteps: sidebarSteps,
                 btnPrev: btnPrev,
                 btnNext: btnNext,
@@ -326,25 +299,22 @@
                 }
             }
 
-            // --- PATRÓN MODAL: ION-FOOTER NATIVO (Keyboard-Aware) ---
-            const footerContainer = document.createElement('ion-footer');
-            footerContainer.className = 'ion-no-border';
+            // --- PATRÓN DRAWER: FOOTER NATIVO (Keyboard-Aware) ---
+            const footerContainer = document.createElement('div');
+            footerContainer.className = 'drawer-footer';
             
             const btnGrid = document.createElement('ion-grid');
-            btnGrid.style.padding = 'var(--spacing-2) var(--spacing-4)';
+            btnGrid.style.padding = 'var(--spacing-1) var(--spacing-2)';
             const btnRow = document.createElement('ion-row');
             btnRow.style.alignItems = 'center';
             
             const colLeft = document.createElement('ion-col');
             colLeft.setAttribute('size', '6');
-            colLeft.classList.remove('ion-hide');
-            colLeft.style.justifyContent = 'flex-start';
+            colLeft.className = 'drawer-footer-left';
             
             const colRight = document.createElement('ion-col');
             colRight.setAttribute('size', '6');
-            colRight.classList.remove('ion-hide');
-            colRight.style.justifyContent = 'flex-end';
-            colRight.style.gap = 'var(--spacing-3)';
+            colRight.className = 'drawer-footer-right';
 
             // Buttons fall down from Stepper init
             colLeft.appendChild(btnPrev);
@@ -387,8 +357,6 @@
                 submitBtn: submitBtn,
                 modal: modal
             });
-
-            container.appendChild(card);
             
             // --- Metadata-Driven Dependency Injection (Zero-Touch UI) ---
             if (window.UI_FormDependencies) {
@@ -397,8 +365,8 @@
             // ------------------------------------------------------------
 
             modal.appendChild(footerContainer);
-            document.body.appendChild(modal);
-            await window.PresentSafe(modal);
+            // El insertion del Drawer ya fue manejado por DrawerStackController.push
+            // de forma síncrona arriba, no requiere document.body.appendChild.
         };
 
         /**
@@ -450,15 +418,58 @@
 
             console.log("[FormEngine] Registro encontrado:", record);
 
-            // 3. Obtener registro hidratado desde el Servidor (Regla 15)
-            const loading = document.createElement('ion-loading');
-            loading.message = 'Hidratando registro...';
-            document.body.appendChild(loading);
-            await window.PresentSafe(loading);
+            // [UX] Master-Detail Uninterrupted Swapping
+            if (global.DrawerStackController && global.DrawerStackController.getDepth() > 0) {
+                global.DrawerStackController.clearAllSync();
+            }
+
+            // 3. Activar modo edición Inmediato
+            global.currentEditId = id;
+            console.log("[FormEngine] currentEditId asignado:", global.currentEditId);
+
+            // 4. Renderizar el formulario base de la entidad AL INSTANTE (0ms) usando caché local
+            await global.renderForm(entityName, record);
+
+            // 5. Aplicar Skeleton/Loading local al Drawer mientras hidrata en background
+            const formContainer = global.currentFormDrawer ? global.currentFormDrawer.querySelector('.drawer-content') : null;
+            let skeletonOverlay = null;
+            
+            if (formContainer) {
+                formContainer.style.position = 'relative';
+                
+                skeletonOverlay = document.createElement('div');
+                skeletonOverlay.style.position = 'absolute';
+                skeletonOverlay.style.top = '0';
+                skeletonOverlay.style.left = '0';
+                skeletonOverlay.style.right = '0';
+                skeletonOverlay.style.bottom = '0';
+                skeletonOverlay.style.backgroundColor = 'var(--ion-background-color, #fff)';
+                skeletonOverlay.style.zIndex = '999';
+                skeletonOverlay.style.padding = '20px';
+                
+                let fakeHtml = '';
+                for(let i=0; i<6; i++) {
+                    fakeHtml += `
+                        <div style="margin-bottom: 24px;">
+                            <ion-skeleton-text animated style="width: 30%; height: 14px; margin-bottom: 8px; border-radius: 4px;"></ion-skeleton-text>
+                            <ion-skeleton-text animated style="width: 100%; height: 44px; border-radius: 8px;"></ion-skeleton-text>
+                        </div>
+                    `;
+                }
+                skeletonOverlay.innerHTML = fakeHtml;
+                formContainer.appendChild(skeletonOverlay);
+            }
+
+            // Actualizar Título del Drawer
+            if (global.currentFormDrawer) {
+                const modalTitle = global.currentFormDrawer.querySelector('.drawer-title') || global.currentFormDrawer.querySelector('ion-title');
+                if (modalTitle) modalTitle.textContent = "Editar: " + window.formatEntityName(entityName);
+            }
 
             let fullRecord = record;
             try {
                 try {
+                    // Hidratación Background Silenciosa
                     const rawRes = await window.DataAPI.call('API_Universal_Router', 'read', entityName, { id: id });
                     const res = typeof rawRes === 'string' ? JSON.parse(rawRes) : rawRes;
                     if (res && res.status === 'success') {
@@ -472,26 +483,15 @@
             } catch (e) {
                 console.warn("[FormEngine] Falló hidratación profunda, usando cache local:", e);
             } finally {
-                loading.dismiss();
-            }
-
-            // 4. Renderizar el formulario base de la entidad
-            await global.renderForm(entityName, fullRecord);
-
-            // 5. Activar modo edición
-            global.currentEditId = id;
-            console.log("[FormEngine] currentEditId asignado:", global.currentEditId);
-
-            const headerTitle = document.getElementById('main-header-title');
-            if (headerTitle) headerTitle.textContent = "Editar: " + window.formatEntityName(entityName);
-
-            if (global.currentFormModal) {
-                const modalTitle = global.currentFormModal.querySelector('ion-title');
-                if (modalTitle) modalTitle.textContent = "Editar: " + window.formatEntityName(entityName);
+                if (skeletonOverlay) {
+                    skeletonOverlay.style.transition = 'opacity 0.25s ease';
+                    skeletonOverlay.style.opacity = '0';
+                    setTimeout(() => skeletonOverlay.remove(), 250);
+                }
             }
 
             // 5. Pre-llenado de campos (Directiva 3.c)
-            const container = global.currentFormModal || document.getElementById('app-container');
+            const container = global.currentFormDrawer || document.getElementById('app-container');
             const inputs = container.querySelectorAll('ion-input, ion-textarea, ion-select, input[type="hidden"]');
 
             // =========================================================================================

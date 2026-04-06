@@ -19,11 +19,12 @@ describe('FormEngine UI Nativo Browser (Vitest SPA)', () => {
         }
         
         // Mock Ionic UI Components required by FormEngine
-        window.ModalStackController = {
+        window.DrawerStackController = {
             push: vi.fn().mockReturnValue(true),
             getDepth: vi.fn().mockReturnValue(0),
             closeTop: vi.fn()
         };
+        window.ModalStackController = window.DrawerStackController;
         
         window.PresentSafe = vi.fn().mockResolvedValue();
         
@@ -75,7 +76,7 @@ describe('FormEngine UI Nativo Browser (Vitest SPA)', () => {
         await window.renderForm('Test_Entity');
         
         // Assertions natively evaluated in Chromium
-        const modal = document.querySelector('ion-modal');
+        const modal = document.querySelector('.drawer-panel');
         expect(modal).not.toBeNull();
         
         // Verificar presencia del Input Visible
@@ -89,7 +90,7 @@ describe('FormEngine UI Nativo Browser (Vitest SPA)', () => {
 
     it('B. Valida que FormValidators reaccione a campos required (UI_Validators)', async () => {
         await window.renderForm('Test_Entity');
-        const modal = document.querySelector('ion-modal');
+        const modal = document.querySelector('.drawer-panel');
         
         // Simulate missing requirement trigger
         const inputNombre = modal.querySelector('ion-input[name="nombre"]');

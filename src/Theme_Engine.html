@@ -4,7 +4,7 @@
      Encargado de modificar las variables nativas CSS de la App.
   ═══════════════════════════════════════════════════════ */
 
-  window.ThemeManager = {
+  window.ThemeManager = Object.assign(window.ThemeManager || {}, {
     themeIcons: {
       'light': 'moon-outline',
       'dark': 'sunny-outline',
@@ -16,9 +16,13 @@
     },
     currentTheme: 'light',
 
-    init: function() {
+    initThemeManager: function() {
       var savedTheme = localStorage.getItem('app_theme') || 'light';
       this.setTheme(savedTheme);
+      // Disparar las variables in-memory rehidratadas (M3 Theme System)
+      if (typeof this.hydrateTokens === 'function') {
+        this.hydrateTokens();
+      }
     },
 
     setTheme: function(themeName) {
@@ -71,5 +75,5 @@
       if (!icon) return;
       icon.name = this.themeIcons[this.currentTheme] || 'moon-outline';
     }
-  };
+  });
 </script>
