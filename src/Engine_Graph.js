@@ -196,20 +196,35 @@ const Engine_Graph = {
             if (typeof Logger !== 'undefined') Logger.log(`[Engine_Graph] Temporal edges closed: ${edgesToClose.length} orphans.`);
         }
         
-        // 3. Process Active Edges (Open validity for new ones)
+        // 3. Diff O(1) para Novedades (Insertions)
+        const activeHash = new Set();
+        (currentActiveEdges || []).forEach(e => {
+            if (e.es_version_actual !== false) {
+                // Ensure strings for strict matching
+                activeHash.add(String(e.id_nodo_padre) + '::' + String(e.id_nodo_hijo));
+            }
+        });
+
+        const edgesToInsert = [];
         if (incomingEdges && incomingEdges.length > 0) {
             incomingEdges.forEach(child => {
-                if (!child.valido_desde) {
-                    child.valido_desde = sysDate;
-                    child.valido_hasta = "";
-                    child.es_version_actual = true;
-                    child.created_at = sysDate;
-                    child.created_by = "UI_SUBGRID";
+                const pId = String(child.id_nodo_padre);
+                const cId = String(child.id_nodo_hijo);
+                const isMatch = activeHash.has(pId + '::' + cId);
+                
+                if (!isMatch) {
+                    // Only stamp validity if exactly missing
+                    child.valido_desde = child.valido_desde || sysDate;
+                    child.valido_hasta = child.valido_hasta || "";
+                    child.es_version_actual = child.es_version_actual !== undefined ? child.es_version_actual : true;
+                    child.created_at = child.created_at || sysDate;
+                    child.created_by = child.created_by || "UI_SUBGRID";
+                    edgesToInsert.push(child);
                 }
             });
         }
         
-        return edgesToClose;
+        return { edgesToClose, edgesToInsert };
     },
 
     /**

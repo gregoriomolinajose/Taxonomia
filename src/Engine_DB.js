@@ -232,11 +232,32 @@ const Engine_DB = {
                         currentActiveEdgesForNode = activeGraph.filter(e => String(e.id_nodo_padre).trim() === String(tempParentPK).trim() && e.tipo_relacion === edgeName);
                     }
                     
-                    const normalClose = Engine_Graph.patchSCD2Edges(children, currentActiveEdgesForNode, f.topologyCardinality) || [];
-                    const stealClose = Engine_Graph.patchSCD2Edges([], stolenEdges, f.topologyCardinality) || [];
+                    const targetEntity = f.targetEntity;
+                    const schema = (typeof APP_SCHEMAS !== 'undefined') ? APP_SCHEMAS[targetEntity] : null;
+                    let childPkField = schema && schema.primaryKey ? schema.primaryKey : null;
+                    
+                    if (!childPkField) {
+                        const tableKey = targetEntity.toLowerCase();
+                        const singularKey = tableKey.endsWith('s') ? tableKey.slice(0, -1) : (tableKey.endsWith('es') ? tableKey.slice(0, -2) : tableKey);
+                        childPkField = 'id_' + singularKey;
+                    }
+
+                    const incomingEdgesMock = children.map(child => ({
+                        ...child,
+                        id_nodo_padre: f.relationType === 'hijo' ? tempParentPK : (child[childPkField] || child['id_registro']),
+                        id_nodo_hijo: f.relationType === 'hijo' ? (child[childPkField] || child['id_registro']) : tempParentPK,
+                        tipo_relacion: edgeName
+                    }));
+
+                    
+                    const normalResult = Engine_Graph.patchSCD2Edges(incomingEdgesMock, currentActiveEdgesForNode, f.topologyCardinality) || {};
+                    const normalClose = normalResult.edgesToClose || [];
+                    const stealResult = Engine_Graph.patchSCD2Edges([], stolenEdges, f.topologyCardinality) || {};
+                    const stealClose = stealResult.edgesToClose || [];
                     
                     precalculatedGraphContext[f.name] = { 
                         orphansToProcess: normalClose.concat(stealClose),
+                        edgesToInsert: normalResult.edgesToInsert || [],
                         precalculatedEdgesForNode: currentActiveEdgesForNode
                     };
                 }
@@ -314,7 +335,12 @@ const Engine_DB = {
                     // Inyectar FK y Guardar Masivamente (Batch)
                     if (f.isTemporalGraph) {
                         const uuidFn = (typeof Utilities !== 'undefined') ? Utilities.getUuid : () => Math.random().toString(36).substring(2,10);
-                        const edgeRecords = children.map(child => {
+                        
+                        // Idempotent Guard: Diff already calculated in Engine_Graph (O(1))
+                        const newChildrenToInsert = precalculatedGraphContext[f.name] ? precalculatedGraphContext[f.name].edgesToInsert || [] : [];
+
+
+                        const edgeRecords = newChildrenToInsert.map(child => {
                             const newId = "RELA-" + uuidFn().substring(0, 8).toUpperCase();
                             const edgePayload = {
                                 id_relacion: newId,
@@ -328,6 +354,8 @@ const Engine_DB = {
                             };
                             return edgePayload;
                         });
+                        
+                        if (typeof Logger !== 'undefined') Logger.log(`[Diffing] Ignorados ${children.length - newChildrenToInsert.length} nodos idénticos. Insertando ${newChildrenToInsert.length} aristas nuevas.`);
                         if (config.useSheets && edgeRecords.length > 0) {
                             _Adapter_Sheets.upsertBatch(f.graphEntity, edgeRecords, config);
                         }

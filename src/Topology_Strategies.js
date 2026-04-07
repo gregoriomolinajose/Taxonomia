@@ -7,14 +7,17 @@ const strategy_1toN = function(incomingEdges, currentActiveEdges) {
     if (!Array.isArray(incomingEdges) || incomingEdges.length === 0) return { edgesToClose: [] };
 
     const incomingChildSet = new Set();
+    const payloadMap = new Map();
     incomingEdges.forEach(e => {
-        const childId = String(e.id_nodo_hijo || '');
+        const childId = String(e.id_nodo_hijo ?? '');
+        const parentId = String(e.id_nodo_padre ?? '');
         if (!childId) return;
         
         if (incomingChildSet.has(childId)) {
-            throw new Error("La regla de topología piramidal prohíbe relaciones cíclicas (no puedes asignar a un padre/ancestro como hijo)");
+            throw new Error("Topología 1:N violada en Payload: El mismo nodo hijo ('" + childId + "') fue proveído múltiples veces hacia distintos padres en una sola petición de guardado masivo.");
         }
         incomingChildSet.add(childId);
+        payloadMap.set(childId, parentId);
     });
 
     if (!Array.isArray(currentActiveEdges) || currentActiveEdges.length === 0) return { edgesToClose: [] };
@@ -27,9 +30,18 @@ const strategy_1toN = function(incomingEdges, currentActiveEdges) {
     };
     
     // Auto-Close SCD-2 for 1:N relations (Hermetic scope tightly bound to O(1) Set)
-    const actives = getActive(currentActiveEdges).filter(e => 
-        incomingChildSet.has(String(e.id_nodo_hijo || ''))
-    );
+    const actives = getActive(currentActiveEdges).filter(e => {
+        const childId = String(e.id_nodo_hijo ?? '');
+        const parentId = String(e.id_nodo_padre ?? '');
+        
+        // Only process children actively declared in the payload
+        if (!incomingChildSet.has(childId)) return false;
+        
+        // Idempotent Guard: Do not close the edge if it already points exactly to the incoming parent
+        if (payloadMap.has(childId) && payloadMap.get(childId) === parentId) return false;
+        
+        return true;
+    });
     return { edgesToClose: actives };
 };
 

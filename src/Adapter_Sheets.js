@@ -135,7 +135,7 @@ const Adapter_Sheets = {
 
             Logger.log(`Adapter_Sheets.upsert: ¿Se encontró el ID?: Sí. Fila: ${foundRowIndex}`);
             sheet.getRange(foundRowIndex, 1, 1, rowToInsert.length).setValues([rowToInsert]);
-            return { status: 'success', action: 'updated', pk: primaryKeyField, val: primaryKeyValue };
+            return { status: 'success', action: 'updated', pk: primaryKeyField, val: primaryKeyValue, version: payload.version };
         } else {
             // Insertar (Create)
             if (idxCreatedAt > -1 && (!rowToInsert[idxCreatedAt] || String(rowToInsert[idxCreatedAt]).trim() === '')) {
@@ -149,7 +149,7 @@ const Adapter_Sheets = {
 
             Logger.log("Adapter_Sheets.upsert: ¿Se encontró el ID?: No. Creando nueva fila para idempotencia...");
             sheet.getRange(sheet.getLastRow() + 1, 1, 1, rowToInsert.length).setValues([rowToInsert]);
-            return { status: 'success', action: 'created', pk: primaryKeyField, val: primaryKeyValue };
+            return { status: 'success', action: 'created', pk: primaryKeyField, val: primaryKeyValue, version: payload.version };
         }
     },
 
@@ -232,7 +232,8 @@ const Adapter_Sheets = {
                 if (idxUpdatedAt > -1) rowToInsert[idxUpdatedAt] = currentTimestamp;
                 if (idxUpdatedBy > -1) rowToInsert[idxUpdatedBy] = currentUser;
                 originalData[rowIndex] = rowToInsert;
-                results.push({ status: 'success', action: 'updated', pk: primaryKeyField, val: primaryKeyValue });
+                sheet.getRange(rowIndex + 1, 1, 1, normalizedHeaders.length).setValues([rowToInsert]);
+                results.push({ status: 'success', action: 'updated', pk: primaryKeyField, val: primaryKeyValue, version: payload.version });
             } else {
                 for (let i = 0; i < normalizedHeaders.length; i++) {
                     const h = normalizedHeaders[i];
@@ -249,7 +250,7 @@ const Adapter_Sheets = {
                 
                 originalData.push(rowToInsert);
                 idToIndexMap.set(String(primaryKeyValue), originalData.length - 1);
-                results.push({ status: 'success', action: 'created', pk: primaryKeyField, val: primaryKeyValue });
+                results.push({ status: 'success', action: 'created', pk: primaryKeyField, val: primaryKeyValue, version: payload.version });
             }
         }
         
@@ -415,7 +416,8 @@ const Adapter_Sheets = {
         for (let j = 0; j < headers.length; j++) {
             if (includeAudit || !auditFields.includes(headers[j])) {
                 visibleHeaderIndices.push(j);
-                filteredHeaders.push(headers[j]);
+                const finalHeader = headers[j] === 'version' ? '_version' : headers[j];
+                filteredHeaders.push(finalHeader);
             }
         }
 
@@ -424,7 +426,6 @@ const Adapter_Sheets = {
         if (data.length < 2) {
             return { headers: filteredHeaders, rows: [] };
         }
-
 
         const rows = [];
         const isTuples = (format === 'tuples');

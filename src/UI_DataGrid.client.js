@@ -188,9 +188,14 @@
                 
                 visibleCols.forEach((col) => {
                     const td = document.createElement('td');
-                    const val = typeof row[col.key] !== "undefined" ? String(row[col.key]) : '';
-                    td.title = val;
-                    td.appendChild(this._formatValueNode(col.key, row[col.key], col));
+                    let rawVal = row[col.key];
+
+                    // --- JIT Relation Resolver (Extracted) ---
+                    rawVal = this._resolveLogicalValue(col.key, rawVal, id);
+                    
+                    const valStr = typeof rawVal !== "undefined" ? String(rawVal) : '';
+                    td.title = valStr;
+                    td.appendChild(this._formatValueNode(col.key, rawVal, col));
                     tr.appendChild(td);
                 });
                 
@@ -290,10 +295,9 @@
                 // S24.8: Dynamic Mapping for Cards - Solo itera las expuestas como 'visible: true' por el Popover
                 const visibleKeys = this.cfg.columns.filter(c => c.visible).map(c => c.key);
                 
-                const attrKeys = Object.keys(row).filter(k => {
+                const attrKeys = visibleKeys.filter(k => {
                     return k !== meta.titleField && k !== meta.idField &&
-                           !(meta.fkField && k === meta.fkField.key) &&
-                           visibleKeys.includes(k);
+                           !(meta.fkField && k === meta.fkField.key);
                 }).slice(0, MAX_ATTRS);
                 
                 attrKeys.forEach(k => {
@@ -306,7 +310,12 @@
                     
                     const attrVal = document.createElement('span');
                     attrVal.className = 'dv-card-item-attr-val';
-                    attrVal.appendChild(this._formatValueNode(k, row[k], this.cfg.columns.find(c => c.key === k)));
+                    
+                    let rawVal = row[k];
+                    // --- JIT Relation Resolver (Extracted) ---
+                    rawVal = this._resolveLogicalValue(k, rawVal, idStr);
+
+                    attrVal.appendChild(this._formatValueNode(k, rawVal, this.cfg.columns.find(c => c.key === k)));
                     
                     attrItem.appendChild(attrKey);
                     attrItem.appendChild(attrVal);
@@ -431,6 +440,44 @@
             const slug = this._slugify(String(value));
             const map = (window.APP_SCHEMAS && window.APP_SCHEMAS._UI_CONFIG && window.APP_SCHEMAS._UI_CONFIG.badgeMap) || {};
             return `dv-badge dv-badge-${map[slug] || 'default'}`;
+        },
+
+        _resolveLogicalValue: function(key, rawVal, currentPK) {
+            const isFalsyButNotZero = (rawVal === undefined || rawVal === null || rawVal === '');
+            if (!isFalsyButNotZero) return rawVal;
+
+            if (!window.APP_SCHEMAS || !window.APP_SCHEMAS[this.cfg.entityName]) return rawVal;
+            
+            const schema = window.APP_SCHEMAS[this.cfg.entityName];
+            const fieldMeta = (schema.fields || []).find(f => f.name === key);
+            
+            if (!fieldMeta || fieldMeta.type !== 'relation') return rawVal;
+            
+            // 1. Resolve Graph Edge pointer if it's a Temporal Graph edge
+            let resolvedVal = rawVal;
+            if (fieldMeta.isTemporalGraph && window.__APP_CACHE__ && window.__APP_CACHE__['Sys_Graph_Edges']) {
+                const activeEdges = window.__APP_CACHE__['Sys_Graph_Edges'].filter(e => e.es_version_actual !== false);
+                const edgeName = (fieldMeta.graphEdgeType || fieldMeta.name).toUpperCase();
+                
+                if (fieldMeta.relationType === 'padre') {
+                    const match = activeEdges.find(e => String(e.id_nodo_hijo) === String(currentPK) && e.tipo_relacion === edgeName);
+                    if (match) resolvedVal = match.id_nodo_padre;
+                } else {
+                    const match = activeEdges.find(e => String(e.id_nodo_padre) === String(currentPK) && e.tipo_relacion === edgeName);
+                    if (match) resolvedVal = match.id_nodo_hijo; // (Soporte básico escalable 1:N -> pinta 1er Match)
+                }
+            }
+            
+            // 2. Transmute the physical ID explicitly to the schema's labelField
+            if (resolvedVal && window.__APP_CACHE__ && window.__APP_CACHE__[fieldMeta.targetEntity]) {
+                const targetTable = window.__APP_CACHE__[fieldMeta.targetEntity];
+                const targetRow = targetTable.find(tr => String(tr[fieldMeta.valueField || 'id_registro']) === String(resolvedVal));
+                if (targetRow && targetRow[fieldMeta.labelField]) {
+                    resolvedVal = targetRow[fieldMeta.labelField];
+                }
+            }
+            
+            return resolvedVal;
         },
 
         _formatValueNode: function(key, value, explicitColConfig) {

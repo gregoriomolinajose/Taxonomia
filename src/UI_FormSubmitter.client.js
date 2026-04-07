@@ -168,7 +168,32 @@ window.UI_FormSubmitter = class UI_FormSubmitter {
         window.currentEditId = null;
         this._internalRetryId = null; // Liberar caché de reintentos
 
-        if (window.__APP_CACHE__ && window.__APP_CACHE__.nestedData) window.__APP_CACHE__.nestedData = {};
+        if (window.__APP_CACHE__) {
+            if (window.__APP_CACHE__.nestedData) window.__APP_CACHE__.nestedData = {};
+            // Re-hidratación Asíncrona del Grafo O(1): Evitamos destruir el caché base y en su lugar
+            // pedimos al backend los nuevos edges silenciosamente para no bloquear la Interfaz UI.
+            if (window.DataAPI && window.DataAPI.call) {
+                window.DataAPI.call('getInitialPayload', 'Sys_Graph_Edges').then(payload => {
+                    const res = typeof payload === 'string' ? JSON.parse(payload) : payload;
+                    if (res && res.data && res.data.rows && res.data.headers) {
+                        const headers = res.data.headers;
+                        const edgesObj = res.data.rows.map(tuple => {
+                            const obj = {};
+                            headers.forEach((h, i) => obj[h] = tuple[i]);
+                            return obj;
+                        });
+                        window.__APP_CACHE__['Sys_Graph_Edges'] = edgesObj;
+                        window.__APP_CACHE__['DB_Sys_Graph_Edges'] = edgesObj;
+                        console.log('[Cache] Sys_Graph_Edges re-hidratado silenciosamente tras guardado.');
+                    }
+                }).catch(err => console.warn('[Cache] Falla al re-hidratar aristas en 2do plano:', err));
+            }
+            
+            // Invalida el caché intermedio de Peticiones Asincronas de Formularios
+            if (window.FormEngine_Resolvers && typeof window.FormEngine_Resolvers.invalidateCache === 'function') {
+                window.FormEngine_Resolvers.invalidateCache();
+            }
+        }
 
         // Obtener callback si es un Modal anidado (In-line Creation)
         let inlineCallback = null;
@@ -225,7 +250,14 @@ window.UI_FormSubmitter = class UI_FormSubmitter {
             }
 
             if (pkField && pkValue) {
-                const cleanRecord = { ...payload, [pkField]: pkValue };
+                let freshVersion = payload._version || 1;
+                try {
+                    if (response.data && response.data.adapter_results && response.data.adapter_results.sheets) {
+                        if (response.data.adapter_results.sheets.version) freshVersion = response.data.adapter_results.sheets.version;
+                    }
+                } catch(e) {}
+                
+                const cleanRecord = { ...payload, [pkField]: pkValue, _version: freshVersion };
                 const liveData = window.__APP_CACHE__[entityName];
                 const existingIdx = liveData.findIndex(r => window.UI_FormUtils.normalizeId(r[pkField]) === window.UI_FormUtils.normalizeId(pkValue));
 
@@ -233,7 +265,7 @@ window.UI_FormSubmitter = class UI_FormSubmitter {
                     ? [...liveData.slice(0, existingIdx), cleanRecord, ...liveData.slice(existingIdx + 1)]
                     : [cleanRecord, ...liveData];
                 
-                console.log(`[Cache] ${existingIdx !== -1 ? 'UPDATE' : 'INSERT'} para: ${entityName}.`);
+                console.log(`[Cache] ${existingIdx !== -1 ? 'UPDATE' : 'INSERT'} para: ${entityName} optimizado a versión ${freshVersion}.`);
             }
         }
 
