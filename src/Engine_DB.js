@@ -201,6 +201,14 @@ const Engine_DB = {
                     if (!Array.isArray(relData)) {
                         // Empaquetamos el string crudo en un array de objetos compatible con el motor de grafos
                         relData = (relData && String(relData).trim() !== "") ? [{ id_registro: String(relData).trim() }] : [];
+                    } else {
+                        // [RAI-DEBUG/S-Tier Fix]: Normalizar arreglos de primitivos (ej. ["ID1"]) generados por subgrids
+                        relData = relData.map(item => {
+                            if (typeof item === 'string' || typeof item === 'number') {
+                                return { id_registro: String(item).trim() };
+                            }
+                            return item;
+                        });
                     }
                     
                     nestedData[f.name] = relData;

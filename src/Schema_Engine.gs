@@ -41,6 +41,7 @@ const APP_SCHEMAS = {
       { name: "producto_dominio", type: "text", label: "Producto / Dominio", required: false, width: 12 },
       { name: "separator_grafo", type: "divider", label: "Pertenencia Topológica (Grafo)", width: 12 },
       { name: "unidad_negocio_padre", type: "relation", relationType: "padre", targetEntity: "Unidad_Negocio", graphEntity: "Sys_Graph_Edges", valueField: "id_unidad_negocio", labelField: "nombre", uiComponent: "select_single", label: "Unidad de Negocio (Padre)", isTemporalGraph: true, graphEdgeType: "UNIDAD_NEGOCIO_PORTAFOLIO", topologyCardinality: "1:N", width: 12, showInList: true },
+      { name: "grupos_productos_vinculados", type: "relation", relationType: "hijo", targetEntity: "Grupo_Productos", graphEntity: "Sys_Graph_Edges", valueField: "id_grupo_producto", labelField: "nombre", uiBehavior: "subgrid", label: "Grupos de Productos Asociados", isTemporalGraph: true, graphEdgeType: "PORTAFOLIO_GRUPO_PRODUCTO", topologyCardinality: "1:N", width: 12 },
       { name: "separator_3", type: "divider", label: "Distribución de Capacidades (%)", width: 12 },
       { name: "capacidad_continuidad", type: "number", label: "Continuidad (BAU %)", required: false, width: 4 },
       { name: "capacidad_fundacional", type: "number", label: "Fundacional (%)", required: false, width: 4 },
@@ -90,14 +91,14 @@ const APP_SCHEMAS = {
         parentEntity: "Portafolio",
         parentField: "id_portafolio"
     },
-    steps: ["Datos Generales", "Estrategia de Negocio"],
+    steps: ["Datos Generales", "Topología (Grafo)", "Estrategia de Negocio"],
     primaryKey: "id_grupo_producto",
     titleField: "nombre",
     fields: [
       { section: "Datos Generales", width: 12, name: "id_grupo_producto", label: "ID Grupo Producto", type: "text", required: true, readonly: true, primaryKey: true },
       { section: "Datos Generales", width: 12, name: "nombre", label: "Nombre", type: "text", required: true },
       { section: "Datos Generales", width: 12, name: "descripcion", label: "Descripción", type: "textarea", required: false, showInList: false },
-      { section: "Datos Generales", width: 12, name: "id_portafolio", label: "Portafolio Padre", type: "select", required: true, options: [], lookupSource: "getPortafoliosOptions" },
+      { section: "Topología (Grafo)", width: 12, name: "id_portafolio", type: "relation", relationType: "padre", targetEntity: "Portafolio", graphEntity: "Sys_Graph_Edges", valueField: "id_portafolio", labelField: "nombre", uiComponent: "select_single", label: "Portafolio Padre (Grafo)", isTemporalGraph: true, graphEdgeType: "PORTAFOLIO_GRUPO_PRODUCTO", topologyCardinality: "1:N", required: true },
       { section: "Estrategia de Negocio", width: 12, name: "naturaleza_valor", label: "Naturaleza de Valor", type: "text", required: false },
       { section: "Estrategia de Negocio", width: 12, name: "modelo_negocio", label: "Modelo de Negocio", type: "select", required: true, options: ["SaaS", "Marketplace", "B2B", "B2C", "Transaccional"] }
     ]

@@ -345,29 +345,48 @@ const Adapter_Sheets = {
             Logger.log(`[Auto-Provision] Hoja creada automáticamente: DB_${tableName}`);
         }
         
-        // Auto-inyectar headers de esquema si está recién creada
-        if (sheet.getLastRow() === 0) {
-            let schemaFields = [];
-            if (typeof APP_SCHEMAS !== 'undefined' && APP_SCHEMAS[tableName]) {
-                if (APP_SCHEMAS[tableName].fields) {
-                    schemaFields = APP_SCHEMAS[tableName].fields
-                        .filter(f => f.type !== 'divider' && f.type !== 'html' && !f.isTemporalGraph)
-                        .map(f => f.name);
-                } else {
-                    // Fallback para entidades planas (como Dominio o Portafolio)
-                    schemaFields = Object.keys(APP_SCHEMAS[tableName]).filter(k => typeof APP_SCHEMAS[tableName][k] === 'object' && !['uiBehavior', 'relationType'].includes(k));
-                }
+        // Auto-inyectar headers de esquema si está recién creada, y Auto-Heal si faltan
+        let schemaFields = [];
+        if (typeof APP_SCHEMAS !== 'undefined' && APP_SCHEMAS[tableName]) {
+            if (APP_SCHEMAS[tableName].fields) {
+                schemaFields = APP_SCHEMAS[tableName].fields
+                    .filter(f => f.type !== 'divider' && f.type !== 'html' && !f.isTemporalGraph)
+                    .map(f => f.name);
             } else {
-                // Fallback primario si no encuentra esquema global (por orden de carga)
-                schemaFields = ['id_' + tableName.toLowerCase().replace(/s$/, '')];
+                schemaFields = Object.keys(APP_SCHEMAS[tableName]).filter(k => typeof APP_SCHEMAS[tableName][k] === 'object' && !['uiBehavior', 'relationType'].includes(k));
             }
-            
-            // Regla 4 de DB
-            const auditFields = ['created_at', 'created_by', 'updated_at', 'updated_by', 'deleted_at', 'deleted_by', '_version'];
-            const allHeaders = [...schemaFields, ...auditFields];
-            
+        } else {
+            schemaFields = ['id_' + tableName.toLowerCase().replace(/s$/, '')];
+        }
+        
+        const auditFields = ['created_at', 'created_by', 'updated_at', 'updated_by', 'deleted_at', 'deleted_by', '_version'];
+        const allHeaders = [...schemaFields, ...auditFields];
+
+        if (sheet.getLastRow() === 0) {
             sheet.getRange(1, 1, 1, allHeaders.length).setValues([allHeaders]);
             Logger.log(`[Auto-Provision] Encabezados inyectados: ${allHeaders.join(', ')}`);
+        } else {
+            // [S21.4 Auto-Healing] Prevenir pérdida silenciosa de I/O si hay desvío (drift) en las columnas de Sheets
+            const currentHeadersRange = sheet.getRange(1, 1, 1, sheet.getLastColumn());
+            const currentHeaders = currentHeadersRange.getValues()[0];
+            const normalizedCurrent = currentHeaders.map(h => typeof _normalizeHeader === 'function' ? _normalizeHeader(h) : h.toLowerCase().trim().replace(/[^a-z0-9]+/g, '_'));
+            
+            let addedHeaders = false;
+            let writeIndex = currentHeaders.length + 1;
+            allHeaders.forEach(fName => {
+                const normName = typeof _normalizeHeader === 'function' ? _normalizeHeader(fName) : fName.toLowerCase().trim().replace(/[^a-z0-9]+/g, '_');
+                if (!normalizedCurrent.includes(normName)) {
+                    sheet.getRange(1, writeIndex).setValue(fName);
+                    writeIndex++;
+                    addedHeaders = true;
+                }
+            });
+            if (addedHeaders) {
+                Logger.log(`[Auto-Healing] DB Drift corregido en DB_${tableName}. Columnas restauradas.`);
+                if (typeof __HEADER_CACHE__ !== 'undefined' && __HEADER_CACHE__[tableName]) {
+                    delete __HEADER_CACHE__[tableName];
+                }
+            }
         }
         
         return sheet;

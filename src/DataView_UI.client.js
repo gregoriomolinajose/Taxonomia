@@ -61,6 +61,27 @@
                 keys = Object.keys(rows[0]);
             }
 
+            // S25.2: Asegurar convenciones de UX (ID primero, Nombre/Título segundo)
+            const meta = window.ENTITY_META ? window.ENTITY_META[entityName] : null;
+            if (meta) {
+                const idKey = meta.idField;
+                const titleKey = meta.titleField;
+                
+                if (idKey && keys.includes(idKey)) {
+                    keys = keys.filter(k => k !== idKey);
+                    keys.unshift(idKey);
+                }
+                
+                if (titleKey && keys.includes(titleKey)) {
+                    keys = keys.filter(k => k !== titleKey);
+                    if (idKey && keys[0] === idKey) {
+                        keys.splice(1, 0, titleKey);
+                    } else {
+                        keys.unshift(titleKey);
+                    }
+                }
+            }
+
             return keys.map(key => {
     let isHidden = false;
     let isPrimaryKey = false;
