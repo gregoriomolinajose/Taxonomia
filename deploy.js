@@ -22,6 +22,10 @@ try {
         'prod': '14oIjG_akx2DuX1nZe_HWBR8TECPYZgCyYikKwtRnng_pgzxcK0wLekYa'
     };
 
+    const DEPLOYMENT_IDS = {
+        'prod': 'AKfycbyM1dZ_VxFzyaljHVEkTC0NXn_FYxnvRfHGZqjtbpnd-T-mRiGyXFWVdI0diJWtH79-eg'
+    };
+
     if (!SCRIPT_IDS[env]) {
         throw new Error(`No scriptId configured for environment: ${env}`);
     }
@@ -217,6 +221,21 @@ try {
             console.error("[Deploy] Error: Clasp failed to reliably push code after 3 attempts.");
             process.exit(1);
         }
+
+        // --- S14.5: Auto-Deploy Versioning for PROD Environment ---
+        if (env === 'prod' && DEPLOYMENT_IDS['prod']) {
+            console.log(`[Deploy] Publishing new Version and updating PROD Executable Link...`);
+            try {
+                const deployOutput = execSync(`npx clasp deploy -i ${DEPLOYMENT_IDS['prod']} -d "Release ${newVersion}"`, { encoding: 'utf8', stdio: 'pipe' });
+                console.log(deployOutput);
+                console.log(`[Deploy] Executable Link (Web App) updated successfully for PROD.`);
+            } catch (e) {
+                console.error(`[Deploy] Warning: Failed to update the Web App deployment link for PROD:`);
+                console.error(e.stdout || e.message);
+                console.log(`[Deploy] Remember: You may need to manually update the deployment version in Apps Script GUI.`);
+            }
+        }
+        // -----------------------------------------------------------
 
         // Cleanup
         if (fs.existsSync(buildDir)) {

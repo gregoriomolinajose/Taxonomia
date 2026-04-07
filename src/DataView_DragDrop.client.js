@@ -58,12 +58,53 @@ window.DataView_DragDrop = (function () {
         });
     }
 
+    /* ── Row Drag & Drop Handlers ── */
+    let _dragRowEl = null;
+
+    function onRowDragStart(id, ev, trElement) {
+        _dragRowEl = trElement;
+        ev.dataTransfer.effectAllowed = 'move';
+        ev.dataTransfer.setData('text/plain', String(id));
+        trElement.style.opacity = '0.4';
+    }
+
+    function onRowDragOver(ev) {
+        ev.preventDefault();
+        return false;
+    }
+
+    function onRowDrop(ev, targetElement, invokeRef, callbackString) {
+        ev.stopPropagation();
+        if (_dragRowEl && _dragRowEl !== targetElement) {
+            const tbody = targetElement.parentNode;
+            const srcNext = _dragRowEl.nextSibling;
+            tbody.insertBefore(_dragRowEl, targetElement);
+            if (srcNext !== targetElement) tbody.insertBefore(targetElement, srcNext);
+            
+            if (invokeRef && callbackString) {
+                const srcId = _dragRowEl.dataset.rowid;
+                const targetId = targetElement.dataset.rowid;
+                if (srcId && targetId) invokeRef(callbackString, srcId, targetId);
+            }
+        }
+        return false;
+    }
+
+    function onRowDragEnd(ev, trElement) {
+        trElement.style.opacity = '1';
+        _dragRowEl = null;
+    }
+
     return {
         init,
         onDragStart,
         onDragOver,
         onDragLeave,
         onDrop,
-        onDragEnd
+        onDragEnd,
+        onRowDragStart,
+        onRowDragOver,
+        onRowDrop,
+        onRowDragEnd
     };
 })();

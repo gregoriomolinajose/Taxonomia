@@ -84,20 +84,6 @@ window.UI_DataView_Toolbar = (function () {
         const left = document.createElement('div');
         left.className = 'dv-toolbar-left';
         
-        const searchWrap = document.createElement('div');
-        searchWrap.className = 'dv-search-wrap';
-        const sb = document.createElement('ion-searchbar');
-        sb.id = 'dv-search-input';
-        sb.placeholder = 'Buscar en todos los campos…';
-        sb.setAttribute('animated', 'true');
-        sb.setAttribute('show-clear-button', 'focus');
-        sb.setAttribute('debounce', '120');
-        searchWrap.appendChild(sb);
-        left.appendChild(searchWrap);
-        
-        const right = document.createElement('div');
-        right.className = 'dv-toolbar-right';
-        
         const btnCols = document.createElement('button');
         btnCols.className = 'dv-btn dv-btn-ghost';
         btnCols.id = 'dv-col-trigger-btn';
@@ -108,7 +94,7 @@ window.UI_DataView_Toolbar = (function () {
         colIcon.setAttribute('slot', 'start');
         btnCols.appendChild(colIcon);
         btnCols.appendChild(document.createTextNode(' Columnas'));
-        right.appendChild(btnCols);
+        left.appendChild(btnCols);
         
         const btnTable = document.createElement('button');
         btnTable.className = `dv-btn-icon ${viewType === 'table' ? 'active' : ''}`;
@@ -116,7 +102,7 @@ window.UI_DataView_Toolbar = (function () {
         btnTable.title = 'Vista de lista';
         btnTable.textContent = '☰';
         btnTable.addEventListener('click', () => onViewToggle('table'));
-        right.appendChild(btnTable);
+        left.appendChild(btnTable);
         
         const btnGrid = document.createElement('button');
         btnGrid.className = `dv-btn-icon ${viewType === 'grid' ? 'active' : ''}`;
@@ -124,7 +110,7 @@ window.UI_DataView_Toolbar = (function () {
         btnGrid.title = 'Vista de cuadrícula';
         btnGrid.textContent = '⊞';
         btnGrid.addEventListener('click', () => onViewToggle('grid'));
-        right.appendChild(btnGrid);
+        left.appendChild(btnGrid);
         
         if (entityName === 'Dominio') {
             const btnMap = document.createElement('button');
@@ -135,8 +121,22 @@ window.UI_DataView_Toolbar = (function () {
             iconMap.setAttribute('name', 'git-network-outline');
             btnMap.appendChild(iconMap);
             btnMap.addEventListener('click', () => onViewToggle('map'));
-            right.appendChild(btnMap);
+            left.appendChild(btnMap);
         }
+
+        const right = document.createElement('div');
+        right.className = 'dv-toolbar-right';
+        
+        const searchWrap = document.createElement('div');
+        searchWrap.className = 'dv-search-wrap';
+        const sb = document.createElement('ion-searchbar');
+        sb.id = 'dv-search-input';
+        sb.placeholder = 'Buscar en todos los campos…';
+        sb.setAttribute('animated', 'true');
+        sb.setAttribute('show-clear-button', 'focus');
+        sb.setAttribute('debounce', '120');
+        searchWrap.appendChild(sb);
+        right.appendChild(searchWrap);
         
         toolbar.appendChild(left);
         toolbar.appendChild(right);

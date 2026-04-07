@@ -26,6 +26,7 @@
             sortDir: 'asc',
             view: 'table',  // 'table' | 'grid'
             columns: [],   // { key, label, visible, sortable }
+            selectedRows: [], // IDs for Bulk Actions
             containerId: ''
         };
 
@@ -47,6 +48,7 @@
         ───────────────────────────────────────────── */
         function _buildColumns(entityName, rows) {
             const fields = window.UI_DataGrid && window.UI_DataGrid._normalizeFields ? window.UI_DataGrid._normalizeFields(entityName) : null;
+            const SYS_COLS = ['created_at', 'create_by', 'created_by', 'updated_at', 'update_by', 'deleted_at', 'deleted_by', 'version'];
             let keys = [];
 
             if (fields) {
@@ -72,10 +74,10 @@
             if (f.showInList !== undefined) isHidden = !f.showInList;
             uiType = f.uiDisplay || f.type || 'text';
         } else {
-            if (['created_at', 'updated_at', 'updated_by'].includes(key)) isHidden = true;
+            if (SYS_COLS.includes(key)) isHidden = true;
         }
     } else {
-        if (['created_at', 'updated_at', 'updated_by'].includes(key)) isHidden = true;
+        if (SYS_COLS.includes(key)) isHidden = true;
     }
 
     if (key.startsWith('id_')) {
@@ -252,16 +254,19 @@
                     dataZone.appendChild(errNode);
                 }
             } else if (window.UI_DataGrid) {
-                // Inyectamos estado hacia la factoría pura:
-                const layoutFrag = window.UI_DataGrid.buildLayout({
-                    view: _state.view,
+                window.DOM.clear(dataZone);
+                dataZone.appendChild(window.UI_DataGrid.buildLayout({
                     entityName: _state.entityName,
-                    filteredData: _state.filtered,
+                    containerId: _state.containerId,
                     page: _state.page,
                     pageSize: _state.pageSize,
                     sortCol: _state.sortCol,
                     sortDir: _state.sortDir,
+                    view: _state.view,
                     columns: _state.columns,
+                    filteredData: _state.filtered,
+                    selectedRows: _state.selectedRows,
+                    loading: false,
                     onSort: 'window.DataViewEngine._onSort',
                     onDragStart: 'window.DataView_DragDrop.onDragStart',
                     onDragOver: 'window.DataView_DragDrop.onDragOver',
@@ -269,12 +274,13 @@
                     onDrop: 'window.DataView_DragDrop.onDrop',
                     onDragEnd: 'window.DataView_DragDrop.onDragEnd',
                     onDelete: 'window.DataViewEngine._confirmDelete',
+                    onRowCheck: 'window.DataViewEngine._onRowCheck',
+                    onSelectAll: 'window.DataViewEngine._onSelectAll',
+                    onRowOrderChange: 'window.DataViewEngine._onRowOrderChange',
                     onPageSize: 'window.DataViewEngine._onPageSize',
                     onPage: 'window.DataViewEngine._onPage',
                     onEdit: 'window.openEditForm'
-                });
-                dataZone.innerHTML = '';
-                dataZone.appendChild(layoutFrag);
+                }));
             }
         }
 
@@ -300,7 +306,7 @@
 
             _state = {
                 entityName, containerId,
-                data: [], filtered: [],
+                data: [], filtered: [], selectedRows: [],
                 page: 1, pageSize: 25,
                 sortCol: '', sortDir: 'asc',
                 view: defaultView, columns: []
@@ -313,6 +319,11 @@
             const container = document.getElementById(containerId);
             if (!container) return;
             
+            // Garantizar que ion-content master no interfiera aislando app-container a sus limites fijos
+            if (containerId === 'app-container') {
+                container.classList.add('dv-fullscreen-lock');
+            }
+            
             // Inicializar handler central de reordenamiento de DataView_DragDrop
             if (window.DataView_DragDrop) {
                 window.DataView_DragDrop.init(_reorderColumns);
@@ -322,7 +333,7 @@
             // #dv-toolbar-zone: NUNCA se destruye durante búsqueda/sort/pagina
             // #dv-data-zone:    se reemplaza en cada operación de datos
             window.DOM.clear(container);
-                const root = document.createElement('div');
+            const root = document.createElement('div');
             root.className = 'dv-root'; root.id = 'dv-root';
             const hZone = document.createElement('div'); hZone.id = 'dv-header-zone';
             hZone.appendChild(_buildHeader());
@@ -448,6 +459,41 @@
             // Actualizar botones de view toggle (no destruye el search input)
             _rerenderToolbar();
             _rerenderData();
+        }
+
+        function _onRowCheck(id, isChecked) {
+            const strId = String(id);
+            if (isChecked) {
+                if (!_state.selectedRows.includes(strId)) _state.selectedRows.push(strId);
+            } else {
+                _state.selectedRows = _state.selectedRows.filter(r => String(r) !== strId);
+            }
+        }
+
+        function _onSelectAll(checked) {
+            const meta = ENTITY_META[_state.entityName] || { idField: 'id' };
+            const pageIds = window.UI_DataGrid._getPageData ? window.UI_DataGrid._getPageData().map(r => String(r[meta.idField] || '')) : [];
+            const dataToIterate = pageIds.length > 0 ? pageIds : _state.filteredData.slice((_state.page - 1) * _state.pageSize, _state.page * _state.pageSize).map(r => String(r[meta.idField] || ''));
+            
+            if (checked) {
+                dataToIterate.forEach(id => {
+                    if (id && !_state.selectedRows.includes(id)) _state.selectedRows.push(id);
+                });
+            } else {
+                _state.selectedRows = _state.selectedRows.filter(r => !dataToIterate.includes(String(r)));
+            }
+            _rerenderData();
+        }
+
+        function _onRowOrderChange(srcId, targetId) {
+            const meta = ENTITY_META[_state.entityName] || { idField: 'id' };
+            const srcIdx = _state.filteredData.findIndex(r => String(r[meta.idField]) === String(srcId));
+            const targetIdx = _state.filteredData.findIndex(r => String(r[meta.idField]) === String(targetId));
+            
+            if(srcIdx > -1 && targetIdx > -1) {
+                const item = _state.filteredData.splice(srcIdx, 1)[0];
+                _state.filteredData.splice(targetIdx, 0, item);
+            }
         }
 
         function _toggleColPopover() { /* no-op: Ionic maneja apertura via trigger */ }
@@ -596,6 +642,7 @@
             },
             _exportCSV, _importCSV,
             _onSearch, _onSort, _onPage, _onPageSize,
+            _onRowCheck, _onSelectAll, _onRowOrderChange,
             _onColToggle, _toggleColPopover, _onViewToggle,
             _confirmDelete
         };

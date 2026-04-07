@@ -31,6 +31,9 @@
             var headerTitle = document.getElementById('main-header-title');
             var backBtn     = document.getElementById('global-back-btn');
             
+            // Garantizar que ninguna vista herede el bloqueo de layout de DataGrid
+            if (container) container.classList.remove('dv-fullscreen-lock');
+            
             // 1. Quitar la clase .active de todos los items
             var navItems = document.querySelectorAll('.nav-item');
             navItems.forEach(function(item) { item.classList.remove('active'); });

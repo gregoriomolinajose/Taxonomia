@@ -4,9 +4,9 @@
 
 ## Session
 
-- **Active Session**: S25.2 - Form Architecture & Graph Transition (COMPLETED)
-- **Last Summary**: Concluded Story 25.2. Implemented seamless Smart Hydration for Google Workspace. Migrated static topology components to the new declarative SCD-2 DAG Architecture. Fixed critical routing defects in `Engine_DB.js` to prevent graph payload bleeding into nodes.
-- **Next Focus**: Transition to S25.3: Restauración de Interacciones de DataGrid (Bug 3).
+- **Active Session**: S25.1 - UI Layout Modernization (Navbar & DataGrid) (COMPLETED)
+- **Last Summary**: Concluyó S25.1. Se redimensionó la grilla (aumentando padding a nivel Atlassian) y se corrigió el centrado flex-box de la barra global superior aislando alturas estándar (`--toolbar-standard-height`). Patrón PAT-G-030 guardado.
+- **Next Focus**: Lógica de selección de interacciones masivas (Bulk Actions).
 
 ## Patterns
 

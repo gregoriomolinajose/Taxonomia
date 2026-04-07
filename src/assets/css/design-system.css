@@ -68,6 +68,7 @@
   --ion-item-border-radius:     var(--rounded-sm);
 
   --ion-toolbar-background:     var(--color-interactive-primary);
+  --toolbar-standard-height:    56px; /* Altura estándar MD/iOS que estabiliza el Navbar */
   --ion-tab-bar-background:     var(--color-bg-0);
   --ion-color-light:            var(--color-bg-0);
   --ion-color-dark:             var(--color-text);

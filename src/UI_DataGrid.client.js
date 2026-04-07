@@ -83,6 +83,20 @@
             const thead = document.createElement('thead');
             const trHead = document.createElement('tr');
             
+            const thCheck = document.createElement('th');
+            thCheck.className = 'dv-th-check';
+            const selectAll = document.createElement('input');
+            selectAll.type = 'checkbox';
+            
+            const meta = (window.ENTITY_META && window.ENTITY_META[this.cfg.entityName]) || { idField: 'id' };
+            const pageIds = rows.map(r => String(r[meta.idField] || ''));
+            selectAll.checked = pageIds.length > 0 && pageIds.every(id => (this.cfg.selectedRows || []).includes(id));
+            selectAll.addEventListener('change', (e) => {
+                if (this.cfg.onSelectAll) this._invoke(this.cfg.onSelectAll, e.target.checked);
+            });
+            thCheck.appendChild(selectAll);
+            trHead.appendChild(thCheck);
+
             const thNum = document.createElement('th');
             thNum.className = 'dv-th-num';
             thNum.textContent = '#';
@@ -181,6 +195,30 @@
                     }
                 });
                 
+                const tdCheck = document.createElement('td');
+                tdCheck.className = 'dv-td-check';
+                const dragHandle = document.createElement('span');
+                dragHandle.className = 'dv-row-drag-handle';
+                dragHandle.textContent = '⣿ ';
+                dragHandle.style.cursor = 'grab';
+                dragHandle.style.color = 'var(--ion-color-medium)';
+                const rowCheck = document.createElement('input');
+                rowCheck.type = 'checkbox';
+                rowCheck.className = 'dv-row-checkbox';
+                rowCheck.value = id;
+                rowCheck.checked = (this.cfg.selectedRows || []).includes(String(id));
+                rowCheck.addEventListener('click', e => e.stopPropagation());
+                rowCheck.addEventListener('change', e => {
+                    if (this.cfg.onRowCheck) this._invoke(this.cfg.onRowCheck, id, e.target.checked);
+                });
+                tdCheck.appendChild(dragHandle);
+                tdCheck.appendChild(rowCheck);
+                tr.appendChild(tdCheck);
+                
+                if (rowCheck.checked) {
+                    tr.style.backgroundColor = 'var(--ion-color-secondary)';
+                }
+
                 const tdNum = document.createElement('td');
                 tdNum.className = 'dv-td-num';
                 tdNum.textContent = String(startIdx + idx + 1);
@@ -222,6 +260,17 @@
                     }
                     tr.appendChild(tdAction);
                 }
+                
+                /* Funcionalidad de Reordenamiento Suspendida temporalmente hasta contar con endpoint:
+                if (window.DataView_DragDrop) {
+                    tr.draggable = true;
+                    tr.dataset.rowid = String(id);
+                    tr.addEventListener('dragstart', e => window.DataView_DragDrop.onRowDragStart(id, e, tr));
+                    tr.addEventListener('dragover', e => window.DataView_DragDrop.onRowDragOver(e));
+                    tr.addEventListener('drop', e => window.DataView_DragDrop.onRowDrop(e, tr, this._invoke.bind(this), this.cfg.onRowOrderChange));
+                    tr.addEventListener('dragend', e => window.DataView_DragDrop.onRowDragEnd(e, tr));
+                }
+                */
                 
                 frag.appendChild(tr);
             });
