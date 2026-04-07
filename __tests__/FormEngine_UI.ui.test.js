@@ -20,7 +20,11 @@ describe('FormEngine UI Nativo Browser (Vitest SPA)', () => {
         
         // Mock Ionic UI Components required by FormEngine
         window.DrawerStackController = {
-            push: vi.fn().mockReturnValue(true),
+            push: vi.fn().mockImplementation((modal) => {
+                modal.classList.add('drawer-panel');
+                document.getElementById('app-container').appendChild(modal);
+                return true;
+            }),
             getDepth: vi.fn().mockReturnValue(0),
             closeTop: vi.fn()
         };
