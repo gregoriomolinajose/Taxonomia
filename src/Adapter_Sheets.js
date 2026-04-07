@@ -111,20 +111,26 @@ const Adapter_Sheets = {
 
         for (let i = 0; i < normalizedHeaders.length; i++) {
             const h = normalizedHeaders[i];
-
+            
             if (foundRowIndex > -1) {
                 // Modo Update: Preservar estricamente campos de creación
                 if (h === 'created_at' || h === 'created_by') {
-                    rowToInsert.push(existingRow[i]);
+                    rowToInsert.push(existingRow[i] !== undefined ? existingRow[i] : '');
                 } else if (payload.hasOwnProperty(h)) {
-                    rowToInsert.push(payload[h]);
+                    rowToInsert.push(payload[h] !== undefined && payload[h] !== null ? payload[h] : '');
+                } else if (h === 'updated_at') {
+                    rowToInsert.push(currentTimestamp);
                 } else {
                     // Mantiene valores existentes de columnas que el payload no envió
-                    rowToInsert.push(existingRow[i]);
+                    rowToInsert.push(existingRow[i] !== undefined ? existingRow[i] : '');
                 }
             } else {
                 // Modo Create
-                rowToInsert.push(payload.hasOwnProperty(h) ? payload[h] : '');
+                if (h === 'created_at' || h === 'updated_at') {
+                    rowToInsert.push(currentTimestamp);
+                } else {
+                    rowToInsert.push(payload.hasOwnProperty(h) && payload[h] !== null && payload[h] !== undefined ? payload[h] : '');
+                }
             }
         }
 
