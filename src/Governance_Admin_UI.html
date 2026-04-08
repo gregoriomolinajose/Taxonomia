@@ -210,7 +210,8 @@ window.GovernanceEngine = {
             id_rol: rolId,
             schema_destino: entName,
             nivel_acceso: newVal,
-            _forceAbac: true // Parameter sent to bypass logic if needed
+            _forceAbac: true, // Parameter sent to bypass logic if needed
+            _overrideConcurrency: true // Bypasses version validation for administrative forced updates
         };
 
         const action = permId ? 'update' : 'create';
