@@ -180,6 +180,7 @@
             const btnPrev = document.createElement('ion-button');
             btnPrev.setAttribute('fill', 'clear');
             btnPrev.setAttribute('color', 'medium');
+            btnPrev.style.cssText += ' font-family: var(--sys-font-family, inherit) !important;';
             const iconPrev = document.createElement('ion-icon');
             iconPrev.setAttribute('slot', 'start');
             iconPrev.setAttribute('name', 'arrow-back-outline');
@@ -190,6 +191,7 @@
             btnNext.setAttribute('shape', 'round');
             btnNext.setAttribute('color', 'primary');
             btnNext.setAttribute('fill', 'outline');
+            btnNext.style.cssText += ' font-family: var(--sys-font-family, inherit) !important;';
             btnNext.appendChild(document.createTextNode('Siguiente '));
             const iconNext = document.createElement('ion-icon');
             iconNext.setAttribute('slot', 'end');

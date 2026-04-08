@@ -8,183 +8,272 @@
 :root {
   /* NIVEL 2: ALIAS TOKENS IONIC (Mapeos a las variables inyectadas en $O(1)$) */
   --rounded-none: 0px;
-  --rounded-sm:   8px;
-  --rounded-md:   16px;
+  --rounded-sm: 8px;
+  --rounded-md: 16px;
   --rounded-full: 999px;
 
-  --spacing-0:  0px;  --spacing-1:  4px;  --spacing-2:  8px;
-  --spacing-3:  12px; --spacing-4:  16px; --spacing-5:  20px;
-  --spacing-6:  24px; --spacing-7:  32px; --spacing-8:  40px;
-  --spacing-9:  48px; --spacing-10: 56px;
+  --spacing-0: 0px;
+  --spacing-1: 4px;
+  --spacing-2: 8px;
+  --spacing-3: 12px;
+  --spacing-4: 16px;
+  --spacing-5: 20px;
+  --spacing-6: 24px;
+  --spacing-7: 32px;
+  --spacing-8: 40px;
+  --spacing-9: 48px;
+  --spacing-10: 56px;
 
-  --shadow-default:  0px 6px 24px 0px rgba(25,75,123,0.04);
-  --shadow-hover:    0px 6px 24px 0px rgba(25,75,123,0.12);
-  --shadow-primary:  0px 6px 24px 0px rgba(25,75,123,0.18);
-  --shadow-floating: 0px 4px 16px rgba(25,75,123,0.24),0px 6px 24px rgba(25,75,123,0.16);
+  --shadow-default: 0px 6px 24px 0px rgba(25, 75, 123, 0.04);
+  --shadow-hover: 0px 6px 24px 0px rgba(25, 75, 123, 0.12);
+  --shadow-primary: 0px 6px 24px 0px rgba(25, 75, 123, 0.18);
+  --shadow-floating: 0px 4px 16px rgba(25, 75, 123, 0.24), 0px 6px 24px rgba(25, 75, 123, 0.16);
 }
 
 :root {
 
   /* NIVEL 2: ALIAS TOKENS IONIC */
-  --ion-color-primary:           var(--color-interactive-primary);
-  --ion-color-primary-rgb:       28,66,232;
-  --ion-color-primary-contrast:  var(--color-text-invert);
-  --ion-color-primary-shade:     var(--color-interactive-primary-hover);
-  --ion-color-primary-tint:      var(--color-interactive-primary-press);
+  --ion-color-primary: var(--color-interactive-primary);
+  --ion-color-primary-rgb: 28, 66, 232;
+  --ion-color-primary-contrast: var(--color-text-invert);
+  --ion-color-primary-shade: var(--color-interactive-primary-hover);
+  --ion-color-primary-tint: var(--color-interactive-primary-press);
 
-  --ion-color-secondary:         var(--color-interactive-secondary);
-  --ion-color-secondary-rgb:     243,243,243;
+  --ion-color-secondary: var(--color-interactive-secondary);
+  --ion-color-secondary-rgb: 243, 243, 243;
   --ion-color-secondary-contrast: var(--color-text);
-  --ion-color-secondary-shade:   var(--color-interactive-secondary-hover);
-  --ion-color-secondary-tint:    var(--color-interactive-secondary-press);
+  --ion-color-secondary-shade: var(--color-interactive-secondary-hover);
+  --ion-color-secondary-tint: var(--color-interactive-secondary-press);
 
-  --ion-color-danger:            var(--color-interactive-error);
-  --ion-color-danger-rgb:        255,89,77;
-  --ion-color-danger-contrast:   var(--color-text-invert);
-  --ion-color-danger-shade:      var(--color-interactive-error-hover);
-  --ion-color-danger-tint:       var(--color-interactive-error-press);
+  --ion-color-danger: var(--color-interactive-error);
+  --ion-color-danger-rgb: 255, 89, 77;
+  --ion-color-danger-contrast: var(--color-text-invert);
+  --ion-color-danger-shade: var(--color-interactive-error-hover);
+  --ion-color-danger-tint: var(--color-interactive-error-press);
 
-  --ion-color-success:           var(--color-bg-success);
-  --ion-color-success-rgb:       10,191,79;
-  --ion-color-success-contrast:  var(--color-text-invert);
+  --ion-color-success: var(--color-bg-success);
+  --ion-color-success-rgb: 10, 191, 79;
+  --ion-color-success-contrast: var(--color-text-invert);
 
-  --ion-color-warning:           var(--color-bg-warning);
-  --ion-color-warning-rgb:       255,174,67;
-  --ion-color-warning-contrast:  var(--color-text);
+  --ion-color-warning: var(--color-bg-warning);
+  --ion-color-warning-rgb: 255, 174, 67;
+  --ion-color-warning-contrast: var(--color-text);
 
-  --ion-color-tertiary:          var(--color-bg-info);
-  --ion-color-tertiary-rgb:      28,168,247;
+  --ion-color-tertiary: var(--color-bg-info);
+  --ion-color-tertiary-rgb: 28, 168, 247;
   --ion-color-tertiary-contrast: var(--color-text-invert);
 
-  --ion-background-color:       var(--color-bg-body);
-  --ion-background-color-rgb:   255,255,255;
-  --ion-card-background:        var(--color-bg-0);
-  --ion-item-background:        var(--color-bg-body);
-  --ion-text-color:             var(--color-text);
-  --ion-text-color-rgb:         8,23,84;
-  --ion-color-medium:           var(--color-text-inactive);
-  --ion-color-medium-rgb:       140,140,140;
-  --ion-card-border-radius:     var(--rounded-md);
-  --ion-item-border-radius:     var(--rounded-sm);
+  --ion-background-color: var(--color-bg-body);
+  --ion-background-color-rgb: 255, 255, 255;
+  --ion-card-background: var(--color-bg-0);
+  --ion-item-background: var(--color-bg-body);
+  --ion-text-color: var(--color-text);
+  --ion-text-color-rgb: 8, 23, 84;
+  --ion-color-medium: var(--color-text-inactive);
+  --ion-color-medium-rgb: 140, 140, 140;
+  --ion-card-border-radius: var(--rounded-md);
+  --ion-item-border-radius: var(--rounded-sm);
 
-  --ion-toolbar-background:     var(--color-interactive-primary);
-  --toolbar-standard-height:    56px; /* Altura estándar MD/iOS que estabiliza el Navbar */
-  --ion-tab-bar-background:     var(--color-bg-0);
-  --ion-color-light:            var(--color-bg-0);
-  --ion-color-dark:             var(--color-text);
-  
-  --sys-font-family-display:    var(--font-display, 'Poppins, sans-serif');
-  --sys-font-family-h1:         var(--font-h1, 'Poppins, sans-serif');
-  --sys-font-family-h2:         var(--font-h2, 'Poppins, sans-serif');
-  --sys-font-family-h3:         var(--font-h3, 'Poppins, sans-serif');
-  --sys-font-family-body:       var(--font-body, 'Poppins, sans-serif');
-  --sys-font-family-sub:        var(--font-sub, 'Poppins, sans-serif');
-  --sys-font-family-caption:    var(--font-caption, 'Poppins, sans-serif');
-  --sys-font-family-mini:       var(--font-mini, 'Poppins, sans-serif');
-  --sys-font-family-action:     var(--font-action, 'Poppins, sans-serif');
-  
-  --ion-font-family:            var(--sys-font-family-body);
+  --ion-toolbar-background: var(--color-interactive-primary);
+  --toolbar-standard-height: 56px;
+  /* Altura estándar MD/iOS que estabiliza el Navbar */
+  --ion-tab-bar-background: var(--color-bg-0);
+  --ion-color-light: var(--color-bg-0);
+  --ion-color-dark: var(--color-text);
+
+  --sys-font-family-display: var(--font-display, 'Poppins, sans-serif');
+  --sys-font-family-h1: var(--font-h1, 'Poppins, sans-serif');
+  --sys-font-family-h2: var(--font-h2, 'Poppins, sans-serif');
+  --sys-font-family-h3: var(--font-h3, 'Poppins, sans-serif');
+  --sys-font-family-body: var(--font-body, 'Poppins, sans-serif');
+  --sys-font-family-sub: var(--font-sub, 'Poppins, sans-serif');
+  --sys-font-family-caption: var(--font-caption, 'Poppins, sans-serif');
+  --sys-font-family-mini: var(--font-mini, 'Poppins, sans-serif');
+  --sys-font-family-action: var(--font-action, 'Poppins, sans-serif');
+
+  --ion-font-family: var(--sys-font-family-body);
 
   /* Font Scale Roots */
   --sys-base-size: var(--wl-base-size, 14px);
   --sys-scale-ratio: var(--wl-scale-ratio, 1.20);
-  --sys-scale-ratio-mobile: calc(var(--sys-scale-ratio) - 0.08); /* Suavizar exponente en móvil */
+  --sys-scale-ratio-mobile: calc(var(--sys-scale-ratio) - 0.08);
+  /* Suavizar exponente en móvil */
   --sys-heading-weight: var(--wl-heading-weight, 600);
   --sys-heading-transform: var(--wl-heading-transform, none);
 
   /* Font Computed Scale */
-  --font-size-body:    var(--sys-base-size); 
-  --font-size-small:   calc(var(--sys-base-size) * 0.85);
+  --font-size-body: var(--sys-base-size);
+  --font-size-small: calc(var(--sys-base-size) * 0.85);
   --font-size-caption: calc(var(--sys-base-size) * 0.75);
   --font-size-caption-mini: calc(var(--sys-base-size) * 0.65);
-  
+
   --font-size-subheader: calc(var(--font-size-body) * var(--sys-scale-ratio));
-  --font-size-h3:        calc(var(--font-size-subheader) * var(--sys-scale-ratio));
-  --font-size-h2:        calc(var(--font-size-h3) * var(--sys-scale-ratio));
-  --font-size-h1:        calc(var(--font-size-h2) * var(--sys-scale-ratio));
-  --font-size-display:   calc(var(--font-size-h1) * var(--sys-scale-ratio));
+  --font-size-h3: calc(var(--font-size-subheader) * var(--sys-scale-ratio));
+  --font-size-h2: calc(var(--font-size-h3) * var(--sys-scale-ratio));
+  --font-size-h1: calc(var(--font-size-h2) * var(--sys-scale-ratio));
+  --font-size-display: calc(var(--font-size-h1) * var(--sys-scale-ratio));
 
   --font-size-subheader-mobile: calc(var(--font-size-body) * var(--sys-scale-ratio-mobile));
-  --font-size-h3-mobile:        calc(var(--font-size-subheader-mobile) * var(--sys-scale-ratio-mobile));
-  --font-size-h2-mobile:        calc(var(--font-size-h3-mobile) * var(--sys-scale-ratio-mobile));
-  --font-size-h1-mobile:        calc(var(--font-size-h2-mobile) * var(--sys-scale-ratio-mobile));
-  --font-size-display-mobile:   calc(var(--font-size-h1-mobile) * var(--sys-scale-ratio-mobile));
+  --font-size-h3-mobile: calc(var(--font-size-subheader-mobile) * var(--sys-scale-ratio-mobile));
+  --font-size-h2-mobile: calc(var(--font-size-h3-mobile) * var(--sys-scale-ratio-mobile));
+  --font-size-h1-mobile: calc(var(--font-size-h2-mobile) * var(--sys-scale-ratio-mobile));
+  --font-size-display-mobile: calc(var(--font-size-h1-mobile) * var(--sys-scale-ratio-mobile));
 
   /* Sidebar Blueprint — Regla UI §13 */
-  --sidebar-width-mini:  72px;
-  --sidebar-bg:          var(--color-bg-body);
-  --sidebar-icon-color:  var(--color-icon-inactive);
+  --sidebar-width-mini: 72px;
+  --sidebar-bg: var(--color-bg-body);
+  --sidebar-icon-color: var(--color-icon-inactive);
   --sidebar-icon-active: var(--color-interactive-primary);
-  --sidebar-item-hover:  rgba(28,66,232,0.08);
-  --sidebar-border:      var(--color-border);
-  --bento-gap:           var(--spacing-4);
+  --sidebar-item-hover: rgba(28, 66, 232, 0.08);
+  --sidebar-border: var(--color-border);
+  --bento-gap: var(--spacing-4);
 }
 
 /* TIPOGRAFIA FLUIDA — Mobile First */
 :root {
-  --sys-font-display:   var(--font-size-display-mobile);
-  --sys-font-h1:        var(--font-size-h1-mobile);
-  --sys-font-h2:        var(--font-size-h2-mobile);
-  --sys-font-h3:        var(--font-size-h3-mobile);
+  --sys-font-display: var(--font-size-display-mobile);
+  --sys-font-h1: var(--font-size-h1-mobile);
+  --sys-font-h2: var(--font-size-h2-mobile);
+  --sys-font-h3: var(--font-size-h3-mobile);
   --sys-font-subheader: var(--font-size-subheader-mobile);
-  --sys-font-body:      var(--font-size-body);
-  --sys-font-small:     var(--font-size-small);
-  --sys-font-caption:   var(--font-size-caption);
-  --sys-font-mini:      var(--font-size-caption-mini);
+  --sys-font-body: var(--font-size-body);
+  --sys-font-small: var(--font-size-small);
+  --sys-font-caption: var(--font-size-caption);
+  --sys-font-mini: var(--font-size-caption-mini);
 }
+
 @media (min-width: 768px) {
   :root {
-    --sys-font-display:   var(--font-size-display);
-    --sys-font-h1:        var(--font-size-h1);
-    --sys-font-h2:        var(--font-size-h2);
-    --sys-font-h3:        var(--font-size-h3);
+    --sys-font-display: var(--font-size-display);
+    --sys-font-h1: var(--font-size-h1);
+    --sys-font-h2: var(--font-size-h2);
+    --sys-font-h3: var(--font-size-h3);
     --sys-font-subheader: var(--font-size-subheader);
   }
 }
 
-html, body, ion-app { height: 100%; font-family: var(--sys-font-family-body); }
-body, ion-app, ion-content { font-size: var(--sys-font-body); color: var(--ion-text-color); }
-ion-content { --background: var(--ion-background-color); }
-
-h1, .text-display { font-family: var(--sys-font-family-display); }
-.text-display { font-size: var(--sys-font-display); line-height: 1.1; font-weight: var(--sys-heading-weight); text-transform: var(--sys-heading-transform); }
-.text-h1      { font-size: var(--sys-font-h1);      line-height: 1.2; font-weight: var(--sys-heading-weight); text-transform: var(--sys-heading-transform); font-family: var(--sys-font-family-h1); }
-.text-h2      { font-size: var(--sys-font-h2);      line-height: 1.25; font-weight: var(--sys-heading-weight); text-transform: var(--sys-heading-transform); font-family: var(--sys-font-family-h2); }
-.text-h3      { font-size: var(--sys-font-h3);      line-height: 1.3; font-weight: var(--sys-heading-weight); text-transform: var(--sys-heading-transform); font-family: var(--sys-font-family-h3); }
-.text-sub     { font-size: var(--sys-font-subheader); font-weight: 500; font-family: var(--sys-font-family-sub); }
-.text-small   { font-size: var(--sys-font-small); }
-.text-caption { font-size: var(--sys-font-caption); font-family: var(--sys-font-family-caption); }
-.text-mini    { font-size: var(--sys-font-mini); text-transform: uppercase; letter-spacing: 0.05em; font-family: var(--sys-font-family-mini); }
-.text-action  { font-size: var(--sys-font-body); font-weight: 600; font-family: var(--sys-font-family-action); }
-ion-button    { font-family: var(--sys-font-family-action); }
-
-/* Forzado Tipográfico Absoluto en Modo Oscuro */
-body.dark h1, body.dark h2, body.dark h3, body.dark h4, body.dark h5, body.dark h6, 
-body.dark p, body.dark span, body.dark ion-card-title, body.dark ion-card-subtitle, 
-body.dark ion-text, body.dark ion-label {
-    color: #FFFFFF !important;
+html,
+body,
+ion-app {
+  height: 100%;
+  font-family: var(--sys-font-family-body);
 }
 
-/* Modo Oscuro (Jira Dark Mode Standard) */
+body,
+ion-app,
+ion-content {
+  font-size: var(--sys-font-body);
+  color: var(--ion-text-color);
+}
+
+ion-content {
+  --background: var(--ion-background-color);
+}
+
+h1,
+.text-display {
+  font-family: var(--sys-font-family-display);
+}
+
+.text-display {
+  font-size: var(--sys-font-display);
+  line-height: 1.1;
+  font-weight: var(--sys-heading-weight);
+  text-transform: var(--sys-heading-transform);
+}
+
+.text-h1 {
+  font-size: var(--sys-font-h1);
+  line-height: 1.2;
+  font-weight: var(--sys-heading-weight);
+  text-transform: var(--sys-heading-transform);
+  font-family: var(--sys-font-family-h1);
+}
+
+.text-h2 {
+  font-size: var(--sys-font-h2);
+  line-height: 1.25;
+  font-weight: var(--sys-heading-weight);
+  text-transform: var(--sys-heading-transform);
+  font-family: var(--sys-font-family-h2);
+}
+
+.text-h3 {
+  font-size: var(--sys-font-h3);
+  line-height: 1.3;
+  font-weight: var(--sys-heading-weight);
+  text-transform: var(--sys-heading-transform);
+  font-family: var(--sys-font-family-h3);
+}
+
+.text-sub {
+  font-size: var(--sys-font-subheader);
+  font-weight: 500;
+  font-family: var(--sys-font-family-sub);
+}
+
+.text-small {
+  font-size: var(--sys-font-small);
+}
+
+.text-caption {
+  font-size: var(--sys-font-caption);
+  font-family: var(--sys-font-family-caption);
+}
+
+.text-mini {
+  font-size: var(--sys-font-mini);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-family: var(--sys-font-family-mini);
+}
+
+.text-action {
+  font-size: var(--sys-font-body);
+  font-weight: 600;
+  font-family: var(--sys-font-family-action);
+}
+
+ion-button {
+  font-family: var(--sys-font-family-action);
+}
+
+/* Forzado Tipográfico Absoluto en Modo Oscuro */
+body.dark h1,
+body.dark h2,
+body.dark h3,
+body.dark h4,
+body.dark h5,
+body.dark h6,
+body.dark p,
+body.dark span,
+body.dark ion-card-title,
+body.dark ion-card-subtitle,
+body.dark ion-text,
+body.dark ion-label {
+  color: #FFFFFF !important;
+}
+
+/* Modo Oscuro (Dark Mode Standard) */
 body.dark {
-  --shadow-floating: 0px 4px 16px rgba(0,0,0,0.6), 0px 6px 24px rgba(0,0,0,0.4) !important;
+  --shadow-floating: 0px 4px 16px rgba(0, 0, 0, 0.6), 0px 6px 24px rgba(0, 0, 0, 0.4) !important;
   /* Variables Nativas Ionic */
-  --ion-background-color:     #161A1D !important;
-  --ion-background-color-rgb: 22,26,29 !important;
-  --ion-card-background:      #1D2125 !important;
-  --ion-item-background:      #1D2125 !important;
-  --ion-toolbar-background:   #161A1D !important;
-  --ion-tab-bar-background:   #1D2125 !important;
-  --ion-text-color:           #FFFFFF !important;
-  --ion-text-color-rgb:       255,255,255 !important;
-  --ion-color-medium:         #8C9BAB !important;
-  --ion-color-medium-rgb:     140,155,171 !important;
+  --ion-background-color: #161A1D !important;
+  --ion-background-color-rgb: 22, 26, 29 !important;
+  --ion-card-background: #1D2125 !important;
+  --ion-item-background: #1D2125 !important;
+  --ion-toolbar-background: #161A1D !important;
+  --ion-tab-bar-background: #1D2125 !important;
+  --ion-text-color: #FFFFFF !important;
+  --ion-text-color-rgb: 255, 255, 255 !important;
+  --ion-color-medium: #8C9BAB !important;
+  --ion-color-medium-rgb: 140, 155, 171 !important;
 
   /* Variables Custom del Sistema y Sidebar */
-  --color-bg-body:            #161A1D !important;
-  --color-text:               #FFFFFF !important;
-  --color-border:             rgba(255,255,255,0.08) !important;
-  --sidebar-bg:               #1D2125 !important;
-  --sidebar-icon-color:       #8C9BAB !important;
-  --sidebar-border:           rgba(255,255,255,0.08) !important;
+  --color-bg-body: #161A1D !important;
+  --color-text: #FFFFFF !important;
+  --color-border: rgba(255, 255, 255, 0.08) !important;
+  --sidebar-bg: #1D2125 !important;
+  --sidebar-icon-color: #8C9BAB !important;
+  --sidebar-border: rgba(255, 255, 255, 0.08) !important;
 }

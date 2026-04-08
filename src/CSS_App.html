@@ -43,7 +43,7 @@ body.drawer-max-depth ion-button[onclick*="openForm"] {
 }
 .drawer-panel {
   position: relative;
-  background: #ffffff !important;
+  background: var(--ion-background-color, #ffffff) !important;
   box-shadow: -10px 0 40px rgba(0,0,0,0.2) !important;
   display: flex;
   flex-direction: column;
@@ -54,14 +54,14 @@ body.drawer-max-depth ion-button[onclick*="openForm"] {
   height: 100%;
   z-index: 15001;
   pointer-events: auto;
-  border-left: 1px solid #ccc;
+  border-left: 1px solid var(--color-border, #ccc);
 }
 .drawer-panel.active {
   transform: translateX(0);
 }
 /* Stacking Offset for multiple drawers */
 .drawer-panel[data-depth="1"] { z-index: 15002; }
-.drawer-panel[data-depth="2"] { z-index: 15003; transform: translateX(100%); transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1); box-shadow: -15px 0 40px rgba(0,0,0,0.3) !important; border-left: 1px solid #aaa; }
+.drawer-panel[data-depth="2"] { z-index: 15003; transform: translateX(100%); transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1); box-shadow: -15px 0 40px rgba(0,0,0,0.3) !important; border-left: 1px solid var(--color-border, #aaa); }
 .drawer-panel[data-depth="2"].active { transform: translateX(0); }
 .drawer-panel[data-depth="3"] { z-index: 15004; transform: translateX(100%); transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1); }
 .drawer-panel[data-depth="3"].active { transform: translateX(0); }
@@ -71,9 +71,9 @@ body.drawer-max-depth ion-button[onclick*="openForm"] {
   align-items: center;
   justify-content: space-between;
   padding: 16px 20px;
-  border-bottom: 1px solid #e2e8f0;
-  background: #ffffff;
-  color: #000000;
+  border-bottom: 1px solid var(--color-border, #e2e8f0);
+  background: var(--ion-background-color, #ffffff);
+  color: var(--ion-text-color, #000000);
   flex-shrink: 0;
 }
 .drawer-title { font-size: 1.25rem; font-weight: 600; margin: 0; flex: 1; }
@@ -81,7 +81,7 @@ body.drawer-max-depth ion-button[onclick*="openForm"] {
   flex: 1;
   overflow-y: auto;
   position: relative;
-  background: #ffffff;
+  background: var(--ion-background-color, #ffffff);
   padding: 24px;
 }
 /* S25.3: Override global ion-grid constraint inside Drawer */
@@ -92,8 +92,8 @@ body.drawer-max-depth ion-button[onclick*="openForm"] {
 }
 .drawer-footer {
   padding: 16px 20px;
-  background: #ffffff;
-  border-top: 1px solid #e2e8f0;
+  background: var(--ion-background-color, #ffffff);
+  border-top: 1px solid var(--color-border, #e2e8f0);
   flex-shrink: 0;
 }
 
