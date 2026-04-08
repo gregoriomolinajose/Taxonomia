@@ -434,7 +434,7 @@
             flexGroup.appendChild(info);
             
             const select = document.createElement('select');
-            select.className = 'dv-page-size-select';
+            select.className = 'dv-select-minimal';
             [10, 25, 50, 100].forEach(s => {
                 const opt = document.createElement('option');
                 opt.value = String(s);

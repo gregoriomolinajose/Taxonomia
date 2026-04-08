@@ -148,7 +148,7 @@ window.GovernanceEngine = {
                 const permSearch = this.perms.find(p => p.id_rol === rol.id_rol && p.schema_destino === ent);
                 
                 const select = document.createElement('select');
-                select.className = 'dv-page-size-select'; // Reutilizando select minimalista V4
+                select.className = 'dv-select-minimal'; // Reutilizando select minimalista V4
                 select.style.width = '100%';
                 select.style.cursor = 'pointer';
                 select.style.fontWeight = '600';
@@ -209,8 +209,7 @@ window.GovernanceEngine = {
         const record = {
             id_rol: rolId,
             schema_destino: entName,
-            nivel_acceso: newVal,
-            _forceAbac: true // Parameter sent to bypass logic if needed
+            nivel_acceso: newVal
         };
 
         const action = permId ? 'update' : 'create';
