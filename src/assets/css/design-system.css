@@ -251,7 +251,7 @@ body.dark ion-card-title,
 body.dark ion-card-subtitle,
 body.dark ion-text,
 body.dark ion-label {
-  color: #FFFFFF !important;
+  color: #CECFD2 !important;
 }
 
 /* Modo Oscuro (Dark Mode Standard) */
@@ -264,14 +264,14 @@ body.dark {
   --ion-item-background: #1D2125 !important;
   --ion-toolbar-background: #161A1D !important;
   --ion-tab-bar-background: #1D2125 !important;
-  --ion-text-color: #FFFFFF !important;
-  --ion-text-color-rgb: 255, 255, 255 !important;
+  --ion-text-color: #CECFD2 !important;
+  --ion-text-color-rgb: 206, 207, 210 !important;
   --ion-color-medium: #8C9BAB !important;
   --ion-color-medium-rgb: 140, 155, 171 !important;
 
   /* Variables Custom del Sistema y Sidebar */
   --color-bg-body: #161A1D !important;
-  --color-text: #FFFFFF !important;
+  --color-text: #CECFD2 !important;
   --color-border: rgba(255, 255, 255, 0.08) !important;
   --sidebar-bg: #1D2125 !important;
   --sidebar-icon-color: #8C9BAB !important;
