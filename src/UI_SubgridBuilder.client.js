@@ -34,6 +34,7 @@ window.UI_SubgridBuilder = {
         const addBtn = document.createElement('ion-button');
         addBtn.setAttribute('size', 'small');
         addBtn.setAttribute('fill', 'clear');
+        addBtn.style.fontFamily = 'var(--sys-font-family, inherit)';
         
         const addIcon = document.createElement('ion-icon');
         addIcon.setAttribute('slot', 'start');
@@ -206,6 +207,7 @@ window.UI_SubgridBuilder = {
             const btnClose = document.createElement('ion-button');
             btnClose.style.color = 'var(--ion-color-primary-contrast)';
             btnClose.setAttribute('fill', 'clear');
+            btnClose.style.fontFamily = 'var(--sys-font-family, inherit)';
             btnClose.textContent = 'Cerrar';
             btnClose.addEventListener('click', () => {
                 modal.dismiss().then(() => modal.remove());
@@ -290,6 +292,8 @@ window.UI_SubgridBuilder = {
             btnConfirm.setAttribute('expand', 'block');
             btnConfirm.id = 'btn-confirm-selection';
             btnConfirm.disabled = true;
+            btnConfirm.style.fontFamily = 'var(--sys-font-family, inherit)';
+            btnConfirm.style.color = '#ffffff'; // Aseguramos contraste total sobre fondos sólidos primarios
             btnConfirm.textContent = 'Vincular Seleccionados (0)';
             
             mfToolbar.appendChild(btnConfirm);
