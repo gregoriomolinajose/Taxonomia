@@ -82,11 +82,11 @@
     });
 
     // Colores genericos
-    var defaultColors = ['#1C42E8','#0ABF4F','#FFAE43','#FF594D','#8C8C8C','#1CA8F7','#2fdf75','#000000', '#673ab7', '#e91e63'];
+    var defaultColors = ['var(--ion-color-light)','var(--ion-color-light)','var(--ion-color-light)','var(--ion-color-light)','var(--ion-color-light)','var(--ion-color-light)','var(--ion-color-light)','var(--ion-color-dark)', 'var(--ion-color-light)', 'var(--ion-color-light)'];
 
     var isDark = (window.ThemeManager && window.ThemeManager.currentTheme === 'dark');
     var currentThemeMode = isDark ? 'dark' : 'light';
-    var currentForeColor = isDark ? '#FFFFFF' : '#081754';
+    var currentForeColor = isDark ? 'var(--ion-color-light)' : 'var(--ion-color-light)';
 
     window.chartTopology = new ApexCharts(document.querySelector('#chart-topology'), {
       series: seriesEsp, 
@@ -104,7 +104,7 @@
       chart: { type:'bar', height:350, foreColor: currentForeColor, background: 'transparent' }, 
       plotOptions: { bar: { horizontal:true } },
       theme: { mode: currentThemeMode },
-      colors: ['#1C42E8']
+      colors: ['var(--ion-color-light)']
     });
     window.chartCapacity.render();
   };

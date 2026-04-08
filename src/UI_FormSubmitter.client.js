@@ -13,6 +13,9 @@ window.UI_FormSubmitter = class UI_FormSubmitter {
         this.submitBtn = context.submitBtn;
         this.modal = context.modal; // Instancia Ion-Modal
         
+        // Dependency Injection for API Services (S26.1)
+        this.apiService = context.apiService || window.DataAPI;
+        
         this.isSaving = false;
 
         this._attachSubmitListener();
@@ -127,8 +130,7 @@ window.UI_FormSubmitter = class UI_FormSubmitter {
             const safePayload = JSON.parse(JSON.stringify(payload));
 
             try {
-                // eslint-disable-next-line arch // Justified: Submitter acts as a service controller
-                const rawResponse = await window.DataAPI.call('API_Universal_Router', action, this.entityName, safePayload);
+                const rawResponse = await this.apiService.call('API_Universal_Router', action, this.entityName, safePayload);
                 await loading.dismiss();
                 const response = typeof rawResponse === 'string' ? JSON.parse(rawResponse) : rawResponse;
                 
@@ -172,8 +174,8 @@ window.UI_FormSubmitter = class UI_FormSubmitter {
             if (window.__APP_CACHE__.nestedData) window.__APP_CACHE__.nestedData = {};
             // Re-hidratación Asíncrona del Grafo O(1): Evitamos destruir el caché base y en su lugar
             // pedimos al backend los nuevos edges silenciosamente para no bloquear la Interfaz UI.
-            if (window.DataAPI && window.DataAPI.call) {
-                window.DataAPI.call('getInitialPayload', 'Sys_Graph_Edges').then(payload => {
+            if (this.apiService && typeof this.apiService.call === 'function') {
+                this.apiService.call('getInitialPayload', 'Sys_Graph_Edges').then(payload => {
                     const res = typeof payload === 'string' ? JSON.parse(payload) : payload;
                     if (res && res.data && res.data.rows && res.data.headers) {
                         const headers = res.data.headers;

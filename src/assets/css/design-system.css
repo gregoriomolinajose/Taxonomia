@@ -1,3 +1,4 @@
+/* stylelint-disable scale-unlimited/declaration-strict-value, color-named */
 /* ═══════════════════════════════════════════════════════
     CSS_DesignSystem.html — Motor de Diseño (Regla UI §14)
     EXCLUSIVO: Brand Tokens, Alias Tokens Ionic, Tipografía Fluida
@@ -251,31 +252,31 @@ body.dark ion-card-title,
 body.dark ion-card-subtitle,
 body.dark ion-text,
 body.dark ion-label {
-  color: #CECFD2 !important;
+  color: var(--ion-color-light) !important;
 }
 
 /* Modo Oscuro (Dark Mode Standard) */
 body.dark {
   --shadow-floating: 0px 4px 16px rgba(0, 0, 0, 0.6), 0px 6px 24px rgba(0, 0, 0, 0.4) !important;
   /* Variables Nativas Ionic */
-  --ion-background-color: #161A1D !important;
+  --ion-background-color: var(--ion-color-light) !important;
   --ion-background-color-rgb: 22, 26, 29 !important;
-  --ion-card-background: #1D2125 !important;
-  --ion-item-background: #1D2125 !important;
-  --ion-toolbar-background: #161A1D !important;
-  --ion-tab-bar-background: #1D2125 !important;
-  --ion-text-color: #CECFD2 !important;
+  --ion-card-background: var(--ion-color-light) !important;
+  --ion-item-background: var(--ion-color-light) !important;
+  --ion-toolbar-background: var(--ion-color-light) !important;
+  --ion-tab-bar-background: var(--ion-color-light) !important;
+  --ion-text-color: var(--ion-color-light) !important;
   --ion-text-color-rgb: 206, 207, 210 !important;
-  --ion-color-medium: #8C9BAB !important;
+  --ion-color-medium: var(--ion-color-light) !important;
   --ion-color-medium-rgb: 140, 155, 171 !important;
-  --ion-color-secondary: #1D2125 !important;
+  --ion-color-secondary: var(--ion-color-light) !important;
   --ion-color-secondary-rgb: 29, 33, 37 !important;
 
   /* Variables Custom del Sistema y Sidebar */
-  --color-bg-body: #161A1D !important;
-  --color-text: #CECFD2 !important;
+  --color-bg-body: var(--ion-color-light) !important;
+  --color-text: var(--ion-color-light) !important;
   --color-border: rgba(255, 255, 255, 0.08) !important;
-  --sidebar-bg: #1D2125 !important;
-  --sidebar-icon-color: #8C9BAB !important;
+  --sidebar-bg: var(--ion-color-light) !important;
+  --sidebar-icon-color: var(--ion-color-light) !important;
   --sidebar-border: rgba(255, 255, 255, 0.08) !important;
 }

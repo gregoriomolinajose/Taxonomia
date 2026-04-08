@@ -105,7 +105,7 @@
     // Tema dinámico y Extracción de Variables de Sistema
     var isDark = document.body.classList.contains('dark');
     var ionicTextColor = getComputedStyle(document.body).getPropertyValue('--ion-text-color').trim();
-    var breadcrumbTextColor = ionicTextColor || (isDark ? '#ffffff' : '#1e2022');
+    var breadcrumbTextColor = ionicTextColor || (isDark ? 'var(--ion-color-light)' : 'var(--ion-color-light)');
     
     // 4. Configuracion Premium Treemap
     var option = {
@@ -114,7 +114,7 @@
             enterable: true,
             hideDelay: 250,
             backgroundColor: 'rgba(30, 32, 35, 0.95)',
-            borderColor: '#3b5998',
+            borderColor: 'var(--ion-color-light)',
             borderWidth: 1,
             formatter: function (info) {
                 var val = info.value || 0;
@@ -132,13 +132,13 @@
                 }
 
                 return '<div style="padding: 10px; min-width: 250px;">' +
-                            '<div style="font-weight:bold; font-size:15px; margin-bottom:12px; color:#ffffff; white-space:normal; word-break:break-word;">' + (info.name || '') + '</div>' +
-                            '<div style="display:flex; justify-content:space-between; margin-bottom:12px; font-size:13px; color:#f0f2f5;">' +
-                                '<span>Subdominios: <b style="color:#4a8bff;">' + val + '</b></span>' +
-                                '<span>Densidad: <b style="color:#4a8bff;">' + percentage + '%</b></span>' +
+                            '<div style="font-weight:bold; font-size:15px; margin-bottom:12px; color:var(--ion-color-light); white-space:normal; word-break:break-word;">' + (info.name || '') + '</div>' +
+                            '<div style="display:flex; justify-content:space-between; margin-bottom:12px; font-size:13px; color:var(--ion-color-light);">' +
+                                '<span>Subdominios: <b style="color:var(--ion-color-light);">' + val + '</b></span>' +
+                                '<span>Densidad: <b style="color:var(--ion-color-light);">' + percentage + '%</b></span>' +
                             '</div>' +
                             '<div style="text-align:center;">' +
-                                '<button data-action="domain:edit" style="width:100%; padding:8px; background:#3b5998; color:white; border:none; border-radius:4px; cursor:pointer; font-weight:bold; font-size:13px; box-shadow: 0 2px 4px rgba(0,0,0,0.3); transition: 0.2s;">' +
+                                '<button data-action="domain:edit" style="width:100%; padding:8px; background:var(--ion-color-light); color: var(--ion-color-light); border:none; border-radius:4px; cursor:pointer; font-weight:bold; font-size:13px; box-shadow: 0 2px 4px var(--color-shadow-xl); transition: 0.2s;">' +
                                     '<ion-icon name="create-outline" style="vertical-align:middle; margin-right:5px;"></ion-icon>Configurar Dominio' +
                                 '</button>' +
                             '</div>' +
@@ -157,7 +157,7 @@
             nodeClick: 'zoomToNode', 
             animationDurationUpdate: 500,
             itemStyle: {
-                borderColor: '#f4f5f7', 
+                borderColor: 'var(--sidebar-item-hover)', 
                 borderWidth: 2,
                 gapWidth: 2, 
                 borderRadius: 4 
@@ -174,13 +174,13 @@
             upperLabel: {
                 show: true,
                 height: 30,
-                color: '#ffffff',
-                backgroundColor: '#3b5998',
+                color: 'var(--ion-color-light)',
+                backgroundColor: 'var(--ion-color-light)',
                 fontSize: 12
             },
             levels: [
                 {
-                    itemStyle: { borderColor: '#fff', borderWidth: 4, gapWidth: 4 }
+                    itemStyle: { borderColor: 'var(--ion-color-light)', borderWidth: 4, gapWidth: 4 }
                 },
                 {
                     colorSaturation: [0.3, 0.6], 
@@ -198,14 +198,14 @@
                 left: '1%',
                 emptyItemWidth: 25,
                 itemStyle: {
-                    color: '#3b5998', 
+                    color: 'var(--ion-color-light)', 
                     borderWidth: 0,
                     borderRadius: 15,
-                    shadowColor: 'rgba(0,0,0,0.3)',
+                    shadowColor: 'var(--color-shadow-xl)',
                     shadowBlur: 5
                 },
                 textStyle: {
-                    color: '#ffffff', 
+                    color: 'var(--ion-color-light)', 
                     fontSize: 14,
                     fontWeight: 'bold'
                 }

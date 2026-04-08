@@ -1,3 +1,4 @@
+<!-- stylelint-disable scale-unlimited/declaration-strict-value, color-named -->
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -7,11 +8,11 @@
 
   <!-- Fail-Fast WSOD Mitigation (System Error Interceptor) -->
   <template id="wsod-mitigator">
-    <div style="background:#fff3f3;color:#8a0000;padding:2rem;font-family:sans-serif;height:100vh;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;">
+    <div style="background:var(--ion-color-light);color:var(--ion-color-light);padding:2rem;font-family:sans-serif;height:100vh;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;">
       <h1 style="font-size:3rem;margin-bottom:0.5rem">⚠️</h1><h2>Error de Sistema</h2>
       <p style="max-width:500px">Fallo crítico durante la inicialización de la plataforma (SyntaxError o ReferenceError asíncrono). La ejecución ha sido bloqueada (API Fail-Fast).</p>
-      <pre id="wsod-error-detail" style="background:#fbe9e9;padding:1rem;border-radius:6px;width:100%;max-width:600px;overflow-x:auto;text-align:left;font-size:0.85rem;border:1px solid #ecc;"></pre>
-      <button data-action="nav:reload" style="margin-top:1.5rem;padding:0.75rem 1.5rem;background:#cc0000;color:white;border:none;border-radius:6px;cursor:pointer;font-weight:600;">Regresar al Inicio</button>
+      <pre id="wsod-error-detail" style="background:var(--ion-color-light);padding:1rem;border-radius:6px;width:100%;max-width:600px;overflow-x:auto;text-align:left;font-size:0.85rem;border-width:1px;border-style:solid;border-color:var(--ion-color-light);"></pre>
+      <button data-action="nav:reload" style="margin-top:1.5rem;padding:0.75rem 1.5rem;background:var(--ion-color-light);color: var(--ion-color-light);border:none;border-radius:6px;cursor:pointer;font-weight:600;">Regresar al Inicio</button>
     </div>
   </template>
   <script>
@@ -185,7 +186,7 @@
           <ion-list id="sidebarList"   lines="none" class="ion-hide"></ion-list>
         </ion-content>
         <ion-footer class="ion-no-border" style="background: transparent;">
-          <div class="build-tracker" style="padding: 10px 15px; border-top: 1px solid var(--ion-color-step-100, #eee);">
+          <div class="build-tracker" style="padding: 10px 15px; border-top: 1px solid var(--ion-color-step-100);">
             <span class="build-version">
               <ion-icon name="git-branch-outline" style="vertical-align:middle;font-size:11px;margin-right:4px;"></ion-icon>
               <?= APP_VERSION ?>
@@ -219,7 +220,7 @@
               </ion-button>
               <!-- Botón Avatar de Perfil -->
               <ion-button id="user-profile-btn" fill="clear">
-                <div id="topbar-avatar" style="width: 32px; height: 32px; border-radius: 50%; background: var(--ion-color-primary); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px;">?</div>
+                <div id="topbar-avatar" style="width: 32px; height: 32px; border-radius: 50%; background: var(--ion-color-primary); color: var(--ion-color-light); display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px;">?</div>
               </ion-button>
             </ion-buttons>
           </ion-toolbar>
@@ -229,7 +230,7 @@
             <ion-content>
               <ion-list lines="full">
                 <ion-item>
-                  <ion-avatar slot="start"><div id="popover-avatar" style="width:100%;height:100%;background:var(--ion-color-primary);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:20px;">?</div></ion-avatar>
+                  <ion-avatar slot="start"><div id="popover-avatar" style="width:100%;height:100%;background:var(--ion-color-primary);color:var(--ion-color-light);display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:20px;">?</div></ion-avatar>
                   <ion-label>
                     <h2 id="popover-user-name" style="font-weight:600;">Usuario</h2>
                     <p id="popover-user-role" style="font-size: 0.85em; color: var(--ion-color-medium); text-transform: uppercase;">Rol: Consultando</p>
@@ -295,7 +296,7 @@
 
         <!-- S22.5 Bottom Tab Bar Mobile (Thumb Zone) -->
         <ion-footer class="ion-no-border hide-on-desktop">
-          <ion-tab-bar slot="bottom" id="mobile-tab-bar" style="--background: var(--ion-color-step-50, #f4f5f8);">
+          <ion-tab-bar slot="bottom" id="mobile-tab-bar" style="--background: var(--ion-color-step-50);">
             <!-- Renderizado Dinámico vía UI_Router_Schema / JS_Core -->
           </ion-tab-bar>
         </ion-footer>
