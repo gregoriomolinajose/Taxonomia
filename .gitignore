@@ -12,3 +12,4 @@ test_*.txt
 *_output.txt
 *_report.txt
 tmp_pull/
+/.auth/

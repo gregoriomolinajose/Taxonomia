@@ -163,12 +163,49 @@
                             alert.message = 'Estás reasignando el nodo padre. Si guardas este cambio, toda la rama se trasladará a la nueva ubicación. ¿Estás seguro de continuar?';
                             alert.buttons = [
                                 { text: 'Cancelar', role: 'cancel', handler: () => basicSel.value = originalVal },
-                                { text: 'Sí, reubicar rama', handler: () => originalVal = newVal }
+                                { text: 'Sí, reubicar rama', handler: () => { originalVal = newVal; basicSel.dataset.optimisticLock = 'true'; setTimeout(()=> basicSel.dataset.optimisticLock = 'false', 6000); } }
                             ];
                             document.body.appendChild(alert);
                             await window.PresentSafe(alert);
                         } else if (!originalVal || originalVal === "") {
                             originalVal = newVal;
+                            basicSel.dataset.optimisticLock = 'true';
+                            setTimeout(()=> basicSel.dataset.optimisticLock = 'false', 6000);
+                        } else {
+                            basicSel.dataset.optimisticLock = 'true';
+                            setTimeout(()=> basicSel.dataset.optimisticLock = 'false', 6000);
+                        }
+                    });
+                }
+
+                // S27.1 Fix de Dependencia: Hidratación global retrasada de DataAPI.
+                // Si __APP_CACHE__ llega tarde, las opciones vacías causan desaparición visual.
+                if (window.AppEventBus) {
+                    window.AppEventBus.subscribe('FormEngine::RecordHydrated', () => {
+                        if (!document.body.contains(basicSel)) return;
+                        if (basicSel.dataset.optimisticLock === 'true') return;
+
+                        const freshLiveData = (window.__APP_CACHE__ && window.__APP_CACHE__[field.targetEntity]) ? window.__APP_CACHE__[field.targetEntity] : [];
+                        const freshActiveData = freshLiveData.filter(d => d.estado !== 'Eliminado' && typeof d === 'object');
+                        
+                        let freshFiltered = freshActiveData;
+                        const cLvl = Number(data ? (data.nivel_tipo || 1) : 1);
+                        if (rules) {
+                            if (rules.levelFiltering === true && rules.strictLevelJumps === true && field.relationType === 'padre') {
+                                freshFiltered = freshActiveData.filter(d => Number(d.nivel_tipo) === cLvl - 1);
+                            }
+                            if (rules.rootRequiresNoParent === true && cLvl === 1 && field.relationType === 'padre') {
+                                freshFiltered = []; 
+                            }
+                        }
+
+                        const oldVal = basicSel.value || (initialValues.length > 0 ? initialValues[0] : null);
+                        basicSel.innerHTML = '';
+                        basicSel.appendChild(emptyOpt);
+                        populateSelectOptions(basicSel, freshFiltered, field);
+                        
+                        if (oldVal) {
+                            basicSel.value = oldVal;
                         }
                     });
                 }

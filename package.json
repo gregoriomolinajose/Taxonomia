@@ -19,6 +19,7 @@
     "@babel/core": "^7.29.0",
     "@babel/preset-env": "^7.29.0",
     "@google/clasp": "^3.2.0",
+    "@playwright/test": "^1.59.1",
     "@testing-library/dom": "^10.4.1",
     "@testing-library/jest-dom": "^6.9.1",
     "@types/google-apps-script": "^2.0.8",

@@ -1,23 +1,23 @@
-# Epic Scope: E27 E2E Relation Resilience
+# Epic Scope: E27 E2E Relation Resilience (Real Auth E2E)
 
 ## Objective
-Sanitizar la Capa Asíncrona del Frontend para garantizar la persistencia visual absoluta de Grafos (Subgrid y Single-Selects) sin importar la latencia del Backend bajo cargas máximas. Dotar al proyecto de Suites Automáticas E2E para comprobación de Stress Limit para Top-Down jerárquico.
+Sanitizar la Capa Asíncrona del Frontend para garantizar la persistencia visual absoluta de Grafos (Subgrid y Single-Selects) sin importar la latencia del Backend bajo cargas máximas, y verificarlo mediante **Pruebas E2E puras contra el entorno Dev Real** burlando las barreras de Auth de Google mediante inyección de credenciales/cookies.
 
 ## In Scope
 - Refactorización de Caché Mutex u Optimistic de las mutaciones Subgrid y Select (Capa Frontend / DataAPI).
-- Creación de Backend Seeder para automatizar inyecciones de estrés a la persistencia en Google Apps Script. 
-- Integración de Testing E2E (Unit/Integration sobre UI Virtual) vía Vitest-Playwright para probar Race Conditions forzadas enviando colisiones masivas en la UI simulada.
+- Creación de Suite Playwright externa capaz de arrancar utilizando Playwright Global Setup para inyectar un estado de sesión (`auth.json` con cookies) hacia la URL real de Apps Script en `dev`.
+- Simulaciones Top-Down (Unidad de Negocio -> Portafolio -> Grupo -> Producto) controlando el DOM remoto.
 
 ## Out Scope
-- Reescritura del Engine_DB o Engine_Graph (ya comprobados).
-- Intervenciones directas por Auth API de Google con Playwright en entorno Cloud (se probará en entonos controlados/simulados o usando el Backend Script nativo `Install_Seeder` directamente).
+- Mocks de UI o interceptores JSDOM (se descartaron a favor del E2E real).
+- Ejecución en CI/CD Cloud automática (por el momento, el Auth State generado se utilizará mediante ejecución local de desarrollador, dado que Google bloquea logins IP-Cloud).
 
 ## Planned Stories
-- **S27.1 Optimistic Frontend Hydration:** Implementar bloqueo Mutex / Event Collation en subgrids para evitar escrituras volátiles (desaparición).
-- **S27.2 Backend Stress Seeder:** Programar y certificar `Install_Seeder.gs` para generar un flujo robusto TopDown/BottomUp sin límite de tiempo (manejo manual de triggers si requiere sortear Timeout 6m).
-- **S27.3 E2E Race Condition Test:** Diseñar test automatizado (Vitest UI SPA) forzando latencias aleatorias en DataAPI interceptado para comprobar tolerancia visual a retrasos de red y clicks paralelos.
+- **S27.1 Optimistic Frontend Hydration:** Implementar bloqueo Mutex / Event Collation en subgrids para evitar escrituras volátiles que corrompen el DOM.
+- **S27.2 E2E Auth State Setup:** Crear un script de inicialización de Playwright que recolecte, encripte o reuse cookies de sesión de desarrollador para evadir el Login interactivo de Apps Script.
+- **S27.3 Top-Down Hierarchy Stress Test:** Escribir el Spec en Vitest/Playwright que abre el entorno DEV cloud, crea 1 Unidad, 5 Portafolios, 10 Grupos y comprueba que las relaciones en el frontend persistan a las rápidas interacciones de Playwright.
 
 ## Definition of Done
-- Los subgrids de 'Unidad de Negocio' hasta 'Producto' retienen sus registros visuales al insertar concurrentemente.
-- Suite Test de Regresión UI pasa con 0 Race conditions visuales demostrables bajo latencia forzada (Mocks 2000ms delay).
-- Seeder Cloud puede reventar la BDD con 100+ registros y la UI los lee sanamente.
+- Los subgrids de la cadena organizativa retienen sus registros visuales al insertar concurrentemente.
+- E2E Playwright corre verde pegando a la URL REAL de Apps Script DEV.
+- Cero interacciones manuales requeridas durante la prueba (salvo la primera inyección de sesión si expiró expiró).

@@ -101,6 +101,7 @@ window.UI_SubgridBuilder = {
                 delBtn.appendChild(delIcon);
                 
                 delBtn.addEventListener('click', () => {
+                    setOptimisticLock();
                     childRecords.splice(idx, 1);
                     _refreshList();
                 });
@@ -114,12 +115,26 @@ window.UI_SubgridBuilder = {
         // Initial hydration
         _refreshList();
 
+        let isOptimisticLock = false;
+        const setOptimisticLock = () => {
+            isOptimisticLock = true;
+            subgridDiv.style.opacity = '0.7';
+            setTimeout(() => {
+                isOptimisticLock = false;
+                subgridDiv.style.opacity = '1';
+            }, 6000); // 6 second protection window against DataAPI roundtrip stale-cache
+        };
+
         if (window.AppEventBus) {
             const unsubscribe = window.AppEventBus.subscribe('FormEngine::RecordHydrated', (data) => {
                 // Auto-cleanup memory leak if the subgrid is no longer in DOM
                 if (!document.body.contains(subgridDiv)) {
                     unsubscribe();
                     return;
+                }
+                if (isOptimisticLock) {
+                    console.warn(`[UI_SubgridBuilder] Mutex Activo: Ignorando Hidratación (EventBus) sobre '${field.name}' para evitar pérdida de relaciones temporales.`);
+                    return; // Avoid overwriting with stale cache
                 }
                 const refreshedData = data;
                 if (refreshedData && Array.isArray(refreshedData[field.name])) {
@@ -322,6 +337,7 @@ window.UI_SubgridBuilder = {
             });
 
             btnConfirm.addEventListener('click', () => {
+                setOptimisticLock();
                 optionsItems.forEach(item => {
                     const cb = item.querySelector('ion-checkbox');
                     if (cb && cb.checked) {
@@ -346,6 +362,7 @@ window.UI_SubgridBuilder = {
                 
                 const onSubFormSuccess = (newRecordResp) => {
                     if (newRecordResp && newRecordResp.status === 'success') {
+                        setOptimisticLock();
                         // Soporte para distintas firmas de payload (según controlador de GAS)
                         const itemPayload = (newRecordResp.data && newRecordResp.data.data) ? newRecordResp.data.data : (newRecordResp.data || newRecordResp);
                         const newId = itemPayload[childPK] || itemPayload['id_registro'];
