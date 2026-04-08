@@ -7,6 +7,7 @@
     "test": "jest",
     "test:ui": "vitest run --config vitest.config.mjs",
     "lint:arch": "node scripts/lint-architecture.js",
+    "lint:css": "stylelint \"src/**/*.css\" \"src/**/*.html\"",
     "deploy:dev": "node deploy.js dev",
     "deploy:prod": "node deploy.js prod"
   },
@@ -34,6 +35,10 @@
     "jest-environment-jsdom": "^30.3.0",
     "jsdom": "^22.1.0",
     "playwright": "^1.59.1",
+    "postcss-html": "^1.8.1",
+    "stylelint": "^17.6.0",
+    "stylelint-config-standard": "^40.0.0",
+    "stylelint-declaration-strict-value": "^1.11.1",
     "vitest": "^4.1.2"
   }
 }

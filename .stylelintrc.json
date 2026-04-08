@@ -1,0 +1,30 @@
+{
+  "plugins": [
+    "stylelint-declaration-strict-value"
+  ],
+  "rules": {
+    "scale-unlimited/declaration-strict-value": [
+      ["/color/", "fill", "stroke", "background-color", "border"],
+      {
+        "ignoreValues": ["transparent", "inherit", "currentColor", "none", "initial", "/rgba?\\(/"],
+        "ignoreKeywords": ["currentColor", "transparent", "none", "inherit", "initial", "auto"],
+        "expandShorthand": true,
+        "message": "Usa una variable semántica CSS (var(--...)) en lugar de un color absoluto. (RaiSE Estricto)"
+      }
+    ],
+    "color-named": "never",
+    "custom-property-pattern": null,
+    "selector-class-pattern": null,
+    "selector-type-no-unknown": null,
+    "no-empty-source": null,
+    "no-descending-specificity": null,
+    "alpha-value-notation": null,
+    "color-function-notation": null
+  },
+  "overrides": [
+    {
+      "files": ["*.html", "**/*.html"],
+      "customSyntax": "postcss-html"
+    }
+  ]
+}
