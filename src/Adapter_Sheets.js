@@ -386,8 +386,9 @@ const Adapter_Sheets = {
             Logger.log(`[Auto-Provision] Encabezados inyectados: ${allHeaders.join(', ')}`);
         } else {
             // [S21.4 Auto-Healing] Prevenir pérdida silenciosa de I/O si hay desvío (drift) en las columnas de Sheets
-            const currentHeadersRange = sheet.getRange(1, 1, 1, sheet.getLastColumn());
-            const currentHeaders = currentHeadersRange.getValues()[0];
+            const currentHeadersRange = sheet.getRange(1, 1, 1, Math.max(1, sheet.getLastColumn()));
+            const currentHeadersVals = (currentHeadersRange && typeof currentHeadersRange.getValues === 'function') ? currentHeadersRange.getValues() : [];
+            const currentHeaders = currentHeadersVals[0] || [];
             const normalizedCurrent = currentHeaders.map(h => typeof _normalizeHeader === 'function' ? _normalizeHeader(h) : h.toLowerCase().trim().replace(/[^a-z0-9]+/g, '_'));
             
             let addedHeaders = false;

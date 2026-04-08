@@ -25,22 +25,22 @@ const mockSheet = {
     })),
     getRange: jest.fn((row, col, numRows, numCols) => {
         // Devuelve siempre un objecto con setValues y setValue
-        const defaultRet = { getValues: () => [[]], setValues: mockSetValues, setValue: mockSetValues };
+        const defaultRet = { getValues: () => [[]], setValues: mockSetValues, setValue: mockSetValues, setValue: mockSetValues };
 
         // Mock headers
         const headerArray = [['id_dom', 'nombre', '_version', 'estado', 'created_at', 'created_by', 'updated_at', 'updated_by', 'deleted_at', 'deleted_by']];
         if (row === 1) {
-            return { getValues: () => headerArray, setValues: mockSetValues, setValue: mockSetValues };
+            return { getValues: () => headerArray, setValues: mockSetValues, setValue: mockSetValues, setValue: mockSetValues };
         }
         
         // Mock ID column (solicitado solo con 1 columna de longitud)
         if (col === 1 && numCols === 1 && numRows > 0) {
-            return { getValues: () => [['DOM-TEST-1']], setValues: mockSetValues, setValue: mockSetValues };
+            return { getValues: () => [['DOM-TEST-1']], setValues: mockSetValues, setValue: mockSetValues, setValue: mockSetValues };
         }
         
         // Mock Full existing row extraction (lee la fila entera, tipicamente 4 cols)
         if (numCols > 1) {
-            return { getValues: () => [['DOM-TEST-1', 'Dominio de Prueba', 3, 'Activo', '', '', '', '', '', '']], setValues: mockSetValues, setValue: mockSetValues };
+            return { getValues: () => [['DOM-TEST-1', 'Dominio de Prueba', 3, 'Activo', '', '', '', '', '', '']], setValues: mockSetValues, setValue: mockSetValues, setValue: mockSetValues };
         }
 
         return defaultRet;
@@ -88,11 +88,11 @@ describe('Optimistic Locking Control - Adapter_Sheets.upsert', () => {
         
         // Setup initial mock sheet state
         mockSheet.getRange.mockImplementation((row, col, numRows, numCols) => {
-            const defaultRet = { getValues: () => [[]], setValues: mockSetValues, setValue: mockSetValues };
+            const defaultRet = { getValues: () => [[]], setValues: mockSetValues, setValue: mockSetValues, setValue: mockSetValues };
             const fullHeaderArray = [['id_dom', 'nombre', '_version', 'estado', 'created_at', 'created_by', 'updated_at', 'updated_by', 'deleted_at', 'deleted_by']];
-            if (row === 1) return { getValues: () => fullHeaderArray, setValues: mockSetValues, setValue: mockSetValues };
-            if (col === 1 && numCols === 1) return { getValues: () => [['DOM-TEST-1']], setValues: mockSetValues, setValue: mockSetValues };
-            if (numCols > 1) return { getValues: () => [['DOM-TEST-1', 'Dominio de Prueba', 3, 'Activo', '', '', '', '', '', '']], setValues: mockSetValues, setValue: mockSetValues };
+            if (row === 1) return { getValues: () => fullHeaderArray, setValues: mockSetValues, setValue: mockSetValues, setValue: mockSetValues };
+            if (col === 1 && numCols === 1) return { getValues: () => [['DOM-TEST-1']], setValues: mockSetValues, setValue: mockSetValues, setValue: mockSetValues };
+            if (numCols > 1) return { getValues: () => [['DOM-TEST-1', 'Dominio de Prueba', 3, 'Activo', '', '', '', '', '', '']], setValues: mockSetValues, setValue: mockSetValues, setValue: mockSetValues };
             return defaultRet;
         });
     });
