@@ -49,11 +49,18 @@
                         }
                     }
                     
-                    // REPAINT
+                    // REPAINT preservando el valor seleccionado
+                    const oldVal = selectEl.value;
                     selectEl.innerHTML = '';
                     selectEl.appendChild(emptyOptNode);
                     
                     populateSelectOptions(selectEl, freshFiltered, field);
+                    
+                    // Restaurar el valor si sigue existiendo en el nuevo dataset
+                    if (oldVal) {
+                        const stillExists = freshFiltered.some(d => (typeof d[field.valueField] !== 'undefined' ? d[field.valueField] : d.id_registro) === oldVal);
+                        if (stillExists) selectEl.value = oldVal;
+                    }
                 });
             }
         }
@@ -109,12 +116,10 @@
                 emptyOpt.textContent = "— Sin asignar —";
                 basicSel.appendChild(emptyOpt);
 
-                if (initialValues.length > 0) basicSel.value = initialValues[0];
-                
                 let filteredActiveData = activeData;
                 const rules = window.APP_SCHEMAS && window.APP_SCHEMAS[entityName] ? window.APP_SCHEMAS[entityName].topologyRules : null;
                 const cLevel = Number(data ? (data.nivel_tipo || 1) : 1);
-                
+
                 if (rules) {
                     const uiStateInit = window.SubgridState ? 
                         window.SubgridState.evaluateFieldState(rules, cLevel, field.relationType) : 
@@ -133,6 +138,12 @@
                 }
                 
                 populateSelectOptions(basicSel, filteredActiveData, field);
+                
+                // [Bugfix S-Tier] Asignar el valor DESPUÉS de poblar las opciones para que Ionic lo reconozca
+                if (initialValues.length > 0) {
+                    basicSel.value = initialValues[0];
+                }
+                
                 bindLevelChangeRepaint(basicSel, activeData, field, emptyOpt, localEventBus);
 
                 if (field.isTemporalGraph && field.relationType === 'padre') {
