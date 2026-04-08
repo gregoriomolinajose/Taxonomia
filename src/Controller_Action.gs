@@ -41,6 +41,12 @@ function _handleRead(entityName) {
  */
 function _handleCreate(entityName, payload) {
   _guardAbac('create', entityName, null);
+
+  // [Security Hardening]: Server-side injection of concurrency bypass for Admin Matrices
+  if (entityName === 'Sys_Permissions' && payload._forceAbac === true) {
+      payload._overrideConcurrency = true;
+  }
+
   const result = Engine_DB.create(entityName, payload);
   return result;
 }
@@ -51,6 +57,12 @@ function _handleCreate(entityName, payload) {
  */
 function _handleUpdate(entityName, id, payload) {
   _guardAbac('update', entityName, id);
+
+  // [Security Hardening]: Server-side injection of concurrency bypass for Admin Matrices
+  if (entityName === 'Sys_Permissions' && payload._forceAbac === true) {
+      payload._overrideConcurrency = true;
+  }
+
   const result = Engine_DB.update(entityName, id, payload);
   return result;
 }
