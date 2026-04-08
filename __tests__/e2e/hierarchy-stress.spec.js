@@ -79,12 +79,19 @@ async function submitHybridForm(frame, page, text) {
     const btnSiguiente = frame.locator('ion-button').filter({ hasText: 'Siguiente' }).last();
     let iter = 0;
     while(iter < 5) {
-        const isVisible = await btnSiguiente.isVisible().catch(() => false);
-        if (!isVisible) break;
+        // Evaluar la presencialidad del ocultador Ionic en lugar de la visibilidad abstracta
+        const isHidden = await btnSiguiente.evaluate(node => node.classList.contains('ion-hide')).catch(() => true);
+        if (isHidden) break;
+        
         await btnSiguiente.click({ force: true });
-        await page.waitForTimeout(500);
+        // Reducimos 90% el Test Muda. Solo micro-latencia para repintado local
+        await page.waitForTimeout(50);
         iter++;
     }
+    
+    // Auto-polling resiliente de Playwright contra el DOM mutante de FormStepper
+    const btnGuardar = frame.locator('ion-button').filter({ hasText: text }).last();
+    await expect(btnGuardar).not.toHaveClass(/ion-hide/, { timeout: 2000 });
     await clickTopButtonByText(frame, text);
 }
 // --------------------------------------------------------------------------
