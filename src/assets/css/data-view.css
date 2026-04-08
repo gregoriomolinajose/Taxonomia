@@ -240,7 +240,7 @@
         --box-shadow: none;
         --placeholder-color: var(--ion-color-medium);
         --color: var(--ion-text-color);
-        border: 1.5px solid var(--color-border, rgba(0,0,0,0.1));
+        border: 1px solid transparent;
         border-radius: 6px;
         transition: border-color var(--dv-transition);
         padding: 0;
