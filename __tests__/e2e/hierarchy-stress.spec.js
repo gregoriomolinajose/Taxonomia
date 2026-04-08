@@ -79,6 +79,7 @@ async function submitHybridForm(frame, page, text) {
     const btnSiguiente = frame.locator('ion-button').filter({ hasText: 'Siguiente' }).last();
     let iter = 0;
     while(iter < 5) {
+        if (await btnSiguiente.count() === 0) break;
         // Evaluar la presencialidad del ocultador Ionic en lugar de la visibilidad abstracta
         const isHidden = await btnSiguiente.evaluate(node => node.classList.contains('ion-hide')).catch(() => true);
         if (isHidden) break;
