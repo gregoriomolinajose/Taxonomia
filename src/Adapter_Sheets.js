@@ -42,9 +42,17 @@ const Adapter_Sheets = {
         const spreadsheetId = config ? config.SPREADSHEET_ID_DB : CONFIG.SPREADSHEET_ID_DB;
         Logger.log("Adapter_Sheets.upsert: Usando SPREADSHEET_ID_DB = " + spreadsheetId);
 
-        const ss = SpreadsheetApp.openById(spreadsheetId);
-        Logger.log("Adapter_Sheets.upsert: Buscando pestaña... DB_" + tableName);
-        const sheet = this._ensureSheetExists(ss, tableName);
+        const lock = LockService.getScriptLock();
+        try {
+            lock.waitLock(10000); // 10s timeout to resolve race conditions
+        } catch (e) {
+            throw new Error('TIMEOUT_LOCK: El sistema de base de datos está ocupado. Intenta de nuevo.');
+        }
+
+        try {
+            const ss = SpreadsheetApp.openById(spreadsheetId);
+            Logger.log("Adapter_Sheets.upsert: Buscando pestaña... DB_" + tableName);
+            const sheet = this._ensureSheetExists(ss, tableName);
 
         // 3. Leer Encabezados
         const headersRange = sheet.getRange(1, 1, 1, sheet.getLastColumn());
@@ -139,8 +147,9 @@ const Adapter_Sheets = {
             if (idxUpdatedAt > -1) rowToInsert[idxUpdatedAt] = currentTimestamp;
             if (idxUpdatedBy > -1) rowToInsert[idxUpdatedBy] = currentUser;
 
-            Logger.log(`Adapter_Sheets.upsert: ¿Se encontró el ID?: Sí. Fila: ${foundRowIndex}`);
+            Logger.log(`Adapter_Sheets.upsert: [Update] Modificando Fila: ${foundRowIndex} PK: ${primaryKeyValue}. Longitud datos: ${rowToInsert.length}/${normalizedHeaders.length}`);
             sheet.getRange(foundRowIndex, 1, 1, rowToInsert.length).setValues([rowToInsert]);
+            SpreadsheetApp.flush(); // Force sync to Google Drive UI
             return { status: 'success', action: 'updated', pk: primaryKeyField, val: primaryKeyValue, version: payload.version };
         } else {
             // Insertar (Create)
@@ -155,7 +164,11 @@ const Adapter_Sheets = {
 
             Logger.log("Adapter_Sheets.upsert: ¿Se encontró el ID?: No. Creando nueva fila para idempotencia...");
             sheet.getRange(sheet.getLastRow() + 1, 1, 1, rowToInsert.length).setValues([rowToInsert]);
+            SpreadsheetApp.flush(); // Force sync to Google Drive UI
             return { status: 'success', action: 'created', pk: primaryKeyField, val: primaryKeyValue, version: payload.version };
+        }
+        } finally {
+            lock.releaseLock();
         }
     },
 
@@ -261,7 +274,7 @@ const Adapter_Sheets = {
         }
         
         sheet.getRange(1, 1, originalData.length, originalData[0].length).setValues(originalData);
-
+        SpreadsheetApp.flush();
         return { status: 'success', count: results.length, details: results };
     },
 

@@ -273,6 +273,11 @@ function bulkInsert(entityName, recordsArray) {
         sheet.getRange(2, 1, existingData.length, headers.length).setValues(existingData);
     }
     
+    // BUGFIX: Invalida explícitamente la memoria RAM y metadatos luego de una inyección masiva para evitar Phantom Ghosting!
+    if (typeof _invalidateCache === 'function') {
+        _invalidateCache(entityName);
+    }
+    
     Logger.log(`BulkUpsert completado para ${entityName}: ${newRecordsCount} insertados, ${updatedRecordsCount} actualizados.`);
     
     return { status: 'success', insertedCount: (newRecordsCount + updatedRecordsCount), newRecords: newRecordsCount, updatedRecords: updatedRecordsCount };
