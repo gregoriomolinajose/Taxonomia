@@ -13,6 +13,7 @@ global.Session = {
 };
 
 global.SpreadsheetApp = {
+    flush: jest.fn(),
     openById: jest.fn().mockReturnValue({
         getSheetByName: jest.fn().mockReturnValue({
             getLastRow: jest.fn().mockReturnValue(3),
@@ -59,6 +60,18 @@ global.CacheService = {
     getScriptCache: jest.fn().mockReturnValue(mockCache),
     getUserCache: jest.fn().mockReturnValue(mockCache),
     getDocumentCache: jest.fn().mockReturnValue(mockCache)
+};
+
+// Mock para LockService (Regla Concurrencia Térmica)
+global.LockService = {
+    getScriptLock: jest.fn().mockReturnValue({
+        waitLock: jest.fn(),
+        releaseLock: jest.fn()
+    }),
+    getUserLock: jest.fn().mockReturnValue({
+        waitLock: jest.fn(),
+        releaseLock: jest.fn()
+    })
 };
 
 // Mock para HtmlService (usado en vistas)
