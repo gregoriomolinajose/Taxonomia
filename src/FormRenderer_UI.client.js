@@ -543,7 +543,7 @@
             console.log("[FormEngine] Pre-llenando", inputs.length, "campos...");
             inputs.forEach(input => {
                 const name = input.getAttribute('name');
-                if (name && record.hasOwnProperty(name)) {
+                if (name && record.hasOwnProperty(name) && !input.hasAttribute('data-skip-hydration')) {
                     if (input.dataset.parser === 'json_array') {
                         let parsedData = [];
                         try {

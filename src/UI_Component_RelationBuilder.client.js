@@ -111,6 +111,9 @@
                 basicSel.setAttribute('label', field.label);
                 basicSel.setAttribute('label-placement', 'stacked');
                 basicSel.setAttribute('fill', 'outline');
+                if (field.isTemporalGraph) {
+                    basicSel.setAttribute('data-skip-hydration', 'true');
+                }
                 basicSel.style.marginBottom = 'var(--spacing-3)';
 
                 const emptyOpt = document.createElement('ion-select-option');
