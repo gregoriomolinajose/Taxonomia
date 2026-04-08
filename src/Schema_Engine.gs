@@ -12,13 +12,13 @@ const APP_SCHEMAS = {
       { name: "id_unidad_negocio", type: "hidden", primaryKey: true },
       { name: "estado", type: "hidden", defaultValue: "Activo" },
 
-      { name: "separator_0", type: "divider", label: "Datos Generales", width: 12 },
-      { name: "nombre", type: "text", label: "Nombre de Unidad", required: true, width: 12 },
-      { name: "descripcion", type: "textarea", label: "Descripción", required: false, width: 12 },
-      { name: "responsable", type: "text", label: "Responsable", required: false, width: 12 },
+      { section: "Datos Generales", name: "separator_0", type: "divider", label: "Datos Generales", width: 12 },
+      { section: "Datos Generales", name: "nombre", type: "text", label: "Nombre de Unidad", required: true, width: 12 },
+      { section: "Datos Generales", name: "descripcion", type: "textarea", label: "Descripción", required: false, width: 12 },
+      { section: "Datos Generales", name: "responsable", type: "text", label: "Responsable", required: false, width: 12 },
 
-      { name: "separator_grafo", type: "divider", label: "Topología (Grafo)", width: 12 },
-      { name: "portafolios_vinculados", type: "relation", relationType: "hijo", targetEntity: "Portafolio", graphEntity: "Sys_Graph_Edges", valueField: "id_portafolio", labelField: "nombre", uiBehavior: "subgrid", label: "Portafolios Asociados", isTemporalGraph: true, graphEdgeType: "UNIDAD_NEGOCIO_PORTAFOLIO", topologyCardinality: "1:N", width: 12 }
+      { section: "Topología (Grafo)", name: "separator_grafo", type: "divider", label: "Topología (Grafo)", width: 12 },
+      { section: "Topología (Grafo)", name: "portafolios_vinculados", type: "relation", relationType: "hijo", targetEntity: "Portafolio", graphEntity: "Sys_Graph_Edges", valueField: "id_portafolio", labelField: "nombre", uiBehavior: "subgrid", label: "Portafolios Asociados", isTemporalGraph: true, graphEdgeType: "UNIDAD_NEGOCIO_PORTAFOLIO", topologyCardinality: "1:N", width: 12 }
     ]
   },
   Portafolio: {
@@ -33,25 +33,25 @@ const APP_SCHEMAS = {
       { name: "id_portafolio", type: "hidden", primaryKey: true },
       { name: "estado", type: "hidden", defaultValue: "Activo" },
 
-      { name: "separator_1", type: "divider", label: "Definición Estratégica", width: 12 },
-      { name: "nombre", type: "text", label: "Nombre de Portafolio", required: true, width: 12 },
+      { section: "Definición Estratégica", name: "separator_1", type: "divider", label: "Definición Estratégica", width: 12 },
+      { section: "Definición Estratégica", name: "nombre", type: "text", label: "Nombre de Portafolio", required: true, width: 12 },
    /**
-     *{ name: "proposito", type: "textarea", label: "Propósito", required: false, width: 12 },
-     *{ name: "objetivos_negocio", type: "textarea", label: "Objetivos de Negocio", required: false, width: 6 },
-     *{ name: "kpis_metricas", type: "textarea", label: "KPIs / Métricas", required: false, width: 6 },
+     *{ section: "Definición Estratégica", name: "proposito", type: "textarea", label: "Propósito", required: false, width: 12 },
+     *{ section: "Definición Estratégica", name: "objetivos_negocio", type: "textarea", label: "Objetivos de Negocio", required: false, width: 6 },
+     *{ section: "Definición Estratégica", name: "kpis_metricas", type: "textarea", label: "KPIs / Métricas", required: false, width: 6 },
      *
-     *{ name: "separator_2", type: "divider", label: "Propuesta de Valor", width: 12 },
-     *{ name: "flujos_valor", type: "textarea", label: "Flujos de Valor", required: false, width: 6 },
-     *{ name: "clientes_segmentos", type: "textarea", label: "Clientes y Segmentos", required: false, width: 6 },
-     *{ name: "producto_dominio", type: "text", label: "Producto / Dominio", required: false, width: 12 },
+     *{ section: "Propuesta de Valor", name: "separator_2", type: "divider", label: "Propuesta de Valor", width: 12 },
+     *{ section: "Propuesta de Valor", name: "flujos_valor", type: "textarea", label: "Flujos de Valor", required: false, width: 6 },
+     *{ section: "Propuesta de Valor", name: "clientes_segmentos", type: "textarea", label: "Clientes y Segmentos", required: false, width: 6 },
+     *{ section: "Propuesta de Valor", name: "producto_dominio", type: "text", label: "Producto / Dominio", required: false, width: 12 },
     */ 
-      { name: "separator_grafo", type: "divider", label: "Pertenencia Topológica (Grafo)", width: 12 },
-      { name: "unidad_negocio_padre", type: "relation", relationType: "padre", targetEntity: "Unidad_Negocio", graphEntity: "Sys_Graph_Edges", valueField: "id_unidad_negocio", labelField: "nombre", uiComponent: "select_single", label: "Unidad de Negocio (Padre)", isTemporalGraph: true, graphEdgeType: "UNIDAD_NEGOCIO_PORTAFOLIO", topologyCardinality: "1:N", width: 12, showInList: true },
-      { name: "grupos_productos_vinculados", type: "relation", relationType: "hijo", targetEntity: "Grupo_Productos", graphEntity: "Sys_Graph_Edges", valueField: "id_grupo_producto", labelField: "nombre", uiBehavior: "subgrid", label: "Grupos de Productos Asociados", isTemporalGraph: true, graphEdgeType: "PORTAFOLIO_GRUPO_PRODUCTO", topologyCardinality: "1:N", width: 12 },
+      { section: "Topología (Grafo)", name: "separator_grafo", type: "divider", label: "Pertenencia Topológica (Grafo)", width: 12 },
+      { section: "Topología (Grafo)", name: "unidad_negocio_padre", type: "relation", relationType: "padre", targetEntity: "Unidad_Negocio", graphEntity: "Sys_Graph_Edges", valueField: "id_unidad_negocio", labelField: "nombre", uiComponent: "select_single", label: "Unidad de Negocio (Padre)", isTemporalGraph: true, graphEdgeType: "UNIDAD_NEGOCIO_PORTAFOLIO", topologyCardinality: "1:N", width: 12, showInList: true },
+      { section: "Topología (Grafo)", name: "grupos_productos_vinculados", type: "relation", relationType: "hijo", targetEntity: "Grupo_Productos", graphEntity: "Sys_Graph_Edges", valueField: "id_grupo_producto", labelField: "nombre", uiBehavior: "subgrid", label: "Grupos de Productos Asociados", isTemporalGraph: true, graphEdgeType: "PORTAFOLIO_GRUPO_PRODUCTO", topologyCardinality: "1:N", width: 12 },
 
-      { name: "separator_4", type: "divider", label: "Gobernanza y Actores", width: 12 },
-      { name: "gobierno_liderazgo", type: "textarea", label: "Gobierno y Liderazgo", required: false, width: 6 },
-      { name: "stakeholders", type: "textarea", label: "Stakeholders", required: false, width: 6 }
+      { section: "Gobernanza y Actores", name: "separator_4", type: "divider", label: "Gobernanza y Actores", width: 12 },
+      { section: "Gobernanza y Actores", name: "gobierno_liderazgo", type: "textarea", label: "Gobierno y Liderazgo", required: false, width: 6 },
+      { section: "Gobernanza y Actores", name: "stakeholders", type: "textarea", label: "Stakeholders", required: false, width: 6 }
     ]
   },
   Dominio: {
@@ -93,16 +93,16 @@ const APP_SCHEMAS = {
     primaryKey: "id_grupo_producto",
     titleField: "nombre",
     fields: [
-      { name: "separator_1", type: "divider", label: "Datos Generales", width: 12 },
-      { width: 12, name: "id_grupo_producto", label: "ID Grupo Producto", type: "text", required: true, readonly: true, primaryKey: true },
-      { width: 12, name: "nombre", label: "Nombre", type: "text", required: true },
-      { width: 12, name: "descripcion", label: "Descripción", type: "textarea", required: false, showInList: false },
-      { name: "separator_grafo", type: "divider", label: "Pertenencia Topológica (Grafo)", width: 12 },
-      { width: 12, name: "id_portafolio", type: "relation", relationType: "padre", targetEntity: "Portafolio", graphEntity: "Sys_Graph_Edges", valueField: "id_portafolio", labelField: "nombre", uiComponent: "select_single", label: "Portafolio Padre (Grafo)", isTemporalGraph: true, graphEdgeType: "PORTAFOLIO_GRUPO_PRODUCTO", topologyCardinality: "1:N", required: true },
-      { width: 12, name: "productos_vinculados", type: "relation", relationType: "hijo", targetEntity: "Producto", graphEntity: "Sys_Graph_Edges", valueField: "id_producto", labelField: "nombre_producto", uiBehavior: "subgrid", label: "Productos Asociados (1:N)", isTemporalGraph: true, graphEdgeType: "GRUPO_PRODUCTO_PRODUCTO", topologyCardinality: "1:N" },
-      { name: "separator_2", type: "divider", label: "Estrategia de Valor", width: 12 },
-      { width: 12, name: "naturaleza_valor", label: "Naturaleza de Valor", type: "text", required: false },
-      { width: 12, name: "modelo_negocio", label: "Modelo de Negocio", type: "select", required: true, options: ["SaaS", "Marketplace", "B2B", "B2C", "Transaccional"] }
+      { section: "Datos Generales", name: "separator_1", type: "divider", label: "Datos Generales", width: 12 },
+      { section: "Datos Generales", width: 12, name: "id_grupo_producto", label: "ID Grupo Producto", type: "text", required: true, readonly: true, primaryKey: true },
+      { section: "Datos Generales", width: 12, name: "nombre", label: "Nombre", type: "text", required: true },
+      { section: "Datos Generales", width: 12, name: "descripcion", label: "Descripción", type: "textarea", required: false, showInList: false },
+      { section: "Topología (Grafo)", name: "separator_grafo", type: "divider", label: "Pertenencia Topológica (Grafo)", width: 12 },
+      { section: "Topología (Grafo)", width: 12, name: "id_portafolio", type: "relation", relationType: "padre", targetEntity: "Portafolio", graphEntity: "Sys_Graph_Edges", valueField: "id_portafolio", labelField: "nombre", uiComponent: "select_single", label: "Portafolio Padre (Grafo)", isTemporalGraph: true, graphEdgeType: "PORTAFOLIO_GRUPO_PRODUCTO", topologyCardinality: "1:N", required: true },
+      { section: "Topología (Grafo)", width: 12, name: "productos_vinculados", type: "relation", relationType: "hijo", targetEntity: "Producto", graphEntity: "Sys_Graph_Edges", valueField: "id_producto", labelField: "nombre_producto", uiBehavior: "subgrid", label: "Productos Asociados (1:N)", isTemporalGraph: true, graphEdgeType: "GRUPO_PRODUCTO_PRODUCTO", topologyCardinality: "1:N" },
+      { section: "Estrategia de Valor", name: "separator_2", type: "divider", label: "Estrategia de Valor", width: 12 },
+      { section: "Estrategia de Valor", width: 12, name: "naturaleza_valor", label: "Naturaleza de Valor", type: "text", required: false },
+      { section: "Estrategia de Valor", width: 12, name: "modelo_negocio", label: "Modelo de Negocio", type: "select", required: true, options: ["SaaS", "Marketplace", "B2B", "B2C", "Transaccional"] }
     ]
   },
   Producto: {
@@ -117,11 +117,11 @@ const APP_SCHEMAS = {
     fields: [
       { name: "id_producto", type: "hidden", primaryKey: true },
       { name: "estado", type: "hidden", defaultValue: "Activo" },
-      { name: "separator_1", type: "divider", label: "Datos Generales", width: 12 },
-      { width: 12, name: "nombre_producto", label: "Nombre de Producto", type: "text", required: true },
-      { width: 12, name: "descripcion", label: "Descripción", type: "textarea", required: false, showInList: false },
-      { name: "separator_grafo", type: "divider", label: "Pertenencia Topológica (Grafo)", width: 12 },
-      { width: 12, name: "id_grupo_producto", type: "relation", relationType: "padre", targetEntity: "Grupo_Productos", graphEntity: "Sys_Graph_Edges", valueField: "id_grupo_producto", labelField: "nombre", uiComponent: "select_single", label: "Grupo de Producto (Padre)", isTemporalGraph: true, graphEdgeType: "GRUPO_PRODUCTO_PRODUCTO", topologyCardinality: "1:N", required: true }
+      { section: "Datos Generales", name: "separator_1", type: "divider", label: "Datos Generales", width: 12 },
+      { section: "Datos Generales", width: 12, name: "nombre_producto", label: "Nombre de Producto", type: "text", required: true },
+      { section: "Datos Generales", width: 12, name: "descripcion", label: "Descripción", type: "textarea", required: false, showInList: false },
+      { section: "Topología (Grafo)", name: "separator_grafo", type: "divider", label: "Pertenencia Topológica (Grafo)", width: 12 },
+      { section: "Topología (Grafo)", width: 12, name: "id_grupo_producto", type: "relation", relationType: "padre", targetEntity: "Grupo_Productos", graphEntity: "Sys_Graph_Edges", valueField: "id_grupo_producto", labelField: "nombre", uiComponent: "select_single", label: "Grupo de Producto (Padre)", isTemporalGraph: true, graphEdgeType: "GRUPO_PRODUCTO_PRODUCTO", topologyCardinality: "1:N", required: true }
     ]
   },
   Capacidad: {
@@ -214,9 +214,9 @@ const APP_SCHEMAS = {
     fields: [
       { name: "id_relacion", type: "hidden", primaryKey: true },
       { name: "estado", type: "hidden", defaultValue: "Activo" },
-      { name: "id_nodo_padre", type: "text", required: true, width: 6 },
-      { name: "id_nodo_hijo", type: "text", required: true, width: 6 },
-      { name: "tipo_relacion", type: "text", required: true, width: 6 },
+      { section: "Datos de Relación", name: "id_nodo_padre", type: "text", required: true, width: 6 },
+      { section: "Datos de Relación", name: "id_nodo_hijo", type: "text", required: true, width: 6 },
+      { section: "Datos de Relación", name: "tipo_relacion", type: "text", required: true, width: 6 },
       { name: "valido_desde", type: "hidden" },
       { name: "valido_hasta", type: "hidden" },
       { name: "es_version_actual", type: "hidden", defaultValue: true }
@@ -226,9 +226,9 @@ const APP_SCHEMAS = {
     metadata: { showInMenu: false, showInDashboard: false, order:90, iconName:'shield-half-outline', color:'danger', label:'Seguridad: Roles', titleField:'nombre_rol', idField:'id_rol', fkField:null },
     primaryKey: "id_rol",
     fields: [
-      { name: "id_rol", type: "text", primaryKey: true, readonly: true, label: "ID Rol", width: 12 },
-      { name: "nombre_rol", type: "text", label: "Nombre de Rol", required: true, width: 6 },
-      { name: "descripcion", type: "textarea", label: "Descripción", required: false, width: 12, showInList: false }
+      { section: "Configuración de Rol", name: "id_rol", type: "text", primaryKey: true, readonly: true, label: "ID Rol", width: 12 },
+      { section: "Configuración de Rol", name: "nombre_rol", type: "text", label: "Nombre de Rol", required: true, width: 6 },
+      { section: "Configuración de Rol", name: "descripcion", type: "textarea", label: "Descripción", required: false, width: 12, showInList: false }
     ]
   },
   Config_Typography: {
@@ -268,10 +268,10 @@ const APP_SCHEMAS = {
     metadata: { showInMenu: false, showInDashboard: false, order:91, iconName:'key-outline', color:'danger', label:'Seguridad: Permisos ABAC', titleField:'schema_destino', idField:'id_permiso', fkField:{ key:'id_rol', label:'Rol Base' } },
     primaryKey: "id_permiso",
     fields: [
-      { name: "id_permiso", type: "text", primaryKey: true, readonly: true, label: "ID Permiso", width: 12 },
-      { name: "id_rol", type: "select", label: "Rol Organizacional", required: true, width: 6, lookupSource: "getSysRolesOptions" },
-      { name: "schema_destino", type: "select", label: "Entidad del Sistema", required: true, width: 6, options: ["Portafolio", "Dominio", "Grupo_Productos", "Producto", "Capacidad", "Unidad_Negocio", "Equipo", "Persona", "Sys_Graph_Edges", "Sys_Roles", "Sys_Permissions", "Config_Typography", "Config_Workspace"] },
-      { name: "nivel_acceso", type: "select", label: "Nivel de Acceso", required: true, width: 12, options: ["ALL (Admin Total)", "OWNER_ONLY (Solo propios)", "MEMBER_ONLY (Siendo Miembro)", "READ_ONLY (Solo lectura)", "NONE (Denegado)"] }
+      { section: "Asignación de Permiso", name: "id_permiso", type: "text", primaryKey: true, readonly: true, label: "ID Permiso", width: 12 },
+      { section: "Asignación de Permiso", name: "id_rol", type: "select", label: "Rol Organizacional", required: true, width: 6, lookupSource: "getSysRolesOptions" },
+      { section: "Asignación de Permiso", name: "schema_destino", type: "select", label: "Entidad del Sistema", required: true, width: 6, options: ["Portafolio", "Dominio", "Grupo_Productos", "Producto", "Capacidad", "Unidad_Negocio", "Equipo", "Persona", "Sys_Graph_Edges", "Sys_Roles", "Sys_Permissions", "Config_Typography", "Config_Workspace"] },
+      { section: "Asignación de Permiso", name: "nivel_acceso", type: "select", label: "Nivel de Acceso", required: true, width: 12, options: ["ALL (Admin Total)", "OWNER_ONLY (Solo propios)", "MEMBER_ONLY (Siendo Miembro)", "READ_ONLY (Solo lectura)", "NONE (Denegado)"] }
     ]
   },
   Config_Workspace: {
