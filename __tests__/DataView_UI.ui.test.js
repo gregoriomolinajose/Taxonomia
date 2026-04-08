@@ -33,7 +33,21 @@ describe('DataViewEngine Nativo JSDOM', () => {
         window.formatEntityName = (name) => name;
         
         // Abstracciones delegadas que no probamos aquí (Single Responsibility Principal)
-        window.UI_DataGrid = { buildLayout: vi.fn().mockImplementation(() => document.createElement('table')) };
+        window.UI_DataGrid = { 
+            buildLayout: vi.fn().mockImplementation(() => document.createElement('table')),
+            _normalizeFields: vi.fn().mockImplementation((entityName) => {
+                if (entityName === 'testEntityVirtual') {
+                    return [
+                        { name: 'id_item', type: 'text', primaryKey: true },
+                        { name: 'nombre', type: 'text' },
+                        { name: 'separador_1', type: 'divider', width: 12 },
+                        { name: 'campo_virtual', type: 'canvas', isVirtual: true }
+                    ];
+                }
+                return null;
+            }),
+            _labelFromKey: vi.fn().mockImplementation((k) => k)
+        };
         window.UI_DataView_Toolbar = { 
             ensureColPopover: vi.fn(), 
             buildToolbarHTML: vi.fn().mockImplementation(() => document.createElement('div')),
@@ -82,6 +96,28 @@ describe('DataViewEngine Nativo JSDOM', () => {
         expect(window.__APP_CACHE__['testEntity'].length).toBe(2); 
 
         expect(window.UI_Router.showListSidebar).toHaveBeenCalledWith('testEntity');
+    });
+
+    it('C. Filtra dinámicamente campos estéticos y virtuales del esquema para no renderizarlos como columnas', async () => {
+        window.DataViewEngine.render('testEntityVirtual', 'test-container');
+        
+        await waitFor(() => {
+            const state = window.DataViewEngine._getState();
+            expect(state).toBeDefined();
+            expect(state.columns).toBeDefined();
+            expect(state.columns.length).toBeGreaterThan(0);
+        }, { timeout: 2000, interval: 20 });
+        
+        const finalState = window.DataViewEngine._getState();
+        const generatedKeys = finalState.columns.map(c => c.key);
+        
+        // Debe contener campos válidos de la data (id_item, nombre, estado)
+        expect(generatedKeys).toContain('id_item');
+        expect(generatedKeys).toContain('nombre');
+        
+        // NO debe contener campos estéticos (divider) ni virtuales (isVirtual)
+        expect(generatedKeys).not.toContain('separador_1');
+        expect(generatedKeys).not.toContain('campo_virtual');
     });
 
 });

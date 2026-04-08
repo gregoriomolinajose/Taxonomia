@@ -63,7 +63,9 @@
                 return;
             }
             
-            const visibleCols = columns.filter(c => c.visible);
+            const SYS_COLS = window.CORE_SYS_FIELDS || [];
+            // Omitir campos de sistema explícitamente para asegurar que la descarga sirva como "Plantilla Limpia"
+            const visibleCols = columns.filter(c => c.visible && !SYS_COLS.includes(c.key || c.name));
             
             // Si el objeto col no viene con key (sino con .name como normaliceFields), usar fallback
             const exportHeaders = visibleCols.map(c => c.key || c.name);

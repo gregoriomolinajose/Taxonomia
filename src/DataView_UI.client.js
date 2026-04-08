@@ -7,6 +7,7 @@
         const ENTITY_META = window.ENTITY_META || {};
 
         /* ── Columnas excluidas de la tabla (Movido a UI_DataGrid) ── */
+        const VIRTUAL_TYPES = ['divider', 'header', 'spacer', 'alert', 'markup'];
 
         /* ── Campos estatus para badges de color ── */
         const STATUS_FIELDS = ['estado', 'nivel_criticalidad', 'modelo_negocio'];
@@ -48,11 +49,12 @@
         ───────────────────────────────────────────── */
         function _buildColumns(entityName, rows) {
             const fields = window.UI_DataGrid && window.UI_DataGrid._normalizeFields ? window.UI_DataGrid._normalizeFields(entityName) : null;
-            const SYS_COLS = ['created_at', 'create_by', 'created_by', 'updated_at', 'update_by', 'deleted_at', 'deleted_by', 'version'];
+            // Migrado a arquitectura global (Index.html -> window.CORE_SYS_FIELDS) para consistencia (CSV y DataGrid)
+            const SYS_COLS = window.CORE_SYS_FIELDS || ['created_at', 'create_by', 'created_by', 'updated_at', 'update_at', 'update_by', 'deleted_at', 'deleted_by', 'version', '_version'];
             let keys = [];
 
             if (fields) {
-                keys = fields.map(f => f.name);
+                keys = fields.filter(f => !f.isVirtual && !VIRTUAL_TYPES.includes(f.type)).map(f => f.name);
                 // agregar claves presentes en datos pero no en schema (ej. created_at)
                 if (rows && rows.length > 0) {
                     Object.keys(rows[0]).forEach(k => { if (!keys.includes(k)) keys.push(k); });
