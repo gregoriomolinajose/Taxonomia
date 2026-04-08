@@ -354,12 +354,7 @@
             // --------------------------------------------------------------------
 
             // S14.1 Delegación Submitter Object
-            new window.UI_FormSubmitter({
-                entityName: entityName,
-                fields: fields,
-                submitBtn: submitBtn,
-                modal: modal
-            });
+            new window.UI_FormSubmitter(entityName, fields, submitBtn);
             
             // --- Metadata-Driven Dependency Injection (Zero-Touch UI) ---
             if (window.UI_FormDependencies) {

@@ -7,14 +7,13 @@
  */
 
 window.UI_FormSubmitter = class UI_FormSubmitter {
-    constructor(context) {
-        this.entityName = context.entityName;
-        this.fields = context.fields;
-        this.submitBtn = context.submitBtn;
-        this.modal = context.modal; // Instancia Ion-Modal
+    constructor(entityName, fields, submitBtn, apiService = null) {
+        this.entityName = entityName;
+        this.fields = fields;
+        this.submitBtn = submitBtn;
         
-        // Dependency Injection for API Services (S26.1)
-        this.apiService = context.apiService || window.DataAPI;
+        // Dependency Injection for API Services
+        this.apiService = apiService || window.DataAPI;
         
         this.isSaving = false;
 

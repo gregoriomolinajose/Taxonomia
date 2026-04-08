@@ -16,20 +16,11 @@ describe('UI_FormSubmitter (Dependency Injection Architecture)', () => {
         };
 
         // Setup DOM Mock Environment
-        mockModal = document.createElement('div');
         mockBtn = document.createElement('button');
-
-        mockContext = {
-            entityName: 'Test_Entity',
-            fields: [],
-            submitBtn: mockBtn,
-            modal: mockModal,
-            apiService: mockApiService // Injection!
-        };
     });
 
     it('A. Debe inyectar correctamente apiService sin depender de window.DataAPI (DI compliance)', () => {
-        const submitter = new window.UI_FormSubmitter(mockContext);
+        const submitter = new window.UI_FormSubmitter('Test_Entity', [], mockBtn, mockApiService);
         
         // Assertions: Validation of strict DI bounds
         expect(submitter.apiService).toBe(mockApiService);
@@ -38,7 +29,7 @@ describe('UI_FormSubmitter (Dependency Injection Architecture)', () => {
     });
 
     it('B. La clase FormSubmitter debe exponer el apiService inyectado asegurando 100% testabilidad', () => {
-        const submitter = new window.UI_FormSubmitter(mockContext);
+        const submitter = new window.UI_FormSubmitter('Test_Entity', [], mockBtn, mockApiService);
         
         // Si el event listener es provocado, el proxy del apiService interceptará llamadas.
         // Validamos que el contract se mantenga sin acceder a dependencias globales
