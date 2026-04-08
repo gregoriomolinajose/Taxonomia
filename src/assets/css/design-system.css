@@ -268,6 +268,8 @@ body.dark {
   --ion-text-color-rgb: 206, 207, 210 !important;
   --ion-color-medium: #8C9BAB !important;
   --ion-color-medium-rgb: 140, 155, 171 !important;
+  --ion-color-secondary: #1D2125 !important;
+  --ion-color-secondary-rgb: 29, 33, 37 !important;
 
   /* Variables Custom del Sistema y Sidebar */
   --color-bg-body: #161A1D !important;
