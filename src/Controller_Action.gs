@@ -206,12 +206,20 @@ function bulkInsert(entityName, recordsArray) {
     if (!config.SPREADSHEET_ID_DB) {
         throw new Error('Configuración Crítica: SPREADSHEET_ID_DB no se encuentra definido o es nulo.');
     }
-    const ss = SpreadsheetApp.openById(config.SPREADSHEET_ID_DB);
-    if (!ss) return { status: 'error', message: 'No se pudo conectar a la base de datos (Spreadsheet nulo).' };
+    const lock = LockService.getScriptLock();
+    try {
+        lock.waitLock(30000); // 30s timeout for massive unpaginated bulk
+    } catch(e) {
+        return { status: 'error', message: 'Sistema saturado realizando inserciones masivas concurrentes. Reintente pronto.' };
+    }
 
-    // Auto-Aprovisionamiento explícito usando el Adapter
-    const sheet = Adapter_Sheets._ensureSheetExists(ss, entityName);
-    if (!sheet) return { status: 'error', message: `No se pudo acceder a la hoja ${entityName}` };
+    try {
+        const ss = SpreadsheetApp.openById(config.SPREADSHEET_ID_DB);
+        if (!ss) return { status: 'error', message: 'No se pudo conectar a la base de datos (Spreadsheet nulo).' };
+
+        // Auto-Aprovisionamiento explícito usando el Adapter
+        const sheet = Adapter_Sheets._ensureSheetExists(ss, entityName);
+        if (!sheet) return { status: 'error', message: `No se pudo acceder a la hoja ${entityName}` };
 
     const dataRange = sheet.getDataRange();
     const allValues = dataRange.getValues();
@@ -286,6 +294,7 @@ function bulkInsert(entityName, recordsArray) {
             sheet.getRange(2, 1, sheet.getLastRow() - 1, headers.length).clearContent();
         }
         sheet.getRange(2, 1, existingData.length, headers.length).setValues(existingData);
+        SpreadsheetApp.flush(); // Garantiza la atomicidad cruzada
     }
     
     // BUGFIX: Invalida explícitamente la memoria RAM y metadatos luego de una inyección masiva para evitar Phantom Ghosting!
@@ -296,6 +305,9 @@ function bulkInsert(entityName, recordsArray) {
     Logger.log(`BulkUpsert completado para ${entityName}: ${newRecordsCount} insertados, ${updatedRecordsCount} actualizados.`);
     
     return { status: 'success', insertedCount: (newRecordsCount + updatedRecordsCount), newRecords: newRecordsCount, updatedRecords: updatedRecordsCount };
+    } finally {
+        lock.releaseLock();
+    }
 }
 
 /**

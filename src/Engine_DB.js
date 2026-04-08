@@ -416,9 +416,10 @@ const Engine_DB = {
 
     upsertBatch: function (tableName, items, config) {
         if (!Array.isArray(items) || items.length === 0) return { status: 'success', count: 0 };
-        const results = items.map(item => this.save(tableName, item, config)); // Changed from this.upsert to this.save
+        // [Performance Fix]: Calling the lock-protected Adapter bulk method directly. O(N) -> O(1) Locks+I/O.
+        const results = _Adapter_Sheets.upsertBatch(tableName, items, config);
         _invalidateCache(tableName);
-        return { status: 'success', count: results.length, details: results };
+        return results;
     },
 
     read: function (entityName, id) {

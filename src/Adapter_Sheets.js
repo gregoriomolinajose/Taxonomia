@@ -197,7 +197,16 @@ const Adapter_Sheets = {
 
         const spreadsheetId = config ? config.SPREADSHEET_ID_DB : CONFIG.SPREADSHEET_ID_DB;
         const ss = SpreadsheetApp.openById(spreadsheetId);
-        const sheet = this._ensureSheetExists(ss, tableName);
+
+        const lock = LockService.getScriptLock();
+        try {
+            lock.waitLock(15000); // Wait up to 15s for bulk operations
+        } catch (e) {
+            throw new Error("ERROR_TIMEOUT: El sistema está bajo alta carga procesando operaciones masivas. Por favor, reintente en unos momentos.");
+        }
+
+        try {
+            const sheet = this._ensureSheetExists(ss, tableName);
 
         const dataRange = sheet.getDataRange();
         const originalData = dataRange.getValues();
@@ -251,7 +260,7 @@ const Adapter_Sheets = {
                 if (idxUpdatedAt > -1) rowToInsert[idxUpdatedAt] = currentTimestamp;
                 if (idxUpdatedBy > -1) rowToInsert[idxUpdatedBy] = currentUser;
                 originalData[rowIndex] = rowToInsert;
-                sheet.getRange(rowIndex + 1, 1, 1, normalizedHeaders.length).setValues([rowToInsert]);
+                // [Performance Fix]: El setValues individual removido para permitir la verdadera inserción en bloque (L276)
                 results.push({ status: 'success', action: 'updated', pk: primaryKeyField, val: primaryKeyValue, version: payload.version });
             } else {
                 for (let i = 0; i < normalizedHeaders.length; i++) {
@@ -276,6 +285,9 @@ const Adapter_Sheets = {
         sheet.getRange(1, 1, originalData.length, originalData[0].length).setValues(originalData);
         SpreadsheetApp.flush();
         return { status: 'success', count: results.length, details: results };
+        } finally {
+            lock.releaseLock();
+        }
     },
 
     remove: function (tableName, id, config) {

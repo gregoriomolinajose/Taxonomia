@@ -58,7 +58,7 @@
                     
                     // Restaurar el valor si sigue existiendo en el nuevo dataset
                     if (oldVal) {
-                        const stillExists = freshFiltered.some(d => (typeof d[field.valueField] !== 'undefined' ? d[field.valueField] : d.id_registro) === oldVal);
+                        const stillExists = freshFiltered.some(d => String(typeof d[field.valueField] !== 'undefined' ? d[field.valueField] : d.id_registro) === String(oldVal));
                         if (stillExists) selectEl.value = oldVal;
                     }
                 });
