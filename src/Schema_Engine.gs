@@ -91,17 +91,19 @@ const APP_SCHEMAS = {
         parentEntity: "Portafolio",
         parentField: "id_portafolio"
     },
-    steps: ["Datos Generales", "Topología (Grafo)", "Estrategia de Negocio"],
     primaryKey: "id_grupo_producto",
     titleField: "nombre",
     fields: [
-      { section: "Datos Generales", width: 12, name: "id_grupo_producto", label: "ID Grupo Producto", type: "text", required: true, readonly: true, primaryKey: true },
-      { section: "Datos Generales", width: 12, name: "nombre", label: "Nombre", type: "text", required: true },
-      { section: "Datos Generales", width: 12, name: "descripcion", label: "Descripción", type: "textarea", required: false, showInList: false },
-      { section: "Topología (Grafo)", width: 12, name: "id_portafolio", type: "relation", relationType: "padre", targetEntity: "Portafolio", graphEntity: "Sys_Graph_Edges", valueField: "id_portafolio", labelField: "nombre", uiComponent: "select_single", label: "Portafolio Padre (Grafo)", isTemporalGraph: true, graphEdgeType: "PORTAFOLIO_GRUPO_PRODUCTO", topologyCardinality: "1:N", required: true },
-      { section: "Estrategia de Negocio", width: 12, name: "naturaleza_valor", label: "Naturaleza de Valor", type: "text", required: false },
-      { section: "Estrategia de Negocio", width: 12, name: "modelo_negocio", label: "Modelo de Negocio", type: "select", required: true, options: ["SaaS", "Marketplace", "B2B", "B2C", "Transaccional"] },
-      { section: "Topología (Grafo)", width: 12, name: "productos_vinculados", type: "relation", relationType: "hijo", targetEntity: "Producto", graphEntity: "Sys_Graph_Edges", valueField: "id_producto", labelField: "nombre_producto", uiBehavior: "subgrid", label: "Productos Asociados (1:N)", isTemporalGraph: true, graphEdgeType: "GRUPO_PRODUCTO_PRODUCTO", topologyCardinality: "1:N" }
+      { name: "separator_1", type: "divider", label: "Datos Generales", width: 12 },
+      { width: 12, name: "id_grupo_producto", label: "ID Grupo Producto", type: "text", required: true, readonly: true, primaryKey: true },
+      { width: 12, name: "nombre", label: "Nombre", type: "text", required: true },
+      { width: 12, name: "descripcion", label: "Descripción", type: "textarea", required: false, showInList: false },
+      { name: "separator_grafo", type: "divider", label: "Pertenencia Topológica (Grafo)", width: 12 },
+      { width: 12, name: "id_portafolio", type: "relation", relationType: "padre", targetEntity: "Portafolio", graphEntity: "Sys_Graph_Edges", valueField: "id_portafolio", labelField: "nombre", uiComponent: "select_single", label: "Portafolio Padre (Grafo)", isTemporalGraph: true, graphEdgeType: "PORTAFOLIO_GRUPO_PRODUCTO", topologyCardinality: "1:N", required: true },
+      { width: 12, name: "productos_vinculados", type: "relation", relationType: "hijo", targetEntity: "Producto", graphEntity: "Sys_Graph_Edges", valueField: "id_producto", labelField: "nombre_producto", uiBehavior: "subgrid", label: "Productos Asociados (1:N)", isTemporalGraph: true, graphEdgeType: "GRUPO_PRODUCTO_PRODUCTO", topologyCardinality: "1:N" },
+      { name: "separator_2", type: "divider", label: "Estrategia de Valor", width: 12 },
+      { width: 12, name: "naturaleza_valor", label: "Naturaleza de Valor", type: "text", required: false },
+      { width: 12, name: "modelo_negocio", label: "Modelo de Negocio", type: "select", required: true, options: ["SaaS", "Marketplace", "B2B", "B2C", "Transaccional"] }
     ]
   },
   Producto: {
@@ -116,9 +118,11 @@ const APP_SCHEMAS = {
     fields: [
       { name: "id_producto", type: "hidden", primaryKey: true },
       { name: "estado", type: "hidden", defaultValue: "Activo" },
-      { section: "Datos Generales", width: 12, name: "nombre_producto", label: "Nombre de Producto", type: "text", required: true },
-      { section: "Datos Generales", width: 12, name: "descripcion", label: "Descripción", type: "textarea", required: false, showInList: false },
-      { section: "Topología (Grafo)", width: 12, name: "id_grupo_producto", type: "relation", relationType: "padre", targetEntity: "Grupo_Productos", graphEntity: "Sys_Graph_Edges", valueField: "id_grupo_producto", labelField: "nombre", uiComponent: "select_single", label: "Grupo de Producto (Padre)", isTemporalGraph: true, graphEdgeType: "GRUPO_PRODUCTO_PRODUCTO", topologyCardinality: "1:N", required: true }
+      { name: "separator_1", type: "divider", label: "Datos Generales", width: 12 },
+      { width: 12, name: "nombre_producto", label: "Nombre de Producto", type: "text", required: true },
+      { width: 12, name: "descripcion", label: "Descripción", type: "textarea", required: false, showInList: false },
+      { name: "separator_grafo", type: "divider", label: "Pertenencia Topológica (Grafo)", width: 12 },
+      { width: 12, name: "id_grupo_producto", type: "relation", relationType: "padre", targetEntity: "Grupo_Productos", graphEntity: "Sys_Graph_Edges", valueField: "id_grupo_producto", labelField: "nombre", uiComponent: "select_single", label: "Grupo de Producto (Padre)", isTemporalGraph: true, graphEdgeType: "GRUPO_PRODUCTO_PRODUCTO", topologyCardinality: "1:N", required: true }
     ]
   },
   Capacidad: {
