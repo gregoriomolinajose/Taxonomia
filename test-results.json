@@ -77,7 +77,7 @@
               "tags": [],
               "tests": [
                 {
-                  "timeout": 120000,
+                  "timeout": 180000,
                   "annotations": [],
                   "expectedStatus": "passed",
                   "projectId": "chromium",
@@ -87,22 +87,22 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "timedOut",
-                      "duration": 120081,
+                      "duration": 180070,
                       "error": {
-                        "message": "\u001b[31mTest timeout of 120000ms exceeded.\u001b[39m",
-                        "stack": "\u001b[31mTest timeout of 120000ms exceeded.\u001b[39m"
+                        "message": "\u001b[31mTest timeout of 180000ms exceeded.\u001b[39m",
+                        "stack": "\u001b[31mTest timeout of 180000ms exceeded.\u001b[39m"
                       },
                       "errors": [
                         {
-                          "message": "\u001b[31mTest timeout of 120000ms exceeded.\u001b[39m"
+                          "message": "\u001b[31mTest timeout of 180000ms exceeded.\u001b[39m"
                         },
                         {
                           "location": {
                             "file": "C:\\Users\\grego\\Antigravity\\Taxonomia Project\\__tests__\\e2e\\hierarchy-stress.spec.js",
-                            "column": 33,
-                            "line": 74
+                            "column": 20,
+                            "line": 112
                           },
-                          "message": "Error: locator.evaluate: Target page, context or browser has been closed\n\n\u001b[0m \u001b[90m 72 |\u001b[39m \u001b[36masync\u001b[39m \u001b[36mfunction\u001b[39m clickTopButtonByText(frame\u001b[33m,\u001b[39m text) {\n \u001b[90m 73 |\u001b[39m     \u001b[36mconst\u001b[39m btnLocator \u001b[33m=\u001b[39m frame\u001b[33m.\u001b[39mlocator(\u001b[32m'ion-button'\u001b[39m)\u001b[33m.\u001b[39mfilter({ hasText\u001b[33m:\u001b[39m text })\u001b[33m.\u001b[39mlast()\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 74 |\u001b[39m     \u001b[36mawait\u001b[39m btnLocator\u001b[33m.\u001b[39mwaitFor({ state\u001b[33m:\u001b[39m \u001b[32m'attached'\u001b[39m\u001b[33m,\u001b[39m timeout\u001b[33m:\u001b[39m \u001b[35m5000\u001b[39m })\u001b[33m.\u001b[39m\u001b[36mcatch\u001b[39m(e \u001b[33m=>\u001b[39m console\u001b[33m.\u001b[39mlog(\u001b[32m`[WARN] Button with text ${text} did not attach.`\u001b[39m))\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                                 \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 75 |\u001b[39m     \u001b[36mawait\u001b[39m btnLocator\u001b[33m.\u001b[39mclick({ force\u001b[33m:\u001b[39m \u001b[36mtrue\u001b[39m })\u001b[33m.\u001b[39m\u001b[36mcatch\u001b[39m(e \u001b[33m=>\u001b[39m console\u001b[33m.\u001b[39mlog(\u001b[32m`[ERROR] Button with text ${text} click failed.`\u001b[39m\u001b[33m,\u001b[39m e))\u001b[33m;\u001b[39m\n \u001b[90m 76 |\u001b[39m }\n \u001b[90m 77 |\u001b[39m \u001b[90m// --------------------------------------------------------------------------\u001b[39m\u001b[0m\n\u001b[2m    at clickTopButtonByText (C:\\Users\\grego\\Antigravity\\Taxonomia Project\\__tests__\\e2e\\hierarchy-stress.spec.js:74:33)\u001b[22m\n\u001b[2m    at C:\\Users\\grego\\Antigravity\\Taxonomia Project\\__tests__\\e2e\\hierarchy-stress.spec.js:126:19\u001b[22m"
+                          "message": "Error: page.waitForTimeout: Target page, context or browser has been closed\n\n\u001b[0m \u001b[90m 110 |\u001b[39m     \u001b[36mfor\u001b[39m (\u001b[36mlet\u001b[39m p \u001b[33m=\u001b[39m \u001b[35m1\u001b[39m\u001b[33m;\u001b[39m p \u001b[33m<=\u001b[39m \u001b[35m3\u001b[39m\u001b[33m;\u001b[39m p\u001b[33m++\u001b[39m) {\n \u001b[90m 111 |\u001b[39m         \u001b[36mawait\u001b[39m clickTopButtonById(frame\u001b[33m,\u001b[39m \u001b[32m'btn-create-new'\u001b[39m)\u001b[33m;\u001b[39m \u001b[90m// Crea un Portafolio\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 112 |\u001b[39m         \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForTimeout(\u001b[35m500\u001b[39m)\u001b[33m;\u001b[39m \u001b[90m// Animación Drawer\u001b[39m\n \u001b[90m     |\u001b[39m                    \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 113 |\u001b[39m\n \u001b[90m 114 |\u001b[39m         \u001b[36mawait\u001b[39m fillTopInput(frame\u001b[33m,\u001b[39m \u001b[32m'nombre'\u001b[39m\u001b[33m,\u001b[39m \u001b[32m`Portafolio E2E Loop #${p} - ${Date.now()}`\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 115 |\u001b[39m\u001b[0m\n\u001b[2m    at C:\\Users\\grego\\Antigravity\\Taxonomia Project\\__tests__\\e2e\\hierarchy-stress.spec.js:112:20\u001b[22m"
                         }
                       ],
                       "stdout": [
@@ -137,32 +137,29 @@
                           "text": "PAGE LOG [info]: Net state changed from IDLE to BUSY Net state changed from IDLE to BUSY\n"
                         },
                         {
-                          "text": "PAGE LOG [log]: [FormEngine] Sincronizando modal para Portafolio. IDs vinculados: 0. Disponibles: 0 [FormEngine] Sincronizando modal para Portafolio. IDs vinculados: 0. Disponibles: 0\n"
-                        },
-                        {
-                          "text": "[WARN] input modelo_negocio no renderizó a tiempo\n"
+                          "text": "[WARN] Button btn-create-new did not attach.\n"
                         },
                         {
                           "text": "PAGE LOG [info]: Net state changed from BUSY to IDLE Net state changed from BUSY to IDLE\n"
                         },
                         {
-                          "text": "[ERROR] evaluate en modelo_negocio: locator.evaluate: Target page, context or browser has been closed\nCall log:\n\u001b[2m  - waiting for locator('#sandboxFrame').contentFrame().locator('#userHtmlFrame').contentFrame().locator('[name=\"modelo_negocio\"]').last()\u001b[22m\n\n    at fillTopInput \u001b[90m(C:\\Users\\grego\\Antigravity\\Taxonomia Project\\\u001b[39m__tests__\\e2e\\hierarchy-stress.spec.js:58:24\u001b[90m)\u001b[39m\n    at \u001b[90mC:\\Users\\grego\\Antigravity\\Taxonomia Project\\\u001b[39m__tests__\\e2e\\hierarchy-stress.spec.js:125:13 {\n  \u001b[32mSymbol(step)\u001b[39m: {\n    location: {\n      file: \u001b[32m'C:\\\\Users\\\\grego\\\\Antigravity\\\\Taxonomia Project\\\\__tests__\\\\e2e\\\\hierarchy-stress.spec.js'\u001b[39m,\n      line: \u001b[33m58\u001b[39m,\n      column: \u001b[33m24\u001b[39m,\n      function: \u001b[32m'fillTopInput'\u001b[39m\n    },\n    category: \u001b[32m'pw:api'\u001b[39m,\n    title: \u001b[32m`Evaluate locator('#sandboxFrame').contentFrame().locator('#userHtmlFrame').contentFrame().locator('[name=\"modelo_negocio\"]').last()`\u001b[39m,\n    apiName: \u001b[32m'locator.evaluate'\u001b[39m,\n    params: {\n      selector: \u001b[32m'#sandboxFrame >> internal:control=enter-frame >> #userHtmlFrame >> internal:control=enter-frame >> [name=\"modelo_negocio\"] >> nth=-1'\u001b[39m,\n      strict: \u001b[33mtrue\u001b[39m,\n      state: \u001b[32m'attached'\u001b[39m,\n      timeout: \u001b[33m0\u001b[39m\n    },\n    group: \u001b[90mundefined\u001b[39m,\n    stepId: \u001b[32m'pw:api@95'\u001b[39m,\n    boxedStack: \u001b[90mundefined\u001b[39m,\n    steps: [],\n    attachmentIndices: [],\n    info: TestStepInfoImpl {\n      annotations: [],\n      _testInfo: \u001b[36m[TestInfoImpl]\u001b[39m,\n      _stepId: \u001b[32m'pw:api@95'\u001b[39m,\n      _title: \u001b[32m`Evaluate locator('#sandboxFrame').contentFrame().locator('#userHtmlFrame').contentFrame().locator('[name=\"modelo_negocio\"]').last()`\u001b[39m,\n      _parentStep: \u001b[90mundefined\u001b[39m,\n      skip: \u001b[36m[Function (anonymous)]\u001b[39m\n    },\n    complete: \u001b[36m[Function: complete]\u001b[39m,\n    endWallTime: \u001b[33m1775684536038\u001b[39m,\n    error: {\n      message: \u001b[32m'Error: locator.evaluate: Target page, context or browser has been closed\\n'\u001b[39m +\n        \u001b[32m'Call log:\\n'\u001b[39m +\n        \u001b[32m`\\x1B[2m  - waiting for locator('#sandboxFrame').contentFrame().locator('#userHtmlFrame').contentFrame().locator('[name=\"modelo_negocio\"]').last()\\x1B[22m\\n`\u001b[39m,\n      stack: \u001b[32m'Error: locator.evaluate: Target page, context or browser has been closed\\n'\u001b[39m +\n        \u001b[32m'Call log:\\n'\u001b[39m +\n        \u001b[32m`\\x1B[2m  - waiting for locator('#sandboxFrame').contentFrame().locator('#userHtmlFrame').contentFrame().locator('[name=\"modelo_negocio\"]').last()\\x1B[22m\\n`\u001b[39m +\n        \u001b[32m'\\n'\u001b[39m +\n        \u001b[32m'    at fillTopInput (C:\\\\Users\\\\grego\\\\Antigravity\\\\Taxonomia Project\\\\__tests__\\\\e2e\\\\hierarchy-stress.spec.js:58:24)\\n'\u001b[39m +\n        \u001b[32m'    at C:\\\\Users\\\\grego\\\\Antigravity\\\\Taxonomia Project\\\\__tests__\\\\e2e\\\\hierarchy-stress.spec.js:125:13'\u001b[39m,\n      cause: \u001b[90mundefined\u001b[39m\n    }\n  }\n}\n"
+                          "text": "[ERROR] Button btn-create-new click failed. locator.click: Target page, context or browser has been closed\nCall log:\n\u001b[2m  - waiting for locator('#sandboxFrame').contentFrame().locator('#userHtmlFrame').contentFrame().locator('ion-button#btn-create-new').last()\u001b[22m\n\n    at clickTopButtonById \u001b[90m(C:\\Users\\grego\\Antigravity\\Taxonomia Project\\\u001b[39m__tests__\\e2e\\hierarchy-stress.spec.js:69:22\u001b[90m)\u001b[39m\n    at \u001b[90mC:\\Users\\grego\\Antigravity\\Taxonomia Project\\\u001b[39m__tests__\\e2e\\hierarchy-stress.spec.js:111:9 {\n  \u001b[32mSymbol(step)\u001b[39m: {\n    location: {\n      file: \u001b[32m'C:\\\\Users\\\\grego\\\\Antigravity\\\\Taxonomia Project\\\\__tests__\\\\e2e\\\\hierarchy-stress.spec.js'\u001b[39m,\n      line: \u001b[33m69\u001b[39m,\n      column: \u001b[33m22\u001b[39m,\n      function: \u001b[32m'clickTopButtonById'\u001b[39m\n    },\n    category: \u001b[32m'pw:api'\u001b[39m,\n    title: \u001b[32m\"Click locator('#sandboxFrame').contentFrame().locator('#userHtmlFrame').contentFrame().locator('ion-button#btn-create-new').last()\"\u001b[39m,\n    apiName: \u001b[32m'locator.click'\u001b[39m,\n    params: {\n      selector: \u001b[32m'#sandboxFrame >> internal:control=enter-frame >> #userHtmlFrame >> internal:control=enter-frame >> ion-button#btn-create-new >> nth=-1'\u001b[39m,\n      strict: \u001b[33mtrue\u001b[39m,\n      force: \u001b[33mtrue\u001b[39m,\n      timeout: \u001b[33m0\u001b[39m\n    },\n    group: \u001b[90mundefined\u001b[39m,\n    stepId: \u001b[32m'pw:api@83'\u001b[39m,\n    boxedStack: \u001b[90mundefined\u001b[39m,\n    steps: [],\n    attachmentIndices: [],\n    info: TestStepInfoImpl {\n      annotations: [],\n      _testInfo: \u001b[36m[TestInfoImpl]\u001b[39m,\n      _stepId: \u001b[32m'pw:api@83'\u001b[39m,\n      _title: \u001b[32m\"Click locator('#sandboxFrame').contentFrame().locator('#userHtmlFrame').contentFrame().locator('ion-button#btn-create-new').last()\"\u001b[39m,\n      _parentStep: \u001b[90mundefined\u001b[39m,\n      skip: \u001b[36m[Function (anonymous)]\u001b[39m\n    },\n    complete: \u001b[36m[Function: complete]\u001b[39m,\n    endWallTime: \u001b[33m1775686188347\u001b[39m,\n    error: {\n      message: \u001b[32m'Error: locator.click: Target page, context or browser has been closed\\n'\u001b[39m +\n        \u001b[32m'Call log:\\n'\u001b[39m +\n        \u001b[32m\"\\x1B[2m  - waiting for locator('#sandboxFrame').contentFrame().locator('#userHtmlFrame').contentFrame().locator('ion-button#btn-create-new').last()\\x1B[22m\\n\"\u001b[39m,\n      stack: \u001b[32m'Error: locator.click: Target page, context or browser has been closed\\n'\u001b[39m +\n        \u001b[32m'Call log:\\n'\u001b[39m +\n        \u001b[32m\"\\x1B[2m  - waiting for locator('#sandboxFrame').contentFrame().locator('#userHtmlFrame').contentFrame().locator('ion-button#btn-create-new').last()\\x1B[22m\\n\"\u001b[39m +\n        \u001b[32m'\\n'\u001b[39m +\n        \u001b[32m'    at clickTopButtonById (C:\\\\Users\\\\grego\\\\Antigravity\\\\Taxonomia Project\\\\__tests__\\\\e2e\\\\hierarchy-stress.spec.js:69:22)\\n'\u001b[39m +\n        \u001b[32m'    at C:\\\\Users\\\\grego\\\\Antigravity\\\\Taxonomia Project\\\\__tests__\\\\e2e\\\\hierarchy-stress.spec.js:111:9'\u001b[39m,\n      cause: \u001b[90mundefined\u001b[39m\n    }\n  }\n}\n"
                         }
                       ],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-04-08T21:40:15.482Z",
+                      "startTime": "2026-04-08T22:06:47.798Z",
                       "annotations": [],
                       "attachments": [
                         {
                           "name": "screenshot",
                           "contentType": "image/png",
-                          "path": "C:\\Users\\grego\\Antigravity\\Taxonomia Project\\test-results\\hierarchy-stress-Top-Down--d963b-cto-sin-pérdida-de-Subgrids-chromium\\test-failed-1.png"
+                          "path": "C:\\Users\\grego\\Antigravity\\Taxonomia Project\\test-results\\hierarchy-stress-Top-Down--d963b-cto-sin-pérdida-de-Subgrids-chromium\\test-failed-2.png"
                         },
                         {
                           "name": "screenshot",
                           "contentType": "image/png",
-                          "path": "C:\\Users\\grego\\Antigravity\\Taxonomia Project\\test-results\\hierarchy-stress-Top-Down--d963b-cto-sin-pérdida-de-Subgrids-chromium\\test-failed-2.png"
+                          "path": "C:\\Users\\grego\\Antigravity\\Taxonomia Project\\test-results\\hierarchy-stress-Top-Down--d963b-cto-sin-pérdida-de-Subgrids-chromium\\test-failed-1.png"
                         },
                         {
                           "name": "error-context",
@@ -182,7 +179,7 @@
               ],
               "id": "ec7a83b542d9418f61d3-4de4cb782febbec8a2de",
               "file": "hierarchy-stress.spec.js",
-              "line": 94,
+              "line": 93,
               "column": 3
             }
           ]
@@ -192,8 +189,8 @@
   ],
   "errors": [],
   "stats": {
-    "startTime": "2026-04-08T21:40:14.866Z",
-    "duration": 121318.329,
+    "startTime": "2026-04-08T22:06:47.193Z",
+    "duration": 181295.131,
     "expected": 0,
     "skipped": 0,
     "unexpected": 1,

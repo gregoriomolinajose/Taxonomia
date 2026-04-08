@@ -185,7 +185,14 @@
             if (extractedSections.length > 0) steps = extractedSections;
             if (!steps || steps.length === 0) steps = ['Configuración General'];
 
-            const useStepper = steps.length > 1;
+            let useStepper = steps.length > 1;
+
+            // Soporte para prescindir del wizard manualmente y convivir puramente con divisores topológicos:
+            const entitySchema = global.APP_SCHEMAS[entityName];
+            if (entitySchema && entitySchema.metadata && entitySchema.metadata.uiBehavior === 'linear') {
+                useStepper = false; // Fuerza el scroll vertical único (las secciones ahora actúan de divisores visuales)
+            }
+
             let rows = {};
 
             if (useStepper) {
@@ -306,7 +313,7 @@
                 }
             }
 
-            // Footer Fijo Lateral Derecho para el Action Guardar
+            // Footer Fijo Lateral Derecho para Action Buttons
             const footerContainer = document.createElement('div');
             footerContainer.className = 'drawer-footer';
             
@@ -314,11 +321,7 @@
             btnGrid.style.padding = 'var(--spacing-1) var(--spacing-2)';
             const btnRow = document.createElement('ion-row');
             
-            const colRight = document.createElement('ion-col');
-            colRight.setAttribute('size', '12');
-            colRight.style.textAlign = 'right';
-
-            // Recrear solo el botón Submit (pues eliminamos referencias de stepper)
+            // Recrear solo el botón Submit Principal
             const submitBtn = document.createElement('ion-button');
             submitBtn.setAttribute('shape', 'round');
             submitBtn.setAttribute('color', 'primary');
@@ -329,12 +332,49 @@
             submitBtn.appendChild(iconSave);
             submitBtn.appendChild(document.createTextNode(' Guardar ' + window.formatEntityName(entityName)));
 
-            colRight.appendChild(submitBtn);
-            btnRow.appendChild(colRight);
+            if (useStepper && container._btnPrev && container._btnNext && container._stepperRef) {
+                // Layout Híbrido: Acomodar botones de Stepper
+                const colLeft = document.createElement('ion-col');
+                colLeft.setAttribute('size', '4');
+                colLeft.style.textAlign = 'left';
+                colLeft.appendChild(container._btnPrev);
+
+                const colRight = document.createElement('ion-col');
+                colRight.setAttribute('size', '8');
+                colRight.style.textAlign = 'right';
+                
+                // Ambos botones en el ladro derecho
+                const btnGroup = document.createElement('span');
+                
+                const iconNext = document.createElement('ion-icon');
+                iconNext.setAttribute('slot', 'end');
+                iconNext.setAttribute('name', 'arrow-forward-outline');
+                container._btnNext.appendChild(iconNext);
+                container._btnNext.setAttribute('shape', 'round');
+
+                btnGroup.appendChild(container._btnNext);
+                btnGroup.appendChild(submitBtn);
+
+                colRight.appendChild(btnGroup);
+
+                btnRow.appendChild(colLeft);
+                btnRow.appendChild(colRight);
+
+                // Arrancar flujo topológico
+                container._stepperRef.btnSubmit = submitBtn; // Aseguramos bind
+                container._stepperRef.start();
+            } else {
+                // Layout Linear 1 Step: Solo Guardar a la derecha
+                const colRight = document.createElement('ion-col');
+                colRight.setAttribute('size', '12');
+                colRight.style.textAlign = 'right';
+                colRight.appendChild(submitBtn);
+                btnRow.appendChild(colRight);
+            }
+
             btnGrid.appendChild(btnRow);
             footerContainer.appendChild(btnGrid);
-
-            // Al eliminar Stepper iteramos libremente de un tajo 
+            // Fin de armado de Header/Footer Híbrido
 
             // --- Delegación de Business Rules UI_Validators ---
             if (global.UI_Validators && typeof global.UI_Validators.attachBusinessRulesListeners === 'function') {

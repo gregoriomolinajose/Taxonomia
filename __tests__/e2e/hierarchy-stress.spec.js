@@ -74,6 +74,19 @@ async function clickTopButtonByText(frame, text) {
     await btnLocator.waitFor({ state: 'attached', timeout: 5000 }).catch(e => console.log(`[WARN] Button with text ${text} did not attach.`));
     await btnLocator.click({ force: true }).catch(e => console.log(`[ERROR] Button with text ${text} click failed.`, e));
 }
+
+async function submitHybridForm(frame, page, text) {
+    const btnSiguiente = frame.locator('ion-button').filter({ hasText: 'Siguiente' }).last();
+    let iter = 0;
+    while(iter < 5) {
+        const isVisible = await btnSiguiente.isVisible().catch(() => false);
+        if (!isVisible) break;
+        await btnSiguiente.click({ force: true });
+        await page.waitForTimeout(500);
+        iter++;
+    }
+    await clickTopButtonByText(frame, text);
+}
 // --------------------------------------------------------------------------
 
   // Nota importante: Al usar nuestro propio "page", le decimos a Playwright que no inyecte el suyo ({ page }) 
@@ -94,8 +107,6 @@ async function clickTopButtonByText(frame, text) {
     // =========================================================================
     // 2. STRESS TEST: Crear 3 Portafolios y 3 Grupos X Portafolio simultáneamente
     // =========================================================================
-    // Sin stepper, todo se renderiza on scroll. No ocupamos clickHeaderButton.
-
     for (let p = 1; p <= 3; p++) {
         await clickTopButtonById(frame, 'btn-create-new'); // Crea un Portafolio
         await page.waitForTimeout(500); // Animación Drawer
@@ -109,12 +120,14 @@ async function clickTopButtonByText(frame, text) {
             await fillTopInput(frame, 'nombre', `Grupo E2E Loop #${g} - ${Date.now()}`);
             // El modelo de negocio es 'required' y sin él, el submit falla en arquitectura linear!
             await fillTopInput(frame, 'modelo_negocio', 'SaaS');
-            await clickTopButtonByText(frame, 'Guardar Grupo');
+            
+            // Reemplazo Híbrido Stepper/Linear
+            await submitHybridForm(frame, page, 'Guardar Grupo');
             
             await page.waitForTimeout(1500); // Wait mutex de Google Apps Script Write
         }
 
-        await clickTopButtonByText(frame, 'Guardar Portafolio');
+        await submitHybridForm(frame, page, 'Guardar Portafolio');
         await page.waitForTimeout(2000); // Wait mutex de Portafolio
     }
 
@@ -125,7 +138,7 @@ async function clickTopButtonByText(frame, text) {
     await expect(childItems).toHaveCount(3);
 
     // Guardar UN
-    await clickTopButtonByText(frame, 'Guardar Unidad');
+    await submitHybridForm(frame, page, 'Guardar Unidad');
 
     await page.waitForTimeout(3000);
     console.log("Ruta Crítica Superada. El Multi-nivel Subgrid conservó su estado Optimista.");
