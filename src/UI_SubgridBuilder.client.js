@@ -289,10 +289,12 @@ window.UI_SubgridBuilder = {
             
             const btnConfirm = document.createElement('ion-button');
             btnConfirm.setAttribute('expand', 'block');
+            btnConfirm.setAttribute('fill', 'solid');
+            btnConfirm.setAttribute('color', 'primary');
             btnConfirm.id = 'btn-confirm-selection';
             btnConfirm.disabled = true;
-            btnConfirm.style.cssText += ' --color: #ffffff !important; color: #ffffff !important; font-family: var(--sys-font-family, inherit) !important;'; // Shadow DOM piercing
-            btnConfirm.textContent = 'Vincular Seleccionados (0)';
+            btnConfirm.style.cssText += ' font-family: var(--sys-font-family, inherit) !important; margin: 8px;'; 
+            btnConfirm.innerHTML = '<span style="color: #ffffff; font-weight: bold;">Vincular Seleccionados (0)</span>';
             
             mfToolbar.appendChild(btnConfirm);
             mFooter.appendChild(mfToolbar);
@@ -314,7 +316,7 @@ window.UI_SubgridBuilder = {
                 item.addEventListener('selectionChange', () => {
                     const allCbs = Array.from(modal.querySelectorAll('ion-checkbox'));
                     const checked = allCbs.filter(c => c.checked).length;
-                    btnConfirm.textContent = `Vincular Seleccionados (${checked})`;
+                    btnConfirm.innerHTML = `<span style="color: #ffffff; font-weight: bold;">Vincular Seleccionados (${checked})</span>`;
                     btnConfirm.disabled = checked === 0;
                 });
             });
