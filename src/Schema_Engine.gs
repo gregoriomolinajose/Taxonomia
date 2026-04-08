@@ -100,7 +100,8 @@ const APP_SCHEMAS = {
       { section: "Datos Generales", width: 12, name: "descripcion", label: "Descripción", type: "textarea", required: false, showInList: false },
       { section: "Topología (Grafo)", width: 12, name: "id_portafolio", type: "relation", relationType: "padre", targetEntity: "Portafolio", graphEntity: "Sys_Graph_Edges", valueField: "id_portafolio", labelField: "nombre", uiComponent: "select_single", label: "Portafolio Padre (Grafo)", isTemporalGraph: true, graphEdgeType: "PORTAFOLIO_GRUPO_PRODUCTO", topologyCardinality: "1:N", required: true },
       { section: "Estrategia de Negocio", width: 12, name: "naturaleza_valor", label: "Naturaleza de Valor", type: "text", required: false },
-      { section: "Estrategia de Negocio", width: 12, name: "modelo_negocio", label: "Modelo de Negocio", type: "select", required: true, options: ["SaaS", "Marketplace", "B2B", "B2C", "Transaccional"] }
+      { section: "Estrategia de Negocio", width: 12, name: "modelo_negocio", label: "Modelo de Negocio", type: "select", required: true, options: ["SaaS", "Marketplace", "B2B", "B2C", "Transaccional"] },
+      { section: "Topología (Grafo)", width: 12, name: "productos_vinculados", type: "relation", relationType: "hijo", targetEntity: "Producto", graphEntity: "Sys_Graph_Edges", valueField: "id_producto", labelField: "nombre_producto", uiBehavior: "subgrid", label: "Productos Asociados (1:N)", isTemporalGraph: true, graphEdgeType: "GRUPO_PRODUCTO_PRODUCTO", topologyCardinality: "1:N" }
     ]
   },
   Producto: {
@@ -110,7 +111,15 @@ const APP_SCHEMAS = {
         parentEntity: "Grupo_Productos",
         parentField: "id_grupo_producto"
     },
-    fields: []
+    primaryKey: "id_producto",
+    titleField: "nombre_producto",
+    fields: [
+      { name: "id_producto", type: "hidden", primaryKey: true },
+      { name: "estado", type: "hidden", defaultValue: "Activo" },
+      { section: "Datos Generales", width: 12, name: "nombre_producto", label: "Nombre de Producto", type: "text", required: true },
+      { section: "Datos Generales", width: 12, name: "descripcion", label: "Descripción", type: "textarea", required: false, showInList: false },
+      { section: "Topología (Grafo)", width: 12, name: "id_grupo_producto", type: "relation", relationType: "padre", targetEntity: "Grupo_Productos", graphEntity: "Sys_Graph_Edges", valueField: "id_grupo_producto", labelField: "nombre", uiComponent: "select_single", label: "Grupo de Producto (Padre)", isTemporalGraph: true, graphEdgeType: "GRUPO_PRODUCTO_PRODUCTO", topologyCardinality: "1:N", required: true }
+    ]
   },
   Capacidad: {
     metadata: { showInMenu: true, showInDashboard: false, order:6, iconName:'layers-outline', color:'warning', label:'Capacidades', titleField:'macrocapacidad', idField:'id_capacidad', fkField:null },
