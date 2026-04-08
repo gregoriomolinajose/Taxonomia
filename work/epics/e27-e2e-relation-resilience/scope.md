@@ -15,6 +15,7 @@ Sanitizar la Capa Asíncrona del Frontend para garantizar la persistencia visual
 - [x] **S27.1 Optimistic Frontend Hydration:** Implementar bloqueo Mutex / Event Collation en subgrids para evitar escrituras volátiles que corrompen el DOM. ✓
 - [x] **S27.2 E2E Auth State Setup:** Crear un script de inicialización de Playwright que recolecte, encripte o reuse cookies de sesión de desarrollador para evadir el Login interactivo de Apps Script. ✓
 - [x] **S27.3 Top-Down Hierarchy Stress Test:** Escribir el Spec en Vitest/Playwright que abre el entorno DEV cloud, crea 1 Unidad, 3 Portafolios, 3 Grupos y comprueba que las relaciones en el frontend persistan a las rápidas interacciones de Playwright. ✓
+- [x] **S27.4 Hybrid Architecture Constraints:** Convertir y asegurar la compatibilidad del Motor de Formularios (Wizard/Linear) controlada por esquemas agnósticos (eliminando metadata section) y validar su consistencia mediante Playwright E2E. ✓
 
 ## Definition of Done
 - Los subgrids de la cadena organizativa retienen sus registros visuales al insertar concurrentemente.
