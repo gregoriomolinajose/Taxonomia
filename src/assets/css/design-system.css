@@ -165,26 +165,26 @@ body.dark ion-text, body.dark ion-label {
     color: #FFFFFF !important;
 }
 
-/* Modo Oscuro (Grises Originales - Especificidad Blindada) */
+/* Modo Oscuro (Jira Dark Mode Standard) */
 body.dark {
   --shadow-floating: 0px 4px 16px rgba(0,0,0,0.6), 0px 6px 24px rgba(0,0,0,0.4) !important;
   /* Variables Nativas Ionic */
-  --ion-background-color:     #4A4A4A !important;
-  --ion-background-color-rgb: 74,74,74 !important;
-  --ion-card-background:      #333333 !important;
-  --ion-item-background:      #333333 !important;
-  --ion-toolbar-background:   #4A4A4A !important;
-  --ion-tab-bar-background:   #333333 !important;
+  --ion-background-color:     #161A1D !important;
+  --ion-background-color-rgb: 22,26,29 !important;
+  --ion-card-background:      #1D2125 !important;
+  --ion-item-background:      #1D2125 !important;
+  --ion-toolbar-background:   #161A1D !important;
+  --ion-tab-bar-background:   #1D2125 !important;
   --ion-text-color:           #FFFFFF !important;
   --ion-text-color-rgb:       255,255,255 !important;
-  --ion-color-medium:         #C9C9C9 !important;
-  --ion-color-medium-rgb:     201,201,201 !important;
+  --ion-color-medium:         #8C9BAB !important;
+  --ion-color-medium-rgb:     140,155,171 !important;
 
   /* Variables Custom del Sistema y Sidebar */
-  --color-bg-body:            #4A4A4A !important;
+  --color-bg-body:            #161A1D !important;
   --color-text:               #FFFFFF !important;
-  --color-border:             rgba(255,255,255,0.1) !important;
-  --sidebar-bg:               #333333 !important;
-  --sidebar-icon-color:       #C9C9C9 !important;
-  --sidebar-border:           rgba(255,255,255,0.1) !important;
+  --color-border:             rgba(255,255,255,0.08) !important;
+  --sidebar-bg:               #1D2125 !important;
+  --sidebar-icon-color:       #8C9BAB !important;
+  --sidebar-border:           rgba(255,255,255,0.08) !important;
 }
