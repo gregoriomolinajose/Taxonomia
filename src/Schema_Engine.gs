@@ -12,17 +12,17 @@ const APP_SCHEMAS = {
       { name: "id_unidad_negocio", type: "hidden", primaryKey: true },
       { name: "estado", type: "hidden", defaultValue: "Activo" },
 
-      { section: "Datos Generales", name: "separator_0", type: "divider", label: "Datos Generales", width: 12 },
-      { section: "Datos Generales", name: "nombre", type: "text", label: "Nombre de Unidad", required: true, width: 12 },
-      { section: "Datos Generales", name: "descripcion", type: "textarea", label: "Descripción", required: false, width: 12 },
-      { section: "Datos Generales", name: "responsable", type: "text", label: "Responsable", required: false, width: 12 },
+      { name: "separator_0", type: "divider", label: "Datos Generales", width: 12 },
+      { name: "nombre", type: "text", label: "Nombre de Unidad", required: true, width: 12 },
+      { name: "descripcion", type: "textarea", label: "Descripción", required: false, width: 12 },
+      { name: "responsable", type: "text", label: "Responsable", required: false, width: 12 },
 
-      { section: "Topología (Grafo)", name: "separator_grafo", type: "divider", label: "Topología (Grafo)", width: 12 },
-      { section: "Topología (Grafo)", name: "portafolios_vinculados", type: "relation", relationType: "hijo", targetEntity: "Portafolio", graphEntity: "Sys_Graph_Edges", valueField: "id_portafolio", labelField: "nombre", uiBehavior: "subgrid", label: "Portafolios Asociados", isTemporalGraph: true, graphEdgeType: "UNIDAD_NEGOCIO_PORTAFOLIO", topologyCardinality: "1:N", width: 12 }
+      { name: "separator_grafo", type: "divider", label: "Topología (Grafo)", width: 12 },
+      { name: "portafolios_vinculados", type: "relation", relationType: "hijo", targetEntity: "Portafolio", graphEntity: "Sys_Graph_Edges", valueField: "id_portafolio", labelField: "nombre", uiBehavior: "subgrid", label: "Portafolios Asociados", isTemporalGraph: true, graphEdgeType: "UNIDAD_NEGOCIO_PORTAFOLIO", topologyCardinality: "1:N", width: 12 }
     ]
   },
   Portafolio: {
-    metadata: { showInMenu: true, showInDashboard: false, order:2, iconName:'briefcase-outline', color:'primary', label:'Portafolios', titleField:'nombre', idField:'id_portafolio', fkField:null },
+    metadata: { showInMenu: true, showInDashboard: false, order:2, iconName:'briefcase-outline', color:'primary', label:'Portafolios', titleField:'nombre', idField:'id_portafolio', fkField:null, maxListAttrs: 8 },
     topological_metadata: {
         ownerFields: ["director_id", "vp_id"],
         parentEntity: null,
@@ -33,25 +33,16 @@ const APP_SCHEMAS = {
       { name: "id_portafolio", type: "hidden", primaryKey: true },
       { name: "estado", type: "hidden", defaultValue: "Activo" },
 
-      { section: "Definición Estratégica", name: "separator_1", type: "divider", label: "Definición Estratégica", width: 12 },
-      { section: "Definición Estratégica", name: "nombre", type: "text", label: "Nombre de Portafolio", required: true, width: 12 },
-   /**
-     *{ section: "Definición Estratégica", name: "proposito", type: "textarea", label: "Propósito", required: false, width: 12 },
-     *{ section: "Definición Estratégica", name: "objetivos_negocio", type: "textarea", label: "Objetivos de Negocio", required: false, width: 6 },
-     *{ section: "Definición Estratégica", name: "kpis_metricas", type: "textarea", label: "KPIs / Métricas", required: false, width: 6 },
-     *
-     *{ section: "Propuesta de Valor", name: "separator_2", type: "divider", label: "Propuesta de Valor", width: 12 },
-     *{ section: "Propuesta de Valor", name: "flujos_valor", type: "textarea", label: "Flujos de Valor", required: false, width: 6 },
-     *{ section: "Propuesta de Valor", name: "clientes_segmentos", type: "textarea", label: "Clientes y Segmentos", required: false, width: 6 },
-     *{ section: "Propuesta de Valor", name: "producto_dominio", type: "text", label: "Producto / Dominio", required: false, width: 12 },
-    */ 
-      { section: "Topología (Grafo)", name: "separator_grafo", type: "divider", label: "Pertenencia Topológica (Grafo)", width: 12 },
-      { section: "Topología (Grafo)", name: "unidad_negocio_padre", type: "relation", relationType: "padre", targetEntity: "Unidad_Negocio", graphEntity: "Sys_Graph_Edges", valueField: "id_unidad_negocio", labelField: "nombre", uiComponent: "select_single", label: "Unidad de Negocio (Padre)", isTemporalGraph: true, graphEdgeType: "UNIDAD_NEGOCIO_PORTAFOLIO", topologyCardinality: "1:N", width: 12, showInList: true },
-      { section: "Topología (Grafo)", name: "grupos_productos_vinculados", type: "relation", relationType: "hijo", targetEntity: "Grupo_Productos", graphEntity: "Sys_Graph_Edges", valueField: "id_grupo_producto", labelField: "nombre", uiBehavior: "subgrid", label: "Grupos de Productos Asociados", isTemporalGraph: true, graphEdgeType: "PORTAFOLIO_GRUPO_PRODUCTO", topologyCardinality: "1:N", width: 12 },
+      { name: "separator_1", type: "divider", label: "Definición Estratégica", width: 12 },
+      { name: "nombre", type: "text", label: "Nombre de Portafolio", required: true, width: 12 },
+      
+      { name: "separator_grafo", type: "divider", label: "Pertenencia Topológica (Grafo)", width: 12 },
+      { name: "unidad_negocio_padre", type: "relation", relationType: "padre", targetEntity: "Unidad_Negocio", graphEntity: "Sys_Graph_Edges", valueField: "id_unidad_negocio", labelField: "nombre", uiComponent: "select_single", label: "Unidad de Negocio (Padre)", isTemporalGraph: true, graphEdgeType: "UNIDAD_NEGOCIO_PORTAFOLIO", topologyCardinality: "1:N", width: 12, showInList: true },
+      { name: "grupos_productos_vinculados", type: "relation", relationType: "hijo", targetEntity: "Grupo_Productos", graphEntity: "Sys_Graph_Edges", valueField: "id_grupo_producto", labelField: "nombre", uiBehavior: "subgrid", label: "Grupos de Productos Asociados", isTemporalGraph: true, graphEdgeType: "PORTAFOLIO_GRUPO_PRODUCTO", topologyCardinality: "1:N", width: 12 },
 
-      { section: "Gobernanza y Actores", name: "separator_4", type: "divider", label: "Gobernanza y Actores", width: 12 },
-      { section: "Gobernanza y Actores", name: "gobierno_liderazgo", type: "textarea", label: "Gobierno y Liderazgo", required: false, width: 6 },
-      { section: "Gobernanza y Actores", name: "stakeholders", type: "textarea", label: "Stakeholders", required: false, width: 6 }
+      { name: "separator_4", type: "divider", label: "Gobernanza y Actores", width: 12 },
+      { name: "gobierno_liderazgo", type: "textarea", label: "Gobierno y Liderazgo", required: false, width: 6 },
+      { name: "stakeholders", type: "textarea", label: "Stakeholders", required: false, width: 6 }
     ]
   },
   Dominio: {
@@ -73,14 +64,14 @@ const APP_SCHEMAS = {
     fields: [
       { name: "id_dominio", type: "hidden", primaryKey: true },
       { name: "estado", type: "hidden", defaultValue: "Activo" },
-      { section: "Datos Generales", name: "id_registro", type: "text", label: "ID Externo", required: true, width: 12 },
-      { section: "Datos Generales", name: "nivel_tipo", type: "number", label: "Nivel Tipo", required: true, width: 6 },
-      { section: "Datos Generales", name: "n0_es", type: "text", label: "Nombre (ES)", required: true, width: 6 },
-      { section: "Datos Generales", name: "nombre_ingles", type: "text", label: "Nombre (EN)", required: false, width: 6 },
-      { section: "Datos Generales", name: "abreviacion", type: "text", label: "Abreviación", required: false, width: 6 },
-      { section: "Datos Generales", name: "definicion", type: "textarea", label: "Definición", required: true, width: 12, showInList: false },
-      { section: "Topología (Grafo)", width: 12, name: "relaciones_padre", type: "relation", relationType: "padre", targetEntity: "Dominio", graphEntity: "Sys_Graph_Edges", valueField: "id_dominio", labelField: "n0_es", uiBehavior: "subgrid", label: "Dominio Padre (1:1)", isTemporalGraph: true, topologyCardinality: "1:N" },
-      { section: "Topología (Grafo)", width: 12,name: "relaciones_hijo", type: "relation", relationType: "hijo", targetEntity: "Dominio", graphEntity: "Sys_Graph_Edges", valueField: "id_dominio", labelField: "n0_es", uiBehavior: "subgrid", label: "Dominios Subordinados (1:N)", isTemporalGraph: true, topologyCardinality: "1:N" }
+      { name: "id_registro", type: "text", label: "ID Externo", required: true, width: 12 },
+      { name: "nivel_tipo", type: "number", label: "Nivel Tipo", required: true, width: 6 },
+      { name: "n0_es", type: "text", label: "Nombre (ES)", required: true, width: 6 },
+      { name: "nombre_ingles", type: "text", label: "Nombre (EN)", required: false, width: 6 },
+      { name: "abreviacion", type: "text", label: "Abreviación", required: false, width: 6 },
+      { name: "definicion", type: "textarea", label: "Definición", required: true, width: 12, showInList: false },
+      { width: 12, name: "relaciones_padre", type: "relation", relationType: "padre", targetEntity: "Dominio", graphEntity: "Sys_Graph_Edges", valueField: "id_dominio", labelField: "n0_es", uiBehavior: "subgrid", label: "Dominio Padre (1:1)", isTemporalGraph: true, topologyCardinality: "1:N" },
+      { width: 12,name: "relaciones_hijo", type: "relation", relationType: "hijo", targetEntity: "Dominio", graphEntity: "Sys_Graph_Edges", valueField: "id_dominio", labelField: "n0_es", uiBehavior: "subgrid", label: "Dominios Subordinados (1:N)", isTemporalGraph: true, topologyCardinality: "1:N" }
     ]
   },
   Grupo_Productos: {
@@ -93,16 +84,16 @@ const APP_SCHEMAS = {
     primaryKey: "id_grupo_producto",
     titleField: "nombre",
     fields: [
-      { section: "Datos Generales", name: "separator_1", type: "divider", label: "Datos Generales", width: 12 },
-      { section: "Datos Generales", width: 12, name: "id_grupo_producto", label: "ID Grupo Producto", type: "text", required: true, readonly: true, primaryKey: true },
-      { section: "Datos Generales", width: 12, name: "nombre", label: "Nombre", type: "text", required: true },
-      { section: "Datos Generales", width: 12, name: "descripcion", label: "Descripción", type: "textarea", required: false, showInList: false },
-      { section: "Topología (Grafo)", name: "separator_grafo", type: "divider", label: "Pertenencia Topológica (Grafo)", width: 12 },
-      { section: "Topología (Grafo)", width: 12, name: "id_portafolio", type: "relation", relationType: "padre", targetEntity: "Portafolio", graphEntity: "Sys_Graph_Edges", valueField: "id_portafolio", labelField: "nombre", uiComponent: "select_single", label: "Portafolio Padre (Grafo)", isTemporalGraph: true, graphEdgeType: "PORTAFOLIO_GRUPO_PRODUCTO", topologyCardinality: "1:N", required: true },
-      { section: "Topología (Grafo)", width: 12, name: "productos_vinculados", type: "relation", relationType: "hijo", targetEntity: "Producto", graphEntity: "Sys_Graph_Edges", valueField: "id_producto", labelField: "nombre_producto", uiBehavior: "subgrid", label: "Productos Asociados (1:N)", isTemporalGraph: true, graphEdgeType: "GRUPO_PRODUCTO_PRODUCTO", topologyCardinality: "1:N" },
-      { section: "Estrategia de Valor", name: "separator_2", type: "divider", label: "Estrategia de Valor", width: 12 },
-      { section: "Estrategia de Valor", width: 12, name: "naturaleza_valor", label: "Naturaleza de Valor", type: "text", required: false },
-      { section: "Estrategia de Valor", width: 12, name: "modelo_negocio", label: "Modelo de Negocio", type: "select", required: true, options: ["SaaS", "Marketplace", "B2B", "B2C", "Transaccional"] }
+      { name: "separator_1", type: "divider", label: "Datos Generales", width: 12 },
+      { width: 12, name: "id_grupo_producto", label: "ID Grupo Producto", type: "text", required: true, readonly: true, primaryKey: true },
+      { width: 12, name: "nombre", label: "Nombre", type: "text", required: true },
+      { width: 12, name: "descripcion", label: "Descripción", type: "textarea", required: false, showInList: false },
+      { name: "separator_grafo", type: "divider", label: "Pertenencia Topológica (Grafo)", width: 12 },
+      { width: 12, name: "id_portafolio", type: "relation", relationType: "padre", targetEntity: "Portafolio", graphEntity: "Sys_Graph_Edges", valueField: "id_portafolio", labelField: "nombre", uiComponent: "select_single", label: "Portafolio Padre (Grafo)", isTemporalGraph: true, graphEdgeType: "PORTAFOLIO_GRUPO_PRODUCTO", topologyCardinality: "1:N", required: true },
+      { width: 12, name: "productos_vinculados", type: "relation", relationType: "hijo", targetEntity: "Producto", graphEntity: "Sys_Graph_Edges", valueField: "id_producto", labelField: "nombre_producto", uiBehavior: "subgrid", label: "Productos Asociados (1:N)", isTemporalGraph: true, graphEdgeType: "GRUPO_PRODUCTO_PRODUCTO", topologyCardinality: "1:N" },
+      { name: "separator_2", type: "divider", label: "Estrategia de Valor", width: 12 },
+      { width: 12, name: "naturaleza_valor", label: "Naturaleza de Valor", type: "text", required: false },
+      { width: 12, name: "modelo_negocio", label: "Modelo de Negocio", type: "select", required: true, options: ["SaaS", "Marketplace", "B2B", "B2C", "Transaccional"] }
     ]
   },
   Producto: {
@@ -117,11 +108,11 @@ const APP_SCHEMAS = {
     fields: [
       { name: "id_producto", type: "hidden", primaryKey: true },
       { name: "estado", type: "hidden", defaultValue: "Activo" },
-      { section: "Datos Generales", name: "separator_1", type: "divider", label: "Datos Generales", width: 12 },
-      { section: "Datos Generales", width: 12, name: "nombre_producto", label: "Nombre de Producto", type: "text", required: true },
-      { section: "Datos Generales", width: 12, name: "descripcion", label: "Descripción", type: "textarea", required: false, showInList: false },
-      { section: "Topología (Grafo)", name: "separator_grafo", type: "divider", label: "Pertenencia Topológica (Grafo)", width: 12 },
-      { section: "Topología (Grafo)", width: 12, name: "id_grupo_producto", type: "relation", relationType: "padre", targetEntity: "Grupo_Productos", graphEntity: "Sys_Graph_Edges", valueField: "id_grupo_producto", labelField: "nombre", uiComponent: "select_single", label: "Grupo de Producto (Padre)", isTemporalGraph: true, graphEdgeType: "GRUPO_PRODUCTO_PRODUCTO", topologyCardinality: "1:N", required: true }
+      { name: "separator_1", type: "divider", label: "Datos Generales", width: 12 },
+      { width: 12, name: "nombre_producto", label: "Nombre de Producto", type: "text", required: true },
+      { width: 12, name: "descripcion", label: "Descripción", type: "textarea", required: false, showInList: false },
+      { name: "separator_grafo", type: "divider", label: "Pertenencia Topológica (Grafo)", width: 12 },
+      { width: 12, name: "id_grupo_producto", type: "relation", relationType: "padre", targetEntity: "Grupo_Productos", graphEntity: "Sys_Graph_Edges", valueField: "id_grupo_producto", labelField: "nombre", uiComponent: "select_single", label: "Grupo de Producto (Padre)", isTemporalGraph: true, graphEdgeType: "GRUPO_PRODUCTO_PRODUCTO", topologyCardinality: "1:N", required: true }
     ]
   },
   Capacidad: {
@@ -131,15 +122,15 @@ const APP_SCHEMAS = {
     fields: [
       { name: "id_capacidad", type: "hidden", primaryKey: true },
       { name: "estado", type: "hidden", defaultValue: "Activo" },
-      { section: "Datos Generales", name: "id_externo", type: "text", label: "ID Externo", required: false, width: 6 },
-      { section: "Datos Generales", name: "nivel_tipo", type: "number", label: "Nivel Tipo", required: true, width: 6 },
-      { section: "Datos Generales", name: "orden_path", type: "text", label: "Orden Path", required: false, width: 12 },
-      { section: "Datos Generales", name: "macrocapacidad", type: "text", label: "Macrocapacidad", required: true, width: 12 },
-      { section: "Datos Generales", name: "nombre_ingles", type: "text", label: "Nombre Inglés", required: false, width: 12 },
-      { section: "Datos Generales", name: "abreviacion", type: "text", label: "Abreviación", required: false, width: 6 },
-      { section: "Datos Generales", name: "descripcion", type: "textarea", label: "Descripción", required: false, width: 12, showInList: false },
-      { section: "Datos Generales", name: "contexto_completo_analisis", type: "textarea", label: "Contexto Análisis", required: false, width: 12, showInList: false },
-      { section: "Datos Generales", name: "path_completo_es", type: "text", label: "Path Completo", required: false, width: 12 }
+      { name: "id_externo", type: "text", label: "ID Externo", required: false, width: 6 },
+      { name: "nivel_tipo", type: "number", label: "Nivel Tipo", required: true, width: 6 },
+      { name: "orden_path", type: "text", label: "Orden Path", required: false, width: 12 },
+      { name: "macrocapacidad", type: "text", label: "Macrocapacidad", required: true, width: 12 },
+      { name: "nombre_ingles", type: "text", label: "Nombre Inglés", required: false, width: 12 },
+      { name: "abreviacion", type: "text", label: "Abreviación", required: false, width: 6 },
+      { name: "descripcion", type: "textarea", label: "Descripción", required: false, width: 12, showInList: false },
+      { name: "contexto_completo_analisis", type: "textarea", label: "Contexto Análisis", required: false, width: 12, showInList: false },
+      { name: "path_completo_es", type: "text", label: "Path Completo", required: false, width: 12 }
     ]
   },
   Equipo: {
@@ -156,15 +147,15 @@ const APP_SCHEMAS = {
     fields: [
       { name: "id_equipo", type: "hidden", primaryKey: true },
       { name: "estado", type: "hidden", defaultValue: "Activo" },
-      { section: "Datos Generales", name: "id_producto", type: "relation", relationType: "hijo", targetEntity: "Producto", label: "Producto", required: true, width: 6 },
-      { section: "Datos Generales", name: "nombre_equipo", type: "text", label: "Nombre de Equipo", required: true, width: 6 },
-      { section: "Datos Generales", name: "seudonimo", type: "text", label: "Seudónimo", required: false, width: 6 },
-      { section: "Datos Generales", name: "metodologia", type: "select", label: "Metodología", required: true, width: 6, options: ["Scrum", "Kanban", "Híbrido"] },
-      { section: "Datos Generales", name: "proposito", type: "textarea", label: "Propósito", required: false, width: 12 },
-      { section: "Líderes", name: "scrum_master_id", type: "text", label: "Scrum Master", required: false, width: 6 },
-      { section: "Líderes", name: "product_owner_id", type: "text", label: "Product Owner", required: false, width: 6 },
-      { section: "Integrantes", name: "cant_team_coach", type: "number", label: "Cant. Team Coach", required: false, width: 6 },
-      { section: "Integrantes", name: "total_integrantes", type: "number", label: "Total Integrantes", required: false, width: 6 }
+      { name: "id_producto", type: "relation", relationType: "hijo", targetEntity: "Producto", label: "Producto", required: true, width: 6 },
+      { name: "nombre_equipo", type: "text", label: "Nombre de Equipo", required: true, width: 6 },
+      { name: "seudonimo", type: "text", label: "Seudónimo", required: false, width: 6 },
+      { name: "metodologia", type: "select", label: "Metodología", required: true, width: 6, options: ["Scrum", "Kanban", "Híbrido"] },
+      { name: "proposito", type: "textarea", label: "Propósito", required: false, width: 12 },
+      { name: "scrum_master_id", type: "text", label: "Scrum Master", required: false, width: 6 },
+      { name: "product_owner_id", type: "text", label: "Product Owner", required: false, width: 6 },
+      { name: "cant_team_coach", type: "number", label: "Cant. Team Coach", required: false, width: 6 },
+      { name: "total_integrantes", type: "number", label: "Total Integrantes", required: false, width: 6 }
     ]
   },
   Persona: {
@@ -214,9 +205,9 @@ const APP_SCHEMAS = {
     fields: [
       { name: "id_relacion", type: "hidden", primaryKey: true },
       { name: "estado", type: "hidden", defaultValue: "Activo" },
-      { section: "Datos de Relación", name: "id_nodo_padre", type: "text", required: true, width: 6 },
-      { section: "Datos de Relación", name: "id_nodo_hijo", type: "text", required: true, width: 6 },
-      { section: "Datos de Relación", name: "tipo_relacion", type: "text", required: true, width: 6 },
+      { name: "id_nodo_padre", type: "text", required: true, width: 6 },
+      { name: "id_nodo_hijo", type: "text", required: true, width: 6 },
+      { name: "tipo_relacion", type: "text", required: true, width: 6 },
       { name: "valido_desde", type: "hidden" },
       { name: "valido_hasta", type: "hidden" },
       { name: "es_version_actual", type: "hidden", defaultValue: true }
@@ -226,9 +217,9 @@ const APP_SCHEMAS = {
     metadata: { showInMenu: false, showInDashboard: false, order:90, iconName:'shield-half-outline', color:'danger', label:'Seguridad: Roles', titleField:'nombre_rol', idField:'id_rol', fkField:null },
     primaryKey: "id_rol",
     fields: [
-      { section: "Configuración de Rol", name: "id_rol", type: "text", primaryKey: true, readonly: true, label: "ID Rol", width: 12 },
-      { section: "Configuración de Rol", name: "nombre_rol", type: "text", label: "Nombre de Rol", required: true, width: 6 },
-      { section: "Configuración de Rol", name: "descripcion", type: "textarea", label: "Descripción", required: false, width: 12, showInList: false }
+      { name: "id_rol", type: "text", primaryKey: true, readonly: true, label: "ID Rol", width: 12 },
+      { name: "nombre_rol", type: "text", label: "Nombre de Rol", required: true, width: 6 },
+      { name: "descripcion", type: "textarea", label: "Descripción", required: false, width: 12, showInList: false }
     ]
   },
   Config_Typography: {
@@ -237,41 +228,41 @@ const APP_SCHEMAS = {
     fields: [
       { name: "id_tipografia", type: "text", primaryKey: true, readonly: true, label: "ID Pack", width: 12 },
       { name: "estado", type: "hidden", defaultValue: "Activo" },
-      { section: "Configuración Tipográfica", name: "nombre_pack", type: "text", label: "Nombre de Pack", required: true, width: 12 },
-      { section: "Configuración Tipográfica", name: "font_display", type: "select", label: "Ultra Título (.text-display)", required: true, width: 6, options: ["Poppins, sans-serif", "Playfair Display, serif", "Inter, sans-serif", "Roboto, sans-serif", "Montserrat, sans-serif"], helpText: "El texto con el que representamos frases, conceptos o ideas urgentes o de gran importancia." },
+      { name: "nombre_pack", type: "text", label: "Nombre de Pack", required: true, width: 12 },
+      { name: "font_display", type: "select", label: "Ultra Título (.text-display)", required: true, width: 6, options: ["Poppins, sans-serif", "Playfair Display, serif", "Inter, sans-serif", "Roboto, sans-serif", "Montserrat, sans-serif"], helpText: "El texto con el que representamos frases, conceptos o ideas urgentes o de gran importancia." },
       
-      { section: "Configuración Tipográfica", name: "div_headers", type: "divider", label: "Headers 1, 2, 3", width: 12 },
-      { section: "Configuración Tipográfica", name: "font_h1", type: "select", label: "Título Principal (h1)", required: true, width: 6, options: ["Poppins, sans-serif", "Playfair Display, serif", "Inter, sans-serif", "Roboto, sans-serif", "Montserrat, sans-serif"], helpText: "El título más importante de una página o sección." },
-      { section: "Configuración Tipográfica", name: "font_h2", type: "select", label: "Título Secundario (h2)", required: true, width: 6, options: ["Poppins, sans-serif", "Playfair Display, serif", "Inter, sans-serif", "Roboto, sans-serif", "Montserrat, sans-serif"], helpText: "Un título de menor importancia que el título principal." },
-      { section: "Configuración Tipográfica", name: "font_h3", type: "select", label: "Título Terciario (h3)", required: true, width: 6, options: ["Poppins, sans-serif", "Playfair Display, serif", "Inter, sans-serif", "Roboto, sans-serif", "Montserrat, sans-serif"], helpText: "Un título de menor importancia que el título secundario." },
+      { name: "div_headers", type: "divider", label: "Headers 1, 2, 3", width: 12 },
+      { name: "font_h1", type: "select", label: "Título Principal (h1)", required: true, width: 6, options: ["Poppins, sans-serif", "Playfair Display, serif", "Inter, sans-serif", "Roboto, sans-serif", "Montserrat, sans-serif"], helpText: "El título más importante de una página o sección." },
+      { name: "font_h2", type: "select", label: "Título Secundario (h2)", required: true, width: 6, options: ["Poppins, sans-serif", "Playfair Display, serif", "Inter, sans-serif", "Roboto, sans-serif", "Montserrat, sans-serif"], helpText: "Un título de menor importancia que el título principal." },
+      { name: "font_h3", type: "select", label: "Título Terciario (h3)", required: true, width: 6, options: ["Poppins, sans-serif", "Playfair Display, serif", "Inter, sans-serif", "Roboto, sans-serif", "Montserrat, sans-serif"], helpText: "Un título de menor importancia que el título secundario." },
       
-      { section: "Configuración Tipográfica", name: "div_subs", type: "divider", label: "SubHeaders", width: 12 },
-      { section: "Configuración Tipográfica", name: "font_sub", type: "select", label: "Subtítulos (.text-sub)", required: true, width: 6, options: ["Poppins, sans-serif", "Playfair Display, serif", "Inter, sans-serif", "Roboto, sans-serif", "Montserrat, sans-serif"], helpText: "Un texto breve que complementa y expande un título." },
+      { name: "div_subs", type: "divider", label: "SubHeaders", width: 12 },
+      { name: "font_sub", type: "select", label: "Subtítulos (.text-sub)", required: true, width: 6, options: ["Poppins, sans-serif", "Playfair Display, serif", "Inter, sans-serif", "Roboto, sans-serif", "Montserrat, sans-serif"], helpText: "Un texto breve que complementa y expande un título." },
       
-      { section: "Configuración Tipográfica", name: "div_body", type: "divider", label: "Body & Small", width: 12 },
-      { section: "Configuración Tipográfica", name: "font_body", type: "select", label: "Texto Cuerpo (body)", required: true, width: 6, options: ["Poppins, sans-serif", "Playfair Display, serif", "Inter, sans-serif", "Roboto, sans-serif", "Montserrat, sans-serif"], helpText: "Párrafos largos, artículos, descripciones." },
-      { section: "Configuración Tipográfica", name: "font_mini", type: "select", label: "Miniaturas (.text-mini)", required: true, width: 6, options: ["Poppins, sans-serif", "Playfair Display, serif", "Inter, sans-serif", "Roboto, sans-serif", "Montserrat, sans-serif"], helpText: "Un texto de menor importancia que el texto principal." },
+      { name: "div_body", type: "divider", label: "Body & Small", width: 12 },
+      { name: "font_body", type: "select", label: "Texto Cuerpo (body)", required: true, width: 6, options: ["Poppins, sans-serif", "Playfair Display, serif", "Inter, sans-serif", "Roboto, sans-serif", "Montserrat, sans-serif"], helpText: "Párrafos largos, artículos, descripciones." },
+      { name: "font_mini", type: "select", label: "Miniaturas (.text-mini)", required: true, width: 6, options: ["Poppins, sans-serif", "Playfair Display, serif", "Inter, sans-serif", "Roboto, sans-serif", "Montserrat, sans-serif"], helpText: "Un texto de menor importancia que el texto principal." },
       
-      { section: "Configuración Tipográfica", name: "div_caption", type: "divider", label: "Caption & Action", width: 12 },
-      { section: "Configuración Tipográfica", name: "font_caption", type: "select", label: "Leyendas (.text-caption)", required: true, width: 6, options: ["Poppins, sans-serif", "Playfair Display, serif", "Inter, sans-serif", "Roboto, sans-serif", "Montserrat, sans-serif"], helpText: "Un texto breve que describe una imagen, gráfico o tabla." },
-      { section: "Configuración Tipográfica", name: "font_action", type: "select", label: "Acciones (.text-action)", required: true, width: 6, options: ["Poppins, sans-serif", "Playfair Display, serif", "Inter, sans-serif", "Roboto, sans-serif", "Montserrat, sans-serif"], helpText: "Botones, enlaces y llamados a la acción." },
+      { name: "div_caption", type: "divider", label: "Caption & Action", width: 12 },
+      { name: "font_caption", type: "select", label: "Leyendas (.text-caption)", required: true, width: 6, options: ["Poppins, sans-serif", "Playfair Display, serif", "Inter, sans-serif", "Roboto, sans-serif", "Montserrat, sans-serif"], helpText: "Un texto breve que describe una imagen, gráfico o tabla." },
+      { name: "font_action", type: "select", label: "Acciones (.text-action)", required: true, width: 6, options: ["Poppins, sans-serif", "Playfair Display, serif", "Inter, sans-serif", "Roboto, sans-serif", "Montserrat, sans-serif"], helpText: "Botones, enlaces y llamados a la acción." },
       
-      { section: "Configuración Tipográfica", name: "div_math", type: "divider", label: "Escala y Proporciones", width: 12 },
+      { name: "div_math", type: "divider", label: "Escala y Proporciones", width: 12 },
       
-      { section: "Configuración Tipográfica", name: "base_size", type: "select", label: "Tamaño Base (Body Px)", required: true, width: 6, options: ["12px", "14px", "16px", "18px"], defaultValue: "16px", helpText: "Impacta directamente el tamaño de los párrafos y textos base." },
-      { section: "Configuración Tipográfica", name: "scale_ratio", type: "select", label: "Multiplicador de Escala", required: true, width: 6, options: ["1.125 (Major Second)", "1.200 (Minor Third)", "1.250 (Major Third)", "1.333 (Perfect Fourth)", "1.618 (Golden Ratio)"], defaultValue: "1.250 (Major Third)", helpText: "Define qué tan rápido crecen los títulos en proporción al texto base." },
-      { section: "Configuración Tipográfica", name: "heading_weight", type: "select", label: "Peso de Títulos (Weight)", required: true, width: 6, options: ["400", "500", "600", "700", "800"], defaultValue: "600", helpText: "Controla el grosor global de todos los Títulos y Subtítulos." },
-      { section: "Configuración Tipográfica", name: "heading_transform", type: "select", label: "Mayúsculas/Minúsculas", required: true, width: 6, options: ["none", "uppercase", "capitalize", "lowercase"], defaultValue: "none", helpText: "Transforma automáticamente la capitalización de los títulos." }
+      { name: "base_size", type: "select", label: "Tamaño Base (Body Px)", required: true, width: 6, options: ["12px", "14px", "16px", "18px"], defaultValue: "16px", helpText: "Impacta directamente el tamaño de los párrafos y textos base." },
+      { name: "scale_ratio", type: "select", label: "Multiplicador de Escala", required: true, width: 6, options: ["1.125 (Major Second)", "1.200 (Minor Third)", "1.250 (Major Third)", "1.333 (Perfect Fourth)", "1.618 (Golden Ratio)"], defaultValue: "1.250 (Major Third)", helpText: "Define qué tan rápido crecen los títulos en proporción al texto base." },
+      { name: "heading_weight", type: "select", label: "Peso de Títulos (Weight)", required: true, width: 6, options: ["400", "500", "600", "700", "800"], defaultValue: "600", helpText: "Controla el grosor global de todos los Títulos y Subtítulos." },
+      { name: "heading_transform", type: "select", label: "Mayúsculas/Minúsculas", required: true, width: 6, options: ["none", "uppercase", "capitalize", "lowercase"], defaultValue: "none", helpText: "Transforma automáticamente la capitalización de los títulos." }
     ]
   },
   Sys_Permissions: {
     metadata: { showInMenu: false, showInDashboard: false, order:91, iconName:'key-outline', color:'danger', label:'Seguridad: Permisos ABAC', titleField:'schema_destino', idField:'id_permiso', fkField:{ key:'id_rol', label:'Rol Base' } },
     primaryKey: "id_permiso",
     fields: [
-      { section: "Asignación de Permiso", name: "id_permiso", type: "text", primaryKey: true, readonly: true, label: "ID Permiso", width: 12 },
-      { section: "Asignación de Permiso", name: "id_rol", type: "select", label: "Rol Organizacional", required: true, width: 6, lookupSource: "getSysRolesOptions" },
-      { section: "Asignación de Permiso", name: "schema_destino", type: "select", label: "Entidad del Sistema", required: true, width: 6, options: ["Portafolio", "Dominio", "Grupo_Productos", "Producto", "Capacidad", "Unidad_Negocio", "Equipo", "Persona", "Sys_Graph_Edges", "Sys_Roles", "Sys_Permissions", "Config_Typography", "Config_Workspace"] },
-      { section: "Asignación de Permiso", name: "nivel_acceso", type: "select", label: "Nivel de Acceso", required: true, width: 12, options: ["ALL (Admin Total)", "OWNER_ONLY (Solo propios)", "MEMBER_ONLY (Siendo Miembro)", "READ_ONLY (Solo lectura)", "NONE (Denegado)"] }
+      { name: "id_permiso", type: "text", primaryKey: true, readonly: true, label: "ID Permiso", width: 12 },
+      { name: "id_rol", type: "select", label: "Rol Organizacional", required: true, width: 6, lookupSource: "getSysRolesOptions" },
+      { name: "schema_destino", type: "select", label: "Entidad del Sistema", required: true, width: 6, options: ["Portafolio", "Dominio", "Grupo_Productos", "Producto", "Capacidad", "Unidad_Negocio", "Equipo", "Persona", "Sys_Graph_Edges", "Sys_Roles", "Sys_Permissions", "Config_Typography", "Config_Workspace"] },
+      { name: "nivel_acceso", type: "select", label: "Nivel de Acceso", required: true, width: 12, options: ["ALL (Admin Total)", "OWNER_ONLY (Solo propios)", "MEMBER_ONLY (Siendo Miembro)", "READ_ONLY (Solo lectura)", "NONE (Denegado)"] }
     ]
   },
   Config_Workspace: {
@@ -280,10 +271,10 @@ const APP_SCHEMAS = {
     fields: [
       { name: "id_workspace", type: "text", primaryKey: true, readonly: true, label: "ID Workspace", width: 12 },
       { name: "estado", type: "hidden", defaultValue: "Activo" },
-      { section: "Datos de Enlace", name: "dominio_principal", type: "text", label: "Dominio Principal", required: true, width: 6, helpText: "Ejemplo: @coppel.com" },
-      { section: "Datos de Enlace", name: "alias_alternativos", type: "text", label: "Alias Soportados (CSV)", required: false, width: 6, helpText: "Ejemplo: @coppelmexico.com,@bancoppel.com" },
-      { section: "Integración OAuth", name: "auth_mode", type: "select", label: "Modo OAuth (M2M)", required: true, width: 12, options: ["USER_DEPLOYING (Global Default)", "SERVICE_ACCOUNT (Explicit)"], defaultValue: "USER_DEPLOYING (Global Default)" },
-      { section: "Seguridad Zero-Trust", name: "admin_contacto", type: "text", label: "Contacto IT (Email)", required: true, width: 12 }
+      { name: "dominio_principal", type: "text", label: "Dominio Principal", required: true, width: 6, helpText: "Ejemplo: @coppel.com" },
+      { name: "alias_alternativos", type: "text", label: "Alias Soportados (CSV)", required: false, width: 6, helpText: "Ejemplo: @coppelmexico.com,@bancoppel.com" },
+      { name: "auth_mode", type: "select", label: "Modo OAuth (M2M)", required: true, width: 12, options: ["USER_DEPLOYING (Global Default)", "SERVICE_ACCOUNT (Explicit)"], defaultValue: "USER_DEPLOYING (Global Default)" },
+      { name: "admin_contacto", type: "text", label: "Contacto IT (Email)", required: true, width: 12 }
     ]
   },
   _UI_CONFIG: {

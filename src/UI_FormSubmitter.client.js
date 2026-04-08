@@ -7,13 +7,14 @@
  */
 
 window.UI_FormSubmitter = class UI_FormSubmitter {
-    constructor(entityName, fields, submitBtn, apiService = null) {
+    constructor(entityName, fields, submitBtn, apiService = null, modal = null) {
         this.entityName = entityName;
         this.fields = fields;
         this.submitBtn = submitBtn;
         
         // Dependency Injection for API Services
         this.apiService = apiService || window.DataAPI;
+        this.modal = modal;
         
         this.isSaving = false;
 
@@ -196,10 +197,13 @@ window.UI_FormSubmitter = class UI_FormSubmitter {
             }
         }
 
-        // Obtener callback si es un Modal anidado (In-line Creation)
-        let inlineCallback = null;
-        if (this.modal && this.modal.__onSaveSuccessFallback) {
-            inlineCallback = this.modal.__onSaveSuccessFallback;
+        // Disparo de Evento Nativo de Persistencia Inline (H6 Simplification)
+        let isInline = false;
+        if (this.modal) {
+            isInline = true;
+            this.modal.dispatchEvent(new CustomEvent('FormEngine::InlinePersisted', {
+                detail: { response: response, payload: payload }
+            }));
         }
 
         // Cerramos el Modal
@@ -208,9 +212,7 @@ window.UI_FormSubmitter = class UI_FormSubmitter {
         }
 
         // Enrutamiento post-Guardado Inmediato
-        if (inlineCallback) {
-            inlineCallback(response);
-        } else if (!window.ModalStackController || window.ModalStackController.getDepth() === 0) {
+        if (!isInline && (!window.ModalStackController || window.ModalStackController.getDepth() === 0)) {
             if (window.AppEventBus) {
                 window.AppEventBus.publish('NAV::CHANGE', {viewType: 'dataview', entityKey: this.entityName});
             } else if (window.onSaveSuccessCallback) {

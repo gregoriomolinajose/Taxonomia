@@ -75,8 +75,12 @@
                 return false; // Abort topological creation (Max Depth Guard triggered)
             }
             
-            // Inyectar callback opcional (In-line Creation)
-            modal.__onSaveSuccessFallback = injectedCallback;
+            // Inyectar callback opcional (In-line Creation via Bubble Events)
+            if (injectedCallback) {
+                modal.addEventListener('FormEngine::InlinePersisted', (e) => {
+                    injectedCallback(e.detail.response, e.detail.payload);
+                }, { once: true });
+            }
 
             // Header Custom del DrawerS25.2
             const header = document.createElement('div');
@@ -176,63 +180,70 @@
             versionInput.value = (data && data._version) ? data._version : 1;
             container.appendChild(versionInput);
 
-            // S14.1: Delegación SRP a UI_FormStepper
-            const btnPrev = document.createElement('ion-button');
-            btnPrev.setAttribute('fill', 'clear');
-            btnPrev.setAttribute('color', 'medium');
-            btnPrev.style.cssText += ' font-family: var(--sys-font-family, inherit) !important;';
-            const iconPrev = document.createElement('ion-icon');
-            iconPrev.setAttribute('slot', 'start');
-            iconPrev.setAttribute('name', 'arrow-back-outline');
-            btnPrev.appendChild(iconPrev);
-            btnPrev.appendChild(document.createTextNode(' Anterior'));
-
-            const btnNext = document.createElement('ion-button');
-            btnNext.setAttribute('shape', 'round');
-            btnNext.setAttribute('color', 'primary');
-            btnNext.setAttribute('fill', 'outline');
-            btnNext.style.cssText += ' font-family: var(--sys-font-family, inherit) !important;';
-            btnNext.appendChild(document.createTextNode('Siguiente '));
-            const iconNext = document.createElement('ion-icon');
-            iconNext.setAttribute('slot', 'end');
-            iconNext.setAttribute('name', 'arrow-forward-outline');
-            btnNext.appendChild(iconNext);
-
-            const submitBtn = document.createElement('ion-button');
-            submitBtn.setAttribute('shape', 'round');
-            submitBtn.setAttribute('color', 'primary');
-            submitBtn.style.cssText += ' font-family: var(--sys-font-family, inherit) !important;';
-            const iconSave = document.createElement('ion-icon');
-            iconSave.setAttribute('slot', 'start');
-            iconSave.setAttribute('name', 'save-outline');
-            submitBtn.appendChild(iconSave);
-            submitBtn.appendChild(document.createTextNode(' Guardar ' + window.formatEntityName(entityName)));
-
-            // Progressive Disclosure (Rule 5.1)
-            const extractedSections = [...new Set(fields.filter(f => f.section).map(f => f.section))];
+            // Hybrid Layout (Linear Vertical vs Progressive Wizard)
+            const extractedSections = [...new Set(fields.filter(f => f.section && f.section.trim() !== '').map(f => f.section))];
             if (extractedSections.length > 0) steps = extractedSections;
             if (!steps || steps.length === 0) steps = ['Configuración General'];
 
-            const progressLabel = document.createElement('h3');
-            progressLabel.style.color = 'var(--ion-color-medium)';
-            progressLabel.style.fontSize = 'var(--sys-font-small)';
-            progressLabel.style.marginTop = '0';
-            progressLabel.style.marginBottom = 'var(--spacing-5)';
-            progressLabel.style.fontWeight = '600';
-            progressLabel.style.textTransform = 'uppercase';
-            progressLabel.style.letterSpacing = '0.05em';
-            
-            const stepper = new window.UI_FormStepper({
-                steps: steps,
-                cardContent: container, // Utilizando el drawer-content puro en vez del card
-                sidebarSteps: sidebarSteps,
-                btnPrev: btnPrev,
-                btnNext: btnNext,
-                btnSubmit: submitBtn,
-                progressLabel: progressLabel
-            });
+            let useStepper = steps.length > 1;
 
-            const rows = stepper.getRows();
+            // Soporte para prescindir del wizard manualmente y convivir puramente con divisores topológicos:
+            const entitySchema = global.APP_SCHEMAS[entityName];
+            if (entitySchema && entitySchema.metadata && entitySchema.metadata.uiBehavior === 'linear') {
+                useStepper = false; // Fuerza el scroll vertical único (las secciones ahora actúan de divisores visuales)
+            }
+
+            let rows = {};
+
+            if (useStepper) {
+                // S14.1 Arquitectura de FormStepper (Wizard)
+                if (!window.UI_FormStepper) {
+                    console.error("[FormEngine] ALERTA: UI_FormStepper no está cargado.");
+                    return;
+                }
+
+                container._btnPrev = document.createElement('ion-button');
+                container._btnPrev.fill = 'clear';
+                container._btnPrev.color = 'medium';
+                container._btnPrev.appendChild(document.createTextNode('Atrás'));
+
+                container._btnNext = document.createElement('ion-button');
+                container._btnNext.appendChild(document.createTextNode('Siguiente'));
+                
+                // Inicializamos el stepper, reasignaremos submitBtn después
+                container._stepperRef = new window.UI_FormStepper({
+                    steps: steps,
+                    cardContent: container,
+                    sidebarSteps: sidebarSteps,
+                    btnPrev: container._btnPrev,
+                    btnNext: container._btnNext,
+                    btnSubmit: submitBtn, // Referencia temporal, lo ajustamos en el Sticky Footer
+                    progressLabel: null 
+                });
+                
+                rows = container._stepperRef.getRows();
+            } else {
+                // LINEAR LAYOUT (1 section or none)
+                const mainGrid = document.createElement('ion-grid');
+                container.appendChild(mainGrid);
+
+                steps.forEach(stepName => {
+                    const stepRow = document.createElement('ion-row');
+                    
+                    // Evaluar la topología del Schema (Inyección manual del Auto-Divider en Linear)
+                    const exactDivider = fields.find(f => f.section === stepName && f.type === 'divider' && f.label === stepName);
+                    
+                    if (!exactDivider) {
+                        const dividerCol = document.createElement('ion-col');
+                        dividerCol.setAttribute('size', '12');
+                        dividerCol.appendChild(global.UI_Factory.buildDivider({ label: stepName === 'Configuración General' ? '' : stepName }));
+                        stepRow.appendChild(dividerCol);
+                    }
+
+                    rows[stepName] = stepRow;
+                    mainGrid.appendChild(stepRow);
+                });
+            }
 
             // Generación Segura de Componentes con Theming Activo
             fields.forEach(field => {
@@ -302,35 +313,68 @@
                 }
             }
 
-            // --- PATRÓN DRAWER: FOOTER NATIVO (Keyboard-Aware) ---
+            // Footer Fijo Lateral Derecho para Action Buttons
             const footerContainer = document.createElement('div');
             footerContainer.className = 'drawer-footer';
             
             const btnGrid = document.createElement('ion-grid');
             btnGrid.style.padding = 'var(--spacing-1) var(--spacing-2)';
             const btnRow = document.createElement('ion-row');
-            btnRow.style.alignItems = 'center';
             
-            const colLeft = document.createElement('ion-col');
-            colLeft.setAttribute('size', '6');
-            colLeft.className = 'drawer-footer-left';
-            
-            const colRight = document.createElement('ion-col');
-            colRight.setAttribute('size', '6');
-            colRight.className = 'drawer-footer-right';
+            // Recrear solo el botón Submit Principal
+            const submitBtn = document.createElement('ion-button');
+            submitBtn.setAttribute('shape', 'round');
+            submitBtn.setAttribute('color', 'primary');
+            submitBtn.style.cssText += ' font-family: var(--sys-font-family, inherit) !important;';
+            const iconSave = document.createElement('ion-icon');
+            iconSave.setAttribute('slot', 'start');
+            iconSave.setAttribute('name', 'save-outline');
+            submitBtn.appendChild(iconSave);
+            submitBtn.appendChild(document.createTextNode(' Guardar ' + window.formatEntityName(entityName)));
 
-            // Buttons fall down from Stepper init
-            colLeft.appendChild(btnPrev);
-            colRight.appendChild(btnNext);
-            colRight.appendChild(submitBtn);
-            
-            btnRow.appendChild(colLeft);
-            btnRow.appendChild(colRight);
+            if (useStepper && container._btnPrev && container._btnNext && container._stepperRef) {
+                // Layout Híbrido: Acomodar botones de Stepper
+                const colLeft = document.createElement('ion-col');
+                colLeft.setAttribute('size', '4');
+                colLeft.style.textAlign = 'left';
+                colLeft.appendChild(container._btnPrev);
+
+                const colRight = document.createElement('ion-col');
+                colRight.setAttribute('size', '8');
+                colRight.style.textAlign = 'right';
+                
+                // Ambos botones en el ladro derecho
+                const btnGroup = document.createElement('span');
+                
+                const iconNext = document.createElement('ion-icon');
+                iconNext.setAttribute('slot', 'end');
+                iconNext.setAttribute('name', 'arrow-forward-outline');
+                container._btnNext.appendChild(iconNext);
+                container._btnNext.setAttribute('shape', 'round');
+
+                btnGroup.appendChild(container._btnNext);
+                btnGroup.appendChild(submitBtn);
+
+                colRight.appendChild(btnGroup);
+
+                btnRow.appendChild(colLeft);
+                btnRow.appendChild(colRight);
+
+                // Arrancar flujo topológico
+                container._stepperRef.btnSubmit = submitBtn; // Aseguramos bind
+                container._stepperRef.start();
+            } else {
+                // Layout Linear 1 Step: Solo Guardar a la derecha
+                const colRight = document.createElement('ion-col');
+                colRight.setAttribute('size', '12');
+                colRight.style.textAlign = 'right';
+                colRight.appendChild(submitBtn);
+                btnRow.appendChild(colRight);
+            }
+
             btnGrid.appendChild(btnRow);
             footerContainer.appendChild(btnGrid);
-
-            // Auto-arranque de Stepper UI_FormStepper
-            stepper.start();
+            // Fin de armado de Header/Footer Híbrido
 
             // --- Delegación de Business Rules UI_Validators ---
             if (global.UI_Validators && typeof global.UI_Validators.attachBusinessRulesListeners === 'function') {
@@ -354,7 +398,7 @@
             // --------------------------------------------------------------------
 
             // S14.1 Delegación Submitter Object
-            new window.UI_FormSubmitter(entityName, fields, submitBtn);
+            new window.UI_FormSubmitter(entityName, fields, submitBtn, null, modal);
             
             // --- Metadata-Driven Dependency Injection (Zero-Touch UI) ---
             if (window.UI_FormDependencies) {

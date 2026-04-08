@@ -1,46 +1,23 @@
 const { chromium } = require('@playwright/test');
 const fs = require('fs');
 const path = require('path');
-
-const authFile = path.resolve('.auth/user.json');
+const authDir = process.env.TEST_CHROME_PROFILE ? path.resolve(process.env.TEST_CHROME_PROFILE) : path.resolve('.auth');
+const authFile = path.join(authDir, 'user.json');
 
 module.exports = async (config) => {
-    // Si el archivo ya existe, saltamos la autenticación de Google interactiva.
+    // Si el archivo ya existe y tiene cookies reales, saltamos la autenticación de Google interactiva.
     if (fs.existsSync(authFile)) {
-        console.log(`[E2E Setup] Archivo de sesión OAuth encontrado: ${authFile}. Bypass activo.`);
-        return;
+        try {
+            const authState = JSON.parse(fs.readFileSync(authFile, 'utf8'));
+            if (authState && authState.cookies && authState.cookies.length > 0) {
+                console.log(`[E2E Setup] Sesión OAuth Válida encontrada: ${authFile}. Bypass activo.`);
+                return;
+            }
+        } catch(e) {}
     }
 
-    console.log(`\n======================================================`);
-    console.log(`[E2E Setup] ¡ESTADO DE SESIÓN GOOGLE AUSENTE!`);
-    console.log(`Abriendo un navegador interactivo para que inicies sesión.`);
-    console.log(`Playwright esperará hasta que "Taxonomía" cargue en el DOM.`);
-    console.log(`======================================================\n`);
+    // Zero-Trust Gate Requerido por Calidad:
+    // Detenemos el framework si no hay sesión para evitar correr aserciones sobre ventanas de autenticación falsas.
+    throw new Error(`\n[E2E Setup - Zero-Trust Gate] ¡ESTADO DE SESIÓN GOOGLE AUSENTE!\nVerifica que exite un profile en: ${authDir}\nEjecuta el login interactivo independientemente o ajusta tu variable TEST_CHROME_PROFILE.\n`);
 
-    fs.mkdirSync('.auth', { recursive: true });
-
-    const browser = await chromium.launch({ headless: false }); // Debe ser visible para permitir 2FA/Passwords
-    const page = await browser.newPage();
-    
-    const baseUrl = config.projects[0].use.baseURL;
-    
-    // Abrimos la URL de GAS. Google forzará log-in si no hay sesión activa en este perfil.
-    await page.goto(baseUrl);
-
-    console.log(`Por favor, inicia sesión con Google. Tienes 120 segundos...`);
-
-    try {
-        // Taxonomia injects <ion-app> or <ion-menu> or <ion-header> into the DOM
-        // We will wait for #app-container or ion-app as proof of successful 302 redirect & loading
-        await page.waitForSelector('ion-app', { timeout: 120000 });
-        console.log(`[E2E Setup] SPA de Taxonomía Montado Exitosamente.`);
-        
-        // Guardamos las cookies de oauth2
-        await page.context().storageState({ path: authFile });
-        console.log(`[E2E Setup] Sesión guardada de forma segura en: ${authFile}`);
-    } catch (err) {
-        console.error(`[E2E Setup] Falló la Captura de Identidad.`, err);
-    } finally {
-        await browser.close();
-    }
 };

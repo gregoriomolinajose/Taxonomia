@@ -12,10 +12,9 @@ Sanitizar la Capa Asíncrona del Frontend para garantizar la persistencia visual
 - Mocks de UI o interceptores JSDOM (se descartaron a favor del E2E real).
 - Ejecución en CI/CD Cloud automática (por el momento, el Auth State generado se utilizará mediante ejecución local de desarrollador, dado que Google bloquea logins IP-Cloud).
 
-## Planned Stories
-- **S27.1 Optimistic Frontend Hydration:** Implementar bloqueo Mutex / Event Collation en subgrids para evitar escrituras volátiles que corrompen el DOM.
-- **S27.2 E2E Auth State Setup:** Crear un script de inicialización de Playwright que recolecte, encripte o reuse cookies de sesión de desarrollador para evadir el Login interactivo de Apps Script.
-- **S27.3 Top-Down Hierarchy Stress Test:** Escribir el Spec en Vitest/Playwright que abre el entorno DEV cloud, crea 1 Unidad, 5 Portafolios, 10 Grupos y comprueba que las relaciones en el frontend persistan a las rápidas interacciones de Playwright.
+- [x] **S27.1 Optimistic Frontend Hydration:** Implementar bloqueo Mutex / Event Collation en subgrids para evitar escrituras volátiles que corrompen el DOM. ✓
+- [x] **S27.2 E2E Auth State Setup:** Crear un script de inicialización de Playwright que recolecte, encripte o reuse cookies de sesión de desarrollador para evadir el Login interactivo de Apps Script. ✓
+- [x] **S27.3 Top-Down Hierarchy Stress Test:** Escribir el Spec en Vitest/Playwright que abre el entorno DEV cloud, crea 1 Unidad, 3 Portafolios, 3 Grupos y comprueba que las relaciones en el frontend persistan a las rápidas interacciones de Playwright. ✓
 
 ## Definition of Done
 - Los subgrids de la cadena organizativa retienen sus registros visuales al insertar concurrentemente.

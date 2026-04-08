@@ -1,4 +1,10 @@
 import { defineConfig, devices } from '@playwright/test';
+require('dotenv').config();
+
+const fs = require('fs');
+const path = require('path');
+const authDir = process.env.TEST_CHROME_PROFILE ? path.resolve(process.env.TEST_CHROME_PROFILE) : path.resolve('.auth');
+const authFile = path.join(authDir, 'user.json');
 
 export default defineConfig({
   testDir: './__tests__/e2e',
@@ -10,18 +16,27 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
   workers: 1, // Race conditions testing on UI requires sequential flow to respect single user constraints
-  reporter: 'html',
-  globalSetup: require.resolve('./__tests__/e2e/global-setup.js'),
+  reporter: [['list'], ['json', { outputFile: 'test-results.json' }]],
   use: {
     // DEV URL de Google Apps Script
-    baseURL: process.env.DEV_URL || 'https://script.google.com/a/macros/coppel.com/s/1ZjGYDSsBgXy9mxa9guRoj69oabUJAVZz9GOy9DzJ5280tzYmMIjIBd5q/dev',
+    baseURL: process.env.DEV_URL || 'https://script.google.com/macros/s/AKfycbz1wK6yVfTuUe3kv35k45IULLBVya51t6HDXUZHNP-6rI9Nh_PEctWZseGyoQiQ2HxkIw/exec',
     trace: 'on-first-retry',
-    storageState: '.auth/user.json', // Utilizar la identidad pre-inyectada
+    screenshot: 'only-on-failure',
   },
   projects: [
     {
       name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
+      use: { 
+        ...devices['Desktop Chrome'],
+        channel: process.env.PLAYWRIGHT_CHANNEL || 'chrome',
+        launchOptions: {
+            headless: false,
+            args: [
+                '--disable-blink-features=AutomationControlled',
+                '--no-sandbox'
+            ]
+        }
+      },
     }
   ],
 });

@@ -360,13 +360,22 @@ window.UI_SubgridBuilder = {
                 // Desmontamos el Subgrid Picker
                 modal.dismiss().then(() => modal.remove());
                 
-                const onSubFormSuccess = (newRecordResp) => {
+                const onSubFormSuccess = (newRecordResp, submittedPayload) => {
                     if (newRecordResp && newRecordResp.status === 'success') {
                         setOptimisticLock();
                         // Soporte para distintas firmas de payload (según controlador de GAS)
                         const itemPayload = (newRecordResp.data && newRecordResp.data.data) ? newRecordResp.data.data : (newRecordResp.data || newRecordResp);
-                        const newId = itemPayload[childPK] || itemPayload['id_registro'];
-                        const newName = itemPayload.nombre || itemPayload.nombre_producto || newId;
+                        
+                        // Extraemos el PK de la respuesta del servidor u originamos del payload devuelto
+                        const newId = newRecordResp.pkValue || itemPayload[childPK] || itemPayload['id_registro'];
+                        
+                        // RQ1: Fallback Defensivo con Invocación Ontológica
+                        // La representación visual se mapea prioritariamente según el schema del framework
+                        const sourceName = submittedPayload || itemPayload;
+                        const schemaMeta = window.APP_SCHEMAS && window.APP_SCHEMAS[field.targetEntity];
+                        const titleKey = schemaMeta ? (schemaMeta.titleField || (schemaMeta.metadata && schemaMeta.metadata.titleField) || 'nombre') : 'nombre';
+                        
+                        const newName = sourceName[titleKey] || sourceName.nombre || sourceName.nombre_producto || newId;
 
                         if (newId) {
                             childRecords.push({

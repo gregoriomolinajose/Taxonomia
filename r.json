@@ -1,0 +1,146 @@
+[E2E Setup] Sesión OAuth Válida encontrada: C:\Users\grego\Antigravity\Taxonomia Project\.auth\user.json. Bypass activo.
+{
+  "config": {
+    "configFile": "C:\\Users\\grego\\Antigravity\\Taxonomia Project\\playwright.config.js",
+    "rootDir": "C:/Users/grego/Antigravity/Taxonomia Project/__tests__/e2e",
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": "C:\\Users\\grego\\Antigravity\\Taxonomia Project\\__tests__\\e2e\\global-setup.js",
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "C:/Users/grego/Antigravity/Taxonomia Project/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "chromium",
+        "name": "chromium",
+        "testDir": "C:/Users/grego/Antigravity/Taxonomia Project/__tests__/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 120000
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "json"
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.59.1",
+    "workers": 1,
+    "webServer": null
+  },
+  "suites": [
+    {
+      "title": "hierarchy-stress.spec.js",
+      "file": "hierarchy-stress.spec.js",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Top-Down Hierarchy Stress Test & Race Conditions",
+          "file": "hierarchy-stress.spec.js",
+          "line": 3,
+          "column": 6,
+          "specs": [
+            {
+              "title": "Crea una rama entera (Unidad -> Portafolio -> Grupo -> Producto) sin pérdida de Subgrids",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 32537,
+                      "error": {
+                        "message": "TimeoutError: locator.waitFor: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('iframe').first().contentFrame().locator('ion-app') to be visible\u001b[22m\n",
+                        "stack": "TimeoutError: locator.waitFor: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('iframe').first().contentFrame().locator('ion-app') to be visible\u001b[22m\n\n    at C:\\Users\\grego\\Antigravity\\Taxonomia Project\\__tests__\\e2e\\hierarchy-stress.spec.js:11:36",
+                        "location": {
+                          "file": "C:\\Users\\grego\\Antigravity\\Taxonomia Project\\__tests__\\e2e\\hierarchy-stress.spec.js",
+                          "column": 36,
+                          "line": 11
+                        },
+                        "snippet": "\u001b[0m \u001b[90m  9 |\u001b[39m     \u001b[90m// Esperar a que Taxonomia se hidrate dentro del iframe\u001b[39m\n \u001b[90m 10 |\u001b[39m     \u001b[36mconst\u001b[39m frame \u001b[33m=\u001b[39m page\u001b[33m.\u001b[39mframeLocator(\u001b[32m'iframe'\u001b[39m)\u001b[33m.\u001b[39mfirst()\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 11 |\u001b[39m     \u001b[36mawait\u001b[39m frame\u001b[33m.\u001b[39mlocator(\u001b[32m'ion-app'\u001b[39m)\u001b[33m.\u001b[39mwaitFor({ state\u001b[33m:\u001b[39m \u001b[32m'visible'\u001b[39m\u001b[33m,\u001b[39m timeout\u001b[33m:\u001b[39m \u001b[35m30000\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                                    \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 12 |\u001b[39m   })\u001b[33m;\u001b[39m\n \u001b[90m 13 |\u001b[39m\n \u001b[90m 14 |\u001b[39m   test(\u001b[32m'Crea una rama entera (Unidad -> Portafolio -> Grupo -> Producto) sin pérdida de Subgrids'\u001b[39m\u001b[33m,\u001b[39m \u001b[36masync\u001b[39m ({ page }) \u001b[33m=>\u001b[39m {\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "C:\\Users\\grego\\Antigravity\\Taxonomia Project\\__tests__\\e2e\\hierarchy-stress.spec.js",
+                            "column": 36,
+                            "line": 11
+                          },
+                          "message": "TimeoutError: locator.waitFor: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('iframe').first().contentFrame().locator('ion-app') to be visible\u001b[22m\n\n\n   9 |     // Esperar a que Taxonomia se hidrate dentro del iframe\n  10 |     const frame = page.frameLocator('iframe').first();\n> 11 |     await frame.locator('ion-app').waitFor({ state: 'visible', timeout: 30000 });\n     |                                    ^\n  12 |   });\n  13 |\n  14 |   test('Crea una rama entera (Unidad -> Portafolio -> Grupo -> Producto) sin pérdida de Subgrids', async ({ page }) => {\n    at C:\\Users\\grego\\Antigravity\\Taxonomia Project\\__tests__\\e2e\\hierarchy-stress.spec.js:11:36"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-04-08T18:37:59.989Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "C:\\Users\\grego\\Antigravity\\Taxonomia Project\\test-results\\hierarchy-stress-Top-Down--d963b-cto-sin-pérdida-de-Subgrids-chromium\\error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "C:\\Users\\grego\\Antigravity\\Taxonomia Project\\__tests__\\e2e\\hierarchy-stress.spec.js",
+                        "column": 36,
+                        "line": 11
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "ec7a83b542d9418f61d3-4de4cb782febbec8a2de",
+              "file": "hierarchy-stress.spec.js",
+              "line": 14,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-04-08T18:37:59.492Z",
+    "duration": 33186.269,
+    "expected": 0,
+    "skipped": 0,
+    "unexpected": 1,
+    "flaky": 0
+  }
+}
