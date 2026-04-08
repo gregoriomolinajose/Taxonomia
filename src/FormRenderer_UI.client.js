@@ -199,6 +199,7 @@
             const submitBtn = document.createElement('ion-button');
             submitBtn.setAttribute('shape', 'round');
             submitBtn.setAttribute('color', 'primary');
+            submitBtn.style.fontFamily = 'var(--sys-font-family, inherit)';
             const iconSave = document.createElement('ion-icon');
             iconSave.setAttribute('slot', 'start');
             iconSave.setAttribute('name', 'save-outline');

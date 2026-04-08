@@ -53,6 +53,7 @@
             const addBtn = document.createElement('ion-button');
             addBtn.fill = 'clear';
             addBtn.size = 'small';
+            addBtn.style.fontFamily = 'var(--sys-font-family, inherit)';
             const addIco2 = document.createElement('ion-icon');
             addIco2.setAttribute('name', 'add');
             addIco2.setAttribute('slot', 'start');
