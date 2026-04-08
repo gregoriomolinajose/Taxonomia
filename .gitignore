@@ -13,3 +13,4 @@ test_*.txt
 *_report.txt
 tmp_pull/
 /.auth/
+.env

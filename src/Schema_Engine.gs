@@ -22,7 +22,7 @@ const APP_SCHEMAS = {
     ]
   },
   Portafolio: {
-    metadata: { showInMenu: true, showInDashboard: false, order:2, iconName:'briefcase-outline', color:'primary', label:'Portafolios', titleField:'nombre', idField:'id_portafolio', fkField:null },
+    metadata: { showInMenu: true, showInDashboard: false, order:2, iconName:'briefcase-outline', color:'primary', label:'Portafolios', titleField:'nombre', idField:'id_portafolio', fkField:null, maxListAttrs: 8 },
     topological_metadata: {
         ownerFields: ["director_id", "vp_id"],
         parentEntity: null,
@@ -35,16 +35,7 @@ const APP_SCHEMAS = {
 
       { section: "Definición Estratégica", name: "separator_1", type: "divider", label: "Definición Estratégica", width: 12 },
       { section: "Definición Estratégica", name: "nombre", type: "text", label: "Nombre de Portafolio", required: true, width: 12 },
-   /**
-     *{ section: "Definición Estratégica", name: "proposito", type: "textarea", label: "Propósito", required: false, width: 12 },
-     *{ section: "Definición Estratégica", name: "objetivos_negocio", type: "textarea", label: "Objetivos de Negocio", required: false, width: 6 },
-     *{ section: "Definición Estratégica", name: "kpis_metricas", type: "textarea", label: "KPIs / Métricas", required: false, width: 6 },
-     *
-     *{ section: "Propuesta de Valor", name: "separator_2", type: "divider", label: "Propuesta de Valor", width: 12 },
-     *{ section: "Propuesta de Valor", name: "flujos_valor", type: "textarea", label: "Flujos de Valor", required: false, width: 6 },
-     *{ section: "Propuesta de Valor", name: "clientes_segmentos", type: "textarea", label: "Clientes y Segmentos", required: false, width: 6 },
-     *{ section: "Propuesta de Valor", name: "producto_dominio", type: "text", label: "Producto / Dominio", required: false, width: 12 },
-    */ 
+      
       { section: "Topología (Grafo)", name: "separator_grafo", type: "divider", label: "Pertenencia Topológica (Grafo)", width: 12 },
       { section: "Topología (Grafo)", name: "unidad_negocio_padre", type: "relation", relationType: "padre", targetEntity: "Unidad_Negocio", graphEntity: "Sys_Graph_Edges", valueField: "id_unidad_negocio", labelField: "nombre", uiComponent: "select_single", label: "Unidad de Negocio (Padre)", isTemporalGraph: true, graphEdgeType: "UNIDAD_NEGOCIO_PORTAFOLIO", topologyCardinality: "1:N", width: 12, showInList: true },
       { section: "Topología (Grafo)", name: "grupos_productos_vinculados", type: "relation", relationType: "hijo", targetEntity: "Grupo_Productos", graphEntity: "Sys_Graph_Edges", valueField: "id_grupo_producto", labelField: "nombre", uiBehavior: "subgrid", label: "Grupos de Productos Asociados", isTemporalGraph: true, graphEdgeType: "PORTAFOLIO_GRUPO_PRODUCTO", topologyCardinality: "1:N", width: 12 },

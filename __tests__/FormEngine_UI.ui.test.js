@@ -41,17 +41,13 @@ describe('FormEngine UI Nativo Browser (Vitest SPA)', () => {
                 input.setAttribute('data-testid', `input-${field.name}`);
                 if (field.required) input.setAttribute('required', 'true');
                 return input;
+            },
+            buildDivider: (config) => {
+                const div = document.createElement('div');
+                div.className = 'mock-divider';
+                div.textContent = config.label || '';
+                return div;
             }
-        };
-
-        window.UI_FormStepper = class {
-            constructor(config) { 
-                this.row = document.createElement('div');
-                config.cardContent.appendChild(this.row); // FIX: Añadir al árbol DOM
-                this.rows = { 'Datos Generales': this.row }; 
-            }
-            getRows() { return this.rows; }
-            start() {}
         };
 
         window.UI_FormSubmitter = class { constructor() {} };

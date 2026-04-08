@@ -283,7 +283,8 @@
             if (rows.length === 0) return this._renderEmpty();
 
             const meta = (window.ENTITY_META && window.ENTITY_META[this.cfg.entityName]) || { titleField: 'nombre', idField: 'id', fkField: null };
-            const MAX_ATTRS = 5;
+            const schemaMeta = window.APP_SCHEMAS && window.APP_SCHEMAS[this.cfg.entityName];
+            const MAX_ATTRS = (schemaMeta && schemaMeta.metadata && schemaMeta.metadata.maxListAttrs) || 5;
 
             const frag = document.createDocumentFragment();
             const grid = document.createElement('ion-grid');

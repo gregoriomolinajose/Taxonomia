@@ -57,3 +57,4 @@
 >   - *Arch Review (S23.3)*: Analizar colisiones potenciales: Evaluar necesidad futura de **debouncing polimórfico paramtetrizado por componente** vs el actual bloqueo en `AppEventBus` dictatorial por string del Evento.
 >   - *Arch Review*: Deshardcodear el umbral estático `MAX_ATTRS = 5` en Tarjetas `UI_DataGrid` para delegarlo a `UI_CONFIG` (Vistas Sensibles/Densas); monitorear métricas de Developer Experience (DX) tras pulverizar God Objects en micro-fragmentos de 150 líneas.
 >   - *Quality Review*: Evaluar seriamente incluir un paso constructivo formal de Transpilación vía Babel (ES6 a ES5) garantizando el Polyfill si las corporaciones clientes manejan Chrome obsoleto.
+>   - *Arch Review*: Abstraer el "Bypass Profile Path" (`.auth/chrome-profile`) de Playwright como variable paramétrica vía `.env` global para evitar conflictos locales de sesión de Google entre desarrolladores o servidores de CI/CD externos durante ejecuciones E2E persistentes.

@@ -1,0 +1,159 @@
+◇ injected env (3) from .env // tip: ◈ secrets for agents [www.dotenvx.com]
+{
+  "config": {
+    "configFile": "C:\\Users\\grego\\Antigravity\\Taxonomia Project\\playwright.config.js",
+    "rootDir": "C:/Users/grego/Antigravity/Taxonomia Project/__tests__/e2e",
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "C:/Users/grego/Antigravity/Taxonomia Project/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "chromium",
+        "name": "chromium",
+        "testDir": "C:/Users/grego/Antigravity/Taxonomia Project/__tests__/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 120000
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "json"
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.59.1",
+    "workers": 1,
+    "webServer": null
+  },
+  "suites": [
+    {
+      "title": "hierarchy-stress.spec.js",
+      "file": "hierarchy-stress.spec.js",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Top-Down Hierarchy Stress Test & Race Conditions",
+          "file": "hierarchy-stress.spec.js",
+          "line": 6,
+          "column": 6,
+          "specs": [
+            {
+              "title": "Crea una rama entera (Unidad -> Portafolio -> Grupo -> Producto) sin pérdida de Subgrids",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 0,
+                      "error": {
+                        "message": "Error: browserType.launchPersistentContext: Target page, context or browser has been closed\nBrowser logs:\n\n<launching> C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe --disable-field-trial-config --disable-background-networking --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-back-forward-cache --disable-breakpad --disable-client-side-phishing-detection --disable-component-extensions-with-background-pages --disable-component-update --no-default-browser-check --disable-default-apps --disable-dev-shm-usage --disable-extensions --disable-features=AvoidUnnecessaryBeforeUnloadCheckSync,BoundaryEventDispatchTracksNodeRemoval,DestroyProfileOnBrowserClose,DialMediaRouteProvider,GlobalMediaControls,HttpsUpgrades,LensOverlay,MediaRouter,PaintHolding,ThirdPartyStoragePartitioning,Translate,AutoDeElevate,RenderDocument,OptimizationHints --enable-features=CDPScreenshotNewSurface --allow-pre-commit-input --disable-hang-monitor --disable-ipc-flooding-protection --disable-popup-blocking --disable-prompt-on-repost --disable-renderer-backgrounding --force-color-profile=srgb --metrics-recording-only --no-first-run --password-store=basic --use-mock-keychain --no-service-autorun --export-tagged-pdf --disable-search-engine-choice-screen --unsafely-disable-devtools-self-xss-warnings --edge-skip-compat-layer-relaunch --enable-automation --disable-infobars --disable-search-engine-choice-screen --disable-sync --enable-unsafe-swiftshader --no-sandbox --disable-blink-features=AutomationControlled --no-sandbox --user-data-dir=C:\\Users\\grego\\Antigravity\\Taxonomia Project\\.auth\\chrome-profile --remote-debugging-pipe about:blank\n<launched> pid=16148\nCall log:\n\u001b[2m  - <launching> C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe --disable-field-trial-config --disable-background-networking --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-back-forward-cache --disable-breakpad --disable-client-side-phishing-detection --disable-component-extensions-with-background-pages --disable-component-update --no-default-browser-check --disable-default-apps --disable-dev-shm-usage --disable-extensions --disable-features=AvoidUnnecessaryBeforeUnloadCheckSync,BoundaryEventDispatchTracksNodeRemoval,DestroyProfileOnBrowserClose,DialMediaRouteProvider,GlobalMediaControls,HttpsUpgrades,LensOverlay,MediaRouter,PaintHolding,ThirdPartyStoragePartitioning,Translate,AutoDeElevate,RenderDocument,OptimizationHints --enable-features=CDPScreenshotNewSurface --allow-pre-commit-input --disable-hang-monitor --disable-ipc-flooding-protection --disable-popup-blocking --disable-prompt-on-repost --disable-renderer-backgrounding --force-color-profile=srgb --metrics-recording-only --no-first-run --password-store=basic --use-mock-keychain --no-service-autorun --export-tagged-pdf --disable-search-engine-choice-screen --unsafely-disable-devtools-self-xss-warnings --edge-skip-compat-layer-relaunch --enable-automation --disable-infobars --disable-search-engine-choice-screen --disable-sync --enable-unsafe-swiftshader --no-sandbox --disable-blink-features=AutomationControlled --no-sandbox --user-data-dir=C:\\Users\\grego\\Antigravity\\Taxonomia Project\\.auth\\chrome-profile --remote-debugging-pipe about:blank\u001b[22m\n\u001b[2m  - <launched> pid=16148\u001b[22m\n\u001b[2m  - [pid=16148] <gracefully close start>\u001b[22m\n\u001b[2m  - [pid=16148] <kill>\u001b[22m\n\u001b[2m  - [pid=16148] <will force kill>\u001b[22m\n\u001b[2m  - [pid=16148] taskkill stderr: ERROR: no se encontr� el proceso \"16148\".\u001b[22m\n\u001b[2m  - [pid=16148] <process did exit: exitCode=21, signal=null>\u001b[22m\n\u001b[2m  - [pid=16148] starting temporary directories cleanup\u001b[22m\n\u001b[2m  - [pid=16148] finished temporary directories cleanup\u001b[22m\n\u001b[2m  - [pid=16148] <gracefully close end>\u001b[22m\n",
+                        "stack": "Error: browserType.launchPersistentContext: Target page, context or browser has been closed\nBrowser logs:\n\n<launching> C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe --disable-field-trial-config --disable-background-networking --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-back-forward-cache --disable-breakpad --disable-client-side-phishing-detection --disable-component-extensions-with-background-pages --disable-component-update --no-default-browser-check --disable-default-apps --disable-dev-shm-usage --disable-extensions --disable-features=AvoidUnnecessaryBeforeUnloadCheckSync,BoundaryEventDispatchTracksNodeRemoval,DestroyProfileOnBrowserClose,DialMediaRouteProvider,GlobalMediaControls,HttpsUpgrades,LensOverlay,MediaRouter,PaintHolding,ThirdPartyStoragePartitioning,Translate,AutoDeElevate,RenderDocument,OptimizationHints --enable-features=CDPScreenshotNewSurface --allow-pre-commit-input --disable-hang-monitor --disable-ipc-flooding-protection --disable-popup-blocking --disable-prompt-on-repost --disable-renderer-backgrounding --force-color-profile=srgb --metrics-recording-only --no-first-run --password-store=basic --use-mock-keychain --no-service-autorun --export-tagged-pdf --disable-search-engine-choice-screen --unsafely-disable-devtools-self-xss-warnings --edge-skip-compat-layer-relaunch --enable-automation --disable-infobars --disable-search-engine-choice-screen --disable-sync --enable-unsafe-swiftshader --no-sandbox --disable-blink-features=AutomationControlled --no-sandbox --user-data-dir=C:\\Users\\grego\\Antigravity\\Taxonomia Project\\.auth\\chrome-profile --remote-debugging-pipe about:blank\n<launched> pid=16148\nCall log:\n\u001b[2m  - <launching> C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe --disable-field-trial-config --disable-background-networking --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-back-forward-cache --disable-breakpad --disable-client-side-phishing-detection --disable-component-extensions-with-background-pages --disable-component-update --no-default-browser-check --disable-default-apps --disable-dev-shm-usage --disable-extensions --disable-features=AvoidUnnecessaryBeforeUnloadCheckSync,BoundaryEventDispatchTracksNodeRemoval,DestroyProfileOnBrowserClose,DialMediaRouteProvider,GlobalMediaControls,HttpsUpgrades,LensOverlay,MediaRouter,PaintHolding,ThirdPartyStoragePartitioning,Translate,AutoDeElevate,RenderDocument,OptimizationHints --enable-features=CDPScreenshotNewSurface --allow-pre-commit-input --disable-hang-monitor --disable-ipc-flooding-protection --disable-popup-blocking --disable-prompt-on-repost --disable-renderer-backgrounding --force-color-profile=srgb --metrics-recording-only --no-first-run --password-store=basic --use-mock-keychain --no-service-autorun --export-tagged-pdf --disable-search-engine-choice-screen --unsafely-disable-devtools-self-xss-warnings --edge-skip-compat-layer-relaunch --enable-automation --disable-infobars --disable-search-engine-choice-screen --disable-sync --enable-unsafe-swiftshader --no-sandbox --disable-blink-features=AutomationControlled --no-sandbox --user-data-dir=C:\\Users\\grego\\Antigravity\\Taxonomia Project\\.auth\\chrome-profile --remote-debugging-pipe about:blank\u001b[22m\n\u001b[2m  - <launched> pid=16148\u001b[22m\n\u001b[2m  - [pid=16148] <gracefully close start>\u001b[22m\n\u001b[2m  - [pid=16148] <kill>\u001b[22m\n\u001b[2m  - [pid=16148] <will force kill>\u001b[22m\n\u001b[2m  - [pid=16148] taskkill stderr: ERROR: no se encontr� el proceso \"16148\".\u001b[22m\n\u001b[2m  - [pid=16148] <process did exit: exitCode=21, signal=null>\u001b[22m\n\u001b[2m  - [pid=16148] starting temporary directories cleanup\u001b[22m\n\u001b[2m  - [pid=16148] finished temporary directories cleanup\u001b[22m\n\u001b[2m  - [pid=16148] <gracefully close end>\u001b[22m\n\n    at C:\\Users\\grego\\Antigravity\\Taxonomia Project\\__tests__\\e2e\\hierarchy-stress.spec.js:11:15",
+                        "location": {
+                          "file": "C:\\Users\\grego\\Antigravity\\Taxonomia Project\\__tests__\\e2e\\hierarchy-stress.spec.js",
+                          "column": 15,
+                          "line": 11
+                        },
+                        "snippet": "\u001b[0m \u001b[90m  9 |\u001b[39m     \u001b[90m// Usamos el Perfil Nativo Persistente para que Google no nos detecte como Bot Inyector\u001b[39m\n \u001b[90m 10 |\u001b[39m     \u001b[36mconst\u001b[39m authDir \u001b[33m=\u001b[39m process\u001b[33m.\u001b[39menv\u001b[33m.\u001b[39m\u001b[33mTEST_CHROME_PROFILE\u001b[39m \u001b[33m||\u001b[39m \u001b[32m'.auth/chrome-profile'\u001b[39m\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 11 |\u001b[39m     context \u001b[33m=\u001b[39m \u001b[36mawait\u001b[39m chromium\u001b[33m.\u001b[39mlaunchPersistentContext(authDir\u001b[33m,\u001b[39m {\n \u001b[90m    |\u001b[39m               \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 12 |\u001b[39m         headless\u001b[33m:\u001b[39m \u001b[36mfalse\u001b[39m\u001b[33m,\u001b[39m\n \u001b[90m 13 |\u001b[39m         channel\u001b[33m:\u001b[39m process\u001b[33m.\u001b[39menv\u001b[33m.\u001b[39m\u001b[33mPLAYWRIGHT_CHANNEL\u001b[39m \u001b[33m||\u001b[39m \u001b[32m'chrome'\u001b[39m\u001b[33m,\u001b[39m\n \u001b[90m 14 |\u001b[39m         args\u001b[33m:\u001b[39m [\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "C:\\Users\\grego\\Antigravity\\Taxonomia Project\\__tests__\\e2e\\hierarchy-stress.spec.js",
+                            "column": 15,
+                            "line": 11
+                          },
+                          "message": "Error: browserType.launchPersistentContext: Target page, context or browser has been closed\nBrowser logs:\n\n<launching> C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe --disable-field-trial-config --disable-background-networking --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-back-forward-cache --disable-breakpad --disable-client-side-phishing-detection --disable-component-extensions-with-background-pages --disable-component-update --no-default-browser-check --disable-default-apps --disable-dev-shm-usage --disable-extensions --disable-features=AvoidUnnecessaryBeforeUnloadCheckSync,BoundaryEventDispatchTracksNodeRemoval,DestroyProfileOnBrowserClose,DialMediaRouteProvider,GlobalMediaControls,HttpsUpgrades,LensOverlay,MediaRouter,PaintHolding,ThirdPartyStoragePartitioning,Translate,AutoDeElevate,RenderDocument,OptimizationHints --enable-features=CDPScreenshotNewSurface --allow-pre-commit-input --disable-hang-monitor --disable-ipc-flooding-protection --disable-popup-blocking --disable-prompt-on-repost --disable-renderer-backgrounding --force-color-profile=srgb --metrics-recording-only --no-first-run --password-store=basic --use-mock-keychain --no-service-autorun --export-tagged-pdf --disable-search-engine-choice-screen --unsafely-disable-devtools-self-xss-warnings --edge-skip-compat-layer-relaunch --enable-automation --disable-infobars --disable-search-engine-choice-screen --disable-sync --enable-unsafe-swiftshader --no-sandbox --disable-blink-features=AutomationControlled --no-sandbox --user-data-dir=C:\\Users\\grego\\Antigravity\\Taxonomia Project\\.auth\\chrome-profile --remote-debugging-pipe about:blank\n<launched> pid=16148\nCall log:\n\u001b[2m  - <launching> C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe --disable-field-trial-config --disable-background-networking --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-back-forward-cache --disable-breakpad --disable-client-side-phishing-detection --disable-component-extensions-with-background-pages --disable-component-update --no-default-browser-check --disable-default-apps --disable-dev-shm-usage --disable-extensions --disable-features=AvoidUnnecessaryBeforeUnloadCheckSync,BoundaryEventDispatchTracksNodeRemoval,DestroyProfileOnBrowserClose,DialMediaRouteProvider,GlobalMediaControls,HttpsUpgrades,LensOverlay,MediaRouter,PaintHolding,ThirdPartyStoragePartitioning,Translate,AutoDeElevate,RenderDocument,OptimizationHints --enable-features=CDPScreenshotNewSurface --allow-pre-commit-input --disable-hang-monitor --disable-ipc-flooding-protection --disable-popup-blocking --disable-prompt-on-repost --disable-renderer-backgrounding --force-color-profile=srgb --metrics-recording-only --no-first-run --password-store=basic --use-mock-keychain --no-service-autorun --export-tagged-pdf --disable-search-engine-choice-screen --unsafely-disable-devtools-self-xss-warnings --edge-skip-compat-layer-relaunch --enable-automation --disable-infobars --disable-search-engine-choice-screen --disable-sync --enable-unsafe-swiftshader --no-sandbox --disable-blink-features=AutomationControlled --no-sandbox --user-data-dir=C:\\Users\\grego\\Antigravity\\Taxonomia Project\\.auth\\chrome-profile --remote-debugging-pipe about:blank\u001b[22m\n\u001b[2m  - <launched> pid=16148\u001b[22m\n\u001b[2m  - [pid=16148] <gracefully close start>\u001b[22m\n\u001b[2m  - [pid=16148] <kill>\u001b[22m\n\u001b[2m  - [pid=16148] <will force kill>\u001b[22m\n\u001b[2m  - [pid=16148] taskkill stderr: ERROR: no se encontr� el proceso \"16148\".\u001b[22m\n\u001b[2m  - [pid=16148] <process did exit: exitCode=21, signal=null>\u001b[22m\n\u001b[2m  - [pid=16148] starting temporary directories cleanup\u001b[22m\n\u001b[2m  - [pid=16148] finished temporary directories cleanup\u001b[22m\n\u001b[2m  - [pid=16148] <gracefully close end>\u001b[22m\n\n\n   9 |     // Usamos el Perfil Nativo Persistente para que Google no nos detecte como Bot Inyector\n  10 |     const authDir = process.env.TEST_CHROME_PROFILE || '.auth/chrome-profile';\n> 11 |     context = await chromium.launchPersistentContext(authDir, {\n     |               ^\n  12 |         headless: false,\n  13 |         channel: process.env.PLAYWRIGHT_CHANNEL || 'chrome',\n  14 |         args: [\n    at C:\\Users\\grego\\Antigravity\\Taxonomia Project\\__tests__\\e2e\\hierarchy-stress.spec.js:11:15"
+                        },
+                        {
+                          "location": {
+                            "file": "C:\\Users\\grego\\Antigravity\\Taxonomia Project\\__tests__\\e2e\\hierarchy-stress.spec.js",
+                            "column": 19,
+                            "line": 31
+                          },
+                          "message": "TypeError: Cannot read properties of undefined (reading 'close')\n\n  29 |\n  30 |   test.afterAll(async () => {\n> 31 |     await context.close();\n     |                   ^\n  32 |   });\n  33 |\n  34 |   test.beforeEach(async () => {\n    at C:\\Users\\grego\\Antigravity\\Taxonomia Project\\__tests__\\e2e\\hierarchy-stress.spec.js:31:19"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-04-08T21:42:04.216Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "C:\\Users\\grego\\Antigravity\\Taxonomia Project\\test-results\\hierarchy-stress-Top-Down--d963b-cto-sin-pérdida-de-Subgrids-chromium\\error-context.md"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "C:\\Users\\grego\\Antigravity\\Taxonomia Project\\test-results\\hierarchy-stress-Top-Down--d963b-cto-sin-pérdida-de-Subgrids-chromium\\error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "C:\\Users\\grego\\Antigravity\\Taxonomia Project\\__tests__\\e2e\\hierarchy-stress.spec.js",
+                        "column": 15,
+                        "line": 11
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "ec7a83b542d9418f61d3-4de4cb782febbec8a2de",
+              "file": "hierarchy-stress.spec.js",
+              "line": 80,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-04-08T21:42:03.662Z",
+    "duration": 822.5299999999999,
+    "expected": 0,
+    "skipped": 0,
+    "unexpected": 1,
+    "flaky": 0
+  }
+}
