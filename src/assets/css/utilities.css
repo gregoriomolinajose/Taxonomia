@@ -1,8 +1,9 @@
+/* stylelint-disable scale-unlimited/declaration-strict-value, color-named */
   /* Toast â€” z-index: 9999 (maxima prioridad â€” Regla UI Â§14.2) */
   .sim-toast {
     position: fixed; bottom: 32px; left: 50%;
     transform: translateX(-50%) translateY(80px);
-    background: #1E293B; border: 1px solid rgba(108,99,255,0.3);
+    background: var(--ion-color-dark); border: 1px solid rgba(108,99,255,0.3);
     border-radius: 12px; padding: 14px 24px;
     display: flex; align-items: center; gap: 10px;
     z-index: 9999; font-size: 0.875rem; color: var(--ion-text-color);

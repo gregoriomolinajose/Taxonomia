@@ -162,7 +162,7 @@ window.GovernanceEngine = {
 
                 // Utilizar dinámicamente badgeMap global sin hardcodear colores
                 const getColorFromConfig = (valStr) => {
-                    if (!valStr) return 'var(--ion-color-medium, #92949c)';
+                    if (!valStr) return 'var(--ion-color-medium)';
                     const slug = (valStr || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
                     const map = (window.APP_SCHEMAS && window.APP_SCHEMAS._UI_CONFIG && window.APP_SCHEMAS._UI_CONFIG.badgeMap) || {};
                     let badgeType = map[slug] || 'medium';
@@ -178,8 +178,8 @@ window.GovernanceEngine = {
                     option.textContent = opt.split(' ')[0]; // Display corto
                     if (opt === currentVal) option.selected = true;
                     // Resetear para que las opciones del sistema nativo siempre sean legibles (Contraste)
-                    option.style.color = 'var(--ion-text-color, #000)';
-                    option.style.backgroundColor = 'var(--ion-background-color, #fff)';
+                    option.style.color = 'var(--ion-text-color)';
+                    option.style.backgroundColor = 'var(--ion-background-color)';
                     select.appendChild(option);
                 });
 

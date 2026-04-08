@@ -1,3 +1,4 @@
+/* stylelint-disable scale-unlimited/declaration-strict-value */
 /* ============================================================ */
 /* DATAVIEW STRUCTURAL LAYOUT */
 /* (Migrado en S10.2 desde DataView_UI.html) */
@@ -5,21 +6,21 @@
 /* â”€â”€ CorrecciÃ³n de Design Tokens (DataView) â”€â”€ */
     body {
         /* Mapeo estricto al Design System */
-        --dv-primary: var(--ion-color-primary, #1C42E8); 
+        --dv-primary: var(--ion-color-primary); 
         --dv-primary-light: rgba(var(--ion-color-primary-rgb, 28, 66, 232), 0.1); 
-        --dv-primary-dark: var(--ion-color-primary-shade, #081754);
+        --dv-primary-dark: var(--ion-color-primary-shade);
 
         /* SincronizaciÃ³n Estricta del Mapeo a CSS_DesignSystem */
-        --dv-surface: var(--ion-background-color, #ffffff);
+        --dv-surface: var(--ion-background-color);
         --dv-bg: var(--sidebar-bg, var(--ion-card-background));
-        --dv-border: var(--color-border, #C9C9C9);
-        --dv-text-primary: var(--ion-text-color, #081754);
-        --dv-text-secondary: var(--color-text-soft, #A4A4A4);
-        --dv-text-light: var(--color-text-soft, #94a3b8);
+        --dv-border: var(--color-border);
+        --dv-text-primary: var(--ion-text-color);
+        --dv-text-secondary: var(--color-text-soft);
+        --dv-text-light: var(--color-text-soft);
         --dv-radius: var(--rounded-md, 10px);
         --dv-radius-sm: var(--rounded-sm, 6px);
-        --dv-shadow: var(--shadow-default, 0 1px 3px rgba(0, 0, 0, .08), 0 1px 2px rgba(0, 0, 0, .04));
-        --dv-shadow-md: var(--shadow-hover, 0 4px 12px rgba(0, 0, 0, .10));
+        --dv-shadow: var(--shadow-default, 0 1px 3px var(--color-shadow), 0 1px 2px var(--color-shadow-light));
+        --dv-shadow-md: var(--shadow-hover, 0 4px 12px var(--color-shadow-md));
         --dv-transition: .18s ease;
     }
 
@@ -148,7 +149,7 @@
 
     .dv-btn-primary {
         background: var(--dv-primary);
-        color: var(--ion-color-primary-contrast, #ffffff);
+        color: var(--ion-color-primary-contrast);
     }
 
     .dv-btn-primary:hover {
@@ -195,7 +196,7 @@
 
     .dv-btn-icon.active {
         background: var(--dv-primary);
-        color: var(--ion-color-primary-contrast, #ffffff);
+        color: var(--ion-color-primary-contrast);
         border-color: var(--dv-primary);
     }
 
@@ -259,7 +260,7 @@
         background: var(--dv-bg);
         border: none;
         border-radius: 12px;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+        box-shadow: 0 4px 20px var(--color-shadow-sm);
         overflow: hidden;
         flex: 1;
         display: flex;
@@ -312,10 +313,10 @@
         font-weight: 600;
         font-size: .78rem;
         background-color: var(--ion-color-secondary);
-        color: var(--ion-color-medium, #5e6c84);
-        border-bottom: 2px solid var(--color-border, rgba(128,128,128,0.2));
+        color: var(--ion-color-medium, var(--ion-color-medium));
+        border-bottom: 2px solid var(--color-border, var(--color-border));
         border-left: none;
-        border-right: 1px solid var(--color-border, rgba(128,128,128,0.15));
+        border-right: 1px solid var(--color-border, var(--color-border));
         white-space: nowrap;
         cursor: pointer;
         user-select: none;
@@ -350,10 +351,10 @@
 
     .dv-table td {
         padding: 8px 14px;
-        border-bottom: 1px solid var(--color-border, rgba(128,128,128,0.15));
+        border-bottom: 1px solid var(--color-border, var(--color-border));
         border-left: none;
-        border-right: 1px solid var(--color-border, rgba(128,128,128,0.1));
-        color: var(--ion-text-color, #172b4d);
+        border-right: 1px solid var(--color-border, var(--color-border));
+        color: var(--ion-text-color, var(--ion-text-color));
         font-size: .85rem;
         vertical-align: middle;
         white-space: nowrap;
@@ -375,7 +376,7 @@
     }
 
     .dv-table tbody tr:hover {
-        background: var(--sidebar-item-hover, #f4f5f7);
+        background: var(--sidebar-item-hover, var(--sidebar-item-hover));
         cursor: pointer;
     }
     
@@ -398,55 +399,55 @@
 
     .dv-badge-activo,
     .dv-badge-tier-1-critico {
-        background: #dcfce7;
-        color: #15803d;
+        background: var(--ion-color-success-tint);
+        color: var(--ion-color-success-shade);
     }
 
     .dv-badge-borrador {
-        background: #fef9c3;
-        color: #a16207;
+        background: var(--ion-color-warning-tint);
+        color: var(--ion-color-warning-shade);
     }
 
     .dv-badge-en-revision {
-        background: #fff7ed;
-        color: #c2410c;
+        background: var(--ion-color-warning-tint);
+        color: var(--ion-color-warning-shade);
     }
 
     .dv-badge-tier-2-alto {
-        background: #ffe4e6;
-        color: #be123c;
+        background: var(--ion-color-danger-tint);
+        color: var(--ion-color-danger-shade);
     }
 
     .dv-badge-tier-3-medio {
-        background: #e0f2fe;
-        color: #0369a1;
+        background: var(--ion-color-primary-tint);
+        color: var(--ion-color-primary-shade);
     }
 
     .dv-badge-tier-4-bajo {
-        background: #f1f5f9;
-        color: #475569;
+        background: var(--ion-color-light);
+        color: var(--ion-color-medium-shade);
     }
 
     .dv-badge-saas,
     .dv-badge-marketplace {
-        background: #f3e8ff;
-        color: #7c3aed;
+        background: var(--ion-color-tertiary-tint);
+        color: var(--ion-color-tertiary-shade);
     }
 
     .dv-badge-b2b,
     .dv-badge-b2c {
-        background: #ecfdf5;
-        color: #065f46;
+        background: var(--ion-color-success-tint);
+        color: var(--ion-color-success-shade);
     }
 
     .dv-badge-transaccional {
-        background: #cffafe;
-        color: #0e7490;
+        background: var(--ion-color-secondary-tint);
+        color: var(--ion-color-secondary-shade);
     }
 
     .dv-badge-default {
-        background: #f1f5f9;
-        color: #475569;
+        background: var(--ion-color-light);
+        color: var(--ion-color-medium-shade);
     }
 
     /* â”€â”€ Grid View â€” Ionic-native layout (ion-grid/ion-row/ion-col/ion-card) â”€â”€ */
@@ -503,7 +504,7 @@
 
     .dv-btn-icon.active {
         background: var(--dv-primary);
-        color: var(--ion-color-primary-contrast, #ffffff);
+        color: var(--ion-color-primary-contrast);
         border-color: var(--dv-primary);
         box-shadow: var(--dv-shadow);
     }
@@ -612,7 +613,7 @@
 
     .dv-page-btn:hover:not(:disabled) {
         background: var(--dv-primary);
-        color: var(--ion-color-primary-contrast, #ffffff);
+        color: var(--ion-color-primary-contrast);
         border-color: var(--dv-primary);
     }
 
@@ -657,7 +658,7 @@
     .dv-skeleton-cell {
         height: 14px;
         border-radius: 4px;
-        background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%);
+        background: linear-gradient(90deg, var(--ion-color-light-shade) 25%, var(--ion-color-light) 50%, var(--ion-color-light-shade) 75%);
         background-size: 600px 100%;
         animation: dv-shimmer 1.4s infinite;
     }

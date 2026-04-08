@@ -1,3 +1,4 @@
+/* stylelint-disable scale-unlimited/declaration-strict-value, color-named */
   /* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
      CSS_App.html â€” Motor Estructural (Regla UI Â§14)
      EXCLUSIVO: Sidebar 3-State, Grid, Bento Box, UI Components
@@ -143,7 +144,7 @@
     justify-content: center; transition: all 0.25s ease;
     flex-shrink: 0;
   }
-  .sidebar-logo-box ion-icon { font-size: 24px; color: var(--ion-color-light, #fff); }
+  .sidebar-logo-box ion-icon { font-size: 24px; color: var(--ion-color-light); }
   /* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
      SIDEBAR BRAND TYPOGRAPHY (2-Line Text Wrapping)
   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */

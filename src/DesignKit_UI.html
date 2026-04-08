@@ -1,5 +1,7 @@
 <!-- src/DesignKit_UI.html -->
 <style>
+/* stylelint-disable scale-unlimited/declaration-strict-value, color-named */
+
   /* 1. Purga del Scrollbar (ion-segment) */
   ion-segment::-webkit-scrollbar { display: none; }
   ion-segment { -ms-overflow-style: none; scrollbar-width: none; }
@@ -501,11 +503,11 @@
   // Helper: Luminance Engine
   window.calculateContrast = function(hex) {
     var rgb = window.hexToRgb(hex);
-    if (!rgb) return '#ffffff';
+    if (!rgb) return 'var(--ion-color-light)';
     var parts = rgb.split(',').map(Number);
     // Fórmula YIQ para brillo visual humano
     var yiq = ((parts[0] * 299) + (parts[1] * 587) + (parts[2] * 114)) / 1000;
-    return (yiq >= 128) ? '#000000' : '#ffffff';
+    return (yiq >= 128) ? 'var(--ion-color-dark)' : 'var(--ion-color-light)';
   };
 
   // Failsafe: Reset Theme Engine

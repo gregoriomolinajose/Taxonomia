@@ -9,7 +9,7 @@
     // [S11.4] E2E Memory Profiler (Garbage Collection QA Tool)
     // Extraído de FormEngine_UI.html para aislamiento productivo
     window.__runMemoryProfile_E2E = async function (iterations = 50) {
-        console.log(`%c[QA] Iniciando Memory Profiling E2E - Iteraciones: ${iterations}`, 'color: #7c3aed; font-weight: bold;');
+        console.log(`%c[QA] Iniciando Memory Profiling E2E - Iteraciones: ${iterations}`, 'color: var(--ion-color-tertiary-shade); font-weight: bold;');
         
         const baselineNodes = document.getElementsByTagName('*').length;
         const baselineMem = performance.memory ? (performance.memory.usedJSHeapSize / 1024 / 1024).toFixed(2) : 'N/A';
@@ -46,9 +46,9 @@
         });
         
         if (nodeDiff <= 5 && nodeDiff >= -5) {
-            console.log('%c[QA] ✔ PASSED: El recolector de basura (GC) operó impecablemente.', 'color: #10b981; font-weight: bold;');
+            console.log('%c[QA] ✔ PASSED: El recolector de basura (GC) operó impecablemente.', 'color: var(--ion-color-light); font-weight: bold;');
         } else {
-            console.warn(`%c[QA] ⚠ WARNING: Fuga de memoria detectada. Deltas inestables (${nodeDiff} nodos huérfanos).`, 'color: #f59e0b; font-weight: bold;');
+            console.warn(`%c[QA] ⚠ WARNING: Fuga de memoria detectada. Deltas inestables (${nodeDiff} nodos huérfanos).`, 'color: var(--ion-color-light); font-weight: bold;');
         }
     };
 </script>
