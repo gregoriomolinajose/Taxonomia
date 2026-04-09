@@ -33,7 +33,7 @@ test.describe('Top-Down Hierarchy Stress Test & Race Conditions', () => {
 
   test.beforeEach(async () => {
     // 1. Navegar al Endpoint Ejecutivo
-    await page.goto('https://script.google.com/macros/s/AKfycbz1wK6yVfTuUe3kv35k45IULLBVya51t6HDXUZHNP-6rI9Nh_PEctWZseGyoQiQ2HxkIw/exec');
+    await page.goto('https://script.google.com/macros/s/AKfycbyYY8F6scltfXdK_CycPcxIQaeNn5tDFn78VhaHGMKlcMzUjOjdrHFvks1OZl5OBqDuzQ/exec');
     
     // Si Google nos mandó al Login, pausamos amigablemente para que llenes tus credenciales
     if (page.url().includes('accounts.google.com')) {

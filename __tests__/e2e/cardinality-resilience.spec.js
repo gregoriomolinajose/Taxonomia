@@ -30,7 +30,7 @@ test.describe('E23: Cardinilidad Topológica y Resiliencia SCD-2', () => {
   });
 
   test.beforeEach(async () => {
-    await page.goto('https://script.google.com/macros/s/AKfycbz1wK6yVfTuUe3kv35k45IULLBVya51t6HDXUZHNP-6rI9Nh_PEctWZseGyoQiQ2HxkIw/exec');
+    await page.goto('https://script.google.com/macros/s/AKfycbyYY8F6scltfXdK_CycPcxIQaeNn5tDFn78VhaHGMKlcMzUjOjdrHFvks1OZl5OBqDuzQ/exec');
     
     if (page.url().includes('accounts.google.com')) {
         console.log("ESPERANDO LOGIN MANUAL...");
