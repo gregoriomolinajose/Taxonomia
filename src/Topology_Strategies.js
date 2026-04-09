@@ -3,8 +3,19 @@
  * Handlers policy maps for domain-specific graph topology closures.
  */
 
+const TOPOLOGY_UTILS = {
+    getActive: function(edges) {
+        if (typeof window !== 'undefined' && window.Math_Engine && window.Math_Engine.TopologyGuard) return window.Math_Engine.TopologyGuard.getActiveEdges(edges);
+        return edges.filter(e => e.es_version_actual !== false && String(e.es_version_actual).toUpperCase() !== 'FALSE');
+    }
+};
+
 const strategy_1toN = function(incomingEdges, currentActiveEdges) {
-    if (!Array.isArray(incomingEdges) || incomingEdges.length === 0) return { edgesToClose: [] };
+
+    if (!Array.isArray(incomingEdges) || incomingEdges.length === 0) {
+        return { edgesToClose: Array.isArray(currentActiveEdges) ? TOPOLOGY_UTILS.getActive(currentActiveEdges) : [] };
+    }
+
 
     const incomingChildSet = new Set();
     const payloadMap = new Map();
@@ -22,15 +33,8 @@ const strategy_1toN = function(incomingEdges, currentActiveEdges) {
 
     if (!Array.isArray(currentActiveEdges) || currentActiveEdges.length === 0) return { edgesToClose: [] };
     
-    // Helper de resiliencia Topo lógica para evitar hardcoding
-    const getActive = function(edges) {
-        if (typeof window !== 'undefined' && window.Math_Engine && window.Math_Engine.TopologyGuard) return window.Math_Engine.TopologyGuard.getActiveEdges(edges);
-        // Fallback para ejecución en V8 Apps Script puro
-        return edges.filter(e => e.es_version_actual !== false && String(e.es_version_actual).toUpperCase() !== 'FALSE');
-    };
-    
     // Auto-Close SCD-2 for 1:N relations (Hermetic scope tightly bound to O(1) Set)
-    const actives = getActive(currentActiveEdges).filter(e => {
+    const actives = TOPOLOGY_UTILS.getActive(currentActiveEdges).filter(e => {
         const childId = String(e.id_nodo_hijo ?? '');
         const parentId = String(e.id_nodo_padre ?? '');
         
@@ -46,7 +50,9 @@ const strategy_1toN = function(incomingEdges, currentActiveEdges) {
 };
 
 const strategy_MtoN = function(incomingEdges, currentActiveEdges) {
-    if (!Array.isArray(incomingEdges) || incomingEdges.length === 0) return { edgesToClose: [] };
+    if (!Array.isArray(incomingEdges) || incomingEdges.length === 0) {
+        return { edgesToClose: Array.isArray(currentActiveEdges) ? TOPOLOGY_UTILS.getActive(currentActiveEdges) : [] };
+    }
     if (!Array.isArray(currentActiveEdges) || currentActiveEdges.length === 0) return { edgesToClose: [] };
 
     const payloadMap = new Map();
@@ -63,12 +69,7 @@ const strategy_MtoN = function(incomingEdges, currentActiveEdges) {
         }
     });
 
-    const getActive = function(edges) {
-        if (typeof window !== 'undefined' && window.Math_Engine && window.Math_Engine.TopologyGuard) return window.Math_Engine.TopologyGuard.getActiveEdges(edges);
-        return edges.filter(e => e.es_version_actual !== false && String(e.es_version_actual).toUpperCase() !== 'FALSE');
-    };
-
-    const toClose = getActive(currentActiveEdges).filter(e => {
+    const toClose = TOPOLOGY_UTILS.getActive(currentActiveEdges).filter(e => {
         const child = String(e.id_nodo_hijo || '');
         const parent = String(e.id_nodo_padre || '');
 

@@ -325,6 +325,26 @@ function _generateShortUUID(entityName) {
   return prefix + '-' + suffix;
 }
 
+/**
+ * getDashboardCounters
+ * Retorna contadores optimizados usando caché L1 para las tarjetas del dashboard
+ */
+function getDashboardCounters() {
+  const p = Engine_DB.list('Portafolio');
+  const e = Engine_DB.list('Equipo');
+  const per = Engine_DB.list('Persona');
+  
+  const cleanP = (p && p.rows) ? p.rows.filter(r => r.estado !== 'Eliminado').length : 0;
+  const cleanE = (e && e.rows) ? e.rows.filter(r => r.estado !== 'Eliminado').length : 0;
+  const cleanPer = (per && per.rows) ? per.rows.filter(r => r.estado !== 'Eliminado').length : 0;
+
+  return {
+    Portafolios: cleanP,
+    Equipos: cleanE,
+    Personas: cleanPer
+  };
+}
+
 // Bloque de Protección Híbrida (Jest)
 if (typeof module !== 'undefined') {
   module.exports = {
@@ -332,6 +352,7 @@ if (typeof module !== 'undefined') {
     _handleUpdate,
     _handleDelete,
     _handleRead,
+    getDashboardCounters,
     _generateShortUUID
   };
 }

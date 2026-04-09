@@ -11,7 +11,7 @@ describe('S6.5: Diccionario de Topologías Polimórfico (Strategy Pattern + Auto
 
         expect(() => {
             Engine_Graph.patchSCD2Edges(incomingEdges, currentActiveEdges, '1:N');
-        }).toThrow('La regla de topología piramidal prohíbe relaciones cíclicas (no puedes asignar a un padre/ancestro como hijo)');
+        }).toThrow("Topología 1:N violada en Payload: El mismo nodo hijo ('DOM-CHILD') fue proveído múltiples veces hacia distintos padres en una sola petición de guardado masivo.");
     });
 
     test('Escenario 2: Auto-Close - Strategy evalúa transacción exitosa de reemplazo', () => {
@@ -26,10 +26,11 @@ describe('S6.5: Diccionario de Topologías Polimórfico (Strategy Pattern + Auto
             { id_nodo_padre: 'DOM-Z', id_nodo_hijo: 'DOM-CHILD', es_version_actual: false, valido_hasta: 'Ayer' } // Historical
         ];
 
-        let edgesToClose;
+        let result;
         expect(() => {
-            edgesToClose = Engine_Graph.patchSCD2Edges(incomingEdges, currentActiveEdges, '1:N');
+            result = Engine_Graph.patchSCD2Edges(incomingEdges, currentActiveEdges, '1:N');
         }).not.toThrow();
+        let edgesToClose = result.edgesToClose;
 
         // El motor determinó correctamente cerrar únicamente el que era activo (DOM-A)
         expect(edgesToClose.length).toBe(1);
@@ -56,10 +57,11 @@ describe('S6.5: Diccionario de Topologías Polimórfico (Strategy Pattern + Auto
             { id_nodo_padre: 'DOM-B', id_nodo_hijo: 'DOM-CHILD', es_version_actual: true, valido_hasta: '' }
         ];
 
-        let edgesToClose;
+        let result;
         expect(() => {
-            edgesToClose = Engine_Graph.patchSCD2Edges(incomingEdges, currentActiveEdges, 'M:N');
+            result = Engine_Graph.patchSCD2Edges(incomingEdges, currentActiveEdges, 'M:N');
         }).not.toThrow();
+        let edgesToClose = result.edgesToClose;
         
         // Cierres
         expect(edgesToClose.length).toBe(1);
@@ -68,4 +70,80 @@ describe('S6.5: Diccionario de Topologías Polimórfico (Strategy Pattern + Auto
         // Inicializados (solo al nuevo se le inyecta data inicial, el A ya existe, el sistema asume que la DB lo persiste intocado)
         expect(incomingEdges.find(e => e.id_nodo_padre === 'DOM-C').es_version_actual).toBe(true);
     });
+
+    test('Escenario 4: Orphan Stealing via analyzeTopology con enforceSingleParent', () => {
+        const incomingEdges = [
+            { id_nodo_padre: 'UN-1', id_nodo_hijo: 'PORT-1' } 
+        ];
+        // En DB, PORT-1 ya pertenece a UN-2
+        const currentActiveEdges = [
+            { id_nodo_padre: 'UN-2', id_nodo_hijo: 'PORT-1', es_version_actual: true, tipo_relacion: 'UN_PORT' }
+        ];
+
+        // Simulamos el topologyRules transformado por Engine_DB
+        const rules = {
+            enforceSingleParent: true,
+            edgeType: 'UN_PORT'
+        };
+
+        const result = Engine_Graph.analyzeTopology(incomingEdges, currentActiveEdges, rules);
+        
+        // Debería identificar la relación con UN-2 como un stolenEdge (robado por UN-1)
+        expect(result.stolenEdges).toBeDefined();
+        expect(result.stolenEdges.length).toBe(1);
+        expect(result.stolenEdges[0].id_nodo_padre).toBe('UN-2');
+    });
+
+    test('Escenario 5: Detección de Ciclo (preventCycles)', () => {
+        const incomingEdges = [{ id_nodo_padre: 'DOM-3', id_nodo_hijo: 'DOM-1' }];
+        const currentActiveEdges = [
+            { id_nodo_padre: 'DOM-1', id_nodo_hijo: 'DOM-2' },
+            { id_nodo_padre: 'DOM-2', id_nodo_hijo: 'DOM-3' }
+        ];
+        const rules = { preventCycles: true };
+
+        expect(() => {
+            Engine_Graph.analyzeTopology(incomingEdges, currentActiveEdges, rules);
+        }).toThrow(/Detección de Ciclo \(DAG\)/);
+    });
+
+    test('Escenario 6: Limite de Profundidad Máxima (maxDepth)', () => {
+        const incomingEdges = [{ id_nodo_padre: 'DOM-2', id_nodo_hijo: 'DOM-X' }];
+        const currentActiveEdges = [
+            { id_nodo_padre: 'DOM-1', id_nodo_hijo: 'DOM-2' },
+            { id_nodo_padre: 'DOM-X', id_nodo_hijo: 'DOM-Y' }
+        ];
+        // En total, la rama DOM-1 -> DOM-2 -> DOM-X -> DOM-Y = 4 niveles (depth: 3)
+        // If max depth is 1, inserting DOM-2 -> DOM-X should fail.
+        const rules = { preventCycles: true, maxDepth: 1 };
+
+        expect(() => {
+            Engine_Graph.analyzeTopology(incomingEdges, currentActiveEdges, rules);
+        }).toThrow(/Profundidad Máxima Excedida/);
+    });
+
+    test('Escenario 7: Colisión de Hermanos (siblingCollisionCheck)', () => {
+        const incomingEdges = [{ id_nodo_padre: 'DOM-A', id_nodo_hijo: 'DOM-Z' }];
+        const currentActiveEdges = [
+            { id_nodo_padre: 'DOM-A', id_nodo_hijo: 'DOM-Z' } // Z already child of A
+        ];
+        const rules = { siblingCollisionCheck: true };
+
+        expect(() => {
+            Engine_Graph.analyzeTopology(incomingEdges, currentActiveEdges, rules);
+        }).toThrow(/Colisión de Hermanos/);
+    });
+
+    test('Escenario 8: Exclusividad Rígida - Zero Trust (allowOrphanStealing: false)', () => {
+        const incomingEdges = [{ id_nodo_padre: 'DOM-B', id_nodo_hijo: 'DOM-Z' }];
+        const currentActiveEdges = [
+            { id_nodo_padre: 'DOM-A', id_nodo_hijo: 'DOM-Z' }
+        ];
+        const rules = { enforceSingleParent: true, allowOrphanStealing: false };
+
+        expect(() => {
+            Engine_Graph.analyzeTopology(incomingEdges, currentActiveEdges, rules);
+        }).toThrow(/Exclusividad de Orfandad/);
+    });
 });
+

@@ -138,7 +138,16 @@ window.UI_FormSubmitter = class UI_FormSubmitter {
                     this._patchFrontendCache(this.entityName, response, payload);
                     const itemName = (response.data && response.data.Entity) ? response.data.Entity : this.entityName;
                     this._showToast(`¡${itemName} guardado con éxito!`, 'success');
-                    this._performSuccessCleanup(response);
+                    // Disparo de Evento Nativo de Persistencia Inline (H6/H2 Simplification)
+                    let isInlineRendered = false;
+                    if (this.modal) {
+                        isInlineRendered = true;
+                        this.modal.dispatchEvent(new CustomEvent('FormEngine::InlinePersisted', {
+                            detail: { response: response, payload: safePayload }
+                        }));
+                    }
+                    
+                    this._performSuccessCleanup(response, isInlineRendered);
                 } else {
                     if (response && response.errorType === 'CONCURRENCY') {
                         this._showToast('⚠️ Colisión: Los datos fueron modificados por otro usuario mientras los editabas. Por favor extrae la información fresca.', 'danger');
@@ -165,7 +174,7 @@ window.UI_FormSubmitter = class UI_FormSubmitter {
     }
 
 
-    _performSuccessCleanup(response) {
+    _performSuccessCleanup(response, isInlineRendered) {
         this._revertButtonState();
         window.currentEditId = null;
         this._internalRetryId = null; // Liberar caché de reintentos
@@ -196,23 +205,13 @@ window.UI_FormSubmitter = class UI_FormSubmitter {
                 window.FormEngine_Resolvers.invalidateCache();
             }
         }
-
-        // Disparo de Evento Nativo de Persistencia Inline (H6 Simplification)
-        let isInline = false;
-        if (this.modal) {
-            isInline = true;
-            this.modal.dispatchEvent(new CustomEvent('FormEngine::InlinePersisted', {
-                detail: { response: response, payload: payload }
-            }));
-        }
-
         // Cerramos el Modal
         if (window._closeTopModal) {
             window._closeTopModal();
         }
 
         // Enrutamiento post-Guardado Inmediato
-        if (!isInline && (!window.ModalStackController || window.ModalStackController.getDepth() === 0)) {
+        if (!isInlineRendered && (!window.ModalStackController || window.ModalStackController.getDepth() === 0)) {
             if (window.AppEventBus) {
                 window.AppEventBus.publish('NAV::CHANGE', {viewType: 'dataview', entityKey: this.entityName});
             } else if (window.onSaveSuccessCallback) {
