@@ -107,12 +107,14 @@
       colors: ['var(--ion-color-light)']
     });
     window.chartCapacity.render();
+
+
   };
 
   window.renderDashboardCards = function() {
     var container = document.getElementById('dashboard-cards-container');
     if (!container) return;
-    container.innerHTML = '';
+    window.DOM.clear(container);
     var sorted = window.getEntitiesByFlag('dashboardCard', 'uiConfig');
     var tmpl = document.getElementById('tmpl-dashboard-card');
     if (!tmpl) return;
@@ -155,29 +157,45 @@
       container.appendChild(clone);
     });
 
-    if (window.DataAPI && typeof window.DataAPI.call === 'function') {
-      window.DataAPI.call('API_Universal_Router', 'getDashboardCounters', null, null)
-        .then(function(res) {
-           if (res && res.status === 'success' && res.data) {
-             const counts = res.data;
-             if (totalEls['Portafolio']) totalEls['Portafolio'].innerHTML = counts.Portafolios !== undefined ? counts.Portafolios : 0;
-             if (totalEls['Equipo']) totalEls['Equipo'].innerHTML = counts.Equipos !== undefined ? counts.Equipos : 0;
-             if (totalEls['Persona']) totalEls['Persona'].innerHTML = counts.Personas !== undefined ? counts.Personas : 0;
-           } else {
-             throw new Error(res ? res.message || "Unrecognized response" : "Empty response");
-           }
-        })
-        .catch(function(err) {
-           console.error('[Dashboard] Error fetching counters', err);
-           var errTmpl = document.getElementById('tmpl-dashboard-error');
-           if (errTmpl && container.parentElement) {
-              // Inject error visually above cards without destroying them
-              var errDiv = document.createElement('div');
-              errDiv.appendChild(errTmpl.content.cloneNode(true));
-              container.parentElement.insertBefore(errDiv, container);
-           }
-           Object.keys(totalEls).forEach(function(k) { totalEls[k].innerHTML = '-'; });
-        });
+    // We store the DOM references so hydrate doesn't need to query every time
+    window._dashboardTotalEls = totalEls;
+
+    // Immediate hydration attempt: if cache is already populated, hydrate now
+    if (window.__APP_CACHE__ && (
+      (window.__APP_CACHE__['Portafolio'] && window.__APP_CACHE__['Portafolio'].length > 0) ||
+      (window.__APP_CACHE__['Equipo'] && window.__APP_CACHE__['Equipo'].length > 0) ||
+      (window.__APP_CACHE__['Persona'] && window.__APP_CACHE__['Persona'].length > 0)
+    )) {
+      window.hydrateDashboardCounters();
+    }
+  };
+
+  // One-shot subscription: hydrate counters once bootstrap completes
+  if (window.AppEventBus) {
+    var _readyUnsub = window.AppEventBus.subscribe('APP::READY', function() {
+      if (typeof window.renderDashboardCards === 'function') {
+        window.renderDashboardCards();
+      }
+      if (typeof _readyUnsub === 'function') _readyUnsub();
+    });
+  }
+
+  window.hydrateDashboardCounters = function() {
+    try {
+      var els = window._dashboardTotalEls;
+      if (!els) return;
+
+      Object.keys(els).forEach(function(key) {
+        var list = (window.__APP_CACHE__ && window.__APP_CACHE__[key]) ? window.__APP_CACHE__[key] : [];
+        var count = list.filter(function(r) { return r.estado !== 'Eliminado'; }).length;
+        els[key].textContent = count;
+      });
+
+    } catch (err) {
+      console.error('[Dashboard] Error al calcular contadores:', err);
+      if (window._dashboardTotalEls) {
+        Object.keys(window._dashboardTotalEls).forEach(function(k) { window._dashboardTotalEls[k].textContent = '-'; });
+      }
     }
   };
 </script>

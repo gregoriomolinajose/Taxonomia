@@ -340,6 +340,32 @@
     </div>
   </template>
 
+  <template id="tmpl-dashboard">
+    <ion-grid>
+      <ion-row id="dashboard-filter-container" class="ion-justify-content-end ion-padding-horizontal ion-hide">
+        <ion-col size="12" size-md="4" class="ion-padding-bottom">
+          <ion-item lines="none" class="ion-no-padding" style="--background:transparent;">
+            <ion-select id="dashboard-portfolio-filter" interface="popover" placeholder="Todos los Portafolios"
+              style="width:100%;max-width:100%;font-weight:600;font-size:1.1em;color:var(--ion-color-primary);">
+              <ion-select-option value="all">TODOS LOS PORTAFOLIOS</ion-select-option>
+            </ion-select>
+          </ion-item>
+        </ion-col>
+      </ion-row>
+      <ion-row id="dashboard-charts-container" class="ion-hide">
+        <ion-col size="12" size-md="6" class="ion-padding-bottom">
+          <ion-card style="height:100%;"><ion-card-header><ion-card-title>Especialidades</ion-card-title></ion-card-header>
+            <ion-card-content><div id="chart-topology"></div></ion-card-content></ion-card>
+        </ion-col>
+        <ion-col size="12" size-md="6" class="ion-padding-bottom">
+          <ion-card style="height:100%;"><ion-card-header><ion-card-title>Capacidad por Equipo</ion-card-title></ion-card-header>
+            <ion-card-content><div id="chart-capacity"></div></ion-card-content></ion-card>
+        </ion-col>
+      </ion-row>
+      <ion-row class="ion-justify-content-center" id="dashboard-cards-container"></ion-row>
+    </ion-grid>
+  </template>
+
   <template id="tmpl-dashboard-card">
     <ion-col size="12" size-md="6" size-xl="4">
       <ion-card>

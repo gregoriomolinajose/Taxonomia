@@ -27,7 +27,7 @@ global.Engine_DB = {
     delete: jest.fn()
 };
 
-global.getDashboardCounters = jest.fn();
+
 
 // Evaluate the entire file to pull doPost and API_Universal_Router
 // API_Universal uses conditional exports, so we can require it
@@ -50,7 +50,6 @@ describe('API_Universal Controller', () => {
                 _handleRead: global._handleRead,
                 _handleUpdate: global._handleUpdate,
                 _handleDelete: global._handleDelete,
-                getDashboardCounters: global.getDashboardCounters,
                 doPost: null
             };
             const match = sourceCode.match(/function doPost\([^)]*\)\s*\{[\s\S]*?\n\}/);
@@ -61,7 +60,7 @@ describe('API_Universal Controller', () => {
                     const _handleRead = context._handleRead;
                     const _handleUpdate = context._handleUpdate;
                     const _handleDelete = context._handleDelete;
-                    const getDashboardCounters = context.getDashboardCounters;
+
                     ${match[0]}
                     context.doPost = doPost;
                 `);
@@ -113,27 +112,16 @@ describe('API_Universal Controller', () => {
             
             expect(parsedContent.status).toBe('error');
             expect(parsedContent.message).toBe("Action not supported yet.");
-        });
-
-        it('should delegate getDashboardCounters directly through doPost', () => {
-            global.getDashboardCounters.mockReturnValue({ Portafolios: 5, Equipos: 2 });
-            const mockEvent = {
-                postData: {
-                    contents: JSON.stringify({ action: 'getDashboardCounters' })
-                }
-            };
-            
-            const result = doPost(mockEvent);
-            const parsedContent = JSON.parse(result.content);
-            
-            expect(global.getDashboardCounters).toHaveBeenCalled();
-            expect(parsedContent.status).toBe('success');
-            expect(parsedContent.data.Portafolios).toBe(5);
-        });
+    });
     });
 
     describe('Service Layer: API_Universal_Router()', () => {
-        const { API_Universal_Router } = API_Universal;
+        const { API_Universal_Router: _Router } = API_Universal;
+        // The router now returns JSON.stringify(...) to avoid GAS IPC deserialize bugs
+        const API_Universal_Router = (...args) => {
+            const raw = _Router(...args);
+            return typeof raw === 'string' ? JSON.parse(raw) : raw;
+        };
 
         it('should read entity cleanly using payload id', () => {
             global.Engine_DB.readFull.mockReturnValue({ is_target: true });
@@ -206,17 +194,7 @@ describe('API_Universal Controller', () => {
             
             expect(global._handleCreate).toHaveBeenCalled();
             expect(result.status).toBe('success');
-        });
-
-        it('should route getDashboardCounters successfully in API_Universal_Router', () => {
-            global.getDashboardCounters.mockReturnValue({ Personas: 42 });
-            
-            const result = API_Universal_Router('getDashboardCounters', null, null);
-            
-            expect(global.getDashboardCounters).toHaveBeenCalled();
-            expect(result.status).toBe('success');
-            expect(result.data.Personas).toBe(42);
-        });
+    });
     });
 
 });

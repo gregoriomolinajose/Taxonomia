@@ -75,6 +75,11 @@
                 // Invocación Real a GAS Client-Side API
                 const runner = google.script.run
                     .withSuccessHandler((response) => {
+                        // Resuelve bugs de "dropping postMessage.. deserialize threw error" 
+                        // aceptando strings crudos y decodificándolos.
+                        if (typeof response === 'string' && response.startsWith('{')) {
+                            try { response = JSON.parse(response); } catch(e) {}
+                        }
                         resolve(response);
                     })
                     .withFailureHandler((error) => {

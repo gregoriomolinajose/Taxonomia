@@ -59,25 +59,25 @@
   },
   "suites": [
     {
-      "title": "cardinality-resilience.spec.js",
-      "file": "cardinality-resilience.spec.js",
+      "title": "dashboard-counters.spec.js",
+      "file": "dashboard-counters.spec.js",
       "column": 0,
       "line": 0,
       "specs": [],
       "suites": [
         {
-          "title": "E23: Cardinilidad Topológica y Resiliencia SCD-2",
-          "file": "cardinality-resilience.spec.js",
+          "title": "E28: Dashboard Counters Visibility",
+          "file": "dashboard-counters.spec.js",
           "line": 6,
           "column": 6,
           "specs": [
             {
-              "title": "Escenario 1.1 y 1.3: Exclusividad 1:N y Limpieza Absoluta de Subgrids",
-              "ok": false,
+              "title": "Los contadores del dashboard deben renderizar datos númericos en lugar de spinners (... o vacíos)",
+              "ok": true,
               "tags": [],
               "tests": [
                 {
-                  "timeout": 280000,
+                  "timeout": 120000,
                   "annotations": [],
                   "expectedStatus": "passed",
                   "projectId": "chromium",
@@ -86,23 +86,26 @@
                     {
                       "workerIndex": 0,
                       "parallelIndex": 0,
-                      "status": "timedOut",
-                      "duration": 280076,
+                      "status": "interrupted",
+                      "duration": 114439,
                       "error": {
-                        "message": "\u001b[31mTest timeout of 280000ms exceeded.\u001b[39m",
-                        "stack": "\u001b[31mTest timeout of 280000ms exceeded.\u001b[39m"
+                        "message": "Error: locator.click: Target page, context or browser has been closed\nCall log:\n\u001b[2m  - waiting for locator('#sandboxFrame').contentFrame().locator('#userHtmlFrame').contentFrame().locator('ion-item').filter({ hasText: 'Inicio' })\u001b[22m\n",
+                        "stack": "Error: locator.click: Target page, context or browser has been closed\nCall log:\n\u001b[2m  - waiting for locator('#sandboxFrame').contentFrame().locator('#userHtmlFrame').contentFrame().locator('ion-item').filter({ hasText: 'Inicio' })\u001b[22m\n\n    at C:\\Users\\grego\\Antigravity\\Taxonomia Project\\__tests__\\e2e\\dashboard-counters.spec.js:45:67",
+                        "location": {
+                          "file": "C:\\Users\\grego\\Antigravity\\Taxonomia Project\\__tests__\\e2e\\dashboard-counters.spec.js",
+                          "column": 67,
+                          "line": 45
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 43 |\u001b[39m     \n \u001b[90m 44 |\u001b[39m     \u001b[90m// Ensure dashboard is active\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 45 |\u001b[39m     \u001b[36mawait\u001b[39m frame\u001b[33m.\u001b[39mlocator(\u001b[32m'ion-item'\u001b[39m)\u001b[33m.\u001b[39mfilter({ hasText\u001b[33m:\u001b[39m \u001b[32m'Inicio'\u001b[39m })\u001b[33m.\u001b[39mclick()\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                                                                   \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 46 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForTimeout(\u001b[35m1000\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 47 |\u001b[39m   })\u001b[33m;\u001b[39m\n \u001b[90m 48 |\u001b[39m\u001b[0m"
                       },
                       "errors": [
                         {
-                          "message": "\u001b[31mTest timeout of 280000ms exceeded.\u001b[39m"
-                        },
-                        {
                           "location": {
-                            "file": "C:\\Users\\grego\\Antigravity\\Taxonomia Project\\__tests__\\e2e\\cardinality-resilience.spec.js",
-                            "column": 20,
-                            "line": 155
+                            "file": "C:\\Users\\grego\\Antigravity\\Taxonomia Project\\__tests__\\e2e\\dashboard-counters.spec.js",
+                            "column": 67,
+                            "line": 45
                           },
-                          "message": "Error: page.screenshot: Target page, context or browser has been closed\n\n\u001b[0m \u001b[90m 153 |\u001b[39m     } \u001b[36mcatch\u001b[39m(err) {\n \u001b[90m 154 |\u001b[39m         console\u001b[33m.\u001b[39merror(\u001b[32m\"DEBUG FATAL PLAYWRIGHT:\"\u001b[39m\u001b[33m,\u001b[39m err)\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 155 |\u001b[39m         \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mscreenshot({ path\u001b[33m:\u001b[39m \u001b[32m'artifacts/pw_error.png'\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m     |\u001b[39m                    \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 156 |\u001b[39m         \u001b[36mthrow\u001b[39m err\u001b[33m;\u001b[39m\n \u001b[90m 157 |\u001b[39m     }\n \u001b[90m 158 |\u001b[39m   })\u001b[33m;\u001b[39m\u001b[0m\n\u001b[2m    at C:\\Users\\grego\\Antigravity\\Taxonomia Project\\__tests__\\e2e\\cardinality-resilience.spec.js:155:20\u001b[22m"
+                          "message": "Error: locator.click: Target page, context or browser has been closed\nCall log:\n\u001b[2m  - waiting for locator('#sandboxFrame').contentFrame().locator('#userHtmlFrame').contentFrame().locator('ion-item').filter({ hasText: 'Inicio' })\u001b[22m\n\n\n\u001b[0m \u001b[90m 43 |\u001b[39m     \n \u001b[90m 44 |\u001b[39m     \u001b[90m// Ensure dashboard is active\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 45 |\u001b[39m     \u001b[36mawait\u001b[39m frame\u001b[33m.\u001b[39mlocator(\u001b[32m'ion-item'\u001b[39m)\u001b[33m.\u001b[39mfilter({ hasText\u001b[33m:\u001b[39m \u001b[32m'Inicio'\u001b[39m })\u001b[33m.\u001b[39mclick()\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                                                                   \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 46 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForTimeout(\u001b[35m1000\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 47 |\u001b[39m   })\u001b[33m;\u001b[39m\n \u001b[90m 48 |\u001b[39m\u001b[0m\n\u001b[2m    at C:\\Users\\grego\\Antigravity\\Taxonomia Project\\__tests__\\e2e\\dashboard-counters.spec.js:45:67\u001b[22m"
                         }
                       ],
                       "stdout": [
@@ -137,68 +140,69 @@
                           "text": "PAGE LOG [info]: Net state changed from IDLE to BUSY Net state changed from IDLE to BUSY\n"
                         },
                         {
-                          "text": "PAGE LOG [log]: [FormEngine] Sincronizando modal para Portafolio. IDs vinculados: 0. Disponibles: 0 [FormEngine] Sincronizando modal para Portafolio. IDs vinculados: 0. Disponibles: 0\n"
+                          "text": "PAGE LOG [info]: Net state changed from BUSY to IDLE Net state changed from BUSY to IDLE\n"
                         },
                         {
-                          "text": "Saving new portafolio...\n"
-                        },
-                        {
-                          "text": "Saving UN A...\n"
-                        },
-                        {
-                          "text": "Linking UN B...\n"
-                        },
-                        {
-                          "text": "PAGE LOG [log]: [FormEngine] Sincronizando modal para Portafolio. IDs vinculados: 0. Disponibles: 16 [FormEngine] Sincronizando modal para Portafolio. IDs vinculados: 0. Disponibles: 16\n"
-                        },
-                        {
-                          "text": "PAGE LOG [log]: [Cache] Sys_Graph_Edges re-hidratado silenciosamente tras guardado. [Cache] Sys_Graph_Edges re-hidratado silenciosamente tras guardado.\n"
-                        },
-                        {
-                          "text": "PAGE LOG [log]: [Cache] Sys_Graph_Edges re-hidratado silenciosamente tras guardado. [Cache] Sys_Graph_Edges re-hidratado silenciosamente tras guardado.\n"
+                          "text": "PAGE LOG [info]: Net state changed from IDLE to BUSY Net state changed from IDLE to BUSY\n"
                         },
                         {
                           "text": "PAGE LOG [info]: Net state changed from BUSY to IDLE Net state changed from BUSY to IDLE\n"
                         }
                       ],
-                      "stderr": [
-                        {
-                          "text": "DEBUG FATAL PLAYWRIGHT: locator.click: Target page, context or browser has been closed\nCall log:\n\u001b[2m  - waiting for locator('#sandboxFrame').contentFrame().locator('#userHtmlFrame').contentFrame().locator('ion-item').filter({ hasText: 'Portafolio Robado 1775694346020' }).first()\u001b[22m\n\n    at \u001b[90mC:\\Users\\grego\\Antigravity\\Taxonomia Project\\\u001b[39m__tests__\\e2e\\cardinality-resilience.spec.js:122:33 {\n  \u001b[32mSymbol(step)\u001b[39m: {\n    location: {\n      file: \u001b[32m'C:\\\\Users\\\\grego\\\\Antigravity\\\\Taxonomia Project\\\\__tests__\\\\e2e\\\\cardinality-resilience.spec.js'\u001b[39m,\n      line: \u001b[33m122\u001b[39m,\n      column: \u001b[33m33\u001b[39m\n    },\n    category: \u001b[32m'pw:api'\u001b[39m,\n    title: \u001b[32m\"Click locator('#sandboxFrame').contentFrame().locator('#userHtmlFrame').contentFrame().locator('ion-item').filter({ hasText: 'Portafolio Robado 1775694346020' }).first()\"\u001b[39m,\n    apiName: \u001b[32m'locator.click'\u001b[39m,\n    params: {\n      selector: \u001b[32m'#sandboxFrame >> internal:control=enter-frame >> #userHtmlFrame >> internal:control=enter-frame >> ion-item >> internal:has-text=\"Portafolio Robado 1775694346020\"i >> nth=0'\u001b[39m,\n      strict: \u001b[33mtrue\u001b[39m,\n      timeout: \u001b[33m0\u001b[39m\n    },\n    group: \u001b[90mundefined\u001b[39m,\n    stepId: \u001b[32m'pw:api@116'\u001b[39m,\n    boxedStack: \u001b[90mundefined\u001b[39m,\n    steps: [],\n    attachmentIndices: [],\n    info: TestStepInfoImpl {\n      annotations: [],\n      _testInfo: \u001b[36m[TestInfoImpl]\u001b[39m,\n      _stepId: \u001b[32m'pw:api@116'\u001b[39m,\n      _title: \u001b[32m\"Click locator('#sandboxFrame').contentFrame().locator('#userHtmlFrame').contentFrame().locator('ion-item').filter({ hasText: 'Portafolio Robado 1775694346020' }).first()\"\u001b[39m,\n      _parentStep: \u001b[90mundefined\u001b[39m,\n      skip: \u001b[36m[Function (anonymous)]\u001b[39m\n    },\n    complete: \u001b[36m[Function: complete]\u001b[39m,\n    endWallTime: \u001b[33m1775694622647\u001b[39m,\n    error: {\n      message: \u001b[32m'Error: locator.click: Target page, context or browser has been closed\\n'\u001b[39m +\n        \u001b[32m'Call log:\\n'\u001b[39m +\n        \u001b[32m\"\\x1B[2m  - waiting for locator('#sandboxFrame').contentFrame().locator('#userHtmlFrame').contentFrame().locator('ion-item').filter({ hasText: 'Portafolio Robado 1775694346020' }).first()\\x1B[22m\\n\"\u001b[39m,\n      stack: \u001b[32m'Error: locator.click: Target page, context or browser has been closed\\n'\u001b[39m +\n        \u001b[32m'Call log:\\n'\u001b[39m +\n        \u001b[32m\"\\x1B[2m  - waiting for locator('#sandboxFrame').contentFrame().locator('#userHtmlFrame').contentFrame().locator('ion-item').filter({ hasText: 'Portafolio Robado 1775694346020' }).first()\\x1B[22m\\n\"\u001b[39m +\n        \u001b[32m'\\n'\u001b[39m +\n        \u001b[32m'    at C:\\\\Users\\\\grego\\\\Antigravity\\\\Taxonomia Project\\\\__tests__\\\\e2e\\\\cardinality-resilience.spec.js:122:33'\u001b[39m,\n      cause: \u001b[90mundefined\u001b[39m\n    }\n  }\n}\n"
-                        }
-                      ],
+                      "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-04-09T00:25:42.079Z",
+                      "startTime": "2026-04-09T01:54:07.316Z",
                       "annotations": [],
                       "attachments": [
                         {
                           "name": "screenshot",
                           "contentType": "image/png",
-                          "path": "C:\\Users\\grego\\Antigravity\\Taxonomia Project\\test-results\\cardinality-resilience-E23-5f115-mpieza-Absoluta-de-Subgrids-chromium\\test-failed-1.png"
+                          "path": "C:\\Users\\grego\\Antigravity\\Taxonomia Project\\test-results\\dashboard-counters-E28-Das-6fd17-lugar-de-spinners-o-vacíos--chromium\\test-failed-1.png"
                         },
                         {
                           "name": "screenshot",
                           "contentType": "image/png",
-                          "path": "C:\\Users\\grego\\Antigravity\\Taxonomia Project\\test-results\\cardinality-resilience-E23-5f115-mpieza-Absoluta-de-Subgrids-chromium\\test-failed-2.png"
+                          "path": "C:\\Users\\grego\\Antigravity\\Taxonomia Project\\test-results\\dashboard-counters-E28-Das-6fd17-lugar-de-spinners-o-vacíos--chromium\\test-failed-2.png"
                         },
                         {
                           "name": "error-context",
                           "contentType": "text/markdown",
-                          "path": "C:\\Users\\grego\\Antigravity\\Taxonomia Project\\test-results\\cardinality-resilience-E23-5f115-mpieza-Absoluta-de-Subgrids-chromium\\error-context.md"
-                        },
-                        {
-                          "name": "error-context",
-                          "contentType": "text/markdown",
-                          "path": "C:\\Users\\grego\\Antigravity\\Taxonomia Project\\test-results\\cardinality-resilience-E23-5f115-mpieza-Absoluta-de-Subgrids-chromium\\error-context.md"
+                          "path": "C:\\Users\\grego\\Antigravity\\Taxonomia Project\\test-results\\dashboard-counters-E28-Das-6fd17-lugar-de-spinners-o-vacíos--chromium\\error-context.md"
                         }
-                      ]
+                      ],
+                      "errorLocation": {
+                        "file": "C:\\Users\\grego\\Antigravity\\Taxonomia Project\\__tests__\\e2e\\dashboard-counters.spec.js",
+                        "column": 67,
+                        "line": 45
+                      }
                     }
                   ],
-                  "status": "unexpected"
+                  "status": "skipped"
                 }
               ],
-              "id": "45605d459925de8918e4-2e117ab651ee8d32bc2e",
-              "file": "cardinality-resilience.spec.js",
-              "line": 89,
+              "id": "077f8d6fafd270e4bb5a-17a6fcd4d4e416086588",
+              "file": "dashboard-counters.spec.js",
+              "line": 49,
+              "column": 3
+            },
+            {
+              "title": "La invocación a getDashboardCounters no debe emitir el error deserialize threw error",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "077f8d6fafd270e4bb5a-8cc620b3b88190c37239",
+              "file": "dashboard-counters.spec.js",
+              "line": 78,
               "column": 3
             }
           ]
@@ -208,11 +212,11 @@
   ],
   "errors": [],
   "stats": {
-    "startTime": "2026-04-09T00:25:41.381Z",
-    "duration": 281400.844,
+    "startTime": "2026-04-09T01:54:06.734Z",
+    "duration": 115695.81,
     "expected": 0,
-    "skipped": 0,
-    "unexpected": 1,
+    "skipped": 2,
+    "unexpected": 0,
     "flaky": 0
   }
 }

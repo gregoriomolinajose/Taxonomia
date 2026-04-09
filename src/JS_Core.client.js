@@ -264,13 +264,6 @@
     window.sidebarState = parseInt(localStorage.getItem('sidebar_state')) || 0;
     window.applySidebarState();
     if (typeof window.renderDashboardCards === 'function') window.renderDashboardCards();
-    var container = document.getElementById('app-container');
-    if (container) {
-        window.OriginalDashboardNode = document.createDocumentFragment();
-        Array.from(container.childNodes).forEach(n => {
-            window.OriginalDashboardNode.appendChild(n.cloneNode(true));
-        });
-    }
     setTimeout(function() {
       if (window.UI_Router) {
         window.UI_Router.showHomeSidebar();

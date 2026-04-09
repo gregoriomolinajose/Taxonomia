@@ -39,9 +39,19 @@ describe('Schema_Engine Governance', () => {
         });
         
         it('should return SAFE FLAT defaults if entity is known but has no topologyRules', () => {
-            const rules = getEntityTopologyRules('Unidad_Negocio'); // This entity runs as purely flat currently
+            const rules = getEntityTopologyRules('Capacidad'); // Capacidad has no topologyRules declared
             expect(rules).toBeDefined();
             expect(rules.topologyType).toBe('FLAT');
+        });
+
+        it('should return JERARQUICA_ESTRICTA for hierarchy chain entities', () => {
+            ['Unidad_Negocio', 'Portafolio', 'Grupo_Productos', 'Producto'].forEach(entity => {
+                const rules = getEntityTopologyRules(entity);
+                expect(rules.topologyType).toBe('JERARQUICA_ESTRICTA');
+                expect(rules.maxDepth).toBe(6);
+                expect(rules.preventCycles).toBe(true);
+                expect(rules.scd2Enabled).toBe(true);
+            });
         });
     });
 

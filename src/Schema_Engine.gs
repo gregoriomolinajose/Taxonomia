@@ -8,6 +8,15 @@ const APP_SCHEMAS = {
   Unidad_Negocio: {
     metadata: { showInMenu: true, order:1, iconName:'business-outline', color:'primary', label:'Unidades de Negocio', titleField:'nombre', idField:'id_unidad_negocio', fkField:null },
     primaryKey: "id_unidad_negocio",
+    topologyRules: {
+      topologyType: "JERARQUICA_ESTRICTA",
+      preventCycles: true,
+      maxDepth: 6,
+      allowOrphanStealing: true,
+      deletionStrategy: "ORPHAN",
+      siblingCollisionCheck: true,
+      scd2Enabled: true
+    },
     fields: [
       { name: "id_unidad_negocio", type: "hidden", primaryKey: true },
       { name: "estado", type: "hidden", defaultValue: "Activo" },
@@ -30,6 +39,15 @@ const APP_SCHEMAS = {
         parentField: null
     },
     primaryKey: "id_portafolio",
+    topologyRules: {
+      topologyType: "JERARQUICA_ESTRICTA",
+      preventCycles: true,
+      maxDepth: 6,
+      allowOrphanStealing: true,
+      deletionStrategy: "ORPHAN",
+      siblingCollisionCheck: true,
+      scd2Enabled: true
+    },
     fields: [
       { name: "id_portafolio", type: "hidden", primaryKey: true },
       { name: "estado", type: "hidden", defaultValue: "Activo" },
@@ -84,6 +102,15 @@ const APP_SCHEMAS = {
     },
     primaryKey: "id_grupo_producto",
     titleField: "nombre",
+    topologyRules: {
+      topologyType: "JERARQUICA_ESTRICTA",
+      preventCycles: true,
+      maxDepth: 6,
+      allowOrphanStealing: true,
+      deletionStrategy: "ORPHAN",
+      siblingCollisionCheck: true,
+      scd2Enabled: true
+    },
     fields: [
       { name: "separator_1", type: "divider", label: "Datos Generales", width: 12 },
       { width: 12, name: "id_grupo_producto", label: "ID Grupo Producto", type: "text", required: true, readonly: true, primaryKey: true },
@@ -106,6 +133,15 @@ const APP_SCHEMAS = {
     },
     primaryKey: "id_producto",
     titleField: "nombre_producto",
+    topologyRules: {
+      topologyType: "JERARQUICA_ESTRICTA",
+      preventCycles: true,
+      maxDepth: 6,
+      allowOrphanStealing: true,
+      deletionStrategy: "ORPHAN",
+      siblingCollisionCheck: true,
+      scd2Enabled: true
+    },
     fields: [
       { name: "id_producto", type: "hidden", primaryKey: true },
       { name: "estado", type: "hidden", defaultValue: "Activo" },

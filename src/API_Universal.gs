@@ -19,9 +19,7 @@ function doPost(e) {
     let responseData = null;
 
     // Delegación estricta hacia Controller_Action.gs
-    if (action === 'getDashboardCounters') {
-      responseData = getDashboardCounters();
-    } else if (action === 'create') {
+    if (action === 'create') {
       responseData = _handleCreate(entity, data);
     } else if (action === 'read') {
       responseData = _handleRead(entity);
@@ -55,10 +53,6 @@ function API_Universal_Router(action, entityName, payload) {
     let responseData = null;
 
     // Custom non-entity specific endpoints
-    if (action === 'getDashboardCounters') {
-      responseData = getDashboardCounters();
-      return JSON.parse(JSON.stringify({ status: "success", data: responseData }));
-    }
 
     if (!entityName) throw new Error("Entidad no especificada para la accion " + action);
 
@@ -84,13 +78,13 @@ function API_Universal_Router(action, entityName, payload) {
       const itemName = payload.nombre || payload.nombre_producto || entityName;
       Logger.log('Persistencia completada para: ' + itemName);
       
-      const sanitizedReturn = JSON.parse(JSON.stringify({
+      const sanitizedReturn = JSON.stringify({
         status: "success",
         data: responseData,
         Entity: entityName,
         pk: pkField,
         pkValue: confirmedPkValue
-      }));
+      });
       return sanitizedReturn;
     } else if (action === 'read') {
       const id = (typeof payload === 'object') ? payload[pkField] || payload.id : payload;
@@ -113,20 +107,20 @@ function API_Universal_Router(action, entityName, payload) {
     const itemName = payload.nombre || payload.id_portafolio || entityName;
     Logger.log('Persistencia completada para: ' + itemName);
 
-    // Destruir Date Nativos (Regla 10) previo a postMessage
-    const sanitizedReturn = JSON.parse(JSON.stringify({
+    // Emitir como String previene Google Apps Script IPC Deserialize Threw Error Native Bug
+    const sanitizedReturn = JSON.stringify({
       status: "success",
       data: responseData
-    }));
+    });
     return sanitizedReturn;
   } catch (error) {
     Logger.log('🚀 ERROR Atrapado en Servidor: ' + error.message + '\n' + error.stack);
-    const sanitizedReturn = JSON.parse(JSON.stringify({
+    const sanitizedReturn = JSON.stringify({
       status: "error",
       success: false,
       errorType: (error.message && error.message.indexOf('ERROR_CONCURRENCY') !== -1) ? 'CONCURRENCY' : 'GENERAL',
       message: error.message
-    }));
+    });
     return sanitizedReturn;
   }
 }

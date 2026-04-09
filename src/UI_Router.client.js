@@ -48,10 +48,14 @@
                 var homeBtn = document.getElementById('nav-item-dashboard');
                 if (homeBtn) homeBtn.classList.add('active');
                 
-                if (container && window.OriginalDashboardNode) {
-                    window.DOM.clear(container);
-                    container.appendChild(window.OriginalDashboardNode.cloneNode(true));
-                    if (typeof window.renderDashboard === 'function') window.renderDashboard();
+                if (container) {
+                    var tmpl = document.getElementById('tmpl-dashboard');
+                    if (tmpl) {
+                        window.DOM.clear(container);
+                        container.appendChild(tmpl.content.cloneNode(true));
+                        if (typeof window.renderDashboardCards === 'function') window.renderDashboardCards();
+                        if (typeof window.renderDashboard === 'function') window.renderDashboard();
+                    }
                 }
             } 
             else if (viewType === 'dataview' && entityKey) {
