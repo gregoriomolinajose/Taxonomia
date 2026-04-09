@@ -113,7 +113,7 @@
     var container = document.getElementById('dashboard-cards-container');
     if (!container) return;
     container.innerHTML = '';
-    var sorted = window.getEntitiesByMetaFlag('showInDashboard');
+    var sorted = window.getEntitiesByUiFlag('dashboardCard');
     var tmpl = document.getElementById('tmpl-dashboard-card');
     if (!tmpl) return;
 
@@ -167,7 +167,13 @@
         })
         .catch(function(err) {
            console.error('[Dashboard] Error fetching counters', err);
-           Object.keys(totalEls).forEach(function(k) { totalEls[k].innerHTML = '-'; });
+           var errTmpl = document.getElementById('tmpl-dashboard-error');
+           if (errTmpl && container) {
+              container.innerHTML = '';
+              container.appendChild(errTmpl.content.cloneNode(true));
+           } else {
+              Object.keys(totalEls).forEach(function(k) { totalEls[k].innerHTML = '-'; });
+           }
         });
     }
   };

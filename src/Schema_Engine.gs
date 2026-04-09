@@ -6,7 +6,7 @@
 
 const APP_SCHEMAS = {
   Unidad_Negocio: {
-    metadata: { showInMenu: true, showInDashboard: false, order:1, iconName:'business-outline', color:'primary', label:'Unidades de Negocio', titleField:'nombre', idField:'id_unidad_negocio', fkField:null },
+    metadata: { showInMenu: true, order:1, iconName:'business-outline', color:'primary', label:'Unidades de Negocio', titleField:'nombre', idField:'id_unidad_negocio', fkField:null },
     primaryKey: "id_unidad_negocio",
     fields: [
       { name: "id_unidad_negocio", type: "hidden", primaryKey: true },
@@ -22,7 +22,8 @@ const APP_SCHEMAS = {
     ]
   },
   Portafolio: {
-    metadata: { showInMenu: true, showInDashboard: true, order:2, iconName:'briefcase-outline', color:'primary', label:'Portafolios', titleField:'nombre', idField:'id_portafolio', fkField:null, maxListAttrs: 8 },
+    uiConfig: { dashboardCard: true },
+    metadata: { showInMenu: true, order:2, iconName:'briefcase-outline', color:'primary', label:'Portafolios', titleField:'nombre', idField:'id_portafolio', fkField:null, maxListAttrs: 8 },
     topological_metadata: {
         ownerFields: ["director_id", "vp_id"],
         parentEntity: null,
@@ -46,7 +47,7 @@ const APP_SCHEMAS = {
     ]
   },
   Dominio: {
-    metadata: { showInMenu: true, showInDashboard: false, order:3, iconName:'globe-outline', color:'secondary', label:'Dominios', titleField:'n0_es', idField:'id_dominio', fkField:null },
+    metadata: { showInMenu: true, order:3, iconName:'globe-outline', color:'secondary', label:'Dominios', titleField:'n0_es', idField:'id_dominio', fkField:null },
     primaryKey: "id_dominio",
     titleField: "n0_es",
     topologyRules: {
@@ -75,7 +76,7 @@ const APP_SCHEMAS = {
     ]
   },
   Grupo_Productos: {
-    metadata: { showInMenu: true, showInDashboard: false, order:4, iconName:'layers-outline', color:'secondary', label:'Grupos de Producto', titleField:'nombre', idField:'id_grupo_producto', fkField:{ key:'id_portafolio', label:'Portafolio' } },
+    metadata: { showInMenu: true, order:4, iconName:'layers-outline', color:'secondary', label:'Grupos de Producto', titleField:'nombre', idField:'id_grupo_producto', fkField:{ key:'id_portafolio', label:'Portafolio' } },
     topological_metadata: {
         ownerFields: ["group_manager_id"],
         parentEntity: "Portafolio",
@@ -97,7 +98,7 @@ const APP_SCHEMAS = {
     ]
   },
   Producto: {
-    metadata: { showInMenu: true, showInDashboard: false, order:5, iconName:'cube-outline', color:'tertiary', label:'Productos', titleField:'nombre_producto', idField:'id_producto', fkField:{ key:'id_grupo_producto', label:'Grupo' } },
+    metadata: { showInMenu: true, order:5, iconName:'cube-outline', color:'tertiary', label:'Productos', titleField:'nombre_producto', idField:'id_producto', fkField:{ key:'id_grupo_producto', label:'Grupo' } },
     topological_metadata: {
         ownerFields: ["rte_id", "pm_id", "agile_coach_id"],
         parentEntity: "Grupo_Productos",
@@ -116,7 +117,7 @@ const APP_SCHEMAS = {
     ]
   },
   Capacidad: {
-    metadata: { showInMenu: true, showInDashboard: false, order:6, iconName:'layers-outline', color:'warning', label:'Capacidades', titleField:'macrocapacidad', idField:'id_capacidad', fkField:null },
+    metadata: { showInMenu: true, order:6, iconName:'layers-outline', color:'warning', label:'Capacidades', titleField:'macrocapacidad', idField:'id_capacidad', fkField:null },
     primaryKey: "id_capacidad",
     titleField: "macrocapacidad",
     fields: [
@@ -134,7 +135,8 @@ const APP_SCHEMAS = {
     ]
   },
   Equipo: {
-    metadata: { showInMenu: true, showInDashboard: true, order:7, iconName:'people-outline', color:'dark', label:'Equipos', titleField:'nombre_equipo', idField:'id_equipo', fkField:{ key:'id_producto', label:'Producto' } },
+    uiConfig: { dashboardCard: true },
+    metadata: { showInMenu: true, order:7, iconName:'people-outline', color:'dark', label:'Equipos', titleField:'nombre_equipo', idField:'id_equipo', fkField:{ key:'id_producto', label:'Producto' } },
     topological_metadata: {
         ownerFields: ["scrum_master_id", "product_owner_id"],
         parentEntity: "Producto",
@@ -159,7 +161,8 @@ const APP_SCHEMAS = {
     ]
   },
   Persona: {
-    metadata: { showInMenu: true, showInDashboard: true, order:8, iconName:'person-outline', color:'medium', label:'Personas', titleField:'email', idField:'email', fkField:null },
+    uiConfig: { dashboardCard: true },
+    metadata: { showInMenu: true, order:8, iconName:'person-outline', color:'medium', label:'Personas', titleField:'email', idField:'email', fkField:null },
     primaryKey: "email",
     topologyRules: {
       topologyType: "JERARQUICA_ESTRICTA",
@@ -214,7 +217,7 @@ const APP_SCHEMAS = {
     ]
   },
   Sys_Roles: {
-    metadata: { showInMenu: false, showInDashboard: false, order:90, iconName:'shield-half-outline', color:'danger', label:'Seguridad: Roles', titleField:'nombre_rol', idField:'id_rol', fkField:null },
+    metadata: { showInMenu: false, order:90, iconName:'shield-half-outline', color:'danger', label:'Seguridad: Roles', titleField:'nombre_rol', idField:'id_rol', fkField:null },
     primaryKey: "id_rol",
     fields: [
       { name: "id_rol", type: "text", primaryKey: true, readonly: true, label: "ID Rol", width: 12 },
@@ -223,7 +226,7 @@ const APP_SCHEMAS = {
     ]
   },
   Config_Typography: {
-    metadata: { showInMenu: false, showInDashboard: false, order:92, iconName:'text-outline', color:'medium', label:'Temas Tipográficos', titleField:'nombre_pack', idField:'id_tipografia', fkField:null },
+    metadata: { showInMenu: false, order:92, iconName:'text-outline', color:'medium', label:'Temas Tipográficos', titleField:'nombre_pack', idField:'id_tipografia', fkField:null },
     primaryKey: "id_tipografia",
     fields: [
       { name: "id_tipografia", type: "text", primaryKey: true, readonly: true, label: "ID Pack", width: 12 },
@@ -256,7 +259,7 @@ const APP_SCHEMAS = {
     ]
   },
   Sys_Permissions: {
-    metadata: { showInMenu: false, showInDashboard: false, order:91, iconName:'key-outline', color:'danger', label:'Seguridad: Permisos ABAC', titleField:'schema_destino', idField:'id_permiso', fkField:{ key:'id_rol', label:'Rol Base' } },
+    metadata: { showInMenu: false, order:91, iconName:'key-outline', color:'danger', label:'Seguridad: Permisos ABAC', titleField:'schema_destino', idField:'id_permiso', fkField:{ key:'id_rol', label:'Rol Base' } },
     primaryKey: "id_permiso",
     fields: [
       { name: "id_permiso", type: "text", primaryKey: true, readonly: true, label: "ID Permiso", width: 12 },
@@ -266,7 +269,7 @@ const APP_SCHEMAS = {
     ]
   },
   Config_Workspace: {
-    metadata: { showInMenu: false, showInDashboard: false, order:93, iconName:'business-outline', color:'primary', label:'Seguridad: Workspaces', titleField:'dominio_principal', idField:'id_workspace', fkField:null },
+    metadata: { showInMenu: false, order:93, iconName:'business-outline', color:'primary', label:'Seguridad: Workspaces', titleField:'dominio_principal', idField:'id_workspace', fkField:null },
     primaryKey: "id_workspace",
     fields: [
       { name: "id_workspace", type: "text", primaryKey: true, readonly: true, label: "ID Workspace", width: 12 },
