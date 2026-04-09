@@ -196,6 +196,10 @@ window.UI_FormSubmitter = class UI_FormSubmitter {
                         window.__APP_CACHE__['Sys_Graph_Edges'] = edgesObj;
                         window.__APP_CACHE__['DB_Sys_Graph_Edges'] = edgesObj;
                         console.log('[Cache] Sys_Graph_Edges re-hidratado silenciosamente tras guardado.');
+                        
+                        if (window.AppEventBus) {
+                            window.AppEventBus.publish('CACHE::GRAPH_HYDRATED', { entityKey: this.entityName });
+                        }
                     }
                 }).catch(err => console.warn('[Cache] Falla al re-hidratar aristas en 2do plano:', err));
             }

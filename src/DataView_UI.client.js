@@ -654,6 +654,18 @@
             );
         }
 
+        /* ────────────────────────────────────────────
+           Event Bus Subscribers
+        ───────────────────────────────────────────── */
+        if (typeof window !== 'undefined' && window.AppEventBus) {
+            window.AppEventBus.subscribe('CACHE::GRAPH_HYDRATED', function(payload) {
+                if (payload && _state && _state.entityName) {
+                    console.log(`[DataViewEngine] Graph hydrated, forzando silent re-render para actualizar columnas de relaciones en ${_state.entityName}`);
+                    _rerenderData();
+                }
+            });
+        }
+
         /* API pública */
         return {
             render,
