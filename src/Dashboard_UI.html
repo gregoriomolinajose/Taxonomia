@@ -116,45 +116,27 @@
     if (!container) return;
     window.DOM.clear(container);
     var sorted = window.getEntitiesByFlag('dashboardCard', 'uiConfig');
-    var tmpl = document.getElementById('tmpl-dashboard-card');
-    if (!tmpl) return;
-
     var totalEls = {};
 
     sorted.forEach(function(entry) {
-      var key = entry[0]; var meta = entry[1];
-      var clone = tmpl.content.cloneNode(true);
+      var key = entry[0]; 
+      var meta = entry[1];
+      var totalId = 'col-total-' + key;
       
-      var iconEl = clone.querySelector('[data-dsh-icon]');
-      var titleEl = clone.querySelector('[data-dsh-title]');
-      var totalEl = clone.querySelector('[data-dsh-total]');
-      var btnCreate = clone.querySelector('[data-btn-create]');
-      var btnList = clone.querySelector('[data-btn-list]');
+      var cardConfig = {
+        title: meta.label,
+        iconName: meta.iconName,
+        color: meta.color,
+        totalId: totalId
+      };
       
-      if (iconEl) {
-        iconEl.setAttribute('name', meta.iconName);
-        iconEl.setAttribute('color', meta.color);
-      }
-      if (titleEl) {
-        titleEl.textContent = meta.label;
-      }
+      var cardEl = window.UI_Factory.buildDashboardCardCont(cardConfig);
+      container.appendChild(cardEl);
+      
+      var totalEl = cardEl.querySelector('[data-dsh-total]');
       if (totalEl) {
         totalEls[key] = totalEl;
       }
-      if (btnCreate) {
-        if (window.ABAC && !window.ABAC.can('create', key)) {
-          btnCreate.style.display = 'none';
-        } else {
-          btnCreate.setAttribute('color', meta.color);
-          btnCreate.onclick = function() { window.renderForm(key); };
-        }
-      }
-      if (btnList) {
-        btnList.setAttribute('color', meta.color);
-        btnList.onclick = function() { window.AppEventBus.publish('NAV::CHANGE', {viewType: 'dataview', entityKey: key}); };
-      }
-      
-      container.appendChild(clone);
     });
 
     // We store the DOM references so hydrate doesn't need to query every time

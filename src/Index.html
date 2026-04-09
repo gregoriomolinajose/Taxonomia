@@ -342,6 +342,7 @@
 
   <template id="tmpl-dashboard">
     <ion-grid>
+      <ion-row class="ion-justify-content-center" id="dashboard-cards-container"></ion-row>
       <ion-row id="dashboard-filter-container" class="ion-justify-content-end ion-padding-horizontal ion-hide">
         <ion-col size="12" size-md="4" class="ion-padding-bottom">
           <ion-item lines="none" class="ion-no-padding" style="--background:transparent;">
@@ -362,31 +363,11 @@
             <ion-card-content><div id="chart-capacity"></div></ion-card-content></ion-card>
         </ion-col>
       </ion-row>
-      <ion-row class="ion-justify-content-center" id="dashboard-cards-container"></ion-row>
+
     </ion-grid>
   </template>
 
-  <template id="tmpl-dashboard-card">
-    <ion-col size="12" size-md="6" size-xl="4">
-      <ion-card>
-        <ion-card-header class="ion-text-center">
-          <ion-icon data-dsh-icon style="font-size:48px;margin-bottom:10px;"></ion-icon>
-          <ion-card-title data-dsh-title></ion-card-title>
-          <div data-dsh-total style="font-size: 3rem; font-weight: bold; margin: 10px 0; color: var(--ion-color-on-surface);">
-            <ion-spinner name="dots"></ion-spinner>
-          </div>
-        </ion-card-header>
-        <ion-card-content>
-          <ion-button data-btn-create expand="block" shape="round">
-            <ion-icon slot="start" name="add-circle-outline"></ion-icon> Crear Nuevo
-          </ion-button>
-          <ion-button data-btn-list expand="block" shape="round" fill="outline" style="margin-top:8px;">
-            <ion-icon slot="start" name="list-outline"></ion-icon> Ver Listado
-          </ion-button>
-        </ion-card-content>
-      </ion-card>
-    </ion-col>
-  </template>
+
 
   <template id="tmpl-dashboard-error">
     <div style="width: 100%; text-align: center; padding: 2rem;">
@@ -409,6 +390,7 @@
   <?!= include('UI_Component_DynamicList'); ?>
   <?!= include('UI_Component_SearchableMulti'); ?>
   <?!= include('UI_Component_RelationBuilder'); ?>
+  <?!= include('UI_Component_DashboardCardCont'); ?>
   <?!= include('SubgridState'); ?>
   <?!= include('UI_SubgridBuilder'); ?>
   <?!= include('FormValidators'); ?>

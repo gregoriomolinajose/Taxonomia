@@ -40,3 +40,4 @@ Optamos por la de manera explícita dado que este es un desarrollo corto:
 |-----|-------|-------|------|--------|
 | 1   | S28.1 | Backend Counters API | XS | Terminado |
 | 2   | S28.2 | Dashboard Cards UI Component | S | Terminado |
+| 3   | S28.3 | Dashboard Card Componentization | S | Terminado |

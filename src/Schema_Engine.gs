@@ -32,7 +32,7 @@ const APP_SCHEMAS = {
   },
   Portafolio: {
     uiConfig: { dashboardCard: true },
-    metadata: { showInMenu: true, order:2, iconName:'briefcase-outline', color:'primary', label:'Portafolios', titleField:'nombre', idField:'id_portafolio', fkField:null, maxListAttrs: 8 },
+    metadata: { showInMenu: true, order:2, iconName:'briefcase-outline', color:'danger', label:'Portafolios', titleField:'nombre', idField:'id_portafolio', fkField:null, maxListAttrs: 8 },
     topological_metadata: {
         ownerFields: ["director_id", "vp_id"],
         parentEntity: null,
@@ -172,7 +172,7 @@ const APP_SCHEMAS = {
   },
   Equipo: {
     uiConfig: { dashboardCard: true },
-    metadata: { showInMenu: true, order:7, iconName:'people-outline', color:'dark', label:'Equipos', titleField:'nombre_equipo', idField:'id_equipo', fkField:{ key:'id_producto', label:'Producto' } },
+    metadata: { showInMenu: true, order:7, iconName:'people-outline', color:'#9575CD', label:'Equipos', titleField:'nombre_equipo', idField:'id_equipo', fkField:{ key:'id_producto', label:'Producto' } },
     topological_metadata: {
         ownerFields: ["scrum_master_id", "product_owner_id"],
         parentEntity: "Producto",
@@ -198,7 +198,7 @@ const APP_SCHEMAS = {
   },
   Persona: {
     uiConfig: { dashboardCard: true },
-    metadata: { showInMenu: true, order:8, iconName:'person-outline', color:'medium', label:'Personas', titleField:'email', idField:'email', fkField:null },
+    metadata: { showInMenu: true, order:8, iconName:'person-outline', color:'warning', label:'Personas', titleField:'email', idField:'email', fkField:null },
     primaryKey: "email",
     topologyRules: {
       topologyType: "JERARQUICA_ESTRICTA",
