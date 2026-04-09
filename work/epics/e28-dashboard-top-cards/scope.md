@@ -39,4 +39,4 @@ Optamos por la de manera explícita dado que este es un desarrollo corto:
 | Seq | ID    | Story | Size | Estado |
 |-----|-------|-------|------|--------|
 | 1   | S28.1 | Backend Counters API | XS | Terminado |
-| 2   | S28.2 | Dashboard Cards UI Component | S | Pendiente |
+| 2   | S28.2 | Dashboard Cards UI Component | S | Terminado |
