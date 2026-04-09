@@ -172,7 +172,7 @@ const APP_SCHEMAS = {
     ]
   },
   Equipo: {
-    uiConfig: { dashboardCard: { iconName: 'people-outline', color: 'var(--ion-color-secondary)' } },
+    uiConfig: { dashboardCard: { iconName: 'people-outline', color: 'var(--ion-color-success)' } },
     metadata: { showInMenu: true, order:7, iconName:'people-outline', color:'#9575CD', label:'Equipos', titleField:'nombre_equipo', idField:'id_equipo', fkField:{ key:'id_producto', label:'Producto' } },
     topological_metadata: {
         ownerFields: ["scrum_master_id", "product_owner_id"],
