@@ -29,9 +29,8 @@
 
         // Contenedor principal responsive (Col)
         var colEl = document.createElement('ion-col');
-        colEl.setAttribute('size', '12');
-        colEl.setAttribute('size-md', '6');
-        colEl.setAttribute('size-xl', '4');
+        colEl.style.flex = '1 1 240px';
+        colEl.style.maxWidth = '100%';
 
         // Tarjeta
         var cardEl = document.createElement('ion-card');

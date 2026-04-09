@@ -122,11 +122,13 @@
       var key = entry[0]; 
       var meta = entry[1];
       var totalId = 'col-total-' + key;
+      var rawDshConfig = (window.APP_SCHEMAS[key] && window.APP_SCHEMAS[key].uiConfig && window.APP_SCHEMAS[key].uiConfig.dashboardCard);
+      var dshConfig = (typeof rawDshConfig === 'object' && rawDshConfig !== null) ? rawDshConfig : {};
       
       var cardConfig = {
         title: meta.label,
-        iconName: meta.iconName,
-        color: meta.color,
+        iconName: dshConfig.iconName || meta.iconName,
+        color: dshConfig.color || meta.color,
         totalId: totalId
       };
       
