@@ -104,7 +104,7 @@
   .hex-display {
     font-family: monospace;
     color: var(--color-text-soft);
-    font-size: 14px;
+    font-size: var(--sys-font-body, 14px);
     margin-top: 4px;
   }
 </style>
@@ -686,7 +686,7 @@
             
             tdSize.innerHTML = `
               <div style="font-weight: 500;">${sizeFormatted}</div>
-              <div style="font-size: 10px; color: var(--color-text-soft); font-family: monospace; margin-top: 4px;">--${varTagStr.replace(/\./g, '-')}</div>
+              <div style="font-size: var(--sys-font-xs, 10px); color: var(--color-text-soft); font-family: monospace; margin-top: 4px;">--${varTagStr.replace(/\./g, '-')}</div>
             `;
             
             var tdLH = document.createElement('td'); tdLH.style.padding = '12px'; tdLH.textContent = lh;

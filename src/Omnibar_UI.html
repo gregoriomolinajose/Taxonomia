@@ -26,7 +26,7 @@ ion-popover.omnibar-popover {
   <ion-content>
     <ion-list id="omnibar-results-list" lines="full">
       <div class="omnibar-empty">
-        <ion-icon name="search-outline" style="font-size: 32px; display: block; margin: 0 auto 10px;"></ion-icon>
+        <ion-icon name="search-outline" style="font-size: var(--sys-font-display, 32px); display: block; margin: 0 auto 10px;"></ion-icon>
         Escribe para buscar entidades empresariales...
       </div>
     </ion-list>
@@ -145,7 +145,7 @@ window.addEventListener('DOMContentLoaded', function() {
     }
 
     if (count === 0) {
-      resultsList.innerHTML = '<div class="omnibar-empty"><ion-icon name="sad-outline" style="font-size:32px; display:block; margin:0 auto 10px;"></ion-icon>No se hallaron resultados para "'+term+'"</div>';
+      resultsList.innerHTML = '<div class="omnibar-empty"><ion-icon name="sad-outline" style="font-size: var(--sys-font-display, 32px); display:block; margin:0 auto 10px;"></ion-icon>No se hallaron resultados para "'+term+'"</div>';
     } else {
       resultsList.appendChild(fragment);
     }

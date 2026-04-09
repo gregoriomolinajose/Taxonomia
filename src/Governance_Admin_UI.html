@@ -81,7 +81,7 @@ window.GovernanceEngine = {
             this._buildTable();
         } catch(e) {
             console.error(e);
-            tContainer.innerHTML = '<p style="color:red;">Error cargando Matriz: ' + e.message + '</p>';
+            tContainer.innerHTML = '<p style="color:var(--ion-color-danger);">Error cargando Matriz: ' + e.message + '</p>';
         } finally {
             loading.dismiss();
         }

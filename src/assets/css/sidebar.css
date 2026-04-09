@@ -101,7 +101,7 @@
   }
   .nav-item:hover  { background: var(--sidebar-item-hover); color: var(--ion-text-color); }
   .nav-item.active { background: rgba(108,99,255,0.18); color: var(--sidebar-icon-active); }
-  .nav-item ion-icon { font-size: 22px; flex-shrink: 0; }
+  .nav-item ion-icon { font-size: var(--sys-font-title, 22px); flex-shrink: 0; }
   
   /* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
      SIDEBAR TYPOGRAPHY (2-Line Text Wrapping)
@@ -144,12 +144,12 @@
     justify-content: center; transition: all 0.25s ease;
     flex-shrink: 0;
   }
-  .sidebar-logo-box ion-icon { font-size: 24px; color: var(--ion-color-light); }
+  .sidebar-logo-box ion-icon { font-size: var(--sys-font-title, 22px); color: var(--ion-color-light); }
   /* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
      SIDEBAR BRAND TYPOGRAPHY (2-Line Text Wrapping)
   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
   .sidebar-app-title {
-    font-size: 1rem; color: var(--ion-color-medium); font-weight: 600;
+    font-size: var(--sys-font-body, 1rem); color: var(--ion-color-medium); font-weight: 600;
     transition: opacity 0.25s ease;
     white-space: normal !important;
     display: -webkit-box !important;

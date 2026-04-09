@@ -678,7 +678,7 @@
 
     .dv-empty h3 {
         margin: 0 0 6px;
-        font-size: 1rem;
+        font-size: var(--sys-font-body, 1rem);
         color: var(--dv-text-primary);
     }
 

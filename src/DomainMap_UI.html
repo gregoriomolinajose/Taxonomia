@@ -132,13 +132,13 @@
                 }
 
                 return '<div style="padding: 10px; min-width: 250px;">' +
-                            '<div style="font-weight:bold; font-size:15px; margin-bottom:12px; color:var(--ion-color-light); white-space:normal; word-break:break-word;">' + (info.name || '') + '</div>' +
-                            '<div style="display:flex; justify-content:space-between; margin-bottom:12px; font-size:13px; color:var(--ion-color-light);">' +
+                            '<div style="font-weight:bold; font-size: var(--sys-font-sub, 16px); margin-bottom:12px; color:var(--ion-color-light); white-space:normal; word-break:break-word;">' + (info.name || '') + '</div>' +
+                            '<div style="display:flex; justify-content:space-between; margin-bottom:12px; font-size: var(--sys-font-body, 14px); color:var(--ion-color-light);">' +
                                 '<span>Subdominios: <b style="color:var(--ion-color-light);">' + val + '</b></span>' +
                                 '<span>Densidad: <b style="color:var(--ion-color-light);">' + percentage + '%</b></span>' +
                             '</div>' +
                             '<div style="text-align:center;">' +
-                                '<button data-action="domain:edit" style="width:100%; padding:8px; background:var(--ion-color-light); color: var(--ion-color-light); border:none; border-radius:4px; cursor:pointer; font-weight:bold; font-size:13px; box-shadow: 0 2px 4px var(--color-shadow-xl); transition: 0.2s;">' +
+                                '<button data-action="domain:edit" style="width:100%; padding:8px; background:var(--ion-color-light); color: var(--ion-color-light); border:none; border-radius:4px; cursor:pointer; font-weight:bold; font-size: var(--sys-font-body, 14px); box-shadow: 0 2px 4px var(--color-shadow-xl); transition: 0.2s;">' +
                                     '<ion-icon name="create-outline" style="vertical-align:middle; margin-right:5px;"></ion-icon>Configurar Dominio' +
                                 '</button>' +
                             '</div>' +

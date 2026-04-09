@@ -35,7 +35,7 @@
 
   /* Avatar cluster */
   .avatar-cluster { display: flex; }
-  .avatar-chip { width: 28px; height: 28px; border-radius: 50%; border: 2px solid var(--ion-card-background); margin-left: -8px; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; color: var(--ion-color-light); }
+  .avatar-chip { width: 28px; height: 28px; border-radius: 50%; border: 2px solid var(--ion-card-background); margin-left: -8px; display: flex; align-items: center; justify-content: center; font-size: var(--sys-font-xs, 10px); font-weight: 700; color: var(--ion-color-light); }
   .avatar-chip:first-child { margin-left: 0; }
 
   /* Section title */
