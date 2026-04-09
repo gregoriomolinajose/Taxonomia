@@ -223,16 +223,25 @@ const Engine_DB = {
             fields.forEach(f => {
                 if (f.type === 'relation' && nestedData[f.name] && f.isTemporalGraph && typeof Engine_Graph !== 'undefined') {
                     const children = nestedData[f.name];
-                    const topologyRules = (typeof getEntityTopologyRules !== 'undefined') 
+                    // [S27.4/Rx] Clone rules to prevent memory leaks across subgrids (State Mutation Bug)
+                    const baseRules = (typeof getEntityTopologyRules !== 'undefined') 
                                             ? getEntityTopologyRules(entityName)
                                             : { preventCycles: false, maxDepth: 0, siblingCollisionCheck: false };
+                    const topologyRules = { ...baseRules }; // Shallow clone
+                                            
+                    // [S27.4/Rx] Normalize passive field metadata into active topological enforcement
+                    const cardinality = f.topologyCardinality || "M:N";
+                    if (cardinality === "1:N") topologyRules.enforceSingleParent = true;
+                    
+                    const edgeName = (f.graphEdgeType || f.name).toUpperCase();
+                    topologyRules.edgeType = edgeName; // For precise stealing checks
+                    
                     const fullGraph = _Adapter_Sheets.list(f.graphEntity, config, 'objects').rows || [];
                     const activeGraph = fullGraph.filter(e => e.es_version_actual !== false);
 
                     const topologyResult = Engine_Graph.analyzeTopology(children, activeGraph, topologyRules);
                     const stolenEdges = topologyResult.stolenEdges || [];
                     
-                    const edgeName = (f.graphEdgeType || f.name).toUpperCase();
                     let currentActiveEdgesForNode = [];
                     if (f.relationType === 'padre') {
                         currentActiveEdgesForNode = activeGraph.filter(e => String(e.id_nodo_hijo).trim() === String(tempParentPK).trim() && e.tipo_relacion === edgeName);

@@ -19,7 +19,9 @@ function doPost(e) {
     let responseData = null;
 
     // Delegación estricta hacia Controller_Action.gs
-    if (action === 'create') {
+    if (action === 'getDashboardCounters') {
+      responseData = getDashboardCounters();
+    } else if (action === 'create') {
       responseData = _handleCreate(entity, data);
     } else if (action === 'read') {
       responseData = _handleRead(entity);
@@ -51,6 +53,14 @@ function doPost(e) {
 function API_Universal_Router(action, entityName, payload) {
   try {
     let responseData = null;
+
+    // Custom non-entity specific endpoints
+    if (action === 'getDashboardCounters') {
+      responseData = getDashboardCounters();
+      return JSON.parse(JSON.stringify({ status: "success", data: responseData }));
+    }
+
+    if (!entityName) throw new Error("Entidad no especificada para la accion " + action);
 
     const schema = (typeof getAppSchema === 'function') ? getAppSchema(entityName) : null;
     let pkField = schema && schema.primaryKey ? schema.primaryKey : null;
