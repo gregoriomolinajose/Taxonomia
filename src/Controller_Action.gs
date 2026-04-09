@@ -334,9 +334,9 @@ function getDashboardCounters() {
   const e = Engine_DB.list('Equipo');
   const per = Engine_DB.list('Persona');
   
-  const cleanP = (p && p.rows) ? p.rows.filter(r => r.estado !== 'Eliminado').length : 0;
-  const cleanE = (e && e.rows) ? e.rows.filter(r => r.estado !== 'Eliminado').length : 0;
-  const cleanPer = (per && per.rows) ? per.rows.filter(r => r.estado !== 'Eliminado').length : 0;
+  const cleanP = (p && p.rows) ? p.rows.filter(r => r?.estado !== 'Eliminado').length : 0;
+  const cleanE = (e && e.rows) ? e.rows.filter(r => r?.estado !== 'Eliminado').length : 0;
+  const cleanPer = (per && per.rows) ? per.rows.filter(r => r?.estado !== 'Eliminado').length : 0;
 
   return {
     Portafolios: cleanP,

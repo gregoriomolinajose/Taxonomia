@@ -163,6 +163,8 @@
              if (totalEls['Portafolio']) totalEls['Portafolio'].innerHTML = counts.Portafolios !== undefined ? counts.Portafolios : 0;
              if (totalEls['Equipo']) totalEls['Equipo'].innerHTML = counts.Equipos !== undefined ? counts.Equipos : 0;
              if (totalEls['Persona']) totalEls['Persona'].innerHTML = counts.Personas !== undefined ? counts.Personas : 0;
+           } else {
+             throw new Error(res ? res.message || "Unrecognized response" : "Empty response");
            }
         })
         .catch(function(err) {
