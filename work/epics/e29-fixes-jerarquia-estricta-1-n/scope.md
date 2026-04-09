@@ -16,15 +16,20 @@ Previene la corrupción de datos, nudos topológicos (hijos huérfanos o con mú
 - Alteraciones masivas a las tablas de la base de datos (se debe manejar lógicamente).
 
 ## Expected Stories
-- **S29.1 [PENDIENTE]:** Definir área afectada (Ej: backend payload vs constraints UI).
-- **S29.2 [PENDIENTE]:** ...
+- **S29.1 Prevención Vectorial:** Validación y parches de Graph Depth, Cycles y Collisions.
+- **S29.2 Políticas ABAC Padre-Hijo:** Jerarquía estricta 1:N y controles transaccionales de Orfandad (Stealing).
+- **S29.3 Destrucción e Historial:** Test-Driven sobre la estrategia transaccional ORPHAN y retención generacional SCD-2.
+- **S29.4 Consistencia Front-End:** Bloqueo y adaptación restrictiva en el FormEngine para proteger relaciones en la UI.
 
 ## Definition of Done
-- Los casos de prueba donde se podía engañar la relación 1:N son bloqueados exitosamente.
-- No hay regresiones en las operaciones M:N del Grafo.
-- La experiencia de usuario informa claramente de la restricción jerárquica alcanzada/violada.
+- Los casos de prueba unitarios comprueban consistentemente que la relación 1:N no puede ser engañada de ninguna forma a nivel servidor.
+- No hay regresiones en las operaciones M:N estructurales de esquemas mixtos.
+- La experiencia de usuario y UI restringe activamente relaciones imposibles.
 
 ## Progress Tracking
 | Seq | ID    | Story | Size | Estado |
 |-----|-------|-------|------|--------|
-| 1   | S29.1 | Definición Técnica del Fix | S | Pendiente |
+| 1   | S29.1 | Prevención Vectorial (Nivel Grafo) | M | Pendiente |
+| 2   | S29.2 | Políticas de Paternidad Estricta y Adopción | M | Pendiente |
+| 3   | S29.3 | Destrucción e Historial (Base de Datos) | M | Pendiente |
+| 4   | S29.4 | Consistencia Front-End (E2E) | S | Pendiente |

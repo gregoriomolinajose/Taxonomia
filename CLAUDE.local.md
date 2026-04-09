@@ -4,9 +4,9 @@
 
 ## Session
 
-- **Active Session**: S28.4 - Dashboard Cards Responsivo (COMPLETED)
-- **Last Summary**: Concluyó S28.4. Se refactorizaron las variables y grids de las tarjetas de conteo de entidades del Dashboard para que utilicen alineación y expansión nativa de Flex (`auto-fit`) de tal forma de no depender de atributos estrictos en su grilla. De igual forma, se desacupló el `uiConfig.dashboardCard` hacia un objeto avanzado para inyectar token de colores. Se fusionó `--no-ff` a develop y limpió rama local.
-- **Next Focus**: Esperar indicaciones estratégicas del usuario o cierre formal de la épica E28.
+- **Active Session**: E29 - Fixes Configuración Jerárquica Estricta 1:N (DESIGN PHASE)
+- **Last Summary**: Se inicializó la épica E29 en el framework RaiSE, registrándose en el maestro `backlog.md` como "En Diseño". Se creó el borrador del documento estructural de la épica para dar paso a la definición del problema.
+- **Next Focus**: Esperar desglose técnico de problemas por parte del consultor para dividir S29.1, S29.2, etc.
 
 ## Patterns
 
