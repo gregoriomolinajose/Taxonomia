@@ -117,12 +117,15 @@
     var tmpl = document.getElementById('tmpl-dashboard-card');
     if (!tmpl) return;
 
+    var totalEls = {};
+
     sorted.forEach(function(entry) {
       var key = entry[0]; var meta = entry[1];
       var clone = tmpl.content.cloneNode(true);
       
       var iconEl = clone.querySelector('[data-dsh-icon]');
       var titleEl = clone.querySelector('[data-dsh-title]');
+      var totalEl = clone.querySelector('[data-dsh-total]');
       var btnCreate = clone.querySelector('[data-btn-create]');
       var btnList = clone.querySelector('[data-btn-list]');
       
@@ -132,6 +135,9 @@
       }
       if (titleEl) {
         titleEl.textContent = meta.label;
+      }
+      if (totalEl) {
+        totalEls[key] = totalEl;
       }
       if (btnCreate) {
         if (window.ABAC && !window.ABAC.can('create', key)) {
@@ -148,5 +154,21 @@
       
       container.appendChild(clone);
     });
+
+    if (window.DataAPI && typeof window.DataAPI.call === 'function') {
+      window.DataAPI.call('API_Universal_Router', 'getDashboardCounters', null, null)
+        .then(function(res) {
+           if (res && res.status === 'success' && res.data) {
+             const counts = res.data;
+             if (totalEls['Portafolio']) totalEls['Portafolio'].innerHTML = counts.Portafolios !== undefined ? counts.Portafolios : 0;
+             if (totalEls['Equipo']) totalEls['Equipo'].innerHTML = counts.Equipos !== undefined ? counts.Equipos : 0;
+             if (totalEls['Persona']) totalEls['Persona'].innerHTML = counts.Personas !== undefined ? counts.Personas : 0;
+           }
+        })
+        .catch(function(err) {
+           console.error('[Dashboard] Error fetching counters', err);
+           Object.keys(totalEls).forEach(function(k) { totalEls[k].innerHTML = '-'; });
+        });
+    }
   };
 </script>
