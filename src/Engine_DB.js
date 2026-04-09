@@ -239,19 +239,9 @@ const Engine_DB = {
                     const fullGraph = _Adapter_Sheets.list(f.graphEntity, config, 'objects').rows || [];
                     const activeGraph = fullGraph.filter(e => e.es_version_actual !== false);
 
-                    const topologyResult = Engine_Graph.analyzeTopology(children, activeGraph, topologyRules);
-                    const stolenEdges = topologyResult.stolenEdges || [];
-                    
-                    let currentActiveEdgesForNode = [];
-                    if (f.relationType === 'padre') {
-                        currentActiveEdgesForNode = activeGraph.filter(e => String(e.id_nodo_hijo).trim() === String(tempParentPK).trim() && e.tipo_relacion === edgeName);
-                    } else {
-                        currentActiveEdgesForNode = activeGraph.filter(e => String(e.id_nodo_padre).trim() === String(tempParentPK).trim() && e.tipo_relacion === edgeName);
-                    }
-                    
                     const targetEntity = f.targetEntity;
-                    const schema = (typeof APP_SCHEMAS !== 'undefined') ? APP_SCHEMAS[targetEntity] : null;
-                    let childPkField = schema && schema.primaryKey ? schema.primaryKey : null;
+                    const nestedSchema = (typeof APP_SCHEMAS !== 'undefined') ? APP_SCHEMAS[targetEntity] : null;
+                    let childPkField = nestedSchema && nestedSchema.primaryKey ? nestedSchema.primaryKey : null;
                     
                     if (!childPkField) {
                         const tableKey = targetEntity.toLowerCase();
@@ -266,6 +256,15 @@ const Engine_DB = {
                         tipo_relacion: edgeName
                     }));
 
+                    const topologyResult = Engine_Graph.analyzeTopology(incomingEdgesMock, activeGraph, topologyRules);
+                    const stolenEdges = topologyResult.stolenEdges || [];
+                    
+                    let currentActiveEdgesForNode = [];
+                    if (f.relationType === 'padre') {
+                        currentActiveEdgesForNode = activeGraph.filter(e => String(e.id_nodo_hijo).trim() === String(tempParentPK).trim() && e.tipo_relacion === edgeName);
+                    } else {
+                        currentActiveEdgesForNode = activeGraph.filter(e => String(e.id_nodo_padre).trim() === String(tempParentPK).trim() && e.tipo_relacion === edgeName);
+                    }
                     
                     const normalResult = Engine_Graph.patchSCD2Edges(incomingEdgesMock, currentActiveEdgesForNode, f.topologyCardinality) || {};
                     const normalClose = normalResult.edgesToClose || [];

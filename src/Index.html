@@ -111,7 +111,7 @@
       if (!window.APP_SCHEMAS) return [];
       var items = Object.keys(window.APP_SCHEMAS).reduce((acc, k) => { 
         var targetObj = window.APP_SCHEMAS[k][scope];
-        if (targetObj && targetObj[flagName] === true) {
+        if (targetObj && (targetObj[flagName] === true || (typeof targetObj[flagName] === 'object' && targetObj[flagName] !== null))) {
             acc[k] = window.APP_SCHEMAS[k].metadata || {};
         }
         return acc; 

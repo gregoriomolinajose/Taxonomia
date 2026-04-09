@@ -31,7 +31,7 @@ const APP_SCHEMAS = {
     ]
   },
   Portafolio: {
-    uiConfig: { dashboardCard: true },
+    uiConfig: { dashboardCard: { iconName: 'briefcase-outline', color: 'var(--ion-color-danger)' } },
     metadata: { showInMenu: true, order:2, iconName:'briefcase-outline', color:'danger', label:'Portafolios', titleField:'nombre', idField:'id_portafolio', fkField:null, maxListAttrs: 8 },
     topological_metadata: {
         ownerFields: ["director_id", "vp_id"],
@@ -125,6 +125,7 @@ const APP_SCHEMAS = {
     ]
   },
   Producto: {
+    uiConfig: { dashboardCard: { iconName: 'cube-outline', color: 'var(--ion-color-tertiary)' } },
     metadata: { showInMenu: true, order:5, iconName:'cube-outline', color:'tertiary', label:'Productos', titleField:'nombre_producto', idField:'id_producto', fkField:{ key:'id_grupo_producto', label:'Grupo' } },
     topological_metadata: {
         ownerFields: ["rte_id", "pm_id", "agile_coach_id"],
@@ -171,7 +172,7 @@ const APP_SCHEMAS = {
     ]
   },
   Equipo: {
-    uiConfig: { dashboardCard: true },
+    uiConfig: { dashboardCard: { iconName: 'people-outline', color: 'var(--ion-color-secondary)' } },
     metadata: { showInMenu: true, order:7, iconName:'people-outline', color:'#9575CD', label:'Equipos', titleField:'nombre_equipo', idField:'id_equipo', fkField:{ key:'id_producto', label:'Producto' } },
     topological_metadata: {
         ownerFields: ["scrum_master_id", "product_owner_id"],
@@ -197,7 +198,7 @@ const APP_SCHEMAS = {
     ]
   },
   Persona: {
-    uiConfig: { dashboardCard: true },
+    uiConfig: { dashboardCard: { iconName: 'person-outline', color: 'var(--ion-color-warning)' } },
     metadata: { showInMenu: true, order:8, iconName:'person-outline', color:'warning', label:'Personas', titleField:'email', idField:'email', fkField:null },
     primaryKey: "email",
     topologyRules: {
