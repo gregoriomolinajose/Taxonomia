@@ -23,3 +23,20 @@ Resolver la falta de visibilidad del Área de Negocio sobre el volumen de la est
 - Cada tarjeta muestra el total en vivo extraído del backend correctamente.
 - Diseño consistente con el theme global (0 CSS en línea, paso estricto por lint).
 - Validado por un entorno limpio (Zero Defects).
+
+## Implementation Plan
+
+### Sequencing Strategy (Dependency-driven)
+Optamos por la de manera explícita dado que este es un desarrollo corto:
+- **S28.1** permite asentar la lógica RPC y conteo.
+- **S28.2** utiliza el contrato RPC para pintar la UI y manejar los esqueletos de carga.
+
+### Milestones
+- **M1: Backend Walking Skeleton:** El endpoint `API_GetDashboardCounters` devuelve los valores calculados usando caché, resolviéndose rápidamente.
+- **M2: UI Core MVP:** Las tarjetas están vivas en el Dashboard, implementan el design system nativo sin CSS suelto, y manejan skeletons asíncronos. (Cierre de Épica)
+
+### Progress Tracking
+| Seq | ID    | Story | Size | Estado |
+|-----|-------|-------|------|--------|
+| 1   | S28.1 | Backend Counters API | XS | Pendiente |
+| 2   | S28.2 | Dashboard Cards UI Component | S | Pendiente |
