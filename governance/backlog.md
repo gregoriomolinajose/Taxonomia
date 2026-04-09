@@ -25,6 +25,8 @@
 | E23| Enterprise Identity & Zero-Trust SSO                  | ✅ Complete  | Admin SDK Directory API integration para Avatares Reales y Perfiles  | Media    |
 | E24| Frontend God Objects Decomposition                    | ✅ Complete   | Split DataView_UI, FormRenderer, FormBuilder_Inputs, app.css         | Alta     |
 | E25| The Zero-Defect Hardening Sprint                      | ✅ Complete   | Deprecate Ionic Modals, Mobile First Drawers, Component UX fixes     | Max      |
+| E28| Dashboard Top Cards                                   | ✅ Complete   | Visibilidad de Estructura Ágil en Dashboard                          | Alta     |
+| E29| Fixes Configuración Jerárquica Estricta 1:N           | 🚧 En Diseño  | Auditoría y parche sobre las restricciones topológicas padre-hijo    | Alta     |
 
 ## Parking Lot / Deuda Técnica (Post-Epic 11)
 
