@@ -1,0 +1,198 @@
+◇ injected env (3) from .env // tip: ⌘ suppress logs { quiet: true }
+{
+  "config": {
+    "configFile": "C:\\Users\\grego\\Antigravity\\Taxonomia Project\\playwright.config.js",
+    "rootDir": "C:/Users/grego/Antigravity/Taxonomia Project/__tests__/e2e",
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "C:/Users/grego/Antigravity/Taxonomia Project/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "chromium",
+        "name": "chromium",
+        "testDir": "C:/Users/grego/Antigravity/Taxonomia Project/__tests__/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 120000
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "json"
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.59.1",
+    "workers": 1,
+    "webServer": null
+  },
+  "suites": [
+    {
+      "title": "cardinality-resilience.spec.js",
+      "file": "cardinality-resilience.spec.js",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "E23: Cardinilidad Topológica y Resiliencia SCD-2",
+          "file": "cardinality-resilience.spec.js",
+          "line": 6,
+          "column": 6,
+          "specs": [
+            {
+              "title": "Escenario 1.1 y 1.3: Exclusividad 1:N y Limpieza Absoluta de Subgrids",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 280000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 7415,
+                      "error": {
+                        "message": "TimeoutError: locator.waitFor: Timeout 5000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#sandboxFrame').contentFrame().locator('#userHtmlFrame').contentFrame().locator('ion-button#btn-create-new').last()\u001b[22m\n",
+                        "stack": "TimeoutError: locator.waitFor: Timeout 5000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#sandboxFrame').contentFrame().locator('#userHtmlFrame').contentFrame().locator('ion-button#btn-create-new').last()\u001b[22m\n\n    at clickTopButtonById (C:\\Users\\grego\\Antigravity\\Taxonomia Project\\__tests__\\e2e\\cardinality-resilience.spec.js:58:22)\n    at C:\\Users\\grego\\Antigravity\\Taxonomia Project\\__tests__\\e2e\\cardinality-resilience.spec.js:95:11",
+                        "location": {
+                          "file": "C:\\Users\\grego\\Antigravity\\Taxonomia Project\\__tests__\\e2e\\cardinality-resilience.spec.js",
+                          "column": 22,
+                          "line": 58
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 56 |\u001b[39m \u001b[36masync\u001b[39m \u001b[36mfunction\u001b[39m clickTopButtonById(frame\u001b[33m,\u001b[39m id) {\n \u001b[90m 57 |\u001b[39m     \u001b[36mconst\u001b[39m btnLocator \u001b[33m=\u001b[39m frame\u001b[33m.\u001b[39mlocator(\u001b[32m`ion-button#${id}`\u001b[39m)\u001b[33m.\u001b[39mlast()\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 58 |\u001b[39m     \u001b[36mawait\u001b[39m btnLocator\u001b[33m.\u001b[39mwaitFor({ state\u001b[33m:\u001b[39m \u001b[32m'attached'\u001b[39m\u001b[33m,\u001b[39m timeout\u001b[33m:\u001b[39m \u001b[35m5000\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                      \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 59 |\u001b[39m     \u001b[36mawait\u001b[39m btnLocator\u001b[33m.\u001b[39mclick({ force\u001b[33m:\u001b[39m \u001b[36mtrue\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m 60 |\u001b[39m }\n \u001b[90m 61 |\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "C:\\Users\\grego\\Antigravity\\Taxonomia Project\\__tests__\\e2e\\cardinality-resilience.spec.js",
+                            "column": 22,
+                            "line": 58
+                          },
+                          "message": "TimeoutError: locator.waitFor: Timeout 5000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#sandboxFrame').contentFrame().locator('#userHtmlFrame').contentFrame().locator('ion-button#btn-create-new').last()\u001b[22m\n\n\n  56 | async function clickTopButtonById(frame, id) {\n  57 |     const btnLocator = frame.locator(`ion-button#${id}`).last();\n> 58 |     await btnLocator.waitFor({ state: 'attached', timeout: 5000 });\n     |                      ^\n  59 |     await btnLocator.click({ force: true });\n  60 | }\n  61 |\n    at clickTopButtonById (C:\\Users\\grego\\Antigravity\\Taxonomia Project\\__tests__\\e2e\\cardinality-resilience.spec.js:58:22)\n    at C:\\Users\\grego\\Antigravity\\Taxonomia Project\\__tests__\\e2e\\cardinality-resilience.spec.js:95:11"
+                        }
+                      ],
+                      "stdout": [
+                        {
+                          "text": "PAGE LOG [warning]: Unrecognized feature: 'ambient-light-sensor'.\n"
+                        },
+                        {
+                          "text": "PAGE LOG [warning]: Unrecognized feature: 'speaker'.\n"
+                        },
+                        {
+                          "text": "PAGE LOG [warning]: Unrecognized feature: 'vibrate'.\n"
+                        },
+                        {
+                          "text": "PAGE LOG [warning]: Unrecognized feature: 'vr'.\n"
+                        },
+                        {
+                          "text": "PAGE LOG [warning]: An iframe which has both allow-scripts and allow-same-origin for its sandbox attribute can escape its sandboxing.\n"
+                        },
+                        {
+                          "text": "PAGE LOG [warning]: Unrecognized feature: 'ambient-light-sensor'.\n"
+                        },
+                        {
+                          "text": "PAGE LOG [warning]: Unrecognized feature: 'speaker'.\n"
+                        },
+                        {
+                          "text": "PAGE LOG [warning]: Unrecognized feature: 'vibrate'.\n"
+                        },
+                        {
+                          "text": "PAGE LOG [warning]: Unrecognized feature: 'vr'.\n"
+                        },
+                        {
+                          "text": "PAGE LOG [info]: Net state changed from IDLE to BUSY Net state changed from IDLE to BUSY\n"
+                        },
+                        {
+                          "text": "PAGE LOG [info]: Net state changed from BUSY to IDLE Net state changed from BUSY to IDLE\n"
+                        },
+                        {
+                          "text": "PAGE LOG [info]: Net state changed from IDLE to BUSY Net state changed from IDLE to BUSY\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-04-09T00:10:49.562Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "C:\\Users\\grego\\Antigravity\\Taxonomia Project\\test-results\\cardinality-resilience-E23-5f115-mpieza-Absoluta-de-Subgrids-chromium\\test-failed-1.png"
+                        },
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "C:\\Users\\grego\\Antigravity\\Taxonomia Project\\test-results\\cardinality-resilience-E23-5f115-mpieza-Absoluta-de-Subgrids-chromium\\test-failed-2.png"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "C:\\Users\\grego\\Antigravity\\Taxonomia Project\\test-results\\cardinality-resilience-E23-5f115-mpieza-Absoluta-de-Subgrids-chromium\\error-context.md"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "C:\\Users\\grego\\Antigravity\\Taxonomia Project\\test-results\\cardinality-resilience-E23-5f115-mpieza-Absoluta-de-Subgrids-chromium\\error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "C:\\Users\\grego\\Antigravity\\Taxonomia Project\\__tests__\\e2e\\cardinality-resilience.spec.js",
+                        "column": 22,
+                        "line": 58
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "45605d459925de8918e4-2e117ab651ee8d32bc2e",
+              "file": "cardinality-resilience.spec.js",
+              "line": 86,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-04-09T00:10:48.989Z",
+    "duration": 8611.456,
+    "expected": 0,
+    "skipped": 0,
+    "unexpected": 1,
+    "flaky": 0
+  }
+}

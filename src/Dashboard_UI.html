@@ -113,7 +113,7 @@
     var container = document.getElementById('dashboard-cards-container');
     if (!container) return;
     container.innerHTML = '';
-    var sorted = window.getEntitiesByUiFlag('dashboardCard');
+    var sorted = window.getEntitiesByFlag('dashboardCard', 'uiConfig');
     var tmpl = document.getElementById('tmpl-dashboard-card');
     if (!tmpl) return;
 
@@ -170,12 +170,13 @@
         .catch(function(err) {
            console.error('[Dashboard] Error fetching counters', err);
            var errTmpl = document.getElementById('tmpl-dashboard-error');
-           if (errTmpl && container) {
-              container.innerHTML = '';
-              container.appendChild(errTmpl.content.cloneNode(true));
-           } else {
-              Object.keys(totalEls).forEach(function(k) { totalEls[k].innerHTML = '-'; });
+           if (errTmpl && container.parentElement) {
+              // Inject error visually above cards without destroying them
+              var errDiv = document.createElement('div');
+              errDiv.appendChild(errTmpl.content.cloneNode(true));
+              container.parentElement.insertBefore(errDiv, container);
            }
+           Object.keys(totalEls).forEach(function(k) { totalEls[k].innerHTML = '-'; });
         });
     }
   };

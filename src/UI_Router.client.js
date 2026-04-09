@@ -162,7 +162,7 @@
             headerEntidades.appendChild(spanEntidades);
             navList.appendChild(headerEntidades);
             
-            var sorted = window.getEntitiesByMetaFlag('showInMenu');
+            var sorted = window.getEntitiesByFlag('showInMenu');
             sorted.forEach(function(entry) {
                 var key = entry[0]; var meta = entry[1];
                 if(meta.hideFromMenu === true) return;

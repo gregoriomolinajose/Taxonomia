@@ -1,0 +1,2 @@
+﻿Error: Multiple PM adapters found: filesystem, jira.
+Use --adapter <name> to select.

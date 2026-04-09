@@ -107,23 +107,13 @@
   <script>
     window.APP_SCHEMAS = <?!= JSON.stringify(getAppSchema()) ?>;
     window.__APP_CACHE__ = {};
-    window.getEntitiesByMetaFlag = function(flagName) {
+    window.getEntitiesByFlag = function(flagName, scope = 'metadata') {
       if (!window.APP_SCHEMAS) return [];
       var items = Object.keys(window.APP_SCHEMAS).reduce((acc, k) => { 
-        var meta = window.APP_SCHEMAS[k].metadata;
-        // Convención Opt-in: Asumir false a menos que sea explícitamente true
-        if (meta && meta[flagName] === true) acc[k] = meta; 
-        return acc; 
-      }, {});
-      return Object.entries(items).sort(function(a,b){ return (a[1].order || 999) - (b[1].order || 999); });
-    };
-
-    window.getEntitiesByUiFlag = function(flagName) {
-      if (!window.APP_SCHEMAS) return [];
-      var items = Object.keys(window.APP_SCHEMAS).reduce((acc, k) => { 
-        var ui = window.APP_SCHEMAS[k].uiConfig;
-        var meta = window.APP_SCHEMAS[k].metadata || {};
-        if (ui && ui[flagName] === true) acc[k] = meta; 
+        var targetObj = window.APP_SCHEMAS[k][scope];
+        if (targetObj && targetObj[flagName] === true) {
+            acc[k] = window.APP_SCHEMAS[k].metadata || {};
+        }
         return acc; 
       }, {});
       return Object.entries(items).sort(function(a,b){ return (a[1].order || 999) - (b[1].order || 999); });
