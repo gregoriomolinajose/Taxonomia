@@ -108,13 +108,7 @@ window.UI_FormSubmitter = class UI_FormSubmitter {
                 }
             });
 
-            // Nested Data
-            if (window.DataStore && window.DataStore.getNested) {
-                const nested = window.DataStore.getNested('ALL') || window.DataStore.getAll().nestedData || {};
-                Object.keys(nested).forEach(key => {
-                    payload[key] = nested[key];
-                });
-            }
+            // [S29.7] Nested Data se recolecta ahora automáticamente a través del hidden_input inyectado por SubgridBuilder.
 
             // Sanitización de Auditoría
             delete payload.created_at;
@@ -181,7 +175,7 @@ window.UI_FormSubmitter = class UI_FormSubmitter {
         this._internalRetryId = null; // Liberar caché de reintentos
 
         if (window.DataStore) {
-            window.DataStore.clearNested();
+            // [S29.7] window.DataStore.clearNested() extirpado. Los Subgrids ahora son stateless.
             // Re-hidratación Asíncrona del Grafo O(1): Evitamos destruir el caché base y en su lugar
             // pedimos al backend los nuevos edges silenciosamente para no bloquear la Interfaz UI.
             if (this.apiService && typeof this.apiService.call === 'function') {

@@ -67,14 +67,19 @@ window.UI_SubgridBuilder = {
         emptyText.textContent = 'Sin registros vinculados';
         emptyState.appendChild(emptyText);
 
-        // Estado local del subgrid
-        // Hydration check: if data[field.name] exists, use it
+        // [S29.7] Estado local del subgrid purificado de Singletons. Usamos un nodo escondido JSON
         const childRecords = (data && Array.isArray(data[field.name])) ? [...data[field.name]] : [];
-        if (window.DataStore && typeof window.DataStore.setNested === 'function') {
-             window.DataStore.setNested(field.name, childRecords);
+        
+        let hiddenInput = subgridDiv.querySelector(`input[name="${field.name}"]`);
+        if (!hiddenInput) {
+            hiddenInput = document.createElement('input');
+            hiddenInput.type = 'hidden';
+            hiddenInput.name = field.name;
+            hiddenInput.setAttribute('data-parser', 'json_array');
+            subgridDiv.appendChild(hiddenInput);
         }
-
         const _refreshList = () => {
+            hiddenInput.value = JSON.stringify(childRecords);
             window.DOM.clear(list);
             if (childRecords.length === 0) {
                 list.appendChild(emptyState);

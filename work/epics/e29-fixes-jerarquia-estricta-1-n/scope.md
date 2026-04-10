@@ -37,3 +37,4 @@ Previene la corrupción de datos, nudos topológicos (hijos huérfanos o con mú
 | 4   | S29.4 | Consistencia Front-End (E2E) | S | Hecho |
 | 5   | S29.5 | Estabilización Front-End | S | Hecho |
 | 6   | S29.6 | Fix Colisión de Hermanos | S | Hecho |
+| 7   | S29.7 | Relaciones no registradas en creación en cadena | S | Hecho |
