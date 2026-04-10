@@ -67,8 +67,11 @@
             }
             
             // S30.6 Resolutor de Contexto Local (Adiós global.currentEditId)
-            const meta = window.APP_SCHEMAS[entityName];
-            const localEditId = data ? data[(meta && meta.idField) ? meta.idField : 'id_registro'] : null;
+            let localEditId = null;
+            if (data) {
+                const targetPkField = window.UI_FormUtils.getPrimaryKey(entityName);
+                localEditId = data[targetPkField] || data['id_registro'] || null;
+            }
             // Construcción del Drawer de la Vista de Formularios (S25.2 Architecture)
             const modal = document.createElement('div');
             if (!global.DrawerStackController.push(modal)) {
@@ -443,7 +446,7 @@
             const meta = window.APP_SCHEMAS[entityName];
             const dataBase = window.DataStore.get(entityName);
 
-            const pkField = meta ? (meta.primaryKey || (meta.metadata && meta.metadata.idField)) : null;
+            const pkField = window.UI_FormUtils.getPrimaryKey(entityName);
 
             // --- REGLA 3 (rules_qa.md): PROTECTOR DE NULLS ---
             if (!meta || !pkField) {

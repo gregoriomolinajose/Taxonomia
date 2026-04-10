@@ -88,8 +88,8 @@
             const selectAll = document.createElement('input');
             selectAll.type = 'checkbox';
             
-            const meta = (window.ENTITY_META && window.ENTITY_META[this.cfg.entityName]) || { idField: 'id' };
-            const pageIds = rows.map(r => String(r[meta.idField] || ''));
+            const pkField = window.UI_FormUtils.getPrimaryKey(this.cfg.entityName);
+            const pageIds = rows.map(r => String(r[pkField] || ''));
             selectAll.checked = pageIds.length > 0 && pageIds.every(id => (this.cfg.selectedRows || []).includes(id));
             selectAll.addEventListener('change', (e) => {
                 if (this.cfg.onSelectAll) this._invoke(this.cfg.onSelectAll, e.target.checked);
@@ -176,8 +176,8 @@
             rows.forEach((row, idx) => {
                 const tr = document.createElement('tr');
                 
-                const meta = (window.ENTITY_META && window.ENTITY_META[this.cfg.entityName]) || { idField: 'id' };
-                const id = row[meta.idField] || '';
+                const pkField = window.UI_FormUtils.getPrimaryKey(this.cfg.entityName);
+                const id = row[pkField] || '';
                 
                 // Bug fix: Row selection logic (S25.3) con captura proactiva de Unhandled Promises
                 tr.addEventListener('click', (e) => {
@@ -292,8 +292,9 @@
             const rowEl = document.createElement('ion-row');
             
             rows.forEach(row => {
-                const titleStr = row[meta.titleField] || row[meta.idField] || '—';
-                const idStr = String(row[meta.idField] || '');
+                const pkField = window.UI_FormUtils.getPrimaryKey(this.cfg.entityName);
+                const titleStr = row[meta.titleField] || row[pkField] || '—';
+                const idStr = String(row[pkField] || '');
                 
                 const colEl = document.createElement('ion-col');
                 colEl.setAttribute('size', '12');
@@ -345,8 +346,9 @@
                 // S24.8: Dynamic Mapping for Cards - Solo itera las expuestas como 'visible: true' por el Popover
                 const visibleKeys = this.cfg.columns.filter(c => c.visible).map(c => c.key);
                 
+                const pkField = window.UI_FormUtils.getPrimaryKey(this.cfg.entityName);
                 const attrKeys = visibleKeys.filter(k => {
-                    return k !== meta.titleField && k !== meta.idField &&
+                    return k !== meta.titleField && k !== pkField &&
                            !(meta.fkField && k === meta.fkField.key);
                 }).slice(0, MAX_ATTRS);
                 

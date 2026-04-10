@@ -17,14 +17,17 @@ describe('UI_SubgridBuilder.client.js (Vitest UI) - S30.2 ReadOnly Scenarios', (
         // Mock Window dependencies
         window.APP_SCHEMAS = {
             'Padre_Entity': {
-                idField: 'id_padre'
+                primaryKey: 'id_padre'
             },
             'Hijo_Entity': {
-                idField: 'id_hijo'
+                primaryKey: 'id_hijo'
             }
         };
         window.DataStore = { get: vi.fn().mockReturnValue([]) };
-        window.UI_FormUtils = { normalizeId: (id) => String(id) };
+        window.UI_FormUtils = { 
+            normalizeId: (id) => String(id),
+            getPrimaryKey: (entityName) => (window.APP_SCHEMAS[entityName] && window.APP_SCHEMAS[entityName].primaryKey) || `id_${entityName.toLowerCase()}` 
+        };
         window.openEditForm = vi.fn();
     });
 

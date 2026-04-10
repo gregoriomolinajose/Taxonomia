@@ -66,7 +66,7 @@
             // S25.2: Asegurar convenciones de UX (ID primero, Nombre/Título segundo)
             const meta = window.ENTITY_META ? window.ENTITY_META[entityName] : null;
             if (meta) {
-                const idKey = meta.idField;
+                const idKey = window.UI_FormUtils.getPrimaryKey(entityName);
                 const titleKey = meta.titleField;
                 
                 if (idKey && keys.includes(idKey)) {
@@ -494,9 +494,9 @@
         }
 
         function _onSelectAll(checked) {
-            const meta = ENTITY_META[_state.entityName] || { idField: 'id' };
-            const pageIds = window.UI_DataGrid._getPageData ? window.UI_DataGrid._getPageData().map(r => String(r[meta.idField] || '')) : [];
-            const dataToIterate = pageIds.length > 0 ? pageIds : _state.filteredData.slice((_state.page - 1) * _state.pageSize, _state.page * _state.pageSize).map(r => String(r[meta.idField] || ''));
+            const pkField = window.UI_FormUtils.getPrimaryKey(_state.entityName);
+            const pageIds = window.UI_DataGrid._getPageData ? window.UI_DataGrid._getPageData().map(r => String(r[pkField] || '')) : [];
+            const dataToIterate = pageIds.length > 0 ? pageIds : _state.filteredData.slice((_state.page - 1) * _state.pageSize, _state.page * _state.pageSize).map(r => String(r[pkField] || ''));
             
             if (checked) {
                 dataToIterate.forEach(id => {
@@ -509,9 +509,9 @@
         }
 
         function _onRowOrderChange(srcId, targetId) {
-            const meta = ENTITY_META[_state.entityName] || { idField: 'id' };
-            const srcIdx = _state.filteredData.findIndex(r => String(r[meta.idField]) === String(srcId));
-            const targetIdx = _state.filteredData.findIndex(r => String(r[meta.idField]) === String(targetId));
+            const pkField = window.UI_FormUtils.getPrimaryKey(_state.entityName);
+            const srcIdx = _state.filteredData.findIndex(r => String(r[pkField]) === String(srcId));
+            const targetIdx = _state.filteredData.findIndex(r => String(r[pkField]) === String(targetId));
             
             if(srcIdx > -1 && targetIdx > -1) {
                 const item = _state.filteredData.splice(srcIdx, 1)[0];
@@ -570,8 +570,7 @@
 
         async function _executeSoftDelete(id) {
             // Optimistic UI update (Local state)
-            const meta = ENTITY_META[_state.entityName] || { idField: 'id' };
-            const idField = meta.idField;
+            const idField = window.UI_FormUtils.getPrimaryKey(_state.entityName);
             _state.data = _state.data.filter(r => r[idField] !== id);
             _applyFilter(document.getElementById('dv-search-input') ? document.getElementById('dv-search-input').value || '' : '');
 
@@ -594,8 +593,8 @@
                 if (response && response.status === 'success') {
                     // Purgar de la RAM local
                     if (window.DataStore && window.DataStore.get(_state.entityName)) {
-                        const idField = (ENTITY_META[_state.entityName] || { idField: 'id' }).idField;
-                        window.DataStore.set(_state.entityName, window.DataStore.get(_state.entityName).filter(row => row[idField] !== id));
+                        const pkField = window.UI_FormUtils.getPrimaryKey(_state.entityName);
+                        window.DataStore.set(_state.entityName, window.DataStore.get(_state.entityName).filter(row => row[pkField] !== id));
                     }
 
                     // Forzar re-renderización de la vista actual desde el caché actualizado

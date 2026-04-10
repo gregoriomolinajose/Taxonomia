@@ -20,8 +20,9 @@ Resolver deuda técnica estructural y visual acumulada en las iteraciones anteri
 | S30.4 | Evolución de ThemeManager | M | Pending | Migrar inyección en crudo de `window.hydrateThemeConfig` hacia una Clase ES6 formally orquestada. |
 | S30.5 | AST RegExp CSS Minifier | L | Pending | Evaluar integración de integrador CSS (Rollup/Esbuild) para prevenir corrupciones visuales por Regex casero. |
 | S30.6 | Navegación Profunda en Subgrids (Drill-Down) | M | Done ✓ | Permitir inspeccionar o editar registros vinculados del subgrid (on-click) delegando las evaluaciones de ABAC a la nueva instancia hija. |
+| S30.7 | Estandarización Universal de Primary Key | S | Pending | Crear utilitario UI_FormUtils.getPrimaryKey y refactorizar todo el Frontend para eliminar dependencias de 'idField' y usar estrictamente la regla E29 'primaryKey'. |
 
-**Total:** 6 stories base + (X) anexos dinámicos en Testing, TBD SP
+**Total:** 7 stories base + (X) anexos dinámicos en Testing, TBD SP
 
 ## Scope
 
@@ -116,6 +117,7 @@ Stream 3 (Testing):          [ Bugs N dinámicos ] ────┘
 | S30.4 | M | Pending | — | — | Evolución de ThemeManager |
 | S30.5 | L | Pending | — | — | AST RegExp CSS Minifier |
 | S30.6 | M | Done ✓ | 1h | S | Navegación Profunda en Subgrids (Drill-Down) |
+| S30.7 | S | Pending | — | — | Estandarización Universal de Primary Key |
 
 ### Sequencing Risks
 

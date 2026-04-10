@@ -240,10 +240,7 @@ window.UI_FormSubmitter = class UI_FormSubmitter {
             }
 
             if (!pkField || !pkValue) {
-                // eslint-disable-next-line arch // Justified: Needs state access for callback routing
-                const meta = (window.DataViewEngine && typeof window.DataViewEngine._getState === 'function')
-                    ? window.DataViewEngine._getState().entityMeta : null;
-                pkField = meta && meta.idField ? meta.idField : pkField;
+                pkField = window.UI_FormUtils.getPrimaryKey(this.entityName);
                 pkValue = pkField ? payload[pkField] : null;
             }
 
