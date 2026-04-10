@@ -346,7 +346,6 @@
                 // S24.8: Dynamic Mapping for Cards - Solo itera las expuestas como 'visible: true' por el Popover
                 const visibleKeys = this.cfg.columns.filter(c => c.visible).map(c => c.key);
                 
-                const pkField = window.UI_FormUtils.getPrimaryKey(this.cfg.entityName);
                 const attrKeys = visibleKeys.filter(k => {
                     return k !== meta.titleField && k !== pkField &&
                            !(meta.fkField && k === meta.fkField.key);
