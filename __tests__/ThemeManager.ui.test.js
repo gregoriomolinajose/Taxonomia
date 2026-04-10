@@ -17,8 +17,6 @@ describe('UI_ThemeManager (ES6 Class Architecture)', () => {
         });
         
         window.dispatchEvent = vi.fn();
-        window.chartTopology = { updateOptions: vi.fn() };
-        window.chartCapacity = { updateOptions: vi.fn() };
         
         vi.useFakeTimers();
     });
@@ -50,9 +48,9 @@ describe('UI_ThemeManager (ES6 Class Architecture)', () => {
         const icon = document.getElementById('theme-toggle-icon');
         expect(icon.name).toBe('sunny-outline');
         
-        // Test Golden Pattern Resizing Dispatch
+        // Test Golden Pattern Resizing Dispatch y Event Inversion of Control
         vi.runAllTimers();
-        expect(window.dispatchEvent).toHaveBeenCalledWith(expect.any(Event));
+        expect(window.dispatchEvent).toHaveBeenCalledWith(expect.objectContaining({ type: 'theme:changed', detail: 'dark' }));
     });
 
     it('C. initThemeManager() debe leer del entorno e invocar a _hydrate() correctamente', () => {
