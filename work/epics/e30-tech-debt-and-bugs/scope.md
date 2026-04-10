@@ -14,7 +14,7 @@ Resolver deuda técnica estructural y visual acumulada en las iteraciones anteri
 
 | ID | Story | Size | Status | Description |
 |----|-------|:----:|:------:|-------------|
-| S30.1 | Limpieza Segura de Assets Temporales | S | Pending | Delegar exclusión de .build/assets al `.claspignore` en vez de usar mutación directa con `fs`. |
+| S30.1 | Limpieza Segura de Assets Temporales | S | Done ✓ | Delegar exclusión de .build/assets al `.claspignore` en vez de usar mutación directa con `fs`. |
 | S30.2 | Robustez en Muteo Estructural de Relacionales | M | Pending | Inyectar flag `readonly` vía prop-drilling en `UI_SubgridBuilder` para reemplazar hacks pasivos de CSS. |
 | S30.3 | DOM Pasivo a Estado Local en Componentes | M | Pending | Evitar los bridges temporales vía *hidden inputs* con JSON strings. Anclar estado efímero en closure memory. |
 | S30.4 | Evolución de ThemeManager | M | Pending | Migrar inyección en crudo de `window.hydrateThemeConfig` hacia una Clase ES6 formally orquestada. |
@@ -108,7 +108,7 @@ Stream 3 (Testing):          [ Bugs N dinámicos ] ────┘
 
 | Story | Size | Status | Actual | Velocity | Notes |
 |-------|:----:|:------:|:------:|:--------:|-------|
-| S30.1 | S | Pending | — | — | Limpieza Segura de Assets Temporales |
+| S30.1 | S | Done ✓ | 1h | S | Completada y merged. |
 | S30.2 | M | Pending | — | — | Robustez en Muteo Estructural de Relacionales |
 | S30.3 | M | Pending | — | — | DOM Pasivo a Estado Local en Componentes |
 | S30.4 | M | Pending | — | — | Evolución de ThemeManager |
