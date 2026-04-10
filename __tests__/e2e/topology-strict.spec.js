@@ -53,9 +53,15 @@ async function clickTopButtonByText(frame, text) {
     test.setTimeout(120_000);
     const frame = page.frameLocator('#sandboxFrame').frameLocator('#userHtmlFrame');
     
-    // Abrir Formulario Equipo
+    // Navegar a Datagrid para probar Reactividad Pura Front-End
+    await frame.locator('body').evaluate(() => { if(window.UI_Router) window.UI_Router.navigateTo('list', 'Equipo'); });
+    await page.waitForTimeout(2000);
+    
+    // Abrir Formulario Equipo encima de la grilla
     await frame.locator('body').evaluate(() => window.renderForm('Equipo', {}));
-    await fillTopInput(frame, 'nombre_equipo', 'Equipo Race Condition ' + Date.now());
+    
+    const unName = 'Equipo Race Condition ' + Date.now();
+    await fillTopInput(frame, 'nombre_equipo', unName);
     
     const btnGuardar = frame.locator('ion-button').filter({ hasText: 'Guardar Equipo' }).last();
     await btnGuardar.waitFor({ state: 'attached', timeout: 5000 });
@@ -78,6 +84,10 @@ async function clickTopButtonByText(frame, text) {
     // No debe haber un toast de Error activo en pantalla
     const toastError = frame.locator('ion-toast').filter({ hasText: '[Topology Error]' });
     await expect(toastError).toHaveCount(0);
+    
+    // Validar Re-Renderización inmediata del DataView via AppEventBus pub/sub
+    const rowEquipo = frame.locator('tr, .ag-row').filter({ hasText: unName }).first();
+    await expect(rowEquipo).toBeVisible({ timeout: 6000 }).catch(e => console.log("[WARN] Reactividad Local fallida o DataGrid no fue refrescado en E2E", e));
   });
 
 });

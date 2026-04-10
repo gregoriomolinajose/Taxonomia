@@ -145,7 +145,7 @@
             if (window.DataStore && window.DataStore.get(entityName)) {
                 console.log(`[Cache Frontend] HIT para ${entityName}. Renderizado instantáneo.`);
                 const cachedData = window.DataStore.get(entityName);
-                const activeRows = cachedData.filter(r => r.estado !== 'Eliminado' && r.estado !== 'eliminado');
+                const activeRows = window.DataStore.getActive ? window.DataStore.getActive(entityName) : cachedData.filter(r => r.estado !== 'Eliminado' && r.estado !== 'eliminado');
                 cb(null, activeRows);
                 return;
             }
@@ -179,7 +179,7 @@
                         window.DataStore.set(entityName, rows);
                     }
 
-                    const activeRows = rows.filter(r => r.estado !== 'Eliminado' && r.estado !== 'eliminado');
+                    const activeRows = window.DataStore && window.DataStore.getActive ? window.DataStore.getActive(entityName) : rows.filter(r => r.estado !== 'Eliminado' && r.estado !== 'eliminado');
                     cb(null, activeRows);
                 } else {
                     cb(new Error(response ? response.message : 'Error desconocido'));
@@ -662,6 +662,27 @@
                 if (payload && _state && _state.entityName) {
                     console.log(`[DataViewEngine] Graph hydrated, forzando silent re-render para actualizar columnas de relaciones en ${_state.entityName}`);
                     _rerenderData();
+                }
+            });
+
+            window.AppEventBus.subscribe('DATA::UPDATED', function(payload) {
+                if (payload && _state && payload.entityKey === _state.entityName) {
+                    console.log(`[DataViewEngine] Datos mutados nativamente, reintegrando de DataStore y repintando.`);
+                    if (window.DataStore && window.DataEngine) {
+                        _state.data = window.DataStore.getActive ? window.DataStore.getActive(_state.entityName) : (window.DataStore.get(_state.entityName) || []).filter(r => r.estado !== 'Eliminado' && r.estado !== 'eliminado');
+                        
+                        // Re-aplicar filtro actual al nuevo set de datos preservando UX
+                        const searchInput = document.getElementById('dv-search-input');
+                        const query = searchInput ? searchInput.value || '' : '';
+                        _state.filtered = window.DataEngine.applyFilter(_state.data, query);
+                        
+                        // Re-aplicar ordenamiento actual preservando UX
+                        if (_state.sortCol) {
+                             _state.filtered = window.DataEngine.applySort(_state.filtered, _state.sortCol, _state.sortDir);
+                        }
+                        
+                        _rerenderData();
+                    }
                 }
             });
         }

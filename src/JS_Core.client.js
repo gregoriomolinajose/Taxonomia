@@ -162,6 +162,11 @@
   window.DataStore = {
     _cache: window.__APP_CACHE__ || {},
     get: function(entityName) { return this._cache[entityName] !== undefined ? this._cache[entityName] : null; },
+    getActive: function(entityName) {
+        var allData = this.get(entityName);
+        if (!allData || !Array.isArray(allData)) return [];
+        return allData.filter(function(r) { return r.estado !== 'Eliminado' && r.estado !== 'eliminado'; });
+    },
     set: function(entityName, data) { 
         this._cache[entityName] = data; 
         if (window.AppEventBus) window.AppEventBus.publish('DATASTORE::CHANGED', { action: 'set', entityName: entityName });

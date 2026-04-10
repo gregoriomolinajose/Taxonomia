@@ -298,5 +298,10 @@ window.UI_FormSubmitter = class UI_FormSubmitter {
                 }
             });
         }
+        
+        // Notificar globalmente mutación de entidad (Ej. DataGrid Re-render)
+        if (window.AppEventBus) {
+            window.AppEventBus.publish('DATA::UPDATED', { entityKey: entityName });
+        }
     }
 };
