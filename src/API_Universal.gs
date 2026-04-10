@@ -60,9 +60,7 @@ function API_Universal_Router(action, entityName, payload) {
     let pkField = schema && schema.primaryKey ? schema.primaryKey : null;
 
     if (!pkField) {
-      const tableKey = entityName.toLowerCase();
-      const singularKey = tableKey.endsWith('es') ? tableKey.slice(0, -2) : (tableKey.endsWith('s') ? tableKey.slice(0, -1) : tableKey);
-      pkField = 'id_' + singularKey;
+      throw new Error(`[AR-Governance] Violación de Schema-Driven Design en Router: Entidad '${entityName}' no posee 'primaryKey' definida en Schema_Engine. El enrutamiento dinámico requiere Schemas estrictos.`);
     }
 
     if (action === 'create') {

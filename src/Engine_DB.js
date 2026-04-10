@@ -244,9 +244,7 @@ const Engine_DB = {
                     let childPkField = nestedSchema && nestedSchema.primaryKey ? nestedSchema.primaryKey : null;
                     
                     if (!childPkField) {
-                        const tableKey = targetEntity.toLowerCase();
-                        const singularKey = tableKey.endsWith('s') ? tableKey.slice(0, -1) : (tableKey.endsWith('es') ? tableKey.slice(0, -2) : tableKey);
-                        childPkField = 'id_' + singularKey;
+                        throw new Error(`[AR-Governance] Violación de Schema-Driven Design: La entidad relacionada '${targetEntity}' no tiene definida su 'primaryKey' en APP_SCHEMAS. El fallback determinista por sufijo está deprecado.`);
                     }
 
                     const incomingEdgesMock = children.map(child => ({
@@ -304,9 +302,9 @@ const Engine_DB = {
                     const orphanMatches = (currentInDB.rows || []).filter(c => c[fkField] == parentPK);
                     
                     // Paso B: Determinar cuáles ya no están en el nuevo payload
-                    const tableKey = targetEntity.toLowerCase();
-                    const singularKey = tableKey.endsWith('s') ? tableKey.slice(0, -1) : (tableKey.endsWith('es') ? tableKey.slice(0, -2) : tableKey);
-                    const pkField = 'id_' + singularKey;
+                    const nestedSchema = (typeof APP_SCHEMAS !== 'undefined') ? APP_SCHEMAS[targetEntity] : null;
+                    const pkField = nestedSchema && nestedSchema.primaryKey ? nestedSchema.primaryKey : null;
+                    if (!pkField) throw new Error(`[AR-Governance] La entidad huerfano '${targetEntity}' carece de 'primaryKey' en Schema_Engine. gs`);
                     
                     const incomingIds = children.map(c => String(c[pkField] || ''));
                     let orphansToProcess = [];
@@ -472,10 +470,12 @@ const Engine_DB = {
                         const targetContext = _Adapter_Sheets.list(targetEntity, config, 'objects');
                         const targetRows = targetContext && targetContext.rows ? targetContext.rows : [];
                         
-                        // Inherit from schema, or fallback to safe lowercased inference
+                        // Inherit explicitly from schema
                         const targetSchema = (typeof APP_SCHEMAS !== 'undefined') ? APP_SCHEMAS[targetEntity] : null;
-                        const singularTarget = targetEntity.toLowerCase().endsWith('es') ? targetEntity.toLowerCase().slice(0, -2) : (targetEntity.toLowerCase().endsWith('s') ? targetEntity.toLowerCase().slice(0, -1) : targetEntity.toLowerCase());
-                        const inferredPk = (targetSchema && targetSchema.primaryKey) ? targetSchema.primaryKey : 'id_' + singularTarget;
+                        const inferredPk = (targetSchema && targetSchema.primaryKey) ? targetSchema.primaryKey : null;
+                        if (!inferredPk) {
+                            throw new Error(`[AR-Governance] Violación de Schema-Driven Design: La entidad '${targetEntity}' no define 'primaryKey' en APP_SCHEMAS. El modo de inferencia por sufijo (fallback) fue deprecado en S29.9.`);
+                        }
                         
                         matches = targetRows.filter(c => matchedIds.includes(String(c[inferredPk] || c['id_registro']).trim()));
                     } else {
@@ -620,8 +620,9 @@ const Engine_DB = {
             const edgesToUpsert = [...edgesClosed, ...edgesSpawned];
 
             // 4. Translate Nodes to Soft-Delete Upsert Payloads
-            const pkPrefix = entityName.toLowerCase().endsWith('es') ? entityName.toLowerCase().slice(0, -2) : (entityName.toLowerCase().endsWith('s') ? entityName.toLowerCase().slice(0, -1) : entityName.toLowerCase());
-            const pkField = 'id_' + pkPrefix;
+            const schema = (typeof APP_SCHEMAS !== 'undefined') ? APP_SCHEMAS[entityName] : null;
+            const pkField = schema && schema.primaryKey ? schema.primaryKey : null;
+            if (!pkField) throw new Error(`[AR-Governance] Violación Topológica: Imposible eliminar nodos para '${entityName}'. Falta declarar 'primaryKey' en Schema_Engine.`);
 
             const nodesToSoftDelete = patch.nodesToDelete.map(nId => {
                 const nodePayload = {

@@ -23,11 +23,7 @@ const Adapter_Sheets = {
         let primaryKeyField = schema && schema.primaryKey ? schema.primaryKey : null;
         
         if (!primaryKeyField) {
-            const tableKey = tableName.toLowerCase();
-            const singularKey = tableKey.endsWith('es') ? tableKey.slice(0, -2) : tableKey.endsWith('s') ? tableKey.slice(0, -1) : tableKey;
-            primaryKeyField = payload.hasOwnProperty('id_' + tableKey) ? 'id_' + tableKey
-                : payload.hasOwnProperty('id_' + singularKey) ? 'id_' + singularKey
-                    : Object.keys(payload).find(key => key.startsWith('id_'));
+            throw new Error(`[AR-Governance] Upsert fallido: La entidad '${tableName}' no tiene definida su 'primaryKey' en Schema_Engine. El enrutamiento dinámico requiere schemas estrictos.`);
         }
 
         if (!primaryKeyField || !payload[primaryKeyField]) {
@@ -184,11 +180,7 @@ const Adapter_Sheets = {
         let primaryKeyField = schema && schema.primaryKey ? schema.primaryKey : null;
 
         if (!primaryKeyField) {
-            const tableKey = tableName.toLowerCase();
-            const singularKey = tableKey.endsWith('es') ? tableKey.slice(0, -2) : tableKey.endsWith('s') ? tableKey.slice(0, -1) : tableKey;
-            primaryKeyField = firstItem.hasOwnProperty('id_' + tableKey) ? 'id_' + tableKey
-                : firstItem.hasOwnProperty('id_' + singularKey) ? 'id_' + singularKey
-                    : Object.keys(firstItem).find(key => key.startsWith('id_'));
+            throw new Error(`[AR-Governance] UpsertBatch fallido: La entidad '${tableName}' no tiene definida su 'primaryKey' en Schema_Engine. El enrutamiento dinámico requiere schemas estrictos.`);
         }
                 
         if (!primaryKeyField) {
@@ -303,10 +295,7 @@ const Adapter_Sheets = {
         let pkField = schema && schema.primaryKey ? schema.primaryKey : null;
 
         if (!pkField) {
-            const tableKey = tableName.toLowerCase();
-            const singularKey = tableKey.endsWith('s') ? tableKey.slice(0, -1) : tableKey;
-            const pkCandidates = ['id_' + tableKey, 'id_' + singularKey].filter(k => normalizedHeaders.includes(k));
-            pkField = pkCandidates.length > 0 ? pkCandidates[0] : normalizedHeaders.find(h => h.startsWith('id_'));
+            throw new Error(`[AR-Governance] Remove fallido: La entidad '${tableName}' no tiene definida su 'primaryKey' en Schema_Engine. El enrutamiento dinámico requiere schemas estrictos.`);
         }
 
         if (!pkField) throw new Error("No se pudo determinar la Primary Key en los encabezados para el Soft Delete.");
