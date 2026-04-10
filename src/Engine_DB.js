@@ -472,9 +472,10 @@ const Engine_DB = {
                         const targetContext = _Adapter_Sheets.list(targetEntity, config, 'objects');
                         const targetRows = targetContext && targetContext.rows ? targetContext.rows : [];
                         
-                        // Infer PK based on targetEntity
-                        const singularTarget = targetEntity.toLowerCase().endsWith('es') ? targetEntity.slice(0, -2) : (targetEntity.toLowerCase().endsWith('s') ? targetEntity.slice(0, -1) : targetEntity.toLowerCase());
-                        const inferredPk = 'id_' + singularTarget;
+                        // Inherit from schema, or fallback to safe lowercased inference
+                        const targetSchema = (typeof APP_SCHEMAS !== 'undefined') ? APP_SCHEMAS[targetEntity] : null;
+                        const singularTarget = targetEntity.toLowerCase().endsWith('es') ? targetEntity.toLowerCase().slice(0, -2) : (targetEntity.toLowerCase().endsWith('s') ? targetEntity.toLowerCase().slice(0, -1) : targetEntity.toLowerCase());
+                        const inferredPk = (targetSchema && targetSchema.primaryKey) ? targetSchema.primaryKey : 'id_' + singularTarget;
                         
                         matches = targetRows.filter(c => matchedIds.includes(String(c[inferredPk] || c['id_registro']).trim()));
                     } else {
