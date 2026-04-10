@@ -17,7 +17,7 @@ Resolver deuda técnica estructural y visual acumulada en las iteraciones anteri
 | S30.1 | Limpieza Segura de Assets Temporales | S | Done ✓ | Delegar exclusión de .build/assets al `.claspignore` en vez de usar mutación directa con `fs`. |
 | S30.2 | Robustez en Muteo Estructural de Relacionales | M | Done ✓ | Inyectar flag `readonly` vía prop-drilling en `UI_SubgridBuilder` para reemplazar hacks pasivos de CSS. |
 | S30.3 | DOM Pasivo a Estado Local en Componentes | M | Done ✓ | Evitar los bridges temporales vía *hidden inputs* con JSON strings. Anclar estado efímero en closure memory para listas dinámicas y subgrids. |
-| S30.4 | Evolución de ThemeManager | M | Pending | Migrar inyección en crudo de `window.hydrateThemeConfig` hacia una Clase ES6 formally orquestada. |
+| S30.4 | Evolución de ThemeManager | M | Done ✓ | Migrar inyección en crudo de `window.hydrateThemeConfig` hacia una Clase ES6 formally orquestada. |
 | S30.5 | AST RegExp CSS Minifier | L | Pending | Evaluar integración de integrador CSS (Rollup/Esbuild) para prevenir corrupciones visuales por Regex casero. |
 | S30.6 | Navegación Profunda en Subgrids (Drill-Down) | M | Done ✓ | Permitir inspeccionar o editar registros vinculados del subgrid (on-click) delegando las evaluaciones de ABAC a la nueva instancia hija. |
 | S30.7 | Estandarización Universal de Primary Key | S | Done ✓ | Crear utilitario UI_FormUtils.getPrimaryKey y refactorizar todo el Frontend para eliminar dependencias de 'idField' y usar estrictamente la regla E29 'primaryKey'. |

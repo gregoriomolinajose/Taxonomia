@@ -1,0 +1,35 @@
+artifact_type: story-design
+version: 1
+skill: rai-story-design
+created: '2026-04-10T14:02:00Z'
+story: 'S30.4'
+epic: 'E30'
+content:
+  summary: 'Migrar el ecosistema visual ThemeManager de object-literals espagueti hacia una formal clase ES6.'
+  complexity: simple
+  acceptance_criteria:
+    - id: AC1
+      description: '`UI_ThemeManager.client.js` debe proveer `class UI_ThemeManager` en modo estricto.'
+      verifiable: true
+    - id: AC2
+      description: 'Eliminar el código espagueti y redundante en `Theme_Engine.html` consolidando toda la lógica (ciclo, hidratación, almacenamiento y eventos) en la misma clase .js.'
+      verifiable: true
+    - id: AC3
+      description: 'Una vez refactorizada, crear la instancia Singleton global en `window.ThemeManager` conservando interfaces públicas utilizadas, evitando fracturar el resto de la App (Dashboard, Index).'
+      verifiable: true
+  integration_points:
+    - module: 'UI.Design'
+      change_type: modification
+      files: 
+        - 'src/UI_ThemeManager.client.js'
+        - 'src/Theme_Engine.html'
+        - 'src/Dashboard_UI.html'
+        - 'src/Index.html'
+  decisions:
+    - id: D1
+      choice: 'Unificación en UI_ThemeManager.client.js'
+      rationale: 'Actualmente un pedazo del gestor vive en Theme_Engine.html perdiendo TypeSafing y fragmentando mantenibilidad. Mover toda la lógica de tema/UI bajo ES6 previene fallos.'
+      alternatives_considered: ['Dejarlo en HTML e intentar instanciar', 'Convertir a TS']
+refs:
+  epic_scope: 'work/epics/e30-tech-debt-and-bugs/scope.md'
+metadata: {}

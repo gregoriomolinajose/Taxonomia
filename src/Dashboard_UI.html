@@ -182,4 +182,21 @@
       }
     }
   };
+
+  // [H14] Inversión de Acoplamiento: ThemeManager notifica, Dashboard escucha y se auto-actualiza
+  window.addEventListener('theme:changed', function(e) {
+    if (typeof window.ApexCharts === 'undefined') return;
+    
+    var isDark = e.detail === 'dark';
+    var chartOptionsUpdate = { 
+      theme: { mode: isDark ? 'dark' : 'light' },
+      chart: { 
+        foreColor: isDark ? 'var(--ion-color-light)' : 'var(--ion-color-light)',
+        background: 'transparent'
+      }
+    };
+
+    if (window.chartTopology) window.chartTopology.updateOptions(chartOptionsUpdate);
+    if (window.chartCapacity) window.chartCapacity.updateOptions(chartOptionsUpdate);
+  });
 </script>
