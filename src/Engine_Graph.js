@@ -31,6 +31,7 @@ const Engine_Graph = {
             childrenOf[pId].push(childId);
         });
         
+        const seenIncomingEdges = new Set();
         (incomingEdges || []).forEach(newEdge => {
             const childId = String(newEdge.id_nodo_hijo);
             const parentId = String(newEdge.id_nodo_padre);
@@ -39,13 +40,12 @@ const Engine_Graph = {
 
             // 1. Sibling Collision Check [Rule 11]
             if (rules.siblingCollisionCheck) {
-                if (childrenOf[parentId] && childrenOf[parentId].includes(childId)) {
-                    throw new Error(`[Topology Error] Colisión de Hermanos: El nodo ${childId} ya existe como subordinado de ${parentId}.`);
-                }
-                const incomingDuplicates = incomingEdges.filter(e => String(e.id_nodo_padre) === parentId && String(e.id_nodo_hijo) === childId);
-                if (incomingDuplicates.length > 1) {
+                // Prevención exclusiva de duplicados maliciosos en un mismo payload. Las aristas pre-existentes en DB se consideran idempotentes (NO-OP).
+                const edgeFingerprint = `${parentId}_${childId}`;
+                if (seenIncomingEdges.has(edgeFingerprint)) {
                     throw new Error(`[Topology Error] Colisión de Hermanos: Payload contiene relaciones duplicadas para ${childId} bajo ${parentId}.`);
                 }
+                seenIncomingEdges.add(edgeFingerprint);
             }
 
             // 2 & 3. Unified DFS Recursion (Cycles & Max Depth) [Rules 7 & 9]

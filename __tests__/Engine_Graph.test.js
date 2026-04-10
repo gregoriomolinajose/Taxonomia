@@ -122,16 +122,30 @@ describe('S6.5: Diccionario de Topologías Polimórfico (Strategy Pattern + Auto
         }).toThrow(/Profundidad Máxima Excedida/);
     });
 
-    test('Escenario 7: Colisión de Hermanos (siblingCollisionCheck)', () => {
+    test('Escenario 7: Colisión de Hermanos Idempotente (NO-OP)', () => {
         const incomingEdges = [{ id_nodo_padre: 'DOM-A', id_nodo_hijo: 'DOM-Z' }];
         const currentActiveEdges = [
             { id_nodo_padre: 'DOM-A', id_nodo_hijo: 'DOM-Z' } // Z already child of A
         ];
         const rules = { siblingCollisionCheck: true };
 
+        // Una re-declaración exacta debe ser percibida como idempotente.
         expect(() => {
             Engine_Graph.analyzeTopology(incomingEdges, currentActiveEdges, rules);
-        }).toThrow(/Colisión de Hermanos/);
+        }).not.toThrow();
+    });
+
+    test('Escenario 7b: Colisión de Hermanos Verdadera (Payload Duplicado)', () => {
+        const incomingEdges = [
+            { id_nodo_padre: 'DOM-A', id_nodo_hijo: 'DOM-Z' },
+            { id_nodo_padre: 'DOM-A', id_nodo_hijo: 'DOM-Z' }
+        ];
+        const currentActiveEdges = [];
+        const rules = { siblingCollisionCheck: true };
+
+        expect(() => {
+            Engine_Graph.analyzeTopology(incomingEdges, currentActiveEdges, rules);
+        }).toThrow(/Colisión de Hermanos: Payload contiene relaciones duplicadas/);
     });
 
     test('Escenario 8: Exclusividad Rígida - Zero Trust (allowOrphanStealing: false)', () => {

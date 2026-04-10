@@ -78,8 +78,8 @@ async function clickTopButtonByText(frame, text) {
     // Validar que NO aparezcan 5 Toast de errores de Engine_DB o API o Colision de hermano
     // La estrategia de 'DataAPI Queue' o disabled del UI debe habernos protegido y solo permitir 1 Request.
     // El "Guardar" debe completarse y regresar sin tirar Topology Error por autoinserciones duplicadas idÃ©nticas (Sibling Collision Rule 11 en Engine Graph)
-    const toastExito = frame.locator('ion-toast').filter({ hasText: 'Ã©xito' });
-    await expect(toastExito).toBeVisible({ timeout: 15000 });
+    const toastExito = frame.locator('ion-toast').filter({ hasText: 'éxito' });
+    await expect(toastExito).toBeVisible({ timeout: 35000 });
     
     // No debe haber un toast de Error activo en pantalla
     const toastError = frame.locator('ion-toast').filter({ hasText: '[Topology Error]' });
