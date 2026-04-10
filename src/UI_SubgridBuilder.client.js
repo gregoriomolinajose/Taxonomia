@@ -11,7 +11,9 @@ window.UI_SubgridBuilder = {
      * @param {Object} data - Mutación Data actual (Hydration Cache)
      * @param {String} entityName - Nombre de la tabla principal
      */
-    build: async function(field, container, data, entityName, localEventBus, modalContext) {
+    build: async function(field, container, data, entityName, localEventBus, modalContext, config = {}) {
+        const isReadonly = config.readonly === true || field.readonly === true;
+
         const subgridDiv = document.createElement('div');
         subgridDiv.style.border = '1px solid var(--ion-border-color)';
         subgridDiv.style.borderRadius = 'var(--rounded-sm)';
@@ -41,7 +43,10 @@ window.UI_SubgridBuilder = {
         addIcon.setAttribute('name', 'add-outline');
         addBtn.appendChild(addIcon);
         addBtn.appendChild(document.createTextNode(' Agregar'));
-        header.appendChild(addBtn);
+        
+        if (!isReadonly) {
+            header.appendChild(addBtn);
+        }
         
         subgridDiv.appendChild(header);
 
@@ -148,7 +153,9 @@ window.UI_SubgridBuilder = {
                 });
                 
                 item.appendChild(labelWrapper);
-                item.appendChild(delBtn);
+                if (!isReadonly) {
+                    item.appendChild(delBtn);
+                }
                 list.appendChild(item);
             });
         };

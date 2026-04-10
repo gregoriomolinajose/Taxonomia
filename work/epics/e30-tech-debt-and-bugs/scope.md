@@ -14,13 +14,14 @@ Resolver deuda técnica estructural y visual acumulada en las iteraciones anteri
 
 | ID | Story | Size | Status | Description |
 |----|-------|:----:|:------:|-------------|
-| S30.1 | Limpieza Segura de Assets Temporales | S | Pending | Delegar exclusión de .build/assets al `.claspignore` en vez de usar mutación directa con `fs`. |
-| S30.2 | Robustez en Muteo Estructural de Relacionales | M | Pending | Inyectar flag `readonly` vía prop-drilling en `UI_SubgridBuilder` para reemplazar hacks pasivos de CSS. |
+| S30.1 | Limpieza Segura de Assets Temporales | S | Done ✓ | Delegar exclusión de .build/assets al `.claspignore` en vez de usar mutación directa con `fs`. |
+| S30.2 | Robustez en Muteo Estructural de Relacionales | M | Done ✓ | Inyectar flag `readonly` vía prop-drilling en `UI_SubgridBuilder` para reemplazar hacks pasivos de CSS. |
 | S30.3 | DOM Pasivo a Estado Local en Componentes | M | Pending | Evitar los bridges temporales vía *hidden inputs* con JSON strings. Anclar estado efímero en closure memory. |
 | S30.4 | Evolución de ThemeManager | M | Pending | Migrar inyección en crudo de `window.hydrateThemeConfig` hacia una Clase ES6 formally orquestada. |
 | S30.5 | AST RegExp CSS Minifier | L | Pending | Evaluar integración de integrador CSS (Rollup/Esbuild) para prevenir corrupciones visuales por Regex casero. |
+| S30.6 | Navegación Profunda en Subgrids (Drill-Down) | M | Pending | Permitir inspeccionar o editar registros vinculados del subgrid (on-click) delegando las evaluaciones de ABAC a la nueva instancia hija. |
 
-**Total:** 5 stories base + (X) anexos dinámicos en Testing, TBD SP
+**Total:** 6 stories base + (X) anexos dinámicos en Testing, TBD SP
 
 ## Scope
 
@@ -80,6 +81,7 @@ Extraídos exitosamente.
 | 3 | S30.4 | M | None | M2 | Migración aislada a ES6 Class de ThemeManager. Base para arquitecturas UI modulares futuras. |
 | 4 | S30.3 | M | S30.4 | M2 | Remueve dependencias de hidden inputs. Se inicia tras estabilizar variables de Theme. |
 | 5 | S30.5 | L | All Prev | M3 | Modificación pesada de pipeline AST Node que afectará el output CSS global, requiere entorno limpio. |
+| 6 | S30.6 | M | S30.2 | M3 | Habilita navegación jerárquica en subgrids tras estabilizar el muteo de relacionales. |
 
 ### Milestones
 
@@ -87,7 +89,7 @@ Extraídos exitosamente.
 |-----------|---------|--------|------------------|
 | **M1: Core Stabilization** | S30.1, S30.2 | TBD | Despliegue sin fallas por Clasp y mutación evitada en Subgrids. |
 | **M2: UI & State Isolation** | +S30.4, S30.3 | TBD | Temas y DOM Event Bridging utilizan encapsulamiento de memoria y clases nativas sin parsings pasivos. |
-| **M3: Pipeline Modernization**| +S30.5 | TBD | Integrador (Esbuild/Rollup) funcionando fluidamente con Ionic. CSS estable en compilación. |
+| **M3: Pipeline Modernization**| +S30.5, S30.6 | TBD | Integrador (Esbuild/Rollup) funcionando fluidamente con Ionic. CSS estable en compilación. |
 | **M4: Epic Complete** | — | TBD | Bugs exploratorios resueltos integrados en la arquitectura. |
 
 ### Parallel Work Streams
@@ -96,7 +98,7 @@ Extraídos exitosamente.
 Time →
 Stream 1 (Ops/Build): S30.1 ──────────────────────> S30.5
                                                       ↑
-Stream 2 (DOM/UI):          S30.2 ─► S30.4 ─► S30.3   │
+Stream 2 (DOM/UI):          S30.2 ─► S30.4 ─► S30.3 ─► S30.6
                                                       │
 Stream 3 (Testing):          [ Bugs N dinámicos ] ────┘
 ```
@@ -108,11 +110,12 @@ Stream 3 (Testing):          [ Bugs N dinámicos ] ────┘
 
 | Story | Size | Status | Actual | Velocity | Notes |
 |-------|:----:|:------:|:------:|:--------:|-------|
-| S30.1 | S | Pending | — | — | Limpieza Segura de Assets Temporales |
-| S30.2 | M | Pending | — | — | Robustez en Muteo Estructural de Relacionales |
+| S30.1 | S | Done ✓ | 1h | S | Completada y merged. |
+| S30.2 | M | Done ✓ | 1h | S | Completada y merged. Permiso cruz de escape preservado. |
 | S30.3 | M | Pending | — | — | DOM Pasivo a Estado Local en Componentes |
 | S30.4 | M | Pending | — | — | Evolución de ThemeManager |
 | S30.5 | L | Pending | — | — | AST RegExp CSS Minifier |
+| S30.6 | M | Pending | — | — | Navegación Profunda en Subgrids (Drill-Down) |
 
 ### Sequencing Risks
 

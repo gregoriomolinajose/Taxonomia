@@ -37,7 +37,7 @@
         };
 
 
-        global.renderForm = async function (entityName, data = null, injectedCallback = null) {
+        global.renderForm = async function (entityName, data = null, injectedCallback = null, config = {}) {
             // S11.3: EventBus de Alcance Léxico Local (Lifecycle atado a Instancia UI para GC automático)
             const LocalEventBus = {
                 listeners: {},
@@ -94,6 +94,7 @@
             const closeBtn = document.createElement('ion-button');
             closeBtn.setAttribute('fill', 'clear');
             closeBtn.setAttribute('color', 'medium');
+            closeBtn.className = 'btn-close-drawer';
             closeBtn.innerHTML = '<ion-icon slot="icon-only" name="close-outline"></ion-icon>';
             closeBtn.addEventListener('click', () => {
                 if(window.AppEventBus) { window.AppEventBus.publish('MODAL::CLOSE_REQUEST'); } 
@@ -308,7 +309,7 @@
                     
                     // S13.1 Delegación Arquitectónica Pura SRP
                     // S14.3 Topological PubSub Dependency Injection
-                    await window.UI_SubgridBuilder.build(field, subCol, data, entityName, LocalEventBus, modal);
+                    await window.UI_SubgridBuilder.build(field, subCol, data, entityName, LocalEventBus, modal, config);
                     
                     targetRow.appendChild(subCol);
                 }
@@ -478,8 +479,11 @@
             global.currentEditId = id;
             console.log("[FormEngine] currentEditId asignado:", global.currentEditId);
 
+            // S18.4 - Evaluación temprana ABAC para propagar el modo Lectura estructuralmente (Prop-Drilling)
+            const canEdit = !window.ABAC || window.ABAC.can('update', entityName, id);
+
             // 4. Renderizar el formulario base de la entidad AL INSTANTE (0ms) usando caché local
-            await global.renderForm(entityName, record);
+            await global.renderForm(entityName, record, null, { readonly: !canEdit });
 
             // 5. [S29.9 Fix] Eliminada la pantalla Skeleton. La hidratación ahora es verdaderamente transparente.
             // Actualizar Título del Drawer
@@ -550,7 +554,6 @@
             // al ser instanciados con `window._buildSearchableMulti(...)` en el switch parent.
 
             // S18.4 - ABAC Passive Hiding & HelpDesk Mitigation (Educative Zero-Trust)
-            const canEdit = !window.ABAC || window.ABAC.can('update', entityName, id);
             if (!canEdit) {
                 // S24.2 Delega ABAC al servicio utilitario puro
                 if (window.UI_FormUtils && window.UI_FormUtils.applyReadOnlyLock) {

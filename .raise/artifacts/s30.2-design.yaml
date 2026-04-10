@@ -1,0 +1,34 @@
+artifact_type: story-design
+version: 1
+skill: rai-story-design
+created: '2026-04-10T10:04:00Z'
+story: 'S30.2'
+epic: 'E30'
+content:
+  summary: 'Inyectar estado readonly condicional hacia Subgrids para eliminar el ocultamiento pasivo CSS.'
+  complexity: medium
+  acceptance_criteria:
+    - id: AC1
+      description: 'renderForm soporta config como 4to parametro.'
+      verifiable: true
+    - id: AC2
+      description: 'UI_SubgridBuilder.build soporta config como 7mo arg (config.readonly).'
+      verifiable: true
+    - id: AC3
+      description: 'UI_SubgridBuilder omite adjuntar (appendChild) addBtn y delBtn si config.readonly === true.'
+      verifiable: true
+  integration_points:
+    - module: 'UI_SubgridBuilder'
+      change_type: modification
+      files: ['src/UI_SubgridBuilder.client.js']
+    - module: 'FormRenderer_UI'
+      change_type: modification
+      files: ['src/FormRenderer_UI.client.js']
+  decisions:
+    - id: D1
+      choice: 'Adelantar chequeo ABAC antes del renderForm.'
+      rationale: 'Permite proveer un config de estado prop-drilled deterministico desde el padre (FormRenderer_UI) hasta el SubgridBuilder sin repuestas React-like mutables, conservando el render puro estático.'
+refs:
+  backlog_item: 'E30'
+  epic_scope: 'work/epics/e30-tech-debt-and-bugs/scope.md'
+metadata: {}
