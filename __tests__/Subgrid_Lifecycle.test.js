@@ -14,7 +14,7 @@ const {
     linkRecord,
     unlinkRecord,
     buildSavePayload
-} = require('../src/SubgridState');
+} = require('../src/SubgridState.client.js');
 
 // ─────────────────────────────────────────────────────────────────────────────
 // SHARED FIXTURES

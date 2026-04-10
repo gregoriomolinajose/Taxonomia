@@ -26,7 +26,11 @@ function buildSheetWithDateObjects(entityName) {
         }),
         getLastRow: () => data.length,
         getLastColumn: () => headers.length,
-        getRange: jest.fn(),
+        getRange: jest.fn(() => ({
+            getValues: () => data,
+            setValues: jest.fn(),
+            setValue: jest.fn()
+        })),
         appendRow: jest.fn()
     };
 }
@@ -42,6 +46,9 @@ describe('API_Universal Serialization Contract — AC4', () => {
             getSheetByName: jest.fn(name => buildSheetWithDateObjects(name)),
             insertSheet: jest.fn()
         }));
+        global.APP_SCHEMAS = {
+            Dominio: { primaryKey: 'id_dominio' }
+        };
     });
 
     test('Contract 1: Adapter_Sheets.list() output survives JSON round-trip even with native Date rows', () => {
@@ -76,7 +83,8 @@ describe('API_Universal Serialization Contract — AC4', () => {
                 }),
                 getRange: jest.fn((row, col, numRows, numCols) => ({
                     getValues: () => store.slice(row - 1, row - 1 + numRows).map(r => r.slice(col - 1, col - 1 + numCols)),
-                    setValues: (vals) => { for (let i = 0; i < vals.length; i++) store[row - 1 + i] = vals[i]; }
+                    setValues: (vals) => { for (let i = 0; i < vals.length; i++) store[row - 1 + i] = vals[i]; },
+                    setValue: jest.fn()
                 })),
                 appendRow: jest.fn(row => store.push(row))
             })),

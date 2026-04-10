@@ -15,13 +15,15 @@ describe('Audit Trail: Adapter_Sheets Inmutabilidad en Update', () => {
                 // 1. Lectura de Encabezados (Fila 1)
                 if (row === 1) {
                     return {
-                        getValues: () => [['id_user', 'name', 'created_at', 'created_by', 'updated_at', 'updated_by']]
+                        getValues: () => [['id_user', 'name', 'created_at', 'created_by', 'updated_at', 'updated_by']],
+                        setValue: jest.fn()
                     };
                 }
                 // 2. Búsqueda de la Primary Key (Columna id_user)
                 if (row === 2 && col === 1 && numCols === 1) {
                     return {
-                        getValues: () => [['USER-123'], ['USER-456']]
+                        getValues: () => [['USER-123'], ['USER-456']],
+                        setValue: jest.fn()
                     };
                 }
                 // 3. Lectura de fila existente para el merge protector (Fila 2)
@@ -35,13 +37,15 @@ describe('Audit Trail: Adapter_Sheets Inmutabilidad en Update', () => {
                             '2026-03-19T00:00:00.000Z',
                             'admin@local'
                         ]],
-                        setValues: setValuesMock
+                        setValues: setValuesMock,
+                        setValue: jest.fn()
                     };
                 }
                 // 4. Inyección final (setValues)
                 return {
                     getValues: () => [[]],
-                    setValues: setValuesMock
+                    setValues: setValuesMock,
+                    setValue: jest.fn()
                 };
             }),
             getDataRange: jest.fn(() => ({
@@ -73,6 +77,9 @@ describe('Audit Trail: Adapter_Sheets Inmutabilidad en Update', () => {
         global.Session = mockSession;
         global.Logger = { log: jest.fn() };
         global.CONFIG = { SPREADSHEET_ID_DB: 'test-id' };
+        global.APP_SCHEMAS = {
+            Users: { primaryKey: 'id_user' }
+        };
     });
 
     afterEach(() => {
