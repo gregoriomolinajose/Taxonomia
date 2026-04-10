@@ -110,11 +110,11 @@ function getAppBootstrapPayload() {
         }
     }
     
-    // OBLIGATORIO: Sanitización JSON.parse(stringify) para destruir proxies nativos
-    const sanitizedReturn = JSON.parse(JSON.stringify({
+    // OBLIGATORIO: Transmitir formato String crudo para evadir el bug de IPC Deserialize de Google Apps Script V8 en diccionarios profundos
+    const sanitizedReturn = JSON.stringify({
       status: "success",
       data: payload
-    }));
+    });
     const executionTime = Date.now() - t0;
     Logger.log(`[Perf] getAppBootstrapPayload completado en ${executionTime}ms`);
     
@@ -180,13 +180,14 @@ function getInitialPayload(entityName) {
     const executionTime = Date.now() - t0;
     Logger.log(`[Perf] getInitialPayload(${entityName}) completado en ${executionTime}ms`);
 
-    const sanitizedReturn = JSON.parse(JSON.stringify({
+    // Transmitir en formato String crudo para evadir el crash del Serializador IPC de GAS
+    const sanitizedReturn = JSON.stringify({
       status: "success",
       schema: schema,
       data: dataResponse,
       lookups: lookups,
       executionTimeMs: executionTime
-    }));
+    });
     return sanitizedReturn;
   } catch (error) {
     Logger.log(`[Hydration Error] ${error.message}`);
