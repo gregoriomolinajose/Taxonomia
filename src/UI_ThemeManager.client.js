@@ -142,24 +142,10 @@ class UI_ThemeManager {
         
         this.updateIcon();
 
-        // Actualizacion dinamica de ApexCharts (Golden Pattern Direct-Instance & ForeColor)
-        const isDark = themeName === 'dark';
-        const chartOptionsUpdate = { 
-            theme: { mode: isDark ? 'dark' : 'light' },
-            chart: { 
-                foreColor: isDark ? 'var(--ion-color-light)' : 'var(--ion-color-light)',
-                background: 'transparent'
-            }
-        };
-        
+        // [H14] Desacople de vistas volátiles: Emitimos un evento nativo en lugar de invocar gráficos hardcoded
         if (typeof window !== 'undefined') {
-            if (typeof window.chartTopology !== 'undefined' && window.chartTopology) {
-                window.chartTopology.updateOptions(chartOptionsUpdate);
-            }
-            if (typeof window.chartCapacity !== 'undefined' && window.chartCapacity) {
-                window.chartCapacity.updateOptions(chartOptionsUpdate);
-            }
-
+            window.dispatchEvent(new CustomEvent('theme:changed', { detail: themeName }));
+            
             // Golden Pattern 6: Reflow mandatory after CSS token switch
             setTimeout(() => {
                 window.dispatchEvent(new Event('resize'));
