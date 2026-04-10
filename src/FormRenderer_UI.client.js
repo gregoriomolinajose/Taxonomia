@@ -56,9 +56,10 @@
 
             // S14.3: Topological PubSub Inversion (Listening to child intents)
             LocalEventBus.subscribe('UI::REQUEST_SUBFORM_OPEN', (ev) => {
-                const { targetEntity, onSuccess } = ev.detail;
+                const { targetEntity, initialData, onSuccess } = ev.detail;
                 if (typeof global.renderForm === 'function') {
-                    global.renderForm(targetEntity, null, onSuccess);
+                    // [S29.8] Propagar el payload inicial si existe (ej. Auto-vinculado)
+                    global.renderForm(targetEntity, initialData || null, onSuccess);
                 }
             });
 

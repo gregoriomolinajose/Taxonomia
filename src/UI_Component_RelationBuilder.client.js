@@ -144,6 +144,15 @@
                 
                 populateSelectOptions(basicSel, filteredActiveData, field);
                 
+                // [S29.8] Mock Option Injection para UX de Creación Anidada
+                const isVirtualParent = initialValues.length > 0 && initialValues[0] === '_NEW_PARENT_';
+                if (isVirtualParent) {
+                    const virtualOpt = document.createElement('ion-select-option');
+                    virtualOpt.value = '_NEW_PARENT_';
+                    virtualOpt.textContent = 'Padre en Curso (Auto-Vinculado)';
+                    basicSel.appendChild(virtualOpt);
+                }
+                
                 // [Bugfix S-Tier] Asignar el valor DESPUÉS de poblar las opciones para que Ionic lo reconozca
                 if (initialValues.length > 0) {
                     basicSel.value = initialValues[0];

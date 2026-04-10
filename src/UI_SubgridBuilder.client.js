@@ -393,10 +393,25 @@ window.UI_SubgridBuilder = {
                     }
                 };
                 
+                // [S29.8] Determinar Foreign Key recíproca hacia el Padre
+                let initialData = {};
+                const schemaMeta = window.APP_SCHEMAS && window.APP_SCHEMAS[field.targetEntity];
+                if (schemaMeta && schemaMeta.fields) {
+                    const reciprocalField = schemaMeta.fields.find(f => 
+                        f.type === 'relation' && 
+                        f.targetEntity === entityName && // Apunta de vuelta al Padre
+                        f.relationType !== field.relationType // Tiene el tipo de arista opuesto
+                    );
+                    if (reciprocalField) {
+                        initialData[reciprocalField.name] = window.currentEditId || '_NEW_PARENT_';
+                    }
+                }
+                
                 // Emisión Invertida (Pub/Sub Topológico) hacia el EventBus para no llamar a globals
                 if (localEventBus && typeof localEventBus.publish === 'function') {
                     localEventBus.publish('UI::REQUEST_SUBFORM_OPEN', {
                         targetEntity: field.targetEntity,
+                        initialData: initialData,
                         onSuccess: onSubFormSuccess
                     });
                 } else {
