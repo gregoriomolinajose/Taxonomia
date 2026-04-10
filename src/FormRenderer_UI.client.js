@@ -582,11 +582,22 @@
                 container.appendChild(noteContainer);
             }
 
+            // [S29.9] Dirty Check: Sensor global de mutación temprana
+            global.currentFormIsDirty = false;
+            const markDirty = () => { global.currentFormIsDirty = true; };
+            container.addEventListener('change', markDirty, { once: true });
+            container.addEventListener('ionInput', markDirty, { once: true });
+            container.addEventListener('input', markDirty, { once: true });
+
             // [S29.9 Fix] 8. Disparar Hidratación Silenciosa al final sin bloquear el hilo
             window.DataAPI.call('API_Universal_Router', 'read', entityName, { id: id })
                 .then(rawRes => {
                     const res = typeof rawRes === 'string' ? JSON.parse(rawRes) : rawRes;
                     if (res && res.status === 'success' && window.AppEventBus) {
+                        if (global.currentFormIsDirty) {
+                            console.warn(`[FormEngine] Dirty Check: Hidratación de ${entityName} abortada. El usuario inició edición antes de la latencia (RTT).`);
+                            return;
+                        }
                         window.AppEventBus.publish('FormEngine::RecordHydrated', res.data);
                     }
                 })
