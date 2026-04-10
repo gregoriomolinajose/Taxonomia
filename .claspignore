@@ -6,3 +6,5 @@ __tests__/
 *.test.js
 .antigravityrules
 **/*.css
+assets/
+.build/assets/

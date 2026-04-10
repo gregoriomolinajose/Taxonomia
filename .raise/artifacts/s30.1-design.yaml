@@ -1,0 +1,29 @@
+artifact_type: story-design
+version: 1
+skill: rai-story-design
+created: '2026-04-10T09:50:00Z'
+story: 'S30.1'
+epic: 'E30'
+content:
+  summary: 'Delegar limpieza de CSS/assets a .claspignore para evitar fs.rmSync riesgoso en Node.'
+  complexity: simple
+  acceptance_criteria:
+    - id: AC1
+      description: 'fs.rmSync es extirpado para assets en deploy.js'
+      verifiable: true
+    - id: AC2
+      description: '.claspignore bloquea apropiadamente lectura de archivos de assets'
+      verifiable: true
+  integration_points:
+    - module: 'deploy'
+      change_type: modification
+      files: ['deploy.js', '.claspignore']
+  decisions:
+    - id: D1
+      choice: 'Utilizar el patrón **/**/*.css y directorios completos en .claspignore.'
+      rationale: 'Gas/Clasp respeta el estándar minimatch; esto prevé errores de archivos no compatibles (unsupported file extensions) sin tener que destruir el local build file system que resulta en colisiones con watchers.'
+      alternatives_considered: ['Renombrar momentáneamente y deshacer']
+refs:
+  backlog_item: 'E30'
+  epic_scope: 'work/epics/e30-tech-debt-and-bugs/scope.md'
+metadata: {}
