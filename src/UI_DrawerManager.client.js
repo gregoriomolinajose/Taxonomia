@@ -93,7 +93,6 @@
                     global.currentFormDrawer = stack.length > 0 ? stack[stack.length - 1] : null;
                     
                     if (stack.length === 0) {
-                        global.currentEditId = null;
                         const root = getRootContainer();
                         root.classList.remove('active');
                         const backdrop = document.getElementById('drawer-backdrop');
@@ -117,7 +116,6 @@
                     }
                 }
                 global.currentFormDrawer = null;
-                global.currentEditId = null;
                 const root = getRootContainer();
                 root.classList.remove('active');
                 if (window.AppEventBus) window.AppEventBus.publish('DRAWER::DEPTH_CHANGED', 0);

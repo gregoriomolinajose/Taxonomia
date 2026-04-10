@@ -135,7 +135,7 @@ window.UI_SubgridBuilder = {
                 p.textContent = record.estado || 'Nuevo';
                 labelWrapper.appendChild(h2);
                 labelWrapper.appendChild(p);
-
+                item.appendChild(labelWrapper);
                 
                 const delBtn = document.createElement('ion-button');
                 delBtn.setAttribute('slot', 'end');
@@ -152,7 +152,22 @@ window.UI_SubgridBuilder = {
                     _refreshList();
                 });
                 
-                item.appendChild(labelWrapper);
+                // S30.6 Drill-Down Click Navigation
+                item.style.cursor = 'pointer';
+                item.addEventListener('click', (e) => {
+                    // Prevenir conflictos con el botón de Eliminar
+                    if (e.target.closest('ion-button')) return;
+                    
+                    if (typeof window.openEditForm === 'function') {
+                        // Navega ciegamente apuntando al TargetEntity, el openEditForm resolverá ABAC aisaldo y lo stackeará
+                        const entityKey = field.targetEntity;
+                        const meta = window.APP_SCHEMAS ? window.APP_SCHEMAS[entityKey] : null;
+                        const pkField = (meta && meta.idField) ? meta.idField : ('id_' + entityKey.toLowerCase());
+                        const recordId = record[pkField] || record.id_registro;
+                        window.openEditForm(recordId, entityKey);
+                    }
+                });
+                
                 if (!isReadonly) {
                     item.appendChild(delBtn);
                 }
@@ -447,7 +462,7 @@ window.UI_SubgridBuilder = {
                     );
                     if (reciprocalField) {
                         const mockToken = (window.UI_CONSTANTS && window.UI_CONSTANTS.MOCK_FK_TOKEN) ? window.UI_CONSTANTS.MOCK_FK_TOKEN : '_NEW_PARENT_';
-                        initialData[reciprocalField.name] = window.currentEditId || mockToken;
+                        initialData[reciprocalField.name] = config.parentEditId || mockToken;
                     }
                 }
                 
