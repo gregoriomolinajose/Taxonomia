@@ -7,7 +7,7 @@
  */
 
 window.UI_FormSubmitter = class UI_FormSubmitter {
-    constructor(entityName, fields, submitBtn, apiService = null, modal = null) {
+    constructor(entityName, fields, submitBtn, apiService = null, modal = null, localEditId = null) {
         this.entityName = entityName;
         this.fields = fields;
         this.submitBtn = submitBtn;
@@ -15,6 +15,7 @@ window.UI_FormSubmitter = class UI_FormSubmitter {
         // Dependency Injection for API Services
         this.apiService = apiService || window.DataAPI;
         this.modal = modal;
+        this._internalRetryId = localEditId;
         
         this.isSaving = false;
 
@@ -43,7 +44,7 @@ window.UI_FormSubmitter = class UI_FormSubmitter {
             await window.PresentSafe(loading);
 
             // LECTURA JIT (Evita Detached Nodes)
-            const activeForm = window.currentFormDrawer || document.getElementById('app-container');
+            const activeForm = this.modal || document.getElementById('app-container');
             const freshInputs = activeForm.querySelectorAll('ion-input, ion-textarea, ion-select, input[type="hidden"]');
             const payload = {};
             
@@ -116,11 +117,8 @@ window.UI_FormSubmitter = class UI_FormSubmitter {
             delete payload.updated_at;
             delete payload.updated_by;
 
-            // Bugfix (QA Review): Do not discard currentEditId immediately, otherwise network failures 
-            // turn retried Updates into unintended Creates. Cache it for this component instance.
-            this._internalRetryId = window.currentEditId || this._internalRetryId;
+            // Bugfix (QA Review & S30.6): Usamos closure pura per-modal guardada en this._internalRetryId
             const action = this._internalRetryId ? 'update' : 'create';
-            window.currentEditId = null; // Liberamos la variable global
             
             const safePayload = JSON.parse(JSON.stringify(payload));
 
@@ -171,7 +169,6 @@ window.UI_FormSubmitter = class UI_FormSubmitter {
 
     _performSuccessCleanup(response, isInlineRendered) {
         this._revertButtonState();
-        window.currentEditId = null;
         this._internalRetryId = null; // Liberar caché de reintentos
 
         if (window.DataStore) {

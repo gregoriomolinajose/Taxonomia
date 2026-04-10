@@ -8,9 +8,7 @@
      */
  
     (function (global) {
-        // Estado Global de Edición (Directiva 1)
-        global.currentEditId = null;
-
+        
         /* ─────────────────────────────────────────────────────────────────
            NOTA ARQUITECTURA (S14.1):
            Las utilidades globales de este módulo fueron extraídas a:
@@ -63,13 +61,14 @@
                 }
             });
 
-            // Asegurar reset de estado al abrir formulario nuevo (Directiva 1)
-            // Ya no lo hacemos incondicionalmente, solo si es la capa raíz
-            if (global.ModalStackController.getDepth() === 0) {
-                global.currentEditId = null;
+            // Asegurar reset de estado al abrir formulario nuevo
+            if (global.ModalStackController && global.ModalStackController.getDepth() === 0) {
                 window._lastSection = null; // Reset de secciones UI
             }
             
+            // S30.6 Resolutor de Contexto Local (Adiós global.currentEditId)
+            const meta = window.APP_SCHEMAS[entityName];
+            const localEditId = data ? data[(meta && meta.idField) ? meta.idField : 'id_registro'] : null;
             // Construcción del Drawer de la Vista de Formularios (S25.2 Architecture)
             const modal = document.createElement('div');
             if (!global.DrawerStackController.push(modal)) {
@@ -292,7 +291,7 @@
 
                 // Usamos ion-input nativo pero configurando su "fill" y "label-placement"
                 // para emular el Figma (label arriba transparente, caja contorno)
-                const inputEl = global.UI_Factory.buildFieldNode(field, entityName, data, LocalEventBus, global.currentEditId);
+                const inputEl = global.UI_Factory.buildFieldNode(field, entityName, data, LocalEventBus, localEditId);
 
                 ionCol.appendChild(inputEl);
                 targetRow.appendChild(ionCol);
@@ -309,7 +308,11 @@
                     
                     // S13.1 Delegación Arquitectónica Pura SRP
                     // S14.3 Topological PubSub Dependency Injection
-                    await window.UI_SubgridBuilder.build(field, subCol, data, entityName, LocalEventBus, modal, config);
+                    // S30.6 Injection of parentEditId directly avoiding singletons 
+                    await window.UI_SubgridBuilder.build(field, subCol, data, entityName, LocalEventBus, modal, {
+                        ...config, 
+                        parentEditId: localEditId
+                    });
                     
                     targetRow.appendChild(subCol);
                 }
@@ -400,7 +403,7 @@
             // --------------------------------------------------------------------
 
             // S14.1 Delegación Submitter Object
-            new window.UI_FormSubmitter(entityName, fields, submitBtn, null, modal);
+            new window.UI_FormSubmitter(entityName, fields, submitBtn, null, modal, localEditId);
             
             // --- Metadata-Driven Dependency Injection (Zero-Touch UI) ---
             if (window.UI_FormDependencies) {
@@ -420,7 +423,7 @@
          */
         global._isRenderingForm = false;
 
-        global.openEditForm = async function (id) {
+        global.openEditForm = async function (id, customEntityName = null) {
             if (global._isRenderingForm) {
                 console.warn("[FormEngine] Race condition prevenida: ignorando click duplicado");
                 return;
@@ -429,22 +432,16 @@
             try {
                 console.log("[FormEngine] Solicitud de edición recibida para ID:", id);
 
-            // 1. Obtener la entidad activa desde el DataViewEngine
-            if (!window.DataViewEngine) {
-                console.error("[FormEngine] Error: DataViewEngine no encontrado en el objeto window.");
-                alert("Error técnico: No se pudo encontrar el motor de datos.");
+            const state = window.DataViewEngine ? window.DataViewEngine._getState() : null;
+            const entityName = customEntityName || (state ? state.entityName : null);
+            
+            if (!entityName) {
+                console.error("[FormEngine] Error: Entidad objetivo no identificada.");
                 return;
             }
 
-            const state = window.DataViewEngine._getState();
-            if (!state || !state.entityName) {
-                console.error("[FormEngine] Error: El estado del listado no es válido.", state);
-                return;
-            }
-
-            const entityName = state.entityName;
-            const data = state.data;
-            const meta = state.entityMeta;
+            const meta = window.APP_SCHEMAS[entityName];
+            const dataBase = window.DataStore.get(entityName);
 
             // --- REGLA 3 (rules_qa.md): PROTECTOR DE NULLS ---
             if (!meta || !meta.idField) {
@@ -453,7 +450,7 @@
                 return;
             }
 
-            if (!data || !Array.isArray(data)) {
+            if (!dataBase || !Array.isArray(dataBase)) {
                 console.error("[FormEngine] Error: Cache de datos no disponible para la entidad:", entityName);
                 return;
             }
@@ -461,23 +458,21 @@
             console.log("[FormEngine] Editando entidad:", entityName, "Usando metadata:", meta);
 
             // 2. Buscar el registro completo
-            const record = data.find(item => item[meta.idField] === id);
+            const record = dataBase.find(item => item[meta.idField] === id);
             if (!record) {
-                console.error("[FormEngine] Error: Registro no encontrado en cache local para ID:", id, "en datos:", data);
+                console.error("[FormEngine] Error: Registro no encontrado en cache local para ID:", id, "en datos:", dataBase);
                 alert("Error: El registro con ID '" + id + "' no pudo ser localizado para edición.");
                 return;
             }
 
             console.log("[FormEngine] Registro encontrado:", record);
 
-            // [UX] Master-Detail Uninterrupted Swapping
-            if (global.DrawerStackController && global.DrawerStackController.getDepth() > 0) {
+            // [UX] Navegación: Evitamos destruir el stack si es Drill-Down
+            if (!customEntityName && global.DrawerStackController && global.DrawerStackController.getDepth() > 0) {
                 global.DrawerStackController.clearAllSync();
             }
 
-            // 3. Activar modo edición Inmediato
-            global.currentEditId = id;
-            console.log("[FormEngine] currentEditId asignado:", global.currentEditId);
+            // 3. (Obsoleto) currentEditId ya no se usa globalmente
 
             // S18.4 - Evaluación temprana ABAC para propagar el modo Lectura estructuralmente (Prop-Drilling)
             const canEdit = !window.ABAC || window.ABAC.can('update', entityName, id);
