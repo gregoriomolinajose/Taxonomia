@@ -481,68 +481,14 @@
             // 4. Renderizar el formulario base de la entidad AL INSTANTE (0ms) usando caché local
             await global.renderForm(entityName, record);
 
-            // 5. Aplicar Skeleton/Loading local al Drawer mientras hidrata en background
-            const formContainer = global.currentFormDrawer ? global.currentFormDrawer.querySelector('.drawer-content') : null;
-            let skeletonOverlay = null;
-            
-            if (formContainer) {
-                formContainer.style.position = 'relative';
-                
-                skeletonOverlay = document.createElement('div');
-                skeletonOverlay.style.position = 'absolute';
-                skeletonOverlay.style.top = '0';
-                skeletonOverlay.style.left = '0';
-                skeletonOverlay.style.right = '0';
-                skeletonOverlay.style.bottom = '0';
-                skeletonOverlay.style.backgroundColor = 'var(--ion-background-color, #fff)';
-                skeletonOverlay.style.zIndex = '999';
-                skeletonOverlay.style.padding = '20px';
-                
-                let fakeHtml = '';
-                for(let i=0; i<6; i++) {
-                    fakeHtml += `
-                        <div style="margin-bottom: 24px;">
-                            <ion-skeleton-text animated style="width: 30%; height: 14px; margin-bottom: 8px; border-radius: 4px;"></ion-skeleton-text>
-                            <ion-skeleton-text animated style="width: 100%; height: 44px; border-radius: 8px;"></ion-skeleton-text>
-                        </div>
-                    `;
-                }
-                skeletonOverlay.innerHTML = fakeHtml;
-                formContainer.appendChild(skeletonOverlay);
-            }
-
+            // 5. [S29.9 Fix] Eliminada la pantalla Skeleton. La hidratación ahora es verdaderamente transparente.
             // Actualizar Título del Drawer
             if (global.currentFormDrawer) {
                 const modalTitle = global.currentFormDrawer.querySelector('.drawer-title') || global.currentFormDrawer.querySelector('ion-title');
                 if (modalTitle) modalTitle.textContent = "Editar: " + window.formatEntityName(entityName);
             }
 
-            let fullRecord = record;
-            try {
-                try {
-                    // Hidratación Background Silenciosa
-                    const rawRes = await window.DataAPI.call('API_Universal_Router', 'read', entityName, { id: id });
-                    const res = typeof rawRes === 'string' ? JSON.parse(rawRes) : rawRes;
-                    if (res && res.status === 'success') {
-                        fullRecord = res.data;
-                        if (window.AppEventBus) window.AppEventBus.publish('FormEngine::RecordHydrated', fullRecord);
-                    } else {
-                        throw new Error(res ? res.message : 'Respuesta inválida');
-                    }
-                } catch (apiErr) {
-                    throw apiErr;
-                }
-            } catch (e) {
-                console.warn("[FormEngine] Falló hidratación profunda, usando cache local:", e);
-            } finally {
-                if (skeletonOverlay) {
-                    skeletonOverlay.style.transition = 'opacity 0.25s ease';
-                    skeletonOverlay.style.opacity = '0';
-                    setTimeout(() => skeletonOverlay.remove(), 250);
-                }
-            }
-
-            // 5. Pre-llenado de campos (Directiva 3.c)
+            // 5. Pre-llenado de campos (Acelerado a 0ms Local Cache)
             const container = global.currentFormDrawer || document.getElementById('app-container');
             const inputs = container.querySelectorAll('ion-input, ion-textarea, ion-select, input[type="hidden"]');
 
@@ -635,6 +581,16 @@
                 noteContainer.appendChild(note);
                 container.appendChild(noteContainer);
             }
+
+            // [S29.9 Fix] 8. Disparar Hidratación Silenciosa al final sin bloquear el hilo
+            window.DataAPI.call('API_Universal_Router', 'read', entityName, { id: id })
+                .then(rawRes => {
+                    const res = typeof rawRes === 'string' ? JSON.parse(rawRes) : rawRes;
+                    if (res && res.status === 'success' && window.AppEventBus) {
+                        window.AppEventBus.publish('FormEngine::RecordHydrated', res.data);
+                    }
+                })
+                .catch(e => console.warn("[FormEngine] Falló hidratación background profunda:", e));
 
             } catch (err) {
                 console.error("[FormEngine] Error asíncrono abriendo Formulario:", err);
