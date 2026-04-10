@@ -70,6 +70,40 @@ window.UI_SubgridBuilder = {
         // [S29.7] Estado local del subgrid purificado de Singletons. Usamos un nodo escondido JSON
         const childRecords = (data && Array.isArray(data[field.name])) ? [...data[field.name]] : [];
         
+        // [S29.9] Zero-Latency Cache Cross-Reference (Agile Join)
+        if (childRecords.length === 0 && field.isTemporalGraph && field.graphEntity && window.DataStore) {
+            const schema = window.APP_SCHEMAS ? window.APP_SCHEMAS[entityName] : null;
+            const pkKey = schema && schema.primaryKey ? schema.primaryKey : (data ? Object.keys(data).find(k => k.startsWith('id_') && k !== 'id_registro') : null);
+            const currentPK = data ? (data[pkKey] || data.id_registro) : null;
+            
+            if (currentPK && window.UI_FormUtils) {
+                const graphEdges = window.DataStore.get(field.graphEntity) || [];
+                const targetTable = window.DataStore.get(field.targetEntity) || [];
+                
+                if (graphEdges.length > 0 && targetTable.length > 0) {
+                    const edgeName = (field.graphEdgeType || field.name).toUpperCase();
+                    let childIds = [];
+                    if (field.relationType === 'hijo') {
+                        childIds = graphEdges.filter(e => e.es_version_actual !== false && window.UI_FormUtils.normalizeId(e.id_nodo_padre) === window.UI_FormUtils.normalizeId(currentPK) && String(e.tipo_relacion).toUpperCase() === edgeName).map(e => window.UI_FormUtils.normalizeId(e.id_nodo_hijo));
+                    } else if (field.relationType === 'padre') {
+                        childIds = graphEdges.filter(e => e.es_version_actual !== false && window.UI_FormUtils.normalizeId(e.id_nodo_hijo) === window.UI_FormUtils.normalizeId(currentPK) && String(e.tipo_relacion).toUpperCase() === edgeName).map(e => window.UI_FormUtils.normalizeId(e.id_nodo_padre));
+                    }
+                    
+                    if (childIds.length > 0) {
+                        const schemaChild = window.APP_SCHEMAS ? window.APP_SCHEMAS[field.targetEntity] : null;
+                        const childPkKey = schemaChild && schemaChild.primaryKey ? schemaChild.primaryKey : Object.keys(targetTable[0] || {}).find(k => k.startsWith('id_') && k !== 'id_registro');
+                        
+                        targetTable.forEach(row => {
+                             const rawId = window.UI_FormUtils.normalizeId(row[childPkKey] || row.id_registro);
+                             if (childIds.includes(rawId) && row.estado !== 'Eliminado') {
+                                 childRecords.push(row);
+                             }
+                        });
+                    }
+                }
+            }
+        }
+        
         let hiddenInput = subgridDiv.querySelector(`input[name="${field.name}"]`);
         if (!hiddenInput) {
             hiddenInput = document.createElement('input');
@@ -90,11 +124,13 @@ window.UI_SubgridBuilder = {
                 
                 const labelWrapper = document.createElement('ion-label');
                 const h2 = document.createElement('h2');
-                h2.textContent = record.nombre || 'Sin nombre';
+                // S29.9 Override: Priorizar labelField por sobre prop hardcodeada "nombre" (ej. evitar "Sin nombre")
+                h2.textContent = (field.labelField && record[field.labelField]) ? record[field.labelField] : (record.nombre || 'Sin nombre');
                 const p = document.createElement('p');
                 p.textContent = record.estado || 'Nuevo';
                 labelWrapper.appendChild(h2);
                 labelWrapper.appendChild(p);
+
                 
                 const delBtn = document.createElement('ion-button');
                 delBtn.setAttribute('slot', 'end');
