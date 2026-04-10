@@ -77,7 +77,7 @@
                     .withSuccessHandler((response) => {
                         // Resuelve bugs de "dropping postMessage.. deserialize threw error" 
                         // aceptando strings crudos y decodificándolos.
-                        if (typeof response === 'string' && response.startsWith('{')) {
+                        if (typeof response === 'string' && (response.startsWith('{') || response.trim().startsWith('['))) {
                             try { response = JSON.parse(response); } catch(e) {}
                         }
                         resolve(response);

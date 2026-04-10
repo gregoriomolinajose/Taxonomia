@@ -20,7 +20,11 @@ function _getCachedLookup(sourceFnName) {
   }
   
   Logger.log(`[Cache] MISS para ${sourceFnName}. Leyendo de DB...`);
-  const result = this[sourceFnName]();
+  let result = this[sourceFnName]();
+  // Safe-Parse para estandarizar el IPC Bug Fix donde las funciones devuelven ya Strings
+  if (typeof result === 'string') {
+      try { result = JSON.parse(result); } catch(e) { }
+  }
   cache.put(cacheKey, JSON.stringify(result), 3600); // 1 hora
   return result;
 }
@@ -59,7 +63,8 @@ function getDominioOptions() {
         hasActiveParent: !!hasActiveParentMap[row.id_dominio]
       }));
       
-    return JSON.parse(JSON.stringify(options));
+    // OBLIGATORIO: Retornar string nativo para evadir bug de serialización V8 IPC
+    return JSON.stringify(options);
   } catch(e) {
     Logger.log("Error en getDominioOptions: " + e.message);
     return [];
@@ -79,7 +84,8 @@ function getPersonasOptions() {
         value: row.id_persona,
         label: row.nombre + (row.cargo ? ` (${row.cargo})` : '')
       }));
-    return JSON.parse(JSON.stringify(options));
+    // OBLIGATORIO: Retornar string nativo para evadir bug de serialización V8 IPC
+    return JSON.stringify(options);
   } catch(e) {
     Logger.log("Error en getPersonasOptions: " + e.message);
     return [];
@@ -131,10 +137,12 @@ function getGenericOptions(entityName, valCol, labelCol) {
     const result = Engine_DB.list(entityName);
     if (!result || !result.rows) return [];
 
-    return result.rows.map(row => ({
+    // OBLIGATORIO: Transmitir en formato String crudo para evadir el crash del Serializador IPC de GAS
+    const options = result.rows.map(row => ({
       value: row[valCol],
       label: row[labelCol]
     })).filter(opt => opt.value !== undefined && opt.value !== null && opt.label);
+    return JSON.stringify(options);
   } catch (error) {
     Logger.log(`Error en getGenericOptions para ${entityName}: ` + error.message);
     return [];

@@ -305,6 +305,32 @@ const APP_SCHEMAS = {
       { name: "nivel_acceso", type: "select", label: "Nivel de Acceso", required: true, width: 12, options: ["ALL (Admin Total)", "OWNER_ONLY (Solo propios)", "MEMBER_ONLY (Siendo Miembro)", "READ_ONLY (Solo lectura)", "NONE (Denegado)"] }
     ]
   },
+  Sys_Graph_Edges: {
+    metadata: { showInMenu: false, order: 90, iconName: 'git-network', color: 'dark', label: 'Sys: Grafo', titleField: 'id_relacion', idField: 'id_relacion', fkField: null },
+    primaryKey: "id_relacion",
+    fields: [
+      { name: "id_relacion", type: "text", primaryKey: true, readonly: true },
+      { name: "id_nodo_padre", type: "text" },
+      { name: "id_nodo_hijo", type: "text" },
+      { name: "tipo_relacion", type: "text" },
+      { name: "valido_desde", type: "text" },
+      { name: "valido_hasta", type: "text" },
+      { name: "es_version_actual", type: "text" }
+    ]
+  },
+  Relacion_Dominios: {
+    metadata: { showInMenu: false, order: 91, iconName: 'git-network', color: 'dark', label: 'Sys: Dominios', titleField: 'id_relacion', idField: 'id_relacion', fkField: null },
+    primaryKey: "id_relacion",
+    fields: [
+      { name: "id_relacion", type: "text", primaryKey: true, readonly: true },
+      { name: "id_nodo_padre", type: "text" },
+      { name: "id_nodo_hijo", type: "text" },
+      { name: "tipo_relacion", type: "text" },
+      { name: "valido_desde", type: "text" },
+      { name: "valido_hasta", type: "text" },
+      { name: "es_version_actual", type: "text" }
+    ]
+  },
   Config_Workspace: {
     metadata: { showInMenu: false, order:93, iconName:'business-outline', color:'primary', label:'Seguridad: Workspaces', titleField:'dominio_principal', idField:'id_workspace', fkField:null },
     primaryKey: "id_workspace",
