@@ -97,6 +97,11 @@
                 } catch(e) { initialValues = (typeof data[field.name] === 'string') ? [data[field.name]] : []; } // fallback
             }
 
+            // [S29.8] Hard Override Topológico: Asegurar pre-hidratación si viene inyectado el Payload Mock
+            if (data && data[field.name] === '_NEW_PARENT_') {
+                initialValues = ['_NEW_PARENT_'];
+            }
+
             if (field.uiComponent === 'searchable_multi') {
                 if (global.UI_Factory.buildSearchableMulti) {
                     const multiNodes = global.UI_Factory.buildSearchableMulti(field, activeData, initialValues, localEventBus);
