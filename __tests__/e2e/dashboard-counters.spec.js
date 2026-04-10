@@ -31,7 +31,7 @@ test.describe('E28: Dashboard Counters Visibility', () => {
 
   test.beforeEach(async () => {
     // Navigate to web app
-    await page.goto('https://script.google.com/macros/s/AKfycbyYY8F6scltfXdK_CycPcxIQaeNn5tDFn78VhaHGMKlcMzUjOjdrHFvks1OZl5OBqDuzQ/exec');
+    await page.goto(process.env.DEV_URL || 'https://script.google.com/macros/s/AKfycbyYY8F6scltfXdK_CycPcxIQaeNn5tDFn78VhaHGMKlcMzUjOjdrHFvks1OZl5OBqDuzQ/exec');
     
     if (page.url().includes('accounts.google.com')) {
         console.log("ESPERANDO LOGIN MANUAL...");
@@ -46,7 +46,7 @@ test.describe('E28: Dashboard Counters Visibility', () => {
     await page.waitForTimeout(1000);
   });
 
-  test('Los contadores del dashboard deben renderizar datos númericos en lugar de spinners (... o vacíos)', async () => {
+  test('Los contadores del dashboard deben renderizar datos nÃºmericos en lugar de spinners (... o vacÃ­os)', async () => {
       const frame = page.frameLocator('#sandboxFrame').frameLocator('#userHtmlFrame');
       
       // Select the Portafolios Card
@@ -75,7 +75,7 @@ test.describe('E28: Dashboard Counters Visibility', () => {
       expect((await personasTotal.textContent()).trim()).toMatch(numPattern);
   });
 
-  test('El bootstrap del dashboard no debe emitir errores de deserialización IPC', async () => {
+  test('El bootstrap del dashboard no debe emitir errores de deserializaciÃ³n IPC', async () => {
       let deserializeErrorSeen = false;
       page.on('console', msg => {
           if (msg.text().includes('deserialize threw error') || msg.text().includes('dropping postMessage')) {
@@ -84,7 +84,7 @@ test.describe('E28: Dashboard Counters Visibility', () => {
       });
 
       // Recarga forzada para capturar todo el flujo
-      await page.goto('https://script.google.com/macros/s/AKfycbyYY8F6scltfXdK_CycPcxIQaeNn5tDFn78VhaHGMKlcMzUjOjdrHFvks1OZl5OBqDuzQ/exec');
+      await page.goto(process.env.DEV_URL || 'https://script.google.com/macros/s/AKfycbyYY8F6scltfXdK_CycPcxIQaeNn5tDFn78VhaHGMKlcMzUjOjdrHFvks1OZl5OBqDuzQ/exec');
       const frame = page.frameLocator('#sandboxFrame').frameLocator('#userHtmlFrame');
       await frame.locator('ion-app').waitFor({ state: 'visible', timeout: 60000 });
 

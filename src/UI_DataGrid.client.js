@@ -505,8 +505,8 @@
             
             // 1. Resolve Graph Edge pointer if it's a Temporal Graph edge
             let resolvedVal = rawVal;
-            if (fieldMeta.isTemporalGraph && window.__APP_CACHE__ && window.__APP_CACHE__['Sys_Graph_Edges']) {
-                const activeEdges = window.__APP_CACHE__['Sys_Graph_Edges'].filter(e => e.es_version_actual !== false);
+            if (fieldMeta.isTemporalGraph && window.DataStore && window.DataStore.get('Sys_Graph_Edges')) {
+                const activeEdges = window.DataStore.get('Sys_Graph_Edges').filter(e => e.es_version_actual !== false);
                 const edgeName = (fieldMeta.graphEdgeType || fieldMeta.name).toUpperCase();
                 
                 if (fieldMeta.relationType === 'padre') {
@@ -519,8 +519,8 @@
             }
             
             // 2. Transmute the physical ID explicitly to the schema's labelField
-            if (resolvedVal && window.__APP_CACHE__ && window.__APP_CACHE__[fieldMeta.targetEntity]) {
-                const targetTable = window.__APP_CACHE__[fieldMeta.targetEntity];
+            if (resolvedVal && window.DataStore && window.DataStore.get(fieldMeta.targetEntity)) {
+                const targetTable = window.DataStore.get(fieldMeta.targetEntity);
                 const targetRow = targetTable.find(tr => String(tr[fieldMeta.valueField || 'id_registro']) === String(resolvedVal));
                 if (targetRow && targetRow[fieldMeta.labelField]) {
                     resolvedVal = targetRow[fieldMeta.labelField];

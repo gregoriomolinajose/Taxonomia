@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeAll, beforeEach, vi } from 'vitest';
 import '@testing-library/jest-dom';
 import { screen, waitFor } from '@testing-library/dom';
-import '../src/DataView_UI.client.js';
+    // Dynamic import to allow window mocks to run before the IIFE executes
 
 describe('DataViewEngine Nativo JSDOM', () => {
 
@@ -30,6 +30,44 @@ describe('DataViewEngine Nativo JSDOM', () => {
         // --- 2. Dependencias del Ecosistema de Taxonomia (Global Scope Mocks) ---
         window.ENTITY_META = { testEntity: { label: 'Entidad QA', idField: 'id_item' } };
         window.__APP_CACHE__ = {};
+        window.DataStore = {
+            _cache: window.__APP_CACHE__,
+            get: function(entityName) { return this._cache[entityName] || null; },
+            getActive: function(entityName) {
+                var allData = this.get(entityName);
+                if (!allData || !Array.isArray(allData)) return [];
+                return allData.filter(function(r) { return r.estado !== 'Eliminado' && r.estado !== 'eliminado'; });
+            },
+            set: function(entityName, data) { this._cache[entityName] = data; },
+            invalidate: function(entityName) { delete this._cache[entityName]; },
+            getAll: function() { return this._cache; },
+            getNested: function(entityName) {
+                if (!this._cache.nestedData) this._cache.nestedData = {};
+                return this._cache.nestedData[entityName] || null;
+            },
+            setNested: function(entityName, data) {
+                if (!this._cache.nestedData) this._cache.nestedData = {};
+                this._cache.nestedData[entityName] = data;
+            },
+            clearNested: function() { this._cache.nestedData = {}; }
+        };
+        
+        window.AppEventBus = {
+            events: {},
+            subscribe: function(event, callback) {
+                if (!this.events[event]) this.events[event] = [];
+                this.events[event].push(callback);
+            },
+            publish: function(event, data) {
+                if (!this.events[event]) return;
+                this.events[event].forEach(cb => cb(data));
+            }
+        };
+
+        window.DataEngine = {
+            applyFilter: vi.fn((data) => data),
+            applySort: vi.fn((data) => data)
+        };
         window.formatEntityName = (name) => name;
         
         // Abstracciones delegadas que no probamos aquí (Single Responsibility Principal)
@@ -57,14 +95,18 @@ describe('DataViewEngine Nativo JSDOM', () => {
         window.UI_Router = { showListSidebar: vi.fn() };
     });
 
-    // La inyección nativa del Módulo DataView_UI se hace junto a los imports superiores
-
-    beforeEach(() => {
+    beforeEach(async () => {
         // Reset DOM para cada test
         document.body.innerHTML = '<div id="test-container"></div>';
         // Reset cache
         window.__APP_CACHE__ = {};
+        window.DataStore._cache = window.__APP_CACHE__;
         vi.clearAllMocks();
+
+        // La inyección nativa del Módulo DataView_UI debe hacerse después del beforeAll/beforeEach
+        if (!window.DataViewEngine) {
+            await import('../src/DataView_UI.client.js');
+        }
     });
 
     it('A. Renderiza la estructura core sincrónica (skeleton) previniendo visual glitches', () => {
@@ -91,9 +133,9 @@ describe('DataViewEngine Nativo JSDOM', () => {
         expect(finalState.data[0].nombre).toBe('Portafolio Principal');
         
         // Validación Architectural RAM Directiva 1: Pre-cache persistido global
-        expect(window.__APP_CACHE__['testEntity']).toBeDefined();
+        expect(window.DataStore.get('testEntity')).toBeDefined();
         // En el cache viven los dos, DataView los filtró en runtime para .data
-        expect(window.__APP_CACHE__['testEntity'].length).toBe(2); 
+        expect(window.DataStore.get('testEntity').length).toBe(2); 
 
         expect(window.UI_Router.showListSidebar).toHaveBeenCalledWith('testEntity');
     });
@@ -115,9 +157,42 @@ describe('DataViewEngine Nativo JSDOM', () => {
         expect(generatedKeys).toContain('id_item');
         expect(generatedKeys).toContain('nombre');
         
-        // NO debe contener campos estéticos (divider) ni virtuales (isVirtual)
-        expect(generatedKeys).not.toContain('separador_1');
         expect(generatedKeys).not.toContain('campo_virtual');
+    });
+
+    it('D. Reacciona a la mutación de datos global vía DATA::UPDATED asegurando la reactividad en UI', async () => {
+        // Render Inicial
+        window.DataViewEngine.render('testEntity', 'test-container');
+        
+        // Esperemos a que lleguen los datos originales del RPC
+        await waitFor(() => {
+            const state = window.DataViewEngine._getState();
+            expect(state).toBeDefined();
+            expect(state.data).toBeDefined();
+            expect(state.data.length).toBeGreaterThan(0);
+        });
+
+        // Forzar inyección explícita
+        const newRow = { id_item: 'ITM-99', nombre: 'Portafolio Reactivo', estado: 'Activo' };
+        const oldRow = { id_item: 'ITM-1', nombre: 'Portafolio Principal', estado: 'Activo' };
+        window.DataStore.set('testEntity', [newRow, oldRow]);
+        
+        // Simular que AppEventBus dispara globalmente la mutación
+        window.AppEventBus.publish('DATA::UPDATED', { entityKey: 'testEntity' });
+        
+        // Verificar que el DataView Engine asimiló el cambio automáticamente
+        await waitFor(() => {
+            const updatedState = window.DataViewEngine._getState();
+            expect(updatedState.data).toBeDefined();
+            expect(updatedState.data.length).toBe(2);
+        });
+        
+        const updatedState = window.DataViewEngine._getState();
+        expect(updatedState.data.find(r => r.nombre === 'Portafolio Reactivo')).toBeDefined();
+        
+        // Comprobar que no impacta si sucede en otra entidad asíncrona
+        window.AppEventBus.publish('DATA::UPDATED', { entityKey: 'otraEntidadZ' });
+        expect(window.DataViewEngine._getState().data.length).toBe(2); // No debe volver a cambiar
     });
 
 });

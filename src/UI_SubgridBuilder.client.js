@@ -70,9 +70,9 @@ window.UI_SubgridBuilder = {
         // Estado local del subgrid
         // Hydration check: if data[field.name] exists, use it
         const childRecords = (data && Array.isArray(data[field.name])) ? [...data[field.name]] : [];
-        window.__APP_CACHE__ = window.__APP_CACHE__ || {};
-        window.__APP_CACHE__.nestedData = window.__APP_CACHE__.nestedData || {};
-        window.__APP_CACHE__.nestedData[field.name] = childRecords;
+        if (window.DataStore && typeof window.DataStore.setNested === 'function') {
+             window.DataStore.setNested(field.name, childRecords);
+        }
 
         const _refreshList = () => {
             window.DOM.clear(list);

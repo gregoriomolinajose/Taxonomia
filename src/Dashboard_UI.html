@@ -10,7 +10,7 @@
     var filterContainer = document.getElementById('dashboard-filter-container');
     if (!container) return;
     
-    var equipos = window.__APP_CACHE__['Equipo'] || [];
+    var equipos = window.DataStore.get('Equipo') || [];
     if (equipos.length === 0) return;
     
     var portfolioSel = document.getElementById('dashboard-portfolio-filter');
@@ -18,7 +18,7 @@
     
     if (portfolioSel) {
       if (!portfolioSel.dataset.populated) {
-        var portafolios = window.__APP_CACHE__['Portafolio'] || [];
+        var portafolios = window.DataStore.get('Portafolio') || [];
         window.DOM.clear(portfolioSel);
         var optAll = document.createElement('ion-select-option');
         optAll.value = 'all';
@@ -38,8 +38,8 @@
     }
     
     if (selectedPortfolio !== 'all') {
-      var productos = window.__APP_CACHE__['Producto'] || [];
-      var grupos    = window.__APP_CACHE__['Grupo_Productos'] || [];
+      var productos = window.DataStore.get('Producto') || [];
+      var grupos    = window.DataStore.get('Grupo_Productos') || [];
       equipos = equipos.filter(function(eq) {
         var prod = productos.find(function(p) { return String(p.id_producto) === String(eq.id_producto); });
         if (!prod) return false;
@@ -145,10 +145,10 @@
     window._dashboardTotalEls = totalEls;
 
     // Immediate hydration attempt: if cache is already populated, hydrate now
-    if (window.__APP_CACHE__ && (
-      (window.__APP_CACHE__['Portafolio'] && window.__APP_CACHE__['Portafolio'].length > 0) ||
-      (window.__APP_CACHE__['Equipo'] && window.__APP_CACHE__['Equipo'].length > 0) ||
-      (window.__APP_CACHE__['Persona'] && window.__APP_CACHE__['Persona'].length > 0)
+    if (window.DataStore && (
+      (window.DataStore.get('Portafolio') && window.DataStore.get('Portafolio').length > 0) ||
+      (window.DataStore.get('Equipo') && window.DataStore.get('Equipo').length > 0) ||
+      (window.DataStore.get('Persona') && window.DataStore.get('Persona').length > 0)
     )) {
       window.hydrateDashboardCounters();
     }
@@ -170,7 +170,7 @@
       if (!els) return;
 
       Object.keys(els).forEach(function(key) {
-        var list = (window.__APP_CACHE__ && window.__APP_CACHE__[key]) ? window.__APP_CACHE__[key] : [];
+        var list = (window.DataStore && window.DataStore.get(key)) ? window.DataStore.get(key) : [];
         var count = list.filter(function(r) { return r.estado !== 'Eliminado'; }).length;
         els[key].textContent = count;
       });

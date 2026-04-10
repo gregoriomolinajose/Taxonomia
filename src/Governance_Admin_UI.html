@@ -63,9 +63,9 @@ window.GovernanceEngine = {
         await window.PresentSafe(loading);
 
         try {
-            if (window.__APP_CACHE__) {
-                delete window.__APP_CACHE__['Sys_Permissions'];
-                delete window.__APP_CACHE__['Sys_Roles'];
+            if (window.DataStore) {
+                window.DataStore.invalidate('Sys_Permissions');
+                window.DataStore.invalidate('Sys_Roles');
             }
             const rolesRes = await this._fetchTable('Sys_Roles');
             const permsRes = await this._fetchTable('Sys_Permissions');

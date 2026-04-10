@@ -177,7 +177,7 @@
                     try {
                         const response = await window.DataAPI.call('bulkInsert', entityName, jsonArray);
                         if (response && response.status === 'success') {
-                            if (window.__APP_CACHE__) window.__APP_CACHE__[entityName] = null;
+                            if (window.DataStore) window.DataStore.set(entityName, null);
                             if (onSuccess) onSuccess(response.insertedCount || jsonArray.length);
                         } else {
                             if (onError) onError((response && response.message) ? response.message : 'Respuesta desconocida');

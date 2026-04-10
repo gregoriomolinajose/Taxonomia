@@ -142,10 +142,10 @@
         async function _fetchData(entityName, cb) {
             _showLoadingState();
             // Check Frontend Cache first (Directiva Arquitectónica: 0.0s latency)
-            if (window.__APP_CACHE__ && window.__APP_CACHE__[entityName]) {
+            if (window.DataStore && window.DataStore.get(entityName)) {
                 console.log(`[Cache Frontend] HIT para ${entityName}. Renderizado instantáneo.`);
-                const cachedData = window.__APP_CACHE__[entityName];
-                const activeRows = cachedData.filter(r => r.estado !== 'Eliminado' && r.estado !== 'eliminado');
+                const cachedData = window.DataStore.get(entityName);
+                const activeRows = window.DataStore.getActive ? window.DataStore.getActive(entityName) : cachedData.filter(r => r.estado !== 'Eliminado' && r.estado !== 'eliminado');
                 cb(null, activeRows);
                 return;
             }
@@ -175,11 +175,11 @@
                     }
 
                     // Store in Frontend Cache for 0.0s subsequent transitions
-                    if (window.__APP_CACHE__) {
-                        window.__APP_CACHE__[entityName] = rows;
+                    if (window.DataStore) {
+                        window.DataStore.set(entityName, rows);
                     }
 
-                    const activeRows = rows.filter(r => r.estado !== 'Eliminado' && r.estado !== 'eliminado');
+                    const activeRows = window.DataStore && window.DataStore.getActive ? window.DataStore.getActive(entityName) : rows.filter(r => r.estado !== 'Eliminado' && r.estado !== 'eliminado');
                     cb(null, activeRows);
                 } else {
                     cb(new Error(response ? response.message : 'Error desconocido'));
@@ -576,8 +576,8 @@
             _applyFilter(document.getElementById('dv-search-input') ? document.getElementById('dv-search-input').value || '' : '');
 
             // Global Cache sync (Prevent Re-render Desync)
-            if (window.__APP_CACHE__ && window.__APP_CACHE__[_state.entityName]) {
-                window.__APP_CACHE__[_state.entityName] = window.__APP_CACHE__[_state.entityName].filter(r => r[idField] !== id);
+            if (window.DataStore && window.DataStore.get(_state.entityName)) {
+                window.DataStore.set(_state.entityName, window.DataStore.get(_state.entityName).filter(r => r[idField] !== id));
                 console.log(`[Cache] Registro eliminado de caché global: ${id}`);
             }
 
@@ -593,9 +593,9 @@
                 
                 if (response && response.status === 'success') {
                     // Purgar de la RAM local
-                    if (window.__APP_CACHE__ && window.__APP_CACHE__[_state.entityName]) {
+                    if (window.DataStore && window.DataStore.get(_state.entityName)) {
                         const idField = (ENTITY_META[_state.entityName] || { idField: 'id' }).idField;
-                        window.__APP_CACHE__[_state.entityName] = window.__APP_CACHE__[_state.entityName].filter(row => row[idField] !== id);
+                        window.DataStore.set(_state.entityName, window.DataStore.get(_state.entityName).filter(row => row[idField] !== id));
                     }
 
                     // Forzar re-renderización de la vista actual desde el caché actualizado
@@ -662,6 +662,27 @@
                 if (payload && _state && _state.entityName) {
                     console.log(`[DataViewEngine] Graph hydrated, forzando silent re-render para actualizar columnas de relaciones en ${_state.entityName}`);
                     _rerenderData();
+                }
+            });
+
+            window.AppEventBus.subscribe('DATA::UPDATED', function(payload) {
+                if (payload && _state && payload.entityKey === _state.entityName) {
+                    console.log(`[DataViewEngine] Datos mutados nativamente, reintegrando de DataStore y repintando.`);
+                    if (window.DataStore && window.DataEngine) {
+                        _state.data = window.DataStore.getActive ? window.DataStore.getActive(_state.entityName) : (window.DataStore.get(_state.entityName) || []).filter(r => r.estado !== 'Eliminado' && r.estado !== 'eliminado');
+                        
+                        // Re-aplicar filtro actual al nuevo set de datos preservando UX
+                        const searchInput = document.getElementById('dv-search-input');
+                        const query = searchInput ? searchInput.value || '' : '';
+                        _state.filtered = window.DataEngine.applyFilter(_state.data, query);
+                        
+                        // Re-aplicar ordenamiento actual preservando UX
+                        if (_state.sortCol) {
+                             _state.filtered = window.DataEngine.applySort(_state.filtered, _state.sortCol, _state.sortDir);
+                        }
+                        
+                        _rerenderData();
+                    }
                 }
             });
         }
