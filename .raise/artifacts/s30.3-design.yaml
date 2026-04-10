@@ -1,0 +1,27 @@
+artifact_type: story-design
+version: 1
+skill: rai-story-design
+created: '2026-04-10T12:00:00Z'
+story: 'S30.3'
+epic: 'E30'
+content:
+  summary: 'Migrar DOM State a JavaScript Closure Memory para componentes anidados.'
+  approach:
+    - Centralizar colecciones JSON dinámicas en propiedades in-memory asíncronas adhiriendo a los Nodos Padre (`activeForm._LocalState`).
+    - Eliminar los inputs invisibles y el parche data-parser.
+  components:
+    - name: UI_SubgridBuilder.client.js
+      type: modify
+    - name: UI_Component_DynamicList.client.js
+      type: modify
+    - name: UI_FormSubmitter.client.js
+      type: modify
+  examples:
+    - description: "Storage de subgrids in memory"
+      code: "const activeForm = container.closest('ion-modal') || document.getElementById('app-container'); activeForm._LocalState = activeForm._LocalState || {}; activeForm._LocalState[field.name] = childRecords;"
+  acceptance_criteria:
+    - MUST evitar cualquier uso de `<input type="hidden">` para transportar/almacenar estructuras no primitivas (arrays o diccionarios).
+    - MUST unificar recolección del scope en UI_FormSubmitter desde activeForm._LocalState de forma defensiva.
+metadata:
+  branch: 'story/s30.3/local-state-components'
+  status: 'Design Complete'
