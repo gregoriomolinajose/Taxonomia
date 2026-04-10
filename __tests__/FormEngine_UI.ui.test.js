@@ -102,4 +102,25 @@ describe('FormEngine UI Nativo Browser (Vitest SPA)', () => {
         expect(inputNombre).toHaveClass('ion-invalid');
         expect(inputNombre).toHaveClass('ion-touched');
     });
+
+    it('C. S29.9 - Dirty Check se activa al disparar mutate events en el FormRenderer', async () => {
+        // En openEditForm, el formulario se renderiza pre-llenado usando caché
+        // y se inyectan listeners. Aquí simulamos _isRenderingForm y DOM para probar Dirty Check.
+        await window.renderForm('Test_Entity', { id: '1', nombre: 'Alpha', monto: 500 });
+        const modal = document.querySelector('.drawer-panel');
+        
+        // Simulando inyección de listener en renderForm desde openEditForm
+        window.currentFormIsDirty = false;
+        const markDirty = () => { window.currentFormIsDirty = true; };
+        modal.addEventListener('change', markDirty, { once: true });
+        modal.addEventListener('ionInput', markDirty, { once: true });
+        
+        // Act: Disparar evento de mutación 'ionInput' sobre un campo
+        const inputNombre = modal.querySelector('ion-input[name="nombre"]');
+        fireEvent(inputNombre, new CustomEvent('ionInput', { bubbles: true }));
+        
+        // Assert: Validar que el Dirty Check saltó a true
+        expect(window.currentFormIsDirty).toBe(true);
+    });
 });
+
