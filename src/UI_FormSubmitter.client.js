@@ -129,7 +129,18 @@ window.UI_FormSubmitter = class UI_FormSubmitter {
             // Bugfix (QA Review & S30.6): Usamos closure pura per-modal guardada en this._internalRetryId
             const action = this._internalRetryId ? 'update' : 'create';
             
-            const safePayload = JSON.parse(JSON.stringify(payload));
+            // S30.3 QA Review: Circular Reference & DOM-Leakage Guard
+            const getCircularReplacer = () => {
+                const seen = new WeakSet();
+                return (key, value) => {
+                    if (typeof value === 'object' && value !== null) {
+                        if (seen.has(value)) return undefined; // Drop cycles
+                        seen.add(value);
+                    }
+                    return value;
+                };
+            };
+            const safePayload = JSON.parse(JSON.stringify(payload, getCircularReplacer()));
 
             try {
                 const rawResponse = await this.apiService.call('API_Universal_Router', action, this.entityName, safePayload);
@@ -143,7 +154,7 @@ window.UI_FormSubmitter = class UI_FormSubmitter {
                     if (activeForm) {
                         activeForm._LocalState = {};
                         const multis = activeForm.querySelectorAll('[data-searchable-multi]');
-                        multis.forEach(el => delete el._LocalStateSelection);
+                        multis.forEach(el => el._LocalStateSelection = undefined);
                     }
                     
                     // Disparo de Evento Nativo de Persistencia Inline (H6/H2 Simplification)
