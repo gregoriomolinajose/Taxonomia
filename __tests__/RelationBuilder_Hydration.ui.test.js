@@ -143,4 +143,36 @@ describe('UI_Component_RelationBuilder & Hydration Stability', () => {
         expect(hasVirtualOption).toBe(true);
         expect(ionicSelect.value).toBe(window.UI_CONSTANTS.MOCK_FK_TOKEN);
     });
+
+    it('S29.8 [QR/UX]: Aplica Fallback Seguro (Safe Check) cuando "window.UI_CONSTANTS" desaparece del entorno global', () => {
+        const fieldConfig = {
+            name: "id_portafolio",
+            type: "relation",
+            relationType: "padre",
+            targetEntity: "Portafolio",
+            graphEntity: "Sys_Graph_Edges",
+            valueField: "id_portafolio",
+            labelField: "nombre",
+            uiComponent: "select_single",
+            isTemporalGraph: true
+        };
+        
+        // Destruir constante defensivamente
+        const prevConsts = window.UI_CONSTANTS;
+        delete window.UI_CONSTANTS;
+        
+        const mockFormRecordData = {
+            id_portafolio: '_NEW_PARENT_'
+        };
+        
+        // Ejecución
+        const uiOutput = buildRelation(fieldConfig, 'Portafolio', mockFormRecordData, null, null);
+        const ionicSelect = uiOutput.querySelector('ion-select');
+        
+        // Assert: Confirmar supervivencia usando fallback (El magic string pelado se usa como default)
+        expect(ionicSelect.value).toBe('_NEW_PARENT_');
+        
+        // Restaurar
+        window.UI_CONSTANTS = prevConsts;
+    });
 });
