@@ -25,13 +25,8 @@
                 selectedIds = [String(initialSelection)];
             }
             
-            const hidden = document.createElement('input');
-            hidden.type = 'hidden';
-            hidden.name = fieldDef.name;
-            hidden.value = JSON.stringify(selectedIds);
-            hidden.id = `hidden_${fieldDef.name}`;
-            hidden.dataset.parser = 'json_array';
-            mainContainer.appendChild(hidden);
+            mainContainer.setAttribute('data-searchable-multi', fieldDef.name);
+            mainContainer._LocalStateSelection = selectedIds;
 
             const visualWrapper = document.createElement('div');
             visualWrapper.style.width = '100%';
@@ -99,6 +94,7 @@
                 confirmBtn.color = 'primary';
                 confirmBtn.onclick = () => {
                     selectedIds = [...draftIds];
+                    mainContainer._LocalStateSelection = selectedIds; // S30.3 Local State Sync
                     renderChips();
                     pickerModal.isOpen = false;
                     

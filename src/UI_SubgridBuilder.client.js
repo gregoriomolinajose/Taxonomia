@@ -109,16 +109,12 @@ window.UI_SubgridBuilder = {
             }
         }
         
-        let hiddenInput = subgridDiv.querySelector(`input[name="${field.name}"]`);
-        if (!hiddenInput) {
-            hiddenInput = document.createElement('input');
-            hiddenInput.type = 'hidden';
-            hiddenInput.name = field.name;
-            hiddenInput.setAttribute('data-parser', 'json_array');
-            subgridDiv.appendChild(hiddenInput);
-        }
+        const activeForm = container.closest('ion-modal') || document.getElementById('app-container');
+        if (activeForm) activeForm._LocalState = activeForm._LocalState || {};
+
         const _refreshList = () => {
-            hiddenInput.value = JSON.stringify(childRecords);
+            if (activeForm) activeForm._LocalState[field.name] = childRecords;
+
             window.DOM.clear(list);
             if (childRecords.length === 0) {
                 list.appendChild(emptyState);

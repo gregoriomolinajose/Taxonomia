@@ -54,12 +54,7 @@ window.UI_FormSubmitter = class UI_FormSubmitter {
                     let val = input.value;
                     const schemaField = this.fields ? this.fields.find(f => f.name === name) : null;
                     
-                    if (input.dataset.parser === 'json_array') {
-                        try {
-                            let parsed = JSON.parse(val);
-                            payload[name] = Array.isArray(parsed) ? parsed.filter(i => Boolean(i) && String(i).trim() !== "") : [];
-                        } catch(e) { payload[name] = []; }
-                    } else if (schemaField) {
+                    if (schemaField) {
                         if (schemaField.type === 'relation' || schemaField.uiComponent === 'select_single') {
                             let strVal = (val === null || val === undefined) ? "" : String(val).trim();
                             if (strVal.toLowerCase() === "null" || strVal.toLowerCase() === "undefined") strVal = "";
@@ -94,7 +89,21 @@ window.UI_FormSubmitter = class UI_FormSubmitter {
                     });
                     jsonArray.push(rowData);
                 });
-                payload[fieldName] = JSON.stringify(jsonArray);
+                payload[fieldName] = jsonArray;
+            });
+
+            // S30.3 - Harvest Memory-Saved Contexts from LocalState
+            if (activeForm && activeForm._LocalState) {
+                Object.assign(payload, activeForm._LocalState);
+            }
+
+            // Searchable Multi Lists
+            const searchableMultis = activeForm.querySelectorAll('[data-searchable-multi]');
+            searchableMultis.forEach(el => {
+                const fieldName = el.getAttribute('data-searchable-multi');
+                if (el._LocalStateSelection !== undefined) {
+                    payload[fieldName] = el._LocalStateSelection;
+                }
             });
 
             // Chip Containers
@@ -120,7 +129,18 @@ window.UI_FormSubmitter = class UI_FormSubmitter {
             // Bugfix (QA Review & S30.6): Usamos closure pura per-modal guardada en this._internalRetryId
             const action = this._internalRetryId ? 'update' : 'create';
             
-            const safePayload = JSON.parse(JSON.stringify(payload));
+            // S30.3 QA Review: Circular Reference & DOM-Leakage Guard
+            const getCircularReplacer = () => {
+                const seen = new WeakSet();
+                return (key, value) => {
+                    if (typeof value === 'object' && value !== null) {
+                        if (seen.has(value)) return undefined; // Drop cycles
+                        seen.add(value);
+                    }
+                    return value;
+                };
+            };
+            const safePayload = JSON.parse(JSON.stringify(payload, getCircularReplacer()));
 
             try {
                 const rawResponse = await this.apiService.call('API_Universal_Router', action, this.entityName, safePayload);
@@ -131,6 +151,12 @@ window.UI_FormSubmitter = class UI_FormSubmitter {
                     this._patchFrontendCache(this.entityName, response, payload);
                     const itemName = (response.data && response.data.Entity) ? response.data.Entity : this.entityName;
                     this._showToast(`¡${itemName} guardado con éxito!`, 'success');
+                    if (activeForm) {
+                        activeForm._LocalState = {};
+                        const multis = activeForm.querySelectorAll('[data-searchable-multi]');
+                        multis.forEach(el => el._LocalStateSelection = undefined);
+                    }
+                    
                     // Disparo de Evento Nativo de Persistencia Inline (H6/H2 Simplification)
                     let isInlineRendered = false;
                     if (this.modal) {
