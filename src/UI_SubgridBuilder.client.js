@@ -161,7 +161,9 @@ window.UI_SubgridBuilder = {
                     if (typeof window.openEditForm === 'function') {
                         // Navega ciegamente apuntando al TargetEntity, el openEditForm resolverá ABAC aisaldo y lo stackeará
                         const entityKey = field.targetEntity;
-                        const recordId = record[targetPK] || record['id_' + entityKey.toLowerCase()] || record.id_registro;
+                        const meta = window.APP_SCHEMAS ? window.APP_SCHEMAS[entityKey] : null;
+                        const pkField = (meta && meta.idField) ? meta.idField : ('id_' + entityKey.toLowerCase());
+                        const recordId = record[pkField] || record.id_registro;
                         window.openEditForm(recordId, entityKey);
                     }
                 });

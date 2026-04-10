@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, beforeAll, vi } from 'vitest';
-import { screen } from '@testing-library/dom';
+import { screen, fireEvent } from '@testing-library/dom';
 import '@testing-library/jest-dom';
 
 import './utils/setup.vitest.js'; // Polyfills Base DOM
@@ -17,14 +17,15 @@ describe('UI_SubgridBuilder.client.js (Vitest UI) - S30.2 ReadOnly Scenarios', (
         // Mock Window dependencies
         window.APP_SCHEMAS = {
             'Padre_Entity': {
-                primaryKey: 'id_padre'
+                idField: 'id_padre'
             },
             'Hijo_Entity': {
-                primaryKey: 'id_hijo'
+                idField: 'id_hijo'
             }
         };
         window.DataStore = { get: vi.fn().mockReturnValue([]) };
         window.UI_FormUtils = { normalizeId: (id) => String(id) };
+        window.openEditForm = vi.fn();
     });
 
     beforeEach(() => {
@@ -49,6 +50,9 @@ describe('UI_SubgridBuilder.client.js (Vitest UI) - S30.2 ReadOnly Scenarios', (
         };
 
         mockEventBus = { subscribe: vi.fn(), publish: vi.fn() };
+        
+        // Reset call count between tests
+        window.openEditForm.mockClear();
     });
 
     it('A. Modo Escritura (readonly: false): Renderiza el botón Agregar y los botones de Eliminar', async () => {
@@ -101,5 +105,27 @@ describe('UI_SubgridBuilder.client.js (Vitest UI) - S30.2 ReadOnly Scenarios', (
         // Las filas de los hijos SÍ deben estar renderizadas
         expect(addBtnRawText).toContain('Hijo 1');
         expect(addBtnRawText).toContain('Hijo 2');
+    });
+
+    it('C. S30.6 Drill-Down Click Navigation: Dispara openEditForm al hacer click en la fila', async () => {
+        await window.UI_SubgridBuilder.build(
+            mockField, 
+            container, 
+            mockData, 
+            'Padre_Entity', 
+            mockEventBus, 
+            null, 
+            { readonly: true }
+        );
+
+        const items = container.querySelectorAll('ion-item');
+        expect(items.length).toBeGreaterThan(0);
+
+        // Disparamos evento nativo usando TestingLibrary
+        fireEvent.click(items[0]);
+
+        // Assertion de que la navegación delegada profunda fue invocada
+        expect(window.openEditForm).toHaveBeenCalledTimes(1);
+        expect(window.openEditForm).toHaveBeenCalledWith('H-1', 'Hijo_Entity');
     });
 });
