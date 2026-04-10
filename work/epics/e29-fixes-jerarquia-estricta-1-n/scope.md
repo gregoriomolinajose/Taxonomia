@@ -38,4 +38,5 @@ Previene la corrupción de datos, nudos topológicos (hijos huérfanos o con mú
 | 5   | S29.5 | Estabilización Front-End | S | Hecho |
 | 6   | S29.6 | Fix Colisión de Hermanos | S | Hecho |
 | 7   | S29.7 | Relaciones no registradas en creación en cadena | S | Hecho |
-| 8   | S29.8 | Auto-hidratación de Padres en inputs de Hijos | M | Pendiente |
+| 8   | S29.8 | Auto-hidratación de Padres en inputs de Hijos | M | Hecho |
+| 9   | S29.9 | Hidratación de registro lenta en drawer | M | Hecho |
