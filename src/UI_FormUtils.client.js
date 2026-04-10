@@ -125,8 +125,8 @@ window.UI_FormUtils = (function () {
             }
         });
         
-        // Mute de elementos custom
-        const customInputs = container.querySelectorAll(customInputsSelector || '.dv-chip, ion-button[fill="clear"]');
+        // Mute de elementos custom (Evitando bloquear el botón de cerrar drawer explícitamente)
+        const customInputs = container.querySelectorAll(customInputsSelector || '.dv-chip, ion-button[fill="clear"]:not(.btn-close-drawer)');
         customInputs.forEach(i => {
             i.style.pointerEvents = 'none';
             i.style.opacity = '0.6';
