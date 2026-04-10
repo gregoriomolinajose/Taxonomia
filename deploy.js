@@ -145,11 +145,7 @@ try {
             fs.writeFileSync(targetPath, htmlWrapped, 'utf8');
         });
 
-        // Cleanup assets/css to prevent Clasp from pushing unsupported standalone CSS natively
-        const assetsCssDir = `${buildDir}/assets/css`;
-        if (fs.existsSync(assetsCssDir)) {
-            fs.rmSync(assetsCssDir, { recursive: true, force: true });
-        }
+        // Cleanup assets/css is now handled passively by .claspignore
         console.log(`[Deploy] Bundled native CSS files into virtual HTML styles`);
 
         // Native JS Frontend Bundler (S24.6 Client JS Decoupling)
