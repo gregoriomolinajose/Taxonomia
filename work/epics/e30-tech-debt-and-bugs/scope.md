@@ -19,7 +19,7 @@ Resolver deuda técnica estructural y visual acumulada en las iteraciones anteri
 | S30.3 | DOM Pasivo a Estado Local en Componentes | M | Pending | Evitar los bridges temporales vía *hidden inputs* con JSON strings. Anclar estado efímero en closure memory. |
 | S30.4 | Evolución de ThemeManager | M | Pending | Migrar inyección en crudo de `window.hydrateThemeConfig` hacia una Clase ES6 formally orquestada. |
 | S30.5 | AST RegExp CSS Minifier | L | Pending | Evaluar integración de integrador CSS (Rollup/Esbuild) para prevenir corrupciones visuales por Regex casero. |
-| S30.6 | Navegación Profunda en Subgrids (Drill-Down) | M | Pending | Permitir inspeccionar o editar registros vinculados del subgrid (on-click) delegando las evaluaciones de ABAC a la nueva instancia hija. |
+| S30.6 | Navegación Profunda en Subgrids (Drill-Down) | M | Done ✓ | Permitir inspeccionar o editar registros vinculados del subgrid (on-click) delegando las evaluaciones de ABAC a la nueva instancia hija. |
 
 **Total:** 6 stories base + (X) anexos dinámicos en Testing, TBD SP
 
@@ -115,7 +115,7 @@ Stream 3 (Testing):          [ Bugs N dinámicos ] ────┘
 | S30.3 | M | Pending | — | — | DOM Pasivo a Estado Local en Componentes |
 | S30.4 | M | Pending | — | — | Evolución de ThemeManager |
 | S30.5 | L | Pending | — | — | AST RegExp CSS Minifier |
-| S30.6 | M | Pending | — | — | Navegación Profunda en Subgrids (Drill-Down) |
+| S30.6 | M | Done ✓ | 1h | S | Navegación Profunda en Subgrids (Drill-Down) |
 
 ### Sequencing Risks
 

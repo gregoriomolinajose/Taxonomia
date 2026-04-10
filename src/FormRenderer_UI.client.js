@@ -443,9 +443,11 @@
             const meta = window.APP_SCHEMAS[entityName];
             const dataBase = window.DataStore.get(entityName);
 
+            const pkField = meta ? (meta.primaryKey || (meta.metadata && meta.metadata.idField)) : null;
+
             // --- REGLA 3 (rules_qa.md): PROTECTOR DE NULLS ---
-            if (!meta || !meta.idField) {
-                console.error("[FormEngine] Error Crítico: No se encontró metadata o 'idField' para la entidad:", entityName);
+            if (!meta || !pkField) {
+                console.error("[FormEngine] Error Crítico: No se encontró metadata o 'primaryKey' para la entidad:", entityName);
                 alert("Error de Configuración: La entidad '" + window.formatEntityName(entityName) + "' no tiene un mapeo de metadatos válido.");
                 return;
             }
@@ -458,7 +460,7 @@
             console.log("[FormEngine] Editando entidad:", entityName, "Usando metadata:", meta);
 
             // 2. Buscar el registro completo
-            const record = dataBase.find(item => item[meta.idField] === id);
+            const record = dataBase.find(item => String(item[pkField]) === String(id));
             if (!record) {
                 console.error("[FormEngine] Error: Registro no encontrado en cache local para ID:", id, "en datos:", dataBase);
                 alert("Error: El registro con ID '" + id + "' no pudo ser localizado para edición.");
