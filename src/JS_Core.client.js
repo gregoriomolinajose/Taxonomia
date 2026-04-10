@@ -38,6 +38,11 @@
     }
   };
 
+  /* ── UI Constants (Diccionario Central de Magics) ──────── */
+  window.UI_CONSTANTS = {
+      MOCK_FK_TOKEN: '_NEW_PARENT_'
+  };
+
   /* ── Telemetry (S19.3 Telemetría y Límites) ──────────── */
   window.Telemetry = {
     _isTrackingFatal: false, // Prevents infinite recursion on WSOD

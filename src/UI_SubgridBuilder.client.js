@@ -403,7 +403,7 @@ window.UI_SubgridBuilder = {
                         f.relationType !== field.relationType // Tiene el tipo de arista opuesto
                     );
                     if (reciprocalField) {
-                        initialData[reciprocalField.name] = window.currentEditId || '_NEW_PARENT_';
+                        initialData[reciprocalField.name] = window.currentEditId || window.UI_CONSTANTS.MOCK_FK_TOKEN;
                     }
                 }
                 

@@ -98,8 +98,9 @@
             }
 
             // [S29.8] Hard Override Topológico: Asegurar pre-hidratación si viene inyectado el Payload Mock
-            if (data && data[field.name] === '_NEW_PARENT_') {
-                initialValues = ['_NEW_PARENT_'];
+            const mockToken = (window.UI_CONSTANTS && window.UI_CONSTANTS.MOCK_FK_TOKEN) ? window.UI_CONSTANTS.MOCK_FK_TOKEN : '_NEW_PARENT_';
+            if (data && data[field.name] === mockToken) {
+                initialValues = [mockToken];
             }
 
             if (field.uiComponent === 'searchable_multi') {
@@ -150,10 +151,10 @@
                 populateSelectOptions(basicSel, filteredActiveData, field);
                 
                 // [S29.8] Mock Option Injection para UX de Creación Anidada
-                const isVirtualParent = initialValues.length > 0 && initialValues[0] === '_NEW_PARENT_';
+                const isVirtualParent = initialValues.length > 0 && initialValues[0] === mockToken;
                 if (isVirtualParent) {
                     const virtualOpt = document.createElement('ion-select-option');
-                    virtualOpt.value = '_NEW_PARENT_';
+                    virtualOpt.value = mockToken;
                     virtualOpt.textContent = 'Padre en Curso (Auto-Vinculado)';
                     basicSel.appendChild(virtualOpt);
                 }

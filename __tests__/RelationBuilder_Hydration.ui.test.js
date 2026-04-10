@@ -27,6 +27,10 @@ describe('UI_Component_RelationBuilder & Hydration Stability', () => {
         window.SubgridState = {
             evaluateFieldState: vi.fn().mockReturnValue({ isDisabled: false, opacity: '1', placeholder: '— Sin asignar —' })
         };
+        
+        window.UI_CONSTANTS = {
+            MOCK_FK_TOKEN: '_NEW_PARENT_'
+        };
 
         // Load targeted JS Modules directly
         await import('../src/UI_FormUtils.client.js');
@@ -111,7 +115,7 @@ describe('UI_Component_RelationBuilder & Hydration Stability', () => {
         expect(ionicSelect.getAttribute('data-skip-hydration')).toBe("true");
     });
     
-    it('S29.8: Inyecta dinámicamente un Mock Option virtual si el initialData revela una creación en cadena ("_NEW_PARENT_")', () => {
+    it('S29.8: Inyecta dinámicamente un Mock Option virtual si el initialData revela una creación en cadena (UI_CONSTANTS.MOCK_FK_TOKEN)', () => {
         const fieldConfig = {
             name: "id_portafolio",
             type: "relation",
@@ -125,7 +129,7 @@ describe('UI_Component_RelationBuilder & Hydration Stability', () => {
         };
         
         const mockFormRecordData = {
-            id_portafolio: "_NEW_PARENT_"
+            id_portafolio: window.UI_CONSTANTS.MOCK_FK_TOKEN
         };
         
         // Ejecución
@@ -134,9 +138,9 @@ describe('UI_Component_RelationBuilder & Hydration Stability', () => {
         
         // Assertions: Confirmar que existe el option virtual
         const options = Array.from(ionicSelect.querySelectorAll('ion-select-option'));
-        const hasVirtualOption = options.some(o => o.value === '_NEW_PARENT_' && o.textContent.includes('Padre en Curso'));
+        const hasVirtualOption = options.some(o => o.value === window.UI_CONSTANTS.MOCK_FK_TOKEN && o.textContent.includes('Padre en Curso'));
         
         expect(hasVirtualOption).toBe(true);
-        expect(ionicSelect.value).toBe('_NEW_PARENT_');
+        expect(ionicSelect.value).toBe(window.UI_CONSTANTS.MOCK_FK_TOKEN);
     });
 });
