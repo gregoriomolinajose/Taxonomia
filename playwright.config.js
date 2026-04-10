@@ -19,7 +19,7 @@ export default defineConfig({
   reporter: [['list'], ['json', { outputFile: 'test-results.json' }]],
   use: {
     // DEV URL de Google Apps Script
-    baseURL: process.env.DEV_URL || 'https://script.google.com/macros/s/AKfycbz1wK6yVfTuUe3kv35k45IULLBVya51t6HDXUZHNP-6rI9Nh_PEctWZseGyoQiQ2HxkIw/exec',
+    baseURL: process.env.DEV_URL || 'https://script.google.com/macros/s/AKfycbyYY8F6scltfXdK_CycPcxIQaeNn5tDFn78VhaHGMKlcMzUjOjdrHFvks1OZl5OBqDuzQ/exec',
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
   },

@@ -157,10 +157,34 @@
   /* ── Sidebar Modes (Movido a UI_Router.html en S12.2) ── */
 
   /* ── Dashboard logic moved to Dashboard_UI.html ── */
-
-
-
-
+  
+  /* ── UI Data Store (S29.5 - Global Cache Encapsulation) ── */
+  window.DataStore = {
+    _cache: window.__APP_CACHE__ || {},
+    get: function(entityName) { return this._cache[entityName] !== undefined ? this._cache[entityName] : null; },
+    set: function(entityName, data) { 
+        this._cache[entityName] = data; 
+        if (window.AppEventBus) window.AppEventBus.publish('DATASTORE::CHANGED', { action: 'set', entityName: entityName });
+    },
+    invalidate: function(entityName) { 
+        delete this._cache[entityName]; 
+        if (window.AppEventBus) window.AppEventBus.publish('DATASTORE::CHANGED', { action: 'invalidate', entityName: entityName });
+    },
+    getAll: function() { return this._cache; },
+    getNested: function(entityName) {
+        if (!this._cache.nestedData) this._cache.nestedData = {};
+        return this._cache.nestedData[entityName] !== undefined ? this._cache.nestedData[entityName] : null;
+    },
+    setNested: function(entityName, data) {
+        if (!this._cache.nestedData) this._cache.nestedData = {};
+        this._cache.nestedData[entityName] = data;
+        if (window.AppEventBus) window.AppEventBus.publish('DATASTORE::CHANGED', { action: 'setNested', entityName: entityName });
+    },
+    clearNested: function() { 
+        this._cache.nestedData = {}; 
+        if (window.AppEventBus) window.AppEventBus.publish('DATASTORE::CHANGED', { action: 'clearNested' });
+    }
+  };
 
   /* ── DOM Factory (S16 Micro-Framework) ── */
   window.DOM = {

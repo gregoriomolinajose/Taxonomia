@@ -25,7 +25,7 @@ window.UI_FormUtils = (function () {
      * (Requerido por M:N Subgrid en N-Dimensional Graph)
      */
     function getDominioOptions(formCurrentState) {
-        const cache = (window.__APP_CACHE__ && window.__APP_CACHE__['Dominio']) ? window.__APP_CACHE__['Dominio'] : [];
+        const cache = (window.DataStore && window.DataStore.get('Dominio')) ? window.DataStore.get('Dominio') : [];
         const active = cache.filter(r => r.estado !== 'Eliminado');
         return active.map(p => ({
             value: p.id_dominio || p.id_registro,
@@ -53,7 +53,7 @@ window.UI_FormUtils = (function () {
         const currentNivel = parseInt(nivelObj.value, 10);
         if (isNaN(currentNivel) || currentNivel <= 0) return []; // Strict N>0
         
-        const cache = (window.__APP_CACHE__ && window.__APP_CACHE__['Dominio']) ? window.__APP_CACHE__['Dominio'] : [];
+        const cache = (window.DataStore && window.DataStore.get('Dominio')) ? window.DataStore.get('Dominio') : [];
         const validParents = cache.filter(r => parseInt(r.nivel_tipo, 10) === currentNivel - 1 && r.estado !== 'Eliminado');
         
         return validParents.map(p => ({

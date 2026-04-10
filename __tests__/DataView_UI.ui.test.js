@@ -30,6 +30,22 @@ describe('DataViewEngine Nativo JSDOM', () => {
         // --- 2. Dependencias del Ecosistema de Taxonomia (Global Scope Mocks) ---
         window.ENTITY_META = { testEntity: { label: 'Entidad QA', idField: 'id_item' } };
         window.__APP_CACHE__ = {};
+        window.DataStore = {
+            _cache: window.__APP_CACHE__,
+            get: function(entityName) { return this._cache[entityName] || null; },
+            set: function(entityName, data) { this._cache[entityName] = data; },
+            invalidate: function(entityName) { delete this._cache[entityName]; },
+            getAll: function() { return this._cache; },
+            getNested: function(entityName) {
+                if (!this._cache.nestedData) this._cache.nestedData = {};
+                return this._cache.nestedData[entityName] || null;
+            },
+            setNested: function(entityName, data) {
+                if (!this._cache.nestedData) this._cache.nestedData = {};
+                this._cache.nestedData[entityName] = data;
+            },
+            clearNested: function() { this._cache.nestedData = {}; }
+        };
         window.formatEntityName = (name) => name;
         
         // Abstracciones delegadas que no probamos aquí (Single Responsibility Principal)
@@ -91,9 +107,9 @@ describe('DataViewEngine Nativo JSDOM', () => {
         expect(finalState.data[0].nombre).toBe('Portafolio Principal');
         
         // Validación Architectural RAM Directiva 1: Pre-cache persistido global
-        expect(window.__APP_CACHE__['testEntity']).toBeDefined();
+        expect(window.DataStore.get('testEntity')).toBeDefined();
         // En el cache viven los dos, DataView los filtró en runtime para .data
-        expect(window.__APP_CACHE__['testEntity'].length).toBe(2); 
+        expect(window.DataStore.get('testEntity').length).toBe(2); 
 
         expect(window.UI_Router.showListSidebar).toHaveBeenCalledWith('testEntity');
     });

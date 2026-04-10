@@ -72,18 +72,18 @@
             inputEl.style.width = '100%';
             inputEl.style.marginBottom = 'var(--spacing-2)';
             
-            const liveData = (window.__APP_CACHE__ && window.__APP_CACHE__[field.targetEntity]) ? window.__APP_CACHE__[field.targetEntity] : [];
+            const liveData = window.DataStore ? (window.DataStore.get(field.targetEntity) || []) : [];
             const activeData = liveData.filter(d => d.estado !== 'Eliminado' && typeof d === 'object');
             
             let initialValues = [];
             
-            if (field.isTemporalGraph && field.graphEntity && window.__APP_CACHE__ && window.__APP_CACHE__[field.graphEntity]) {
+            if (field.isTemporalGraph && field.graphEntity && window.DataStore && window.DataStore.get(field.graphEntity)) {
                 const schema = window.APP_SCHEMAS ? window.APP_SCHEMAS[entityName] : null;
                 // Leemos con precisión milimétrica la Llave Primaria desde la Arquitectura
                 const pkKey = schema && schema.primaryKey ? schema.primaryKey : (data ? Object.keys(data).find(k => k.startsWith('id_') && k !== 'id_registro') : null);
                 const currentPK = data ? (data[pkKey] || data.id_registro) : null;
                 if (currentPK) {
-                    const aristas = window.__APP_CACHE__[field.graphEntity].filter(e => e.es_version_actual !== false);
+                    const aristas = window.DataStore.get(field.graphEntity).filter(e => e.es_version_actual !== false);
                     const edgeName = (field.graphEdgeType || field.name).toUpperCase();
                     if (field.relationType === 'padre') {
                         initialValues = aristas.filter(e => window.UI_FormUtils.normalizeId(e.id_nodo_hijo) === window.UI_FormUtils.normalizeId(currentPK) && String(e.tipo_relacion).toUpperCase() === edgeName).map(e => window.UI_FormUtils.normalizeId(e.id_nodo_padre));
@@ -185,7 +185,7 @@
                         if (!document.body.contains(basicSel)) return;
                         if (basicSel.dataset.optimisticLock === 'true') return;
 
-                        const freshLiveData = (window.__APP_CACHE__ && window.__APP_CACHE__[field.targetEntity]) ? window.__APP_CACHE__[field.targetEntity] : [];
+                        const freshLiveData = window.DataStore ? (window.DataStore.get(field.targetEntity) || []) : [];
                         const freshActiveData = freshLiveData.filter(d => d.estado !== 'Eliminado' && typeof d === 'object');
                         
                         let freshFiltered = freshActiveData;

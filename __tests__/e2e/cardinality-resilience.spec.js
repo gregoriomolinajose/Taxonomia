@@ -3,7 +3,7 @@ const { test, expect, chromium } = require('@playwright/test');
 let context;
 let page;
 
-test.describe('E23: Cardinilidad Topológica y Resiliencia SCD-2', () => {
+test.describe('E23: Cardinilidad TopolÃ³gica y Resiliencia SCD-2', () => {
 
   test.beforeAll(async () => {
     const authDir = process.env.TEST_CHROME_PROFILE || '.auth/chrome-profile';
@@ -30,7 +30,7 @@ test.describe('E23: Cardinilidad Topológica y Resiliencia SCD-2', () => {
   });
 
   test.beforeEach(async () => {
-    await page.goto('https://script.google.com/macros/s/AKfycbyYY8F6scltfXdK_CycPcxIQaeNn5tDFn78VhaHGMKlcMzUjOjdrHFvks1OZl5OBqDuzQ/exec');
+    await page.goto(process.env.DEV_URL || 'https://script.google.com/macros/s/AKfycbyYY8F6scltfXdK_CycPcxIQaeNn5tDFn78VhaHGMKlcMzUjOjdrHFvks1OZl5OBqDuzQ/exec');
     
     if (page.url().includes('accounts.google.com')) {
         console.log("ESPERANDO LOGIN MANUAL...");
@@ -111,7 +111,7 @@ async function submitHybridForm(frame, page, text) {
         
         // 2. Crear UN B e intentar Robar el Portafolio
         await frame.locator('body').evaluate(() => window.renderForm('Unidad_Negocio', {}));
-        await fillTopInput(frame, 'nombre', 'UN B (Padre Ladrón) ' + Date.now());
+        await fillTopInput(frame, 'nombre', 'UN B (Padre LadrÃ³n) ' + Date.now());
         
         console.log("Linking UN B...");
         await clickTopButtonByText(frame, 'Agregar');
@@ -144,11 +144,11 @@ async function submitHybridForm(frame, page, text) {
         await removeBtn.click();
         await page.waitForTimeout(500);
 
-        // Guardar (Subgrid vacío)
+        // Guardar (Subgrid vacÃ­o)
         await submitHybridForm(frame, page, 'Guardar Unidad');
         
-        // Si el guardado fue exitoso y Toast aparece, early-return M:N / 1:N no abortó la operación prematuramente.
-        const toast = frame.locator('ion-toast').filter({ hasText: 'éxito' });
+        // Si el guardado fue exitoso y Toast aparece, early-return M:N / 1:N no abortÃ³ la operaciÃ³n prematuramente.
+        const toast = frame.locator('ion-toast').filter({ hasText: 'Ã©xito' });
         await expect(toast).toBeVisible({ timeout: 10000 });
     } catch(err) {
         console.error("DEBUG FATAL PLAYWRIGHT:", err);

@@ -13,7 +13,7 @@
       var oGS = oDVE ? oDVE._getState : null;
       if (!window.DataViewEngine) window.DataViewEngine = {};
       window.DataViewEngine._getState = function() {
-          return { entityName: 'Dominio', data: window.__APP_CACHE__['Dominio'] || [record], entityMeta: { idField: 'id_dominio' } };
+          return { entityName: 'Dominio', data: window.DataStore.get('Dominio') || [record], entityMeta: { idField: 'id_dominio' } };
       };
       
       if (window.DomainTreemapInstance) window.DomainTreemapInstance.dispatchAction({ type: 'hideTip' });
@@ -83,7 +83,7 @@
     containerEl.appendChild(grid);
 
     // 2. Extraer datos procesados anidados via O(N) HashMap
-    var graphData = window.Math_Engine.buildEChartsTreemapData(window.__APP_CACHE__);
+    var graphData = window.Math_Engine.buildEChartsTreemapData(window.DataStore.getAll());
     var treemapContainer = document.getElementById('domain-treemap-container');
 
     if (!graphData || graphData.length === 0) {

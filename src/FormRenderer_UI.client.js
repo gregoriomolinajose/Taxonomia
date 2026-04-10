@@ -139,12 +139,12 @@
 
             // --- MATH ENGINES (Delegado a Math_Engine.js universal) ---
             global.getGenericOrdenPath = function(formStateObj, params) {
-                const cache = (window.__APP_CACHE__ && window.__APP_CACHE__[params.entity]) ? window.__APP_CACHE__[params.entity] : [];
+                const cache = (window.DataStore && window.DataStore.get(params.entity)) ? window.DataStore.get(params.entity) : [];
                 return window.Math_Engine ? window.Math_Engine.buildOrdenPath(formStateObj, params, cache) : '';
             };
 
             global.getGenericPathName = function(formStateObj, params) {
-                const cache = (window.__APP_CACHE__ && window.__APP_CACHE__[params.entity]) ? window.__APP_CACHE__[params.entity] : [];
+                const cache = (window.DataStore && window.DataStore.get(params.entity)) ? window.DataStore.get(params.entity) : [];
                 return window.Math_Engine ? window.Math_Engine.buildPathName(formStateObj, params, cache) : '';
             };
 

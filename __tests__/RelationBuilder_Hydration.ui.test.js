@@ -36,14 +36,18 @@ describe('UI_Component_RelationBuilder & Hydration Stability', () => {
     beforeEach(() => {
         document.body.innerHTML = '';
         
-        // Carga de Cache representativa (Temporal graph)
-        window.__APP_CACHE__ = {
-            Sys_Graph_Edges: [
-                { id_nodo_padre: "PORT-123", id_nodo_hijo: "GRUP-G14II", tipo_relacion: "PORTAFOLIO_GRUPO_PRODUCTO", es_version_actual: true, estado: 'Activo' }
-            ],
-            Portafolio: [
-                { id_portafolio: "PORT-123", nombre: "Portafolio Alfa", id_registro: "PORT-123", nivel_tipo: 1, estado: 'Activo' }
-            ]
+        window.__APP_CACHE__ = {};
+        window.DataStore = {
+            _cache: {
+                Sys_Graph_Edges: [
+                    { id_nodo_padre: "PORT-123", id_nodo_hijo: "GRUP-G14II", tipo_relacion: "PORTAFOLIO_GRUPO_PRODUCTO", es_version_actual: true, estado: 'Activo' }
+                ],
+                Portafolio: [
+                    { id_portafolio: "PORT-123", nombre: "Portafolio Alfa", id_registro: "PORT-123", nivel_tipo: 1, estado: 'Activo' }
+                ]
+            },
+            get: function(entityName) { return this._cache[entityName] || null; },
+            set: function(entityName, data) { this._cache[entityName] = data; }
         };
     });
 

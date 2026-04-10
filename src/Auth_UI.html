@@ -134,7 +134,10 @@
         newToast.position = 'bottom';
         if (res && res.status === 'success') {
           var data = res.data;
-          for (var entity in data) { window.__APP_CACHE__[entity] = data[entity]; }
+          for (var entity in data) { 
+              if (window.DataStore) window.DataStore.set(entity, data[entity]); 
+              else window.__APP_CACHE__[entity] = data[entity]; 
+          }
           if (typeof window.renderDashboard === 'function') window.renderDashboard();
           newToast.message = 'Plataforma sincronizada.'; newToast.icon = 'checkmark-circle-outline';
           newToast.color = 'success'; newToast.duration = 2000;

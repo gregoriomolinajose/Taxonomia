@@ -6,7 +6,7 @@
 (function (global) {
     global.DrawerStackController = (function() {
         const stack = [];
-        const MAX_DEPTH = 3;
+        const MAX_DEPTH = 6; // Sincronizado con Schema_Engine.topologyRules.maxDepth
         
         function getRootContainer() {
             let container = document.getElementById('drawer-root-container');

@@ -142,9 +142,9 @@
         async function _fetchData(entityName, cb) {
             _showLoadingState();
             // Check Frontend Cache first (Directiva Arquitectónica: 0.0s latency)
-            if (window.__APP_CACHE__ && window.__APP_CACHE__[entityName]) {
+            if (window.DataStore && window.DataStore.get(entityName)) {
                 console.log(`[Cache Frontend] HIT para ${entityName}. Renderizado instantáneo.`);
-                const cachedData = window.__APP_CACHE__[entityName];
+                const cachedData = window.DataStore.get(entityName);
                 const activeRows = cachedData.filter(r => r.estado !== 'Eliminado' && r.estado !== 'eliminado');
                 cb(null, activeRows);
                 return;
@@ -175,8 +175,8 @@
                     }
 
                     // Store in Frontend Cache for 0.0s subsequent transitions
-                    if (window.__APP_CACHE__) {
-                        window.__APP_CACHE__[entityName] = rows;
+                    if (window.DataStore) {
+                        window.DataStore.set(entityName, rows);
                     }
 
                     const activeRows = rows.filter(r => r.estado !== 'Eliminado' && r.estado !== 'eliminado');
@@ -576,8 +576,8 @@
             _applyFilter(document.getElementById('dv-search-input') ? document.getElementById('dv-search-input').value || '' : '');
 
             // Global Cache sync (Prevent Re-render Desync)
-            if (window.__APP_CACHE__ && window.__APP_CACHE__[_state.entityName]) {
-                window.__APP_CACHE__[_state.entityName] = window.__APP_CACHE__[_state.entityName].filter(r => r[idField] !== id);
+            if (window.DataStore && window.DataStore.get(_state.entityName)) {
+                window.DataStore.set(_state.entityName, window.DataStore.get(_state.entityName).filter(r => r[idField] !== id));
                 console.log(`[Cache] Registro eliminado de caché global: ${id}`);
             }
 
@@ -593,9 +593,9 @@
                 
                 if (response && response.status === 'success') {
                     // Purgar de la RAM local
-                    if (window.__APP_CACHE__ && window.__APP_CACHE__[_state.entityName]) {
+                    if (window.DataStore && window.DataStore.get(_state.entityName)) {
                         const idField = (ENTITY_META[_state.entityName] || { idField: 'id' }).idField;
-                        window.__APP_CACHE__[_state.entityName] = window.__APP_CACHE__[_state.entityName].filter(row => row[idField] !== id);
+                        window.DataStore.set(_state.entityName, window.DataStore.get(_state.entityName).filter(row => row[idField] !== id));
                     }
 
                     // Forzar re-renderización de la vista actual desde el caché actualizado

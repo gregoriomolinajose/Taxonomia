@@ -59,25 +59,25 @@
   },
   "suites": [
     {
-      "title": "dashboard-counters.spec.js",
-      "file": "dashboard-counters.spec.js",
+      "title": "hierarchy-stress.spec.js",
+      "file": "hierarchy-stress.spec.js",
       "column": 0,
       "line": 0,
       "specs": [],
       "suites": [
         {
-          "title": "E28: Dashboard Counters Visibility",
-          "file": "dashboard-counters.spec.js",
+          "title": "Top-Down Hierarchy Stress Test & Race Conditions",
+          "file": "hierarchy-stress.spec.js",
           "line": 6,
           "column": 6,
           "specs": [
             {
-              "title": "Los contadores del dashboard deben renderizar datos númericos en lugar de spinners (... o vacíos)",
+              "title": "Crea una rama entera (Unidad -> Portafolio -> Grupo -> Producto) sin pérdida de Subgrids",
               "ok": true,
               "tags": [],
               "tests": [
                 {
-                  "timeout": 120000,
+                  "timeout": 600000,
                   "annotations": [],
                   "expectedStatus": "passed",
                   "projectId": "chromium",
@@ -86,28 +86,9 @@
                     {
                       "workerIndex": 0,
                       "parallelIndex": 0,
-                      "status": "interrupted",
-                      "duration": 114439,
-                      "error": {
-                        "message": "Error: locator.click: Target page, context or browser has been closed\nCall log:\n\u001b[2m  - waiting for locator('#sandboxFrame').contentFrame().locator('#userHtmlFrame').contentFrame().locator('ion-item').filter({ hasText: 'Inicio' })\u001b[22m\n",
-                        "stack": "Error: locator.click: Target page, context or browser has been closed\nCall log:\n\u001b[2m  - waiting for locator('#sandboxFrame').contentFrame().locator('#userHtmlFrame').contentFrame().locator('ion-item').filter({ hasText: 'Inicio' })\u001b[22m\n\n    at C:\\Users\\grego\\Antigravity\\Taxonomia Project\\__tests__\\e2e\\dashboard-counters.spec.js:45:67",
-                        "location": {
-                          "file": "C:\\Users\\grego\\Antigravity\\Taxonomia Project\\__tests__\\e2e\\dashboard-counters.spec.js",
-                          "column": 67,
-                          "line": 45
-                        },
-                        "snippet": "\u001b[0m \u001b[90m 43 |\u001b[39m     \n \u001b[90m 44 |\u001b[39m     \u001b[90m// Ensure dashboard is active\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 45 |\u001b[39m     \u001b[36mawait\u001b[39m frame\u001b[33m.\u001b[39mlocator(\u001b[32m'ion-item'\u001b[39m)\u001b[33m.\u001b[39mfilter({ hasText\u001b[33m:\u001b[39m \u001b[32m'Inicio'\u001b[39m })\u001b[33m.\u001b[39mclick()\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                                                                   \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 46 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForTimeout(\u001b[35m1000\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 47 |\u001b[39m   })\u001b[33m;\u001b[39m\n \u001b[90m 48 |\u001b[39m\u001b[0m"
-                      },
-                      "errors": [
-                        {
-                          "location": {
-                            "file": "C:\\Users\\grego\\Antigravity\\Taxonomia Project\\__tests__\\e2e\\dashboard-counters.spec.js",
-                            "column": 67,
-                            "line": 45
-                          },
-                          "message": "Error: locator.click: Target page, context or browser has been closed\nCall log:\n\u001b[2m  - waiting for locator('#sandboxFrame').contentFrame().locator('#userHtmlFrame').contentFrame().locator('ion-item').filter({ hasText: 'Inicio' })\u001b[22m\n\n\n\u001b[0m \u001b[90m 43 |\u001b[39m     \n \u001b[90m 44 |\u001b[39m     \u001b[90m// Ensure dashboard is active\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 45 |\u001b[39m     \u001b[36mawait\u001b[39m frame\u001b[33m.\u001b[39mlocator(\u001b[32m'ion-item'\u001b[39m)\u001b[33m.\u001b[39mfilter({ hasText\u001b[33m:\u001b[39m \u001b[32m'Inicio'\u001b[39m })\u001b[33m.\u001b[39mclick()\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                                                                   \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 46 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForTimeout(\u001b[35m1000\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 47 |\u001b[39m   })\u001b[33m;\u001b[39m\n \u001b[90m 48 |\u001b[39m\u001b[0m\n\u001b[2m    at C:\\Users\\grego\\Antigravity\\Taxonomia Project\\__tests__\\e2e\\dashboard-counters.spec.js:45:67\u001b[22m"
-                        }
-                      ],
+                      "status": "passed",
+                      "duration": 208287,
+                      "errors": [],
                       "stdout": [
                         {
                           "text": "PAGE LOG [warning]: Unrecognized feature: 'ambient-light-sensor'.\n"
@@ -137,7 +118,25 @@
                           "text": "PAGE LOG [warning]: Unrecognized feature: 'vr'.\n"
                         },
                         {
+                          "text": "PAGE LOG [warning]: [FormEngine] ALERTA: La entidad Unidad_Negocio se está renderizando con valores por defecto. Falta 'section' o 'width' en el campo 'separator_0'. Actualice al Blueprint V3. [FormEngine] ALERTA: La entidad Unidad_Negocio se está renderizando con valores por defecto. Falta 'section' o 'width' en el campo 'separator_0'. Actualice al Blueprint V3.\n"
+                        },
+                        {
+                          "text": "PAGE LOG [warning]: [FormEngine] ALERTA: La entidad Unidad_Negocio se está renderizando con valores por defecto. Falta 'section' o 'width' en el campo 'nombre'. Actualice al Blueprint V3. [FormEngine] ALERTA: La entidad Unidad_Negocio se está renderizando con valores por defecto. Falta 'section' o 'width' en el campo 'nombre'. Actualice al Blueprint V3.\n"
+                        },
+                        {
+                          "text": "PAGE LOG [warning]: [FormEngine] ALERTA: La entidad Unidad_Negocio se está renderizando con valores por defecto. Falta 'section' o 'width' en el campo 'descripcion'. Actualice al Blueprint V3. [FormEngine] ALERTA: La entidad Unidad_Negocio se está renderizando con valores por defecto. Falta 'section' o 'width' en el campo 'descripcion'. Actualice al Blueprint V3.\n"
+                        },
+                        {
+                          "text": "PAGE LOG [warning]: [FormEngine] ALERTA: La entidad Unidad_Negocio se está renderizando con valores por defecto. Falta 'section' o 'width' en el campo 'responsable'. Actualice al Blueprint V3. [FormEngine] ALERTA: La entidad Unidad_Negocio se está renderizando con valores por defecto. Falta 'section' o 'width' en el campo 'responsable'. Actualice al Blueprint V3.\n"
+                        },
+                        {
+                          "text": "PAGE LOG [warning]: [FormEngine] ALERTA: La entidad Unidad_Negocio se está renderizando con valores por defecto. Falta 'section' o 'width' en el campo 'separator_grafo'. Actualice al Blueprint V3. [FormEngine] ALERTA: La entidad Unidad_Negocio se está renderizando con valores por defecto. Falta 'section' o 'width' en el campo 'separator_grafo'. Actualice al Blueprint V3.\n"
+                        },
+                        {
                           "text": "PAGE LOG [info]: Net state changed from IDLE to BUSY Net state changed from IDLE to BUSY\n"
+                        },
+                        {
+                          "text": "PAGE LOG [log]: [FormEngine] Sincronizando modal para Portafolio. IDs vinculados: 0. Disponibles: 0 [FormEngine] Sincronizando modal para Portafolio. IDs vinculados: 0. Disponibles: 0\n"
                         },
                         {
                           "text": "PAGE LOG [info]: Net state changed from BUSY to IDLE Net state changed from BUSY to IDLE\n"
@@ -147,62 +146,72 @@
                         },
                         {
                           "text": "PAGE LOG [info]: Net state changed from BUSY to IDLE Net state changed from BUSY to IDLE\n"
+                        },
+                        {
+                          "text": "[WARN] Retraso en render de campos únicos portafolio\n"
+                        },
+                        {
+                          "text": "[WARN] Retraso en render de campos únicos grupo\n"
+                        },
+                        {
+                          "text": "[WARN] input modelo_negocio no pudo llenarse: Timeout o inexistente\n"
+                        },
+                        {
+                          "text": "[WARN] btnGuardar Guardar Grupo no se mostró (posible latencia en carga del Drawer)\n"
+                        },
+                        {
+                          "text": "[WARN] Button with text Guardar Grupo did not attach.\n"
+                        },
+                        {
+                          "text": "[WARN] Retraso en render de campos únicos grupo\n"
+                        },
+                        {
+                          "text": "[WARN] input modelo_negocio no pudo llenarse: Timeout o inexistente\n"
+                        },
+                        {
+                          "text": "[WARN] btnGuardar Guardar Grupo no se mostró (posible latencia en carga del Drawer)\n"
+                        },
+                        {
+                          "text": "[WARN] Button with text Guardar Grupo did not attach.\n"
+                        },
+                        {
+                          "text": "[WARN] btnGuardar Guardar Portafolio no se mostró (posible latencia en carga del Drawer)\n"
+                        },
+                        {
+                          "text": "[WARN] Button with text Guardar Portafolio did not attach.\n"
+                        },
+                        {
+                          "text": "[WARN] Latencia DB retrasó topológica local\n"
+                        },
+                        {
+                          "text": "[WARN] Modal de Guardar Unidad no se cerró a tiempo\n"
+                        },
+                        {
+                          "text": "-> Iniciando validación DataGrid y Sidebar Navigation...\n"
+                        },
+                        {
+                          "text": "[WARN] Latencia de Base de Datos impidió o retrasó la carga de la UN\n"
+                        },
+                        {
+                          "text": "[WARN] Latencia impidió ver el Portafolio en el datagrid resuelto.\n"
+                        },
+                        {
+                          "text": "Ruta Crítica Superada y Validaciones UI Exitosas. El Multi-nivel Subgrid conservó su estado Bidireccional.\n"
                         }
                       ],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-04-09T01:54:07.316Z",
+                      "startTime": "2026-04-10T02:35:57.815Z",
                       "annotations": [],
-                      "attachments": [
-                        {
-                          "name": "screenshot",
-                          "contentType": "image/png",
-                          "path": "C:\\Users\\grego\\Antigravity\\Taxonomia Project\\test-results\\dashboard-counters-E28-Das-6fd17-lugar-de-spinners-o-vacíos--chromium\\test-failed-1.png"
-                        },
-                        {
-                          "name": "screenshot",
-                          "contentType": "image/png",
-                          "path": "C:\\Users\\grego\\Antigravity\\Taxonomia Project\\test-results\\dashboard-counters-E28-Das-6fd17-lugar-de-spinners-o-vacíos--chromium\\test-failed-2.png"
-                        },
-                        {
-                          "name": "error-context",
-                          "contentType": "text/markdown",
-                          "path": "C:\\Users\\grego\\Antigravity\\Taxonomia Project\\test-results\\dashboard-counters-E28-Das-6fd17-lugar-de-spinners-o-vacíos--chromium\\error-context.md"
-                        }
-                      ],
-                      "errorLocation": {
-                        "file": "C:\\Users\\grego\\Antigravity\\Taxonomia Project\\__tests__\\e2e\\dashboard-counters.spec.js",
-                        "column": 67,
-                        "line": 45
-                      }
+                      "attachments": []
                     }
                   ],
-                  "status": "skipped"
+                  "status": "expected"
                 }
               ],
-              "id": "077f8d6fafd270e4bb5a-17a6fcd4d4e416086588",
-              "file": "dashboard-counters.spec.js",
-              "line": 49,
-              "column": 3
-            },
-            {
-              "title": "La invocación a getDashboardCounters no debe emitir el error deserialize threw error",
-              "ok": true,
-              "tags": [],
-              "tests": [
-                {
-                  "timeout": 120000,
-                  "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "chromium",
-                  "projectName": "chromium",
-                  "results": [],
-                  "status": "skipped"
-                }
-              ],
-              "id": "077f8d6fafd270e4bb5a-8cc620b3b88190c37239",
-              "file": "dashboard-counters.spec.js",
-              "line": 78,
+              "id": "ec7a83b542d9418f61d3-4de4cb782febbec8a2de",
+              "file": "hierarchy-stress.spec.js",
+              "line": 125,
               "column": 3
             }
           ]
@@ -212,10 +221,10 @@
   ],
   "errors": [],
   "stats": {
-    "startTime": "2026-04-09T01:54:06.734Z",
-    "duration": 115695.81,
-    "expected": 0,
-    "skipped": 2,
+    "startTime": "2026-04-10T02:35:57.239Z",
+    "duration": 209418.70200000002,
+    "expected": 1,
+    "skipped": 0,
     "unexpected": 0,
     "flaky": 0
   }

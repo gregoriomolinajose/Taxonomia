@@ -109,9 +109,10 @@ window.UI_FormSubmitter = class UI_FormSubmitter {
             });
 
             // Nested Data
-            if (window.__APP_CACHE__ && window.__APP_CACHE__.nestedData) {
-                Object.keys(window.__APP_CACHE__.nestedData).forEach(key => {
-                    payload[key] = window.__APP_CACHE__.nestedData[key];
+            if (window.DataStore && window.DataStore.getNested) {
+                const nested = window.DataStore.getNested('ALL') || window.DataStore.getAll().nestedData || {};
+                Object.keys(nested).forEach(key => {
+                    payload[key] = nested[key];
                 });
             }
 
@@ -179,8 +180,8 @@ window.UI_FormSubmitter = class UI_FormSubmitter {
         window.currentEditId = null;
         this._internalRetryId = null; // Liberar caché de reintentos
 
-        if (window.__APP_CACHE__) {
-            if (window.__APP_CACHE__.nestedData) window.__APP_CACHE__.nestedData = {};
+        if (window.DataStore) {
+            window.DataStore.clearNested();
             // Re-hidratación Asíncrona del Grafo O(1): Evitamos destruir el caché base y en su lugar
             // pedimos al backend los nuevos edges silenciosamente para no bloquear la Interfaz UI.
             if (this.apiService && typeof this.apiService.call === 'function') {
@@ -193,8 +194,8 @@ window.UI_FormSubmitter = class UI_FormSubmitter {
                             headers.forEach((h, i) => obj[h] = tuple[i]);
                             return obj;
                         });
-                        window.__APP_CACHE__['Sys_Graph_Edges'] = edgesObj;
-                        window.__APP_CACHE__['DB_Sys_Graph_Edges'] = edgesObj;
+                        window.DataStore.set('Sys_Graph_Edges', edgesObj);
+                        window.DataStore.set('DB_Sys_Graph_Edges', edgesObj);
                         console.log('[Cache] Sys_Graph_Edges re-hidratado silenciosamente tras guardado.');
                         
                         if (window.AppEventBus) {
@@ -235,10 +236,10 @@ window.UI_FormSubmitter = class UI_FormSubmitter {
     }
 
     _patchFrontendCache(entityName, response, payload) {
-        if (!window.__APP_CACHE__) return;
+        if (!window.DataStore) return;
 
         // 1. Root Entity Injection
-        if (window.__APP_CACHE__[entityName] && Array.isArray(window.__APP_CACHE__[entityName])) {
+        if (window.DataStore.get(entityName) && Array.isArray(window.DataStore.get(entityName))) {
             let pkField = response.pk;
             let pkValue = response.pkValue;
 
@@ -264,12 +265,12 @@ window.UI_FormSubmitter = class UI_FormSubmitter {
                 } catch(e) {}
                 
                 const cleanRecord = { ...payload, [pkField]: pkValue, _version: freshVersion };
-                const liveData = window.__APP_CACHE__[entityName];
+                const liveData = window.DataStore.get(entityName);
                 const existingIdx = liveData.findIndex(r => window.UI_FormUtils.normalizeId(r[pkField]) === window.UI_FormUtils.normalizeId(pkValue));
 
-                window.__APP_CACHE__[entityName] = existingIdx !== -1
+                window.DataStore.set(entityName, existingIdx !== -1
                     ? [...liveData.slice(0, existingIdx), cleanRecord, ...liveData.slice(existingIdx + 1)]
-                    : [cleanRecord, ...liveData];
+                    : [cleanRecord, ...liveData]);
                 
                 console.log(`[Cache] ${existingIdx !== -1 ? 'UPDATE' : 'INSERT'} para: ${entityName} optimizado a versión ${freshVersion}.`);
             }
@@ -279,11 +280,11 @@ window.UI_FormSubmitter = class UI_FormSubmitter {
         if (response.data && response.data.orchestratedChildren) {
             const orch = response.data.orchestratedChildren;
             Object.keys(orch).forEach(childEntity => {
-                if (Array.isArray(window.__APP_CACHE__[childEntity])) {
+                if (window.DataStore && Array.isArray(window.DataStore.get(childEntity))) {
                     const freshChildren = orch[childEntity] || [];
                     const childPkField = 'id_' + childEntity.toLowerCase().replace(/s$/, '').replace(/es$/, '');
                     
-                    let currentCache = [...window.__APP_CACHE__[childEntity]];
+                    let currentCache = [...window.DataStore.get(childEntity)];
                     freshChildren.forEach(newChild => {
                         const cid = newChild[childPkField] || newChild['id_' + childEntity.toLowerCase()];
                         const idx = currentCache.findIndex(c => (c[childPkField] === cid) || (c['id_' + childEntity.toLowerCase()] === cid));
@@ -293,7 +294,7 @@ window.UI_FormSubmitter = class UI_FormSubmitter {
                             currentCache = [newChild, ...currentCache];
                         }
                     });
-                    window.__APP_CACHE__[childEntity] = currentCache;
+                    window.DataStore.set(childEntity, currentCache);
                 }
             });
         }

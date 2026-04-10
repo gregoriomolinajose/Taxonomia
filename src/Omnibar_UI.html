@@ -76,7 +76,7 @@ window.addEventListener('DOMContentLoaded', function() {
       return;
     }
 
-    var cache = window.__APP_CACHE__ || {};
+    var cache = window.DataStore ? window.DataStore.getAll() : {};
     var schemas = window.APP_SCHEMAS || {};
     var count = 0;
     var maxResults = 15;
