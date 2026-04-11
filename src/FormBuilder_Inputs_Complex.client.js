@@ -37,9 +37,15 @@
             const chipContainer = document.createElement('div');
             chipContainer.className = 'chip-container';
             chipContainer.setAttribute('data-chip-name', field.name);
+            chipContainer.setAttribute('data-form-component', field.name);
             chipContainer.classList.remove('ion-hide');
             chipContainer.style.flexWrap = 'wrap';
             chipContainer.style.gap = 'var(--spacing-2)';
+            
+            // S30.11 Nodal Protocol
+            chipContainer.getValidatedValue = () => {
+                return Array.from(chipContainer.querySelectorAll('ion-label')).map(l => l.textContent).join(', ');
+            };
 
             inputEl.appendChild(chipItem);
             inputEl.appendChild(chipContainer);
@@ -76,103 +82,9 @@
             return inputEl;
         };
 
-        global.UI_Factory.buildDynamicList = function(field, data) {
-            const inputEl = document.createElement('div');
-            inputEl.setAttribute('data-dynamic-list', field.name);
-            inputEl.style.border = '0px solid var(--ion-border-color)';
-            inputEl.style.padding = 'var(--spacing-0)';
-            inputEl.style.marginBottom = 'var(--spacing-4)';
-            
-            const dlHeader = document.createElement('div');
-            dlHeader.style.fontSize = 'var(--sys-font-small)';
-            dlHeader.style.color = 'var(--ion-color-medium)';
-            dlHeader.style.marginBottom = 'var(--spacing-2)';
-            dlHeader.style.paddingLeft = 'var(--spacing-1)';
-            dlHeader.textContent = field.label + (field.required ? ' *' : '');
-            inputEl.appendChild(dlHeader);
+        // NOTA S30.11: La implementación redundante global.UI_Factory.buildDynamicList 
+        // ha sido extirpada para mantener una única fuente de verdad en UI_Component_DynamicList.client.js.
 
-            const listRowsContainer = document.createElement('div');
-            inputEl.appendChild(listRowsContainer);
-
-            const addBtn = document.createElement('ion-button');
-            addBtn.setAttribute('fill', 'outline');
-            addBtn.setAttribute('size', 'small');
-            const addIcon = document.createElement('ion-icon');
-            addIcon.setAttribute('slot', 'start');
-            addIcon.setAttribute('name', 'add');
-            addBtn.appendChild(addIcon);
-            addBtn.appendChild(document.createTextNode(' Agregar'));
-            
-            let initialData = [];
-            if (data && data[field.name]) {
-                try {
-                    initialData = typeof data[field.name] === 'string' ? JSON.parse(data[field.name]) : data[field.name];
-                } catch(e) {}
-            }
-            
-            const createRow = (rowData = {}) => {
-                const row = document.createElement('ion-row');
-                row.classList.add('dynamic-list-row');
-                row.style.alignItems = 'center';
-                row.style.marginBottom = 'var(--spacing-2)';
-
-                field.subFields.forEach(sub => {
-                    const col = document.createElement('ion-col');
-                    col.setAttribute('size-md', String(sub.width || 12));
-                    col.setAttribute('size', '12');
-
-                    const subInput = document.createElement(sub.type === 'select' ? 'ion-select' : 'ion-input');
-                    subInput.setAttribute('name', sub.name);
-                    subInput.setAttribute('label', sub.label);
-                    subInput.setAttribute('label-placement', 'floating');
-                    subInput.setAttribute('fill', 'outline');
-                    subInput.style.setProperty('--background', 'var(--ion-color-step-100)');
-                    
-                    if (rowData[sub.name]) {
-                        subInput.value = rowData[sub.name];
-                    }
-
-                    if (sub.type === 'select' && sub.lookupSource) {
-                        subInput.setAttribute('interface', window.innerWidth < 768 ? 'action-sheet' : 'popover');
-                        if (sub.options && Array.isArray(sub.options)) {
-                            sub.options.forEach(opt => {
-                                const ionOption = document.createElement('ion-select-option');
-                                ionOption.value = (typeof opt === 'object' && opt !== null) ? opt.value : opt;
-                                ionOption.textContent = (typeof opt === 'object' && opt !== null) ? opt.label : opt;
-                                subInput.appendChild(ionOption);
-                            });
-                        }
-                    }
-                    col.appendChild(subInput);
-                    row.appendChild(col);
-                });
-
-                const delCol = document.createElement('ion-col');
-                delCol.setAttribute('size-md', '1');
-                delCol.setAttribute('size', '2');
-                const delBtn = document.createElement('ion-button');
-                delBtn.setAttribute('color', 'danger');
-                delBtn.setAttribute('fill', 'clear');
-                const delIcon = document.createElement('ion-icon');
-                delIcon.setAttribute('name', 'trash-outline');
-                delBtn.appendChild(delIcon);
-                delBtn.onclick = () => row.remove();
-                
-                delCol.appendChild(delBtn);
-                row.appendChild(delCol);
-
-                listRowsContainer.appendChild(row);
-            };
-
-            if (initialData.length > 0 && Array.isArray(initialData)) {
-                initialData.forEach(item => createRow(item));
-            }
-
-            addBtn.onclick = () => createRow();
-
-            inputEl.appendChild(addBtn);
-            return inputEl;
-        };
 
         global.UI_Factory.drawChip = function(id, labelText, onRemoveCallback) {
             const chip = document.createElement('ion-chip');

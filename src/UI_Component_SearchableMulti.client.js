@@ -26,15 +26,13 @@
             }
             
             mainContainer.setAttribute('data-searchable-multi', fieldDef.name);
+            mainContainer.setAttribute('data-form-component', fieldDef.name);
+            mainContainer.getValidatedValue = () => Array.from(selectedIds);
 
-            // S30.3 - Local State Sync Architecture
+            // S30.3 - Local State Sync Architecture (Migrado a S30.11 Nodal)
             const getActiveForm = () => mainContainer.closest('ion-modal') || document.getElementById('app-container');
             const syncToLocalState = () => {
-                const activeForm = getActiveForm();
-                if (activeForm) {
-                    activeForm._LocalState = activeForm._LocalState || {};
-                    activeForm._LocalState[fieldDef.name] = selectedIds;
-                }
+                // Estado expuesto vía mainContainer.getValidatedValue()
             };
 
             const visualWrapper = document.createElement('div');

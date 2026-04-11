@@ -99,17 +99,20 @@ describe('UI_FormSubmitter (Dependency Injection Architecture)', () => {
         document.createElement = document.createElementOrig;
     });
 
-    it('D. Debe extraer el data asincrona anidada desde _LocalState y limpiarlo al finalizar (S30.3)', async () => {
+    it('D. Debe extraer el data asincrona anidada utilizando Delegación Nodal (getValidatedValue) en lugar de lectura global (S30.11)', async () => {
         // Reutilizar el app-container de beforeEach
         const mockModal = document.getElementById('app-container');
         
-        // Simular Subgrid Data (LocalState)
-        mockModal._LocalState = { 'subgrid_data': [{id: 1, name: 'Test'}] };
+        // Simular Nodal Component Data (Subgrid Equivalente)
+        const subgridNode = document.createElement('div');
+        subgridNode.setAttribute('data-form-component', 'subgrid_data');
+        subgridNode.getValidatedValue = () => [{id: 1, name: 'Test'}];
+        mockModal.appendChild(subgridNode);
         
-        // Simular SearchableMulti Data
+        // Simular Nodal Component Data (SearchableMulti Equivalente)
         const multiNode = document.createElement('div');
-        multiNode.setAttribute('data-searchable-multi', 'roles');
-        multiNode._LocalStateSelection = ['admin', 'user'];
+        multiNode.setAttribute('data-form-component', 'roles');
+        multiNode.getValidatedValue = () => ['admin', 'user'];
         mockModal.appendChild(multiNode);
         
         // Mock Dependencias Globales invocadas en flujo on-click
@@ -149,9 +152,7 @@ describe('UI_FormSubmitter (Dependency Injection Architecture)', () => {
                 'Test_Entity', 
                 { subgrid_data: [{id: 1, name: 'Test'}], roles: ['admin', 'user'] }
             );
-            // S30.3 QA Guard: Validar purga exitosa
-            expect(mockModal._LocalState).toEqual({});
-            expect(multiNode._LocalStateSelection).toBeUndefined();
+            // Cleanup de arquitectura Nodal ya no requiere purga explícita (S30.11)
         }, { timeout: 1000 });
         
         mockModal.innerHTML = ''; // reset

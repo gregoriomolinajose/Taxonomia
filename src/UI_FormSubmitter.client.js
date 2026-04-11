@@ -74,24 +74,16 @@ window.UI_FormSubmitter = class UI_FormSubmitter {
                 }
             });
 
-            // S30.3 - Harvest Memory-Saved Contexts from LocalState
-            // The following components natively push to _LocalState automatically: 
-            // - Subgrids
-            // - DynamicLists
-            // - SearchableMultis
-            if (activeForm && activeForm._LocalState) {
-                Object.assign(payload, activeForm._LocalState);
-            }
-
-            // Chip Containers
-            const freshChipContainers = activeForm.querySelectorAll('.chip-container');
-            freshChipContainers.forEach(cc => {
-                const name = cc.getAttribute('data-chip-name');
-                if (name) {
-                    const chips = cc.querySelectorAll('ion-label');
-                    const arr = [];
-                    chips.forEach(l => arr.push(l.textContent));
-                    payload[name] = arr.join(', ');
+            // S30.11 - Protocolo de Extracción Nodal Frontend (Duck-Typing API)
+            // Extrae datos de WebComponents delegando a su función getValidatedValue local.
+            const nodalComponents = activeForm.querySelectorAll('[data-form-component]');
+            nodalComponents.forEach(cmp => {
+                const name = cmp.getAttribute('data-form-component');
+                if (name && typeof cmp.getValidatedValue === 'function') {
+                    const val = cmp.getValidatedValue();
+                    if (val !== undefined) {
+                        payload[name] = val;
+                    }
                 }
             });
 
@@ -129,9 +121,8 @@ window.UI_FormSubmitter = class UI_FormSubmitter {
                     const itemName = (response.data && response.data.Entity) ? response.data.Entity : this.entityName;
                     this._showToast(`¡${itemName} guardado con éxito!`, 'success');
                     if (activeForm) {
-                        activeForm._LocalState = {};
-                        const multis = activeForm.querySelectorAll('[data-searchable-multi]');
-                        multis.forEach(el => el._LocalStateSelection = undefined);
+                        // El estado ahora pertenece localmente a cada componente (S30.11 Nodal Architecture).
+                        // Si requieren limpieza post-guardado, responderán a AppEventBus u otro ciclo de vida.
                     }
                     
                     // Disparo de Evento Nativo de Persistencia Inline (H6/H2 Simplification)

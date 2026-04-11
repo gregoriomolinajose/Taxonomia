@@ -16,6 +16,22 @@
             inputEl.style.border = '0px solid var(--ion-border-color)';
             inputEl.style.padding = 'var(--spacing-0)';
             inputEl.style.marginBottom = 'var(--spacing-4)';
+            inputEl.setAttribute('data-form-component', field.name);
+            
+            // S30.11 Nodal Protocol
+            inputEl.getValidatedValue = () => {
+                const rows = inputEl.querySelectorAll('.dynamic-list-row');
+                const jsonArray = [];
+                rows.forEach(r => {
+                    const rd = {};
+                    const rInputs = r.querySelectorAll('ion-input, ion-select');
+                    rInputs.forEach(inp => {
+                        if (inp.name) rd[inp.name] = inp.value;
+                    });
+                    jsonArray.push(rd);
+                });
+                return jsonArray;
+            };
             
             const dlHeader = document.createElement('div');
             dlHeader.style.fontSize = 'var(--sys-font-small)';
@@ -47,20 +63,7 @@
             const createRow = (rowData = {}) => {
                 const activeForm = inputEl.closest('ion-modal') || document.getElementById('app-container');
                 const syncState = () => {
-                    if (activeForm) {
-                        activeForm._LocalState = activeForm._LocalState || {};
-                        const rows = inputEl.querySelectorAll('.dynamic-list-row');
-                        const jsonArray = [];
-                        rows.forEach(r => {
-                            const rd = {};
-                            const rInputs = r.querySelectorAll('ion-input, ion-select');
-                            rInputs.forEach(inp => {
-                                if (inp.name) rd[inp.name] = inp.value;
-                            });
-                            jsonArray.push(rd);
-                        });
-                        activeForm._LocalState[field.name] = jsonArray;
-                    }
+                    // Estado delegado a inputEl.getValidatedValue() (S30.11 Nodal)
                 };
 
                 const row = document.createElement('ion-row');
