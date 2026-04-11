@@ -253,6 +253,13 @@
                   <ion-icon name="shield-checkmark-outline" slot="start"></ion-icon>
                   <ion-label>Seguridad</ion-label>
                 </ion-item>
+
+                <!-- [E31-S31.5] Sistema: Schema Config Studio — SUPER_ADMIN only, hidden by default -->
+                <ion-item button id="popover-btn-sistema" class="ion-hide" data-dismiss="#profile-popover" data-action="nav:sistema">
+                  <ion-icon name="server-outline" slot="start" color="warning"></ion-icon>
+                  <ion-label>Sistema</ion-label>
+                  <ion-badge slot="end" color="warning" style="font-size:0.65rem;">ADMIN</ion-badge>
+                </ion-item>
                 
                 <ion-item button lines="none" detail="false" data-dismiss="#profile-popover" data-action="auth:logout" style="--color: var(--ion-color-danger);">
                   <ion-icon name="log-out-outline" slot="start" color="danger"></ion-icon>
@@ -407,6 +414,7 @@
   <?!= include('Dashboard_UI'); ?>
   <?!= include('DomainMap_UI'); ?>
   <?!= include('DesignKit_UI'); ?>
+  <?!= include('Schema_Studio_UI'); ?>
   <?!= include('Governance_Admin_UI'); ?>
   <?!= include('Auth_UI'); ?>
   <!-- [QA_MODULE_START] -->

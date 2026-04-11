@@ -469,4 +469,28 @@ function getEntityTopologyRules(entityName) {
 if (typeof module !== 'undefined') {
   module.exports = { APP_SCHEMAS, TOPOLOGY_PRESETS, FIELD_TEMPLATES, getAppSchema, getEntityTopologyRules };
 }
+
+// ─── [E31-S31.5] Schema Studio GAS Endpoints ─────────────────────────────────
+
+/**
+ * Get DB provisioning status for all entities.
+ * Called by Schema Studio → DB Health tab.
+ * SUPER_ADMIN guard enforced via Execution API.
+ *
+ * @returns {Object[]} Array of entity health records from Schema Provisioner.
+ */
+function getSchemaProvisioningStatus() {
+  return getProvisioningStatus(SpreadsheetApp.getActiveSpreadsheet());
+}
+
+/**
+ * Run full schema reconciliation across all entities.
+ * Called by Schema Studio → "Reconciliar DB" button.
+ * SUPER_ADMIN guard enforced via Execution API.
+ *
+ * @returns {Object} Full reconciliation report.
+ */
+function runSchemaReconcile() {
+  return reconcileAll(SpreadsheetApp.getActiveSpreadsheet());
+}
 

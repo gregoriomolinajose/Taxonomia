@@ -1,0 +1,622 @@
+<!-- [E31-S31.5] Schema_Studio_UI.html
+     Schema Governance Config Studio — Viewer (Read-Only)
+     Acceso: SUPER_ADMIN exclusivo — revelado desde icono de perfil → Sistema
+     Inyectado via: <?!= include('Schema_Studio_UI'); ?>
+-->
+
+<!-- ═══ TEMPLATE ════════════════════════════════════════════════════════════ -->
+<template id="tmpl-schema-studio">
+  <div id="schema-studio-root" style="
+    font-family: var(--font-body, 'Inter', sans-serif);
+    color: var(--ion-text-color);
+    padding: 0 8px 32px;
+    max-width: 1400px;
+    margin: 0 auto;
+    animation: ss-fade-in 0.35s ease;
+  ">
+
+    <!-- Header Banner -->
+    <div style="
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 20px 24px;
+      background: linear-gradient(135deg, var(--ion-color-warning) 0%, var(--ion-color-warning-shade) 100%);
+      border-radius: 14px;
+      margin-bottom: 24px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.12);
+    ">
+      <div style="display:flex;align-items:center;gap:14px;">
+        <div style="
+          width:48px;height:48px;border-radius:12px;
+          background:rgba(0,0,0,0.12);
+          display:flex;align-items:center;justify-content:center;
+        ">
+          <ion-icon name="server-outline" style="font-size:24px;color:#fff;"></ion-icon>
+        </div>
+        <div>
+          <div style="font-family:var(--font-display,'Poppins',sans-serif);font-size:1.25rem;font-weight:700;color:#fff;">
+            Schema Governance Studio
+          </div>
+          <div style="font-size:0.8rem;color:rgba(255,255,255,0.8);margin-top:2px;">
+            E31 · Read-Only Viewer · SUPER_ADMIN
+          </div>
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;align-items:center;">
+        <div id="ss-db-status-pill" style="
+          padding:6px 14px;border-radius:20px;
+          background:rgba(255,255,255,0.2);
+          font-size:0.75rem;font-weight:600;color:#fff;
+          display:flex;align-items:center;gap:6px;
+        ">
+          <ion-icon name="ellipse" style="font-size:8px;color:#fff;" id="ss-status-dot"></ion-icon>
+          <span id="ss-status-text">Verificando DB...</span>
+        </div>
+        <button id="ss-btn-reconcile" onclick="window.SchemaStudio.runReconcile()" style="
+          padding:8px 18px;border-radius:8px;
+          background:rgba(255,255,255,0.92);
+          color:var(--ion-color-warning-shade);
+          font-weight:700;font-size:0.8rem;
+          border:none;cursor:pointer;
+          display:flex;align-items:center;gap:6px;
+          transition:all 0.2s;
+        " title="Reconciliar esquema contra Google Sheets">
+          <ion-icon name="sync-outline"></ion-icon>
+          Reconciliar DB
+        </button>
+      </div>
+    </div>
+
+    <!-- Tab Selector -->
+    <div style="
+      display:flex;gap:8px;margin-bottom:20px;
+      border-bottom:1px solid var(--ion-color-step-100);
+      padding-bottom:0;
+    " id="ss-tabs">
+      <button class="ss-tab ss-tab-active" data-tab="entities" onclick="window.SchemaStudio.switchTab('entities')" style="
+        padding:10px 20px;border:none;background:none;cursor:pointer;
+        font-weight:600;font-size:0.85rem;color:var(--ion-color-warning);
+        border-bottom:2px solid var(--ion-color-warning);margin-bottom:-1px;
+        display:flex;align-items:center;gap:6px;transition:all 0.2s;
+      ">
+        <ion-icon name="layers-outline"></ion-icon> Entidades
+      </button>
+      <button class="ss-tab" data-tab="templates" onclick="window.SchemaStudio.switchTab('templates')" style="
+        padding:10px 20px;border:none;background:none;cursor:pointer;
+        font-weight:600;font-size:0.85rem;color:var(--ion-color-medium);
+        border-bottom:2px solid transparent;margin-bottom:-1px;
+        display:flex;align-items:center;gap:6px;transition:all 0.2s;
+      ">
+        <ion-icon name="code-slash-outline"></ion-icon> Templates
+      </button>
+      <button class="ss-tab" data-tab="presets" onclick="window.SchemaStudio.switchTab('presets')" style="
+        padding:10px 20px;border:none;background:none;cursor:pointer;
+        font-weight:600;font-size:0.85rem;color:var(--ion-color-medium);
+        border-bottom:2px solid transparent;margin-bottom:-1px;
+        display:flex;align-items:center;gap:6px;transition:all 0.2s;
+      ">
+        <ion-icon name="git-network-outline"></ion-icon> Topology Presets
+      </button>
+      <button class="ss-tab" data-tab="db" onclick="window.SchemaStudio.switchTab('db')" style="
+        padding:10px 20px;border:none;background:none;cursor:pointer;
+        font-weight:600;font-size:0.85rem;color:var(--ion-color-medium);
+        border-bottom:2px solid transparent;margin-bottom:-1px;
+        display:flex;align-items:center;gap:6px;transition:all 0.2s;
+      ">
+        <ion-icon name="hardware-chip-outline"></ion-icon> DB Health
+      </button>
+    </div>
+
+    <!-- Tab Content Area -->
+    <div id="ss-tab-content">
+      <!-- Rendered by SchemaStudio.mount() -->
+      <div style="text-align:center;padding:60px 20px;color:var(--ion-color-medium);">
+        <ion-spinner name="crescent" color="warning"></ion-spinner>
+        <div style="margin-top:12px;font-size:0.85rem;">Cargando catálogo...</div>
+      </div>
+    </div>
+
+  </div>
+</template>
+
+<!-- ═══ STYLES ════════════════════════════════════════════════════════════ -->
+<style>
+  @keyframes ss-fade-in {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes ss-card-in {
+    from { opacity: 0; transform: scale(0.97); }
+    to   { opacity: 1; transform: scale(1); }
+  }
+
+  .ss-entity-card {
+    background: var(--ion-item-background, var(--ion-color-step-50));
+    border: 1px solid var(--ion-color-step-100);
+    border-radius: 12px;
+    padding: 16px 20px;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    animation: ss-card-in 0.2s ease;
+    transition: box-shadow 0.2s;
+  }
+  .ss-entity-card:hover {
+    box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+  }
+
+  .ss-field-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 9px;
+    border-radius: 20px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    margin: 2px 3px 2px 0;
+    white-space: nowrap;
+  }
+  .ss-field-chip.system   { background: rgba(var(--ion-color-primary-rgb),0.12); color: var(--ion-color-primary); }
+  .ss-field-chip.audit    { background: rgba(var(--ion-color-success-rgb),0.12); color: var(--ion-color-success); }
+  .ss-field-chip.version  { background: rgba(var(--ion-color-warning-rgb),0.12); color: var(--ion-color-warning-shade); }
+  .ss-field-chip.custom   { background: var(--ion-color-step-100); color: var(--ion-color-medium); }
+  .ss-field-chip.relation { background: rgba(var(--ion-color-tertiary-rgb),0.12); color: var(--ion-color-tertiary); }
+
+  .ss-template-card {
+    background: var(--ion-item-background);
+    border: 1px solid var(--ion-color-step-100);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 14px;
+    animation: ss-card-in 0.2s ease;
+  }
+
+  .ss-preset-card {
+    background: var(--ion-item-background);
+    border: 1px solid var(--ion-color-step-100);
+    border-left: 4px solid var(--ion-color-primary);
+    border-radius: 12px;
+    padding: 18px 20px;
+    margin-bottom: 12px;
+    animation: ss-card-in 0.2s ease;
+  }
+
+  .ss-health-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    border-radius: 10px;
+    margin-bottom: 8px;
+    border: 1px solid var(--ion-color-step-100);
+    background: var(--ion-item-background);
+    animation: ss-card-in 0.2s ease;
+    transition: background 0.2s;
+  }
+  .ss-health-row:hover { background: var(--ion-color-step-50); }
+
+  .ss-pill {
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+  }
+  .ss-pill.ok      { background: rgba(var(--ion-color-success-rgb),0.15); color: var(--ion-color-success); }
+  .ss-pill.warn    { background: rgba(var(--ion-color-warning-rgb),0.15); color: var(--ion-color-warning-shade); }
+  .ss-pill.missing { background: rgba(var(--ion-color-danger-rgb),0.12); color: var(--ion-color-danger); }
+
+  .ss-code {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 0.78rem;
+    background: var(--ion-color-step-100);
+    padding: 2px 7px;
+    border-radius: 5px;
+    color: var(--ion-color-primary);
+  }
+
+  .ss-tab { outline: none; }
+  .ss-tab:hover { color: var(--ion-color-warning-shade) !important; }
+
+  #ss-btn-reconcile:hover {
+    background: #fff !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    transform: translateY(-1px);
+  }
+</style>
+
+<!-- ═══ ENGINE ════════════════════════════════════════════════════════════ -->
+<script>
+(function() {
+  'use strict';
+
+  // ── Field Classification ──────────────────────────────────────────────────
+  var SYSTEM_FIELD_NAMES  = ['lexical_id', 'estado'];
+  var AUDIT_FIELD_NAMES   = ['created_at','created_by','updated_at','updated_by','deleted_at','deleted_by'];
+  var VERSION_FIELD_NAMES = ['version'];
+
+  function classifyField(fieldName) {
+    if (AUDIT_FIELD_NAMES.includes(fieldName))   return 'audit';
+    if (VERSION_FIELD_NAMES.includes(fieldName)) return 'version';
+    if (SYSTEM_FIELD_NAMES.includes(fieldName))  return 'system';
+    return 'custom';
+  }
+
+  // ── Chip HTML ─────────────────────────────────────────────────────────────
+  function chipHtml(name, type, icon) {
+    return '<span class="ss-field-chip ' + type + '">' +
+           '<ion-icon name="' + icon + '"></ion-icon>' +
+           name + '</span>';
+  }
+
+  function renderFieldChips(fields) {
+    if (!fields || !fields.length) return '<span style="color:var(--ion-color-medium);font-size:0.8rem;">Sin campos</span>';
+    return fields.map(function(f) {
+      var t = f.type;
+      if (t === 'relation') return chipHtml(f.name, 'relation', 'link-outline');
+      if (t === 'divider' ) return ''; // skip UI-only
+      var cls = classifyField(f.name);
+      var icons = { system:'finger-print-outline', audit:'time-outline', version:'git-commit-outline', custom:'code-slash-outline' };
+      return chipHtml(f.name, cls, icons[cls] || 'code-slash-outline');
+    }).filter(Boolean).join('');
+  }
+
+  // ── Tabs ──────────────────────────────────────────────────────────────────
+  function switchTab(tabId) {
+    var tabs = document.querySelectorAll('.ss-tab');
+    tabs.forEach(function(t) {
+      var active = t.getAttribute('data-tab') === tabId;
+      t.style.color        = active ? 'var(--ion-color-warning)' : 'var(--ion-color-medium)';
+      t.style.borderBottom = active ? '2px solid var(--ion-color-warning)' : '2px solid transparent';
+    });
+    renderTab(tabId);
+  }
+
+  // ── Tab Renderers ─────────────────────────────────────────────────────────
+  function renderTab(tabId) {
+    var container = document.getElementById('ss-tab-content');
+    if (!container) return;
+    container.innerHTML = '';
+
+    if (tabId === 'entities')  renderEntitiesTab(container);
+    else if (tabId === 'templates') renderTemplatesTab(container);
+    else if (tabId === 'presets')   renderPresetsTab(container);
+    else if (tabId === 'db')        renderDbHealthTab(container);
+  }
+
+  // ── Entities Tab ──────────────────────────────────────────────────────────
+  function renderEntitiesTab(container) {
+    var schemas = window.APP_SCHEMAS || {};
+    var html = '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">' +
+      '<div>' +
+        '<div style="font-weight:700;font-size:1rem;">Catálogo de Entidades</div>' +
+        '<div style="font-size:0.78rem;color:var(--ion-color-medium);margin-top:2px;">' +
+          Object.keys(schemas).filter(function(k){return k!=='_UI_CONFIG';}).length +
+          ' entidades registradas en APP_SCHEMAS' +
+        '</div>' +
+      '</div>' +
+      '<div style="display:flex;gap:8px;font-size:0.72rem;">' +
+        '<span class="ss-field-chip system"><ion-icon name="finger-print-outline"></ion-icon>SYSTEM_FIELDS</span>' +
+        '<span class="ss-field-chip audit"><ion-icon name="time-outline"></ion-icon>AUDIT_FIELDS</span>' +
+        '<span class="ss-field-chip version"><ion-icon name="git-commit-outline"></ion-icon>VERSION</span>' +
+        '<span class="ss-field-chip custom"><ion-icon name="code-slash-outline"></ion-icon>CUSTOM</span>' +
+        '<span class="ss-field-chip relation"><ion-icon name="link-outline"></ion-icon>RELATION</span>' +
+      '</div>' +
+    '</div>';
+
+    Object.keys(schemas).sort().forEach(function(entityName) {
+      if (entityName === '_UI_CONFIG') return;
+      var schema = schemas[entityName];
+      var meta = schema.metadata || {};
+      var fields = schema.fields || [];
+
+      var fieldCount    = fields.filter(function(f){ return f.type !== 'divider'; }).length;
+      var auditCount    = fields.filter(function(f){ return AUDIT_FIELD_NAMES.includes(f.name); }).length;
+      var hasVersion    = fields.some(function(f){ return f.name === 'version'; });
+      var hasLexical    = fields.some(function(f){ return f.name === 'lexical_id'; });
+      var topologyKey   = schema.topologyRules ? (schema.topologyRules._preset || '—') : '—';
+
+      // Compliance score
+      var score = 0;
+      if (auditCount === 6) score++;
+      if (hasVersion) score++;
+      if (hasLexical || entityName.startsWith('Sys_') || entityName.startsWith('Config_') || entityName.startsWith('Relacion_')) score++;
+      var scoreColor = score >= 3 ? 'var(--ion-color-success)' : score >= 2 ? 'var(--ion-color-warning-shade)' : 'var(--ion-color-danger)';
+
+      html += '<div class="ss-entity-card">' +
+        '<div style="flex:1;min-width:0;">' +
+          '<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">' +
+            '<ion-icon name="' + (meta.iconName || 'cube-outline') + '" style="font-size:18px;color:var(--ion-color-' + (meta.color || 'primary') + ');flex-shrink:0;"></ion-icon>' +
+            '<span style="font-weight:700;font-size:0.9rem;">' + entityName + '</span>' +
+            (meta.label ? '<span style="font-size:0.75rem;color:var(--ion-color-medium);">' + meta.label + '</span>' : '') +
+            (topologyKey !== '—' ? '<span class="ss-code">' + topologyKey + '</span>' : '') +
+          '</div>' +
+          '<div style="flex-wrap:wrap;display:flex;">' + renderFieldChips(fields) + '</div>' +
+        '</div>' +
+        '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0;">' +
+          '<div style="font-size:0.72rem;font-weight:700;color:' + scoreColor + ';">' +
+            '<ion-icon name="' + (score >= 3 ? 'checkmark-circle' : 'warning') + '"></ion-icon> ' +
+            fieldCount + ' campos' +
+          '</div>' +
+          '<div style="font-size:0.7rem;color:var(--ion-color-medium);">Audit: ' + auditCount + '/6 · Version: ' + (hasVersion?'✓':'–') + ' · Lexical: ' + (hasLexical?'✓':'–') + '</div>' +
+        '</div>' +
+      '</div>';
+    });
+
+    container.innerHTML = html;
+  }
+
+  // ── Templates Tab ─────────────────────────────────────────────────────────
+  function renderTemplatesTab(container) {
+    var templates = [
+      {
+        key: 'SYSTEM_FIELDS',
+        description: 'ID amigable para el usuario + estado de ciclo de vida. Universal en todas las entidades de negocio.',
+        fields: [
+          { name: 'lexical_id', hint: 'Auto: ACRONIMO-0042. Readonly.' },
+          { name: 'estado',     hint: 'Activo | Eliminado | Borrador. Soft-delete.' }
+        ],
+        icon: 'finger-print-outline',
+        color: 'var(--ion-color-primary)'
+      },
+      {
+        key: 'ESTADO_FIELD',
+        description: 'Estado de ciclo de vida standalone para entidades de sistema que no requieren lexical_id.',
+        fields: [
+          { name: 'estado', hint: 'Activo | Eliminado | Borrador.' }
+        ],
+        icon: 'toggle-outline',
+        color: 'var(--ion-color-secondary)'
+      },
+      {
+        key: 'AUDIT_FIELDS',
+        description: 'Trail completo de auditoría de industria. Todos hidden — manejados exclusivamente por Engine_DB.',
+        fields: [
+          { name: 'created_at',  hint: 'ISO 8601 UTC. Inmutable tras creación.' },
+          { name: 'created_by',  hint: 'Email del creador. Inmutable.' },
+          { name: 'updated_at',  hint: 'ISO 8601. Actualizado en cada write.' },
+          { name: 'updated_by',  hint: 'Email del último editor.' },
+          { name: 'deleted_at',  hint: 'ISO 8601. Soft-delete timestamp.' },
+          { name: 'deleted_by',  hint: 'Email del que marcó como eliminado.' }
+        ],
+        icon: 'time-outline',
+        color: 'var(--ion-color-success)'
+      },
+      {
+        key: 'VERSION_FIELD',
+        description: 'Contador de versión para optimistic locking. Previene lost-update en ediciones concurrentes.',
+        fields: [
+          { name: 'version', hint: 'Int incremental. Default: 1. Manejado por Engine_DB.' }
+        ],
+        icon: 'git-commit-outline',
+        color: 'var(--ion-color-warning-shade)'
+      },
+      {
+        key: 'GRAPH_SEPARATOR',
+        description: 'Separador visual de sección para la topología de grafo en el FormEngine.',
+        fields: [
+          { name: 'separator_grafo', hint: 'type: divider. Acepta label personalizado.' }
+        ],
+        icon: 'apps-outline',
+        color: 'var(--ion-color-tertiary)'
+      }
+    ];
+
+    var html = '<div style="font-weight:700;font-size:1rem;margin-bottom:4px;">Catálogo FIELD_TEMPLATES</div>' +
+      '<div style="font-size:0.78rem;color:var(--ion-color-medium);margin-bottom:18px;">' + templates.length + ' templates · Fuente: Schema_Engine.gs · Object.freeze()</div>';
+
+    templates.forEach(function(t) {
+      html += '<div class="ss-template-card">' +
+        '<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">' +
+          '<ion-icon name="' + t.icon + '" style="font-size:20px;color:' + t.color + ';"></ion-icon>' +
+          '<div>' +
+            '<span style="font-family:\'Roboto Mono\',monospace;font-weight:700;font-size:0.9rem;color:' + t.color + ';">FIELD_TEMPLATES.' + t.key + '()</span>' +
+            '<div style="font-size:0.78rem;color:var(--ion-color-medium);margin-top:2px;">' + t.description + '</div>' +
+          '</div>' +
+        '</div>' +
+        '<div style="display:flex;flex-direction:column;gap:6px;">' +
+        t.fields.map(function(f) {
+          return '<div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--ion-color-step-50);border-radius:8px;">' +
+            '<span class="ss-code">' + f.name + '</span>' +
+            '<span style="font-size:0.75rem;color:var(--ion-color-medium);">' + f.hint + '</span>' +
+          '</div>';
+        }).join('') +
+        '</div>' +
+      '</div>';
+    });
+
+    container.innerHTML = html;
+  }
+
+  // ── Presets Tab ───────────────────────────────────────────────────────────
+  function renderPresetsTab(container) {
+    var presets = window.APP_SCHEMAS
+      ? Object.entries(window.APP_SCHEMAS)
+          .filter(function(e){ return e[0] !== '_UI_CONFIG'; })
+          .reduce(function(acc, e) {
+            var rules = e[1].topologyRules;
+            if (rules && rules._preset && !acc[rules._preset]) {
+              acc[rules._preset] = { key: rules._preset, rules: rules, users: [] };
+            }
+            if (rules && rules._preset) acc[rules._preset].users.push(e[0]);
+            return acc;
+          }, {})
+      : {};
+
+    var html = '<div style="font-weight:700;font-size:1rem;margin-bottom:4px;">Catálogo TOPOLOGY_PRESETS</div>' +
+      '<div style="font-size:0.78rem;color:var(--ion-color-medium);margin-bottom:18px;">' +
+        Object.keys(presets).length + ' presets · Object.freeze() · Reglas referenciadas, no duplicadas</div>';
+
+    Object.values(presets).forEach(function(p) {
+      var rules = p.rules || {};
+      html += '<div class="ss-preset-card">' +
+        '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;">' +
+          '<div style="flex:1;">' +
+            '<div style="font-family:\'Roboto Mono\',monospace;font-weight:700;font-size:0.9rem;color:var(--ion-color-primary);">TOPOLOGY_PRESETS.' + p.key + '</div>' +
+            '<div style="margin-top:10px;display:flex;flex-wrap:wrap;gap:6px;">' +
+              (rules.maxChildren !== undefined ? '<span class="ss-field-chip system">maxChildren: ' + rules.maxChildren + '</span>' : '') +
+              (rules.maxDepth !== undefined    ? '<span class="ss-field-chip system">maxDepth: '    + rules.maxDepth    + '</span>' : '') +
+              (rules.allowCycles !== undefined ? '<span class="ss-field-chip ' + (rules.allowCycles?'warn':'audit') + '">cycles: ' + rules.allowCycles + '</span>' : '') +
+              (rules.allowStealing !== undefined ? '<span class="ss-field-chip custom">stealing: ' + rules.allowStealing + '</span>' : '') +
+              (rules.topologyType  ? '<span class="ss-field-chip version">' + rules.topologyType + '</span>' : '') +
+            '</div>' +
+          '</div>' +
+          '<div style="text-align:right;flex-shrink:0;">' +
+            '<div style="font-size:0.7rem;color:var(--ion-color-medium);">Usado por</div>' +
+            '<div style="font-size:0.78rem;font-weight:600;margin-top:4px;">' + p.users.join(', ') + '</div>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
+    });
+
+    if (!Object.keys(presets).length) {
+      html += '<div style="text-align:center;padding:40px;color:var(--ion-color-medium);">No se detectaron presets activos en APP_SCHEMAS.</div>';
+    }
+
+    container.innerHTML = html;
+  }
+
+  // ── DB Health Tab ─────────────────────────────────────────────────────────
+  function renderDbHealthTab(container) {
+    container.innerHTML = '<div style="text-align:center;padding:40px;color:var(--ion-color-medium);">' +
+      '<ion-spinner name="crescent" color="warning"></ion-spinner>' +
+      '<div style="margin-top:12px;font-size:0.85rem;">Consultando estado de la base de datos...</div>' +
+      '</div>';
+
+    if (typeof google !== 'undefined' && google.script && google.script.run) {
+      google.script.run
+        .withSuccessHandler(function(statusData) {
+          renderDbHealthResults(container, statusData);
+        })
+        .withFailureHandler(function(err) {
+          container.innerHTML = '<div style="text-align:center;padding:40px;">' +
+            '<ion-icon name="cloud-offline-outline" style="font-size:3rem;color:var(--ion-color-danger);"></ion-icon>' +
+            '<div style="margin-top:12px;font-weight:600;">Error consultando DB</div>' +
+            '<div style="font-size:0.8rem;color:var(--ion-color-medium);margin-top:6px;">' + (err.message || String(err)) + '</div>' +
+          '</div>';
+        })
+        .getSchemaProvisioningStatus();
+    } else {
+      // Dev fallback: derive from APP_SCHEMAS
+      var mockData = Object.keys(window.APP_SCHEMAS || {})
+        .filter(function(k){ return k !== '_UI_CONFIG'; })
+        .map(function(entityName) {
+          return { entity: entityName, exists: null, managed: null, isHealthy: null, missingColumns: [], orphanedColumns: [] };
+        });
+      renderDbHealthResults(container, mockData);
+    }
+  }
+
+  function renderDbHealthResults(container, data) {
+    var healthy  = (data || []).filter(function(r){ return r.isHealthy === true; }).length;
+    var warn     = (data || []).filter(function(r){ return r.orphanedColumns && r.orphanedColumns.length > 0; }).length;
+    var missing  = (data || []).filter(function(r){ return r.isHealthy === false || r.exists === false; }).length;
+    var unknown  = (data || []).filter(function(r){ return r.isHealthy === null; }).length;
+
+    var html = '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:20px;">' +
+      statsCard('checkmark-circle-outline', healthy, 'Saludables', 'var(--ion-color-success)') +
+      statsCard('warning-outline',         warn,    'Con Huérfanas', 'var(--ion-color-warning-shade)') +
+      statsCard('close-circle-outline',    missing, 'Con Defectos', 'var(--ion-color-danger)') +
+      statsCard('help-circle-outline',     unknown, 'Sin Verificar', 'var(--ion-color-medium)') +
+    '</div>';
+
+    html += '<div style="font-weight:600;font-size:0.85rem;margin-bottom:10px;color:var(--ion-color-medium);">ESTADO POR ENTIDAD</div>';
+
+    (data || []).forEach(function(r) {
+      var statusIcon  = r.isHealthy === true ? 'checkmark-circle' : r.isHealthy === false ? 'close-circle' : 'help-circle';
+      var statusColor = r.isHealthy === true ? 'var(--ion-color-success)' : r.isHealthy === false ? 'var(--ion-color-danger)' : 'var(--ion-color-medium)';
+      var pill = r.isHealthy === true ? 'ok' : r.orphanedColumns && r.orphanedColumns.length ? 'warn' : r.isHealthy === false ? 'missing' : '';
+
+      html += '<div class="ss-health-row">' +
+        '<ion-icon name="' + statusIcon + '" style="font-size:20px;color:' + statusColor + ';flex-shrink:0;"></ion-icon>' +
+        '<div style="flex:1;min-width:0;">' +
+          '<div style="font-weight:600;font-size:0.85rem;">' + r.entity + '</div>' +
+          (r.orphanedColumns && r.orphanedColumns.length
+            ? '<div style="font-size:0.72rem;color:var(--ion-color-warning-shade);margin-top:2px;">Huérfanas: ' + r.orphanedColumns.join(', ') + '</div>'
+            : ''
+          ) +
+          (r.missingColumns && r.missingColumns.length
+            ? '<div style="font-size:0.72rem;color:var(--ion-color-danger);margin-top:2px;">Faltantes: ' + r.missingColumns.join(', ') + '</div>'
+            : ''
+          ) +
+        '</div>' +
+        (r.provisionedAt
+          ? '<div style="font-size:0.68rem;color:var(--ion-color-medium);flex-shrink:0;">' + new Date(r.provisionedAt).toLocaleDateString() + '</div>'
+          : ''
+        ) +
+        (pill ? '<span class="ss-pill ' + pill + '">' + (r.isHealthy === true ? 'OK' : r.orphanedColumns && r.orphanedColumns.length ? 'WARN' : 'FAIL') + '</span>' : '') +
+      '</div>';
+    });
+
+    html += '<div style="margin-top:16px;padding:12px;background:var(--ion-color-step-50);border-radius:10px;font-size:0.75rem;color:var(--ion-color-medium);">' +
+      '<ion-icon name="information-circle-outline"></ion-icon> ' +
+      'Para reconciliar el esquema contra Google Sheets, usa el botón <strong>Reconciliar DB</strong> en la cabecera.' +
+    '</div>';
+
+    container.innerHTML = html;
+  }
+
+  function statsCard(icon, count, label, color) {
+    return '<div style="background:var(--ion-item-background);border:1px solid var(--ion-color-step-100);border-radius:12px;padding:16px;text-align:center;">' +
+      '<ion-icon name="' + icon + '" style="font-size:28px;color:' + color + ';"></ion-icon>' +
+      '<div style="font-size:1.6rem;font-weight:800;color:' + color + ';line-height:1;">' + count + '</div>' +
+      '<div style="font-size:0.72rem;color:var(--ion-color-medium);margin-top:4px;">' + label + '</div>' +
+    '</div>';
+  }
+
+  // ── Reconcile Handler ─────────────────────────────────────────────────────
+  function runReconcile() {
+    var btn = document.getElementById('ss-btn-reconcile');
+    if (btn) { btn.disabled = true; btn.innerHTML = '<ion-spinner name="crescent" style="width:14px;height:14px;"></ion-spinner> Reconciliando...'; }
+
+    var statusText = document.getElementById('ss-status-text');
+    if (statusText) statusText.textContent = 'Reconciliando...';
+
+    if (typeof google !== 'undefined' && google.script && google.script.run) {
+      google.script.run
+        .withSuccessHandler(function(report) {
+          if (btn) { btn.disabled = false; btn.innerHTML = '<ion-icon name="sync-outline"></ion-icon> Reconciliar DB'; }
+          if (statusText) {
+            var total = Object.keys(report.entities || {}).length;
+            var orphan = (report.orphanedSheets || []).length;
+            statusText.textContent = total + ' entidades · ' + orphan + ' hojas huérfanas';
+          }
+          if (window.showToast) window.showToast('Reconciliación completada', 'success');
+          switchTab('db');
+        })
+        .withFailureHandler(function(err) {
+          if (btn) { btn.disabled = false; btn.innerHTML = '<ion-icon name="sync-outline"></ion-icon> Reconciliar DB'; }
+          if (window.showToast) window.showToast('Error: ' + (err.message || String(err)), 'danger');
+        })
+        .runSchemaReconcile();
+    } else {
+      setTimeout(function() {
+        if (btn) { btn.disabled = false; btn.innerHTML = '<ion-icon name="sync-outline"></ion-icon> Reconciliar DB'; }
+        if (statusText) statusText.textContent = 'Solo disponible en GAS';
+        if (window.showToast) window.showToast('Reconciliación simulada (modo dev)', 'warning');
+      }, 1200);
+    }
+  }
+
+  // ── Public API ────────────────────────────────────────────────────────────
+  window.SchemaStudio = {
+    mount: function() {
+      switchTab('entities');
+      this._loadDbStatusPill();
+    },
+    switchTab: switchTab,
+    runReconcile: runReconcile,
+    _loadDbStatusPill: function() {
+      var pill = document.getElementById('ss-db-status-pill');
+      var dot  = document.getElementById('ss-status-dot');
+      var txt  = document.getElementById('ss-status-text');
+      if (!txt) return;
+      var entityCount = Object.keys(window.APP_SCHEMAS || {}).filter(function(k){ return k !== '_UI_CONFIG'; }).length;
+      if (txt) txt.textContent = entityCount + ' entidades en schema';
+      if (dot) dot.style.color = '#a5f3a5';
+    }
+  };
+
+})();
+</script>
