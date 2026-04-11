@@ -376,7 +376,7 @@ const Adapter_Sheets = {
                 schemaFields = Object.keys(APP_SCHEMAS[tableName]).filter(k => typeof APP_SCHEMAS[tableName][k] === 'object' && !['uiBehavior', 'relationType'].includes(k));
             }
         } else {
-            schemaFields = ['id_' + tableName.toLowerCase().replace(/s$/, '')];
+            throw new Error(`[AR-Governance] Inferencia Bloqueada: La hoja DB_${tableName} intentó auto-crearse pero no existe un Schema con primaryKey en Schema_Engine.gs.`);
         }
         
         const auditFields = ['created_at', 'created_by', 'updated_at', 'updated_by', 'deleted_at', 'deleted_by', '_version'];

@@ -431,8 +431,15 @@ const Engine_DB = {
     read: function (entityName, id) {
         const config = (typeof CONFIG !== 'undefined') ? CONFIG : { useSheets: true };
         const results = _Adapter_Sheets.list(entityName, config, 'objects');
-        const pkField = 'id_' + entityName.toLowerCase().replace(/s$/, '');
-        return results.rows.find(r => r[pkField] == id || r['id_' + entityName.toLowerCase()] == id);
+        
+        const schema = (typeof APP_SCHEMAS !== 'undefined') ? APP_SCHEMAS[entityName] : null;
+        const pkField = schema ? schema.primaryKey : null;
+
+        if (!pkField) {
+            throw new Error(`[AR-Governance] Violación de Schema-Driven Design: La entidad '${entityName}' no define 'primaryKey' en APP_SCHEMAS. La inferencia por sufijo ID fue removida en S30.7.`);
+        }
+
+        return results.rows.find(r => String(r[pkField]) === String(id));
     },
 
     /**
