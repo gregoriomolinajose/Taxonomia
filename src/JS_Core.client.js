@@ -266,6 +266,7 @@
         case 'nav:dashboard': window.AppEventBus.publish('NAV::CHANGE', {viewType: 'dashboard'}); break;
         case 'nav:designkit': window.AppEventBus.publish('NAV::CHANGE', {viewType: 'designkit'}); break;
         case 'nav:governance': window.AppEventBus.publish('NAV::CHANGE', {viewType: 'governance'}); break;
+        case 'nav:sistema': window.AppEventBus.publish('NAV::CHANGE', {viewType: 'sistema'}); break;
         
         // Theme & Session
         case 'theme:cycle': if (window.ThemeManager) window.ThemeManager.cycleTheme(); break;
@@ -389,6 +390,9 @@
                  var cAdmin = bMap.SYS_ADMIN || '#eb445a';
                  if(avatarBtn) avatarBtn.style.background = cAdmin;
                  if(avatarPop) avatarPop.style.background = cAdmin;
+                 // [E31-S31.5] Reveal Sistema (SUPER_ADMIN only)
+                 var btnSistema = document.getElementById('popover-btn-sistema');
+                 if (btnSistema) btnSistema.classList.remove('ion-hide');
               } else {
                  // Securing Governance Node Visibility 
                  var btnGov = document.getElementById('popover-btn-governance');

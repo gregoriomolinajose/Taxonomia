@@ -129,6 +129,24 @@
                     window.renderDomainMap(container);
                 }
             }
+            // [E31-S31.5] Schema Config Studio — SUPER_ADMIN only
+            else if (viewType === 'sistema') {
+                if (headerTitle) headerTitle.textContent = 'Sistema · Schema Governance Studio';
+                if (backBtn) {
+                    backBtn.classList.remove('ion-hide');
+                    backBtn.onclick = function() { window.AppEventBus.publish('NAV::CHANGE', {viewType: 'dashboard'}); };
+                }
+                if (container) {
+                    var tmpl = document.getElementById('tmpl-schema-studio');
+                    if (tmpl) {
+                        window.DOM.clear(container);
+                        container.appendChild(tmpl.content.cloneNode(true));
+                        if (typeof window.SchemaStudio !== 'undefined' && typeof window.SchemaStudio.mount === 'function') {
+                            window.SchemaStudio.mount();
+                        }
+                    }
+                }
+            }
         },
 
         renderMainNav: function() {
