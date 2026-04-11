@@ -2,7 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const { execSync } = require('child_process');
 const readline = require('readline');
-const CleanCSS = require('clean-css');
+const esbuild = require('esbuild');
 const { stripQAModule, extractAndValidateScripts } = require('./scripts/pipelineUtils.js');
 
 const env = process.argv[2];
@@ -130,12 +130,11 @@ try {
             let minified = cssContent;
             
             try {
-                const output = new CleanCSS({ level: 1 }).minify(cssContent);
-                if (output.errors.length > 0) {
-                    console.error(`\x1b[31m[Deploy-Error] Fallo CSS AST Minifier en ${file.source}:\x1b[0m`, output.errors);
-                } else {
-                    minified = output.styles;
-                }
+                const output = esbuild.transformSync(cssContent, {
+                    loader: 'css',
+                    minify: true
+                });
+                minified = output.code;
             } catch (e) {
                 console.error(`\x1b[31m[Deploy-Error] Excepción Crítica compilando CSS con Esbuild en ${file.source}:\x1b[0m`, e);
                 process.exit(1);
