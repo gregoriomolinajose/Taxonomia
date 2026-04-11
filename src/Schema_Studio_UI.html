@@ -450,7 +450,10 @@
 (function() {
   'use strict';
 
-  // ── Field Classification ──────────────────────────────────────────────────
+  // ── Field Classification ────────────────────────────────────────────────────────────
+  // SYNC [H9]: These name arrays MUST match FIELD_TEMPLATES.* in Schema_Engine.gs.
+  // If a template field is added/renamed, update all three lists here.
+  // Future: replace with getGovernedFieldNames() GAS API to eliminate drift risk.
   var SYSTEM_FIELD_NAMES  = ['lexical_id', 'estado'];
   var AUDIT_FIELD_NAMES   = ['created_at','created_by','updated_at','updated_by','deleted_at','deleted_by'];
   var VERSION_FIELD_NAMES = ['version'];
@@ -789,8 +792,22 @@
   // ── [E31-S31.6] BLUEPRINT COMPOSER ENGINE ────────────────────────────────
   // ══════════════════════════════════════════════════════════════════════════
 
-  // Business entities eligible for Blueprint composition
-  var BUSINESS_ENTITIES = ['Unidad_Negocio','Portafolio','Dominio','Grupo_Productos','Producto','Capacidad','Equipo','Persona'];
+  // Business entities eligible for Blueprint composition.
+  // [O3-AR] Derived dynamically from APP_SCHEMAS using showInMenu + order metadata.
+  // Automatically reflects new entities added to APP_SCHEMAS without code changes.
+  function _getBusinessEntities() {
+    return Object.keys(window.APP_SCHEMAS || {})
+      .filter(function(k) {
+        if (k === '_UI_CONFIG') return false;
+        var meta = (window.APP_SCHEMAS[k].metadata || {});
+        return meta.showInMenu === true;
+      })
+      .sort(function(a, b) {
+        var oa = ((window.APP_SCHEMAS[a].metadata || {}).order) || 999;
+        var ob = ((window.APP_SCHEMAS[b].metadata || {}).order) || 999;
+        return oa - ob;
+      });
+  }
 
   // Template group definitions (mirrors FIELD_TEMPLATES)
   var TEMPLATE_GROUPS = {
@@ -810,15 +827,18 @@
     dirty:         false
   };
 
-  // Fields locked from deletion/reorder (governed by templates or are PK)
+  // SYNC [H9]: Must stay in sync with FIELD_TEMPLATES.* in Schema_Engine.gs.
+  // Covers: SYSTEM_FIELDS (lexical_id, estado), AUDIT_FIELDS (6 names), VERSION_FIELD.
+  // Future: replace with getGovernedFieldNames() GAS API to eliminate drift risk.
   var GOVERNED_FIELD_NAMES = ['lexical_id','estado','created_at','created_by','updated_at',
     'updated_by','deleted_at','deleted_by','version'];
 
   // ── Composer Tab Renderer ─────────────────────────────────────────────────
   function renderComposerTab(container) {
-    var schemas = window.APP_SCHEMAS || {};
-    var sidebar = buildComposerSidebar(schemas);
-    var panel   = buildComposerPanel();
+    var schemas  = window.APP_SCHEMAS || {};
+    var entities = _getBusinessEntities(); // [O3-AR] dynamic
+    var sidebar  = buildComposerSidebar(schemas, entities);
+    var panel    = buildComposerPanel();
 
     var layout = document.createElement('div');
     layout.className = 'ss-composer-layout';
@@ -827,16 +847,16 @@
     container.appendChild(layout);
 
     // Auto-select first business entity
-    if (BUSINESS_ENTITIES.length) composerSelectEntity(BUSINESS_ENTITIES[0]);
+    if (entities.length) composerSelectEntity(entities[0]);
   }
 
-  function buildComposerSidebar(schemas) {
+  function buildComposerSidebar(schemas, entities) {
     var sb = document.createElement('div');
     sb.className = 'ss-composer-sidebar';
 
     // ── NEGOCIO Section ──────────────────────────────────────────────────────
     sb.innerHTML = '<div class="ss-sidebar-section-title">🏗 Blueprint</div>';
-    BUSINESS_ENTITIES.forEach(function(eName) {
+    entities.forEach(function(eName) {
       var s = schemas[eName];
       var meta = (s && s.metadata) || {};
       var btn = document.createElement('div');
@@ -953,21 +973,28 @@
 
     html += '</div></div>';
 
-    // ── Add Field Form ─────────────────────────────────────────────────────
-    html += '<div style="padding:16px;border-bottom:1px solid var(--ion-color-step-100);">' +
-      '<div style="font-size:0.72rem;font-weight:700;color:var(--ion-color-medium);margin-bottom:12px;letter-spacing:0.06em;">AGREGAR CAMPO</div>' +
-      '<div class="ss-form-row" style="margin-bottom:10px;">' +
-        '<div><label class="ss-label">Nombre (snake_case) *</label>' +
-          '<input class="ss-input" id="ss-new-name" placeholder="mi_campo" autocomplete="off"></div>' +
-        '<div><label class="ss-label">Tipo *</label>' +
-          '<select class="ss-input" id="ss-new-type">' +
-            FIELD_TYPES.map(function(t){ return '<option value="' + t + '">' + t + '</option>'; }).join('') +
-          '</select></div>' +
+    // ── Add Field Form ────────────────────────────────────────�    // ── Code Export Header ─────────────────────────────────────────────────
+    html += '<div style="padding:12px 16px;background:var(--ion-color-step-100);display:flex;align-items:center;justify-content:space-between;">' +
+      '<div style="font-size:0.72rem;font-weight:700;color:var(--ion-color-medium);letter-spacing:0.06em;display:flex;align-items:center;gap:8px;">' +
+        '<ion-icon name="code-download-outline" style="color:var(--ion-color-warning-shade);"></ion-icon>' +
+        'CODE EXPORT (JSON) — ' + entityName +
       '</div>' +
-      '<div class="ss-form-row" style="margin-bottom:10px;">' +
-        '<div><label class="ss-label">Label</label>' +
-          '<input class="ss-input" id="ss-new-label" placeholder="Mi Campo"></div>' +
-        '<div><label class="ss-label">Width (1–12)</label>' +
+      '<button class="ss-btn-secondary" id="ss-copy-btn" onclick="window.SchemaStudio.composerCopyCode()" style="font-size:0.75rem;padding:5px 12px;">' +
+        '<ion-icon name="copy-outline"></ion-icon>Copiar JSON</button>' +
+    '</div>';
+
+    // ── Code Block [O2-AR] ─────────────────────────────────────────────────
+    // Plain JSON stored in data-plain; highlighted HTML shown in innerHTML.
+    // composerCopyCode() reads data-plain to avoid HTML tag contamination.
+    var plainJson = generateCodeJson(entityName, _composer.fields, schema);
+    html += '<div class="ss-code-block" id="ss-code-output" data-plain="" >' +
+      generateCodeHtml(plainJson) + '</div>';
+
+    panel.innerHTML = html;
+
+    // Store plain JSON after innerHTML is set (avoids encoding issues)
+    var codeEl = panel.querySelector('#ss-code-output');
+    if (codeEl) codeEl.dataset.plain = plainJson;el class="ss-label">Width (1–12)</label>' +
           '<select class="ss-input" id="ss-new-width">' +
             [12,6,4,3].map(function(w){ return '<option value="' + w + '"' + (w===6?' selected':'') + '>' + w + ' col</option>'; }).join('') +
           '</select></div>' +
@@ -1040,71 +1067,56 @@
     }).join('');
   }
 
-  // ── Code Generator ────────────────────────────────────────────────────────
-  // Pattern: detect template groups → emit spread references; emit custom fields individually
-  function generateCode(entityName, fields, schema) {
-    var names    = fields.map(function(f){ return f.name; });
-    var consumed = {};
-    var lines    = [];
+  // ── Code Generator [O2-AR] ────────────────────────────────────────────────
+  // ARCHITECTURE: Two separate functions:
+  //   generateCodeJson() → pure JSON string (clipboard payload — no HTML)
+  //   generateCodeHtml()  → syntax-highlighted HTML (display only)
+  // This prevents HTML tag contamination in clipboard output (O2 AR finding).
 
-    // Detect which template groups are fully present
-    var activeTemplates = {};
-    Object.keys(TEMPLATE_GROUPS).forEach(function(tKey) {
-      var group = TEMPLATE_GROUPS[tKey];
-      activeTemplates[tKey] = group.fields.every(function(n){ return names.includes(n); });
-    });
-    // SYSTEM_FIELDS supersedes ESTADO_FIELD if both active
-    if (activeTemplates.SYSTEM_FIELDS) activeTemplates.ESTADO_FIELD = false;
-
-    fields.forEach(function(f) {
-      if (consumed[f.name]) return;
-
-      // Check if this field is the first of a complete template group
-      var emittedTemplate = false;
-      Object.keys(TEMPLATE_GROUPS).forEach(function(tKey) {
-        if (!activeTemplates[tKey] || emittedTemplate) return;
-        var group = TEMPLATE_GROUPS[tKey];
-        if (f.name === group.fields[0]) {
-          lines.push('    <span class="ss-code-templ">...FIELD_TEMPLATES.' + tKey + '()</span>,   <span class="ss-code-comment">// ' + group.fields.join(', ') + '</span>');
-          group.fields.forEach(function(n){ consumed[n] = true; });
-          emittedTemplate = true;
-        }
+  /**
+   * Generate a pure JSON string for the composed schema.
+   * Templates are fully expanded (all fields resolved to concrete objects).
+   * This is the clipboard payload — no HTML markup whatsoever.
+   */
+  function generateCodeJson(entityName, fields, schema) {
+    var pk = schema && schema.primaryKey;
+    var resolvedFields = fields
+      .filter(function(f) { return f.type !== 'divider'; }) // exclude UI separators
+      .map(function(f) {
+        var obj = {};
+        if (f.name)      obj.name     = f.name;
+        if (f.type)      obj.type     = f.type;
+        if (f.label)     obj.label    = f.label;
+        if (f.required)  obj.required = f.required;
+        if (f.width)     obj.width    = f.width;
+        if (f.primaryKey) obj.primaryKey = f.primaryKey;
+        if (f.readonly)  obj.readonly = f.readonly;
+        if (f.defaultValue !== undefined) obj.defaultValue = f.defaultValue;
+        return obj;
       });
-      if (emittedTemplate) return;
-      if (consumed[f.name]) return;
 
-      // PK field
-      if (f.primaryKey || f.name === (schema && schema.primaryKey)) {
-        lines.push('    { <span class="ss-code-key">name</span>: <span class="ss-code-str">"' + f.name + '"</span>, <span class="ss-code-key">type</span>: <span class="ss-code-str">"' + (f.type||'text') + '"</span>, <span class="ss-code-key">primaryKey</span>: <span class="ss-code-bool">true</span> },');
-        consumed[f.name] = true;
-        return;
-      }
+    var payload = {
+      entity:     entityName,
+      primaryKey: pk || entityName.toLowerCase() + '_id',
+      fields:     resolvedFields
+    };
 
-      // Regular custom field
-      var parts = [];
-      parts.push('<span class="ss-code-key">name</span>: <span class="ss-code-str">"' + f.name + '"</span>');
-      parts.push('<span class="ss-code-key">type</span>: <span class="ss-code-str">"' + (f.type||'text') + '"</span>');
-      if (f.label)    parts.push('<span class="ss-code-key">label</span>: <span class="ss-code-str">"' + f.label + '"</span>');
-      if (f.required) parts.push('<span class="ss-code-key">required</span>: <span class="ss-code-bool">true</span>');
-      if (f.width)    parts.push('<span class="ss-code-key">width</span>: <span class="ss-code-num">' + f.width + '</span>');
-      lines.push('    { ' + parts.join(', ') + ' },');
-      consumed[f.name] = true;
-    });
+    return JSON.stringify(payload, null, 2);
+  }
 
-    var meta = (schema && schema.metadata) || {};
-    var pk   = schema && schema.primaryKey;
-    return [
-      '<span class="ss-code-comment">// Schema_Engine.gs — ' + entityName + ' · Generated by Schema Studio</span>',
-      '<span class="ss-code-comment">// Paste inside APP_SCHEMAS. DO NOT modify governed fields.</span>',
-      '',
-      '<span class="ss-code-key">' + entityName + '</span>: {',
-      '  metadata: { <span class="ss-code-comment">/* preserve existing metadata */</span> },',
-      '  <span class="ss-code-key">primaryKey</span>: <span class="ss-code-str">"' + (pk || entityName.toLowerCase() + '_id') + '"</span>,',
-      '  <span class="ss-code-key">fields</span>: [',
-      lines.join('\n'),
-      '  ]',
-      '}'
-    ].join('\n');
+  /**
+   * Generate syntax-highlighted HTML for display in the code block.
+   * Takes the plain JSON string and applies color spans.
+   * NEVER use this for clipboard — use generateCodeJson() instead.
+   */
+  function generateCodeHtml(plainJson) {
+    // Simple JSON syntax highlighter
+    return plainJson
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"([^"]+)":/g, '<span class="ss-code-key">"$1"</span>:')
+      .replace(/: "([^"]+)"/g, ': <span class="ss-code-str">"$1"</span>')
+      .replace(/: (true|false)/g, ': <span class="ss-code-bool">$1</span>')
+      .replace(/: (-?\d+)/g, ': <span class="ss-code-num">$1</span>');
   }
 
   // ── Public Composer Actions ───────────────────────────────────────────────
@@ -1170,12 +1182,13 @@
   function composerCopyCode() {
     var codeEl = document.getElementById('ss-code-output');
     if (!codeEl) return;
-    var plainText = codeEl.innerText || codeEl.textContent;
+    // [O2-AR] Read from data-plain to get pure JSON (no HTML tag contamination)
+    var plainText = codeEl.dataset.plain || codeEl.innerText || codeEl.textContent;
     if (navigator.clipboard) {
       navigator.clipboard.writeText(plainText).then(function() {
         var btn = document.getElementById('ss-copy-btn');
-        if (btn) { btn.innerHTML = '<ion-icon name="checkmark-outline"></ion-icon>Copiado!'; setTimeout(function(){ btn.innerHTML = '<ion-icon name="copy-outline"></ion-icon>Copiar'; }, 2000); }
-        if (window.showToast) window.showToast('Código copiado al portapapeles', 'success');
+        if (btn) { btn.innerHTML = '<ion-icon name="checkmark-outline"></ion-icon>Copiado!'; setTimeout(function(){ btn.innerHTML = '<ion-icon name="copy-outline"></ion-icon>Copiar JSON'; }, 2000); }
+        if (window.showToast) window.showToast('JSON copiado al portapapeles', 'success');
       }).catch(function() {
         if (window.showToast) window.showToast('No se pudo copiar automáticamente', 'warning');
       });

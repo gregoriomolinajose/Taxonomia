@@ -117,11 +117,13 @@ const FIELD_TEMPLATES = Object.freeze({
 
   /**
    * Standard graph topology section separator.
+   * Returns a frozen single-element array (consistent with other FIELD_TEMPLATES factories).
+   * Use with spread: ...FIELD_TEMPLATES.GRAPH_SEPARATOR()
    * @param {string} [label="Pertenencia Topológica (Grafo)"] - Section label
    */
-  GRAPH_SEPARATOR: (label = "Pertenencia Topológica (Grafo)") => Object.freeze(
+  GRAPH_SEPARATOR: (label = "Pertenencia Topológica (Grafo)") => Object.freeze([
     { name: "separator_grafo", type: "divider", label, width: 12 }
-  )
+  ])
 
 });
 
@@ -141,7 +143,7 @@ const APP_SCHEMAS = {
       { name: "descripcion", type: "textarea", label: "Descripción", required: false, width: 12 },
       { name: "responsable", type: "text", label: "Responsable", required: false, width: 12 },
 
-      FIELD_TEMPLATES.GRAPH_SEPARATOR("Topología (Grafo)"),
+      ...FIELD_TEMPLATES.GRAPH_SEPARATOR("Topología (Grafo)"),
       { name: "portafolios_vinculados", type: "relation", relationType: "hijo", targetEntity: "Portafolio", graphEntity: "Sys_Graph_Edges", valueField: "id_portafolio", labelField: "nombre", uiBehavior: "subgrid", label: "Portafolios Asociados", isTemporalGraph: true, graphEdgeType: "UNIDAD_NEGOCIO_PORTAFOLIO", topologyCardinality: "1:N", width: 12 }
     ]
   },
@@ -164,7 +166,7 @@ const APP_SCHEMAS = {
       { name: "separator_1", type: "divider", label: "Definición Estratégica", width: 12 },
       { name: "nombre", type: "text", label: "Nombre de Portafolio", required: true, width: 12 },
       
-      FIELD_TEMPLATES.GRAPH_SEPARATOR(),
+      ...FIELD_TEMPLATES.GRAPH_SEPARATOR(),
       { name: "unidad_negocio_padre", type: "relation", relationType: "padre", targetEntity: "Unidad_Negocio", graphEntity: "Sys_Graph_Edges", valueField: "id_unidad_negocio", labelField: "nombre", uiComponent: "select_single", label: "Unidad de Negocio (Padre)", isTemporalGraph: true, graphEdgeType: "UNIDAD_NEGOCIO_PORTAFOLIO", topologyCardinality: "1:N", width: 12, showInList: true },
       { name: "grupos_productos_vinculados", type: "relation", relationType: "hijo", targetEntity: "Grupo_Productos", graphEntity: "Sys_Graph_Edges", valueField: "id_grupo_producto", labelField: "nombre", uiBehavior: "subgrid", label: "Grupos de Productos Asociados", isTemporalGraph: true, graphEdgeType: "PORTAFOLIO_GRUPO_PRODUCTO", topologyCardinality: "1:N", width: 12 },
 
@@ -211,7 +213,7 @@ const APP_SCHEMAS = {
       { width: 12, name: "id_grupo_producto", label: "ID Grupo Producto", type: "text", required: true, readonly: true, primaryKey: true },
       { width: 12, name: "nombre", label: "Nombre", type: "text", required: true },
       { width: 12, name: "descripcion", label: "Descripción", type: "textarea", required: false, showInList: false },
-      FIELD_TEMPLATES.GRAPH_SEPARATOR(),
+      ...FIELD_TEMPLATES.GRAPH_SEPARATOR(),
       { width: 12, name: "id_portafolio", type: "relation", relationType: "padre", targetEntity: "Portafolio", graphEntity: "Sys_Graph_Edges", valueField: "id_portafolio", labelField: "nombre", uiComponent: "select_single", label: "Portafolio Padre (Grafo)", isTemporalGraph: true, graphEdgeType: "PORTAFOLIO_GRUPO_PRODUCTO", topologyCardinality: "1:N", required: true },
       { width: 12, name: "productos_vinculados", type: "relation", relationType: "hijo", targetEntity: "Producto", graphEntity: "Sys_Graph_Edges", valueField: "id_producto", labelField: "nombre_producto", uiBehavior: "subgrid", label: "Productos Asociados (1:N)", isTemporalGraph: true, graphEdgeType: "GRUPO_PRODUCTO_PRODUCTO", topologyCardinality: "1:N" },
       { name: "separator_2", type: "divider", label: "Estrategia de Valor", width: 12 },
@@ -238,7 +240,7 @@ const APP_SCHEMAS = {
       { name: "separator_1", type: "divider", label: "Datos Generales", width: 12 },
       { width: 12, name: "nombre_producto", label: "Nombre de Producto", type: "text", required: true },
       { width: 12, name: "descripcion", label: "Descripción", type: "textarea", required: false, showInList: false },
-      FIELD_TEMPLATES.GRAPH_SEPARATOR(),
+      ...FIELD_TEMPLATES.GRAPH_SEPARATOR(),
       { width: 12, name: "id_grupo_producto", type: "relation", relationType: "padre", targetEntity: "Grupo_Productos", graphEntity: "Sys_Graph_Edges", valueField: "id_grupo_producto", labelField: "nombre", uiComponent: "select_single", label: "Grupo de Producto (Padre)", isTemporalGraph: true, graphEdgeType: "GRUPO_PRODUCTO_PRODUCTO", topologyCardinality: "1:N", required: true }
     ]
   },
@@ -470,27 +472,8 @@ if (typeof module !== 'undefined') {
   module.exports = { APP_SCHEMAS, TOPOLOGY_PRESETS, FIELD_TEMPLATES, getAppSchema, getEntityTopologyRules };
 }
 
-// ─── [E31-S31.5] Schema Studio GAS Endpoints ─────────────────────────────────
-
-/**
- * Get DB provisioning status for all entities.
- * Called by Schema Studio → DB Health tab.
- * SUPER_ADMIN guard enforced via Execution API.
- *
- * @returns {Object[]} Array of entity health records from Schema Provisioner.
- */
-function getSchemaProvisioningStatus() {
-  return getProvisioningStatus(SpreadsheetApp.getActiveSpreadsheet());
-}
-
-/**
- * Run full schema reconciliation across all entities.
- * Called by Schema Studio → "Reconciliar DB" button.
- * SUPER_ADMIN guard enforced via Execution API.
- *
- * @returns {Object} Full reconciliation report.
- */
-function runSchemaReconcile() {
-  return reconcileAll(SpreadsheetApp.getActiveSpreadsheet());
-}
+// ─── [E31] Admin GAS endpoints ───────────────────────────────────────────────
+// Requires: Adapter_Sheets_Provisioner.gs (shares GAS global scope)
+// These endpoints are now maintained in API_Admin.gs for SRP.
+// See API_Admin.gs for getSchemaProvisioningStatus() and runSchemaReconcile().
 
