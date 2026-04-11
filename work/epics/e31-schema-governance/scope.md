@@ -124,8 +124,8 @@ E2E Integration checkpoint: ─────────────────�
 | Story | Size | Status | Actual | Velocity | Notes |
 |-------|:----:|:------:|:------:|:--------:|-------|
 | S31.1 | S | Done ✓ | 25min | S | Reporte de auditoría: 3 presets, 4 templates, bug Sys_Graph_Edges |
-| S31.2 | M | Pending | — | — | Paralela con S31.3 |
-| S31.3 | M | Pending | — | — | Paralela con S31.2 |
+| S31.2 | M | Done ✓ | 15min | S | TOPOLOGY_PRESETS: 3 presets, 6 entidades migradas, Object.freeze |
+| S31.3 | M | Done ✓ | 10min | XS | FIELD_TEMPLATES: SYSTEM_FIELDS, ESTADO_FIELD, GRAPH_SEPARATOR |
 | S31.4 | M | Pending | — | — | Entidad a entidad, test entre cada una |
 | S31.5 | L | Pending | — | — | Incluye sección "Sistema" en ProfileMenu |
 | S31.6 | L | Pending | — | — | |
