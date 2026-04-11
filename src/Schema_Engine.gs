@@ -56,6 +56,39 @@ const TOPOLOGY_PRESETS = Object.freeze({
 
 });
 
+/**
+ * [E31] FIELD_TEMPLATES: Composable field factories for common repeated patterns.
+ * Use spread operator to inline: fields: [ ...FIELD_TEMPLATES.SYSTEM_FIELDS(), { ... } ]
+ * All returned arrays are new instances (immutable source, mutable copies per entity).
+ */
+const FIELD_TEMPLATES = Object.freeze({
+
+  /**
+   * System identity fields present in all main business entities.
+   * Returns: [lexical_id, estado] — always appear as a pair.
+   */
+  SYSTEM_FIELDS: () => Object.freeze([
+    { name: "lexical_id", type: "text", label: "Ticket ID", uiBehavior: "badge", readonly: true },
+    { name: "estado", type: "hidden", defaultValue: "Activo" }
+  ]),
+
+  /**
+   * Standalone status field for entities that don't use lexical_id.
+   */
+  ESTADO_FIELD: () => Object.freeze([
+    { name: "estado", type: "hidden", defaultValue: "Activo" }
+  ]),
+
+  /**
+   * Standard graph topology section separator.
+   * @param {string} [label="Pertenencia Topológica (Grafo)"] - Section label
+   */
+  GRAPH_SEPARATOR: (label = "Pertenencia Topológica (Grafo)") => Object.freeze(
+    { name: "separator_grafo", type: "divider", label, width: 12 }
+  )
+
+});
+
 const APP_SCHEMAS = {
   Unidad_Negocio: {
     metadata: { prefix: 'UNDN', showInMenu: true, order:1, iconName:'business-outline', color:'primary', label:'Unidades de Negocio', titleField:'nombre', idField:'id_unidad_negocio', fkField:null },
@@ -391,5 +424,6 @@ function getEntityTopologyRules(entityName) {
 }
 
 if (typeof module !== 'undefined') {
-  module.exports = { APP_SCHEMAS, TOPOLOGY_PRESETS, getAppSchema, getEntityTopologyRules };
-}
+  module.exports = { APP_SCHEMAS, TOPOLOGY_PRESETS, FIELD_TEMPLATES, getAppSchema, getEntityTopologyRules };
+}
+
