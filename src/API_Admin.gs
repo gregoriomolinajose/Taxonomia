@@ -10,8 +10,12 @@
  * Adapter_Sheets_Provisioner.gs (infrastructure) to uphold SRP.
  *
  * Security:
- *   All functions here are SUPER_ADMIN-only. Access is enforced by the
- *   Execution API — the client-side ABAC check prevents unauthorized invocation.
+ *   All functions here are SUPER_ADMIN-only. The client-side ABAC check
+ *   prevents unauthorized invocation. Server-side guard planned in S31.9.
+ *
+ * Spreadsheet access:
+ *   Uses SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID_DB) — required in
+ *   WebApp context because getActiveSpreadsheet() returns null server-side.
  *
  * Requires (GAS global scope):
  *   - Schema_Engine.gs          → APP_SCHEMAS
@@ -27,7 +31,7 @@
  * @returns {Object[]} Array of entity health records from Schema Provisioner.
  */
 function getSchemaProvisioningStatus() {
-  return getProvisioningStatus(SpreadsheetApp.getActiveSpreadsheet());
+  return getProvisioningStatus(_getSpreadsheet());
 }
 
 /**
@@ -37,7 +41,7 @@ function getSchemaProvisioningStatus() {
  * @returns {Object} Full reconciliation report.
  */
 function runSchemaReconcile() {
-  return reconcileAll(SpreadsheetApp.getActiveSpreadsheet());
+  return reconcileAll(_getSpreadsheet());
 }
 
 /**
@@ -49,5 +53,20 @@ function runSchemaReconcile() {
  * @returns {Object} Reconciliation result for the entity.
  */
 function ensureEntityProvisioned(entityName) {
-  return ensureProvisioned(entityName, SpreadsheetApp.getActiveSpreadsheet());
+  return ensureProvisioned(entityName, _getSpreadsheet());
+}
+
+// ─── Private Helpers ──────────────────────────────────────────────────────────
+
+/**
+ * Returns the application spreadsheet using the explicit ID from CONFIG.
+ * Required in WebApp server-side context — getActiveSpreadsheet() returns null
+ * when not bound to a spreadsheet (Execution API / WebApp mode).
+ * Pattern consistent with Adapter_Sheets.js, Engine_DB.js, Controller_Action.gs.
+ */
+function _getSpreadsheet() {
+  if (typeof CONFIG === 'undefined' || !CONFIG.SPREADSHEET_ID_DB) {
+    throw new Error('[API_Admin] CONFIG.SPREADSHEET_ID_DB not set. Check Global_Config.js.');
+  }
+  return SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID_DB);
 }
