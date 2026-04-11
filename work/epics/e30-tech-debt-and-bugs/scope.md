@@ -123,7 +123,8 @@ Stream 3 (Testing):          [ Bugs N dinámicos ] ────┘
 | S30.4 | M | Done ✓ | 2h | M | Migración a Clase ES6 de UI_ThemeManager completada |
 | S30.5 | L | Done ✓ | 2h | L | Parse5 AST deploy validation loop integradoc |
 | S30.6 | M | Done ✓ | 1h | S | Navegación Profunda en Subgrids (Drill-Down) |
-| S30.7 | S | Pending | — | — | Estandarización Universal de Primary Key |
+| S30.7 | S | Done ✓ | 1h | S | Estandarización Universal de Primary Key |
+| S30.8 | S | Pending | — | — | Autogenerador de IDs Puros e Identidad Lexical UI (estilo Jira) |
 | S30.12 | L | Pending | — | — | Optimistic UI Server Latency Mitigation & FormEngine Lifecycle Synchronization (Hallazgos E2E) |
 
 ### Sequencing Risks
