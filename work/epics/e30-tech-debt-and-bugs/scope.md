@@ -18,7 +18,7 @@ Resolver deuda técnica estructural y visual acumulada en las iteraciones anteri
 | S30.2 | Robustez en Muteo Estructural de Relacionales | M | Done ✓ | Inyectar flag `readonly` vía prop-drilling en `UI_SubgridBuilder` para reemplazar hacks pasivos de CSS. |
 | S30.3 | DOM Pasivo a Estado Local en Componentes | M | Done ✓ | Evitar los bridges temporales vía *hidden inputs* con JSON strings. Anclar estado efímero en closure memory para listas dinámicas y subgrids. |
 | S30.4 | Evolución de ThemeManager | M | Done ✓ | Migrar inyección en crudo de `window.hydrateThemeConfig` hacia una Clase ES6 formally orquestada. |
-| S30.5 | AST RegExp CSS Minifier | L | Pending | Evaluar integración de integrador CSS (Rollup/Esbuild) para prevenir corrupciones visuales por Regex casero. |
+| S30.5 | AST RegExp CSS Minifier | L | Done ✓ | Evaluar integración de integrador CSS (Rollup/Esbuild) para prevenir corrupciones visuales por Regex casero. |
 | S30.6 | Navegación Profunda en Subgrids (Drill-Down) | M | Done ✓ | Permitir inspeccionar o editar registros vinculados del subgrid (on-click) delegando las evaluaciones de ABAC a la nueva instancia hija. |
 | S30.7 | Estandarización Universal de Primary Key | S | Done ✓ | Crear utilitario UI_FormUtils.getPrimaryKey y refactorizar todo el Frontend para eliminar dependencias de 'idField' y usar estrictamente la regla E29 'primaryKey'. |
 | S30.8 | Fix Resiliencia de Cardinalidad 1:N en Subgrids | M | Done ✓ | Resolver fallas detectadas en E2E (cardinality-resilience) relacionadas con la limpieza absoluta y exclusividad 1:N. |
