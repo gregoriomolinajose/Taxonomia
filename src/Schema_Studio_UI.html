@@ -1,4 +1,4 @@
-<!-- [E31-S31.5/S31.6] Schema_Studio_UI.html
+﻿<!-- [E31-S31.5/S31.6] Schema_Studio_UI.html
      Schema Governance Config Studio — Viewer + Blueprint Composer (Code Export)
      Acceso: SUPER_ADMIN exclusivo — revelado desde icono de perfil → Sistema
      Inyectado via: <?!= include('Schema_Studio_UI'); ?>
@@ -926,27 +926,22 @@
     var meta       = schema.metadata || {};
     var pkField    = schema.primaryKey;
 
-    // ── Panel Header ──────────────────────────────────────────────────────
-    var html = '<div style="' +
-      'padding:16px 20px;border-bottom:1px solid var(--ion-color-step-100);' +
-      'display:flex;align-items:center;justify-content:space-between;gap:12px;' +
-    '">' +
+    var html = '<div style="padding:16px 20px;border-bottom:1px solid var(--ion-color-step-100);display:flex;align-items:center;justify-content:space-between;gap:12px;">' +
       '<div style="display:flex;align-items:center;gap:10px;">' +
         '<ion-icon name="' + (meta.iconName || 'cube-outline') + '" style="font-size:20px;color:var(--ion-color-' + (meta.color || 'primary') + ');"></ion-icon>' +
         '<div>' +
           '<div style="font-weight:700;font-size:1rem;">' + entityName + '</div>' +
-          '<div style="font-size:0.72rem;color:var(--ion-color-medium);">' + (meta.label || '') + '  ·  PK: ' + (pkField || '—') + '</div>' +
+          '<div style="font-size:0.72rem;color:var(--ion-color-medium);">' + (meta.label || '') + '  &middot;  PK: ' + (pkField || '--') + '</div>' +
         '</div>' +
       '</div>' +
       '<div style="display:flex;gap:8px;">' +
-        '<button class="ss-btn-secondary" onclick="window.SchemaStudio.composerReset()" title="Restaurar campos originales desde APP_SCHEMAS">' +
+        '<button class="ss-btn-secondary" onclick="window.SchemaStudio.composerReset()">' +
           '<ion-icon name="refresh-outline"></ion-icon>Reset</button>' +
         '<button class="ss-btn-primary" onclick="window.SchemaStudio.composerExport()">' +
           '<ion-icon name="code-download-outline"></ion-icon>Code Export</button>' +
       '</div>' +
     '</div>';
 
-    // ── Fields List ────────────────────────────────────────────────────────
     html += '<div style="padding:12px 16px;border-bottom:1px solid var(--ion-color-step-100);">' +
       '<div style="font-size:0.72rem;font-weight:700;color:var(--ion-color-medium);margin-bottom:8px;letter-spacing:0.06em;">CAMPOS ACTUALES</div>' +
       '<div id="ss-field-list">';
@@ -956,45 +951,34 @@
       var isPK     = !!f.primaryKey || f.name === pkField;
       var cls      = classifyField(f.name);
       if (isPK) cls = 'system';
-      var typeLabel = f.type || 'text';
-
       html += '<div class="ss-field-row' + (isLocked ? ' locked' : '') + '" data-idx="' + idx + '">' +
         '<ion-icon class="ss-drag-handle" name="reorder-four-outline"></ion-icon>' +
         '<span class="ss-field-chip ' + cls + '" style="flex-shrink:0;">' + f.name + '</span>' +
-        '<span style="font-size:0.72rem;color:var(--ion-color-medium);flex:1;">' + typeLabel +
-          (f.label ? ' · ' + f.label : '') +
-          (f.required ? ' · <span style="color:var(--ion-color-danger);">required</span>' : '') +
+        '<span style="font-size:0.72rem;color:var(--ion-color-medium);flex:1;">' + (f.type || 'text') +
+          (f.label ? ' - ' + f.label : '') +
+          (f.required ? ' - <span style="color:var(--ion-color-danger);">req</span>' : '') +
         '</span>' +
-        (isPK  ? '<ion-icon name="key-outline" title="Primary Key" style="color:var(--ion-color-warning-shade);font-size:14px;"></ion-icon>' : '') +
-        (isLocked && !isPK ? '<ion-icon name="lock-closed-outline" title="Campo gobernado" style="color:var(--ion-color-medium);font-size:13px;"></ion-icon>' : '') +
-        (!isLocked ? '<button class="ss-btn-danger" onclick="window.SchemaStudio.composerRemoveField(' + idx + ')" title="Eliminar campo"><ion-icon name="trash-outline"></ion-icon></button>' : '') +
+        (isPK  ? '<ion-icon name="key-outline" style="color:var(--ion-color-warning-shade);font-size:14px;"></ion-icon>' : '') +
+        (isLocked && !isPK ? '<ion-icon name="lock-closed-outline" style="color:var(--ion-color-medium);font-size:13px;"></ion-icon>' : '') +
+        (!isLocked ? '<button class="ss-btn-danger" onclick="window.SchemaStudio.composerRemoveField(' + idx + ')"><ion-icon name="trash-outline"></ion-icon></button>' : '') +
       '</div>';
     });
-
     html += '</div></div>';
 
-    // ── Add Field Form ────────────────────────────────────────�    // ── Code Export Header ─────────────────────────────────────────────────
-    html += '<div style="padding:12px 16px;background:var(--ion-color-step-100);display:flex;align-items:center;justify-content:space-between;">' +
-      '<div style="font-size:0.72rem;font-weight:700;color:var(--ion-color-medium);letter-spacing:0.06em;display:flex;align-items:center;gap:8px;">' +
-        '<ion-icon name="code-download-outline" style="color:var(--ion-color-warning-shade);"></ion-icon>' +
-        'CODE EXPORT (JSON) — ' + entityName +
+    html += '<div style="padding:16px;border-bottom:1px solid var(--ion-color-step-100);">' +
+      '<div style="font-size:0.72rem;font-weight:700;color:var(--ion-color-medium);margin-bottom:12px;letter-spacing:0.06em;">AGREGAR CAMPO</div>' +
+      '<div class="ss-form-row" style="margin-bottom:10px;">' +
+        '<div><label class="ss-label">Nombre (snake_case) *</label>' +
+          '<input class="ss-input" id="ss-new-name" placeholder="mi_campo" autocomplete="off"></div>' +
+        '<div><label class="ss-label">Tipo *</label>' +
+          '<select class="ss-input" id="ss-new-type">' +
+            FIELD_TYPES.map(function(t){ return '<option value="' + t + '">' + t + '</option>'; }).join('') +
+          '</select></div>' +
       '</div>' +
-      '<button class="ss-btn-secondary" id="ss-copy-btn" onclick="window.SchemaStudio.composerCopyCode()" style="font-size:0.75rem;padding:5px 12px;">' +
-        '<ion-icon name="copy-outline"></ion-icon>Copiar JSON</button>' +
-    '</div>';
-
-    // ── Code Block [O2-AR] ─────────────────────────────────────────────────
-    // Plain JSON stored in data-plain; highlighted HTML shown in innerHTML.
-    // composerCopyCode() reads data-plain to avoid HTML tag contamination.
-    var plainJson = generateCodeJson(entityName, _composer.fields, schema);
-    html += '<div class="ss-code-block" id="ss-code-output" data-plain="" >' +
-      generateCodeHtml(plainJson) + '</div>';
-
-    panel.innerHTML = html;
-
-    // Store plain JSON after innerHTML is set (avoids encoding issues)
-    var codeEl = panel.querySelector('#ss-code-output');
-    if (codeEl) codeEl.dataset.plain = plainJson;el class="ss-label">Width (1–12)</label>' +
+      '<div class="ss-form-row" style="margin-bottom:10px;">' +
+        '<div><label class="ss-label">Label</label>' +
+          '<input class="ss-input" id="ss-new-label" placeholder="Mi Campo"></div>' +
+        '<div><label class="ss-label">Width (cols)</label>' +
           '<select class="ss-input" id="ss-new-width">' +
             [12,6,4,3].map(function(w){ return '<option value="' + w + '"' + (w===6?' selected':'') + '>' + w + ' col</option>'; }).join('') +
           '</select></div>' +
@@ -1005,7 +989,7 @@
         '</label>' +
         '<div style="display:flex;gap:8px;align-items:center;">' +
           '<select class="ss-input" id="ss-new-template" style="width:auto;font-size:0.78rem;">' +
-            '<option value="">○ Insertar template...</option>' +
+            '<option value="">Insertar template...</option>' +
             Object.keys(TEMPLATE_GROUPS).map(function(k){ return '<option value="' + k + '">+ ' + k + '</option>'; }).join('') +
           '</select>' +
           '<button class="ss-btn-primary" onclick="window.SchemaStudio.composerAddField()">' +
@@ -1014,36 +998,35 @@
       '</div>' +
     '</div>';
 
-    // ── Live Preview ───────────────────────────────────────────────────────
     html += '<div style="border-bottom:1px solid var(--ion-color-step-100);">' +
-      '<div style="padding:12px 16px 4px;font-size:0.72rem;font-weight:700;color:var(--ion-color-medium);letter-spacing:0.06em;display:flex;align-items:center;gap:8px;">' +
-        'LIVE PREVIEW <span style="font-weight:400;font-size:0.7rem;">(FormEngine simulation)</span>' +
-      '</div>' +
+      '<div style="padding:12px 16px 4px;font-size:0.72rem;font-weight:700;color:var(--ion-color-medium);letter-spacing:0.06em;">LIVE PREVIEW <span style="font-weight:400;">(FormEngine sim)</span></div>' +
       '<div class="ss-preview-form" id="ss-form-preview">' + buildFormPreview(_composer.fields) + '</div>' +
     '</div>';
 
-    // ── Code Export Header ─────────────────────────────────────────────────
+    // [O2-AR] Code Export: generateCodeJson -> clipboard, generateCodeHtml -> display
+    var plainJson = generateCodeJson(entityName, _composer.fields, schema);
     html += '<div style="padding:12px 16px;background:var(--ion-color-step-100);display:flex;align-items:center;justify-content:space-between;">' +
       '<div style="font-size:0.72rem;font-weight:700;color:var(--ion-color-medium);letter-spacing:0.06em;display:flex;align-items:center;gap:8px;">' +
         '<ion-icon name="code-download-outline" style="color:var(--ion-color-warning-shade);"></ion-icon>' +
-        'CODE EXPORT — ' + entityName +
+        'CODE EXPORT (JSON) - ' + entityName +
       '</div>' +
       '<button class="ss-btn-secondary" id="ss-copy-btn" onclick="window.SchemaStudio.composerCopyCode()" style="font-size:0.75rem;padding:5px 12px;">' +
-        '<ion-icon name="copy-outline"></ion-icon>Copiar</button>' +
+        '<ion-icon name="copy-outline"></ion-icon>Copiar JSON</button>' +
     '</div>';
-
-    // ── Code Block ────────────────────────────────────────────────────────
-    html += '<div class="ss-code-block" id="ss-code-output">' + generateCode(entityName, _composer.fields, schema) + '</div>';
+    html += '<div class="ss-code-block" id="ss-code-output" data-plain="">' + generateCodeHtml(plainJson) + '</div>';
 
     panel.innerHTML = html;
+    var codeEl = panel.querySelector('#ss-code-output');
+    if (codeEl) codeEl.dataset.plain = plainJson;
 
-    // Wire template selector
     var tmplSelect = document.getElementById('ss-new-template');
     if (tmplSelect) {
       tmplSelect.addEventListener('change', function() {
         var key = this.value;
         if (key) { window.SchemaStudio.composerInsertTemplate(key); this.value = ''; }
       });
+    }
+  }
     }
   }
 
