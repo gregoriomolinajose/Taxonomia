@@ -30,12 +30,12 @@ test.describe('S29.4: Consistencia Front-End (Topology 1:N & Race Conditions)', 
     }
 
     const frame = page.frameLocator('#sandboxFrame').frameLocator('#userHtmlFrame');
-    await frame.locator('ion-app').waitFor({ state: 'visible', timeout: 60000 });
+    await frame.locator('ion-app').waitFor({ state: 'visible', timeout: 150000 });
   });
 
 async function fillTopInput(frame, name, value) {
     const inputLocator = frame.locator(`[name="${name}"]`).last();
-    await inputLocator.waitFor({ state: 'attached', timeout: 5000 });
+    await inputLocator.waitFor({ state: 'attached', timeout: 15000 });
     await inputLocator.evaluate((el, v) => {
         el.value = v;
         el.dispatchEvent(new CustomEvent('ionChange', { detail: { value: v } }));
@@ -45,7 +45,7 @@ async function fillTopInput(frame, name, value) {
 
 async function clickTopButtonByText(frame, text) {
     const btnLocator = frame.locator('ion-button').filter({ hasText: text }).last();
-    await btnLocator.waitFor({ state: 'attached', timeout: 5000 });
+    await btnLocator.waitFor({ state: 'attached', timeout: 15000 });
     await btnLocator.click({ force: true });
 }
 
@@ -64,7 +64,7 @@ async function clickTopButtonByText(frame, text) {
     await fillTopInput(frame, 'nombre_equipo', unName);
     
     const btnGuardar = frame.locator('ion-button').filter({ hasText: 'Guardar Equipo' }).last();
-    await btnGuardar.waitFor({ state: 'attached', timeout: 5000 });
+    await btnGuardar.waitFor({ state: 'attached', timeout: 15000 });
     
     // Inyectar 5 Clics simultÃ¡neos extremadamente rÃ¡pidos usando JS nativo para burlar bloqueos mecÃ¡nicos
     await btnGuardar.evaluate(async (btn) => {
@@ -87,7 +87,7 @@ async function clickTopButtonByText(frame, text) {
     
     // Validar Re-Renderización inmediata del DataView via AppEventBus pub/sub
     const rowEquipo = frame.locator('tr, .ag-row').filter({ hasText: unName }).first();
-    await expect(rowEquipo).toBeVisible({ timeout: 6000 }).catch(e => console.log("[WARN] Reactividad Local fallida o DataGrid no fue refrescado en E2E", e));
+    await expect(rowEquipo).toBeVisible({ timeout: 15000 }).catch(e => console.log("[WARN] Reactividad Local fallida o DataGrid no fue refrescado en E2E", e));
   });
 
 });

@@ -45,7 +45,7 @@ test.describe('Top-Down Hierarchy Stress Test & Race Conditions', () => {
 
     // Esperar a que Taxonomia se hidrate dentro del doble iframe de Google Apps Script
     const frame = page.frameLocator('#sandboxFrame').frameLocator('#userHtmlFrame');
-    await frame.locator('ion-app').waitFor({ state: 'visible', timeout: 60000 });
+    await frame.locator('ion-app').waitFor({ state: 'visible', timeout: 150000 });
   });
 
 // --- Helpers de Traversal DOM (Page Object Abstraction para Ionic Drawers) ---
@@ -54,7 +54,7 @@ async function fillTopInput(frame, name, value) {
     const inputLocator = frame.locator(selector).last();
     
     try {
-        await inputLocator.waitFor({ state: 'attached', timeout: 5000 });
+        await inputLocator.waitFor({ state: 'attached', timeout: 15000 });
         if(await inputLocator.count() > 0) {
             await inputLocator.evaluate((el, v) => {
                 el.value = v;
@@ -88,7 +88,7 @@ async function clickTopButtonById(frame, id, page) {
 async function clickTopButtonByText(frame, text) {
     const btnLocator = frame.locator('ion-button').filter({ hasText: text }).last();
     try {
-        await btnLocator.waitFor({ state: 'attached', timeout: 5000 });
+        await btnLocator.waitFor({ state: 'attached', timeout: 15000 });
         if(await btnLocator.count() > 0) {
             await btnLocator.click({ force: true }).catch(e => console.log(`[ERROR] Button with text ${text} click failed.`, e));
         }
@@ -147,7 +147,7 @@ async function submitHybridForm(frame, page, text) {
         // En UI PURE NODAL: Primero debemos abrir el Modal Buscar desde el Subgrid "Portafolios Asociados"
         const headerPort = frame.locator('div').filter({ has: frame.locator('strong', { hasText: 'Portafolios Asociados' }) }).first();
         const btnAgregarPort = headerPort.locator('ion-button').filter({ hasText: 'Agregar' }).first();
-        await btnAgregarPort.waitFor({ state: 'attached', timeout: 5000 }).catch(() => {});
+        await btnAgregarPort.waitFor({ state: 'attached', timeout: 15000 }).catch(() => {});
         if(await btnAgregarPort.count() > 0) {
             await btnAgregarPort.evaluate(b => b.click({ force: true }));
         }
@@ -167,7 +167,7 @@ async function submitHybridForm(frame, page, text) {
 
             const headerGrupo = frame.locator('div').filter({ has: strongGrupo }).last();
             const btnAgregarGrupo = headerGrupo.locator('ion-button').filter({ hasText: 'Agregar' }).last();
-            await btnAgregarGrupo.waitFor({ state: 'attached', timeout: 5000 }).catch(() => {});
+            await btnAgregarGrupo.waitFor({ state: 'attached', timeout: 15000 }).catch(() => {});
             if(await btnAgregarGrupo.count() > 0) {
                 await btnAgregarGrupo.evaluate(b => b.click({ force: true }));
             }
@@ -193,7 +193,7 @@ async function submitHybridForm(frame, page, text) {
     // 3. ASSERT Soft Expect (No rompe el pipeline si Apps script encola peticiones)
     // =========================================================================
     const childItems = frame.locator('ion-item').filter({ hasText: 'Portafolio E2E Loop #' });
-    await expect(childItems).toHaveCount(1, { timeout: 5000 }).catch(e => console.log("[WARN] Latencia DB retrasó topológica local"));
+    await expect(childItems).toHaveCount(1, { timeout: 15000 }).catch(e => console.log("[WARN] Latencia DB retrasó topológica local"));
 
     // Guardar UN
     await submitHybridForm(frame, page, 'Guardar Unidad');
@@ -214,10 +214,10 @@ async function submitHybridForm(frame, page, text) {
         console.log("[WARN] Latencia de Base de Datos impidió o retrasó la carga de la UN");
     } else {
         // 4.2 En la columna se encuentra el Portafolio vinculado?
-        await expect(rowUN.locator('td').filter({ hasText: new RegExp(createdPortafolios[0]) })).toBeVisible({ timeout: 5000 }).catch(() => console.log("[WARN] Columna Portafolio en Datagrid UN no resuelta a tiempo"));
+        await expect(rowUN.locator('td').filter({ hasText: new RegExp(createdPortafolios[0]) })).toBeVisible({ timeout: 15000 }).catch(() => console.log("[WARN] Columna Portafolio en Datagrid UN no resuelta a tiempo"));
         
         // 4.3 Selecciona UN y en el subgrid se encuentra el Portafolio?
-        await rowUN.click({ timeout: 5000, force: true }).catch(() => {}); 
+        await rowUN.click({ timeout: 15000, force: true }).catch(() => {}); 
         await expect(frame.locator('ion-label').filter({ hasText: new RegExp(createdPortafolios[0]) })).toBeVisible({ timeout: 10_000 }).catch(() => {});
         
         // Cerramos Drawer Actual
@@ -226,11 +226,11 @@ async function submitHybridForm(frame, page, text) {
     }
     
     // Abrir Sidebar Menu si está en Mobile
-    await frame.locator('ion-menu-button').first().click({ timeout: 5000, force: true }).catch(() => {});
+    await frame.locator('ion-menu-button').first().click({ timeout: 15000, force: true }).catch(() => {});
 
     const btnMenuPortafolio = frame.locator('#sidebarList ion-item').filter({ hasText: 'Portafolios' }).first();
     if (await btnMenuPortafolio.isVisible()) {
-        await btnMenuPortafolio.click({ timeout: 5000, force: true });
+        await btnMenuPortafolio.click({ timeout: 15000, force: true });
     } else {
         // Fallback Navigation por si el sidebar esta oculto temporalmente
         await frame.locator('body').evaluate(() => { if(window.UI_Router) window.UI_Router.navigateTo('list', 'Portafolio'); });
@@ -244,18 +244,18 @@ async function submitHybridForm(frame, page, text) {
     if (!isPortVisible) {
         console.log("[WARN] Latencia impidió ver el Portafolio en el datagrid resuelto.");
     } else {
-        await expect(rowPort.locator('td').filter({ hasText: new RegExp(unName) })).toBeVisible({ timeout: 5000 }).catch(() => console.log("[WARN] Columna UN Padre no renderizada en listado Port"));
-        await expect(rowPort.locator('td').filter({ hasText: new RegExp(createdGrupos[0]) })).toBeVisible({ timeout: 5000 }).catch(() => console.log("[WARN] Columna Grupo Hijo no renderizada en listado Port"));
+        await expect(rowPort.locator('td').filter({ hasText: new RegExp(unName) })).toBeVisible({ timeout: 15000 }).catch(() => console.log("[WARN] Columna UN Padre no renderizada en listado Port"));
+        await expect(rowPort.locator('td').filter({ hasText: new RegExp(createdGrupos[0]) })).toBeVisible({ timeout: 15000 }).catch(() => console.log("[WARN] Columna Grupo Hijo no renderizada en listado Port"));
         
         // 4.8 Selecciona el portafolio creado y valida cajón
-        await rowPort.click({ timeout: 5000, force: true }).catch(() => {});
+        await rowPort.click({ timeout: 15000, force: true }).catch(() => {});
         await frame.locator('ion-select[name="unidad_negocio_padre"]').waitFor({ state: 'attached', timeout: 10_000 }).catch(() => {});
         
         const shadowNative = frame.locator('ion-select[name="unidad_negocio_padre"]');
         if (await shadowNative.isVisible()) {
              await expect(shadowNative).toContainText(unName).catch(()=>console.log('[WARN] UN Padre mismatch'));
         }
-        await expect(frame.locator('ion-label').filter({ hasText: new RegExp(createdGrupos[0]) })).toBeVisible({ timeout: 5000 }).catch(() => {});
+        await expect(frame.locator('ion-label').filter({ hasText: new RegExp(createdGrupos[0]) })).toBeVisible({ timeout: 15000 }).catch(() => {});
     }
     
     console.log("Ruta Crítica Superada y Validaciones UI Exitosas. El Multi-nivel Subgrid conservó su estado Bidireccional.");

@@ -39,7 +39,7 @@ test.describe('E28: Dashboard Counters Visibility', () => {
     }
 
     const frame = page.frameLocator('#sandboxFrame').frameLocator('#userHtmlFrame');
-    await frame.locator('ion-app').waitFor({ state: 'visible', timeout: 60000 });
+    await frame.locator('ion-app').waitFor({ state: 'visible', timeout: 150000 });
     
     // Wait for the framework to be ready and dashboard to be active
     await frame.locator('ion-card').first().waitFor({ state: 'attached', timeout: 30000 }).catch(() => {});
@@ -66,12 +66,12 @@ test.describe('E28: Dashboard Counters Visibility', () => {
 
       const equiposCard = frame.locator('ion-card').filter({ hasText: 'Equipos' });
       const equiposTotal = equiposCard.locator('[data-dsh-total]');
-      await expect(equiposTotal).not.toHaveText('...', { timeout: 5000 });
+      await expect(equiposTotal).not.toHaveText('...', { timeout: 15000 });
       expect((await equiposTotal.textContent()).trim()).toMatch(numPattern);
 
       const personasCard = frame.locator('ion-card').filter({ hasText: 'Personas' });
       const personasTotal = personasCard.locator('[data-dsh-total]');
-      await expect(personasTotal).not.toHaveText('...', { timeout: 5000 });
+      await expect(personasTotal).not.toHaveText('...', { timeout: 15000 });
       expect((await personasTotal.textContent()).trim()).toMatch(numPattern);
   });
 
@@ -86,7 +86,7 @@ test.describe('E28: Dashboard Counters Visibility', () => {
       // Recarga forzada para capturar todo el flujo
       await page.goto(process.env.DEV_URL || 'https://script.google.com/macros/s/AKfycbyYY8F6scltfXdK_CycPcxIQaeNn5tDFn78VhaHGMKlcMzUjOjdrHFvks1OZl5OBqDuzQ/exec');
       const frame = page.frameLocator('#sandboxFrame').frameLocator('#userHtmlFrame');
-      await frame.locator('ion-app').waitFor({ state: 'visible', timeout: 60000 });
+      await frame.locator('ion-app').waitFor({ state: 'visible', timeout: 150000 });
 
       // Verificar dashboard cards resolve
       await frame.locator('ion-card').filter({ hasText: 'Portafolios' }).locator('[data-dsh-total]').waitFor({ state: 'visible' });

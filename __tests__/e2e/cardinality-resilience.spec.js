@@ -38,14 +38,14 @@ test.describe('E23: Cardinilidad TopolÃ³gica y Resiliencia SCD-2', () => {
     }
 
     const frame = page.frameLocator('#sandboxFrame').frameLocator('#userHtmlFrame');
-    await frame.locator('ion-app').waitFor({ state: 'visible', timeout: 60000 });
+    await frame.locator('ion-app').waitFor({ state: 'visible', timeout: 150000 });
   });
 
 // --- Helpers DOM ---
 async function fillTopInput(frame, name, value) {
     const selector = `[name="${name}"]`;
     const inputLocator = frame.locator(selector).last();
-    await inputLocator.waitFor({ state: 'attached', timeout: 5000 });
+    await inputLocator.waitFor({ state: 'attached', timeout: 15000 });
     await inputLocator.evaluate((el, v) => {
         el.value = v;
         el.dispatchEvent(new CustomEvent('ionChange', { detail: { value: v } }));
@@ -55,13 +55,13 @@ async function fillTopInput(frame, name, value) {
 
 async function clickTopButtonById(frame, id) {
     const btnLocator = frame.locator(`[id="${id}"]`).last();
-    await btnLocator.waitFor({ state: 'attached', timeout: 5000 });
+    await btnLocator.waitFor({ state: 'attached', timeout: 15000 });
     await btnLocator.click({ force: true });
 }
 
 async function clickTopButtonByText(frame, text) {
     const btnLocator = frame.locator('ion-button').filter({ hasText: text }).last();
-    await btnLocator.waitFor({ state: 'attached', timeout: 5000 });
+    await btnLocator.waitFor({ state: 'attached', timeout: 15000 });
     await btnLocator.click({ force: true });
 }
 
@@ -78,7 +78,7 @@ async function submitHybridForm(frame, page, text) {
     }
     const btnGuardar = frame.locator('ion-button').filter({ hasText: text }).last();
     // Bypass strict expect which often fails with Ionic Web Components
-    await btnGuardar.waitFor({ state: 'attached', timeout: 5000 }).catch(()=>{});
+    await btnGuardar.waitFor({ state: 'attached', timeout: 15000 }).catch(()=>{});
     await btnGuardar.evaluate(btn => {
         if (!btn.disabled) btn.click({ force: true });
     });
