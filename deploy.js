@@ -83,11 +83,21 @@ try {
                 // S30.5: Sustitución de RegExp por cortes absolutos estáticos
                 const startToken = '<!-- [QA_MODULE_START] -->';
                 const endToken = '<!-- [QA_MODULE_END] -->';
-                const startIndex = indexContent.indexOf(startToken);
-                const endIndex = indexContent.indexOf(endToken);
+                let stripped = false;
                 
-                if (startIndex !== -1 && endIndex !== -1) {
-                    indexContent = indexContent.substring(0, startIndex) + indexContent.substring(endIndex + endToken.length);
+                while (indexContent.indexOf(startToken) !== -1 && indexContent.indexOf(endToken) !== -1) {
+                    const startIndex = indexContent.indexOf(startToken);
+                    const endIndex = indexContent.indexOf(endToken);
+                    
+                    if (endIndex > startIndex) {
+                        indexContent = indexContent.substring(0, startIndex) + indexContent.substring(endIndex + endToken.length);
+                        stripped = true;
+                    } else {
+                        break; // Tokens malformados o invertidos, romper para evitar bucle infinito
+                    }
+                }
+                
+                if (stripped) {
                     fs.writeFileSync(indexFile, indexContent, 'utf8');
                     console.log(`[Deploy] Stripped QA Module from PROD build (String Slice Mode).`);
                 }
