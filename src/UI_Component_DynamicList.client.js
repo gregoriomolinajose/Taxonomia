@@ -45,6 +45,24 @@
             }
             
             const createRow = (rowData = {}) => {
+                const activeForm = inputEl.closest('ion-modal') || document.getElementById('app-container');
+                const syncState = () => {
+                    if (activeForm) {
+                        activeForm._LocalState = activeForm._LocalState || {};
+                        const rows = inputEl.querySelectorAll('.dynamic-list-row');
+                        const jsonArray = [];
+                        rows.forEach(r => {
+                            const rd = {};
+                            const rInputs = r.querySelectorAll('ion-input, ion-select');
+                            rInputs.forEach(inp => {
+                                if (inp.name) rd[inp.name] = inp.value;
+                            });
+                            jsonArray.push(rd);
+                        });
+                        activeForm._LocalState[field.name] = jsonArray;
+                    }
+                };
+
                 const row = document.createElement('ion-row');
                 row.classList.add('dynamic-list-row');
                 row.style.alignItems = 'center';
@@ -77,6 +95,10 @@
                             });
                         }
                     }
+                    
+                    subInput.addEventListener('ionChange', syncState);
+                    subInput.addEventListener('input', syncState); // Respaldo para browsers lentos
+                    
                     col.appendChild(subInput);
                     row.appendChild(col);
                 });
@@ -90,12 +112,13 @@
                 const delIcon = document.createElement('ion-icon');
                 delIcon.setAttribute('name', 'trash-outline');
                 delBtn.appendChild(delIcon);
-                delBtn.onclick = () => row.remove();
+                delBtn.onclick = () => { row.remove(); syncState(); };
                 
                 delCol.appendChild(delBtn);
                 row.appendChild(delCol);
 
                 listRowsContainer.appendChild(row);
+                syncState(); // Sincroniza al añadir una fila inicial
             };
 
             if (initialData.length > 0 && Array.isArray(initialData)) {

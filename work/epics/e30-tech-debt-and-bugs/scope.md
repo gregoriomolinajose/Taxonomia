@@ -87,6 +87,8 @@ Extraídos exitosamente.
 | 4 | S30.3 | M | S30.4 | M2 | Remueve dependencias de hidden inputs. Se inicia tras estabilizar variables de Theme. |
 | 5 | S30.5 | L | All Prev | M3 | Modificación pesada de pipeline AST Node que afectará el output CSS global, requiere entorno limpio. |
 | 6 | S30.6 | M | S30.2 | M3 | Habilita navegación jerárquica en subgrids tras estabilizar el muteo de relacionales. |
+| 7 | S30.7 | S | None | M3 | Estandarización Universal de Primary Key |
+| 8 | S30.12 | L | None | M3 | Optimistic UI Server Latency Mitigation & FormEngine Lifecycle Synchronization (Hallazgos E2E) |
 
 ### Milestones
 
@@ -122,6 +124,7 @@ Stream 3 (Testing):          [ Bugs N dinámicos ] ────┘
 | S30.5 | L | Pending | — | — | AST RegExp CSS Minifier |
 | S30.6 | M | Done ✓ | 1h | S | Navegación Profunda en Subgrids (Drill-Down) |
 | S30.7 | S | Pending | — | — | Estandarización Universal de Primary Key |
+| S30.12 | L | Pending | — | — | Optimistic UI Server Latency Mitigation & FormEngine Lifecycle Synchronization (Hallazgos E2E) |
 
 ### Sequencing Risks
 

@@ -26,7 +26,16 @@
             }
             
             mainContainer.setAttribute('data-searchable-multi', fieldDef.name);
-            mainContainer._LocalStateSelection = selectedIds;
+
+            // S30.3 - Local State Sync Architecture
+            const getActiveForm = () => mainContainer.closest('ion-modal') || document.getElementById('app-container');
+            const syncToLocalState = () => {
+                const activeForm = getActiveForm();
+                if (activeForm) {
+                    activeForm._LocalState = activeForm._LocalState || {};
+                    activeForm._LocalState[fieldDef.name] = selectedIds;
+                }
+            };
 
             const visualWrapper = document.createElement('div');
             visualWrapper.style.width = '100%';
@@ -94,7 +103,7 @@
                 confirmBtn.color = 'primary';
                 confirmBtn.onclick = () => {
                     selectedIds = [...draftIds];
-                    mainContainer._LocalStateSelection = selectedIds; // S30.3 Local State Sync
+                    syncToLocalState(); // S30.3 Local State Sync
                     renderChips();
                     pickerModal.isOpen = false;
                     
@@ -174,7 +183,7 @@
             
             const renderChips = () => {
                 chipsBox.innerHTML = '';
-                hidden.value = JSON.stringify(selectedIds);
+                syncToLocalState();
                 
                 if (selectedIds.length === 0) {
                     const emptyNode = document.createElement('div');
