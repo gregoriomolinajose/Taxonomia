@@ -1027,8 +1027,6 @@
       });
     }
   }
-    }
-  }
 
   // ── Form Preview Builder ──────────────────────────────────────────────────
   function buildFormPreview(fields) {
@@ -1140,6 +1138,7 @@
       if (!existingNames.includes(fn.name)) {
         _composer.fields.push(JSON.parse(JSON.stringify(fn)));
       }
+    });
     _composer.dirty = true;
     renderComposerPanelContent();
     if (window.showToast) window.showToast(templateKey + ' insertado', 'success');
@@ -1250,6 +1249,7 @@
     composerExport:         composerExport,
     composerCopyCode:       composerCopyCode,
     composerSelectEntity:    composerSelectEntity,   // [C2-QR] export for programmatic entity switching
+    _loadDbStatusPill: function() {
       var dot = document.getElementById('ss-status-dot');
       var txt = document.getElementById('ss-status-text');
       if (!txt) return;
