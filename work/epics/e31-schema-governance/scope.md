@@ -21,13 +21,17 @@ Desacoplar el catálogo de presets topológicos y plantillas de campos reutiliza
 | S31.4 | Migración de Entidades a Referencias | M | Pending | Refactorizar todas las entidades de `APP_SCHEMAS` para referenciar presets por clave en lugar de declararlos inline. Validar retrocompatibilidad total con `FormEngine`, `Engine_DB` y `DataView_Engine` mediante test suite. |
 | S31.5 | Schema Config Studio UI (Viewer) | L | Pending | Interfaz de administración read-only que liste el catálogo de presets y templates, y muestre qué entidades usan cada regla. Accesible desde el icono de perfil → sección "Sistema" (nueva), exclusivo para `SUPER_ADMIN`. |
 | S31.6 | Schema Config Studio UI (CRUD) | L | Pending | Extender el Config Studio con capacidad de crear/editar reglas de campo para una entidad específica, generando la declaración correspondiente en el schema. Binding entre reglas del catálogo y campos de entidades. Exclusivo `SUPER_ADMIN`. |
+| S31.3b | AUDIT_FIELDS + VERSION_FIELD en FIELD_TEMPLATES | M | Pending | Agregar templates de auditoría de industria (`AUDIT_FIELDS`, `VERSION_FIELD`) a `FIELD_TEMPLATES`. Migrar todas las entidades de negocio para incluir trazabilidad de creación, actualización y borrado. Ampliar `SYSTEM_FIELDS` para cubrir `lexical_id` universalmente. |
+| S31.7 | Schema Provisioner — Auto-reparación de Estructura DB | L | Pending | Nuevo módulo `Adapter_Sheets_Provisioner.gs` con capacidad de: (1) crear tabla si no existe, (2) agregar columnas faltantes, (3) marcar columnas huérfanas como `_ORPHAN_`, (4) marcar hojas gestionadas con `DeveloperMetadata` + tab color, (5) detectar hojas huérfanas. Trigger: on-demand admin + lazy on-first-write. |
 
-**Total:** 6 stories, TBD SP
+**Total:** 8 stories, TBD SP
 
 ## Scope
 
 **In scope (MUST):**
 - Extracción de `TOPOLOGY_PRESETS` y `FIELD_TEMPLATES` del `Schema_Engine.gs`
+- Templates de auditoría de industria: `AUDIT_FIELDS()`, `VERSION_FIELD()` en todas las entidades de negocio
+- Schema Provisioner auto-reparable: create-if-missing, add-missing-columns, quarantine-orphans, mark-sheets
 - Resolvedor transparente que mantiene retrocompatibilidad con todos los consumidores existentes
 - Refactorización completa de todas las entidades a referencias por clave
 - Validación mediante test suite existente (sin regresiones)
