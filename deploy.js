@@ -100,7 +100,12 @@ try {
             const filePath = path.join(buildDir, file);
             const content = fs.readFileSync(filePath, 'utf8');
             // S30.5: Delegar a la librería pipelineUtils.js
-            extractAndValidateScripts(content, file);
+            try {
+                extractAndValidateScripts(content, file);
+            } catch (err) {
+                console.error(`\x1b[31m[Deploy-Error]\x1b[0m ${err.message}`);
+                process.exit(1);
+            }
         }
         console.log(`[Deploy] AST Validation passed.`);
 
