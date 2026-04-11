@@ -161,4 +161,43 @@ describe('UI_FormSubmitter (Dependency Injection Architecture)', () => {
         // Limpiar mock nativo
         document.createElement = document.createElementOrig;
     });
+
+    it('E. Debe abortar la ejecución y no bloquear UI tras alcanzar la tolerancia de limitación de red (S30.12)', async () => {
+        const mockModal = document.getElementById('app-container');
+        const submitter = new window.UI_FormSubmitter('Test_Entity', [], mockBtn, mockApiService);
+        
+        // Sobreescribir apiService para forzar un timeout nativo que nunca resuelve (simulando backend caído)
+        submitter.apiService.call = vi.fn().mockImplementation(() => new Promise(() => {}));
+        
+        window.UI_Components = {
+            presentToast: vi.fn(),
+            showLoading: vi.fn(),
+            hideLoading: vi.fn()
+        };
+        const dismissSpy = vi.fn().mockResolvedValue();
+        
+        // Mock document.createElement to handle ion-loading correctly
+        document.createElementOrig = document.createElement.bind(document);
+        document.createElement = (tag) => {
+            const el = document.createElementOrig(tag);
+            if (tag === 'ion-loading') el.dismiss = dismissSpy;
+            return el;
+        };
+
+        // Reducimos temporalmente el timeout real en JS para evitar que vitest espere 20s en el test
+        // Haremos uso fake timers
+        vi.useFakeTimers();
+        
+        mockBtn.click(); // Iniciamos envío
+        
+        // Avanzamos asíncronamente para resolver Promise.race timeout
+        await vi.advanceTimersByTimeAsync(20500);
+        
+        // Verificamos estado posterior
+        expect(dismissSpy).toHaveBeenCalled();
+        expect(submitter.submitBtn.disabled).toBe(false); // Botón rehabilitado
+        
+        vi.useRealTimers();
+        document.createElement = document.createElementOrig;
+    });
 });

@@ -25,6 +25,7 @@ Resolver deuda técnica estructural y visual acumulada en las iteraciones anteri
 | S30.9 | Fix Deserialización IPC en Dashboard | S | Done ✓ | Resolver errores IPC en Dashboard Counters y spinners atascados reportados por la suite E2E (dashboard-counters). |
 | S30.10 | Auditoría Universal IPC Deserialization | S | Done ✓ | Auditar y estandarizar todos los endpoints públicos RPC para asegurar que los payloads pasen como cadenas mediante JSON.stringify nativo, anulando totalmente el Bug V8. |
 | S30.11 | Protocolo de Extracción Nodal Frontend | S | Done ✓ | Estandarización de recolección de LocalState para abolir la Asimetría H10 descubierta durante la inspección técnica de componentes anidados. |
+| S30.12 | Mitigación Optimista de Latencia UI y Form Lifecycle | L | Done ✓ | Protección Timeboxed estricta (Promise.race 20s) contra cuellos de botella de red y bugs de LockService, asegurando el UX contra phantom overlays. |
 
 **Total:** 10 stories base + (X) anexos dinámicos en Testing, TBD SP
 

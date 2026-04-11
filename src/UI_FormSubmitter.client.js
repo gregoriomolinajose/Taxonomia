@@ -112,8 +112,17 @@ window.UI_FormSubmitter = class UI_FormSubmitter {
             const safePayload = JSON.parse(JSON.stringify(payload, getCircularReplacer()));
 
             try {
-                const rawResponse = await this.apiService.call('API_Universal_Router', action, this.entityName, safePayload);
-                await loading.dismiss();
+                // S30.12 - Timeboxed Network Wrapper (20s Threshold) UX Resilience
+                const timeoutMs = 20000;
+                const _timeoutSafe = new Promise((_, reject) => 
+                    setTimeout(() => reject(new Error('TIMEOUT_EXCEEDED')), timeoutMs)
+                );
+                
+                const rawResponse = await Promise.race([
+                    this.apiService.call('API_Universal_Router', action, this.entityName, safePayload),
+                    _timeoutSafe
+                ]);
+                
                 const response = typeof rawResponse === 'string' ? JSON.parse(rawResponse) : rawResponse;
                 
                 if (response && response.status === 'success') {
@@ -144,9 +153,17 @@ window.UI_FormSubmitter = class UI_FormSubmitter {
                     this._revertButtonState();
                 }
             } catch (err) {
-                await loading.dismiss();
                 this._revertButtonState();
-                this._showToast(`Error de Servidor: ${err.message}`, 'danger');
+                if (err.message === 'TIMEOUT_EXCEEDED') {
+                    this._showToast('⏳ Saturación de Red Temporal: Evitamos el bloqueo visual. Por favor intenta guardar nuevamente.', 'warning');
+                } else {
+                    this._showToast(`Error de Servidor: ${err.message}`, 'danger');
+                }
+            } finally {
+                // S30.12 - Garantía Blindaje de UX Cleanup
+                if (loading && typeof loading.dismiss === 'function') {
+                    await loading.dismiss().catch(e => console.warn('[UI_FormSubmitter] Tolerancia mitigada de Backdrop Fantasma:', e));
+                }
             }
         });
     }
