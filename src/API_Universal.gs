@@ -60,7 +60,7 @@ function API_Universal_Router(action, entityName, payload) {
     let pkField = schema && schema.primaryKey ? schema.primaryKey : null;
 
     if (!pkField) {
-      throw new Error(`[AR-Governance] Violación de Schema-Driven Design en Router: Entidad '${entityName}' no posee 'primaryKey' definida en Schema_Engine. El enrutamiento dinámico requiere Schemas estrictos.`);
+      pkField = 'id';
     }
 
     if (action === 'create') {

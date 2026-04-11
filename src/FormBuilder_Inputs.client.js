@@ -47,11 +47,7 @@
             hiddenInput.setAttribute('type', 'hidden');
             hiddenInput.setAttribute('name', field.name);
             
-            if (field.primaryKey) {
-                const prefix = entityName.substring(0, 4).toUpperCase();
-                const sufix = Math.random().toString(36).substring(2, 7).toUpperCase();
-                hiddenInput.value = `${prefix}-${sufix}`;
-            } else if (defaultValue !== undefined) {
+            if (defaultValue !== undefined) {
                 hiddenInput.value = defaultValue;
             } else if (field.defaultValue !== undefined) {
                 hiddenInput.value = field.defaultValue;
@@ -59,15 +55,57 @@
             return hiddenInput;
         };
 
-        global.UI_Factory.buildInput = function(field, entityName) {
+        global.UI_Factory.buildBadge = function(field) {
+            const container = document.createElement('div');
+            container.style.marginTop = 'var(--spacing-2)';
+            container.style.marginBottom = 'var(--spacing-4)';
+            container.style.display = 'flex';
+            container.style.alignItems = 'center';
+            container.style.justifyContent = 'space-between';
+            container.style.padding = '0px var(--spacing-2)';
+
+            const labelEl = document.createElement('span');
+            labelEl.style.fontSize = 'var(--text-sm)';
+            labelEl.style.color = 'var(--ion-color-medium)';
+            labelEl.style.textTransform = 'uppercase';
+            labelEl.style.letterSpacing = '0.5px';
+            labelEl.textContent = field.label || 'Ticket ID';
+
+            const chipEl = document.createElement('ion-chip');
+            chipEl.setAttribute('color', 'primary');
+            chipEl.style.fontWeight = 'var(--font-weight-bold)';
+            chipEl.style.fontFamily = 'var(--font-mono)';
+            chipEl.style.border = '1px solid var(--ion-color-primary)';
+            
+            // The actual value will be populated by hydrateField 
+            chipEl.textContent = '...';
+
+            const hiddenInput = document.createElement('input');
+            hiddenInput.setAttribute('type', 'hidden');
+            hiddenInput.setAttribute('name', field.name);
+            hiddenInput.className = 'badge-hidden-input'; 
+
+            const _originalValSetter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set;
+            Object.defineProperty(hiddenInput, 'value', {
+                set: function(val) {
+                    _originalValSetter.call(this, val);
+                    chipEl.textContent = val || 'NUEVO';
+                },
+                get: function() {
+                    return Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').get.call(this);
+                }
+            });
+
+            container.appendChild(labelEl);
+            container.appendChild(chipEl);
+            container.appendChild(hiddenInput);
+
+            return container;
+        };
+
+        global.UI_Factory.buildInput = function(field) {
             const inputEl = document.createElement('ion-input');
             inputEl.setAttribute('type', field.type === 'number' ? 'number' : (field.type === 'date' ? 'date' : 'text'));
-            
-            if (field.readonly && field.name.startsWith('id_')) {
-                const prefix = entityName.substring(0, 4).toUpperCase();
-                const sufix = Math.random().toString(36).substring(2, 7).toUpperCase();
-                inputEl.value = `${prefix}-${sufix}`;
-            }
             
             _applyBaseAttributes(inputEl, field);
             return inputEl;
@@ -322,7 +360,10 @@
         };
 
         // --- Core Builders Automatic Registration ---
-        global.UI_Factory.registerBuilder('text', (f, e) => global.UI_Factory.buildInput(f, e));
+        global.UI_Factory.registerBuilder('text', (f, e) => {
+            if (f.uiBehavior === 'badge') return global.UI_Factory.buildBadge(f);
+            return global.UI_Factory.buildInput(f, e);
+        });
         global.UI_Factory.registerBuilder('number', (f, e) => global.UI_Factory.buildInput(f, e));
         global.UI_Factory.registerBuilder('date', (f, e) => global.UI_Factory.buildInput(f, e));
         global.UI_Factory.registerBuilder('textarea', (f) => global.UI_Factory.buildTextarea(f));

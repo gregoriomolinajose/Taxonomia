@@ -158,10 +158,19 @@ const Adapter_Sheets = {
             if (idxUpdatedAt > -1) rowToInsert[idxUpdatedAt] = currentTimestamp;
             if (idxUpdatedBy > -1) rowToInsert[idxUpdatedBy] = currentUser;
 
+            // Inyectar lexical_id Jira-Style de manera Atómica (LockService active)
+            const idxLexical = normalizedHeaders.indexOf('lexical_id');
+            let lexicalValue = null;
+            if (idxLexical > -1) {
+                const sheetDataRangeObjects = dataRange.getValues();
+                lexicalValue = this._calculateNextLexicalId(sheetDataRangeObjects, normalizedHeaders, tableName, schema);
+                rowToInsert[idxLexical] = lexicalValue;
+            }
+
             Logger.log("Adapter_Sheets.upsert: ¿Se encontró el ID?: No. Creando nueva fila para idempotencia...");
             sheet.getRange(sheet.getLastRow() + 1, 1, 1, rowToInsert.length).setValues([rowToInsert]);
             SpreadsheetApp.flush(); // Force sync to Google Drive UI
-            return { status: 'success', action: 'created', pk: primaryKeyField, val: primaryKeyValue, version: payload.version };
+            return { status: 'success', action: 'created', pk: primaryKeyField, val: primaryKeyValue, lexical_id: lexicalValue, version: payload.version };
         }
         } finally {
             lock.releaseLock();
@@ -268,9 +277,17 @@ const Adapter_Sheets = {
                 if (idxUpdatedAt > -1) rowToInsert[idxUpdatedAt] = currentTimestamp;
                 if (idxUpdatedBy > -1) rowToInsert[idxUpdatedBy] = currentUser;
                 
+                // Inyectar lexical_id dinámicamente si es un record nuevo en bulk
+                const idxLexical = normalizedHeaders.indexOf('lexical_id');
+                let lexicalValue = null;
+                if (idxLexical > -1) {
+                    lexicalValue = this._calculateNextLexicalId(originalData, normalizedHeaders, tableName, schema);
+                    rowToInsert[idxLexical] = lexicalValue;
+                }
+
                 originalData.push(rowToInsert);
                 idToIndexMap.set(String(primaryKeyValue), originalData.length - 1);
-                results.push({ status: 'success', action: 'created', pk: primaryKeyField, val: primaryKeyValue, version: payload.version });
+                results.push({ status: 'success', action: 'created', pk: primaryKeyField, val: primaryKeyValue, lexical_id: lexicalValue, version: payload.version });
             }
         }
         
@@ -357,6 +374,31 @@ const Adapter_Sheets = {
     },
 
     _normalizeHeader: _normalizeHeader,
+    
+    _calculateNextLexicalId: function(originalData, normalizedHeaders, tableName, schema) {
+        const idxLexical = normalizedHeaders.indexOf('lexical_id');
+        if (idxLexical === -1) return null;
+
+        const prefix = (schema && schema.metadata && schema.metadata.prefix) 
+            ? schema.metadata.prefix 
+            : tableName.substring(0, 4).toUpperCase();
+            
+        let maxCounter = 0;
+        for (let r = 1; r < originalData.length; r++) {
+            const val = String(originalData[r][idxLexical] || '').trim();
+            if (val.startsWith(prefix + '-')) {
+                const parts = val.split('-');
+                if (parts.length === 2) {
+                    const num = parseInt(parts[1], 10);
+                    if (!isNaN(num) && num > maxCounter) {
+                        maxCounter = num;
+                    }
+                }
+            }
+        }
+        
+        return `${prefix}-${maxCounter + 1}`;
+    },
 
     _ensureSheetExists: function(ss, tableName) {
         let sheet = ss.getSheetByName('DB_' + tableName);
@@ -379,7 +421,7 @@ const Adapter_Sheets = {
             throw new Error(`[AR-Governance] Inferencia Bloqueada: La hoja DB_${tableName} intentó auto-crearse pero no existe un Schema con primaryKey en Schema_Engine.gs.`);
         }
         
-        const auditFields = ['created_at', 'created_by', 'updated_at', 'updated_by', 'deleted_at', 'deleted_by', '_version'];
+        const auditFields = ['lexical_id', 'created_at', 'created_by', 'updated_at', 'updated_by', 'deleted_at', 'deleted_by', '_version'];
         const allHeaders = [...schemaFields, ...auditFields];
 
         if (sheet.getLastRow() === 0) {
