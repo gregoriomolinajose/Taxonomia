@@ -123,7 +123,7 @@ E2E Integration checkpoint: ─────────────────�
 
 | Story | Size | Status | Actual | Velocity | Notes |
 |-------|:----:|:------:|:------:|:--------:|-------|
-| S31.1 | S | Pending | — | — | |
+| S31.1 | S | Done ✓ | 25min | S | Reporte de auditoría: 3 presets, 4 templates, bug Sys_Graph_Edges |
 | S31.2 | M | Pending | — | — | Paralela con S31.3 |
 | S31.3 | M | Pending | — | — | Paralela con S31.2 |
 | S31.4 | M | Pending | — | — | Entidad a entidad, test entre cada una |
