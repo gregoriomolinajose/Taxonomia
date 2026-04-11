@@ -3,8 +3,7 @@ const path = require('path');
 const { execSync } = require('child_process');
 const readline = require('readline');
 const CleanCSS = require('clean-css');
-const acorn = require('acorn');
-const parse5 = require('parse5');
+const { stripQAModule, extractAndValidateScripts } = require('./scripts/pipelineUtils.js');
 
 const env = process.argv[2];
 
@@ -81,25 +80,14 @@ try {
                 let indexContent = fs.readFileSync(indexFile, 'utf8');
                 
                 // S30.5: Sustitución de RegExp por cortes absolutos estáticos
-                const startToken = '<!-- [QA_MODULE_START] -->';
-                const endToken = '<!-- [QA_MODULE_END] -->';
-                let stripped = false;
-                let startIndex, endIndex;
                 
-                while ((startIndex = indexContent.indexOf(startToken)) !== -1 && 
-                       (endIndex = indexContent.indexOf(endToken)) !== -1) {
-                    
-                    if (endIndex > startIndex) {
-                        indexContent = indexContent.substring(0, startIndex) + indexContent.substring(endIndex + endToken.length);
-                        stripped = true;
-                    } else {
-                        break; // Tokens malformados o invertidos, romper para evitar bucle infinito
-                    }
-                }
+                // S30.5: Uso de la librería de despliegue para purgado de AST
+                const originalContent = indexContent;
+                indexContent = stripQAModule(indexContent);
                 
-                if (stripped) {
+                if (originalContent !== indexContent) {
                     fs.writeFileSync(indexFile, indexContent, 'utf8');
-                    console.log(`[Deploy] Stripped QA Module from PROD build (String Slice Mode).`);
+                    console.log(`[Deploy] Stripped QA Module from PROD build (Utils Pipeline).`);
                 }
             }
         }
@@ -111,34 +99,8 @@ try {
             if (!file.endsWith('.html')) continue;
             const filePath = path.join(buildDir, file);
             const content = fs.readFileSync(filePath, 'utf8');
-            // S30.5: Uso de parse5 para extraer nodos reales, inmunizando contra tags corruptos
-            const ast = parse5.parse(content);
-            const scriptNodes = [];
-            
-            const walk = (node) => {
-                if (node.tagName === 'script') {
-                    scriptNodes.push(node);
-                }
-                if (node.childNodes) {
-                    node.childNodes.forEach(walk);
-                }
-            };
-            walk(ast);
-            
-            scriptNodes.forEach(node => {
-                const textNode = node.childNodes && node.childNodes.find(n => n.nodeName === '#text');
-                const scriptContent = textNode ? textNode.value.trim() : '';
-                
-                // Omitir vacíos o plantillas App Script "<?!="
-                if (!scriptContent || scriptContent.includes('<?!=')) return;
-                
-                try {
-                    acorn.parse(scriptContent, { ecmaVersion: 'latest', sourceType: 'script' });
-                } catch (e) {
-                    console.error(`\x1b[31m[Deploy-Error] SyntaxError in ${file} at line ${e.loc ? e.loc.line : 'unknown'}:\x1b[0m ${e.message}`);
-                    process.exit(1);
-                }
-            });
+            // S30.5: Delegar a la librería pipelineUtils.js
+            extractAndValidateScripts(content, file);
         }
         console.log(`[Deploy] AST Validation passed.`);
 
