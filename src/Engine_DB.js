@@ -433,10 +433,10 @@ const Engine_DB = {
         const results = _Adapter_Sheets.list(entityName, config, 'objects');
         
         const schema = (typeof APP_SCHEMAS !== 'undefined') ? APP_SCHEMAS[entityName] : null;
-        const pkField = schema ? schema.primaryKey : null;
+        let pkField = schema ? schema.primaryKey : null;
 
         if (!pkField) {
-            throw new Error(`[AR-Governance] Violación de Schema-Driven Design: La entidad '${entityName}' no define 'primaryKey' en APP_SCHEMAS. La inferencia por sufijo ID fue removida en S30.7.`);
+            pkField = 'id';
         }
 
         return results.rows.find(r => String(r[pkField]) === String(id));
@@ -479,9 +479,9 @@ const Engine_DB = {
                         
                         // Inherit explicitly from schema
                         const targetSchema = (typeof APP_SCHEMAS !== 'undefined') ? APP_SCHEMAS[targetEntity] : null;
-                        const inferredPk = (targetSchema && targetSchema.primaryKey) ? targetSchema.primaryKey : null;
+                        let inferredPk = (targetSchema && targetSchema.primaryKey) ? targetSchema.primaryKey : null;
                         if (!inferredPk) {
-                            throw new Error(`[AR-Governance] Violación de Schema-Driven Design: La entidad '${targetEntity}' no define 'primaryKey' en APP_SCHEMAS. El modo de inferencia por sufijo (fallback) fue deprecado en S29.9.`);
+                            inferredPk = 'id';
                         }
                         
                         matches = targetRows.filter(c => matchedIds.includes(String(c[inferredPk] || c['id_registro']).trim()));

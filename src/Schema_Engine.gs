@@ -6,7 +6,7 @@
 
 const APP_SCHEMAS = {
   Unidad_Negocio: {
-    metadata: { showInMenu: true, order:1, iconName:'business-outline', color:'primary', label:'Unidades de Negocio', titleField:'nombre', idField:'id_unidad_negocio', fkField:null },
+    metadata: { prefix: 'UNDN', showInMenu: true, order:1, iconName:'business-outline', color:'primary', label:'Unidades de Negocio', titleField:'nombre', idField:'id_unidad_negocio', fkField:null },
     primaryKey: "id_unidad_negocio",
     topologyRules: {
       topologyType: "JERARQUICA_ESTRICTA",
@@ -19,6 +19,7 @@ const APP_SCHEMAS = {
     },
     fields: [
       { name: "id_unidad_negocio", type: "hidden", primaryKey: true },
+      { name: "lexical_id", type: "text", label: "Ticket ID", uiBehavior: "badge", readonly: true },
       { name: "estado", type: "hidden", defaultValue: "Activo" },
 
       { name: "separator_0", type: "divider", label: "Datos Generales", width: 12 },
@@ -32,7 +33,7 @@ const APP_SCHEMAS = {
   },
   Portafolio: {
     uiConfig: { dashboardCard: { iconName: 'briefcase-outline', color: 'var(--ion-color-danger)' } },
-    metadata: { showInMenu: true, order:2, iconName:'briefcase-outline', color:'danger', label:'Portafolios', titleField:'nombre', idField:'id_portafolio', fkField:null, maxListAttrs: 8 },
+    metadata: { prefix: 'PORT', showInMenu: true, order:2, iconName:'briefcase-outline', color:'danger', label:'Portafolios', titleField:'nombre', idField:'id_portafolio', fkField:null, maxListAttrs: 8 },
     topological_metadata: {
         ownerFields: ["director_id", "vp_id"],
         parentEntity: null,
@@ -50,6 +51,7 @@ const APP_SCHEMAS = {
     },
     fields: [
       { name: "id_portafolio", type: "hidden", primaryKey: true },
+      { name: "lexical_id", type: "text", label: "Ticket ID", uiBehavior: "badge", readonly: true },
       { name: "estado", type: "hidden", defaultValue: "Activo" },
 
       { name: "separator_1", type: "divider", label: "Definición Estratégica", width: 12 },
@@ -65,7 +67,7 @@ const APP_SCHEMAS = {
     ]
   },
   Dominio: {
-    metadata: { showInMenu: true, order:3, iconName:'globe-outline', color:'secondary', label:'Dominios', titleField:'n0_es', idField:'id_dominio', fkField:null },
+    metadata: { prefix: 'DOMI', showInMenu: true, order:3, iconName:'globe-outline', color:'secondary', label:'Dominios', titleField:'n0_es', idField:'id_dominio', fkField:null },
     primaryKey: "id_dominio",
     titleField: "n0_es",
     topologyRules: {
@@ -82,6 +84,7 @@ const APP_SCHEMAS = {
     },
     fields: [
       { name: "id_dominio", type: "hidden", primaryKey: true },
+      { name: "lexical_id", type: "text", label: "Ticket ID", uiBehavior: "badge", readonly: true },
       { name: "estado", type: "hidden", defaultValue: "Activo" },
       { name: "id_registro", type: "text", label: "ID Externo", required: true, width: 12 },
       { name: "nivel_tipo", type: "number", label: "Nivel Tipo", required: true, width: 6 },

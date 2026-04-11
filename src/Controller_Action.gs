@@ -317,13 +317,10 @@ function bulkInsert(entityName, recordsArray) {
  * Ejemplo: UNID-X8R2P
  */
 function _generateShortUUID(entityName) {
-  var prefix = entityName.toUpperCase().substring(0, 4);
-  var chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-  var suffix = '';
-  for (var i = 0; i < 5; i++) {
-    suffix += chars.charAt(Math.floor(Math.random() * chars.length));
+  if (typeof Utilities !== 'undefined' && typeof Utilities.getUuid === 'function') {
+    return Utilities.getUuid();
   }
-  return prefix + '-' + suffix;
+  return 'uuid-' + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
 }
 
 
