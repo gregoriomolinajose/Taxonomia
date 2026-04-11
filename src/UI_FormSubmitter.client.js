@@ -74,37 +74,14 @@ window.UI_FormSubmitter = class UI_FormSubmitter {
                 }
             });
 
-            // Dynamic Lists
-            const dynamicLists = activeForm.querySelectorAll('[data-dynamic-list]');
-            dynamicLists.forEach(list => {
-                const fieldName = list.getAttribute('data-dynamic-list');
-                const rows = list.querySelectorAll('.dynamic-list-row');
-                const jsonArray = [];
-                
-                rows.forEach(row => {
-                    const rowData = {};
-                    const rowInputs = row.querySelectorAll('ion-input, ion-select');
-                    rowInputs.forEach(inp => {
-                        if (inp.name) rowData[inp.name] = inp.value;
-                    });
-                    jsonArray.push(rowData);
-                });
-                payload[fieldName] = jsonArray;
-            });
-
             // S30.3 - Harvest Memory-Saved Contexts from LocalState
+            // The following components natively push to _LocalState automatically: 
+            // - Subgrids
+            // - DynamicLists
+            // - SearchableMultis
             if (activeForm && activeForm._LocalState) {
                 Object.assign(payload, activeForm._LocalState);
             }
-
-            // Searchable Multi Lists
-            const searchableMultis = activeForm.querySelectorAll('[data-searchable-multi]');
-            searchableMultis.forEach(el => {
-                const fieldName = el.getAttribute('data-searchable-multi');
-                if (el._LocalStateSelection !== undefined) {
-                    payload[fieldName] = el._LocalStateSelection;
-                }
-            });
 
             // Chip Containers
             const freshChipContainers = activeForm.querySelectorAll('.chip-container');
