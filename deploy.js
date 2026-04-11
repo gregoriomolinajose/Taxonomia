@@ -84,10 +84,10 @@ try {
                 const startToken = '<!-- [QA_MODULE_START] -->';
                 const endToken = '<!-- [QA_MODULE_END] -->';
                 let stripped = false;
+                let startIndex, endIndex;
                 
-                while (indexContent.indexOf(startToken) !== -1 && indexContent.indexOf(endToken) !== -1) {
-                    const startIndex = indexContent.indexOf(startToken);
-                    const endIndex = indexContent.indexOf(endToken);
+                while ((startIndex = indexContent.indexOf(startToken)) !== -1 && 
+                       (endIndex = indexContent.indexOf(endToken)) !== -1) {
                     
                     if (endIndex > startIndex) {
                         indexContent = indexContent.substring(0, startIndex) + indexContent.substring(endIndex + endToken.length);
