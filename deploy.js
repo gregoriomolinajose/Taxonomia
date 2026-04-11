@@ -4,6 +4,7 @@ const { execSync } = require('child_process');
 const readline = require('readline');
 const CleanCSS = require('clean-css');
 const acorn = require('acorn');
+const parse5 = require('parse5');
 
 const env = process.argv[2];
 
@@ -78,9 +79,28 @@ try {
             const indexFile = `${buildDir}/Index.html`;
             if (fs.existsSync(indexFile)) {
                 let indexContent = fs.readFileSync(indexFile, 'utf8');
-                indexContent = indexContent.replace(/<!-- \[QA_MODULE_START\] -->[\s\S]*<!-- \[QA_MODULE_END\] -->/, '');
-                fs.writeFileSync(indexFile, indexContent, 'utf8');
-                console.log(`[Deploy] Stripped QA Module from PROD build.`);
+                
+                // S30.5: Sustitución de RegExp por cortes absolutos estáticos
+                const startToken = '<!-- [QA_MODULE_START] -->';
+                const endToken = '<!-- [QA_MODULE_END] -->';
+                let stripped = false;
+                
+                while (indexContent.indexOf(startToken) !== -1 && indexContent.indexOf(endToken) !== -1) {
+                    const startIndex = indexContent.indexOf(startToken);
+                    const endIndex = indexContent.indexOf(endToken);
+                    
+                    if (endIndex > startIndex) {
+                        indexContent = indexContent.substring(0, startIndex) + indexContent.substring(endIndex + endToken.length);
+                        stripped = true;
+                    } else {
+                        break; // Tokens malformados o invertidos, romper para evitar bucle infinito
+                    }
+                }
+                
+                if (stripped) {
+                    fs.writeFileSync(indexFile, indexContent, 'utf8');
+                    console.log(`[Deploy] Stripped QA Module from PROD build (String Slice Mode).`);
+                }
             }
         }
 
@@ -91,13 +111,26 @@ try {
             if (!file.endsWith('.html')) continue;
             const filePath = path.join(buildDir, file);
             const content = fs.readFileSync(filePath, 'utf8');
+            // S30.5: Uso de parse5 para extraer nodos reales, inmunizando contra tags corruptos
+            const ast = parse5.parse(content);
+            const scriptNodes = [];
             
-            const scriptRegex = /<script\b[^>]*>([\s\S]*?)<\/script>/gi;
-            let match;
-            while ((match = scriptRegex.exec(content)) !== null) {
-                const scriptContent = match[1].trim();
-                // Omitir templates de EJS / App Script directivos cortos si fallan, priorizamos pure JS logs.
-                if (!scriptContent || scriptContent.includes('<?!=')) continue;
+            const walk = (node) => {
+                if (node.tagName === 'script') {
+                    scriptNodes.push(node);
+                }
+                if (node.childNodes) {
+                    node.childNodes.forEach(walk);
+                }
+            };
+            walk(ast);
+            
+            scriptNodes.forEach(node => {
+                const textNode = node.childNodes && node.childNodes.find(n => n.nodeName === '#text');
+                const scriptContent = textNode ? textNode.value.trim() : '';
+                
+                // Omitir vacíos o plantillas App Script "<?!="
+                if (!scriptContent || scriptContent.includes('<?!=')) return;
                 
                 try {
                     acorn.parse(scriptContent, { ecmaVersion: 'latest', sourceType: 'script' });
@@ -105,7 +138,7 @@ try {
                     console.error(`\x1b[31m[Deploy-Error] SyntaxError in ${file} at line ${e.loc ? e.loc.line : 'unknown'}:\x1b[0m ${e.message}`);
                     process.exit(1);
                 }
-            }
+            });
         }
         console.log(`[Deploy] AST Validation passed.`);
 

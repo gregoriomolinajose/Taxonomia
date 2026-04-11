@@ -119,8 +119,8 @@ Stream 3 (Testing):          [ Bugs N dinámicos ] ────┘
 |-------|:----:|:------:|:------:|:--------:|-------|
 | S30.1 | S | Done ✓ | 1h | S | Completada y merged. |
 | S30.2 | M | Done ✓ | 1h | S | Completada y merged. Permiso cruz de escape preservado. |
-| S30.3 | M | Pending | — | — | DOM Pasivo a Estado Local en Componentes |
-| S30.4 | M | Pending | — | — | Evolución de ThemeManager |
+| S30.3 | M | Done ✓ | 2h | S | DOM Pasivo migrado a LocalState en Componentes |
+| S30.4 | M | Done ✓ | 2h | M | Migración a Clase ES6 de UI_ThemeManager completada |
 | S30.5 | L | Pending | — | — | AST RegExp CSS Minifier |
 | S30.6 | M | Done ✓ | 1h | S | Navegación Profunda en Subgrids (Drill-Down) |
 | S30.7 | S | Pending | — | — | Estandarización Universal de Primary Key |
