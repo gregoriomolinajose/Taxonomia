@@ -1,22 +1,66 @@
 /**
  * EPT-OMR Project: APP_SCHEMAS Configuration (Server-Side)
- * 
+ *
  * This object is the Single Source of Truth for the FormEngine.
+ *
+ * [E31] TOPOLOGY_PRESETS: Named catalog of reusable topology rule sets.
+ * Entities reference a preset by key instead of redeclaring inline blocks.
+ * All presets are frozen (immutable) to prevent accidental mutation.
  */
+
+const TOPOLOGY_PRESETS = Object.freeze({
+
+  /**
+   * Standard hierarchical topology for graph-linked business entities.
+   * Used by: Unidad_Negocio, Portafolio, Grupo_Productos, Producto
+   */
+  JERARQUICA_ESTRICTA_GRAPH_STD: Object.freeze({
+    topologyType: "JERARQUICA_ESTRICTA",
+    preventCycles: true,
+    maxDepth: 6,
+    allowOrphanStealing: true,
+    deletionStrategy: "ORPHAN",
+    siblingCollisionCheck: true,
+    scd2Enabled: true
+  }),
+
+  /**
+   * Hierarchical topology for taxonomy domain entities.
+   * Enforces level filtering and strict level jumps.
+   * Used by: Dominio
+   */
+  JERARQUICA_ESTRICTA_DOMAIN: Object.freeze({
+    topologyType: "JERARQUICA_ESTRICTA",
+    levelFiltering: true,
+    strictLevelJumps: true,
+    rootRequiresNoParent: true,
+    allowOrphanStealing: true,
+    maxDepth: 5,
+    deletionStrategy: "ORPHAN",
+    siblingCollisionCheck: true,
+    scd2Enabled: true,
+    preventCycles: true
+  }),
+
+  /**
+   * Minimal hierarchical topology for person-to-person leadership graph.
+   * No orphan stealing, no deletion strategy, sibling checks disabled.
+   * Used by: Persona
+   */
+  JERARQUICA_PERSONA: Object.freeze({
+    topologyType: "JERARQUICA_ESTRICTA",
+    preventCycles: true,
+    scd2Enabled: true,
+    siblingCollisionCheck: false
+  })
+
+});
 
 const APP_SCHEMAS = {
   Unidad_Negocio: {
     metadata: { prefix: 'UNDN', showInMenu: true, order:1, iconName:'business-outline', color:'primary', label:'Unidades de Negocio', titleField:'nombre', idField:'id_unidad_negocio', fkField:null },
     primaryKey: "id_unidad_negocio",
-    topologyRules: {
-      topologyType: "JERARQUICA_ESTRICTA",
-      preventCycles: true,
-      maxDepth: 6,
-      allowOrphanStealing: true,
-      deletionStrategy: "ORPHAN",
-      siblingCollisionCheck: true,
-      scd2Enabled: true
-    },
+    topologyRules: TOPOLOGY_PRESETS.JERARQUICA_ESTRICTA_GRAPH_STD,
     fields: [
       { name: "id_unidad_negocio", type: "hidden", primaryKey: true },
       { name: "lexical_id", type: "text", label: "Ticket ID", uiBehavior: "badge", readonly: true },
@@ -40,15 +84,7 @@ const APP_SCHEMAS = {
         parentField: null
     },
     primaryKey: "id_portafolio",
-    topologyRules: {
-      topologyType: "JERARQUICA_ESTRICTA",
-      preventCycles: true,
-      maxDepth: 6,
-      allowOrphanStealing: true,
-      deletionStrategy: "ORPHAN",
-      siblingCollisionCheck: true,
-      scd2Enabled: true
-    },
+    topologyRules: TOPOLOGY_PRESETS.JERARQUICA_ESTRICTA_GRAPH_STD,
     fields: [
       { name: "id_portafolio", type: "hidden", primaryKey: true },
       { name: "lexical_id", type: "text", label: "Ticket ID", uiBehavior: "badge", readonly: true },
@@ -70,18 +106,7 @@ const APP_SCHEMAS = {
     metadata: { prefix: 'DOMI', showInMenu: true, order:3, iconName:'globe-outline', color:'secondary', label:'Dominios', titleField:'n0_es', idField:'id_dominio', fkField:null },
     primaryKey: "id_dominio",
     titleField: "n0_es",
-    topologyRules: {
-      topologyType: "JERARQUICA_ESTRICTA",
-      levelFiltering: true,
-      strictLevelJumps: true,
-      rootRequiresNoParent: true,
-      allowOrphanStealing: true,
-      maxDepth: 5,
-      deletionStrategy: "ORPHAN",
-      siblingCollisionCheck: true,
-      scd2Enabled: true,
-      preventCycles: true
-    },
+    topologyRules: TOPOLOGY_PRESETS.JERARQUICA_ESTRICTA_DOMAIN,
     fields: [
       { name: "id_dominio", type: "hidden", primaryKey: true },
       { name: "lexical_id", type: "text", label: "Ticket ID", uiBehavior: "badge", readonly: true },
@@ -105,15 +130,7 @@ const APP_SCHEMAS = {
     },
     primaryKey: "id_grupo_producto",
     titleField: "nombre",
-    topologyRules: {
-      topologyType: "JERARQUICA_ESTRICTA",
-      preventCycles: true,
-      maxDepth: 6,
-      allowOrphanStealing: true,
-      deletionStrategy: "ORPHAN",
-      siblingCollisionCheck: true,
-      scd2Enabled: true
-    },
+    topologyRules: TOPOLOGY_PRESETS.JERARQUICA_ESTRICTA_GRAPH_STD,
     fields: [
       { name: "separator_1", type: "divider", label: "Datos Generales", width: 12 },
       { width: 12, name: "id_grupo_producto", label: "ID Grupo Producto", type: "text", required: true, readonly: true, primaryKey: true },
@@ -137,15 +154,7 @@ const APP_SCHEMAS = {
     },
     primaryKey: "id_producto",
     titleField: "nombre_producto",
-    topologyRules: {
-      topologyType: "JERARQUICA_ESTRICTA",
-      preventCycles: true,
-      maxDepth: 6,
-      allowOrphanStealing: true,
-      deletionStrategy: "ORPHAN",
-      siblingCollisionCheck: true,
-      scd2Enabled: true
-    },
+    topologyRules: TOPOLOGY_PRESETS.JERARQUICA_ESTRICTA_GRAPH_STD,
     fields: [
       { name: "id_producto", type: "hidden", primaryKey: true },
       { name: "estado", type: "hidden", defaultValue: "Activo" },
@@ -204,12 +213,7 @@ const APP_SCHEMAS = {
     uiConfig: { dashboardCard: { iconName: 'person-outline', color: 'var(--ion-color-warning)' } },
     metadata: { showInMenu: true, order:8, iconName:'person-outline', color:'warning', label:'Personas', titleField:'email', idField:'email', fkField:null },
     primaryKey: "email",
-    topologyRules: {
-      topologyType: "JERARQUICA_ESTRICTA",
-      preventCycles: true,
-      scd2Enabled: true,
-      siblingCollisionCheck: false
-    },
+    topologyRules: TOPOLOGY_PRESETS.JERARQUICA_PERSONA,
     fields: [
       { name: "email", type: "email", primaryKey: true, label: "Correo Corporativo", required: true, width: 12, validators: ["regex:^[a-zA-Z0-9._%+-]+@(coppel\\.com|bancoppel\\.com|kairosds\\.com|nttdata\\.com)$"], triggers_workspace_resolve: true },
       
@@ -387,5 +391,5 @@ function getEntityTopologyRules(entityName) {
 }
 
 if (typeof module !== 'undefined') {
-  module.exports = { APP_SCHEMAS, getAppSchema, getEntityTopologyRules };
-}
+  module.exports = { APP_SCHEMAS, TOPOLOGY_PRESETS, getAppSchema, getEntityTopologyRules };
+}
