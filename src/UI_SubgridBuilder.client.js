@@ -19,6 +19,10 @@ window.UI_SubgridBuilder = {
         subgridDiv.style.borderRadius = 'var(--rounded-sm)';
         subgridDiv.style.overflow = 'hidden';
         subgridDiv.style.marginBottom = 'var(--spacing-5)';
+        subgridDiv.setAttribute('data-form-component', field.name);
+        
+        // S30.11 Nodal Protocol
+        subgridDiv.getValidatedValue = () => Array.from(childRecords);
 
         // Header de la mini-tabla
         const header = document.createElement('div');
@@ -109,12 +113,7 @@ window.UI_SubgridBuilder = {
             }
         }
         
-        const activeForm = container.closest('ion-modal') || document.getElementById('app-container');
-        if (activeForm) activeForm._LocalState = activeForm._LocalState || {};
-
         const _refreshList = () => {
-            if (activeForm) activeForm._LocalState[field.name] = childRecords;
-
             window.DOM.clear(list);
             if (childRecords.length === 0) {
                 list.appendChild(emptyState);
