@@ -1,4 +1,4 @@
-/**
+﻿/**
  * [E31-S31.7] Adapter_Sheets_Provisioner.gs
  *
  * Schema Provisioner — Self-healing database structure reconciliation.
@@ -135,7 +135,7 @@ function _reconcileEntity(ss, entityName) {
   current.forEach(col => {
     if (col.startsWith(PROVISIONER_CONFIG.ORPHAN_PREFIX)) return; // already quarantined
     if (!canonical.includes(col)) {
-      _quarantineColumn(sheet, col);
+      _quarantineColumn(sheet, col, current);  // [R3-QR] pass preloaded headers to avoid O(n^2) reads
       report.orphaned.push(col);
     } else {
       report.alreadyCorrect.push(col);
@@ -184,8 +184,8 @@ function _getCurrentHeaders(sheet) {
  * @param {GoogleAppsScript.Spreadsheet.Sheet} sheet
  * @param {string} colName - Original column name to quarantine.
  */
-function _quarantineColumn(sheet, colName) {
-  const headers = _getCurrentHeaders(sheet);
+function _quarantineColumn(sheet, colName, preloadedHeaders) {
+  const headers = preloadedHeaders || _getCurrentHeaders(sheet); // [R3-QR] avoid redundant API call
   const colIndex = headers.indexOf(colName) + 1; // 1-based
   if (colIndex > 0) {
     sheet.getRange(1, colIndex).setValue(PROVISIONER_CONFIG.ORPHAN_PREFIX + colName);

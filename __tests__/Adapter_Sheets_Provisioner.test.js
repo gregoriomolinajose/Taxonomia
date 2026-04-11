@@ -1,4 +1,4 @@
-/**
+﻿/**
  * [E31-S31.7] Adapter_Sheets_Provisioner Unit Tests
  *
  * Tests for pure functions that don't require GAS runtime (Spreadsheet API).
@@ -30,18 +30,21 @@ const {
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 function makeSheet(headers = []) {
-  const data = [headers, ...Array(5).fill(headers.map(() => ''))];
+  // [R1-QR] getValues now respects the row argument:
+  //   row === 1 -> return header row
+  //   row > 1  -> return empty data rows
+  // This prevents tests passing through mock regardless of mutated logic.
   return {
-    getName: vi.fn(() => 'TestSheet'),
+    getName:       vi.fn(() => 'TestSheet'),
     getLastColumn: vi.fn(() => headers.length),
     getRange: vi.fn((row, col, numRows, numCols) => ({
-      getValues: vi.fn(() => [headers]),
-      getValue: vi.fn(() => headers[col - 1] || ''),
-      setValue: vi.fn(),
+      getValues: vi.fn(() => row === 1 ? [headers] : [headers.map(() => '')]),
+      getValue:  vi.fn(() => headers[col - 1] || ''),
+      setValue:  vi.fn(),
       setBackground: vi.fn()
     })),
     insertColumnAfter: vi.fn(),
-    setTabColor: vi.fn(),
+    setTabColor:       vi.fn(),
     getDeveloperMetadata: vi.fn(() => []),
     addDeveloperMetadata: vi.fn()
   };

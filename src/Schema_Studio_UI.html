@@ -810,14 +810,14 @@
   }
 
   // Template group definitions (mirrors FIELD_TEMPLATES)
+  // SYNC [H9]: Field definitions here must match FIELD_TEMPLATES.* in Schema_Engine.gs.
+  // Fields array uses objects {name, type} so composerInsertTemplate preserves correct types.
   var TEMPLATE_GROUPS = {
-    SYSTEM_FIELDS:  { fields: ['lexical_id','estado'], label: 'SYSTEM_FIELDS', color: 'var(--ion-color-primary)' },
-    ESTADO_FIELD:   { fields: ['estado'], label: 'ESTADO_FIELD', color: 'var(--ion-color-secondary)' },
-    AUDIT_FIELDS:   { fields: ['created_at','created_by','updated_at','updated_by','deleted_at','deleted_by'], label: 'AUDIT_FIELDS', color: 'var(--ion-color-success)' },
-    VERSION_FIELD:  { fields: ['version'], label: 'VERSION_FIELD', color: 'var(--ion-color-warning-shade)' }
+    SYSTEM_FIELDS:  { fields: [{ name:'lexical_id', type:'text', readonly:true }, { name:'estado', type:'hidden' }], label: 'SYSTEM_FIELDS', color: 'var(--ion-color-primary)' },
+    ESTADO_FIELD:   { fields: [{ name:'estado', type:'hidden' }], label: 'ESTADO_FIELD', color: 'var(--ion-color-secondary)' },
+    AUDIT_FIELDS:   { fields: ['created_at','created_by','updated_at','updated_by','deleted_at','deleted_by'].map(function(n){ return { name:n, type:'hidden', readonly:true }; }), label: 'AUDIT_FIELDS', color: 'var(--ion-color-success)' },
+    VERSION_FIELD:  { fields: [{ name:'version', type:'hidden', readonly:true, defaultValue:1 }], label: 'VERSION_FIELD', color: 'var(--ion-color-warning-shade)' }
   };
-
-  // Field types catalog
   var FIELD_TYPES = ['text','textarea','number','email','tel','select','lookup','relation','avatar','hidden','divider','date'];
 
   // Composer state
@@ -1133,13 +1133,13 @@
     var group = TEMPLATE_GROUPS[templateKey];
     if (!group) return;
     var existingNames = _composer.fields.map(function(f){ return f.name; });
-    var alreadyAll = group.fields.every(function(n){ return existingNames.includes(n); });
+    var alreadyAll = group.fields.every(function(fd){ var n = typeof fd === 'string' ? fd : fd.name; return existingNames.includes(n); });
     if (alreadyAll) { if (window.showToast) window.showToast(templateKey + ' ya está incluido', 'warning'); return; }
-    group.fields.forEach(function(fieldName) {
-      if (!existingNames.includes(fieldName)) {
-        _composer.fields.push({ name: fieldName, type: 'hidden' });
+    group.fields.forEach(function(fieldDef) {
+      var fn = typeof fieldDef === 'string' ? { name: fieldDef, type: 'hidden' } : fieldDef;
+      if (!existingNames.includes(fn.name)) {
+        _composer.fields.push(JSON.parse(JSON.stringify(fn)));
       }
-    });
     _composer.dirty = true;
     renderComposerPanelContent();
     if (window.showToast) window.showToast(templateKey + ' insertado', 'success');
@@ -1165,16 +1165,38 @@
   function composerCopyCode() {
     var codeEl = document.getElementById('ss-code-output');
     if (!codeEl) return;
-    // [O2-AR] Read from data-plain to get pure JSON (no HTML tag contamination)
+    // [C1-QR][O2-AR] data-plain holds pure JSON; no HTML tag contamination
     var plainText = codeEl.dataset.plain || codeEl.innerText || codeEl.textContent;
+
+    function _onSuccess() {
+      var btn = document.getElementById('ss-copy-btn');
+      if (btn) {
+        btn.innerHTML = '<ion-icon name="checkmark-outline"></ion-icon>Copiado!';
+        setTimeout(function(){ btn.innerHTML = '<ion-icon name="copy-outline"></ion-icon>Copiar JSON'; }, 2000);
+      }
+      if (window.showToast) window.showToast('JSON copiado al portapapeles', 'success');
+    }
+    function _onError() {
+      if (window.showToast) window.showToast('No se pudo copiar automaticamente', 'warning');
+    }
+
     if (navigator.clipboard) {
-      navigator.clipboard.writeText(plainText).then(function() {
-        var btn = document.getElementById('ss-copy-btn');
-        if (btn) { btn.innerHTML = '<ion-icon name="checkmark-outline"></ion-icon>Copiado!'; setTimeout(function(){ btn.innerHTML = '<ion-icon name="copy-outline"></ion-icon>Copiar JSON'; }, 2000); }
-        if (window.showToast) window.showToast('JSON copiado al portapapeles', 'success');
-      }).catch(function() {
-        if (window.showToast) window.showToast('No se pudo copiar automáticamente', 'warning');
-      });
+      // Modern async API (HTTPS / same-origin contexts)
+      navigator.clipboard.writeText(plainText).then(_onSuccess).catch(_onError);
+    } else {
+      // [C1-QR] Fallback: execCommand for HTTP / GAS WebApp iframe contexts
+      try {
+        var ta = document.createElement('textarea');
+        ta.value = plainText;
+        ta.style.cssText = 'position:fixed;top:-9999px;left:-9999px;opacity:0;';
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+        _onSuccess();
+      } catch(e) {
+        _onError();
+      }
     }
   }
 
@@ -1227,7 +1249,7 @@
     composerReset:          composerReset,
     composerExport:         composerExport,
     composerCopyCode:       composerCopyCode,
-    _loadDbStatusPill: function() {
+    composerSelectEntity:    composerSelectEntity,   // [C2-QR] export for programmatic entity switching
       var dot = document.getElementById('ss-status-dot');
       var txt = document.getElementById('ss-status-text');
       if (!txt) return;
