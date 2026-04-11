@@ -1,6 +1,6 @@
 # Epic E31: Schema Engine Governance Layer — Scope
 
-> **Status:** DESIGN
+> **Status:** PLANNED
 > **Release:** REL-TBD
 > **Created:** 2026-04-10
 > **Brief:** `work/problem-briefs/schema-engine-constraint-governance-2026-04-10.md`
@@ -78,3 +78,62 @@ S31.3 (FIELD_TEMPLATES) ───┤ (paralelas)
 - Persistencia del catálogo en Google Sheets (Schema como dato, no código) — E32+
 - Exportación/importación de presets (interoperabilidad multi-proyecto) — E32+
 - Vista de diff de schema entre versiones (audit trail) — Post-E32
+
+---
+
+## Implementation Plan
+
+> Added by `/rai-epic-plan` — 2026-04-10
+
+### Story Sequence
+
+| Orden | Story | Size | Dependencias | Milestone | Rationale |
+|:-----:|-------|:----:|:------------:|:---------:|-----------|
+| 1 | S31.1 — Auditoría de Duplicaciones | S | Ninguna | M1 | **Risk-first.** Produce el mapa exacto de patrones repetidos. Sin él, S31.2/S31.3 son especulativas. Walking skeleton informacional. |
+| 2a | S31.2 — TOPOLOGY_PRESETS | M | S31.1 | M2 | **Paralela con S31.3.** Mayor impacto en reducción de duplicación (topologyRules es el bloque más pesado por entidad). |
+| 2b | S31.3 — FIELD_TEMPLATES | M | S31.1 | M2 | **Paralela con S31.2.** Independiente de TOPOLOGY_PRESETS — áreas de código distintas. |
+| 3 | S31.4 — Migración de Entidades | M | S31.2 + S31.3 | M3 | **Dependency-driven.** Necesita ambos catálogos listos. Entidad a entidad con test run entre cada una. |
+| 4 | S31.5 — Config Studio UI (Viewer) | L | S31.4 | M3 | Walking skeleton de la UI — muestra el catálogo ya poblado. Incluye sección "Sistema" en ProfileMenu. |
+| 5 | S31.6 — Config Studio UI (CRUD) | L | S31.5 | M4 | Extensión del Viewer. Se inicia solo cuando el Viewer está estable y validado por SUPER_ADMIN. |
+
+### Milestones
+
+| Milestone | Stories | Success Criteria | Demo |
+|-----------|---------|-----------------|------|
+| **M1: Walking Skeleton** | S31.1 | Mapa de duplicaciones publicado. Se conoce el número exacto de patrones repetidos y cuántas líneas ahorrará la extracción. | Review del reporte de auditoría |
+| **M2: Core Backend Refactored** | +S31.2, S31.3 | `TOPOLOGY_PRESETS` y `FIELD_TEMPLATES` creados. Suite de tests pasa sin regresiones. Listos para migración de entidades. | `Schema_Engine.gs` con los dos catálogos en aislamiento |
+| **M3: Schema Completo + UI Viewer** | +S31.4, S31.5 | Todas las entidades usan referencias. Config Studio Viewer muestra el catálogo en el SPA. Verificar acceso exclusivo SUPER_ADMIN. | Demo E2E: agregar entidad nueva con solo ~5 líneas únicas |
+| **M4: Epic Complete** | +S31.6 | Config Studio CRUD funcional. Done criteria epicos verificados. Retrospective completa. | Demo CRUD: vincular preset a campo, verificar en form render |
+
+### Parallel Work Streams
+
+```
+Tiempo →
+Stream 1 (Backend Schema):  S31.1 → S31.2 ──────────────────→ S31.4
+                                   → S31.3 ──────────────────↗
+
+Stream 2 (Frontend UI):                                        S31.5 → S31.6
+
+E2E Integration checkpoint: ────────────────────────────── [M3: Viewer + Entities] ──→ M4
+```
+
+**Merge point:** S31.5 no puede iniciar hasta que S31.4 esté completa y testeada — el catálogo debe estar resuelto antes de renderizarlo.
+
+### Progress Tracking
+
+| Story | Size | Status | Actual | Velocity | Notes |
+|-------|:----:|:------:|:------:|:--------:|-------|
+| S31.1 | S | Pending | — | — | |
+| S31.2 | M | Pending | — | — | Paralela con S31.3 |
+| S31.3 | M | Pending | — | — | Paralela con S31.2 |
+| S31.4 | M | Pending | — | — | Entidad a entidad, test entre cada una |
+| S31.5 | L | Pending | — | — | Incluye sección "Sistema" en ProfileMenu |
+| S31.6 | L | Pending | — | — | |
+
+### Sequencing Risks
+
+| Riesgo | P | I | Mitigación |
+|--------|---|---|------------|
+| S31.4 migración batch rompe contrato en `Engine_DB` | M | H | Migrar una entidad a la vez; ejecutar test suite completa entre cada una. No hacer commit batch. |
+| S31.2 aliasing mutable en TOPOLOGY_PRESETS | M | H | `Object.freeze()` obligatorio en todos los presets. Test de inmutabilidad en S31.2 antes de continuar. |
+| S31.5/S31.6 excede scope → "Schema Designer" completo | L | M | Hard stop: E31 solo implementa binding preset↔campo. Diseñador de entidades completo es E32+. |
