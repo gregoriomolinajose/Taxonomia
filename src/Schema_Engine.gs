@@ -96,15 +96,14 @@ const APP_SCHEMAS = {
     topologyRules: TOPOLOGY_PRESETS.JERARQUICA_ESTRICTA_GRAPH_STD,
     fields: [
       { name: "id_unidad_negocio", type: "hidden", primaryKey: true },
-      { name: "lexical_id", type: "text", label: "Ticket ID", uiBehavior: "badge", readonly: true },
-      { name: "estado", type: "hidden", defaultValue: "Activo" },
+      ...FIELD_TEMPLATES.SYSTEM_FIELDS(),
 
       { name: "separator_0", type: "divider", label: "Datos Generales", width: 12 },
       { name: "nombre", type: "text", label: "Nombre de Unidad", required: true, width: 12 },
       { name: "descripcion", type: "textarea", label: "Descripción", required: false, width: 12 },
       { name: "responsable", type: "text", label: "Responsable", required: false, width: 12 },
 
-      { name: "separator_grafo", type: "divider", label: "Topología (Grafo)", width: 12 },
+      FIELD_TEMPLATES.GRAPH_SEPARATOR("Topología (Grafo)"),
       { name: "portafolios_vinculados", type: "relation", relationType: "hijo", targetEntity: "Portafolio", graphEntity: "Sys_Graph_Edges", valueField: "id_portafolio", labelField: "nombre", uiBehavior: "subgrid", label: "Portafolios Asociados", isTemporalGraph: true, graphEdgeType: "UNIDAD_NEGOCIO_PORTAFOLIO", topologyCardinality: "1:N", width: 12 }
     ]
   },
@@ -120,13 +119,12 @@ const APP_SCHEMAS = {
     topologyRules: TOPOLOGY_PRESETS.JERARQUICA_ESTRICTA_GRAPH_STD,
     fields: [
       { name: "id_portafolio", type: "hidden", primaryKey: true },
-      { name: "lexical_id", type: "text", label: "Ticket ID", uiBehavior: "badge", readonly: true },
-      { name: "estado", type: "hidden", defaultValue: "Activo" },
+      ...FIELD_TEMPLATES.SYSTEM_FIELDS(),
 
       { name: "separator_1", type: "divider", label: "Definición Estratégica", width: 12 },
       { name: "nombre", type: "text", label: "Nombre de Portafolio", required: true, width: 12 },
       
-      { name: "separator_grafo", type: "divider", label: "Pertenencia Topológica (Grafo)", width: 12 },
+      FIELD_TEMPLATES.GRAPH_SEPARATOR(),
       { name: "unidad_negocio_padre", type: "relation", relationType: "padre", targetEntity: "Unidad_Negocio", graphEntity: "Sys_Graph_Edges", valueField: "id_unidad_negocio", labelField: "nombre", uiComponent: "select_single", label: "Unidad de Negocio (Padre)", isTemporalGraph: true, graphEdgeType: "UNIDAD_NEGOCIO_PORTAFOLIO", topologyCardinality: "1:N", width: 12, showInList: true },
       { name: "grupos_productos_vinculados", type: "relation", relationType: "hijo", targetEntity: "Grupo_Productos", graphEntity: "Sys_Graph_Edges", valueField: "id_grupo_producto", labelField: "nombre", uiBehavior: "subgrid", label: "Grupos de Productos Asociados", isTemporalGraph: true, graphEdgeType: "PORTAFOLIO_GRUPO_PRODUCTO", topologyCardinality: "1:N", width: 12 },
 
@@ -142,8 +140,7 @@ const APP_SCHEMAS = {
     topologyRules: TOPOLOGY_PRESETS.JERARQUICA_ESTRICTA_DOMAIN,
     fields: [
       { name: "id_dominio", type: "hidden", primaryKey: true },
-      { name: "lexical_id", type: "text", label: "Ticket ID", uiBehavior: "badge", readonly: true },
-      { name: "estado", type: "hidden", defaultValue: "Activo" },
+      ...FIELD_TEMPLATES.SYSTEM_FIELDS(),
       { name: "id_registro", type: "text", label: "ID Externo", required: true, width: 12 },
       { name: "nivel_tipo", type: "number", label: "Nivel Tipo", required: true, width: 6 },
       { name: "n0_es", type: "text", label: "Nombre (ES)", required: true, width: 6 },
@@ -169,7 +166,7 @@ const APP_SCHEMAS = {
       { width: 12, name: "id_grupo_producto", label: "ID Grupo Producto", type: "text", required: true, readonly: true, primaryKey: true },
       { width: 12, name: "nombre", label: "Nombre", type: "text", required: true },
       { width: 12, name: "descripcion", label: "Descripción", type: "textarea", required: false, showInList: false },
-      { name: "separator_grafo", type: "divider", label: "Pertenencia Topológica (Grafo)", width: 12 },
+      FIELD_TEMPLATES.GRAPH_SEPARATOR(),
       { width: 12, name: "id_portafolio", type: "relation", relationType: "padre", targetEntity: "Portafolio", graphEntity: "Sys_Graph_Edges", valueField: "id_portafolio", labelField: "nombre", uiComponent: "select_single", label: "Portafolio Padre (Grafo)", isTemporalGraph: true, graphEdgeType: "PORTAFOLIO_GRUPO_PRODUCTO", topologyCardinality: "1:N", required: true },
       { width: 12, name: "productos_vinculados", type: "relation", relationType: "hijo", targetEntity: "Producto", graphEntity: "Sys_Graph_Edges", valueField: "id_producto", labelField: "nombre_producto", uiBehavior: "subgrid", label: "Productos Asociados (1:N)", isTemporalGraph: true, graphEdgeType: "GRUPO_PRODUCTO_PRODUCTO", topologyCardinality: "1:N" },
       { name: "separator_2", type: "divider", label: "Estrategia de Valor", width: 12 },
@@ -190,11 +187,11 @@ const APP_SCHEMAS = {
     topologyRules: TOPOLOGY_PRESETS.JERARQUICA_ESTRICTA_GRAPH_STD,
     fields: [
       { name: "id_producto", type: "hidden", primaryKey: true },
-      { name: "estado", type: "hidden", defaultValue: "Activo" },
+      ...FIELD_TEMPLATES.ESTADO_FIELD(),
       { name: "separator_1", type: "divider", label: "Datos Generales", width: 12 },
       { width: 12, name: "nombre_producto", label: "Nombre de Producto", type: "text", required: true },
       { width: 12, name: "descripcion", label: "Descripción", type: "textarea", required: false, showInList: false },
-      { name: "separator_grafo", type: "divider", label: "Pertenencia Topológica (Grafo)", width: 12 },
+      FIELD_TEMPLATES.GRAPH_SEPARATOR(),
       { width: 12, name: "id_grupo_producto", type: "relation", relationType: "padre", targetEntity: "Grupo_Productos", graphEntity: "Sys_Graph_Edges", valueField: "id_grupo_producto", labelField: "nombre", uiComponent: "select_single", label: "Grupo de Producto (Padre)", isTemporalGraph: true, graphEdgeType: "GRUPO_PRODUCTO_PRODUCTO", topologyCardinality: "1:N", required: true }
     ]
   },
@@ -204,7 +201,7 @@ const APP_SCHEMAS = {
     titleField: "macrocapacidad",
     fields: [
       { name: "id_capacidad", type: "hidden", primaryKey: true },
-      { name: "estado", type: "hidden", defaultValue: "Activo" },
+      ...FIELD_TEMPLATES.ESTADO_FIELD(),
       { name: "id_externo", type: "text", label: "ID Externo", required: false, width: 6 },
       { name: "nivel_tipo", type: "number", label: "Nivel Tipo", required: true, width: 6 },
       { name: "orden_path", type: "text", label: "Orden Path", required: false, width: 12 },
@@ -230,7 +227,7 @@ const APP_SCHEMAS = {
     primaryKey: "id_equipo",
     fields: [
       { name: "id_equipo", type: "hidden", primaryKey: true },
-      { name: "estado", type: "hidden", defaultValue: "Activo" },
+      ...FIELD_TEMPLATES.ESTADO_FIELD(),
       { name: "id_producto", type: "relation", relationType: "hijo", targetEntity: "Producto", label: "Producto", required: true, width: 6 },
       { name: "nombre_equipo", type: "text", label: "Nombre de Equipo", required: true, width: 6 },
       { name: "seudonimo", type: "text", label: "Seudónimo", required: false, width: 6 },
@@ -284,7 +281,7 @@ const APP_SCHEMAS = {
     primaryKey: "id_relacion",
     fields: [
       { name: "id_relacion", type: "hidden", primaryKey: true },
-      { name: "estado", type: "hidden", defaultValue: "Activo" },
+      ...FIELD_TEMPLATES.ESTADO_FIELD(),
       { name: "id_nodo_padre", type: "text", required: true, width: 6 },
       { name: "id_nodo_hijo", type: "text", required: true, width: 6 },
       { name: "tipo_relacion", type: "text", required: true, width: 6 },
@@ -307,7 +304,7 @@ const APP_SCHEMAS = {
     primaryKey: "id_tipografia",
     fields: [
       { name: "id_tipografia", type: "text", primaryKey: true, readonly: true, label: "ID Pack", width: 12 },
-      { name: "estado", type: "hidden", defaultValue: "Activo" },
+      ...FIELD_TEMPLATES.ESTADO_FIELD(),
       { name: "nombre_pack", type: "text", label: "Nombre de Pack", required: true, width: 12 },
       { name: "font_display", type: "select", label: "Ultra Título (.text-display)", required: true, width: 6, options: ["Poppins, sans-serif", "Playfair Display, serif", "Inter, sans-serif", "Roboto, sans-serif", "Montserrat, sans-serif"], helpText: "El texto con el que representamos frases, conceptos o ideas urgentes o de gran importancia." },
       
@@ -345,19 +342,7 @@ const APP_SCHEMAS = {
       { name: "nivel_acceso", type: "select", label: "Nivel de Acceso", required: true, width: 12, options: ["ALL (Admin Total)", "OWNER_ONLY (Solo propios)", "MEMBER_ONLY (Siendo Miembro)", "READ_ONLY (Solo lectura)", "NONE (Denegado)"] }
     ]
   },
-  Sys_Graph_Edges: {
-    metadata: { showInMenu: false, order: 90, iconName: 'git-network', color: 'dark', label: 'Sys: Grafo', titleField: 'id_relacion', idField: 'id_relacion', fkField: null },
-    primaryKey: "id_relacion",
-    fields: [
-      { name: "id_relacion", type: "text", primaryKey: true, readonly: true },
-      { name: "id_nodo_padre", type: "text" },
-      { name: "id_nodo_hijo", type: "text" },
-      { name: "tipo_relacion", type: "text" },
-      { name: "valido_desde", type: "text" },
-      { name: "valido_hasta", type: "text" },
-      { name: "es_version_actual", type: "text" }
-    ]
-  },
+  // [E31-S31.4] Duplicate Sys_Graph_Edges key removed. Canonical definition ~line 282.
   Relacion_Dominios: {
     metadata: { showInMenu: false, order: 91, iconName: 'git-network', color: 'dark', label: 'Sys: Dominios', titleField: 'id_relacion', idField: 'id_relacion', fkField: null },
     primaryKey: "id_relacion",
@@ -376,7 +361,7 @@ const APP_SCHEMAS = {
     primaryKey: "id_workspace",
     fields: [
       { name: "id_workspace", type: "text", primaryKey: true, readonly: true, label: "ID Workspace", width: 12 },
-      { name: "estado", type: "hidden", defaultValue: "Activo" },
+      ...FIELD_TEMPLATES.ESTADO_FIELD(),
       { name: "dominio_principal", type: "text", label: "Dominio Principal", required: true, width: 6, helpText: "Ejemplo: @coppel.com" },
       { name: "alias_alternativos", type: "text", label: "Alias Soportados (CSV)", required: false, width: 6, helpText: "Ejemplo: @coppelmexico.com,@bancoppel.com" },
       { name: "auth_mode", type: "select", label: "Modo OAuth (M2M)", required: true, width: 12, options: ["USER_DEPLOYING (Global Default)", "SERVICE_ACCOUNT (Explicit)"], defaultValue: "USER_DEPLOYING (Global Default)" },
