@@ -1,6 +1,6 @@
 # Epic E30: Tech Debt & Bugs — Scope
 
-> **Status:** IN PROGRESS
+> **Status:** CLOSED
 > **Release:** REL-TBD
 > **Created:** 2026-04-10
 
