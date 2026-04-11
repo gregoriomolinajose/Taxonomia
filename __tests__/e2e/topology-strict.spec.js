@@ -46,7 +46,7 @@ async function fillTopInput(frame, name, value) {
 async function clickTopButtonByText(frame, text) {
     const btnLocator = frame.locator('ion-button').filter({ hasText: text }).last();
     await btnLocator.waitFor({ state: 'attached', timeout: 5000 });
-    await btnLocator.evaluate(btn => btn.click());
+    await btnLocator.click({ force: true });
 }
 
   test('Race Condition Subgrid Prevention: MÃºltiples Clics concurrentes deben bloquear dobles guardados topologicos', async () => {
@@ -55,7 +55,7 @@ async function clickTopButtonByText(frame, text) {
     
     // Navegar a Datagrid para probar Reactividad Pura Front-End
     await frame.locator('body').evaluate(() => { if(window.UI_Router) window.UI_Router.navigateTo('list', 'Equipo'); });
-    await page.waitForTimeout(2000);
+
     
     // Abrir Formulario Equipo encima de la grilla
     await frame.locator('body').evaluate(() => window.renderForm('Equipo', {}));
@@ -68,11 +68,11 @@ async function clickTopButtonByText(frame, text) {
     
     // Inyectar 5 Clics simultÃ¡neos extremadamente rÃ¡pidos usando JS nativo para burlar bloqueos mecÃ¡nicos
     await btnGuardar.evaluate(async (btn) => {
-        btn.click();
-        btn.click();
-        btn.click();
-        btn.click();
-        btn.click();
+        btn.click({ force: true });
+        btn.click({ force: true });
+        btn.click({ force: true });
+        btn.click({ force: true });
+        btn.click({ force: true });
     });
 
     // Validar que NO aparezcan 5 Toast de errores de Engine_DB o API o Colision de hermano

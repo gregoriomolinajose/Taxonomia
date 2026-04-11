@@ -80,7 +80,7 @@ async function clickTopButtonById(frame, id, page) {
                 break;
             }
         }
-        await page.waitForTimeout(200);
+
         Iterations++;
     }
 }
@@ -108,7 +108,7 @@ async function submitHybridForm(frame, page, text) {
         
         await btnSiguiente.click({ force: true });
         // Reducimos 90% el Test Muda. Solo micro-latencia para repintado local
-        await page.waitForTimeout(50);
+
         iter++;
     }
     
@@ -149,7 +149,7 @@ async function submitHybridForm(frame, page, text) {
         const btnAgregarPort = headerPort.locator('ion-button').filter({ hasText: 'Agregar' }).first();
         await btnAgregarPort.waitFor({ state: 'attached', timeout: 5000 }).catch(() => {});
         if(await btnAgregarPort.count() > 0) {
-            await btnAgregarPort.evaluate(b => b.click());
+            await btnAgregarPort.evaluate(b => b.click({ force: true }));
         }
         
         await clickTopButtonById(frame, 'btn-create-new', page); // Crea el Portafolio desde el Modal
@@ -169,7 +169,7 @@ async function submitHybridForm(frame, page, text) {
             const btnAgregarGrupo = headerGrupo.locator('ion-button').filter({ hasText: 'Agregar' }).last();
             await btnAgregarGrupo.waitFor({ state: 'attached', timeout: 5000 }).catch(() => {});
             if(await btnAgregarGrupo.count() > 0) {
-                await btnAgregarGrupo.evaluate(b => b.click());
+                await btnAgregarGrupo.evaluate(b => b.click({ force: true }));
             }
             
             await clickTopButtonById(frame, 'btn-create-new', page); 
@@ -182,11 +182,11 @@ async function submitHybridForm(frame, page, text) {
             await fillTopInput(frame, 'modelo_negocio', 'SaaS');
             
             await submitHybridForm(frame, page, 'Guardar Grupo');
-            await page.waitForTimeout(500); 
+ 
         }
 
         await submitHybridForm(frame, page, 'Guardar Portafolio');
-        await page.waitForTimeout(500); // UI Reflow Mutex
+ // UI Reflow Mutex
     }
 
     // =========================================================================
@@ -197,7 +197,7 @@ async function submitHybridForm(frame, page, text) {
 
     // Guardar UN
     await submitHybridForm(frame, page, 'Guardar Unidad');
-    await page.waitForTimeout(3000);
+
     
     // =========================================================================
     // 4. VERIFICACIÓN DE FRONTEND ESTADO DATAGRID Y DRAWERS
@@ -206,7 +206,7 @@ async function submitHybridForm(frame, page, text) {
     
     // Navegar primero al datagrid base de Unidades de Negocio
     await frame.locator('body').evaluate(() => { if(window.UI_Router) window.UI_Router.navigateTo('list', 'Unidad_Negocio'); });
-    await page.waitForTimeout(2000); // Wait for DataGrid UI transition
+ // Wait for DataGrid UI transition
     
     const rowUN = frame.locator('tr').filter({ hasText: unName }).first();
     const isUNVisible = await rowUN.isVisible({ timeout: 15_000 }).catch(() => false);
@@ -222,12 +222,12 @@ async function submitHybridForm(frame, page, text) {
         
         // Cerramos Drawer Actual
         await frame.locator('body').evaluate(() => { if (window.DrawerStackController) window.DrawerStackController.closeTop(); });
-        await page.waitForTimeout(1000);
+
     }
     
     // Abrir Sidebar Menu si está en Mobile
     await frame.locator('ion-menu-button').first().click({ timeout: 5000, force: true }).catch(() => {});
-    await page.waitForTimeout(500);
+
     const btnMenuPortafolio = frame.locator('#sidebarList ion-item').filter({ hasText: 'Portafolios' }).first();
     if (await btnMenuPortafolio.isVisible()) {
         await btnMenuPortafolio.click({ timeout: 5000, force: true });
@@ -236,7 +236,7 @@ async function submitHybridForm(frame, page, text) {
         await frame.locator('body').evaluate(() => { if(window.UI_Router) window.UI_Router.navigateTo('list', 'Portafolio'); });
     }
     
-    await page.waitForTimeout(2000);
+
     
     // 4.5 El portafolio creado se cargó en el datagrid?
     const rowPort = frame.locator('tr').filter({ hasText: createdPortafolios[0] }).first();

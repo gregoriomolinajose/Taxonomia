@@ -56,13 +56,13 @@ async function fillTopInput(frame, name, value) {
 async function clickTopButtonById(frame, id) {
     const btnLocator = frame.locator(`[id="${id}"]`).last();
     await btnLocator.waitFor({ state: 'attached', timeout: 5000 });
-    await btnLocator.evaluate(btn => btn.click());
+    await btnLocator.click({ force: true });
 }
 
 async function clickTopButtonByText(frame, text) {
     const btnLocator = frame.locator('ion-button').filter({ hasText: text }).last();
     await btnLocator.waitFor({ state: 'attached', timeout: 5000 });
-    await btnLocator.evaluate(btn => btn.click());
+    await btnLocator.click({ force: true });
 }
 
 async function submitHybridForm(frame, page, text) {
@@ -72,15 +72,15 @@ async function submitHybridForm(frame, page, text) {
         if (await btnSiguiente.count() === 0) break;
         const isHidden = await btnSiguiente.evaluate(node => node.classList.contains('ion-hide')).catch(() => true);
         if (isHidden) break;
-        await btnSiguiente.evaluate(btn => btn.click());
-        await page.waitForTimeout(500);
+        await btnSiguiente.click({ force: true });
+
         iter++;
     }
     const btnGuardar = frame.locator('ion-button').filter({ hasText: text }).last();
     // Bypass strict expect which often fails with Ionic Web Components
     await btnGuardar.waitFor({ state: 'attached', timeout: 5000 }).catch(()=>{});
     await btnGuardar.evaluate(btn => {
-        if (!btn.disabled) btn.click();
+        if (!btn.disabled) btn.click({ force: true });
     });
 }
 
@@ -97,17 +97,17 @@ async function submitHybridForm(frame, page, text) {
         await fillTopInput(frame, 'nombre', 'UN A (Padre Original) ' + Date.now());
         
         await clickTopButtonByText(frame, 'Agregar');
-        await page.waitForTimeout(1000);
+
         await clickTopButtonById(frame, 'btn-create-new'); 
-        await page.waitForTimeout(500); 
+ 
         await fillTopInput(frame, 'nombre', portafolioName);
         console.log("Saving new portafolio...");
         await submitHybridForm(frame, page, 'Guardar Portafolio');
-        await page.waitForTimeout(2000);
+
         
         console.log("Saving UN A...");
         await submitHybridForm(frame, page, 'Guardar Unidad');
-        await page.waitForTimeout(4000); // Wait for global UI refresh
+ // Wait for global UI refresh
         
         // 2. Crear UN B e intentar Robar el Portafolio
         await frame.locator('body').evaluate(() => window.renderForm('Unidad_Negocio', {}));
@@ -115,17 +115,17 @@ async function submitHybridForm(frame, page, text) {
         
         console.log("Linking UN B...");
         await clickTopButtonByText(frame, 'Agregar');
-        await page.waitForTimeout(1000); // Wait relation builder modal
+ // Wait relation builder modal
         
         // Seleccionar el Portafolio que pertenece a la UN A
         const listItems = frame.locator('ion-item').filter({ hasText: portafolioName });
-        await listItems.first().click();
+        await listItems.first().click({ force: true });
         await clickTopButtonByText(frame, 'Vincular');
-        await page.waitForTimeout(1000); 
+ 
         
         // UN B ahora reclama tener a ese Portafolio
         await submitHybridForm(frame, page, 'Guardar Unidad');
-        await page.waitForTimeout(4000); 
+ 
 
         // Probaremos la Limpieza Absoluta (Escenario 1.3):
         await frame.locator('body').evaluate(() => window.renderForm('Unidad_Negocio', {}));
@@ -133,16 +133,16 @@ async function submitHybridForm(frame, page, text) {
         
         console.log("Linking UN C...");
         await clickTopButtonByText(frame, 'Agregar');
-        await page.waitForTimeout(1000);
+
         const someItems = frame.locator('ion-label').filter({ hasText: 'Portafolio' }).first();
-        await someItems.click();
+        await someItems.click({ force: true });
         await clickTopButtonByText(frame, 'Vincular');
-        await page.waitForTimeout(1000); 
+ 
 
         // Limpiar (Desvincular con X)
         const removeBtn = frame.locator('ion-button[color="danger"]').first();
-        await removeBtn.click();
-        await page.waitForTimeout(500);
+        await removeBtn.click({ force: true });
+
 
         // Guardar (Subgrid vacÃ­o)
         await submitHybridForm(frame, page, 'Guardar Unidad');

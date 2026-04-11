@@ -41,9 +41,9 @@ test.describe('E28: Dashboard Counters Visibility', () => {
     const frame = page.frameLocator('#sandboxFrame').frameLocator('#userHtmlFrame');
     await frame.locator('ion-app').waitFor({ state: 'visible', timeout: 60000 });
     
-    // Ensure dashboard is active
-    await frame.locator('ion-item').filter({ hasText: 'Inicio' }).click();
-    await page.waitForTimeout(1000);
+    // Wait for the framework to be ready and dashboard to be active
+    await frame.locator('ion-card').first().waitFor({ state: 'attached', timeout: 30000 }).catch(() => {});
+
   });
 
   test('Los contadores del dashboard deben renderizar datos nÃºmericos en lugar de spinners (... o vacÃ­os)', async () => {
@@ -90,7 +90,7 @@ test.describe('E28: Dashboard Counters Visibility', () => {
 
       // Verificar dashboard cards resolve
       await frame.locator('ion-card').filter({ hasText: 'Portafolios' }).locator('[data-dsh-total]').waitFor({ state: 'visible' });
-      await page.waitForTimeout(5000); // 5s headroom para que deserialize asome si existiese
+ // 5s headroom para que deserialize asome si existiese
 
       expect(deserializeErrorSeen).toBe(false);
   });

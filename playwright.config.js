@@ -8,9 +8,9 @@ const authFile = path.join(authDir, 'user.json');
 
 export default defineConfig({
   testDir: './__tests__/e2e',
-  timeout: 120_000,
+  timeout: 30_000,
   expect: {
-    timeout: 15000
+    timeout: 5000
   },
   fullyParallel: false,
   forbidOnly: !!process.env.CI,
