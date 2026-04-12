@@ -94,7 +94,7 @@
         border-bottom:2px solid transparent;margin-bottom:-1px;
         display:flex;align-items:center;gap:6px;transition:all 0.2s;
       ">
-        <ion-icon name="git-network-outline"></ion-icon> Topology Presets
+        <ion-icon name="git-network-outline"></ion-icon> Graph Behavior
       </button>
       <button class="ss-tab" data-tab="db" onclick="window.SchemaStudio.switchTab('db')" style="
         padding:10px 20px;border:none;background:none;cursor:pointer;
@@ -669,7 +669,7 @@
           }, {})
       : {};
 
-    var html = '<div style="font-weight:700;font-size:1rem;margin-bottom:4px;">Catálogo TOPOLOGY_PRESETS</div>' +
+    var html = '<div style="font-weight:700;font-size:1rem;margin-bottom:4px;">Catálogo GRAPH BEHAVIOR</div>' +
       '<div style="font-size:0.78rem;color:var(--ion-color-medium);margin-bottom:18px;">' +
         Object.keys(presets).length + ' presets · Object.freeze() · Reglas referenciadas, no duplicadas</div>';
 
@@ -696,7 +696,7 @@
     });
 
     if (!Object.keys(presets).length) {
-      html += '<div style="text-align:center;padding:40px;color:var(--ion-color-medium);">No se detectaron presets activos en APP_SCHEMAS.</div>';
+      html += '<div style="text-align:center;padding:40px;color:var(--ion-color-medium);">No se detectaron Graph Behaviors activos en APP_SCHEMAS.</div>';
     }
 
     container.innerHTML = html;
