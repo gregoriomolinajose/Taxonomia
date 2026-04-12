@@ -1,4 +1,4 @@
-﻿<!-- [E31-S31.5/S31.6] Schema_Studio_UI.html
+<!-- [E31-S31.5/S31.6] Schema_Studio_UI.html
      Schema Governance Config Studio — Viewer + Blueprint Composer (Code Export)
      Acceso: SUPER_ADMIN exclusivo — revelado desde icono de perfil → Sistema
      Inyectado via: <?!= include('Schema_Studio_UI'); ?>
@@ -1008,6 +1008,7 @@
     // [O2-AR] Code Export: generateCodeJson -> clipboard, generateCodeHtml -> display
     // [GAS Format] generateCodeGas() collapses template groups back to FIELD_TEMPLATES.* spread refs
     var plainJson = generateCodeGas(entityName, _composer.fields, schema);
+    html += '<div style="padding:12px 16px;background:var(--ion-color-step-100);display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,0.06);">' +
       '<div style="font-size:0.72rem;font-weight:700;color:var(--ion-color-medium);letter-spacing:0.06em;display:flex;align-items:center;gap:8px;">' +
         '<ion-icon name="code-download-outline" style="color:var(--ion-color-warning-shade);"></ion-icon>' +
         'CODE EXPORT (GAS) — ' + entityName +
@@ -1055,7 +1056,7 @@
   //   generateCodeGas()  → template-aware GAS JS (clipboard payload, direct paste into Schema_Engine.gs)
   //   generateCodeHtml() → syntax-highlighted HTML (display only)
   //
-  // Template group detection collapses governed fields back to FIELD_TEMPLATES references,
+  // Template group detection collapses governed fields back to FIELD_TEMPLATES.* spread refs
   // mirroring exactly how Schema_Engine.gs composes schemas (spread pattern).
 
   // SYNC [H9]: Must match FIELD_TEMPLATES.* field name order in Schema_Engine.gs.
@@ -1153,7 +1154,7 @@
     return plain
       .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
       // Spread + FIELD_TEMPLATES reference  → highlighted in warning color
-      .replace(/(\.\.\.FIELD_TEMPLATES\.[A-Z_]+\(\))/g, '<span class="ss-code-spread">$1</span>')
+      .replace(/(\.\.\.FIELD_TEMPLATES\.[A-Z_]+\([^)]*\))/g, '<span class="ss-code-spread">$1</span>')
       // Object keys (word: )
       .replace(/\b([a-zA-Z_]+):/g, '<span class="ss-code-key">$1</span>:')
       // String values
