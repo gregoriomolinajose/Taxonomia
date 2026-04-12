@@ -15,13 +15,14 @@ const TOPOLOGY_PRESETS = Object.freeze({
    * Used by: Unidad_Negocio, Portafolio, Grupo_Productos, Producto
    */
   JERARQUICA_ESTRICTA_GRAPH_STD: Object.freeze({
-    topologyType: "JERARQUICA_ESTRICTA",
-    preventCycles: true,
-    maxDepth: 6,
-    allowOrphanStealing: true,
-    deletionStrategy: "ORPHAN",
+    _preset:               'JERARQUICA_ESTRICTA_GRAPH_STD',  // [E31] Studio Viewer identifier
+    topologyType:          "JERARQUICA_ESTRICTA",
+    preventCycles:         true,
+    maxDepth:              6,
+    allowOrphanStealing:   true,
+    deletionStrategy:      "ORPHAN",
     siblingCollisionCheck: true,
-    scd2Enabled: true
+    scd2Enabled:           true
   }),
 
   /**
@@ -30,16 +31,17 @@ const TOPOLOGY_PRESETS = Object.freeze({
    * Used by: Dominio
    */
   JERARQUICA_ESTRICTA_DOMAIN: Object.freeze({
-    topologyType: "JERARQUICA_ESTRICTA",
-    levelFiltering: true,
-    strictLevelJumps: true,
-    rootRequiresNoParent: true,
-    allowOrphanStealing: true,
-    maxDepth: 5,
-    deletionStrategy: "ORPHAN",
+    _preset:               'JERARQUICA_ESTRICTA_DOMAIN',  // [E31] Studio Viewer identifier
+    topologyType:          "JERARQUICA_ESTRICTA",
+    levelFiltering:        true,
+    strictLevelJumps:      true,
+    rootRequiresNoParent:  true,
+    allowOrphanStealing:   true,
+    maxDepth:              5,
+    deletionStrategy:      "ORPHAN",
     siblingCollisionCheck: true,
-    scd2Enabled: true,
-    preventCycles: true
+    scd2Enabled:           true,
+    preventCycles:         true
   }),
 
   /**
@@ -48,9 +50,10 @@ const TOPOLOGY_PRESETS = Object.freeze({
    * Used by: Persona
    */
   JERARQUICA_PERSONA: Object.freeze({
-    topologyType: "JERARQUICA_ESTRICTA",
-    preventCycles: true,
-    scd2Enabled: true,
+    _preset:               'JERARQUICA_PERSONA',  // [E31] Studio Viewer identifier
+    topologyType:          "JERARQUICA_ESTRICTA",
+    preventCycles:         true,
+    scd2Enabled:           true,
     siblingCollisionCheck: false
   })
 
