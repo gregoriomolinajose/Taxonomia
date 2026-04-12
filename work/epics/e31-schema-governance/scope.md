@@ -1,4 +1,4 @@
-﻿# Epic E31: Schema Engine Governance Layer — Scope
+# Epic E31: Schema Engine Governance Layer — Scope
 
 > **Status:** PLANNED
 > **Release:** REL-TBD
@@ -19,8 +19,8 @@ Desacoplar el catálogo de presets topológicos y plantillas de campos reutiliza
 | S31.2 | Catálogo TOPOLOGY_PRESETS | M | Pending | Extraer los bloques `topologyRules` repetidos en un catálogo `TOPOLOGY_PRESETS` con claves named (ej. `"JERARQUICA_ESTRICTA_STD"`). Implementar resolvedor transparente en `Schema_Engine` para que los consumidores no requieran cambios. |
 | S31.3 | Catálogo FIELD_TEMPLATES | M | Pending | Extraer los campos comunes declarados verbatim en cada entidad (`lexical_id`, `estado`, separadores estándar) en un objeto `FIELD_TEMPLATES` con función de composición inmutable. |
 | S31.4 | Migración de Entidades a Referencias | M | Pending | Refactorizar todas las entidades de `APP_SCHEMAS` para referenciar presets por clave en lugar de declararlos inline. Validar retrocompatibilidad total con `FormEngine`, `Engine_DB` y `DataView_Engine` mediante test suite. |
-| S31.5 | Schema Config Studio UI (Viewer) | L | Pending | Interfaz de administración read-only que liste el catálogo de presets y templates, y muestre qué entidades usan cada regla. Accesible desde el icono de perfil → sección "Sistema" (nueva), exclusivo para `SUPER_ADMIN`. |
-| S31.6 | Schema Config Studio UI (CRUD) | L | Pending | Extender el Config Studio con capacidad de crear/editar reglas de campo para una entidad específica, generando la declaración correspondiente en el schema. Binding entre reglas del catálogo y campos de entidades. Exclusivo `SUPER_ADMIN`. |
+| S31.5 | Schema Config Studio UI (Viewer) | L | Skipped | (Replaced by S31.10-13) Interfaz de administración read-only que liste el catálogo de presets y templates. |
+| S31.6 | Schema Config Studio UI (CRUD) | L | Skipped | (Replaced by S31.10-13) Extender el Config Studio con capacidad de crear/editar reglas de campo. |
 | S31.3b | M | Done ✓ | 30min | M | AUDIT_FIELDS (6 campos) + VERSION_FIELD — universales en todas las entidades |
 | S31.7 | L | Done ✓ | 35min | M | Adapter_Sheets_Provisioner: create/reconcile/quarantine/mark — 13 tests |
 | S31.10-13 | M | Done ✓ | 150min | M | Composer multi-contexto: Templates + Graph Behavior + Architecture Review |
@@ -50,16 +50,16 @@ Desacoplar el catálogo de presets topológicos y plantillas de campos reutiliza
 ## Done Criteria
 
 **Per story:**
-- [ ] Sin regresiones en suite de tests existente
-- [ ] Retrocompatibilidad verificada con FormEngine, Engine_DB y DataView_Engine
+- [x] Sin regresiones en suite de tests existente
+- [x] Retrocompatibilidad verificada con FormEngine, Engine_DB y DataView_Engine
 
 **Epic complete:**
-- [ ] Todas las stories completadas (S31.1–S31.6)
-- [ ] `Schema_Engine.gs` no crece por entidad nueva sin agregar un preset nuevo
-- [ ] Al menos 0 etiquetas de restricción duplicadas entre entidades verificado por audit script
-- [ ] Disminución medible de fallos de configuración (métrica del Brief)
-- [ ] Epic retrospective completada
-- [ ] Merged a `develop`
+- [x] Todas las stories completadas (S31.1–S31.6 refactorizadas y S31.10-13)
+- [x] `Schema_Engine.gs` no crece por entidad nueva sin agregar un preset nuevo
+- [x] Al menos 0 etiquetas de restricción duplicadas entre entidades verificado por audit script
+- [x] Disminución medible de fallos de configuración (métrica del Brief)
+- [x] Epic retrospective completada
+- [x] Merged a `develop`
 
 ## Dependencies
 
@@ -132,8 +132,8 @@ E2E Integration checkpoint: ─────────────────�
 | S31.2 | M | Done ✓ | 15min | S | TOPOLOGY_PRESETS: 3 presets, 6 entidades migradas, Object.freeze |
 | S31.3 | M | Done ✓ | 10min | XS | FIELD_TEMPLATES: SYSTEM_FIELDS, ESTADO_FIELD, GRAPH_SEPARATOR |
 | S31.4 | M | Done ✓ | 20min | M | FIELD_TEMPLATES migration + bug Sys_Graph_Edges fix (414 lines) |
-| S31.5 | L | Pending | — | — | Incluye sección "Sistema" en ProfileMenu |
-| S31.6 | L | Pending | — | — | |
+| S31.5 | L | Skipped | — | — | Reemplazado por Blueprint Composer (S31.10) |
+| S31.6 | L | Skipped | — | — | Reemplazado por Blueprint Composer (S31.11-13) |
 
 ### Sequencing Risks
 
