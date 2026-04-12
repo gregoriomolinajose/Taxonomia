@@ -1,4 +1,4 @@
-# Epic E31: Schema Engine Governance Layer — Scope
+﻿# Epic E31: Schema Engine Governance Layer — Scope
 
 > **Status:** PLANNED
 > **Release:** REL-TBD
@@ -23,6 +23,7 @@ Desacoplar el catálogo de presets topológicos y plantillas de campos reutiliza
 | S31.6 | Schema Config Studio UI (CRUD) | L | Pending | Extender el Config Studio con capacidad de crear/editar reglas de campo para una entidad específica, generando la declaración correspondiente en el schema. Binding entre reglas del catálogo y campos de entidades. Exclusivo `SUPER_ADMIN`. |
 | S31.3b | M | Done ✓ | 30min | M | AUDIT_FIELDS (6 campos) + VERSION_FIELD — universales en todas las entidades |
 | S31.7 | L | Done ✓ | 35min | M | Adapter_Sheets_Provisioner: create/reconcile/quarantine/mark — 13 tests |
+| S31.10-13 | M | Done ✓ | 150min | M | Composer multi-contexto: Templates + Graph Behavior + Architecture Review |
 
 **Total:** 8 stories, TBD SP
 
