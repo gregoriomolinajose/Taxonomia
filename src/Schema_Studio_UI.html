@@ -113,7 +113,7 @@
         margin-left:auto;
       ">
         <ion-icon name="construct-outline"></ion-icon> Composer
-        <span style="font-size:0.65rem;padding:2px 6px;border-radius:10px;background:rgba(var(--ion-color-warning-rgb),0.15);color:var(--ion-color-warning-shade);font-weight:700;">CODE EXPORT</span>
+        <span class="ss-code-export-badge" style="font-size:0.65rem;padding:2px 6px;border-radius:10px;background:rgba(var(--ion-color-warning-rgb),0.15);color:var(--ion-color-warning-shade);font-weight:700;transition:opacity 0.2s;">CODE EXPORT</span>
       </button>
     </div>
 
@@ -494,6 +494,14 @@
       t.style.color        = active ? 'var(--ion-color-warning)' : 'var(--ion-color-medium)';
       t.style.borderBottom = active ? '2px solid var(--ion-color-warning)' : '2px solid transparent';
     });
+    // [Debug-fix] CODE EXPORT badge only visible on entity-related tabs
+    var badge = document.querySelector('.ss-tab[data-tab="composer"] .ss-code-export-badge');
+    if (badge) {
+      var entityTabs = ['entities', 'composer'];
+      badge.style.opacity = entityTabs.includes(tabId) ? '1' : '0.25';
+      badge.style.pointerEvents = entityTabs.includes(tabId) ? 'auto' : 'none';
+      badge.title = entityTabs.includes(tabId) ? '' : 'Solo disponible en tab Entidades';
+    }
     renderTab(tabId);
   }
 
@@ -628,7 +636,11 @@
       }
     ];
 
-    var html = '<div style="font-weight:700;font-size:1rem;margin-bottom:4px;">Catálogo FIELD_TEMPLATES</div>' +
+    var html = '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">' +
+      '<div style="font-weight:700;font-size:1rem;">Catálogo FIELD_TEMPLATES</div>' +
+      '<button class="ss-btn-primary" id="ss-copy-templates-btn" onclick="window.SchemaStudio.copyTemplatesGas()" style="font-size:0.75rem;padding:5px 14px;display:flex;align-items:center;gap:6px;">' +
+        '<ion-icon name="copy-outline"></ion-icon>Copiar Templates GAS</button>' +
+    '</div>' +
       '<div style="font-size:0.78rem;color:var(--ion-color-medium);margin-bottom:18px;">' + templates.length + ' templates · Fuente: Schema_Engine.gs · Object.freeze()</div>';
 
     templates.forEach(function(t) {
@@ -669,7 +681,11 @@
           }, {})
       : {};
 
-    var html = '<div style="font-weight:700;font-size:1rem;margin-bottom:4px;">Catálogo GRAPH BEHAVIOR</div>' +
+    var html = '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">' +
+      '<div style="font-weight:700;font-size:1rem;">Catálogo GRAPH BEHAVIOR</div>' +
+      '<button class="ss-btn-primary" id="ss-copy-presets-btn" onclick="window.SchemaStudio.copyPresetsGas()" style="font-size:0.75rem;padding:5px 14px;display:flex;align-items:center;gap:6px;">' +
+        '<ion-icon name="copy-outline"></ion-icon>Copiar Presets GAS</button>' +
+    '</div>' +
       '<div style="font-size:0.78rem;color:var(--ion-color-medium);margin-bottom:18px;">' +
         Object.keys(presets).length + ' presets · Object.freeze() · Reglas referenciadas, no duplicadas</div>';
 
@@ -1300,6 +1316,87 @@
     }
   }
 
+
+  // ── Context-aware tab export functions [Debug-fix] ─────────────────────────
+  // These let Templates and Graph Behavior tabs export their own content,
+  // eliminating the confusion of CODE EXPORT always producing entity data.
+
+  function _copyTabContent(text, btnId, newLabel) {
+    var btn = btnId ? document.getElementById(btnId) : null;
+    function onCopied() {
+      if (btn) {
+        btn.innerHTML = '<ion-icon name="checkmark-outline"></ion-icon>Copiado!';
+        setTimeout(function() {
+          btn.innerHTML = '<ion-icon name="copy-outline"></ion-icon>' + (newLabel || 'Copiar GAS');
+        }, 2000);
+      }
+    }
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(text).then(onCopied).catch(function() {
+        var el = document.createElement('textarea'); el.value = text;
+        document.body.appendChild(el); el.select(); document.execCommand('copy');
+        document.body.removeChild(el); onCopied();
+      });
+    } else {
+      var el = document.createElement('textarea'); el.value = text;
+      document.body.appendChild(el); el.select(); document.execCommand('copy');
+      document.body.removeChild(el); onCopied();
+    }
+  }
+
+  function copyTemplatesGas() {
+    var lines = [
+      '// ─── FIELD_TEMPLATES — Reference Card ─────────────────────────────────',
+      '// Paste these spreads into your entity fields array in Schema_Engine.gs:',
+      '',
+      '  ...FIELD_TEMPLATES.SYSTEM_FIELDS(),    // lexical_id, estado',
+      '  ...FIELD_TEMPLATES.AUDIT_FIELDS(),     // created_at/by, updated_at/by, deleted_at/by',
+      '  ...FIELD_TEMPLATES.VERSION_FIELD(),    // version (optimistic locking)',
+      '  ...FIELD_TEMPLATES.GRAPH_SEPARATOR("Label"),  // section divider',
+      '',
+      '// Usage pattern:',
+      '  MyEntity: {',
+      '    primaryKey: "id_entity",',
+      '    fields: [',
+      '      { name: "id_entity", type: "hidden", primaryKey: true },',
+      '      ...FIELD_TEMPLATES.SYSTEM_FIELDS(),',
+      '      ...FIELD_TEMPLATES.AUDIT_FIELDS(),',
+      '      ...FIELD_TEMPLATES.VERSION_FIELD(),',
+      '      ...FIELD_TEMPLATES.GRAPH_SEPARATOR("Datos de Negocio"),',
+      '      // ... custom fields',
+      '    ]',
+      '  }'
+    ];
+    _copyTabContent(lines.join('\n'), 'ss-copy-templates-btn', 'Copiar Templates GAS');
+  }
+
+  function copyPresetsGas() {
+    var schemas = window.APP_SCHEMAS || {};
+    var presets = Object.entries(schemas)
+      .filter(function(e) { return e[0] !== '_UI_CONFIG'; })
+      .reduce(function(acc, e) {
+        var rules = e[1].topologyRules;
+        if (rules && rules._preset && !acc[rules._preset]) {
+          acc[rules._preset] = { key: rules._preset, rules: rules, users: [] };
+        }
+        if (rules && rules._preset) acc[rules._preset].users.push(e[0]);
+        return acc;
+      }, {});
+
+    var lines = ['// ─── TOPOLOGY_PRESETS — Active Graph Behaviors ──────────────────────────────'];
+    Object.values(presets).forEach(function(p) {
+      var r = p.rules;
+      lines.push('');
+      lines.push('  // Used by: ' + p.users.join(', '));
+      lines.push('  ' + p.key + ': Object.freeze({');
+      Object.keys(r).forEach(function(k) {
+        if (k !== '_preset') lines.push('    ' + k + ': ' + JSON.stringify(r[k]) + ',');
+      });
+      lines.push('  }),');
+    });
+    _copyTabContent(lines.join('\n'), 'ss-copy-presets-btn', 'Copiar Presets GAS');
+  }
+
   // ── Public API ────────────────────────────────────────────────────────────
   window.SchemaStudio = {
     mount: function() {
@@ -1315,6 +1412,9 @@
     composerReset:          composerReset,
     composerExport:         composerExport,
     composerCopyCode:       composerCopyCode,
+    // Tab-specific exports [Debug-fix]
+    copyTemplatesGas: copyTemplatesGas,
+    copyPresetsGas:   copyPresetsGas,
     composerSelectEntity:    composerSelectEntity,   // [C2-QR] export for programmatic entity switching
     _loadDbStatusPill: function() {
       var dot = document.getElementById('ss-status-dot');
