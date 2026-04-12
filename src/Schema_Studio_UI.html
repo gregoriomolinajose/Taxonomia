@@ -1009,7 +1009,7 @@
 
   function composerTemplateSelect(key) {
     // Find in catalogue or in user-created templates
-    var all = _TEMPLATE_CATALOGUE.concat(_composer._customTemplates || []);
+    var tmpl = _activeTemplate(); // [AR-R2]
     var tmpl = all.find(function(t) { return t.key === key; });
     if (!tmpl) return;
 
@@ -1112,32 +1112,21 @@
     var hint = (document.getElementById('ss-tmpl-new-hint') || {}).value || '';
     if (!name.trim()) return;
     _composer.templateFields.push({ name: name.trim(), type: type, hint: hint.trim() });
-    var all = _TEMPLATE_CATALOGUE.concat(_composer._customTemplates || []);
-    var tmpl = all.find(function(t) { return t.key === _composer.templateKey; });
+    var tmpl = _activeTemplate(); // [AR-R2]
     if (tmpl) { tmpl.fields = _composer.templateFields; renderTemplatePanelContent(tmpl); }
   }
 
   function composerTemplateRemoveField(idx) {
     _composer.templateFields.splice(idx, 1);
-    var all = _TEMPLATE_CATALOGUE.concat(_composer._customTemplates || []);
-    var tmpl = all.find(function(t) { return t.key === _composer.templateKey; });
+    var tmpl = _activeTemplate(); // [AR-R2]
     if (tmpl) { tmpl.fields = _composer.templateFields; renderTemplatePanelContent(tmpl); }
   }
 
+  // [AR-R1] Delegates to _copyTabContent (single clipboard implementation)
   function composerTemplateCopy() {
     var codeEl = document.getElementById('ss-tmpl-code-output');
     if (!codeEl) return;
-    var txt = codeEl.dataset.plain || codeEl.textContent;
-    var btn = document.getElementById('ss-copy-tmpl-export');
-    if (navigator.clipboard) {
-      navigator.clipboard.writeText(txt).then(function() {
-        if (btn) { btn.innerHTML = '<ion-icon name="checkmark-outline"></ion-icon>Copiado!'; setTimeout(function(){ btn.innerHTML = '<ion-icon name="copy-outline"></ion-icon>Copiar GAS'; }, 2000); }
-      });
-    } else {
-      var el = document.createElement('textarea'); el.value = txt;
-      document.body.appendChild(el); el.select(); document.execCommand('copy'); document.body.removeChild(el);
-      if (btn) { btn.innerHTML = '<ion-icon name="checkmark-outline"></ion-icon>Copiado!'; setTimeout(function(){ btn.innerHTML = '<ion-icon name="copy-outline"></ion-icon>Copiar GAS'; }, 2000); }
-    }
+    _copyTabContent(codeEl.dataset.plain || codeEl.textContent, 'ss-copy-tmpl-export', 'Copiar GAS');
   }
 
   function composerTemplateNew() {
@@ -1184,7 +1173,7 @@
   }
 
   function renderBehaviorComposer(container) {
-    var presets = _getPresetsFromSchemas();
+    var p = _activePreset(); // [AR-R2]
     var layout = document.createElement('div');
     layout.className = 'ss-composer-layout';
 
@@ -1234,7 +1223,7 @@
   }
 
   function composerBehaviorSelect(key) {
-    var presets = _getPresetsFromSchemas();
+    var p = _activePreset(); // [AR-R2]
     var preset = presets.find(function(p) { return p.key === key; });
     if (!preset) return;
     _composer.behaviorKey   = key;
@@ -1333,32 +1322,23 @@
     if (type === 'boolean') parsed = val === 'true' || val === '1';
     else if (type === 'integer') parsed = parseInt(val, 10) || 0;
     _composer.behaviorRules[key.trim()] = parsed;
-    var presets = _getPresetsFromSchemas();
+    var p = _activePreset(); // [AR-R2]
     var p = presets.find(function(x){ return x.key === _composer.behaviorKey; });
     if (p) { p.rules = Object.assign({ _preset: p.key }, _composer.behaviorRules); renderBehaviorPanelContent(p); }
   }
 
   function composerBehaviorRemoveRule(key) {
     delete _composer.behaviorRules[key];
-    var presets = _getPresetsFromSchemas();
+    var p = _activePreset(); // [AR-R2]
     var p = presets.find(function(x){ return x.key === _composer.behaviorKey; });
     if (p) { p.rules = Object.assign({ _preset: p.key }, _composer.behaviorRules); renderBehaviorPanelContent(p); }
   }
 
+  // [AR-R1] Delegates to _copyTabContent (single clipboard implementation)
   function composerBehaviorCopy() {
     var codeEl = document.getElementById('ss-beh-code-output');
     if (!codeEl) return;
-    var txt = codeEl.dataset.plain || codeEl.textContent;
-    var btn = document.getElementById('ss-copy-beh-export');
-    if (navigator.clipboard) {
-      navigator.clipboard.writeText(txt).then(function() {
-        if (btn) { btn.innerHTML = '<ion-icon name="checkmark-outline"></ion-icon>Copiado!'; setTimeout(function(){ btn.innerHTML = '<ion-icon name="copy-outline"></ion-icon>Copiar GAS'; }, 2000); }
-      });
-    } else {
-      var el = document.createElement('textarea'); el.value = txt;
-      document.body.appendChild(el); el.select(); document.execCommand('copy'); document.body.removeChild(el);
-      if (btn) { btn.innerHTML = '<ion-icon name="checkmark-outline"></ion-icon>Copiado!'; setTimeout(function(){ btn.innerHTML = '<ion-icon name="copy-outline"></ion-icon>Copiar GAS'; }, 2000); }
-    }
+    _copyTabContent(codeEl.dataset.plain || codeEl.textContent, 'ss-copy-beh-export', 'Copiar GAS');
   }
 
   function composerBehaviorNew() {
@@ -1829,6 +1809,16 @@
   // These let Templates and Graph Behavior tabs export their own content,
   // eliminating the confusion of CODE EXPORT always producing entity data.
 
+
+  // [AR-R2] Private helpers to avoid repeated catalogue.concat().find() pattern
+  function _activeTemplate() {
+    var all = _TEMPLATE_CATALOGUE.concat(_composer._customTemplates || []);
+    return all.find(function(t) { return t.key === _composer.templateKey; }) || null;
+    return all.find(function(t) { return t.key === _composer.templateKey; }) || null;
+  }
+  function _activePreset() {
+    return _getPresetsFromSchemas().find(function(p) { return p.key === _composer.behaviorKey; }) || null;
+  }
   function _copyTabContent(text, btnId, newLabel) {
     var btn = btnId ? document.getElementById(btnId) : null;
     function onCopied() {
