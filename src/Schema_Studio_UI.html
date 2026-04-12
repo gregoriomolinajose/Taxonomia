@@ -488,19 +488,40 @@
 
   // ── Tabs ──────────────────────────────────────────────────────────────────
   function switchTab(tabId) {
+    // [S31.10] Track _lastContentTab for Composer multi-context mode
+    if (tabId === 'entities' || tabId === 'templates' || tabId === 'presets') {
+      _lastContentTab = tabId;
+    }
     var tabs = document.querySelectorAll('.ss-tab');
     tabs.forEach(function(t) {
       var active = t.getAttribute('data-tab') === tabId;
       t.style.color        = active ? 'var(--ion-color-warning)' : 'var(--ion-color-medium)';
       t.style.borderBottom = active ? '2px solid var(--ion-color-warning)' : '2px solid transparent';
     });
-    // [Debug-fix] CODE EXPORT badge only visible on entity-related tabs
+    // [S31.13] Dynamic badge label and visibility based on context
     var badge = document.querySelector('.ss-tab[data-tab="composer"] .ss-code-export-badge');
     if (badge) {
-      var entityTabs = ['entities', 'composer'];
-      badge.style.opacity = entityTabs.includes(tabId) ? '1' : '0.25';
-      badge.style.pointerEvents = entityTabs.includes(tabId) ? 'auto' : 'none';
-      badge.title = entityTabs.includes(tabId) ? '' : 'Solo disponible en tab Entidades';
+      if (tabId === 'entities' || tabId === 'composer') {
+        badge.textContent = 'CODE EXPORT';
+        badge.style.opacity = '1';
+        badge.style.pointerEvents = 'auto';
+        badge.title = '';
+      } else if (tabId === 'templates') {
+        badge.textContent = 'TEMPLATES';
+        badge.style.opacity = '1';
+        badge.style.pointerEvents = 'auto';
+        badge.title = 'Abre composer de FIELD_TEMPLATES';
+      } else if (tabId === 'presets') {
+        badge.textContent = 'BEHAVIORS';
+        badge.style.opacity = '1';
+        badge.style.pointerEvents = 'auto';
+        badge.title = 'Abre composer de TOPOLOGY_PRESETS';
+      } else {
+        badge.textContent = 'CODE EXPORT';
+        badge.style.opacity = '0.25';
+        badge.style.pointerEvents = 'none';
+        badge.title = 'N/A en este tab';
+      }
     }
     renderTab(tabId);
   }
@@ -840,10 +861,23 @@
 
   // Composer state
   var _composer = {
+    // Entity mode (original behaviour - unchanged)
     entityName:    null,
-    fields:        [],   // working copy — mutable
-    dirty:         false
+    fields:        [],   // working copy - mutable
+    dirty:         false,
+    // [S31.10] Multi-context extension
+    mode:           'entity',  // 'entity' | 'template' | 'behavior'
+    // Template mode
+    templateKey:    null,
+    templateFields: [],
+    // Behavior mode
+    behaviorKey:   null,
+    behaviorRules: {}
   };
+
+  // [S31.10] Tracks which content tab was last active before switching to Composer.
+  // Determines the Composer mode: 'entities'->entity, 'templates'->template, 'presets'->behavior.
+  var _lastContentTab = 'entities';
 
   // SYNC [H9]: Must stay in sync with FIELD_TEMPLATES.* in Schema_Engine.gs.
   // Covers: SYSTEM_FIELDS (lexical_id, estado), AUDIT_FIELDS (6 names), VERSION_FIELD.
@@ -852,7 +886,18 @@
     'updated_by','deleted_at','deleted_by','version'];
 
   // ── Composer Tab Renderer ─────────────────────────────────────────────────
+  // [S31.10] Branch dispatcher — routes to the correct composer based on _lastContentTab.
   function renderComposerTab(container) {
+    _composer.mode = _lastContentTab === 'templates' ? 'template'
+                   : _lastContentTab === 'presets'   ? 'behavior'
+                   : 'entity';
+    if (_composer.mode === 'template')  renderTemplateComposer(container);
+    else if (_composer.mode === 'behavior') renderBehaviorComposer(container);
+    else                                renderEntityComposer(container);
+  }
+
+  // [S31.10] Original entity composer — renamed from renderComposerTab.
+  function renderEntityComposer(container) {
     var schemas  = window.APP_SCHEMAS || {};
     var entities = _getBusinessEntities(); // [O3-AR] dynamic
     var sidebar  = buildComposerSidebar(schemas, entities);
@@ -866,6 +911,469 @@
 
     // Auto-select first business entity
     if (entities.length) composerSelectEntity(entities[0]);
+  }
+
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // S31.11 — TEMPLATE COMPOSER
+  // Composer context for FIELD_TEMPLATES: view, add, remove fields per group.
+  // CODE EXPORT produces a GAS factory-function ready to paste in Schema_Engine.gs.
+  // ══════════════════════════════════════════════════════════════════════════
+
+  // [S31.11] Static catalogue — mirrors FIELD_TEMPLATES in Schema_Engine.gs.
+  // NOTE: When a new template group is added here via Composer, the developer
+  //       copies the CODE EXPORT and adds it to Schema_Engine.gs, then redeploys.
+  var _TEMPLATE_CATALOGUE = [
+    {
+      key: 'SYSTEM_FIELDS', description: 'ID amigable + estado de ciclo de vida. Universal en entidades de negocio.',
+      fields: [
+        { name: 'lexical_id', type: 'text',   hint: 'Auto: ACRONIMO-0042. Readonly.' },
+        { name: 'estado',     type: 'hidden',  hint: 'Activo | Eliminado | Borrador. Soft-delete.' }
+      ]
+    },
+    {
+      key: 'AUDIT_FIELDS', description: 'Trail completo de auditoría. Todos hidden — manejados por Engine_DB.',
+      fields: [
+        { name: 'created_at', type: 'hidden', hint: 'ISO 8601 UTC. Inmutable tras creación.' },
+        { name: 'created_by', type: 'hidden', hint: 'Email del creador. Inmutable.' },
+        { name: 'updated_at', type: 'hidden', hint: 'ISO 8601. Actualizado en cada write.' },
+        { name: 'updated_by', type: 'hidden', hint: 'Email del último editor.' },
+        { name: 'deleted_at', type: 'hidden', hint: 'ISO 8601. Soft-delete timestamp.' },
+        { name: 'deleted_by', type: 'hidden', hint: 'Email del que marcó como eliminado.' }
+      ]
+    },
+    {
+      key: 'VERSION_FIELD', description: 'Contador de versión para optimistic locking.',
+      fields: [
+        { name: 'version', type: 'hidden', hint: 'Int incremental. Default: 1. Manejado por Engine_DB.' }
+      ]
+    },
+    {
+      key: 'GRAPH_SEPARATOR', description: 'Divisor visual de sección en el formulario. Acepta un label dinámico.',
+      fields: [
+        { name: 'separator_label', type: 'text', hint: 'Ej: "Topología (Grafo)". Argumento de GRAPH_SEPARATOR("...").' }
+      ]
+    }
+  ];
+
+  function renderTemplateComposer(container) {
+    var layout = document.createElement('div');
+    layout.className = 'ss-composer-layout';
+
+    // ── Sidebar ──────────────────────────────────────────────────────────────
+    var sidebar = document.createElement('div');
+    sidebar.className = 'ss-composer-sidebar';
+    sidebar.id = 'ss-tmpl-sidebar';
+
+    var sidebarHtml = '<div style="padding:12px 16px;border-bottom:1px solid var(--ion-color-step-100);">' +
+      '<div style="font-size:0.7rem;font-weight:700;color:var(--ion-color-medium);letter-spacing:0.06em;display:flex;align-items:center;gap:6px;">' +
+        '<ion-icon name="code-slash-outline"></ion-icon>FIELD_TEMPLATES</div>' +
+      '</div>';
+
+    _TEMPLATE_CATALOGUE.forEach(function(tmpl) {
+      var isActive = _composer.templateKey === tmpl.key;
+      sidebarHtml += '<div class="ss-entity-item' + (isActive ? ' active' : '') + '" ' +
+        'onclick="window.SchemaStudio.composerTemplateSelect(\'' + tmpl.key + '\')" ' +
+        'style="cursor:pointer;padding:10px 16px;border-bottom:1px solid var(--ion-color-step-50);">' +
+        '<div style="font-size:0.82rem;font-weight:600;">' + tmpl.key + '</div>' +
+        '<div style="font-size:0.7rem;color:var(--ion-color-medium);margin-top:2px;">' +
+          tmpl.fields.length + ' campo(s)</div>' +
+      '</div>';
+    });
+
+    sidebarHtml += '<div style="padding:12px 16px;">' +
+      '<button class="ss-btn-secondary" onclick="window.SchemaStudio.composerTemplateNew()" style="width:100%;font-size:0.78rem;">' +
+        '<ion-icon name="add-circle-outline"></ion-icon>Nuevo Template</button></div>';
+
+    sidebar.innerHTML = sidebarHtml;
+
+    // ── Panel ─────────────────────────────────────────────────────────────────
+    var panel = document.createElement('div');
+    panel.className = 'ss-composer-panel';
+    panel.id = 'ss-tmpl-panel';
+    panel.innerHTML = '<div style="padding:40px;text-align:center;color:var(--ion-color-medium);">' +
+      '<ion-icon name="code-slash-outline" style="font-size:2.5rem;opacity:0.3;display:block;margin-bottom:12px;"></ion-icon>' +
+      'Selecciona un Template Group para editar</div>';
+
+    layout.appendChild(sidebar);
+    layout.appendChild(panel);
+    container.appendChild(layout);
+
+    // Auto-select first template
+    if (!_composer.templateKey && _TEMPLATE_CATALOGUE.length) {
+      composerTemplateSelect(_TEMPLATE_CATALOGUE[0].key);
+    } else if (_composer.templateKey) {
+      composerTemplateSelect(_composer.templateKey);
+    }
+  }
+
+  function composerTemplateSelect(key) {
+    // Find in catalogue or in user-created templates
+    var all = _TEMPLATE_CATALOGUE.concat(_composer._customTemplates || []);
+    var tmpl = all.find(function(t) { return t.key === key; });
+    if (!tmpl) return;
+
+    _composer.templateKey    = key;
+    _composer.templateFields = tmpl.fields.map(function(f) { return Object.assign({}, f); });
+
+    // Re-render sidebar to update active state
+    var sidebar = document.getElementById('ss-tmpl-sidebar');
+    if (sidebar) {
+      var items = sidebar.querySelectorAll('.ss-entity-item');
+      items.forEach(function(el) {
+        var elKey = el.querySelector('.ss-entity-item div') ? el.querySelector('div').textContent : '';
+        el.classList.toggle('active', el.onclick && el.getAttribute('onclick') &&
+          el.getAttribute('onclick').indexOf("'" + key + "'") !== -1);
+      });
+    }
+
+    renderTemplatePanelContent(tmpl);
+  }
+
+  function renderTemplatePanelContent(tmpl) {
+    var panel = document.getElementById('ss-tmpl-panel');
+    if (!panel) return;
+
+    var html = '<div style="padding:12px 16px;background:var(--ion-color-step-50);display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--ion-color-step-100);">' +
+      '<div style="font-size:0.7rem;font-weight:700;color:var(--ion-color-medium);letter-spacing:0.06em;">' +
+        '<ion-icon name="code-slash-outline" style="color:var(--ion-color-primary);"></ion-icon>' +
+        ' FIELD_TEMPLATES.' + tmpl.key + '</div>' +
+    '</div>';
+
+    // Description
+    html += '<div style="padding:16px;border-bottom:1px solid var(--ion-color-step-100);">' +
+      '<div style="font-size:0.72rem;color:var(--ion-color-medium);margin-bottom:4px;">DESCRIPCIÓN</div>' +
+      '<div style="font-size:0.85rem;">' + (tmpl.description || '—') + '</div>' +
+    '</div>';
+
+    // Fields list
+    html += '<div style="padding:16px;border-bottom:1px solid var(--ion-color-step-100);">' +
+      '<div style="font-size:0.72rem;font-weight:700;color:var(--ion-color-medium);margin-bottom:10px;letter-spacing:0.06em;">CAMPOS DEL TEMPLATE</div>' +
+      '<div id="ss-tmpl-field-list">';
+
+    (_composer.templateFields || []).forEach(function(f, idx) {
+      html += '<div class="ss-field-row" data-idx="' + idx + '">' +
+        '<span class="ss-field-chip system" style="flex-shrink:0;">' + f.name + '</span>' +
+        '<span style="font-size:0.72rem;color:var(--ion-color-medium);flex:1;">' +
+          (f.type || 'text') + (f.hint ? ' — ' + f.hint : '') + '</span>' +
+        '<button class="ss-btn-danger-sm" onclick="window.SchemaStudio.composerTemplateRemoveField(' + idx + ')" ' +
+          'style="font-size:0.72rem;padding:3px 8px;background:rgba(var(--ion-color-danger-rgb),0.12);color:var(--ion-color-danger);border:none;border-radius:4px;cursor:pointer;">' +
+          '<ion-icon name="trash-outline"></ion-icon></button>' +
+      '</div>';
+    });
+
+    html += '</div>';
+
+    // Add field form
+    html += '<div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;">' +
+      '<input id="ss-tmpl-new-name" type="text" placeholder="nombre_campo" style="flex:1;min-width:120px;background:var(--ion-color-step-100);border:1px solid var(--ion-color-step-150);border-radius:6px;padding:6px 10px;font-size:0.8rem;color:inherit;">' +
+      '<select id="ss-tmpl-new-type" style="background:var(--ion-color-step-100);border:1px solid var(--ion-color-step-150);border-radius:6px;padding:6px 10px;font-size:0.8rem;color:inherit;">' +
+        '<option value="text">text</option><option value="hidden">hidden</option>' +
+        '<option value="textarea">textarea</option><option value="number">number</option>' +
+        '<option value="relation">relation</option><option value="divider">divider</option></select>' +
+      '<input id="ss-tmpl-new-hint" type="text" placeholder="Descripción / hint" style="flex:2;min-width:160px;background:var(--ion-color-step-100);border:1px solid var(--ion-color-step-150);border-radius:6px;padding:6px 10px;font-size:0.8rem;color:inherit;">' +
+      '<button class="ss-btn-secondary" onclick="window.SchemaStudio.composerTemplateAddField()" style="font-size:0.78rem;padding:6px 12px;">' +
+        '<ion-icon name="add-outline"></ion-icon>Agregar</button>' +
+    '</div></div>';
+
+    // CODE EXPORT
+    var gasCode = _generateTemplateGas(tmpl.key, _composer.templateFields || []);
+    html += '<div style="margin-top:8px;padding:10px 16px;background:rgba(251,191,36,0.08);border:1px solid rgba(251,191,36,0.25);border-radius:8px 8px 0 0;display:flex;align-items:center;justify-content:space-between;">' +
+      '<div style="font-size:0.72rem;font-weight:700;color:#fbbf24;letter-spacing:0.08em;display:flex;align-items:center;gap:8px;">' +
+        '<ion-icon name="code-download-outline"></ion-icon>' +
+        'CODE EXPORT (GAS) \u2014 FIELD_TEMPLATES.' + tmpl.key + '</div>' +
+      '<button class="ss-btn-primary" id="ss-copy-tmpl-export" onclick="window.SchemaStudio.composerTemplateCopy()" style="font-size:0.75rem;padding:5px 14px;display:flex;align-items:center;gap:6px;">' +
+        '<ion-icon name="copy-outline"></ion-icon>Copiar GAS</button>' +
+    '</div>';
+    html += '<div class="ss-code-block" id="ss-tmpl-code-output" data-plain="">' + generateCodeHtml(gasCode) + '</div>';
+
+    panel.innerHTML = html;
+    var codeEl = panel.querySelector('#ss-tmpl-code-output');
+    if (codeEl) codeEl.dataset.plain = gasCode;
+  }
+
+  function _generateTemplateGas(key, fields) {
+    var lines = ['  ' + key + ': function(label) {', '    return ['];
+    fields.forEach(function(f) {
+      var obj = '      { name: "' + f.name + '"';
+      if (f.type && f.type !== 'text') obj += ', type: "' + f.type + '"';
+      if (f.hint) obj += ', hint: "' + f.hint + '"';
+      obj += ' }';
+      lines.push(obj + ',');
+    });
+    lines.push('    ];');
+    lines.push('  },');
+    return '// FIELD_TEMPLATES.' + key + '\n' + lines.join('\n');
+  }
+
+  function composerTemplateAddField() {
+    var name = (document.getElementById('ss-tmpl-new-name') || {}).value || '';
+    var type = (document.getElementById('ss-tmpl-new-type') || {}).value || 'text';
+    var hint = (document.getElementById('ss-tmpl-new-hint') || {}).value || '';
+    if (!name.trim()) return;
+    _composer.templateFields.push({ name: name.trim(), type: type, hint: hint.trim() });
+    var all = _TEMPLATE_CATALOGUE.concat(_composer._customTemplates || []);
+    var tmpl = all.find(function(t) { return t.key === _composer.templateKey; });
+    if (tmpl) { tmpl.fields = _composer.templateFields; renderTemplatePanelContent(tmpl); }
+  }
+
+  function composerTemplateRemoveField(idx) {
+    _composer.templateFields.splice(idx, 1);
+    var all = _TEMPLATE_CATALOGUE.concat(_composer._customTemplates || []);
+    var tmpl = all.find(function(t) { return t.key === _composer.templateKey; });
+    if (tmpl) { tmpl.fields = _composer.templateFields; renderTemplatePanelContent(tmpl); }
+  }
+
+  function composerTemplateCopy() {
+    var codeEl = document.getElementById('ss-tmpl-code-output');
+    if (!codeEl) return;
+    var txt = codeEl.dataset.plain || codeEl.textContent;
+    var btn = document.getElementById('ss-copy-tmpl-export');
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(txt).then(function() {
+        if (btn) { btn.innerHTML = '<ion-icon name="checkmark-outline"></ion-icon>Copiado!'; setTimeout(function(){ btn.innerHTML = '<ion-icon name="copy-outline"></ion-icon>Copiar GAS'; }, 2000); }
+      });
+    } else {
+      var el = document.createElement('textarea'); el.value = txt;
+      document.body.appendChild(el); el.select(); document.execCommand('copy'); document.body.removeChild(el);
+      if (btn) { btn.innerHTML = '<ion-icon name="checkmark-outline"></ion-icon>Copiado!'; setTimeout(function(){ btn.innerHTML = '<ion-icon name="copy-outline"></ion-icon>Copiar GAS'; }, 2000); }
+    }
+  }
+
+  function composerTemplateNew() {
+    var key = prompt('Nombre del nuevo template group (ej: COMPLIANCE_FIELDS):');
+    if (!key || !key.trim()) return;
+    key = key.trim().toUpperCase().replace(/\s+/g, '_');
+    _composer._customTemplates = _composer._customTemplates || [];
+    if (_TEMPLATE_CATALOGUE.some(function(t){ return t.key === key; }) ||
+        _composer._customTemplates.some(function(t){ return t.key === key; })) {
+      alert('Ya existe un template con ese nombre.'); return;
+    }
+    var newTmpl = { key: key, description: 'Nuevo template group personalizado.', fields: [] };
+    _composer._customTemplates.push(newTmpl);
+    _composer.templateKey = key;
+    // Re-render
+    var container = document.getElementById('ss-tab-content');
+    if (container) { container.innerHTML = ''; renderTemplateComposer(container); }
+  }
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // S31.12 — BEHAVIOR COMPOSER
+  // Composer context for TOPOLOGY_PRESETS: view, add, remove rules per preset.
+  // CODE EXPORT produces Object.freeze({...}) GAS ready to paste in Schema_Engine.gs.
+  // ══════════════════════════════════════════════════════════════════════════
+
+  function _getPresetsFromSchemas() {
+    var schemas = window.APP_SCHEMAS || {};
+    var presets = {};
+    Object.entries(schemas).forEach(function(e) {
+      if (e[0] === '_UI_CONFIG') return;
+      var rules = e[1].topologyRules;
+      if (rules && rules._preset) {
+        if (!presets[rules._preset]) {
+          presets[rules._preset] = { key: rules._preset, rules: Object.assign({}, rules), users: [] };
+        }
+        presets[rules._preset].users.push(e[0]);
+      }
+    });
+    // Merge any user-created behaviors
+    (_composer._customBehaviors || []).forEach(function(b) {
+      if (!presets[b.key]) presets[b.key] = b;
+    });
+    return Object.values(presets);
+  }
+
+  function renderBehaviorComposer(container) {
+    var presets = _getPresetsFromSchemas();
+    var layout = document.createElement('div');
+    layout.className = 'ss-composer-layout';
+
+    // ── Sidebar ──────────────────────────────────────────────────────────────
+    var sidebar = document.createElement('div');
+    sidebar.className = 'ss-composer-sidebar';
+    sidebar.id = 'ss-beh-sidebar';
+
+    var sidebarHtml = '<div style="padding:12px 16px;border-bottom:1px solid var(--ion-color-step-100);">' +
+      '<div style="font-size:0.7rem;font-weight:700;color:var(--ion-color-medium);letter-spacing:0.06em;display:flex;align-items:center;gap:6px;">' +
+        '<ion-icon name="git-network-outline"></ion-icon>TOPOLOGY_PRESETS</div>' +
+    '</div>';
+
+    presets.forEach(function(p) {
+      var isActive = _composer.behaviorKey === p.key;
+      sidebarHtml += '<div class="ss-entity-item' + (isActive ? ' active' : '') + '" ' +
+        'onclick="window.SchemaStudio.composerBehaviorSelect(\'' + p.key + '\')" ' +
+        'style="cursor:pointer;padding:10px 16px;border-bottom:1px solid var(--ion-color-step-50);">' +
+        '<div style="font-size:0.82rem;font-weight:600;">' + p.key + '</div>' +
+        '<div style="font-size:0.7rem;color:var(--ion-color-medium);margin-top:2px;">' +
+          (p.users && p.users.length ? 'Usado por: ' + p.users.join(', ') : 'Sin entidades') + '</div>' +
+      '</div>';
+    });
+
+    sidebarHtml += '<div style="padding:12px 16px;">' +
+      '<button class="ss-btn-secondary" onclick="window.SchemaStudio.composerBehaviorNew()" style="width:100%;font-size:0.78rem;">' +
+        '<ion-icon name="add-circle-outline"></ion-icon>Nuevo Graph Behavior</button></div>';
+
+    sidebar.innerHTML = sidebarHtml;
+
+    // ── Panel ─────────────────────────────────────────────────────────────────
+    var panel = document.createElement('div');
+    panel.className = 'ss-composer-panel';
+    panel.id = 'ss-beh-panel';
+    panel.innerHTML = '<div style="padding:40px;text-align:center;color:var(--ion-color-medium);">' +
+      '<ion-icon name="git-network-outline" style="font-size:2.5rem;opacity:0.3;display:block;margin-bottom:12px;"></ion-icon>' +
+      'Selecciona un Graph Behavior para editar</div>';
+
+    layout.appendChild(sidebar);
+    layout.appendChild(panel);
+    container.appendChild(layout);
+
+    if (presets.length) {
+      var selectKey = _composer.behaviorKey || presets[0].key;
+      composerBehaviorSelect(selectKey);
+    }
+  }
+
+  function composerBehaviorSelect(key) {
+    var presets = _getPresetsFromSchemas();
+    var preset = presets.find(function(p) { return p.key === key; });
+    if (!preset) return;
+    _composer.behaviorKey   = key;
+    _composer.behaviorRules = Object.assign({}, preset.rules);
+    delete _composer.behaviorRules._preset; // managed separately
+    renderBehaviorPanelContent(preset);
+  }
+
+  function renderBehaviorPanelContent(preset) {
+    var panel = document.getElementById('ss-beh-panel');
+    if (!panel) return;
+    var rules = _composer.behaviorRules;
+
+    var html = '<div style="padding:12px 16px;background:var(--ion-color-step-50);display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--ion-color-step-100);">' +
+      '<div style="font-size:0.7rem;font-weight:700;color:var(--ion-color-medium);letter-spacing:0.06em;">' +
+        '<ion-icon name="git-network-outline" style="color:var(--ion-color-primary);"></ion-icon>' +
+        ' TOPOLOGY_PRESETS.' + preset.key + '</div>' +
+    '</div>';
+
+    // Usado por
+    if (preset.users && preset.users.length) {
+      html += '<div style="padding:12px 16px;border-bottom:1px solid var(--ion-color-step-100);display:flex;align-items:center;gap:8px;flex-wrap:wrap;">' +
+        '<span style="font-size:0.7rem;color:var(--ion-color-medium);font-weight:600;">USADO POR:</span>';
+      preset.users.forEach(function(u) {
+        html += '<span class="ss-field-chip system">' + u + '</span>';
+      });
+      html += '</div>';
+    }
+
+    // Rules table
+    html += '<div style="padding:16px;border-bottom:1px solid var(--ion-color-step-100);">' +
+      '<div style="font-size:0.72rem;font-weight:700;color:var(--ion-color-medium);margin-bottom:10px;letter-spacing:0.06em;">REGLAS DE COMPORTAMIENTO</div>' +
+      '<div id="ss-beh-rules-list">';
+
+    Object.keys(rules).forEach(function(k, idx) {
+      var val = rules[k];
+      var valType = typeof val;
+      html += '<div class="ss-field-row" style="align-items:center;">' +
+        '<span class="ss-field-chip custom" style="flex-shrink:0;font-family:monospace;">' + k + '</span>' +
+        '<span class="ss-field-chip ' + (valType === 'boolean' ? (val ? 'version' : 'warn') : 'audit') + '" style="flex-shrink:0;">' +
+          (val === null ? 'null' : String(val)) + '</span>' +
+        '<span style="font-size:0.7rem;color:var(--ion-color-medium);flex:1;">' + valType + '</span>' +
+        '<button onclick="window.SchemaStudio.composerBehaviorRemoveRule(\'' + k + '\')" ' +
+          'style="font-size:0.72rem;padding:3px 8px;background:rgba(var(--ion-color-danger-rgb),0.12);color:var(--ion-color-danger);border:none;border-radius:4px;cursor:pointer;">' +
+          '<ion-icon name="trash-outline"></ion-icon></button>' +
+      '</div>';
+    });
+
+    html += '</div>';
+
+    // Add rule form
+    html += '<div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;">' +
+      '<input id="ss-beh-new-key" type="text" placeholder="ruleKey" style="flex:1;min-width:120px;background:var(--ion-color-step-100);border:1px solid var(--ion-color-step-150);border-radius:6px;padding:6px 10px;font-size:0.8rem;color:inherit;">' +
+      '<select id="ss-beh-new-type" style="background:var(--ion-color-step-100);border:1px solid var(--ion-color-step-150);border-radius:6px;padding:6px 10px;font-size:0.8rem;color:inherit;">' +
+        '<option value="boolean">boolean</option><option value="integer">integer</option>' +
+        '<option value="string">string</option></select>' +
+      '<input id="ss-beh-new-val" type="text" placeholder="valor" style="flex:1;min-width:100px;background:var(--ion-color-step-100);border:1px solid var(--ion-color-step-150);border-radius:6px;padding:6px 10px;font-size:0.8rem;color:inherit;">' +
+      '<button class="ss-btn-secondary" onclick="window.SchemaStudio.composerBehaviorAddRule()" style="font-size:0.78rem;padding:6px 12px;">' +
+        '<ion-icon name="add-outline"></ion-icon>Agregar</button>' +
+    '</div></div>';
+
+    // CODE EXPORT
+    var gasCode = _generateBehaviorGas(preset.key, rules);
+    html += '<div style="margin-top:8px;padding:10px 16px;background:rgba(251,191,36,0.08);border:1px solid rgba(251,191,36,0.25);border-radius:8px 8px 0 0;display:flex;align-items:center;justify-content:space-between;">' +
+      '<div style="font-size:0.72rem;font-weight:700;color:#fbbf24;letter-spacing:0.08em;display:flex;align-items:center;gap:8px;">' +
+        '<ion-icon name="code-download-outline"></ion-icon>' +
+        'CODE EXPORT (GAS) \u2014 TOPOLOGY_PRESETS.' + preset.key + '</div>' +
+      '<button class="ss-btn-primary" id="ss-copy-beh-export" onclick="window.SchemaStudio.composerBehaviorCopy()" style="font-size:0.75rem;padding:5px 14px;display:flex;align-items:center;gap:6px;">' +
+        '<ion-icon name="copy-outline"></ion-icon>Copiar GAS</button>' +
+    '</div>';
+    html += '<div class="ss-code-block" id="ss-beh-code-output" data-plain="">' + generateCodeHtml(gasCode) + '</div>';
+
+    panel.innerHTML = html;
+    var codeEl = panel.querySelector('#ss-beh-code-output');
+    if (codeEl) codeEl.dataset.plain = gasCode;
+  }
+
+  function _generateBehaviorGas(key, rules) {
+    var lines = ['  ' + key + ': Object.freeze({',
+      '    _preset: \'' + key + '\',  // [E31] Studio Viewer identifier'];
+    Object.keys(rules).forEach(function(k) {
+      var v = rules[k];
+      var val = typeof v === 'string' ? '"' + v + '"' : String(v);
+      lines.push('    ' + k + ': ' + val + ',');
+    });
+    lines.push('  })');
+    return '// TOPOLOGY_PRESETS.' + key + '\n' + lines.join('\n');
+  }
+
+  function composerBehaviorAddRule() {
+    var key  = (document.getElementById('ss-beh-new-key') || {}).value || '';
+    var type = (document.getElementById('ss-beh-new-type') || {}).value || 'string';
+    var val  = (document.getElementById('ss-beh-new-val') || {}).value || '';
+    if (!key.trim()) return;
+    var parsed = val;
+    if (type === 'boolean') parsed = val === 'true' || val === '1';
+    else if (type === 'integer') parsed = parseInt(val, 10) || 0;
+    _composer.behaviorRules[key.trim()] = parsed;
+    var presets = _getPresetsFromSchemas();
+    var p = presets.find(function(x){ return x.key === _composer.behaviorKey; });
+    if (p) { p.rules = Object.assign({ _preset: p.key }, _composer.behaviorRules); renderBehaviorPanelContent(p); }
+  }
+
+  function composerBehaviorRemoveRule(key) {
+    delete _composer.behaviorRules[key];
+    var presets = _getPresetsFromSchemas();
+    var p = presets.find(function(x){ return x.key === _composer.behaviorKey; });
+    if (p) { p.rules = Object.assign({ _preset: p.key }, _composer.behaviorRules); renderBehaviorPanelContent(p); }
+  }
+
+  function composerBehaviorCopy() {
+    var codeEl = document.getElementById('ss-beh-code-output');
+    if (!codeEl) return;
+    var txt = codeEl.dataset.plain || codeEl.textContent;
+    var btn = document.getElementById('ss-copy-beh-export');
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(txt).then(function() {
+        if (btn) { btn.innerHTML = '<ion-icon name="checkmark-outline"></ion-icon>Copiado!'; setTimeout(function(){ btn.innerHTML = '<ion-icon name="copy-outline"></ion-icon>Copiar GAS'; }, 2000); }
+      });
+    } else {
+      var el = document.createElement('textarea'); el.value = txt;
+      document.body.appendChild(el); el.select(); document.execCommand('copy'); document.body.removeChild(el);
+      if (btn) { btn.innerHTML = '<ion-icon name="checkmark-outline"></ion-icon>Copiado!'; setTimeout(function(){ btn.innerHTML = '<ion-icon name="copy-outline"></ion-icon>Copiar GAS'; }, 2000); }
+    }
+  }
+
+  function composerBehaviorNew() {
+    var key = prompt('Nombre del nuevo Graph Behavior (ej: FLAT_TAXONOMY):');
+    if (!key || !key.trim()) return;
+    key = key.trim().toUpperCase().replace(/\s+/g, '_');
+    var existing = _getPresetsFromSchemas();
+    if (existing.some(function(p){ return p.key === key; })) {
+      alert('Ya existe un preset con ese nombre.'); return;
+    }
+    _composer._customBehaviors = _composer._customBehaviors || [];
+    _composer._customBehaviors.push({ key: key, rules: { _preset: key }, users: [] });
+    _composer.behaviorKey = key;
+    var container = document.getElementById('ss-tab-content');
+    if (container) { container.innerHTML = ''; renderBehaviorComposer(container); }
   }
 
   function buildComposerSidebar(schemas, entities) {
@@ -1415,6 +1923,18 @@
     // Tab-specific exports [Debug-fix]
     copyTemplatesGas: copyTemplatesGas,
     copyPresetsGas:   copyPresetsGas,
+    // Template Composer [S31.11]
+    composerTemplateSelect:     composerTemplateSelect,
+    composerTemplateAddField:   composerTemplateAddField,
+    composerTemplateRemoveField:composerTemplateRemoveField,
+    composerTemplateCopy:       composerTemplateCopy,
+    composerTemplateNew:        composerTemplateNew,
+    // Behavior Composer [S31.12]
+    composerBehaviorSelect:     composerBehaviorSelect,
+    composerBehaviorAddRule:    composerBehaviorAddRule,
+    composerBehaviorRemoveRule: composerBehaviorRemoveRule,
+    composerBehaviorCopy:       composerBehaviorCopy,
+    composerBehaviorNew:        composerBehaviorNew,
     composerSelectEntity:    composerSelectEntity,   // [C2-QR] export for programmatic entity switching
     _loadDbStatusPill: function() {
       var dot = document.getElementById('ss-status-dot');
