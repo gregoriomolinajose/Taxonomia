@@ -115,7 +115,7 @@ const FIELD_TEMPLATES = Object.freeze({
    * Default: 1 (first write).
    */
   VERSION_FIELD: () => Object.freeze([
-    { name: "version", type: "hidden", readonly: true, defaultValue: 1 }
+    { name: "_version", type: "hidden", readonly: true, defaultValue: 1 }
   ]),
 
   /**
@@ -138,15 +138,10 @@ const APP_SCHEMAS = {
     fields: [
       { name: "id_unidad_negocio", type: "hidden", primaryKey: true },
       ...FIELD_TEMPLATES.SYSTEM_FIELDS(),
+      ...FIELD_TEMPLATES.ESTADO_FIELD(),
       ...FIELD_TEMPLATES.AUDIT_FIELDS(),
       ...FIELD_TEMPLATES.VERSION_FIELD(),
-
-      { name: "separator_0", type: "divider", label: "Datos Generales", width: 12 },
       { name: "nombre", type: "text", label: "Nombre de Unidad", required: true, width: 12 },
-      { name: "descripcion", type: "textarea", label: "Descripción", required: false, width: 12 },
-      { name: "responsable", type: "text", label: "Responsable", required: false, width: 12 },
-
-      ...FIELD_TEMPLATES.GRAPH_SEPARATOR("Topología (Grafo)"),
       { name: "portafolios_vinculados", type: "relation", relationType: "hijo", targetEntity: "Portafolio", graphEntity: "Sys_Graph_Edges", valueField: "id_portafolio", labelField: "nombre", uiBehavior: "subgrid", label: "Portafolios Asociados", isTemporalGraph: true, graphEdgeType: "UNIDAD_NEGOCIO_PORTAFOLIO", topologyCardinality: "1:N", width: 12 }
     ]
   },
@@ -155,27 +150,20 @@ const APP_SCHEMAS = {
     metadata: { prefix: 'PORT', showInMenu: true, order:2, iconName:'briefcase-outline', color:'danger', label:'Portafolios', titleField:'nombre', idField:'id_portafolio', fkField:null, maxListAttrs: 8 },
     topological_metadata: {
         ownerFields: ["director_id", "vp_id"],
-        parentEntity: null,
-        parentField: null
+        parentEntity: "Unidad_Negocio",
+        parentField: "unidad_negocio_padre"
     },
     primaryKey: "id_portafolio",
     topologyRules: TOPOLOGY_PRESETS.JERARQUICA_ESTRICTA_GRAPH_STD,
     fields: [
       { name: "id_portafolio", type: "hidden", primaryKey: true },
       ...FIELD_TEMPLATES.SYSTEM_FIELDS(),
+      ...FIELD_TEMPLATES.ESTADO_FIELD(),
       ...FIELD_TEMPLATES.AUDIT_FIELDS(),
       ...FIELD_TEMPLATES.VERSION_FIELD(),
-
-      { name: "separator_1", type: "divider", label: "Definición Estratégica", width: 12 },
       { name: "nombre", type: "text", label: "Nombre de Portafolio", required: true, width: 12 },
-      
-      ...FIELD_TEMPLATES.GRAPH_SEPARATOR(),
       { name: "unidad_negocio_padre", type: "relation", relationType: "padre", targetEntity: "Unidad_Negocio", graphEntity: "Sys_Graph_Edges", valueField: "id_unidad_negocio", labelField: "nombre", uiComponent: "select_single", label: "Unidad de Negocio (Padre)", isTemporalGraph: true, graphEdgeType: "UNIDAD_NEGOCIO_PORTAFOLIO", topologyCardinality: "1:N", width: 12, showInList: true },
-      { name: "grupos_productos_vinculados", type: "relation", relationType: "hijo", targetEntity: "Grupo_Productos", graphEntity: "Sys_Graph_Edges", valueField: "id_grupo_producto", labelField: "nombre", uiBehavior: "subgrid", label: "Grupos de Productos Asociados", isTemporalGraph: true, graphEdgeType: "PORTAFOLIO_GRUPO_PRODUCTO", topologyCardinality: "1:N", width: 12 },
-
-      { name: "separator_4", type: "divider", label: "Gobernanza y Actores", width: 12 },
-      { name: "gobierno_liderazgo", type: "textarea", label: "Gobierno y Liderazgo", required: false, width: 6 },
-      { name: "stakeholders", type: "textarea", label: "Stakeholders", required: false, width: 6 }
+      { name: "grupos_productos_vinculados", type: "relation", relationType: "hijo", targetEntity: "Grupo_Productos", graphEntity: "Sys_Graph_Edges", valueField: "id_grupo_producto", labelField: "nombre", uiBehavior: "subgrid", label: "Grupos de Productos Asociados", isTemporalGraph: true, graphEdgeType: "PORTAFOLIO_GRUPO_PRODUCTO", topologyCardinality: "1:N", width: 12 }
     ]
   },
   Dominio: {
@@ -211,17 +199,12 @@ const APP_SCHEMAS = {
     fields: [
       { name: "id_grupo_producto", type: "hidden", primaryKey: true },
       ...FIELD_TEMPLATES.SYSTEM_FIELDS(),
+      ...FIELD_TEMPLATES.ESTADO_FIELD(),
       ...FIELD_TEMPLATES.AUDIT_FIELDS(),
       ...FIELD_TEMPLATES.VERSION_FIELD(),
-      { name: "separator_1", type: "divider", label: "Datos Generales", width: 12 },
       { width: 12, name: "nombre", label: "Nombre", type: "text", required: true },
-      { width: 12, name: "descripcion", label: "Descripción", type: "textarea", required: false, showInList: false },
-      ...FIELD_TEMPLATES.GRAPH_SEPARATOR(),
       { width: 12, name: "id_portafolio", type: "relation", relationType: "padre", targetEntity: "Portafolio", graphEntity: "Sys_Graph_Edges", valueField: "id_portafolio", labelField: "nombre", uiComponent: "select_single", label: "Portafolio Padre (Grafo)", isTemporalGraph: true, graphEdgeType: "PORTAFOLIO_GRUPO_PRODUCTO", topologyCardinality: "1:N", required: true },
-      { width: 12, name: "productos_vinculados", type: "relation", relationType: "hijo", targetEntity: "Producto", graphEntity: "Sys_Graph_Edges", valueField: "id_producto", labelField: "nombre_producto", uiBehavior: "subgrid", label: "Productos Asociados (1:N)", isTemporalGraph: true, graphEdgeType: "GRUPO_PRODUCTO_PRODUCTO", topologyCardinality: "1:N" },
-      { name: "separator_2", type: "divider", label: "Estrategia de Valor", width: 12 },
-      { width: 12, name: "naturaleza_valor", label: "Naturaleza de Valor", type: "text", required: false },
-      { width: 12, name: "modelo_negocio", label: "Modelo de Negocio", type: "select", required: true, options: ["SaaS", "Marketplace", "B2B", "B2C", "Transaccional"] }
+      { width: 12, name: "productos_vinculados", type: "relation", relationType: "hijo", targetEntity: "Producto", graphEntity: "Sys_Graph_Edges", valueField: "id_producto", labelField: "nombre_producto", uiBehavior: "subgrid", label: "Productos Asociados (1:N)", isTemporalGraph: true, graphEdgeType: "GRUPO_PRODUCTO_PRODUCTO", topologyCardinality: "1:N" }
     ]
   },
   Producto: {
@@ -238,12 +221,10 @@ const APP_SCHEMAS = {
     fields: [
       { name: "id_producto", type: "hidden", primaryKey: true },
       ...FIELD_TEMPLATES.SYSTEM_FIELDS(),
+      ...FIELD_TEMPLATES.ESTADO_FIELD(),
       ...FIELD_TEMPLATES.AUDIT_FIELDS(),
       ...FIELD_TEMPLATES.VERSION_FIELD(),
-      { name: "separator_1", type: "divider", label: "Datos Generales", width: 12 },
       { width: 12, name: "nombre_producto", label: "Nombre de Producto", type: "text", required: true },
-      { width: 12, name: "descripcion", label: "Descripción", type: "textarea", required: false, showInList: false },
-      ...FIELD_TEMPLATES.GRAPH_SEPARATOR(),
       { width: 12, name: "id_grupo_producto", type: "relation", relationType: "padre", targetEntity: "Grupo_Productos", graphEntity: "Sys_Graph_Edges", valueField: "id_grupo_producto", labelField: "nombre", uiComponent: "select_single", label: "Grupo de Producto (Padre)", isTemporalGraph: true, graphEdgeType: "GRUPO_PRODUCTO_PRODUCTO", topologyCardinality: "1:N", required: true }
     ]
   },

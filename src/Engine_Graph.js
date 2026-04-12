@@ -40,12 +40,17 @@ const Engine_Graph = {
 
             // 1. Sibling Collision Check [Rule 11]
             if (rules.siblingCollisionCheck) {
-                // Prevención exclusiva de duplicados maliciosos en un mismo payload. Las aristas pre-existentes en DB se consideran idempotentes (NO-OP).
                 const edgeFingerprint = `${parentId}_${childId}`;
+                // Prevención de duplicados INTRACARGA (En el mismo payload)
                 if (seenIncomingEdges.has(edgeFingerprint)) {
                     throw new Error(`[Topology Error] Colisión de Hermanos: Payload contiene relaciones duplicadas para ${childId} bajo ${parentId}.`);
                 }
                 seenIncomingEdges.add(edgeFingerprint);
+                
+                // NOTA: No lanzamos error si la relación ya existe en la DB (parentsOf[childId].includes(parentId)).
+                // S30: El enfoque Declarativo-SCD2 envía el estado ABSOLUTO de la grilla. Las aristas inmutadas 
+                // ya presentes en DB llegarán por acá nativamente y Engine_Graph.patchSCD2Edges sabrá 
+                // ignorarlas vía diffing delta sin generar colisiones ficticias.
             }
 
             // 2 & 3. Unified DFS Recursion (Cycles & Max Depth) [Rules 7 & 9]

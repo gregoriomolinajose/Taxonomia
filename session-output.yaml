@@ -1,0 +1,35 @@
+session_id: "SES-DEBUG-GHOST"
+summary: "Fix Ghost Stealing bug in nested SCD2 graph patching + e2e test"
+type: maintenance
+outcomes:
+  - "Injected JIT relational Pre-fill into FormRenderer_UI.client.js to prevent empty payloads on graph parent components."
+  - "Patched Engine_DB.js to gracefully handle standard 'id_registro' wrappers instead of requiring strict 'primaryKey' during the recursive diff."
+  - "Deployed hotfixes incrementally to DEV and finalized synchronization in PROD."
+  - "Created Playwright automated test (__tests__/e2e/ghost-stealing.spec.js) defending this specific resilience case."
+patterns:
+  - description: "When UI forms operate over temporal SCD-2 edges, use silent hydration (JIT pre-fill from cached edges) rather than physically expecting the relation in the flattened JSON response."
+    context: "frontend, schema, forms, temporal_graph"
+    type: architecture
+  - description: "UI Component select_single arrays encode strictly to 'id_registro', so backend relational difference mapping must reliably fallback to c['id_registro'] to avoid false orphans."
+    context: "backend, subgrid, diffing"
+    type: defensive
+corrections: []
+coaching:
+  trust_level: "established"
+current_work:
+  release: v1.2.8
+  phase: closed
+pending:
+  decisions: []
+  blockers: []
+  next_actions: []
+narrative: |
+  ## Root Cause Found
+  The Ghost Stealing bug arose from a collision between the Client and Server:
+  1. The UI Drawer implicitly mapped physical record fields, disregarding virtual `isTemporalGraph: true` relations, so the child returned an empty empty parent ID string upon subgrid addition.
+  2. The server (`Engine_DB`) falsely validated an array of parent orphans due to mapping `incomingIds` natively to `c[pkField]`, when scalars are natively encoded as `c['id_registro']`.
+
+  ## Implementation
+  FormRenderer was taught to resolve and securely lock logical graph relationships directly inside single select DOM inputs before the drawer exposes them. On the backend, we patched an array `.map()` to accurately index scalar representations. Playwright tests were added successfully. The branch has been committed and deployed seamlessly up to Production.
+next_session_prompt: |
+  Start evaluating other possible Ghost Stealing variants if the user adds deep relations (3rd tier). Playwright pipeline runs reliably currently.

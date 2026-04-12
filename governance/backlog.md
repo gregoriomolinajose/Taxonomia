@@ -29,7 +29,8 @@
 | E29| Fixes Configuración Jerárquica Estricta 1:N           | ✅ Complete  | Auditoría y parche sobre las restricciones topológicas padre-hijo    | Alta     |
 | E30| Bug Bash & Tech Debt Cleaning Sprint                  | ✅ Complete  | Limpieza de assets `.claspignore` y muteo estructural relacional     | Alta     |
 | E31| Schema Governance Studio                              | ✅ Complete  | Catálogos de Presets/Templates y Blueprint Composer multi-contexto   | Alta     |
-| E32| Bug Bash: Visual & Persistence                        | 🔄 In Progress| Fix: Carga en caliente reactiva y Persistencia en Engine DB          | Alta     |
+| E32| Bug Bash: Visual & Persistence                        | ✅ Complete  | Fix: Carga en caliente reactiva y Persistencia en Engine DB          | Alta     |
+| E33| Ghost Stealing Resilience Bug Bash                      | ✅ Complete  | Mitigar omisión de hidratación SCD-2 de relaciones en subgrids 1:N   | Máxima   |
 
 ## Parking Lot / Deuda Técnica (Post-Epic 11)
 

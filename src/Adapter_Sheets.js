@@ -103,7 +103,7 @@ const Adapter_Sheets = {
                 const currentDbVersion = Number(existingRow[idxVersion]) || 1;
                 const incomingVersion = Number(payload.version) || Number(payload._version) || 1;
                 if (currentDbVersion !== incomingVersion && payload._overrideConcurrency !== true) {
-                    throw new Error("ERROR_CONCURRENCY: La entidad '" + primaryKeyValue + "' ha sido modificada por otro usuario recientemente. Por favor, recargue e intente nuevamente.");
+                    throw new Error("ERROR_CONCURRENCY: [DEBUG_OCC] sheetV=" + currentDbVersion + ", payloadV=" + incomingVersion + " para " + primaryKeyValue + " |\nPAYLOAD=" + JSON.stringify(payload));
                 }
                 payload.version = currentDbVersion + 1;
                 payload._version = payload.version; // Compatibilidad hacia atrás

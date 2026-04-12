@@ -130,8 +130,15 @@ window.UI_FormSubmitter = class UI_FormSubmitter {
                     const itemName = (response.data && response.data.Entity) ? response.data.Entity : this.entityName;
                     this._showToast(`¡${itemName} guardado con éxito!`, 'success');
                     if (activeForm) {
-                        // El estado ahora pertenece localmente a cada componente (S30.11 Nodal Architecture).
-                        // Si requieren limpieza post-guardado, responderán a AppEventBus u otro ciclo de vida.
+                        // Sincronización de DOM con Backend: Actualizar versión y previniendo Colisiones (OCC) en guardados múltiples
+                        try {
+                            let freshVersion = payload.version || payload._version || 1;
+                            if (response.data && response.data.adapter_results && response.data.adapter_results.sheets) {
+                                if (response.data.adapter_results.sheets.version) freshVersion = response.data.adapter_results.sheets.version;
+                            }
+                            const vInputs = activeForm.querySelectorAll('input[name="version"], input[name="_version"]');
+                            vInputs.forEach(i => i.value = freshVersion);
+                        } catch(e) { }
                     }
                     
                     // Disparo de Evento Nativo de Persistencia Inline (H6/H2 Simplification)
@@ -146,6 +153,7 @@ window.UI_FormSubmitter = class UI_FormSubmitter {
                     this._performSuccessCleanup(response, isInlineRendered);
                 } else {
                     if (response && response.errorType === 'CONCURRENCY') {
+                        console.error("[OCC_FATAL_TRACE] Backend telemetry:", response.message);
                         this._showToast('⚠️ Colisión: Los datos fueron modificados por otro usuario mientras los editabas. Por favor extrae la información fresca.', 'danger');
                     } else {
                         this._showToast(`Error: ${response ? response.message : 'Error desconocido'}`, 'danger');
@@ -266,7 +274,7 @@ window.UI_FormSubmitter = class UI_FormSubmitter {
                     }
                 } catch(e) {}
                 
-                const cleanRecord = { ...payload, [pkField]: pkValue, _version: freshVersion };
+                const cleanRecord = { ...payload, [pkField]: pkValue, _version: freshVersion, version: freshVersion };
                 if (freshLexical) cleanRecord.lexical_id = freshLexical;
                 const liveData = window.DataStore.get(entityName);
                 const existingIdx = liveData.findIndex(r => window.UI_FormUtils.normalizeId(r[pkField]) === window.UI_FormUtils.normalizeId(pkValue));
