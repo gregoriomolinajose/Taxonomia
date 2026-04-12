@@ -1,4 +1,4 @@
-﻿/**
+/**
  * [E31-S31.7] Adapter_Sheets_Provisioner.gs
  *
  * Schema Provisioner — Self-healing database structure reconciliation.
@@ -29,6 +29,9 @@
 // ─── Config ──────────────────────────────────────────────────────────────────
 
 const PROVISIONER_CONFIG = Object.freeze({
+  // [BugA-fix] TAB_PREFIX must match Adapter_Sheets._ensureSheetExists naming convention.
+  // Adapter_Sheets creates tabs as 'DB_<EntityName>' — Provisioner must use same prefix.
+  TAB_PREFIX:        "DB_",
   ORPHAN_PREFIX:     "_ORPHAN_",
   TAB_COLOR_MANAGED: "#4285F4",   // Google Blue — fully reconciled
   TAB_COLOR_WARN:    "#FDD835",   // Yellow — has orphaned columns
@@ -69,9 +72,12 @@ function reconcileAll(ss) {
   });
 
   // 2. Detect orphaned sheets
+  // [BugA-fix] Sheets are named 'DB_<EntityName>'. Strip prefix before cross-referencing.
+  // Sheets that are NOT DB_<knownEntity> and NOT already managed are considered orphans.
+  const managedTabNames = new Set(entityNames.map(n => PROVISIONER_CONFIG.TAB_PREFIX + n));
   ss.getSheets().forEach(sheet => {
     const sheetName = sheet.getName();
-    if (!entityNames.includes(sheetName)) {
+    if (!managedTabNames.has(sheetName)) {
       _markSheetAsOrphan(sheet);
       report.orphanedSheets.push(sheetName);
     }
@@ -109,9 +115,10 @@ function ensureProvisioned(entityName, ss) {
  * @returns {Object} { added, orphaned, alreadyCorrect }
  */
 function _reconcileEntity(ss, entityName) {
-  const schema   = getAppSchema(entityName);
+  const schema    = getAppSchema(entityName);
   const canonical = _getCanonicalHeaders(schema);
-  const sheet    = _getOrCreateSheet(ss, entityName);
+  // [BugA+BugB fix] Pass canonical headers so _getOrCreateSheet can initialize a new sheet.
+  const sheet     = _getOrCreateSheet(ss, entityName, canonical);
   const current  = _getCurrentHeaders(sheet);
 
   const report = {
@@ -197,17 +204,29 @@ function _quarantineColumn(sheet, colName, preloadedHeaders) {
 // ─── Sheet Helpers ────────────────────────────────────────────────────────────
 
 /**
- * Find an existing sheet or create a new one with the entity name.
+ * Find an existing sheet (DB_<entityName>) or create it with canonical headers.
+ *
+ * [BugA-fix] Tab naming follows Adapter_Sheets convention: 'DB_' + entityName.
+ * [BugB-fix] Freshly created sheets receive the full canonical header row immediately,
+ *            preventing the reconciler from seeing them as empty on the same run.
  *
  * @param {GoogleAppsScript.Spreadsheet.Spreadsheet} ss
  * @param {string} entityName
+ * @param {string[]} canonicalHeaders - Headers to inject if creating a new sheet.
  * @returns {GoogleAppsScript.Spreadsheet.Sheet}
  */
-function _getOrCreateSheet(ss, entityName) {
-  let sheet = ss.getSheetByName(entityName);
+function _getOrCreateSheet(ss, entityName, canonicalHeaders) {
+  const tabName = PROVISIONER_CONFIG.TAB_PREFIX + entityName;  // e.g. 'DB_Portafolio'
+  let sheet = ss.getSheetByName(tabName);
   if (!sheet) {
-    sheet = ss.insertSheet(entityName);
-    Logger.log('[Provisioner] Created new sheet: ' + entityName);
+    sheet = ss.insertSheet(tabName);
+    Logger.log('[Provisioner] Created new sheet: ' + tabName);
+    // [BugB-fix] Inject canonical headers immediately on creation.
+    // Avoids the empty-sheet problem where insertColumnAfter(0) behaves unexpectedly.
+    if (canonicalHeaders && canonicalHeaders.length > 0) {
+      sheet.getRange(1, 1, 1, canonicalHeaders.length).setValues([canonicalHeaders]);
+      Logger.log('[Provisioner] Headers injected into ' + tabName + ': ' + canonicalHeaders.join(', '));
+    }
   }
   return sheet;
 }
@@ -303,8 +322,10 @@ function getProvisioningStatus(ss) {
   const entityNames = Object.keys(APP_SCHEMAS).filter(k => k !== '_UI_CONFIG');
 
   return entityNames.map(entityName => {
-    const sheet = ss.getSheetByName(entityName);
-    if (!sheet) return { entity: entityName, exists: false, managed: false };
+    // [BugA-fix] Look up 'DB_<EntityName>' — the actual tab naming convention.
+    const tabName = PROVISIONER_CONFIG.TAB_PREFIX + entityName;
+    const sheet = ss.getSheetByName(tabName);
+    if (!sheet) return { entity: entityName, exists: false, managed: false, tabName };
 
     const meta = _readDeveloperMetadata(sheet);
     const canonical = _getCanonicalHeaders(getAppSchema(entityName));
