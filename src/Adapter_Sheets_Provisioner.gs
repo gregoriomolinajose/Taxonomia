@@ -130,11 +130,14 @@ function _reconcileEntity(ss, entityName) {
 
   // ── Step 1: Add missing columns ──────────────────────────────────────────
   const missingCols = canonical.filter(col => !current.includes(col));
+  let numAdded = 0;
   missingCols.forEach(col => {
     const lastCol = sheet.getLastColumn();
-    sheet.insertColumnAfter(Math.max(lastCol, 1));
-    const newCol = sheet.getLastColumn();
-    sheet.getRange(1, newCol).setValue(col);
+    // Append the new column to the right of the real data boundary + already added cols
+    const targetCol = Math.max(lastCol, 1) + numAdded;
+    sheet.insertColumnAfter(targetCol);
+    sheet.getRange(1, targetCol + 1).setValue(col);
+    numAdded++;
     report.added.push(col);
   });
 

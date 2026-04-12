@@ -534,17 +534,46 @@
             }
 
             console.log("[FormEngine] Pre-llenando", inputs.length, "campos...");
+            const formSchemaMap = APP_SCHEMAS[entityName] ? (APP_SCHEMAS[entityName].fields || APP_SCHEMAS[entityName]) : [];
+            const pkFieldLocal = APP_SCHEMAS[entityName]?.primaryKey || 'id';
+
             inputs.forEach(input => {
                 const name = input.getAttribute('name');
-                if (name && record.hasOwnProperty(name) && !input.hasAttribute('data-skip-hydration')) {
+                if (!name || input.hasAttribute('data-skip-hydration')) return;
+
+                let valToSet = undefined;
+                if (record.hasOwnProperty(name)) {
+                    valToSet = record[name];
+                } else {
+                    // S30.13 JIT Graph Relational Pre-fill para Single-Select Padres (Evita Stealing Fantasma)
+                    let checkSchemaMap = Array.isArray(formSchemaMap) ? formSchemaMap : Object.keys(formSchemaMap).map(k => ({ name: k, ...formSchemaMap[k]}));
+                    const fieldMeta = checkSchemaMap.find(f => f.name === name);
+                    
+                    if (fieldMeta && fieldMeta.isTemporalGraph && window.DataStore && window.DataStore.get('Sys_Graph_Edges')) {
+                        const activeEdges = window.DataStore.get('Sys_Graph_Edges').filter(e => e.es_version_actual !== false);
+                        const edgeName = (fieldMeta.graphEdgeType || fieldMeta.name).toUpperCase();
+                        const currentPK = record[pkFieldLocal];
+                        if (currentPK) {
+                            if (fieldMeta.relationType === 'padre') {
+                                const match = activeEdges.find(e => String(e.id_nodo_hijo) === String(currentPK) && e.tipo_relacion === edgeName);
+                                if (match) valToSet = match.id_nodo_padre;
+                            } else {
+                                const match = activeEdges.find(e => String(e.id_nodo_padre) === String(currentPK) && e.tipo_relacion === edgeName);
+                                if (match) valToSet = match.id_nodo_hijo;
+                            }
+                        }
+                    }
+                }
+
+                if (valToSet !== undefined) {
                     if (input.dataset.parser === 'json_array') {
                         let parsedData = [];
                         try {
-                            parsedData = typeof record[name] === 'string' ? JSON.parse(record[name]) : record[name];
-                        } catch(e) { parsedData = typeof record[name] === 'string' && record[name] ? [record[name]] : []; }
+                            parsedData = typeof valToSet === 'string' ? JSON.parse(valToSet) : valToSet;
+                        } catch(e) { parsedData = typeof valToSet === 'string' && valToSet ? [valToSet] : []; }
                         input.value = JSON.stringify(Array.isArray(parsedData) ? parsedData : []);
                     } else {
-                        input.value = record[name];
+                        input.value = valToSet;
                     }
                 }
             });

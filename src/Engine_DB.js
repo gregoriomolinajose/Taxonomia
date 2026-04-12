@@ -306,7 +306,7 @@ const Engine_DB = {
                     const pkField = nestedSchema && nestedSchema.primaryKey ? nestedSchema.primaryKey : null;
                     if (!pkField) throw new Error(`[AR-Governance] La entidad huerfano '${targetEntity}' carece de 'primaryKey' en Schema_Engine. gs`);
                     
-                    const incomingIds = children.map(c => String(c[pkField] || ''));
+                    const incomingIds = children.map(c => String(c[pkField] || c['id_registro'] || ''));
                     let orphansToProcess = [];
 
                     // [S6.1] Config-Driven Delegation to Engine_Graph
