@@ -57,8 +57,8 @@
 
         global.UI_Factory.buildBadge = function(field) {
             const container = document.createElement('div');
-            container.style.marginTop = 'var(--spacing-2)';
-            container.style.marginBottom = 'var(--spacing-4)';
+            container.style.marginTop = 'var(--spacing-1)';
+            container.style.marginBottom = '2px';
             container.style.display = 'flex';
             container.style.alignItems = 'center';
             container.style.justifyContent = 'space-between';
@@ -77,8 +77,9 @@
             chipEl.style.fontFamily = 'var(--font-mono)';
             chipEl.style.border = '1px solid var(--ion-color-primary)';
             
-            // The actual value will be populated by hydrateField 
-            chipEl.textContent = '...';
+            // Init default state for new records
+            chipEl.textContent = '(Autogenerado)';
+            chipEl.setAttribute('color', 'medium');
 
             const hiddenInput = document.createElement('input');
             hiddenInput.setAttribute('type', 'hidden');
@@ -89,7 +90,13 @@
             Object.defineProperty(hiddenInput, 'value', {
                 set: function(val) {
                     _originalValSetter.call(this, val);
-                    chipEl.textContent = val || 'NUEVO';
+                    if (val && String(val).trim() !== '') {
+                        chipEl.textContent = val;
+                        chipEl.setAttribute('color', 'primary');
+                    } else {
+                        chipEl.textContent = '(Autogenerado)';
+                        chipEl.setAttribute('color', 'medium');
+                    }
                 },
                 get: function() {
                     return Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').get.call(this);

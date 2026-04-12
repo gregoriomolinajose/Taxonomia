@@ -93,7 +93,8 @@
         const f = fields.find(field => field.name === key);
         if (f) {
             if (f.primaryKey) isPrimaryKey = true;
-            if (f.type === 'hidden' && !f.primaryKey) isHidden = true;
+            // [S32 Fix] Campos hidden nun ca se muestran en la tabla (incluyendo PKs como id_unidad_negocio)
+            if (f.type === 'hidden') isHidden = true;
             if (f.showInList !== undefined) isHidden = !f.showInList;
             uiType = f.uiDisplay || f.type || 'text';
         } else {
@@ -110,7 +111,8 @@
     return {
         key,
         label: window.UI_DataGrid && window.UI_DataGrid._labelFromKey ? window.UI_DataGrid._labelFromKey(key, entityName) : key,
-        visible: isPrimaryKey ? true : !isHidden,
+        // [S32 Fix] NO forzamos true para PK. isHidden domina (generalmente los PK son hidden)
+        visible: !isHidden,
         sortable: true,
         uiType: uiType
     };

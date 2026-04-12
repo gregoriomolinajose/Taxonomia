@@ -257,13 +257,17 @@ window.UI_FormSubmitter = class UI_FormSubmitter {
 
             if (pkField && pkValue) {
                 let freshVersion = payload._version || 1;
+                let freshLexical = payload.lexical_id;
                 try {
+                    if (response.lexical_id) freshLexical = response.lexical_id;
                     if (response.data && response.data.adapter_results && response.data.adapter_results.sheets) {
                         if (response.data.adapter_results.sheets.version) freshVersion = response.data.adapter_results.sheets.version;
+                        if (response.data.adapter_results.sheets.lexical_id) freshLexical = response.data.adapter_results.sheets.lexical_id;
                     }
                 } catch(e) {}
                 
                 const cleanRecord = { ...payload, [pkField]: pkValue, _version: freshVersion };
+                if (freshLexical) cleanRecord.lexical_id = freshLexical;
                 const liveData = window.DataStore.get(entityName);
                 const existingIdx = liveData.findIndex(r => window.UI_FormUtils.normalizeId(r[pkField]) === window.UI_FormUtils.normalizeId(pkValue));
 

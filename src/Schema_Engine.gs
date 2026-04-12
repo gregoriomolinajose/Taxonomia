@@ -82,7 +82,7 @@ const FIELD_TEMPLATES = Object.freeze({
    * - estado: lifecycle status flag ("Activo" | "Eliminado" | "Borrador").
    */
   SYSTEM_FIELDS: () => Object.freeze([
-    { name: "lexical_id", type: "text", label: "ID Amigable", uiBehavior: "badge", readonly: true,
+    { name: "lexical_id", type: "text", label: "ID", uiBehavior: "badge", readonly: true,
       helpText: "Generado automáticamente: ACRONIMO-CONSECUTIVO (ej. PORT-0042)" },
     { name: "estado", type: "hidden", defaultValue: "Activo" }
   ]),
@@ -209,11 +209,11 @@ const APP_SCHEMAS = {
     titleField: "nombre",
     topologyRules: TOPOLOGY_PRESETS.JERARQUICA_ESTRICTA_GRAPH_STD,
     fields: [
+      { name: "id_grupo_producto", type: "hidden", primaryKey: true },
       ...FIELD_TEMPLATES.SYSTEM_FIELDS(),
       ...FIELD_TEMPLATES.AUDIT_FIELDS(),
       ...FIELD_TEMPLATES.VERSION_FIELD(),
       { name: "separator_1", type: "divider", label: "Datos Generales", width: 12 },
-      { width: 12, name: "id_grupo_producto", label: "ID Grupo Producto", type: "text", required: true, readonly: true, primaryKey: true },
       { width: 12, name: "nombre", label: "Nombre", type: "text", required: true },
       { width: 12, name: "descripcion", label: "Descripción", type: "textarea", required: false, showInList: false },
       ...FIELD_TEMPLATES.GRAPH_SEPARATOR(),
@@ -479,4 +479,4 @@ if (typeof module !== 'undefined') {
 // Requires: Adapter_Sheets_Provisioner.gs (shares GAS global scope)
 // These endpoints are now maintained in API_Admin.gs for SRP.
 // See API_Admin.gs for getSchemaProvisioningStatus() and runSchemaReconcile().
-
+
