@@ -27,6 +27,8 @@
 | E25| The Zero-Defect Hardening Sprint                      | ✅ Complete   | Deprecate Ionic Modals, Mobile First Drawers, Component UX fixes     | Max      |
 | E28| Dashboard Top Cards                                   | ✅ Complete   | Visibilidad de Estructura Ágil en Dashboard                          | Alta     |
 | E29| Fixes Configuración Jerárquica Estricta 1:N           | ✅ Complete  | Auditoría y parche sobre las restricciones topológicas padre-hijo    | Alta     |
+| E30| Bug Bash & Tech Debt Cleaning Sprint                  | ✅ Complete  | Limpieza de assets `.claspignore` y muteo estructural relacional     | Alta     |
+| E31| Schema Governance Studio                              | ✅ Complete  | Catálogos de Presets/Templates y Blueprint Composer multi-contexto   | Alta     |
 
 ## Parking Lot / Deuda Técnica (Post-Epic 11)
 
