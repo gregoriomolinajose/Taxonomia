@@ -370,6 +370,8 @@
   .ss-code-key    { color: #93c5fd; }
   .ss-code-str    { color: #86efac; }
   .ss-code-num    { color: #fcd34d; }
+  .ss-code-spread { color: #fbbf24; font-weight: 700; }    /* GAS: ...FIELD_TEMPLATES spread */
+  .ss-code-entity { color: #c084fc; font-weight: 700; }    /* GAS: entity name */
   .ss-code-bool   { color: #f0abfc; }
   .ss-code-templ  { color: #67e8f9; font-weight: 600; }
   .ss-code-comment{ color: #94a3b8; font-style: italic; }
@@ -1004,14 +1006,14 @@
     '</div>';
 
     // [O2-AR] Code Export: generateCodeJson -> clipboard, generateCodeHtml -> display
-    var plainJson = generateCodeJson(entityName, _composer.fields, schema);
-    html += '<div style="padding:12px 16px;background:var(--ion-color-step-100);display:flex;align-items:center;justify-content:space-between;">' +
+    // [GAS Format] generateCodeGas() collapses template groups back to FIELD_TEMPLATES.* spread refs
+    var plainJson = generateCodeGas(entityName, _composer.fields, schema);
       '<div style="font-size:0.72rem;font-weight:700;color:var(--ion-color-medium);letter-spacing:0.06em;display:flex;align-items:center;gap:8px;">' +
         '<ion-icon name="code-download-outline" style="color:var(--ion-color-warning-shade);"></ion-icon>' +
-        'CODE EXPORT (JSON) - ' + entityName +
+        'CODE EXPORT (GAS) — ' + entityName +
       '</div>' +
       '<button class="ss-btn-secondary" id="ss-copy-btn" onclick="window.SchemaStudio.composerCopyCode()" style="font-size:0.75rem;padding:5px 12px;">' +
-        '<ion-icon name="copy-outline"></ion-icon>Copiar JSON</button>' +
+        '<ion-icon name="copy-outline"></ion-icon>Copiar GAS</button>' +
     '</div>';
     html += '<div class="ss-code-block" id="ss-code-output" data-plain="">' + generateCodeHtml(plainJson) + '</div>';
 
@@ -1048,56 +1050,119 @@
     }).join('');
   }
 
-  // ── Code Generator [O2-AR] ────────────────────────────────────────────────
-  // ARCHITECTURE: Two separate functions:
-  //   generateCodeJson() → pure JSON string (clipboard payload — no HTML)
-  //   generateCodeHtml()  → syntax-highlighted HTML (display only)
-  // This prevents HTML tag contamination in clipboard output (O2 AR finding).
+  // ── Code Generator [GAS Format] ──────────────────────────────────────────────
+  // ARCHITECTURE:
+  //   generateCodeGas()  → template-aware GAS JS (clipboard payload, direct paste into Schema_Engine.gs)
+  //   generateCodeHtml() → syntax-highlighted HTML (display only)
+  //
+  // Template group detection collapses governed fields back to FIELD_TEMPLATES references,
+  // mirroring exactly how Schema_Engine.gs composes schemas (spread pattern).
+
+  // SYNC [H9]: Must match FIELD_TEMPLATES.* field name order in Schema_Engine.gs.
+  var TEMPLATE_SEQUENCES = [
+    { key: 'SYSTEM_FIELDS', names: ['lexical_id', 'estado'] },
+    { key: 'AUDIT_FIELDS',  names: ['created_at','created_by','updated_at','updated_by','deleted_at','deleted_by'] },
+    { key: 'VERSION_FIELD', names: ['version'] }
+  ];
 
   /**
-   * Generate a pure JSON string for the composed schema.
-   * Templates are fully expanded (all fields resolved to concrete objects).
-   * This is the clipboard payload — no HTML markup whatsoever.
+   * Detect whether fields[idx..] starts a known template group.
+   * Returns { groupKey, consumed } or null.
    */
-  function generateCodeJson(entityName, fields, schema) {
-    var pk = schema && schema.primaryKey;
-    var resolvedFields = fields
-      .filter(function(f) { return f.type !== 'divider'; }) // exclude UI separators
-      .map(function(f) {
-        var obj = {};
-        if (f.name)      obj.name     = f.name;
-        if (f.type)      obj.type     = f.type;
-        if (f.label)     obj.label    = f.label;
-        if (f.required)  obj.required = f.required;
-        if (f.width)     obj.width    = f.width;
-        if (f.primaryKey) obj.primaryKey = f.primaryKey;
-        if (f.readonly)  obj.readonly = f.readonly;
-        if (f.defaultValue !== undefined) obj.defaultValue = f.defaultValue;
-        return obj;
-      });
-
-    var payload = {
-      entity:     entityName,
-      primaryKey: pk || entityName.toLowerCase() + '_id',
-      fields:     resolvedFields
-    };
-
-    return JSON.stringify(payload, null, 2);
+  function _detectTemplateAt(fields, idx) {
+    for (var t = 0; t < TEMPLATE_SEQUENCES.length; t++) {
+      var tpl = TEMPLATE_SEQUENCES[t];
+      if (idx + tpl.names.length > fields.length) continue;
+      var match = true;
+      for (var n = 0; n < tpl.names.length; n++) {
+        if (fields[idx + n].name !== tpl.names[n]) { match = false; break; }
+      }
+      if (match) return { groupKey: tpl.key, consumed: tpl.names.length };
+    }
+    return null;
   }
 
   /**
-   * Generate syntax-highlighted HTML for display in the code block.
-   * Takes the plain JSON string and applies color spans.
-   * NEVER use this for clipboard — use generateCodeJson() instead.
+   * Serialize a single field object to a GAS-compatible JS literal.
+   * Omits defaults to keep output clean (matches Schema_Engine.gs style).
    */
-  function generateCodeHtml(plainJson) {
-    // Simple JSON syntax highlighter
-    return plainJson
+  function _fieldToGasLiteral(f) {
+    var parts = [];
+    if (f.name)                         parts.push('name: "' + f.name + '"');
+    if (f.type && f.type !== 'text')    parts.push('type: "' + f.type + '"');
+    if (f.label)                        parts.push('label: "' + f.label + '"');
+    if (f.required)                     parts.push('required: true');
+    if (f.width && f.width !== 12)      parts.push('width: ' + f.width);
+    if (f.primaryKey)                   parts.push('primaryKey: true');
+    if (f.readonly)                     parts.push('readonly: true');
+    if (f.relationType)                 parts.push('relationType: "' + f.relationType + '"');
+    if (f.defaultValue !== undefined)   parts.push('defaultValue: ' + JSON.stringify(f.defaultValue));
+    return '    { ' + parts.join(', ') + ' }';
+  }
+
+  /**
+   * Generate a GAS-compatible JS block for pasting into Schema_Engine.gs.
+   * Governed field groups are collapsed to FIELD_TEMPLATES.* spread references.
+   * Dividers become GRAPH_SEPARATOR calls. Custom fields become object literals.
+   * This is the clipboard payload — no HTML markup.
+   */
+  function generateCodeGas(entityName, fields, schema) {
+    var pk = schema && schema.primaryKey;
+    var lines = [];
+    lines.push('  ' + entityName + ': {');
+    if (pk) lines.push('    primaryKey: "' + pk + '",');
+    lines.push('    fields: [');
+
+    var i = 0;
+    while (i < fields.length) {
+      var f = fields[i];
+
+      // Skip UI-only dividers (or emit as GRAPH_SEPARATOR for labeled ones)
+      if (f.type === 'divider') {
+        if (f.label) {
+          lines.push('      ...FIELD_TEMPLATES.GRAPH_SEPARATOR("' + f.label + '"),');
+        }
+        i++;
+        continue;
+      }
+
+      // Try to match a template group starting at current position
+      var tplMatch = _detectTemplateAt(fields, i);
+      if (tplMatch) {
+        lines.push('      ...FIELD_TEMPLATES.' + tplMatch.groupKey + '(),');
+        i += tplMatch.consumed;
+        continue;
+      }
+
+      // Regular field — emit as JS object literal
+      lines.push(_fieldToGasLiteral(f) + ',');
+      i++;
+    }
+
+    lines.push('    ]');
+    lines.push('  }');
+    return lines.join('\n');
+  }
+
+  /**
+   * GAS JS syntax highlighter for display in the code block.
+   * Highlights: spread (...), template refs, string values, keywords, numbers.
+   * NEVER use for clipboard — use generateCodeGas() directly.
+   */
+  function generateCodeHtml(plain) {
+    return plain
       .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-      .replace(/"([^"]+)":/g, '<span class="ss-code-key">"$1"</span>:')
-      .replace(/: "([^"]+)"/g, ': <span class="ss-code-str">"$1"</span>')
-      .replace(/: (true|false)/g, ': <span class="ss-code-bool">$1</span>')
-      .replace(/: (-?\d+)/g, ': <span class="ss-code-num">$1</span>');
+      // Spread + FIELD_TEMPLATES reference  → highlighted in warning color
+      .replace(/(\.\.\.FIELD_TEMPLATES\.[A-Z_]+\(\))/g, '<span class="ss-code-spread">$1</span>')
+      // Object keys (word: )
+      .replace(/\b([a-zA-Z_]+):/g, '<span class="ss-code-key">$1</span>:')
+      // String values
+      .replace(/:\s*"([^"]+)"/g, ': <span class="ss-code-str">"$1"</span>')
+      // Boolean / numeric values
+      .replace(/:\s*(true|false)\b/g, ': <span class="ss-code-bool">$1</span>')
+      .replace(/:\s*(-?\d+)\b/g, ': <span class="ss-code-num">$1</span>')
+      // Entity name (first identifier on a line followed by :)
+      .replace(/^(\s{2})([A-Z][A-Za-z_]+)(<span class="ss-code-key">:)/, '$1<span class="ss-code-entity">$2</span>$3');
   }
 
   // ── Public Composer Actions ───────────────────────────────────────────────
@@ -1171,7 +1236,7 @@
       var btn = document.getElementById('ss-copy-btn');
       if (btn) {
         btn.innerHTML = '<ion-icon name="checkmark-outline"></ion-icon>Copiado!';
-        setTimeout(function(){ btn.innerHTML = '<ion-icon name="copy-outline"></ion-icon>Copiar JSON'; }, 2000);
+        setTimeout(function(){ btn.innerHTML = '<ion-icon name="copy-outline"></ion-icon>Copiar GAS'; }, 2000);
       }
       if (window.showToast) window.showToast('JSON copiado al portapapeles', 'success');
     }
