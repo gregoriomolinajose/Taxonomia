@@ -184,6 +184,7 @@ const Engine_DB = {
         const nestedData = {};
         const flatPayload = { ...payload };
         let precalculatedGraphContext = {};
+        let cachedGraphFull = null;
 
         // [S5.6] Dynamic DAG Subgrid takes over Transient Edge
         // transientParentId y _updateGraphEdges ya no se usan porque la topología
@@ -236,7 +237,13 @@ const Engine_DB = {
                     const edgeName = (f.graphEdgeType || f.name).toUpperCase();
                     topologyRules.edgeType = edgeName; // For precise stealing checks
                     
-                    const fullGraph = _Adapter_Sheets.list(f.graphEntity, config, 'objects').rows || [];
+                    let fullGraph;
+                    if (f.graphEntity === 'Sys_Graph_Edges') {
+                        if (!cachedGraphFull) cachedGraphFull = _Adapter_Sheets.list('Sys_Graph_Edges', config, 'objects').rows || [];
+                        fullGraph = cachedGraphFull;
+                    } else {
+                        fullGraph = _Adapter_Sheets.list(f.graphEntity, config, 'objects').rows || [];
+                    }
                     const activeGraph = fullGraph.filter(e => e.es_version_actual !== false);
 
                     const targetEntity = f.targetEntity;
@@ -421,8 +428,8 @@ const Engine_DB = {
             equiposToRecalc.forEach(eqId => {
                 if (!eqId || eqId === 'undefined' || eqId === '') return;
                 
-                const ctxGraph = _Adapter_Sheets.list('Sys_Graph_Edges', config, 'objects') || { rows: [] };
-                const eqEdges = ctxGraph.rows.filter(e => e.es_version_actual !== false && e.tipo_relacion === 'PERSONA_EQUIPO' && String(e.id_nodo_padre).trim() === eqId);
+                if (!cachedGraphFull) cachedGraphFull = _Adapter_Sheets.list('Sys_Graph_Edges', config, 'objects').rows || [];
+                const eqEdges = cachedGraphFull.filter(e => e.es_version_actual !== false && e.tipo_relacion === 'PERSONA_EQUIPO' && String(e.id_nodo_padre).trim() === eqId);
                 const count = eqEdges.length;
 
                 if (typeof Logger !== 'undefined') Logger.log(`[Materialized Headcount] Equipo ${eqId} recalibrado a: ${count}`);

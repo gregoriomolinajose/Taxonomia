@@ -264,13 +264,14 @@ const APP_SCHEMAS = {
       ...FIELD_TEMPLATES.VERSION_FIELD(),
       ...FIELD_TEMPLATES.ESTADO_FIELD(),
       { name: "id_grupo_producto", type: "relation", relationType: "padre", targetEntity: "Grupo_Productos", label: "Grupo de Producto", isTemporalGraph: true, graphEdgeType: "GRUPO_PRODUCTO_EQUIPO", required: true, width: 6 },
-      { name: "personas_asignadas", type: "relation", relationType: "hijo", childSchema: "Persona", isTemporalGraph: true, graphEdgeType: "PERSONA_EQUIPO", label: "Personas Asignadas", virtual: true, uiBehavior: "subgrid", width: 12 },
+      { name: "personas_asignadas", type: "relation", relationType: "hijo", childSchema: "Persona", isTemporalGraph: true, graphEdgeType: "PERSONA_EQUIPO", label: "Personas Asignadas (Célula Base)", virtual: true, uiBehavior: "subgrid", allowedRoles: ["Developer", "Tester", "Tech Lead"], width: 12 },
       { name: "nombre_equipo", type: "text", label: "Nombre de Equipo", required: true, width: 6 },
       { name: "seudonimo", type: "text", label: "Seudónimo", required: false, width: 6 },
       { name: "metodologia", type: "select", label: "Metodología", required: true, width: 6, options: ["Scrum", "Kanban", "Híbrido"] },
       { name: "proposito", type: "textarea", label: "Propósito", required: false, width: 12 },
-      { name: "scrum_master_id", type: "text", label: "Scrum Master", required: false, width: 6 },
-      { name: "product_owner_id", type: "text", label: "Product Owner", required: false, width: 6 },
+      { name: "scrum_master_id", type: "relation", relationType: "padre", targetEntity: "Persona", label: "Scrum Master / Team Coach", isTemporalGraph: true, graphEdgeType: "EQUIPO_SM", uiComponent: "select_single", valueField: "email", labelField: "nombre", required: false, width: 6 },
+      { name: "product_owner_id", type: "relation", relationType: "padre", targetEntity: "Persona", label: "Product Owner", isTemporalGraph: true, graphEdgeType: "EQUIPO_PO", uiComponent: "select_single", valueField: "email", labelField: "nombre", required: false, width: 6 },
+      { name: "rte_id", type: "relation", relationType: "padre", targetEntity: "Persona", label: "Release Train Engineer (RTE)", isTemporalGraph: true, graphEdgeType: "EQUIPO_RTE", uiComponent: "select_single", valueField: "email", labelField: "nombre", required: false, width: 12 },
       { name: "cant_team_coach", type: "number", label: "Cant. Team Coach", required: false, width: 6 },
       { name: "total_integrantes", type: "number", label: "Total Integrantes", required: false, width: 6 }
     ]
