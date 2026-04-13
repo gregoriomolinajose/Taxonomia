@@ -65,9 +65,10 @@ Establecer Taxonomia como el source of truth del censo operativo de equipos ági
 |---|---|---|---|---|
 | S34.1 | Schema: Relación Persona↔Equipo | Fix GAP-1/2/5: `Persona.equipo` → `relation` temporal `PERSONA_EQUIPO`, corregir `relationType` invertido en `Equipo.id_producto`, agregar subgrid hijo Personas en Equipo. Reactivar tests (GAP-6). | L | — |
 | S34.2 | Backend: Headcount dinámico | Fix GAP-4: endpoint que cuente aristas `PERSONA_EQUIPO` activas por equipo. Hacer `total_integrantes` readonly+computed. Eliminar `businessRules.sumPrefix`. | M | S34.1 |
-| S34.3 | UI: Subgrid de Personas en Equipo | Renderizar subgrid de personas en la pantalla de Equipo con rol ágil y estado. | S | S34.1 |
+| S34.3 | UI: Subgrid de Personas en Equipo | Renderizar subgrid de personas en la pantalla de Equipo con rol ágil y estado. *Tech Debt: Refactorizar `Engine_DB` usando `precalculatedGraphContext` para no hacer `list('Sys_Graph_Edges')` completo y abaratar I/O.* | S | S34.1 |
 | S34.4 | Dashboard: Fix chart vacío + WIP roll-up | Fix GAP-3: reemplazar filtro `section === 'Capacidad'` por fuente real desde grafo. Roll-up de headcount por Portafolio. | M | S34.2 |
 | S34.5 | Mapa de Capacidad Swimlane | Nueva vista dedicada: renderer custom HTML/CSS Grid con swimlanes jerarquizados (Portafolio → Grupo → Equipos). Tarjetas con nombre, responsable, # Personas. Color coding por nivel. | L | S34.2 |
+| Spike | QA: Estabilización de E2E en DEV | Analizar e implementar timeouts dinámicos (`expect.toPass`) en `cardinality-resilience`, `dashboard-counters`, `ghost-stealing` y `topology-strict` debido a fallos de latencia (Drawer, NetState) en la nube. | M | — |
 
 ---
 
@@ -121,6 +122,7 @@ Establecer Taxonomia como el source of truth del censo operativo de equipos ági
 - % asignación por persona-equipo (E35)
 - Alertas de over-capacity por equipo (Backlog)
 - Mapa de Capacidad exportable a PDF/PNG (Backlog)
+- Refactor topológico: Migrar lógica de escaneo crudo de aristas en `Engine_DB.js` hacia un método estandarizado `getEdgeCount()` dentro de `Engine_Graph.js` para su re-utilización (Tech Debt, próximo sprint).
 
 ---
 

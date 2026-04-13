@@ -135,7 +135,8 @@ async function clickTopButtonByText(frame, text) {
             await window.DataStore.delete('Portafolio', 'pf_' + stamp);
             await window.DataStore.delete('Unidad_Negocio', 'un_' + stamp);
         } catch(e) {
-            console.warn('Teardown incompleto', e);
+            console.error('Teardown incompleto', e);
+            throw e;
         }
     }, ts);
   });
