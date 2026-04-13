@@ -401,6 +401,43 @@ const Engine_DB = {
             });
         }
 
+        // [S34.2] Materialized View Headcount Aggregation
+        try {
+            let equiposToRecalc = new Set();
+            
+            if (entityName === 'Equipo') {
+                equiposToRecalc.add(String(parentPK).trim());
+            } else if (entityName === 'Persona') {
+                if (nestedData['equipo'] && nestedData['equipo'].length > 0) {
+                    equiposToRecalc.add(String(nestedData['equipo'][0].id_registro || '').trim());
+                }
+                if (precalculatedGraphContext['equipo'] && precalculatedGraphContext['equipo'].precalculatedEdgesForNode) {
+                    precalculatedGraphContext['equipo'].precalculatedEdgesForNode.forEach(oldEdge => {
+                        equiposToRecalc.add(String(oldEdge.id_nodo_padre).trim());
+                    });
+                }
+            }
+
+            equiposToRecalc.forEach(eqId => {
+                if (!eqId || eqId === 'undefined' || eqId === '') return;
+                
+                const ctxGraph = _Adapter_Sheets.list('Sys_Graph_Edges', config, 'objects') || { rows: [] };
+                const eqEdges = ctxGraph.rows.filter(e => e.es_version_actual !== false && e.tipo_relacion === 'PERSONA_EQUIPO' && String(e.id_nodo_padre).trim() === eqId);
+                const count = eqEdges.length;
+
+                if (typeof Logger !== 'undefined') Logger.log(`[Materialized Headcount] Equipo ${eqId} recalibrado a: ${count}`);
+                
+                const updatePayload = { id_equipo: eqId, total_integrantes: count };
+                if (config.useSheets) {
+                    _Adapter_Sheets.upsertBatch('Equipo', [updatePayload], config);
+                }
+                _invalidateCache('Equipo');
+            });
+            
+        } catch(aggErr) {
+            if (typeof Logger !== 'undefined') Logger.log(`[Materialized Headcount Error] ${aggErr.message}`);
+        }
+
         return parentResults;
     },
 
