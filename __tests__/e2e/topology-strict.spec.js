@@ -123,6 +123,21 @@ async function clickTopButtonByText(frame, text) {
     // Validar que el API retorne todo limpio
     const toastError = frame.locator('ion-toast').filter({ hasText: '[Topology Error]' });
     await expect(toastError).toHaveCount(0);
+
+    // Teardown E2E Limpieza
+    await frame.locator('body').evaluate(async (stamp) => {
+        if (!window.DataStore || !window.API) return;
+        try {
+            await window.DataStore.delete('Persona', 'a'+stamp+'@nttdata.com');
+            await window.DataStore.delete('Equipo', 'eq_' + stamp);
+            await window.DataStore.delete('Producto', 'prod_' + stamp);
+            await window.DataStore.delete('Grupo_Productos', 'gp_' + stamp);
+            await window.DataStore.delete('Portafolio', 'pf_' + stamp);
+            await window.DataStore.delete('Unidad_Negocio', 'un_' + stamp);
+        } catch(e) {
+            console.warn('Teardown incompleto', e);
+        }
+    }, ts);
   });
 
 });
