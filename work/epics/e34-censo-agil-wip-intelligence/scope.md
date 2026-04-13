@@ -34,7 +34,8 @@ Establecer Taxonomia como el source of truth del censo operativo de equipos ági
 
 - Fix GAP-1: `Persona.equipo` cambiar de `lookup` muerto → `relation` temporal `PERSONA_EQUIPO` con `isTemporalGraph: true`
 - Fix GAP-1: Resolver typo `"Equipas"` → `"Equipo"` en schema
-- Fix GAP-5: Corregir `Equipo.id_producto`: `relationType: "hijo"` → `"padre"` + `isTemporalGraph: true` + `graphEdgeType: "PRODUCTO_EQUIPO"`
+- Fix GAP-5: Corregir Nivel de Jerarquía: Cambiar relación de `Equipo` de `id_producto` a `id_grupo_producto` como `relationType: "padre"` + `isTemporalGraph: true` + `graphEdgeType: "GRUPO_PRODUCTO_EQUIPO"`
+- Separación de Estructura: Asignar explícitamente `graphEdgeType: "PERSONA_LIDER_DIRECTO"` en la entidad `Persona` para su dependencia recursiva organizacional para evitar colisiones con el grafo Ágil.
 - Fix GAP-2: Agregar campo hijo en `Equipo` → subgrid de `Personas`
 - Fix GAP-4: `total_integrantes` readonly y computado dinámicamente desde conteo de aristas `PERSONA_EQUIPO` activas
 - Fix GAP-4: Eliminar `businessRules.sumPrefix` stale de Equipo
