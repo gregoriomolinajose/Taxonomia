@@ -51,35 +51,23 @@
     if (filterContainer) filterContainer.classList.remove('ion-hide');
     container.classList.remove('ion-hide');
     
-    // Extraccion Dinamica de Capacidades desde Metadata (Regla Metadata-Driven)
-    // Sin "hardcoding"
-    var equipoSchema = window.APP_SCHEMAS['Equipo'];
-    var dynamicFields = equipoSchema.fields.filter(function(f) { 
-       return f.section === 'Capacidad' && f.type === 'number' && f.name !== 'total_integrantes';
-    });
-    
-    var dynamicSums = {};
-    var labelsEsp = [];
-    var seriesEsp = [];
-    
-    dynamicFields.forEach(function(f) {
-      dynamicSums[f.name] = 0;
-      labelsEsp.push(f.label);
-    });
+    // Extracción de Distribución Topológica (Metodología de Equipos) para Donut Chart
+    var mapMetodologias = { 'Scrum': 0, 'Kanban': 0, 'Híbrido': 0, 'Otro': 0 };
 
     var capacityData = [];
     equipos.forEach(function(eq) {
-      dynamicFields.forEach(function(f) {
-        const parsedFV = parseInt(eq[f.name], 10);
-        dynamicSums[f.name] += isNaN(parsedFV) ? 0 : parsedFV;
-      });
+      // 1. Bar Chart Data (Integrantes por equipo)
       const capY = parseInt(eq.total_integrantes, 10);
       capacityData.push({ x: eq.nombre_equipo || 'Desconocido', y: isNaN(capY) ? 0 : capY });
+
+      // 2. Donut Chart Data (Distribución)
+      var met = eq.metodologia || 'Otro';
+      if(mapMetodologias[met] === undefined) mapMetodologias['Otro']++;
+      else mapMetodologias[met]++;
     });
-    
-    dynamicFields.forEach(function(f) {
-      seriesEsp.push(dynamicSums[f.name]);
-    });
+
+    var labelsEsp = Object.keys(mapMetodologias).filter(function(k) { return mapMetodologias[k] > 0; });
+    var seriesEsp = labelsEsp.map(function(k) { return mapMetodologias[k]; });
 
     // Colores genericos
     var defaultColors = ['var(--ion-color-light)','var(--ion-color-light)','var(--ion-color-light)','var(--ion-color-light)','var(--ion-color-light)','var(--ion-color-light)','var(--ion-color-light)','var(--ion-color-dark)', 'var(--ion-color-light)', 'var(--ion-color-light)'];
