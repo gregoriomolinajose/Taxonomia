@@ -140,7 +140,7 @@ window.CapacityMapEngine = (function() {
         const card = document.createElement('ion-card');
         card.className = 'capmap-card';
         card.onclick = function() {
-            window.UI_Router.navigateTo('dataview', actionObj.target, { filterQuery: actionObj.query });
+            window.UI_Router.navigateTo('dataview', actionObj.target, { strictFilter: actionObj.strict });
         };
         
         const header = document.createElement('ion-card-header');
@@ -226,7 +226,7 @@ window.CapacityMapEngine = (function() {
             unTitle.textContent = safeGetText(un, 'nombre_unidad', 'nombre');
             // Make title clickable to drill down
             unTitle.style.cursor = 'pointer';
-            unTitle.onclick = () => window.UI_Router.navigateTo('dataview', 'Portafolio', { filterQuery: unPk });
+            unTitle.onclick = () => window.UI_Router.navigateTo('dataview', 'Portafolio', { strictFilter: { key: 'id_unidad_negocio', value: unPk } });
 
             unTitleWrap.appendChild(toggleIcon);
             unTitleWrap.appendChild(unTitle);
@@ -256,7 +256,7 @@ window.CapacityMapEngine = (function() {
                 ptTitle.className = 'capmap-port-title';
                 ptTitle.textContent = safeGetText(pt, 'nombre_portafolio', 'nombre');
                 ptTitle.style.cursor = 'pointer';
-                ptTitle.onclick = () => window.UI_Router.navigateTo('dataview', 'Grupo_Productos', { filterQuery: ptPk });
+                ptTitle.onclick = () => window.UI_Router.navigateTo('dataview', 'Grupo_Productos', { strictFilter: { key: 'id_portafolio', value: ptPk } });
 
                 const ptBadge = document.createElement('span');
                 ptBadge.className = 'capmap-badge badge-port';
@@ -284,7 +284,7 @@ window.CapacityMapEngine = (function() {
                     gpTitle.className = 'capmap-grp-title';
                     gpTitle.textContent = safeGetText(gp, 'nombre_grupo', 'nombre');
                     gpTitle.style.cursor = 'pointer';
-                    gpTitle.onclick = () => window.UI_Router.navigateTo('dataview', 'Equipo', { filterQuery: gpPk });
+                    gpTitle.onclick = () => window.UI_Router.navigateTo('dataview', 'Equipo', { strictFilter: { key: 'id_grupo_producto', value: gpPk } });
 
                     const gpBadge = document.createElement('span');
                     gpBadge.className = 'capmap-badge badge-grp';
@@ -310,7 +310,7 @@ window.CapacityMapEngine = (function() {
                             safeGetText(eq, 'nombre_equipo', 'nombre'), 
                             eq.metodologia || 'Equipo', 
                             eqPersonas, 
-                            { target: 'Persona', query: eqPk },
+                            { target: 'Persona', strict: { key: 'equipo', value: eqPk } },
                             'badge-eq'
                         );
                         eqContainer.appendChild(teamCard);

@@ -198,7 +198,13 @@
            Búsqueda y Ordenación (Delegadas a DataEngine)
         ───────────────────────────────────────────── */
         function _applyFilter(query) {
-            _state.filtered = window.DataEngine.applyFilter(_state.data, query);
+            let baseData = _state.data;
+            if (_state.payload && _state.payload.strictFilter && _state.payload.strictFilter.key) {
+                const sKey = _state.payload.strictFilter.key;
+                const sVal = _state.payload.strictFilter.value;
+                baseData = baseData.filter(r => String(r[sKey]) === String(sVal));
+            }
+            _state.filtered = window.DataEngine.applyFilter(baseData, query);
             _state.page = 1;
             _rerenderData(); // Solo datos — el toolbar/search box NO se toca
         }
@@ -249,14 +255,37 @@
             if (window.UI_DataView_Toolbar) {
                 const canCreate = !window.ABAC || window.ABAC.can('create', _state.entityName);
                 const onAddClick = () => renderForm(_state.entityName);
-                return window.UI_DataView_Toolbar.buildHeader(
+                const headerDiv = window.UI_DataView_Toolbar.buildHeader(
                     _state.entityName, 
-                    _state.data.length, 
+                    _state.filtered.length, 
                     canCreate, 
                     _exportCSV, 
                     function(e) { window.DataViewEngine._importCSV(e); }, 
                     onAddClick
                 );
+
+                if (_state.payload && _state.payload.strictFilter && _state.payload.strictFilter.key) {
+                    const leftDiv = headerDiv.querySelector('.dv-header-left');
+                    if (leftDiv) {
+                        const chip = document.createElement('ion-chip');
+                        chip.setAttribute('color', 'primary');
+                        chip.style.marginLeft = '1rem';
+                        chip.style.marginTop = '0.5rem';
+                        chip.innerHTML = `<ion-icon name="filter"></ion-icon><ion-label>Filtrado: ${_state.payload.strictFilter.value}</ion-label>`;
+                        const closeIcon = document.createElement('ion-icon');
+                        closeIcon.name = 'close-circle';
+                        closeIcon.onclick = function() {
+                            _state.payload.strictFilter = null;
+                            _applyFilter(document.getElementById('dv-search-input') ? document.getElementById('dv-search-input').value : '');
+                            _rerenderData();
+                            const hd = document.getElementById('dv-header-zone');
+                            if (hd) { window.DOM.clear(hd); hd.appendChild(_buildHeader()); }
+                        };
+                        chip.appendChild(closeIcon);
+                        leftDiv.appendChild(chip);
+                    }
+                }
+                return headerDiv;
             }
             return document.createElement('div');
         }
@@ -334,7 +363,7 @@
                 data: [], filtered: [], selectedRows: [],
                 page: 1, pageSize: 25,
                 sortCol: '', sortDir: 'asc',
-                view: defaultView, columns: []
+                view: defaultView, columns: [], payload: payload || null
             };
 
             // Limpiar ion-popover de la entidad anterior (si existe)
@@ -414,15 +443,9 @@
 
                 _rerenderData();
 
-                if (payload && payload.filterQuery) {
-                    setTimeout(function() {
-                        const searchInput = document.getElementById('dv-search-input');
-                        if (searchInput) {
-                            searchInput.value = payload.filterQuery;
-                            _onSearch(payload.filterQuery);
-                        }
-                    }, 50);
-                }
+                // El Filtro visual del Searchbar ya no se inyecta con IDs para evitar colisiones.
+                // Se procesa de forma transpartente en _applyFilter utilizando payload.strictFilter
+                _applyFilter('');
             });
         }
 
