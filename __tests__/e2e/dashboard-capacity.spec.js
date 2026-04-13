@@ -60,23 +60,18 @@ test.describe('E34 - S34.5: Capacity Map (Mapa E2E) Drill-down and Visibility', 
       const container = frame.locator('.capmap-container');
       await expect(container).toBeVisible({ timeout: 10000 });
 
-      // Opcional: Probar el Drill down asumiendo que SIEMPRE hay al menos una UN en la taxonomía local Dev
-      // Si la BD de test es completamente vacía, validamos su existencia.
+      // Probar el Drill down asumiendo que SIEMPRE hay al menos una UN en la taxonomía local Dev
+      // Si la BD de test es completamente vacía, la prueba debe fallar por Test Seeding (Muda Mitigation).
       const firstUN = frame.locator('.capmap-un-title').first();
-      try {
-          await firstUN.waitFor({ state: 'visible', timeout: 5000 });
-          // Clic en la primera UN para drill-down
-          await firstUN.click();
-          
-          // Verify DataView Engine took over and set the search bar with ID
-          const searchInput = frame.locator('#dv-search-input');
-          await expect(searchInput).toBeVisible({ timeout: 10000 });
-          
-          // El input de búsqueda debería tener algun texto (que no esté vacía)
-          const filterValue = await searchInput.inputValue();
-          expect(filterValue.length).toBeGreaterThan(0);
-      } catch (err) {
-          console.log("No se encontraron Unidades de Negocio para testear el Drill down (DataStore vacía)");
-      }
+      await firstUN.waitFor({ state: 'visible', timeout: 5000 });
+      // Clic en la primera UN para drill-down
+      await firstUN.click();
+      
+      // Verify DataView Engine took over and set strict filter in UI (Chip was appended)
+      const strictChip = frame.locator('.dv-header ion-chip').first();
+      await expect(strictChip).toBeVisible({ timeout: 10000 });
+      
+      // Validate that the label includes 'Filtrado'
+      await expect(strictChip).toContainText('Filtrado');
   });
 });

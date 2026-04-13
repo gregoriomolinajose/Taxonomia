@@ -201,8 +201,23 @@
             let baseData = _state.data;
             if (_state.payload && _state.payload.strictFilter && _state.payload.strictFilter.key) {
                 const sKey = _state.payload.strictFilter.key;
-                const sVal = _state.payload.strictFilter.value;
-                baseData = baseData.filter(r => String(r[sKey]) === String(sVal));
+                const sVal = String(_state.payload.strictFilter.value);
+                
+                baseData = baseData.filter(function(r) {
+                    let val = r[sKey];
+                    // Unwraps Graph/Relation Array [{id: "EQ-1"}] checking ANY object property or flat value
+                    if (Array.isArray(val)) {
+                        return val.some(function(item) {
+                            if (typeof item === 'object' && item !== null) {
+                                return Object.values(item).some(function(innerVal) {
+                                    return String(innerVal) === sVal;
+                                });
+                            }
+                            return String(item) === sVal;
+                        });
+                    }
+                    return String(val) === sVal;
+                });
             }
             _state.filtered = window.DataEngine.applyFilter(baseData, query);
             _state.page = 1;
