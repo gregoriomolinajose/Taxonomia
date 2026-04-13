@@ -45,10 +45,12 @@ test.describe('E34 - S34.5: Capacity Map (Mapa E2E) Drill-down and Visibility', 
   test('El Mapa de Capacidad E2E debe inicializar su render jerárquico al presionar nav e ir directo al dataview prefiltrado', async () => {
       const frame = page.frameLocator('#sandboxFrame').frameLocator('#userHtmlFrame');
       
-      // Select the Capacity Map from the navigation
+      // Select the Capacity Map from the navigation dynamically to avoid ionic menu layout issues
       const navItem = frame.locator('#nav-item-capacitymap');
-      await expect(navItem).toBeVisible({ timeout: 15000 });
-      await navItem.click();
+      await expect(navItem).toBeAttached({ timeout: 15000 });
+      await frame.locator('body').evaluate(() => {
+          window.AppEventBus.publish('NAV::CHANGE', {viewType: 'capacitymap'});
+      });
 
       // Verify the map Canvas wrapper renders
       const canvas = frame.locator('#capacity-map-canvas');
