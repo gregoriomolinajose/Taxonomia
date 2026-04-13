@@ -279,11 +279,12 @@ const APP_SCHEMAS = {
   },
   Persona: {
     uiConfig: { dashboardCard: { iconName: 'person-outline', color: 'var(--ion-color-warning)' } },
-    metadata: { showInMenu: true, order:8, iconName:'person-outline', color:'warning', label:'Personas', titleField:'email', idField:'email', fkField:null },
-    primaryKey: "email",
+    metadata: { showInMenu: true, order:8, iconName:'person-outline', color:'warning', label:'Personas', titleField:'email', idField:'id_persona', fkField:null },
+    primaryKey: "id_persona",
     topologyRules: TOPOLOGY_PRESETS.JERARQUICA_PERSONA,
     fields: [
-      { name: "email", type: "email", primaryKey: true, label: "Correo Corporativo", required: true, width: 12, validators: ["regex:^[a-zA-Z0-9._%+-]+@(coppel\\.com|bancoppel\\.com|kairosds\\.com|nttdata\\.com)$"], triggers_workspace_resolve: true },
+      { name: "id_persona", type: "hidden", primaryKey: true },
+      { name: "email", type: "email", primaryKey: false, label: "Correo Corporativo", required: true, width: 12, validators: ["regex:^[a-zA-Z0-9._%+-]+@(coppel\\.com|bancoppel\\.com|kairosds\\.com|nttdata\\.com)$"], triggers_workspace_resolve: true },
       ...FIELD_TEMPLATES.SYSTEM_FIELDS(),
       ...FIELD_TEMPLATES.AUDIT_FIELDS(),
       ...FIELD_TEMPLATES.VERSION_FIELD(),
