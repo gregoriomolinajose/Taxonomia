@@ -250,22 +250,21 @@ const APP_SCHEMAS = {
   },
   Equipo: {
     uiConfig: { dashboardCard: { iconName: 'people-outline', color: 'var(--ion-color-success)' } },
-    metadata: { showInMenu: true, order:7, iconName:'people-outline', color:'#9575CD', label:'Equipos', titleField:'nombre_equipo', idField:'id_equipo', fkField:{ key:'id_producto', label:'Producto' } },
+    metadata: { showInMenu: true, order:7, iconName:'people-outline', color:'#9575CD', label:'Equipos', titleField:'nombre_equipo', idField:'id_equipo', fkField:{ key:'id_grupo_producto', label:'Grupo de Producto' } },
     topological_metadata: {
         ownerFields: ["scrum_master_id", "product_owner_id"],
-        parentEntity: "Producto",
-        parentField: "id_producto"
+        parentEntity: "Grupo_Productos",
+        parentField: "id_grupo_producto"
     },
-    businessRules: [
-      { trigger: 'onInput', action: 'sumPrefix', prefix: 'cant_', target: 'total_integrantes' }
-    ],
     primaryKey: "id_equipo",
     fields: [
       { name: "id_equipo", type: "hidden", primaryKey: true },
       ...FIELD_TEMPLATES.SYSTEM_FIELDS(),
       ...FIELD_TEMPLATES.AUDIT_FIELDS(),
       ...FIELD_TEMPLATES.VERSION_FIELD(),
-      { name: "id_producto", type: "relation", relationType: "hijo", targetEntity: "Producto", label: "Producto", required: true, width: 6 },
+      ...FIELD_TEMPLATES.ESTADO_FIELD(),
+      { name: "id_grupo_producto", type: "relation", relationType: "padre", targetEntity: "Grupo_Productos", label: "Grupo de Producto", isTemporalGraph: true, graphEdgeType: "GRUPO_PRODUCTO_EQUIPO", required: true, width: 6 },
+      { name: "personas_asignadas", type: "relation", relationType: "hijo", childSchema: "Persona", isTemporalGraph: true, graphEdgeType: "PERSONA_EQUIPO", label: "Personas Asignadas", virtual: true, uiBehavior: "subgrid", width: 12 },
       { name: "nombre_equipo", type: "text", label: "Nombre de Equipo", required: true, width: 6 },
       { name: "seudonimo", type: "text", label: "Seudónimo", required: false, width: 6 },
       { name: "metodologia", type: "select", label: "Metodología", required: true, width: 6, options: ["Scrum", "Kanban", "Híbrido"] },
@@ -283,8 +282,10 @@ const APP_SCHEMAS = {
     topologyRules: TOPOLOGY_PRESETS.JERARQUICA_PERSONA,
     fields: [
       { name: "email", type: "email", primaryKey: true, label: "Correo Corporativo", required: true, width: 12, validators: ["regex:^[a-zA-Z0-9._%+-]+@(coppel\\.com|bancoppel\\.com|kairosds\\.com|nttdata\\.com)$"], triggers_workspace_resolve: true },
+      ...FIELD_TEMPLATES.SYSTEM_FIELDS(),
       ...FIELD_TEMPLATES.AUDIT_FIELDS(),
       ...FIELD_TEMPLATES.VERSION_FIELD(),
+      ...FIELD_TEMPLATES.ESTADO_FIELD(),
       
       { name: "separator_1", type: "divider", label: "Datos Personales y Contacto", width: 12 },
       { name: "avatar", type: "avatar", label: "Fotografía", width: 12, readonly: true },
@@ -307,11 +308,11 @@ const APP_SCHEMAS = {
       
       
       { name: "separator_3", type: "divider", label: "Organización y Agilidad", width: 12 },
-      { name: "equipo", type: "lookup", lookupTarget: "Equipas", label: "Equipo Asignado", required: false, width: 12 },
+      { name: "equipo", type: "relation", relationType: "padre", targetEntity: "Equipo", label: "Equipo Asignado", isTemporalGraph: true, graphEdgeType: "PERSONA_EQUIPO", required: false, width: 12 },
       { name: "rol_agil", type: "select", label: "Rol Ágil Asignado", options: ["Product Manager", "Product Owner", "Team Coach", "RTE", "Developer", "Tech Lead", "Tester", "N/A"], required: true, width: 6 },
       { name: "porcentaje_asignacion", type: "select", label: "Asignación", options: ["Full Time", "Part Time", "Por Proyecto"], width: 6 },
       { name: "separator_4", type: "divider", label: "Grafo de Liderazgo y Accesos", width: 12 },
-      { name: "lider_directo", type: "relation", relationType: "padre", targetEntity: "Persona", graphEntity: "Sys_Graph_Edges", valueField: "email", labelField: "email", topologyCardinality: "1:N", isTemporalGraph: true, uiBehavior: "subgrid", label: "Líder Directo", required: false, width: 12 },
+      { name: "lider_directo", type: "relation", relationType: "padre", targetEntity: "Persona", graphEntity: "Sys_Graph_Edges", valueField: "email", labelField: "email", topologyCardinality: "1:N", isTemporalGraph: true, graphEdgeType: "PERSONA_LIDER_DIRECTO", label: "Líder Directo", required: false, width: 12 },
       { name: "id_rol", type: "select", label: "Rol de Autorización", required: false, width: 12, lookupSource: "getSysRolesOptions" }
     ]
   },
