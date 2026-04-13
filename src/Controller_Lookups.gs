@@ -79,10 +79,11 @@ function getPersonasOptions() {
     const options = result.rows
       .filter(row => row.estado !== 'Eliminado')
       .map(row => ({
-        id: row.id_persona,
+        id: row.email,
         nombre: row.nombre,
-        value: row.id_persona,
-        label: row.nombre + (row.cargo ? ` (${row.cargo})` : '')
+        value: row.email,
+        label: row.nombre + " " + row.apellidos + (row.cargo ? ` (${row.cargo})` : ''),
+        rol_agil: row.rol_agil
       }));
     // OBLIGATORIO: Retornar string nativo para evadir bug de serialización V8 IPC
     return JSON.stringify(options);

@@ -127,7 +127,11 @@ window.UI_SubgridBuilder = {
                 // S29.9 Override: Priorizar labelField por sobre prop hardcodeada "nombre" (ej. evitar "Sin nombre")
                 h2.textContent = (field.labelField && record[field.labelField]) ? record[field.labelField] : (record.nombre || 'Sin nombre');
                 const p = document.createElement('p');
-                p.textContent = record.estado || 'Nuevo';
+                let extraInfo = record.estado || 'Nuevo';
+                if (record.rol_agil && record.rol_agil !== 'N/A') {
+                    extraInfo = `${record.rol_agil} • ${extraInfo}`;
+                }
+                p.textContent = extraInfo;
                 labelWrapper.appendChild(h2);
                 labelWrapper.appendChild(p);
                 item.appendChild(labelWrapper);
@@ -233,7 +237,8 @@ window.UI_SubgridBuilder = {
                          value: r[pkField], 
                          label: r.nombre || r.nombre_producto || r[pkField],
                          nivel_tipo: r.nivel_tipo,
-                         hasActiveParent: r.hasActiveParent
+                         hasActiveParent: r.hasActiveParent,
+                         rol_agil: r.rol_agil
                      }));
                  }
             }
@@ -260,7 +265,10 @@ window.UI_SubgridBuilder = {
                 relationType: field.relationType
             };
             
-            const availableOptions = window.SubgridState.filterAvailableOptions(normalizedOptions, childRecords, childPK, rulesContext);
+            let availableOptions = window.SubgridState.filterAvailableOptions(normalizedOptions, childRecords, childPK, rulesContext);
+            if (field.allowedRoles && Array.isArray(field.allowedRoles)) {
+                availableOptions = availableOptions.filter(opt => field.allowedRoles.includes(opt.rol_agil));
+            }
 
             console.log(`[FormEngine] Sincronizando modal para ${field.targetEntity}. IDs vinculados: ${childRecords.length}. Disponibles: ${availableOptions.length}`);
 

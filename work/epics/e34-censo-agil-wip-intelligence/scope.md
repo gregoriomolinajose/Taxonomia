@@ -166,8 +166,8 @@ Tras S34.2, se desbloquean S34.3, S34.4 y S34.5. Diferentes desarrolladores pued
 
 | Story | Status  | T-Size | Par |
 |---|---|---|---|
-| S34.1 | TODO  | L | No |
-| S34.2 | TODO  | M | No |
+| S34.1 | DONE  | L | No |
+| S34.2 | DONE  | M | No |
 | S34.3 | TODO  | S | Si |
 | S34.4 | TODO  | M | Si |
 | S34.5 | TODO  | L | Si |
