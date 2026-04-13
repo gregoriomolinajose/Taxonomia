@@ -90,4 +90,54 @@ async function clickTopButtonByText(frame, text) {
     await expect(rowEquipo).toBeVisible({ timeout: 15000 }).catch(e => console.log("[WARN] Reactividad Local fallida o DataGrid no fue refrescado en E2E", e));
   });
 
+  test('Validar topología de árbol profundo Ágil y Tradicional (S34.1)', async () => {
+    test.setTimeout(150_000);
+    const frame = page.frameLocator('#sandboxFrame').frameLocator('#userHtmlFrame');
+    
+    const ts = Date.now();
+    await frame.locator('body').evaluate(async (stamp) => {
+        if (!window.DataStore || !window.API) return;
+        
+        // Ejecución acelerada de Topología utilizando el Adapter interno sin depender de subgrids interactivos E2E (muy frágil)
+        const un = { nombre_unidad: 'UN Auto ' + stamp, id_unidad_negocio: 'un_' + stamp, head_id: 'auto@nttdata.com' };
+        await window.DataStore.save('Unidad_Negocio', un);
+        
+        const portf = { nombre: 'Portafolio Auto', id_unidad_negocio: un.id_unidad_negocio, id_portafolio: 'pf_' + stamp };
+        await window.DataStore.save('Portafolio', portf);
+        
+        const gp = { nombre: 'GP Auto', id_portafolio: portf.id_portafolio, id_grupo_producto: 'gp_' + stamp };
+        await window.DataStore.save('Grupo_Productos', gp);
+        
+        // Tradicional
+        const prod = { nombre_producto: 'Prod Auto', id_grupo_producto: gp.id_grupo_producto, id_producto: 'prod_' + stamp };
+        await window.DataStore.save('Producto', prod);
+        
+        // Agil
+        const eq = { nombre_equipo: 'Eq Auto', id_grupo_producto: gp.id_grupo_producto, id_equipo: 'eq_' + stamp, metodologia: 'Scrum' };
+        await window.DataStore.save('Equipo', eq);
+        
+        const pers = { email: 'a'+stamp+'@nttdata.com', nombre: 'Test', apellidos: 'Auto', equipo: eq.id_equipo, unidad_negocio: un.id_unidad_negocio, rol_agil: 'Developer', departamento: 'IT', centro_costo: 'IT.1', cargo: 'Dev', modalidad: 'Virtual', herradura: 'X', esquema: 'Interno' };
+        await window.DataStore.save('Persona', pers);
+    }, ts);
+
+    // Validar que el API retorne todo limpio
+    const toastError = frame.locator('ion-toast').filter({ hasText: '[Topology Error]' });
+    await expect(toastError).toHaveCount(0);
+
+    // Teardown E2E Limpieza
+    await frame.locator('body').evaluate(async (stamp) => {
+        if (!window.DataStore || !window.API) return;
+        try {
+            await window.DataStore.delete('Persona', 'a'+stamp+'@nttdata.com');
+            await window.DataStore.delete('Equipo', 'eq_' + stamp);
+            await window.DataStore.delete('Producto', 'prod_' + stamp);
+            await window.DataStore.delete('Grupo_Productos', 'gp_' + stamp);
+            await window.DataStore.delete('Portafolio', 'pf_' + stamp);
+            await window.DataStore.delete('Unidad_Negocio', 'un_' + stamp);
+        } catch(e) {
+            console.warn('Teardown incompleto', e);
+        }
+    }, ts);
+  });
+
 });

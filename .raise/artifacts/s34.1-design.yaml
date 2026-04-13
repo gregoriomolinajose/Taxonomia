@@ -1,0 +1,44 @@
+artifact_type: story-design
+version: 1
+skill: rai-story-design
+created: '2026-04-12T20:12:00Z'
+story: 'S34.1'
+epic: 'E34'
+content:
+  summary: 'Resuelve la deuda técnica crítica y corrige la topología del schema para habilitar las relaciones de Grafo Temporal entre Persona y Equipo.'
+  complexity: moderate
+  acceptance_criteria:
+    - id: AC1
+      description: 'Persona.equipo se declara correctamente como relacion temporal a Equipo'
+      verifiable: true
+    - id: AC2
+      description: 'Equipo.id_producto define relationType: "padre" y es parte del grafo temporal'
+      verifiable: true
+    - id: AC3
+      description: 'Equipo subgrid hijo de Personas agregado.'
+      verifiable: true
+    - id: AC4
+      description: 'Pruebas de Schema_Engine reactivadas y verdes.'
+      verifiable: true
+  integration_points:
+    - module: 'APP_SCHEMAS.Persona'
+      change_type: modification
+      files: ['src/Schema_Engine.gs']
+    - module: 'APP_SCHEMAS.Equipo'
+      change_type: modification
+      files: ['src/Schema_Engine.gs']
+    - module: 'Controller_Lookups'
+      change_type: modification
+      files: ['src/Controller_Lookups.gs']
+    - module: 'Equipo_Tests'
+      change_type: modification
+      files: ['__tests__/Equipo_CRUD_Fix.test.js']
+  decisions:
+    - id: D1
+      choice: 'Cambiar type "lookup" a "relation" en Persona.equipo con isTemporalGraph: true.'
+      rationale: 'El lookup plano no permitía la persistencia en el Grafo (SCD-2) impidiendo el análisis de censo.'
+      alternatives_considered: ['Mantener lookup y hacer trigger manual en backend (Rechazado, anti-patrón)']
+refs:
+  backlog_item: 'S34.1'
+  epic_scope: 'work/epics/e34-censo-agil-wip-intelligence/scope.md'
+metadata: {}

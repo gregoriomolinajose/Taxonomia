@@ -59,573 +59,6 @@
   },
   "suites": [
     {
-      "title": "cardinality-resilience.spec.js",
-      "file": "cardinality-resilience.spec.js",
-      "column": 0,
-      "line": 0,
-      "specs": [],
-      "suites": [
-        {
-          "title": "E23: Cardinilidad TopolÃ³gica y Resiliencia SCD-2",
-          "file": "cardinality-resilience.spec.js",
-          "line": 6,
-          "column": 6,
-          "specs": [
-            {
-              "title": "Escenario 1.1 y 1.3: Exclusividad 1:N y Limpieza Absoluta de Subgrids",
-              "ok": false,
-              "tags": [],
-              "tests": [
-                {
-                  "timeout": 280000,
-                  "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "chromium",
-                  "projectName": "chromium",
-                  "results": [
-                    {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
-                      "status": "failed",
-                      "duration": 22011,
-                      "error": {
-                        "message": "TimeoutError: locator.waitFor: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#sandboxFrame').contentFrame().locator('#userHtmlFrame').contentFrame().locator('[id=\"btn-create-new\"]').last()\u001b[22m\n",
-                        "stack": "TimeoutError: locator.waitFor: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#sandboxFrame').contentFrame().locator('#userHtmlFrame').contentFrame().locator('[id=\"btn-create-new\"]').last()\u001b[22m\n\n    at clickTopButtonById (C:\\Users\\grego\\Antigravity\\Taxonomia Project\\__tests__\\e2e\\cardinality-resilience.spec.js:58:22)\n    at C:\\Users\\grego\\Antigravity\\Taxonomia Project\\__tests__\\e2e\\cardinality-resilience.spec.js:101:15",
-                        "location": {
-                          "file": "C:\\Users\\grego\\Antigravity\\Taxonomia Project\\__tests__\\e2e\\cardinality-resilience.spec.js",
-                          "column": 22,
-                          "line": 58
-                        },
-                        "snippet": "\u001b[0m \u001b[90m 56 |\u001b[39m \u001b[36masync\u001b[39m \u001b[36mfunction\u001b[39m clickTopButtonById(frame\u001b[33m,\u001b[39m id) {\n \u001b[90m 57 |\u001b[39m     \u001b[36mconst\u001b[39m btnLocator \u001b[33m=\u001b[39m frame\u001b[33m.\u001b[39mlocator(\u001b[32m`[id=\"${id}\"]`\u001b[39m)\u001b[33m.\u001b[39mlast()\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 58 |\u001b[39m     \u001b[36mawait\u001b[39m btnLocator\u001b[33m.\u001b[39mwaitFor({ state\u001b[33m:\u001b[39m \u001b[32m'attached'\u001b[39m\u001b[33m,\u001b[39m timeout\u001b[33m:\u001b[39m \u001b[35m15000\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                      \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 59 |\u001b[39m     \u001b[36mawait\u001b[39m btnLocator\u001b[33m.\u001b[39mclick({ force\u001b[33m:\u001b[39m \u001b[36mtrue\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m 60 |\u001b[39m }\n \u001b[90m 61 |\u001b[39m\u001b[0m"
-                      },
-                      "errors": [
-                        {
-                          "location": {
-                            "file": "C:\\Users\\grego\\Antigravity\\Taxonomia Project\\__tests__\\e2e\\cardinality-resilience.spec.js",
-                            "column": 22,
-                            "line": 58
-                          },
-                          "message": "TimeoutError: locator.waitFor: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#sandboxFrame').contentFrame().locator('#userHtmlFrame').contentFrame().locator('[id=\"btn-create-new\"]').last()\u001b[22m\n\n\n  56 | async function clickTopButtonById(frame, id) {\n  57 |     const btnLocator = frame.locator(`[id=\"${id}\"]`).last();\n> 58 |     await btnLocator.waitFor({ state: 'attached', timeout: 15000 });\n     |                      ^\n  59 |     await btnLocator.click({ force: true });\n  60 | }\n  61 |\n    at clickTopButtonById (C:\\Users\\grego\\Antigravity\\Taxonomia Project\\__tests__\\e2e\\cardinality-resilience.spec.js:58:22)\n    at C:\\Users\\grego\\Antigravity\\Taxonomia Project\\__tests__\\e2e\\cardinality-resilience.spec.js:101:15"
-                        }
-                      ],
-                      "stdout": [
-                        {
-                          "text": "PAGE LOG [warning]: Unrecognized feature: 'ambient-light-sensor'.\n"
-                        },
-                        {
-                          "text": "PAGE LOG [warning]: Unrecognized feature: 'speaker'.\n"
-                        },
-                        {
-                          "text": "PAGE LOG [warning]: Unrecognized feature: 'vibrate'.\n"
-                        },
-                        {
-                          "text": "PAGE LOG [warning]: Unrecognized feature: 'vr'.\n"
-                        },
-                        {
-                          "text": "PAGE LOG [warning]: An iframe which has both allow-scripts and allow-same-origin for its sandbox attribute can escape its sandboxing.\n"
-                        },
-                        {
-                          "text": "PAGE LOG [warning]: Unrecognized feature: 'ambient-light-sensor'.\n"
-                        },
-                        {
-                          "text": "PAGE LOG [warning]: Unrecognized feature: 'speaker'.\n"
-                        },
-                        {
-                          "text": "PAGE LOG [warning]: Unrecognized feature: 'vibrate'.\n"
-                        },
-                        {
-                          "text": "PAGE LOG [warning]: Unrecognized feature: 'vr'.\n"
-                        },
-                        {
-                          "text": "PAGE LOG [warning]: [FormEngine] ALERTA: La entidad Unidad_Negocio se está renderizando con valores por defecto. Falta 'section' o 'width' en el campo 'lexical_id'. Actualice al Blueprint V3. [FormEngine] ALERTA: La entidad Unidad_Negocio se está renderizando con valores por defecto. Falta 'section' o 'width' en el campo 'lexical_id'. Actualice al Blueprint V3.\n"
-                        },
-                        {
-                          "text": "PAGE LOG [warning]: [FormEngine] ALERTA: La entidad Unidad_Negocio se está renderizando con valores por defecto. Falta 'section' o 'width' en el campo 'nombre'. Actualice al Blueprint V3. [FormEngine] ALERTA: La entidad Unidad_Negocio se está renderizando con valores por defecto. Falta 'section' o 'width' en el campo 'nombre'. Actualice al Blueprint V3.\n"
-                        },
-                        {
-                          "text": "PAGE LOG [info]: Net state changed from IDLE to BUSY Net state changed from IDLE to BUSY\n"
-                        },
-                        {
-                          "text": "PAGE LOG [info]: Net state changed from BUSY to IDLE Net state changed from BUSY to IDLE\n"
-                        },
-                        {
-                          "text": "PAGE LOG [info]: Net state changed from IDLE to BUSY Net state changed from IDLE to BUSY\n"
-                        },
-                        {
-                          "text": "PAGE LOG [info]: Net state changed from BUSY to IDLE Net state changed from BUSY to IDLE\n"
-                        }
-                      ],
-                      "stderr": [
-                        {
-                          "text": "DEBUG FATAL PLAYWRIGHT: locator.waitFor: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#sandboxFrame').contentFrame().locator('#userHtmlFrame').contentFrame().locator('[id=\"btn-create-new\"]').last()\u001b[22m\n\n    at clickTopButtonById \u001b[90m(C:\\Users\\grego\\Antigravity\\Taxonomia Project\\\u001b[39m__tests__\\e2e\\cardinality-resilience.spec.js:58:22\u001b[90m)\u001b[39m\n    at \u001b[90mC:\\Users\\grego\\Antigravity\\Taxonomia Project\\\u001b[39m__tests__\\e2e\\cardinality-resilience.spec.js:101:15 {\n  name: \u001b[32m'TimeoutError'\u001b[39m,\n  \u001b[32mSymbol(step)\u001b[39m: {\n    location: {\n      file: \u001b[32m'C:\\\\Users\\\\grego\\\\Antigravity\\\\Taxonomia Project\\\\__tests__\\\\e2e\\\\cardinality-resilience.spec.js'\u001b[39m,\n      line: \u001b[33m58\u001b[39m,\n      column: \u001b[33m22\u001b[39m,\n      function: \u001b[32m'clickTopButtonById'\u001b[39m\n    },\n    category: \u001b[32m'pw:api'\u001b[39m,\n    title: \u001b[32m`Wait for selector locator('#sandboxFrame').contentFrame().locator('#userHtmlFrame').contentFrame().locator('[id=\"btn-create-new\"]').last()`\u001b[39m,\n    apiName: \u001b[32m'locator.waitFor'\u001b[39m,\n    params: {\n      selector: \u001b[32m'#sandboxFrame >> internal:control=enter-frame >> #userHtmlFrame >> internal:control=enter-frame >> [id=\"btn-create-new\"] >> nth=-1'\u001b[39m,\n      strict: \u001b[33mtrue\u001b[39m,\n      omitReturnValue: \u001b[33mtrue\u001b[39m,\n      state: \u001b[32m'attached'\u001b[39m,\n      timeout: \u001b[33m15000\u001b[39m\n    },\n    group: \u001b[90mundefined\u001b[39m,\n    stepId: \u001b[32m'pw:api@86'\u001b[39m,\n    boxedStack: \u001b[90mundefined\u001b[39m,\n    steps: [],\n    attachmentIndices: [],\n    info: TestStepInfoImpl {\n      annotations: [],\n      _testInfo: \u001b[36m[TestInfoImpl]\u001b[39m,\n      _stepId: \u001b[32m'pw:api@86'\u001b[39m,\n      _title: \u001b[32m`Wait for selector locator('#sandboxFrame').contentFrame().locator('#userHtmlFrame').contentFrame().locator('[id=\"btn-create-new\"]').last()`\u001b[39m,\n      _parentStep: \u001b[90mundefined\u001b[39m,\n      skip: \u001b[36m[Function (anonymous)]\u001b[39m\n    },\n    complete: \u001b[36m[Function: complete]\u001b[39m,\n    endWallTime: \u001b[33m1775981800465\u001b[39m,\n    error: {\n      message: \u001b[32m'TimeoutError: locator.waitFor: Timeout 15000ms exceeded.\\n'\u001b[39m +\n        \u001b[32m'Call log:\\n'\u001b[39m +\n        \u001b[32m`\\x1B[2m  - waiting for locator('#sandboxFrame').contentFrame().locator('#userHtmlFrame').contentFrame().locator('[id=\"btn-create-new\"]').last()\\x1B[22m\\n`\u001b[39m,\n      stack: \u001b[32m'TimeoutError: locator.waitFor: Timeout 15000ms exceeded.\\n'\u001b[39m +\n        \u001b[32m'Call log:\\n'\u001b[39m +\n        \u001b[32m`\\x1B[2m  - waiting for locator('#sandboxFrame').contentFrame().locator('#userHtmlFrame').contentFrame().locator('[id=\"btn-create-new\"]').last()\\x1B[22m\\n`\u001b[39m +\n        \u001b[32m'\\n'\u001b[39m +\n        \u001b[32m'    at clickTopButtonById (C:\\\\Users\\\\grego\\\\Antigravity\\\\Taxonomia Project\\\\__tests__\\\\e2e\\\\cardinality-resilience.spec.js:58:22)\\n'\u001b[39m +\n        \u001b[32m'    at C:\\\\Users\\\\grego\\\\Antigravity\\\\Taxonomia Project\\\\__tests__\\\\e2e\\\\cardinality-resilience.spec.js:101:15'\u001b[39m,\n      cause: \u001b[90mundefined\u001b[39m\n    }\n  }\n}\n"
-                        }
-                      ],
-                      "retry": 0,
-                      "startTime": "2026-04-12T08:16:18.115Z",
-                      "annotations": [],
-                      "attachments": [
-                        {
-                          "name": "screenshot",
-                          "contentType": "image/png",
-                          "path": "C:\\Users\\grego\\Antigravity\\Taxonomia Project\\test-results\\cardinality-resilience-E23-bbb51-mpieza-Absoluta-de-Subgrids-chromium\\test-failed-1.png"
-                        },
-                        {
-                          "name": "screenshot",
-                          "contentType": "image/png",
-                          "path": "C:\\Users\\grego\\Antigravity\\Taxonomia Project\\test-results\\cardinality-resilience-E23-bbb51-mpieza-Absoluta-de-Subgrids-chromium\\test-failed-2.png"
-                        },
-                        {
-                          "name": "error-context",
-                          "contentType": "text/markdown",
-                          "path": "C:\\Users\\grego\\Antigravity\\Taxonomia Project\\test-results\\cardinality-resilience-E23-bbb51-mpieza-Absoluta-de-Subgrids-chromium\\error-context.md"
-                        },
-                        {
-                          "name": "error-context",
-                          "contentType": "text/markdown",
-                          "path": "C:\\Users\\grego\\Antigravity\\Taxonomia Project\\test-results\\cardinality-resilience-E23-bbb51-mpieza-Absoluta-de-Subgrids-chromium\\error-context.md"
-                        }
-                      ],
-                      "errorLocation": {
-                        "file": "C:\\Users\\grego\\Antigravity\\Taxonomia Project\\__tests__\\e2e\\cardinality-resilience.spec.js",
-                        "column": 22,
-                        "line": 58
-                      }
-                    }
-                  ],
-                  "status": "unexpected"
-                }
-              ],
-              "id": "45605d459925de8918e4-3f4458f08e6a904df2ca",
-              "file": "cardinality-resilience.spec.js",
-              "line": 89,
-              "column": 3
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "title": "dashboard-counters.spec.js",
-      "file": "dashboard-counters.spec.js",
-      "column": 0,
-      "line": 0,
-      "specs": [],
-      "suites": [
-        {
-          "title": "E28: Dashboard Counters Visibility",
-          "file": "dashboard-counters.spec.js",
-          "line": 6,
-          "column": 6,
-          "specs": [
-            {
-              "title": "Los contadores del dashboard deben renderizar datos nÃºmericos en lugar de spinners (... o vacÃ­os)",
-              "ok": false,
-              "tags": [],
-              "tests": [
-                {
-                  "timeout": 60000,
-                  "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "chromium",
-                  "projectName": "chromium",
-                  "results": [
-                    {
-                      "workerIndex": 1,
-                      "parallelIndex": 0,
-                      "status": "failed",
-                      "duration": 3417,
-                      "error": {
-                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoMatch\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m\n\nExpected pattern: \u001b[32m/^(\\d+|-1)$/\u001b[39m\nReceived string:  \u001b[31m\"\"\u001b[39m",
-                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoMatch\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m\n\nExpected pattern: \u001b[32m/^(\\d+|-1)$/\u001b[39m\nReceived string:  \u001b[31m\"\"\u001b[39m\n    at C:\\Users\\grego\\Antigravity\\Taxonomia Project\\__tests__\\e2e\\dashboard-counters.spec.js:65:27",
-                        "location": {
-                          "file": "C:\\Users\\grego\\Antigravity\\Taxonomia Project\\__tests__\\e2e\\dashboard-counters.spec.js",
-                          "column": 27,
-                          "line": 65
-                        },
-                        "snippet": "\u001b[0m \u001b[90m 63 |\u001b[39m       \u001b[36mconst\u001b[39m text \u001b[33m=\u001b[39m \u001b[36mawait\u001b[39m portafoliosTotal\u001b[33m.\u001b[39mtextContent()\u001b[33m;\u001b[39m\n \u001b[90m 64 |\u001b[39m       \u001b[36mconst\u001b[39m numPattern \u001b[33m=\u001b[39m \u001b[35m/^(\\d+|-1)$/\u001b[39m\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 65 |\u001b[39m       expect(text\u001b[33m.\u001b[39mtrim())\u001b[33m.\u001b[39mtoMatch(numPattern)\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                           \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 66 |\u001b[39m\n \u001b[90m 67 |\u001b[39m       \u001b[36mconst\u001b[39m equiposCard \u001b[33m=\u001b[39m frame\u001b[33m.\u001b[39mlocator(\u001b[32m'ion-card'\u001b[39m)\u001b[33m.\u001b[39mfilter({ hasText\u001b[33m:\u001b[39m \u001b[32m'Equipos'\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m 68 |\u001b[39m       \u001b[36mconst\u001b[39m equiposTotal \u001b[33m=\u001b[39m equiposCard\u001b[33m.\u001b[39mlocator(\u001b[32m'[data-dsh-total]'\u001b[39m)\u001b[33m;\u001b[39m\u001b[0m"
-                      },
-                      "errors": [
-                        {
-                          "location": {
-                            "file": "C:\\Users\\grego\\Antigravity\\Taxonomia Project\\__tests__\\e2e\\dashboard-counters.spec.js",
-                            "column": 27,
-                            "line": 65
-                          },
-                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoMatch\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m\n\nExpected pattern: \u001b[32m/^(\\d+|-1)$/\u001b[39m\nReceived string:  \u001b[31m\"\"\u001b[39m\n\n  63 |       const text = await portafoliosTotal.textContent();\n  64 |       const numPattern = /^(\\d+|-1)$/;\n> 65 |       expect(text.trim()).toMatch(numPattern);\n     |                           ^\n  66 |\n  67 |       const equiposCard = frame.locator('ion-card').filter({ hasText: 'Equipos' });\n  68 |       const equiposTotal = equiposCard.locator('[data-dsh-total]');\n    at C:\\Users\\grego\\Antigravity\\Taxonomia Project\\__tests__\\e2e\\dashboard-counters.spec.js:65:27"
-                        }
-                      ],
-                      "stdout": [
-                        {
-                          "text": "PAGE LOG [warning]: Unrecognized feature: 'ambient-light-sensor'.\n"
-                        },
-                        {
-                          "text": "PAGE LOG [warning]: Unrecognized feature: 'speaker'.\n"
-                        },
-                        {
-                          "text": "PAGE LOG [warning]: Unrecognized feature: 'vibrate'.\n"
-                        },
-                        {
-                          "text": "PAGE LOG [warning]: Unrecognized feature: 'vr'.\n"
-                        },
-                        {
-                          "text": "PAGE LOG [warning]: An iframe which has both allow-scripts and allow-same-origin for its sandbox attribute can escape its sandboxing.\n"
-                        },
-                        {
-                          "text": "PAGE LOG [warning]: Unrecognized feature: 'ambient-light-sensor'.\n"
-                        },
-                        {
-                          "text": "PAGE LOG [warning]: Unrecognized feature: 'speaker'.\n"
-                        },
-                        {
-                          "text": "PAGE LOG [warning]: Unrecognized feature: 'vibrate'.\n"
-                        },
-                        {
-                          "text": "PAGE LOG [warning]: Unrecognized feature: 'vr'.\n"
-                        }
-                      ],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-04-12T08:16:41.332Z",
-                      "annotations": [],
-                      "attachments": [
-                        {
-                          "name": "screenshot",
-                          "contentType": "image/png",
-                          "path": "C:\\Users\\grego\\Antigravity\\Taxonomia Project\\test-results\\dashboard-counters-E28-Das-d656d-ugar-de-spinners-o-vacÃ­os--chromium\\test-failed-2.png"
-                        },
-                        {
-                          "name": "screenshot",
-                          "contentType": "image/png",
-                          "path": "C:\\Users\\grego\\Antigravity\\Taxonomia Project\\test-results\\dashboard-counters-E28-Das-d656d-ugar-de-spinners-o-vacÃ­os--chromium\\test-failed-1.png"
-                        },
-                        {
-                          "name": "error-context",
-                          "contentType": "text/markdown",
-                          "path": "C:\\Users\\grego\\Antigravity\\Taxonomia Project\\test-results\\dashboard-counters-E28-Das-d656d-ugar-de-spinners-o-vacÃ­os--chromium\\error-context.md"
-                        },
-                        {
-                          "name": "error-context",
-                          "contentType": "text/markdown",
-                          "path": "C:\\Users\\grego\\Antigravity\\Taxonomia Project\\test-results\\dashboard-counters-E28-Das-d656d-ugar-de-spinners-o-vacÃ­os--chromium\\error-context.md"
-                        }
-                      ],
-                      "errorLocation": {
-                        "file": "C:\\Users\\grego\\Antigravity\\Taxonomia Project\\__tests__\\e2e\\dashboard-counters.spec.js",
-                        "column": 27,
-                        "line": 65
-                      }
-                    }
-                  ],
-                  "status": "unexpected"
-                }
-              ],
-              "id": "077f8d6fafd270e4bb5a-d8f99a7bd5e961e35f32",
-              "file": "dashboard-counters.spec.js",
-              "line": 49,
-              "column": 3
-            },
-            {
-              "title": "El bootstrap del dashboard no debe emitir errores de deserializaciÃ³n IPC",
-              "ok": true,
-              "tags": [],
-              "tests": [
-                {
-                  "timeout": 60000,
-                  "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "chromium",
-                  "projectName": "chromium",
-                  "results": [
-                    {
-                      "workerIndex": 2,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 5095,
-                      "errors": [],
-                      "stdout": [
-                        {
-                          "text": "PAGE LOG [warning]: Unrecognized feature: 'ambient-light-sensor'.\n"
-                        },
-                        {
-                          "text": "PAGE LOG [warning]: Unrecognized feature: 'speaker'.\n"
-                        },
-                        {
-                          "text": "PAGE LOG [warning]: Unrecognized feature: 'vibrate'.\n"
-                        },
-                        {
-                          "text": "PAGE LOG [warning]: Unrecognized feature: 'vr'.\n"
-                        },
-                        {
-                          "text": "PAGE LOG [warning]: An iframe which has both allow-scripts and allow-same-origin for its sandbox attribute can escape its sandboxing.\n"
-                        },
-                        {
-                          "text": "PAGE LOG [warning]: Unrecognized feature: 'ambient-light-sensor'.\n"
-                        },
-                        {
-                          "text": "PAGE LOG [warning]: Unrecognized feature: 'speaker'.\n"
-                        },
-                        {
-                          "text": "PAGE LOG [warning]: Unrecognized feature: 'vibrate'.\n"
-                        },
-                        {
-                          "text": "PAGE LOG [warning]: Unrecognized feature: 'vr'.\n"
-                        },
-                        {
-                          "text": "PAGE LOG [info]: Net state changed from IDLE to BUSY Net state changed from IDLE to BUSY\n"
-                        },
-                        {
-                          "text": "PAGE LOG [info]: Net state changed from BUSY to IDLE Net state changed from BUSY to IDLE\n"
-                        },
-                        {
-                          "text": "PAGE LOG [warning]: Unrecognized feature: 'ambient-light-sensor'.\n"
-                        },
-                        {
-                          "text": "PAGE LOG [warning]: Unrecognized feature: 'speaker'.\n"
-                        },
-                        {
-                          "text": "PAGE LOG [warning]: Unrecognized feature: 'vibrate'.\n"
-                        },
-                        {
-                          "text": "PAGE LOG [warning]: Unrecognized feature: 'vr'.\n"
-                        },
-                        {
-                          "text": "PAGE LOG [warning]: An iframe which has both allow-scripts and allow-same-origin for its sandbox attribute can escape its sandboxing.\n"
-                        },
-                        {
-                          "text": "PAGE LOG [warning]: Unrecognized feature: 'ambient-light-sensor'.\n"
-                        },
-                        {
-                          "text": "PAGE LOG [warning]: Unrecognized feature: 'speaker'.\n"
-                        },
-                        {
-                          "text": "PAGE LOG [warning]: Unrecognized feature: 'vibrate'.\n"
-                        },
-                        {
-                          "text": "PAGE LOG [warning]: Unrecognized feature: 'vr'.\n"
-                        }
-                      ],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-04-12T08:16:45.938Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
-                }
-              ],
-              "id": "077f8d6fafd270e4bb5a-ef34dda75b8dd4c39661",
-              "file": "dashboard-counters.spec.js",
-              "line": 78,
-              "column": 3
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "title": "hierarchy-stress.spec.js",
-      "file": "hierarchy-stress.spec.js",
-      "column": 0,
-      "line": 0,
-      "specs": [],
-      "suites": [
-        {
-          "title": "Top-Down Hierarchy Stress Test & Race Conditions",
-          "file": "hierarchy-stress.spec.js",
-          "line": 6,
-          "column": 6,
-          "specs": [
-            {
-              "title": "Crea una rama entera (Unidad -> Portafolio -> Grupo -> Producto) sin pérdida de Subgrids",
-              "ok": true,
-              "tags": [],
-              "tests": [
-                {
-                  "timeout": 600000,
-                  "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "chromium",
-                  "projectName": "chromium",
-                  "results": [
-                    {
-                      "workerIndex": 2,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 274406,
-                      "errors": [],
-                      "stdout": [
-                        {
-                          "text": "PAGE LOG [warning]: Unrecognized feature: 'ambient-light-sensor'.\n"
-                        },
-                        {
-                          "text": "PAGE LOG [warning]: Unrecognized feature: 'speaker'.\n"
-                        },
-                        {
-                          "text": "PAGE LOG [warning]: Unrecognized feature: 'vibrate'.\n"
-                        },
-                        {
-                          "text": "PAGE LOG [warning]: Unrecognized feature: 'vr'.\n"
-                        },
-                        {
-                          "text": "PAGE LOG [warning]: An iframe which has both allow-scripts and allow-same-origin for its sandbox attribute can escape its sandboxing.\n"
-                        },
-                        {
-                          "text": "PAGE LOG [warning]: Unrecognized feature: 'ambient-light-sensor'.\n"
-                        },
-                        {
-                          "text": "PAGE LOG [warning]: Unrecognized feature: 'speaker'.\n"
-                        },
-                        {
-                          "text": "PAGE LOG [warning]: Unrecognized feature: 'vibrate'.\n"
-                        },
-                        {
-                          "text": "PAGE LOG [warning]: Unrecognized feature: 'vr'.\n"
-                        },
-                        {
-                          "text": "PAGE LOG [warning]: [FormEngine] ALERTA: La entidad Unidad_Negocio se está renderizando con valores por defecto. Falta 'section' o 'width' en el campo 'lexical_id'. Actualice al Blueprint V3. [FormEngine] ALERTA: La entidad Unidad_Negocio se está renderizando con valores por defecto. Falta 'section' o 'width' en el campo 'lexical_id'. Actualice al Blueprint V3.\n"
-                        },
-                        {
-                          "text": "PAGE LOG [warning]: [FormEngine] ALERTA: La entidad Unidad_Negocio se está renderizando con valores por defecto. Falta 'section' o 'width' en el campo 'nombre'. Actualice al Blueprint V3. [FormEngine] ALERTA: La entidad Unidad_Negocio se está renderizando con valores por defecto. Falta 'section' o 'width' en el campo 'nombre'. Actualice al Blueprint V3.\n"
-                        },
-                        {
-                          "text": "PAGE LOG [info]: Net state changed from IDLE to BUSY Net state changed from IDLE to BUSY\n"
-                        },
-                        {
-                          "text": "PAGE LOG [log]: [FormEngine] Sincronizando modal para Portafolio. IDs vinculados: 0. Disponibles: 0 [FormEngine] Sincronizando modal para Portafolio. IDs vinculados: 0. Disponibles: 0\n"
-                        },
-                        {
-                          "text": "PAGE LOG [info]: Net state changed from BUSY to IDLE Net state changed from BUSY to IDLE\n"
-                        },
-                        {
-                          "text": "PAGE LOG [info]: Net state changed from IDLE to BUSY Net state changed from IDLE to BUSY\n"
-                        },
-                        {
-                          "text": "PAGE LOG [info]: Net state changed from BUSY to IDLE Net state changed from BUSY to IDLE\n"
-                        },
-                        {
-                          "text": "[WARN] Retraso en render de campos únicos portafolio\n"
-                        },
-                        {
-                          "text": "[WARN] Retraso en render de campos únicos grupo\n"
-                        },
-                        {
-                          "text": "[WARN] input modelo_negocio no pudo llenarse: Timeout o inexistente\n"
-                        },
-                        {
-                          "text": "[WARN] btnGuardar Guardar Grupo no se mostró (posible latencia en carga del Drawer)\n"
-                        },
-                        {
-                          "text": "[WARN] Button with text Guardar Grupo did not attach.\n"
-                        },
-                        {
-                          "text": "[WARN] Retraso en render de campos únicos grupo\n"
-                        },
-                        {
-                          "text": "[WARN] input modelo_negocio no pudo llenarse: Timeout o inexistente\n"
-                        },
-                        {
-                          "text": "[WARN] btnGuardar Guardar Grupo no se mostró (posible latencia en carga del Drawer)\n"
-                        },
-                        {
-                          "text": "[WARN] Button with text Guardar Grupo did not attach.\n"
-                        },
-                        {
-                          "text": "[WARN] btnGuardar Guardar Portafolio no se mostró (posible latencia en carga del Drawer)\n"
-                        },
-                        {
-                          "text": "[WARN] Button with text Guardar Portafolio did not attach.\n"
-                        },
-                        {
-                          "text": "[WARN] Latencia DB retrasó topológica local\n"
-                        },
-                        {
-                          "text": "[WARN] Modal de Guardar Unidad no se cerró a tiempo\n"
-                        },
-                        {
-                          "text": "-> Iniciando validación DataGrid y Sidebar Navigation...\n"
-                        },
-                        {
-                          "text": "[WARN] Latencia de Base de Datos impidió o retrasó la carga de la UN\n"
-                        },
-                        {
-                          "text": "[WARN] Latencia impidió ver el Portafolio en el datagrid resuelto.\n"
-                        },
-                        {
-                          "text": "Ruta Crítica Superada y Validaciones UI Exitosas. El Multi-nivel Subgrid conservó su estado Bidireccional.\n"
-                        }
-                      ],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-04-12T08:16:51.654Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
-                }
-              ],
-              "id": "ec7a83b542d9418f61d3-4de4cb782febbec8a2de",
-              "file": "hierarchy-stress.spec.js",
-              "line": 125,
-              "column": 3
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "title": "occ-dual-version.spec.js",
-      "file": "occ-dual-version.spec.js",
-      "column": 0,
-      "line": 0,
-      "specs": [],
-      "suites": [
-        {
-          "title": "E33: Optimistic Concurrency Control (OCC) Dom Sync Resilience",
-          "file": "occ-dual-version.spec.js",
-          "line": 6,
-          "column": 6,
-          "specs": [
-            {
-              "title": "OCC Form State Sync: Secuencia agresiva M:N sin cerrar el Drawer debe actualizar el DOM _version y version equitativamente",
-              "ok": true,
-              "tags": [],
-              "tests": [
-                {
-                  "timeout": 120000,
-                  "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "chromium",
-                  "projectName": "chromium",
-                  "results": [
-                    {
-                      "workerIndex": 2,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 13697,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-04-12T08:21:26.681Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
-                }
-              ],
-              "id": "ae51f60792b1f015e5cc-c563108eda7f5e4d478e",
-              "file": "occ-dual-version.spec.js",
-              "line": 52,
-              "column": 3
-            }
-          ]
-        }
-      ]
-    },
-    {
       "title": "topology-strict.spec.js",
       "file": "topology-strict.spec.js",
       "column": 0,
@@ -651,19 +84,19 @@
                   "projectName": "chromium",
                   "results": [
                     {
-                      "workerIndex": 2,
+                      "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 22180,
+                      "duration": 26050,
                       "errors": [],
                       "stdout": [
                         {
-                          "text": "[WARN] Reactividad Local fallida o DataGrid no fue refrescado en E2E ExpectError: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('#sandboxFrame').contentFrame().locator('#userHtmlFrame').contentFrame().locator('tr, .ag-row').filter({ hasText: 'Equipo Race Condition 1775982104503' }).first()\nExpected: visible\nTimeout: 15000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 15000ms\u001b[22m\n\u001b[2m  - waiting for locator('#sandboxFrame').contentFrame().locator('#userHtmlFrame').contentFrame().locator('tr, .ag-row').filter({ hasText: 'Equipo Race Condition 1775982104503' }).first()\u001b[22m\n\n    at \u001b[90mC:\\Users\\grego\\Antigravity\\Taxonomia Project\\\u001b[39m__tests__\\e2e\\topology-strict.spec.js:90:29 {\n  matcherResult: {\n    message: \u001b[32m'\\x1B[2mexpect(\\x1B[22m\\x1B[31mlocator\\x1B[39m\\x1B[2m).\\x1B[22mtoBeVisible\\x1B[2m(\\x1B[22m\\x1B[2m)\\x1B[22m failed\\n'\u001b[39m +\n      \u001b[32m'\\n'\u001b[39m +\n      \u001b[32m\"Locator: locator('#sandboxFrame').contentFrame().locator('#userHtmlFrame').contentFrame().locator('tr, .ag-row').filter({ hasText: 'Equipo Race Condition 1775982104503' }).first()\\n\"\u001b[39m +\n      \u001b[32m'Expected: visible\\n'\u001b[39m +\n      \u001b[32m'Timeout: 15000ms\\n'\u001b[39m +\n      \u001b[32m'Error: element(s) not found\\n'\u001b[39m +\n      \u001b[32m'\\n'\u001b[39m +\n      \u001b[32m'Call log:\\n'\u001b[39m +\n      \u001b[32m'\\x1B[2m  - Expect \"toBeVisible\" with timeout 15000ms\\x1B[22m\\n'\u001b[39m +\n      \u001b[32m\"\\x1B[2m  - waiting for locator('#sandboxFrame').contentFrame().locator('#userHtmlFrame').contentFrame().locator('tr, .ag-row').filter({ hasText: 'Equipo Race Condition 1775982104503' }).first()\\x1B[22m\\n\"\u001b[39m,\n    pass: \u001b[33mfalse\u001b[39m,\n    actual: \u001b[90mundefined\u001b[39m,\n    name: \u001b[32m'toBeVisible'\u001b[39m,\n    expected: \u001b[32m'visible'\u001b[39m,\n    log: [\n      \u001b[32m'  - Expect \"toBeVisible\" with timeout 15000ms'\u001b[39m,\n      \u001b[32m\"  - waiting for locator('#sandboxFrame').contentFrame().locator('#userHtmlFrame').contentFrame().locator('tr, .ag-row').filter({ hasText: 'Equipo Race Condition 1775982104503' }).first()\"\u001b[39m\n    ],\n    timeout: \u001b[33m15000\u001b[39m\n  },\n  \u001b[32mSymbol(step)\u001b[39m: {\n    category: \u001b[32m'expect'\u001b[39m,\n    apiName: \u001b[32m'expect.toBeVisible'\u001b[39m,\n    title: \u001b[32m`Expect \"toBeVisible\" locator('#sandboxFrame').contentFrame().locator('#userHtmlFrame').contentFrame().locator('tr, .ag-row').filter({ hasText: 'Equipo Race Condition 1775982104503' }).first()`\u001b[39m,\n    shortTitle: \u001b[32m'Expect \"toBeVisible\"'\u001b[39m,\n    params: { expected: \u001b[36m[Object]\u001b[39m },\n    infectParentStepsWithError: \u001b[90mundefined\u001b[39m,\n    stepId: \u001b[32m'expect@83'\u001b[39m,\n    group: \u001b[90mundefined\u001b[39m,\n    boxedStack: \u001b[90mundefined\u001b[39m,\n    location: {\n      file: \u001b[32m'C:\\\\Users\\\\grego\\\\Antigravity\\\\Taxonomia Project\\\\__tests__\\\\e2e\\\\topology-strict.spec.js'\u001b[39m,\n      line: \u001b[33m90\u001b[39m,\n      column: \u001b[33m29\u001b[39m\n    },\n    steps: [],\n    attachmentIndices: [],\n    info: TestStepInfoImpl {\n      annotations: [],\n      _testInfo: \u001b[36m[TestInfoImpl]\u001b[39m,\n      _stepId: \u001b[32m'expect@83'\u001b[39m,\n      _title: \u001b[32m`Expect \"toBeVisible\" locator('#sandboxFrame').contentFrame().locator('#userHtmlFrame').contentFrame().locator('tr, .ag-row').filter({ hasText: 'Equipo Race Condition 1775982104503' }).first()`\u001b[39m,\n      _parentStep: \u001b[90mundefined\u001b[39m,\n      skip: \u001b[36m[Function (anonymous)]\u001b[39m\n    },\n    complete: \u001b[36m[Function: complete]\u001b[39m,\n    endWallTime: \u001b[33m1775982123530\u001b[39m,\n    error: {\n      message: \u001b[32m'Error: \\x1B[2mexpect(\\x1B[22m\\x1B[31mlocator\\x1B[39m\\x1B[2m).\\x1B[22mtoBeVisible\\x1B[2m(\\x1B[22m\\x1B[2m)\\x1B[22m failed\\n'\u001b[39m +\n        \u001b[32m'\\n'\u001b[39m +\n        \u001b[32m\"Locator: locator('#sandboxFrame').contentFrame().locator('#userHtmlFrame').contentFrame().locator('tr, .ag-row').filter({ hasText: 'Equipo Race Condition 1775982104503' }).first()\\n\"\u001b[39m +\n        \u001b[32m'Expected: visible\\n'\u001b[39m +\n        \u001b[32m'Timeout: 15000ms\\n'\u001b[39m +\n        \u001b[32m'Error: element(s) not found\\n'\u001b[39m +\n        \u001b[32m'\\n'\u001b[39m +\n        \u001b[32m'Call log:\\n'\u001b[39m +\n        \u001b[32m'\\x1B[2m  - Expect \"toBeVisible\" with timeout 15000ms\\x1B[22m\\n'\u001b[39m +\n        \u001b[32m\"\\x1B[2m  - waiting for locator('#sandboxFrame').contentFrame().locator('#userHtmlFrame').contentFrame().locator('tr, .ag-row').filter({ hasText: 'Equipo Race Condition 1775982104503' }).first()\\x1B[22m\\n\"\u001b[39m,\n      stack: \u001b[32m'Error: \\x1B[2mexpect(\\x1B[22m\\x1B[31mlocator\\x1B[39m\\x1B[2m).\\x1B[22mtoBeVisible\\x1B[2m(\\x1B[22m\\x1B[2m)\\x1B[22m failed\\n'\u001b[39m +\n        \u001b[32m'\\n'\u001b[39m +\n        \u001b[32m\"Locator: locator('#sandboxFrame').contentFrame().locator('#userHtmlFrame').contentFrame().locator('tr, .ag-row').filter({ hasText: 'Equipo Race Condition 1775982104503' }).first()\\n\"\u001b[39m +\n        \u001b[32m'Expected: visible\\n'\u001b[39m +\n        \u001b[32m'Timeout: 15000ms\\n'\u001b[39m +\n        \u001b[32m'Error: element(s) not found\\n'\u001b[39m +\n        \u001b[32m'\\n'\u001b[39m +\n        \u001b[32m'Call log:\\n'\u001b[39m +\n        \u001b[32m'\\x1B[2m  - Expect \"toBeVisible\" with timeout 15000ms\\x1B[22m\\n'\u001b[39m +\n        \u001b[32m\"\\x1B[2m  - waiting for locator('#sandboxFrame').contentFrame().locator('#userHtmlFrame').contentFrame().locator('tr, .ag-row').filter({ hasText: 'Equipo Race Condition 1775982104503' }).first()\\x1B[22m\\n\"\u001b[39m +\n        \u001b[32m'\\n'\u001b[39m +\n        \u001b[32m'    at C:\\\\Users\\\\grego\\\\Antigravity\\\\Taxonomia Project\\\\__tests__\\\\e2e\\\\topology-strict.spec.js:90:29'\u001b[39m,\n      cause: \u001b[90mundefined\u001b[39m\n    }\n  }\n}\n"
+                          "text": "[WARN] Reactividad Local fallida o DataGrid no fue refrescado en E2E ExpectError: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('#sandboxFrame').contentFrame().locator('#userHtmlFrame').contentFrame().locator('tr, .ag-row').filter({ hasText: 'Equipo Race Condition 1776049076175' }).first()\nExpected: visible\nTimeout: 15000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 15000ms\u001b[22m\n\u001b[2m  - waiting for locator('#sandboxFrame').contentFrame().locator('#userHtmlFrame').contentFrame().locator('tr, .ag-row').filter({ hasText: 'Equipo Race Condition 1776049076175' }).first()\u001b[22m\n\n    at \u001b[90mC:\\Users\\grego\\Antigravity\\Taxonomia Project\\\u001b[39m__tests__\\e2e\\topology-strict.spec.js:90:29 {\n  matcherResult: {\n    message: \u001b[32m'\\x1B[2mexpect(\\x1B[22m\\x1B[31mlocator\\x1B[39m\\x1B[2m).\\x1B[22mtoBeVisible\\x1B[2m(\\x1B[22m\\x1B[2m)\\x1B[22m failed\\n'\u001b[39m +\n      \u001b[32m'\\n'\u001b[39m +\n      \u001b[32m\"Locator: locator('#sandboxFrame').contentFrame().locator('#userHtmlFrame').contentFrame().locator('tr, .ag-row').filter({ hasText: 'Equipo Race Condition 1776049076175' }).first()\\n\"\u001b[39m +\n      \u001b[32m'Expected: visible\\n'\u001b[39m +\n      \u001b[32m'Timeout: 15000ms\\n'\u001b[39m +\n      \u001b[32m'Error: element(s) not found\\n'\u001b[39m +\n      \u001b[32m'\\n'\u001b[39m +\n      \u001b[32m'Call log:\\n'\u001b[39m +\n      \u001b[32m'\\x1B[2m  - Expect \"toBeVisible\" with timeout 15000ms\\x1B[22m\\n'\u001b[39m +\n      \u001b[32m\"\\x1B[2m  - waiting for locator('#sandboxFrame').contentFrame().locator('#userHtmlFrame').contentFrame().locator('tr, .ag-row').filter({ hasText: 'Equipo Race Condition 1776049076175' }).first()\\x1B[22m\\n\"\u001b[39m,\n    pass: \u001b[33mfalse\u001b[39m,\n    actual: \u001b[90mundefined\u001b[39m,\n    name: \u001b[32m'toBeVisible'\u001b[39m,\n    expected: \u001b[32m'visible'\u001b[39m,\n    log: [\n      \u001b[32m'  - Expect \"toBeVisible\" with timeout 15000ms'\u001b[39m,\n      \u001b[32m\"  - waiting for locator('#sandboxFrame').contentFrame().locator('#userHtmlFrame').contentFrame().locator('tr, .ag-row').filter({ hasText: 'Equipo Race Condition 1776049076175' }).first()\"\u001b[39m\n    ],\n    timeout: \u001b[33m15000\u001b[39m\n  },\n  \u001b[32mSymbol(step)\u001b[39m: {\n    category: \u001b[32m'expect'\u001b[39m,\n    apiName: \u001b[32m'expect.toBeVisible'\u001b[39m,\n    title: \u001b[32m`Expect \"toBeVisible\" locator('#sandboxFrame').contentFrame().locator('#userHtmlFrame').contentFrame().locator('tr, .ag-row').filter({ hasText: 'Equipo Race Condition 1776049076175' }).first()`\u001b[39m,\n    shortTitle: \u001b[32m'Expect \"toBeVisible\"'\u001b[39m,\n    params: { expected: \u001b[36m[Object]\u001b[39m },\n    infectParentStepsWithError: \u001b[90mundefined\u001b[39m,\n    stepId: \u001b[32m'expect@86'\u001b[39m,\n    group: \u001b[90mundefined\u001b[39m,\n    boxedStack: \u001b[90mundefined\u001b[39m,\n    location: {\n      file: \u001b[32m'C:\\\\Users\\\\grego\\\\Antigravity\\\\Taxonomia Project\\\\__tests__\\\\e2e\\\\topology-strict.spec.js'\u001b[39m,\n      line: \u001b[33m90\u001b[39m,\n      column: \u001b[33m29\u001b[39m\n    },\n    steps: [],\n    attachmentIndices: [],\n    info: TestStepInfoImpl {\n      annotations: [],\n      _testInfo: \u001b[36m[TestInfoImpl]\u001b[39m,\n      _stepId: \u001b[32m'expect@86'\u001b[39m,\n      _title: \u001b[32m`Expect \"toBeVisible\" locator('#sandboxFrame').contentFrame().locator('#userHtmlFrame').contentFrame().locator('tr, .ag-row').filter({ hasText: 'Equipo Race Condition 1776049076175' }).first()`\u001b[39m,\n      _parentStep: \u001b[90mundefined\u001b[39m,\n      skip: \u001b[36m[Function (anonymous)]\u001b[39m\n    },\n    complete: \u001b[36m[Function: complete]\u001b[39m,\n    endWallTime: \u001b[33m1776049095207\u001b[39m,\n    error: {\n      message: \u001b[32m'Error: \\x1B[2mexpect(\\x1B[22m\\x1B[31mlocator\\x1B[39m\\x1B[2m).\\x1B[22mtoBeVisible\\x1B[2m(\\x1B[22m\\x1B[2m)\\x1B[22m failed\\n'\u001b[39m +\n        \u001b[32m'\\n'\u001b[39m +\n        \u001b[32m\"Locator: locator('#sandboxFrame').contentFrame().locator('#userHtmlFrame').contentFrame().locator('tr, .ag-row').filter({ hasText: 'Equipo Race Condition 1776049076175' }).first()\\n\"\u001b[39m +\n        \u001b[32m'Expected: visible\\n'\u001b[39m +\n        \u001b[32m'Timeout: 15000ms\\n'\u001b[39m +\n        \u001b[32m'Error: element(s) not found\\n'\u001b[39m +\n        \u001b[32m'\\n'\u001b[39m +\n        \u001b[32m'Call log:\\n'\u001b[39m +\n        \u001b[32m'\\x1B[2m  - Expect \"toBeVisible\" with timeout 15000ms\\x1B[22m\\n'\u001b[39m +\n        \u001b[32m\"\\x1B[2m  - waiting for locator('#sandboxFrame').contentFrame().locator('#userHtmlFrame').contentFrame().locator('tr, .ag-row').filter({ hasText: 'Equipo Race Condition 1776049076175' }).first()\\x1B[22m\\n\"\u001b[39m,\n      stack: \u001b[32m'Error: \\x1B[2mexpect(\\x1B[22m\\x1B[31mlocator\\x1B[39m\\x1B[2m).\\x1B[22mtoBeVisible\\x1B[2m(\\x1B[22m\\x1B[2m)\\x1B[22m failed\\n'\u001b[39m +\n        \u001b[32m'\\n'\u001b[39m +\n        \u001b[32m\"Locator: locator('#sandboxFrame').contentFrame().locator('#userHtmlFrame').contentFrame().locator('tr, .ag-row').filter({ hasText: 'Equipo Race Condition 1776049076175' }).first()\\n\"\u001b[39m +\n        \u001b[32m'Expected: visible\\n'\u001b[39m +\n        \u001b[32m'Timeout: 15000ms\\n'\u001b[39m +\n        \u001b[32m'Error: element(s) not found\\n'\u001b[39m +\n        \u001b[32m'\\n'\u001b[39m +\n        \u001b[32m'Call log:\\n'\u001b[39m +\n        \u001b[32m'\\x1B[2m  - Expect \"toBeVisible\" with timeout 15000ms\\x1B[22m\\n'\u001b[39m +\n        \u001b[32m\"\\x1B[2m  - waiting for locator('#sandboxFrame').contentFrame().locator('#userHtmlFrame').contentFrame().locator('tr, .ag-row').filter({ hasText: 'Equipo Race Condition 1776049076175' }).first()\\x1B[22m\\n\"\u001b[39m +\n        \u001b[32m'\\n'\u001b[39m +\n        \u001b[32m'    at C:\\\\Users\\\\grego\\\\Antigravity\\\\Taxonomia Project\\\\__tests__\\\\e2e\\\\topology-strict.spec.js:90:29'\u001b[39m,\n      cause: \u001b[90mundefined\u001b[39m\n    }\n  }\n}\n"
                         }
                       ],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-04-12T08:21:40.962Z",
+                      "startTime": "2026-04-13T02:57:48.770Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -675,46 +108,29 @@
               "file": "topology-strict.spec.js",
               "line": 52,
               "column": 3
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "title": "topology-unmodified-subgrid.spec.js",
-      "file": "topology-unmodified-subgrid.spec.js",
-      "column": 0,
-      "line": 0,
-      "specs": [],
-      "suites": [
-        {
-          "title": "E33: Unmodified Subgrid Declarative Save Resilience",
-          "file": "topology-unmodified-subgrid.spec.js",
-          "line": 6,
-          "column": 6,
-          "specs": [
+            },
             {
-              "title": "Topology State: Guardar un registro intacto con un Portafolio existente no debe lanzar Colisión de Hermanos",
+              "title": "Validar topología de árbol profundo Ágil y Tradicional (S34.1)",
               "ok": true,
               "tags": [],
               "tests": [
                 {
-                  "timeout": 120000,
+                  "timeout": 150000,
                   "annotations": [],
                   "expectedStatus": "passed",
                   "projectId": "chromium",
                   "projectName": "chromium",
                   "results": [
                     {
-                      "workerIndex": 2,
+                      "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 16349,
+                      "duration": 3231,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-04-12T08:22:03.717Z",
+                      "startTime": "2026-04-13T02:58:15.218Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -722,9 +138,9 @@
                   "status": "expected"
                 }
               ],
-              "id": "24d0ff9566326f11e172-dea3520ef9368f695b18",
-              "file": "topology-unmodified-subgrid.spec.js",
-              "line": 36,
+              "id": "4a670036ef1357e513f1-7bd5321a67e673548aff",
+              "file": "topology-strict.spec.js",
+              "line": 93,
               "column": 3
             }
           ]
@@ -734,11 +150,11 @@
   ],
   "errors": [],
   "stats": {
-    "startTime": "2026-04-12T08:16:17.511Z",
-    "duration": 363144.476,
-    "expected": 5,
+    "startTime": "2026-04-13T02:57:48.215Z",
+    "duration": 30468.761000000002,
+    "expected": 2,
     "skipped": 0,
-    "unexpected": 2,
+    "unexpected": 0,
     "flaky": 0
   }
 }
