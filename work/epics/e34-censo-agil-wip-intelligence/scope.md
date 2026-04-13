@@ -146,7 +146,7 @@ Tras S34.2, se desbloquean S34.3, S34.4 y S34.5. Diferentes desarrolladores pued
 - [ ] **M1: Backing de Datos & Relaciones (S34.1 + S34.2)**
   *Purpose:* Demostrar vinculación 1:N SCD-2 Persona↔Equipo y cómputo backend sin bugs topológicos.
   *Success Criteria:* Tests de CRUD corriendo limpios, Aristas en DB verificadas.
-- [ ] **M2: Integraciones Visuales Pre-existentes (S34.3 + S34.4)**
+- [x] **M2: Integraciones Visuales Pre-existentes (S34.3 + S34.4)**
   *Purpose:* Mostrar la visibilidad de portafolio reparada en la interfaz del SPA.
   *Success Criteria:* Dashboard pinta contadores precisos; panel lateral del Equipo lista Personas asociadas.
 - [ ] **M3: Mapa de Capacidad E2E (S34.5)**
@@ -169,5 +169,5 @@ Tras S34.2, se desbloquean S34.3, S34.4 y S34.5. Diferentes desarrolladores pued
 | S34.1 | DONE  | L | No |
 | S34.2 | DONE  | M | No |
 | S34.3 | DONE  | S | Si |
-| S34.4 | TODO  | M | Si |
+| S34.4 | DONE  | M | Si |
 | S34.5 | TODO  | L | Si |
