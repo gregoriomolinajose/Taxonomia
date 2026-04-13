@@ -231,11 +231,15 @@ function bulkInsert(entityName, recordsArray) {
        return { status: 'error', message: `La entidad ${entityName} no está aprovisionada (faltan cabeceras).` };
     }
     
-    // Determinar Primary Key dinámicamente desde los headers o la convención
-    let pkField = headers.find(h => h.toString().startsWith('id_'));
+    // Determinar Primary Key dinámicamente usando el Schema como Ground Truth
+    let pkField = (typeof APP_SCHEMAS !== 'undefined' && APP_SCHEMAS[entityName] && APP_SCHEMAS[entityName].primaryKey) ? APP_SCHEMAS[entityName].primaryKey : null;
+    
+    if (!pkField) {
+        pkField = headers.find(h => h.toString().startsWith('id_'));
+    }
     if (!pkField) {
         const tableKey = entityName.toLowerCase();
-        const singularKey = tableKey.endsWith('s') ? tableKey.slice(0, -1) : tableKey;
+        const singularKey = tableKey.endsWith('s') ? tableKey.slice(0, -1) : (tableKey.endsWith('es') ? tableKey.slice(0, -2) : tableKey);
         pkField = 'id_' + singularKey;
     }
 

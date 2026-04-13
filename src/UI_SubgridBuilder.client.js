@@ -249,9 +249,16 @@ window.UI_SubgridBuilder = {
                 window.showToast && window.showToast(`Error de esquema en Subgrid: Múltiples de ${field.label}`, 'danger');
                 return;
             }
-            const tableKey = field.targetEntity.toLowerCase();
-            const singularKey = tableKey.endsWith('s') ? tableKey.slice(0, -1) : (tableKey.endsWith('es') ? tableKey.slice(0, -2) : tableKey);
-            const childPK = 'id_' + singularKey;
+            let childPK = "id_registro";
+            if (window.UI_FormUtils && typeof window.UI_FormUtils.getPrimaryKey === 'function') {
+                childPK = window.UI_FormUtils.getPrimaryKey(field.targetEntity);
+            } else if (window.APP_SCHEMAS && window.APP_SCHEMAS[field.targetEntity] && window.APP_SCHEMAS[field.targetEntity].primaryKey) {
+                childPK = window.APP_SCHEMAS[field.targetEntity].primaryKey;
+            } else {
+                const tableKey = field.targetEntity.toLowerCase();
+                const singularKey = tableKey.endsWith('s') ? tableKey.slice(0, -1) : (tableKey.endsWith('es') ? tableKey.slice(0, -2) : tableKey);
+                childPK = 'id_' + singularKey;
+            }
 
             // Delegación a SubgridState PURE Engine (Inyectado Híbridamente)
             const rootDOMContext = modalContext || window.currentFormDrawer || document;
