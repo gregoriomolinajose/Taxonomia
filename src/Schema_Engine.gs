@@ -264,8 +264,8 @@ const APP_SCHEMAS = {
       ...FIELD_TEMPLATES.AUDIT_FIELDS(),
       ...FIELD_TEMPLATES.VERSION_FIELD(),
       ...FIELD_TEMPLATES.ESTADO_FIELD(),
-      { name: "id_grupo_producto", type: "relation", relationType: "padre", targetEntity: "Grupo_Productos", label: "Grupo de Producto", isTemporalGraph: true, graphEdgeType: "GRUPO_PRODUCTO_EQUIPO", required: true, width: 6 },
-      { name: "personas_asignadas", type: "relation", relationType: "hijo", childSchema: "Persona", isTemporalGraph: true, graphEdgeType: "PERSONA_EQUIPO", label: "Personas Asignadas (Célula Base)", virtual: true, uiBehavior: "subgrid", allowedRoles: ["Developer", "Tester", "Tech Lead"], width: 12 },
+      { name: "id_grupo_producto", type: "relation", relationType: "padre", targetEntity: "Grupo_Productos", label: "Grupo de Producto", isTemporalGraph: true, graphEdgeType: "GRUPO_PRODUCTO_EQUIPO", required: true, width: 6, uiComponent: "select_single", valueField: "id_grupo_producto", labelField: "nombre" },
+      { name: "personas_asignadas", type: "relation", relationType: "hijo", targetEntity: "Persona", isTemporalGraph: true, graphEdgeType: "PERSONA_EQUIPO", label: "Personas Asignadas (Célula Base)", virtual: true, uiBehavior: "subgrid", allowedRoles: ["Developer", "Tester", "Tech Lead"], width: 12 },
       { name: "nombre_equipo", type: "text", label: "Nombre de Equipo", required: true, width: 6 },
       { name: "seudonimo", type: "text", label: "Seudónimo", required: false, width: 6 },
       { name: "metodologia", type: "select", label: "Metodología", required: true, width: 6, options: ["Scrum", "Kanban", "Híbrido"] },
@@ -310,7 +310,7 @@ const APP_SCHEMAS = {
       
       
       { name: "separator_3", type: "divider", label: "Organización y Agilidad", width: 12 },
-      { name: "equipo", type: "relation", relationType: "padre", targetEntity: "Equipo", label: "Equipo Asignado", isTemporalGraph: true, graphEdgeType: "PERSONA_EQUIPO", required: false, width: 12 },
+      { name: "equipo", type: "relation", relationType: "padre", targetEntity: "Equipo", label: "Equipo Asignado", isTemporalGraph: true, graphEdgeType: "PERSONA_EQUIPO", required: false, width: 12, uiComponent: "select_single", valueField: "id_equipo", labelField: "nombre_equipo" },
       { name: "rol_agil", type: "select", label: "Rol Ágil Asignado", options: ["Product Manager", "Product Owner", "Team Coach", "RTE", "Developer", "Tech Lead", "Tester", "N/A"], required: true, width: 6 },
       { name: "porcentaje_asignacion", type: "select", label: "Asignación", options: ["Full Time", "Part Time", "Por Proyecto"], width: 6 },
       { name: "separator_4", type: "divider", label: "Grafo de Liderazgo y Accesos", width: 12 },
