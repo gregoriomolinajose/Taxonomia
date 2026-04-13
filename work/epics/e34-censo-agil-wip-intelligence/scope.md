@@ -96,7 +96,7 @@ Establecer Taxonomia como el source of truth del censo operativo de equipos ági
 - [ ] `Equipo.id_producto` persiste como arista `PRODUCTO_EQUIPO` correctamente orientada
 - [ ] `total_integrantes` refleja conteo real de aristas `PERSONA_EQUIPO` activas
 - [ ] Subgrid de personas visible en la vista de Equipo
-- [ ] Mapa de Capacidad renderiza swimlanes con datos reales por Portafolio
+- [x] Mapa de Capacidad renderiza swimlanes con datos reales por Portafolio
 - [ ] Dashboard charts leen headcount desde grafo (no campo manual)
 - [ ] Playwright e2e: persona asignada → headcount se incrementa en Mapa y Dashboard
 - [ ] Tests de Equipo reactivados y en verde
@@ -137,6 +137,7 @@ Establecer Taxonomia como el source of truth del censo operativo de equipos ági
 | 3 | **S34.3** (UI Subgrid) | Quick win | Agrega el subgrid en la vista individual. Flujos UI separados. Paralelizable tras S34.1. | Valida la interacción usuaria y llenado SCD-2 inicial. |
 | 4 | **S34.4** (Dashboard) | Quick win | Soluciona la pre-existente gráfica vacía del Donut Chart utilizando el `total_integrantes` real del Store. | Restaura funcionalidad dañada en producción inmediatamente. |
 | 5 | **S34.5** (Mapa) | MVP Core | Requisito principal, visualización Swimlane por jerarquías usando recursos CSS Grid y Datos desde el Frontend (DataStore). | Concreta la vista deseada según Mockups. |
+| 6 | **S34.6** (Performance) | Performance | Optimización Topológica O(1) basada en pre-procesamiento de subgrafos para DataStore. Nace por Quality Review de S34.5. | Preparación para scale > 10,000 Headcount. |
 
 **Parallel opportunities:**
 Tras S34.2, se desbloquean S34.3, S34.4 y S34.5. Diferentes desarrolladores pueden hacer la S34.4 (Dashboard) y la S34.5 (Renderización Angular / DOM custom de Mapa) en paralelo.
@@ -149,7 +150,7 @@ Tras S34.2, se desbloquean S34.3, S34.4 y S34.5. Diferentes desarrolladores pued
 - [x] **M2: Integraciones Visuales Pre-existentes (S34.3 + S34.4)**
   *Purpose:* Mostrar la visibilidad de portafolio reparada en la interfaz del SPA.
   *Success Criteria:* Dashboard pinta contadores precisos; panel lateral del Equipo lista Personas asociadas.
-- [ ] **M3: Mapa de Capacidad E2E (S34.5)**
+- [x] **M3: Mapa de Capacidad E2E (S34.5)**
   *Purpose:* Renderizar Grid interactivo As-Is Portafolio completo.
   *Success Criteria:* Mapa de swimlanes cargado sin fetchs adicionales (reusando DataStore) y adaptado a móviles.
 - [ ] **M4: Epic E34 Complete**
@@ -170,4 +171,4 @@ Tras S34.2, se desbloquean S34.3, S34.4 y S34.5. Diferentes desarrolladores pued
 | S34.2 | DONE  | M | No |
 | S34.3 | DONE  | S | Si |
 | S34.4 | DONE  | M | Si |
-| S34.5 | TODO  | L | Si |
+| S34.5 | DONE  | L | Si |

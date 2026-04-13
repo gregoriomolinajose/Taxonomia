@@ -276,7 +276,9 @@
 
                 // 3. Distribución de Campos JIT por Sección
                 if (!field.section || !field.width) {
-                    console.warn(`[FormEngine] ALERTA: La entidad ${entityName} se está renderizando con valores por defecto. Falta 'section' o 'width' en el campo '${field.name}'. Actualice al Blueprint V3.`);
+                    if (extractedSections?.length > 0) {
+                        console.warn(`[FormEngine] ALERTA: La entidad ${entityName} usa Secciones, pero el campo '${field.name}' carece de 'section' o 'width'. Este campo quedará huérfano en el Stepper. Actualice al Blueprint V3.`);
+                    }
                     field.section = field.section || "Datos Generales";
                     field.width = field.width || 12;
                 }

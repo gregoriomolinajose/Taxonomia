@@ -559,8 +559,9 @@ const Engine_DB = {
     list: function (entityName, format) {
         const config = (typeof CONFIG !== 'undefined') ? CONFIG : { useSheets: true, SPREADSHEET_ID_DB: '' };
         
-        // Intentar leer de RAM (CacheService)
-        const cacheKey = 'CACHE_LIST_' + entityName;
+        // Intentar leer de RAM (CacheService) con versionado dinámico
+        const versionHash = (typeof CONFIG !== 'undefined' && CONFIG.APP_VERSION) ? CONFIG.APP_VERSION.replace(/[^a-zA-Z0-9]/g, '') : 'V0';
+        const cacheKey = `CACHE_LIST_${versionHash}_${entityName}`;
         if (typeof CacheService !== 'undefined') {
             const cached = CacheService.getScriptCache().get(cacheKey);
             if (cached && format !== 'tuples') { // No cacheamos tuplas por ahora para evitar colisiones de formato

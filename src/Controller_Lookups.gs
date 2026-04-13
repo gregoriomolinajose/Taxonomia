@@ -11,7 +11,8 @@
  */
 function _getCachedLookup(sourceFnName) {
   const cache = CacheService.getScriptCache();
-  const cacheKey = `CACHE_LOOKUP_${sourceFnName}`;
+  const versionHash = (typeof CONFIG !== 'undefined' && CONFIG.APP_VERSION) ? CONFIG.APP_VERSION.replace(/[^a-zA-Z0-9]/g, '') : 'V0';
+  const cacheKey = `CACHE_LOOKUP_${versionHash}_${sourceFnName}`;
   const cached = cache.get(cacheKey);
   
   if (cached) {
@@ -78,13 +79,22 @@ function getPersonasOptions() {
     
     const options = result.rows
       .filter(row => row.estado !== 'Eliminado')
-      .map(row => ({
-        id: row.email,
-        nombre: row.nombre,
-        value: row.email,
-        label: row.nombre + " " + row.apellidos + (row.cargo ? ` (${row.cargo})` : ''),
-        rol_agil: row.rol_agil
-      }));
+      .map(row => {
+        const primaryId = row.id_persona || row.email;
+        const lexicalStr = row.lexical_id ? `[${row.lexical_id}] ` : '';
+        const nombreStr = [row.nombre, row.apellidos].filter(Boolean).join(" ");
+        const cargoStr = row.cargo ? ` (${row.cargo})` : '';
+        let finalLabel = (lexicalStr + nombreStr + cargoStr).trim();
+        if (!finalLabel) finalLabel = row.email || primaryId;
+
+        return {
+          id: primaryId,
+          nombre: row.nombre,
+          value: primaryId,
+          label: finalLabel,
+          rol_agil: row.rol_agil
+        };
+      });
     // OBLIGATORIO: Retornar string nativo para evadir bug de serialización V8 IPC
     return JSON.stringify(options);
   } catch(e) {
@@ -139,10 +149,14 @@ function getGenericOptions(entityName, valCol, labelCol) {
     if (!result || !result.rows) return [];
 
     // OBLIGATORIO: Transmitir en formato String crudo para evadir el crash del Serializador IPC de GAS
-    const options = result.rows.map(row => ({
-      value: row[valCol],
-      label: row[labelCol]
-    })).filter(opt => opt.value !== undefined && opt.value !== null && opt.label);
+    const options = result.rows.map(row => {
+      const lexicalStr = row.lexical_id ? `[${row.lexical_id}] ` : '';
+      const baseLabel = row[labelCol] || '';
+      return {
+        value: row[valCol],
+        label: (lexicalStr + baseLabel).trim() || row[valCol]
+      };
+    }).filter(opt => opt.value !== undefined && opt.value !== null && opt.label);
     return JSON.stringify(options);
   } catch (error) {
     Logger.log(`Error en getGenericOptions para ${entityName}: ` + error.message);

@@ -219,10 +219,34 @@ window.UI_SubgridBuilder = {
             const modalId = 'modal-' + field.name;
             modal.id = modalId;
             
-            const lookupSource = field.options || (window._LOOKUP_DATA && window._LOOKUP_DATA[field.name]) || [];
+            let lookupSource = field.options || (window._LOOKUP_DATA && window._LOOKUP_DATA[field.name]);
+            
+            // S34.6 UX Fix: Race Condition Mitigation for Async Hydration
+            const isEmptyLookup = !lookupSource || (Array.isArray(lookupSource) && lookupSource.length === 0) || (lookupSource.data && lookupSource.data.rows && lookupSource.data.rows.length === 0);
+            if (isEmptyLookup && window.FormEngine_Resolvers && window.FormEngine_Resolvers._cache) {
+                let apiMethod = field.lookupSource || 'getInitialPayload';
+                let apiArgs = field.lookupSource ? [] : [field.targetEntity];
+                const cacheKey = apiMethod + '::' + JSON.stringify(apiArgs);
+                
+                const cached = window.FormEngine_Resolvers._cache[cacheKey];
+                if (cached instanceof Promise) {
+                    addBtn.disabled = true;
+                    const prevText = addBtn.innerHTML;
+                    addBtn.innerHTML = '<ion-spinner name="dots" style="height:20px;"></ion-spinner>';
+                    try {
+                        await cached;
+                        lookupSource = field.options || (window._LOOKUP_DATA && window._LOOKUP_DATA[field.name]) || [];
+                    } catch(e) {
+                        console.warn('[UI_SubgridBuilder] Falló la hidratación retrasada', e);
+                    }
+                    addBtn.disabled = false;
+                    addBtn.innerHTML = prevText;
+                }
+            }
+
             let normalizedOptions = Array.isArray(lookupSource) ? lookupSource : [];
             
-            if (lookupSource.data && lookupSource.lookups) {
+            if (lookupSource && lookupSource.data && lookupSource.lookups) {
                  // If it came from getInitialPayload (Tuples)
                  const headers = lookupSource.data.headers;
                  const rows = lookupSource.data.rows.map(tuple => {
@@ -235,7 +259,7 @@ window.UI_SubgridBuilder = {
                  if (pkField) {
                      normalizedOptions = rows.map(r => ({ 
                          value: r[pkField], 
-                         label: r.nombre || r.nombre_producto || r[pkField],
+                         label: (r.lexical_id ? `[${r.lexical_id}] ` : '') + (r.nombre || r.nombre_producto || r.nombre_equipo || '') || r[pkField],
                          nivel_tipo: r.nivel_tipo,
                          hasActiveParent: r.hasActiveParent,
                          rol_agil: r.rol_agil

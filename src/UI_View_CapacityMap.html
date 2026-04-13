@@ -179,16 +179,44 @@ window.CapacityMapEngine = (function() {
          const personas = window.DataStore.get('Persona');
          if (!personas) return 0;
 
-         // Primero verificamos por aristas temporales en Sys_Graph_Edges (prioridad)
+         // Utilizamos la misma lógica universal híbrida (Grafo -> Fallback a Columna Física)
          const edges = window.DataStore.get('Sys_Graph_Edges');
          if (edges && edges.length > 0) {
              const teamEdges = edges.filter(e => e.tipo_relacion === 'PERSONA_EQUIPO' && String(e.id_nodo_padre) === String(eqPk) && e.es_version_actual !== false);
              if (teamEdges.length > 0) return teamEdges.length;
          }
 
-         // Fallback a FK física si exite
+         // Fallback a FK física si existe
          const teamPersonas = personas.filter(p => String(p.equipo) === String(eqPk) || String(p.id_equipo) === String(eqPk));
          return teamPersonas.length;
+    }
+
+    // Helper universal para recuperar relaciones 1:N leyendo el Sys_Graph_Edges como prioridad.
+    // Garantiza que la topología SCD-2 sea prioritaria frente a FKs desincronizadas.
+    function getGraphChildren(childStore, edgeType, parentId, fallbackFk) {
+         if (!childStore || !parentId) return [];
+         const edges = window.DataStore ? window.DataStore.get('Sys_Graph_Edges') : [];
+         
+         if (edges && edges.length > 0) {
+             // ¿Se utiliza este edgeType formalmente en el grafo global del ecosistema?
+             const edgeTypeExists = edges.some(e => e.tipo_relacion === edgeType);
+             
+             if (edgeTypeExists) {
+                 const activeChildIds = edges
+                     .filter(e => e.tipo_relacion === edgeType && String(e.id_nodo_padre) === String(parentId) && e.es_version_actual !== false)
+                     .map(e => String(e.id_nodo_hijo));
+                     
+                 // Verdad absoluta del Grafo. (Si array vacío, devuelve [] correctamente, sin fallbacks fantasmas)
+                 return childStore.filter(c => {
+                     // Búsqueda genérica inteligente de PK para cualquier sub-modelo:
+                     const pk = c.id_portafolio || c.id_grupo_producto || c.id_equipo || c.id_unidad_negocio || c.id_registro;
+                     return activeChildIds.includes(String(pk)) || activeChildIds.includes(String(c.lexical_id));
+                 });
+             }
+         }
+         
+         // Solo si el Grafo NUNCA ha registrado este tipo de relación globalmente, ejecutamos Fallback.
+         return fallbackFk ? childStore.filter(c => String(c[fallbackFk]) === String(parentId)) : [];
     }
 
     function render(containerElement) {
@@ -223,10 +251,12 @@ window.CapacityMapEngine = (function() {
             
             const unTitle = document.createElement('span');
             unTitle.className = 'capmap-un-title';
-            unTitle.textContent = safeGetText(un, 'nombre_unidad', 'nombre');
+            const unNombre = safeGetText(un, 'nombre_unidad', 'nombre');
+            unTitle.textContent = unNombre;
             // Make title clickable to drill down
             unTitle.style.cursor = 'pointer';
-            unTitle.onclick = () => window.UI_Router.navigateTo('dataview', 'Portafolio', { strictFilter: { key: 'id_unidad_negocio', value: unPk } });
+            const unLk = un.lexical_id || unPk;
+            unTitle.onclick = () => window.UI_Router.navigateTo('dataview', 'Portafolio', { strictFilter: { key: 'id_unidad_negocio', value: unLk, label: unNombre } });
 
             unTitleWrap.appendChild(toggleIcon);
             unTitleWrap.appendChild(unTitle);
@@ -243,7 +273,7 @@ window.CapacityMapEngine = (function() {
             let totalUNPersonas = 0;
 
             // Nivel 1: Portafolios (hijos de la UN)
-            const pts = storePT.filter(p => String(p.id_unidad_negocio) === String(unPk));
+            const pts = getGraphChildren(storePT, 'UNIDAD_NEGOCIO_PORTAFOLIO', unPk, 'unidad_negocio_padre');
             pts.forEach(pt => {
                 const ptPk = pt.id_portafolio || pt.id_registro;
                 const ptNode = document.createElement('div');
@@ -254,9 +284,11 @@ window.CapacityMapEngine = (function() {
                 
                 const ptTitle = document.createElement('span');
                 ptTitle.className = 'capmap-port-title';
-                ptTitle.textContent = safeGetText(pt, 'nombre_portafolio', 'nombre');
+                const ptNombre = safeGetText(pt, 'nombre_portafolio', 'nombre');
+                ptTitle.textContent = ptNombre;
                 ptTitle.style.cursor = 'pointer';
-                ptTitle.onclick = () => window.UI_Router.navigateTo('dataview', 'Grupo_Productos', { strictFilter: { key: 'id_portafolio', value: ptPk } });
+                const ptLk = pt.lexical_id || ptPk;
+                ptTitle.onclick = () => window.UI_Router.navigateTo('dataview', 'Grupo_Productos', { strictFilter: { key: 'id_portafolio', value: ptLk, label: ptNombre } });
 
                 const ptBadge = document.createElement('span');
                 ptBadge.className = 'capmap-badge badge-port';
@@ -271,7 +303,7 @@ window.CapacityMapEngine = (function() {
                 let totalPTPersonas = 0;
 
                 // Nivel 2: Grupos de Producto
-                const gps = storeGP.filter(g => String(g.id_portafolio) === String(ptPk));
+                const gps = getGraphChildren(storeGP, 'PORTAFOLIO_GRUPO_PRODUCTO', ptPk, 'id_portafolio');
                 gps.forEach(gp => {
                     const gpPk = gp.id_grupo_producto || gp.id_registro;
                     const gpNode = document.createElement('div');
@@ -282,9 +314,11 @@ window.CapacityMapEngine = (function() {
                     
                     const gpTitle = document.createElement('span');
                     gpTitle.className = 'capmap-grp-title';
-                    gpTitle.textContent = safeGetText(gp, 'nombre_grupo', 'nombre');
+                    const gpNombre = safeGetText(gp, 'nombre_grupo', 'nombre');
+                    gpTitle.textContent = gpNombre;
                     gpTitle.style.cursor = 'pointer';
-                    gpTitle.onclick = () => window.UI_Router.navigateTo('dataview', 'Equipo', { strictFilter: { key: 'id_grupo_producto', value: gpPk } });
+                    const gpLk = gp.lexical_id || gpPk;
+                    gpTitle.onclick = () => window.UI_Router.navigateTo('dataview', 'Equipo', { strictFilter: { key: 'id_grupo_producto', value: gpLk, label: gpNombre } });
 
                     const gpBadge = document.createElement('span');
                     gpBadge.className = 'capmap-badge badge-grp';
@@ -299,18 +333,20 @@ window.CapacityMapEngine = (function() {
                     let totalGPPersonas = 0;
 
                     // Nivel 3: Equipos
-                    const eqs = storeEQ.filter(e => String(e.id_grupo_producto) === String(gpPk));
+                    const eqs = getGraphChildren(storeEQ, 'GRUPO_PRODUCTO_EQUIPO', gpPk, 'id_grupo_producto');
                     eqs.forEach(eq => {
                         const eqPk = eq.id_equipo || eq.id_registro;
+                        const eqLk = eq.lexical_id || eqPk;
+                        const eqNombre = safeGetText(eq, 'nombre_equipo', 'nombre');
                         const eqPersonas = getPersonsByTeam(eqPk);
                         
                         totalGPPersonas += eqPersonas;
 
                         const teamCard = createClickableCard(
-                            safeGetText(eq, 'nombre_equipo', 'nombre'), 
+                            eqNombre, 
                             eq.metodologia || 'Equipo', 
                             eqPersonas, 
-                            { target: 'Persona', strict: { key: 'equipo', value: eqPk } },
+                            { target: 'Persona', strict: { key: 'equipo', value: eqLk, label: eqNombre } },
                             'badge-eq'
                         );
                         eqContainer.appendChild(teamCard);

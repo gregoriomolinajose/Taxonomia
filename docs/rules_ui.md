@@ -28,6 +28,7 @@
 - Toda operación de red DEBE bloquear la interfaz usando `<ion-loading>` o `<ion-spinner>`.
 - El resultado de las operaciones DEBE comunicarse mediante `<ion-toast>` nativo.
 - **Consistencia de Iconografía:** La familia oficial de glifos es la variante delineada (`-outline`) de Ionicons. NUNCA mezcles íconos sólidos con delineados.
+- **Bloqueo Optimista contra Condiciones de Carrera (Async UI Locks):** Siempre que un componente interactivo dependa del catálogo de fondo del MasterPayload (ej. Modal Lookups poblándose asíncronamente vía `FormEngine_Resolvers`), el Frontend DEBE evaluar el estado en memoria (`_cache`) al vuelo. Si los datos aún viajan por red, el componente (Botón "+ Agregar") DEBE bloquearse localmente protegiendo el touch target e inyectar un `<ion-spinner>` hasta que la Promesa aterrice. Se rechaza cualquier modal que lance pantallas huecas/vacías por asincronía (Race Condition).
 
 ## 5. Navegación y Flujos de Vida CRUD (Routing)
 - **Success Routing:** Todo evento de éxito al guardar/actualizar DEBE destruir el contenedor del formulario del DOM y retornar a la vista de listado (`DataView_UI`).
@@ -42,6 +43,7 @@
 ## 7. Formateo de Cadenas (Anti-Snake-Case Bleeding)
 - **Saneamiento Obligatorio:** NUNCA expongas llaves crudas de BD (ej. `Unidad_Negocio`) en la UI.
 - Todo título, subtítulo, botón o alerta generado por esquema DEBE pasar por un formateador que reemplace guiones bajos (`_`) por espacios, presentando lenguaje natural corporativo.
+- **Ley Semántica Global (Lexical Fallback Rule):** Todo Subgrid, Grid o Modal Picker que exhiba opciones relacionales debe exhibir la información centrada en humanos. Si la entidad objetivo carece del estándar `"nombre"`, el resolutor unificado de Lookups DEBE iterar con base en una heurística robusta encadenada: `[lexical_id] (nombre || nombre_equipo || nombre_producto) || id_tecnico` para evitar casillas vacías.
 
 ## 8. Determinismo y Estados Vacíos (Empty States)
 - **Navegación Determinista:** El orden del menú NO DEBE depender de `Object.keys()`. Se DEBE usar una configuración explícita (`order` en esquema) para garantizar una jerarquía inmutable.
@@ -60,6 +62,7 @@
 - **Prohibición de Nodos Fantasma:** PROHIBIDO capturar referencias a inputs del DOM en variables globales o closures fuera del evento de acción.
 - **Lectura Just-In-Time (JIT):** Toda recolección de Payload DEBE realizarse consultando el contenedor activo en el milisegundo exacto del clic.
 - **Destrucción y Reset:** Al completar/cancelar un flujo, el contenedor DEBE forzar la limpieza de su estado interno y DOM (Anti-Stale State) para que nazca como un lienzo en blanco la próxima vez.
+- **Protocolo de Lectura Nodal (Nodal Protocol):** Queda prohibida la dependencia de referencias globales (Singleton o `window.*`) para capturar la captura de estado complejo en formularios (como listas dinámicas o Pickers anidados). Todo componente visual complejo inyectado por el `FormEngine` DEBE empaquetar su estado internamente y exponer de forma aislada una interfaz inyectada al DOM raíz llamable externamente, nombrada unificadamente como `element.getValidatedValue()`. El Submitter recorrerá la topología del DOM recolectando estos estados orgánicamente.
 
 ## 12. Versionado Estricto y Trazabilidad Visual
 - **Visibilidad Obligatoria:** La UI DEBE mostrar siempre la versión y build actual (ej. `v1.0.0 - Build 260325.1030`).

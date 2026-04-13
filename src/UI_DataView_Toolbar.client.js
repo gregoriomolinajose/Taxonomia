@@ -96,6 +96,22 @@ window.UI_DataView_Toolbar = (function () {
         btnCols.appendChild(document.createTextNode(' Columnas'));
         left.appendChild(btnCols);
         
+        const btnFilter = document.createElement('button');
+        btnFilter.className = 'dv-btn dv-btn-ghost';
+        btnFilter.id = 'dv-filter-trigger-btn';
+        btnFilter.title = 'Filtros avanzados';
+        const filterIcon = document.createElement('ion-icon');
+        filterIcon.className = 'dv-options-icon';
+        filterIcon.setAttribute('name', 'filter-outline');
+        filterIcon.setAttribute('slot', 'start');
+        btnFilter.appendChild(filterIcon);
+        btnFilter.appendChild(document.createTextNode(' Filtros'));
+        // TODO (Future phase): Listeners para abrir panel de filtros
+        btnFilter.addEventListener('click', () => {
+             console.log('Panel de Filtros Avanzados (Próximamente)');
+        });
+        left.appendChild(btnFilter);
+        
         const btnTable = document.createElement('button');
         btnTable.className = `dv-btn-icon ${viewType === 'table' ? 'active' : ''}`;
         btnTable.id = 'dv-view-table-btn';

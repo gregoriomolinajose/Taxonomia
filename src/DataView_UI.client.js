@@ -210,13 +210,13 @@
                         return val.some(function(item) {
                             if (typeof item === 'object' && item !== null) {
                                 return Object.values(item).some(function(innerVal) {
-                                    return String(innerVal) === sVal;
+                                    return String(innerVal) === sVal || String(innerVal).includes(`[${sVal}]`);
                                 });
                             }
-                            return String(item) === sVal;
+                            return String(item) === sVal || String(item).includes(`[${sVal}]`);
                         });
                     }
-                    return String(val) === sVal;
+                    return String(val) === sVal || String(val).includes(`[${sVal}]`);
                 });
             }
             _state.filtered = window.DataEngine.applyFilter(baseData, query);
@@ -286,7 +286,8 @@
                         chip.setAttribute('color', 'primary');
                         chip.style.marginLeft = '1rem';
                         chip.style.marginTop = '0.5rem';
-                        chip.innerHTML = `<ion-icon name="filter"></ion-icon><ion-label>Filtrado: ${_state.payload.strictFilter.value}</ion-label>`;
+                        const displayVal = _state.payload.strictFilter.label || _state.payload.strictFilter.value;
+                        chip.innerHTML = `<ion-icon name="filter"></ion-icon><ion-label>Filtrado: ${displayVal}</ion-label>`;
                         const closeIcon = document.createElement('ion-icon');
                         closeIcon.name = 'close-circle';
                         closeIcon.onclick = function() {

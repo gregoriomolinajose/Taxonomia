@@ -34,6 +34,7 @@
 - **Uso Obligatorio de CacheService:** Todo catálogo, lista desplegable o tabla de búsqueda (Lookups) DEBE ser almacenado en `CacheService.getScriptCache()` por un mínimo de 1 hora. El backend solo debe leer la Spreadsheet si el caché está vacío (Cache Miss).
 - **Compresión de Matrices (Tuplas):** Para listados de más de 100 registros, el backend NO DEBE retornar Arrays de Objetos. Debe retornar Arrays de Arrays (Tuplas) donde el índice 0 contenga los encabezados, delegando la reconstrucción de objetos al frontend para ahorrar ancho de banda.
 - **Ley de Invalidación de Caché (Cache Busting):** Todo uso de `CacheService` para listas o catálogos DEBE estar acompañado de un mecanismo de purga. Toda operación de mutación de datos (Insert, Update, Delete) en el backend DEBE invalidar/borrar explícitamente la llave de caché correspondiente a esa entidad para evitar servir datos estancados (Stale Data).
+- **Ley de Invalidación de Caché Dinámico (Deployment Salt):** El servicio de lectura y cacheo (`DataStore` y `Controller_Lookups`) tiene prohibido usar prefijos estáticos en crudo (ej. `"CACHE_V3"`). En su lugar, todas las llaves generadas para el `CacheService` deben estar "*salteadas*" dinámicamente con la variable `CONFIG.APP_VERSION`. Esto garantiza que cada vez que se despliegue a `dev` o `prod`, el caché distribuido se invalide automáticamente, erradicando datos estancados sin intervención humana.
 
 ## 8. Gestión de Estado en Cliente (Zero-Latency SPA)
 - **Ley de Memoria UI:** El Frontend DEBE actuar como una verdadera Single Page Application (SPA). Todo `MasterPayload` descargado desde el servidor DEBE ser almacenado en la memoria temporal del navegador (ej. `window.__APP_CACHE__`).
@@ -47,6 +48,7 @@
 - **Tipos de Relación Visual:**
   - `1:N` (Jerarquía): Se renderiza como un `subgrid` (Tabla anidada editable).
   - `M:N` (Grafo Simple): Se renderiza como un `multi-select` (Selector de etiquetas/chips).
+- **Persistencia No-Destructiva de Aristas (SCD-2 Graph Diffing):** Al gestionar Subgrids y multi-selects en el Frontend, el backend `Sys_Graph_Edges` tiene prohibido realizar operaciones de limpieza total de relaciones y reescritura. Se DEBE utilizar algoritmos de "Diffing" (Agregados y Restados), marcando pasiva y explícitamente las aristas descartadas (`es_version_actual = false`) respetando la línea temporal del grafo (Temporal Edge Versioning), neutralizando el bug de "Orphan Stealing".
 
   ## 10. Sanitización de Salida (Prevención de Colapso RPC)
 - **El Límite del postMessage:** Google Apps Script utiliza clonación estructurada para enviar datos del Backend al Frontend. Queda ESTRICTAMENTE PROHIBIDO retornar objetos complejos no serializables (como objetos `Date` nativos generados por la base de datos o referencias circulares) en las respuestas de éxito.
@@ -55,3 +57,7 @@
 
 ## 11. Performance Crítico en GAS (Imperativo de Bloque)
 - **Operaciones Bulk Ops:** Queda estrictamente prohibido invocar APIs nativas de GAS (`SpreadsheetApp`, `getRange`, `setValues`) dentro de bucles iterativos. Toda operación de base de datos debe mapearse en memoria (Array 2D) y escribirse con una sola llamada O(1).
+
+## 12. Gobernanza Estricta de Esquemas (SDA - Schema Driven Architecture)
+- **Ley del Origen de la Verdad (Ground Truth):** Queda estrictamente prohibido intentar inferir llaves primarias o nombres de entidades mediante heurísticas (fallbacks como buscar prefijos `id_` o truncamientos de strings) dentro de la capa `Engine_DB` o adaptadores. Todo ruteo, mutación y evaluación de PKs **DEBE** leerse implícitamente de la configuración declarada en `APP_SCHEMAS`.
+- **Política Fail-Fast:** Si una entidad intenta persistirse y no cuenta con la directiva explícita `primaryKey` configurada, o no coincide la llave en el payload con la del esquema, el backend debe lanzar un Error Crítico (Hard Error) y detener la ejecución, impidiendo corrupción estructural de datos.
