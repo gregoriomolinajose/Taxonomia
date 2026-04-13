@@ -1,0 +1,361 @@
+<style>
+/* ─────────────────────────────────────────────────────────
+   S34.5 CAPACIDAD E2E - ESTILOS
+───────────────────────────────────────────────────────── */
+.capmap-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    padding: 1rem;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.capmap-un {
+    background: var(--ion-color-step-50, #f4f5f8);
+    border: 1px solid var(--ion-color-step-150, #d7d8da);
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+
+.capmap-un-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 2px solid var(--ion-color-primary, #3880ff);
+    padding-bottom: 0.75rem;
+    margin-bottom: 1.5rem;
+}
+
+.capmap-un-title {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--ion-color-dark, #222);
+}
+
+.capmap-portafolio {
+    background: var(--ion-background-color, #ffffff);
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+    border-left: 4px solid var(--ion-color-secondary, #3dc2ff);
+}
+
+.capmap-port-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.capmap-port-title {
+    font-size: 1.15rem;
+    font-weight: 600;
+    color: var(--ion-color-medium, #92949c);
+}
+
+.capmap-grupos-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.capmap-grupo {
+    flex: 1 1 300px;
+    background: rgba(var(--ion-color-step-100-rgb, 200,200,200), 0.1);
+    border-radius: 8px;
+    padding: 1rem;
+    border: 1px dashed var(--ion-color-step-200, #c8c7cc);
+    min-width: 0;
+}
+
+.capmap-grp-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+}
+
+.capmap-grp-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--ion-text-color, #000);
+}
+
+.capmap-equipos-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 0.5rem;
+}
+
+.capmap-card {
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    margin: 0; /* Reset ionic card margin */
+    border: 1px solid var(--ion-color-step-100, #eee);
+}
+
+.capmap-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(0,0,0,0.1);
+    border-color: var(--ion-color-primary, #3880ff);
+}
+
+.capmap-badge {
+    font-size: 0.8rem;
+    border-radius: 12px;
+    padding: 4px 8px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.badge-un { background: var(--ion-color-primary-tint); color: var(--ion-color-primary-contrast); }
+.badge-port { background: var(--ion-color-secondary-tint); color: var(--ion-color-secondary-contrast); }
+.badge-grp { background: var(--ion-color-tertiary-tint); color: var(--ion-color-tertiary-contrast); }
+.badge-eq { background: var(--ion-color-light-shade); color: var(--ion-color-dark); }
+
+@media (max-width: 768px) {
+    .capmap-grupos-container { flex-direction: column; }
+    .capmap-grupo { flex: 1 1 auto; }
+}
+</style>
+
+<script>
+window.CapacityMapEngine = (function() {
+
+    function safeGetText(obj, field1, field2) {
+        if (!obj) return 'Desconocido';
+        return obj[field1] || obj[field2] || 'Sin Nombre';
+    }
+
+    function calculateDrilldownFilterQuery(entityType, parentId) {
+        return parentId; // Direct literal match para el buscador Omnibar
+    }
+
+    function createClickableCard(title, subtitle, personasCount, actionObj, colorClass) {
+        const card = document.createElement('ion-card');
+        card.className = 'capmap-card';
+        card.onclick = function() {
+            window.UI_Router.navigateTo('dataview', actionObj.target, { filterQuery: actionObj.query });
+        };
+        
+        const header = document.createElement('ion-card-header');
+        header.style.padding = '10px';
+        
+        const sub = document.createElement('ion-card-subtitle');
+        sub.textContent = subtitle;
+        sub.style.fontSize = '0.75rem';
+        header.appendChild(sub);
+        
+        const ttl = document.createElement('ion-card-title');
+        ttl.textContent = title;
+        ttl.style.fontSize = '0.9rem';
+        ttl.style.lineHeight = '1.2';
+        header.appendChild(ttl);
+        
+        card.appendChild(header);
+        
+        const content = document.createElement('ion-card-content');
+        content.style.padding = '0 10px 10px 10px';
+        content.style.display = 'flex';
+        content.style.justifyContent = 'space-between';
+        content.style.alignItems = 'center';
+        
+        const badge = document.createElement('span');
+        badge.className = 'capmap-badge ' + colorClass;
+        badge.innerHTML = `<ion-icon name="person"></ion-icon> ${personasCount}`;
+        content.appendChild(badge);
+        
+        card.appendChild(content);
+        return card;
+    }
+
+    function getPersonsByTeam(eqPk) {
+         if (!window.DataStore) return 0;
+         const personas = window.DataStore.get('Persona');
+         if (!personas) return 0;
+
+         // Primero verificamos por aristas temporales en Sys_Graph_Edges (prioridad)
+         const edges = window.DataStore.get('Sys_Graph_Edges');
+         if (edges && edges.length > 0) {
+             const teamEdges = edges.filter(e => e.tipo_relacion === 'PERSONA_EQUIPO' && String(e.id_nodo_padre) === String(eqPk) && e.es_version_actual !== false);
+             if (teamEdges.length > 0) return teamEdges.length;
+         }
+
+         // Fallback a FK física si exite
+         const teamPersonas = personas.filter(p => String(p.equipo) === String(eqPk) || String(p.id_equipo) === String(eqPk));
+         return teamPersonas.length;
+    }
+
+    function render(containerElement) {
+        containerElement.innerHTML = '';
+        if (!window.DataStore || !window.DataStore.get('Unidad_Negocio')) {
+            containerElement.innerHTML = '<div style="padding:2rem;text-align:center;color:var(--ion-color-medium)">La caché de topología está vacía. Navegue al Inicio para hidratar.</div>';
+            return;
+        }
+
+        const storeUN = window.DataStore.getActive('Unidad_Negocio');
+        const storePT = window.DataStore.getActive('Portafolio');
+        const storeGP = window.DataStore.getActive('Grupo_Productos');
+        const storeEQ = window.DataStore.getActive('Equipo');
+
+        const wrapper = document.createElement('div');
+        wrapper.className = 'capmap-container';
+
+        // Nivel 0: Unidades de Negocio
+        storeUN.forEach(un => {
+            const unPk = un.id_unidad_negocio || un.id_registro;
+            const unNode = document.createElement('div');
+            unNode.className = 'capmap-un';
+
+            const unHeader = document.createElement('div');
+            unHeader.className = 'capmap-un-header';
+            
+            const unTitleWrap = document.createElement('div');
+            const toggleIcon = document.createElement('ion-icon');
+            toggleIcon.name = 'chevron-down';
+            toggleIcon.style.marginRight = '8px';
+            toggleIcon.style.cursor = 'pointer';
+            
+            const unTitle = document.createElement('span');
+            unTitle.className = 'capmap-un-title';
+            unTitle.textContent = safeGetText(un, 'nombre_unidad', 'nombre');
+            // Make title clickable to drill down
+            unTitle.style.cursor = 'pointer';
+            unTitle.onclick = () => window.UI_Router.navigateTo('dataview', 'Portafolio', { filterQuery: unPk });
+
+            unTitleWrap.appendChild(toggleIcon);
+            unTitleWrap.appendChild(unTitle);
+            
+            const unBadge = document.createElement('span');
+            unBadge.className = 'capmap-badge badge-un';
+            
+            unHeader.appendChild(unTitleWrap);
+            unHeader.appendChild(unBadge);
+            unNode.appendChild(unHeader);
+
+            const ptContainer = document.createElement('div');
+
+            let totalUNPersonas = 0;
+
+            // Nivel 1: Portafolios (hijos de la UN)
+            const pts = storePT.filter(p => String(p.id_unidad_negocio) === String(unPk));
+            pts.forEach(pt => {
+                const ptPk = pt.id_portafolio || pt.id_registro;
+                const ptNode = document.createElement('div');
+                ptNode.className = 'capmap-portafolio';
+
+                const ptHeader = document.createElement('div');
+                ptHeader.className = 'capmap-port-header';
+                
+                const ptTitle = document.createElement('span');
+                ptTitle.className = 'capmap-port-title';
+                ptTitle.textContent = safeGetText(pt, 'nombre_portafolio', 'nombre');
+                ptTitle.style.cursor = 'pointer';
+                ptTitle.onclick = () => window.UI_Router.navigateTo('dataview', 'Grupo_Productos', { filterQuery: ptPk });
+
+                const ptBadge = document.createElement('span');
+                ptBadge.className = 'capmap-badge badge-port';
+
+                ptHeader.appendChild(ptTitle);
+                ptHeader.appendChild(ptBadge);
+                ptNode.appendChild(ptHeader);
+
+                const gpContainer = document.createElement('div');
+                gpContainer.className = 'capmap-grupos-container';
+
+                let totalPTPersonas = 0;
+
+                // Nivel 2: Grupos de Producto
+                const gps = storeGP.filter(g => String(g.id_portafolio) === String(ptPk));
+                gps.forEach(gp => {
+                    const gpPk = gp.id_grupo_producto || gp.id_registro;
+                    const gpNode = document.createElement('div');
+                    gpNode.className = 'capmap-grupo';
+
+                    const gpHeader = document.createElement('div');
+                    gpHeader.className = 'capmap-grp-header';
+                    
+                    const gpTitle = document.createElement('span');
+                    gpTitle.className = 'capmap-grp-title';
+                    gpTitle.textContent = safeGetText(gp, 'nombre_grupo', 'nombre');
+                    gpTitle.style.cursor = 'pointer';
+                    gpTitle.onclick = () => window.UI_Router.navigateTo('dataview', 'Equipo', { filterQuery: gpPk });
+
+                    const gpBadge = document.createElement('span');
+                    gpBadge.className = 'capmap-badge badge-grp';
+
+                    gpHeader.appendChild(gpTitle);
+                    gpHeader.appendChild(gpBadge);
+                    gpNode.appendChild(gpHeader);
+
+                    const eqContainer = document.createElement('div');
+                    eqContainer.className = 'capmap-equipos-grid';
+
+                    let totalGPPersonas = 0;
+
+                    // Nivel 3: Equipos
+                    const eqs = storeEQ.filter(e => String(e.id_grupo_producto) === String(gpPk));
+                    eqs.forEach(eq => {
+                        const eqPk = eq.id_equipo || eq.id_registro;
+                        const eqPersonas = getPersonsByTeam(eqPk);
+                        
+                        totalGPPersonas += eqPersonas;
+
+                        const teamCard = createClickableCard(
+                            safeGetText(eq, 'nombre_equipo', 'nombre'), 
+                            eq.metodologia || 'Equipo', 
+                            eqPersonas, 
+                            { target: 'Persona', query: eqPk },
+                            'badge-eq'
+                        );
+                        eqContainer.appendChild(teamCard);
+                    });
+
+                    // Si no existen equipos, mostramos vacío
+                    if (eqs.length === 0) {
+                        eqContainer.innerHTML = '<div style="font-size:0.8rem;color:var(--ion-color-medium)">Sin equipos asignados.</div>';
+                    }
+
+                    gpBadge.innerHTML = `<ion-icon name="people"></ion-icon> ${totalGPPersonas}`;
+                    gpNode.appendChild(eqContainer);
+                    gpContainer.appendChild(gpNode);
+
+                    totalPTPersonas += totalGPPersonas;
+                });
+
+                // Si no hay grupos
+                if (gps.length === 0) {
+                    gpContainer.innerHTML = '<div style="font-size:0.9rem;color:var(--ion-color-medium);padding:1rem;">No hay Grupos de Productos asignados.</div>';
+                }
+
+                ptBadge.innerHTML = `<ion-icon name="people"></ion-icon> ${totalPTPersonas}`;
+                ptNode.appendChild(gpContainer);
+                ptContainer.appendChild(ptNode);
+
+                totalUNPersonas += totalPTPersonas;
+            });
+
+            if (pts.length === 0) {
+                ptContainer.innerHTML = '<div style="font-size:1rem;color:var(--ion-color-medium);padding:2rem;text-align:center;">No hay portafolios en esta Unidad.</div>';
+            }
+
+            unBadge.innerHTML = `<ion-icon name="people"></ion-icon> ${totalUNPersonas} Personas Totales`;
+            unNode.appendChild(ptContainer);
+            wrapper.appendChild(unNode);
+        });
+
+        if (storeUN.length === 0) {
+            wrapper.innerHTML = '<div style="text-align:center;padding:3rem;"><h2 style="color:var(--ion-color-medium);">No hay Unidades de Negocio registradas.</h2></div>';
+        }
+
+        containerElement.appendChild(wrapper);
+    }
+
+    return { render };
+})();
+</script>

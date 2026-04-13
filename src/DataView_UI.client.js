@@ -325,7 +325,7 @@
         /* ────────────────────────────────────────────
            Render principal (entrada pública)
         ───────────────────────────────────────────── */
-        function render(entityName, containerId) {
+        function render(entityName, containerId, payload) {
             // Mobile-first: grid por defecto en móvil (<768px), tabla en desktop
             const defaultView = (window.innerWidth < 768) ? 'grid' : 'table';
 
@@ -413,6 +413,16 @@
                 }
 
                 _rerenderData();
+
+                if (payload && payload.filterQuery) {
+                    setTimeout(function() {
+                        const searchInput = document.getElementById('dv-search-input');
+                        if (searchInput) {
+                            searchInput.value = payload.filterQuery;
+                            _onSearch(payload.filterQuery);
+                        }
+                    }, 50);
+                }
             });
         }
 

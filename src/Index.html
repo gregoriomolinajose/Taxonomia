@@ -384,6 +384,19 @@
     </div>
   </template>
 
+  <template id="tmpl-capacity-map">
+    <div id="capacity-map-canvas" class="ion-page">
+      <ion-header class="ion-no-border">
+        <ion-toolbar>
+          <ion-title>Mapa de Capacidad E2E</ion-title>
+        </ion-toolbar>
+      </ion-header>
+      <ion-content class="ion-padding" id="capacity-map-content">
+        <!-- Mapa Renderizado Dinámicamente -->
+      </ion-content>
+    </div>
+  </template>
+
   <!-- MOTORES LOGICOS (Regla UI §14) -->
   <?!= include('DataAPI'); ?>
   <?!= include('JS_Core'); ?>
@@ -413,6 +426,7 @@
   <?!= include('DataView_UI'); ?>
   <?!= include('Dashboard_UI'); ?>
   <?!= include('DomainMap_UI'); ?>
+  <?!= include('UI_View_CapacityMap'); ?>
   <?!= include('DesignKit_UI'); ?>
   <?!= include('Schema_Studio_UI'); ?>
   <?!= include('Governance_Admin_UI'); ?>

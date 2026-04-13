@@ -25,7 +25,7 @@
     };
 
     window.UI_Router = {
-        navigateTo: function(viewType, entityKey) {
+        navigateTo: function(viewType, entityKey, payload) {
             if (typeof entityKey === 'undefined') entityKey = null;
             var container   = document.getElementById('app-container');
             var headerTitle = document.getElementById('main-header-title');
@@ -74,9 +74,30 @@
                 
                 // eslint-disable-next-line arch // Justified: Router triggers controller render
                 if (window.DataViewEngine && typeof window.DataViewEngine.render === 'function') {
-                    window.DataViewEngine.render(entityKey, 'app-container');
+                    window.DataViewEngine.render(entityKey, 'app-container', payload);
                 }
             } 
+            else if (viewType === 'capacitymap') {
+                if (headerTitle) headerTitle.textContent = 'Mapa de Capacidad As-Is';
+                if (backBtn) {
+                    backBtn.classList.remove('ion-hide');
+                    backBtn.onclick = function() { window.AppEventBus.publish('NAV::CHANGE', {viewType: 'dashboard'}); };
+                }
+                
+                var capBtn = document.getElementById('nav-item-capacitymap');
+                if (capBtn) capBtn.classList.add('active');
+                
+                if (container) {
+                    var tmpl = document.getElementById('tmpl-capacity-map');
+                    if (tmpl) {
+                        window.DOM.clear(container);
+                        container.appendChild(tmpl.content.cloneNode(true));
+                        if (typeof window.CapacityMapEngine !== 'undefined' && typeof window.CapacityMapEngine.render === 'function') {
+                            window.CapacityMapEngine.render(container);
+                        }
+                    }
+                }
+            }
             else if (viewType === 'designkit') {
                 if (headerTitle) headerTitle.textContent = 'Design System Kit';
                 if (backBtn) {
@@ -176,6 +197,19 @@
             homeItem.appendChild(homeIcon);
             homeItem.appendChild(homeLabel);
             navList.appendChild(homeItem);
+
+            var mapCapItem = document.createElement('div');
+            mapCapItem.className = 'nav-item';
+            mapCapItem.id = 'nav-item-capacitymap';
+            mapCapItem.title = 'Visualizador de Capacidad';
+            mapCapItem.addEventListener('click', function() { window.AppEventBus.publish('NAV::CHANGE', {viewType: 'capacitymap'}); });
+            var mapCapIcon = document.createElement('ion-icon');
+            mapCapIcon.setAttribute('name', 'map-outline');
+            var mapCapLabel = document.createElement('ion-label');
+            mapCapLabel.textContent = 'Mapa E2E';
+            mapCapItem.appendChild(mapCapIcon);
+            mapCapItem.appendChild(mapCapLabel);
+            navList.appendChild(mapCapItem);
                 
             var headerEntidades = document.createElement('div');
             headerEntidades.className = 'sidebar-heading';
