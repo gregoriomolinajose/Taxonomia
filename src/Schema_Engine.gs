@@ -170,7 +170,7 @@ const APP_SCHEMAS = {
       ...FIELD_TEMPLATES.AUDIT_FIELDS(),
       ...FIELD_TEMPLATES.VERSION_FIELD(),
       ...FIELD_TEMPLATES.NAME_FIELD("Nombre de Portafolio"),
-      { name: "unidad_negocio_padre", type: "relation", relationType: "padre", targetEntity: "Unidad_Negocio", graphEntity: "Sys_Graph_Edges", valueField: "id_unidad_negocio", labelField: "nombre", uiComponent: "select_single", label: "Unidad de Negocio (Padre)", isTemporalGraph: true, graphEdgeType: "UNIDAD_NEGOCIO_PORTAFOLIO", topologyCardinality: "1:N", width: 12, showInList: true },
+      { name: "unidad_negocio_padre", type: "relation", relationType: "padre", targetEntity: "Unidad_Negocio", graphEntity: "Sys_Graph_Edges", valueField: "id_unidad_negocio", labelField: "nombre", uiComponent: "select_single", label: "Unidad de Negocio", isTemporalGraph: true, graphEdgeType: "UNIDAD_NEGOCIO_PORTAFOLIO", topologyCardinality: "1:N", width: 12, showInList: true },
       { name: "grupos_productos_vinculados", type: "relation", relationType: "hijo", targetEntity: "Grupo_Productos", graphEntity: "Sys_Graph_Edges", valueField: "id_grupo_producto", labelField: "nombre", uiBehavior: "subgrid", label: "Grupos de Productos Asociados", isTemporalGraph: true, graphEdgeType: "PORTAFOLIO_GRUPO_PRODUCTO", topologyCardinality: "1:N", width: 12 }
     ]
   },
@@ -195,7 +195,7 @@ const APP_SCHEMAS = {
     ]
   },
   Grupo_Productos: {
-    metadata: { showInMenu: true, order:4, iconName:'layers-outline', color:'secondary', label:'Grupos de Producto', titleField:'nombre', idField:'id_grupo_producto', fkField:{ key:'id_portafolio', label:'Portafolio' } },
+    metadata: { showInMenu: true, order:4, iconName:'layers-outline', color:'dark', label:'Grupos de Producto', titleField:'nombre', idField:'id_grupo_producto', fkField:{ key:'id_portafolio', label:'Portafolio' } },
     topological_metadata: {
         ownerFields: ["group_manager_id"],
         parentEntity: "Portafolio",
@@ -211,7 +211,7 @@ const APP_SCHEMAS = {
       ...FIELD_TEMPLATES.AUDIT_FIELDS(),
       ...FIELD_TEMPLATES.VERSION_FIELD(),
       ...FIELD_TEMPLATES.NAME_FIELD("Nombre"),
-      { width: 12, name: "id_portafolio", type: "relation", relationType: "padre", targetEntity: "Portafolio", graphEntity: "Sys_Graph_Edges", valueField: "id_portafolio", labelField: "nombre", uiComponent: "select_single", label: "Portafolio Padre (Grafo)", isTemporalGraph: true, graphEdgeType: "PORTAFOLIO_GRUPO_PRODUCTO", topologyCardinality: "1:N", required: true },
+      { width: 12, name: "id_portafolio", type: "relation", relationType: "padre", targetEntity: "Portafolio", graphEntity: "Sys_Graph_Edges", valueField: "id_portafolio", labelField: "nombre", uiComponent: "select_single", label: "Portafolio", isTemporalGraph: true, graphEdgeType: "PORTAFOLIO_GRUPO_PRODUCTO", topologyCardinality: "1:N", required: true },
       { width: 12, name: "productos_vinculados", type: "relation", relationType: "hijo", targetEntity: "Producto", graphEntity: "Sys_Graph_Edges", valueField: "id_producto", labelField: "nombre", uiBehavior: "subgrid", label: "Productos Asociados (1:N)", isTemporalGraph: true, graphEdgeType: "GRUPO_PRODUCTO_PRODUCTO", topologyCardinality: "1:N" },
       { width: 12, name: "equipos_asignados", type: "relation", relationType: "hijo", targetEntity: "Equipo", graphEntity: "Sys_Graph_Edges", valueField: "id_equipo", labelField: "nombre", uiBehavior: "subgrid", label: "Equipos Ágiles del Grupo", isTemporalGraph: true, graphEdgeType: "GRUPO_PRODUCTO_EQUIPO", topologyCardinality: "1:N" }
     ]
@@ -234,7 +234,7 @@ const APP_SCHEMAS = {
       ...FIELD_TEMPLATES.AUDIT_FIELDS(),
       ...FIELD_TEMPLATES.VERSION_FIELD(),
       ...FIELD_TEMPLATES.NAME_FIELD("Nombre de Producto"),
-      { width: 12, name: "id_grupo_producto", type: "relation", relationType: "padre", targetEntity: "Grupo_Productos", graphEntity: "Sys_Graph_Edges", valueField: "id_grupo_producto", labelField: "nombre", uiComponent: "select_single", label: "Grupo de Producto (Padre)", isTemporalGraph: true, graphEdgeType: "GRUPO_PRODUCTO_PRODUCTO", topologyCardinality: "1:N", required: true }
+      { width: 12, name: "id_grupo_producto", type: "relation", relationType: "padre", targetEntity: "Grupo_Productos", graphEntity: "Sys_Graph_Edges", valueField: "id_grupo_producto", labelField: "nombre", uiComponent: "select_single", label: "Grupo de Producto", isTemporalGraph: true, graphEdgeType: "GRUPO_PRODUCTO_PRODUCTO", topologyCardinality: "1:N", required: true }
     ]
   },
   Capacidad: {
@@ -259,7 +259,7 @@ const APP_SCHEMAS = {
   },
   Equipo: {
     uiConfig: { dashboardCard: { iconName: 'people-outline', color: 'var(--ion-color-success)' } },
-    metadata: { showInMenu: true, order:7, iconName:'people-outline', color:'#9575CD', label:'Equipos', titleField:'nombre', idField:'id_equipo', fkField:{ key:'id_grupo_producto', label:'Grupo de Producto' } },
+    metadata: { showInMenu: true, order:7, iconName:'people-outline', color:'success', label:'Equipos', titleField:'nombre', idField:'id_equipo', fkField:{ key:'id_grupo_producto', label:'Grupo de Producto' } },
     topological_metadata: {
         ownerFields: ["scrum_master_id", "product_owner_id"],
         parentEntity: "Grupo_Productos",
