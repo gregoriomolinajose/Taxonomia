@@ -105,25 +105,93 @@
 
             const titleWrap = document.createElement('div');
             titleWrap.style.display = 'flex';
-            titleWrap.style.alignItems = 'center';
-            titleWrap.style.gap = 'var(--spacing-2)';
+            titleWrap.style.flexDirection = 'column';
+
+            // ROW 1: Icon + Entity Name / Badge
+            const topTitleRow = document.createElement('div');
+            topTitleRow.style.display = 'flex';
+            topTitleRow.style.alignItems = 'center';
+            topTitleRow.style.gap = 'var(--spacing-2)';
+            topTitleRow.style.paddingTop = '8px'; // Respiro superior de 8px al Entity/ID
 
             const metadata = (window.APP_SCHEMAS && window.APP_SCHEMAS[entityName] && window.APP_SCHEMAS[entityName].metadata) || {};
             const iconName = metadata.iconName || 'folder-outline';
+            const targetTitleField = metadata.titleField || 'nombre';
 
             const headerIcon = document.createElement('ion-icon');
             headerIcon.setAttribute('name', iconName);
             headerIcon.style.color = 'var(--dv-primary)'; // Mismo color que la vista DataView
-            headerIcon.style.fontSize = '24px';
-            titleWrap.appendChild(headerIcon);
+            headerIcon.style.fontSize = '16px'; // Reducido peso visual
+            topTitleRow.appendChild(headerIcon);
 
+            const titleWrapEntity = document.createElement('div');
+            titleWrapEntity.style.display = 'flex';
+            titleWrapEntity.style.alignItems = 'center';
+            titleWrapEntity.style.gap = 'var(--spacing-2)';
+            
             const title = document.createElement('h2');
             title.className = 'drawer-title';
             title.style.margin = '0';
-            title.style.fontSize = '20px'; // Incrementado para simetría con el icono
-            title.style.fontWeight = 'bold';
-            title.textContent = window.formatEntityName(entityName); // Removido texto estático
-            titleWrap.appendChild(title);
+            title.style.fontSize = '14px'; // Reducido peso visual
+            title.style.fontWeight = '500'; // Menos grueso
+            title.style.color = 'var(--ion-color-medium)'; // Suavizar el contraste
+            title.textContent = window.formatEntityName(entityName);
+            titleWrapEntity.appendChild(title);
+
+            const slashSpan = document.createElement('span');
+            slashSpan.textContent = '/';
+            slashSpan.style.color = 'var(--ion-color-medium)';
+            slashSpan.style.fontSize = '14px';
+            slashSpan.style.fontWeight = '400';
+            titleWrapEntity.appendChild(slashSpan);
+
+            const idTag = document.createElement('div');
+            idTag.style.background = 'transparent'; // Safest fallback for contrast in Dark Mode
+            idTag.style.border = '1px solid var(--color-border, var(--ion-color-step-300))';
+            idTag.style.borderRadius = '4px';
+            idTag.style.padding = '1px 6px';
+            idTag.style.fontSize = '11px';
+            idTag.style.fontWeight = '600';
+            idTag.style.color = 'var(--ion-text-color)';
+            
+            let displayBadge = localEditId || '(Autogenerado)';
+            if (data && global.APP_SCHEMAS && global.APP_SCHEMAS[entityName]) {
+                const schemaDef = global.APP_SCHEMAS[entityName];
+                let targetFields = [];
+                if (Array.isArray(schemaDef)) { targetFields = schemaDef; }
+                else if (schemaDef.fields) { targetFields = schemaDef.fields; }
+                else { targetFields = Object.keys(schemaDef).filter(k => k !== 'steps' && k !== 'metadata').map(k => ({ name: k, ...schemaDef[k] })); }
+                
+                const badgeField = targetFields.find(f => f.type === 'badge');
+                if (badgeField && data[badgeField.name] && String(data[badgeField.name]).trim() !== '') {
+                    displayBadge = data[badgeField.name];
+                }
+            }
+            idTag.textContent = displayBadge;
+            titleWrapEntity.appendChild(idTag);
+            
+            topTitleRow.appendChild(titleWrapEntity);
+
+            // ROW 2: Record Semantic Name
+            let semanticName = 'Nuevo Registro';
+            if (data) {
+                if (data[targetTitleField]) {
+                    semanticName = data[targetTitleField];
+                } else if (data['nombre']) {
+                    semanticName = data['nombre'];
+                }
+            }
+            
+            const recordNameTitle = document.createElement('h1');
+            recordNameTitle.style.margin = '10px 0 0 0'; // Espaciado de 10px
+            recordNameTitle.style.fontSize = 'var(--h1-font-size, 24px)';
+            recordNameTitle.style.fontWeight = 'var(--heading-weight, 800)';
+            recordNameTitle.style.color = 'var(--ion-color-dark)';
+            recordNameTitle.style.lineHeight = '1.2';
+            recordNameTitle.textContent = semanticName;
+
+            titleWrap.appendChild(topTitleRow);
+            titleWrap.appendChild(recordNameTitle);
 
             const closeBtn = document.createElement('ion-button');
             closeBtn.setAttribute('fill', 'clear');
@@ -139,47 +207,7 @@
             topRow.appendChild(titleWrap);
             topRow.appendChild(closeBtn);
 
-            const idRow = document.createElement('div');
-            idRow.style.display = 'flex';
-            idRow.style.alignItems = 'center';
-            idRow.style.gap = 'var(--spacing-2)';
-            idRow.style.marginTop = '2px'; // Reducida separación exagerada
-
-            const idLabel = document.createElement('span');
-            idLabel.textContent = 'ID';
-            idLabel.style.fontSize = '12px';
-            idLabel.style.color = 'var(--ion-color-medium)';
-
-            const idTag = document.createElement('div');
-            idTag.style.background = 'transparent'; // Safest fallback for contrast in Dark Mode
-            idTag.style.border = '1px solid var(--color-border, var(--ion-color-step-300))';
-            idTag.style.borderRadius = '4px';
-            idTag.style.padding = '1px 6px';
-            idTag.style.fontSize = '11px';
-            idTag.style.fontWeight = '600';
-            idTag.style.color = 'var(--ion-text-color)';
-            // Reemplazo estratégico: Mostrar Lexical ID (Badge) en la UI en vez de la Clave Secreta/UUID
-            let displayBadge = localEditId || '(Autogenerado)';
-            if (data && global.APP_SCHEMAS && global.APP_SCHEMAS[entityName]) {
-                const schemaDef = global.APP_SCHEMAS[entityName];
-                let targetFields = [];
-                if (Array.isArray(schemaDef)) { targetFields = schemaDef; }
-                else if (schemaDef.fields) { targetFields = schemaDef.fields; }
-                else { targetFields = Object.keys(schemaDef).filter(k => k !== 'steps' && k !== 'metadata').map(k => ({ name: k, ...schemaDef[k] })); }
-                
-                const badgeField = targetFields.find(f => f.type === 'badge');
-                if (badgeField && data[badgeField.name] && String(data[badgeField.name]).trim() !== '') {
-                    displayBadge = data[badgeField.name];
-                }
-            }
-            
-            idTag.textContent = displayBadge;
-
-            idRow.appendChild(idLabel);
-            idRow.appendChild(idTag);
-
             header.appendChild(topRow);
-            header.appendChild(idRow);
 
             modal.appendChild(header);
 
@@ -187,6 +215,18 @@
             // Contenedor interno scrollable del Drawer con soporte nativo para móvil
             const container = document.createElement('ion-content');
             container.className = 'drawer-content ion-padding';
+
+            const updateDynamicHeader = (e) => {
+                if (e.target && e.target.name) {
+                    if (e.target.name === targetTitleField || e.target.name === 'nombre') {
+                        const val = String(e.target.value).trim();
+                        recordNameTitle.textContent = val || 'Nuevo Registro';
+                    }
+                }
+            };
+            container.addEventListener('input', updateDynamicHeader);
+            container.addEventListener('ionInput', updateDynamicHeader);
+
             modal.appendChild(container);
 
             const schemas = global.APP_SCHEMAS;
