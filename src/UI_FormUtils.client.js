@@ -21,18 +21,6 @@ window.formatUserName = function(emailStr) {
 window.UI_FormUtils = (function () {
 
     /**
-     * Resuelve el Primary Key canónico para una entidad
-     * Strict SSOT: 1. primaryKey -> 2. idField -> 3. Fallback convención
-     * @param {string} entityName
-     * @returns {string} The resolved primary key field name
-     */
-    function getPrimaryKey(entityName) {
-        if (!entityName || !window.APP_SCHEMAS || !window.APP_SCHEMAS[entityName]) return 'id';
-        const schema = window.APP_SCHEMAS[entityName];
-        return schema.primaryKey || (schema.metadata && schema.metadata.idField) || ('id_' + entityName.toLowerCase());
-    }
-
-    /**
      * Resolutor de opciones genérico para Dominios completos
      * (Requerido por M:N Subgrid en N-Dimensional Graph)
      */
@@ -158,7 +146,6 @@ window.UI_FormUtils = (function () {
     }
 
     return {
-        getPrimaryKey,
         getDominioOptions,
         getDominiosPadreOptions,
         normalizeId,

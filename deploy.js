@@ -48,9 +48,9 @@ try {
 
     const autoVersion = `${baseVersion} - ${suffix}`;
 
-    rl.question(`\n[Deploy] Current version in ${env}: ${currentVersion}\n[Deploy] Presiona Enter para auto-generar (${autoVersion}) o escribe una base nueva (ej. v1.5.0): `, (inputVersion) => {
-        rl.close();
-        
+    const isZeroTouch = process.argv.includes('--zero-touch');
+
+    const proceedWithVersion = (inputVersion) => {
         let finalBase = inputVersion.trim() || baseVersion;
         // Si el usuario escribió la base manual (ej v1.5.0), le agregamos el sufijo igual.
         // Si escribió todo completo, lo respetamos, pero asumimos que escribirá la base.
@@ -78,8 +78,6 @@ try {
             const indexFile = `${buildDir}/Index.html`;
             if (fs.existsSync(indexFile)) {
                 let indexContent = fs.readFileSync(indexFile, 'utf8');
-                
-                // S30.5: Sustitución de RegExp por cortes absolutos estáticos
                 
                 // S30.5: Uso de la librería de despliegue para purgado de AST
                 const originalContent = indexContent;
@@ -144,7 +142,6 @@ try {
             fs.writeFileSync(targetPath, htmlWrapped, 'utf8');
         });
 
-        // Cleanup assets/css is now handled passively by .claspignore
         console.log(`[Deploy] Bundled native CSS files into virtual HTML styles`);
 
         // Native JS Frontend Bundler (S24.6 Client JS Decoupling)
@@ -230,7 +227,6 @@ try {
                 console.log(`[Deploy] Remember: You may need to manually update the deployment version in Apps Script GUI.`);
             }
         }
-        // -----------------------------------------------------------
 
         // Cleanup
         if (fs.existsSync(buildDir)) {
@@ -244,7 +240,18 @@ try {
         }, null, 2), 'utf8');
 
         console.log(`[Deploy] Successfully deployed to ${env}!`);
-    });
+    };
+
+    if (isZeroTouch) {
+        console.log(`\n[Deploy] Zero-Touch mode enabled. Auto-generating version: ${autoVersion}`);
+        rl.close();
+        proceedWithVersion('');
+    } else {
+        rl.question(`\n[Deploy] Current version in ${env}: ${currentVersion}\n[Deploy] Presiona Enter para auto-generar (${autoVersion}) o escribe una base nueva (ej. v1.5.0): `, (inputVersion) => {
+            rl.close();
+            proceedWithVersion(inputVersion);
+        });
+    }
 } catch (error) {
     console.error(`[Deploy] Error: ${error.message}`);
     rl.close();

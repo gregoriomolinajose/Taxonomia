@@ -88,7 +88,7 @@
             const selectAll = document.createElement('input');
             selectAll.type = 'checkbox';
             
-            const pkField = window.UI_FormUtils.getPrimaryKey(this.cfg.entityName);
+            const pkField = window.Schema_Utils.getPrimaryKey(this.cfg.entityName);
             const pageIds = rows.map(r => String(r[pkField] || ''));
             selectAll.checked = pageIds.length > 0 && pageIds.every(id => (this.cfg.selectedRows || []).includes(id));
             selectAll.addEventListener('change', (e) => {
@@ -176,7 +176,7 @@
             rows.forEach((row, idx) => {
                 const tr = document.createElement('tr');
                 
-                const pkField = window.UI_FormUtils.getPrimaryKey(this.cfg.entityName);
+                const pkField = window.Schema_Utils.getPrimaryKey(this.cfg.entityName);
                 const id = row[pkField] || '';
                 
                 // Bug fix: Row selection logic (S25.3) con captura proactiva de Unhandled Promises
@@ -292,7 +292,7 @@
             const rowEl = document.createElement('ion-row');
             
             rows.forEach(row => {
-                const pkField = window.UI_FormUtils.getPrimaryKey(this.cfg.entityName);
+                const pkField = window.Schema_Utils.getPrimaryKey(this.cfg.entityName);
                 const titleStr = row[meta.titleField] || row[pkField] || '—';
                 const idStr = String(row[pkField] || '');
                 

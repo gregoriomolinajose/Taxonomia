@@ -24,6 +24,13 @@
         window.applySidebarState();
     };
 
+    /**
+     * @typedef {Object} StrictFilter
+     * @property {string} key Nombre de la columna o campo relacional a filtrar.
+     * @property {string} value ID Lexico o Técnico a igualar.
+     * @property {string} [label] Etiqueta human-readable opcional para mostrar en la interfaz en lugar del ID.
+     */
+
     window.UI_Router = {
         navigateTo: function(viewType, entityKey, payload) {
             if (typeof entityKey === 'undefined') entityKey = null;

@@ -66,7 +66,7 @@
             // S25.2: Asegurar convenciones de UX (ID primero, Nombre/Título segundo)
             const meta = window.ENTITY_META ? window.ENTITY_META[entityName] : null;
             if (meta) {
-                const idKey = window.UI_FormUtils.getPrimaryKey(entityName);
+                const idKey = window.Schema_Utils.getPrimaryKey(entityName);
                 const titleKey = meta.titleField;
                 
                 if (idKey && keys.includes(idKey)) {
@@ -203,20 +203,45 @@
                 const sKey = _state.payload.strictFilter.key;
                 const sVal = String(_state.payload.strictFilter.value);
                 
+                const escapeRegExp = function(str) { return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); };
+                const sRegex = new RegExp('(^|\\W)' + escapeRegExp(sVal) + '(\\W|$)');
+
+                // NEW: Resolve Graph edges JIT for filter (H8/S34 QA)
+                let fMeta = null;
+                if (window.APP_SCHEMAS && window.APP_SCHEMAS[_state.entityName]) {
+                    fMeta = (window.APP_SCHEMAS[_state.entityName].fields || []).find(f => f.name === sKey);
+                }
+                const activeEdges = (fMeta && fMeta.isTemporalGraph && window.DataStore && window.DataStore.get('Sys_Graph_Edges')) ? window.DataStore.get('Sys_Graph_Edges') : null;
+                const edgeName = fMeta ? (fMeta.graphEdgeType || fMeta.name).toUpperCase() : null;
+                const pkCol = window.Schema_Utils ? window.Schema_Utils.getPrimaryKey(_state.entityName) : 'id_registro';
+
                 baseData = baseData.filter(function(r) {
                     let val = r[sKey];
+
+                    // Graph Fallback: Si no hay FK física, buscala en la topología (Orphan Prevention)
+                    const isEmptyValue = val === undefined || val === null || val === '' || (Array.isArray(val) && val.length === 0);
+                    if (fMeta && fMeta.isTemporalGraph && activeEdges && isEmptyValue) {
+                        const currentPK = r[pkCol];
+                        if (fMeta.relationType === 'padre') {
+                            const match = activeEdges.find(e => String(e.id_nodo_hijo) === String(currentPK) && e.tipo_relacion === edgeName && e.es_version_actual !== false && e.estado !== 'Eliminado');
+                            if (match) val = match.id_nodo_padre;
+                        } else {
+                            const match = activeEdges.find(e => String(e.id_nodo_padre) === String(currentPK) && e.tipo_relacion === edgeName && e.es_version_actual !== false && e.estado !== 'Eliminado');
+                            if (match) val = match.id_nodo_hijo; 
+                        }
+                    }
                     // Unwraps Graph/Relation Array [{id: "EQ-1"}] checking ANY object property or flat value
                     if (Array.isArray(val)) {
                         return val.some(function(item) {
                             if (typeof item === 'object' && item !== null) {
                                 return Object.values(item).some(function(innerVal) {
-                                    return String(innerVal) === sVal || String(innerVal).includes(`[${sVal}]`);
+                                    return String(innerVal) === sVal || sRegex.test(String(innerVal));
                                 });
                             }
-                            return String(item) === sVal || String(item).includes(`[${sVal}]`);
+                            return String(item) === sVal || sRegex.test(String(item));
                         });
                     }
-                    return String(val) === sVal || String(val).includes(`[${sVal}]`);
+                    return String(val) === sVal || sRegex.test(String(val));
                 });
             }
             _state.filtered = window.DataEngine.applyFilter(baseData, query);
@@ -545,7 +570,7 @@
         }
 
         function _onSelectAll(checked) {
-            const pkField = window.UI_FormUtils.getPrimaryKey(_state.entityName);
+            const pkField = window.Schema_Utils.getPrimaryKey(_state.entityName);
             const pageIds = window.UI_DataGrid._getPageData ? window.UI_DataGrid._getPageData().map(r => String(r[pkField] || '')) : [];
             const dataToIterate = pageIds.length > 0 ? pageIds : _state.filteredData.slice((_state.page - 1) * _state.pageSize, _state.page * _state.pageSize).map(r => String(r[pkField] || ''));
             
@@ -560,7 +585,7 @@
         }
 
         function _onRowOrderChange(srcId, targetId) {
-            const pkField = window.UI_FormUtils.getPrimaryKey(_state.entityName);
+            const pkField = window.Schema_Utils.getPrimaryKey(_state.entityName);
             const srcIdx = _state.filteredData.findIndex(r => String(r[pkField]) === String(srcId));
             const targetIdx = _state.filteredData.findIndex(r => String(r[pkField]) === String(targetId));
             
@@ -621,7 +646,7 @@
 
         async function _executeSoftDelete(id) {
             // Optimistic UI update (Local state)
-            const idField = window.UI_FormUtils.getPrimaryKey(_state.entityName);
+            const idField = window.Schema_Utils.getPrimaryKey(_state.entityName);
             _state.data = _state.data.filter(r => r[idField] !== id);
             _applyFilter(document.getElementById('dv-search-input') ? document.getElementById('dv-search-input').value || '' : '');
 
@@ -644,7 +669,7 @@
                 if (response && response.status === 'success') {
                     // Purgar de la RAM local
                     if (window.DataStore && window.DataStore.get(_state.entityName)) {
-                        const pkField = window.UI_FormUtils.getPrimaryKey(_state.entityName);
+                        const pkField = window.Schema_Utils.getPrimaryKey(_state.entityName);
                         window.DataStore.set(_state.entityName, window.DataStore.get(_state.entityName).filter(row => row[pkField] !== id));
                     }
 

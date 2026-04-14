@@ -69,7 +69,7 @@
             // S30.6 Resolutor de Contexto Local (Adiós global.currentEditId)
             let localEditId = null;
             if (data) {
-                const targetPkField = window.UI_FormUtils.getPrimaryKey(entityName);
+                const targetPkField = window.Schema_Utils.getPrimaryKey(entityName);
                 localEditId = data[targetPkField] || data['id_registro'] || null;
             }
             // Construcción del Drawer de la Vista de Formularios (S25.2 Architecture)
@@ -85,27 +85,104 @@
                 }, { once: true });
             }
 
-            // Header Custom del DrawerS25.2
+            // Header Custom del DrawerS25.2 con soporte para Badge ID congelado
             const header = document.createElement('div');
             header.className = 'drawer-header';
-            
+            // Sobrescribir flex nativo para layout multi-fila 100% ancho
+            header.style.flexDirection = 'column';
+            header.style.alignItems = 'stretch';
+            header.style.justifyContent = 'flex-start';
+            header.style.padding = 'var(--spacing-3) var(--spacing-4)';
+            // Eliminado header.style.background para heredar de drawer-header (Dark mode safeness)
+            header.style.borderBottom = '1px solid var(--color-border, var(--ion-color-light-shade))';
+
+            const topRow = document.createElement('div');
+            topRow.style.display = 'flex';
+            topRow.style.justifyContent = 'space-between';
+            topRow.style.alignItems = 'flex-start';
+            topRow.style.width = '100%';
+            topRow.style.marginTop = '4px'; // Añade respiro superior al título
+
+            const titleWrap = document.createElement('div');
+            titleWrap.style.display = 'flex';
+            titleWrap.style.alignItems = 'center';
+            titleWrap.style.gap = 'var(--spacing-2)';
+
+            const metadata = (window.APP_SCHEMAS && window.APP_SCHEMAS[entityName] && window.APP_SCHEMAS[entityName].metadata) || {};
+            const iconName = metadata.iconName || 'folder-outline';
+
+            const headerIcon = document.createElement('ion-icon');
+            headerIcon.setAttribute('name', iconName);
+            headerIcon.style.color = 'var(--dv-primary)'; // Mismo color que la vista DataView
+            headerIcon.style.fontSize = '24px';
+            titleWrap.appendChild(headerIcon);
+
             const title = document.createElement('h2');
             title.className = 'drawer-title';
-            title.textContent = `Taxonomia: ${window.formatEntityName(entityName)}`;
-            
+            title.style.margin = '0';
+            title.style.fontSize = '20px'; // Incrementado para simetría con el icono
+            title.style.fontWeight = 'bold';
+            title.textContent = window.formatEntityName(entityName); // Removido texto estático
+            titleWrap.appendChild(title);
+
             const closeBtn = document.createElement('ion-button');
             closeBtn.setAttribute('fill', 'clear');
             closeBtn.setAttribute('color', 'medium');
+            closeBtn.style.margin = '-4px -10px 0 0'; // Compensar padding natural del boton y top margin
             closeBtn.className = 'btn-close-drawer';
             closeBtn.innerHTML = '<ion-icon slot="icon-only" name="close-outline"></ion-icon>';
             closeBtn.addEventListener('click', () => {
                 if(window.AppEventBus) { window.AppEventBus.publish('MODAL::CLOSE_REQUEST'); } 
                 else if(window._closeTopModal) { window._closeTopModal(); }
             });
+
+            topRow.appendChild(titleWrap);
+            topRow.appendChild(closeBtn);
+
+            const idRow = document.createElement('div');
+            idRow.style.display = 'flex';
+            idRow.style.alignItems = 'center';
+            idRow.style.gap = 'var(--spacing-2)';
+            idRow.style.marginTop = '2px'; // Reducida separación exagerada
+
+            const idLabel = document.createElement('span');
+            idLabel.textContent = 'ID';
+            idLabel.style.fontSize = '12px';
+            idLabel.style.color = 'var(--ion-color-medium)';
+
+            const idTag = document.createElement('div');
+            idTag.style.background = 'transparent'; // Safest fallback for contrast in Dark Mode
+            idTag.style.border = '1px solid var(--color-border, var(--ion-color-step-300))';
+            idTag.style.borderRadius = '4px';
+            idTag.style.padding = '1px 6px';
+            idTag.style.fontSize = '11px';
+            idTag.style.fontWeight = '600';
+            idTag.style.color = 'var(--ion-text-color)';
+            // Reemplazo estratégico: Mostrar Lexical ID (Badge) en la UI en vez de la Clave Secreta/UUID
+            let displayBadge = localEditId || '(Autogenerado)';
+            if (data && global.APP_SCHEMAS && global.APP_SCHEMAS[entityName]) {
+                const schemaDef = global.APP_SCHEMAS[entityName];
+                let targetFields = [];
+                if (Array.isArray(schemaDef)) { targetFields = schemaDef; }
+                else if (schemaDef.fields) { targetFields = schemaDef.fields; }
+                else { targetFields = Object.keys(schemaDef).filter(k => k !== 'steps' && k !== 'metadata').map(k => ({ name: k, ...schemaDef[k] })); }
+                
+                const badgeField = targetFields.find(f => f.type === 'badge');
+                if (badgeField && data[badgeField.name] && String(data[badgeField.name]).trim() !== '') {
+                    displayBadge = data[badgeField.name];
+                }
+            }
             
-            header.appendChild(title);
-            header.appendChild(closeBtn);
+            idTag.textContent = displayBadge;
+
+            idRow.appendChild(idLabel);
+            idRow.appendChild(idTag);
+
+            header.appendChild(topRow);
+            header.appendChild(idRow);
+
             modal.appendChild(header);
+
 
             // Contenedor interno scrollable del Drawer con soporte nativo para móvil
             const container = document.createElement('ion-content');
@@ -448,7 +525,7 @@
             const meta = window.APP_SCHEMAS[entityName];
             const dataBase = window.DataStore.get(entityName);
 
-            const pkField = window.UI_FormUtils.getPrimaryKey(entityName);
+            const pkField = window.Schema_Utils.getPrimaryKey(entityName);
 
             // --- REGLA 3 (rules_qa.md): PROTECTOR DE NULLS ---
             if (!meta || !pkField) {
@@ -491,7 +568,7 @@
             // Actualizar Título del Drawer
             if (global.currentFormDrawer) {
                 const modalTitle = global.currentFormDrawer.querySelector('.drawer-title') || global.currentFormDrawer.querySelector('ion-title');
-                if (modalTitle) modalTitle.textContent = "Editar: " + window.formatEntityName(entityName);
+                if (modalTitle) modalTitle.textContent = window.formatEntityName(entityName); // Removido prefijo Editar:
             }
 
             // 5. Pre-llenado de campos (Acelerado a 0ms Local Cache)
@@ -577,6 +654,8 @@
                     } else {
                         input.value = valToSet;
                     }
+                    // S4.X Notificar silenciosamente al nodo DOM por si pertenece a un Custom Component complejo (Ej. Avatar) que requiere reaccionar
+                    input.dispatchEvent(new CustomEvent('FormHydrated', { detail: valToSet, bubbles: false }));
                 }
             });
 

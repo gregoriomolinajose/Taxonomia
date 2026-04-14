@@ -56,58 +56,11 @@
         };
 
         global.UI_Factory.buildBadge = function(field) {
-            const container = document.createElement('div');
-            container.style.marginTop = 'var(--spacing-1)';
-            container.style.marginBottom = '2px';
-            container.style.display = 'flex';
-            container.style.alignItems = 'center';
-            container.style.justifyContent = 'space-between';
-            container.style.padding = '0px var(--spacing-2)';
-
-            const labelEl = document.createElement('span');
-            labelEl.style.fontSize = 'var(--text-sm)';
-            labelEl.style.color = 'var(--ion-color-medium)';
-            labelEl.style.textTransform = 'uppercase';
-            labelEl.style.letterSpacing = '0.5px';
-            labelEl.textContent = field.label || 'Ticket ID';
-
-            const chipEl = document.createElement('ion-chip');
-            chipEl.setAttribute('color', 'primary');
-            chipEl.style.fontWeight = 'var(--font-weight-bold)';
-            chipEl.style.fontFamily = 'var(--font-mono)';
-            chipEl.style.border = '1px solid var(--ion-color-primary)';
-            
-            // Init default state for new records
-            chipEl.textContent = '(Autogenerado)';
-            chipEl.setAttribute('color', 'medium');
-
             const hiddenInput = document.createElement('input');
             hiddenInput.setAttribute('type', 'hidden');
             hiddenInput.setAttribute('name', field.name);
             hiddenInput.className = 'badge-hidden-input'; 
-
-            const _originalValSetter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set;
-            Object.defineProperty(hiddenInput, 'value', {
-                set: function(val) {
-                    _originalValSetter.call(this, val);
-                    if (val && String(val).trim() !== '') {
-                        chipEl.textContent = val;
-                        chipEl.setAttribute('color', 'primary');
-                    } else {
-                        chipEl.textContent = '(Autogenerado)';
-                        chipEl.setAttribute('color', 'medium');
-                    }
-                },
-                get: function() {
-                    return Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').get.call(this);
-                }
-            });
-
-            container.appendChild(labelEl);
-            container.appendChild(chipEl);
-            container.appendChild(hiddenInput);
-
-            return container;
+            return hiddenInput;
         };
 
         global.UI_Factory.buildInput = function(field) {

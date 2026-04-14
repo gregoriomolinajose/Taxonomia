@@ -166,6 +166,74 @@
   /* ── UI Data Store (S29.5 - Global Cache Encapsulation) ── */
   window.DataStore = {
     _cache: window.__APP_CACHE__ || {},
+    _topologyIndex: null, // S34.6: O(1) Hash Map para relacion SCD-2 temporal
+    
+    _buildTopologyIndex: function() {
+        this._topologyIndex = {};
+        var edges = this._cache['Sys_Graph_Edges'];
+        if (!edges || !Array.isArray(edges)) return;
+        
+        for (var i = 0; i < edges.length; i++) {
+            var e = edges[i];
+            if (e.es_version_actual === false || e.estado === 'Eliminado') continue;
+            
+            var rel = e.tipo_relacion;
+            var parent = String(e.id_nodo_padre);
+            var child = String(e.id_nodo_hijo);
+            
+            if (!this._topologyIndex[rel]) this._topologyIndex[rel] = {};
+            if (!this._topologyIndex[rel][parent]) this._topologyIndex[rel][parent] = new Set();
+            this._topologyIndex[rel][parent].add(child);
+        }
+    },
+    
+    // Atomic Indexing for UI Draft updates (H8 AR Feedback)
+    mutateTopologyEdge: function(edge, isAdd) {
+        if (!this._topologyIndex) this._buildTopologyIndex();
+        if (!edge || !edge.tipo_relacion || !edge.id_nodo_padre || !edge.id_nodo_hijo) return;
+        
+        var rel = edge.tipo_relacion;
+        var parent = String(edge.id_nodo_padre);
+        var child = String(edge.id_nodo_hijo);
+        
+        if (isAdd) {
+            if (!this._topologyIndex[rel]) this._topologyIndex[rel] = {};
+            if (!this._topologyIndex[rel][parent]) this._topologyIndex[rel][parent] = new Set();
+            this._topologyIndex[rel][parent].add(child);
+        } else {
+            if (this._topologyIndex[rel] && this._topologyIndex[rel][parent]) {
+                this._topologyIndex[rel][parent].delete(child);
+                if (this._topologyIndex[rel][parent].size === 0) {
+                    delete this._topologyIndex[rel][parent];
+                }
+            }
+        }
+    },
+    
+    getEdgeChildren: function(childStore, edgeType, parentId, fallbackFk, childEntityName) {
+        if (!childStore || !parentId) return [];
+        if (!this._topologyIndex) this._buildTopologyIndex();
+        
+        if (this._topologyIndex && this._topologyIndex[edgeType]) {
+            var activeChildSet = this._topologyIndex[edgeType][String(parentId)];
+            var edgeTypeExistsGlobally = Object.keys(this._topologyIndex[edgeType]).length > 0;
+            
+            if (edgeTypeExistsGlobally) {
+                return childStore.filter(function(c) {
+                    var dynamicPkField = childEntityName && window.Schema_Utils ? window.Schema_Utils.getPrimaryKey(childEntityName) : null;
+                    var pk = dynamicPkField ? c[dynamicPkField] : (c.id_equipo || c.id_grupo_producto || c.id_portafolio || c.id_unidad_negocio || c.id_registro);
+                    
+                    var inGraph = activeChildSet ? (activeChildSet.has(String(pk)) || (c.lexical_id && activeChildSet.has(String(c.lexical_id)))) : false;
+                    var inFallback = fallbackFk ? (String(c[fallbackFk]) === String(parentId)) : false;
+                    
+                    return inGraph || inFallback;
+                });
+            }
+        }
+        
+        return fallbackFk ? childStore.filter(function(c) { return String(c[fallbackFk]) === String(parentId); }) : [];
+    },
+
     get: function(entityName) { return this._cache[entityName] !== undefined ? this._cache[entityName] : null; },
     getActive: function(entityName) {
         var allData = this.get(entityName);
@@ -174,10 +242,12 @@
     },
     set: function(entityName, data) { 
         this._cache[entityName] = data; 
+        if (entityName === 'Sys_Graph_Edges') this._buildTopologyIndex();
         if (window.AppEventBus) window.AppEventBus.publish('DATASTORE::CHANGED', { action: 'set', entityName: entityName });
     },
     invalidate: function(entityName) { 
         delete this._cache[entityName]; 
+        if (entityName === 'Sys_Graph_Edges') this._topologyIndex = null;
         if (window.AppEventBus) window.AppEventBus.publish('DATASTORE::CHANGED', { action: 'invalidate', entityName: entityName });
     },
     getAll: function() { return this._cache; },

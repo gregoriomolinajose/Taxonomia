@@ -254,12 +254,7 @@ window.UI_FormSubmitter = class UI_FormSubmitter {
             let pkValue = response.pkValue;
 
             if (!pkField || !pkValue) {
-                pkField = Object.keys(payload).find(k => k.startsWith('id_'));
-                pkValue = pkField ? payload[pkField] : null;
-            }
-
-            if (!pkField || !pkValue) {
-                pkField = window.UI_FormUtils.getPrimaryKey(this.entityName);
+                pkField = window.Schema_Utils.getPrimaryKey(entityName);
                 pkValue = pkField ? payload[pkField] : null;
             }
 
@@ -279,9 +274,14 @@ window.UI_FormSubmitter = class UI_FormSubmitter {
                 const liveData = window.DataStore.get(entityName);
                 const existingIdx = liveData.findIndex(r => window.UI_FormUtils.normalizeId(r[pkField]) === window.UI_FormUtils.normalizeId(pkValue));
 
+                let finalRecord = cleanRecord;
+                if (existingIdx !== -1) {
+                    finalRecord = Object.assign({}, liveData[existingIdx], cleanRecord);
+                }
+
                 window.DataStore.set(entityName, existingIdx !== -1
-                    ? [...liveData.slice(0, existingIdx), cleanRecord, ...liveData.slice(existingIdx + 1)]
-                    : [cleanRecord, ...liveData]);
+                    ? [...liveData.slice(0, existingIdx), finalRecord, ...liveData.slice(existingIdx + 1)]
+                    : [finalRecord, ...liveData]);
                 
                 console.log(`[Cache] ${existingIdx !== -1 ? 'UPDATE' : 'INSERT'} para: ${entityName} optimizado a versión ${freshVersion}.`);
             }
@@ -293,11 +293,15 @@ window.UI_FormSubmitter = class UI_FormSubmitter {
             Object.keys(orch).forEach(childEntity => {
                 if (window.DataStore && Array.isArray(window.DataStore.get(childEntity))) {
                     const freshChildren = orch[childEntity] || [];
-                    const childPkField = 'id_' + childEntity.toLowerCase().replace(/s$/, '').replace(/es$/, '');
+                    const childPkField = window.Schema_Utils.getPrimaryKey(childEntity) || ('id_' + childEntity.toLowerCase().replace(/s$/, '').replace(/es$/, ''));
                     
                     let currentCache = [...window.DataStore.get(childEntity)];
                     freshChildren.forEach(newChild => {
                         const cid = newChild[childPkField] || newChild['id_' + childEntity.toLowerCase()];
+                        if (!cid) {
+                            console.warn(`[UI_FormSubmitter] Ignorando hijo sin PK para ${childEntity}:`, newChild);
+                            return; // Failsafe against Index 0 corruption
+                        }
                         const idx = currentCache.findIndex(c => (c[childPkField] === cid) || (c['id_' + childEntity.toLowerCase()] === cid));
                         if (idx !== -1) {
                             currentCache = [...currentCache.slice(0, idx), newChild, ...currentCache.slice(idx + 1)];
@@ -305,7 +309,16 @@ window.UI_FormSubmitter = class UI_FormSubmitter {
                             currentCache = [newChild, ...currentCache];
                         }
                     });
+                    
                     window.DataStore.set(childEntity, currentCache);
+                    
+                    if (window.AppEventBus) {
+                        if (childEntity === 'Sys_Graph_Edges') {
+                            window.AppEventBus.publish('CACHE::GRAPH_HYDRATED', { source: 'FormSubmitter', count: freshChildren.length });
+                        } else {
+                            window.AppEventBus.publish('DATA::UPDATED', { entityKey: childEntity });
+                        }
+                    }
                 }
             });
         }
