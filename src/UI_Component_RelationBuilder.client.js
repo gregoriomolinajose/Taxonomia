@@ -49,17 +49,22 @@
                         }
                     }
                     
-                    // REPAINT preservando el valor seleccionado
-                    const oldVal = selectEl.value;
-                    selectEl.innerHTML = '';
-                    selectEl.appendChild(emptyOptNode);
-                    
-                    populateSelectOptions(selectEl, freshFiltered, field);
-                    
-                    // Restaurar el valor si sigue existiendo en el nuevo dataset
-                    if (oldVal) {
-                        const stillExists = freshFiltered.some(d => String(typeof d[field.valueField] !== 'undefined' ? d[field.valueField] : d.id_registro) === String(oldVal));
-                        if (stillExists) selectEl.value = oldVal;
+                    if (typeof selectEl.updateConfig === 'function') {
+                        // S37.1 - Modern SearchableSingle Integration
+                        selectEl.updateConfig(freshFiltered, uiState.isDisabled, uiState.placeholder);
+                    } else {
+                        // Legacy HTML Select
+                        const oldVal = selectEl.value;
+                        selectEl.innerHTML = '';
+                        selectEl.appendChild(emptyOptNode);
+                        
+                        populateSelectOptions(selectEl, freshFiltered, field);
+                        
+                        // Restaurar el valor si sigue existiendo en el nuevo dataset
+                        if (oldVal) {
+                            const stillExists = freshFiltered.some(d => String(typeof d[field.valueField] !== 'undefined' ? d[field.valueField] : d.id_registro) === String(oldVal));
+                            if (stillExists) selectEl.value = oldVal;
+                        }
                     }
                 });
             }
@@ -111,35 +116,15 @@
                     console.warn('[UI_Component_RelationBuilder] Falta UI_Component_SearchableMulti.html en el Index.');
                 }
             } else if (field.uiComponent === 'select_single') {
-                const basicSel = document.createElement('ion-select');
-                basicSel.setAttribute('interface', window.innerWidth < 768 ? 'action-sheet' : 'popover');
-                basicSel.setAttribute('name', field.name);
-                basicSel.setAttribute('label', field.label);
-                basicSel.setAttribute('label-placement', 'stacked');
-                basicSel.setAttribute('fill', 'outline');
-                if (field.isTemporalGraph) {
-                    basicSel.setAttribute('data-skip-hydration', 'true');
-                }
-                basicSel.style.marginBottom = 'var(--spacing-3)';
-
-                const emptyOpt = document.createElement('ion-select-option');
-                emptyOpt.value = "";
-                emptyOpt.textContent = "— Sin asignar —";
-                basicSel.appendChild(emptyOpt);
-
                 let filteredActiveData = activeData;
                 const rules = window.APP_SCHEMAS && window.APP_SCHEMAS[entityName] ? window.APP_SCHEMAS[entityName].topologyRules : null;
                 const cLevel = Number(data ? (data.nivel_tipo || 1) : 1);
+                let uiStateInit = { isDisabled: false, opacity: '1', placeholder: '— Sin asignar —' };
 
                 if (rules) {
-                    const uiStateInit = window.SubgridState ? 
-                        window.SubgridState.evaluateFieldState(rules, cLevel, field.relationType) : 
-                        { isDisabled: false, opacity: '1', placeholder: '— Sin asignar —' };
+                    uiStateInit = window.SubgridState ? 
+                        window.SubgridState.evaluateFieldState(rules, cLevel, field.relationType) : uiStateInit;
                     
-                    if (uiStateInit.isDisabled) basicSel.setAttribute('disabled', 'true');
-                    basicSel.style.opacity = uiStateInit.opacity;
-                    emptyOpt.textContent = uiStateInit.placeholder;
-
                     if (rules.levelFiltering === true && rules.strictLevelJumps === true && field.relationType === 'padre') {
                         filteredActiveData = activeData.filter(d => Number(d.nivel_tipo) === cLevel - 1);
                     }
@@ -147,23 +132,33 @@
                         filteredActiveData = []; 
                     }
                 }
-                
-                populateSelectOptions(basicSel, filteredActiveData, field);
-                
-                // [S29.8] Mock Option Injection para UX de Creación Anidada
+
+                // [S29.8] Mock Option Injection para UX de Creación Anidada no se visualiza como 'Option' 
+                // sino que el valor pasa como pre-seleccionado a SearchableSingle.
                 const isVirtualParent = initialValues.length > 0 && initialValues[0] === mockToken;
                 if (isVirtualParent) {
-                    const virtualOpt = document.createElement('ion-select-option');
-                    virtualOpt.value = mockToken;
-                    virtualOpt.textContent = 'Padre en Curso (Auto-Vinculado)';
-                    basicSel.appendChild(virtualOpt);
+                    // Injecting mock to dataset manually for it to map correctly in render
+                    filteredActiveData.push({ [field.valueField]: mockToken, [field.labelField]: 'Padre en Curso (Auto-Vinculado)', id_numero: 'TEMP' });
+                }
+
+                // S37.1 UI_Component_SearchableSingle reemplaza al framework nativo de ionic
+                // Inversion de Control: Inyectamos visualTokens de Metadatos desde afuera en vez de que el Componente de búsqueda lo escanee por sí mismo
+                const metadataToken = (window.APP_SCHEMAS && window.APP_SCHEMAS[field.targetEntity] && window.APP_SCHEMAS[field.targetEntity].metadata) || {};
+                const visualTokens = { iconName: metadataToken.iconName, color: metadataToken.color };
+                
+                const basicSel = global.UI_Factory.buildSearchableSingle(field, filteredActiveData, initialValues, localEventBus, visualTokens);
+                
+                if (field.isTemporalGraph) {
+                    basicSel.setAttribute('data-skip-hydration', 'true');
                 }
                 
-                // [Bugfix S-Tier] Asignar el valor DESPUÉS de poblar las opciones para que Ionic lo reconozca
-                if (initialValues.length > 0) {
-                    basicSel.value = initialValues[0];
+                if (uiStateInit.isDisabled) {
+                    basicSel.setAttribute('disabled', 'true');
                 }
-                
+                basicSel.style.opacity = uiStateInit.opacity;
+
+                // Soporte Legacy para `bindLevelChangeRepaint`
+                const emptyOpt = { textContent: uiStateInit.placeholder };
                 bindLevelChangeRepaint(basicSel, activeData, field, emptyOpt, localEventBus);
 
                 if (field.isTemporalGraph && field.relationType === 'padre') {
@@ -214,13 +209,22 @@
                             }
                         }
 
-                        const oldVal = basicSel.value || (initialValues.length > 0 ? initialValues[0] : null);
-                        basicSel.innerHTML = '';
-                        basicSel.appendChild(emptyOpt);
-                        populateSelectOptions(basicSel, freshFiltered, field);
-                        
-                        if (oldVal) {
-                            basicSel.value = oldVal;
+                        if (typeof basicSel.updateConfig === 'function') {
+                            // S37.1 - Modern SearchableSingle Integration
+                            const uiStateInit = window.SubgridState ? 
+                                window.SubgridState.evaluateFieldState(rules, cLvl, field.relationType) : 
+                                { isDisabled: false, opacity: '1', placeholder: '— Sin asignar —' };
+                            basicSel.updateConfig(freshFiltered, uiStateInit.isDisabled, uiStateInit.placeholder);
+                        } else {
+                            // Legacy ion-select rollback
+                            const oldVal = basicSel.value || (initialValues.length > 0 ? initialValues[0] : null);
+                            basicSel.innerHTML = '';
+                            basicSel.appendChild(emptyOpt);
+                            populateSelectOptions(basicSel, freshFiltered, field);
+                            
+                            if (oldVal) {
+                                basicSel.value = oldVal;
+                            }
                         }
                     });
                 }
