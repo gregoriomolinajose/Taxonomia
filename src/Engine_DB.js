@@ -380,6 +380,15 @@ const Engine_DB = {
                         if (config.useSheets && edgeRecords.length > 0) {
                             _Adapter_Sheets.upsertBatch(f.graphEntity, edgeRecords, config);
                         }
+
+                        if (!parentResults.orchestratedChildren) parentResults.orchestratedChildren = {};
+                        if (!parentResults.orchestratedChildren[f.graphEntity]) parentResults.orchestratedChildren[f.graphEntity] = [];
+                        parentResults.orchestratedChildren[f.graphEntity].push(...edgeRecords);
+                        if (orphansToProcess.length > 0) {
+                            parentResults.orchestratedChildren[f.graphEntity].push(...orphansToProcess);
+                        }
+                        
+                        _invalidateCache(f.graphEntity);
                     } else {
                         children.forEach(child => {
                             child[fkField] = parentPK;
@@ -397,6 +406,10 @@ const Engine_DB = {
                         if (config.useSheets) {
                             _Adapter_Sheets.upsertBatch(targetEntity, children, config);
                         }
+                        
+                        if (!parentResults.orchestratedChildren) parentResults.orchestratedChildren = {};
+                        if (!parentResults.orchestratedChildren[targetEntity]) parentResults.orchestratedChildren[targetEntity] = [];
+                        parentResults.orchestratedChildren[targetEntity].push(...children);
                     }
                     if (config.useCloudDB) {
                         // Omitido para brevedad o implementado si el adapter soporta batch

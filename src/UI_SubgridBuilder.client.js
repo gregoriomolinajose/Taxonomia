@@ -79,11 +79,12 @@ window.UI_SubgridBuilder = {
         // [S29.7] Estado local del subgrid purificado de Singletons. Usamos un nodo escondido JSON
         const childRecords = (data && Array.isArray(data[field.name])) ? [...data[field.name]] : [];
         
+        const schema = window.APP_SCHEMAS ? window.APP_SCHEMAS[entityName] : null;
+        const pkKey = schema && schema.primaryKey ? schema.primaryKey : (data ? Object.keys(data).find(k => k.startsWith('id_') && k !== 'id_registro') : null);
+        const currentPK = data ? (data[pkKey] || data.id_registro) : null;
+        
         // [S29.9] Zero-Latency Cache Cross-Reference (Agile Join)
         if (childRecords.length === 0 && field.isTemporalGraph && field.graphEntity && window.DataStore) {
-            const schema = window.APP_SCHEMAS ? window.APP_SCHEMAS[entityName] : null;
-            const pkKey = schema && schema.primaryKey ? schema.primaryKey : (data ? Object.keys(data).find(k => k.startsWith('id_') && k !== 'id_registro') : null);
-            const currentPK = data ? (data[pkKey] || data.id_registro) : null;
             
             if (currentPK && window.UI_FormUtils) {
                 const graphEdges = window.DataStore.get(field.graphEntity) || [];
@@ -160,7 +161,7 @@ window.UI_SubgridBuilder = {
                     if (typeof window.openEditForm === 'function') {
                         // Navega ciegamente apuntando al TargetEntity, el openEditForm resolverá ABAC aisaldo y lo stackeará
                         const entityKey = field.targetEntity;
-                        const pkField = window.UI_FormUtils.getPrimaryKey(entityKey);
+                        const pkField = window.Schema_Utils.getPrimaryKey(entityKey);
                         const recordId = record[pkField] || record.id_registro;
                         window.openEditForm(recordId, entityKey);
                     }
@@ -198,6 +199,14 @@ window.UI_SubgridBuilder = {
                     return; // Avoid overwriting with stale cache
                 }
                 const refreshedData = data;
+                
+                // [S34.6 UX Fix] Race Condition Mitigation: Validar que el payload pertenece al registro actual
+                const refreshedPK = refreshedData ? (refreshedData[pkKey] || refreshedData.id_registro) : null;
+                if (currentPK && refreshedPK && String(currentPK) !== String(refreshedPK)) {
+                    console.warn(`[UI_SubgridBuilder] Ignoring stale hydration payload para ID: ${refreshedPK}. Esperado: ${currentPK}`);
+                    return;
+                }
+
                 if (refreshedData && Array.isArray(refreshedData[field.name])) {
                     childRecords.length = 0;
                     refreshedData[field.name].forEach(item => childRecords.push(item));
@@ -274,8 +283,8 @@ window.UI_SubgridBuilder = {
                 return;
             }
             let childPK = "id_registro";
-            if (window.UI_FormUtils && typeof window.UI_FormUtils.getPrimaryKey === 'function') {
-                childPK = window.UI_FormUtils.getPrimaryKey(field.targetEntity);
+            if (window.Schema_Utils && typeof window.Schema_Utils.getPrimaryKey === 'function') {
+                childPK = window.Schema_Utils.getPrimaryKey(field.targetEntity);
             } else if (window.APP_SCHEMAS && window.APP_SCHEMAS[field.targetEntity] && window.APP_SCHEMAS[field.targetEntity].primaryKey) {
                 childPK = window.APP_SCHEMAS[field.targetEntity].primaryKey;
             } else {

@@ -13,7 +13,7 @@
       var oGS = oDVE ? oDVE._getState : null;
       if (!window.DataViewEngine) window.DataViewEngine = {};
       window.DataViewEngine._getState = function() {
-          return { entityName: 'Dominio', data: window.DataStore.get('Dominio') || [record], entityMeta: { idField: window.UI_FormUtils.getPrimaryKey('Dominio') } };
+          return { entityName: 'Dominio', data: window.DataStore.get('Dominio') || [record], entityMeta: { idField: window.Schema_Utils.getPrimaryKey('Dominio') } };
       };
       
       if (window.DomainTreemapInstance) window.DomainTreemapInstance.dispatchAction({ type: 'hideTip' });

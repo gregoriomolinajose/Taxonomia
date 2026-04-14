@@ -143,34 +143,40 @@ window.CapacityMapEngine = (function() {
             window.UI_Router.navigateTo('dataview', actionObj.target, { strictFilter: actionObj.strict });
         };
         
-        const header = document.createElement('ion-card-header');
+        const header = document.createElement('div');
         header.style.padding = '10px';
+        header.style.display = 'flex';
+        header.style.justifyContent = 'space-between';
+        header.style.alignItems = 'flex-start';
         
-        const sub = document.createElement('ion-card-subtitle');
+        const textContainer = document.createElement('div');
+        textContainer.style.flex = '1';
+        textContainer.style.paddingRight = '8px';
+
+        const sub = document.createElement('div');
         sub.textContent = subtitle;
         sub.style.fontSize = '0.75rem';
-        header.appendChild(sub);
+        sub.style.color = 'var(--ion-color-medium)';
+        sub.style.marginBottom = '4px';
+        textContainer.appendChild(sub);
         
-        const ttl = document.createElement('ion-card-title');
+        const ttl = document.createElement('div');
         ttl.textContent = title;
         ttl.style.fontSize = '0.9rem';
+        ttl.style.fontWeight = '600';
+        ttl.style.color = 'var(--ion-text-color)';
         ttl.style.lineHeight = '1.2';
-        header.appendChild(ttl);
+        textContainer.appendChild(ttl);
         
-        card.appendChild(header);
-        
-        const content = document.createElement('ion-card-content');
-        content.style.padding = '0 10px 10px 10px';
-        content.style.display = 'flex';
-        content.style.justifyContent = 'space-between';
-        content.style.alignItems = 'center';
+        header.appendChild(textContainer);
         
         const badge = document.createElement('span');
         badge.className = 'capmap-badge ' + colorClass;
         badge.innerHTML = `<ion-icon name="person"></ion-icon> ${personasCount}`;
-        content.appendChild(badge);
+        badge.style.flexShrink = '0';
+        header.appendChild(badge);
         
-        card.appendChild(content);
+        card.appendChild(header);
         return card;
     }
 
@@ -191,38 +197,40 @@ window.CapacityMapEngine = (function() {
          return teamPersonas.length;
     }
 
-    // Helper universal para recuperar relaciones 1:N leyendo el Sys_Graph_Edges como prioridad.
-    // Garantiza que la topología SCD-2 sea prioritaria frente a FKs desincronizadas.
-    function getGraphChildren(childStore, edgeType, parentId, fallbackFk) {
-         if (!childStore || !parentId) return [];
-         const edges = window.DataStore ? window.DataStore.get('Sys_Graph_Edges') : [];
-         
-         if (edges && edges.length > 0) {
-             // ¿Se utiliza este edgeType formalmente en el grafo global del ecosistema?
-             const edgeTypeExists = edges.some(e => e.tipo_relacion === edgeType);
-             
-             if (edgeTypeExists) {
-                 const activeChildIds = edges
-                     .filter(e => e.tipo_relacion === edgeType && String(e.id_nodo_padre) === String(parentId) && e.es_version_actual !== false)
-                     .map(e => String(e.id_nodo_hijo));
-                     
-                 // Verdad absoluta del Grafo. (Si array vacío, devuelve [] correctamente, sin fallbacks fantasmas)
-                 return childStore.filter(c => {
-                     // Búsqueda genérica inteligente de PK para cualquier sub-modelo:
-                     const pk = c.id_portafolio || c.id_grupo_producto || c.id_equipo || c.id_unidad_negocio || c.id_registro;
-                     return activeChildIds.includes(String(pk)) || activeChildIds.includes(String(c.lexical_id));
-                 });
-             }
-         }
-         
-         // Solo si el Grafo NUNCA ha registrado este tipo de relación globalmente, ejecutamos Fallback.
-         return fallbackFk ? childStore.filter(c => String(c[fallbackFk]) === String(parentId)) : [];
-    }
+
 
     function render(containerElement) {
         containerElement.innerHTML = '';
         if (!window.DataStore || !window.DataStore.get('Unidad_Negocio')) {
-            containerElement.innerHTML = '<div style="padding:2rem;text-align:center;color:var(--ion-color-medium)">La caché de topología está vacía. Navegue al Inicio para hidratar.</div>';
+            containerElement.innerHTML = `
+                <div class="capmap-container" style="opacity: 0.7;">
+                    <div class="capmap-un" style="margin-bottom: 2rem; border-color: transparent; pointer-events: none;">
+                        <div class="capmap-un-header" style="border-bottom-color: var(--ion-color-light);">
+                            <ion-skeleton-text animated style="width: 30%; height: 1.8rem; border-radius: 4px;"></ion-skeleton-text>
+                            <ion-skeleton-text animated style="width: 15%; height: 1.8rem; border-radius: 12px;"></ion-skeleton-text>
+                        </div>
+                        <div class="capmap-portafolio" style="border-left-color: var(--ion-color-light);">
+                            <div class="capmap-port-header">
+                                <ion-skeleton-text animated style="width: 25%; height: 1.4rem; border-radius: 4px;"></ion-skeleton-text>
+                                <ion-skeleton-text animated style="width: 10%; height: 1.4rem; border-radius: 8px;"></ion-skeleton-text>
+                            </div>
+                            <div class="capmap-grupos-container">
+                                <div class="capmap-grupo">
+                                    <div class="capmap-grp-header">
+                                        <ion-skeleton-text animated style="width: 35%; height: 1.2rem; border-radius: 4px;"></ion-skeleton-text>
+                                        <ion-skeleton-text animated style="width: 10%; height: 1.2rem; border-radius: 8px;"></ion-skeleton-text>
+                                    </div>
+                                    <div class="capmap-equipos-grid">
+                                        <ion-skeleton-text animated style="width: 100%; height: 75px; border-radius: 8px;"></ion-skeleton-text>
+                                        <ion-skeleton-text animated style="width: 100%; height: 75px; border-radius: 8px;"></ion-skeleton-text>
+                                        <ion-skeleton-text animated style="width: 100%; height: 75px; border-radius: 8px;"></ion-skeleton-text>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
             return;
         }
 
@@ -252,11 +260,11 @@ window.CapacityMapEngine = (function() {
             const unTitle = document.createElement('span');
             unTitle.className = 'capmap-un-title';
             const unNombre = safeGetText(un, 'nombre_unidad', 'nombre');
-            unTitle.textContent = unNombre;
+            unTitle.textContent = `Unidad de Negocio: ${unNombre}`;
             // Make title clickable to drill down
             unTitle.style.cursor = 'pointer';
             const unLk = un.lexical_id || unPk;
-            unTitle.onclick = () => window.UI_Router.navigateTo('dataview', 'Portafolio', { strictFilter: { key: 'id_unidad_negocio', value: unLk, label: unNombre } });
+            unTitle.onclick = () => window.UI_Router.navigateTo('dataview', 'Portafolio', { strictFilter: { key: 'unidad_negocio_padre', value: unPk, label: unNombre } });
 
             unTitleWrap.appendChild(toggleIcon);
             unTitleWrap.appendChild(unTitle);
@@ -269,11 +277,22 @@ window.CapacityMapEngine = (function() {
             unNode.appendChild(unHeader);
 
             const ptContainer = document.createElement('div');
+            
+            toggleIcon.onclick = function(e) {
+                e.stopPropagation();
+                if (ptContainer.style.display === 'none') {
+                    ptContainer.style.display = 'block';
+                    toggleIcon.name = 'chevron-down';
+                } else {
+                    ptContainer.style.display = 'none';
+                    toggleIcon.name = 'chevron-forward';
+                }
+            };
 
             let totalUNPersonas = 0;
 
-            // Nivel 1: Portafolios (hijos de la UN)
-            const pts = getGraphChildren(storePT, 'UNIDAD_NEGOCIO_PORTAFOLIO', unPk, 'unidad_negocio_padre');
+            // Hijos: Portafolios
+            const pts = window.DataStore.getEdgeChildren(storePT, 'UNIDAD_NEGOCIO_PORTAFOLIO', unPk, 'unidad_negocio_padre', 'Portafolio');
             pts.forEach(pt => {
                 const ptPk = pt.id_portafolio || pt.id_registro;
                 const ptNode = document.createElement('div');
@@ -285,10 +304,9 @@ window.CapacityMapEngine = (function() {
                 const ptTitle = document.createElement('span');
                 ptTitle.className = 'capmap-port-title';
                 const ptNombre = safeGetText(pt, 'nombre_portafolio', 'nombre');
-                ptTitle.textContent = ptNombre;
+                ptTitle.textContent = `Portafolio: ${ptNombre}`;
                 ptTitle.style.cursor = 'pointer';
-                const ptLk = pt.lexical_id || ptPk;
-                ptTitle.onclick = () => window.UI_Router.navigateTo('dataview', 'Grupo_Productos', { strictFilter: { key: 'id_portafolio', value: ptLk, label: ptNombre } });
+                ptTitle.onclick = () => window.UI_Router.navigateTo('dataview', 'Grupo_Productos', { strictFilter: { key: 'id_portafolio', value: ptPk, label: ptNombre } });
 
                 const ptBadge = document.createElement('span');
                 ptBadge.className = 'capmap-badge badge-port';
@@ -302,8 +320,8 @@ window.CapacityMapEngine = (function() {
 
                 let totalPTPersonas = 0;
 
-                // Nivel 2: Grupos de Producto
-                const gps = getGraphChildren(storeGP, 'PORTAFOLIO_GRUPO_PRODUCTO', ptPk, 'id_portafolio');
+                // Hijos: Grupos de Producto
+                const gps = window.DataStore.getEdgeChildren(storeGP, 'PORTAFOLIO_GRUPO_PRODUCTO', ptPk, 'id_portafolio', 'Grupo_Productos');
                 gps.forEach(gp => {
                     const gpPk = gp.id_grupo_producto || gp.id_registro;
                     const gpNode = document.createElement('div');
@@ -315,10 +333,8 @@ window.CapacityMapEngine = (function() {
                     const gpTitle = document.createElement('span');
                     gpTitle.className = 'capmap-grp-title';
                     const gpNombre = safeGetText(gp, 'nombre_grupo', 'nombre');
-                    gpTitle.textContent = gpNombre;
-                    gpTitle.style.cursor = 'pointer';
-                    const gpLk = gp.lexical_id || gpPk;
-                    gpTitle.onclick = () => window.UI_Router.navigateTo('dataview', 'Equipo', { strictFilter: { key: 'id_grupo_producto', value: gpLk, label: gpNombre } });
+                    gpTitle.textContent = `Grupo de Productos: ${gpNombre}`;
+                    gpTitle.onclick = () => window.UI_Router.navigateTo('dataview', 'Equipo', { strictFilter: { key: 'id_grupo_producto', value: gpPk, label: gpNombre } });
 
                     const gpBadge = document.createElement('span');
                     gpBadge.className = 'capmap-badge badge-grp';
@@ -332,8 +348,8 @@ window.CapacityMapEngine = (function() {
 
                     let totalGPPersonas = 0;
 
-                    // Nivel 3: Equipos
-                    const eqs = getGraphChildren(storeEQ, 'GRUPO_PRODUCTO_EQUIPO', gpPk, 'id_grupo_producto');
+                    // Hijos: Equipos
+                    const eqs = window.DataStore.getEdgeChildren(storeEQ, 'GRUPO_PRODUCTO_EQUIPO', gpPk, 'id_grupo_producto', 'Equipo');
                     eqs.forEach(eq => {
                         const eqPk = eq.id_equipo || eq.id_registro;
                         const eqLk = eq.lexical_id || eqPk;
@@ -345,8 +361,8 @@ window.CapacityMapEngine = (function() {
                         const teamCard = createClickableCard(
                             eqNombre, 
                             eq.metodologia || 'Equipo', 
-                            eqPersonas, 
-                            { target: 'Persona', strict: { key: 'equipo', value: eqLk, label: eqNombre } },
+                            eqPersonas,
+                            { target: 'Persona', strict: { key: 'equipo', value: eqPk, label: eqNombre } },
                             'badge-eq'
                         );
                         eqContainer.appendChild(teamCard);
@@ -390,6 +406,17 @@ window.CapacityMapEngine = (function() {
         }
 
         containerElement.appendChild(wrapper);
+    }
+
+    // Auto-refresh when DataStore is fully hydrated
+    if (window.AppEventBus) {
+        window.AppEventBus.subscribe('APP::READY', () => {
+            const capBtn = document.getElementById('nav-item-capacitymap');
+            const container = document.getElementById('app-container');
+            if (capBtn && capBtn.classList.contains('active') && container && typeof render === 'function') {
+                render(container);
+            }
+        });
     }
 
     return { render };

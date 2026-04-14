@@ -92,7 +92,7 @@ window.addEventListener('DOMContentLoaded', function() {
       
       var rows = cache[entityName] || [];
       var titleField = (sMeta && sMeta.metadata) ? sMeta.metadata.titleField : 'nombre';
-      var idField = window.UI_FormUtils.getPrimaryKey(entityName);
+      var idField = window.Schema_Utils.getPrimaryKey(entityName);
       var icon = (sMeta && sMeta.metadata) ? sMeta.metadata.iconName : 'search-outline';
       var color = (sMeta && sMeta.metadata) ? sMeta.metadata.color : 'primary';
       

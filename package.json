@@ -9,7 +9,9 @@
     "lint:arch": "node scripts/lint-architecture.js",
     "lint:css": "stylelint \"src/**/*.css\" \"src/**/*.html\"",
     "deploy:dev": "node deploy.js dev",
-    "deploy:prod": "node deploy.js prod"
+    "deploy:dev:auto": "node deploy.js dev --zero-touch",
+    "deploy:prod": "node deploy.js prod",
+    "deploy:prod:auto": "node deploy.js prod --zero-touch"
   },
   "keywords": [],
   "author": "",
