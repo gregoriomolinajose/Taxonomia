@@ -179,7 +179,7 @@
             
             const btnImp = document.createElement('button');
             btnImp.className = 'dv-btn dv-btn-ghost';
-            btnImp.addEventListener('click', () => document.getElementById('dv-bulk-upload-input').click());
+            btnImp.addEventListener('click', () => input.click());
             const iconImp = document.createElement('ion-icon');
             iconImp.setAttribute('name', 'cloud-upload-outline');
             iconImp.setAttribute('slot', 'start');
