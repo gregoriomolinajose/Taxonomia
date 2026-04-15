@@ -24,6 +24,7 @@ export default defineConfig({
           name: 'unit',
           environment: 'node',
           include: ['__tests__/**/*.test.js', '!__tests__/**/*.ui.test.js'],
+          setupFiles: ['./jest.setup.js'],
           globals: true
         }
       }

@@ -1,12 +1,16 @@
 const Engine_DB = require('../src/Engine_DB');
-const Adapter_Sheets = require('../src/Adapter_Sheets');
+const Adapter_Sheets = require('../src/Adapter_Sheets.js');
+Adapter_Sheets.upsert = vi.fn();
+Adapter_Sheets.upsertBatch = vi.fn();
+Adapter_Sheets.list = vi.fn();
 
-jest.mock('../src/Adapter_Sheets');
-jest.mock('../src/Adapter_CloudDB');
+
+vi.mock('../src/Adapter_CloudDB');
 
 describe('Master-Detail Data Integrity & Hydration', () => {
     beforeEach(() => {
-        jest.clearAllMocks();
+        global.getAppSchema = vi.fn((ent) => ({ primaryKey: (ent === 'Portafolio' ? 'id_portafolio' : 'id_' + ent.toLowerCase()), fields: [] }));
+        vi.clearAllMocks();
         // Setup global mock for APP_SCHEMAS
         global.APP_SCHEMAS = {
             Portafolio: {

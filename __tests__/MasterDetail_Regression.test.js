@@ -8,10 +8,13 @@
  */
 
 const Engine_DB = require('../src/Engine_DB');
-const Adapter_Sheets = require('../src/Adapter_Sheets');
+const Adapter_Sheets = require('../src/Adapter_Sheets.js');
+Adapter_Sheets.upsert = vi.fn();
+Adapter_Sheets.upsertBatch = vi.fn();
+Adapter_Sheets.list = vi.fn();
 
-jest.mock('../src/Adapter_Sheets');
-jest.mock('../src/Adapter_CloudDB');
+
+vi.mock('../src/Adapter_CloudDB');
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -65,7 +68,7 @@ const SCHEMAS = {
 };
 
 beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     global.APP_SCHEMAS = SCHEMAS;
     global.CONFIG = { useSheets: true, useCloudDB: false };
 });

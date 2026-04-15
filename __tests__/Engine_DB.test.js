@@ -1,6 +1,6 @@
 // __tests__/Engine_DB.test.js
-// T1: QA-7 Compliance — Real Adapter_Sheets used (no jest.mock)
-// jest.mock(Adapter_Sheets) is PROHIBITED per rules_qa.md §7 (Anti-Mockery Rule)
+// T1: QA-7 Compliance — Real Adapter_Sheets used (no vi.mock)
+// vi.mock(Adapter_Sheets) is PROHIBITED per rules_qa.md §7 (Anti-Mockery Rule)
 
 /**
  * Engine_DB Facade Integration Tests
@@ -14,7 +14,7 @@ const Engine_DB = require('../src/Engine_DB');
 const Adapter_Sheets = require('../src/Adapter_Sheets');
 
 // ─────────────────────────────────────────────────────────────────────────────
-// In-memory sheet builder — simulates SpreadsheetApp without jest.mock
+// In-memory sheet builder — simulates SpreadsheetApp without vi.mock
 // ─────────────────────────────────────────────────────────────────────────────
 function buildInMemorySheet(headers, rows = []) {
     // Internal storage: [headers, ...dataRows]
@@ -25,6 +25,7 @@ function buildInMemorySheet(headers, rows = []) {
             store.slice(rowStart - 1, rowStart - 1 + numRows).map(r =>
                 r.slice(colStart - 1, colStart - 1 + numCols)
             ),
+        setValue: (v) => { store[rowStart - 1][colStart - 1] = v; },
         setValues: (newVals) => {
             for (let i = 0; i < newVals.length; i++) {
                 store[rowStart - 1 + i] = newVals[i];
@@ -40,15 +41,15 @@ function buildInMemorySheet(headers, rows = []) {
             getValues: () => JSON.parse(JSON.stringify(store)),
             getNumRows: () => store.length
         }),
-        getRange: jest.fn((row, col, numRows, numCols) => makeRange(row, col, numRows, numCols)),
-        appendRow: jest.fn(row => store.push(row))
+        getRange: vi.fn((row, col, numRows, numCols) => makeRange(row, col, numRows, numCols)),
+        appendRow: vi.fn(row => store.push(row))
     };
 }
 
 function buildInMemorySpreadsheet(sheetMap) {
     return {
-        getSheetByName: jest.fn(name => sheetMap[name] || null),
-        insertSheet: jest.fn(name => {
+        getSheetByName: vi.fn(name => sheetMap[name] || null),
+        insertSheet: vi.fn(name => {
             const newSheet = buildInMemorySheet(['__placeholder__']);
             sheetMap[name] = newSheet;
             return newSheet;
@@ -67,12 +68,13 @@ describe('Engine_DB Facade — Integration with real Adapter_Sheets (QA-7)', () 
     const config = { useSheets: true, useCloudDB: false, SPREADSHEET_ID_DB: 'mem-id' };
 
     beforeEach(() => {
+        global.getAppSchema = vi.fn((ent) => ({ primaryKey: (ent === 'Portafolio' ? 'id_portafolio' : 'id_' + ent.toLowerCase()), fields: [] }));
         // Fresh in-memory sheet for each test; DB_Producto starts empty (headers only)
         sheetStore = { 'DB_Producto': buildInMemorySheet(AUDIT_HEADERS) };
-        global.SpreadsheetApp.openById = jest.fn(() => buildInMemorySpreadsheet(sheetStore));
-        global.Logger = { log: jest.fn() };
+        global.SpreadsheetApp.openById = vi.fn(() => buildInMemorySpreadsheet(sheetStore));
+        global.Logger = { log: vi.fn() };
         global.Session = {
-            getActiveUser: jest.fn().mockReturnValue({ getEmail: jest.fn().mockReturnValue('agent@local') })
+            getActiveUser: vi.fn().mockReturnValue({ getEmail: vi.fn().mockReturnValue('agent@local') })
         };
     });
 

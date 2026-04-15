@@ -1,7 +1,7 @@
 const Engine_DB = require('../src/Engine_DB');
 const Adapter_Sheets = require('../src/Adapter_Sheets');
 
-// global.CacheService and global.Logger are now provided by jest.setup.js
+// global.CacheService and global.Logger are now provided by vi.setup.js
 
 global.CONFIG = {
   useSheets: true,
@@ -9,10 +9,10 @@ global.CONFIG = {
   SPREADSHEET_ID_DB: 'MOCK_ID'
 };
 
-// Removed individual mock, using global from jest.setup.js
+// Removed individual mock, using global from vi.setup.js
 const globalSheet = global.SpreadsheetApp.openById().getSheetByName();
 globalSheet.getDataRange.mockReturnValue({
-    getValues: jest.fn(() => {
+    getValues: vi.fn(() => {
         // Generate 1,001 rows (headers + 1000 records)
         const headers = ['id_producto', 'nombre_producto', 'nivel_criticalidad', 'slo_objetivo', 'id_grupo_producto', 'estado'];
         const rows = [headers];

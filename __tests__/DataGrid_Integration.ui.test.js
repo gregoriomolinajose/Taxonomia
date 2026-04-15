@@ -26,6 +26,7 @@ describe('DataGrid Integration Browser (Vitest S24.8)', () => {
         };
 
         window.ENTITY_META = { testEntity: { label: 'Entidad QA', idField: 'id_item', titleField: 'nombre' } };
+        window.Schema_Utils = { getPrimaryKey: () => 'id_item' };
         window.__APP_CACHE__ = {};
         window.formatEntityName = (name) => name;
         

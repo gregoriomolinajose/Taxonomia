@@ -24,9 +24,11 @@ describe('UI_SubgridBuilder.client.js (Vitest UI) - S30.2 ReadOnly Scenarios', (
             }
         };
         window.DataStore = { get: vi.fn().mockReturnValue([]) };
-        window.UI_FormUtils = { 
-            normalizeId: (id) => String(id),
+        window.Schema_Utils = { 
             getPrimaryKey: (entityName) => (window.APP_SCHEMAS[entityName] && window.APP_SCHEMAS[entityName].primaryKey) || `id_${entityName.toLowerCase()}` 
+        };
+        window.UI_FormUtils = { 
+            normalizeId: (id) => String(id)
         };
         window.openEditForm = vi.fn();
     });

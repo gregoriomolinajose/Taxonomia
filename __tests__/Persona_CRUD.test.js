@@ -6,13 +6,13 @@
  */
 
 global.Session = {
-    getActiveUser: jest.fn(() => ({
-        getEmail: jest.fn(() => 'test.user@taxonomia.com')
+    getActiveUser: vi.fn(() => ({
+        getEmail: vi.fn(() => 'test.user@taxonomia.com')
     }))
 };
 
 const Engine_DB_Mock = {
-    create: jest.fn((entityName, data) => {
+    create: vi.fn((entityName, data) => {
         return { success: true, Entity: entityName, data: data };
     })
 };
@@ -26,14 +26,16 @@ const path = require('path');
 describe('Persona CRUD - Blueprint V2 Verification', () => {
 
     beforeAll(() => {
-        global._generateShortUUID = jest.fn(() => 'SHORT-1234');
-        global._handleCreate = jest.fn((entityName, payload) => {
+        global.getAppSchema = vi.fn(() => ({ primaryKey: 'id_persona' }));
+        global._generateShortUUID = vi.fn(() => 'SHORT-1234');
+        global._handleCreate = vi.fn((entityName, payload) => {
             return global.Engine_DB.create(entityName, payload);
         });
     });
 
     beforeEach(() => {
-        jest.clearAllMocks();
+        global.Logger = { log: vi.fn() };
+        vi.clearAllMocks();
     });
 
     test('Step 1: Document Schema - Should verify schema existence in Schema_Engine.gs', () => {
@@ -41,7 +43,7 @@ describe('Persona CRUD - Blueprint V2 Verification', () => {
         const content = fs.readFileSync(schemaPath, 'utf8');
         
         expect(content).toContain('Persona:');
-        expect(content).toContain('primaryKey: "numero_empleado"');
+        expect(content).toContain('primaryKey: "id_persona"');
     });
 
     test.skip('Step 2 & 5: UI Routing & Zero-Touch - Should verify ENTITY_META registration in Index.html (OBSOLETE in V4)', () => {

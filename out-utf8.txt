@@ -1,0 +1,70 @@
+﻿Error: Multiple PM adapters found: filesystem, jira.
+Use --adapter <name> to select.
+# Session Context
+
+Developer: Gregorio (shu)
+Communication: language: es, style: direct, redirect_when_dispersing
+
+Session: SES-017
+
+Story: S35.4 [close]
+Epic: E35
+Branch: story/s35.3/test-automation
+ÔÜá Backlog adapter unavailable ÔÇö showing cached state
+
+Last: SES-016 (2026-04-15, Gregorio) ÔÇö SES-E35: S35.3 Test Suite QA + S35.4 Topology Refactor ÔÇö Epic E35 completada
+
+Recent:
+- SES-016: SES-E35: S35.3 Test Suite QA + S35.4 Topology Refactor ÔÇö Epic E35 completada
+- SES-015: Fix Ghost Stealing bug in nested SCD2 graph patching + e2e test
+- SES-014: SES-E29: Zero-Latency Subgrids, Strict Schema Validation & Deploy a PROD
+
+# Session Narrative
+(Captured at session close on 2026-04-15. Git/branch state may be stale ÔÇö verify before acting.)
+## Decisions
+- Se decidi├│ crear S35.4 (Refactor Topol├│gico) a partir de las recomendaciones del Architecture Review de E35, aplicando el principio de "no dejar deuda t├®cnica al cerrar una ├®pica".
+- El camino legacy (bindLevelChangeRepaint ÔåÆ else ion-select) se preserv├│ intencionalmente como c├│digo muerto documentado, pendiente de limpieza cuando se confirme que ning├║n schema usa ion-select nativo.
+
+## Research
+- `UI_Factory.BuilderRegistry` (no `builders`) es el mapa de constructores registrados v├¡a `registerBuilder()` en FormBuilder_Inputs.
+- El evento `TAXONOMY_LEVEL_CHANGED` se publica desde `FormRenderer_UI` al cambiar `nivel_tipo`, disparando `bindLevelChangeRepaint` en todos los RelationBuilders activos del form.
+
+## Artifacts
+- `src/TEST_Suite_UI.html` ÔÇö suite completa de 4 specs de integraci├│n profunda.
+- `src/UI_Component_SearchableSingle.client.js` ÔÇö Array.isArray guard + Blur Guard documentado.
+- `src/UI_FormUtils.client.js` ÔÇö nueva funci├│n `filterByTopology` exportada.
+- `src/UI_Component_RelationBuilder.client.js` ÔÇö 3 bloques H9 reemplazados por `filterByTopology`.
+- `work/epics/e35-detalles-esteticos-ui/stories/s35.3-retrospective.md`
+- `work/epics/e35-detalles-esteticos-ui/stories/s35.4-story.md`
+- `work/epics/e35-detalles-esteticos-ui/stories/s35.4-retrospective.md`
+- `work/epics/e35-detalles-esteticos-ui/scope.md` ÔÇö todas las historias marcadas DONE.
+
+## Branch State
+- Rama: `story/s35.3/test-automation` (worktree activo, no eliminable por Git).
+- Commits adelante de dev: `30f791f5` y `46f029b4`.
+
+
+# Next Session Prompt
+(Captured at session close on 2026-04-15. Git/branch state may be stale ÔÇö verify before acting.)
+Iniciar la pr├│xima sesi├│n con /rai-epic-close para E35. Una vez cerrada la ├®pica, revisar el backlog y priorizar la siguiente (probablemente E36 u otra pendiente).
+
+IMPORTANTE: Si el usuario reporta "funci├│n no definida" al ejecutar los tests QA, recordar que debe:
+1. Estar en la pesta├▒a Console (no Issues/What's New)
+2. Cambiar el contexto del frame a `userHtmlFrame...` en el selector de contexto de DevTools.
+
+El refactor de filterByTopology est├í completo en los 3 call sites de RelationBuilder. Pendiente: validaci├│n manual de que el filtrado jer├írquico por nivel funciona correctamente en producci├│n.
+
+
+# Pending
+Blockers:
+- Suite de pruebas QA requiere cambiar contexto a userHtmlFrame en DevTools para ejecutarse ÔÇö explicar al usuario en la pr├│xima sesi├│n si reporta error 'is not defined'.
+Next:
+- Ejecutar /rai-epic-close para cerrar formalmente la ├ëpica E35.
+- Validar manualmente en el navegador que la jerarqu├¡a de niveles sigue filtrando correctamente padres tras el refactor de filterByTopology.
+
+# Available Context
+- governance: 0 items
+- behavioral: 0 items
+- coaching: 1 items (~80 tokens)
+- deadlines: 0 items
+- progress: 0 items

@@ -74,7 +74,7 @@ function API_Universal_Router(action, entityName, payload) {
       // can build the newRecord without guessing the adapter's internal shape.
       const confirmedPkValue = payload[pkField];
       const itemName = payload.nombre || payload.nombre_producto || entityName;
-      Logger.log('Persistencia completada para: ' + itemName);
+      if (typeof Logger !== 'undefined') Logger.log('Persistencia completada para: ' + itemName);
       
       const sanitizedReturn = JSON.stringify({
         status: "success",
@@ -103,7 +103,7 @@ function API_Universal_Router(action, entityName, payload) {
     }
 
     const itemName = payload.nombre || payload.id_portafolio || entityName;
-    Logger.log('Persistencia completada para: ' + itemName);
+    if (typeof Logger !== 'undefined') Logger.log('Persistencia completada para: ' + itemName);
 
     // Emitir como String previene Google Apps Script IPC Deserialize Threw Error Native Bug
     const sanitizedReturn = JSON.stringify({
@@ -112,7 +112,7 @@ function API_Universal_Router(action, entityName, payload) {
     });
     return sanitizedReturn;
   } catch (error) {
-    Logger.log('🚀 ERROR Atrapado en Servidor: ' + error.message + '\n' + error.stack);
+    if (typeof Logger !== 'undefined') Logger.log('🚀 ERROR Atrapado en Servidor: ' + error.message + '\n' + error.stack);
     const sanitizedReturn = JSON.stringify({
       status: "error",
       success: false,

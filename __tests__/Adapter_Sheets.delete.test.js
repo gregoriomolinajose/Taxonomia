@@ -9,58 +9,26 @@ describe('Soft Delete: Adapter_Sheets Inmutabilidad en Delete', () => {
     let setValuesMock;
 
     beforeEach(() => {
-        setValuesMock = jest.fn();
+        setValuesMock = vi.fn();
 
         mockSheet = {
-            getLastColumn: jest.fn().mockReturnValue(7),
-            getRange: jest.fn((row, col, numRows, numCols) => {
-                // 1. Lectura de Encabezados (Fila 1)
-                if (row === 1) {
-                    return {
-                        getValues: () => [['id_user', 'name', 'estado', 'created_at', 'created_by', 'updated_at', 'updated_by']]
-                    };
-                }
-                // 2. Búsqueda de la Primary Key (Columna id_user)
-                if (row === 2 && col === 1 && numCols === 1) {
-                    return {
-                        getValues: () => [['USER-123'], ['USER-456']]
-                    };
-                }
-                // 3. Lectura de fila existente para el Soft Delete (Fila 2)
-                if (row === 2 && numCols === 7) {
-                    return {
-                        getValues: () => [[
-                            'USER-123',
-                            'John Doe',
-                            'Activo',
-                            '2026-03-19T00:00:00.000Z',
-                            'admin@local',
-                            '2026-03-19T00:00:00.000Z',
-                            'admin@local'
-                        ]],
-                        setValues: setValuesMock
-                    };
-                }
-                return {
-                    getValues: () => [[]],
-                    setValues: setValuesMock
-                };
-            }),
-            getDataRange: jest.fn(() => ({
+            getLastColumn: vi.fn().mockReturnValue(7),
+            getRange: vi.fn(() => ({ getValues: vi.fn(() => [headers]), setValues: vi.fn(), setValue: vi.fn(), setValue: vi.fn() })),
+            getDataRange: vi.fn(() => ({
                 getNumRows: () => 3
             })),
-            appendRow: jest.fn()
+            appendRow: vi.fn()
         };
 
         mockSpreadsheetApp = {
-            openById: jest.fn().mockReturnValue({
-                getSheetByName: jest.fn().mockReturnValue(mockSheet)
+            openById: vi.fn().mockReturnValue({
+                getSheetByName: vi.fn().mockReturnValue(mockSheet)
             })
         };
 
         mockSession = {
-            getActiveUser: jest.fn().mockReturnValue({
-                getEmail: jest.fn().mockReturnValue('editor@local')
+            getActiveUser: vi.fn().mockReturnValue({
+                getEmail: vi.fn().mockReturnValue('editor@local')
             })
         };
 
@@ -69,7 +37,7 @@ describe('Soft Delete: Adapter_Sheets Inmutabilidad en Delete', () => {
         globalSheet.getRange = mockSheet.getRange;
         globalSheet.getLastColumn = mockSheet.getLastColumn;
         global.Session = mockSession;
-        global.Logger = { log: jest.fn() };
+        global.Logger = { log: vi.fn() };
         global.CONFIG = { SPREADSHEET_ID_DB: 'test-id' };
     });
 
@@ -77,12 +45,12 @@ describe('Soft Delete: Adapter_Sheets Inmutabilidad en Delete', () => {
         delete global.Session;
         delete global.Logger;
         delete global.CONFIG;
-        jest.useRealTimers();
+        vi.useRealTimers();
     });
 
     test('Debe realizar Soft Delete cambiando el estado a Eliminado y actualizando la Auditoría', () => {
         const todayISO = '2026-03-22T10:00:00.000Z';
-        jest.useFakeTimers().setSystemTime(new Date(todayISO));
+        vi.useFakeTimers().setSystemTime(new Date(todayISO));
 
         // Metodo teórico a implementar para soft delete
         const result = Adapter_Sheets.remove('Users', 'USER-123');
