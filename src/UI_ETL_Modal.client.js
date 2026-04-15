@@ -44,7 +44,7 @@ window.UI_ETL_Modal = (function() {
         const cardDrive = document.createElement('ion-card');
         cardDrive.className = 'ion-no-margin';
         const cardDriveHeader = document.createElement('ion-card-header');
-        cardDriveHeader.innerHTML = `<ion-card-title class="ion-text-primary"><ion-icon name="logo-google"></ion-icon> Google Sheets (Recomendado)</ion-card-title>`;
+        cardDriveHeader.innerHTML = `<ion-card-title><span style="color: #0F9D58; font-weight: 900; margin-right: 5px; font-family: 'Product Sans', sans-serif;">G</span> <span style="color: #0F9D58; font-weight: 600;">Google Sheets</span> <span class="ion-text-medium">(Recomendado)</span></ion-card-title>`;
         
         const cardDriveContent = document.createElement('ion-card-content');
         cardDriveContent.innerHTML = `<p class="ion-margin-bottom ion-text-medium">Sincroniza directamente desde tu Drive. Omite dependencias offline y evita bloqueos de límite de Google.</p>`;
@@ -52,6 +52,10 @@ window.UI_ETL_Modal = (function() {
         const btnGenTpl = document.createElement('ion-button');
         btnGenTpl.setAttribute('expand', 'block');
         btnGenTpl.setAttribute('fill', 'outline');
+        btnGenTpl.setAttribute('shape', 'round');
+        btnGenTpl.style.textTransform = 'none';
+        btnGenTpl.style.fontFamily = 'inherit';
+        btnGenTpl.style.fontWeight = '500';
         btnGenTpl.innerHTML = `<ion-icon name="document-text-outline" slot="start"></ion-icon> 1. Auto-Generar Plantilla en Drive`;
         btnGenTpl.addEventListener('click', () => {
             if (options && typeof options.onGenerateTemplate === 'function') {
@@ -61,17 +65,21 @@ window.UI_ETL_Modal = (function() {
 
         const inputItem = document.createElement('ion-item');
         inputItem.className = 'ion-margin-top';
-        inputItem.setAttribute('lines', 'full');
+        inputItem.setAttribute('fill', 'solid');
+        inputItem.style.borderRadius = '8px';
         const urlInput = document.createElement('ion-input');
         urlInput.id = 'etl-drive-url';
         urlInput.setAttribute('label', '2. URL o ID de Google Sheet');
-        urlInput.setAttribute('label-placement', 'stacked');
-        urlInput.setAttribute('placeholder', 'Pega el enlace aquí...');
+        urlInput.setAttribute('label-placement', 'floating');
         urlInput.setAttribute('clear-input', 'true');
         inputItem.appendChild(urlInput);
 
         const btnSync = document.createElement('ion-button');
         btnSync.setAttribute('expand', 'block');
+        btnSync.setAttribute('shape', 'round');
+        btnSync.style.textTransform = 'none';
+        btnSync.style.fontFamily = 'inherit';
+        btnSync.style.fontWeight = '500';
         btnSync.className = 'ion-margin-top';
         btnSync.innerHTML = `<ion-icon name="sync-circle-outline" slot="start"></ion-icon> 3. Ejecutar Extracción Híbrida`;
         btnSync.addEventListener('click', () => {
@@ -115,6 +123,10 @@ window.UI_ETL_Modal = (function() {
 
         const btnDownloadCsv = document.createElement('ion-button');
         btnDownloadCsv.setAttribute('fill', 'clear');
+        btnDownloadCsv.setAttribute('shape', 'round');
+        btnDownloadCsv.style.textTransform = 'none';
+        btnDownloadCsv.style.fontFamily = 'inherit';
+        btnDownloadCsv.style.fontWeight = '500';
         btnDownloadCsv.style.flex = "1";
         btnDownloadCsv.innerHTML = `<ion-icon name="download-outline" slot="start"></ion-icon> Bajar Template`;
         btnDownloadCsv.addEventListener('click', () => {
@@ -126,6 +138,10 @@ window.UI_ETL_Modal = (function() {
         const btnUploadCsv = document.createElement('ion-button');
         btnUploadCsv.setAttribute('fill', 'outline');
         btnUploadCsv.setAttribute('color', 'secondary');
+        btnUploadCsv.setAttribute('shape', 'round');
+        btnUploadCsv.style.textTransform = 'none';
+        btnUploadCsv.style.fontFamily = 'inherit';
+        btnUploadCsv.style.fontWeight = '500';
         btnUploadCsv.style.flex = "1";
         btnUploadCsv.innerHTML = `<ion-icon name="upload-outline" slot="start"></ion-icon> Adjuntar .CSV`;
         btnUploadCsv.addEventListener('click', () => fileInput.click());
@@ -144,10 +160,10 @@ window.UI_ETL_Modal = (function() {
         segment.className = 'ion-margin-bottom';
         segment.innerHTML = `
             <ion-segment-button value="drive">
-                <ion-label>Nube (AppScript)</ion-label>
+                <ion-label>Desde GoogleSheet</ion-label>
             </ion-segment-button>
             <ion-segment-button value="local">
-                <ion-label>Local (CSV)</ion-label>
+                <ion-label>Desde tu Equipo</ion-label>
             </ion-segment-button>
         `;
         
