@@ -17,20 +17,20 @@ function buildEmptySheet() {
             getValues: () => JSON.parse(JSON.stringify(store)),
             getNumRows: () => store.length
         }),
-        getRange: jest.fn((row, col, numRows, numCols) => {
+        getRange: vi.fn((row, col, numRows, numCols) => {
             return {
                 getValues: () =>
                     store.slice(row - 1, row - 1 + numRows).map(r =>
                         r.slice(col - 1, col - 1 + numCols)
                     ),
-                setValues: (newVals) => {
+                setValue: (val) => {}, setValues: (newVals) => {
                     for (let i = 0; i < newVals.length; i++) {
                         store[row - 1 + i] = newVals[i];
                     }
                 }
             };
         }),
-        appendRow: jest.fn(row => store.push(row))
+        appendRow: vi.fn(row => store.push(row))
     };
 }
 
@@ -38,22 +38,22 @@ describe('Adapter_Sheets.upsert() — AC2: Audit Trail', () => {
     let sheet;
 
     beforeEach(() => {
-        jest.useFakeTimers().setSystemTime(new Date(FIXED_TIME));
+        vi.useFakeTimers().setSystemTime(new Date(FIXED_TIME));
         sheet = buildEmptySheet();
 
-        global.SpreadsheetApp.openById = jest.fn(() => ({
-            getSheetByName: jest.fn(() => sheet),
-            insertSheet: jest.fn(() => sheet)
+        global.SpreadsheetApp.openById = vi.fn(() => ({
+            getSheetByName: vi.fn(() => sheet),
+            insertSheet: vi.fn(() => sheet)
         }));
         global.Session = {
-            getActiveUser: jest.fn(() => ({ getEmail: jest.fn(() => 'agent@local') }))
+            getActiveUser: vi.fn(() => ({ getEmail: vi.fn(() => 'agent@local') }))
         };
-        global.Logger = { log: jest.fn() };
+        global.Logger = { log: vi.fn() };
         global.CONFIG = { SPREADSHEET_ID_DB: 'test-id' };
     });
 
     afterEach(() => {
-        jest.useRealTimers();
+        vi.useRealTimers();
     });
 
     test('Create path: injects all 4 audit fields automatically', () => {

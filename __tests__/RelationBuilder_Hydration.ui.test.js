@@ -12,7 +12,25 @@ describe('UI_Component_RelationBuilder & Hydration Stability', () => {
             registerBuilder: vi.fn((name, fn) => {
                 if (name === 'relation') buildRelation = fn;
             }),
-            buildSearchableMulti: vi.fn()
+            buildSearchableMulti: vi.fn(),
+            buildSearchableSingle: vi.fn((field, filteredData, initialValues) => {
+                const b = document.createElement('ion-select');
+                b.value = initialValues && initialValues.length > 0 ? initialValues[0] : null;
+                const opt = document.createElement('ion-select-option');
+                opt.value = window.UI_CONSTANTS ? window.UI_CONSTANTS.MOCK_FK_TOKEN : '_NEW_PARENT_';
+                opt.textContent = 'Padre en Curso';
+                b.appendChild(opt);
+                if (filteredData) {
+                    filteredData.forEach(d => {
+                        const o = document.createElement('ion-select-option');
+                        o.value = String(typeof d[field.valueField] !== 'undefined' ? d[field.valueField] : d.id_registro);
+                        o.textContent = field.labelField ? d[field.labelField] : d.nombre;
+                        b.appendChild(o);
+                    });
+                }
+                b.updateConfig = vi.fn();
+                return b;
+            })
         };
         
         window.APP_SCHEMAS = {

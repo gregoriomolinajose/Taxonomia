@@ -3,7 +3,7 @@
 
 // NOTE: Adapter_Sheets has a module-level __HEADER_CACHE__ var that persists
 // across tests in the same Jest run (module is cached). We must re-require it
-// each test via jest.resetModules() to prevent cross-test cache pollution.
+// each test via vi.resetModules() to prevent cross-test cache pollution.
 
 let Adapter_Sheets;
 
@@ -20,25 +20,34 @@ function buildSheet(dataRows = [ROW_1, ROW_2]) {
         }),
         getLastRow: () => store.length,
         getLastColumn: () => FULL_HEADERS.length,
-        getRange: jest.fn(),
-        appendRow: jest.fn()
+        getRange: vi.fn(() => ({ 
+            setValue: vi.fn(), 
+            setValues: vi.fn(), 
+            getValues: vi.fn(() => [FULL_HEADERS]) 
+        })),
+        appendRow: vi.fn()
     };
 }
 
 beforeEach(() => {
     // Re-require to reset module-level __HEADER_CACHE__ state between tests
-    jest.resetModules();
+    vi.resetModules();
     Adapter_Sheets = require('../src/Adapter_Sheets');
     global.CONFIG = { SPREADSHEET_ID_DB: 'test-id' };
-    global.Logger = { log: jest.fn() };
+    global.Logger = { log: vi.fn() };
+    global.APP_SCHEMAS = {
+        Dominio: { fields: [] }
+    };
 });
 
 describe('Adapter_Sheets.list() — AC1', () => {
 
     test('Normal listing: audit columns stripped by default', () => {
-        global.SpreadsheetApp.openById = jest.fn(() => ({
-            getSheetByName: jest.fn(() => buildSheet()),
-            insertSheet: jest.fn()
+        global.SpreadsheetApp.openById = vi.fn(() => ({
+            getSheetByName: vi.fn(() => buildSheet()),
+            insertSheet: vi.fn(() => ({
+                getRange: vi.fn(() => ({ setValue: vi.fn(), setValues: vi.fn() }))
+            }))
         }));
 
         const result = Adapter_Sheets.list('Dominio', { SPREADSHEET_ID_DB: 'test-id' });
@@ -54,9 +63,11 @@ describe('Adapter_Sheets.list() — AC1', () => {
     });
 
     test('includeAudit=true: audit columns present in result (R-01)', () => {
-        global.SpreadsheetApp.openById = jest.fn(() => ({
-            getSheetByName: jest.fn(() => buildSheet()),
-            insertSheet: jest.fn()
+        global.SpreadsheetApp.openById = vi.fn(() => ({
+            getSheetByName: vi.fn(() => buildSheet()),
+            insertSheet: vi.fn(() => ({
+                getRange: vi.fn(() => ({ setValue: vi.fn(), setValues: vi.fn() }))
+            }))
         }));
 
         const result = Adapter_Sheets.list('Dominio', { SPREADSHEET_ID_DB: 'test-id' }, 'objects', true);
@@ -71,9 +82,11 @@ describe('Adapter_Sheets.list() — AC1', () => {
     });
 
     test('Empty sheet (headers only): returns empty rows array', () => {
-        global.SpreadsheetApp.openById = jest.fn(() => ({
-            getSheetByName: jest.fn(() => buildSheet([])),
-            insertSheet: jest.fn()
+        global.SpreadsheetApp.openById = vi.fn(() => ({
+            getSheetByName: vi.fn(() => buildSheet([])),
+            insertSheet: vi.fn(() => ({
+                getRange: vi.fn(() => ({ setValue: vi.fn(), setValues: vi.fn() }))
+            }))
         }));
 
         const result = Adapter_Sheets.list('Dominio', { SPREADSHEET_ID_DB: 'test-id' });
@@ -83,9 +96,11 @@ describe('Adapter_Sheets.list() — AC1', () => {
     });
 
     test("format='tuples': rows are arrays not objects", () => {
-        global.SpreadsheetApp.openById = jest.fn(() => ({
-            getSheetByName: jest.fn(() => buildSheet([ROW_1])),
-            insertSheet: jest.fn()
+        global.SpreadsheetApp.openById = vi.fn(() => ({
+            getSheetByName: vi.fn(() => buildSheet([ROW_1])),
+            insertSheet: vi.fn(() => ({
+                getRange: vi.fn(() => ({ setValue: vi.fn(), setValues: vi.fn() }))
+            }))
         }));
 
         const result = Adapter_Sheets.list('Dominio', { SPREADSHEET_ID_DB: 'test-id' }, 'tuples');
@@ -99,9 +114,11 @@ describe('Adapter_Sheets.list() — AC1', () => {
         const rowWithDate = ['DOMI-003', 'Innovación', 'Activo',
             new Date('2026-01-01'), 'admin@local', new Date('2026-03-01'), 'editor@local'];
 
-        global.SpreadsheetApp.openById = jest.fn(() => ({
-            getSheetByName: jest.fn(() => buildSheet([rowWithDate])),
-            insertSheet: jest.fn()
+        global.SpreadsheetApp.openById = vi.fn(() => ({
+            getSheetByName: vi.fn(() => buildSheet([rowWithDate])),
+            insertSheet: vi.fn(() => ({
+                getRange: vi.fn(() => ({ setValue: vi.fn(), setValues: vi.fn() }))
+            }))
         }));
 
         const result = Adapter_Sheets.list('Dominio', { SPREADSHEET_ID_DB: 'test-id' }, 'objects', true);

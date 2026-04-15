@@ -2,14 +2,14 @@
 
 // Mock del objeto de Google Apps Script Session
 global.Session = {
-    getActiveUser: jest.fn(() => ({
-        getEmail: jest.fn(() => 'test.user@taxonomia.com')
+    getActiveUser: vi.fn(() => ({
+        getEmail: vi.fn(() => 'test.user@taxonomia.com')
     }))
 };
 
 // Mock para simular Engine_DB y atrapar el payload antes de guardarlo.
 const Engine_DB_Mock = {
-    create: jest.fn((entityName, data) => {
+    create: vi.fn((entityName, data) => {
         // Simulamos que el DB Engine retornará un objeto con id o true
         return { success: true, Entity: entityName, data_recibida: data };
     })
@@ -25,14 +25,16 @@ const API_Universal = require('../src/API_Universal.gs');
 describe('Portafolio CRUD - Capa de Servicio API_Universal', () => {
 
     beforeAll(() => {
-        global._generateShortUUID = jest.fn(() => 'SHORT-1234');
-        global._handleCreate = jest.fn((entityName, payload) => {
+        global.getAppSchema = vi.fn(() => ({ primaryKey: 'id_portafolio' }));
+        global._generateShortUUID = vi.fn(() => 'SHORT-1234');
+        global._handleCreate = vi.fn((entityName, payload) => {
             return global.Engine_DB.create(entityName, payload);
         });
     });
 
     beforeEach(() => {
-        jest.clearAllMocks();
+        global.Logger = { log: vi.fn() };
+        vi.clearAllMocks();
     });
 
     test('POST (Create) inyecta campos de auditoría (created_at y updated_by) correctamente antes de invocar Engine_DB', () => {

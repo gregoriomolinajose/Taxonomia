@@ -6,13 +6,13 @@
  */
 
 global.Session = {
-    getActiveUser: jest.fn(() => ({
-        getEmail: jest.fn(() => 'test.user@taxonomia.com')
+    getActiveUser: vi.fn(() => ({
+        getEmail: vi.fn(() => 'test.user@taxonomia.com')
     }))
 };
 
 const Engine_DB_Mock = {
-    create: jest.fn((entityName, data) => {
+    create: vi.fn((entityName, data) => {
         return { success: true, Entity: entityName, data: data };
     })
 };
@@ -24,14 +24,16 @@ const API_Universal = require('../src/API_Universal.gs');
 describe('Unidad_Negocio CRUD - Verification', () => {
 
     beforeAll(() => {
-        global._generateShortUUID = jest.fn(() => 'UNID-ABCDE');
-        global._handleCreate = jest.fn((entityName, payload) => {
+        global.getAppSchema = vi.fn(() => ({ primaryKey: 'id_unidad_negocio' }));
+        global._generateShortUUID = vi.fn(() => 'UNID-ABCDE');
+        global._handleCreate = vi.fn((entityName, payload) => {
             return global.Engine_DB.create(entityName, payload);
         });
     });
 
     beforeEach(() => {
-        jest.clearAllMocks();
+        global.Logger = { log: vi.fn() };
+        vi.clearAllMocks();
     });
 
     test('Should handle "Unidad_Negocio" creation via API_Universal', () => {

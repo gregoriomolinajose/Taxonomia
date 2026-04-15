@@ -24,8 +24,41 @@ window.Schema_Utils = (function () {
         return schema.primaryKey || schema?.metadata?.idField || ('id_' + entityName.toLowerCase());
     }
 
+    /**
+     * Resuelve el nombre semántico (título) de una entidad.
+     * @param {string} entityName
+     * @param {Object} recordData
+     * @returns {string} El nombre semántico o "Nuevo Registro"
+     */
+    function getSemanticTitle(entityName, recordData) {
+        if (!recordData) return 'Nuevo Registro';
+        let targetTitleField = 'nombre';
+        if (entityName && window.APP_SCHEMAS && window.APP_SCHEMAS[entityName]) {
+            targetTitleField = window.APP_SCHEMAS[entityName]?.metadata?.titleField || 'nombre';
+        }
+        return recordData[targetTitleField] || recordData['nombre'] || recordData['nombre_unidad'] || 'Nuevo Registro';
+    }
+
+    /**
+     * Calcula las iniciales de un texto (para Avatars).
+     * @param {string} nameString
+     * @returns {string} Iniciales (1 o 2 letras mayúsculas)
+     */
+    function getAvatarInitials(nameString) {
+        if (!nameString || nameString === 'Nuevo Registro') return "N/A";
+        const parts = String(nameString).trim().split(' ').filter(String);
+        if (parts.length >= 2) {
+            return (parts[0][0] + parts[1][0]).toUpperCase();
+        } else if (parts.length === 1) {
+            return parts[0].substring(0, 2).toUpperCase();
+        }
+        return "N/A";
+    }
+
     return {
-        getPrimaryKey
+        getPrimaryKey,
+        getSemanticTitle,
+        getAvatarInitials
     };
 
 })();

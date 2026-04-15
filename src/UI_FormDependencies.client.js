@@ -15,6 +15,92 @@
              */
             attachListeners: function(modal, fields) {
                 let debounceTimer; // S4.3: Debounce logic
+                let _typeaheadNode = null;
+                
+                const _closeWorkspaceTypeahead = () => {
+                    if (_typeaheadNode && _typeaheadNode.parentNode) {
+                        _typeaheadNode.parentNode.removeChild(_typeaheadNode);
+                    }
+                    _typeaheadNode = null;
+                };
+
+                const _renderWorkspaceTypeahead = (triggerInput, dtos, formModal) => {
+                    _closeWorkspaceTypeahead();
+                    const rect = triggerInput.getBoundingClientRect();
+                    
+                    _typeaheadNode = document.createElement('ion-list');
+                    _typeaheadNode.style.position = 'absolute';
+                    _typeaheadNode.style.top = (rect.bottom + window.scrollY) + 'px';
+                    _typeaheadNode.style.left = (rect.left + window.scrollX) + 'px';
+                    _typeaheadNode.style.width = rect.width + 'px';
+                    _typeaheadNode.style.maxHeight = '250px';
+                    _typeaheadNode.style.overflowY = 'auto';
+                    _typeaheadNode.style.zIndex = '99999';
+                    _typeaheadNode.style.boxShadow = '0 4px 16px rgba(0,0,0,0.2)';
+                    _typeaheadNode.style.borderRadius = 'var(--rounded-md)';
+                    
+                    dtos.forEach(dto => {
+                        const item = document.createElement('ion-item');
+                        item.button = true;
+                        
+                        const avatar = document.createElement('ion-avatar');
+                        avatar.slot = 'start';
+                        if (dto.avatar) {
+                            const img = document.createElement('img');
+                            img.src = dto.avatar;
+                            avatar.appendChild(img);
+                        } else {
+                            const fallback = document.createElement('div');
+                            fallback.style.background = 'var(--ion-color-primary)';
+                            fallback.style.color = 'white';
+                            fallback.style.width = '100%';
+                            fallback.style.height = '100%';
+                            fallback.style.display = 'flex';
+                            fallback.style.alignItems = 'center';
+                            fallback.style.justifyContent = 'center';
+                            fallback.style.fontSize = '1.2rem';
+                            const inits = (dto.nombre.charAt(0) + dto.apellidos.charAt(0)).toUpperCase();
+                            fallback.textContent = inits;
+                            avatar.appendChild(fallback);
+                        }
+                        item.appendChild(avatar);
+                        
+                        const lbl = document.createElement('ion-label');
+                        const h3 = document.createElement('h3');
+                        h3.textContent = dto.nombre + " " + dto.apellidos;
+                        const p = document.createElement('p');
+                        p.textContent = dto.email + (dto.cargo ? ` • ${dto.cargo}` : '');
+                        lbl.appendChild(h3);
+                        lbl.appendChild(p);
+                        item.appendChild(lbl);
+                        
+                        item.onmousedown = (e) => {
+                            e.preventDefault();
+                            // Hidratar todo el formulario con el DTO (idéntico a ionBlur)
+                            const formStateObj = {};
+                            const currentInputs = formModal.querySelectorAll('ion-input, ion-select, ion-textarea, input[type="hidden"]');
+                            currentInputs.forEach(inp => formStateObj[inp.name] = inp.value);
+                            
+                            Object.keys(dto).forEach(key => {
+                                const autoInput = formModal.querySelector(`ion-input[name="${key}"]`);
+                                if (autoInput) {
+                                    autoInput.value = dto[key];
+                                    if (dto[key]) {
+                                        autoInput.readonly = true;
+                                        autoInput.setAttribute('readonly', 'true');
+                                        autoInput.style.color = 'var(--ion-color-primary)';
+                                    }
+                                    autoInput.dispatchEvent(new CustomEvent('FormHydrated', { detail: dto[key] }));
+                                }
+                            });
+                            triggerInput.dispatchEvent(new Event('ionChange'));
+                            _closeWorkspaceTypeahead();
+                        };
+                        _typeaheadNode.appendChild(item);
+                    });
+                    document.body.appendChild(_typeaheadNode);
+                };
+
                 
                 ['ionChange', 'ionInput', 'ionBlur'].forEach(eventType => {
                     modal.addEventListener(eventType, (e) => {
@@ -53,9 +139,32 @@
 
                             if (!schemaField) return;
 
-                            // --- NUEVO: C) Smart API Lookup (Workspace Resolve) ---
+                            // --- NUEVO: C.2) Workspace Typeahead (S37.4) ---
+                            if (schemaField.triggers_workspace_resolve && eventType === 'ionInput') {
+                                const term = formStateObj[fieldName] || "";
+                                if (term.length >= 3) {
+                                    if (window.DataAPI) {
+                                        window.DataAPI.call('searchDirectoryByName', term)
+                                            .then(dtos => {
+                                                if (Array.isArray(dtos) && dtos.length > 0) {
+                                                    _renderWorkspaceTypeahead(triggerInput, dtos, modal, fields);
+                                                } else {
+                                                    _closeWorkspaceTypeahead();
+                                                }
+                                            })
+                                            .catch(err => {
+                                                console.warn("[FormEngine] Workspace Typeahead API Error:", err);
+                                                _closeWorkspaceTypeahead();
+                                            });
+                                    }
+                                } else {
+                                    _closeWorkspaceTypeahead();
+                                }
+                            }
+
+                            // --- NUEVO: C) Smart API Lookup Full Profile (Workspace Resolve Blur) ---
                             if (schemaField.triggers_workspace_resolve && formStateObj[fieldName] && (eventType === 'ionChange' || eventType === 'ionBlur')) {
-                                if (window.google && window.google.script && window.google.script.run) {
+                                if (window.DataAPI) {
                                     // Bloquear modal temporalmente con retraso p/evitar flash (UX)
                                     const loadingUI = document.createElement('ion-loading');
                                     loadingUI.message = 'Buscando en Directorio Corporativo...';
@@ -68,8 +177,8 @@
                                         await loadingUI.present();
                                     }, 250);
 
-                                    window.google.script.run
-                                        .withSuccessHandler((dto) => {
+                                    window.DataAPI.call('resolverDirectorioWorkspace', formStateObj[fieldName])
+                                        .then(dto => {
                                             clearTimeout(loadingTimeout);
                                             if (loadingPresented) loadingUI.dismiss();
                                             else document.body.removeChild(loadingUI);
@@ -85,40 +194,71 @@
                                             }
                                             
                                             if (dto) {
-                                                // Hidratar Formulario (Read-Only condicional)
+                                                // Hidratar Formulario (Reactive Defense)
                                                 Object.keys(dto).forEach(key => {
-                                                    const autoInput = modal.querySelector(`ion-input[name="${key}"]`);
-                                                    if (autoInput) {
-                                                        const fetchedValue = dto[key];
-                                                        autoInput.value = fetchedValue;
+                                                    const stdInput = modal.querySelector(`ion-input[name="${key}"], ion-textarea[name="${key}"], input[type="hidden"][name="${key}"]`);
+                                                    const cmpInput = modal.querySelector(`[data-form-component="${key}"]`);
+                                                    
+                                                    const fetchedValue = dto[key];
+                                                    
+                                                    // H10 Mitigación: Primero intentar Inyección Reactiva p/WebComponents Complejos
+                                                    if (cmpInput) {
+                                                        if (typeof cmpInput.setValidatedValue === 'function') {
+                                                            cmpInput.setValidatedValue(fetchedValue);
+                                                        } else if (cmpInput.tagName.includes('-SEARCHABLE') || cmpInput.tagName.includes('-RELATION')) {
+                                                            cmpInput.dataset.prefill = JSON.stringify([{ id_registro: fetchedValue }]);
+                                                            window.Schema_Utils && window.Schema_Utils.triggerNativeInject(cmpInput);
+                                                        }
+                                                    } else if (stdInput) {
+                                                        // Fallback a Primitivos Estándar
+                                                        stdInput.value = fetchedValue;
                                                         
-                                                        // Solo bloquear y colorear si Workspace SI devolvió datos reales.
-                                                        // Si está vacío, permitimos la captura manual.
-                                                        if (fetchedValue && fetchedValue.toString().trim() !== '') {
-                                                            autoInput.setAttribute('readonly', 'true');
-                                                            autoInput.readonly = true;
-                                                            autoInput.style.color = 'var(--ion-color-primary)';
+                                                        // Bloqueo Inteligente si el Backend resolvió el valor
+                                                        if (fetchedValue !== undefined && fetchedValue !== null && String(fetchedValue).trim() !== '') {
+                                                            stdInput.setAttribute('readonly', 'true');
+                                                            stdInput.readonly = true;
+                                                            stdInput.style.color = 'var(--ion-color-primary)';
                                                         } else {
-                                                            autoInput.removeAttribute('readonly');
-                                                            autoInput.readonly = false;
-                                                            autoInput.style.color = '';
+                                                            stdInput.removeAttribute('readonly');
+                                                            stdInput.readonly = false;
+                                                            stdInput.style.color = '';
                                                         }
                                                         
-                                                        // Notify custom inputs
-                                                        autoInput.dispatchEvent(new CustomEvent('FormHydrated', { detail: fetchedValue }));
+                                                        // Despachar Burbujeo Nodal
+                                                        stdInput.dispatchEvent(new CustomEvent('ionChange', { detail: { value: fetchedValue }, bubbles: true }));
                                                     }
                                                 });
+                                                
+                                                // Trigger Collision Warning explícito después del barrido
+                                                if (window.DataStore && window.DataStore.get) {
+                                                    const entityKey = 'Persona';
+                                                    const pkField = window.Schema_Utils ? window.Schema_Utils.getPrimaryKey(entityKey) : 'id_registro';
+                                                    const localEditId = formStateObj[pkField];
+                                                    const liveData = window.DataStore.get(entityKey) || [];
+                                                    const testUniques = ['email', 'numero_empleado'];
+                                                    let hitMsg = "";
+                                                    
+                                                    for (const uq of testUniques) {
+                                                        if (dto[uq] !== undefined && dto[uq] !== null && String(dto[uq]).trim() !== '') {
+                                                           const exist = liveData.find(r => r.estado !== 'Eliminado' && String(r[uq]).toLowerCase() === String(dto[uq]).toLowerCase());
+                                                           if (exist && (!localEditId || String(exist[pkField]) !== String(localEditId))) {
+                                                               hitMsg = `⚠️ Atención: Ya existe un registro vigente con ${uq} = ${dto[uq]}.`;
+                                                               break;
+                                                           }
+                                                        }
+                                                    }
+                                                    if (hitMsg) window.PresentSafe && window.PresentSafe(Object.assign(document.createElement('ion-toast'), { message: hitMsg, duration: 5000, color: 'warning' }));
+                                                }
                                             }
                                         })
-                                        .withFailureHandler((err) => {
+                                        .catch(err => {
                                             clearTimeout(loadingTimeout);
                                             if (loadingPresented) loadingUI.dismiss();
                                             else document.body.removeChild(loadingUI);
-                                            console.warn("Error en Workspace Resolve:", err);
-                                        })
-                                        .resolverDirectorioWorkspace(formStateObj[fieldName]);
+                                            console.warn("Error en Workspace Resolve (DataAPI):", err);
+                                        });
                                 } else {
-                                    console.log("[Dev Mode] Simulating Workspace Resolve for:", formStateObj[fieldName]);
+                                    console.log("[Dev Mode] FormEngine Mock Call - Missing DataAPI abstraction for:", formStateObj[fieldName]);
                                 }
                             }
 

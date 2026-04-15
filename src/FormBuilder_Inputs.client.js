@@ -225,23 +225,35 @@
         global.UI_Factory.buildDivider = function(field) {
             const dividerEl = document.createElement('div');
             dividerEl.style.width = '100%';
+            dividerEl.style.display = 'flex';
+            dividerEl.style.alignItems = 'center';
             dividerEl.style.marginTop = 'var(--spacing-4)';
             dividerEl.style.marginBottom = 'var(--spacing-4)';
+            dividerEl.style.gap = 'var(--spacing-2)';
             
+            if (field.icon) {
+                const ic = document.createElement('ion-icon');
+                ic.setAttribute('name', field.icon);
+                ic.style.fontSize = '16px';
+                ic.style.color = 'var(--ion-color-medium, #92949c)';
+                dividerEl.appendChild(ic);
+            }
+
             if (field.label) {
-                const title = document.createElement('h3');
-                title.style.margin = '0 0 var(--spacing-2) 0';
-                title.style.color = 'var(--ion-color-dark)';
-                title.style.fontSize = 'var(--sys-font-sub)';
-                title.style.fontWeight = '600';
-                title.style.letterSpacing = '0.02em';
+                const title = document.createElement('span');
+                title.style.color = 'var(--ion-color-dark, #222428)';
+                title.style.fontSize = 'var(--sys-font-small, 13px)';
+                title.style.fontWeight = 'var(--fw-bold, 700)';
+                title.style.letterSpacing = '0.04em';
+                title.style.textTransform = 'uppercase';
                 title.textContent = field.label;
                 dividerEl.appendChild(title);
             }
             
             const line = document.createElement('hr');
+            line.style.flexGrow = '1';
             line.style.border = 'none';
-            line.style.borderTop = '1px solid var(--ion-color-step-300, #d7d8da)';
+            line.style.borderTop = '1px solid var(--ion-color-step-200, #e6e8eb)';
             line.style.margin = '0';
             dividerEl.appendChild(line);
             

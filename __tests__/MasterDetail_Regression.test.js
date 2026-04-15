@@ -8,10 +8,13 @@
  */
 
 const Engine_DB = require('../src/Engine_DB');
-const Adapter_Sheets = require('../src/Adapter_Sheets');
+const Adapter_Sheets = require('../src/Adapter_Sheets.js');
+Adapter_Sheets.upsert = vi.fn();
+Adapter_Sheets.upsertBatch = vi.fn();
+Adapter_Sheets.list = vi.fn();
 
-jest.mock('../src/Adapter_Sheets');
-jest.mock('../src/Adapter_CloudDB');
+
+vi.mock('../src/Adapter_CloudDB');
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -44,6 +47,7 @@ function applyImmutableCacheUpdate(currentCache, cleanRecord, pkField) {
 
 const SCHEMAS = {
     Portafolio: {
+        primaryKey: 'id_portafolio',
         fields: [
             { name: 'id_portafolio', type: 'hidden', primaryKey: true },
             { name: 'nombre', type: 'text' },
@@ -56,6 +60,7 @@ const SCHEMAS = {
         ]
     },
     Grupo_Productos: {
+        primaryKey: 'id_grupo_producto',
         fields: [
             { name: 'id_grupo_producto', type: 'text', primaryKey: true },
             { name: 'nombre', type: 'text' },
@@ -65,7 +70,7 @@ const SCHEMAS = {
 };
 
 beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     global.APP_SCHEMAS = SCHEMAS;
     global.CONFIG = { useSheets: true, useCloudDB: false };
 });

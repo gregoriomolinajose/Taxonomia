@@ -8,40 +8,40 @@ describe('Red Phase - Auto-Aprovisionamiento DB y Schema: Capacidad', () => {
     let mockSession;
 
     beforeEach(() => {
-        setValuesMock = jest.fn();
+        setValuesMock = vi.fn();
         
         const mockNewSheet = {
-            getLastRow: jest.fn().mockReturnValue(0), // Simular hoja vacía recién creada
-            getRange: jest.fn().mockReturnValue({
+            getLastRow: vi.fn().mockReturnValue(0), // Simular hoja vacía recién creada
+            getRange: vi.fn().mockReturnValue({
                 setValues: setValuesMock
             }),
-            appendRow: jest.fn(),
-            getDataRange: jest.fn().mockReturnValue({
-                getValues: jest.fn().mockReturnValue([[]]), // Para que no explote data[0]
+            appendRow: vi.fn(),
+            getDataRange: vi.fn().mockReturnValue({
+                getValues: vi.fn().mockReturnValue([[]]), // Para que no explote data[0]
                 getNumRows: () => 0
             })
         };
 
-        insertSheetMock = jest.fn().mockReturnValue(mockNewSheet);
+        insertSheetMock = vi.fn().mockReturnValue(mockNewSheet);
 
         mockSpreadsheet = {
-            getSheetByName: jest.fn().mockReturnValue(null), // Simular que la hoja NO existe
+            getSheetByName: vi.fn().mockReturnValue(null), // Simular que la hoja NO existe
             insertSheet: insertSheetMock
         };
 
         mockSpreadsheetApp = {
-            openById: jest.fn().mockReturnValue(mockSpreadsheet)
+            openById: vi.fn().mockReturnValue(mockSpreadsheet)
         };
 
         mockSession = {
-            getActiveUser: jest.fn().mockReturnValue({
-                getEmail: jest.fn().mockReturnValue('admin@local')
+            getActiveUser: vi.fn().mockReturnValue({
+                getEmail: vi.fn().mockReturnValue('admin@local')
             })
         };
 
         global.SpreadsheetApp = mockSpreadsheetApp;
         global.Session = mockSession;
-        global.Logger = { log: jest.fn() };
+        global.Logger = { log: vi.fn() };
         global.CONFIG = { SPREADSHEET_ID_DB: 'test-id' };
         
         // Mock del Schema Engine (Entidad Plana: Capacidad)
@@ -86,7 +86,7 @@ describe('Red Phase - Auto-Aprovisionamiento DB y Schema: Capacidad', () => {
         const expectedHeaders = [
             'id_capacidad', 'estado', 'id_externo', 'nivel_tipo', 'orden_path', 'macrocapacidad', 
             'nombre_ingles', 'abreviacion', 'descripcion', 'contexto_completo_analisis', 'path_completo_es',
-            'created_at', 'created_by', 'updated_at', 'updated_by', 'deleted_at', 'deleted_by', '_version'
+            'lexical_id', 'created_at', 'created_by', 'updated_at', 'updated_by', 'deleted_at', 'deleted_by', '_version'
         ];
         
         expect(injectedHeaders).toEqual(expectedHeaders);

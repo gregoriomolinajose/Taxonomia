@@ -29,15 +29,15 @@ describe('JS_Core.html - Debounce Truthiness Trap (S21.2)', () => {
     });
 
     beforeEach(() => {
-        jest.useFakeTimers();
+        vi.useFakeTimers();
     });
 
     afterEach(() => {
-        jest.useRealTimers();
+        vi.useRealTimers();
     });
 
     test('1. Funciona correctamente con delay positivo', () => {
-        const mockFn = jest.fn();
+        const mockFn = vi.fn();
         const debounced = window.debounce(mockFn, 100);
 
         debounced();
@@ -46,32 +46,32 @@ describe('JS_Core.html - Debounce Truthiness Trap (S21.2)', () => {
 
         expect(mockFn).not.toHaveBeenCalled();
 
-        jest.advanceTimersByTime(110);
+        vi.advanceTimersByTime(110);
 
         expect(mockFn).toHaveBeenCalledTimes(1);
     });
 
     test('2. Funciona correctamente usando el default delay', () => {
-        const mockFn = jest.fn();
+        const mockFn = vi.fn();
         const debounced = window.debounce(mockFn);
 
         debounced();
-        jest.advanceTimersByTime(290);
+        vi.advanceTimersByTime(290);
         expect(mockFn).not.toHaveBeenCalled();
 
-        jest.advanceTimersByTime(15);
+        vi.advanceTimersByTime(15);
         expect(mockFn).toHaveBeenCalledTimes(1);
     });
 
     test('3. Truthiness Trap: Permite delay = 0 (Macro-task defer) explícito', () => {
-        const mockFn = jest.fn();
+        const mockFn = vi.fn();
         // El usuario pide explícitamente 0ms para diferir solo la caja actual de event loop
         const debounced = window.debounce(mockFn, 0);
 
         debounced();
         
         // Avanzamos 5ms
-        jest.advanceTimersByTime(5);
+        vi.advanceTimersByTime(5);
         
         // Si el truthiness trap existe, delay = 0 fue sobreescrito por 300,
         // Y por lo tanto toHaveBeenCalledTimes(1) fallará aquí.

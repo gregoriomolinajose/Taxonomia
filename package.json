@@ -44,5 +44,8 @@
     "stylelint-config-standard": "^40.0.0",
     "stylelint-declaration-strict-value": "^1.11.1",
     "vitest": "^4.1.2"
+  },
+  "dependencies": {
+    "parse5": "^8.0.0"
   }
 }

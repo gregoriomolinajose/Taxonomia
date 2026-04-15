@@ -1,12 +1,11 @@
 const Engine_DB = require('../src/Engine_DB');
-const Adapter_Sheets = require('../src/Adapter_Sheets');
+const Adapter_Sheets = require('../src/Adapter_Sheets.js');
+Adapter_Sheets.upsert = vi.fn();
+Adapter_Sheets.upsertBatch = vi.fn();
+Adapter_Sheets.list = vi.fn();
 
 // [Mocks]
-jest.mock('../src/Adapter_Sheets', () => ({
-    list: jest.fn(),
-    upsertBatch: jest.fn(),
-    upsert: jest.fn()
-}));
+
 
 const { Engine_Graph } = require('../src/Engine_Graph');
 
@@ -35,7 +34,7 @@ global.APP_SCHEMAS = {
     }
 };
 
-global.getEntityTopologyRules = jest.fn((entity) => {
+global.getEntityTopologyRules = vi.fn((entity) => {
     return {
         topologyType: "JERARQUICA_ESTRICTA",
         allowOrphanStealing: false,
@@ -48,7 +47,7 @@ global.Utilities = { getUuid: () => 'MOCK-UUID' };
 describe('S29.2: Políticas de Paternidad Estricta y Adopción (Engine_DB)', () => {
     
     beforeEach(() => {
-        jest.clearAllMocks();
+        vi.clearAllMocks();
         Adapter_Sheets.upsert.mockReturnValue({ status: 'success' });
     });
 

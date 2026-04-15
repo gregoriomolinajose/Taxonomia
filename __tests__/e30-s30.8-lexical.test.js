@@ -5,11 +5,11 @@
 // Sin mocks de require recursivos
 
 // Global polyfills for GAS environment
-global.Logger = { log: jest.fn() };
+global.Logger = { log: vi.fn() };
 global.Utilities = { getUuid: () => 'uuid-pure-v4-mock-1234' };
 global.Session = { getActiveUser: () => ({ getEmail: () => 'test@admin.com' }) };
-global.LockService = { getScriptLock: () => ({ waitLock: jest.fn(), releaseLock: jest.fn() }) };
-global.SpreadsheetApp = { flush: jest.fn(), openById: jest.fn() };
+global.LockService = { getScriptLock: () => ({ waitLock: vi.fn(), releaseLock: vi.fn() }) };
+global.SpreadsheetApp = { flush: vi.fn(), openById: vi.fn() };
 
 const AdapterSheets = require('../src/Adapter_Sheets.js');
 

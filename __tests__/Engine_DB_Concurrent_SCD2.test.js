@@ -1,11 +1,10 @@
 const Engine_DB = require('../src/Engine_DB');
-const Adapter_Sheets = require('../src/Adapter_Sheets');
+const Adapter_Sheets = require('../src/Adapter_Sheets.js');
+Adapter_Sheets.upsert = vi.fn();
+Adapter_Sheets.upsertBatch = vi.fn();
+Adapter_Sheets.list = vi.fn();
 
-jest.mock('../src/Adapter_Sheets', () => ({
-    list: jest.fn(),
-    upsertBatch: jest.fn(),
-    upsert: jest.fn()
-}));
+
 
 const { Engine_Graph } = require('../src/Engine_Graph');
 
@@ -21,16 +20,16 @@ global.APP_SCHEMAS = {
     }
 };
 
-global.getEntityTopologyRules = jest.fn(() => ({
+global.getEntityTopologyRules = vi.fn(() => ({
     topologyType: "JERARQUICA_ESTRICTA", allowOrphanStealing: true, preventCycles: true
 }));
 global.Engine_Graph = Engine_Graph;
 global.Utilities = { getUuid: () => 'MOCK-RACE-UUID' };
-global._invalidateCache = jest.fn();
+global._invalidateCache = vi.fn();
 
 describe('S29.3: Destrucción, Historial y Race Conditions (Engine_DB)', () => {
     beforeEach(() => {
-        jest.clearAllMocks();
+        vi.clearAllMocks();
         Adapter_Sheets.upsert.mockReturnValue({ status: 'success' });
     });
 

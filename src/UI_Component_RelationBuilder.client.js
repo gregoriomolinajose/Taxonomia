@@ -40,13 +40,8 @@
                     let freshFiltered = activeData;
                     
                     if (rulesContext) {
-                        if (rulesContext.levelFiltering === true && rulesContext.strictLevelJumps === true && field.relationType === 'padre') {
-                            freshFiltered = activeData.filter(d => Number(d.nivel_tipo) === newLevel - 1);
-                        }
-                        
-                        if (rulesContext.rootRequiresNoParent === true && newLevel === 1 && field.relationType === 'padre') {
-                            freshFiltered = []; 
-                        }
+                        // [S35.4] Filtrado centralizado — elimina duplicación H9 con buildRelation/reloadDataset
+                        freshFiltered = window.UI_FormUtils.filterByTopology(activeData, rulesContext, newLevel, field.relationType);
                     }
                     
                     if (typeof selectEl.updateConfig === 'function') {
@@ -122,15 +117,10 @@
                 let uiStateInit = { isDisabled: false, opacity: '1', placeholder: '— Sin asignar —' };
 
                 if (rules) {
-                    uiStateInit = window.SubgridState ? 
+                    uiStateInit = window.SubgridState ?
                         window.SubgridState.evaluateFieldState(rules, cLevel, field.relationType) : uiStateInit;
-                    
-                    if (rules.levelFiltering === true && rules.strictLevelJumps === true && field.relationType === 'padre') {
-                        filteredActiveData = activeData.filter(d => Number(d.nivel_tipo) === cLevel - 1);
-                    }
-                    if (rules.rootRequiresNoParent === true && cLevel === 1 && field.relationType === 'padre') {
-                        filteredActiveData = []; 
-                    }
+                    // [S35.4] Filtrado centralizado vía UI_FormUtils.filterByTopology (elimina H9)
+                    filteredActiveData = window.UI_FormUtils.filterByTopology(activeData, rules, cLevel, field.relationType);
                 }
 
                 // [S29.8] Mock Option Injection para UX de Creación Anidada no se visualiza como 'Option' 
@@ -210,12 +200,8 @@
                         let freshFiltered = freshActiveData;
                         const cLvl = Number(data ? (data.nivel_tipo || 1) : 1);
                         if (rules) {
-                            if (rules.levelFiltering === true && rules.strictLevelJumps === true && field.relationType === 'padre') {
-                                freshFiltered = freshActiveData.filter(d => Number(d.nivel_tipo) === cLvl - 1);
-                            }
-                            if (rules.rootRequiresNoParent === true && cLvl === 1 && field.relationType === 'padre') {
-                                freshFiltered = []; 
-                            }
+                            // [S35.4] Filtrado centralizado vía UI_FormUtils.filterByTopology (elimina H9)
+                            freshFiltered = window.UI_FormUtils.filterByTopology(freshActiveData, rules, cLvl, field.relationType);
                         }
 
                         if (typeof basicSel.updateConfig === 'function') {

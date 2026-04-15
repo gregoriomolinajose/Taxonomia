@@ -117,77 +117,33 @@
             const file = event.target.files[0];
             if (!file) return;
 
-            const reader = new FileReader();
-            reader.onload = async function(e) {
-                const text = e.target.result;
-                
-                // Parser robusto con Regex para comillas
-                const regex = /(?!\s*$)\s*(?:'([^'\\]*(?:\\[\s\S][^'\\]*)*)'|"([^"\\]*(?:\\[\s\S][^"\\]*)*)"|([^,'"\s\\]*(?:\s+[^,'"\s\\]+)*))\s*(?:,|$)/g;
-                
-                const rawRows = text.split(/\r?\n/).filter(r => r.trim() !== '');
-                if (rawRows.length < 2) {
-                    if (onError) onError('El CSV está vacío o no tiene datos (Solo cabeceras).');
-                    event.target.value = '';
-                    return;
-                }
-
-                const parsedRows = rawRows.map(rowStr => {
-                    let row = [];
-                    let match;
-                    regex.lastIndex = 0; // Reset
-                    while ((match = regex.exec(rowStr)) !== null) {
-                        let val = match[1] || match[2] || match[3] || '';
-                        if (match[2]) val = val.replace(/""/g, '"');
-                        row.push(val);
-                        if (match[0] === '' || !match[0].endsWith(',')) break;
-                    }
-                    if (row.length === 0) row = rowStr.split(',').map(s => s.trim());
-                    return row;
-                });
-
-                const headers = parsedRows.shift();
-                
-                const jsonArray = parsedRows.filter(r => r.length > 0).map(row => {
-                    let obj = {};
-                    headers.forEach((h, i) => {
-                        obj[h.trim()] = row[i] !== undefined ? row[i] : '';
-                    });
-                    return obj;
-                });
-
-                // Middleware de Cálculo Pre-Inserción (Declarativo / Config-Driven)
-                const rules = (window.APP_SCHEMAS && window.APP_SCHEMAS[entityName] && window.APP_SCHEMAS[entityName].businessRules) || [];
-                rules.forEach(rule => {
-                    if (rule.action === 'sumPrefix') {
-                        jsonArray.forEach(row => {
-                            let total = 0;
-                            Object.keys(row).forEach(key => {
-                                if (key.startsWith(rule.prefix) && !isNaN(parseInt(row[key], 10))) {
-                                    total += parseInt(row[key], 10);
-                                }
-                            });
-                            row[rule.target] = total;
-                        });
-                    }
-                });
-
-                if (confirm(`Se encontraron ${jsonArray.length} registros. ¿Deseas importarlos a la entidad '${entityName}'?`)) {
-                    if (onLoadingStart) onLoadingStart();
-
-                    try {
-                        const response = await window.DataAPI.call('bulkInsert', entityName, jsonArray);
-                        if (response && response.status === 'success') {
-                            if (window.DataStore) window.DataStore.set(entityName, null);
-                            if (onSuccess) onSuccess(response.insertedCount || jsonArray.length);
-                        } else {
-                            if (onError) onError((response && response.message) ? response.message : 'Respuesta desconocida');
+            if (confirm(`Estás a punto de procesar y cargar un archivo por lotes a la entidad '${entityName}'. ¿Deseas continuar?`)) {
+                if (window.DataEngine_ETL && window.DataEngine_ETL.processFile) {
+                    let loadingUi;
+                    
+                    window.DataEngine_ETL.processFile(file, entityName, function onProgress(chunkIndex, totalChunks, isDone) {
+                        if (chunkIndex === 1 && onLoadingStart) {
+                            onLoadingStart(); 
+                            loadingUi = document.getElementById('dv-import-loading');
                         }
-                    } catch (err) {
-                        if (onError) onError(err.message || 'Error de red');
-                    }
+                        if (loadingUi) {
+                            requestAnimationFrame(() => {
+                                loadingUi.message = `Procesando Lote ${chunkIndex} de ${totalChunks}...`;
+                            });
+                        }
+                    }).then(() => {
+                        event.target.value = ''; // Reset input
+                        if (window.DataStore) window.DataStore.set(entityName, null);
+                        if (onSuccess) onSuccess('múltiples'); 
+                    }).catch(err => {
+                        event.target.value = ''; // Reset input
+                        if (onError) onError(err.message || 'Error de procesamiento');
+                    });
+                } else {
+                    if (onError) onError('DataEngine_ETL no está disponible en el entorno.');
                 }
-                event.target.value = ''; // Reset input
-            };
-            reader.readAsText(file);
+            } else {
+                event.target.value = '';
+            }
         }
     };

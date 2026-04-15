@@ -29,6 +29,7 @@ describe('DataViewEngine Nativo JSDOM', () => {
 
         // --- 2. Dependencias del Ecosistema de Taxonomia (Global Scope Mocks) ---
         window.ENTITY_META = { testEntity: { label: 'Entidad QA', idField: 'id_item' } };
+        window.Schema_Utils = { getPrimaryKey: () => 'id_item' };
         window.__APP_CACHE__ = {};
         window.DataStore = {
             _cache: window.__APP_CACHE__,

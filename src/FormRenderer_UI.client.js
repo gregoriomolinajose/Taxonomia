@@ -86,129 +86,18 @@
             }
 
             // Header Custom del DrawerS25.2 con soporte para Badge ID congelado
-            const header = document.createElement('div');
-            header.className = 'drawer-header';
-            // Sobrescribir flex nativo para layout multi-fila 100% ancho
-            header.style.flexDirection = 'column';
-            header.style.alignItems = 'stretch';
-            header.style.justifyContent = 'flex-start';
-            header.style.padding = 'var(--spacing-3) var(--spacing-4)';
-            // Eliminado header.style.background para heredar de drawer-header (Dark mode safeness)
-            header.style.borderBottom = '1px solid var(--color-border, var(--ion-color-light-shade))';
-
-            const topRow = document.createElement('div');
-            topRow.style.display = 'flex';
-            topRow.style.justifyContent = 'space-between';
-            topRow.style.alignItems = 'flex-start';
-            topRow.style.width = '100%';
-            topRow.style.marginTop = '4px'; // Añade respiro superior al título
-
-            const titleWrap = document.createElement('div');
-            titleWrap.style.display = 'flex';
-            titleWrap.style.flexDirection = 'column';
-
-            // ROW 1: Icon + Entity Name / Badge
-            const topTitleRow = document.createElement('div');
-            topTitleRow.style.display = 'flex';
-            topTitleRow.style.alignItems = 'center';
-            topTitleRow.style.gap = 'var(--spacing-2)';
-            topTitleRow.style.paddingTop = '8px'; // Respiro superior de 8px al Entity/ID
-
-            const metadata = (window.APP_SCHEMAS && window.APP_SCHEMAS[entityName] && window.APP_SCHEMAS[entityName].metadata) || {};
-            const iconName = metadata.iconName || 'folder-outline';
-            const targetTitleField = metadata.titleField || 'nombre';
-
-            const headerIcon = document.createElement('ion-icon');
-            headerIcon.setAttribute('name', iconName);
-            headerIcon.style.color = 'var(--dv-primary)'; // Mismo color que la vista DataView
-            headerIcon.style.fontSize = '16px'; // Reducido peso visual
-            topTitleRow.appendChild(headerIcon);
-
-            const titleWrapEntity = document.createElement('div');
-            titleWrapEntity.style.display = 'flex';
-            titleWrapEntity.style.alignItems = 'center';
-            titleWrapEntity.style.gap = 'var(--spacing-2)';
-            
-            const title = document.createElement('h2');
-            title.className = 'drawer-title';
-            title.style.margin = '0';
-            title.style.fontSize = '14px'; // Reducido peso visual
-            title.style.fontWeight = '500'; // Menos grueso
-            title.style.color = 'var(--ion-color-medium)'; // Suavizar el contraste
-            title.textContent = window.formatEntityName(entityName);
-            titleWrapEntity.appendChild(title);
-
-            const slashSpan = document.createElement('span');
-            slashSpan.textContent = '/';
-            slashSpan.style.color = 'var(--ion-color-medium)';
-            slashSpan.style.fontSize = '14px';
-            slashSpan.style.fontWeight = '400';
-            titleWrapEntity.appendChild(slashSpan);
-
-            const idTag = document.createElement('div');
-            idTag.style.background = 'transparent'; // Safest fallback for contrast in Dark Mode
-            idTag.style.border = '1px solid var(--color-border, var(--ion-color-step-300))';
-            idTag.style.borderRadius = '4px';
-            idTag.style.padding = '1px 6px';
-            idTag.style.fontSize = '11px';
-            idTag.style.fontWeight = '600';
-            idTag.style.color = 'var(--ion-text-color)';
-            
-            let displayBadge = localEditId || '(Autogenerado)';
-            if (data && global.APP_SCHEMAS && global.APP_SCHEMAS[entityName]) {
-                const schemaDef = global.APP_SCHEMAS[entityName];
-                let targetFields = [];
-                if (Array.isArray(schemaDef)) { targetFields = schemaDef; }
-                else if (schemaDef.fields) { targetFields = schemaDef.fields; }
-                else { targetFields = Object.keys(schemaDef).filter(k => k !== 'steps' && k !== 'metadata').map(k => ({ name: k, ...schemaDef[k] })); }
-                
-                const badgeField = targetFields.find(f => f.type === 'badge');
-                if (badgeField && data[badgeField.name] && String(data[badgeField.name]).trim() !== '') {
-                    displayBadge = data[badgeField.name];
+            // HEADER DESACOPLADO (S37.6)
+            // Se delega al Componente Puro Reutilizable UI_Factory
+            const header = window.UI_Factory.buildDrawerHeader({
+                entityName: entityName,
+                data: data,
+                localEditId: localEditId,
+                onClose: () => {
+                    if (window.AppEventBus) { window.AppEventBus.publish('MODAL::CLOSE_REQUEST'); } 
+                    else if (window._closeTopModal) { window._closeTopModal(); }
                 }
-            }
-            idTag.textContent = displayBadge;
-            titleWrapEntity.appendChild(idTag);
-            
-            topTitleRow.appendChild(titleWrapEntity);
-
-            // ROW 2: Record Semantic Name
-            let semanticName = 'Nuevo Registro';
-            if (data) {
-                if (data[targetTitleField]) {
-                    semanticName = data[targetTitleField];
-                } else if (data['nombre']) {
-                    semanticName = data['nombre'];
-                }
-            }
-            
-            const recordNameTitle = document.createElement('h1');
-            recordNameTitle.style.margin = '10px 0 0 0'; // Espaciado de 10px
-            recordNameTitle.style.fontSize = 'var(--h1-font-size, 24px)';
-            recordNameTitle.style.fontWeight = 'var(--heading-weight, 800)';
-            recordNameTitle.style.color = 'var(--ion-color-dark)';
-            recordNameTitle.style.lineHeight = '1.2';
-            recordNameTitle.textContent = semanticName;
-
-            titleWrap.appendChild(topTitleRow);
-            titleWrap.appendChild(recordNameTitle);
-
-            const closeBtn = document.createElement('ion-button');
-            closeBtn.setAttribute('fill', 'clear');
-            closeBtn.setAttribute('color', 'medium');
-            closeBtn.style.margin = '-4px -10px 0 0'; // Compensar padding natural del boton y top margin
-            closeBtn.className = 'btn-close-drawer';
-            closeBtn.innerHTML = '<ion-icon slot="icon-only" name="close-outline"></ion-icon>';
-            closeBtn.addEventListener('click', () => {
-                if(window.AppEventBus) { window.AppEventBus.publish('MODAL::CLOSE_REQUEST'); } 
-                else if(window._closeTopModal) { window._closeTopModal(); }
             });
-
-            topRow.appendChild(titleWrap);
-            topRow.appendChild(closeBtn);
-
-            header.appendChild(topRow);
-
+            
             modal.appendChild(header);
 
 

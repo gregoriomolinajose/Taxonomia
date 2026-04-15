@@ -87,7 +87,38 @@ window.UI_FormSubmitter = class UI_FormSubmitter {
                 }
             });
 
-            // [S29.7] Nested Data se recolecta ahora automáticamente a través del hidden_input inyectado por SubgridBuilder.
+            // S37.3: Identity Collision Prevention (Uniqueness Checker)
+            if (window.DataStore && this.fields) {
+                const liveData = window.DataStore.get(this.entityName) || [];
+                
+                // Extrae cualquier campo marcado oficialmente en Schema_Engine como "único" o trigger workspace
+                const uniquenessFields = this.fields.filter(f => f.triggers_workspace_resolve === true || f.unique === true);
+                
+                let collisionFound = false;
+                
+                for (const field of uniquenessFields) {
+                    const valToCheck = payload[field.name];
+                    if (valToCheck && String(valToCheck).trim() !== '') {
+                        const hit = liveData.find(r => (r.estado !== 'Eliminado' && r.estado !== 'eliminado') && String(r[field.name]).toLowerCase() === String(valToCheck).toLowerCase());
+                        if (hit) {
+                            const pkField = window.Schema_Utils ? window.Schema_Utils.getPrimaryKey(this.entityName) : 'id_registro';
+                            const hitId = hit[pkField];
+                            // Si es nuevo registro, hitId colisiona. Si es actualizacion, colisiona si es distinto registro
+                            if (!this._internalRetryId || String(hitId) !== String(this._internalRetryId)) {
+                                collisionFound = true;
+                                this._showToast(`⚠️ Colisión Detectada: Ya existe un registro vigente con ${field.label || field.name} = ${valToCheck}.`, 'danger');
+                                break;
+                            }
+                        }
+                    }
+                }
+                
+                if (collisionFound) {
+                    if (loading && typeof loading.dismiss === 'function') await loading.dismiss();
+                    this._revertButtonState();
+                    return; // Abort Submit Flow
+                }
+            }
 
             // Sanitización de Auditoría
             delete payload.created_at;

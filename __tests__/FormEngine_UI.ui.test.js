@@ -9,6 +9,7 @@ import './utils/setup.vitest.js'; // Polyfills Base DOM
 // Import Source Code directly (Since we extracted them to .client.js)
 import '../src/JS_Core.client.js';
 import '../src/FormValidators.client.js';
+import '../src/UI_Factory.client.js';
 import '../src/FormRenderer_UI.client.js';
 
 describe('FormEngine UI Nativo Browser (Vitest SPA)', () => {
@@ -17,6 +18,12 @@ describe('FormEngine UI Nativo Browser (Vitest SPA)', () => {
         if (!window.AppEventBus) {
             window.AppEventBus = { subscribe: vi.fn(), publish: vi.fn() };
         }
+        
+        // Mock utilería semántica global requerida por FormRenderer
+        window.Schema_Utils = { 
+            getSemanticTitle: (name) => name || 'TST',
+            getAvatarInitials: (name) => 'TS'
+        };
         
         // Mock Ionic UI Components required by FormEngine
         window.DrawerStackController = {
@@ -34,21 +41,20 @@ describe('FormEngine UI Nativo Browser (Vitest SPA)', () => {
         
         // Polyfill para formatEntityName si no existe
         window.formatEntityName = window.formatEntityName || ((str) => str.replace(/_/g, ' '));
-        window.UI_Factory = {
-            buildFieldNode: (field) => {
-                const input = document.createElement(`ion-${field.type === 'textarea' ? 'textarea' : 'input'}`);
-                input.setAttribute('name', field.name);
-                input.setAttribute('data-testid', `input-${field.name}`);
-                if (field.required) input.setAttribute('required', 'true');
-                return input;
-            },
-            buildDivider: (config) => {
-                const div = document.createElement('div');
-                div.className = 'mock-divider';
-                div.textContent = config.label || '';
-                return div;
-            }
-        };
+        window.UI_Factory = window.UI_Factory || {};
+        window.UI_Factory.buildFieldNode = window.UI_Factory.buildFieldNode || ((field) => {
+            const input = document.createElement(`ion-${field.type === 'textarea' ? 'textarea' : 'input'}`);
+            input.setAttribute('name', field.name);
+            input.setAttribute('data-testid', `input-${field.name}`);
+            if (field.required) input.setAttribute('required', 'true');
+            return input;
+        });
+        window.UI_Factory.buildDivider = window.UI_Factory.buildDivider || ((config) => {
+            const div = document.createElement('div');
+            div.className = 'mock-divider';
+            div.textContent = config.label || '';
+            return div;
+        });
 
         window.UI_FormSubmitter = class { constructor() {} };
     });

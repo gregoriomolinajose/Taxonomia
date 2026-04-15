@@ -28,10 +28,10 @@ const mockDB = {
 };
 
 global.Engine_DB = {
-    list: jest.fn((entityName) => {
+    list: vi.fn((entityName) => {
         return { rows: mockDB[entityName] || [] };
     }),
-    readFull: jest.fn()
+    readFull: vi.fn()
 };
 
 global.APP_SCHEMAS = {
@@ -57,7 +57,7 @@ const { Engine_ABAC } = require('../src/Engine_ABAC.gs');
 describe('Engine_ABAC Authorization Rules', () => {
 
     beforeEach(() => {
-        jest.clearAllMocks();
+        vi.clearAllMocks();
         Engine_ABAC._requestCache = {};
     });
 

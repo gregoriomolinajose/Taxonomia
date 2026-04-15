@@ -9,10 +9,10 @@ describe('Engine_Graph - Topology Defenses (S8.2)', () => {
         expect(() => Engine_Graph.analyzeTopology(incoming, fullGraph, rules)).not.toThrow();
     });
 
-    test('Should prevent Sibling Collisions (duplicate active edge)', () => {
+    test('Should prevent Sibling Collisions (duplicate active edge in same payload)', () => {
         const rules = { siblingCollisionCheck: true };
-        const incoming = [{ id_nodo_padre: 'A', id_nodo_hijo: 'B' }];
-        const fullGraph = [{ id_nodo_padre: 'A', id_nodo_hijo: 'B', es_version_actual: true }];
+        const incoming = [{ id_nodo_padre: 'A', id_nodo_hijo: 'B' }, { id_nodo_padre: 'A', id_nodo_hijo: 'B' }];
+        const fullGraph = [];
         
         expect(() => Engine_Graph.analyzeTopology(incoming, fullGraph, rules)).toThrow(/Colisión de Hermanos/);
     });

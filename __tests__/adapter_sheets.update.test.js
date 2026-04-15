@@ -7,23 +7,23 @@ describe('Audit Trail: Adapter_Sheets Inmutabilidad en Update', () => {
     let setValuesMock;
 
     beforeEach(() => {
-        setValuesMock = jest.fn();
+        setValuesMock = vi.fn();
 
         mockSheet = {
-            getLastColumn: jest.fn().mockReturnValue(6),
-            getRange: jest.fn((row, col, numRows, numCols) => {
+            getLastColumn: vi.fn().mockReturnValue(6),
+            getRange: vi.fn((row, col, numRows, numCols) => {
                 // 1. Lectura de Encabezados (Fila 1)
                 if (row === 1) {
                     return {
                         getValues: () => [['id_user', 'name', 'created_at', 'created_by', 'updated_at', 'updated_by']],
-                        setValue: jest.fn()
+                        setValue: vi.fn()
                     };
                 }
                 // 2. Búsqueda de la Primary Key (Columna id_user)
                 if (row === 2 && col === 1 && numCols === 1) {
                     return {
                         getValues: () => [['USER-123'], ['USER-456']],
-                        setValue: jest.fn()
+                        setValue: vi.fn()
                     };
                 }
                 // 3. Lectura de fila existente para el merge protector (Fila 2)
@@ -38,32 +38,32 @@ describe('Audit Trail: Adapter_Sheets Inmutabilidad en Update', () => {
                             'admin@local'
                         ]],
                         setValues: setValuesMock,
-                        setValue: jest.fn()
+                        setValue: vi.fn()
                     };
                 }
                 // 4. Inyección final (setValues)
                 return {
                     getValues: () => [[]],
                     setValues: setValuesMock,
-                    setValue: jest.fn()
+                    setValue: vi.fn()
                 };
             }),
-            getDataRange: jest.fn(() => ({
+            getDataRange: vi.fn(() => ({
                 getNumRows: () => 3 // headers + 2 data rows
             })),
-            appendRow: jest.fn(),
-            insertSheet: jest.fn()
+            appendRow: vi.fn(),
+            insertSheet: vi.fn()
         };
 
         mockSpreadsheetApp = {
-            openById: jest.fn().mockReturnValue({
-                getSheetByName: jest.fn().mockReturnValue(mockSheet)
+            openById: vi.fn().mockReturnValue({
+                getSheetByName: vi.fn().mockReturnValue(mockSheet)
             })
         };
 
         mockSession = {
-            getActiveUser: jest.fn().mockReturnValue({
-                getEmail: jest.fn().mockReturnValue('editor@local')
+            getActiveUser: vi.fn().mockReturnValue({
+                getEmail: vi.fn().mockReturnValue('editor@local')
             })
         };
 
@@ -75,7 +75,7 @@ describe('Audit Trail: Adapter_Sheets Inmutabilidad en Update', () => {
         
         // No sobreescribir global.SpreadsheetApp
         global.Session = mockSession;
-        global.Logger = { log: jest.fn() };
+        global.Logger = { log: vi.fn() };
         global.CONFIG = { SPREADSHEET_ID_DB: 'test-id' };
         global.APP_SCHEMAS = {
             Users: { primaryKey: 'id_user' }
@@ -86,13 +86,13 @@ describe('Audit Trail: Adapter_Sheets Inmutabilidad en Update', () => {
         delete global.Session;
         delete global.Logger;
         delete global.CONFIG;
-        jest.useRealTimers();
+        vi.useRealTimers();
     });
 
     test('Debe preservar created_at de ayer y actualizar updated_at ignorando llaves sucias del Frontend', () => {
         // Fijar el tiempo actual para simular el server-time al momento del update
         const todayISO = '2026-03-20T22:54:34.000Z';
-        jest.useFakeTimers().setSystemTime(new Date(todayISO));
+        vi.useFakeTimers().setSystemTime(new Date(todayISO));
 
         // Payload sucio enviado desde el frontend (Simulando Frontend desobediente o Hackeo)
         const dirtyPayload = {

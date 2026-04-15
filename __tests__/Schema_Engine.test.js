@@ -6,7 +6,7 @@ describe('Schema_Engine Governance', () => {
         it('should return specific entity schema if requested', () => {
             const schema = getAppSchema('Dominio');
             expect(schema).toBeDefined();
-            expect(schema.titleField).toBe('n0_es');
+            expect(schema.titleField).toBe('nombre');
         });
 
         it('should return all schemas if no entity requested', () => {

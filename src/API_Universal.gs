@@ -74,7 +74,7 @@ function API_Universal_Router(action, entityName, payload) {
       // can build the newRecord without guessing the adapter's internal shape.
       const confirmedPkValue = payload[pkField];
       const itemName = payload.nombre || payload.nombre_producto || entityName;
-      Logger.log('Persistencia completada para: ' + itemName);
+      if (typeof Logger !== 'undefined') Logger.log('Persistencia completada para: ' + itemName);
       
       const sanitizedReturn = JSON.stringify({
         status: "success",
@@ -98,12 +98,34 @@ function API_Universal_Router(action, entityName, payload) {
       // Para delete, el payload puede ser solo el ID como string o un obj {id: ...}
       const id = (typeof payload === 'object') ? payload[pkField] || payload.id : payload;
       responseData = _handleDelete(entityName, id);
+    } else if (action === 'bulkInsert') {
+      if (!Array.isArray(payload)) {
+        throw new Error("Payload for bulkInsert must be an array of objects.");
+      }
+      
+      // Auto-generación de UUIDs p/records sin primaryKey para toda la ráfaga
+      payload.forEach(record => {
+        if (!record[pkField] || String(record[pkField]).trim() === '') {
+          record[pkField] = _generateShortUUID(entityName);
+        }
+      });
+      
+      // Delegamos la unidad de trabajo (Unit of Work) al backend
+      responseData = Engine_DB.upsertBatch(entityName, payload);
+      
+      if (typeof Logger !== 'undefined') Logger.log(`Batch Persistencia completada p/${entityName}: ${payload.length} records.`);
+      
+      return JSON.stringify({
+        status: "success",
+        data: responseData,
+        insertedCount: payload.length
+      });
     } else {
       throw new Error(`Action '${action}' not supported yet.`);
     }
 
     const itemName = payload.nombre || payload.id_portafolio || entityName;
-    Logger.log('Persistencia completada para: ' + itemName);
+    if (typeof Logger !== 'undefined') Logger.log('Persistencia completada para: ' + itemName);
 
     // Emitir como String previene Google Apps Script IPC Deserialize Threw Error Native Bug
     const sanitizedReturn = JSON.stringify({
@@ -112,7 +134,7 @@ function API_Universal_Router(action, entityName, payload) {
     });
     return sanitizedReturn;
   } catch (error) {
-    Logger.log('🚀 ERROR Atrapado en Servidor: ' + error.message + '\n' + error.stack);
+    if (typeof Logger !== 'undefined') Logger.log('🚀 ERROR Atrapado en Servidor: ' + error.message + '\n' + error.stack);
     const sanitizedReturn = JSON.stringify({
       status: "error",
       success: false,

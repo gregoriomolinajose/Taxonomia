@@ -3,7 +3,7 @@
 // Validates that all response payloads survive JSON.parse(JSON.stringify()) without throwing.
 // Purpose: prevent silent `postMessage dropping: deserialize threw` failures in the browser.
 
-// API_Universal.gs uses GAS globals — we load it via jest.setup.js mocks
+// API_Universal.gs uses GAS globals — we load it via vi.setup.js mocks
 // and wire up the minimum stubs needed to call getAppBootstrapPayload()
 
 const Adapter_Sheets = require('../src/Adapter_Sheets');
@@ -26,12 +26,12 @@ function buildSheetWithDateObjects(entityName) {
         }),
         getLastRow: () => data.length,
         getLastColumn: () => headers.length,
-        getRange: jest.fn(() => ({
+        getRange: vi.fn(() => ({
             getValues: () => data,
-            setValues: jest.fn(),
-            setValue: jest.fn()
+            setValues: vi.fn(),
+            setValue: vi.fn()
         })),
-        appendRow: jest.fn()
+        appendRow: vi.fn()
     };
 }
 
@@ -40,11 +40,11 @@ function buildSheetWithDateObjects(entityName) {
 // ─────────────────────────────────────────────────────────────────────────────
 describe('API_Universal Serialization Contract — AC4', () => {
     beforeEach(() => {
-        global.Logger = { log: jest.fn() };
+        global.Logger = { log: vi.fn() };
         global.CONFIG = { SPREADSHEET_ID_DB: 'test-id' };
-        global.SpreadsheetApp.openById = jest.fn(() => ({
-            getSheetByName: jest.fn(name => buildSheetWithDateObjects(name)),
-            insertSheet: jest.fn()
+        global.SpreadsheetApp.openById = vi.fn(() => ({
+            getSheetByName: vi.fn(name => buildSheetWithDateObjects(name)),
+            insertSheet: vi.fn()
         }));
         global.APP_SCHEMAS = {
             Dominio: { primaryKey: 'id_dominio' }
@@ -72,8 +72,8 @@ describe('API_Universal Serialization Contract — AC4', () => {
     test('Contract 3: upsert() result is serializable (no Date objects in return value)', () => {
         // Build fresh empty sheet for upsert
         const store = [['id_dominio', 'n0_es', 'estado', 'created_at', 'created_by', 'updated_at', 'updated_by']];
-        global.SpreadsheetApp.openById = jest.fn(() => ({
-            getSheetByName: jest.fn(() => ({
+        global.SpreadsheetApp.openById = vi.fn(() => ({
+            getSheetByName: vi.fn(() => ({
                 _store: store,
                 getLastRow: () => store.length,
                 getLastColumn: () => 7,
@@ -81,17 +81,17 @@ describe('API_Universal Serialization Contract — AC4', () => {
                     getValues: () => JSON.parse(JSON.stringify(store)),
                     getNumRows: () => store.length
                 }),
-                getRange: jest.fn((row, col, numRows, numCols) => ({
+                getRange: vi.fn((row, col, numRows, numCols) => ({
                     getValues: () => store.slice(row - 1, row - 1 + numRows).map(r => r.slice(col - 1, col - 1 + numCols)),
                     setValues: (vals) => { for (let i = 0; i < vals.length; i++) store[row - 1 + i] = vals[i]; },
-                    setValue: jest.fn()
+                    setValue: vi.fn()
                 })),
-                appendRow: jest.fn(row => store.push(row))
+                appendRow: vi.fn(row => store.push(row))
             })),
-            insertSheet: jest.fn()
+            insertSheet: vi.fn()
         }));
         global.Session = {
-            getActiveUser: jest.fn(() => ({ getEmail: jest.fn(() => 'agent@local') }))
+            getActiveUser: vi.fn(() => ({ getEmail: vi.fn(() => 'agent@local') }))
         };
 
         const result = Adapter_Sheets.upsert('Dominio', { id_dominio: 'DOMI-SRL', n0_es: 'Test', estado: 'Activo' });

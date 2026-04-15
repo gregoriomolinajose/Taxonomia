@@ -145,11 +145,48 @@ window.UI_FormUtils = (function () {
         }
     }
 
+    /**
+     * [S35.4] filterByTopology — Función pura de filtrado jerárquico.
+     *
+     * Centraliza la lógica de filtrado de datasets relacionales según las reglas
+     * topológicas del schema (strictLevelJumps, levelFiltering, rootRequiresNoParent).
+     * Elimina la duplicación H9 entre RelationBuilder.buildRelation y el listener reloadDataset.
+     *
+     * @param {Array}  dataset      Dataset activo de la entidad objetivo.
+     * @param {Object} rules        topologyRules del schema de la entidad padre.
+     * @param {number} currentLevel nivel_tipo del registro en edición.
+     * @param {string} relationType 'padre' | 'hijo' | 'relacionado'.
+     * @returns {Array} Dataset filtrado listo para renderizar.
+     */
+    function filterByTopology(dataset, rules, currentLevel, relationType) {
+        if (!rules || !Array.isArray(dataset)) return dataset || [];
+
+        let filtered = dataset;
+        // QR-2: parseInt() explícito para evitar truthiness traps (Number(true)===1, Number(null)===0).
+        // QR-1: El guard de rootRequiresNoParent va PRIMERO intencionalmente — su early-return evita
+        //        ejecutar levelFiltering innecesariamente en nivel 1. Si se añaden reglas nuevas para
+        //        nivel 1, deben ir ANTES de este bloque o se quedarán sombradas.
+        const level = parseInt(currentLevel, 10);
+
+        // Regla: Nodo raíz (nivel 1) no puede tener padre.
+        if (rules.rootRequiresNoParent === true && level === 1 && relationType === 'padre') {
+            return [];
+        }
+
+        // Regla: Filtrado estricto por nivel (solo padres del nivel inmediatamente superior).
+        if (rules.levelFiltering === true && rules.strictLevelJumps === true && relationType === 'padre') {
+            filtered = dataset.filter(d => parseInt(d.nivel_tipo, 10) === level - 1);
+        }
+
+        return filtered;
+    }
+
     return {
         getDominioOptions,
         getDominiosPadreOptions,
         normalizeId,
         isRecordLinked,
-        applyReadOnlyLock
+        applyReadOnlyLock,
+        filterByTopology
     };
 })();

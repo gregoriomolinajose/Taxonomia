@@ -6,16 +6,18 @@
  */
 
 const Engine_DB = require('../src/Engine_DB');
-const Adapter_Sheets = require('../src/Adapter_Sheets');
+const Adapter_Sheets = require('../src/Adapter_Sheets.js');
+Adapter_Sheets.upsert = vi.fn();
+Adapter_Sheets.upsertBatch = vi.fn();
+Adapter_Sheets.list = vi.fn();
 const { APP_SCHEMAS } = require('../src/Schema_Engine.gs');
 
 // Inyectar APP_SCHEMAS en el entorno global para que Engine_DB lo encuentre (Regla 15)
 global.APP_SCHEMAS = APP_SCHEMAS;
 
 // Mock components
-jest.mock('../src/Adapter_Sheets', () => {
-    const actual = jest.requireActual('../src/Adapter_Sheets');
-    
+vi.mock('../src/Adapter_Sheets.js', async (importOriginal) => {
+    const actual = await importOriginal();
     // Regla QA 7: Validar físicamente que el método existe en el código real antes de testear
     if (typeof actual.upsertBatch !== 'function') {
         throw new Error("CRITICAL: upsertBatch NO existe en Adapter_Sheets.js. El test fallará por integridad.");
@@ -23,23 +25,23 @@ jest.mock('../src/Adapter_Sheets', () => {
 
     return {
         ...actual,
-        upsert: jest.fn(),
-        upsertBatch: jest.fn(actual.upsertBatch), // Mantenemos la referencia pero la envolvemos en un espía
-        list: jest.fn()
+        upsert: vi.fn(),
+        upsertBatch: vi.fn(actual.upsertBatch), // Mantenemos la referencia pero la envolvemos en un espía
+        list: vi.fn()
     };
 });
 
-jest.mock('../src/Adapter_CloudDB', () => ({
-    upsert: jest.fn()
+vi.mock('../src/Adapter_CloudDB', () => ({
+    upsert: vi.fn()
 }));
 
 // Mock Logger and Google Globals for the test environment
-global.Logger = { log: jest.fn() };
+global.Logger = { log: vi.fn() };
 
 describe('Engine_DB Orchestration: Master-Detail (nested payloads)', () => {
     
     beforeEach(() => {
-        jest.clearAllMocks();
+        vi.clearAllMocks();
         // Isolating Schema from Human-Led overrides:
         global.APP_SCHEMAS.Portafolio = {
             primaryKey: 'id_portafolio',

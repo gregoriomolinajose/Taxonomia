@@ -46,7 +46,7 @@ describe('Blueprint V4 - Equipo & Persona Structural Integrity', () => {
         const block = getEntityBlock('Equipo', 'Persona');
         expect(block).toContain('name: "personas_asignadas"');
         expect(block).toContain('relationType: "hijo"');
-        expect(block).toContain('childSchema: "Persona"');
+        expect(block).toContain('targetEntity: "Persona"');
         expect(block).toContain('isTemporalGraph: true');
         expect(block).toContain('graphEdgeType: "PERSONA_EQUIPO"');
     });

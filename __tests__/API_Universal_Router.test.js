@@ -5,27 +5,34 @@ const filePath = path.resolve(__dirname, '../src/API_Universal.gs');
 const sourceCode = fs.readFileSync(filePath, 'utf8');
 
 // Global Mocks for Apps Script internal classes
-global.Logger = { log: jest.fn() };
+global.Logger = { log: vi.fn() };
 global.ContentService = {
     MimeType: { JSON: 'application/json' },
-    createTextOutput: jest.fn((content) => ({
-        setMimeType: jest.fn(() => ({ type: 'TextOutput', content }))
+    createTextOutput: vi.fn((content) => ({
+        setMimeType: vi.fn(() => ({ type: 'TextOutput', content }))
     }))
 };
 
 // Legacy handlers mentioned in API_Universal.gs
-global._handleCreate = jest.fn();
-global._handleRead = jest.fn();
-global._handleUpdate = jest.fn();
-global._handleDelete = jest.fn();
-global._generateShortUUID = jest.fn(() => 'SHORT-UUID');
+global._handleCreate = vi.fn();
+global._handleRead = vi.fn();
+global._handleUpdate = vi.fn();
+global._handleDelete = vi.fn();
+global._generateShortUUID = vi.fn(() => 'SHORT-UUID');
 
 // Mock Engine_DB
 global.Engine_DB = {
-    save: jest.fn(),
-    readFull: jest.fn(),
-    delete: jest.fn()
+    save: vi.fn(),
+    readFull: vi.fn(),
+    delete: vi.fn()
 };
+
+// Mock getAppSchema (S37.8 Gobernanza Estricta) - Aislado para pruebas de ruteador
+global.getAppSchema = vi.fn((entityName) => {
+    if (entityName === 'Catalogo') return { primaryKey: 'id_catalogo' };
+    if (entityName === 'Grupo_Productos') return { primaryKey: 'id_grupo_producto' };
+    return { primaryKey: 'id' };
+});
 
 
 
@@ -36,7 +43,7 @@ const API_Universal = require('../src/API_Universal.gs');
 describe('API_Universal Controller', () => {
 
     beforeEach(() => {
-        jest.clearAllMocks();
+        vi.clearAllMocks();
     });
 
     describe('Network Layer: doPost(e)', () => {
@@ -50,6 +57,7 @@ describe('API_Universal Controller', () => {
                 _handleRead: global._handleRead,
                 _handleUpdate: global._handleUpdate,
                 _handleDelete: global._handleDelete,
+                getAppSchema: global.getAppSchema,
                 doPost: null
             };
             const match = sourceCode.match(/function doPost\([^)]*\)\s*\{[\s\S]*?\n\}/);
@@ -60,6 +68,7 @@ describe('API_Universal Controller', () => {
                     const _handleRead = context._handleRead;
                     const _handleUpdate = context._handleUpdate;
                     const _handleDelete = context._handleDelete;
+                    const getAppSchema = context.getAppSchema;
 
                     ${match[0]}
                     context.doPost = doPost;

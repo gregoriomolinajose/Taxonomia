@@ -63,24 +63,23 @@
                 keys = Object.keys(rows[0]);
             }
 
-            // S25.2: Asegurar convenciones de UX (ID primero, Nombre/Título segundo)
+            // S37.2: Asegurar convenciones de UX (Lexical ID primero, Nombre/Título segundo)
             const meta = window.ENTITY_META ? window.ENTITY_META[entityName] : null;
-            if (meta) {
-                const idKey = window.Schema_Utils.getPrimaryKey(entityName);
-                const titleKey = meta.titleField;
-                
-                if (idKey && keys.includes(idKey)) {
-                    keys = keys.filter(k => k !== idKey);
-                    keys.unshift(idKey);
-                }
-                
-                if (titleKey && keys.includes(titleKey)) {
-                    keys = keys.filter(k => k !== titleKey);
-                    if (idKey && keys[0] === idKey) {
-                        keys.splice(1, 0, titleKey);
-                    } else {
-                        keys.unshift(titleKey);
-                    }
+            
+            const fallbackTitleKey = (meta && meta.titleField) ? meta.titleField : 'nombre';
+            const idKey = keys.includes('lexical_id') ? 'lexical_id' : (window.Schema_Utils ? window.Schema_Utils.getPrimaryKey(entityName) : null);
+
+            if (idKey && keys.includes(idKey)) {
+                keys = keys.filter(k => k !== idKey);
+                keys.unshift(idKey);
+            }
+            
+            if (fallbackTitleKey && keys.includes(fallbackTitleKey)) {
+                keys = keys.filter(k => k !== fallbackTitleKey);
+                if (keys.length > 0 && keys[0] === idKey) {
+                    keys.splice(1, 0, fallbackTitleKey);
+                } else {
+                    keys.unshift(fallbackTitleKey);
                 }
             }
 
@@ -732,11 +731,20 @@
         /* ────────────────────────────────────────────
            Event Bus Subscribers
         ───────────────────────────────────────────── */
+        let _redrawRAF = null;
+        function _queueRedraw() {
+            if (_redrawRAF) cancelAnimationFrame(_redrawRAF);
+            _redrawRAF = requestAnimationFrame(() => {
+                _rerenderData();
+                _redrawRAF = null;
+            });
+        }
+
         if (typeof window !== 'undefined' && window.AppEventBus) {
             window.AppEventBus.subscribe('CACHE::GRAPH_HYDRATED', function(payload) {
                 if (payload && _state && _state.entityName) {
                     console.log(`[DataViewEngine] Graph hydrated, forzando silent re-render para actualizar columnas de relaciones en ${_state.entityName}`);
-                    _rerenderData();
+                    _queueRedraw();
                 }
             });
 
@@ -756,10 +764,11 @@
                              _state.filtered = window.DataEngine.applySort(_state.filtered, _state.sortCol, _state.sortDir);
                         }
                         
-                        _rerenderData();
+                        _queueRedraw();
                     }
                 }
             });
+
         }
 
         /* API pública */
