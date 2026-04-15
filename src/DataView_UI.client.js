@@ -299,7 +299,7 @@
                     _state.filtered.length, 
                     canCreate, 
                     _exportCSV, 
-                    function(e) { window.DataViewEngine._importCSV(e); }, 
+                    function(e) { window.DataViewEngine._openETLModal(e); },
                     onAddClick
                 );
 
@@ -728,6 +728,29 @@
             );
         }
 
+        function _openETLModal() {
+            if (!window.UI_ETL_Modal) {
+                return _showToast('Módulo ETL no cargado.', 'danger');
+            }
+            window.UI_ETL_Modal.present(_state.entityName, {
+                onDriveSync: function(entity, url, modal) {
+                    console.log(`[S38.1 Stub] Extracción solicitada de ${entity} desde: ${url}`);
+                    _showToast(`Obteniendo Sábana de ${url}...`, 'primary');
+                },
+                onGenerateTemplate: function(entity, modal) {
+                    console.log(`[S38.1 Stub] Generando plantilla para ${entity}`);
+                    _showToast(`Generando Plantilla Nativa en Drive...`, 'primary');
+                },
+                onDownloadCSVTpl: function(entity) {
+                    window.DataEngine.exportCSV(entity, _state.columns, []);
+                },
+                onLocalUpload: function(entity, event, modal) {
+                    modal.dismiss();
+                    _importCSV(event); // Mantenemos el baseline Legacy intacto
+                }
+            });
+        }
+
         /* ────────────────────────────────────────────
            Event Bus Subscribers
         ───────────────────────────────────────────── */
@@ -780,7 +803,7 @@
                     entityMeta: ENTITY_META[_state.entityName]
                 };
             },
-            _exportCSV, _importCSV,
+            _exportCSV, _importCSV, _openETLModal,
             _onSearch, _onSort, _onPage, _onPageSize,
             _onRowCheck, _onSelectAll, _onRowOrderChange,
             _onColToggle, _toggleColPopover, _onViewToggle,

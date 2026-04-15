@@ -188,13 +188,7 @@ window.UI_DataView_Toolbar = (function () {
         const rightDiv = document.createElement('div');
         rightDiv.className = 'dv-header-actions';
         
-        // Import Input Helper
-        const input = document.createElement('input');
-        input.setAttribute('type', 'file');
-        input.id = 'dv-bulk-upload-input';
-        input.setAttribute('accept', '.csv');
-        input.className = 'dv-hidden';
-        if (typeof onImportCSVTrigger === 'function') input.addEventListener('change', onImportCSVTrigger);
+        // Import Input Helper se ha eliminado. Su lógica ahora reside en UI_ETL_Modal
         
         const btnExp = document.createElement('button');
         btnExp.className = 'dv-btn dv-btn-ghost';
@@ -207,7 +201,7 @@ window.UI_DataView_Toolbar = (function () {
         
         const btnImp = document.createElement('button');
         btnImp.className = 'dv-btn dv-btn-ghost';
-        btnImp.addEventListener('click', () => input.click());
+        if (typeof onImportCSVTrigger === 'function') btnImp.addEventListener('click', onImportCSVTrigger);
         const iconImp = document.createElement('ion-icon');
         iconImp.setAttribute('name', 'cloud-upload-outline');
         iconImp.setAttribute('slot', 'start');
@@ -223,7 +217,6 @@ window.UI_DataView_Toolbar = (function () {
         btnAdd.appendChild(iconAdd);
         btnAdd.appendChild(document.createTextNode(` Crear ${displayLabel.replace(/s$/, '')}`));
         
-        rightDiv.appendChild(input);
         rightDiv.appendChild(btnExp);
         rightDiv.appendChild(btnImp);
         
