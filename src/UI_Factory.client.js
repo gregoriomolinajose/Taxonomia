@@ -11,8 +11,8 @@ window.UI_Factory = {
      * @param {Array} config.actions Array de acciones Opcionales (Próxima Extensión).
      * @returns {HTMLElement} Div container .drawer-header a ensamblar.
      */
-    buildDrawerHeader: function(config) {
-        const { entityName, data, localEditId, onClose, actions } = config;
+    buildDrawerHeader: function(config = {}) {
+        const { entityName, data = {}, localEditId, onClose, actions } = config;
 
         const header = document.createElement('div');
         header.className = 'drawer-header';
