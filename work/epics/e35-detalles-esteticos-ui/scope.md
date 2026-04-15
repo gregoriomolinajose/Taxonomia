@@ -25,6 +25,7 @@ Resolver la lista de detalles estéticos menores e implementar mejoras de UI que
 | ID | Nombre | Descripción | Tamaño | Depende de | Status |
 |---|---|---|---|---|---|
 | S35.1 | Mejora Visual: Drawer Headers & Avatar | 1) Bugfix del Drawer Avatar donde la imagen no se actualizaba pese a existir en base de datos debido a inyección reactiva asíncrona ciega. 2) Trasladar campo PrimaryKey (ID Ticket/Grupo) desde el bloque interno del form (`display:none` en UI_Factory.buildBadge) a ser una etiqueta congelada persistente dentro del Drawer Header. Se implementa un stack flex abarcando el 100% del ancho (Header Column Stretch) para que el boton (X) se ubique en extrema derecha. Además, se limpiaron todos los colores hardcodeados para heredar la resiliencia del Dark Mode nativo de Ionic (Ej. var(--ion-background-color) y meta-iconos por esquema). Por último, se calibró el contraste del Badge ID quitando el fondo pálido, se eliminó la herencia de color fuerte en los iconos del header para asegurar su legibilidad en el tema oscuro, y se ajustaron los espaciados verticales del layout para un respiro visual equilibrado. Además, se suprimieron los prefijos de texto obsoletos ('Gestión:', 'Editar:') logrando una cabecera más minimalista y simétrica emparejando el tamaño de fuente (20px) con el del icono. Por solicitud adicional, se re-asignó el color del icono explícitamente hacia var(--dv-primary) para lograr emular perfectamente el render del encabezado principal de la DataView en todo momento. Finalmente, se restituyó la inyección de Lexical IDs (ej. UNID-XXXX) en lugar del UUID local, aplicando una extracción resiliente directamente en tiempo de render mapeando el esquema contra el payload de datos sin depender de Event Listeners del DOM. | S | — | DONE |
+| S35.3 | Pruebas Automatizadas UI/Back | Automatización de infraestructura de pruebas para garantizar el EventBus bidireccional, barreras de fuga de RAM (H10) y clausuras UX Mobile del componente SearchableSingle y RelationBuilder | S | S37.2 | TODO |
 
 ---
 
@@ -50,3 +51,4 @@ Resolver la lista de detalles estéticos menores e implementar mejoras de UI que
 | Story | Status  | T-Size |
 |---|---|---|
 | S35.1 | DONE  | S |
+| S35.3 | TODO  | S |
