@@ -200,4 +200,68 @@ describe('UI_FormSubmitter (Dependency Injection Architecture)', () => {
         vi.useRealTimers();
         document.createElement = document.createElementOrig;
     });
+    it('F. Debe abortar la ejecución si detecta colisiones de Identidad Pre-Commit (S37.3)', async () => {
+        const mockModal = document.getElementById('app-container');
+        
+        // Simular DOM Form
+        const testInput = document.createElement('ion-input');
+        testInput.setAttribute('name', 'email');
+        testInput.value = 'gemelo@empresa.com';
+        mockModal.appendChild(testInput);
+
+        // Mock UI Toast
+        window.UI_Components = {
+            presentToast: vi.fn(),
+            showLoading: vi.fn(),
+            hideLoading: vi.fn()
+        };
+        const dismissSpy = vi.fn().mockResolvedValue();
+        
+        document.createElementOrig = document.createElement.bind(document);
+        document.createElement = (tag) => {
+            const el = document.createElementOrig(tag);
+            if (tag === 'ion-loading') el.dismiss = dismissSpy;
+            return el;
+        };
+        window.PresentSafe = vi.fn().mockResolvedValue();
+        window.DOM = { 
+            clear: vi.fn(), 
+            create: vi.fn().mockImplementation((tag) => document.createElementOrig(tag)) 
+        };
+
+        // Simular RAM Local
+        window.DataStore = {
+            get: (entity) => {
+                if (entity === 'Test_Entity') {
+                    return [
+                        { id_registro: 'UUID-AB12', email: 'gemelo@empresa.com', estado: 'Activo' } // Ya existe!
+                    ];
+                }
+                return [];
+            }
+        };
+
+        // Esquema indica que 'email' es unique
+        const fields = [{ name: 'email', unique: true, label: 'Correo' }];
+
+        const submitter = new window.UI_FormSubmitter('Test_Entity', fields, mockBtn, mockApiService);
+        submitter._showToast = vi.fn(); // Mock interno
+
+        mockBtn.click(); // Iniciamos envío
+
+        // Uso de waitFor para asegurar el flujo async del Guard
+        await waitFor(() => {
+            // El abort flow llama a this._revertButtonState()
+            expect(submitter.submitBtn.disabled).toBe(false); 
+        }, { timeout: 1000 });
+
+        // Verificamos estado posterior: Toast rojo se disparó y Network se saltó
+        expect(submitter._showToast).toHaveBeenCalledWith(
+            expect.stringContaining('Colisión Detectada'), 
+            'danger'
+        );
+        expect(mockApiService.call).not.toHaveBeenCalled(); // NUNCA TOCÓ LA RED
+        
+        document.createElement = document.createElementOrig;
+    });
 });

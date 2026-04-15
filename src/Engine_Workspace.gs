@@ -83,3 +83,60 @@ function resolverDirectorioWorkspace(queryEmail) {
     return { __status: "ERROR", message: e.message }; // Notificamos a la UI del fallo subyacente
   }
 }
+
+/**
+ * [S37.4] Typeahead Proxy para Directorio Workspace
+ * Busca usuarios por nombre o apellido con caché asertivo.
+ * 
+ * @param {string} queryName - Fragmento del nombre
+ * @returns {Array|Object} Lista de DTOs mínimos o Error
+ */
+function searchDirectoryByName(queryName) {
+  try {
+    if (typeof CONFIG !== 'undefined' && CONFIG.WORKSPACE_INTEGRATION === false) {
+      return { __status: "DISABLED" };
+    }
+    if (!AdminDirectory || !AdminDirectory.Users) {
+      throw new Error("AdminDirectory SDK no está inyectado o habilitado.");
+    }
+    
+    var q = (queryName || "").trim();
+    if (q.length < 3) return []; // Evitar barridos costosos
+    
+    // Caché Script-Level para evitar cuotas de Límite (1500 per day admin API)
+    var cache = CacheService.getScriptCache();
+    var cacheKey = "ws_search_" + Utilities.base64Encode(q.toLowerCase());
+    var cached = cache.get(cacheKey);
+    if (cached) {
+      return JSON.parse(cached);
+    }
+    
+    // query simple
+    var response = AdminDirectory.Users.list({
+      customer: 'my_customer',
+      query: "name:" + q + "*",
+      maxResults: 15,
+      projection: "full",
+      viewType: "domain_public"
+    });
+    
+    var users = response.users || [];
+    var dtos = users.map(function(u) {
+      return {
+         email: u.primaryEmail,
+         nombre: u.name ? u.name.givenName : "",
+         apellidos: u.name ? u.name.familyName : "",
+         cargo: (u.organizations && u.organizations.length > 0) ? u.organizations[0].title : "",
+         avatar: u.thumbnailPhotoUrl || ""
+       };
+    });
+    
+    // TTL Caché: 4 Horas (14400s)
+    cache.put(cacheKey, JSON.stringify(dtos), 14400);
+    return dtos;
+    
+  } catch (e) {
+    Logger.log("Workspace Typeahead Error [" + queryName + "]: " + e.message);
+    return { __status: "ERROR", message: e.message };
+  }
+}

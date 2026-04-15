@@ -20,7 +20,11 @@ function buildSheet(dataRows = [ROW_1, ROW_2]) {
         }),
         getLastRow: () => store.length,
         getLastColumn: () => FULL_HEADERS.length,
-        getRange: vi.fn(),
+        getRange: vi.fn(() => ({ 
+            setValue: vi.fn(), 
+            setValues: vi.fn(), 
+            getValues: vi.fn(() => [FULL_HEADERS]) 
+        })),
         appendRow: vi.fn()
     };
 }
@@ -31,6 +35,9 @@ beforeEach(() => {
     Adapter_Sheets = require('../src/Adapter_Sheets');
     global.CONFIG = { SPREADSHEET_ID_DB: 'test-id' };
     global.Logger = { log: vi.fn() };
+    global.APP_SCHEMAS = {
+        Dominio: { fields: [] }
+    };
 });
 
 describe('Adapter_Sheets.list() — AC1', () => {
@@ -38,7 +45,9 @@ describe('Adapter_Sheets.list() — AC1', () => {
     test('Normal listing: audit columns stripped by default', () => {
         global.SpreadsheetApp.openById = vi.fn(() => ({
             getSheetByName: vi.fn(() => buildSheet()),
-            insertSheet: vi.fn()
+            insertSheet: vi.fn(() => ({
+                getRange: vi.fn(() => ({ setValue: vi.fn(), setValues: vi.fn() }))
+            }))
         }));
 
         const result = Adapter_Sheets.list('Dominio', { SPREADSHEET_ID_DB: 'test-id' });
@@ -56,7 +65,9 @@ describe('Adapter_Sheets.list() — AC1', () => {
     test('includeAudit=true: audit columns present in result (R-01)', () => {
         global.SpreadsheetApp.openById = vi.fn(() => ({
             getSheetByName: vi.fn(() => buildSheet()),
-            insertSheet: vi.fn()
+            insertSheet: vi.fn(() => ({
+                getRange: vi.fn(() => ({ setValue: vi.fn(), setValues: vi.fn() }))
+            }))
         }));
 
         const result = Adapter_Sheets.list('Dominio', { SPREADSHEET_ID_DB: 'test-id' }, 'objects', true);
@@ -73,7 +84,9 @@ describe('Adapter_Sheets.list() — AC1', () => {
     test('Empty sheet (headers only): returns empty rows array', () => {
         global.SpreadsheetApp.openById = vi.fn(() => ({
             getSheetByName: vi.fn(() => buildSheet([])),
-            insertSheet: vi.fn()
+            insertSheet: vi.fn(() => ({
+                getRange: vi.fn(() => ({ setValue: vi.fn(), setValues: vi.fn() }))
+            }))
         }));
 
         const result = Adapter_Sheets.list('Dominio', { SPREADSHEET_ID_DB: 'test-id' });
@@ -85,7 +98,9 @@ describe('Adapter_Sheets.list() — AC1', () => {
     test("format='tuples': rows are arrays not objects", () => {
         global.SpreadsheetApp.openById = vi.fn(() => ({
             getSheetByName: vi.fn(() => buildSheet([ROW_1])),
-            insertSheet: vi.fn()
+            insertSheet: vi.fn(() => ({
+                getRange: vi.fn(() => ({ setValue: vi.fn(), setValues: vi.fn() }))
+            }))
         }));
 
         const result = Adapter_Sheets.list('Dominio', { SPREADSHEET_ID_DB: 'test-id' }, 'tuples');
@@ -101,7 +116,9 @@ describe('Adapter_Sheets.list() — AC1', () => {
 
         global.SpreadsheetApp.openById = vi.fn(() => ({
             getSheetByName: vi.fn(() => buildSheet([rowWithDate])),
-            insertSheet: vi.fn()
+            insertSheet: vi.fn(() => ({
+                getRange: vi.fn(() => ({ setValue: vi.fn(), setValues: vi.fn() }))
+            }))
         }));
 
         const result = Adapter_Sheets.list('Dominio', { SPREADSHEET_ID_DB: 'test-id' }, 'objects', true);

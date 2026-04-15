@@ -80,7 +80,7 @@ const FIELD_TEMPLATES = Object.freeze({
    * Standardizes the semantic name of any entity.
    */
   NAME_FIELD: (label = "Nombre", width = 12) => Object.freeze([
-    { name: "nombre", type: "text", label: label, required: true, width: width }
+    { name: "nombre", type: "text", label: label, required: true, width: width, unique: true }
   ]),
 
   /**
@@ -292,7 +292,7 @@ const APP_SCHEMAS = {
     topologyRules: TOPOLOGY_PRESETS.JERARQUICA_PERSONA,
     fields: [
       { name: "id_persona", type: "hidden", primaryKey: true },
-      { name: "email", type: "email", primaryKey: false, label: "Correo Corporativo", required: true, width: 12, validators: ["regex:^[a-zA-Z0-9._%+-]+@(coppel\\.com|bancoppel\\.com|kairosds\\.com|nttdata\\.com)$"], triggers_workspace_resolve: true },
+      { name: "email", type: "email", primaryKey: false, label: "Correo Corporativo", required: true, width: 12, validators: ["regex:^[a-zA-Z0-9._%+-]+@(coppel\\.com|bancoppel\\.com|kairosds\\.com|nttdata\\.com)$"], triggers_workspace_resolve: true, unique: true },
       ...FIELD_TEMPLATES.SYSTEM_FIELDS(),
       ...FIELD_TEMPLATES.AUDIT_FIELDS(),
       ...FIELD_TEMPLATES.VERSION_FIELD(),
@@ -300,10 +300,10 @@ const APP_SCHEMAS = {
       
       { name: "separator_1", type: "divider", label: "Datos Personales y Contacto", width: 12 },
       { name: "avatar", type: "avatar", label: "Fotografía", width: 12, readonly: true },
-      ...FIELD_TEMPLATES.NAME_FIELD("Nombre(s)", 6),
-      { name: "apellidos", type: "text", label: "Apellidos", required: true, width: 6 },
+      { name: "nombre", type: "text", label: "Nombre(s)", required: true, width: 6, validators: ["minLength:2"], triggers_workspace_resolve: true },
+      { name: "apellidos", type: "text", label: "Apellidos", required: true, width: 6, validators: ["minLength:2"] },
       { name: "telefono", type: "tel", label: "Teléfono", required: false, width: 6 },
-      { name: "numero_empleado", type: "number", label: "Número de Empleado", required: true, width: 12, validators: ["regex:^\\d{8}$"] },
+      { name: "numero_empleado", type: "number", label: "Número de Empleado", required: true, width: 12, validators: ["regex:^\\d{8}$"], unique: true },
 
       
       { name: "separator_2", type: "divider", label: "Datos Contractuales y Logísticos", width: 12 },

@@ -54,6 +54,7 @@ describe('Engine_DB Orchestration & DAG SCD-2', () => {
 
     beforeEach(() => {
         global.getAppSchema = vi.fn((ent) => ({ primaryKey: (ent === 'Portafolio' ? 'id_portafolio' : 'id_' + ent.toLowerCase()), fields: [] }));
+        global.APP_SCHEMAS = new Proxy({}, { get: (target, prop) => ({ primaryKey: (prop === 'Portafolio' ? 'id_portafolio' : 'id_' + String(prop).toLowerCase()) }) });
         vi.clearAllMocks();
         Engine_DB.upsertBatch = vi.fn((entity, payload) => ({ status: 'success', handled: payload.length }));
     });
@@ -127,7 +128,7 @@ describe('Engine_DB Orchestration & DAG SCD-2', () => {
 
             const result = Engine_DB.delete('PadreLevel', 'TARGET');
 
-            expect(global.getEntityTopologyRules).toHaveBeenCalledWith('EntidadMagica');
+            expect(global.getEntityTopologyRules).toHaveBeenCalledWith('PadreLevel');
             
             expect(global.Engine_Graph.buildDeletionPatch).toHaveBeenCalledWith('TARGET', 'ORPHAN', activeGraphMock);
 
@@ -141,11 +142,11 @@ describe('Engine_DB Orchestration & DAG SCD-2', () => {
             expect(edgeBatch[1].id_nodo_hijo).toBe('ORPHANED_NODE');
             expect(edgeBatch[1].es_version_actual).toBe(true);
 
-            expect(Engine_DB.upsertBatch).toHaveBeenCalledWith('EntidadMagica', expect.any(Array), expect.objectContaining({ useSheets: true }));
+            expect(Engine_DB.upsertBatch).toHaveBeenCalledWith('PadreLevel', expect.any(Array), expect.objectContaining({ useSheets: true }));
             const nodeBatch = Engine_DB.upsertBatch.mock.calls[1][1];
             expect(nodeBatch.length).toBe(1);
             expect(nodeBatch[0].estado).toBe('Eliminado');
-            expect(nodeBatch[0].id_entidadmagica).toBe('TARGET'); 
+            expect(nodeBatch[0].id_padrelevel).toBe('TARGET');
             
             expect(result.success).toBe(true);
         });

@@ -85,4 +85,41 @@ describe('DataGrid Integration Browser (Vitest S24.8)', () => {
         expect(cardKeys.includes('Estado')).toBe(true);
         expect(cardKeys.includes('Created at')).toBe(false); // Oculto por _buildColumns SSOT
     });
+    it('B. Transmuta IDs de relaciones a nombres semánticos O(1) en el DataGrid (AR H9/H10)', () => {
+        // Configurar metadatos del esquema simulando una relación jerárquica por Grafo
+        window.APP_SCHEMAS = {
+            testEntity: {
+                fields: [
+                    { name: 'id_item', type: 'text' },
+                    { name: 'id_padre', type: 'relation', isTemporalGraph: true, relationType: 'padre', graphEdgeType: 'PERTENECE_A', targetEntity: 'PadreEntity' }
+                ]
+            },
+            PadreEntity: {}
+        };
+        
+        window.ENTITY_META = window.ENTITY_META || {};
+        window.ENTITY_META['PadreEntity'] = { titleField: 'nombre_padre' };
+
+        // Simular la Memoria RAM del explorador local con 1 Edge válido y 1 Registro Destino
+        window.DataStore = {
+            get: (entity) => {
+                if (entity === 'Sys_Graph_Edges') {
+                    return [{ es_version_actual: true, estado: 'Activo', tipo_relacion: 'PERTENECE_A', id_nodo_hijo: 'ITM-1', id_nodo_padre: 'PADRE-100' }];
+                }
+                if (entity === 'PadreEntity') {
+                    return [{ id_registro: 'PADRE-100', nombre_padre: 'Padre Absoluto' }];
+                }
+                return [];
+            }
+        };
+
+        // Inyección de configuración base al DataGrid
+        window.UI_DataGrid.cfg = { entityName: 'testEntity' };
+
+        // Test de ejecución
+        const resolvedVal = window.UI_DataGrid._resolveLogicalValue('id_padre', null, 'ITM-1');
+        
+        // Assert: El ID físico del padre jamás se asomó, obtuve su String semántico a pesar de que "rawVal" estaba vacío (via Graph stealing)
+        expect(resolvedVal).toBe('Padre Absoluto');
+    });
 });

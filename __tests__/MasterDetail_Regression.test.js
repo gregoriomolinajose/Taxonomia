@@ -47,6 +47,7 @@ function applyImmutableCacheUpdate(currentCache, cleanRecord, pkField) {
 
 const SCHEMAS = {
     Portafolio: {
+        primaryKey: 'id_portafolio',
         fields: [
             { name: 'id_portafolio', type: 'hidden', primaryKey: true },
             { name: 'nombre', type: 'text' },
@@ -59,6 +60,7 @@ const SCHEMAS = {
         ]
     },
     Grupo_Productos: {
+        primaryKey: 'id_grupo_producto',
         fields: [
             { name: 'id_grupo_producto', type: 'text', primaryKey: true },
             { name: 'nombre', type: 'text' },

@@ -27,6 +27,13 @@ global.Engine_DB = {
     delete: vi.fn()
 };
 
+// Mock getAppSchema (S37.8 Gobernanza Estricta) - Aislado para pruebas de ruteador
+global.getAppSchema = vi.fn((entityName) => {
+    if (entityName === 'Catalogo') return { primaryKey: 'id_catalogo' };
+    if (entityName === 'Grupo_Productos') return { primaryKey: 'id_grupo_producto' };
+    return { primaryKey: 'id' };
+});
+
 
 
 // Evaluate the entire file to pull doPost and API_Universal_Router
@@ -50,6 +57,7 @@ describe('API_Universal Controller', () => {
                 _handleRead: global._handleRead,
                 _handleUpdate: global._handleUpdate,
                 _handleDelete: global._handleDelete,
+                getAppSchema: global.getAppSchema,
                 doPost: null
             };
             const match = sourceCode.match(/function doPost\([^)]*\)\s*\{[\s\S]*?\n\}/);
@@ -60,6 +68,7 @@ describe('API_Universal Controller', () => {
                     const _handleRead = context._handleRead;
                     const _handleUpdate = context._handleUpdate;
                     const _handleDelete = context._handleDelete;
+                    const getAppSchema = context.getAppSchema;
 
                     ${match[0]}
                     context.doPost = doPost;

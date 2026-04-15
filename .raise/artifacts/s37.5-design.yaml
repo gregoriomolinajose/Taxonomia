@@ -1,0 +1,37 @@
+artifact_type: story-design
+version: 1
+skill: rai-story-design
+created: '2026-04-15T11:05:00Z'
+story: 'S37.5'
+epic: 'E37'
+content:
+  summary: 'Módulo de importación masiva desde CSV/Sheets con validación topológica y chunking.'
+  complexity: complex
+  acceptance_criteria:
+    - id: AC1
+      description: 'El Toolbar debe poseer un botón de Importar cuando la entidad permita inserciones.'
+      verifiable: true
+    - id: AC2
+      description: 'La lectura del archivo local mapea el CSV a JSON sin bloquear el hilo de la UI.'
+      verifiable: true
+    - id: AC3
+      description: 'El envío de datos ocurre en lotes (chunks de 50) para prevenir Timeouts de 6 min en Google Apps Script.'
+      verifiable: true
+    - id: AC4
+      description: 'El backend procesa y valida usando Schema_Engine antes de invocar Engine_DB.upsertBatch.'
+      verifiable: true
+  integration_points:
+    - module: 'UI_DataView_Toolbar.client.js'
+      change_type: modification
+      files: ['src/UI_DataView_Toolbar.client.js']
+    - module: 'API_Universal.gs'
+      change_type: modification
+      files: ['src/API_Universal.gs']
+  decisions:
+    - id: D1
+      choice: 'Envío Chunked guiado por Frontend.'
+      rationale: 'El límite de ejecución de GAS de 6 minutos crashea inserciones pesadas. Gestionarlo en el cliente vía AppEventBus es resiliente.'
+      alternatives_considered: ['Uso de Time-Driven Triggers (muy complejo, no-sincrónico).']
+refs:
+  epic_scope: 'work/epics/e37-searchable-single/scope.md'
+metadata: {}

@@ -50,6 +50,18 @@ global.CONFIG = {
     useCloudDB: false
 };
 
+global.APP_SCHEMAS = {
+    Portafolio: { primaryKey: 'id_portafolio', fields: [] },
+    Catalogo: { primaryKey: 'id_catalogo', fields: [] },
+    PadreLevel: { primaryKey: 'id_padrelevel', fields: [] },
+    EntidadFlat: { primaryKey: 'id_entidadflat', fields: [] },
+    Users: { primaryKey: 'id_user', fields: [] },
+    Colision: { primaryKey: 'id', fields: [] },
+    Grupo_Productos: { primaryKey: 'id_grupo_producto', fields: [] }
+};
+
+global.getAppSchema = vi.fn((ent) => global.APP_SCHEMAS[ent] || { primaryKey: (ent === 'Portafolio' || ent === 'Catalogo' ? 'id_' + ent.toLowerCase() : 'id_' + String(ent).toLowerCase()), fields: [] });
+
 // Mock para CacheService (Regla 11: Performance)
 const mockCache = {
     get: vi.fn(),

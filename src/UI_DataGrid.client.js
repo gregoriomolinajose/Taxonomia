@@ -11,6 +11,8 @@
         /* ── Punto de Entrada Central de la Factoría ── */
         buildLayout: function(config) {
             this.cfg = config; 
+            this._edgeMemo = null;   // Flush memo cache para Grafos (H9/AR)
+            this._targetMemo = null; // Flush memo cache para Semántica (H9/AR)
             
             if (config.loading) return this._renderSkeleton();
             if (config.error) return this._renderErrorState(config.error);
@@ -493,10 +495,47 @@
             return `dv-badge dv-badge-${map[slug] || 'default'}`;
         },
 
-        _resolveLogicalValue: function(key, rawVal, currentPK) {
-            const isFalsyButNotZero = (rawVal === undefined || rawVal === null || rawVal === '');
-            if (!isFalsyButNotZero) return rawVal;
+        _buildEdgeMemo: function() {
+            if (this._edgeMemo) return this._edgeMemo;
+            
+            const allEdges = (window.DataStore && window.DataStore.get('Sys_Graph_Edges')) || [];
+            const memo = { padreToHijo: {}, hijoToPadre: {} };
+            
+            for (let i = 0; i < allEdges.length; i++) {
+                const e = allEdges[i];
+                if (e.es_version_actual !== false && e.estado !== 'Eliminado' && e.estado !== 'eliminado') {
+                    const edgeName = (e.tipo_relacion || '').toUpperCase();
+                    const pKey = String(e.id_nodo_padre) + '_' + edgeName;
+                    const hKey = String(e.id_nodo_hijo) + '_' + edgeName;
+                    
+                    if (!memo.padreToHijo[pKey]) memo.padreToHijo[pKey] = e.id_nodo_hijo;
+                    if (!memo.hijoToPadre[hKey]) memo.hijoToPadre[hKey] = e.id_nodo_padre;
+                }
+            }
+            this._edgeMemo = memo;
+            return memo;
+        },
 
+        _buildTargetMemo: function(entityName, labelKey) {
+            this._targetMemo = this._targetMemo || {};
+            const memoKey = entityName + '_' + labelKey;
+            if (this._targetMemo[memoKey]) return this._targetMemo[memoKey];
+            
+            const rows = (window.DataStore && window.DataStore.get(entityName)) || [];
+            const memo = {};
+            for(let i=0; i<rows.length; i++) {
+                const r = rows[i];
+                const vl = r[labelKey];
+                if (vl) {
+                    if (r.id_registro) memo[String(r.id_registro)] = vl;
+                    if (r.lexical_id) memo[String(r.lexical_id)] = vl;
+                }
+            }
+            this._targetMemo[memoKey] = memo;
+            return memo;
+        },
+
+        _resolveLogicalValue: function(key, rawVal, currentPK) {
             if (!window.APP_SCHEMAS || !window.APP_SCHEMAS[this.cfg.entityName]) return rawVal;
             
             const schema = window.APP_SCHEMAS[this.cfg.entityName];
@@ -504,27 +543,31 @@
             
             if (!fieldMeta || fieldMeta.type !== 'relation') return rawVal;
             
-            // 1. Resolve Graph Edge pointer if it's a Temporal Graph edge
             let resolvedVal = rawVal;
-            if (fieldMeta.isTemporalGraph && window.DataStore && window.DataStore.get('Sys_Graph_Edges')) {
-                const activeEdges = window.DataStore.get('Sys_Graph_Edges').filter(e => e.es_version_actual !== false);
+            const isEmptyValue = (rawVal === undefined || rawVal === null || rawVal === '');
+
+            // 1. Resolve Graph Edge pointer if it's a Temporal Graph edge AND physically empty
+            if (isEmptyValue && fieldMeta.isTemporalGraph && window.DataStore && window.DataStore.get('Sys_Graph_Edges')) {
+                const edgeMemo = this._buildEdgeMemo();
                 const edgeName = (fieldMeta.graphEdgeType || fieldMeta.name).toUpperCase();
+                const lookupKey = String(currentPK) + '_' + edgeName;
                 
                 if (fieldMeta.relationType === 'padre') {
-                    const match = activeEdges.find(e => String(e.id_nodo_hijo) === String(currentPK) && e.tipo_relacion === edgeName);
-                    if (match) resolvedVal = match.id_nodo_padre;
+                    // Yo soy el hijo, busco al padre (Match de hijoToPadre)
+                    if (edgeMemo.hijoToPadre[lookupKey]) resolvedVal = edgeMemo.hijoToPadre[lookupKey];
                 } else {
-                    const match = activeEdges.find(e => String(e.id_nodo_padre) === String(currentPK) && e.tipo_relacion === edgeName);
-                    if (match) resolvedVal = match.id_nodo_hijo; // (Soporte básico escalable 1:N -> pinta 1er Match)
+                    // Yo soy el padre, busco al hijo
+                    if (edgeMemo.padreToHijo[lookupKey]) resolvedVal = edgeMemo.padreToHijo[lookupKey];
                 }
             }
             
             // 2. Transmute the physical ID explicitly to the schema's labelField
             if (resolvedVal && window.DataStore && window.DataStore.get(fieldMeta.targetEntity)) {
-                const targetTable = window.DataStore.get(fieldMeta.targetEntity);
-                const targetRow = targetTable.find(tr => String(tr[fieldMeta.valueField || 'id_registro']) === String(resolvedVal));
-                if (targetRow && targetRow[fieldMeta.labelField]) {
-                    resolvedVal = targetRow[fieldMeta.labelField];
+                const trgLabelKey = fieldMeta.labelField || (window.ENTITY_META && window.ENTITY_META[fieldMeta.targetEntity] && window.ENTITY_META[fieldMeta.targetEntity].titleField) || 'nombre';
+                const targetMemo = this._buildTargetMemo(fieldMeta.targetEntity, trgLabelKey);
+                
+                if (targetMemo[String(resolvedVal)]) {
+                    resolvedVal = targetMemo[String(resolvedVal)];
                 }
             }
             

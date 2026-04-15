@@ -18,6 +18,12 @@ describe('FormEngine UI Nativo Browser (Vitest SPA)', () => {
             window.AppEventBus = { subscribe: vi.fn(), publish: vi.fn() };
         }
         
+        // Mock utilería semántica global requerida por FormRenderer
+        window.Schema_Utils = { 
+            getSemanticTitle: (name) => name || 'TST',
+            getAvatarInitials: (name) => 'TS'
+        };
+        
         // Mock Ionic UI Components required by FormEngine
         window.DrawerStackController = {
             push: vi.fn().mockImplementation((modal) => {

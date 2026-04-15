@@ -13,7 +13,13 @@ describe('Soft Delete: Adapter_Sheets Inmutabilidad en Delete', () => {
 
         mockSheet = {
             getLastColumn: vi.fn().mockReturnValue(7),
-            getRange: vi.fn(() => ({ getValues: vi.fn(() => [headers]), setValues: vi.fn(), setValue: vi.fn(), setValue: vi.fn() })),
+            getRange: vi.fn((r, c, rows, cols) => {
+                let data = [];
+                if (r === 1) data = [['id_user', 'name', 'estado', 'created_at', 'created_by', 'updated_at', 'updated_by']];
+                else if (r === 2 && c === 1 && cols === 1) data = [['USER-123']]; // Búsqueda de PK
+                else data = [['USER-123', 'John Doe', 'Activo', '2026-03-19T00:00:00.000Z', 'admin@local', '', '']]; // Datos Originales
+                return { getValues: () => data, setValues: setValuesMock, setValue: vi.fn() };
+            }),
             getDataRange: vi.fn(() => ({
                 getNumRows: () => 3
             })),
@@ -39,6 +45,15 @@ describe('Soft Delete: Adapter_Sheets Inmutabilidad en Delete', () => {
         global.Session = mockSession;
         global.Logger = { log: vi.fn() };
         global.CONFIG = { SPREADSHEET_ID_DB: 'test-id' };
+        
+        global.APP_SCHEMAS = {
+            Users: { primaryKey: 'id_user', fields: [] } // Evita Fallo por Auto-Healing Inferencia Bloqueada
+        };
+        
+        global.getAppSchema = vi.fn((ent) => {
+            if (ent === 'Users') return { primaryKey: 'id_user', fields: [] };
+            return null;
+        });
     });
 
     afterEach(() => {

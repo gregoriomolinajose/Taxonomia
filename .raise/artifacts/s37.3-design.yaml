@@ -1,0 +1,34 @@
+artifact_type: story-design
+version: 1
+skill: rai-story-design
+created: '2026-04-15T12:12:00Z'
+story: 'S37.3'
+epic: 'E37'
+content:
+  summary: 'Bloqueo estricto de Identidades Duplicadas y Colisiones Semánticas en el ecosistema (Workspace).'
+  complexity: low
+  acceptance_criteria:
+    - id: AC1
+      description: 'Pre-validación en el lado del servidor de unicidad para evitar registros fantasma idénticos persistidos en base de datos.'
+      verifiable: true
+    - id: AC2
+      description: 'El buscador unificado en el DataGrid debe soportar y resolver nombres completos y correos sin ambigüedad en el Workspace.'
+      verifiable: true
+    - id: AC3
+      description: 'Mensaje de error determinista al intentar guardar un nodo redundante (User Feedback).'
+      verifiable: true
+  integration_points:
+    - module: 'Engine_DB.gs'
+      change_type: modification
+      files: ['src/Engine_DB.js']
+    - module: 'UI_FormSubmitter.client.js'
+      change_type: modification
+      files: ['src/UI_FormSubmitter.client.js']
+  decisions:
+    - id: D1
+      choice: 'Interceptación Fail-Fast en capa de Upsert'
+      rationale: 'Se implementa un guard preventivo en la base de datos para abortar transacciones de colisión semántica (ej. dos personas con el mismo correo/nombre) en lugar de permitirlo y corregirlo a base de merges posteriores, evadiendo Corrupción de Datos (Garbage in, Garbage out).'
+      alternatives_considered: ['Creación de triggers asíncronos de limpieza (descartado por la inestabilidad de referencias).']
+refs:
+  epic_scope: 'work/epics/e37-searchable-single/scope.md'
+metadata: {}
