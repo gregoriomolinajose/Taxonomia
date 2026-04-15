@@ -15,5 +15,4 @@ Si transformamos el componente básico de carga de archivos (ETL Offline) en un 
 
 ## Anti-Goals (Rabbit Holes)
 - Construir nosotros una "hoja de cálculo" en la web.
-- Procesar descargas a archivos físicos desde el backend (Todo el flujo debe delegarse al frontend para evadir los 6 minutos lógicos). 
-- Generar un sistema que marque en rojo los archivos en el drive de los usuarios para informarles de los duplicados. La omisión será en su lugar, silenciosa.
+- Procesar descargas a archivos físicos desde el backend (Todo el flujo debe delegarse al frontend para evadir los 6 minutos lógicos o manejarse mediante API visual sobre los sheets vinculados).

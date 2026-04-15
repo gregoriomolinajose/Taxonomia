@@ -13,9 +13,9 @@ Transicionar el sistema de importaciones planas CSV hacia un flujo integral (Mod
 - Lector Backend (`SpreadsheetApp`) puro que retorna matrices al Frontend.
 - Chunker Asincrónico JS Frontend (División de la sabana en arreglos limitados).
 - DB Batch Hook para ignorar pasivamente copias basándose en PK's lógicas (`email` o `numero_empleado`).
+- Mecanismo visual de retrolimentación "Rojo" para registros duplicados (Directo en el Google Sheet vinculado, o devolviendo un archivo de retorno).
 
 ## Fuera de Alcance (Out of Scope)
-- Devolver un archivo marcado con errores al usuario (Se ignorará el requerimiento de retornar un rojo visible por cuestiones de performance, tal como lo aclaró el product owner).
 - Validación de fórmulas del Excel. Los valores brutos obtenidos (`getValues()`) son la base.
 
 ## Historias Planificadas
