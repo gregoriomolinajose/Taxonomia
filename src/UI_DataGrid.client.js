@@ -27,21 +27,7 @@
             }
         },
 
-        /* ── Helper de Invocación Config-Driven ── */
-        _invoke: function(callbackStr, ...args) {
-            if (!callbackStr) return;
-            const parts = callbackStr.split('.');
-            let context = window;
-            for(let i=0; i<parts.length-1; i++) {
-                if (parts[i] === 'window') continue;
-                context = context[parts[i]];
-                if (!context) return;
-            }
-            const funcName = parts[parts.length-1];
-            if (context && typeof context[funcName] === 'function') {
-                context[funcName].apply(context, args);
-            }
-        },
+        /* ── Helper de Invocación Config-Driven [REMOVIDO S37.7: Ahora usa IoC puro] ── */
 
         /* ── Renderers Estructurales Estáticos ── */
         _renderSkeleton: function() {
@@ -94,7 +80,7 @@
             const pageIds = rows.map(r => String(r[pkField] || ''));
             selectAll.checked = pageIds.length > 0 && pageIds.every(id => (this.cfg.selectedRows || []).includes(id));
             selectAll.addEventListener('change', (e) => {
-                if (this.cfg.onSelectAll) this._invoke(this.cfg.onSelectAll, e.target.checked);
+                if (typeof this.cfg.onSelectAll === 'function') this.cfg.onSelectAll(e.target.checked);
             });
             thCheck.appendChild(selectAll);
             trHead.appendChild(thCheck);
@@ -114,14 +100,14 @@
                 th.draggable = true;
                 
                 // Eventos Drag and Drop (Nativos DOM2)
-                if (this.cfg.onDragStart) th.addEventListener('dragstart', (e) => this._invoke(this.cfg.onDragStart, colIdx, e));
-                if (this.cfg.onDragOver) th.addEventListener('dragover', (e) => this._invoke(this.cfg.onDragOver, colIdx, e));
-                if (this.cfg.onDragLeave) th.addEventListener('dragleave', (e) => this._invoke(this.cfg.onDragLeave, e));
-                if (this.cfg.onDrop) th.addEventListener('drop', (e) => this._invoke(this.cfg.onDrop, colIdx, e));
-                if (this.cfg.onDragEnd) th.addEventListener('dragend', (e) => this._invoke(this.cfg.onDragEnd, e));
+                if (typeof this.cfg.onDragStart === 'function') th.addEventListener('dragstart', (e) => this.cfg.onDragStart(colIdx, e));
+                if (typeof this.cfg.onDragOver === 'function') th.addEventListener('dragover', (e) => this.cfg.onDragOver(colIdx, e));
+                if (typeof this.cfg.onDragLeave === 'function') th.addEventListener('dragleave', (e) => this.cfg.onDragLeave(e));
+                if (typeof this.cfg.onDrop === 'function') th.addEventListener('drop', (e) => this.cfg.onDrop(colIdx, e));
+                if (typeof this.cfg.onDragEnd === 'function') th.addEventListener('dragend', (e) => this.cfg.onDragEnd(e));
                 
                 // Evento Click Sort
-                if (this.cfg.onSort) th.addEventListener('click', () => this._invoke(this.cfg.onSort, col.key));
+                if (typeof this.cfg.onSort === 'function') th.addEventListener('click', () => this.cfg.onSort(col.key));
                 
                 th.appendChild(document.createTextNode(col.label + ' '));
                 
@@ -187,7 +173,7 @@
                     if (e.target.closest('button')) return;
                     if (id) {
                         try {
-                            const result = this._invoke(this.cfg.onEdit, id);
+                            const result = (typeof this.cfg.onEdit === 'function') ? this.cfg.onEdit(id) : null;
                             if (result && typeof result.catch === 'function') {
                                 result.catch(err => console.error('[UI_DataGrid] Async Error on row click:', err));
                             }
@@ -211,7 +197,7 @@
                 rowCheck.checked = (this.cfg.selectedRows || []).includes(String(id));
                 rowCheck.addEventListener('click', e => e.stopPropagation());
                 rowCheck.addEventListener('change', e => {
-                    if (this.cfg.onRowCheck) this._invoke(this.cfg.onRowCheck, id, e.target.checked);
+                    if (typeof this.cfg.onRowCheck === 'function') this.cfg.onRowCheck(id, e.target.checked);
                 });
                 tdCheck.appendChild(dragHandle);
                 tdCheck.appendChild(rowCheck);
@@ -251,7 +237,7 @@
                         btnDel.title = 'Eliminar';
                         btnDel.addEventListener('click', (e) => {
                             e.stopPropagation();
-                            this._invoke(this.cfg.onDelete, id);
+                            if (typeof this.cfg.onDelete === 'function') this.cfg.onDelete(id);
                         });
                         
                         const iconDel = document.createElement('ion-icon');
@@ -333,7 +319,7 @@
                     btnDel.title = 'Eliminar';
                     btnDel.addEventListener('click', (e) => {
                         e.stopPropagation();
-                        this._invoke(this.cfg.onDelete, idStr);
+                        if (typeof this.cfg.onDelete === 'function') this.cfg.onDelete(idStr);
                     });
                     const iconDel = document.createElement('ion-icon');
                     iconDel.setAttribute('name', 'trash');
@@ -391,7 +377,7 @@
                     if (e.target.closest('button')) return;
                     if (idStr) {
                         try {
-                            const result = this._invoke(this.cfg.onEdit, idStr);
+                            const result = (typeof this.cfg.onEdit === 'function') ? this.cfg.onEdit(idStr) : null;
                             if (result && typeof result.catch === 'function') {
                                 result.catch(err => console.error('[UI_DataGrid] Async Error on card click:', err));
                             }
@@ -446,7 +432,9 @@
                 if (s === this.cfg.pageSize) opt.selected = true;
                 select.appendChild(opt);
             });
-            select.addEventListener('change', (e) => this._invoke(this.cfg.onPageSize, e.target.value));
+            select.addEventListener('change', (e) => {
+                if (typeof this.cfg.onPageSize === 'function') this.cfg.onPageSize(e.target.value);
+            });
             flexGroup.appendChild(select);
             wrapper.appendChild(flexGroup);
             
@@ -459,7 +447,9 @@
                 btn.title = title;
                 btn.textContent = text;
                 if (disabled) btn.disabled = true;
-                btn.addEventListener('click', () => this._invoke(this.cfg.onPage, targetPage));
+                btn.addEventListener('click', () => {
+                    if (typeof this.cfg.onPage === 'function') this.cfg.onPage(targetPage);
+                });
                 return btn;
             };
             
