@@ -191,8 +191,17 @@
                 // S27.1 Fix de Dependencia: Hidratación global retrasada de DataAPI.
                 // Si __APP_CACHE__ llega tarde, las opciones vacías causan desaparición visual.
                 if (window.AppEventBus) {
-                    window.AppEventBus.subscribe('FormEngine::RecordHydrated', () => {
-                        if (!document.body.contains(basicSel)) return;
+                    const reloadDataset = (ev) => {
+                        // Limpieza activa de ram interactiva (H10 Zombie Subscription Prevention)
+                        if (!document.body.contains(basicSel)) {
+                            window.AppEventBus.unsubscribe('FormEngine::RecordHydrated', reloadDataset);
+                            window.AppEventBus.unsubscribe('DATASTORE::CHANGED', reloadDataset);
+                            window.AppEventBus.unsubscribe('CACHE::GRAPH_HYDRATED', reloadDataset);
+                            return;
+                        }
+
+                        // Optimización: Solo repinta si el cambio en DataStore afecta a la Entidad Objetivo (o si no hay scope declarado)
+                        if (ev && ev.entityName && ev.entityName !== field.targetEntity) return;
                         if (basicSel.dataset.optimisticLock === 'true') return;
 
                         const freshLiveData = window.DataStore ? (window.DataStore.get(field.targetEntity) || []) : [];
@@ -226,7 +235,11 @@
                                 basicSel.value = oldVal;
                             }
                         }
-                    });
+                    };
+
+                    window.AppEventBus.subscribe('FormEngine::RecordHydrated', reloadDataset);
+                    window.AppEventBus.subscribe('DATASTORE::CHANGED', reloadDataset);
+                    window.AppEventBus.subscribe('CACHE::GRAPH_HYDRATED', reloadDataset);
                 }
                 inputEl.appendChild(basicSel);
             }

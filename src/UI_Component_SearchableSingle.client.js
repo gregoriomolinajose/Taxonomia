@@ -79,6 +79,7 @@
         mainContainer.appendChild(realInput);
 
         // Variables de Motor De Búsqueda Dinámica
+        const isMobile = () => window.innerWidth <= 768;
         let popoverNode = null;
         let isDropdownOpen = false;
         let currentSearchTerm = '';
@@ -96,6 +97,13 @@
                 realInput.setAttribute('disabled', 'true');
             } else {
                 realInput.removeAttribute('disabled');
+            }
+
+            // Sensado dinámico de dispositivo (Quality Review Fix)
+            if (isMobile()) {
+                realInput.setAttribute('readonly', 'true');
+            } else {
+                realInput.removeAttribute('readonly');
             }
 
             if (!selectedId) {
@@ -131,8 +139,19 @@
         const closeDropdown = () => {
             if (popoverNode && isDropdownOpen) {
                 isDropdownOpen = false;
-                popoverNode.remove();
+                const nodeRef = popoverNode;
                 popoverNode = null;
+                
+                if (nodeRef.tagName === 'ION-MODAL') {
+                    // Cierre nativo fluido de Capacitor/Ionic
+                    if (typeof nodeRef.dismiss === 'function') {
+                        nodeRef.dismiss().then(() => { if(nodeRef.parentNode) nodeRef.parentNode.removeChild(nodeRef); });
+                    } else {
+                        nodeRef.remove();
+                    }
+                } else {
+                    nodeRef.remove();
+                }
             }
         };
 
@@ -192,7 +211,8 @@
                 titleText.style.color = 'var(--ion-color-dark)';
                 
                 const subText = document.createElement('p');
-                subText.textContent = `${targetEntity} • ${m.key}`;
+                const targetEntityStr = fieldDef.targetEntity || fieldDef.name || 'Registro';
+                subText.textContent = `${targetEntityStr} • ${m.key}`;
                 subText.style.fontSize = '11px';
                 
                 labelNode.appendChild(titleText);
@@ -237,32 +257,86 @@
             }
             
             isDropdownOpen = true;
-            // Native Div approach bypasses Ionic Overlays Focus Trap
-            popoverNode = document.createElement('div');
-            popoverNode.style.position = 'absolute';
-            popoverNode.style.zIndex = '999999';
-            popoverNode.style.background = 'var(--ion-background-color, #fff)';
-            popoverNode.style.borderRadius = '8px';
-            popoverNode.style.border = '1px solid var(--sidebar-border, #ccc)';
-            popoverNode.style.boxShadow = 'var(--shadow-floating)';
-            popoverNode.style.maxHeight = '350px';
-            popoverNode.style.overflowY = 'auto'; // habilitar scroll local
-            
-            const boxRect = realInput.getBoundingClientRect();
-            // Evitar desbordes verticales y anclar directo al padre rect
-            popoverNode.style.width = `${boxRect.width}px`;
-            popoverNode.style.top = `${boxRect.bottom + 4 + window.scrollY}px`;
-            popoverNode.style.left = `${boxRect.left + window.scrollX}px`;
-            
-            const list = document.createElement('ion-list');
-            list.lines = 'full';
-            list.style.margin = '0';
-            list.style.padding = '0';
-            
-            await buildListItems(list, currentSearchTerm);
-            popoverNode.appendChild(list);
 
-            document.body.appendChild(popoverNode);
+            // DRY [H9] Instancia base unificada
+            const commonList = document.createElement('ion-list');
+            commonList.lines = 'full';
+            commonList.style.margin = '0';
+            commonList.style.padding = '0';
+            await buildListItems(commonList, currentSearchTerm);
+
+            if (isMobile()) {
+                // UX Móvil (Bottom Sheet)
+                popoverNode = document.createElement('ion-modal');
+                popoverNode.breakpoints = [0, 0.5, 0.85, 1];
+                popoverNode.initialBreakpoint = 0.85;
+                popoverNode.setAttribute('handle', 'true'); // Barra gestual UX para ayudar al swipe-down nativo
+                popoverNode.style.overscrollBehaviorY = 'none'; // CRÍTICO: Evita Pull-to-Refresh en Chrome mobile
+
+                popoverNode.addEventListener('ionModalDidDismiss', () => {
+                    // El usuario hizo swipe down
+                    if (isDropdownOpen) {
+                        isDropdownOpen = false;
+                        popoverNode = null;
+                        strictBlurValidation();
+                    }
+                });
+                
+                const header = document.createElement('ion-header');
+                const toolbar = document.createElement('ion-toolbar');
+                const searchbar = document.createElement('ion-searchbar');
+                searchbar.placeholder = fieldDef.label || 'Buscar...';
+                searchbar.value = currentSearchTerm;
+                
+                searchbar.addEventListener('ionInput', async (e) => {
+                    const term = (e.detail.value || '').trim();
+                    const listEl = popoverNode.querySelector('ion-list');
+                    if (listEl) await buildListItems(listEl, term);
+                });
+
+                toolbar.appendChild(searchbar);
+                header.appendChild(toolbar);
+
+                const content = document.createElement('ion-content');
+                // Detener el sangrado de overscroll fuera del wrapper hacia el app shell de Chrome
+                content.style.overscrollBehaviorY = 'contain';
+                content.appendChild(commonList);
+                
+                popoverNode.appendChild(header);
+                popoverNode.appendChild(content);
+
+                document.body.appendChild(popoverNode);
+                
+                // Presentación: Al usar await, la animación del Bottom-Sheet ya tomó ~300ms.
+                // Disparemos el foco de la caja asíncronamente sin bloqueadores agresivos.
+                await popoverNode.present();
+                
+                if (searchbar.getInputElement) {
+                    searchbar.getInputElement().then(el => el.focus());
+                }
+
+            } else {
+                // UX Desktop (Div Absoluto flotante)
+                popoverNode = document.createElement('div');
+                popoverNode.style.position = 'absolute';
+                popoverNode.style.zIndex = '999999';
+                popoverNode.style.background = 'var(--ion-background-color, #fff)';
+                popoverNode.style.borderRadius = '8px';
+                popoverNode.style.border = '1px solid var(--sidebar-border, #ccc)';
+                popoverNode.style.boxShadow = 'var(--shadow-floating)';
+                popoverNode.style.maxHeight = '350px';
+                popoverNode.style.overflowY = 'auto'; // habilitar scroll local
+                
+                const boxRect = realInput.getBoundingClientRect();
+                // Evitar desbordes verticales y anclar directo al padre rect
+                popoverNode.style.width = `${boxRect.width}px`;
+                popoverNode.style.top = `${boxRect.bottom + 4 + window.scrollY}px`;
+                popoverNode.style.left = `${boxRect.left + window.scrollX}px`;
+                
+                popoverNode.appendChild(commonList);
+
+                document.body.appendChild(popoverNode);
+            }
         };
 
         const strictBlurValidation = () => {
@@ -312,9 +386,11 @@
         };
 
         realInput.addEventListener('ionInput', (ev) => {
-            currentSearchTerm = (ev.detail.value || '').trim();
-            // Disparar redibujado de lista dinámico
-            executeSearchAndOpen(ev);
+            if (!isMobile()) {
+                currentSearchTerm = (ev.detail.value || '').trim();
+                // Disparar redibujado de lista dinámico
+                executeSearchAndOpen(ev);
+            }
         });
 
         // BLOQUEO DE DOBLE-BURBUJA: El <ion-input> nativamente dispara ionChange al perder el foco si su texto cambió.
@@ -338,6 +414,8 @@
 
         // Evento crítico para disparar validación si el usuario scrollea o hace clic afuera
         realInput.addEventListener('ionBlur', () => {
+            if (isMobile()) return; // En móvil, el Modal roba el foco. Su propia clausura gestiona la limpieza.
+            
             setTimeout(() => {
                 if (!temporaryBlurFlag) {
                     closeDropdown();
