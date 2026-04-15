@@ -361,19 +361,19 @@
                     filteredData: _state.filtered,
                     selectedRows: _state.selectedRows,
                     loading: false,
-                    onSort: 'window.DataViewEngine._onSort',
-                    onDragStart: 'window.DataView_DragDrop.onDragStart',
-                    onDragOver: 'window.DataView_DragDrop.onDragOver',
-                    onDragLeave: 'window.DataView_DragDrop.onDragLeave',
-                    onDrop: 'window.DataView_DragDrop.onDrop',
-                    onDragEnd: 'window.DataView_DragDrop.onDragEnd',
-                    onDelete: 'window.DataViewEngine._confirmDelete',
-                    onRowCheck: 'window.DataViewEngine._onRowCheck',
-                    onSelectAll: 'window.DataViewEngine._onSelectAll',
-                    onRowOrderChange: 'window.DataViewEngine._onRowOrderChange',
-                    onPageSize: 'window.DataViewEngine._onPageSize',
-                    onPage: 'window.DataViewEngine._onPage',
-                    onEdit: 'window.openEditForm'
+                    onSort: _onSort,
+                    onDragStart: (typeof window !== 'undefined' && window.DataView_DragDrop) ? window.DataView_DragDrop.onDragStart : null,
+                    onDragOver: (typeof window !== 'undefined' && window.DataView_DragDrop) ? window.DataView_DragDrop.onDragOver : null,
+                    onDragLeave: (typeof window !== 'undefined' && window.DataView_DragDrop) ? window.DataView_DragDrop.onDragLeave : null,
+                    onDrop: (typeof window !== 'undefined' && window.DataView_DragDrop) ? window.DataView_DragDrop.onDrop : null,
+                    onDragEnd: (typeof window !== 'undefined' && window.DataView_DragDrop) ? window.DataView_DragDrop.onDragEnd : null,
+                    onDelete: _confirmDelete,
+                    onRowCheck: _onRowCheck,
+                    onSelectAll: _onSelectAll,
+                    onRowOrderChange: _onRowOrderChange,
+                    onPageSize: _onPageSize,
+                    onPage: _onPage,
+                    onEdit: (id) => { if (typeof window !== 'undefined' && window.openEditForm) window.openEditForm(id); }
                 }));
             }
         }
