@@ -20,7 +20,7 @@ window.UI_ETL_Modal = (function() {
         const header = document.createElement('ion-header');
         const toolbar = document.createElement('ion-toolbar');
         const title = document.createElement('ion-title');
-        title.innerHTML = `<ion-icon name="cloud-upload-outline" style="vertical-align: middle; margin-right: 6px;"></ion-icon> Hub de Ingesta - ${window.formatEntityName ? window.formatEntityName(entityName) : entityName}`;
+        title.innerHTML = `<ion-icon name="cloud-upload-outline" style="vertical-align: middle; margin-right: 6px;"></ion-icon> Carga Masiva - ${window.formatEntityName ? window.formatEntityName(entityName) : entityName}`;
         
         const buttonsEnd = document.createElement('ion-buttons');
         buttonsEnd.setAttribute('slot', 'end');
@@ -138,7 +138,34 @@ window.UI_ETL_Modal = (function() {
         cardLocal.appendChild(cardLocalHeader);
         cardLocal.appendChild(cardLocalContent);
 
+        // --- TAB SEGMENTATION ---
+        const segment = document.createElement('ion-segment');
+        segment.value = 'drive';
+        segment.className = 'ion-margin-bottom';
+        segment.innerHTML = `
+            <ion-segment-button value="drive">
+                <ion-label>Nube (AppScript)</ion-label>
+            </ion-segment-button>
+            <ion-segment-button value="local">
+                <ion-label>Local (CSV)</ion-label>
+            </ion-segment-button>
+        `;
+        
+        segment.addEventListener('ionChange', (e) => {
+            if (e.detail.value === 'drive') {
+                cardDrive.style.display = 'block';
+                cardLocal.style.display = 'none';
+            } else {
+                cardDrive.style.display = 'none';
+                cardLocal.style.display = 'block';
+            }
+        });
+
+        // Estado inicial
+        cardLocal.style.display = 'none';
+
         // Assembly
+        container.appendChild(segment);
         container.appendChild(cardDrive);
         container.appendChild(cardLocal);
         
