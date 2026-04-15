@@ -8,7 +8,7 @@
 (function (global) {
     global.UI_Factory = global.UI_Factory || {};
 
-    global.UI_Factory.buildSearchableSingle = (fieldDef, dataset, initialSelection, localEventBus, visualTokens = {}) => {
+    global.UI_Factory.buildSearchableSingle = (fieldDef, dataset = [], initialSelection, localEventBus, visualTokens = {}) => {
         const mainContainer = document.createElement('div');
         mainContainer.setAttribute('data-searchable-single', fieldDef.name);
         mainContainer.setAttribute('data-form-component', fieldDef.name);
@@ -83,12 +83,29 @@
         let popoverNode = null;
         let isDropdownOpen = false;
         let currentSearchTerm = '';
-        let temporaryBlurFlag = false; // Prevent race conditions on physical clicks
+        /**
+         * [S35.4] BLUR RACE CONDITION GUARD (Patrón Estándar de Proyecto)
+         *
+         * Problema: En Desktop, el clic en una opción de la lista dispara primero
+         * el `ionBlur` del ion-input ANTES de que el `onclick` del item se ejecute.
+         * Esto provoca que `closeDropdown()` cierre la lista antes de que se pueda
+         * registrar la selección del usuario.
+         *
+         * Solución: `temporaryBlurFlag` se activa en `onmousedown` (que ocurre antes
+         * del blur) y se desactiva en `onclick` (tras capturar la selección).
+         * El listener de `ionBlur` respeta esta guardia con un delay de 180ms.
+         *
+         * NOTA: NO eliminar este flag. Es la guardia crítica contra la carrera de
+         * eventos Blur→Click que afecta a todos los Combobox nativos en Ionic/Desktop.
+         * @see https://developer.mozilla.org/en-US/docs/Web/API/Element/mousedown_event
+         */
+        let temporaryBlurFlag = false;
 
         // ==========================================
         // 2. Transductor de Visibilidad (Estado Seguro)
         // ==========================================
         const getMatchTarget = (idToSearch) => {
+            if (!Array.isArray(dataset)) return null;
             return dataset.find(d => String(typeof d[fieldDef.valueField] !== 'undefined' ? d[fieldDef.valueField] : d.id_registro) === String(idToSearch));
         };
 

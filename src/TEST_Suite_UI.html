@@ -51,4 +51,233 @@
             console.warn(`%c[QA] ⚠ WARNING: Fuga de memoria detectada. Deltas inestables (${nodeDiff} nodos huérfanos).`, 'color: var(--ion-color-light); font-weight: bold;');
         }
     };
+
+    // [S35.3] Suite de Pruebas a Profundidad (Deep E2E Integration Specs)
+
+    // Spec 1: Sensado Responsivo (Mobile vs Desktop)
+    window.__testSearchableResponsive = async function() {
+        console.log(`%c[QA] Iniciando Spec 1: Sensado Responsivo`, 'color: var(--ion-color-tertiary-shade); font-weight: bold;');
+        
+        const container = document.createElement('div');
+        document.body.appendChild(container);
+        
+        const mockField = { type: 'string', name: 'pruebaResp', label: 'Prueba Resp' };
+        // Acceso directo seguro al constructor purificado
+        const buildFn = window.UI_Factory?.buildSearchableSingle;
+        if (!buildFn) {
+            console.error('[QA] No se encontró UI_Factory.buildSearchableSingle');
+            container.remove();
+            return;
+        }
+
+        // Firma: (fieldDef, dataset, initialSelection, localEventBus, visualTokens)
+        const component = buildFn(mockField, [], null, { subscribe: ()=>{} });
+        container.appendChild(component);
+        
+        const isMobile = window.innerWidth <= 768;
+        console.log(`[QA] Entorno detectado: ${isMobile ? 'Mobile' : 'Desktop'} (Width: ${window.innerWidth}px)`);
+
+        const realInput = container.querySelector('ion-input');
+        if (!realInput) {
+            console.error('[QA] ion-input interno no encontrado. ¿El componente falló al renderizar?');
+            container.remove();
+            return;
+        }
+        
+        // Trigger the opening
+        realInput.dispatchEvent(new CustomEvent('ionInput', { detail: { value: '' } }));
+        
+        await new Promise(r => setTimeout(r, 600)); 
+        
+        let foundPopover = false;
+        let pass = false;
+        
+        if (isMobile) {
+            const modal = document.querySelector('ion-modal');
+            if (modal) {
+                foundPopover = true;
+                const overscroll = modal.style.overscrollBehaviorY;
+                const handle = modal.getAttribute('handle');
+                console.log(`[QA] Modal detectado. overscrollBehaviorY=${overscroll}, handle=${handle}`);
+                if (overscroll === 'none' && handle === 'true') {
+                    pass = true;
+                }
+                if(modal.dismiss) modal.dismiss();
+                modal.remove();
+            }
+        } else {
+            const div = document.querySelector('div[style*="z-index: 999999"]');
+            if (div) {
+                foundPopover = true;
+                pass = true;
+                div.remove();
+            }
+        }
+        
+        container.remove();
+        
+        if (pass) {
+            console.log('%c[QA] ✔ PASSED: Sensado Responsivo y atributos PWA correctos.', 'color: var(--ion-color-success); font-weight: bold;');
+        } else {
+            console.error(`%c[QA] ❌ FAILED: Problemas en la ramificación responsiva. Popover encontrado: ${foundPopover}`, 'color: var(--ion-color-danger);');
+        }
+    };
+
+    // Spec 2: Antibloqueo & Foco (Condition Race Check)
+    window.__testSearchableConditionRace = async function() {
+        console.log(`%c[QA] Iniciando Spec 2: Condition Race blur in Mobile`, 'color: var(--ion-color-tertiary-shade); font-weight: bold;');
+        
+        if (window.innerWidth > 768) {
+            console.warn('%c[QA] ⚠ Ignorando Spec 2: Este test está diseñado puramente para entorno Mobile emulator.', 'color: var(--ion-color-warning);');
+            return;
+        }
+
+        const container = document.createElement('div');
+        document.body.appendChild(container);
+        
+        const mockField = { type: 'string', name: 'race', label: 'Race test' };
+        const buildFn = window.UI_Factory?.buildSearchableSingle;
+        if (!buildFn) { container.remove(); return; }
+
+        const component = buildFn(mockField, [], null, { subscribe: ()=>{} });
+        container.appendChild(component);
+        
+        const realInput = container.querySelector('ion-input');
+
+        realInput.dispatchEvent(new CustomEvent('ionInput', { detail: { value: '' } }));
+        await new Promise(r => setTimeout(r, 400));
+        
+        const modal = document.querySelector('ion-modal');
+        if (!modal) {
+            console.error('[QA] Modal no levantó.');
+            container.remove();
+            return;
+        }
+
+        console.log('[QA] Inyectando ionBlur hostil simulado desde Capacitor...');
+        realInput.dispatchEvent(new Event('ionBlur'));
+        
+        console.log('[QA] Esperando 300ms a que pase la carrera...');
+        await new Promise(r => setTimeout(r, 300));
+
+        let stillAlive = document.body.contains(modal);
+        
+        if (stillAlive) {
+            console.log('%c[QA] ✔ PASSED: Modal sobrevivió al robo de foco nativo (Race Condition contenida).', 'color: var(--ion-color-success); font-weight: bold;');
+            if(modal.dismiss) modal.dismiss();
+            modal.remove();
+        } else {
+            console.error('%c[QA] ❌ FAILED: Modal destruido preventivamente. Regresión del BUG ionBlur detectada.', 'color: var(--ion-color-danger);');
+        }
+        
+        container.remove();
+    };
+
+    // Spec 3: Asíncrono de Alta Presión (Graph Hydration)
+    window.__testSearchableAsyncHydrationDeep = async function() {
+        console.log(`%c[QA] Iniciando Spec 3: Graph Hydration High Pressure`, 'color: var(--ion-color-tertiary-shade); font-weight: bold;');
+        
+        window.DataStore = window.DataStore || { get: () => [] };
+        const container = document.createElement('div');
+        document.body.appendChild(container);
+        
+        let updateCount = 0;
+        const mockField = { type: 'relation', name: 'mockDep', targetEntity: 'MockEntityTarget', relationType: 'padre', uiComponent: 'select_single' };
+        const buildFn = window.UI_Factory?.BuilderRegistry?.['relation'];
+        if (!buildFn) { 
+            console.error('[QA] No se encontró constructor de relación');
+            container.remove(); 
+            return; 
+        }
+
+        // Firma buildRelation: (field, entityName, data, localEventBus, currentEditId)
+        const inputEl = buildFn(mockField, mockField.targetEntity, {}, { subscribe: ()=>{} });
+        container.appendChild(inputEl);
+        
+        const searchableSel = inputEl.querySelector('[data-searchable-single]') || inputEl.querySelector('div');
+        
+        if (searchableSel && typeof searchableSel.updateConfig === 'function') {
+            const original = searchableSel.updateConfig;
+            searchableSel.updateConfig = function(data, dis, ph) {
+                updateCount++;
+                original.call(this, data, dis, ph);
+            };
+        } else {
+            console.warn('[QA] Spy no pudo instalarse en updateConfig, revisa la estructura del container.');
+        }
+
+        console.log(`[QA] Disparando tormenta de 10 basuras de red DATASTORE::CHANGED...`);
+        for(let i=0; i<10; i++) {
+            window.AppEventBus.publish('DATASTORE::CHANGED', { entityName: 'BasuraEntity_' + i });
+        }
+        
+        await new Promise(r => setTimeout(r, 100));
+        let countAfterTrash = updateCount;
+
+        console.log(`[QA] Despachando data real de MockEntityTarget asíncronamente...`);
+        const originalGet = window.DataStore.get;
+        window.DataStore.get = (e) => e === 'MockEntityTarget' ? [{ id_registro: 'OK', key: 'Valido', estado: 'Activo' }] : [];
+        
+        window.AppEventBus.publish('DATASTORE::CHANGED', { action: 'set', entityName: 'MockEntityTarget' });
+        
+        await new Promise(r => setTimeout(r, 100));
+        let countAfterReal = updateCount;
+        
+        // Restore
+        window.DataStore.get = originalGet;
+        
+        console.log(`[QA] Repintes por basura: ${countAfterTrash} | Repintes por Data Target: ${countAfterReal - countAfterTrash}`);
+
+        if (countAfterTrash === 0 && (countAfterReal - countAfterTrash) > 0) {
+            console.log('%c[QA] ✔ PASSED: Reactividad profunda aprobada. Ignoró el ruido inútil e hidrató el payload.', 'color: var(--ion-color-success); font-weight: bold;');
+        } else {
+            console.error(`%c[QA] ❌ FAILED: Fuga en el Event Filter o falla de hidratación. (Basura renderizada: ${countAfterTrash} veces)`, 'color: var(--ion-color-danger);');
+        }
+        
+        container.remove();
+    };
+
+    // Spec 4: Inmunidad Anti-Fugas Masiva (100)
+    window.__testEventBusZombieLeakMass = async function() {
+        console.log(`%c[QA] Iniciando Spec 4: V8 Garbage Collection Memory Leak Audit (Mass Load)`, 'color: var(--ion-color-tertiary-shade); font-weight: bold;');
+        
+        if (!window.AppEventBus) return console.warn("AppEventBus no detectado");
+
+        const initialListeners = (window.AppEventBus.listeners || {})['DATASTORE::CHANGED']?.length || 0;
+        console.log(`[QA] Listeners BASE en bus central: ${initialListeners}`);
+
+        const megaContainer = document.createElement('div');
+        document.body.appendChild(megaContainer);
+        
+        const buildFn = window.UI_Factory?.BuilderRegistry?.['relation'];
+        if (!buildFn) { megaContainer.remove(); return; }
+
+        console.log(`[QA] Montando violentamente 100 instancias de RelationBuilder concurrentes...`);
+        for (let i=0; i<100; i++) {
+            const mockField = { type: 'relation', name: 'prueba_' + i, targetEntity: 'Portafolio', uiComponent: 'select_single' };
+            const el = buildFn(mockField, 'Portafolio', {}, { subscribe: ()=>{} });
+            megaContainer.appendChild(el);
+        }
+
+        const activeListeners = (window.AppEventBus.listeners || {})['DATASTORE::CHANGED']?.length || 0;
+        console.log(`[QA] Listeners de red tras montaje: ${activeListeners} (+${activeListeners - initialListeners} zombies potenciales)`);
+        
+        console.log(`[QA] Simulando cierre de panel masivo (remove root DOM)...`);
+        megaContainer.remove();
+
+        console.log(`[QA] Disparando Probe fantasma para detonar GC in-clousure...`);
+        window.AppEventBus.publish('DATASTORE::CHANGED', { entityName: 'Trigger' });
+
+        const finalListeners = (window.AppEventBus.listeners || {})['DATASTORE::CHANGED']?.length || 0;
+        console.log(`[QA] Listeners Finales POST-Purga: ${finalListeners}`);
+
+        if (finalListeners === initialListeners) {
+            console.log('%c[QA] ✔ PASSED: El Auto-Unsubscribe masivo limpió 100 subrutinas de RAM magistralmente (0 Leaks).', 'color: var(--ion-color-success); font-weight: bold;');
+        } else {
+            console.error('%c[QA] ❌ FAILED: Fuga H10 activa detectada. Quedan zombies asíncronos consumiendo Heap.', 'color: var(--ion-color-danger);');
+        }
+        
+        console.log(`%c[QA] Test Finalizado.`, 'font-style: italic; color: #888;');
+    };
+
 </script>
