@@ -35,19 +35,19 @@ window.UI_ETL_Modal = (function() {
         
         // --- Body Container ---
         const container = document.createElement('div');
-        container.style.padding = '20px';
+        container.className = 'ion-padding';
         container.style.display = 'flex';
         container.style.flexDirection = 'column';
         container.style.gap = '20px';
 
         // --- SECTION 1: Google Workspace Sync ---
         const cardDrive = document.createElement('ion-card');
-        cardDrive.style.margin = '0';
+        cardDrive.className = 'ion-no-margin';
         const cardDriveHeader = document.createElement('ion-card-header');
-        cardDriveHeader.innerHTML = `<ion-card-title style="font-size: 1.1rem; color: var(--ion-color-primary);"><ion-icon name="logo-google"></ion-icon> Google Sheets (Recomendado)</ion-card-title>`;
+        cardDriveHeader.innerHTML = `<ion-card-title class="ion-text-primary"><ion-icon name="logo-google"></ion-icon> Google Sheets (Recomendado)</ion-card-title>`;
         
         const cardDriveContent = document.createElement('ion-card-content');
-        cardDriveContent.innerHTML = `<p style="margin-bottom: 12px; font-size: 0.95rem; color: var(--ion-color-medium);">Sincroniza directamente desde tu Drive. Omite dependencias offline y evita bloqueos de límite de Google.</p>`;
+        cardDriveContent.innerHTML = `<p class="ion-margin-bottom ion-text-medium">Sincroniza directamente desde tu Drive. Omite dependencias offline y evita bloqueos de límite de Google.</p>`;
         
         const btnGenTpl = document.createElement('ion-button');
         btnGenTpl.setAttribute('expand', 'block');
@@ -60,8 +60,8 @@ window.UI_ETL_Modal = (function() {
         });
 
         const inputItem = document.createElement('ion-item');
+        inputItem.className = 'ion-margin-top';
         inputItem.setAttribute('lines', 'full');
-        inputItem.style.marginTop = '15px';
         const urlInput = document.createElement('ion-input');
         urlInput.id = 'etl-drive-url';
         urlInput.setAttribute('label', '2. URL o ID de Google Sheet');
@@ -72,7 +72,7 @@ window.UI_ETL_Modal = (function() {
 
         const btnSync = document.createElement('ion-button');
         btnSync.setAttribute('expand', 'block');
-        btnSync.style.marginTop = '15px';
+        btnSync.className = 'ion-margin-top';
         btnSync.innerHTML = `<ion-icon name="sync-circle-outline" slot="start"></ion-icon> 3. Ejecutar Extracción Híbrida`;
         btnSync.addEventListener('click', () => {
             const val = urlInput.value;
@@ -92,12 +92,12 @@ window.UI_ETL_Modal = (function() {
 
         // --- SECTION 2: Local CSV (Fallback) ---
         const cardLocal = document.createElement('ion-card');
-        cardLocal.style.margin = '0';
+        cardLocal.className = 'ion-no-margin';
         const cardLocalHeader = document.createElement('ion-card-header');
-        cardLocalHeader.innerHTML = `<ion-card-title style="font-size: 1.1rem;"><ion-icon name="folder-open-outline"></ion-icon> Carga Plana (CSV)</ion-card-title>`;
+        cardLocalHeader.innerHTML = `<ion-card-title><ion-icon name="folder-open-outline"></ion-icon> Carga Plana (CSV)</ion-card-title>`;
         
         const cardLocalContent = document.createElement('ion-card-content');
-        cardLocalContent.innerHTML = `<p style="margin-bottom: 12px; font-size: 0.95rem; color: var(--ion-color-medium);">Procesa un archivo local sin pasar por los servidores de nube nativos.</p>`;
+        cardLocalContent.innerHTML = `<p class="ion-margin-bottom ion-text-medium">Procesa un archivo local sin pasar por los servidores de nube nativos.</p>`;
         
         const flexRow = document.createElement('div');
         flexRow.style.display = 'flex';
