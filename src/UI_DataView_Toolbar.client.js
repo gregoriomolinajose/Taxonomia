@@ -216,11 +216,11 @@ window.UI_DataView_Toolbar = (function () {
         iconAdd.setAttribute('slot', 'start');
         btnAdd.appendChild(iconAdd);
         btnAdd.appendChild(document.createTextNode(` Crear ${displayLabel.replace(/s$/, '')}`));
-        
         rightDiv.appendChild(btnExp);
-        rightDiv.appendChild(btnImp);
-        
+        // btnImp se inyecta condicionalmente más abajo
+
         if (canCreate) {
+            rightDiv.appendChild(btnImp);
             rightDiv.appendChild(btnAdd);
         }
         

@@ -5,6 +5,10 @@
 window.UI_ETL_Modal = (function() {
 
     function present(entityName, options) {
+        // [QA Fix] Evitar DOM Node Leakage eliminando rastros previos
+        const prevModal = document.getElementById('dv-etl-modal');
+        if (prevModal) prevModal.remove();
+
         const modal = document.createElement('ion-modal');
         modal.id = 'dv-etl-modal';
         // Ajustes para que se comporte como un Popup Centrado (Desktop) y no Fullscreen si es posible
@@ -141,6 +145,9 @@ window.UI_ETL_Modal = (function() {
         content.appendChild(header);
         content.appendChild(container);
         modal.appendChild(content);
+
+        // [QA Fix] Self-destruct listener RAM clear
+        modal.addEventListener('ionModalDidDismiss', () => { modal.remove(); });
 
         document.body.appendChild(modal);
         return typeof window.PresentSafe === 'function' ? window.PresentSafe(modal) : modal.present();

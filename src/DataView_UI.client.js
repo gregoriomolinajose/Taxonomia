@@ -736,10 +736,12 @@
                 onDriveSync: function(entity, url, modal) {
                     console.log(`[S38.1 Stub] Extracción solicitada de ${entity} desde: ${url}`);
                     _showToast(`Obteniendo Sábana de ${url}...`, 'primary');
+                    // TODO: Conectar a API_Universal_Router en S38.3 (Hub ETL Extractor híbrido)
                 },
                 onGenerateTemplate: function(entity, modal) {
                     console.log(`[S38.1 Stub] Generando plantilla para ${entity}`);
                     _showToast(`Generando Plantilla Nativa en Drive...`, 'primary');
+                    // TODO: Conectar a API_Universal_Router en S38.2 (Generador Plantillas Drive)
                 },
                 onDownloadCSVTpl: function(entity) {
                     window.DataEngine.exportCSV(entity, _state.columns, []);
