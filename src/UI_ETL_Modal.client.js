@@ -108,6 +108,8 @@ window.UI_ETL_Modal = (function() {
 
         radioGrid.appendChild(radioSheets);
         radioGrid.appendChild(radioCSV);
+        container.appendChild(radioGrid);
+
         // --- DIVIDER: Pasos para importar ---
         if (window.UI_Factory && window.UI_Factory.buildDivider) {
             container.appendChild(window.UI_Factory.buildDivider({ label: 'PASOS PARA IMPORTAR' }));
