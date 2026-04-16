@@ -59,25 +59,25 @@
   },
   "suites": [
     {
-      "title": "dashboard-capacity.spec.js",
-      "file": "dashboard-capacity.spec.js",
+      "title": "ui-resilience.spec.js",
+      "file": "ui-resilience.spec.js",
       "column": 0,
       "line": 0,
       "specs": [],
       "suites": [
         {
-          "title": "E34 - S34.5: Capacity Map (Mapa E2E) Drill-down and Visibility",
-          "file": "dashboard-capacity.spec.js",
-          "line": 6,
+          "title": "E2E UI Resilience & Interaction Stability",
+          "file": "ui-resilience.spec.js",
+          "line": 7,
           "column": 6,
           "specs": [
             {
-              "title": "El Mapa de Capacidad E2E debe inicializar su render jerárquico al presionar nav e ir directo al dataview prefiltrado",
+              "title": "Validar Resiliencia en FormEngine_UI (Drawers Principales y Satélites) sin generar ReferenceExceptions",
               "ok": false,
               "tags": [],
               "tests": [
                 {
-                  "timeout": 60000,
+                  "timeout": 180000,
                   "annotations": [],
                   "expectedStatus": "passed",
                   "projectId": "chromium",
@@ -87,104 +87,77 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "failed",
-                      "duration": 12804,
+                      "duration": 14756,
                       "error": {
-                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('#sandboxFrame').contentFrame().locator('#userHtmlFrame').contentFrame().locator('#capacity-map-canvas')\nExpected: visible\nTimeout: 10000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for locator('#sandboxFrame').contentFrame().locator('#userHtmlFrame').contentFrame().locator('#capacity-map-canvas')\u001b[22m\n",
-                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('#sandboxFrame').contentFrame().locator('#userHtmlFrame').contentFrame().locator('#capacity-map-canvas')\nExpected: visible\nTimeout: 10000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for locator('#sandboxFrame').contentFrame().locator('#userHtmlFrame').contentFrame().locator('#capacity-map-canvas')\u001b[22m\n\n    at C:\\Users\\grego\\Antigravity\\Taxonomia Project\\__tests__\\e2e\\dashboard-capacity.spec.js:57:28",
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoHaveText\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator: locator('#sandboxFrame').contentFrame().locator('#userHtmlFrame').contentFrame().locator('ion-title h1').last()\nExpected: \u001b[32m\"Portafolio de Resiliencia UI\"\u001b[39m\nTimeout: 10000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toHaveText\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for locator('#sandboxFrame').contentFrame().locator('#userHtmlFrame').contentFrame().locator('ion-title h1').last()\u001b[22m\n",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoHaveText\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator: locator('#sandboxFrame').contentFrame().locator('#userHtmlFrame').contentFrame().locator('ion-title h1').last()\nExpected: \u001b[32m\"Portafolio de Resiliencia UI\"\u001b[39m\nTimeout: 10000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toHaveText\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for locator('#sandboxFrame').contentFrame().locator('#userHtmlFrame').contentFrame().locator('ion-title h1').last()\u001b[22m\n\n    at C:\\Users\\grego\\Antigravity\\Taxonomia Project\\__tests__\\e2e\\ui-resilience.spec.js:88:33",
                         "location": {
-                          "file": "C:\\Users\\grego\\Antigravity\\Taxonomia Project\\__tests__\\e2e\\dashboard-capacity.spec.js",
-                          "column": 28,
-                          "line": 57
+                          "file": "C:\\Users\\grego\\Antigravity\\Taxonomia Project\\__tests__\\e2e\\ui-resilience.spec.js",
+                          "column": 33,
+                          "line": 88
                         },
-                        "snippet": "\u001b[0m \u001b[90m 55 |\u001b[39m       \u001b[90m// Verify the map Canvas wrapper renders\u001b[39m\n \u001b[90m 56 |\u001b[39m       \u001b[36mconst\u001b[39m canvas \u001b[33m=\u001b[39m frame\u001b[33m.\u001b[39mlocator(\u001b[32m'#capacity-map-canvas'\u001b[39m)\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 57 |\u001b[39m       \u001b[36mawait\u001b[39m expect(canvas)\u001b[33m.\u001b[39mtoBeVisible({ timeout\u001b[33m:\u001b[39m \u001b[35m10000\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                            \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 58 |\u001b[39m       \n \u001b[90m 59 |\u001b[39m       \u001b[90m// Test Unidades de Negocio block exists (even if empty, the wrapper `.capmap-container` mounts)\u001b[39m\n \u001b[90m 60 |\u001b[39m       \u001b[36mconst\u001b[39m container \u001b[33m=\u001b[39m frame\u001b[33m.\u001b[39mlocator(\u001b[32m'.capmap-container'\u001b[39m)\u001b[33m;\u001b[39m\u001b[0m"
+                        "snippet": "\u001b[0m \u001b[90m 86 |\u001b[39m     \u001b[36mconst\u001b[39m dynamicHeader \u001b[33m=\u001b[39m frame\u001b[33m.\u001b[39mlocator(\u001b[32m'ion-title h1'\u001b[39m)\u001b[33m.\u001b[39mlast()\u001b[33m;\u001b[39m\n \u001b[90m 87 |\u001b[39m     console\u001b[33m.\u001b[39mlog(\u001b[32m\"[DEBUG DOM Header]\"\u001b[39m\u001b[33m,\u001b[39m \u001b[36mawait\u001b[39m frame\u001b[33m.\u001b[39mlocator(\u001b[32m'ion-title'\u001b[39m)\u001b[33m.\u001b[39mlast()\u001b[33m.\u001b[39minnerHTML()\u001b[33m.\u001b[39m\u001b[36mcatch\u001b[39m(()\u001b[33m=>\u001b[39m \u001b[32m'no title'\u001b[39m))\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 88 |\u001b[39m     \u001b[36mawait\u001b[39m expect(dynamicHeader)\u001b[33m.\u001b[39mtoHaveText(\u001b[32m'Portafolio de Resiliencia UI'\u001b[39m\u001b[33m,\u001b[39m { timeout\u001b[33m:\u001b[39m \u001b[35m10000\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                                 \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 89 |\u001b[39m\n \u001b[90m 90 |\u001b[39m     \u001b[90m// 2. Simulación Humana en el Componente SearchableSelect (Satélite)\u001b[39m\n \u001b[90m 91 |\u001b[39m     console\u001b[33m.\u001b[39mlog(\u001b[32m\"[E2E] Explorando Searchable Proxy...\"\u001b[39m)\u001b[33m;\u001b[39m\u001b[0m"
                       },
                       "errors": [
                         {
                           "location": {
-                            "file": "C:\\Users\\grego\\Antigravity\\Taxonomia Project\\__tests__\\e2e\\dashboard-capacity.spec.js",
-                            "column": 28,
-                            "line": 57
+                            "file": "C:\\Users\\grego\\Antigravity\\Taxonomia Project\\__tests__\\e2e\\ui-resilience.spec.js",
+                            "column": 33,
+                            "line": 88
                           },
-                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('#sandboxFrame').contentFrame().locator('#userHtmlFrame').contentFrame().locator('#capacity-map-canvas')\nExpected: visible\nTimeout: 10000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for locator('#sandboxFrame').contentFrame().locator('#userHtmlFrame').contentFrame().locator('#capacity-map-canvas')\u001b[22m\n\n\n  55 |       // Verify the map Canvas wrapper renders\n  56 |       const canvas = frame.locator('#capacity-map-canvas');\n> 57 |       await expect(canvas).toBeVisible({ timeout: 10000 });\n     |                            ^\n  58 |       \n  59 |       // Test Unidades de Negocio block exists (even if empty, the wrapper `.capmap-container` mounts)\n  60 |       const container = frame.locator('.capmap-container');\n    at C:\\Users\\grego\\Antigravity\\Taxonomia Project\\__tests__\\e2e\\dashboard-capacity.spec.js:57:28"
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoHaveText\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator: locator('#sandboxFrame').contentFrame().locator('#userHtmlFrame').contentFrame().locator('ion-title h1').last()\nExpected: \u001b[32m\"Portafolio de Resiliencia UI\"\u001b[39m\nTimeout: 10000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toHaveText\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for locator('#sandboxFrame').contentFrame().locator('#userHtmlFrame').contentFrame().locator('ion-title h1').last()\u001b[22m\n\n\n  86 |     const dynamicHeader = frame.locator('ion-title h1').last();\n  87 |     console.log(\"[DEBUG DOM Header]\", await frame.locator('ion-title').last().innerHTML().catch(()=> 'no title'));\n> 88 |     await expect(dynamicHeader).toHaveText('Portafolio de Resiliencia UI', { timeout: 10000 });\n     |                                 ^\n  89 |\n  90 |     // 2. Simulación Humana en el Componente SearchableSelect (Satélite)\n  91 |     console.log(\"[E2E] Explorando Searchable Proxy...\");\n    at C:\\Users\\grego\\Antigravity\\Taxonomia Project\\__tests__\\e2e\\ui-resilience.spec.js:88:33"
                         }
                       ],
                       "stdout": [
                         {
-                          "text": "PAGE LOG [warning]: Unrecognized feature: 'ambient-light-sensor'.\n"
+                          "text": "[E2E] Abriendo Formulario Entidad...\n"
                         },
                         {
-                          "text": "PAGE LOG [warning]: Unrecognized feature: 'speaker'.\n"
+                          "text": "[E2E] Tecleando título principal...\n"
                         },
                         {
-                          "text": "PAGE LOG [warning]: Unrecognized feature: 'vibrate'.\n"
-                        },
-                        {
-                          "text": "PAGE LOG [warning]: Unrecognized feature: 'vr'.\n"
-                        },
-                        {
-                          "text": "PAGE LOG [warning]: An iframe which has both allow-scripts and allow-same-origin for its sandbox attribute can escape its sandboxing.\n"
-                        },
-                        {
-                          "text": "PAGE LOG [warning]: Unrecognized feature: 'ambient-light-sensor'.\n"
-                        },
-                        {
-                          "text": "PAGE LOG [warning]: Unrecognized feature: 'speaker'.\n"
-                        },
-                        {
-                          "text": "PAGE LOG [warning]: Unrecognized feature: 'vibrate'.\n"
-                        },
-                        {
-                          "text": "PAGE LOG [warning]: Unrecognized feature: 'vr'.\n"
-                        },
-                        {
-                          "text": "PAGE LOG [info]: Net state changed from IDLE to BUSY Net state changed from IDLE to BUSY\n"
-                        },
-                        {
-                          "text": "PAGE LOG [info]: Net state changed from BUSY to IDLE Net state changed from BUSY to IDLE\n"
-                        },
-                        {
-                          "text": "PAGE LOG [info]: Net state changed from IDLE to BUSY Net state changed from IDLE to BUSY\n"
+                          "text": "[DEBUG DOM Header] Modal Enterprise\n"
                         }
                       ],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-04-13T06:33:28.431Z",
+                      "startTime": "2026-04-16T22:10:48.464Z",
                       "annotations": [],
                       "attachments": [
                         {
                           "name": "screenshot",
                           "contentType": "image/png",
-                          "path": "C:\\Users\\grego\\Antigravity\\Taxonomia Project\\test-results\\dashboard-capacity-E34---S-57de9-cto-al-dataview-prefiltrado-chromium\\test-failed-2.png"
+                          "path": "C:\\Users\\grego\\Antigravity\\Taxonomia Project\\test-results\\ui-resilience-E2E-UI-Resil-ea784-generar-ReferenceExceptions-chromium\\test-failed-2.png"
                         },
                         {
                           "name": "screenshot",
                           "contentType": "image/png",
-                          "path": "C:\\Users\\grego\\Antigravity\\Taxonomia Project\\test-results\\dashboard-capacity-E34---S-57de9-cto-al-dataview-prefiltrado-chromium\\test-failed-1.png"
+                          "path": "C:\\Users\\grego\\Antigravity\\Taxonomia Project\\test-results\\ui-resilience-E2E-UI-Resil-ea784-generar-ReferenceExceptions-chromium\\test-failed-1.png"
                         },
                         {
                           "name": "error-context",
                           "contentType": "text/markdown",
-                          "path": "C:\\Users\\grego\\Antigravity\\Taxonomia Project\\test-results\\dashboard-capacity-E34---S-57de9-cto-al-dataview-prefiltrado-chromium\\error-context.md"
+                          "path": "C:\\Users\\grego\\Antigravity\\Taxonomia Project\\test-results\\ui-resilience-E2E-UI-Resil-ea784-generar-ReferenceExceptions-chromium\\error-context.md"
                         },
                         {
                           "name": "error-context",
                           "contentType": "text/markdown",
-                          "path": "C:\\Users\\grego\\Antigravity\\Taxonomia Project\\test-results\\dashboard-capacity-E34---S-57de9-cto-al-dataview-prefiltrado-chromium\\error-context.md"
+                          "path": "C:\\Users\\grego\\Antigravity\\Taxonomia Project\\test-results\\ui-resilience-E2E-UI-Resil-ea784-generar-ReferenceExceptions-chromium\\error-context.md"
                         }
                       ],
                       "errorLocation": {
-                        "file": "C:\\Users\\grego\\Antigravity\\Taxonomia Project\\__tests__\\e2e\\dashboard-capacity.spec.js",
-                        "column": 28,
-                        "line": 57
+                        "file": "C:\\Users\\grego\\Antigravity\\Taxonomia Project\\__tests__\\e2e\\ui-resilience.spec.js",
+                        "column": 33,
+                        "line": 88
                       }
                     }
                   ],
                   "status": "unexpected"
                 }
               ],
-              "id": "0ea795da0fede86009e9-b61ae15a9ad47bb7367b",
-              "file": "dashboard-capacity.spec.js",
-              "line": 45,
+              "id": "a6ca329089183d52eb83-0a370e93c314a83fee9a",
+              "file": "ui-resilience.spec.js",
+              "line": 71,
               "column": 3
             }
           ]
@@ -194,8 +167,8 @@
   ],
   "errors": [],
   "stats": {
-    "startTime": "2026-04-13T06:33:27.890Z",
-    "duration": 13976.076,
+    "startTime": "2026-04-16T22:10:47.827Z",
+    "duration": 16196.758000000002,
     "expected": 0,
     "skipped": 0,
     "unexpected": 1,
