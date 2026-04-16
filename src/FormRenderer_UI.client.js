@@ -104,9 +104,22 @@
             // Contenedor interno scrollable del Drawer con soporte nativo para móvil
             const container = document.createElement('ion-content');
             container.className = 'drawer-content ion-padding';
-
-
-
+            // S40.1 Feature Restore: Dynamic Title Update via safe DOM query
+            const updateDynamicHeader = (e) => {
+                if (e.target && e.target.name) {
+                    // Soporta identificadores taxonómicos conocidos
+                    const isTitleField = e.target.name === 'nombre' || e.target.name === 'nombre_proyecto' || e.target.name === 'nombre_unidad' || e.target.name === 'titulo';
+                    if (isTitleField) {
+                        const val = String(e.target.value).trim();
+                        const dynamicTitleEl = modal.querySelector('.drawer-dynamic-title');
+                        if (dynamicTitleEl) {
+                            dynamicTitleEl.textContent = val || 'Nuevo Registro';
+                        }
+                    }
+                }
+            };
+            container.addEventListener('input', updateDynamicHeader);
+            container.addEventListener('ionInput', updateDynamicHeader);
             modal.appendChild(container);
 
             const schemas = global.APP_SCHEMAS;

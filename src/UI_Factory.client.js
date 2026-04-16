@@ -148,6 +148,7 @@ window.UI_Factory = {
         infoCol.style.gap = '4px';
 
         const recordNameTitle = document.createElement('h1');
+        recordNameTitle.className = 'drawer-dynamic-title';
         recordNameTitle.style.margin = '0';
         recordNameTitle.style.fontSize = '18px';
         recordNameTitle.style.fontWeight = '700';
