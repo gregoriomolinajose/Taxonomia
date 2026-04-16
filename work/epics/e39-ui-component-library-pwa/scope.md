@@ -25,6 +25,7 @@ Esta épica nace del parking lot de la E38 (Hub de Ingesta), donde se identific�
 - **S39.3**: [ ] Integración de Capacitor File Picker como adapter de fuente de archivos.
 - **S39.4**: [ ] Manifesto PWA y Service Worker básico para la SPA de Taxonomía.
 - **S39.5**: [ ] Catálogo de componentes y documentación de uso (Storybook o equivalente ligero).
+- **S39.6**: [ ] Resolver el dilema de Caching de Modal (H3 de S38): transicionar la instanciación destructiva de DOM a un Singleton verdaderamente persistente para ahorrar repintado en PWA.
 
 ## Criterios de Finalización (Done)
 - El componente `<tx-upload-modal>` funciona idénticamente en browser (PWA), iOS (Capacitor) y Android (Capacitor).

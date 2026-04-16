@@ -732,6 +732,8 @@
             if (!window.UI_ETL_Modal) {
                 return _showToast('Módulo ETL no cargado.', 'danger');
             }
+            
+            // Presentamos la instancia
             window.UI_ETL_Modal.present(_state.entityName, {
                 onDriveSync: async function(entity, url, modal) {
                     let loading;
@@ -779,10 +781,12 @@
                     }
                 },
                 onGenerateTemplate: async function(entity, modal) {
-                    if (document.querySelector('ion-loading.loader-etl')) return; // Bloquear race-condition (Debounce)
+                    // Limpieza proactiva de loaders huérfanos que provocan el "bloqueo fantasma"
+                    document.querySelectorAll('ion-loading.loader-etl').forEach(el => el.remove());
+                    
                     const loading = document.createElement('ion-loading');
                     loading.className = 'loader-etl';
-                    loading.message = 'Forjando Plantilla Nativa...';
+                    loading.message = 'Creando plantilla en Google Sheet...';
                     document.body.appendChild(loading);
                     await loading.present();
 
@@ -790,9 +794,16 @@
                         .then(res => {
                             loading.dismiss();
                             if (res && res.data) {
-                                window.UI_ETL_Modal.updateUrlField(modal, res.data);
-                                _showToast('¡Plantilla Creada en tu Drive! Pega tus datos en ella.', 'success');
-                                window.open(res.data, '_blank'); // Redirigir al usuario proactivamente
+                                // H10: Guardado local de la URL temporal delegado nativamente al diccionario Cache del UI_ETL_Modal
+                                window.UI_ETL_Modal.urlCache[entity] = res.data;
+                                window.UI_ETL_Modal.updateUrlField(res.data);
+                                
+                                const newWin = window.open(res.data, '_blank'); // Redirigir al usuario proactivamente
+                                if (newWin) {
+                                    _showToast('¡Plantilla Creada en tu Drive! Pega tus datos en ella.', 'success');
+                                } else {
+                                    _showToast('Plantilla creada, pero tu navegador bloqueó la pestaña. Usa la opción "Abrir archivo" para acceder a ella.', 'warning');
+                                }
                             }
                         })
                         .catch(err => {
@@ -808,6 +819,20 @@
                     _importCSV(event); // Mantenemos el baseline Legacy intacto
                 }
             });
+
+            // Si el state del sub-módulo guarda que ya se generó una plantilla en esta pre-sesión, evitamos sobrecarga de red de forma reactiva al ciclo de vida
+            const cachedUrl = window.UI_ETL_Modal.urlCache[_state.entityName];
+            if (cachedUrl) {
+                // H3 Quality Replace: Usar requestAnimationFrame para no desestabilizar hilos bloqueados 
+                // o iterar sobre el elemento en sí post-append. Ya que modalPromise no está expuesto aquí.
+                requestAnimationFrame(() => {
+                    requestAnimationFrame(() => {
+                        if (window.UI_ETL_Modal && window.UI_ETL_Modal.updateUrlField) {
+                            window.UI_ETL_Modal.updateUrlField(cachedUrl);
+                        }
+                    });
+                });
+            }
         }
 
         /* ────────────────────────────────────────────
