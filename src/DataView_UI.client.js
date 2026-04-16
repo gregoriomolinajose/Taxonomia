@@ -739,7 +739,9 @@
                     // TODO: Conectar a API_Universal_Router en S38.3 (Hub ETL Extractor híbrido)
                 },
                 onGenerateTemplate: async function(entity, modal) {
+                    if (document.querySelector('ion-loading.loader-etl')) return; // Bloquear race-condition (Debounce)
                     const loading = document.createElement('ion-loading');
+                    loading.className = 'loader-etl';
                     loading.message = 'Forjando Plantilla Nativa...';
                     document.body.appendChild(loading);
                     await loading.present();

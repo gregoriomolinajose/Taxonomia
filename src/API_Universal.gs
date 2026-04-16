@@ -64,6 +64,9 @@ function API_Universal_Router(action, entityName, payload) {
     }
 
     if (action === 'etl_generate_template') {
+      if (typeof _guardAbac === 'function') {
+         _guardAbac('create', entityName, null);
+      }
       responseData = Engine_ETL.generateDriveTemplate(entityName);
       return JSON.stringify({ status: "success", data: responseData, action });
     }
