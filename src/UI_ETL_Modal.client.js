@@ -130,7 +130,7 @@ window.UI_ETL_Modal = (function() {
                 <div class="etl-step-desc">Crea automáticamente una hoja con el formato correcto en tu Google Drive.</div>
                 
                 <div class="etl-download-card" id="btn-gen-tpl">
-                    <ion-icon class="etl-download-icon" name="document-text"></ion-icon>
+                    <ion-icon class="etl-download-icon" name="document-text" color="success"></ion-icon>
                     <div>
                         <div class="etl-download-title">Descarga</div>
                         <div class="etl-download-hint">Generar Template Sheets</div>
@@ -155,7 +155,7 @@ window.UI_ETL_Modal = (function() {
                         <ion-icon name="search-outline"></ion-icon>
                     </ion-button>
                 </ion-item>
-                <p class="etl-hint-text">Hemos agregado la liga de tu plantilla descargada automáticamente</p>
+                <p class="etl-hint-text" id="etl-drive-hint" style="display:none; color: var(--ion-color-success);">Hemos agregado la liga de tu plantilla descargada automáticamente</p>
             </div>
         `;
 
@@ -193,7 +193,7 @@ window.UI_ETL_Modal = (function() {
                 <div class="etl-step-desc">Usa el formato correcto para evitar errores en la importación.</div>
                 
                 <div class="etl-download-card" id="btn-dl-csv">
-                    <ion-icon class="etl-download-icon" name="document-text" color="success"></ion-icon>
+                    <ion-icon class="etl-download-icon" name="document-text" color="primary"></ion-icon>
                     <div>
                         <div class="etl-download-title">Descarga</div>
                         <div class="etl-download-hint">Descargar Template CSV</div>
@@ -283,8 +283,19 @@ window.UI_ETL_Modal = (function() {
         });
 
         // Execute Sheets
-        modal.querySelector('#btn-sync-drive').addEventListener('click', () => {
-            const val = modal.querySelector('#etl-drive-url').value;
+        const btnSyncDrive = modal.querySelector('#btn-sync-drive');
+        const urlInput = modal.querySelector('#etl-drive-url');
+        btnSyncDrive.disabled = true;
+
+        urlInput.addEventListener('ionInput', (e) => {
+            const val = (e.currentTarget.value || '').trim();
+            btnSyncDrive.disabled = val.length === 0;
+            const hint = modal.querySelector('#etl-drive-hint');
+            if (hint && val.length === 0) hint.style.display = 'none';
+        });
+
+        btnSyncDrive.addEventListener('click', () => {
+            const val = urlInput.value;
             if (!val || val.trim() === '') {
                 return _showToast('Por favor provee un enlace o ID válido.', 'warning');
             }
@@ -381,7 +392,12 @@ window.UI_ETL_Modal = (function() {
         present: present,
         updateUrlField: function(urlStr) {
             const input = document.getElementById('etl-drive-url');
-            if (input) input.value = urlStr;
+            if (input) {
+                input.value = urlStr;
+                input.dispatchEvent(new CustomEvent('ionInput', { detail: { value: urlStr } }));
+                const hint = document.getElementById('etl-drive-hint');
+                if (hint) hint.style.display = 'block';
+            }
         },
         updateProgress: function(chunkIndex, totalChunks) {
             const progressContainer = document.getElementById('etl-progress-container');

@@ -65,17 +65,14 @@ ion-modal.etl-central-modal {
 
 /* 3. SISTEMA DE RADIO TARJETAS */
 .etl-radio-grid {
-  display: grid;
-  grid-template-columns: 1fr;
+  display: flex;
+  flex-direction: row;
   gap: var(--spacing-3, 12px);
-}
-@media (min-width: 768px) {
-  .etl-radio-grid {
-    grid-template-columns: 1fr 1fr;
-  }
+  width: 100%;
 }
 
 .etl-radio-card {
+  flex: 1;
   border: 1px solid var(--ion-color-step-100, #E0E0E0);
   border-radius: var(--rounded-md, 16px);
   padding: var(--spacing-3, 12px);
@@ -169,11 +166,15 @@ ion-modal.etl-central-modal {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-5, 20px);
+  flex-grow: 1;
 }
 .etl-step {
   display: flex;
   align-items: flex-start;
   gap: var(--spacing-3, 12px);
+}
+.etl-step:last-child {
+  margin-top: auto;
 }
 .etl-step-badge {
   width: 28px;
@@ -266,7 +267,7 @@ ion-modal.etl-central-modal {
 }
 .etl-bottom-exec {
   display: flex;
-  justify-content: flex-end;
+  justify-content: flex-start;
   gap: var(--spacing-3, 12px);
 }
 
