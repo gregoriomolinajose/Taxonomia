@@ -20,7 +20,8 @@ window.UI_ETL_Modal = (function() {
         const header = document.createElement('ion-header');
         const toolbar = document.createElement('ion-toolbar');
         const title = document.createElement('ion-title');
-        title.innerHTML = `<ion-icon name="cloud-upload-outline" class="ion-margin-end"></ion-icon> Carga Masiva - ${window.formatEntityName ? window.formatEntityName(entityName) : entityName}`;
+        title.innerHTML = `<ion-icon name="cloud-upload-outline" class="ion-margin-end"></ion-icon> Carga Masiva - `;
+        title.appendChild(document.createTextNode(window.formatEntityName ? window.formatEntityName(entityName) : entityName));
         
         const buttonsEnd = document.createElement('ion-buttons');
         buttonsEnd.setAttribute('slot', 'end');
@@ -168,7 +169,7 @@ window.UI_ETL_Modal = (function() {
         
         // H6: Dropzone que complementa al botón CSV con affordance
         // Optimization (AR): Evitar instanciar listeners y nodos de Drag&Drop si la pantalla es estrictamente táctil
-        const isTouchScreen = window.matchMedia("(hover: none) and (pointer: coarse)").matches;
+        const isTouchScreen = !!(window.matchMedia && window.matchMedia("(hover: none) and (pointer: coarse)").matches);
         
         const dropzone = document.createElement('div');
         dropzone.className = 'etl-dropzone';
