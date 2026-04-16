@@ -24,6 +24,7 @@ Transicionar el sistema de importaciones planas CSV hacia un flujo integral (Mod
 - **S38.3**: [x] Extracción Segura (Reader Pipeline) de la matriz de Google Sheets al Frontend.
 - **S38.4**: [x] Tolerancia e Ignorado de Inconsistencias (Omitir Cabeceras de Auditoría).
 - **S38.5**: [x] Hardening de DB Batch y Re-hidratación Automática para `Persona` (Workspace Lookup).
+- **S38.6**: [ ] Cobertura de Pruebas Integrales (Unitarias, Integración y E2E) para Hub Ingesta.
 
 ## Criterios de Finalización (Done)
 - Todas las UI tests corren sin lanzar Console Errors.
