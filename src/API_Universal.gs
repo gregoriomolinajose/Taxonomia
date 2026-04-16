@@ -71,6 +71,17 @@ function API_Universal_Router(action, entityName, payload) {
       return JSON.stringify({ status: "success", data: responseData, action });
     }
 
+    if (action === 'etl_extract_sheet_data') {
+      if (typeof _guardAbac === 'function') {
+         // Extracción masiva presupone Upsert, demandando permisos conjuntos.
+         _guardAbac('create', entityName, null);
+         _guardAbac('update', entityName, null); 
+      }
+      if (!payload || !payload.url) throw new Error("Parámetro URL faltante en request ETL.");
+      responseData = Engine_ETL.extractDataFromDrive(entityName, payload.url);
+      return JSON.stringify({ status: "success", data: responseData, action });
+    }
+
     if (action === 'create') {
       if (!payload[pkField] || String(payload[pkField]).trim() === '') {
         payload[pkField] = _generateShortUUID(entityName);

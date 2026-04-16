@@ -733,10 +733,36 @@
                 return _showToast('Módulo ETL no cargado.', 'danger');
             }
             window.UI_ETL_Modal.present(_state.entityName, {
-                onDriveSync: function(entity, url, modal) {
-                    console.log(`[S38.1 Stub] Extracción solicitada de ${entity} desde: ${url}`);
-                    _showToast(`Obteniendo Sábana de ${url}...`, 'primary');
-                    // TODO: Conectar a API_Universal_Router en S38.3 (Hub ETL Extractor híbrido)
+                onDriveSync: async function(entity, url, modal) {
+                    let loading;
+                    try {
+                        if (document.querySelector('ion-loading.loader-etl-sync')) return; // Bloquear race-condition
+                        loading = document.createElement('ion-loading');
+                        loading.className = 'loader-etl-sync';
+                        loading.message = 'Extrayendo Matriz desde Hoja de Cálculo...';
+                        document.body.appendChild(loading);
+                        await loading.present();
+
+                        window.DataAPI.call('API_Universal_Router', 'etl_extract_sheet_data', entity, { url: url })
+                            .then(res => {
+                                loading.dismiss();
+                                modal.dismiss();
+                                if (res && res.data) {
+                                    window._etlPayloadCache = res.data; 
+                                    console.log('[ETL] Extracción 100% Finalizada. Registros capturados: ', res.data);
+                                    _showToast(`¡${res.data.length} Registros Obtenidos Exitosamente! (Revisar Consola)`, 'success');
+                                }
+                            })
+                            .catch(err => {
+                                loading.dismiss();
+                                console.error('[ETL Fatal Error]', err);
+                                _showToast(`Fallo al extraer registros: ${err.message}`, 'danger');
+                            });
+                    } catch (fatalErr) {
+                        if (loading) loading.dismiss();
+                        console.error('[UI Fatal Error]', fatalErr);
+                        _showToast(`Error inesperado procesando la sincronización: ${fatalErr.message}`, 'danger');
+                    }
                 },
                 onGenerateTemplate: async function(entity, modal) {
                     if (document.querySelector('ion-loading.loader-etl')) return; // Bloquear race-condition (Debounce)

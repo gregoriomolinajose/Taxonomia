@@ -1,0 +1,33 @@
+artifact_type: story-design
+version: 1
+skill: rai-story-design
+created: '2026-04-15T21:26:00Z'
+story: 'S38.3'
+epic: 'E38'
+content:
+  summary: 'Extracción backend pasiva de matrices de Share Sheets hacia JS nativo.'
+  complexity: moderate
+  acceptance_criteria:
+    - id: AC1
+      description: 'extractDataFromDrive omite blank rows y mapea dinámicamente'
+      verifiable: true
+    - id: AC2
+      description: 'API Universal rutea con _guardAbac("read")'
+      verifiable: true
+  integration_points:
+    - module: 'Engine_ETL'
+      change_type: modification
+      files: ['src/Engine_ETL.gs']
+    - module: 'API_Universal'
+      change_type: modification
+      files: ['src/API_Universal.gs']
+    - module: 'DataView_UI'
+      change_type: modification
+      files: ['src/DataView_UI.client.js']
+  decisions:
+    - id: D1
+      choice: 'Filtrado silencioso de blanks en Backend'
+      rationale: 'Para aligerar peso en RAM y serialización IPC.'
+      alternatives_considered: ['Enviar nulos y filtrar en frontend']
+refs:
+  epic_scope: 'work/epics/e38-hub-ingesta-inteligente/scope.md'
