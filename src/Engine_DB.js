@@ -479,60 +479,6 @@ const Engine_DB = {
 
     upsertBatch: function (tableName, items, config) {
         if (!Array.isArray(items) || items.length === 0) return { status: 'success', count: 0 };
-
-        // [S38.5] Pre-procesamiento de Batch: Deduplicación e Hidratación Automática
-        const schema = (typeof APP_SCHEMAS !== 'undefined') ? APP_SCHEMAS[tableName] : null;
-        const pkField = schema && schema.primaryKey ? schema.primaryKey : 'id';
-        const uniqueFields = (schema && schema.fields) ? schema.fields.filter(f => f.unique === true).map(f => f.name) : [];
-        
-        let dbRowsForLookup = null;
-        if (uniqueFields.length > 0 || tableName === 'Persona') {
-            const listResult = this.list(tableName, 'objects'); // Obtenemos contexto en caché O(1)
-            dbRowsForLookup = listResult.rows || [];
-        }
-
-        items.forEach(payload => {
-            // A. Re-hidratación Silenciosa al vuelo para Workspace (Zero-Touch Population)
-            if (tableName === 'Persona' && typeof resolverDirectorioWorkspace !== 'undefined') {
-                // Solo disparamos el hook si tiene email y viene con nombre en blanco/indefinido
-                if (payload.email && (!payload.nombre || String(payload.nombre).trim() === '')) {
-                    try {
-                        const wsData = resolverDirectorioWorkspace(payload.email);
-                        if (wsData && wsData.__status !== "DISABLED" && wsData.__status !== "ERROR") {
-                            Object.keys(wsData).forEach(k => {
-                                if (payload[k] === undefined || payload[k] === null || payload[k] === '') {
-                                    payload[k] = wsData[k];
-                                }
-                            });
-                            if (typeof Logger !== 'undefined') Logger.log(`[Batch Hook] Persona Re-Hidratada Automáticamente: ${payload.email}`);
-                        }
-                    } catch(e) {
-                         // Fallback silencioso: no truncar el batch si Workspace API rate-limitea
-                        if (typeof Logger !== 'undefined') Logger.log(`[Batch Hook] Ignorando error WS para ${payload.email}: ${e.message}`);
-                    }
-                }
-            }
-
-            // B. Deduplicación Pasiva (Identity Resolution) para sobreescribir inserciones parasitarias
-            if (uniqueFields.length > 0 && Array.isArray(dbRowsForLookup)) {
-                for (let i = 0; i < dbRowsForLookup.length; i++) {
-                    const row = dbRowsForLookup[i];
-                    let isMatch = false;
-                    for (let j = 0; j < uniqueFields.length; j++) {
-                        const uField = uniqueFields[j];
-                        if (payload[uField] && row[uField] && String(payload[uField]).trim().toLowerCase() === String(row[uField]).trim().toLowerCase()) {
-                            isMatch = true;
-                            break;
-                        }
-                    }
-                    if (isMatch) {
-                        payload[pkField] = row[pkField]; // Subsumimos el Temp UUID y forzamos modo UPDATE en el Adapter
-                        break;
-                    }
-                }
-            }
-        });
-
         // [Performance Fix]: Calling the lock-protected Adapter bulk method directly. O(N) -> O(1) Locks+I/O.
         const results = _Adapter_Sheets.upsertBatch(tableName, items, config);
         _invalidateCache(tableName);
