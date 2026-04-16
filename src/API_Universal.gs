@@ -160,10 +160,18 @@ function API_Universal_Router(action, entityName, payload) {
     return sanitizedReturn;
   } catch (error) {
     if (typeof Logger !== 'undefined') Logger.log('🚀 ERROR Atrapado en Servidor: ' + error.message + '\n' + error.stack);
+    
+    // Categorización Semántica del Error para el Cliente
+    let errorType = 'GENERAL';
+    const msg = error.message || '';
+    if (msg.indexOf('ERROR_CONCURRENCY') !== -1) errorType = 'CONCURRENCY';
+    else if (msg.indexOf('ABAC Error') !== -1) errorType = 'UNAUTHORIZED';
+    else if (msg.indexOf('not supported') !== -1 || msg.indexOf('must be an array') !== -1 || msg.indexOf('no especificada') !== -1) errorType = 'BAD_REQUEST';
+
     const sanitizedReturn = JSON.stringify({
       status: "error",
       success: false,
-      errorType: (error.message && error.message.indexOf('ERROR_CONCURRENCY') !== -1) ? 'CONCURRENCY' : 'GENERAL',
+      errorType: errorType,
       message: error.message
     });
     return sanitizedReturn;
