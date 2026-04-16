@@ -738,10 +738,24 @@
                     _showToast(`Obteniendo Sábana de ${url}...`, 'primary');
                     // TODO: Conectar a API_Universal_Router en S38.3 (Hub ETL Extractor híbrido)
                 },
-                onGenerateTemplate: function(entity, modal) {
-                    console.log(`[S38.1 Stub] Generando plantilla para ${entity}`);
-                    _showToast(`Generando Plantilla Nativa en Drive...`, 'primary');
-                    // TODO: Conectar a API_Universal_Router en S38.2 (Generador Plantillas Drive)
+                onGenerateTemplate: async function(entity, modal) {
+                    const loading = document.createElement('ion-loading');
+                    loading.message = 'Forjando Plantilla Nativa...';
+                    document.body.appendChild(loading);
+                    await loading.present();
+
+                    window.DataAPI.call('etl_generate_template', entity, {})
+                        .then(res => {
+                            loading.dismiss();
+                            if (res && res.data) {
+                                window.UI_ETL_Modal.updateUrlField(modal, res.data);
+                                _showToast('¡Plantilla Creada en tu Drive! Pega tus datos en ella.', 'success');
+                            }
+                        })
+                        .catch(err => {
+                            loading.dismiss();
+                            _showToast(`Fallo crítico al forjar plantilla: ${err.message}`, 'danger');
+                        });
                 },
                 onDownloadCSVTpl: function(entity) {
                     window.DataEngine.exportCSV(entity, _state.columns, []);

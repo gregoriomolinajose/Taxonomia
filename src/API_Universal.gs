@@ -63,6 +63,11 @@ function API_Universal_Router(action, entityName, payload) {
       pkField = 'id';
     }
 
+    if (action === 'etl_generate_template') {
+      responseData = Engine_ETL.generateDriveTemplate(entityName);
+      return JSON.stringify({ status: "success", data: responseData, action });
+    }
+
     if (action === 'create') {
       if (!payload[pkField] || String(payload[pkField]).trim() === '') {
         payload[pkField] = _generateShortUUID(entityName);
