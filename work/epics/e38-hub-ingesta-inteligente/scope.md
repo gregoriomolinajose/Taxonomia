@@ -20,7 +20,7 @@ Transicionar el sistema de importaciones planas CSV hacia un flujo integral (Mod
 
 ## Historias Planificadas
 - **S38.1**: [x] Construcción del Componente Modal Híbrido ETL.
-- **S38.2**: Endpoint y Permisos para Auto-Generación de Plantillas en Drive.
+- **S38.2**: [x] Endpoint y Permisos para Auto-Generación de Plantillas en Drive.
 - **S38.3**: Extracción Segura (Reader Pipeline) de la matriz de Google Sheets al Frontend.
 - **S38.4**: Tolerancia e Ignorado de Inconsistencias (Omitir Cabeceras de Auditoría).
 - **S38.5**: Hardening de DB Batch y Re-hidratación Automática para `Persona` (Workspace Lookup).
