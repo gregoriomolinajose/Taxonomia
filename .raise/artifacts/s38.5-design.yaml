@@ -1,0 +1,31 @@
+artifact_type: story-design
+version: 1
+skill: rai-story-design
+created: '2026-04-16T15:00:00Z'
+story: 'S38.5'
+epic: 'E38'
+content:
+  summary: 'Asegurar que las ingestas masivas (bulkInsert) puedan reaccionar a claves lógicas (email, numero_empleado) para actualizar registros en lugar de duplicarlos, e hidratar silenciosamente atributos faltantes consultando la API nativa de Google Workspace para la entidad Persona.'
+  complexity: moderate
+  acceptance_criteria:
+    - id: AC1
+      description: 'Si se intenta una carga masiva de Persona usando únicamente su correo (sin UUID), el sistema debe identificar a la persona previamente existente y actualizar su fila en lugar de crear una duplicidad.'
+      verifiable: true
+    - id: AC2
+      description: 'Si en el payload falta el campo `nombre` y la entidad es `Persona`, el Batch Hook debe ejecutar `resolverDirectorioWorkspace` para inyectar su avatar, nombre, apellidos y otros metadatos directamente durante la transacción.'
+      verifiable: true
+    - id: AC3
+      description: 'La delegación arquitectónica debe preservarse intersecando el Hook dentro de `Engine_DB.upsertBatch` en lugar de exponer la lógica de base de datos dentro de `API_Universal`.'
+      verifiable: true
+  integration_points:
+    - module: 'backend.db'
+      change_type: modification
+      files: ['src/Engine_DB.js']
+  decisions:
+    - id: D1
+      choice: 'Interceptar la lógica de deduplicación dentro de Engine_DB.upsertBatch sobre-escribiendo la primaryKey autogenerada.'
+      rationale: 'Mantener a API_Universal libre de lógicas de DB Scanning y permitir que _Adapter_Sheets identifique el payload mágicamente como un UPDATE al coincidir las llaves lógicas.'
+      alternatives_considered: ['Deduplicar en _Adapter_Sheets (Acoplaría lógica de negocio en el adaptador físico)', 'Scan completo en API_Universal (Rompe SRP)']
+refs:
+  epic_scope: 'work/epics/e38-hub-ingesta-inteligente/scope.md'
+metadata: {}

@@ -136,10 +136,93 @@ var Engine_ETL = (function() {
     return records;
   }
 
+  /**
+   * Pre-procesamiento de Batch: Deduplicación e Hidratación Automática (Workspace)
+   * Modifica los registros "in-place" antes de enviarlos a Engine_DB para preservar la Idempotencia y Reglas de Negocio.
+   * 
+   * @param {string} entityName
+   * @param {Array<Object>} items 
+   */
+  function hydrateAndDeduplicate(entityName, items) {
+       if (!Array.isArray(items) || items.length === 0) return;
+       
+       const schema = (typeof APP_SCHEMAS !== 'undefined') ? APP_SCHEMAS[entityName] : null;
+       const pkField = schema && schema.primaryKey ? schema.primaryKey : 'id';
+       const uniqueFields = (schema && schema.fields) ? schema.fields.filter(f => f.unique === true).map(f => f.name) : [];
+       
+       let dbRowsForLookup = null;
+       const lookupMaps = {}; // { 'email': { 'test@...': row }, 'numero_empleado': { '123': row } }
+
+       if (uniqueFields.length > 0 || entityName === 'Persona') {
+           if (typeof Engine_DB !== 'undefined') {
+              const listResult = Engine_DB.list(entityName, 'objects'); // Obtenemos contexto en caché O(1)
+              dbRowsForLookup = listResult.rows || [];
+              
+              // Inicializar diccionarios por cada Unique Field
+              uniqueFields.forEach(uf => { lookupMaps[uf] = {}; });
+              
+              // Pre-indexar O(M)
+              if (uniqueFields.length > 0) {
+                  dbRowsForLookup.forEach(row => {
+                      uniqueFields.forEach(uf => {
+                          if (row[uf]) {
+                              const normKey = String(row[uf]).trim().toLowerCase();
+                              lookupMaps[uf][normKey] = row;
+                          }
+                      });
+                  });
+              }
+           }
+       }
+
+       items.forEach(payload => {
+           // A. Re-hidratación Silenciosa al vuelo para Workspace (Zero-Touch Population)
+           if (entityName === 'Persona' && typeof resolverDirectorioWorkspace !== 'undefined') {
+               // Solo disparamos el hook si tiene email y viene con nombre en blanco/indefinido
+               if (payload.email && (!payload.nombre || String(payload.nombre).trim() === '')) {
+                   try {
+                       const wsData = resolverDirectorioWorkspace(payload.email);
+                       if (wsData && wsData.__status !== "DISABLED" && wsData.__status !== "ERROR") {
+                           Object.keys(wsData).forEach(k => {
+                               if (payload[k] === undefined || payload[k] === null || payload[k] === '') {
+                                   payload[k] = wsData[k];
+                               }
+                           });
+                           if (typeof Logger !== 'undefined') Logger.log(`[Batch Hook] Persona Re-Hidratada Automáticamente: ${payload.email}`);
+                       }
+                   } catch(e) {
+                        // Fallback silencioso: no truncar el batch si Workspace API rate-limitea
+                       if (typeof Logger !== 'undefined') Logger.log(`[Batch Hook] Ignorando error WS para ${payload.email}: ${e.message}`);
+                   }
+               }
+           }
+
+           // B. Deduplicación Pasiva (Identity Resolution) O(1) Search Mode
+           if (uniqueFields.length > 0) {
+               let matchedRow = null;
+               for (let j = 0; j < uniqueFields.length; j++) {
+                   const uField = uniqueFields[j];
+                   if (payload[uField]) {
+                       const searchKey = String(payload[uField]).trim().toLowerCase();
+                       if (lookupMaps[uField] && lookupMaps[uField][searchKey]) {
+                           matchedRow = lookupMaps[uField][searchKey];
+                           break; // Un solo match lógico es suficiente para sobreescribir la PK
+                       }
+                   }
+               }
+               
+               if (matchedRow) {
+                   payload[pkField] = matchedRow[pkField]; // Subsumimos el Temp UUID y forzamos modo UPDATE
+               }
+           }
+       });
+  }
+
   // --- Public API ---
   return {
     generateDriveTemplate: generateDriveTemplate,
-    extractDataFromDrive: extractDataFromDrive
+    extractDataFromDrive: extractDataFromDrive,
+    hydrateAndDeduplicate: hydrateAndDeduplicate
   };
 
 })();

@@ -122,14 +122,20 @@ function API_Universal_Router(action, entityName, payload) {
         throw new Error("Payload for bulkInsert must be an array of objects.");
       }
       
-      // Auto-generación de UUIDs p/records sin primaryKey para toda la ráfaga
+      // Auto-generación de UUIDs temporales para la ráfaga
       payload.forEach(record => {
         if (!record[pkField] || String(record[pkField]).trim() === '') {
           record[pkField] = _generateShortUUID(entityName);
         }
       });
       
-      // Delegamos la unidad de trabajo (Unit of Work) al backend
+      // [S38.5] Pre-procesamiento de Batch: Deduplicación Lógica e Hidratación Automática
+      // Delegamos la Inteligencia de Dominio a la capa especializada ETL (Transform)
+      if (typeof Engine_ETL !== 'undefined' && typeof Engine_ETL.hydrateAndDeduplicate === 'function') {
+          Engine_ETL.hydrateAndDeduplicate(entityName, payload);
+      }
+      
+      // Delegamos la unidad de trabajo cruda (Unit of Work) al backend
       responseData = Engine_DB.upsertBatch(entityName, payload);
       
       if (typeof Logger !== 'undefined') Logger.log(`Batch Persistencia completada p/${entityName}: ${payload.length} records.`);
