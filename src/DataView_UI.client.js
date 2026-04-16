@@ -786,7 +786,7 @@
                     
                     const loading = document.createElement('ion-loading');
                     loading.className = 'loader-etl';
-                    loading.message = 'Forjando Plantilla Nativa...';
+                    loading.message = 'Creando plantilla en Google Sheet...';
                     document.body.appendChild(loading);
                     await loading.present();
 
