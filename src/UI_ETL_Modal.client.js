@@ -104,9 +104,12 @@ window.UI_ETL_Modal = (function() {
         container.appendChild(radioGrid);
 
         // --- DIVIDER: Pasos para importar ---
+        const hrDiv = document.createElement('hr');
+        hrDiv.className = 'ion-margin-vertical';
         const sectionTitle2 = document.createElement('div');
         sectionTitle2.className = 'etl-section-title';
-        sectionTitle2.innerHTML = `PASOS PARA IMPORTAR <hr>`;
+        sectionTitle2.innerHTML = `PASOS PARA IMPORTAR`;
+        container.appendChild(hrDiv);
         container.appendChild(sectionTitle2);
 
         // --- SECTION 1: Google Sheets View ---

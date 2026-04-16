@@ -22,7 +22,7 @@ ion-modal.etl-central-modal {
 .etl-header {
   background: var(--ion-color-primary, #1c42e8);
   color: var(--ion-color-primary-contrast, #fff);
-  padding-top: var(--ion-safe-area-top, 0);
+  padding-top: calc(var(--ion-safe-area-top, 0px) + 6px);
 }
 .etl-header-box {
   display: flex;
@@ -59,12 +59,6 @@ ion-modal.etl-central-modal {
   align-items: center;
   gap: var(--spacing-2, 8px);
 }
-.etl-section-title hr {
-  flex-grow: 1;
-  border: none;
-  border-top: 1px solid var(--ion-color-step-100, #E0E0E0);
-  margin: 0;
-}
 
 /* 3. SISTEMA DE RADIO TARJETAS */
 .etl-radio-grid {
@@ -86,6 +80,9 @@ ion-modal.etl-central-modal {
   position: relative;
   transition: all 0.2s ease;
   background: var(--ion-card-background, #fff);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
 }
 .etl-radio-card:hover {
   border-color: var(--ion-color-primary, #1c42e8);
@@ -109,8 +106,8 @@ ion-modal.etl-central-modal {
 .etl-radio-icon {
   font-size: 20px;
   margin-bottom: var(--spacing-2, 8px);
-  color: var(--ion-color-primary, #1c42e8);
-  background: rgba(28, 66, 232, 0.1);
+  color: var(--ion-color-success, #0abf4f);
+  background: rgba(10, 191, 79, 0.1);
   padding: var(--spacing-2, 8px);
   border-radius: var(--rounded-sm, 8px);
   display: inline-block;
@@ -118,8 +115,8 @@ ion-modal.etl-central-modal {
 }
 
 .etl-radio-card.csv .etl-radio-icon {
-  color: var(--ion-color-success, #0abf4f);
-  background: rgba(10, 191, 79, 0.1);
+  color: var(--ion-color-primary, #1c42e8);
+  background: rgba(28, 66, 232, 0.1);
 }
 .etl-radio-card.active.csv {
   border-color: var(--ion-color-success, #0abf4f);
@@ -141,14 +138,16 @@ ion-modal.etl-central-modal {
 }
 
 .etl-badge-recommended {
+  margin-left: auto;
   display: inline-block;
-  background: var(--ion-color-success-tint, #e6f9ec);
-  color: var(--ion-color-success, #0abf4f);
+  background: transparent;
+  color: var(--ion-color-medium, #8C8C8C);
+  border: 1px solid var(--ion-color-step-100, #E0E0E0);
   font-size: var(--sys-font-mini, 10px);
   padding: 4px 8px;
   border-radius: 4px;
-  margin-top: var(--spacing-2, 8px);
   font-weight: 600;
+  margin-top: 8px;
 }
 
 /* 4. VERTICAL STEPPER / LISTA DE VIÑETAS */
@@ -172,18 +171,8 @@ ion-modal.etl-central-modal {
   font-weight: 600;
   font-size: var(--sys-font-small, 12px);
   flex-shrink: 0;
-}
-.etl-step-badge.active {
-  background: var(--ion-color-success-tint, #e6f9ec);
-  color: var(--ion-color-success, #0abf4f);
-}
-.etl-step-badge.current {
   background: var(--ion-color-primary, #1c42e8);
   color: var(--ion-color-primary-contrast, #fff);
-}
-.etl-step-badge.pending {
-  background: var(--ion-color-step-100, #F3F3F3);
-  color: var(--ion-color-medium, #8C8C8C);
 }
 
 .etl-step-content {
@@ -260,7 +249,7 @@ ion-modal.etl-central-modal {
 }
 .etl-bottom-exec {
   display: flex;
-  justify-content: flex-start;
+  justify-content: flex-end;
   gap: var(--spacing-3, 12px);
 }
 
