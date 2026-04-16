@@ -122,6 +122,9 @@
                     let loadingUi;
                     
                     window.DataEngine_ETL.processFile(file, entityName, function onProgress(chunkIndex, totalChunks, isDone) {
+                        if (window.UI_ETL_Modal && window.UI_ETL_Modal.updateProgress) {
+                            window.UI_ETL_Modal.updateProgress(chunkIndex, totalChunks);
+                        }
                         if (chunkIndex === 1 && onLoadingStart) {
                             onLoadingStart(); 
                             loadingUi = document.getElementById('dv-import-loading');

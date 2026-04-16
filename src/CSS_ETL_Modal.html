@@ -1,0 +1,90 @@
+<style>
+/* =====================================================================
+   CSS_ETL_Modal.html — Sistema de Estilos Mobile-First para Ingesta 
+   > Consumo O(1) de tokens globales (Arquitectura v4)
+   ===================================================================== */
+
+/* Base: Mobile (375px+) */
+.etl-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-3, 12px);
+  padding: var(--spacing-3, 12px);
+}
+.etl-btn-row {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2, 8px);
+}
+.etl-btn-action {
+  text-transform: none;
+  font-family: var(--ion-font-family, inherit);
+  font-weight: 500;
+  width: 100%;
+}
+.etl-progress-wrap {
+  height: 6px;
+  background-color: var(--color-bg-0, #F3F3F3);
+  border-radius: var(--rounded-full, 999px);
+  overflow: hidden;
+  margin-top: var(--spacing-2, 8px);
+}
+.etl-progress-bar {
+  height: 100%;
+  background-color: var(--color-interactive-primary, #1C42E8);
+  transition: width 0.3s ease;
+  width: 0%;
+}
+.etl-progress-label {
+  font-size: var(--sys-font-small, 12px);
+  color: var(--ion-color-medium, #8C8C8C);
+  text-align: center;
+  display: block;
+  margin-top: 4px;
+}
+.etl-dropzone {
+  display: none; /* Oculto en touch como fallback empírico */
+}
+
+/* Base: Desktop (768px+) */
+@media (min-width: 768px) {
+  .etl-body {
+    gap: var(--spacing-5, 20px);
+    padding: var(--spacing-5, 20px);
+  }
+  .etl-btn-row {
+    flex-direction: row;
+    gap: var(--spacing-3, 12px);
+  }
+  .etl-btn-action {
+    width: auto;
+    flex: 1; /* Distribución horizontal equilibrada */
+  }
+}
+
+/* Hover/Puntero preciso (desktop / mouse) -> Renderiza Drag&Drop */
+@media (hover: hover) and (pointer: fine) {
+  .etl-dropzone {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    border: 2px dashed var(--color-interactive-primary, #1C42E8);
+    border-radius: var(--rounded-md, 16px);
+    padding: var(--spacing-5, 20px) var(--spacing-4, 16px);
+    background-color: transparent;
+    transition: all 0.2s ease;
+  }
+  .etl-dropzone.dragover {
+    border-color: var(--color-interactive-primary, #1C42E8);
+    background-color: var(--dv-primary-light, rgba(28, 66, 232, 0.1));
+  }
+  .etl-dropzone-msg {
+    margin-top: var(--spacing-4, 16px);
+    font-size: var(--sys-font-small, 12px);
+    color: var(--ion-color-medium, #8C8C8C);
+    font-weight: 500;
+    text-align: center;
+    pointer-events: none; /* Previene flicker de drop */
+  }
+}
+</style>

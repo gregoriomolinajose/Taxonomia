@@ -750,6 +750,9 @@
                                     if (window.DataEngine_ETL && window.DataEngine_ETL.processPayload) {
                                         let chunkLoadingUi;
                                         window.DataEngine_ETL.processPayload(res.data, entity, function onProgress(chunkIndex, totalChunks, isDone) {
+                                            if (window.UI_ETL_Modal && window.UI_ETL_Modal.updateProgress) {
+                                                window.UI_ETL_Modal.updateProgress(chunkIndex, totalChunks);
+                                            }
                                             if (chunkIndex === 1 && !chunkLoadingUi) {
                                                 chunkLoadingUi = document.createElement('ion-loading');
                                                 document.body.appendChild(chunkLoadingUi);
