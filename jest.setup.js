@@ -12,6 +12,13 @@ global.Session = {
     })
 };
 
+global._generateShortUUID = vi.fn().mockReturnValue('UUID-123456');
+
+global.Engine_ABAC = {
+    resolveTopologyFor: vi.fn().mockReturnValue({ ownerOf: [], memberOf: [], permissions: { 'Persona': 'ALL' } }),
+    validatePermission: vi.fn().mockReturnValue(true) // Permitimos todo para el router en este mock universal
+};
+
 global.SpreadsheetApp = {
     flush: vi.fn(),
     openById: vi.fn().mockReturnValue({

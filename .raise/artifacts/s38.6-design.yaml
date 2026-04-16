@@ -1,0 +1,37 @@
+artifact_type: story-design
+version: 1
+skill: rai-story-design
+created: '2026-04-16T15:35:00Z'
+story: 'S38.6'
+epic: 'E38'
+content:
+  summary: 'Cobertura de pruebas integrales para asegurar el funcionamiento determinista del Hub de Ingesta, divididas en pruebas Unitarias Node (Backend), Integración, y Pruebas Unitarias de IU (Frontend).'
+  complexity: complex
+  acceptance_criteria:
+    - id: AC1
+      description: 'El hook deduplicador de Engine_ETL (Backend) debe contar con tests unitarios que comprueben la correcta retención de UUIDs (Updates locales) con una cobertura del 100% sobre hydrateAndDeduplicate.'
+      verifiable: true
+    - id: AC2
+      description: 'Prueba de particionado de Payload (Chunking) en DataEngine_ETL comprobando en Jest/Vitest que envíe lotes limpios purgados de cabeceras de auditoría estáticas.'
+      verifiable: true
+    - id: AC3
+      description: 'Prueba E2E integrativa simulando API_Universal bulkInsert con el switch logic adecuado llamando el hook ETL antes de upsertBatch.'
+      verifiable: true
+  integration_points:
+    - module: 'tests.backend'
+      change_type: new
+      files: ['tests/backend/Engine_ETL.test.js', 'tests/backend/API_Universal_ETL.test.js']
+    - module: 'tests.frontend'
+      change_type: new
+      files: ['tests/frontend/DataEngine_ETL.client.test.js']
+    - module: 'tests.mocks'
+      change_type: new
+      files: ['tests/mocks/gasMocks.js']
+  decisions:
+    - id: D1
+      choice: 'Separar las pruebas en Jest para funciones GAS y Vitest para client.js.'
+      rationale: 'El frontend está orquestado a través de módulos DOM interconectados, mejor evaluables con Vitest Browser Playwright, mientras que las .gs en el backend dependen de un mock de entorno de Google puramente algorítmico.'
+      alternatives_considered: ['Usar claps-test (Añade lentitud I/O)', 'Usar gas-local (Mantenimiento inestable)']
+refs:
+  epic_scope: 'work/epics/e38-hub-ingesta-inteligente/scope.md'
+metadata: {}
