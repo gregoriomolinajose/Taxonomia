@@ -125,10 +125,6 @@ window.UI_ETL_Modal = (function() {
         const cardLocalContent = document.createElement('ion-card-content');
         cardLocalContent.innerHTML = `<p class="ion-margin-bottom ion-text-medium">Procesa un archivo local sin pasar por los servidores de nube nativos.</p>`;
         
-        // H6: Dropzone que complementa al botón CSV con affordance
-        const dropzone = document.createElement('div');
-        dropzone.className = 'etl-dropzone';
-
         const fileInput = document.createElement('input');
         fileInput.setAttribute('type', 'file');
         fileInput.setAttribute('accept', '.csv');
@@ -170,64 +166,49 @@ window.UI_ETL_Modal = (function() {
         flexRow.appendChild(btnDownloadCsv);
         flexRow.appendChild(btnUploadCsv);
         
-        // Desktop Drag events
-        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-            dropzone.addEventListener(eventName, e => {
-                e.preventDefault();
-                e.stopPropagation();
-            });
-        });
+        // H6: Dropzone que complementa al botón CSV con affordance
+        // Optimization (AR): Evitar instanciar listeners y nodos de Drag&Drop si la pantalla es estrictamente táctil
+        const isTouchScreen = window.matchMedia("(hover: none) and (pointer: coarse)").matches;
         
-        dropzone.addEventListener('dragover', () => dropzone.classList.add('dragover'));
-        dropzone.addEventListener('dragleave', () => dropzone.classList.remove('dragover'));
-        dropzone.addEventListener('drop', (e) => {
-            dropzone.classList.remove('dragover');
-            const file = e.dataTransfer.files[0];
-            if (file) handleFile({ target: { files: [file] } });
-        });
-
-        const dropMsg = document.createElement('div');
-        dropMsg.className = 'etl-dropzone-msg';
-        dropMsg.textContent = 'Arrastra tu archivo .csv aquí para procesarlo directamente.';
-
-        // Agrupar en dropzone
-        dropzone.appendChild(fileInput);
-        dropzone.appendChild(flexRow);
-        dropzone.appendChild(dropMsg);
+        const dropzone = document.createElement('div');
+        dropzone.className = 'etl-dropzone';
         
-        cardLocalContent.appendChild(dropzone);
-
-        // Fallback for Touch (El CSS de .etl-dropzone lo oculta, así que los botones se pintan fuera también para móvil si es necesario)
-        // Wait, si el CSS de .etl-dropzone hace "display:none", flexRow (botones) se oculta en móvil.
-        // Solución: Dejar flexRow fuera del dropzone visual, y que el dropzone sea solo un área complementaria
-        // Refinamiento D4: "Dropzone complementa botón CSV"
-        const mobileContainer = document.createElement('div');
-        mobileContainer.appendChild(fileInput);
-        mobileContainer.appendChild(flexRow); // los botones siempre visibles
-
-        dropzone.innerHTML = ''; // Limpiamos lo previo
-        dropzone.appendChild(dropMsg); // Solo el mensaje
-
-        cardLocalContent.appendChild(mobileContainer);
-        cardLocalContent.appendChild(dropzone); // Aparece debajo solo en desktop (via CSS pointer:fine)
-
-        // Asigna eventos dragover del dropzone al mobileContainer as well, so it feels natural.
-        const addDragEvents = (el) => {
-            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-                el.addEventListener(eventName, e => {
-                    e.preventDefault();
-                    e.stopPropagation();
+        if (!isTouchScreen) {
+            // Desktop Drag events
+            const addDragEvents = (el) => {
+                ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                    el.addEventListener(eventName, e => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                    });
                 });
-            });
-            el.addEventListener('dragover', () => dropzone.classList.add('dragover'));
-            el.addEventListener('dragleave', () => dropzone.classList.remove('dragover'));
-            el.addEventListener('drop', (e) => {
-                dropzone.classList.remove('dragover');
-                const file = e.dataTransfer.files[0];
-                if (file) handleFile({ target: { files: [file] } });
-            });
-        };
-        addDragEvents(dropzone);
+                
+                el.addEventListener('dragover', () => dropzone.classList.add('dragover'));
+                el.addEventListener('dragleave', () => dropzone.classList.remove('dragover'));
+                el.addEventListener('drop', (e) => {
+                    dropzone.classList.remove('dragover');
+                    const file = e.dataTransfer.files[0];
+                    if (file) handleFile({ target: { files: [file] } });
+                });
+            };
+            
+            addDragEvents(dropzone);
+            
+            const dropMsg = document.createElement('div');
+            dropMsg.className = 'etl-dropzone-msg';
+            dropMsg.textContent = 'Arrastra tu archivo .csv aquí para procesarlo directamente.';
+            dropzone.appendChild(dropMsg);
+        }
+
+        // Fallback for Touch: Los botones se pintan fuera para asegurar interacción incondicional
+        const actionContainer = document.createElement('div');
+        actionContainer.appendChild(fileInput);
+        actionContainer.appendChild(flexRow);
+
+        cardLocalContent.appendChild(actionContainer);
+        if (!isTouchScreen) {
+            cardLocalContent.appendChild(dropzone); // Solo se anexa al DOM si no es touch
+        }
 
         cardLocal.appendChild(cardLocalHeader);
         cardLocal.appendChild(cardLocalContent);
