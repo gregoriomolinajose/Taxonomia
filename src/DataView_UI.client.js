@@ -746,11 +746,34 @@
                         window.DataAPI.call('API_Universal_Router', 'etl_extract_sheet_data', entity, { url: url })
                             .then(res => {
                                 loading.dismiss();
-                                modal.dismiss();
                                 if (res && res.data) {
-                                    window._etlPayloadCache = res.data; 
-                                    console.log('[ETL] Extracción 100% Finalizada. Registros capturados: ', res.data);
-                                    _showToast(`¡${res.data.length} Registros Obtenidos Exitosamente! (Revisar Consola)`, 'success');
+                                    if (window.DataEngine_ETL && window.DataEngine_ETL.processPayload) {
+                                        let chunkLoadingUi;
+                                        window.DataEngine_ETL.processPayload(res.data, entity, function onProgress(chunkIndex, totalChunks, isDone) {
+                                            if (chunkIndex === 1 && !chunkLoadingUi) {
+                                                chunkLoadingUi = document.createElement('ion-loading');
+                                                document.body.appendChild(chunkLoadingUi);
+                                                chunkLoadingUi.present();
+                                            }
+                                            if (chunkLoadingUi) {
+                                                requestAnimationFrame(() => {
+                                                    chunkLoadingUi.message = `Procesando Lote ${chunkIndex} de ${totalChunks}...`;
+                                                });
+                                                if (isDone) chunkLoadingUi.dismiss();
+                                            }
+                                        }).then(() => {
+                                            modal.dismiss();
+                                            if (window.DataStore) window.DataStore.set(entity, null); // Invocar Soft-Reload
+                                            _showToast(`¡Importación Nativa de ${res.data.length} registros finalizada!`, 'success');
+                                        }).catch(err => {
+                                            if (chunkLoadingUi) chunkLoadingUi.dismiss();
+                                            console.error('[Chunker Error]', err);
+                                            _showToast(`Fallo crítico inyectando lote: ${err.message}`, 'danger');
+                                        });
+                                    } else {
+                                        modal.dismiss();
+                                        _showToast(`Se extrajeron ${res.data.length} registros pero el Chunker no está cargado.`, 'warning');
+                                    }
                                 }
                             })
                             .catch(err => {
