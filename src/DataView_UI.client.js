@@ -752,6 +752,7 @@
                             if (res && res.data) {
                                 window.UI_ETL_Modal.updateUrlField(modal, res.data);
                                 _showToast('¡Plantilla Creada en tu Drive! Pega tus datos en ella.', 'success');
+                                window.open(res.data, '_blank'); // Redirigir al usuario proactivamente
                             }
                         })
                         .catch(err => {
