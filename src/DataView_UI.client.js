@@ -732,6 +732,8 @@
             if (!window.UI_ETL_Modal) {
                 return _showToast('Módulo ETL no cargado.', 'danger');
             }
+            
+            // Presentamos la instancia
             window.UI_ETL_Modal.present(_state.entityName, {
                 onDriveSync: async function(entity, url, modal) {
                     let loading;
@@ -779,7 +781,9 @@
                     }
                 },
                 onGenerateTemplate: async function(entity, modal) {
-                    if (document.querySelector('ion-loading.loader-etl')) return; // Bloquear race-condition (Debounce)
+                    // Limpieza proactiva de loaders huérfanos que provocan el "bloqueo fantasma"
+                    document.querySelectorAll('ion-loading.loader-etl').forEach(el => el.remove());
+                    
                     const loading = document.createElement('ion-loading');
                     loading.className = 'loader-etl';
                     loading.message = 'Forjando Plantilla Nativa...';
@@ -790,6 +794,8 @@
                         .then(res => {
                             loading.dismiss();
                             if (res && res.data) {
+                                // Guardado local de la URL temporal para esta vista
+                                _state.lastGeneratedEtlUrl = res.data;
                                 window.UI_ETL_Modal.updateUrlField(res.data);
                                 _showToast('¡Plantilla Creada en tu Drive! Pega tus datos en ella.', 'success');
                                 window.open(res.data, '_blank'); // Redirigir al usuario proactivamente
@@ -808,6 +814,15 @@
                     _importCSV(event); // Mantenemos el baseline Legacy intacto
                 }
             });
+
+            // Si el estado guarda que ya se generó una plantilla en esta ventana sin recargar, la inyectamos auto.
+            if (_state.lastGeneratedEtlUrl) {
+                setTimeout(() => {
+                    if (window.UI_ETL_Modal && window.UI_ETL_Modal.updateUrlField) {
+                        window.UI_ETL_Modal.updateUrlField(_state.lastGeneratedEtlUrl);
+                    }
+                }, 150);
+            }
         }
 
         /* ────────────────────────────────────────────
