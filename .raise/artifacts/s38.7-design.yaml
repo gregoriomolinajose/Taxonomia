@@ -1,0 +1,54 @@
+artifact_type: story-design
+version: 1
+skill: rai-story-design
+created: '2026-04-16T16:19:00Z'
+story: 'S38.7'
+epic: 'E38'
+content:
+  summary: >
+    El modal ETL fue construido como MVP con estilos inline hardcodeados.
+    Este rediseño alinea el componente al Design System centralizado (tokens CSS),
+    añade feedback de progreso visual y propone 5 nuevos tokens reutilizables.
+  complexity: moderate
+  acceptance_criteria:
+    - id: AC1
+      description: 'Cero instancias de element.style.* en UI_ETL_Modal.client.js'
+      verifiable: true
+    - id: AC2
+      description: 'Todas las clases CSS nuevas usan exclusivamente tokens del Design System'
+      verifiable: true
+    - id: AC3
+      description: 'Indicador de progreso visible durante operaciones de chunking'
+      verifiable: true
+    - id: AC4
+      description: 'Dark Mode y Light Mode renderizan correctamente sin CSS overrides'
+      verifiable: true
+    - id: AC5
+      description: 'Zona de drag-and-drop visual para sección CSV (SHOULD)'
+      verifiable: true
+    - id: AC6
+      description: 'Toasts de error mapean al errorType semántico de S38.6 (SHOULD)'
+      verifiable: true
+  integration_points:
+    - module: 'UI_ETL_Modal'
+      change_type: modification
+      files: ['src/UI_ETL_Modal.client.js']
+    - module: 'CSS_App'
+      change_type: modification
+      files: ['src/CSS_App.html']
+    - module: 'CSS_DesignSystem'
+      change_type: modification
+      files: ['src/CSS_DesignSystem.html']
+  decisions:
+    - id: D1
+      choice: 'Clases CSS semánticas con prefijo .etl-* en CSS_App.html'
+      rationale: 'Mantener colocación con estilos de componentes existentes (.dv-*, .drawer-*)'
+      alternatives_considered: ['Archivo CSS separado', 'Shadow DOM encapsulado']
+    - id: D2
+      choice: '5 nuevos tokens en CSS_DesignSystem.html'
+      rationale: 'Tokens genéricos reutilizables (progress, dropzone, surface-hover) que benefician a futuros componentes'
+      alternatives_considered: ['Tokens solo para ETL (descartado por especificidad excesiva)']
+refs:
+  backlog_item: 'S38.7'
+  epic_scope: 'work/epics/e38-hub-ingesta-inteligente/scope.md'
+metadata: {}
