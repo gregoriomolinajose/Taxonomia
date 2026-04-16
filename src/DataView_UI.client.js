@@ -797,8 +797,13 @@
                                 // H10: Guardado local de la URL temporal delegado nativamente al diccionario Cache del UI_ETL_Modal
                                 window.UI_ETL_Modal.urlCache[entity] = res.data;
                                 window.UI_ETL_Modal.updateUrlField(res.data);
-                                _showToast('¡Plantilla Creada en tu Drive! Pega tus datos en ella.', 'success');
-                                window.open(res.data, '_blank'); // Redirigir al usuario proactivamente
+                                
+                                const newWin = window.open(res.data, '_blank'); // Redirigir al usuario proactivamente
+                                if (newWin) {
+                                    _showToast('¡Plantilla Creada en tu Drive! Pega tus datos en ella.', 'success');
+                                } else {
+                                    _showToast('Plantilla creada, pero tu navegador bloqueó la pestaña. Usa la opción "Abrir archivo" para acceder a ella.', 'warning');
+                                }
                             }
                         })
                         .catch(err => {
@@ -815,14 +820,18 @@
                 }
             });
 
-            // Si el state del sub-módulo guarda que ya se generó una plantilla en esta pre-sesión para la entidad, evitamos sobrecraga de red
+            // Si el state del sub-módulo guarda que ya se generó una plantilla en esta pre-sesión, evitamos sobrecarga de red de forma reactiva al ciclo de vida
             const cachedUrl = window.UI_ETL_Modal.urlCache[_state.entityName];
             if (cachedUrl) {
-                setTimeout(() => {
-                    if (window.UI_ETL_Modal && window.UI_ETL_Modal.updateUrlField) {
-                        window.UI_ETL_Modal.updateUrlField(cachedUrl);
-                    }
-                }, 150);
+                // H3 Quality Replace: Usar requestAnimationFrame para no desestabilizar hilos bloqueados 
+                // o iterar sobre el elemento en sí post-append. Ya que modalPromise no está expuesto aquí.
+                requestAnimationFrame(() => {
+                    requestAnimationFrame(() => {
+                        if (window.UI_ETL_Modal && window.UI_ETL_Modal.updateUrlField) {
+                            window.UI_ETL_Modal.updateUrlField(cachedUrl);
+                        }
+                    });
+                });
             }
         }
 
