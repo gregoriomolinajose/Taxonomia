@@ -20,6 +20,7 @@ Resolver bugs funcionales, deuda técnica o defectos recién detectados por el d
 | ID | Nombre | Estado |
 |---|---|---|
 | S40.1 | Bug Fix: Drawer Header ReferenceError (WSOD) | DONE |
+| S40.2 | E2E Playwright: Tests de Resiliencia Interactiva | TODO |
 
 ---
 
