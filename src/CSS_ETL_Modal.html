@@ -260,6 +260,9 @@ ion-modal.etl-central-modal {
 .etl-btn-execute {
   margin-top: 0;
   --border-radius: var(--rounded-sm, 8px);
+  font-family: var(--sys-font-primary, inherit) !important;
+  font-weight: 600;
+  letter-spacing: 0.02em;
 }
 .etl-bottom-exec {
   display: flex;
@@ -304,6 +307,11 @@ ion-modal.etl-central-modal {
   }
   .etl-dropzone.dragover, .etl-dropzone:hover {
     background-color: rgba(28, 66, 232, 0.05);
+  }
+  .etl-dropzone.filled {
+    border-style: solid;
+    border-color: var(--ion-color-success, #0abf4f);
+    background-color: rgba(10, 191, 79, 0.05);
   }
   .etl-dropzone-msg {
     margin-top: var(--spacing-3, 12px);

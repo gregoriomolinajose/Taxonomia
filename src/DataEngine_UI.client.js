@@ -63,7 +63,7 @@
                 return;
             }
             
-            const SYS_COLS = window.CORE_SYS_FIELDS || [];
+            const SYS_COLS = window.CORE_SYS_FIELDS || ['created_at', 'create_by', 'created_by', 'updated_at', 'update_at', 'update_by', 'deleted_at', 'deleted_by', 'version', '_version'];
             // Omitir campos de sistema explícitamente para asegurar que la descarga sirva como "Plantilla Limpia"
             const visibleCols = columns.filter(c => c.visible && !SYS_COLS.includes(c.key || c.name));
             

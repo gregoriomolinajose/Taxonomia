@@ -90,7 +90,6 @@ window.UI_ETL_Modal = (function() {
                 </div>
             </div>
             <ion-icon class="etl-radio-card-check" name="checkmark-circle"></ion-icon>
-            <div class="etl-badge-recommended">Recomendado</div>
         `;
 
         // CSV Card
@@ -109,18 +108,11 @@ window.UI_ETL_Modal = (function() {
 
         radioGrid.appendChild(radioSheets);
         radioGrid.appendChild(radioCSV);
-        container.appendChild(radioGrid);
-
         // --- DIVIDER: Pasos para importar ---
-        const hrDiv = document.createElement('hr');
-        hrDiv.style.margin = '16px 0';
-        hrDiv.style.border = 'none';
-        hrDiv.style.borderTop = '1px solid var(--ion-color-step-100, #E0E0E0)';
-        const sectionTitle2 = document.createElement('div');
-        sectionTitle2.className = 'etl-section-title';
-        sectionTitle2.innerHTML = `PASOS PARA IMPORTAR`;
-        container.appendChild(hrDiv);
-        container.appendChild(sectionTitle2);
+        if (window.UI_Factory && window.UI_Factory.buildDivider) {
+            container.appendChild(window.UI_Factory.buildDivider({ label: 'PASOS PARA IMPORTAR' }));
+        }
+
 
         // --- SECTION 1: Google Sheets View ---
         const viewSheets = document.createElement('div');
@@ -320,12 +312,18 @@ window.UI_ETL_Modal = (function() {
             cachedFile = file;
             btnSyncCsv.disabled = false;
             
-            // Visual Update
-            const msgs = modal.querySelectorAll('.etl-dropzone-msg');
-            msgs.forEach(msg => msg.textContent = `Archivo adjuntado: ${file.name}`);
+            // Visual Update para Mobile
             btnUploadMobile.innerHTML = `<ion-icon name="document-outline" slot="start"></ion-icon> ${file.name}`;
             
-            _showToast('Archivo preparado para importación.', 'success');
+            // Visual Update DropZone (Desktop)
+            dropzone.classList.add('filled');
+            dropzone.innerHTML = `
+                <ion-icon name="document-text" style="font-size: 32px; color: var(--ion-color-success)"></ion-icon>
+                <div class="etl-dropzone-msg" style="color: var(--ion-color-dark); font-weight: 600; margin-top: 8px;">${file.name}</div>
+                <div style="font-size: 11px; color: var(--ion-color-medium); margin-top: 4px;">Listo para importarse</div>
+            `;
+            
+            if (typeof _showToast !== 'undefined') _showToast('Archivo preparado para importación.', 'success');
         };
 
         fileInput.addEventListener('change', (e) => processFileSelect(e.target.files[0]));
