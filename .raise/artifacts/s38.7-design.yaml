@@ -1,22 +1,22 @@
 artifact_type: story-design
-version: 2
+version: 4
 skill: rai-story-design
-created: '2026-04-16T16:35:00Z'
+created: '2026-04-16T16:55:00Z'
 story: 'S38.7'
 epic: 'E38'
 content:
   summary: >
     Rediseño del modal ETL basado en auditoría UX (6 hallazgos) y resolución
     de 4 heurísticas del Architecture Review. CSS modularizado en archivo
-    propio, 7 clases semánticas (≥2 props cada una), 4 tokens nuevos,
-    drag-and-drop complementario, y barra de progreso visual.
+    propio, 7 clases semánticas (≥2 props cada una), drag-and-drop complementario,
+    barra de progreso visual y consumo directo de tokens globales.
   complexity: moderate
   acceptance_criteria:
     - id: AC1
       description: 'Cero instancias de element.style.* en UI_ETL_Modal.client.js (excepto width dinámico del progress bar)'
       verifiable: true
     - id: AC2
-      description: 'Todas las clases CSS usan exclusivamente tokens del Design System'
+      description: 'Todas las clases CSS usan exclusivamente tokens del Design System de manera directa'
       verifiable: true
     - id: AC3
       description: 'Indicador de progreso visible durante chunking'
@@ -43,9 +43,6 @@ content:
     - module: 'CSS_ETL_Modal'
       change_type: new
       files: ['src/CSS_ETL_Modal.html']
-    - module: 'CSS_DesignSystem'
-      change_type: modification
-      files: ['src/CSS_DesignSystem.html']
     - module: 'Index'
       change_type: modification
       files: ['src/Index.html']
@@ -59,9 +56,9 @@ content:
       rationale: 'H7: evitar wrappers vacíos sobre Ionic. Clases eliminadas que Ionic resuelve nativamente'
       alternatives_considered: ['11 clases (v1, descartado por over-abstraction)']
     - id: D3
-      choice: '4 tokens nuevos (eliminado --color-bg-surface-hover)'
-      rationale: 'H8: --dv-primary-light ya cubre la necesidad con opacidad similar'
-      alternatives_considered: ['5 tokens (v1, eliminado por redundancia)']
+      choice: 'Consumo directo de tokens globales sin inyectar alias'
+      rationale: 'H9 / H8: evitar polución del Design System con tokens para componentes específicos'
+      alternatives_considered: ['Crear alias globales (v3, descartado por AR H9)']
     - id: D4
       choice: 'Dropzone complementa botón CSV, no lo reemplaza'
       rationale: 'H6: ambas interacciones coexisten. Click para usuarios conservadores, drag para power users'
@@ -71,4 +68,4 @@ refs:
   epic_scope: 'work/epics/e38-hub-ingesta-inteligente/scope.md'
   architecture_review: 'AR-S38.7 (pre-implementation, inline)'
 metadata:
-  ar_resolutions: ['H6', 'H7', 'H8', 'H11']
+  ar_resolutions: ['H6', 'H7', 'H8', 'H9', 'H11']
