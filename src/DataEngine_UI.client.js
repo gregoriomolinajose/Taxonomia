@@ -122,14 +122,12 @@
                     let loadingUi;
                     
                     window.DataEngine_ETL.processFile(file, entityName, function onProgress(chunkIndex, totalChunks, isDone) {
+                        // Unificamos progreso en la barra visual del modal y omitimos blockeos innecesarios en pantalla (H10)
+                        if (window.UI_ETL_Modal && window.UI_ETL_Modal.updateProgress) {
+                            window.UI_ETL_Modal.updateProgress(chunkIndex, totalChunks);
+                        }
                         if (chunkIndex === 1 && onLoadingStart) {
                             onLoadingStart(); 
-                            loadingUi = document.getElementById('dv-import-loading');
-                        }
-                        if (loadingUi) {
-                            requestAnimationFrame(() => {
-                                loadingUi.message = `Procesando Lote ${chunkIndex} de ${totalChunks}...`;
-                            });
                         }
                     }).then(() => {
                         event.target.value = ''; // Reset input

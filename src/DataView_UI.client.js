@@ -747,26 +747,16 @@
                             .then(res => {
                                 loading.dismiss();
                                 if (res && res.data) {
-                                    if (window.DataEngine_ETL && window.DataEngine_ETL.processPayload) {
-                                        let chunkLoadingUi;
                                         window.DataEngine_ETL.processPayload(res.data, entity, function onProgress(chunkIndex, totalChunks, isDone) {
-                                            if (chunkIndex === 1 && !chunkLoadingUi) {
-                                                chunkLoadingUi = document.createElement('ion-loading');
-                                                document.body.appendChild(chunkLoadingUi);
-                                                chunkLoadingUi.present();
-                                            }
-                                            if (chunkLoadingUi) {
-                                                requestAnimationFrame(() => {
-                                                    chunkLoadingUi.message = `Procesando Lote ${chunkIndex} de ${totalChunks}...`;
-                                                });
-                                                if (isDone) chunkLoadingUi.dismiss();
+                                            // H10: No crear un ion-loading redundante apilándose frente al modal, usar el progreso nativo de la ventana modal
+                                            if (window.UI_ETL_Modal && window.UI_ETL_Modal.updateProgress) {
+                                                window.UI_ETL_Modal.updateProgress(chunkIndex, totalChunks);
                                             }
                                         }).then(() => {
                                             modal.dismiss();
                                             if (window.DataStore) window.DataStore.set(entity, null); // Invocar Soft-Reload
                                             _showToast(`¡Importación Nativa de ${res.data.length} registros finalizada!`, 'success');
                                         }).catch(err => {
-                                            if (chunkLoadingUi) chunkLoadingUi.dismiss();
                                             console.error('[Chunker Error]', err);
                                             _showToast(`Fallo crítico inyectando lote: ${err.message}`, 'danger');
                                         });

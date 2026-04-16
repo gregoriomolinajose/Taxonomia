@@ -1,5 +1,5 @@
 /* ============================================================
-   UI_ETL_Modal.client.js — Hub Visual de Ingesta Híbrida
+   UI_ETL_Modal.client.js — Hub Visual de Ingesta Híbrida (V4)
    ============================================================ */
 
 window.UI_ETL_Modal = (function() {
@@ -20,7 +20,8 @@ window.UI_ETL_Modal = (function() {
         const header = document.createElement('ion-header');
         const toolbar = document.createElement('ion-toolbar');
         const title = document.createElement('ion-title');
-        title.innerHTML = `<ion-icon name="cloud-upload-outline" style="vertical-align: middle; margin-right: 6px;"></ion-icon> Carga Masiva - ${window.formatEntityName ? window.formatEntityName(entityName) : entityName}`;
+        title.innerHTML = `<ion-icon name="cloud-upload-outline" class="ion-margin-end"></ion-icon> Carga Masiva - `;
+        title.appendChild(document.createTextNode(window.formatEntityName ? window.formatEntityName(entityName) : entityName));
         
         const buttonsEnd = document.createElement('ion-buttons');
         buttonsEnd.setAttribute('slot', 'end');
@@ -35,16 +36,39 @@ window.UI_ETL_Modal = (function() {
         
         // --- Body Container ---
         const container = document.createElement('div');
-        container.className = 'ion-padding';
-        container.style.display = 'flex';
-        container.style.flexDirection = 'column';
-        container.style.gap = '20px';
+        container.className = 'etl-body'; // Reemplazo de inline styles y ion-padding
+
+        // --- Progress Tracker (Oculto inicialmente) ---
+        const progressContainer = document.createElement('div');
+        progressContainer.id = 'etl-progress-container';
+        progressContainer.style.display = 'none'; // Estado base oculto en DOM
+        
+        const progressLabel = document.createElement('span');
+        progressLabel.id = 'etl-progress-label';
+        progressLabel.className = 'etl-progress-label';
+        progressLabel.textContent = 'Procesando Lote...';
+
+        const progressWrap = document.createElement('div');
+        progressWrap.className = 'etl-progress-wrap';
+
+        const progressBar = document.createElement('div');
+        progressBar.id = 'etl-progress-bar';
+        progressBar.className = 'etl-progress-bar';
+        // Width se controlará en tiempo de ejecución
+        
+        progressWrap.appendChild(progressBar);
+        progressContainer.appendChild(progressLabel);
+        progressContainer.appendChild(progressWrap);
 
         // --- SECTION 1: Google Workspace Sync ---
         const cardDrive = document.createElement('ion-card');
         cardDrive.className = 'ion-no-margin';
         const cardDriveHeader = document.createElement('ion-card-header');
-        cardDriveHeader.innerHTML = `<ion-card-title><span style="color: #0F9D58; font-weight: 900; margin-right: 5px; font-family: 'Product Sans', sans-serif;">G</span> <span style="color: #0F9D58; font-weight: 600;">Google Sheets</span> <span class="ion-text-medium">(Recomendado)</span></ion-card-title>`;
+        // Remueve styles hardcoded y delega a tokens/clases utilitarias de Ionic (color="success")
+        cardDriveHeader.innerHTML = `<ion-card-title>
+            <ion-text color="success"><strong>G</strong></ion-text> 
+            <ion-text color="success"><strong>Google Sheets</strong></ion-text> 
+            <span class="ion-text-medium">(Recomendado)</span></ion-card-title>`;
         
         const cardDriveContent = document.createElement('ion-card-content');
         cardDriveContent.innerHTML = `<p class="ion-margin-bottom ion-text-medium">Sincroniza directamente desde tu Drive. Omite dependencias offline y evita bloqueos de límite de Google.</p>`;
@@ -53,9 +77,7 @@ window.UI_ETL_Modal = (function() {
         btnGenTpl.setAttribute('expand', 'block');
         btnGenTpl.setAttribute('fill', 'outline');
         btnGenTpl.setAttribute('shape', 'round');
-        btnGenTpl.style.textTransform = 'none';
-        btnGenTpl.style.fontFamily = 'inherit';
-        btnGenTpl.style.fontWeight = '500';
+        btnGenTpl.className = 'etl-btn-action';
         btnGenTpl.innerHTML = `<ion-icon name="document" slot="start"></ion-icon> 1. Auto-Generar Plantilla en Drive`;
         btnGenTpl.addEventListener('click', () => {
             if (options && typeof options.onGenerateTemplate === 'function') {
@@ -66,7 +88,7 @@ window.UI_ETL_Modal = (function() {
         const inputItem = document.createElement('ion-item');
         inputItem.className = 'ion-margin-top';
         inputItem.setAttribute('fill', 'solid');
-        inputItem.style.borderRadius = '8px';
+        inputItem.style.borderRadius = 'var(--rounded-sm, 8px)'; // Manteniendo scope acoplado a la API Ionic
         const urlInput = document.createElement('ion-input');
         urlInput.id = 'etl-drive-url';
         urlInput.setAttribute('label', '2. URL o ID de Google Sheet');
@@ -77,10 +99,7 @@ window.UI_ETL_Modal = (function() {
         const btnSync = document.createElement('ion-button');
         btnSync.setAttribute('expand', 'block');
         btnSync.setAttribute('shape', 'round');
-        btnSync.style.textTransform = 'none';
-        btnSync.style.fontFamily = 'inherit';
-        btnSync.style.fontWeight = '500';
-        btnSync.className = 'ion-margin-top';
+        btnSync.className = 'etl-btn-action ion-margin-top';
         btnSync.innerHTML = `<ion-icon name="sync-circle-outline" slot="start"></ion-icon> 3. Ejecutar Extracción Híbrida`;
         btnSync.addEventListener('click', () => {
             const val = urlInput.value;
@@ -107,29 +126,26 @@ window.UI_ETL_Modal = (function() {
         const cardLocalContent = document.createElement('ion-card-content');
         cardLocalContent.innerHTML = `<p class="ion-margin-bottom ion-text-medium">Procesa un archivo local sin pasar por los servidores de nube nativos.</p>`;
         
-        const flexRow = document.createElement('div');
-        flexRow.style.display = 'flex';
-        flexRow.style.gap = '10px';
-
         const fileInput = document.createElement('input');
         fileInput.setAttribute('type', 'file');
         fileInput.setAttribute('accept', '.csv');
         fileInput.style.display = 'none';
-        fileInput.addEventListener('change', (e) => {
+        
+        const handleFile = (evtOrFile) => {
             if (options && typeof options.onLocalUpload === 'function') {
-                options.onLocalUpload(entityName, e, modal);
+                options.onLocalUpload(entityName, evtOrFile, modal);
             }
-        });
+        };
+
+        fileInput.addEventListener('change', (e) => handleFile(e));
 
         const btnDownloadCsv = document.createElement('ion-button');
         btnDownloadCsv.setAttribute('fill', 'clear');
         btnDownloadCsv.setAttribute('shape', 'round');
-        btnDownloadCsv.style.textTransform = 'none';
-        btnDownloadCsv.style.fontFamily = 'inherit';
-        btnDownloadCsv.style.fontWeight = '500';
-        btnDownloadCsv.style.flex = "1";
+        btnDownloadCsv.className = 'etl-btn-action';
         btnDownloadCsv.innerHTML = `<ion-icon name="download-outline" slot="start"></ion-icon> Bajar Template`;
-        btnDownloadCsv.addEventListener('click', () => {
+        btnDownloadCsv.addEventListener('click', (e) => {
+             e.stopPropagation();
              if (options && typeof options.onDownloadCSVTpl === 'function') {
                 options.onDownloadCSVTpl(entityName);
              }
@@ -139,22 +155,68 @@ window.UI_ETL_Modal = (function() {
         btnUploadCsv.setAttribute('fill', 'outline');
         btnUploadCsv.setAttribute('color', 'secondary');
         btnUploadCsv.setAttribute('shape', 'round');
-        btnUploadCsv.style.textTransform = 'none';
-        btnUploadCsv.style.fontFamily = 'inherit';
-        btnUploadCsv.style.fontWeight = '500';
-        btnUploadCsv.style.flex = "1";
+        btnUploadCsv.className = 'etl-btn-action';
         btnUploadCsv.innerHTML = `<ion-icon name="upload-outline" slot="start"></ion-icon> Adjuntar .CSV`;
-        btnUploadCsv.addEventListener('click', () => fileInput.click());
+        btnUploadCsv.addEventListener('click', (e) => {
+            e.stopPropagation();
+            fileInput.click();
+        });
 
+        const flexRow = document.createElement('div');
+        flexRow.className = 'etl-btn-row';
         flexRow.appendChild(btnDownloadCsv);
         flexRow.appendChild(btnUploadCsv);
         
-        cardLocalContent.appendChild(fileInput);
-        cardLocalContent.appendChild(flexRow);
+        // H6: Dropzone que complementa al botón CSV con affordance
+        // Optimization (AR): Evitar instanciar listeners y nodos de Drag&Drop si la pantalla es estrictamente táctil
+        const isTouchScreen = !!(window.matchMedia && window.matchMedia("(hover: none) and (pointer: coarse)").matches);
+        
+        const dropzone = document.createElement('div');
+        dropzone.className = 'etl-dropzone';
+        
+        if (!isTouchScreen) {
+            // Desktop Drag events
+            const addDragEvents = (el) => {
+                ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                    el.addEventListener(eventName, e => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                    });
+                });
+                
+                el.addEventListener('dragover', () => dropzone.classList.add('dragover'));
+                el.addEventListener('dragleave', () => dropzone.classList.remove('dragover'));
+                el.addEventListener('drop', (e) => {
+                    dropzone.classList.remove('dragover');
+                    const file = e.dataTransfer.files[0];
+                    if (file) handleFile({ target: { files: [file] } });
+                });
+            };
+            
+            addDragEvents(dropzone);
+            
+            const dropMsg = document.createElement('div');
+            dropMsg.className = 'etl-dropzone-msg';
+            dropMsg.textContent = 'Arrastra tu archivo .csv aquí para procesarlo directamente.';
+            dropzone.appendChild(dropMsg);
+        }
+
+        // Fallback for Touch: Los botones se pintan fuera para asegurar interacción incondicional
+        const actionContainer = document.createElement('div');
+        actionContainer.appendChild(fileInput);
+        actionContainer.appendChild(flexRow);
+
+        cardLocalContent.appendChild(actionContainer);
+        if (!isTouchScreen) {
+            cardLocalContent.appendChild(dropzone); // Solo se anexa al DOM si no es touch
+        }
+
         cardLocal.appendChild(cardLocalHeader);
         cardLocal.appendChild(cardLocalContent);
 
         // --- TAB SEGMENTATION ---
+        // Se cambió ion-segment style a solo className si queremos inyectar un estilo. 
+        // Ionic resuelve el background nativo.
         const segment = document.createElement('ion-segment');
         segment.value = 'drive';
         segment.className = 'ion-margin-bottom';
@@ -182,6 +244,7 @@ window.UI_ETL_Modal = (function() {
 
         // Assembly
         container.appendChild(segment);
+        container.appendChild(progressContainer);
         container.appendChild(cardDrive);
         container.appendChild(cardLocal);
         
@@ -207,9 +270,28 @@ window.UI_ETL_Modal = (function() {
 
     return {
         present: present,
-        updateUrlField: function(modalEl, urlStr) {
-            const input = modalEl.querySelector('#etl-drive-url');
+        updateUrlField: function(urlStr) {
+            const input = document.getElementById('etl-drive-url');
             if (input) input.value = urlStr;
+        },
+        updateProgress: function(chunkIndex, totalChunks) {
+            const progressContainer = document.getElementById('etl-progress-container');
+            const progressBar = document.getElementById('etl-progress-bar');
+            const progressLabel = document.getElementById('etl-progress-label');
+            
+            if (progressContainer && progressBar && progressLabel) {
+                progressContainer.style.display = 'block';
+                const pc = (chunkIndex / totalChunks) * 100;
+                progressBar.style.width = `${pc}%`;
+                progressLabel.textContent = `Procesando Lote ${chunkIndex} de ${totalChunks} (${Math.round(pc)}%)`;
+                
+                if (chunkIndex >= totalChunks) {
+                    setTimeout(() => {
+                        progressContainer.style.display = 'none';
+                        progressBar.style.width = '0%';
+                    }, 2000);
+                }
+            }
         }
     };
 })();

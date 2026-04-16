@@ -25,6 +25,7 @@ Transicionar el sistema de importaciones planas CSV hacia un flujo integral (Mod
 - **S38.4**: [x] Tolerancia e Ignorado de Inconsistencias (Omitir Cabeceras de Auditoría).
 - **S38.5**: [x] Hardening de DB Batch y Re-hidratación Automática para `Persona` (Workspace Lookup).
 - **S38.6**: [x] Cobertura de Pruebas Integrales (Unitarias, Integración y E2E) para Hub Ingesta.
+- **S38.7**: [ ] Revisión UI/UX y Propuesta de Rediseño del Modal ETL de Carga Masiva.
 
 ## Integraciones y Mejoras Transversales
 - **Error Categorization (S38.6)**: Se implementó un mapeo semántico de códigos de error dentro del `API_Universal`, de modo que el Front-End consuma un `errorType` estandarizado (`BAD_REQUEST`, `UNAUTHORIZED`, `CONCURRENCY`, `GENERAL`) en lugar de fallos nativos no-manejables de Google Apps Script. Esto permite mostrar Retroalimentación visual proactiva en Toasts.
