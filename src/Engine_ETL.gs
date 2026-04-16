@@ -75,9 +75,71 @@ var Engine_ETL = (function() {
     return ss.getUrl();
   }
 
+  /**
+   * Lee la sábana de datos crudos de una hoja de cálculo en Drive.
+   * Filtra las filas estériles e inyecta las cabeceras como keys.
+   * 
+   * @param {string} entityName 
+   * @param {string} urlOrId 
+   * @returns {Array<Object>} Arreglo de Registros
+   */
+  function extractDataFromDrive(entityName, urlOrId) {
+    if (!urlOrId || urlOrId.trim() === '') {
+      throw new Error("URL o ID ausente.");
+    }
+    
+    // Regex puro nativo JS
+    let sheetId = urlOrId.trim();
+    const match = urlOrId.match(/\/d\/([a-zA-Z0-9-_]+)/);
+    if (match && match[1]) {
+      sheetId = match[1];
+    }
+
+    let ss;
+    try {
+      ss = SpreadsheetApp.openById(sheetId);
+    } catch (e) {
+      throw new Error("El archivo introducido es inaccesible o no es una Hoja de Cálculo válida de Google Sheets. Verifica los permisos de Drive.");
+    }
+    
+    const sheet = ss.getSheets()[0]; // Leemos la hoja maestra / primera posición
+    const data = sheet.getDataRange().getValues();
+    
+    if (!data || data.length < 2) {
+      throw new Error("La hoja de cálculo está vacía o carece de registros.");
+    }
+    
+    const headers = data[0]; // Fila 0 es el Diccionario de Cabeceras
+    const records = [];
+    
+    for (let i = 1; i < data.length; i++) {
+        const row = data[i];
+        const record = {};
+        let isEmptyRow = true;
+        
+        for (let j = 0; j < headers.length; j++) {
+            const header = headers[j];
+            if (!header || header.trim() === '') continue; // Cabecera vacía no sirve
+            
+            const value = row[j];
+            if (value !== undefined && value !== null && value !== '') {
+               isEmptyRow = false;
+            }
+            record[header] = value;
+        }
+        
+        if (!isEmptyRow) {
+            records.push(record);
+        }
+    }
+    
+    return records;
+  }
+
   // --- Public API ---
   return {
-    generateDriveTemplate: generateDriveTemplate
+    generateDriveTemplate: generateDriveTemplate,
+    extractDataFromDrive: extractDataFromDrive
   };
 
 })();
