@@ -31,6 +31,7 @@
 | E31| Schema Governance Studio                              | ✅ Complete  | Catálogos de Presets/Templates y Blueprint Composer multi-contexto   | Alta     |
 | E32| Bug Bash: Visual & Persistence                        | ✅ Complete  | Fix: Carga en caliente reactiva y Persistencia en Engine DB          | Alta     |
 | E33| Ghost Stealing Resilience Bug Bash                      | ✅ Complete  | Mitigar omisión de hidratación SCD-2 de relaciones en subgrids 1:N   | Máxima   |
+| E38| Hub de Ingesta Inteligente y Sincronización             | ✅ Complete  | Modal Híbrido ETL, Drive Native Provider, Duplicate Tolerable Batch  | Alta     |
 
 ## Parking Lot / Deuda Técnica (Post-Epic 11)
 
