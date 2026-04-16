@@ -18,21 +18,6 @@ global.APP_SCHEMAS = {
     Persona: { primaryKey: 'id_persona', fields: [] }
 };
 
-global.Session = {
-    getActiveUser: vi.fn().mockReturnValue({
-        getEmail: vi.fn().mockReturnValue('admin@sys.com')
-    })
-};
-
-global.Engine_ABAC = {
-    resolveTopologyFor: vi.fn().mockReturnValue({ permissions: { 'Persona': 'ALL' } }),
-    validatePermission: vi.fn().mockReturnValue(true) // Permitimos todo para el router en este mock
-};
-
-global.getAppSchema = (entityName) => global.APP_SCHEMAS[entityName] || { primaryKey: 'id', fields: [] };
-global.Logger = { log: vi.fn() };
-global._generateShortUUID = vi.fn().mockReturnValue('UUID1234');
-
 // Import the module under test
 const { API_Universal_Router } = require('../src/API_Universal.gs');
 

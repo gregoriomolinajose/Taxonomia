@@ -23,8 +23,10 @@ const mockAPP_SCHEMAS = {
 };
 
 // Injection into Global Scope for Node
-global.APP_SCHEMAS = mockAPP_SCHEMAS;
-global.Logger = { log: vi.fn() };
+global.APP_SCHEMAS = {
+    ...global.APP_SCHEMAS,
+    ...mockAPP_SCHEMAS
+};
 
 // Mock DB Storage to emulate list()
 const dbPersonaRows = [
