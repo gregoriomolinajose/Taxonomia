@@ -226,3 +226,8 @@ var Engine_ETL = (function() {
   };
 
 })();
+
+// Export for Node.js environments (Jest)
+if (typeof module !== 'undefined') {
+  module.exports = { Engine_ETL };
+}
