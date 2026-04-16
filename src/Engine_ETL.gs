@@ -151,10 +151,27 @@ var Engine_ETL = (function() {
        const uniqueFields = (schema && schema.fields) ? schema.fields.filter(f => f.unique === true).map(f => f.name) : [];
        
        let dbRowsForLookup = null;
+       const lookupMaps = {}; // { 'email': { 'test@...': row }, 'numero_empleado': { '123': row } }
+
        if (uniqueFields.length > 0 || entityName === 'Persona') {
            if (typeof Engine_DB !== 'undefined') {
               const listResult = Engine_DB.list(entityName, 'objects'); // Obtenemos contexto en caché O(1)
               dbRowsForLookup = listResult.rows || [];
+              
+              // Inicializar diccionarios por cada Unique Field
+              uniqueFields.forEach(uf => { lookupMaps[uf] = {}; });
+              
+              // Pre-indexar O(M)
+              if (uniqueFields.length > 0) {
+                  dbRowsForLookup.forEach(row => {
+                      uniqueFields.forEach(uf => {
+                          if (row[uf]) {
+                              const normKey = String(row[uf]).trim().toLowerCase();
+                              lookupMaps[uf][normKey] = row;
+                          }
+                      });
+                  });
+              }
            }
        }
 
@@ -180,22 +197,22 @@ var Engine_ETL = (function() {
                }
            }
 
-           // B. Deduplicación Pasiva (Identity Resolution) para sobreescribir inserciones parasitarias
-           if (uniqueFields.length > 0 && Array.isArray(dbRowsForLookup)) {
-               for (let i = 0; i < dbRowsForLookup.length; i++) {
-                   const row = dbRowsForLookup[i];
-                   let isMatch = false;
-                   for (let j = 0; j < uniqueFields.length; j++) {
-                       const uField = uniqueFields[j];
-                       if (payload[uField] && row[uField] && String(payload[uField]).trim().toLowerCase() === String(row[uField]).trim().toLowerCase()) {
-                           isMatch = true;
-                           break;
+           // B. Deduplicación Pasiva (Identity Resolution) O(1) Search Mode
+           if (uniqueFields.length > 0) {
+               let matchedRow = null;
+               for (let j = 0; j < uniqueFields.length; j++) {
+                   const uField = uniqueFields[j];
+                   if (payload[uField]) {
+                       const searchKey = String(payload[uField]).trim().toLowerCase();
+                       if (lookupMaps[uField] && lookupMaps[uField][searchKey]) {
+                           matchedRow = lookupMaps[uField][searchKey];
+                           break; // Un solo match lógico es suficiente para sobreescribir la PK
                        }
                    }
-                   if (isMatch) {
-                       payload[pkField] = row[pkField]; // Subsumimos el Temp UUID y forzamos modo UPDATE en el Adapter
-                       break;
-                   }
+               }
+               
+               if (matchedRow) {
+                   payload[pkField] = matchedRow[pkField]; // Subsumimos el Temp UUID y forzamos modo UPDATE
                }
            }
        });
