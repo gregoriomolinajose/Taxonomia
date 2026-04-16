@@ -148,9 +148,11 @@ window.UI_ETL_Modal = (function() {
             <div class="etl-step-content">
                 <div class="etl-step-title">Pegar URL, ID de la hoja</div>
                 <div class="etl-step-desc">Copia el enlace desde la barra de tu navegador o inspecciona directamente desde google drive.</div>
-                
                 <ion-item class="etl-input-item" lines="none">
                     <ion-input id="etl-drive-url" placeholder="https://docs..."></ion-input>
+                    <ion-button fill="clear" slot="end" color="primary" id="btn-open-drive-link" style="display:none; margin:0;" title="Abrir archivo">
+                        <ion-icon name="open-outline"></ion-icon>
+                    </ion-button>
                     <ion-button fill="clear" slot="end" color="medium" id="btn-inspect-drive" style="margin:0;">
                         <ion-icon name="search-outline"></ion-icon>
                     </ion-button>
@@ -272,6 +274,12 @@ window.UI_ETL_Modal = (function() {
         // ------------------ SHEETS LOGIC ------------------ //
         // Gen Template
         modal.querySelector('#btn-gen-tpl').addEventListener('click', () => {
+            const currentUrl = modal.querySelector('#etl-drive-url').value;
+            if (currentUrl && currentUrl.trim().startsWith('http')) {
+                window.open(currentUrl.trim(), '_blank');
+                return;
+            }
+
             if (options && typeof options.onGenerateTemplate === 'function') {
                 options.onGenerateTemplate(entityName, modal);
             }
@@ -292,7 +300,20 @@ window.UI_ETL_Modal = (function() {
             btnSyncDrive.disabled = val.length === 0;
             const hint = modal.querySelector('#etl-drive-hint');
             if (hint && val.length === 0) hint.style.display = 'none';
+            
+            const btnOpenLink = modal.querySelector('#btn-open-drive-link');
+            if (btnOpenLink) {
+                btnOpenLink.style.display = val.startsWith('http') ? 'block' : 'none';
+            }
         });
+
+        const btnOpenLink = modal.querySelector('#btn-open-drive-link');
+        if (btnOpenLink) {
+            btnOpenLink.addEventListener('click', () => {
+                const val = urlInput.value.trim();
+                if (val.startsWith('http')) window.open(val, '_blank');
+            });
+        }
 
         btnSyncDrive.addEventListener('click', () => {
             const val = urlInput.value;
