@@ -4,6 +4,10 @@
 
 window.UI_ETL_Modal = (function() {
 
+    const localCache = {
+        generatedUrls: {} // H10: Aislar caché de URLs a UI_ETL_Modal en lugar de DataView_UI
+    };
+
     function present(entityName, options) {
         // [QA Fix] Evitar DOM Node Leakage eliminando rastros previos
         const prevModal = document.getElementById('dv-etl-modal');
@@ -410,6 +414,7 @@ window.UI_ETL_Modal = (function() {
     }
 
     return {
+        urlCache: localCache.generatedUrls, // H10: Exposed cached urls map
         present: present,
         updateUrlField: function(urlStr) {
             const input = document.getElementById('etl-drive-url');

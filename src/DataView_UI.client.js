@@ -794,8 +794,8 @@
                         .then(res => {
                             loading.dismiss();
                             if (res && res.data) {
-                                // Guardado local de la URL temporal para esta vista
-                                _state.lastGeneratedEtlUrl = res.data;
+                                // H10: Guardado local de la URL temporal delegado nativamente al diccionario Cache del UI_ETL_Modal
+                                window.UI_ETL_Modal.urlCache[entity] = res.data;
                                 window.UI_ETL_Modal.updateUrlField(res.data);
                                 _showToast('¡Plantilla Creada en tu Drive! Pega tus datos en ella.', 'success');
                                 window.open(res.data, '_blank'); // Redirigir al usuario proactivamente
@@ -815,11 +815,12 @@
                 }
             });
 
-            // Si el estado guarda que ya se generó una plantilla en esta ventana sin recargar, la inyectamos auto.
-            if (_state.lastGeneratedEtlUrl) {
+            // Si el state del sub-módulo guarda que ya se generó una plantilla en esta pre-sesión para la entidad, evitamos sobrecraga de red
+            const cachedUrl = window.UI_ETL_Modal.urlCache[_state.entityName];
+            if (cachedUrl) {
                 setTimeout(() => {
                     if (window.UI_ETL_Modal && window.UI_ETL_Modal.updateUrlField) {
-                        window.UI_ETL_Modal.updateUrlField(_state.lastGeneratedEtlUrl);
+                        window.UI_ETL_Modal.updateUrlField(cachedUrl);
                     }
                 }, 150);
             }
