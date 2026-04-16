@@ -58,8 +58,8 @@
          * @param {Array} rows Datos a exportar.
          */
         exportCSV: function(entityName, columns, rows) {
-            if (!entityName || !rows || rows.length === 0) {
-                if (window.showGlobalToast) window.showGlobalToast('No hay datos para exportar.', 'warning');
+            if (!entityName || !columns || columns.length === 0) {
+                if (window.showGlobalToast) window.showGlobalToast('No hay configuración de columnas.', 'warning');
                 return;
             }
             

@@ -82,10 +82,14 @@ window.UI_ETL_Modal = (function() {
         const radioSheets = document.createElement('div');
         radioSheets.className = 'etl-radio-card active'; // Default
         radioSheets.innerHTML = `
+            <div class="etl-radio-content-row">
+                <div class="etl-radio-icon"><ion-icon name="document-text-outline"></ion-icon></div>
+                <div class="etl-radio-text-col">
+                    <div class="etl-radio-title">Google Sheets</div>
+                    <div class="etl-radio-desc">Sincroniza desde Drive en tiempo real</div>
+                </div>
+            </div>
             <ion-icon class="etl-radio-card-check" name="checkmark-circle"></ion-icon>
-            <div class="etl-radio-icon"><ion-icon name="document-text-outline"></ion-icon></div>
-            <div class="etl-radio-title">Google Sheets</div>
-            <div class="etl-radio-desc">Sincroniza desde Drive en tiempo real</div>
             <div class="etl-badge-recommended">Recomendado</div>
         `;
 
@@ -93,10 +97,14 @@ window.UI_ETL_Modal = (function() {
         const radioCSV = document.createElement('div');
         radioCSV.className = 'etl-radio-card csv';
         radioCSV.innerHTML = `
+            <div class="etl-radio-content-row">
+                <div class="etl-radio-icon"><ion-icon name="document-outline"></ion-icon></div>
+                <div class="etl-radio-text-col">
+                    <div class="etl-radio-title">Archivo CSV</div>
+                    <div class="etl-radio-desc">Carga desde tu computadora</div>
+                </div>
+            </div>
             <ion-icon class="etl-radio-card-check" name="checkmark-circle"></ion-icon>
-            <div class="etl-radio-icon"><ion-icon name="document-outline"></ion-icon></div>
-            <div class="etl-radio-title">Archivo CSV</div>
-            <div class="etl-radio-desc">Carga desde tu computadora</div>
         `;
 
         radioGrid.appendChild(radioSheets);
@@ -105,7 +113,9 @@ window.UI_ETL_Modal = (function() {
 
         // --- DIVIDER: Pasos para importar ---
         const hrDiv = document.createElement('hr');
-        hrDiv.className = 'ion-margin-vertical';
+        hrDiv.style.margin = '16px 0';
+        hrDiv.style.border = 'none';
+        hrDiv.style.borderTop = '1px solid var(--ion-color-step-100, #E0E0E0)';
         const sectionTitle2 = document.createElement('div');
         sectionTitle2.className = 'etl-section-title';
         sectionTitle2.innerHTML = `PASOS PARA IMPORTAR`;
@@ -165,7 +175,7 @@ window.UI_ETL_Modal = (function() {
                 <div class="etl-step-desc">Ejecuta la importación para realizar la carga de los registros.</div>
                 
                 <div class="etl-bottom-exec">
-                    <ion-button class="etl-btn-execute" fill="outline" id="btn-sync-drive">Cargar Registros</ion-button>
+                    <ion-button class="etl-btn-execute" fill="solid" color="primary" id="btn-sync-drive">Cargar Registros</ion-button>
                 </div>
             </div>
         `;
@@ -232,7 +242,7 @@ window.UI_ETL_Modal = (function() {
                 <div class="etl-step-desc">Ejecuta la importación para realizar la carga de los registros.</div>
                 
                 <div class="etl-bottom-exec">
-                    <ion-button class="etl-btn-execute" fill="outline" color="success" id="btn-sync-csv" disabled="true">Cargar Registros</ion-button>
+                    <ion-button class="etl-btn-execute" fill="solid" color="primary" id="btn-sync-csv" disabled="true">Cargar Registros</ion-button>
                 </div>
             </div>
         `;

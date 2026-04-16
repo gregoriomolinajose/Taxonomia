@@ -22,7 +22,10 @@ ion-modal.etl-central-modal {
 .etl-header {
   background: var(--ion-color-primary, #1c42e8);
   color: var(--ion-color-primary-contrast, #fff);
-  padding-top: calc(var(--ion-safe-area-top, 0px) + 6px);
+  padding: 12px 16px;
+  min-height: 56px;
+  display: flex;
+  align-items: center;
 }
 .etl-header-box {
   display: flex;
@@ -54,7 +57,7 @@ ion-modal.etl-central-modal {
   color: var(--ion-color-medium, #8C8C8C);
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  margin: var(--spacing-2, 8px) 0;
+  margin: 0;
   display: flex;
   align-items: center;
   gap: var(--spacing-2, 8px);
@@ -80,9 +83,16 @@ ion-modal.etl-central-modal {
   position: relative;
   transition: all 0.2s ease;
   background: var(--ion-card-background, #fff);
+}
+.etl-radio-content-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: var(--spacing-3, 12px);
+}
+.etl-radio-text-col {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
 }
 .etl-radio-card:hover {
   border-color: var(--ion-color-primary, #1c42e8);
@@ -93,25 +103,29 @@ ion-modal.etl-central-modal {
 }
 
 .etl-radio-card-check {
-  position: absolute;
-  top: var(--spacing-3, 12px);
-  right: var(--spacing-3, 12px);
-  color: var(--ion-color-primary, #1c42e8);
-  font-size: 20px;
   display: none;
 }
 .etl-radio-card.active .etl-radio-card-check {
   display: block;
+  position: absolute;
+  right: -8px;
+  top: -8px;
+  font-size: 24px;
+  color: var(--ion-color-success, #0abf4f);
+  background: #fff;
+  border-radius: 50%;
+  z-index: 5;
 }
 .etl-radio-icon {
   font-size: 20px;
-  margin-bottom: var(--spacing-2, 8px);
   color: var(--ion-color-success, #0abf4f);
   background: rgba(10, 191, 79, 0.1);
   padding: var(--spacing-2, 8px);
   border-radius: var(--rounded-sm, 8px);
-  display: inline-block;
-  line-height: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
 }
 
 .etl-radio-card.csv .etl-radio-icon {
@@ -119,11 +133,11 @@ ion-modal.etl-central-modal {
   background: rgba(28, 66, 232, 0.1);
 }
 .etl-radio-card.active.csv {
-  border-color: var(--ion-color-success, #0abf4f);
-  background: rgba(10, 191, 79, 0.02);
+  border-color: var(--ion-color-primary, #1c42e8);
+  background: rgba(28, 66, 232, 0.02);
 }
 .etl-radio-card.active.csv .etl-radio-card-check {
-  color: var(--ion-color-success, #0abf4f);
+  color: var(--ion-color-primary, #1c42e8);
 }
 
 .etl-radio-title {
@@ -138,8 +152,9 @@ ion-modal.etl-central-modal {
 }
 
 .etl-badge-recommended {
-  margin-left: auto;
-  display: inline-block;
+  position: absolute;
+  top: 12px;
+  right: 12px;
   background: transparent;
   color: var(--ion-color-medium, #8C8C8C);
   border: 1px solid var(--ion-color-step-100, #E0E0E0);
@@ -147,7 +162,6 @@ ion-modal.etl-central-modal {
   padding: 4px 8px;
   border-radius: 4px;
   font-weight: 600;
-  margin-top: 8px;
 }
 
 /* 4. VERTICAL STEPPER / LISTA DE VIÑETAS */
