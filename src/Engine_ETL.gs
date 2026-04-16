@@ -39,7 +39,9 @@ var Engine_ETL = (function() {
     const headers = [];
     schema.fields.forEach(f => {
       if (f.type === 'divider' || f.type === 'title') return;
-      if (f.type === 'hidden' && !f.primaryKey) return; // ocultos puramente técnicos
+      if (f.type === 'hidden') return;  // Omitir ocultos por defecto
+      if (f.primaryKey === true) return; // El Motor DB genera los UUID de PK solos, no se piden al usuario
+      if (f.type === 'relation' || f.isTemporalGraph || f.isEdge) return; // Las topologías Padre-Hijo no se inyectan en cargas planas
       if (excludedFields.includes(f.name)) return;
       headers.push(f.name);
     });
