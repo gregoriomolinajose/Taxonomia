@@ -105,16 +105,7 @@
             const container = document.createElement('ion-content');
             container.className = 'drawer-content ion-padding';
 
-            const updateDynamicHeader = (e) => {
-                if (e.target && e.target.name) {
-                    if (e.target.name === targetTitleField || e.target.name === 'nombre') {
-                        const val = String(e.target.value).trim();
-                        recordNameTitle.textContent = val || 'Nuevo Registro';
-                    }
-                }
-            };
-            container.addEventListener('input', updateDynamicHeader);
-            container.addEventListener('ionInput', updateDynamicHeader);
+
 
             modal.appendChild(container);
 
