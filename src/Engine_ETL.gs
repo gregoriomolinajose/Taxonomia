@@ -18,11 +18,23 @@ var Engine_ETL = (function() {
     const schema = getAppSchema(entityName);
     if (!schema) throw new Error("No existe esquema para la entidad " + entityName);
 
-    // 1. Filtrar campos que no pertenecen a la Ingesta
-    const excludedFields = [
-      'created_at', 'created_by', 'updated_at', 'updated_by', 
-      'deleted_at', 'deleted_by', 'estado', '_version'
-    ];
+    // 1. Filtrar campos que no pertenecen a la Ingesta de forma dinámica (H10 resuelto)
+    let excludedFields = [];
+    if (typeof FIELD_TEMPLATES !== 'undefined') {
+      const technicalTemplates = [
+        ...(FIELD_TEMPLATES.SYSTEM_FIELDS ? FIELD_TEMPLATES.SYSTEM_FIELDS() : []),
+        ...(FIELD_TEMPLATES.ESTADO_FIELD ? FIELD_TEMPLATES.ESTADO_FIELD() : []),
+        ...(FIELD_TEMPLATES.AUDIT_FIELDS ? FIELD_TEMPLATES.AUDIT_FIELDS() : []),
+        ...(FIELD_TEMPLATES.VERSION_FIELD ? FIELD_TEMPLATES.VERSION_FIELD() : [])
+      ];
+      excludedFields = technicalTemplates.map(f => f.name);
+    } else {
+      // Fallback estricto
+      excludedFields = [
+        'created_at', 'created_by', 'updated_at', 'updated_by', 
+        'deleted_at', 'deleted_by', 'estado', '_version', 'lexical_id'
+      ];
+    }
     
     const headers = [];
     schema.fields.forEach(f => {
