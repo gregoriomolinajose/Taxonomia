@@ -42,6 +42,7 @@ var Engine_ETL = (function() {
       if (f.type === 'hidden') return;  // Omitir ocultos por defecto
       if (f.primaryKey === true) return; // El Motor DB genera los UUID de PK solos, no se piden al usuario
       if (f.type === 'relation' || f.isTemporalGraph || f.isEdge) return; // Las topologías Padre-Hijo no se inyectan en cargas planas
+      if (f.type === 'image' || f.type === 'file' || f.name === 'avatar') return; // Elementos multimedia o binarios estorbosos excluidos
       if (excludedFields.includes(f.name)) return;
       headers.push(f.name);
     });
@@ -65,8 +66,10 @@ var Engine_ETL = (function() {
     headerRange.setBackground("#E8EAF6"); // Color Corporativo Suave
     sheet.setFrozenRows(1);
 
-    // Opcional: auto-ajustar columnas
-    sheet.autoResizeColumns(1, headers.length);
+    // Opcional: Forzar ancho uniforme requerido por UX
+    for (let i = 1; i <= headers.length; i++) {
+      sheet.setColumnWidth(i, 200);
+    }
 
     // 4. Retornar link
     return ss.getUrl();
