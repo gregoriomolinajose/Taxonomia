@@ -746,7 +746,7 @@
                     document.body.appendChild(loading);
                     await loading.present();
 
-                    window.DataAPI.call('etl_generate_template', entity, {})
+                    window.DataAPI.call('API_Universal_Router', 'etl_generate_template', entity, {})
                         .then(res => {
                             loading.dismiss();
                             if (res && res.data) {

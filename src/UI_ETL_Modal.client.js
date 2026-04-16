@@ -56,7 +56,7 @@ window.UI_ETL_Modal = (function() {
         btnGenTpl.style.textTransform = 'none';
         btnGenTpl.style.fontFamily = 'inherit';
         btnGenTpl.style.fontWeight = '500';
-        btnGenTpl.innerHTML = `<ion-icon name="document-text-outline" slot="start"></ion-icon> 1. Auto-Generar Plantilla en Drive`;
+        btnGenTpl.innerHTML = `<ion-icon name="document-outline" slot="start"></ion-icon> 1. Auto-Generar Plantilla en Drive`;
         btnGenTpl.addEventListener('click', () => {
             if (options && typeof options.onGenerateTemplate === 'function') {
                 options.onGenerateTemplate(entityName, modal);
