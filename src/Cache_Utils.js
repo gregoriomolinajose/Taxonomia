@@ -1,8 +1,11 @@
 function clearProjectCache() {
   const cache = CacheService.getScriptCache();
-  const entities = ['Portafolio', 'Grupo_Productos', 'Producto', 'Unidad_Negocio', 'Equipo', 'Persona'];
+  const vHash = typeof _getAppVersionHash === 'function' ? _getAppVersionHash() : 'V0';
+
+  const entities = ['Portafolio', 'Grupo_Productos', 'Producto', 'Unidad_Negocio', 'Equipo', 'Persona', 'Sys_Permissions'];
   entities.forEach(ent => {
     cache.remove('CACHE_LIST_' + ent);
+    cache.remove(`CACHE_LIST_${vHash}_${ent}`);
     const lookupMap = {
       'Portafolio': 'getPortafoliosOptions',
       'Grupo_Productos': 'getGruposProductosOptions',

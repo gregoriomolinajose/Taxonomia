@@ -19,15 +19,24 @@ if (typeof require !== 'undefined') {
 }
 
 /**
+ * _getAppVersionHash (Cache Strategy)
+ * Provee un hash único para evitar Cache-Pollution cross-deployments.
+ */
+function _getAppVersionHash() {
+    return (typeof CONFIG !== 'undefined' && CONFIG.APP_VERSION) ? String(CONFIG.APP_VERSION).replace(/[^a-zA-Z0-9]/g, '') : 'V0';
+}
+
+/**
  * _invalidateCache (Directiva Architect: Cache Busting)
  * Purga la RAM para forzar lectura fresca tras mutaciones.
  */
 function _invalidateCache(entityName) {
     if (typeof CacheService === 'undefined') return;
     const cache = CacheService.getScriptCache();
-    
-    // Invalidación de lista principal
+
+    // Invalidación de lista principal (ambos mapeos para cubrir legado y versionado actual)
     cache.remove('CACHE_LIST_' + entityName);
+    cache.remove(`CACHE_LIST_${_getAppVersionHash()}_${entityName}`);
     
     // Invalidación de lookups asociados
     const lookupMap = {
@@ -573,8 +582,7 @@ const Engine_DB = {
         const config = (typeof CONFIG !== 'undefined') ? CONFIG : { useSheets: true, SPREADSHEET_ID_DB: '' };
         
         // Intentar leer de RAM (CacheService) con versionado dinámico
-        const versionHash = (typeof CONFIG !== 'undefined' && CONFIG.APP_VERSION) ? CONFIG.APP_VERSION.replace(/[^a-zA-Z0-9]/g, '') : 'V0';
-        const cacheKey = `CACHE_LIST_${versionHash}_${entityName}`;
+        const cacheKey = `CACHE_LIST_${_getAppVersionHash()}_${entityName}`;
         if (typeof CacheService !== 'undefined') {
             const cached = CacheService.getScriptCache().get(cacheKey);
             if (cached && format !== 'tuples') { // No cacheamos tuplas por ahora para evitar colisiones de formato
