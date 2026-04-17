@@ -30,6 +30,16 @@
         // Bridge de Memoria Directa
         node.dataSource = dataset || [];
 
+        // Bridge Legacy Contract (API H14 Fix para RelationBuilder)
+        node.updateConfig = function(newData, disabledState, placeholderText) {
+            this.dataSource = newData || [];
+            if (disabledState === true) {
+                this.setAttribute('disabled', 'true');
+            } else if (disabledState === false) {
+                this.removeAttribute('disabled');
+            }
+        };
+
         // Retransmisión al motor del ABAC Form
         node.addEventListener('txChange', (e) => {
             // Emular evento nativo ionChange para FormRenderer base validators
@@ -64,6 +74,16 @@
 
         // Bridge de Memoria Directa
         node.dataSource = dataset || [];
+
+        // Bridge Legacy Contract (API H14 Fix para RelationBuilder)
+        node.updateConfig = function(newData, disabledState, placeholderText) {
+            this.dataSource = newData || [];
+            if (disabledState === true) {
+                this.setAttribute('disabled', 'true');
+            } else if (disabledState === false) {
+                this.removeAttribute('disabled');
+            }
+        };
 
         // Retransmisión al motor del ABAC Form
         node.addEventListener('txChange', (e) => {
