@@ -14,6 +14,7 @@ class TXSearchable extends HTMLElement {
         this._dataSource = [];
         this._selectedState = null; // String (Single) o Set (Multi)
         this._isMultiple = false;
+        this._isDisabled = false;
         this._entityName = 'Registro';
         this._rafId = null; // Puntero para cancelar animaciones colgantes (GC)
         
@@ -80,7 +81,7 @@ class TXSearchable extends HTMLElement {
                 }
                 break;
             case 'disabled':
-                // CSS hook for disablement
+                this._isDisabled = (newValue === 'true' || newValue === '');
                 break;
         }
 
@@ -122,6 +123,7 @@ class TXSearchable extends HTMLElement {
         const trigger = this.querySelector('.trigger-container');
         if (trigger && !this._triggerBound) {
             trigger.addEventListener('click', () => {
+                if (this._isDisabled) return; // Bloqueo de Modal por ABAC
                 if (this._temporaryBlurFlag) return;
                 this.executeSearchAndOpen();
             });
@@ -394,6 +396,7 @@ class TXSearchable extends HTMLElement {
         if (inputBase) {
             const displ = this._getDisplayValue();
             inputBase.value = displ;
+            inputBase.disabled = this._isDisabled; // Sincroniza renderizado visual nativo
             
             // Ajustar Label color para que se vea activo (Formato Ionic custom)
             if (displ) {
