@@ -21,7 +21,7 @@ Resolver bugs funcionales, deuda técnica o defectos recién detectados por el d
 |---|---|---|
 | S40.1 | Bug Fix: Drawer Header ReferenceError (WSOD) | DONE |
 | S40.2 | E2E Playwright: Tests de Resiliencia Interactiva | DONE |
-| S40.3 | E2E Playwright: Tests de Integridad ETL y OCC de Carga Masiva (Bug Bash) | IN-PROGRESS |
+| S40.3 | E2E Playwright: Tests de Integridad ETL y OCC de Carga Masiva (Bug Bash) | DONE |
 
 ---
 
