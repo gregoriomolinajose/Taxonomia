@@ -338,7 +338,8 @@ class TXSearchable extends HTMLElement {
         // RAM-Secure Local Filter (YAGNI Endless Scroll)
         let filtered = this._dataSource || [];
         if (query.trim()) {
-            filtered = filtered.filter(item => this._extractPayloadTitle(item).toLowerCase().includes(query.trim()));
+            const rawQ = query.trim().toLowerCase();
+            filtered = filtered.filter(item => String(this._extractPayloadTitle(item)).toLowerCase().includes(rawQ));
         }
         filtered = filtered.slice(0, 100);
 
