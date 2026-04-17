@@ -33,7 +33,7 @@
 | E33| Ghost Stealing Resilience Bug Bash                      | ✅ Complete  | Mitigar omisión de hidratación SCD-2 de relaciones en subgrids 1:N   | Máxima   |
 | E35| Detalles Estéticos y Refinamiento UX                    | ✅ Complete  | UI Header & Bugfixes                                                 | Alta     |
 | E38| Hub de Ingesta Inteligente y Sincronización             | ✅ Complete  | Modal Híbrido ETL, Drive Native Provider, Duplicate Tolerable Batch  | Alta     |
-| E40| Bug Bash Sprint                                       | 🔄 In Progress| Estabilización de defectos técnicos y operativos                   | Alta     |
+| E40| Bug Bash Sprint                                       | ✅ Complete  | Estabilización de defectos técnicos y operativos                   | Alta     |
 
 ## Parking Lot / Deuda Técnica (Post-Epic 11)
 
