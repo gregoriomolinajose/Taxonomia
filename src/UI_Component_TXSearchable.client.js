@@ -22,6 +22,13 @@ class TXSearchable extends HTMLElement {
     }
 
     // ===============================================
+    // 0. Environment & Utilities
+    // ===============================================
+    isMobile() {
+        return typeof window !== 'undefined' && window.innerWidth <= 768;
+    }
+
+    // ===============================================
     // 1. API Contract / Declarative Attributes
     // ===============================================
     static get observedAttributes() {
@@ -103,15 +110,60 @@ class TXSearchable extends HTMLElement {
     // ===============================================
     // 3. Lifecycle Hooks (Garbage Collection Limits)
     // ===============================================
+    _bindTriggerEvents() {
+        const trigger = this.querySelector('.trigger-container');
+        if (trigger && !this._triggerBound) {
+            trigger.addEventListener('click', () => {
+                if (this._temporaryBlurFlag) return;
+                this.executeSearchAndOpen();
+            });
+            this._triggerBound = true;
+        }
+    }
+
     connectedCallback() {
+        if (!this._componentId) {
+            this._componentId = 'tx-searchable-' + Math.random().toString(36).substr(2, 9);
+        }
+
         if (!this.innerHTML.trim()) {
             this.innerHTML = `
-                <div class="tx-searchable-wrapper" style="width: 100%; position: relative; border: 1px dashed var(--ion-color-medium, #ccc); padding: 8px; border-radius: 4px;">
-                    <span style="font-size:12px; color:gray;">[TX-Searchable ${this._entityName} / Mode: ${this._isMultiple ? 'Multi' : 'Single'}] Layout Inicializando...</span>
+                <div class="tx-searchable-root" style="width: 100%; position: relative;">
+                    <!-- S41.2: Trigger Container -->
+                    <div class="trigger-container" style="position: relative; cursor: pointer; display: block; width: 100%;">
+                        <ion-input 
+                            id="${this._componentId}-input"
+                            class="tx-search-input"
+                            label="Seleccionar ${this._entityName}" 
+                            label-placement="floating" 
+                            fill="outline"
+                            readonly="true"
+                            style="cursor: pointer; --padding-end: 35px;"
+                            placeholder="Toca para seleccionar..."
+                        ></ion-input>
+                        
+                        <!-- S41.2: Lupa Overlay -->
+                        <div style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); pointer-events: none; color: var(--ion-color-medium, gray); z-index: 2; display: flex; align-items: center;">
+                            <ion-icon name="search-outline" style="font-size: 20px;"></ion-icon>
+                        </div>
+                    </div>
+                    <!-- Node Anchors for overlays -->
+                    <div id="${this._componentId}-overlay-anchor" style="position: absolute; width: 100%; bottom: 0;"></div>
                 </div>
             `;
         }
         this._scheduleRender();
+        setTimeout(() => this._bindTriggerEvents(), 100);
+    }
+
+    _cleanupOverlay() {
+        if (this._overlayNode) {
+            this._overlayNode.remove();
+            this._overlayNode = null;
+        }
+        // Restaurar estado de Click Anti-Carrera PWA
+        this._temporaryBlurFlag = true;
+        setTimeout(() => this._temporaryBlurFlag = false, 350);
     }
 
     disconnectedCallback() {
@@ -129,10 +181,7 @@ class TXSearchable extends HTMLElement {
         this._selectedState = null;
         
         // Destitución de modales anclados en root
-        if (this._popoverNode) {
-            this._popoverNode.remove();
-            this._popoverNode = null;
-        }
+        this._cleanupOverlay();
     }
 
     // ===============================================
@@ -161,18 +210,198 @@ class TXSearchable extends HTMLElement {
         this._rafId = requestAnimationFrame(this._boundRender);
     }
 
+    _getDisplayValue() {
+        if (!this._selectedState) return '';
+        
+        // Criterio Duck-Typing Universal (Zero Config)
+        const getPayloadTitle = (item) => item.nombre || item.label || item.descripcion || item.title || 'Desconocido';
+        const getPayloadId = (item) => item.id_registro || item.id_numero || item.id || item.codigo || item;
+
+        // Multi Mode
+        if (this._isMultiple) {
+            if (this._selectedState.size === 0) return '';
+            if (this._selectedState.size === 1) {
+                const singleId = Array.from(this._selectedState)[0];
+                const found = this._dataSource.find(item => String(getPayloadId(item)) === String(singleId));
+                return found ? getPayloadTitle(found) : singleId;
+            }
+            return `${this._selectedState.size} ítem(s) seleccionado(s)`;
+        }
+        
+        // Single Mode
+        const rawId = this._selectedState;
+        const found = this._dataSource.find(item => String(getPayloadId(item)) === String(rawId));
+        return found ? getPayloadTitle(found) : rawId;
+    }
+
+    // ===============================================
+    // 6. Overlay Sub-Engine (Popovers / Modals)
+    // ===============================================
+    executeSearchAndOpen() {
+        if (this._overlayNode) return; // Prevent double-tap spawning
+
+        const isMob = this.isMobile();
+        const baseHtml = `
+            <ion-header>
+                ${isMob ? `
+                <ion-toolbar>
+                    <ion-title>Buscar ${this._entityName}</ion-title>
+                    <ion-buttons slot="end">
+                        <ion-button id="${this._componentId}-btn-close">Cerrar</ion-button>
+                    </ion-buttons>
+                </ion-toolbar>
+                ` : ''}
+                <ion-toolbar>
+                    <ion-searchbar id="${this._componentId}-searchbar" placeholder="Escribe para buscar..."></ion-searchbar>
+                </ion-toolbar>
+                ${this._isMultiple ? `
+                <ion-toolbar>
+                    <ion-button expand="block" id="${this._componentId}-btn-apply">Aplicar Selección</ion-button>
+                </ion-toolbar>
+                ` : ''}
+            </ion-header>
+            <ion-content>
+                <div style="text-align:center; padding: 15px;" id="${this._componentId}-spinner">
+                    <ion-spinner></ion-spinner>
+                </div>
+                <ion-list id="${this._componentId}-list"></ion-list>
+            </ion-content>
+        `;
+
+        if (isMob) {
+            const modal = document.createElement('ion-modal');
+            modal.initialBreakpoint = 0.5;
+            modal.breakpoints = [0, 0.5, 0.85, 1];
+            modal.innerHTML = baseHtml;
+            document.body.appendChild(modal);
+            this._overlayNode = modal;
+        } else {
+            const popover = document.createElement('ion-popover');
+            popover.trigger = `${this._componentId}-input`;
+            popover.size = "cover";
+            popover.innerHTML = baseHtml;
+            document.body.appendChild(popover);
+            this._overlayNode = popover;
+        }
+
+        // Link Dismiss Events to Anti-Race Engine
+        if (isMob) {
+            this._overlayNode.addEventListener('ionModalDidDismiss', () => this._cleanupOverlay());
+        } else {
+            this._overlayNode.addEventListener('ionPopoverDidDismiss', () => this._cleanupOverlay());
+        }
+        
+        this._overlayNode.present().then(() => {
+            this._bindOverlayInternalEvents();
+            this.buildListItems(); // Dibujar el Pool Inicial
+            
+            // Auto Focus
+            const searchbar = this._overlayNode.querySelector('ion-searchbar');
+            if (searchbar) {
+                setTimeout(() => searchbar.setFocus(), 150);
+            }
+        });
+    }
+
+    _bindOverlayInternalEvents() {
+        const closeBtn = this._overlayNode.querySelector(`#${this._componentId}-btn-close`);
+        if (closeBtn) closeBtn.addEventListener('click', () => this._overlayNode.dismiss());
+
+        const applyBtn = this._overlayNode.querySelector(`#${this._componentId}-btn-apply`);
+        if (applyBtn) {
+            applyBtn.addEventListener('click', () => {
+                this.dispatchSelection(); // Confirmar al mundo exterior
+                this._overlayNode.dismiss();
+            });
+        }
+
+        const searchbar = this._overlayNode.querySelector('ion-searchbar');
+        if (searchbar) {
+            searchbar.addEventListener('ionInput', (e) => {
+                const query = (e.target.value || '').toLowerCase();
+                this.buildListItems(query);
+            });
+        }
+    }
+
+    buildListItems(query = '') {
+        const listNode = this._overlayNode.querySelector(`#${this._componentId}-list`);
+        const spinner = this._overlayNode.querySelector(`#${this._componentId}-spinner`);
+        if (!listNode) return;
+
+        if (spinner) spinner.style.display = 'none';
+
+        const getPayloadTitle = (item) => item.nombre || item.label || item.descripcion || item.title || 'Desconocido';
+        const getPayloadId = (item) => item.id_registro || item.id_numero || item.id || item.codigo || item;
+
+        // RAM-Secure Local Filter (YAGNI Endless Scroll)
+        let filtered = this._dataSource || [];
+        if (query.trim()) {
+            filtered = filtered.filter(item => getPayloadTitle(item).toLowerCase().includes(query.trim()));
+        }
+        filtered = filtered.slice(0, 100);
+
+        listNode.innerHTML = ''; // Fast Clear
+        
+        filtered.forEach(item => {
+            const idVal = String(getPayloadId(item));
+            const title = getPayloadTitle(item);
+            const el = document.createElement('ion-item');
+            el.button = true;
+
+            if (this._isMultiple) {
+                const isChecked = this._selectedState.has(idVal);
+                el.innerHTML = `
+                    <ion-label>${title}</ion-label>
+                    <ion-checkbox slot="end" ${isChecked ? 'checked="true"' : ''}></ion-checkbox>
+                `;
+                el.addEventListener('click', (e) => {
+                    e.preventDefault(); // Evitar doble evento de Ion-Checkbox
+                    const checkbox = el.querySelector('ion-checkbox');
+                    if (this._selectedState.has(idVal)) {
+                        this._selectedState.delete(idVal);
+                        checkbox.checked = false;
+                    } else {
+                        this._selectedState.add(idVal);
+                        checkbox.checked = true;
+                    }
+                    this._scheduleRender(); // Reflejar cuenta externamente
+                });
+            } else {
+                const isSelected = String(this._selectedState) === idVal;
+                el.innerHTML = `
+                    <ion-label>${title}</ion-label>
+                    ${isSelected ? '<ion-icon name="checkmark-outline" slot="end" color="primary"></ion-icon>' : ''}
+                `;
+                el.addEventListener('click', () => {
+                    this._selectedState = idVal;
+                    this._scheduleRender();
+                    this.dispatchSelection(); // Disparo automático inmediato si es Single
+                    this._overlayNode.dismiss();
+                });
+            }
+            listNode.appendChild(el);
+        });
+
+        if (filtered.length === 0) {
+            listNode.innerHTML = `<ion-item><ion-label color="medium">No se encontraron resultados</ion-label></ion-item>`;
+        }
+    }
+
     _render() {
         this._rafId = null; // Liberar pointer al arrancar dibujado
-        // [S41.2 Target Placeholder] 
-        // Aquí se incrustará el Motor DOM Híbrido.
-        const wrapper = this.querySelector('.tx-searchable-wrapper');
-        if (wrapper) {
-            const count = this._dataSource ? this._dataSource.length : 0;
-            wrapper.innerHTML = `
-                <span style="font-size:12px; color:gray;">
-                   [TX-Searchable ${this._entityName} / Mode: ${this._isMultiple ? 'Multi' : 'Single'} / Pool: ${count} recs / Sel: ${JSON.stringify(this.getValidatedValue())}]
-                </span>
-            `;
+        
+        const inputBase = this.querySelector('ion-input.tx-search-input');
+        if (inputBase) {
+            const displ = this._getDisplayValue();
+            inputBase.value = displ;
+            
+            // Ajustar Label color para que se vea activo (Formato Ionic custom)
+            if (displ) {
+                inputBase.classList.add('ion-valid');
+            } else {
+                inputBase.classList.remove('ion-valid');
+            }
         }
     }
 }
