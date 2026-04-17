@@ -23,6 +23,7 @@ Resolver bugs funcionales, deuda técnica o defectos recién detectados por el d
 | S40.2 | E2E Playwright: Tests de Resiliencia Interactiva | DONE |
 | S40.3 | E2E Playwright: Tests de Integridad ETL y OCC de Carga Masiva (Bug Bash) | DONE |
 | S40.4 | Bug Fix: Falla de Hidratación de Schema Defaults en Capa Bulk ETL (Headless) | DONE |
+| S40.5 | DataGrid Custom Ordering Refactor & QA Fix | DONE |
 
 ---
 
