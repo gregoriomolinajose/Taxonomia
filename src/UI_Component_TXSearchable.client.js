@@ -50,13 +50,15 @@ class TXSearchable extends HTMLElement {
             case 'pre-selected':
                 try {
                     const parsed = JSON.parse(newValue);
+                    const resolvePrimitive = (val) => typeof val === 'object' && val !== null ? String(val.id_registro || val.id || '') : String(val);
+                    
                     if (this._isMultiple) {
-                        this._selectedState = new Set(Array.isArray(parsed) ? parsed.map(c => typeof c === 'string' ? c : (c.id_registro || c.id)) : []);
+                        this._selectedState = new Set(Array.isArray(parsed) ? parsed.map(c => resolvePrimitive(c)) : []);
                     } else {
                         // SCD-2 Hydration check fallback seguro
                         this._selectedState = Array.isArray(parsed) && parsed.length > 0 
-                            ? (typeof parsed[0] === 'string' ? parsed[0] : (parsed[0].id_registro || parsed[0].id)) 
-                            : (typeof parsed === 'string' ? parsed : (parsed.id_registro || parsed.id));
+                            ? resolvePrimitive(parsed[0])
+                            : resolvePrimitive(parsed);
                     }
                 } catch(e) {
                     console.warn(`[TXSearchable] pre-selected parsing error: ${e.message}`);
