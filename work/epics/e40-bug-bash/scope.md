@@ -22,6 +22,7 @@ Resolver bugs funcionales, deuda técnica o defectos recién detectados por el d
 | S40.1 | Bug Fix: Drawer Header ReferenceError (WSOD) | DONE |
 | S40.2 | E2E Playwright: Tests de Resiliencia Interactiva | DONE |
 | S40.3 | E2E Playwright: Tests de Integridad ETL y OCC de Carga Masiva (Bug Bash) | DONE |
+| S40.4 | Bug Fix: Falla de Hidratación de Schema Defaults en Capa Bulk ETL (Headless) | DONE |
 
 ---
 
@@ -38,3 +39,19 @@ Removida la clausura obsoleta `updateDynamicHeader` y sus dos delegaciones a `in
 
 **Prevention:** 
 El código obsoleto fue borrado. Vitest SPA Tests ejecutados comprobando 0% de regresiones visuales *(✓ 224 passed)*.
+
+---
+
+## Debug Summary (S40.4)
+**Problem:** Durante la Carga Masiva (ETL), el campo "estado" se guardaba en blanco en lugar de asumir su valor `Activo` establecido estructuralmente en el diccionario de la entidad.
+**Root Cause (5 Whys):**
+1. *Why?* La red no transmitió la llave `estado` porque el CSV original prescinde limpiamente de columnas de auditoría.
+2. *Why?* Al iterar sobre los encabezados para armar la inyección `Adapter_Sheets.upsertBatch`, se topó con un vacío.
+3. *Why?* El adaptador, en los casos de ausencia de variable local, estaba programado para empujar asertivamente un string vacío `''`.
+4. *Root Cause:* Deuda Autónoma de Repositorio. La lógica de generación de Default Values residuales (`defaultValue`) estaba ligada de manera acoplada al renderizador HTML (`UI_Factory.buildHidden`) en vez de pertenecer a la persistencia estricta. El motor ETL, al carecer de un DOM o Form Builder, evadía dichas inicializaciones.
+
+**Countermeasure (Fix):**
+Modificados los vectores de ensamblaje en `Adapter_Sheets.upsert` y `upsertBatch`. Se infundió una compilación cruzada `defaultValuesMap` en O(C) que hidrata nativamente los vacíos del payload cuando el `Schema_Engine` dicta un Standard (ej: "Activo").
+
+**Prevention:**
+El test E2E de Identidad Semántica fue amputado explícitamente del valor "estado" y recargado con una sonda de aserción ReadFull cruzada al final del loop para comprobar algorítmicamente que el servidor ahora sana y rellena transparentemente a sus espaldas.
