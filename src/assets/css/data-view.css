@@ -33,9 +33,13 @@
     .dv-error-desc { font-size: 0.75rem; color: var(--dv-text-light); margin-top: 8px; }
     .dv-card-skel { padding: 4px 0; }
     .dv-folder-icon { font-size: 64px; color: var(--ion-color-medium); }
-    .dv-th-num { width: 50px; text-align: center; }
+    .dv-th-check, .dv-td-check,
+    .dv-th-num, .dv-td-num,
+    .dv-th-lexical, .dv-td-lexical { width: 1%; white-space: nowrap; }
+    
+    .dv-th-num { text-align: center; }
     .dv-th-action { width: 50px; }
-    .dv-td-num { width: 50px; text-align: center; color: var(--dv-text-secondary); font-variant-numeric: tabular-nums; font-weight: 500; }
+    .dv-td-num { text-align: center; color: var(--dv-text-secondary); font-variant-numeric: tabular-nums; font-weight: 500; }
     .dv-td-action { width: 50px; text-align: center; }
     .dv-btn-danger { color: var(--color-interactive-error); }
     .dv-btn-danger-lite { color: var(--color-interactive-error); border: none; padding: 4px; }

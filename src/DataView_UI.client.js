@@ -69,53 +69,63 @@
             const fallbackTitleKey = (meta && meta.titleField) ? meta.titleField : 'nombre';
             const idKey = keys.includes('lexical_id') ? 'lexical_id' : (window.Schema_Utils ? window.Schema_Utils.getPrimaryKey(entityName) : null);
 
-            if (idKey && keys.includes(idKey)) {
-                keys = keys.filter(k => k !== idKey);
-                keys.unshift(idKey);
-            }
-            
-            if (fallbackTitleKey && keys.includes(fallbackTitleKey)) {
-                keys = keys.filter(k => k !== fallbackTitleKey);
-                if (keys.length > 0 && keys[0] === idKey) {
-                    keys.splice(1, 0, fallbackTitleKey);
+            let columns = keys.map(key => {
+                let isHidden = false;
+                let isPrimaryKey = false;
+                let uiType = 'text';
+                let gridOrder = -1;
+
+                if (fields) {
+                    const f = fields.find(field => field.name === key);
+                    if (f) {
+                        if (f.primaryKey) isPrimaryKey = true;
+                        // [S32 Fix] Campos hidden nun ca se muestran en la tabla (incluyendo PKs como id_unidad_negocio)
+                        if (f.type === 'hidden') isHidden = true;
+                        if (f.showInList !== undefined) isHidden = !f.showInList;
+                        uiType = f.uiDisplay || f.type || 'text';
+                        if (f.gridOrder !== undefined) gridOrder = f.gridOrder;
+                    } else {
+                        if (SYS_COLS.includes(key)) isHidden = true;
+                    }
                 } else {
-                    keys.unshift(fallbackTitleKey);
+                    if (SYS_COLS.includes(key)) isHidden = true;
                 }
-            }
 
-            return keys.map(key => {
-    let isHidden = false;
-    let isPrimaryKey = false;
-    let uiType = 'text';
+                if (key.startsWith('id_')) {
+                    isPrimaryKey = true;
+                }
+                
+                // Fallbacks para orden natural relativo al DataGrid en caso de no definir gridOrder
+                // Asumimos que Checkbox es fisicamente 1 y Numeracion es fisicamente 2.
+                if (gridOrder === -1) {
+                    if (key === idKey) gridOrder = 3;
+                    else if (key === fallbackTitleKey) gridOrder = 4;
+                    else gridOrder = 100;
+                }
+                
+                return {
+                    key,
+                    label: window.UI_DataGrid && window.UI_DataGrid._labelFromKey ? window.UI_DataGrid._labelFromKey(key, entityName) : key,
+                    // [S32 Fix] NO forzamos true para PK. isHidden domina (generalmente los PK son hidden)
+                    visible: !isHidden,
+                    sortable: true,
+                    uiType: uiType,
+                    gridOrder: gridOrder
+                };
+            });
 
-    if (fields) {
-        const f = fields.find(field => field.name === key);
-        if (f) {
-            if (f.primaryKey) isPrimaryKey = true;
-            // [S32 Fix] Campos hidden nun ca se muestran en la tabla (incluyendo PKs como id_unidad_negocio)
-            if (f.type === 'hidden') isHidden = true;
-            if (f.showInList !== undefined) isHidden = !f.showInList;
-            uiType = f.uiDisplay || f.type || 'text';
-        } else {
-            if (SYS_COLS.includes(key)) isHidden = true;
-        }
-    } else {
-        if (SYS_COLS.includes(key)) isHidden = true;
-    }
+            // S40.5: Inyectar campos estructurales del ecosistema en indices fijos por defecto
+            columns.push({
+                key: '_checkbox_', label: '', visible: true, sortable: false, uiType: 'system-checkbox', gridOrder: 1
+            });
+            columns.push({
+                key: '_row_num_', label: '#', visible: true, sortable: false, uiType: 'system-num', gridOrder: 2
+            });
 
-    if (key.startsWith('id_')) {
-        isPrimaryKey = true;
-    }
-    
-    return {
-        key,
-        label: window.UI_DataGrid && window.UI_DataGrid._labelFromKey ? window.UI_DataGrid._labelFromKey(key, entityName) : key,
-        // [S32 Fix] NO forzamos true para PK. isHidden domina (generalmente los PK son hidden)
-        visible: !isHidden,
-        sortable: true,
-        uiType: uiType
-    };
-});
+            // S40.5: Filtrar y ordenar la coleccion de columnas por atributo gobernado en Schema_Engine
+            columns.sort((a, b) => a.gridOrder - b.gridOrder);
+
+            return columns;
         }
 
         /* ────────────────────────────────────────────

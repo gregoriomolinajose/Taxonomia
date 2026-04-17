@@ -71,30 +71,38 @@
             const thead = document.createElement('thead');
             const trHead = document.createElement('tr');
             
-            const thCheck = document.createElement('th');
-            thCheck.className = 'dv-th-check';
-            const selectAll = document.createElement('input');
-            selectAll.type = 'checkbox';
-            
             const pkField = window.Schema_Utils.getPrimaryKey(this.cfg.entityName);
-            const pageIds = rows.map(r => String(r[pkField] || ''));
-            selectAll.checked = pageIds.length > 0 && pageIds.every(id => (this.cfg.selectedRows || []).includes(id));
-            selectAll.addEventListener('change', (e) => {
-                if (typeof this.cfg.onSelectAll === 'function') this.cfg.onSelectAll(e.target.checked);
-            });
-            thCheck.appendChild(selectAll);
-            trHead.appendChild(thCheck);
-
-            const thNum = document.createElement('th');
-            thNum.className = 'dv-th-num';
-            thNum.textContent = '#';
-            trHead.appendChild(thNum);
             
+            // S40.5: Inyección dinámica controlada por schema gobernado (gridOrder)
             visibleCols.forEach((col) => {
                 const colIdx = this.cfg.columns.indexOf(col);
+
+                if (col.uiType === 'system-checkbox') {
+                    const thCheck = document.createElement('th');
+                    thCheck.className = 'dv-th-check';
+                    const selectAll = document.createElement('input');
+                    selectAll.type = 'checkbox';
+                    const pageIds = rows.map(r => String(r[pkField] || ''));
+                    selectAll.checked = pageIds.length > 0 && pageIds.every(id => (this.cfg.selectedRows || []).includes(id));
+                    selectAll.addEventListener('change', (e) => {
+                        if (typeof this.cfg.onSelectAll === 'function') this.cfg.onSelectAll(e.target.checked);
+                    });
+                    thCheck.appendChild(selectAll);
+                    trHead.appendChild(thCheck);
+                    return;
+                }
+
+                if (col.uiType === 'system-num') {
+                    const thNum = document.createElement('th');
+                    thNum.className = 'dv-th-num';
+                    thNum.textContent = '#';
+                    trHead.appendChild(thNum);
+                    return;
+                }
                 const isSorted = this.cfg.sortCol === col.key;
                 
                 const th = document.createElement('th');
+                if (col.key === 'lexical_id') th.className = 'dv-th-lexical';
                 if (isSorted) th.classList.add('sorted');
                 th.dataset.colidx = colIdx;
                 th.draggable = true;
@@ -183,37 +191,43 @@
                     }
                 });
                 
-                const tdCheck = document.createElement('td');
-                tdCheck.className = 'dv-td-check';
-                const dragHandle = document.createElement('span');
-                dragHandle.className = 'dv-row-drag-handle';
-                dragHandle.textContent = '⣿ ';
-                dragHandle.style.cursor = 'grab';
-                dragHandle.style.color = 'var(--ion-color-medium)';
-                const rowCheck = document.createElement('input');
-                rowCheck.type = 'checkbox';
-                rowCheck.className = 'dv-row-checkbox';
-                rowCheck.value = id;
-                rowCheck.checked = (this.cfg.selectedRows || []).includes(String(id));
-                rowCheck.addEventListener('click', e => e.stopPropagation());
-                rowCheck.addEventListener('change', e => {
-                    if (typeof this.cfg.onRowCheck === 'function') this.cfg.onRowCheck(id, e.target.checked);
-                });
-                tdCheck.appendChild(dragHandle);
-                tdCheck.appendChild(rowCheck);
-                tr.appendChild(tdCheck);
-                
-                if (rowCheck.checked) {
-                    tr.style.backgroundColor = 'var(--ion-color-secondary)';
-                }
-
-                const tdNum = document.createElement('td');
-                tdNum.className = 'dv-td-num';
-                tdNum.textContent = String(startIdx + idx + 1);
-                tr.appendChild(tdNum);
-                
                 visibleCols.forEach((col) => {
+                    if (col.uiType === 'system-checkbox') {
+                        const tdCheck = document.createElement('td');
+                        tdCheck.className = 'dv-td-check';
+                        const dragHandle = document.createElement('span');
+                        dragHandle.className = 'dv-row-drag-handle';
+                        dragHandle.textContent = '⣿ ';
+                        dragHandle.style.cursor = 'grab';
+                        dragHandle.style.color = 'var(--ion-color-medium)';
+                        const rowCheck = document.createElement('input');
+                        rowCheck.type = 'checkbox';
+                        rowCheck.className = 'dv-row-checkbox';
+                        rowCheck.value = id;
+                        rowCheck.checked = (this.cfg.selectedRows || []).includes(String(id));
+                        rowCheck.addEventListener('click', e => e.stopPropagation());
+                        rowCheck.addEventListener('change', e => {
+                            if (typeof this.cfg.onRowCheck === 'function') this.cfg.onRowCheck(id, e.target.checked);
+                        });
+                        tdCheck.appendChild(dragHandle);
+                        tdCheck.appendChild(rowCheck);
+                        tr.appendChild(tdCheck);
+                        if (rowCheck.checked) {
+                            tr.style.backgroundColor = 'var(--ion-color-secondary)';
+                        }
+                        return;
+                    }
+
+                    if (col.uiType === 'system-num') {
+                        const tdNum = document.createElement('td');
+                        tdNum.className = 'dv-td-num';
+                        tdNum.textContent = String(startIdx + idx + 1);
+                        tr.appendChild(tdNum);
+                        return;
+                    }
+
                     const td = document.createElement('td');
+                    if (col.key === 'lexical_id') td.className = 'dv-td-lexical';
                     let rawVal = row[col.key];
 
                     // --- JIT Relation Resolver (Extracted) ---

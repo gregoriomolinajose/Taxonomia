@@ -80,7 +80,7 @@ const FIELD_TEMPLATES = Object.freeze({
    * Standardizes the semantic name of any entity.
    */
   NAME_FIELD: (label = "Nombre", width = 12) => Object.freeze([
-    { name: "nombre", type: "text", label: label, required: true, width: width, unique: true }
+    { name: "nombre", type: "text", label: label, required: true, width: width, unique: true, gridOrder: 4 }
   ]),
 
   /**
@@ -91,7 +91,7 @@ const FIELD_TEMPLATES = Object.freeze({
    */
   SYSTEM_FIELDS: () => Object.freeze([
     { name: "lexical_id", type: "text", label: "ID", uiBehavior: "badge", readonly: true,
-      helpText: "Generado automáticamente: ACRONIMO-CONSECUTIVO (ej. PORT-0042)" },
+      helpText: "Generado automáticamente: ACRONIMO-CONSECUTIVO (ej. PORT-0042)", gridOrder: 3 },
     { name: "estado", type: "hidden", defaultValue: "Activo" }
   ]),
 

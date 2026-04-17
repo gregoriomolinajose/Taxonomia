@@ -87,7 +87,7 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 5123,
+                      "duration": 16651,
                       "errors": [],
                       "stdout": [
                         {
@@ -157,12 +157,21 @@
                           "text": "PAGE LOG [info]: Net state changed from IDLE to BUSY Net state changed from IDLE to BUSY\n"
                         },
                         {
-                          "text": "ITEM DEBUG FRONTEND: {\n  val: \u001b[32m'PORT-PG715'\u001b[39m,\n  action: \u001b[32m'created'\u001b[39m,\n  pk: \u001b[32m'id_portafolio'\u001b[39m,\n  version: \u001b[33m1\u001b[39m,\n  lexical_id: \u001b[32m'PORT-36'\u001b[39m,\n  status: \u001b[32m'success'\u001b[39m\n}\n"
+                          "text": "ITEM DEBUG FRONTEND: {\n  val: \u001b[32m'PORT-2OZ03'\u001b[39m,\n  action: \u001b[32m'created'\u001b[39m,\n  pk: \u001b[32m'id_portafolio'\u001b[39m,\n  version: \u001b[33m1\u001b[39m,\n  lexical_id: \u001b[32m'PORT-43'\u001b[39m,\n  status: \u001b[32m'success'\u001b[39m\n}\n"
+                        },
+                        {
+                          "text": "BACKEND RECORD DEBUG: {\n  status: \u001b[32m'success'\u001b[39m,\n  data: {\n    id_portafolio: \u001b[32m'PORT-2OZ03'\u001b[39m,\n    lexical_id: \u001b[32m'PORT-43'\u001b[39m,\n    estado: \u001b[32m'Activo'\u001b[39m,\n    nombre: \u001b[32m'ETL Test Auto 1 - 1776393542569'\u001b[39m,\n    deleted_at: \u001b[32m''\u001b[39m,\n    deleted_by: \u001b[32m''\u001b[39m,\n    _version: \u001b[33m1\u001b[39m,\n    unidad_negocio_padre: [],\n    grupos_productos_vinculados: []\n  }\n}\n"
+                        },
+                        {
+                          "text": "[TEARDOWN] Purificando la Base de Datos... IDs: [ \u001b[32m'PORT-2OZ03'\u001b[39m ]\n"
+                        },
+                        {
+                          "text": "PAGE LOG [log]: 🗑️ Petición de purga enviada para test data: PORT-2OZ03 🗑️ Petición de purga enviada para test data: PORT-2OZ03\n"
                         }
                       ],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-04-17T00:10:17.289Z",
+                      "startTime": "2026-04-17T02:38:17.422Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -174,132 +183,6 @@
               "file": "etl-mass-upload.spec.js",
               "line": 58,
               "column": 5
-            },
-            {
-              "title": "ETL Date Parsing (ISO 8601 Compliance)",
-              "ok": true,
-              "tags": [],
-              "tests": [
-                {
-                  "timeout": 60000,
-                  "annotations": [
-                    {
-                      "type": "skip",
-                      "location": {
-                        "file": "C:\\Users\\grego\\Antigravity\\Taxonomia Project\\__tests__\\e2e\\etl-mass-upload.spec.js",
-                        "line": 93,
-                        "column": 10
-                      }
-                    }
-                  ],
-                  "expectedStatus": "skipped",
-                  "projectId": "chromium",
-                  "projectName": "chromium",
-                  "results": [
-                    {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
-                      "status": "skipped",
-                      "duration": 0,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-04-17T00:10:52.618Z",
-                      "annotations": [
-                        {
-                          "type": "skip",
-                          "location": {
-                            "file": "C:\\Users\\grego\\Antigravity\\Taxonomia Project\\__tests__\\e2e\\etl-mass-upload.spec.js",
-                            "line": 93,
-                            "column": 10
-                          }
-                        }
-                      ],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "skipped"
-                }
-              ],
-              "id": "996a61ae96456f9efaa4-6be11cddafcf9076efa7",
-              "file": "etl-mass-upload.spec.js",
-              "line": 93,
-              "column": 10
-            },
-            {
-              "title": "ETL OCC Versioning (Optimistic Concurrency Bulk Auto-healing)",
-              "ok": true,
-              "tags": [],
-              "tests": [
-                {
-                  "timeout": 60000,
-                  "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "chromium",
-                  "projectName": "chromium",
-                  "results": [
-                    {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 12313,
-                      "errors": [],
-                      "stdout": [
-                        {
-                          "text": "PAGE LOG [warning]: Unrecognized feature: 'ambient-light-sensor'.\n"
-                        },
-                        {
-                          "text": "PAGE LOG [warning]: Unrecognized feature: 'speaker'.\n"
-                        },
-                        {
-                          "text": "PAGE LOG [warning]: Unrecognized feature: 'vibrate'.\n"
-                        },
-                        {
-                          "text": "PAGE LOG [warning]: Unrecognized feature: 'vr'.\n"
-                        },
-                        {
-                          "text": "PAGE LOG [warning]: An iframe which has both allow-scripts and allow-same-origin for its sandbox attribute can escape its sandboxing.\n"
-                        },
-                        {
-                          "text": "PAGE LOG [warning]: Unrecognized feature: 'ambient-light-sensor'.\n"
-                        },
-                        {
-                          "text": "PAGE LOG [warning]: Unrecognized feature: 'speaker'.\n"
-                        },
-                        {
-                          "text": "PAGE LOG [warning]: Unrecognized feature: 'vibrate'.\n"
-                        },
-                        {
-                          "text": "PAGE LOG [warning]: Unrecognized feature: 'vr'.\n"
-                        },
-                        {
-                          "text": "PAGE LOG [info]: Net state changed from IDLE to BUSY Net state changed from IDLE to BUSY\n"
-                        },
-                        {
-                          "text": "[TEARDOWN] Purificando la Base de Datos... IDs: [ \u001b[32m'PORT-PG715'\u001b[39m, \u001b[32m'PORT-ZDSPI'\u001b[39m ]\n"
-                        },
-                        {
-                          "text": "PAGE LOG [log]: 🗑️ Deleted test data: PORT-PG715 🗑️ Deleted test data: PORT-PG715\n"
-                        },
-                        {
-                          "text": "PAGE LOG [log]: 🗑️ Deleted test data: PORT-ZDSPI 🗑️ Deleted test data: PORT-ZDSPI\n"
-                        }
-                      ],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-04-17T00:10:52.619Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
-                }
-              ],
-              "id": "996a61ae96456f9efaa4-183391d28619b35cf523",
-              "file": "etl-mass-upload.spec.js",
-              "line": 122,
-              "column": 5
             }
           ]
         }
@@ -308,10 +191,10 @@
   ],
   "errors": [],
   "stats": {
-    "startTime": "2026-04-17T00:10:16.561Z",
-    "duration": 52083.614,
-    "expected": 2,
-    "skipped": 1,
+    "startTime": "2026-04-17T02:38:16.285Z",
+    "duration": 60235.92,
+    "expected": 1,
+    "skipped": 0,
     "unexpected": 0,
     "flaky": 0
   }

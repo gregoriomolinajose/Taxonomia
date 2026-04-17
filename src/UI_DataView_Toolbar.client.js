@@ -20,6 +20,9 @@ window.UI_DataView_Toolbar = (function () {
         list.setAttribute('lines', 'none');
         
         (columns || []).forEach((col, i) => {
+            // S40.5 QA Fix: Desplegar el Selector de Columnas excluyendo herramientas maestras de UX
+            if (col.uiType === 'system-checkbox' || col.uiType === 'system-num') return;
+
             const item = document.createElement('ion-item');
             item.className = 'dv-popover-item';
             item.setAttribute('lines', 'none');
