@@ -98,16 +98,8 @@ const Adapter_Sheets = {
                 throw new Error("ERROR_ARCHIVED: No se puede modificar una entidad eliminada lógicamente.");
             }
 
-            const idxVersion = normalizedHeaders.indexOf('version');
-            if (idxVersion > -1) {
-                const currentDbVersion = Number(existingRow[idxVersion]) || 1;
-                const incomingVersion = Number(payload.version) || Number(payload._version) || 1;
-                if (currentDbVersion !== incomingVersion && payload._overrideConcurrency !== true) {
-                    throw new Error("ERROR_CONCURRENCY: [DEBUG_OCC] sheetV=" + currentDbVersion + ", payloadV=" + incomingVersion + " para " + primaryKeyValue + " |\nPAYLOAD=" + JSON.stringify(payload));
-                }
-                payload.version = currentDbVersion + 1;
-                payload._version = payload.version; // Compatibilidad hacia atrás
-            }
+            const idxVersion = normalizedHeaders.indexOf('_version') > -1 ? normalizedHeaders.indexOf('_version') : normalizedHeaders.indexOf('version');
+            this._validateAndIncrementOCC(idxVersion, existingRow, payload, primaryKeyValue);
         } else {
             payload.version = 1;
             payload._version = 1;
@@ -231,6 +223,7 @@ const Adapter_Sheets = {
         const idxCreatedBy = normalizedHeaders.indexOf('created_by');
         const idxUpdatedAt = normalizedHeaders.indexOf('updated_at');
         const idxUpdatedBy = normalizedHeaders.indexOf('updated_by');
+        const idxVersion = normalizedHeaders.indexOf('_version') > -1 ? normalizedHeaders.indexOf('_version') : normalizedHeaders.indexOf('version'); // FIX: OCC Tracker Híbrido
 
         const results = [];
         for (const payload of items) {
@@ -248,6 +241,8 @@ const Adapter_Sheets = {
                     throw new Error(`ERROR_ARCHIVED: No se puede modificar la entidad con ID '${primaryKeyValue}' por estar eliminada lógicamente.`);
                 }
 
+                this._validateAndIncrementOCC(idxVersion, existingRow, payload, primaryKeyValue);
+
                 for (let i = 0; i < normalizedHeaders.length; i++) {
                     const h = normalizedHeaders[i];
                     if (h === 'created_at' || h === 'created_by') {
@@ -264,6 +259,9 @@ const Adapter_Sheets = {
                 // [Performance Fix]: El setValues individual removido para permitir la verdadera inserción en bloque (L276)
                 results.push({ status: 'success', action: 'updated', pk: primaryKeyField, val: primaryKeyValue, version: payload.version });
             } else {
+                payload.version = 1;
+                payload._version = 1;
+
                 for (let i = 0; i < normalizedHeaders.length; i++) {
                     const h = normalizedHeaders[i];
                     rowToInsert.push(payload.hasOwnProperty(h) ? payload[h] : '');
@@ -283,6 +281,7 @@ const Adapter_Sheets = {
                 if (idxLexical > -1) {
                     lexicalValue = this._calculateNextLexicalId(originalData, normalizedHeaders, tableName, schema);
                     rowToInsert[idxLexical] = lexicalValue;
+                    payload.lexical_id = lexicalValue; // Retorno Frontend
                 }
 
                 originalData.push(rowToInsert);
@@ -375,6 +374,18 @@ const Adapter_Sheets = {
 
     _normalizeHeader: _normalizeHeader,
     
+    _validateAndIncrementOCC: function(idxVersion, existingRow, payload, primaryKeyValue) {
+        if (idxVersion > -1) {
+            const currentDbVersion = Number(existingRow[idxVersion]) || 1;
+            const incomingVersion = Number(payload.version) || Number(payload._version) || 1;
+            if (currentDbVersion !== incomingVersion && payload._overrideConcurrency !== true) {
+                throw new Error("ERROR_CONCURRENCY: [DEBUG_OCC] sheetV=" + currentDbVersion + ", payloadV=" + incomingVersion + " para " + primaryKeyValue + " |\nPAYLOAD=" + JSON.stringify(payload));
+            }
+            payload.version = currentDbVersion + 1;
+            payload._version = payload.version; // Compatibilidad OCC
+        }
+    },
+
     _calculateNextLexicalId: function(originalData, normalizedHeaders, tableName, schema) {
         const idxLexical = normalizedHeaders.indexOf('lexical_id');
         if (idxLexical === -1) return null;

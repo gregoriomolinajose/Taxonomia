@@ -131,6 +131,16 @@
                 }
             }
 
+            // Recompilar Set de fechas para mapeo O(1) de parseo de fechas ISO
+            const dateFields = new Set();
+            if (schema && schema.fields) {
+                schema.fields.forEach(f => {
+                    if (f.type === 'date' || f.type === 'datetime') {
+                        dateFields.add(f.name.toLowerCase());
+                    }
+                });
+            }
+
             const jsonPayloads = [];
 
             for (let i = 1; i < lines.length; i++) {
@@ -148,7 +158,25 @@
                     // Purgar comillas de arropamiento
                     val = val.replace(/^"|"$/g, '').trim();
                     
-                    if (val !== "") hasData = true;
+                    if (val !== "") {
+                        hasData = true;
+                        
+                        // Parseo ISO Robusto con Split de Local Time (DD/MM/YYYY)
+                        if (dateFields.has(key)) {
+                            let originalVal = val;
+                            if (val.includes('/')) {
+                                const splits = val.split('/');
+                                if (splits.length === 3 && splits[2].length === 4) {
+                                    val = `${splits[2]}-${splits[1].padStart(2, '0')}-${splits[0].padStart(2, '0')}T00:00:00.000Z`;
+                                }
+                            }
+                            const d = new Date(val);
+                            if (isNaN(d.getTime())) {
+                                throw new Error(`[ETL Error] Fecha Invalida en columna '${key}': ${originalVal}`);
+                            }
+                            val = d.toISOString();
+                        }
+                    }
                     obj[key] = val;
                 }
                 

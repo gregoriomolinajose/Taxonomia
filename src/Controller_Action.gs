@@ -200,119 +200,19 @@ function getInitialPayload(entityName) {
  * Inserción y actualización masiva de registros en hoja (Universal Bulk Data Engine)
  */
 function bulkInsert(entityName, recordsArray) {
-    const user = Session.getActiveUser().getEmail();
-    const timestamp = new Date();
-    
-    const config = (typeof CONFIG !== 'undefined') ? CONFIG : { SPREADSHEET_ID_DB: '' };
-    if (!config.SPREADSHEET_ID_DB) {
-        throw new Error('Configuración Crítica: SPREADSHEET_ID_DB no se encuentra definido o es nulo.');
+    // [BugFix S40.3] Redireccionamos la llamada legacy del frontend hacia nuestro enrutador principal universal
+    const resString = API_Universal_Router('bulkInsert', entityName, recordsArray);
+    const res = JSON.parse(resString);
+    if (res.status === 'error') {
+        throw new Error(res.message);
     }
-    const lock = LockService.getScriptLock();
-    try {
-        lock.waitLock(30000); // 30s timeout for massive unpaginated bulk
-    } catch(e) {
-        return { status: 'error', message: 'Sistema saturado realizando inserciones masivas concurrentes. Reintente pronto.' };
-    }
-
-    try {
-        const ss = SpreadsheetApp.openById(config.SPREADSHEET_ID_DB);
-        if (!ss) return { status: 'error', message: 'No se pudo conectar a la base de datos (Spreadsheet nulo).' };
-
-        // Auto-Aprovisionamiento explícito usando el Adapter
-        const sheet = Adapter_Sheets._ensureSheetExists(ss, entityName);
-        if (!sheet) return { status: 'error', message: `No se pudo acceder a la hoja ${entityName}` };
-
-    const dataRange = sheet.getDataRange();
-    const allValues = dataRange.getValues();
-    const headers = allValues[0];
-    let existingData = allValues.slice(1);
-    
-    if (headers.length === 0 || headers[0] === "") {
-       return { status: 'error', message: `La entidad ${entityName} no está aprovisionada (faltan cabeceras).` };
-    }
-    
-    // Determinar Primary Key dinámicamente usando el Schema como Ground Truth
-    let pkField = (typeof APP_SCHEMAS !== 'undefined' && APP_SCHEMAS[entityName] && APP_SCHEMAS[entityName].primaryKey) ? APP_SCHEMAS[entityName].primaryKey : null;
-    
-    if (!pkField) {
-        pkField = headers.find(h => h.toString().startsWith('id_'));
-    }
-    if (!pkField) {
-        const tableKey = entityName.toLowerCase();
-        const singularKey = tableKey.endsWith('s') ? tableKey.slice(0, -1) : (tableKey.endsWith('es') ? tableKey.slice(0, -2) : tableKey);
-        pkField = 'id_' + singularKey;
-    }
-
-    let idIndex = headers.indexOf(pkField);
-    if(idIndex === -1) idIndex = 0; // Fallback to first column
-
-    let existingMap = {};
-    existingData.forEach((row, index) => {
-        if (row[idIndex]) existingMap[row[idIndex]] = index;
-    });
-
-    let newRecordsCount = 0;
-    let updatedRecordsCount = 0;
-
-    recordsArray.forEach(record => {
-        const recordId = record[pkField] || record['id'];
-        
-        // Es un UPDATE
-        if (recordId && existingMap.hasOwnProperty(recordId)) {
-            _guardAbac('update', entityName, recordId);
-            const rowIndex = existingMap[recordId];
-            
-            // Mantener datos de creación originales
-            record.created_at = existingData[rowIndex][headers.indexOf('created_at')] || timestamp;
-            record.created_by = existingData[rowIndex][headers.indexOf('created_by')] || user;
-            // Actualizar auditoría
-            record.updated_at = timestamp;
-            record.updated_by = user;
-            record.estado = record.estado || existingData[rowIndex][headers.indexOf('estado')] || 'Activo';
-            
-            // Reconstruir la fila preservando el orden de las cabeceras
-            const updatedRow = headers.map(colName => record[colName] !== undefined ? record[colName] : existingData[rowIndex][headers.indexOf(colName)]);
-            existingData[rowIndex] = updatedRow;
-            updatedRecordsCount++;
-        } 
-        // Es un INSERT
-        else {
-            _guardAbac('create', entityName, null);
-            const newId = recordId || _generateShortUUID(entityName);
-            record[pkField] = newId; 
-            record.created_at = timestamp;
-            record.created_by = user;
-            record.updated_at = timestamp;
-            record.updated_by = user;
-            record.estado = record.estado || 'Activo';
-            
-            const newRow = headers.map(colName => record[colName] !== undefined ? record[colName] : '');
-            existingData.push(newRow);
-            existingMap[newId] = existingData.length - 1;
-            newRecordsCount++;
-        }
-    });
-
-    // Escribir de vuelta TODO a la base de datos en 1 sola operación (Flash Write)
-    if (existingData.length > 0) {
-        if(sheet.getLastRow() > 1) {
-            sheet.getRange(2, 1, sheet.getLastRow() - 1, headers.length).clearContent();
-        }
-        sheet.getRange(2, 1, existingData.length, headers.length).setValues(existingData);
-        SpreadsheetApp.flush(); // Garantiza la atomicidad cruzada
-    }
-    
-    // BUGFIX: Invalida explícitamente la memoria RAM y metadatos luego de una inyección masiva para evitar Phantom Ghosting!
-    if (typeof _invalidateCache === 'function') {
-        _invalidateCache(entityName);
-    }
-    
-    Logger.log(`BulkUpsert completado para ${entityName}: ${newRecordsCount} insertados, ${updatedRecordsCount} actualizados.`);
-    
-    return { status: 'success', insertedCount: (newRecordsCount + updatedRecordsCount), newRecords: newRecordsCount, updatedRecords: updatedRecordsCount };
-    } finally {
-        lock.releaseLock();
-    }
+    return {
+        status: 'success',
+        insertedCount: res.insertedCount || recordsArray.length,
+        newRecords: recordsArray.length, // Compat
+        updatedRecords: 0,
+        details: res.data ? res.data.details : (res.data || [])
+    };
 }
 
 /**
@@ -321,10 +221,14 @@ function bulkInsert(entityName, recordsArray) {
  * Ejemplo: UNID-X8R2P
  */
 function _generateShortUUID(entityName) {
-  if (typeof Utilities !== 'undefined' && typeof Utilities.getUuid === 'function') {
-    return Utilities.getUuid();
-  }
-  return 'uuid-' + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+    const safeName = entityName || 'uuid';
+    const prefix = safeName.substring(0, 4).toUpperCase();
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    let suffix = '';
+    for (let i = 0; i < 5; i++) {
+      suffix += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return `${prefix}-${suffix}`;
 }
 
 
