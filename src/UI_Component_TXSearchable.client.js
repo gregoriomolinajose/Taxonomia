@@ -28,6 +28,14 @@ class TXSearchable extends HTMLElement {
         return typeof window !== 'undefined' && window.innerWidth <= 768;
     }
 
+    _extractPayloadTitle(item) {
+        return item.nombre || item.label || item.descripcion || item.title || 'Desconocido';
+    }
+
+    _extractPayloadId(item) {
+        return item.id_registro || item.id_numero || item.id || item.codigo || item;
+    }
+
     // ===============================================
     // 1. API Contract / Declarative Attributes
     // ===============================================
@@ -213,25 +221,21 @@ class TXSearchable extends HTMLElement {
     _getDisplayValue() {
         if (!this._selectedState) return '';
         
-        // Criterio Duck-Typing Universal (Zero Config)
-        const getPayloadTitle = (item) => item.nombre || item.label || item.descripcion || item.title || 'Desconocido';
-        const getPayloadId = (item) => item.id_registro || item.id_numero || item.id || item.codigo || item;
-
         // Multi Mode
         if (this._isMultiple) {
             if (this._selectedState.size === 0) return '';
             if (this._selectedState.size === 1) {
                 const singleId = Array.from(this._selectedState)[0];
-                const found = this._dataSource.find(item => String(getPayloadId(item)) === String(singleId));
-                return found ? getPayloadTitle(found) : singleId;
+                const found = this._dataSource.find(item => String(this._extractPayloadId(item)) === String(singleId));
+                return found ? this._extractPayloadTitle(found) : singleId;
             }
             return `${this._selectedState.size} ítem(s) seleccionado(s)`;
         }
         
         // Single Mode
         const rawId = this._selectedState;
-        const found = this._dataSource.find(item => String(getPayloadId(item)) === String(rawId));
-        return found ? getPayloadTitle(found) : rawId;
+        const found = this._dataSource.find(item => String(this._extractPayloadId(item)) === String(rawId));
+        return found ? this._extractPayloadTitle(found) : rawId;
     }
 
     // ===============================================
@@ -331,21 +335,18 @@ class TXSearchable extends HTMLElement {
 
         if (spinner) spinner.style.display = 'none';
 
-        const getPayloadTitle = (item) => item.nombre || item.label || item.descripcion || item.title || 'Desconocido';
-        const getPayloadId = (item) => item.id_registro || item.id_numero || item.id || item.codigo || item;
-
         // RAM-Secure Local Filter (YAGNI Endless Scroll)
         let filtered = this._dataSource || [];
         if (query.trim()) {
-            filtered = filtered.filter(item => getPayloadTitle(item).toLowerCase().includes(query.trim()));
+            filtered = filtered.filter(item => this._extractPayloadTitle(item).toLowerCase().includes(query.trim()));
         }
         filtered = filtered.slice(0, 100);
 
         listNode.innerHTML = ''; // Fast Clear
         
         filtered.forEach(item => {
-            const idVal = String(getPayloadId(item));
-            const title = getPayloadTitle(item);
+            const idVal = String(this._extractPayloadId(item));
+            const title = this._extractPayloadTitle(item);
             const el = document.createElement('ion-item');
             el.button = true;
 
