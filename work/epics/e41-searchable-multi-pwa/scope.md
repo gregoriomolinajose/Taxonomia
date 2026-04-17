@@ -19,11 +19,11 @@ El rediseño obedece directamente al principio DRY (Don't Repeat Yourself). Evit
 - Configuración del Manifest Global PWA.
 
 ## Stories
-- **S41.1**: Design API Contract for Unified Web Component (`<tx-searchable multiple="boolean">`). [Size: XS]
-- **S41.2**: Implement Base Hybrid Architecture & Unified State Engine. [Size: M]
-- **S41.3**: Conditional DOM Mapping (Single Click vs Multi Checkbox + Pills). [Size: S]
-- **S41.4**: DOM Lifecycle Hooks (Garbage Collection Limits). [Size: S]
-- **S41.5**: Integration Testing & FormRenderer Regression checks. [Size: M]
+- **S41.1**: Design API Contract for Unified Web Component (`<tx-searchable>`). [DONE]
+- **S41.2**: Implement Base Hybrid Architecture & Unified State Engine. [DONE]
+- **S41.3**: Conditional DOM Mapping (Absorbida en S41.2). [DONE]
+- **S41.4**: DOM Lifecycle Hooks (Absorbida en S41.1). [DONE]
+- **S41.5**: Integration Testing & FormRenderer Regression checks. [DONE]
 
 ## Done
 - El componente `SearchableMulti` puede invocarse limpiamente mediante custom tags de HTML.
