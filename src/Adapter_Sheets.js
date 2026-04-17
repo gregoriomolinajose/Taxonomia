@@ -88,6 +88,15 @@ const Adapter_Sheets = {
         const idxUpdatedAt = normalizedHeaders.indexOf('updated_at');
         const idxUpdatedBy = normalizedHeaders.indexOf('updated_by');
 
+        const defaultValuesMap = {};
+        if (schema && schema.fields) {
+            schema.fields.forEach(f => {
+                if (f.defaultValue !== undefined) {
+                    defaultValuesMap[_normalizeHeader(f.name)] = f.defaultValue;
+                }
+            });
+        }
+
         const rowToInsert = [];
         let existingRow = [];
         if (foundRowIndex > -1) {
@@ -124,8 +133,12 @@ const Adapter_Sheets = {
                 // Modo Create
                 if (h === 'created_at' || h === 'updated_at') {
                     rowToInsert.push(currentTimestamp);
+                } else if (payload.hasOwnProperty(h) && payload[h] !== null && payload[h] !== undefined) {
+                    rowToInsert.push(payload[h]);
+                } else if (defaultValuesMap[h] !== undefined) {
+                    rowToInsert.push(defaultValuesMap[h]);
                 } else {
-                    rowToInsert.push(payload.hasOwnProperty(h) && payload[h] !== null && payload[h] !== undefined ? payload[h] : '');
+                    rowToInsert.push('');
                 }
             }
         }
@@ -225,6 +238,15 @@ const Adapter_Sheets = {
         const idxUpdatedBy = normalizedHeaders.indexOf('updated_by');
         const idxVersion = normalizedHeaders.indexOf('_version') > -1 ? normalizedHeaders.indexOf('_version') : normalizedHeaders.indexOf('version'); // FIX: OCC Tracker Híbrido
 
+        const defaultValuesMap = {};
+        if (schema && schema.fields) {
+            schema.fields.forEach(f => {
+                if (f.defaultValue !== undefined) {
+                    defaultValuesMap[_normalizeHeader(f.name)] = f.defaultValue;
+                }
+            });
+        }
+
         const results = [];
         for (const payload of items) {
             const primaryKeyValue = payload[primaryKeyField];
@@ -264,7 +286,13 @@ const Adapter_Sheets = {
 
                 for (let i = 0; i < normalizedHeaders.length; i++) {
                     const h = normalizedHeaders[i];
-                    rowToInsert.push(payload.hasOwnProperty(h) ? payload[h] : '');
+                    if (payload.hasOwnProperty(h) && payload[h] !== null && payload[h] !== undefined) {
+                        rowToInsert.push(payload[h]);
+                    } else if (defaultValuesMap[h] !== undefined) {
+                        rowToInsert.push(defaultValuesMap[h]);
+                    } else {
+                        rowToInsert.push('');
+                    }
                 }
                 if (idxCreatedAt > -1 && (!rowToInsert[idxCreatedAt] || String(rowToInsert[idxCreatedAt]).trim() === '')) {
                     rowToInsert[idxCreatedAt] = currentTimestamp;

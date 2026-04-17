@@ -58,8 +58,8 @@ test.describe('S40.3 ETL Mass Upload & Integrity', () => {
     test('ETL Payload Semantic Identity (Lexical y UUID Corto)', async () => {
         const mockPayload = [{
             nombre: `ETL Test Auto 1 - ${Date.now()}`,
-            descripcion: 'Payload de Fabricación Automatizada',
-            estado: 'Activo'
+            descripcion: 'Payload de Fabricación Automatizada'
+            // [BugFix S40.4] Omitimos explícitamente "estado" para probar el schema defaultValue
         }];
 
         const response = await frame.locator('body').evaluate(async (el, payload) => {
@@ -86,6 +86,18 @@ test.describe('S40.3 ETL Mass Upload & Integrity', () => {
         console.log("ITEM DEBUG FRONTEND:", item);
         expect(item.lexical_id, 'Falta enrutamiento Lexical').toBeDefined();
         expect(item.lexical_id).toMatch(/^PORT-\d+$/);
+
+        // 4. [BugFix S40.4] Recuperar registro duro desde BD y asegurar que el Schema inyectó Default Value
+        const backendRecord = await frame.locator('body').evaluate(async (el, idToRead) => {
+            return await window.DataAPI.call('API_Universal_Router', 'read', 'Portafolio', idToRead).catch(e => { 
+                console.error("DEBUG E2E S40.4 READ ERROR:", e);
+                return { status: 'error', message: e.message || e };
+            });
+        }, item.val);
+        
+        console.log("BACKEND RECORD DEBUG:", backendRecord);
+        expect(backendRecord.status).toBe('success');
+        expect(backendRecord.data.estado).toBe('Activo'); // Omitido en payload, inyectado por Adapter_Sheets
     });
 
     // H10: Skipped porque DataEngine_ETL respeta el Strict Schema y actualmente ninguna entidad usa type="date".
