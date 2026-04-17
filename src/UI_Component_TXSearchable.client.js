@@ -36,11 +36,14 @@ class TXSearchable extends HTMLElement {
                 break;
             case 'multiple':
                 this._isMultiple = (newValue === 'true' || newValue === '');
-                // Normalizar Estado Interno basado en cardinalidad recién descubierta
+                // Normalizar Estado Interno preservando hidrataciones tempranas (Fix HTML Parser Race Condition)
                 if (this._isMultiple && !(this._selectedState instanceof Set)) {
-                    this._selectedState = new Set();
+                    // Migra el estado precoz Single hacia Múltiple
+                    this._selectedState = new Set(this._selectedState ? [this._selectedState] : []);
                 } else if (!this._isMultiple && (this._selectedState instanceof Set)) {
-                    this._selectedState = null;
+                    // Migra el estado precoz Múltiple hacia Single
+                    const arr = Array.from(this._selectedState);
+                    this._selectedState = arr.length > 0 ? arr[0] : null;
                 }
                 break;
             case 'pre-selected':
@@ -49,8 +52,10 @@ class TXSearchable extends HTMLElement {
                     if (this._isMultiple) {
                         this._selectedState = new Set(Array.isArray(parsed) ? parsed.map(c => typeof c === 'string' ? c : (c.id_registro || c.id)) : []);
                     } else {
-                        // SCD-2 Hydration check fallback (toma el primero si vino en Array)
-                        this._selectedState = Array.isArray(parsed) && parsed.length > 0 ? (parsed[0].id_registro || parsed[0]) : parsed;
+                        // SCD-2 Hydration check fallback seguro
+                        this._selectedState = Array.isArray(parsed) && parsed.length > 0 
+                            ? (typeof parsed[0] === 'string' ? parsed[0] : (parsed[0].id_registro || parsed[0].id)) 
+                            : (typeof parsed === 'string' ? parsed : (parsed.id_registro || parsed.id));
                     }
                 } catch(e) {
                     console.warn(`[TXSearchable] pre-selected parsing error: ${e.message}`);
