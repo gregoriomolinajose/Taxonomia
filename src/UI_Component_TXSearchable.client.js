@@ -155,8 +155,6 @@ class TXSearchable extends HTMLElement {
                             <ion-icon name="search-outline" style="font-size: 20px;"></ion-icon>
                         </div>
                     </div>
-                    <!-- Node Anchors for overlays -->
-                    <div id="${this._componentId}-overlay-anchor" style="position: absolute; width: 100%; bottom: 0;"></div>
                 </div>
             `;
         }
