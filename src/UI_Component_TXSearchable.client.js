@@ -15,6 +15,7 @@ class TXSearchable extends HTMLElement {
         this._selectedState = null; // String (Single) o Set (Multi)
         this._isMultiple = false;
         this._entityName = 'Registro';
+        this._rafId = null; // Puntero para cancelar animaciones colgantes (GC)
         
         // Atar handlers al contexto local para limpieza segura (Garbage Collection).
         this._boundRender = this._render.bind(this);
@@ -67,9 +68,7 @@ class TXSearchable extends HTMLElement {
         }
 
         // Emitir un render scheduling seguro asíncrono
-        if (this.isConnected) {
-            requestAnimationFrame(this._boundRender);
-        }
+        this._scheduleRender();
     }
 
     // ===============================================
@@ -81,9 +80,7 @@ class TXSearchable extends HTMLElement {
 
     set dataSource(dataArr) {
         this._dataSource = Array.isArray(dataArr) ? dataArr : [];
-        if (this.isConnected) {
-            requestAnimationFrame(this._boundRender);
-        }
+        this._scheduleRender();
     }
 
     /**
@@ -112,10 +109,16 @@ class TXSearchable extends HTMLElement {
                 </div>
             `;
         }
-        requestAnimationFrame(this._boundRender);
+        this._scheduleRender();
     }
 
     disconnectedCallback() {
+        // Detener renders fantasma pendientes (Evita Memory Leak de Detached DOM tree)
+        if (this._rafId) {
+            cancelAnimationFrame(this._rafId);
+            this._rafId = null;
+        }
+
         // [GC] Destrucciones críticas para PWA
         this._dataSource = []; 
         if (this._selectedState instanceof Set) {
@@ -150,7 +153,14 @@ class TXSearchable extends HTMLElement {
     // ===============================================
     // 5. Internal Rendering Base
     // ===============================================
+    _scheduleRender() {
+        if (!this.isConnected) return;
+        if (this._rafId) cancelAnimationFrame(this._rafId);
+        this._rafId = requestAnimationFrame(this._boundRender);
+    }
+
     _render() {
+        this._rafId = null; // Liberar pointer al arrancar dibujado
         // [S41.2 Target Placeholder] 
         // Aquí se incrustará el Motor DOM Híbrido.
         const wrapper = this.querySelector('.tx-searchable-wrapper');
