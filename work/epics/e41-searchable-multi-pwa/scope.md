@@ -1,29 +1,29 @@
-# Epic E41: Decoupled Searchable Multi Component (PWA Ready)
+# Epic E41: Unified Searchable Web Component (Single & Multi PWA Ready)
 
 ## Objective
-Transformar el actual subgrid genérico utilizado para la selección múltiple en un **Pure Web Component** (`<tx-searchable-multi>`), tomando como base estructural el componente `SearchableSingle`. El nuevo componente debe ser totalmente desacoplado, modular y compatible con el empaquetado nativo (PWA/Capacitor para iOS/Android), sentando los cimientos de la nueva UI Component Library de Taxonomía.
+Evolucionar y fusionar los componentes de selección de Taxonomía (`UI_Component_SearchableSingle` y `UI_Component_SearchableMulti`) en un **Único Web Component Unificado** (`<tx-searchable>`). Este componente maestro utilizará el paradigma de *Vanilla Custom Elements*, soportando tanto la elección única como múltiple a través de un simple atributo HTML (`multiple="true"`), siendo totalmente compatible con el empaquetado nativo (PWA/Capacitor para iOS/Android).
 
 ## Value
-El rediseño permite a Taxonomía reutilizar la selección múltiple avanzada sin dependencia directa del `FormRenderer_UI` ni inyección rígida del DOM, mitigando *Memory Leaks* y *Ghost Stealing* en subgrids 1:N. Al encapsular el componente nativamente, se habilita la distribución Mobile PWA, resolviendo la última gran barrera arquitectónica para un desarrollo escalable en dispositivos táctiles.
+El rediseño obedece directamente al principio DRY (Don't Repeat Yourself). Evita mantener dos motores de búsqueda, modales infinitos y generadores de DOM paralelos. Al abstraerlo todo bajo el atributo de cardinalidad, Taxonomía consolida su Component Library UX, mitiga Memory Leaks (ausencia de listeners repetitivos), acelera la estandarización PWA y elimina definitivamente el código espagueti inyectado desde `FormRenderer_UI`.
 
 ## In Scope (MUST/SHOULD)
-- Refactorización del código legacy que rige la selección múltiple (actualmente incrustado y fuertemente acoplado en `UI_Component_SearchableMulti.client.js`).
-- Encapsulamiento como Web Component independiente con Shadow DOM o Scoped DOM (`<tx-searchable-multi>`).
-- Implementación del Look & Feel del `SearchableSingle` (diseño mobile-first, Drawer nativo, Search Bar, Tags seleccionadas en pills superiores).
-- Gestión del ciclo de vida para recolección de basura (Garbage Collection) y limpieza de Listeners al cerrar la vista.
-- Compatibilidad nativa Capacitor / PWA.
+- Refactorización y fusión del código legado de `SearchableSingle` y `SearchableMulti`.
+- Encapsulamiento del motor unificado como Web Component nativo `<tx-searchable>`.
+- Control declarativo de UI: renderiza sub-vistas Radio/Click Directo (Single) VS Checkboxes + Action Pills (Multi) evaluando su estado de cardinalidad.
+- Limpieza agresiva de Memoria (Garbage Collection Lifecycle).
+- Soporte base para ecosistemas PWA e integraciones táctiles (Capacitor).
 
 ## Out of Scope
-- Migración de otros componentes (DataGrid, FileUpload) a Web Components puros (se relega a la E39 u otra épica).
-- Lógica backend de resolución topológica estricta (ya resuelta en E38/E40).
-- Configuración del Manifest PWA Global (se resolverá transversalmente).
+- Migración de otros componentes (DataGrid, Uploads) a Web Components puros.
+- SCROLL VIRTUAL / INFINITO: Descartado por Overengineering (YAGNI). Un simple Flex Overflow-Y será utilizado.
+- Configuración del Manifest Global PWA.
 
 ## Stories
-- **S41.1**: Design API Contract for Web Component. [Size: XS]
-- **S41.2**: Implement Basic Markup & Data Binding (SearchableMulti Shadow Layout). [Size: S]
-- **S41.3**: Port Search & Selection Engine from SearchableSingle (Logic Replication). [Size: M]
-- **S41.4**: DOM Lifecycle Interceptors & Garbage Collection limits. [Size: S]
-- **S41.5**: Integration Testing inside FormRenderer_UI. [Size: M]
+- **S41.1**: Design API Contract for Unified Web Component (`<tx-searchable multiple="boolean">`). [Size: XS]
+- **S41.2**: Implement Base Hybrid Architecture & Unified State Engine. [Size: M]
+- **S41.3**: Conditional DOM Mapping (Single Click vs Multi Checkbox + Pills). [Size: S]
+- **S41.4**: DOM Lifecycle Hooks (Garbage Collection Limits). [Size: S]
+- **S41.5**: Integration Testing & FormRenderer Regression checks. [Size: M]
 
 ## Done
 - El componente `SearchableMulti` puede invocarse limpiamente mediante custom tags de HTML.
