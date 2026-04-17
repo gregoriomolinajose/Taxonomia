@@ -15,6 +15,18 @@ function _normalizeHeader(headerStr) {
         .replace(/^_+|_+$/g, "");                // 4. Limpiar TODOS los guiones bajos iniciales y finales
 }
 
+function _buildDefaultValuesMap(schema) {
+    const map = {};
+    if (schema && schema.fields) {
+        schema.fields.forEach(f => {
+            if (f.defaultValue !== undefined) {
+                map[_normalizeHeader(f.name)] = f.defaultValue;
+            }
+        });
+    }
+    return map;
+}
+
 const Adapter_Sheets = {
     upsert: function (tableName, payload, config) {
         // 1. Determinar PK con soporte para entidades plurales (ej. Grupo_Productos → id_grupo_producto)
@@ -88,14 +100,7 @@ const Adapter_Sheets = {
         const idxUpdatedAt = normalizedHeaders.indexOf('updated_at');
         const idxUpdatedBy = normalizedHeaders.indexOf('updated_by');
 
-        const defaultValuesMap = {};
-        if (schema && schema.fields) {
-            schema.fields.forEach(f => {
-                if (f.defaultValue !== undefined) {
-                    defaultValuesMap[_normalizeHeader(f.name)] = f.defaultValue;
-                }
-            });
-        }
+        const defaultValuesMap = _buildDefaultValuesMap(schema);
 
         const rowToInsert = [];
         let existingRow = [];
@@ -238,14 +243,7 @@ const Adapter_Sheets = {
         const idxUpdatedBy = normalizedHeaders.indexOf('updated_by');
         const idxVersion = normalizedHeaders.indexOf('_version') > -1 ? normalizedHeaders.indexOf('_version') : normalizedHeaders.indexOf('version'); // FIX: OCC Tracker Híbrido
 
-        const defaultValuesMap = {};
-        if (schema && schema.fields) {
-            schema.fields.forEach(f => {
-                if (f.defaultValue !== undefined) {
-                    defaultValuesMap[_normalizeHeader(f.name)] = f.defaultValue;
-                }
-            });
-        }
+        const defaultValuesMap = _buildDefaultValuesMap(schema);
 
         const results = [];
         for (const payload of items) {
