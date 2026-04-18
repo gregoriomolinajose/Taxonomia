@@ -78,14 +78,18 @@ const Adapter_Sheets = {
 
         const dataRange = sheet.getDataRange();
         const numRows = dataRange.getNumRows();
+        
+        let allData = [];
+        if (numRows > 1) {
+            allData = dataRange.getValues();
+        }
 
         let foundRowIndex = -1;
         if (numRows > 1) {
-            const pkColumnData = sheet.getRange(2, pkIndex + 1, numRows - 1, 1).getValues();
-            for (let r = 0; r < pkColumnData.length; r++) {
+            for (let r = 1; r < allData.length; r++) { // skip header
                 // C-01: Strict string comparison to prevent type-coercion collisions (e.g. "1" == 1)
-                if (String(pkColumnData[r][0]) === String(primaryKeyValue)) {
-                    foundRowIndex = r + 2; // +2: filas 1-indexed + skip header
+                if (String(allData[r][pkIndex]) === String(primaryKeyValue)) {
+                    foundRowIndex = r + 1; // +1: filas 1-indexed nativo en sheets
                     break;
                 }
             }
@@ -105,7 +109,7 @@ const Adapter_Sheets = {
         const rowToInsert = [];
         let existingRow = [];
         if (foundRowIndex > -1) {
-            existingRow = sheet.getRange(foundRowIndex, 1, 1, normalizedHeaders.length).getValues()[0];
+            existingRow = allData[foundRowIndex - 1]; // Recuperar directo desde RAM, esquivando latencia de red!
             
             // [S21.3 Soft-Delete] Bloquear updates en nodos lógicamente eliminados
             if (this._isNodeLogicallyDeleted(normalizedHeaders, existingRow)) {
@@ -155,7 +159,6 @@ const Adapter_Sheets = {
 
             Logger.log(`Adapter_Sheets.upsert: [Update] Modificando Fila: ${foundRowIndex} PK: ${primaryKeyValue}. Longitud datos: ${rowToInsert.length}/${normalizedHeaders.length}`);
             sheet.getRange(foundRowIndex, 1, 1, rowToInsert.length).setValues([rowToInsert]);
-            SpreadsheetApp.flush(); // Force sync to Google Drive UI
             return { status: 'success', action: 'updated', pk: primaryKeyField, val: primaryKeyValue, version: payload.version };
         } else {
             // Insertar (Create)
@@ -179,7 +182,6 @@ const Adapter_Sheets = {
 
             Logger.log("Adapter_Sheets.upsert: ¿Se encontró el ID?: No. Creando nueva fila para idempotencia...");
             sheet.getRange(sheet.getLastRow() + 1, 1, 1, rowToInsert.length).setValues([rowToInsert]);
-            SpreadsheetApp.flush(); // Force sync to Google Drive UI
             return { status: 'success', action: 'created', pk: primaryKeyField, val: primaryKeyValue, lexical_id: lexicalValue, version: payload.version };
         }
         } finally {
@@ -317,7 +319,6 @@ const Adapter_Sheets = {
         }
         
         sheet.getRange(1, 1, originalData.length, originalData[0].length).setValues(originalData);
-        SpreadsheetApp.flush();
         return { status: 'success', count: results.length, details: results };
         } finally {
             lock.releaseLock();
