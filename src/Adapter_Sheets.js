@@ -28,6 +28,19 @@ function _buildDefaultValuesMap(schema) {
 }
 
 const Adapter_Sheets = {
+    // --- S42.5 SINGLETON POOLER ---
+    _cachedSS: null,
+    _cachedSS_id: null,
+    
+    _getSpreadsheet: function(spreadsheetId) {
+        if (!this._cachedSS || this._cachedSS_id !== spreadsheetId) {
+            this._cachedSS = SpreadsheetApp.openById(spreadsheetId);
+            this._cachedSS_id = spreadsheetId;
+        }
+        return this._cachedSS;
+    },
+    // ------------------------------
+    
     upsert: function (tableName, payload, config) {
         // 1. Determinar PK con soporte para entidades plurales (ej. Grupo_Productos → id_grupo_producto)
         //    Prueba: id_<tableName> → id_<singular> → find(startsWith('id_'))
@@ -58,17 +71,18 @@ const Adapter_Sheets = {
         }
 
         try {
-            const ss = SpreadsheetApp.openById(spreadsheetId);
+            const ss = this._getSpreadsheet(spreadsheetId);
             Logger.log("Adapter_Sheets.upsert: Buscando pestaña... DB_" + tableName);
             const sheet = this._ensureSheetExists(ss, tableName);
 
         // 3. Leer Encabezados
-        const headersRange = sheet.getRange(1, 1, 1, sheet.getLastColumn());
+        const numCols = sheet.getLastColumn() || 1;
+        const headersRange = sheet.getRange(1, 1, 1, numCols);
         const headers = headersRange.getValues()[0];
 
         // Mapear encabezados usando underscore para comparar con el payload
         const normalizedHeaders = headers.map(h => _normalizeHeader(h));
-        Logger.log("Adapter_Sheets.upsert: Encabezados encontrados (normalizados): " + JSON.stringify(normalizedHeaders));
+        if (typeof Logger !== 'undefined') Logger.log("Adapter_Sheets.upsert: Encabezados encontrados (normalizados): " + JSON.stringify(normalizedHeaders));
 
         // 5. Idempotencia: Buscar si existe la PK (Upsert)
         const pkIndex = normalizedHeaders.indexOf(primaryKeyField);
@@ -76,22 +90,16 @@ const Adapter_Sheets = {
             throw new Error(`La columna llave primaria (${primaryKeyField}) no existe en DB_${tableName}`);
         }
 
-        const dataRange = sheet.getDataRange();
-        const numRows = dataRange.getNumRows();
+        const numRows = sheet.getLastRow();
         
-        let allData = [];
-        if (numRows > 1) {
-            allData = dataRange.getValues();
-        }
-
         let foundRowIndex = -1;
         if (numRows > 1) {
-            for (let r = 1; r < allData.length; r++) { // skip header
-                // C-01: Strict string comparison to prevent type-coercion collisions (e.g. "1" == 1)
-                if (String(allData[r][pkIndex]) === String(primaryKeyValue)) {
-                    foundRowIndex = r + 1; // +1: filas 1-indexed nativo en sheets
-                    break;
-                }
+            // S42.5: Búsqueda Unidimensional en DB_ (Evita descargar matriz completa a la VRAM)
+            const pkColumnData = sheet.getRange(2, pkIndex + 1, numRows - 1, 1).getValues();
+            const flatIds = pkColumnData.map(r => String(r[0]));
+            const arrayIndex = flatIds.indexOf(String(primaryKeyValue));
+            if (arrayIndex > -1) {
+                foundRowIndex = arrayIndex + 2; // +2 porque el array de flatIds empieza desde la fila 2 de la hoja de cálculo
             }
         }
 
@@ -109,7 +117,8 @@ const Adapter_Sheets = {
         const rowToInsert = [];
         let existingRow = [];
         if (foundRowIndex > -1) {
-            existingRow = allData[foundRowIndex - 1]; // Recuperar directo desde RAM, esquivando latencia de red!
+            // Cargar a memoria V8 únicamente la fila destino para evitar recargar RAM innecesariamente
+            existingRow = sheet.getRange(foundRowIndex, 1, 1, normalizedHeaders.length).getValues()[0];
             
             // [S21.3 Soft-Delete] Bloquear updates en nodos lógicamente eliminados
             if (this._isNodeLogicallyDeleted(normalizedHeaders, existingRow)) {
@@ -157,7 +166,7 @@ const Adapter_Sheets = {
             if (idxUpdatedAt > -1) rowToInsert[idxUpdatedAt] = currentTimestamp;
             if (idxUpdatedBy > -1) rowToInsert[idxUpdatedBy] = currentUser;
 
-            Logger.log(`Adapter_Sheets.upsert: [Update] Modificando Fila: ${foundRowIndex} PK: ${primaryKeyValue}. Longitud datos: ${rowToInsert.length}/${normalizedHeaders.length}`);
+            if (typeof Logger !== 'undefined') Logger.log(`Adapter_Sheets.upsert: [Update] Modificando Fila: ${foundRowIndex} PK: ${primaryKeyValue}. Longitud datos: ${rowToInsert.length}/${normalizedHeaders.length}`);
             sheet.getRange(foundRowIndex, 1, 1, rowToInsert.length).setValues([rowToInsert]);
             return { status: 'success', action: 'updated', pk: primaryKeyField, val: primaryKeyValue, version: payload.version };
         } else {
@@ -175,12 +184,12 @@ const Adapter_Sheets = {
             const idxLexical = normalizedHeaders.indexOf('lexical_id');
             let lexicalValue = null;
             if (idxLexical > -1) {
-                const sheetDataRangeObjects = dataRange.getValues();
+                const sheetDataRangeObjects = sheet.getDataRange().getValues(); // Falback for complete Lexical evaluation if new
                 lexicalValue = this._calculateNextLexicalId(sheetDataRangeObjects, normalizedHeaders, tableName, schema);
                 rowToInsert[idxLexical] = lexicalValue;
             }
 
-            Logger.log("Adapter_Sheets.upsert: ¿Se encontró el ID?: No. Creando nueva fila para idempotencia...");
+            if (typeof Logger !== 'undefined') Logger.log("Adapter_Sheets.upsert: ¿Se encontró el ID?: No. Creando nueva fila para idempotencia...");
             sheet.getRange(sheet.getLastRow() + 1, 1, 1, rowToInsert.length).setValues([rowToInsert]);
             return { status: 'success', action: 'created', pk: primaryKeyField, val: primaryKeyValue, lexical_id: lexicalValue, version: payload.version };
         }
@@ -209,7 +218,7 @@ const Adapter_Sheets = {
         }
 
         const spreadsheetId = config ? config.SPREADSHEET_ID_DB : CONFIG.SPREADSHEET_ID_DB;
-        const ss = SpreadsheetApp.openById(spreadsheetId);
+        const ss = this._getSpreadsheet(spreadsheetId);
 
         const lock = LockService.getScriptLock();
         try {
@@ -354,7 +363,7 @@ const Adapter_Sheets = {
 
     remove: function (tableName, id, config) {
         const spreadsheetId = config ? config.SPREADSHEET_ID_DB : CONFIG.SPREADSHEET_ID_DB;
-        const ss = SpreadsheetApp.openById(spreadsheetId);
+        const ss = this._getSpreadsheet(spreadsheetId);
         const sheet = this._ensureSheetExists(ss, tableName);
 
         const headersRange = sheet.getRange(1, 1, 1, sheet.getLastColumn());
@@ -537,7 +546,7 @@ const Adapter_Sheets = {
             ? config.SPREADSHEET_ID_DB
             : CONFIG.SPREADSHEET_ID_DB;
 
-        const ss = SpreadsheetApp.openById(spreadsheetId);
+        const ss = this._getSpreadsheet(spreadsheetId);
         const sheet = this._ensureSheetExists(ss, entityName);
 
         // [Regla 11: Performance] - Estándar Inmutable: Traer todo el rango de datos en una sola llamada
