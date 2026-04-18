@@ -363,6 +363,9 @@ const Engine_DB = {
         // [S5.6] Legacy Graph Edge SCD-2 Orchestrator eliminado (Delegado al bloque de relaciones)
 
         // Paso C y D: Inyección de FK y Transacción Hijos
+        const globalBatches = {};
+        const globalCachesToBust = new Set();
+
         if (schema) {
             const fields = schema.fields || (typeof schema === 'object' ? Object.keys(schema).map(k => ({ name: k, ...schema[k] })) : []);
             fields.forEach(f => {
@@ -416,9 +419,12 @@ const Engine_DB = {
                         }
                     }
 
+                    const targetTableForOrphans = f.isTemporalGraph ? f.graphEntity : targetEntity;
                     if (orphansToProcess.length > 0) {
                         if (typeof Logger !== 'undefined') Logger.log(`[Diffing] Detectados ${orphansToProcess.length} huérfanos para desvincular.`);
-                        _Adapter_Sheets.upsertBatch(f.isTemporalGraph ? f.graphEntity : targetEntity, orphansToProcess, config);
+                        if (!globalBatches[targetTableForOrphans]) globalBatches[targetTableForOrphans] = [];
+                        globalBatches[targetTableForOrphans].push(...orphansToProcess);
+                        globalCachesToBust.add(targetTableForOrphans);
                     }
 
                     // Inyectar FK y Guardar Masivamente (Batch)
@@ -427,7 +433,6 @@ const Engine_DB = {
                         
                         // Idempotent Guard: Diff already calculated in Engine_Graph (O(1))
                         const newChildrenToInsert = precalculatedGraphContext[f.name] ? precalculatedGraphContext[f.name].edgesToInsert || [] : [];
-
 
                         const edgeRecords = newChildrenToInsert.map(child => {
                             const newId = "RELA-" + uuidFn().substring(0, 8).toUpperCase();
@@ -445,8 +450,10 @@ const Engine_DB = {
                         });
                         
                         if (typeof Logger !== 'undefined') Logger.log(`[Diffing] Ignorados ${children.length - newChildrenToInsert.length} nodos idénticos. Insertando ${newChildrenToInsert.length} aristas nuevas.`);
-                        if (config.useSheets && edgeRecords.length > 0) {
-                            _Adapter_Sheets.upsertBatch(f.graphEntity, edgeRecords, config);
+                        if (edgeRecords.length > 0) {
+                            if (!globalBatches[f.graphEntity]) globalBatches[f.graphEntity] = [];
+                            globalBatches[f.graphEntity].push(...edgeRecords);
+                            globalCachesToBust.add(f.graphEntity);
                         }
 
                         if (!parentResults.orchestratedChildren) parentResults.orchestratedChildren = {};
@@ -455,8 +462,6 @@ const Engine_DB = {
                         if (orphansToProcess.length > 0) {
                             parentResults.orchestratedChildren[f.graphEntity].push(...orphansToProcess);
                         }
-                        
-                        _invalidateCache(f.graphEntity);
                     } else {
                         children.forEach(child => {
                             child[fkField] = parentPK;
@@ -471,8 +476,10 @@ const Engine_DB = {
                             }
                         });
 
-                        if (config.useSheets) {
-                            _Adapter_Sheets.upsertBatch(targetEntity, children, config);
+                        if (children.length > 0) {
+                            if (!globalBatches[targetEntity]) globalBatches[targetEntity] = [];
+                            globalBatches[targetEntity].push(...children);
+                            globalCachesToBust.add(targetEntity);
                         }
                         
                         if (!parentResults.orchestratedChildren) parentResults.orchestratedChildren = {};
@@ -483,11 +490,24 @@ const Engine_DB = {
                         // Omitido para brevedad o implementado si el adapter soporta batch
                     }
                     
-                    // IMPORTANTE: Invalidar Backend Cache del hijo recién modificado en el Subgrid
-                    _invalidateCache(targetEntity);
+                    // Removido: _invalidateCache recursivo intermedio. Se ejecutará externamente.
                 }
             });
         }
+        
+        // --- S42.3 EJECUCIÓN CONSOLIDADA O(1) ---
+        if (config.useSheets) {
+            Object.keys(globalBatches).forEach(tableName => {
+                if (globalBatches[tableName].length > 0) {
+                    _Adapter_Sheets.upsertBatch(tableName, globalBatches[tableName], config);
+                }
+            });
+        }
+        
+        // Purgar la RAM agrupadamente (Rule 2: No Duplication, AR Request)
+        globalCachesToBust.forEach(tableName => {
+            _invalidateCache(tableName);
+        });
 
         // [S34.2] Materialized View Headcount Aggregation
         try {
