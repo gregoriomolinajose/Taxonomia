@@ -184,8 +184,8 @@ const Adapter_Sheets = {
             const idxLexical = normalizedHeaders.indexOf('lexical_id');
             let lexicalValue = null;
             if (idxLexical > -1) {
-                const sheetDataRangeObjects = sheet.getDataRange().getValues(); // Falback for complete Lexical evaluation if new
-                lexicalValue = this._calculateNextLexicalId(sheetDataRangeObjects, normalizedHeaders, tableName, schema);
+                // S42.6: Memoria Cacheada O(1) de Generador
+                lexicalValue = this._calculateNextLexicalId(sheet, normalizedHeaders, tableName, schema);
                 rowToInsert[idxLexical] = lexicalValue;
             }
 
@@ -230,19 +230,43 @@ const Adapter_Sheets = {
         try {
             const sheet = this._ensureSheetExists(ss, tableName);
 
-        const dataRange = sheet.getDataRange();
-        const originalData = dataRange.getValues();
-        const headers = originalData[0];
-        const normalizedHeaders = headers.map(h => _normalizeHeader(h));
-        
-        const pkIndex = normalizedHeaders.indexOf(primaryKeyField);
-        if (pkIndex === -1) {
-            throw new Error(`La columna llave primaria (${primaryKeyField}) no existe en DB_${tableName}`);
-        }
+        const ROW_REWRITE_THRESHOLD = 15;
+        const useNuclearDump = (items.length > ROW_REWRITE_THRESHOLD);
 
-        const idToIndexMap = new Map();
-        for (let r = 1; r < originalData.length; r++) {
-            idToIndexMap.set(String(originalData[r][pkIndex]), r);
+        const dataRange = sheet.getDataRange();
+        
+        let originalData = null;
+        let idToIndexMap = new Map();
+        let normalizedHeaders = [];
+        let pkIndex = -1;
+        let numRows = sheet.getLastRow() || 1;
+
+        if (useNuclearDump) {
+            originalData = dataRange.getValues();
+            const headers = originalData[0];
+            normalizedHeaders = headers.map(h => _normalizeHeader(h));
+            
+            pkIndex = normalizedHeaders.indexOf(primaryKeyField);
+            if (pkIndex === -1) throw new Error(`La columna llave primaria (${primaryKeyField}) no existe en DB_${tableName}`);
+            
+            for (let r = 1; r < originalData.length; r++) {
+                idToIndexMap.set(String(originalData[r][pkIndex]), r); // 0-based for originalData indexing
+            }
+        } else {
+            const numCols = sheet.getLastColumn() || 1;
+            const headersRange = sheet.getRange(1, 1, 1, numCols);
+            const headers = headersRange.getValues()[0];
+            normalizedHeaders = headers.map(h => _normalizeHeader(h));
+            
+            pkIndex = normalizedHeaders.indexOf(primaryKeyField);
+            if (pkIndex === -1) throw new Error(`La columna llave primaria (${primaryKeyField}) no existe en DB_${tableName}`);
+            
+            if (numRows > 1) {
+                const pkColumnData = sheet.getRange(2, pkIndex + 1, numRows - 1, 1).getValues();
+                for (let r = 0; r < pkColumnData.length; r++) {
+                    idToIndexMap.set(String(pkColumnData[r][0]), r + 2); // 1-based (starts at row 2) Sheets index
+                }
+            }
         }
 
         const currentUser = (typeof Session !== 'undefined') ? Session.getActiveUser().getEmail() : 'system@localhost';
@@ -252,7 +276,7 @@ const Adapter_Sheets = {
         const idxCreatedBy = normalizedHeaders.indexOf('created_by');
         const idxUpdatedAt = normalizedHeaders.indexOf('updated_at');
         const idxUpdatedBy = normalizedHeaders.indexOf('updated_by');
-        const idxVersion = normalizedHeaders.indexOf('_version') > -1 ? normalizedHeaders.indexOf('_version') : normalizedHeaders.indexOf('version'); // FIX: OCC Tracker Híbrido
+        const idxVersion = normalizedHeaders.indexOf('_version') > -1 ? normalizedHeaders.indexOf('_version') : normalizedHeaders.indexOf('version');
 
         const defaultValuesMap = _buildDefaultValuesMap(schema);
 
@@ -264,13 +288,22 @@ const Adapter_Sheets = {
             const primaryKeyValue = payload[primaryKeyField];
             if (!primaryKeyValue) continue;
             
-            const rowIndex = idToIndexMap.get(String(primaryKeyValue));
+            const routerIndex = idToIndexMap.get(String(primaryKeyValue));
             let rowToInsert = [];
             
-            if (rowIndex !== undefined) {
-                const existingRow = originalData[rowIndex];
+            if (routerIndex !== undefined) {
+                // Determine existing row fetch mechanism
+                let existingRow = [];
+                let sheetTargetIndex = -1;
+                
+                if (useNuclearDump) {
+                    existingRow = originalData[routerIndex];
+                    sheetTargetIndex = routerIndex + 1; // Translate back to 1-indexed for fallback mechanics
+                } else {
+                    sheetTargetIndex = routerIndex; // Already absolute sheet index
+                    existingRow = sheet.getRange(sheetTargetIndex, 1, 1, normalizedHeaders.length).getValues()[0];
+                }
 
-                // [S21.3 Soft-Delete] Bloquear updates en nodos lógicamente eliminados
                 if (this._isNodeLogicallyDeleted(normalizedHeaders, existingRow)) {
                     throw new Error(`ERROR_ARCHIVED: No se puede modificar la entidad con ID '${primaryKeyValue}' por estar eliminada lógicamente.`);
                 }
@@ -290,9 +323,11 @@ const Adapter_Sheets = {
                 if (idxUpdatedAt > -1) rowToInsert[idxUpdatedAt] = currentTimestamp;
                 if (idxUpdatedBy > -1) rowToInsert[idxUpdatedBy] = currentUser;
                 
-                originalData[rowIndex] = rowToInsert;
-                rowsToUpdate.push({ rowIndex: rowIndex + 1, rowData: rowToInsert });
+                if (useNuclearDump) {
+                    originalData[routerIndex] = rowToInsert;
+                }
                 
+                rowsToUpdate.push({ rowIndex: sheetTargetIndex, rowData: rowToInsert });
                 results.push({ status: 'success', action: 'updated', pk: primaryKeyField, val: primaryKeyValue, version: payload.version });
             } else {
                 payload.version = 1;
@@ -317,40 +352,38 @@ const Adapter_Sheets = {
                 if (idxUpdatedAt > -1) rowToInsert[idxUpdatedAt] = currentTimestamp;
                 if (idxUpdatedBy > -1) rowToInsert[idxUpdatedBy] = currentUser;
                 
-                // Inyectar lexical_id dinámicamente si es un record nuevo en bulk
                 const idxLexical = normalizedHeaders.indexOf('lexical_id');
                 let lexicalValue = null;
                 if (idxLexical > -1) {
-                    lexicalValue = this._calculateNextLexicalId(originalData, normalizedHeaders, tableName, schema);
+                    lexicalValue = this._calculateNextLexicalId(sheet, normalizedHeaders, tableName, schema);
                     rowToInsert[idxLexical] = lexicalValue;
-                    payload.lexical_id = lexicalValue; // Retorno Frontend
+                    payload.lexical_id = lexicalValue;
                 }
 
-                originalData.push(rowToInsert);
+                if (useNuclearDump) {
+                    originalData.push(rowToInsert);
+                    idToIndexMap.set(String(primaryKeyValue), originalData.length - 1);
+                }
+                
                 rowsToAppend.push(rowToInsert);
-                idToIndexMap.set(String(primaryKeyValue), originalData.length - 1);
                 results.push({ status: 'success', action: 'created', pk: primaryKeyField, val: primaryKeyValue, lexical_id: lexicalValue, version: payload.version });
             }
         }
         
         // --- S42.4 MUTAÇÃO DIFERENCIAL ---
-        const ROW_REWRITE_THRESHOLD = 20;
-        if (rowsToUpdate.length > ROW_REWRITE_THRESHOLD) {
-            if (typeof Logger !== 'undefined') Logger.log(`[Metrics I/O] Umbral Excedido (${rowsToUpdate.length}). Escribiendo dataset maestro (Nuclear Array Dump)`);
+        if (useNuclearDump) {
+            if (typeof Logger !== 'undefined') Logger.log(`[Metrics I/O] Umbral Excedido (${items.length}). Escribiendo dataset maestro (Nuclear Array Dump)`);
             sheet.getRange(1, 1, originalData.length, originalData[0].length).setValues(originalData);
         } else {
-            // Fase A: Single Row Micro-Updates
             if (rowsToUpdate.length > 0) {
                 if (typeof Logger !== 'undefined') Logger.log(`[Metrics I/O] Modificando ${rowsToUpdate.length} filas exactas (Differential Updates)`);
                 rowsToUpdate.forEach(up => {
                     sheet.getRange(up.rowIndex, 1, 1, up.rowData.length).setValues([up.rowData]);
                 });
             }
-            
-            // Fase B: Fragment Appends O(1) Fetch
             if (rowsToAppend.length > 0) {
                 if (typeof Logger !== 'undefined') Logger.log(`[Metrics I/O] Cimentando ${rowsToAppend.length} registros nuevos en un bloque (Bulk Appends)`);
-                const lastRowPriorToAppend = originalData.length - rowsToAppend.length;
+                const lastRowPriorToAppend = numRows;
                 sheet.getRange(lastRowPriorToAppend + 1, 1, rowsToAppend.length, rowsToAppend[0].length).setValues(rowsToAppend);
             }
         }
@@ -449,7 +482,9 @@ const Adapter_Sheets = {
         }
     },
 
-    _calculateNextLexicalId: function(originalData, normalizedHeaders, tableName, schema) {
+    _lexicalMaxState: null,
+    
+    _calculateNextLexicalId: function(sheet, normalizedHeaders, tableName, schema) {
         const idxLexical = normalizedHeaders.indexOf('lexical_id');
         if (idxLexical === -1) return null;
 
@@ -457,21 +492,33 @@ const Adapter_Sheets = {
             ? schema.metadata.prefix 
             : tableName.substring(0, 4).toUpperCase();
             
-        let maxCounter = 0;
-        for (let r = 1; r < originalData.length; r++) {
-            const val = String(originalData[r][idxLexical] || '').trim();
-            if (val.startsWith(prefix + '-')) {
-                const parts = val.split('-');
-                if (parts.length === 2) {
-                    const num = parseInt(parts[1], 10);
-                    if (!isNaN(num) && num > maxCounter) {
-                        maxCounter = num;
-                    }
-                }
-            }
+        // Usar cache de sesión (O(1)) para no repetir escanéos en la misma petición si hay multi-upsert
+        if (!this._lexicalMaxState) this._lexicalMaxState = {};
+        const stateKey = tableName + '_max';
+
+        if (this._lexicalMaxState[stateKey] === undefined) {
+             const numRows = sheet.getLastRow();
+             let maxCounter = 0;
+             if (numRows > 1) {
+                 const lexicalColumnData = sheet.getRange(2, idxLexical + 1, numRows - 1, 1).getValues();
+                 for (let r = 0; r < lexicalColumnData.length; r++) {
+                     const val = String(lexicalColumnData[r][0] || '').trim();
+                     if (val.startsWith(prefix + '-')) {
+                         const parts = val.split('-');
+                         if (parts.length === 2) {
+                             const num = parseInt(parts[1], 10);
+                             if (!isNaN(num) && num > maxCounter) {
+                                 maxCounter = num;
+                             }
+                         }
+                     }
+                 }
+             }
+             this._lexicalMaxState[stateKey] = maxCounter;
         }
-        
-        return `${prefix}-${maxCounter + 1}`;
+
+        this._lexicalMaxState[stateKey]++;
+        return `${prefix}-${this._lexicalMaxState[stateKey]}`;
     },
 
     _ensureSheetExists: function(ss, tableName) {
