@@ -90,7 +90,12 @@ class TXSearchable extends HTMLElement {
                             : resolvePrimitive(parsed);
                     }
                 } catch(e) {
-                    console.warn(`[TXSearchable] pre-selected parsing error: ${e.message}`);
+                    console.error(`[TXSearchable] CRITICAL: Fallo al parsear pre-selected en ${this._entityName}: ${e.message}`, newValue);
+                    if (typeof window !== 'undefined') {
+                        window.dispatchEvent(new CustomEvent('txTelemetryError', {
+                            detail: { component: 'TXSearchable', error: e.message, rawValue: newValue }
+                        }));
+                    }
                 }
                 break;
             case 'disabled':
@@ -213,6 +218,17 @@ class TXSearchable extends HTMLElement {
     }
 
     connectedCallback() {
+        if (!document.getElementById('tx-searchable-global-styles')) {
+            const style = document.createElement('style');
+            style.id = 'tx-searchable-global-styles';
+            style.innerHTML = `
+                [data-tx-state="hidden"] { display: none !important; }
+                [data-tx-state="flex"] { display: flex !important; }
+                [data-tx-state="block"] { display: block !important; }
+            `;
+            document.head.appendChild(style);
+        }
+
         if (!this._componentId) {
             this._componentId = 'tx-searchable-' + Math.random().toString(36).substr(2, 9);
         }
@@ -231,7 +247,7 @@ class TXSearchable extends HTMLElement {
                         ${this._getPlaceholderTemplate(`${this._componentId}-placeholder`, true, iconName)}
 
                         <!-- ESTADO LLENO HEADER (MULTISELECT) -->
-                        <div id="${this._componentId}-filled-header" style="display: none; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <div id="${this._componentId}-filled-header" data-tx-state="hidden" style="justify-content: space-between; align-items: center; margin-bottom: 8px;">
                             <strong style="color: var(--ion-color-dark); font-size: 14px; margin-left: 4px;">${this._entityName}</strong>
                             <ion-button class="trigger-container" size="small" fill="clear" style="margin: 0; --color: var(--ion-color-primary, #3880ff); font-weight: bold; font-family: var(--sys-font-family, inherit);">
                                 + AGREGAR
@@ -239,7 +255,7 @@ class TXSearchable extends HTMLElement {
                         </div>
                         
                         <!-- ESTADO INLINE CHECKLIST (ABIERTO) S41.10 -->
-                        <div id="${this._componentId}-inline-list-container" style="display: none; flex-direction: column; margin-bottom: 12px; border: 1px solid var(--color-border, #cccccc); border-radius: 8px; overflow: hidden; background: var(--ion-background-color, #ffffff);">
+                        <div id="${this._componentId}-inline-list-container" data-tx-state="hidden" style="flex-direction: column; margin-bottom: 12px; border: 1px solid var(--color-border, #cccccc); border-radius: 8px; overflow: hidden; background: var(--ion-background-color, #ffffff);">
                             <!-- HEADER / CLOSER -->
                             <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 16px; border-bottom: 1px solid var(--color-border, #e0e0e0); background: var(--ion-color-secondary, #f8f9fa);">
                                 <div style="display: flex; align-items: center; gap: 8px;">
@@ -280,7 +296,7 @@ class TXSearchable extends HTMLElement {
                         ${this._getPlaceholderTemplate(`${this._componentId}-single-ph`, false, iconName)}
 
                         <!-- ESTADO LLENO HEADER (SINGLE SELECT) -->
-                        <div id="${this._componentId}-single-filled-header" style="display: none; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <div id="${this._componentId}-single-filled-header" data-tx-state="hidden" style="justify-content: space-between; align-items: center; margin-bottom: 8px;">
                             <strong style="color: var(--ion-color-dark); font-size: 14px; margin-left: 4px;">${this._entityName}</strong>
                             <ion-button class="trigger-container" size="small" fill="clear" style="margin: 0; --color: var(--ion-color-primary, #3880ff); font-weight: bold; font-family: var(--sys-font-family, inherit);">
                                 CAMBIAR
@@ -288,7 +304,7 @@ class TXSearchable extends HTMLElement {
                         </div>
                         
                         <!-- ESTADO LLENO CARD (SINGLE SELECT) -->
-                        <div id="${this._componentId}-single-filled" style="display: none; width: 100%; margin-bottom: 24px;">
+                        <div id="${this._componentId}-single-filled" data-tx-state="hidden" style="width: 100%; margin-bottom: 24px;">
                             ${this._getSharedCardTemplate({
                                 textId: `${this._componentId}-single-text`,
                                 subId: `${this._componentId}-single-sub`,
@@ -510,7 +526,7 @@ class TXSearchable extends HTMLElement {
     // S41.13: Refactorización Estructural (DRY UI Factories)
     _getPlaceholderTemplate(domId, hidden, iconName) {
         return `
-            <div id="${domId}" class="trigger-container" style="background: var(--ion-color-secondary, #f4f5f8); border-radius: 8px; border: 1px solid var(--color-border, #e0e0e0); margin-bottom: 24px; cursor: pointer; transition: all 0.2s ease; ${hidden ? 'display: none;' : ''}">
+            <div id="${domId}" class="trigger-container" ${hidden ? 'data-tx-state="hidden"' : ''} style="background: var(--ion-color-secondary, #f4f5f8); border-radius: 8px; border: 1px solid var(--color-border, #e0e0e0); margin-bottom: 24px; cursor: pointer; transition: all 0.2s ease;">
                 <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 16px;">
                     <strong style="color: var(--ion-color-dark); font-size: 14px;">${this._entityName}</strong>
                     <ion-button size="small" fill="clear" style="margin: 0; --color: var(--ion-color-primary, #3880ff); font-weight: bold; font-family: var(--sys-font-family, inherit);">
@@ -690,7 +706,7 @@ class TXSearchable extends HTMLElement {
             
         if (!listNode) return;
 
-        if (spinner) spinner.style.display = 'none';
+        if (spinner) spinner.setAttribute('data-tx-state', 'hidden');
 
         // RAM-Secure Local Filter (YAGNI Endless Scroll)
         let filtered = this._dataSource || [];
@@ -833,10 +849,10 @@ class TXSearchable extends HTMLElement {
             const btnClear = this.querySelector(`#${this._componentId}-mobile-clear`); // Reusando ID del listener
             
             if (hasSelection) {
-                if (phNode) phNode.style.display = 'none';
-                if (filledHeader) filledHeader.style.display = 'flex';
-                if (filledNode) filledNode.style.display = 'block';
-                if (btnClear) btnClear.style.display = 'block';
+                if (phNode) phNode.setAttribute('data-tx-state', 'hidden');
+                if (filledHeader) filledHeader.setAttribute('data-tx-state', 'flex');
+                if (filledNode) filledNode.setAttribute('data-tx-state', 'block');
+                if (btnClear) btnClear.setAttribute('data-tx-state', 'block');
                 
                 if (textNode) {
                     const rawId = this._selectedState;
@@ -847,10 +863,10 @@ class TXSearchable extends HTMLElement {
                     }
                 }
             } else {
-                if (phNode) phNode.style.display = 'block';
-                if (filledHeader) filledHeader.style.display = 'none';
-                if (filledNode) filledNode.style.display = 'none';
-                if (btnClear) btnClear.style.display = 'none';
+                if (phNode) phNode.setAttribute('data-tx-state', 'block');
+                if (filledHeader) filledHeader.setAttribute('data-tx-state', 'hidden');
+                if (filledNode) filledNode.setAttribute('data-tx-state', 'hidden');
+                if (btnClear) btnClear.setAttribute('data-tx-state', 'hidden');
             }
         }
 
@@ -866,10 +882,10 @@ class TXSearchable extends HTMLElement {
             
             // Toggle de modos de la vista principal
             if (this._inlineMode) {
-                if (placeholderNode) placeholderNode.style.display = 'none';
-                if (filledHeaderNode) filledHeaderNode.style.display = 'none';
+                if (placeholderNode) placeholderNode.setAttribute('data-tx-state', 'hidden');
+                if (filledHeaderNode) filledHeaderNode.setAttribute('data-tx-state', 'hidden');
                 if (inlineContainerNode) {
-                    inlineContainerNode.style.display = 'flex';
+                    inlineContainerNode.setAttribute('data-tx-state', 'flex');
                     // Auto-focus de searchbar al transicionar a Inline abierto
                     if (inlineContainerNode.dataset.focused !== 'true') {
                         inlineContainerNode.dataset.focused = 'true';
@@ -882,18 +898,18 @@ class TXSearchable extends HTMLElement {
                 if (inlineCounterNode) inlineCounterNode.textContent = hasItems ? `${this._selectedState.size} seleccionados` : 'Ninguno';
             } else {
                 if (inlineContainerNode) {
-                    inlineContainerNode.style.display = 'none';
+                    inlineContainerNode.setAttribute('data-tx-state', 'hidden');
                     if (inlineContainerNode.dataset.focused) delete inlineContainerNode.dataset.focused;
                 }
                 if (hasItems) {
-                    if (placeholderNode) placeholderNode.style.display = 'none';
-                    if (filledHeaderNode) filledHeaderNode.style.display = 'flex';
+                    if (placeholderNode) placeholderNode.setAttribute('data-tx-state', 'hidden');
+                    if (filledHeaderNode) filledHeaderNode.setAttribute('data-tx-state', 'flex');
                 } else {
                     if (placeholderNode) {
-                        placeholderNode.style.display = 'block';
+                        placeholderNode.setAttribute('data-tx-state', 'block');
                         placeholderNode.style.marginBottom = '24px';
                     }
-                    if (filledHeaderNode) filledHeaderNode.style.display = 'none';
+                    if (filledHeaderNode) filledHeaderNode.setAttribute('data-tx-state', 'hidden');
                 }
             }
             

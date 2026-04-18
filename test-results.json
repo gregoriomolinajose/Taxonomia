@@ -59,95 +59,6 @@
   },
   "suites": [
     {
-      "title": "topology-strict.spec.js",
-      "file": "topology-strict.spec.js",
-      "column": 0,
-      "line": 0,
-      "specs": [],
-      "suites": [
-        {
-          "title": "S29.4: Consistencia Front-End (Topology 1:N & Race Conditions)",
-          "file": "topology-strict.spec.js",
-          "line": 6,
-          "column": 6,
-          "specs": [
-            {
-              "title": "Race Condition Subgrid Prevention: MÃºltiples Clics concurrentes deben bloquear dobles guardados topologicos",
-              "ok": true,
-              "tags": [],
-              "tests": [
-                {
-                  "timeout": 120000,
-                  "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "chromium",
-                  "projectName": "chromium",
-                  "results": [
-                    {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 32423,
-                      "errors": [],
-                      "stdout": [
-                        {
-                          "text": "[WARN] Reactividad Local fallida o DataGrid no fue refrescado en E2E ExpectError: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('#sandboxFrame').contentFrame().locator('#userHtmlFrame').contentFrame().locator('tr, .ag-row').filter({ hasText: 'Equipo Race Condition 1776498509495' }).first()\nExpected: visible\nTimeout: 15000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 15000ms\u001b[22m\n\u001b[2m  - waiting for locator('#sandboxFrame').contentFrame().locator('#userHtmlFrame').contentFrame().locator('tr, .ag-row').filter({ hasText: 'Equipo Race Condition 1776498509495' }).first()\u001b[22m\n\n    at \u001b[90mC:\\Users\\grego\\Antigravity\\Taxonomia Project\\\u001b[39m__tests__\\e2e\\topology-strict.spec.js:90:29 {\n  matcherResult: {\n    message: \u001b[32m'\\x1B[2mexpect(\\x1B[22m\\x1B[31mlocator\\x1B[39m\\x1B[2m).\\x1B[22mtoBeVisible\\x1B[2m(\\x1B[22m\\x1B[2m)\\x1B[22m failed\\n'\u001b[39m +\n      \u001b[32m'\\n'\u001b[39m +\n      \u001b[32m\"Locator: locator('#sandboxFrame').contentFrame().locator('#userHtmlFrame').contentFrame().locator('tr, .ag-row').filter({ hasText: 'Equipo Race Condition 1776498509495' }).first()\\n\"\u001b[39m +\n      \u001b[32m'Expected: visible\\n'\u001b[39m +\n      \u001b[32m'Timeout: 15000ms\\n'\u001b[39m +\n      \u001b[32m'Error: element(s) not found\\n'\u001b[39m +\n      \u001b[32m'\\n'\u001b[39m +\n      \u001b[32m'Call log:\\n'\u001b[39m +\n      \u001b[32m'\\x1B[2m  - Expect \"toBeVisible\" with timeout 15000ms\\x1B[22m\\n'\u001b[39m +\n      \u001b[32m\"\\x1B[2m  - waiting for locator('#sandboxFrame').contentFrame().locator('#userHtmlFrame').contentFrame().locator('tr, .ag-row').filter({ hasText: 'Equipo Race Condition 1776498509495' }).first()\\x1B[22m\\n\"\u001b[39m,\n    pass: \u001b[33mfalse\u001b[39m,\n    actual: \u001b[90mundefined\u001b[39m,\n    name: \u001b[32m'toBeVisible'\u001b[39m,\n    expected: \u001b[32m'visible'\u001b[39m,\n    log: [\n      \u001b[32m'  - Expect \"toBeVisible\" with timeout 15000ms'\u001b[39m,\n      \u001b[32m\"  - waiting for locator('#sandboxFrame').contentFrame().locator('#userHtmlFrame').contentFrame().locator('tr, .ag-row').filter({ hasText: 'Equipo Race Condition 1776498509495' }).first()\"\u001b[39m\n    ],\n    timeout: \u001b[33m15000\u001b[39m\n  },\n  \u001b[32mSymbol(step)\u001b[39m: {\n    category: \u001b[32m'expect'\u001b[39m,\n    apiName: \u001b[32m'expect.toBeVisible'\u001b[39m,\n    title: \u001b[32m`Expect \"toBeVisible\" locator('#sandboxFrame').contentFrame().locator('#userHtmlFrame').contentFrame().locator('tr, .ag-row').filter({ hasText: 'Equipo Race Condition 1776498509495' }).first()`\u001b[39m,\n    shortTitle: \u001b[32m'Expect \"toBeVisible\"'\u001b[39m,\n    params: { expected: \u001b[36m[Object]\u001b[39m },\n    infectParentStepsWithError: \u001b[90mundefined\u001b[39m,\n    stepId: \u001b[32m'expect@86'\u001b[39m,\n    group: \u001b[90mundefined\u001b[39m,\n    boxedStack: \u001b[90mundefined\u001b[39m,\n    location: {\n      file: \u001b[32m'C:\\\\Users\\\\grego\\\\Antigravity\\\\Taxonomia Project\\\\__tests__\\\\e2e\\\\topology-strict.spec.js'\u001b[39m,\n      line: \u001b[33m90\u001b[39m,\n      column: \u001b[33m29\u001b[39m\n    },\n    steps: [],\n    attachmentIndices: [],\n    info: TestStepInfoImpl {\n      annotations: [],\n      _testInfo: \u001b[36m[TestInfoImpl]\u001b[39m,\n      _stepId: \u001b[32m'expect@86'\u001b[39m,\n      _title: \u001b[32m`Expect \"toBeVisible\" locator('#sandboxFrame').contentFrame().locator('#userHtmlFrame').contentFrame().locator('tr, .ag-row').filter({ hasText: 'Equipo Race Condition 1776498509495' }).first()`\u001b[39m,\n      _parentStep: \u001b[90mundefined\u001b[39m,\n      skip: \u001b[36m[Function (anonymous)]\u001b[39m\n    },\n    complete: \u001b[36m[Function: complete]\u001b[39m,\n    endWallTime: \u001b[33m1776498538715\u001b[39m,\n    error: {\n      message: \u001b[32m'Error: \\x1B[2mexpect(\\x1B[22m\\x1B[31mlocator\\x1B[39m\\x1B[2m).\\x1B[22mtoBeVisible\\x1B[2m(\\x1B[22m\\x1B[2m)\\x1B[22m failed\\n'\u001b[39m +\n        \u001b[32m'\\n'\u001b[39m +\n        \u001b[32m\"Locator: locator('#sandboxFrame').contentFrame().locator('#userHtmlFrame').contentFrame().locator('tr, .ag-row').filter({ hasText: 'Equipo Race Condition 1776498509495' }).first()\\n\"\u001b[39m +\n        \u001b[32m'Expected: visible\\n'\u001b[39m +\n        \u001b[32m'Timeout: 15000ms\\n'\u001b[39m +\n        \u001b[32m'Error: element(s) not found\\n'\u001b[39m +\n        \u001b[32m'\\n'\u001b[39m +\n        \u001b[32m'Call log:\\n'\u001b[39m +\n        \u001b[32m'\\x1B[2m  - Expect \"toBeVisible\" with timeout 15000ms\\x1B[22m\\n'\u001b[39m +\n        \u001b[32m\"\\x1B[2m  - waiting for locator('#sandboxFrame').contentFrame().locator('#userHtmlFrame').contentFrame().locator('tr, .ag-row').filter({ hasText: 'Equipo Race Condition 1776498509495' }).first()\\x1B[22m\\n\"\u001b[39m,\n      stack: \u001b[32m'Error: \\x1B[2mexpect(\\x1B[22m\\x1B[31mlocator\\x1B[39m\\x1B[2m).\\x1B[22mtoBeVisible\\x1B[2m(\\x1B[22m\\x1B[2m)\\x1B[22m failed\\n'\u001b[39m +\n        \u001b[32m'\\n'\u001b[39m +\n        \u001b[32m\"Locator: locator('#sandboxFrame').contentFrame().locator('#userHtmlFrame').contentFrame().locator('tr, .ag-row').filter({ hasText: 'Equipo Race Condition 1776498509495' }).first()\\n\"\u001b[39m +\n        \u001b[32m'Expected: visible\\n'\u001b[39m +\n        \u001b[32m'Timeout: 15000ms\\n'\u001b[39m +\n        \u001b[32m'Error: element(s) not found\\n'\u001b[39m +\n        \u001b[32m'\\n'\u001b[39m +\n        \u001b[32m'Call log:\\n'\u001b[39m +\n        \u001b[32m'\\x1B[2m  - Expect \"toBeVisible\" with timeout 15000ms\\x1B[22m\\n'\u001b[39m +\n        \u001b[32m\"\\x1B[2m  - waiting for locator('#sandboxFrame').contentFrame().locator('#userHtmlFrame').contentFrame().locator('tr, .ag-row').filter({ hasText: 'Equipo Race Condition 1776498509495' }).first()\\x1B[22m\\n\"\u001b[39m +\n        \u001b[32m'\\n'\u001b[39m +\n        \u001b[32m'    at C:\\\\Users\\\\grego\\\\Antigravity\\\\Taxonomia Project\\\\__tests__\\\\e2e\\\\topology-strict.spec.js:90:29'\u001b[39m,\n      cause: \u001b[90mundefined\u001b[39m\n    }\n  }\n}\n"
-                        }
-                      ],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-04-18T07:48:25.777Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
-                }
-              ],
-              "id": "4a670036ef1357e513f1-17f2dbb5f0fc39c7ae45",
-              "file": "topology-strict.spec.js",
-              "line": 52,
-              "column": 3
-            },
-            {
-              "title": "Validar topología de árbol profundo Ágil y Tradicional (S34.1)",
-              "ok": true,
-              "tags": [],
-              "tests": [
-                {
-                  "timeout": 150000,
-                  "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "chromium",
-                  "projectName": "chromium",
-                  "results": [
-                    {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 4538,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-04-18T07:48:58.721Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
-                }
-              ],
-              "id": "4a670036ef1357e513f1-7bd5321a67e673548aff",
-              "file": "topology-strict.spec.js",
-              "line": 93,
-              "column": 3
-            }
-          ]
-        }
-      ]
-    },
-    {
       "title": "ui-resilience.spec.js",
       "file": "ui-resilience.spec.js",
       "column": 0,
@@ -162,7 +73,7 @@
           "specs": [
             {
               "title": "Validar Resiliencia en FormEngine_UI (Drawers Principales y Satélites) sin generar ReferenceExceptions",
-              "ok": false,
+              "ok": true,
               "tags": [],
               "tests": [
                 {
@@ -175,28 +86,9 @@
                     {
                       "workerIndex": 0,
                       "parallelIndex": 0,
-                      "status": "failed",
-                      "duration": 9082,
-                      "error": {
-                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoHaveText\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator:  locator('#sandboxFrame').contentFrame().locator('#userHtmlFrame').contentFrame().locator('.drawer-dynamic-title').last()\nExpected: \u001b[32m\"Portafolio de Resiliencia UI\"\u001b[39m\nReceived: \u001b[31m\"Nuevo Registro\"\u001b[39m\nTimeout:  2000ms\n\nCall log:\n\u001b[2m  - Expect \"soft toHaveText\" with timeout 2000ms\u001b[22m\n\u001b[2m  - waiting for locator('#sandboxFrame').contentFrame().locator('#userHtmlFrame').contentFrame().locator('.drawer-dynamic-title').last()\u001b[22m\n\u001b[2m    6 × locator resolved to <h1 class=\"drawer-dynamic-title\">Nuevo Registro</h1>\u001b[22m\n\u001b[2m      - unexpected value \"Nuevo Registro\"\u001b[22m\n",
-                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoHaveText\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator:  locator('#sandboxFrame').contentFrame().locator('#userHtmlFrame').contentFrame().locator('.drawer-dynamic-title').last()\nExpected: \u001b[32m\"Portafolio de Resiliencia UI\"\u001b[39m\nReceived: \u001b[31m\"Nuevo Registro\"\u001b[39m\nTimeout:  2000ms\n\nCall log:\n\u001b[2m  - Expect \"soft toHaveText\" with timeout 2000ms\u001b[22m\n\u001b[2m  - waiting for locator('#sandboxFrame').contentFrame().locator('#userHtmlFrame').contentFrame().locator('.drawer-dynamic-title').last()\u001b[22m\n\u001b[2m    6 × locator resolved to <h1 class=\"drawer-dynamic-title\">Nuevo Registro</h1>\u001b[22m\n\u001b[2m      - unexpected value \"Nuevo Registro\"\u001b[22m\n\n    at C:\\Users\\grego\\Antigravity\\Taxonomia Project\\__tests__\\e2e\\ui-resilience.spec.js:73:42",
-                        "location": {
-                          "file": "C:\\Users\\grego\\Antigravity\\Taxonomia Project\\__tests__\\e2e\\ui-resilience.spec.js",
-                          "column": 42,
-                          "line": 73
-                        },
-                        "snippet": "\u001b[0m \u001b[90m 71 |\u001b[39m     \u001b[36mconst\u001b[39m hasHeader \u001b[33m=\u001b[39m \u001b[36mawait\u001b[39m dynamicHeader\u001b[33m.\u001b[39misVisible()\u001b[33m;\u001b[39m\n \u001b[90m 72 |\u001b[39m     \u001b[36mif\u001b[39m (hasHeader) {\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 73 |\u001b[39m         \u001b[36mawait\u001b[39m expect\u001b[33m.\u001b[39msoft(dynamicHeader)\u001b[33m.\u001b[39mtoHaveText(\u001b[32m'Portafolio de Resiliencia UI'\u001b[39m\u001b[33m,\u001b[39m { timeout\u001b[33m:\u001b[39m \u001b[35m2000\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                                          \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 74 |\u001b[39m     }\n \u001b[90m 75 |\u001b[39m\n \u001b[90m 76 |\u001b[39m     \u001b[90m// 2. Simulación Humana en el Componente SearchableSelect (Satélite)\u001b[39m\u001b[0m"
-                      },
-                      "errors": [
-                        {
-                          "location": {
-                            "file": "C:\\Users\\grego\\Antigravity\\Taxonomia Project\\__tests__\\e2e\\ui-resilience.spec.js",
-                            "column": 42,
-                            "line": 73
-                          },
-                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoHaveText\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator:  locator('#sandboxFrame').contentFrame().locator('#userHtmlFrame').contentFrame().locator('.drawer-dynamic-title').last()\nExpected: \u001b[32m\"Portafolio de Resiliencia UI\"\u001b[39m\nReceived: \u001b[31m\"Nuevo Registro\"\u001b[39m\nTimeout:  2000ms\n\nCall log:\n\u001b[2m  - Expect \"soft toHaveText\" with timeout 2000ms\u001b[22m\n\u001b[2m  - waiting for locator('#sandboxFrame').contentFrame().locator('#userHtmlFrame').contentFrame().locator('.drawer-dynamic-title').last()\u001b[22m\n\u001b[2m    6 × locator resolved to <h1 class=\"drawer-dynamic-title\">Nuevo Registro</h1>\u001b[22m\n\u001b[2m      - unexpected value \"Nuevo Registro\"\u001b[22m\n\n\n  71 |     const hasHeader = await dynamicHeader.isVisible();\n  72 |     if (hasHeader) {\n> 73 |         await expect.soft(dynamicHeader).toHaveText('Portafolio de Resiliencia UI', { timeout: 2000 });\n     |                                          ^\n  74 |     }\n  75 |\n  76 |     // 2. Simulación Humana en el Componente SearchableSelect (Satélite)\n    at C:\\Users\\grego\\Antigravity\\Taxonomia Project\\__tests__\\e2e\\ui-resilience.spec.js:73:42"
-                        }
-                      ],
+                      "status": "passed",
+                      "duration": 6362,
+                      "errors": [],
                       "stdout": [
                         {
                           "text": "[E2E] Abriendo Formulario Entidad...\n"
@@ -216,43 +108,17 @@
                       ],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-04-18T07:49:03.464Z",
+                      "startTime": "2026-04-18T08:33:39.965Z",
                       "annotations": [],
-                      "attachments": [
-                        {
-                          "name": "screenshot",
-                          "contentType": "image/png",
-                          "path": "C:\\Users\\grego\\Antigravity\\Taxonomia Project\\test-results\\ui-resilience-E2E-UI-Resil-ea784-generar-ReferenceExceptions-chromium\\test-failed-1.png"
-                        },
-                        {
-                          "name": "screenshot",
-                          "contentType": "image/png",
-                          "path": "C:\\Users\\grego\\Antigravity\\Taxonomia Project\\test-results\\ui-resilience-E2E-UI-Resil-ea784-generar-ReferenceExceptions-chromium\\test-failed-2.png"
-                        },
-                        {
-                          "name": "error-context",
-                          "contentType": "text/markdown",
-                          "path": "C:\\Users\\grego\\Antigravity\\Taxonomia Project\\test-results\\ui-resilience-E2E-UI-Resil-ea784-generar-ReferenceExceptions-chromium\\error-context.md"
-                        },
-                        {
-                          "name": "error-context",
-                          "contentType": "text/markdown",
-                          "path": "C:\\Users\\grego\\Antigravity\\Taxonomia Project\\test-results\\ui-resilience-E2E-UI-Resil-ea784-generar-ReferenceExceptions-chromium\\error-context.md"
-                        }
-                      ],
-                      "errorLocation": {
-                        "file": "C:\\Users\\grego\\Antigravity\\Taxonomia Project\\__tests__\\e2e\\ui-resilience.spec.js",
-                        "column": 42,
-                        "line": 73
-                      }
+                      "attachments": []
                     }
                   ],
-                  "status": "unexpected"
+                  "status": "expected"
                 }
               ],
               "id": "a6ca329089183d52eb83-0a370e93c314a83fee9a",
               "file": "ui-resilience.spec.js",
-              "line": 55,
+              "line": 57,
               "column": 3
             }
           ]
@@ -262,11 +128,11 @@
   ],
   "errors": [],
   "stats": {
-    "startTime": "2026-04-18T07:48:25.066Z",
-    "duration": 48099.572,
-    "expected": 2,
+    "startTime": "2026-04-18T08:33:39.356Z",
+    "duration": 7694.987999999999,
+    "expected": 1,
     "skipped": 0,
-    "unexpected": 1,
+    "unexpected": 0,
     "flaky": 0
   }
 }
