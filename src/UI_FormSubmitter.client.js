@@ -34,14 +34,8 @@ window.UI_FormSubmitter = class UI_FormSubmitter {
             this.submitBtn.appendChild(window.DOM.create('ion-spinner', { name: 'crescent' }));
             this.submitBtn.appendChild(document.createTextNode(' \u00a0 Guardando...'));
 
-            // --- UI Blocking (Zero-Latency Rule) ---
-            const loading = window.DOM.create('ion-loading', {
-                backdropDismiss: false,
-                message: 'Guardando registro...',
-                spinner: 'crescent'
-            });
-            document.body.appendChild(loading);
-            await window.PresentSafe(loading);
+            // --- Removed UI Blocking (S42.7: Optimistic UI) ---
+            // Sincronía background habilitada.
 
             // LECTURA JIT (Evita Detached Nodes)
             const activeForm = this.modal || document.getElementById('app-container');
@@ -114,7 +108,6 @@ window.UI_FormSubmitter = class UI_FormSubmitter {
                 }
                 
                 if (collisionFound) {
-                    if (loading && typeof loading.dismiss === 'function') await loading.dismiss();
                     this._revertButtonState();
                     return; // Abort Submit Flow
                 }
@@ -126,7 +119,6 @@ window.UI_FormSubmitter = class UI_FormSubmitter {
             delete payload.updated_at;
             delete payload.updated_by;
 
-            // Bugfix (QA Review & S30.6): Usamos closure pura per-modal guardada en this._internalRetryId
             const action = this._internalRetryId ? 'update' : 'create';
             
             // S30.3 QA Review: Circular Reference & DOM-Leakage Guard
@@ -142,70 +134,151 @@ window.UI_FormSubmitter = class UI_FormSubmitter {
             };
             const safePayload = JSON.parse(JSON.stringify(payload, getCircularReplacer()));
 
+            // ==========================================
+            // S42.7: OPTIMISTIC DATA CLONING & JIT PATCH
+            // ==========================================
+            const liveStore = (window.DataStore && this.entityName) ? window.DataStore.get(this.entityName) : null;
+            const stateBackup = liveStore ? JSON.parse(JSON.stringify(liveStore)) : [];
+            const childBackups = {};
+            
+            const pkField = window.Schema_Utils ? window.Schema_Utils.getPrimaryKey(this.entityName) : 'id_registro';
+            let optimisticPK = payload[pkField] || this._internalRetryId;
+            let isTempPK = false;
+            
+            if (action === 'create' && !optimisticPK) {
+                 optimisticPK = 'TMP_LOCAL_' + Math.random().toString(36).substring(2, 10).toUpperCase();
+                 payload[pkField] = optimisticPK;
+                 isTempPK = true;
+            }
+            
+            // Extrapolar submisiones de subgrids para el repintado predictivo.
+            const optimisticChildren = {};
+            for (const key of Object.keys(payload)) {
+                 if (Array.isArray(payload[key]) && window.DataStore && window.DataStore.get(key)) {
+                      optimisticChildren[key] = payload[key];
+                      childBackups[key] = JSON.parse(JSON.stringify(window.DataStore.get(key)));
+                      
+                      if (isTempPK) { // Ligar Edges nuevos con el Padre Falso de ser requerido
+                          const childParentRef = 'id_' + this.entityName.toLowerCase();
+                          payload[key].forEach(childRow => {
+                               childRow[childParentRef] = optimisticPK;
+                               if (!childRow[window.Schema_Utils.getPrimaryKey(key)]) {
+                                   childRow[window.Schema_Utils.getPrimaryKey(key)] = 'TMP_EDGE_' + Math.random().toString(36).substring(2, 10).toUpperCase();
+                               }
+                          });
+                      }
+                 }
+            }
+            
+            const fakeResponse = { status: 'success', action: action, pk: pkField, pkValue: optimisticPK, data: { orchestratedChildren: optimisticChildren } };
+            
+            // FASE 1: INYECCIÓN CERO-LATENCIA VISUAL Y DESTRUCCIÓN UI
             try {
-                // S30.12 - Timeboxed Network Wrapper (20s Threshold) UX Resilience
-                const timeoutMs = 20000;
-                const _timeoutSafe = new Promise((_, reject) => 
-                    setTimeout(() => reject(new Error('TIMEOUT_EXCEEDED')), timeoutMs)
-                );
-                
-                const rawResponse = await Promise.race([
-                    this.apiService.call('API_Universal_Router', action, this.entityName, safePayload),
-                    _timeoutSafe
-                ]);
-                
+                 this._patchFrontendCache(this.entityName, fakeResponse, payload);
+                 
+                 let isInlineRendered = false;
+                 if (this.modal) {
+                     isInlineRendered = true;
+                     this.modal.dispatchEvent(new CustomEvent('FormEngine::InlinePersisted', { detail: { response: fakeResponse, payload: safePayload } }));
+                 }
+                 this._showToast('Guardando en segundo plano...', 'medium');
+                 this._performSuccessCleanup(fakeResponse, isInlineRendered); 
+            } catch(opErr) {
+                 console.error('Optimistic Patch Fracasó, abortando red:', opErr);
+                 return this._revertButtonState();
+            }
+
+            // FASE 2: THE BACKGROUND FIRE & FORGET (Sin Bloqueo Await)
+            const timeoutMs = 25000; // Incrementado a 25s por el colchón background
+            const _timeoutSafe = new Promise((_, reject) => setTimeout(() => reject(new Error('TIMEOUT_EXCEEDED')), timeoutMs));
+            
+            Promise.race([
+                this.apiService.call('API_Universal_Router', action, this.entityName, safePayload),
+                _timeoutSafe
+            ]).then(rawResponse => {
                 const response = typeof rawResponse === 'string' ? JSON.parse(rawResponse) : rawResponse;
                 
                 if (response && response.status === 'success') {
-                    this._patchFrontendCache(this.entityName, response, payload);
-                    const itemName = (response.data && response.data.Entity) ? response.data.Entity : this.entityName;
-                    this._showToast(`¡${itemName} guardado con éxito!`, 'success');
-                    if (activeForm) {
-                        // Sincronización de DOM con Backend: Actualizar versión y previniendo Colisiones (OCC) en guardados múltiples
-                        try {
-                            let freshVersion = payload.version || payload._version || 1;
-                            if (response.data && response.data.adapter_results && response.data.adapter_results.sheets) {
-                                if (response.data.adapter_results.sheets.version) freshVersion = response.data.adapter_results.sheets.version;
-                            }
-                            const vInputs = activeForm.querySelectorAll('input[name="version"], input[name="_version"]');
-                            vInputs.forEach(i => i.value = freshVersion);
-                        } catch(e) { }
+                    // Reconciliación: Intercambio de Llaves y Versiones
+                    if (isTempPK && response.pkValue && String(response.pkValue) !== String(optimisticPK)) {
+                        this._reconcileTemporaryId(this.entityName, optimisticPK, response.pkValue, response.lexical_id);
                     }
-                    
-                    // Disparo de Evento Nativo de Persistencia Inline (H6/H2 Simplification)
-                    let isInlineRendered = false;
-                    if (this.modal) {
-                        isInlineRendered = true;
-                        this.modal.dispatchEvent(new CustomEvent('FormEngine::InlinePersisted', {
-                            detail: { response: response, payload: safePayload }
-                        }));
+                    if (response.data && response.data.adapter_results && response.data.adapter_results.sheets) {
+                        const newVer = response.data.adapter_results.sheets.version;
+                        if (newVer) this._reconcileVersion(this.entityName, response.pkValue || optimisticPK, newVer);
                     }
-                    
-                    this._performSuccessCleanup(response, isInlineRendered);
+                    if (response.action === 'updated') {
+                        this._showToast(`Registro actualizado silenciosamente.`, 'success');
+                    } else {
+                        const itemName = (response.data && response.data.Entity) ? response.data.Entity : this.entityName;
+                        this._showToast(`¡${itemName} creado y guardado en nube!`, 'success');
+                    }
                 } else {
                     if (response && response.errorType === 'CONCURRENCY') {
-                        console.error("[OCC_FATAL_TRACE] Backend telemetry:", response.message);
-                        this._showToast('⚠️ Colisión: Los datos fueron modificados por otro usuario mientras los editabas. Por favor extrae la información fresca.', 'danger');
+                        this._handleOptimisticRollback(stateBackup, childBackups, 'Choque de concurrencia OCC en Base de datos.');
                     } else {
-                        this._showToast(`Error: ${response ? response.message : 'Error desconocido'}`, 'danger');
+                        this._handleOptimisticRollback(stateBackup, childBackups, response ? response.message : 'Error desconocido de Adaptador');
                     }
-                    this._revertButtonState();
                 }
-            } catch (err) {
-                this._revertButtonState();
+            }).catch(err => {
                 if (err.message === 'TIMEOUT_EXCEEDED') {
-                    this._showToast('⏳ Saturación de Red Temporal: Evitamos el bloqueo visual. Por favor intenta guardar nuevamente.', 'warning');
+                    this._handleOptimisticRollback(stateBackup, childBackups, 'Red severamente saturada (>25s) u Off-line.');
                 } else {
-                    this._showToast(`Error de Servidor: ${err.message}`, 'danger');
+                    this._handleOptimisticRollback(stateBackup, childBackups, 'Falla de conexión: ' + err.message);
                 }
-            } finally {
-                // S30.12 - Garantía Blindaje de UX Cleanup
-                if (loading && typeof loading.dismiss === 'function') {
-                    await loading.dismiss().catch(e => console.warn('[UI_FormSubmitter] Tolerancia mitigada de Backdrop Fantasma:', e));
-                }
-            }
+            });
+            // Fin _attachSubmitListener
         });
     }
+
+    // --- SUBRUTINAS DE RECONCILIACIÓN OPTIMISTA (S42.7) ---
+    _reconcileTemporaryId(entityName, tmpId, realId, lexicalId) {
+        if (!window.DataStore) return;
+        const liveData = window.DataStore.get(entityName);
+        if (!liveData) return;
+        const pkField = window.Schema_Utils ? window.Schema_Utils.getPrimaryKey(entityName) : 'id_registro';
+        let mutated = false;
+        liveData.forEach(row => {
+            if (String(row[pkField]) === String(tmpId)) {
+                row[pkField] = realId;
+                if (lexicalId) row.lexical_id = lexicalId;
+                mutated = true;
+            }
+        });
+        if (mutated) {
+            window.DataStore.set(entityName, liveData);
+            if (window.AppEventBus) window.AppEventBus.publish('DATA::UPDATED', { entityKey: entityName });
+        }
+    }
+
+    _reconcileVersion(entityName, entityId, freshVersion) {
+        if (!window.DataStore) return;
+        const liveData = window.DataStore.get(entityName);
+        if (!liveData) return;
+        const pkField = window.Schema_Utils ? window.Schema_Utils.getPrimaryKey(entityName) : 'id_registro';
+        let mutated = false;
+        liveData.forEach(row => {
+            if (String(row[pkField]) === String(entityId)) {
+                row._version = freshVersion;
+                row.version = freshVersion;
+                mutated = true;
+            }
+        });
+        if (mutated) window.DataStore.set(entityName, liveData);
+    }
+
+    _handleOptimisticRollback(stateBackup, childBackups, issueDesc) {
+        if (window.DataStore) {
+            window.DataStore.set(this.entityName, stateBackup);
+            for (const key of Object.keys(childBackups || {})) {
+                window.DataStore.set(key, childBackups[key]);
+            }
+            if (window.AppEventBus) window.AppEventBus.publish('DATA::UPDATED', { entityKey: this.entityName });
+        }
+        console.error("OPTIMISTIC_ROLLBACK", issueDesc);
+        this._showToast(`⚠️ Rollback Automático: ${issueDesc}. Tus cambios temporales visuales fueron desechados.`, 'danger');
+    }
+
 
     _revertButtonState() {
         this.isSaving = false;
