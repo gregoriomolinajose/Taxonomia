@@ -61,7 +61,7 @@ async function clickTopButtonByText(frame, text) {
     await frame.locator('body').evaluate(() => window.renderForm('Equipo', {}));
     
     const unName = 'Equipo Race Condition ' + Date.now();
-    await fillTopInput(frame, 'nombre_equipo', unName);
+    await fillTopInput(frame, 'nombre', unName);
     
     const btnGuardar = frame.locator('ion-button').filter({ hasText: 'Guardar Equipo' }).last();
     await btnGuardar.waitFor({ state: 'attached', timeout: 15000 });

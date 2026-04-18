@@ -75,28 +75,36 @@ test.describe('E2E UI Resilience & Interaction Stability', () => {
 
     // 2. Simulación Humana en el Componente SearchableSelect (Satélite)
     console.log("[E2E] Explorando Searchable Proxy...");
-    const selectPadre = frame.locator('ion-select[name="unidad_negocio_padre"]').last();
+    const selectPadre = frame.locator('tx-searchable[data-form-component="unidad_negocio_padre"]').last();
     await selectPadre.waitFor({ state: 'visible', timeout: 5000 });
-    await selectPadre.evaluate(n => n.dispatchEvent(new Event('click', { bubbles: true })));
     
-    // Aparecerá el Modal Searchable
-    const alertSearch = frame.locator('ion-alert').last();
+    // Expandir el Popover TXSearchable vía API en vez de clickDOM bruto
+    await selectPadre.evaluate(el => el.executeSearchAndOpen());
+    
+    // Aparecerá el Popover/Modal nativo que renderiza el ShadowDOM inyectado
+    // Como ion-select_padre en modo single crea un Desktop Dropdown o Mobile Modal
+    const popoverContainer = frame.locator('.tx-desktop-dropdown, ion-modal').last();
+    const alertSearch = popoverContainer.locator('ion-list').last(); // Buscamos la lista
     await alertSearch.waitFor({ state: 'visible', timeout: 5000 });
-    // Normalmente Ionic Alerts para inputs tienen class .alert-input
-    const alertInput = alertSearch.locator('input').last();
+    
+    // En Desktop la caja de busqueda embebida está en ion-searchbar
+    const alertInput = popoverContainer.locator('ion-searchbar').last().locator('input').last();
     if(await alertInput.count() > 0) {
        await alertInput.pressSequentially("Busqueda", { delay: 50 });
     }
     
-    // Volvemos a salir y cancelar.
-    await alertSearch.locator('button').filter({ hasText: 'Cancel' }).last().click({ force: true, timeout: 5000 });
+    // Volvemos a salir y cancelar usando tecla Escape (Standard de Ionic para popovers)
+    await page.keyboard.press('Escape');
 
     // 3. Simulación Humana en SubgridBuilder (Drill-Down Recursividad Modales)
-    console.log("[E2E] Explorando Subgrid (Inception)...");
-    const strongGrupo = frame.locator('strong', { hasText: 'Grupos de Productos Asociados' }).last();
-    await strongGrupo.waitFor({ state: 'attached', timeout: 10000 });
-    const headerGrupo = frame.locator('div').filter({ has: strongGrupo }).last();
-    const btnAgregarGrupo = headerGrupo.locator('ion-button').filter({ hasText: 'Agregar' }).last();
+    console.log("[E2E] Explorando SearchableMulti Modal...");
+    // Localizar el Multi Select de Grupos
+    const multiContainer = frame.locator('tx-searchable[data-form-component="grupos_productos_vinculados"]').last();
+    await multiContainer.waitFor({ state: 'attached', timeout: 10000 });
+    
+    await multiContainer.evaluate(el => el.executeSearchAndOpen());
+    
+    const btnAgregarGrupo = frame.locator('ion-item').filter({ hasText: 'Crear' }).last();
     
     if (await btnAgregarGrupo.count() > 0) {
         await btnAgregarGrupo.evaluate(b => b.click({ force: true }));

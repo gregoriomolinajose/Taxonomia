@@ -108,6 +108,14 @@
                     const metadataToken = (window.APP_SCHEMAS && window.APP_SCHEMAS[field.targetEntity] && window.APP_SCHEMAS[field.targetEntity].metadata) || {};
                     const visualTokens = { iconName: metadataToken.iconName, color: metadataToken.color };
                     const multiNodes = global.UI_Factory.buildSearchableMulti(field, activeData, initialValues, localEventBus, visualTokens);
+
+                    // S41.14 Bind Create Action
+                    multiNodes.addEventListener('txSearchableCreate', (e) => {
+                        const targetE = e.detail.targetEntity;
+                        if (typeof window.renderForm === 'function') {
+                            window.renderForm(targetE);
+                        }
+                    });
                     
                     const rawLiveData = window.DataStore ? window.DataStore.get(field.targetEntity) : null;
                     if (rawLiveData === null || rawLiveData === undefined) {
@@ -176,6 +184,14 @@
                 const visualTokens = { iconName: metadataToken.iconName, color: metadataToken.color };
                 
                 const basicSel = global.UI_Factory.buildSearchableSingle(field, filteredActiveData, initialValues, localEventBus, visualTokens);
+                
+                // S41.14 Bind Create Action
+                basicSel.addEventListener('txSearchableCreate', (e) => {
+                    const targetE = e.detail.targetEntity;
+                    if (typeof window.renderForm === 'function') {
+                        window.renderForm(targetE);
+                    }
+                });
                 
                 const rawLiveDataSingle = window.DataStore ? window.DataStore.get(field.targetEntity) : null;
                 if (rawLiveDataSingle === null || rawLiveDataSingle === undefined) {
