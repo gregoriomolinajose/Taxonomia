@@ -248,6 +248,9 @@ const Adapter_Sheets = {
         const defaultValuesMap = _buildDefaultValuesMap(schema);
 
         const results = [];
+        const rowsToUpdate = [];
+        const rowsToAppend = [];
+        
         for (const payload of items) {
             const primaryKeyValue = payload[primaryKeyField];
             if (!primaryKeyValue) continue;
@@ -277,8 +280,10 @@ const Adapter_Sheets = {
                 }
                 if (idxUpdatedAt > -1) rowToInsert[idxUpdatedAt] = currentTimestamp;
                 if (idxUpdatedBy > -1) rowToInsert[idxUpdatedBy] = currentUser;
+                
                 originalData[rowIndex] = rowToInsert;
-                // [Performance Fix]: El setValues individual removido para permitir la verdadera inserción en bloque (L276)
+                rowsToUpdate.push({ rowIndex: rowIndex + 1, rowData: rowToInsert });
+                
                 results.push({ status: 'success', action: 'updated', pk: primaryKeyField, val: primaryKeyValue, version: payload.version });
             } else {
                 payload.version = 1;
@@ -313,12 +318,34 @@ const Adapter_Sheets = {
                 }
 
                 originalData.push(rowToInsert);
+                rowsToAppend.push(rowToInsert);
                 idToIndexMap.set(String(primaryKeyValue), originalData.length - 1);
                 results.push({ status: 'success', action: 'created', pk: primaryKeyField, val: primaryKeyValue, lexical_id: lexicalValue, version: payload.version });
             }
         }
         
-        sheet.getRange(1, 1, originalData.length, originalData[0].length).setValues(originalData);
+        // --- S42.4 MUTAÇÃO DIFERENCIAL ---
+        const ROW_REWRITE_THRESHOLD = 20;
+        if (rowsToUpdate.length > ROW_REWRITE_THRESHOLD) {
+            if (typeof Logger !== 'undefined') Logger.log(`[Metrics I/O] Umbral Excedido (${rowsToUpdate.length}). Escribiendo dataset maestro (Nuclear Array Dump)`);
+            sheet.getRange(1, 1, originalData.length, originalData[0].length).setValues(originalData);
+        } else {
+            // Fase A: Single Row Micro-Updates
+            if (rowsToUpdate.length > 0) {
+                if (typeof Logger !== 'undefined') Logger.log(`[Metrics I/O] Modificando ${rowsToUpdate.length} filas exactas (Differential Updates)`);
+                rowsToUpdate.forEach(up => {
+                    sheet.getRange(up.rowIndex, 1, 1, up.rowData.length).setValues([up.rowData]);
+                });
+            }
+            
+            // Fase B: Fragment Appends O(1) Fetch
+            if (rowsToAppend.length > 0) {
+                if (typeof Logger !== 'undefined') Logger.log(`[Metrics I/O] Cimentando ${rowsToAppend.length} registros nuevos en un bloque (Bulk Appends)`);
+                const lastRowPriorToAppend = originalData.length - rowsToAppend.length;
+                sheet.getRange(lastRowPriorToAppend + 1, 1, rowsToAppend.length, rowsToAppend[0].length).setValues(rowsToAppend);
+            }
+        }
+
         return { status: 'success', count: results.length, details: results };
         } finally {
             lock.releaseLock();
