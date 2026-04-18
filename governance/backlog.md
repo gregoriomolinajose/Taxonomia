@@ -34,7 +34,7 @@
 | E35| Detalles Estéticos y Refinamiento UX                    | ✅ Complete  | UI Header & Bugfixes                                                 | Alta     |
 | E38| Hub de Ingesta Inteligente y Sincronización             | ✅ Complete  | Modal Híbrido ETL, Drive Native Provider, Duplicate Tolerable Batch  | Alta     |
 | E40| Bug Bash Sprint                                       | ✅ Complete  | Estabilización de defectos técnicos y operativos                   | Alta     |
-| E41| Searchable Multi Component PWA                      | 🔄 In Progress| Evolucionar selección múltiple a Web Component puro PWA/Capacitor  | Alta     |
+| E41| Searchable Multi Component PWA                      | ✅ Complete   | Evolucionar selección múltiple a Web Component puro PWA/Capacitor  | Alta     |
 
 ## Parking Lot / Deuda Técnica (Post-Epic 11)
 
