@@ -105,7 +105,46 @@
 
             if (field.uiComponent === 'searchable_multi') {
                 if (global.UI_Factory.buildSearchableMulti) {
-                    const multiNodes = global.UI_Factory.buildSearchableMulti(field, activeData, initialValues, localEventBus);
+                    const metadataToken = (window.APP_SCHEMAS && window.APP_SCHEMAS[field.targetEntity] && window.APP_SCHEMAS[field.targetEntity].metadata) || {};
+                    const visualTokens = { iconName: metadataToken.iconName, color: metadataToken.color };
+                    const multiNodes = global.UI_Factory.buildSearchableMulti(field, activeData, initialValues, localEventBus, visualTokens);
+                    
+                    const rawLiveData = window.DataStore ? window.DataStore.get(field.targetEntity) : null;
+                    if (rawLiveData === null || rawLiveData === undefined) {
+                        multiNodes.setAttribute('is-loading', 'true');
+                    }
+
+                    if (window.AppEventBus) {
+                        const reloadDatasetMulti = (ev) => {
+                            // Limpieza activa de ram interactiva
+                            if (!document.body.contains(multiNodes)) {
+                                window.AppEventBus.unsubscribe('FormEngine::RecordHydrated', reloadDatasetMulti);
+                                window.AppEventBus.unsubscribe('DATASTORE::CHANGED', reloadDatasetMulti);
+                                window.AppEventBus.unsubscribe('CACHE::GRAPH_HYDRATED', reloadDatasetMulti);
+                                return;
+                            }
+
+                            // Optimización: Solo repinta si el cambio en DataStore afecta a la Entidad Objetivo
+                            if (ev && ev.entityName && ev.entityName !== field.targetEntity) return;
+
+                            const freshRaw = window.DataStore ? window.DataStore.get(field.targetEntity) : null;
+                            const isSyncing = freshRaw === null || freshRaw === undefined;
+                            
+                            if (isSyncing) multiNodes.setAttribute('is-loading', 'true');
+                            else multiNodes.removeAttribute('is-loading');
+
+                            const freshLiveData = freshRaw || [];
+                            const freshActiveData = freshLiveData.filter(d => d.estado !== 'Eliminado' && typeof d === 'object');
+                            
+                            if (typeof multiNodes.updateConfig === 'function') {
+                                multiNodes.updateConfig(freshActiveData, false);
+                            }
+                        };
+                        window.AppEventBus.subscribe('FormEngine::RecordHydrated', reloadDatasetMulti);
+                        window.AppEventBus.subscribe('DATASTORE::CHANGED', reloadDatasetMulti);
+                        window.AppEventBus.subscribe('CACHE::GRAPH_HYDRATED', reloadDatasetMulti);
+                    }
+
                     inputEl.appendChild(multiNodes);
                 } else {
                     console.warn('[UI_Component_RelationBuilder] Falta UI_Component_SearchableMulti.html en el Index.');
@@ -137,6 +176,11 @@
                 const visualTokens = { iconName: metadataToken.iconName, color: metadataToken.color };
                 
                 const basicSel = global.UI_Factory.buildSearchableSingle(field, filteredActiveData, initialValues, localEventBus, visualTokens);
+                
+                const rawLiveDataSingle = window.DataStore ? window.DataStore.get(field.targetEntity) : null;
+                if (rawLiveDataSingle === null || rawLiveDataSingle === undefined) {
+                    basicSel.setAttribute('is-loading', 'true');
+                }
                 
                 if (field.isTemporalGraph) {
                     basicSel.setAttribute('data-skip-hydration', 'true');
@@ -203,6 +247,10 @@
                             // [S35.4] Filtrado centralizado vía UI_FormUtils.filterByTopology (elimina H9)
                             freshFiltered = window.UI_FormUtils.filterByTopology(freshActiveData, rules, cLvl, field.relationType);
                         }
+
+                        const isSyncingSingle = freshLiveData === null || freshLiveData === undefined || (window.DataStore && window.DataStore.get(field.targetEntity) === null);
+                        if (isSyncingSingle) basicSel.setAttribute('is-loading', 'true');
+                        else basicSel.removeAttribute('is-loading');
 
                         if (typeof basicSel.updateConfig === 'function') {
                             // S37.1 - Modern SearchableSingle Integration
