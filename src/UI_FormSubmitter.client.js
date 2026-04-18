@@ -223,28 +223,8 @@ window.UI_FormSubmitter = class UI_FormSubmitter {
 
         if (window.DataStore) {
             // [S29.7] window.DataStore.clearNested() extirpado. Los Subgrids ahora son stateless.
-            // Re-hidratación Asíncrona del Grafo O(1): Evitamos destruir el caché base y en su lugar
-            // pedimos al backend los nuevos edges silenciosamente para no bloquear la Interfaz UI.
-            if (this.apiService && typeof this.apiService.call === 'function') {
-                this.apiService.call('getInitialPayload', 'Sys_Graph_Edges').then(payload => {
-                    const res = typeof payload === 'string' ? JSON.parse(payload) : payload;
-                    if (res && res.data && res.data.rows && res.data.headers) {
-                        const headers = res.data.headers;
-                        const edgesObj = res.data.rows.map(tuple => {
-                            const obj = {};
-                            headers.forEach((h, i) => obj[h] = tuple[i]);
-                            return obj;
-                        });
-                        window.DataStore.set('Sys_Graph_Edges', edgesObj);
-                        window.DataStore.set('DB_Sys_Graph_Edges', edgesObj);
-                        console.log('[Cache] Sys_Graph_Edges re-hidratado silenciosamente tras guardado.');
-                        
-                        if (window.AppEventBus) {
-                            window.AppEventBus.publish('CACHE::GRAPH_HYDRATED', { entityKey: this.entityName });
-                        }
-                    }
-                }).catch(err => console.warn('[Cache] Falla al re-hidratar aristas en 2do plano:', err));
-            }
+            // S42.1 (Fast-I/O Optimization): Extirpada la re-hidratación por red de Sys_Graph_Edges.
+            // La entidad ya se hidrata atómicamente a través de _patchFrontendCache usando orchestratedChildren.
             
             // Invalida el caché intermedio de Peticiones Asincronas de Formularios
             if (window.FormEngine_Resolvers && typeof window.FormEngine_Resolvers.invalidateCache === 'function') {

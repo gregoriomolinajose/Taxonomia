@@ -34,9 +34,9 @@ function _invalidateCache(entityName) {
     if (typeof CacheService === 'undefined') return;
     const cache = CacheService.getScriptCache();
 
-    // Invalidación de lista principal (ambos mapeos para cubrir legado y versionado actual)
-    cache.remove('CACHE_LIST_' + entityName);
-    cache.remove(`CACHE_LIST_${_getAppVersionHash()}_${entityName}`);
+    // Invalidación de lista principal (soportando Chunking y versionado dinámico)
+    _removeCacheChunked(cache, 'CACHE_LIST_' + entityName);
+    _removeCacheChunked(cache, `CACHE_LIST_${_getAppVersionHash()}_${entityName}`);
     
     // Invalidación de lookups asociados
     const lookupMap = {
@@ -47,10 +47,69 @@ function _invalidateCache(entityName) {
         'Equipo': 'getEquiposOptions'
     };
     if (lookupMap[entityName]) {
-        cache.remove('CACHE_LOOKUP_' + lookupMap[entityName]);
+        _removeCacheChunked(cache, 'CACHE_LOOKUP_' + lookupMap[entityName]);
     }
     
     if (typeof Logger !== 'undefined') Logger.log(`[Cache] BUSTED para ${entityName}`);
+}
+
+/**
+ * [S42.1] Fragmentación Dinámica de RAM (Chunking O(1))
+ * Soluciona el Límite Crítico Físico de 100KB de Google Apps Script CacheService
+ */
+function _getCacheChunked(cache, key) {
+    const metaStr = cache.get(key);
+    if (!metaStr) return null;
+    if (!metaStr.startsWith('{"isChunked":true')) return metaStr; // Legacy Support
+    
+    const meta = JSON.parse(metaStr);
+    let fullData = "";
+    for (let i = 0; i < meta.chunks; i++) {
+        const chunk = cache.get(key + '_chunk_' + i);
+        if (!chunk) return null; // Cache truncado / evadido prematuramente
+        fullData += chunk;
+    }
+    return fullData;
+}
+
+function _putCacheChunked(cache, key, strData, expiration) {
+    try {
+        const CHUNK_SIZE = 90000; // Safety threshold de 90KB
+        if (strData.length <= CHUNK_SIZE) {
+            cache.put(key, strData, expiration);
+            return;
+        }
+        
+        const chunks = Math.ceil(strData.length / CHUNK_SIZE);
+        const meta = JSON.stringify({ isChunked: true, chunks: chunks });
+        
+        const payloadDict = {};
+        payloadDict[key] = meta;
+        for (let i = 0; i < chunks; i++) {
+            payloadDict[key + '_chunk_' + i] = strData.substring(i * CHUNK_SIZE, (i + 1) * CHUNK_SIZE);
+        }
+        
+        cache.putAll(payloadDict, expiration);
+        if (typeof Logger !== 'undefined') Logger.log(`[Cache Chunking] Clave ${key} fragmentada en ${chunks} pedazos.`);
+    } catch(e) {
+        if (typeof Logger !== 'undefined') Logger.log(`[Cache Error] Falló al inyectar caché para ${key}: ` + e.message);
+    }
+}
+
+function _removeCacheChunked(cache, key) {
+    const metaStr = cache.get(key);
+    if (metaStr && metaStr.startsWith('{"isChunked":true')) {
+        try {
+            const meta = JSON.parse(metaStr);
+            const keysToRemove = [key];
+            for (let i = 0; i < meta.chunks; i++) {
+                keysToRemove.push(key + '_chunk_' + i);
+            }
+            cache.removeAll(keysToRemove);
+            return;
+        } catch(e) {}
+    }
+    cache.remove(key);
 }
 
 /**
@@ -248,10 +307,10 @@ const Engine_DB = {
                     
                     let fullGraph;
                     if (f.graphEntity === 'Sys_Graph_Edges') {
-                        if (!cachedGraphFull) cachedGraphFull = _Adapter_Sheets.list('Sys_Graph_Edges', config, 'objects').rows || [];
+                        if (!cachedGraphFull) cachedGraphFull = this.list('Sys_Graph_Edges', 'objects').rows || [];
                         fullGraph = cachedGraphFull;
                     } else {
-                        fullGraph = _Adapter_Sheets.list(f.graphEntity, config, 'objects').rows || [];
+                        fullGraph = this.list(f.graphEntity, 'objects').rows || [];
                     }
                     const activeGraph = fullGraph.filter(e => e.es_version_actual !== false);
 
@@ -314,7 +373,7 @@ const Engine_DB = {
 
                     // --- RECONCILIACIÓN (DIFFING) ---
                     // Paso A: Buscar hijos huérfanos antes de actualizar
-                    const currentInDB = _Adapter_Sheets.list(targetEntity, config, 'objects') || { rows: [] };
+                    const currentInDB = this.list(targetEntity, 'objects') || { rows: [] };
                     const orphanMatches = (currentInDB.rows || []).filter(c => c[fkField] == parentPK);
                     
                     // Paso B: Determinar cuáles ya no están en el nuevo payload
@@ -581,11 +640,12 @@ const Engine_DB = {
     list: function (entityName, format) {
         const config = (typeof CONFIG !== 'undefined') ? CONFIG : { useSheets: true, SPREADSHEET_ID_DB: '' };
         
-        // Intentar leer de RAM (CacheService) con versionado dinámico
+        // Intentar leer de RAM (CacheService) con Fragmentación Inteligente S42.1
         const cacheKey = `CACHE_LIST_${_getAppVersionHash()}_${entityName}`;
         if (typeof CacheService !== 'undefined') {
-            const cached = CacheService.getScriptCache().get(cacheKey);
-            if (cached && format !== 'tuples') { // No cacheamos tuplas por ahora para evitar colisiones de formato
+            const cache = CacheService.getScriptCache();
+            const cached = _getCacheChunked(cache, cacheKey);
+            if (cached && format !== 'tuples') {
                 Logger.log(`[Cache Engine] HIT para ${entityName}`);
                 return JSON.parse(cached);
             }
@@ -594,9 +654,10 @@ const Engine_DB = {
         Logger.log(`[Cache Engine] MISS para ${entityName}. Leyendo de DB...`);
         const result = _Adapter_Sheets.list(entityName, config, format);
         
-        // Guardar en caché si no es formato tuplas (para simplificar)
+        // Guardar en caché si no es formato tuplas (Chunked blindado)
         if (typeof CacheService !== 'undefined' && format !== 'tuples' && result) {
-            CacheService.getScriptCache().put(cacheKey, JSON.stringify(result), 3600);
+            const cache = CacheService.getScriptCache();
+            _putCacheChunked(cache, cacheKey, JSON.stringify(result), 3600);
         }
         
         return result;
