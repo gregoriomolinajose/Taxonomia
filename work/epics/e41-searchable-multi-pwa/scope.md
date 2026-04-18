@@ -33,6 +33,7 @@ El rediseño obedece directamente al principio DRY (Don't Repeat Yourself). Evit
 - **S41.12**: Cierre de Brechas Modal/Dropdown UI Resilience. [x] S41.12 ✓
 - **S41.13**: Abstracción de UI Factories (DRY refactoring). [x] S41.13 ✓
 - **S41.14**: Migración de Subgrids Legacy a TXSearchable. [x] S41.14 ✓
+- **S41.15**: Abstracción Declarativa de Renderizado PWA (Zero-Hardcode CSS for Inline/Popover States, Refactor Arquitectónico H8). [TO DO]
 
 ## Done
 - El componente `SearchableMulti` puede invocarse limpiamente mediante custom tags de HTML.
