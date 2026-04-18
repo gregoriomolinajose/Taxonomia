@@ -150,7 +150,7 @@ const APP_SCHEMAS = {
       ...FIELD_TEMPLATES.AUDIT_FIELDS(),
       ...FIELD_TEMPLATES.VERSION_FIELD(),
       ...FIELD_TEMPLATES.NAME_FIELD("Nombre de Unidad"),
-      { name: "portafolios_vinculados", type: "relation", relationType: "hijo", targetEntity: "Portafolio", graphEntity: "Sys_Graph_Edges", valueField: "id_portafolio", labelField: "nombre", uiBehavior: "subgrid", label: "Portafolios", isTemporalGraph: true, graphEdgeType: "UNIDAD_NEGOCIO_PORTAFOLIO", topologyCardinality: "1:N", width: 12 }
+      { name: "portafolios_vinculados", type: "relation", relationType: "hijo", targetEntity: "Portafolio", graphEntity: "Sys_Graph_Edges", valueField: "id_portafolio", labelField: "nombre", uiComponent: "searchable_multi", label: "Portafolios", isTemporalGraph: true, graphEdgeType: "UNIDAD_NEGOCIO_PORTAFOLIO", topologyCardinality: "1:N", width: 12 }
     ]
   },
   Portafolio: {
@@ -190,8 +190,8 @@ const APP_SCHEMAS = {
       { name: "nombre_ingles", type: "text", label: "Nombre (EN)", required: false, width: 6 },
       { name: "abreviacion", type: "text", label: "Abreviación", required: false, width: 6 },
       { name: "definicion", type: "textarea", label: "Definición", required: true, width: 12, showInList: false },
-      { width: 12, name: "relaciones_padre", type: "relation", relationType: "padre", targetEntity: "Dominio", graphEntity: "Sys_Graph_Edges", valueField: "id_dominio", labelField: "nombre", uiBehavior: "subgrid", label: "Dominio Padre (1:1)", isTemporalGraph: true, topologyCardinality: "1:N" },
-      { width: 12,name: "relaciones_hijo", type: "relation", relationType: "hijo", targetEntity: "Dominio", graphEntity: "Sys_Graph_Edges", valueField: "id_dominio", labelField: "nombre", uiBehavior: "subgrid", label: "Dominios Subordinados (1:N)", isTemporalGraph: true, topologyCardinality: "1:N" }
+      { width: 12, name: "relaciones_padre", type: "relation", relationType: "padre", targetEntity: "Dominio", graphEntity: "Sys_Graph_Edges", valueField: "id_dominio", labelField: "nombre", uiComponent: "select_single", label: "Dominio Padre (1:1)", isTemporalGraph: true, topologyCardinality: "1:N" },
+      { width: 12,name: "relaciones_hijo", type: "relation", relationType: "hijo", targetEntity: "Dominio", graphEntity: "Sys_Graph_Edges", valueField: "id_dominio", labelField: "nombre", uiComponent: "searchable_multi", label: "Dominios Subordinados (1:N)", isTemporalGraph: true, topologyCardinality: "1:N" }
     ]
   },
   Grupo_Productos: {

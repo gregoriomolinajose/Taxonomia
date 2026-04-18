@@ -12,6 +12,9 @@
         const node = document.createElement('tx-searchable');
         
         node.setAttribute('entity-name', fieldDef.label || fieldDef.targetEntity || 'Registro');
+        if (fieldDef.targetEntity) {
+            node.setAttribute('target-entity', fieldDef.targetEntity);
+        }
         node.setAttribute('multiple', isMulti ? 'true' : 'false');
         
         if (visualTokens.iconName) node.setAttribute('icon-name', visualTokens.iconName);

@@ -24,10 +24,15 @@ El rediseño obedece directamente al principio DRY (Don't Repeat Yourself). Evit
 - **S41.3**: Conditional DOM Mapping (Absorbida en S41.2). [DONE]
 - **S41.4**: DOM Lifecycle Hooks (Absorbida en S41.1). [DONE]
 - **S41.5**: Integration Testing & FormRenderer Regression checks. [DONE]
-- **S41.6**: TDD & E2E Testing (Actualización de TEST_Suite_UI y Pruebas Playwright para resiliencia PWA). [Size: M]
-- **S41.7**: Retroalimentación Visual (Desktop Legacy UI Clone absoluto bypassando ion-popover). [DONE]
-- **S41.8**: Estabilización Arquitectónica y Cumplimiento de Design System PWA (Refactors H9/H10, Corrección de WOSD y Nullish Coalescing). [DONE]
-- **S41.9**: Finalización del Flujo Multi-Selección (Validación de Chips, Límites, y envío FormRenderer). [TO DO]
+- **S41.6**: TDD & E2E Testing (Actualización de TEST_Suite_UI y Pruebas Playwright para resiliencia PWA). [x] S41.6 ✓
+- **S41.7**: Retroalimentación Visual (Desktop Legacy UI Clone absoluto bypassando ion-popover). [x] S41.7 ✓
+- **S41.8**: Estabilización Arquitectónica y Cumplimiento de Design System PWA. [x] S41.8 ✓
+- **S41.9**: Finalización del Flujo Multi-Selección (Validación de Chips, Límites, y envío FormRenderer). [x] S41.9 ✓
+- **S41.10**: Fix UX In-Line para Multi-select. [x] S41.10 ✓
+- **S41.11**: Eliminación del bloqueo Race Condition FormRenderer. [x] S41.11 ✓
+- **S41.12**: Cierre de Brechas Modal/Dropdown UI Resilience. [x] S41.12 ✓
+- **S41.13**: Abstracción de UI Factories (DRY refactoring). [x] S41.13 ✓
+- **S41.14**: Migración de Subgrids Legacy a TXSearchable. [x] S41.14 ✓
 
 ## Done
 - El componente `SearchableMulti` puede invocarse limpiamente mediante custom tags de HTML.

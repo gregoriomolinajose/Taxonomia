@@ -144,15 +144,16 @@ async function submitHybridForm(frame, page, text) {
     // 2. STRESS TEST: Crear 1 Portafolios y 2 Grupos X Portafolio simultáneamente
     // =========================================================================
     for (let p = 1; p <= 1; p++) {
-        // En UI PURE NODAL: Primero debemos abrir el Modal Buscar desde el Subgrid "Portafolios Asociados"
-        const headerPort = frame.locator('div').filter({ has: frame.locator('strong', { hasText: 'Portafolios Asociados' }) }).first();
-        const btnAgregarPort = headerPort.locator('ion-button').filter({ hasText: 'Agregar' }).first();
-        await btnAgregarPort.waitFor({ state: 'attached', timeout: 15000 }).catch(() => {});
-        if(await btnAgregarPort.count() > 0) {
-            await btnAgregarPort.evaluate(b => b.click({ force: true }));
-        }
+        // En UI PURE NODAL: Primero debemos abrir el Popover "Buscar / Añadir" desde el TXSearchable "Portafolios Asociados"
+        const containerPort = frame.locator('tx-searchable[data-form-component="portafolios_vinculados"]').last();
+        await containerPort.waitFor({ state: 'attached', timeout: 15000 }).catch(() => {});
         
-        await clickTopButtonById(frame, 'btn-create-new', page); // Crea el Portafolio desde el Modal
+        await containerPort.evaluate(el => el.executeSearchAndOpen());
+        
+        // Click al botón especial de Crear
+        const btnCreatePort = containerPort.locator('ion-item').filter({ hasText: 'Crear' }).last();
+        await btnCreatePort.waitFor({ state: 'visible', timeout: 8000 });
+        await btnCreatePort.click({ force: true });
         
         // Espera arquitectónica única
         await frame.locator('ion-textarea[name="gobierno_liderazgo"]').last().waitFor({ state: 'attached', timeout: 30000 }).catch(e => console.log('[WARN] Retraso en render de campos únicos portafolio'));
@@ -162,17 +163,15 @@ async function submitHybridForm(frame, page, text) {
         await fillTopInput(frame, 'nombre', portName);
 
         for (let g = 1; g <= 2; g++) {
-            const strongGrupo = frame.locator('strong', { hasText: 'Grupos de Productos Asociados' }).last();
-            await strongGrupo.waitFor({ state: 'attached', timeout: 10000 }).catch(() => {});
+            const containerGrupo = frame.locator('tx-searchable[data-form-component="grupos_vinculados"]').last();
+            await containerGrupo.waitFor({ state: 'attached', timeout: 10000 }).catch(() => {});
 
-            const headerGrupo = frame.locator('div').filter({ has: strongGrupo }).last();
-            const btnAgregarGrupo = headerGrupo.locator('ion-button').filter({ hasText: 'Agregar' }).last();
-            await btnAgregarGrupo.waitFor({ state: 'attached', timeout: 15000 }).catch(() => {});
-            if(await btnAgregarGrupo.count() > 0) {
-                await btnAgregarGrupo.evaluate(b => b.click({ force: true }));
-            }
+            await containerGrupo.evaluate(el => el.executeSearchAndOpen());
             
-            await clickTopButtonById(frame, 'btn-create-new', page); 
+            const btnCreateGrupo = containerGrupo.locator('ion-item').filter({ hasText: 'Crear' }).last();
+            await btnCreateGrupo.waitFor({ state: 'visible', timeout: 8000 });
+            await btnCreateGrupo.click({ force: true });
+            
             
             await frame.locator('ion-select[name="modelo_negocio"]').last().waitFor({ state: 'attached', timeout: 30000 }).catch(e => console.log('[WARN] Retraso en render de campos únicos grupo'));
 
@@ -249,11 +248,12 @@ async function submitHybridForm(frame, page, text) {
         
         // 4.8 Selecciona el portafolio creado y valida cajón
         await rowPort.click({ timeout: 15000, force: true }).catch(() => {});
-        await frame.locator('ion-select[name="unidad_negocio_padre"]').waitFor({ state: 'attached', timeout: 10_000 }).catch(() => {});
         
-        const shadowNative = frame.locator('ion-select[name="unidad_negocio_padre"]');
-        if (await shadowNative.isVisible()) {
-             await expect(shadowNative).toContainText(unName).catch(()=>console.log('[WARN] UN Padre mismatch'));
+        const txPadre = frame.locator('tx-searchable[data-form-component="unidad_negocio_padre"]');
+        await txPadre.waitFor({ state: 'attached', timeout: 10_000 }).catch(() => {});
+        
+        if (await txPadre.isVisible()) {
+             await expect(txPadre).toContainText(unName).catch(()=>console.log('[WARN] UN Padre mismatch'));
         }
         await expect(frame.locator('ion-label').filter({ hasText: new RegExp(createdGrupos[0]) })).toBeVisible({ timeout: 15000 }).catch(() => {});
     }

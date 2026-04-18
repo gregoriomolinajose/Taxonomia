@@ -41,19 +41,19 @@ test.describe('Ghost Stealing Bug Resistance Test', () => {
   }
 
   async function setSelectValueByText(frame, selectName, txtValue) {
-      const selectLocator = frame.locator(`ion-select[name="${selectName}"]`).last();
+      const selectLocator = frame.locator(`tx-searchable[data-form-component="${selectName}"]`).last();
       try {
           await selectLocator.waitFor({ state: 'attached', timeout: 15000 });
-          // Force click to open select
-          await selectLocator.evaluate(n => n.dispatchEvent(new Event('click', { bubbles: true })));
+          // Open TXSearchable via Component API
+          await selectLocator.evaluate(el => el.executeSearchAndOpen());
           
-          const alertWindow = frame.locator('ion-alert').last();
-          await alertWindow.waitFor({ state: 'visible', timeout: 5000 });
+          // Desktop uses ion-popover, Mobile uses ion-modal, but either way it renders ion-list natively inside
+          const overlayList = frame.locator(`.tx-desktop-dropdown ion-list, ion-modal ion-list`).last();
+          await overlayList.waitFor({ state: 'visible', timeout: 5000 });
           
-          await alertWindow.locator('button').filter({ hasText: txtValue }).first().click();
-          await alertWindow.locator('button').filter({ hasText: 'OK' }).first().click();
+          await overlayList.locator('ion-item').filter({ hasText: txtValue }).first().click();
       } catch(e) {
-          console.log(`[WARN] No se pudo seleccionar ${txtValue} en ${selectName}`);
+          console.log(`[WARN] No se pudo seleccionar ${txtValue} en ${selectName}`, e);
       }
   }
 
@@ -108,15 +108,17 @@ test.describe('Ghost Stealing Bug Resistance Test', () => {
 
     // El Drawer del Portafolio se abre. El parche Ghost Stealing DEBE pre-llenar la Unidad de Negocio.
     // Agregar un Grupo de Productos sin tocar conscientemente la UN.
-    const strongGrupo = frame.locator('strong', { hasText: 'Grupos de Productos Asociados' }).last();
-    await strongGrupo.waitFor({ state: 'attached', timeout: 10000 });
-    const headerGrupo = frame.locator('div').filter({ has: strongGrupo }).last();
-    const btnAgregarGrupo = headerGrupo.locator('ion-button').filter({ hasText: 'Agregar' }).last();
+    // [S41.14 E2E Update] searchable_multi usa TXSearchable en vez de Subgrid puro.
+    const container = frame.locator('tx-searchable[data-form-component="grupos_vinculados"]').last();
+    await container.waitFor({ state: 'attached', timeout: 15000 });
     
-    await btnAgregarGrupo.waitFor({ state: 'attached', timeout: 15000 });
-    if(await btnAgregarGrupo.count() > 0) {
-        await btnAgregarGrupo.evaluate(b => b.click({ force: true }));
-    }
+    // Abrir el popup iterativamente
+    await container.evaluate(el => el.executeSearchAndOpen());
+    
+    // Esperar a que renderice y clickear en el boton CREAR
+    const btnCreate = frame.locator('#tx-searchable-multigrupos_vinculados-btn-create-desk, #tx-searchable-multigrupos_vinculados-btn-create-inline').last();
+    await btnCreate.waitFor({ state: 'attached', timeout: 5000 });
+    await btnCreate.click({ force: true });
     
     const ghostGrupoName = 'GRUPO GHOST HIJO ' + Date.now();
     await fillTopInput(frame, 'nombre', ghostGrupoName);

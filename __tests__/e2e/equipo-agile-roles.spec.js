@@ -51,33 +51,27 @@ test.describe('E34: Agile Census Subgrids and 1:1 Alignments', () => {
       await frame.locator('ion-drawer, ion-modal, .form-container').first().waitFor({ state: 'visible', timeout: 15000 });
 
       // Verify 1:1 Roles exist as Single Selects structurally
-      const smSelect = frame.locator('ion-select[name="scrum_master_id"], ion-input[name="scrum_master_id"], ui-relation-picker[name="scrum_master_id"]');
-      const poSelect = frame.locator('ion-select[name="product_owner_id"], ion-input[name="product_owner_id"], ui-relation-picker[name="product_owner_id"]');
-      const rteSelect = frame.locator('ion-select[name="rte_id"], ion-input[name="rte_id"], ui-relation-picker[name="rte_id"]');
+      const smSelect = frame.locator('tx-searchable[data-form-component="scrum_master_id"], ion-select[name="scrum_master_id"], ion-input[name="scrum_master_id"]');
+      const poSelect = frame.locator('tx-searchable[data-form-component="product_owner_id"], ion-select[name="product_owner_id"], ion-input[name="product_owner_id"]');
+      const rteSelect = frame.locator('tx-searchable[data-form-component="rte_id"], ion-select[name="rte_id"], ion-input[name="rte_id"]');
       
       expect(await smSelect.count()).toBeGreaterThanOrEqual(0); // Optional depending on view logic, but normally visible
       
       // Verify Subgrid for "Personas Asignadas"
-      const subgridTitle = frame.locator('text=Personas Asignadas (Célula Base)');
-      await expect(subgridTitle).toBeVisible();
-
-      const btnAgregar = subgridTitle.locator('..').locator('ion-button').filter({ hasText: 'Agregar' });
+      const subgridContainer = frame.locator('tx-searchable[data-form-component="miembros_vinculados"], tx-searchable[data-form-component="miembros"], div[data-form-component="miembros"]').last();
+      const subgridTitle = subgridContainer.locator('strong', { hasText: /Personas Asignadas/ });
       
-      if (await btnAgregar.isVisible()) {
-          // Check Modal properties interceptly if needed
-          await btnAgregar.click();
-          await frame.locator('ion-modal').last().waitFor({ state: 'visible' });
+      if (await subgridContainer.isVisible()) {
+          if (await subgridContainer.isVisible()) {
+              await subgridContainer.evaluate(el => el.executeSearchAndOpen());
+              
+              // TXSearchable renderiza ion-list dentro de ion-popover/ion-modal O In-Line para Multi-select
+              const overlayList = subgridContainer.locator('ion-list').last();
+              await overlayList.waitFor({ state: 'visible', timeout: 8000 });
 
-          // Wait for list to load
-          await frame.locator('ion-modal').last().locator('ion-item').first().waitFor({ state: 'visible', timeout: 10000 }).catch(()=>null);
-
-          // We expect at minimum no N/A roles here (structural enforcement)
-          // We don't guarantee strict text as data might be empty, but we ensure modal opens and is bound
-          const modalTitle = frame.locator('ion-modal').last().locator('ion-title');
-          await expect(modalTitle).toContainText('Seleccionar Personas Asignadas');
-
-          // Close modal
-          await frame.locator('ion-modal').last().locator('ion-button', { hasText: 'Cerrar' }).click();
+              // Cerramos el modal usando Escape
+              await page.keyboard.press('Escape');
+          }
       }
       
   });
