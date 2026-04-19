@@ -512,8 +512,11 @@
                     const pKey = String(e.id_nodo_padre) + '_' + edgeName;
                     const hKey = String(e.id_nodo_hijo) + '_' + edgeName;
                     
-                    if (!memo.padreToHijo[pKey]) memo.padreToHijo[pKey] = e.id_nodo_hijo;
-                    if (!memo.hijoToPadre[hKey]) memo.hijoToPadre[hKey] = e.id_nodo_padre;
+                    if (!memo.padreToHijo[pKey]) memo.padreToHijo[pKey] = [];
+                    memo.padreToHijo[pKey].push(e.id_nodo_hijo);
+                    
+                    if (!memo.hijoToPadre[hKey]) memo.hijoToPadre[hKey] = [];
+                    memo.hijoToPadre[hKey].push(e.id_nodo_padre);
                 }
             }
             this._edgeMemo = memo;
@@ -527,12 +530,15 @@
             
             const rows = (window.DataStore && window.DataStore.get(entityName)) || [];
             const memo = {};
+            const pkField = window.Schema_Utils ? window.Schema_Utils.getPrimaryKey(entityName) : null;
+            
             for(let i=0; i<rows.length; i++) {
                 const r = rows[i];
                 const vl = r[labelKey];
                 if (vl) {
                     if (r.id_registro) memo[String(r.id_registro)] = vl;
                     if (r.lexical_id) memo[String(r.lexical_id)] = vl;
+                    if (pkField && r[pkField]) memo[String(r[pkField])] = vl;
                 }
             }
             this._targetMemo[memoKey] = memo;
@@ -548,20 +554,32 @@
             if (!fieldMeta || fieldMeta.type !== 'relation') return rawVal;
             
             let resolvedVal = rawVal;
-            const isEmptyValue = (rawVal === undefined || rawVal === null || rawVal === '');
-
-            // 1. Resolve Graph Edge pointer if it's a Temporal Graph edge AND physically empty
-            if (isEmptyValue && fieldMeta.isTemporalGraph && window.DataStore && window.DataStore.get('Sys_Graph_Edges')) {
+            // Quitamos isEmptyValue como condición para forzar CÁLCULO ESTRICTO SCD-2 100% dependiente del cache Graph
+            
+            // 1. Resolve Graph Edge pointer if it's a Temporal Graph edge
+            if (fieldMeta.isTemporalGraph && window.DataStore && window.DataStore.get('Sys_Graph_Edges')) {
                 const edgeMemo = this._buildEdgeMemo();
                 const edgeName = (fieldMeta.graphEdgeType || fieldMeta.name).toUpperCase();
                 const lookupKey = String(currentPK) + '_' + edgeName;
                 
+                let rawResolvedArray = [];
                 if (fieldMeta.relationType === 'padre') {
                     // Yo soy el hijo, busco al padre (Match de hijoToPadre)
-                    if (edgeMemo.hijoToPadre[lookupKey]) resolvedVal = edgeMemo.hijoToPadre[lookupKey];
+                    if (edgeMemo.hijoToPadre[lookupKey]) rawResolvedArray = edgeMemo.hijoToPadre[lookupKey];
                 } else {
                     // Yo soy el padre, busco al hijo
-                    if (edgeMemo.padreToHijo[lookupKey]) resolvedVal = edgeMemo.padreToHijo[lookupKey];
+                    if (edgeMemo.padreToHijo[lookupKey]) rawResolvedArray = edgeMemo.padreToHijo[lookupKey];
+                }
+                
+                if (rawResolvedArray.length > 0) {
+                    // Re-empaquetamos acorde al componente listado, sino chips o unico string
+                    if (fieldMeta.uiComponent === 'select_single') {
+                        resolvedVal = rawResolvedArray[0]; // Extrae el primero para no renderizar chips forzados
+                    } else {
+                        resolvedVal = rawResolvedArray;
+                    }
+                } else {
+                    resolvedVal = null; // Forza vacío si el subgrid ya no detecta edges activos
                 }
             }
             
@@ -570,8 +588,12 @@
                 const trgLabelKey = fieldMeta.labelField || (window.ENTITY_META && window.ENTITY_META[fieldMeta.targetEntity] && window.ENTITY_META[fieldMeta.targetEntity].titleField) || 'nombre';
                 const targetMemo = this._buildTargetMemo(fieldMeta.targetEntity, trgLabelKey);
                 
-                if (targetMemo[String(resolvedVal)]) {
-                    resolvedVal = targetMemo[String(resolvedVal)];
+                if (Array.isArray(resolvedVal)) {
+                     resolvedVal = resolvedVal.map(id => targetMemo[String(id)] || id);
+                } else {
+                     if (targetMemo[String(resolvedVal)]) {
+                         resolvedVal = targetMemo[String(resolvedVal)];
+                     }
                 }
             }
             

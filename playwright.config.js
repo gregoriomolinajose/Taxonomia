@@ -22,7 +22,9 @@ export default defineConfig({
     baseURL: process.env.DEV_URL || 'https://script.google.com/macros/s/AKfycbyYY8F6scltfXdK_CycPcxIQaeNn5tDFn78VhaHGMKlcMzUjOjdrHFvks1OZl5OBqDuzQ/exec',
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
+    storageState: authFile,
   },
+  globalSetup: require.resolve('./__tests__/e2e/global-setup.js'),
   projects: [
     {
       name: 'chromium',
