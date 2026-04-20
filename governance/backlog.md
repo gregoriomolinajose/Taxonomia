@@ -35,7 +35,8 @@
 | E38| Hub de Ingesta Inteligente y Sincronización             | ✅ Complete  | Modal Híbrido ETL, Drive Native Provider, Duplicate Tolerable Batch  | Alta     |
 | E40| Bug Bash Sprint                                       | ✅ Complete  | Estabilización de defectos técnicos y operativos                   | Alta     |
 | E41| Searchable Multi Component PWA                      | ✅ Complete   | Evolucionar selección múltiple a Web Component puro PWA/Capacitor  | Alta     |
-| E42| Optimización de Tiempos de Guardado                 | ⏳ In Progress| Minimizar latencia de red y peticiones XHR innecesarias al guardar| Máxima   |
+| E42| Optimización de Tiempos de Guardado                 | ✅ Complete   | Minimizar latencia de red y peticiones XHR innecesarias al guardar| Máxima   |
+| E43| Rediseño de Cards (Vista Grid)                      | ⏳ In Progress| Mejorar UI/UX de cards inyectando grafos, badge lexicológico e íconos | Alta     |
 
 ## Parking Lot / Deuda Técnica (Post-Epic 11)
 
