@@ -456,9 +456,11 @@
 
     /* â”€â”€ Grid View â€” Ionic-native layout (ion-grid/ion-row/ion-col/ion-card) â”€â”€ */
 
-    /* Override ion-grid padding para alinearlo con el dv-root */
+    /* Override ion-grid padding para alinearlo con el dv-root S42.3 */
     .dv-ionic-grid {
-        padding: 8px 0 0;
+        padding: 4px 0 0;
+        --ion-grid-padding: 0;
+        --ion-grid-column-padding: 6px;
     }
 
     /* ion-card overrides: hereda tokens del design system */
@@ -480,7 +482,7 @@
     }
 
     .dv-grid-col {
-        padding: 8px;
+        /* Delegado a --ion-grid-column-padding S42.3 */
     }
 
     .dv-btn-icon {
@@ -793,10 +795,62 @@
     color: var(--dv-text-primary);
 }
 
-.dv-card-hero {
+/* S42.3 Unified Header */
+.dv-card-header-unified {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    width: 100%;
+}
+
+.dv-card-header-unified .dv-card-left-wrap {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+.dv-badge-lg {
+    width: 44px;
+    height: 44px;
+    font-size: 1.6rem;
+}
+
+.dv-card-meta-wrap {
     display: flex;
     flex-direction: column;
+    gap: 2px;
 }
+
+.dv-card-meta-top-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.dv-card-status-wrap {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.dv-card-status-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+}
+
+.dv-card-status-text {
+    line-height: 1;
+}
+
+/* Modifier clases for status encapsulados H9 Fix */
+.dv-status--active .dv-card-status-dot { background-color: var(--dv-success, var(--ion-color-success, #2dd36f)); }
+.dv-status--active .dv-card-status-text { color: var(--dv-success, var(--ion-color-success, #2dd36f)); }
+
+.dv-status--inactive .dv-card-status-dot { background-color: var(--dv-danger, var(--ion-color-danger, #eb445a)); }
+.dv-status--inactive .dv-card-status-text { color: var(--dv-danger, var(--ion-color-danger, #eb445a)); }
 
 .dv-card-hero-title {
     margin: 0;
@@ -820,31 +874,31 @@
 
 .dv-card-graph-nodes {
     display: flex;
-    flex-direction: column;
+    flex-wrap: wrap;
+    flex-direction: row;
     gap: 8px;
 }
 
 .dv-node-pill {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 4px;
     font-size: 0.82rem;
     background: var(--dv-bg);
-    padding: 6px 12px;
+    padding: 4px 8px;
     border-radius: 6px;
     border: 1px solid var(--dv-border);
 }
 
 .dv-node-pill ion-icon {
     font-size: 1.1rem;
-    color: var(--dv-primary);
+    color: var(--dv-text-secondary);
 }
 
 .dv-node-text-wrap {
     display: flex;
     align-items: center;
     gap: 4px;
-    flex: 1;
 }
 
 .dv-node-label {
@@ -858,6 +912,42 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+}
+
+/* S42.3: Back to Top FAB */
+.dv-fab-top {
+    position: absolute;
+    bottom: 24px;
+    right: 24px;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: var(--dv-primary);
+    color: var(--ion-color-primary-contrast, #fff);
+    border: none;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+    font-size: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 100;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(20px);
+    transition: all 0.3s ease;
+}
+
+.dv-fab-top.active {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.dv-fab-top:hover {
+    background: var(--dv-primary-dark);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
 }
 
 .dv-node-empty {

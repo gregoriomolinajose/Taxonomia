@@ -307,27 +307,72 @@
                 const cardEl = document.createElement('ion-card');
                 cardEl.className = 'dv-ion-card dv-card-grid-modern';
                 
-                // 1. Top Bar
-                const topBar = document.createElement('div');
-                topBar.className = 'dv-card-top-bar';
+                // 1. Unified Card Header (S42.3 Refinamiento)
+                const cardHeader = document.createElement('div');
+                cardHeader.className = 'dv-card-header-unified';
                 
-                const badgeEl = document.createElement('ion-badge');
-                if (meta.color) { badgeEl.setAttribute('color', meta.color); }
-                badgeEl.className = 'dv-badge-circular';
+                const badgeEl = document.createElement('div');
+                if (meta.color) { 
+                    badgeEl.style.setProperty('--dv-primary', `var(--ion-color-${meta.color}, ${meta.color})`);
+                    badgeEl.style.setProperty('--dv-primary-light', `rgba(var(--ion-color-${meta.color}-rgb, 28, 66, 232), 0.15)`);
+                }
+                badgeEl.className = 'dv-badge-circular dv-badge-lg';
                 
                 const baseIcon = meta.iconName ? meta.iconName.replace('-outline', '') : 'cube';
                 const iconBadge = document.createElement('ion-icon');
                 iconBadge.setAttribute('name', baseIcon);
                 badgeEl.appendChild(iconBadge);
-                topBar.appendChild(badgeEl);
                 
-                const topActions = document.createElement('div');
-                topActions.className = 'dv-card-top-actions';
+                const leftWrap = document.createElement('div');
+                leftWrap.className = 'dv-card-left-wrap';
+                leftWrap.appendChild(badgeEl);
+                
+                // Titulo y Meta
+                const metaWrap = document.createElement('div');
+                metaWrap.className = 'dv-card-meta-wrap';
+                
+                const metaTopRow = document.createElement('div');
+                metaTopRow.className = 'dv-card-meta-top-row';
                 
                 const lexicalEl = document.createElement('span');
                 lexicalEl.className = 'dv-card-lexical-id';
                 lexicalEl.textContent = lexIdStr;
-                topActions.appendChild(lexicalEl);
+                metaTopRow.appendChild(lexicalEl);
+                
+                // Estado
+                const estadoVal = row.estado || row.status || (row.metadata ? row.metadata.estado : null);
+                if (estadoVal) {
+                    const statusWrap = document.createElement('div');
+                    statusWrap.className = 'dv-card-status-wrap';
+                    const isInactive = String(estadoVal).toLowerCase().includes('inactiv');
+                    statusWrap.classList.add(isInactive ? 'dv-status--inactive' : 'dv-status--active');
+                    
+                    const statusDot = document.createElement('div');
+                    statusDot.className = 'dv-card-status-dot';
+                    
+                    const statusText = document.createElement('span');
+                    statusText.className = 'dv-card-status-text';
+                    statusText.textContent = estadoVal;
+                    
+                    statusWrap.appendChild(statusDot);
+                    statusWrap.appendChild(statusText);
+                    metaTopRow.appendChild(statusWrap);
+                }
+                
+                const h3Title = document.createElement('h3');
+                h3Title.className = 'dv-card-hero-title';
+                h3Title.textContent = titleStr;
+                h3Title.title = titleStr;
+                
+                metaWrap.appendChild(metaTopRow);
+                metaWrap.appendChild(h3Title);
+                
+                leftWrap.appendChild(metaWrap);
+                cardHeader.appendChild(leftWrap);
+                
+                // Actions (Trash)
+                const topActions = document.createElement('div');
+                topActions.className = 'dv-card-top-actions';
                 
                 if (!window.ABAC || window.ABAC.can('delete', this.cfg.entityName, idStr)) {
                     const btnDel = document.createElement('button');
@@ -345,20 +390,8 @@
                     topActions.appendChild(btnDel);
                 }
                 
-                topBar.appendChild(topActions);
-                cardEl.appendChild(topBar);
-
-                // 2. Hero Body
-                const heroWrap = document.createElement('div');
-                heroWrap.className = 'dv-card-hero';
-                
-                const h3Title = document.createElement('h3');
-                h3Title.className = 'dv-card-hero-title';
-                h3Title.textContent = titleStr;
-                h3Title.title = titleStr;
-                heroWrap.appendChild(h3Title);
-                
-                cardEl.appendChild(heroWrap);
+                cardHeader.appendChild(topActions);
+                cardEl.appendChild(cardHeader);
 
                 // 3. Footer (Graphs)
                 let graphData = this._extractGraphMetadata(row, this.cfg.entityName);
@@ -386,7 +419,9 @@
                     
                     const ndLabel = document.createElement('span');
                     ndLabel.className = 'dv-node-label';
-                    ndLabel.textContent = nodeObj.label + ':';
+                    // S42.3 (Refinamiento): Devolver el nombre de la entidad pero truncado a la primera palabra
+                    const fullLabel = nodeObj.label || '';
+                    ndLabel.textContent = fullLabel.split(' ')[0];
                     
                     const ndVal = document.createElement('span');
                     ndVal.className = 'dv-node-value';
@@ -429,14 +464,29 @@
             
             // Fix: Wrap grid to enable Y-axis scrolling in flex layout
             const gridScrollWrap = document.createElement('div');
+            gridScrollWrap.className = 'dv-grid-scroll-wrap';
             gridScrollWrap.style.flex = '1';
             gridScrollWrap.style.overflowY = 'auto';
             gridScrollWrap.style.overflowX = 'hidden';
-            gridScrollWrap.style.padding = '4px 4px 16px 4px'; // Prevent shadow clipping
+            
+            // S42.3 FAB Button (Local per render to avoid stale closures)
+            const fabTopBtn = document.createElement('button');
+            fabTopBtn.className = 'dv-fab-top';
+            fabTopBtn.innerHTML = '<ion-icon name="chevron-up"></ion-icon>';
+            fabTopBtn.addEventListener('click', () => {
+                gridScrollWrap.scrollTo({ top: 0, behavior: 'smooth' });
+            });
             
             // S42.2: Implementación de Scroll Infinito
             gridScrollWrap.addEventListener('scroll', (e) => {
                 const target = e.target;
+                
+                if (target.scrollTop > 300) {
+                    fabTopBtn.classList.add('active');
+                } else {
+                    fabTopBtn.classList.remove('active');
+                }
+                
                 if (typeof this.cfg.onGridScroll === 'function') {
                     this.cfg.onGridScroll(target.scrollTop);
                 }
@@ -456,12 +506,25 @@
             if (this.cfg.lastGridScroll !== undefined) {
                 setTimeout(() => { 
                     gridScrollWrap.scrollTop = this.cfg.lastGridScroll; 
+                    if (this.cfg.lastGridScroll > 300) fabTopBtn.classList.add('active');
                     this._scrollIsFetching = false; 
                 }, 0);
             }
             
             gridScrollWrap.appendChild(grid);
-            frag.appendChild(gridScrollWrap);
+            
+            // Wrapper temporal en el fragmento
+            const wrapperZone = document.createElement('div');
+            wrapperZone.style.display = 'flex';
+            wrapperZone.style.flexDirection = 'column';
+            wrapperZone.style.flex = '1';
+            wrapperZone.style.position = 'relative'; 
+            wrapperZone.style.minHeight = '0';
+            
+            wrapperZone.appendChild(fabTopBtn);
+            wrapperZone.appendChild(gridScrollWrap);
+            
+            frag.appendChild(wrapperZone);
             
             // Paginación física eliminada en favor del Lazy Load (S42.2)
             

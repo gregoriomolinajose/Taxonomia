@@ -16,6 +16,11 @@
   - Eliminar paginador físico y filtro de cantidad de registros para la vista en cuadrícula.
   - Implementar paginado infinito por scroll (lazy loading visual).
   - Sustituir el menú de tres puntos (kebab/ellipsis) en las tarjetas de la cuadrícula por un botón directo de eliminar (icono 'x').
+- [x] **S42.3**: Refinamiento Premium de UX en Dataview Cuadrícula:
+  - Ancho dinámico y alineación al grid.
+  - Back-to-top FAB dinámico.
+  - Layout compacto del Lexical ID.
+  - Títulos formateados de Nodos (truncados) y Footer iconográfico compacto.
 
 ### Done Criteria
 - [ ] Tiempo de guardado medido en DevTools muestra una reducción sustancial (e.g. desde 10s hasta <3s o lo mínimo posible).
