@@ -12,7 +12,7 @@
 
 ### Planned Stories
 - **S42.1**: Optimización de tiempos de guardado.
-- **S42.2**: Refactorización de UX en Dataview Cuadrícula:
+- [x] **S42.2**: Refactorización de UX en Dataview Cuadrícula:
   - Eliminar paginador físico y filtro de cantidad de registros para la vista en cuadrícula.
   - Implementar paginado infinito por scroll (lazy loading visual).
   - Sustituir el menú de tres puntos (kebab/ellipsis) en las tarjetas de la cuadrícula por un botón directo de eliminar (icono 'x').
