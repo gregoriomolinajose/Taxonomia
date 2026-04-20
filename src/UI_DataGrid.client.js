@@ -284,10 +284,8 @@
             const rows = this._getPageData();
             if (rows.length === 0) return this._renderEmpty();
 
-            const meta = (window.ENTITY_META && window.ENTITY_META[this.cfg.entityName]) || { titleField: 'nombre', idField: 'id', fkField: null };
-            const schemaMeta = window.APP_SCHEMAS && window.APP_SCHEMAS[this.cfg.entityName];
-            const MAX_ATTRS = (schemaMeta && schemaMeta.metadata && schemaMeta.metadata.maxListAttrs) || 5;
-
+            const meta = (window.ENTITY_META && window.ENTITY_META[this.cfg.entityName]) || { titleField: 'nombre', idField: 'id', fkField: null, iconName: 'cube', color: 'primary' };
+            
             const frag = document.createDocumentFragment();
             const grid = document.createElement('ion-grid');
             grid.className = 'dv-ionic-grid';
@@ -295,8 +293,9 @@
             
             rows.forEach(row => {
                 const pkField = window.Schema_Utils.getPrimaryKey(this.cfg.entityName);
-                const titleStr = row[meta.titleField] || row[pkField] || '—';
+                const titleStr = row[meta.titleField] || row[pkField] || '--';
                 const idStr = String(row[pkField] || '');
+                const lexIdStr = row['lexical_id'] || idStr;
                 
                 const colEl = document.createElement('ion-col');
                 colEl.setAttribute('size', '12');
@@ -306,31 +305,36 @@
                 colEl.className = 'dv-grid-col';
                 
                 const cardEl = document.createElement('ion-card');
-                cardEl.className = 'dv-ion-card';
+                cardEl.className = 'dv-ion-card dv-card-grid-modern';
                 
-                const headerEl = document.createElement('ion-card-header');
-                headerEl.className = 'dv-card-header-flex';
+                // 1. Top Bar
+                const topBar = document.createElement('div');
+                topBar.className = 'dv-card-top-bar';
                 
-                const headerTextWrap = document.createElement('div');
+                const badgeEl = document.createElement('ion-badge');
+                if (meta.color) { badgeEl.setAttribute('color', meta.color); }
+                badgeEl.className = 'dv-badge-circular';
                 
-                const subtitle = document.createElement('ion-card-subtitle');
-                subtitle.className = 'dv-code-link';
-                subtitle.textContent = idStr;
+                const baseIcon = meta.iconName ? meta.iconName.replace('-outline', '') : 'cube';
+                const iconBadge = document.createElement('ion-icon');
+                iconBadge.setAttribute('name', baseIcon);
+                badgeEl.appendChild(iconBadge);
+                topBar.appendChild(badgeEl);
                 
-                const title = document.createElement('ion-card-title');
-                title.className = 'dv-card-title-clamp';
-                title.title = titleStr;
-                title.textContent = titleStr;
+                const topActions = document.createElement('div');
+                topActions.className = 'dv-card-top-actions';
                 
-                headerTextWrap.appendChild(subtitle);
-                headerTextWrap.appendChild(title);
-                headerEl.appendChild(headerTextWrap);
+                const lexicalEl = document.createElement('span');
+                lexicalEl.className = 'dv-card-lexical-id';
+                lexicalEl.textContent = lexIdStr;
+                topActions.appendChild(lexicalEl);
                 
-                // S18.4 - Hiding Agresivo (Cards Grid)
                 if (!window.ABAC || window.ABAC.can('delete', this.cfg.entityName, idStr)) {
                     const btnDel = document.createElement('button');
-                    btnDel.className = 'dv-btn-icon dv-btn-danger-lite';
+                    btnDel.className = 'dv-btn-danger-lite';
                     btnDel.title = 'Eliminar';
+                    btnDel.style.padding = '4px 6px';
+                    btnDel.style.marginLeft = '4px';
                     btnDel.addEventListener('click', (e) => {
                         e.stopPropagation();
                         if (typeof this.cfg.onDelete === 'function') this.cfg.onDelete(idStr);
@@ -338,55 +342,71 @@
                     const iconDel = document.createElement('ion-icon');
                     iconDel.setAttribute('name', 'trash');
                     btnDel.appendChild(iconDel);
-                    headerEl.appendChild(btnDel);
+                    topActions.appendChild(btnDel);
                 }
-                cardEl.appendChild(headerEl);
                 
-                const contentEl = document.createElement('ion-card-content');
-                const attrsWrap = document.createElement('div');
-                attrsWrap.className = 'dv-card-item-attrs';
-                // S24.8: Dynamic Mapping for Cards - Solo itera las expuestas como 'visible: true' por el Popover
-                const visibleKeys = this.cfg.columns.filter(c => c.visible).map(c => c.key);
-                
-                const attrKeys = visibleKeys.filter(k => {
-                    return k !== meta.titleField && k !== pkField &&
-                           !(meta.fkField && k === meta.fkField.key);
-                }).slice(0, MAX_ATTRS);
-                
-                attrKeys.forEach(k => {
-                    const attrItem = document.createElement('div');
-                    attrItem.className = 'dv-card-item-attr';
-                    
-                    const attrKey = document.createElement('span');
-                    attrKey.className = 'dv-card-item-attr-key';
-                    attrKey.textContent = this._labelFromKey(k);
-                    
-                    const attrVal = document.createElement('span');
-                    attrVal.className = 'dv-card-item-attr-val';
-                    
-                    let rawVal = row[k];
-                    // --- JIT Relation Resolver (Extracted) ---
-                    rawVal = this._resolveLogicalValue(k, rawVal, idStr);
+                topBar.appendChild(topActions);
+                cardEl.appendChild(topBar);
 
-                    attrVal.appendChild(this._formatValueNode(k, rawVal, this.cfg.columns.find(c => c.key === k)));
+                // 2. Hero Body
+                const heroWrap = document.createElement('div');
+                heroWrap.className = 'dv-card-hero';
+                
+                const h3Title = document.createElement('h3');
+                h3Title.className = 'dv-card-hero-title';
+                h3Title.textContent = titleStr;
+                h3Title.title = titleStr;
+                heroWrap.appendChild(h3Title);
+                
+                cardEl.appendChild(heroWrap);
+
+                // 3. Footer (Graphs)
+                let graphData = this._extractGraphMetadata(row, this.cfg.entityName);
+                
+                if (graphData.singleNodes.length > 0 || graphData.multiNodes.length > 0) {
+                    const sep = document.createElement('hr');
+                    sep.className = 'dv-card-graph-sep';
+                    cardEl.appendChild(sep);
+                }
+
+                const graphWrap = document.createElement('div');
+                graphWrap.className = 'dv-card-graph-nodes';
+                
+                const buildNode = (nodeObj) => {
+                    const rowNode = document.createElement('div');
+                    rowNode.className = 'dv-node-pill';
+                    if (nodeObj.count === 0) rowNode.classList.add('dv-node-empty');
                     
-                    attrItem.appendChild(attrKey);
-                    attrItem.appendChild(attrVal);
-                    attrsWrap.appendChild(attrItem);
-                });
-                
-                contentEl.appendChild(attrsWrap);
-                
-                if (meta.fkField && row[meta.fkField.key]) {
-                    const badge = document.createElement('ion-badge');
-                    badge.className = 'dv-fk-badge';
-                    badge.textContent = `🔗 ${meta.fkField.label}: ${row[meta.fkField.key]}`;
-                    contentEl.appendChild(badge);
+                    const ndIcon = document.createElement('ion-icon');
+                    const oIcon = nodeObj.icon.includes('-outline') ? nodeObj.icon : nodeObj.icon + '-outline';
+                    ndIcon.setAttribute('name', oIcon);
+                    
+                    const ndTextWrap = document.createElement('span');
+                    ndTextWrap.className = 'dv-node-text-wrap';
+                    
+                    const ndLabel = document.createElement('span');
+                    ndLabel.className = 'dv-node-label';
+                    ndLabel.textContent = nodeObj.label + ':';
+                    
+                    const ndVal = document.createElement('span');
+                    ndVal.className = 'dv-node-value';
+                    ndVal.textContent = String(nodeObj.value !== undefined ? nodeObj.value : nodeObj.count);
+                    
+                    ndTextWrap.appendChild(ndLabel);
+                    ndTextWrap.appendChild(ndVal);
+                    
+                    rowNode.appendChild(ndIcon);
+                    rowNode.appendChild(ndTextWrap);
+                    return rowNode;
+                };
+
+                graphData.singleNodes.forEach(node => graphWrap.appendChild(buildNode(node)));
+                graphData.multiNodes.forEach(node => graphWrap.appendChild(buildNode(node)));
+
+                if (graphWrap.childNodes.length > 0) {
+                    cardEl.appendChild(graphWrap);
                 }
                 
-                cardEl.appendChild(contentEl);
-                
-                // Bug fix: Card entire body selection logic (S25.3)
                 cardEl.addEventListener('click', (e) => {
                     if (e.target.closest('button')) return;
                     if (idStr) {
@@ -406,12 +426,44 @@
             });
             
             grid.appendChild(rowEl);
-            frag.appendChild(grid);
             
-            const footer = document.createElement('div');
-            footer.className = 'dv-card-footer';
-            footer.appendChild(this._renderPaginationNodes());
-            frag.appendChild(footer);
+            // Fix: Wrap grid to enable Y-axis scrolling in flex layout
+            const gridScrollWrap = document.createElement('div');
+            gridScrollWrap.style.flex = '1';
+            gridScrollWrap.style.overflowY = 'auto';
+            gridScrollWrap.style.overflowX = 'hidden';
+            gridScrollWrap.style.padding = '4px 4px 16px 4px'; // Prevent shadow clipping
+            
+            // S42.2: Implementación de Scroll Infinito
+            gridScrollWrap.addEventListener('scroll', (e) => {
+                const target = e.target;
+                if (typeof this.cfg.onGridScroll === 'function') {
+                    this.cfg.onGridScroll(target.scrollTop);
+                }
+                
+                if (target.scrollHeight - target.scrollTop - target.clientHeight < 150) {
+                    if (this._scrollIsFetching) return;
+                    if (this.cfg.filteredData && this.cfg.pageSize < this.cfg.filteredData.length) {
+                        this._scrollIsFetching = true; // Lock recursión
+                        if (typeof this.cfg.onPageSize === 'function') {
+                            this.cfg.onPageSize(this.cfg.pageSize + 25);
+                        }
+                    }
+                }
+            }, { passive: true });
+
+            // Restore scroll momentum
+            if (this.cfg.lastGridScroll !== undefined) {
+                setTimeout(() => { 
+                    gridScrollWrap.scrollTop = this.cfg.lastGridScroll; 
+                    this._scrollIsFetching = false; 
+                }, 0);
+            }
+            
+            gridScrollWrap.appendChild(grid);
+            frag.appendChild(gridScrollWrap);
+            
+            // Paginación física eliminada en favor del Lazy Load (S42.2)
             
             return frag;
         },
@@ -503,7 +555,7 @@
             if (this._edgeMemo) return this._edgeMemo;
             
             const allEdges = (window.DataStore && window.DataStore.get('Sys_Graph_Edges')) || [];
-            const memo = { padreToHijo: {}, hijoToPadre: {} };
+            const memo = { padreToHijo: {}, hijoToPadre: {}, padreToMultiHijos: {} };
             
             for (let i = 0; i < allEdges.length; i++) {
                 const e = allEdges[i];
@@ -514,10 +566,68 @@
                     
                     if (!memo.padreToHijo[pKey]) memo.padreToHijo[pKey] = e.id_nodo_hijo;
                     if (!memo.hijoToPadre[hKey]) memo.hijoToPadre[hKey] = e.id_nodo_padre;
+                    
+                    if (!memo.padreToMultiHijos[pKey]) memo.padreToMultiHijos[pKey] = [];
+                    memo.padreToMultiHijos[pKey].push(e.id_nodo_hijo);
                 }
             }
             this._edgeMemo = memo;
             return memo;
+        },
+
+        _extractGraphMetadata: function(row, entityName) {
+            const schema = window.APP_SCHEMAS && window.APP_SCHEMAS[entityName];
+            if (!schema || !schema.fields) return { singleNodes: [], multiNodes: [] };
+
+            const metaNodes = { singleNodes: [], multiNodes: [] };
+            const edgeMemo = this._buildEdgeMemo();
+            const pkField = window.Schema_Utils ? window.Schema_Utils.getPrimaryKey(entityName) : 'id_registro';
+            const rowId = row[pkField];
+            
+            schema.fields.forEach(field => {
+                if (!field.isTemporalGraph) return;
+                
+                const edgeName = (field.graphEdgeType || field.name).toUpperCase();
+                const targetSchema = window.APP_SCHEMAS[field.targetEntity];
+                const icon = targetSchema && targetSchema.metadata ? targetSchema.metadata.iconName : 'git-network-outline';
+                const entityLabel = field.label || field.name;
+
+                // Attempt to extract joined label preemptively from row[field.name]
+                let joinedLabel = null;
+                const rowVal = row[field.name];
+                if (rowVal) {
+                    if (Array.isArray(rowVal) && rowVal.length > 0) {
+                        joinedLabel = rowVal[0].nombre || rowVal[0].title || rowVal[0].label || rowVal[0].lexical_id || null;
+                    } else if (typeof rowVal === 'object' && rowVal !== null) {
+                        joinedLabel = rowVal.nombre || rowVal.title || rowVal.label || rowVal.lexical_id || null;
+                    } else if (typeof rowVal === 'string' && !rowVal.startsWith('id_') && !rowVal.match(/^[0-9A-F]{8}-[0-9A-F]{4}/i)) {
+                        joinedLabel = rowVal;
+                    }
+                }
+
+                if (field.relationType === 'padre') {
+                    const hKey = String(rowId) + '_' + edgeName;
+                    let parentId = edgeMemo.hijoToPadre[hKey];
+                    if (parentId || joinedLabel) {
+                        const trgLabelKey = field.labelField || (window.ENTITY_META && window.ENTITY_META[field.targetEntity] && window.ENTITY_META[field.targetEntity].titleField) || 'nombre';
+                        const targetMemo = this._buildTargetMemo(field.targetEntity, trgLabelKey);
+                        
+                        let parentName = joinedLabel;
+                        if (!parentName) {
+                            if (parentId && targetMemo[String(parentId)]) parentName = targetMemo[String(parentId)];
+                            else if (rowVal && typeof rowVal === 'string' && targetMemo[rowVal]) parentName = targetMemo[rowVal];
+                            else parentName = parentId || rowVal;
+                        }
+                        
+                        metaNodes.singleNodes.push({ label: entityLabel, value: parentName, icon: icon });
+                    }
+                } else if (field.relationType === 'hijo' && field.topologyCardinality === '1:N') {
+                    const pKey = String(rowId) + '_' + edgeName;
+                    const childrenArray = edgeMemo.padreToMultiHijos[pKey] || [];
+                    metaNodes.multiNodes.push({ label: entityLabel, count: childrenArray.length, icon: icon });
+                }
+            });
+            return metaNodes;
         },
 
         _buildTargetMemo: function(entityName, labelKey) {
@@ -527,12 +637,15 @@
             
             const rows = (window.DataStore && window.DataStore.get(entityName)) || [];
             const memo = {};
+            const pkField = window.Schema_Utils ? window.Schema_Utils.getPrimaryKey(entityName) : 'id_registro';
+            
             for(let i=0; i<rows.length; i++) {
                 const r = rows[i];
                 const vl = r[labelKey];
                 if (vl) {
                     if (r.id_registro) memo[String(r.id_registro)] = vl;
                     if (r.lexical_id) memo[String(r.lexical_id)] = vl;
+                    if (r[pkField]) memo[String(r[pkField])] = vl;
                 }
             }
             this._targetMemo[memoKey] = memo;

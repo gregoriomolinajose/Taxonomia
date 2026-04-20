@@ -255,6 +255,7 @@
             }
             _state.filtered = window.DataEngine.applyFilter(baseData, query);
             _state.page = 1;
+            _state.lastGridScroll = 0; // Reset scroll momentum on search
             _rerenderData(); // Solo datos — el toolbar/search box NO se toca
         }
 
@@ -383,7 +384,9 @@
                     onRowOrderChange: _onRowOrderChange,
                     onPageSize: _onPageSize,
                     onPage: _onPage,
-                    onEdit: (id) => { if (typeof window !== 'undefined' && window.openEditForm) window.openEditForm(id); }
+                    onEdit: (id) => { if (typeof window !== 'undefined' && window.openEditForm) window.openEditForm(id); },
+                    lastGridScroll: _state.lastGridScroll,
+                    onGridScroll: (top) => { _state.lastGridScroll = top; }
                 }));
             }
         }
@@ -405,15 +408,16 @@
            Render principal (entrada pública)
         ───────────────────────────────────────────── */
         function render(entityName, containerId, payload) {
-            // Mobile-first: grid por defecto en móvil (<768px), tabla en desktop
-            const defaultView = (window.innerWidth < 768) ? 'grid' : 'table';
+            // S42.2: Rediseño orienta a que cuadrícula (Card) sea el default sin importar resolución
+            const defaultView = 'grid';
 
             _state = {
                 entityName, containerId,
                 data: [], filtered: [], selectedRows: [],
                 page: 1, pageSize: 25,
                 sortCol: '', sortDir: 'asc',
-                view: defaultView, columns: [], payload: payload || null
+                view: defaultView, columns: [], payload: payload || null,
+                lastGridScroll: 0 // H10: Scroll momentum orchestration
             };
 
             // Limpiar ion-popover de la entidad anterior (si existe)
