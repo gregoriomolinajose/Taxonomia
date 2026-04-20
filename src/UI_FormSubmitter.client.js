@@ -34,14 +34,8 @@ window.UI_FormSubmitter = class UI_FormSubmitter {
             this.submitBtn.appendChild(window.DOM.create('ion-spinner', { name: 'crescent' }));
             this.submitBtn.appendChild(document.createTextNode(' \u00a0 Guardando...'));
 
-            // --- UI Blocking (Zero-Latency Rule) ---
-            const loading = window.DOM.create('ion-loading', {
-                backdropDismiss: false,
-                message: 'Guardando registro...',
-                spinner: 'crescent'
-            });
-            document.body.appendChild(loading);
-            await window.PresentSafe(loading);
+            // --- Removed UI Blocking (S42.7: Optimistic UI) ---
+            // Sincronía background habilitada.
 
             // LECTURA JIT (Evita Detached Nodes)
             const activeForm = this.modal || document.getElementById('app-container');
@@ -50,7 +44,7 @@ window.UI_FormSubmitter = class UI_FormSubmitter {
             
             freshInputs.forEach(input => {
                 const name = input.getAttribute('name');
-                if (name && !input.closest('[data-dynamic-list]')) {
+                if (name && !input.closest('[data-dynamic-list]') && !name.toLowerCase().startsWith('ion-')) {
                     let val = input.value;
                     const schemaField = this.fields ? this.fields.find(f => f.name === name) : null;
                     
@@ -114,7 +108,6 @@ window.UI_FormSubmitter = class UI_FormSubmitter {
                 }
                 
                 if (collisionFound) {
-                    if (loading && typeof loading.dismiss === 'function') await loading.dismiss();
                     this._revertButtonState();
                     return; // Abort Submit Flow
                 }
@@ -126,7 +119,6 @@ window.UI_FormSubmitter = class UI_FormSubmitter {
             delete payload.updated_at;
             delete payload.updated_by;
 
-            // Bugfix (QA Review & S30.6): Usamos closure pura per-modal guardada en this._internalRetryId
             const action = this._internalRetryId ? 'update' : 'create';
             
             // S30.3 QA Review: Circular Reference & DOM-Leakage Guard
@@ -142,70 +134,169 @@ window.UI_FormSubmitter = class UI_FormSubmitter {
             };
             const safePayload = JSON.parse(JSON.stringify(payload, getCircularReplacer()));
 
+            // ==========================================
+            // S42.7: OPTIMISTIC DATA CLONING & JIT PATCH
+            // ==========================================
+            const liveStore = (window.DataStore && this.entityName) ? window.DataStore.get(this.entityName) : null;
+            const stateBackup = liveStore ? JSON.parse(JSON.stringify(liveStore)) : [];
+            const childBackups = {};
+            
+            const pkField = window.Schema_Utils ? window.Schema_Utils.getPrimaryKey(this.entityName) : 'id_registro';
+            let optimisticPK = payload[pkField] || this._internalRetryId;
+            let isTempPK = false;
+            
+            if (action === 'create' && !optimisticPK) {
+                 optimisticPK = 'TMP_LOCAL_' + Math.random().toString(36).substring(2, 10).toUpperCase();
+                 payload[pkField] = optimisticPK;
+                 isTempPK = true;
+            }
+            
+            // Extrapolar submisiones de subgrids para el repintado predictivo.
+            const optimisticChildren = {};
+            const _sessionId = optimisticPK; // Session tagging para aislar asincronía concurrente
+            
+            for (const key of Object.keys(payload)) {
+                 if (Array.isArray(payload[key]) && window.DataStore && window.DataStore.get(key)) {
+                      optimisticChildren[key] = payload[key].map(child => {
+                          const childClone = { ...child, _optimistic_session: _sessionId };
+                          if (isTempPK) { // Ligar Edges nuevos con el Padre Falso de ser requerido
+                              const childParentRef = 'id_' + this.entityName.toLowerCase();
+                              childClone[childParentRef] = optimisticPK;
+                          }
+                          // Asegurar un PK falso temporal para que DataGrid no explote
+                          const childPk = window.Schema_Utils.getPrimaryKey(key);
+                          if (!childClone[childPk]) childClone[childPk] = 'TMP_EDGE_' + Math.random().toString(36).substring(2, 10).toUpperCase();
+                          return childClone;
+                      });
+                      childBackups[key] = JSON.parse(JSON.stringify(window.DataStore.get(key)));
+                 }
+            }
+            
+            const fakeResponse = { status: 'success', action: action, pk: pkField, pkValue: optimisticPK, data: { orchestratedChildren: optimisticChildren } };
+            
+            // FASE 1: INYECCIÓN CERO-LATENCIA VISUAL Y DESTRUCCIÓN UI
             try {
-                // S30.12 - Timeboxed Network Wrapper (20s Threshold) UX Resilience
-                const timeoutMs = 20000;
-                const _timeoutSafe = new Promise((_, reject) => 
-                    setTimeout(() => reject(new Error('TIMEOUT_EXCEEDED')), timeoutMs)
-                );
-                
-                const rawResponse = await Promise.race([
-                    this.apiService.call('API_Universal_Router', action, this.entityName, safePayload),
-                    _timeoutSafe
-                ]);
-                
+                 if (window.DataStore && typeof window.DataStore.reconcileOptimisticPatch === 'function') {
+                     window.DataStore.reconcileOptimisticPatch(this.entityName, fakeResponse, payload);
+                 }
+                 
+                 let isInlineRendered = false;
+                 if (this.modal) {
+                     isInlineRendered = true;
+                     this.modal.dispatchEvent(new CustomEvent('FormEngine::InlinePersisted', { detail: { response: fakeResponse, payload: safePayload } }));
+                 }
+                 this._showToast('Guardando en segundo plano...', 'medium');
+                 this._performSuccessCleanup(fakeResponse, isInlineRendered); 
+            } catch(opErr) {
+                 console.error('Optimistic Patch Fracasó, abortando red:', opErr);
+                 return this._revertButtonState();
+            }
+
+            // FASE 2: THE BACKGROUND FIRE & FORGET (Sin Bloqueo Await)
+            const timeoutMs = 25000; // Incrementado a 25s por el colchón background
+            const _timeoutSafe = new Promise((_, reject) => setTimeout(() => reject(new Error('TIMEOUT_EXCEEDED')), timeoutMs));
+            
+            Promise.race([
+                this.apiService.call('API_Universal_Router', action, this.entityName, safePayload),
+                _timeoutSafe
+            ]).then(rawResponse => {
                 const response = typeof rawResponse === 'string' ? JSON.parse(rawResponse) : rawResponse;
                 
                 if (response && response.status === 'success') {
-                    this._patchFrontendCache(this.entityName, response, payload);
-                    const itemName = (response.data && response.data.Entity) ? response.data.Entity : this.entityName;
-                    this._showToast(`¡${itemName} guardado con éxito!`, 'success');
-                    if (activeForm) {
-                        // Sincronización de DOM con Backend: Actualizar versión y previniendo Colisiones (OCC) en guardados múltiples
-                        try {
-                            let freshVersion = payload.version || payload._version || 1;
-                            if (response.data && response.data.adapter_results && response.data.adapter_results.sheets) {
-                                if (response.data.adapter_results.sheets.version) freshVersion = response.data.adapter_results.sheets.version;
-                            }
-                            const vInputs = activeForm.querySelectorAll('input[name="version"], input[name="_version"]');
-                            vInputs.forEach(i => i.value = freshVersion);
-                        } catch(e) { }
+                    // 1. Purga Quirúrgica del Caché Optimista (Previene Ghost Records)
+                    if (window.DataStore) {
+                        for (const key of Object.keys(optimisticChildren)) {
+                             let liveCache = window.DataStore.get(key) || [];
+                             liveCache = liveCache.filter(row => row._optimistic_session !== _sessionId);
+                             window.DataStore.set(key, liveCache);
+                        }
                     }
-                    
-                    // Disparo de Evento Nativo de Persistencia Inline (H6/H2 Simplification)
-                    let isInlineRendered = false;
-                    if (this.modal) {
-                        isInlineRendered = true;
-                        this.modal.dispatchEvent(new CustomEvent('FormEngine::InlinePersisted', {
-                            detail: { response: response, payload: safePayload }
-                        }));
+
+                    // 2. Inyección de la Verdad Absoluta (Backend Hydration)
+                    if (window.DataStore && typeof window.DataStore.reconcileOptimisticPatch === 'function') {
+                        window.DataStore.reconcileOptimisticPatch(this.entityName, response, payload);
                     }
-                    
-                    this._performSuccessCleanup(response, isInlineRendered);
+
+                    // 3. Reconciliación: Intercambio de Llaves y Versiones
+                    if (isTempPK && response.pkValue && String(response.pkValue) !== String(optimisticPK)) {
+                        this._reconcileTemporaryId(this.entityName, optimisticPK, response.pkValue, response.lexical_id);
+                    }
+                    if (response.data && response.data.adapter_results && response.data.adapter_results.sheets) {
+                        const newVer = response.data.adapter_results.sheets.version;
+                        if (newVer) this._reconcileVersion(this.entityName, response.pkValue || optimisticPK, newVer);
+                    }
+                    if (response.action === 'updated') {
+                        this._showToast(`Registro actualizado silenciosamente.`, 'success');
+                    } else {
+                        const itemName = (response.data && response.data.Entity) ? response.data.Entity : this.entityName;
+                        this._showToast(`¡${itemName} guardado en nube!`, 'success');
+                    }
                 } else {
                     if (response && response.errorType === 'CONCURRENCY') {
-                        console.error("[OCC_FATAL_TRACE] Backend telemetry:", response.message);
-                        this._showToast('⚠️ Colisión: Los datos fueron modificados por otro usuario mientras los editabas. Por favor extrae la información fresca.', 'danger');
+                        this._handleOptimisticRollback(stateBackup, childBackups, 'Choque de concurrencia OCC en Base de datos.');
                     } else {
-                        this._showToast(`Error: ${response ? response.message : 'Error desconocido'}`, 'danger');
+                        this._handleOptimisticRollback(stateBackup, childBackups, response ? response.message : 'Error desconocido de Adaptador');
                     }
-                    this._revertButtonState();
                 }
-            } catch (err) {
-                this._revertButtonState();
+            }).catch(err => {
                 if (err.message === 'TIMEOUT_EXCEEDED') {
-                    this._showToast('⏳ Saturación de Red Temporal: Evitamos el bloqueo visual. Por favor intenta guardar nuevamente.', 'warning');
+                    this._handleOptimisticRollback(stateBackup, childBackups, 'Red severamente saturada (>25s) u Off-line.');
                 } else {
-                    this._showToast(`Error de Servidor: ${err.message}`, 'danger');
+                    this._handleOptimisticRollback(stateBackup, childBackups, 'Falla de conexión: ' + err.message);
                 }
-            } finally {
-                // S30.12 - Garantía Blindaje de UX Cleanup
-                if (loading && typeof loading.dismiss === 'function') {
-                    await loading.dismiss().catch(e => console.warn('[UI_FormSubmitter] Tolerancia mitigada de Backdrop Fantasma:', e));
-                }
-            }
+            });
+            // Fin _attachSubmitListener
         });
     }
+
+    // --- SUBRUTINAS DE RECONCILIACIÓN OPTIMISTA (S42.7) ---
+    _reconcileTemporaryId(entityName, tmpId, realId, lexicalId) {
+        if (!window.DataStore) return;
+        const liveData = window.DataStore.get(entityName);
+        if (!liveData) return;
+        const pkField = window.Schema_Utils ? window.Schema_Utils.getPrimaryKey(entityName) : 'id_registro';
+        let mutated = false;
+        liveData.forEach(row => {
+            if (String(row[pkField]) === String(tmpId)) {
+                row[pkField] = realId;
+                if (lexicalId) row.lexical_id = lexicalId;
+                mutated = true;
+            }
+        });
+        if (mutated) {
+            window.DataStore.set(entityName, liveData);
+            if (window.AppEventBus) window.AppEventBus.publish('DATA::UPDATED', { entityKey: entityName });
+        }
+    }
+
+    _reconcileVersion(entityName, entityId, freshVersion) {
+        if (!window.DataStore) return;
+        const liveData = window.DataStore.get(entityName);
+        if (!liveData) return;
+        const pkField = window.Schema_Utils ? window.Schema_Utils.getPrimaryKey(entityName) : 'id_registro';
+        let mutated = false;
+        liveData.forEach(row => {
+            if (String(row[pkField]) === String(entityId)) {
+                row._version = freshVersion;
+                row.version = freshVersion;
+                mutated = true;
+            }
+        });
+        if (mutated) window.DataStore.set(entityName, liveData);
+    }
+
+    _handleOptimisticRollback(stateBackup, childBackups, issueDesc) {
+        if (window.DataStore) {
+            window.DataStore.set(this.entityName, stateBackup);
+            for (const key of Object.keys(childBackups || {})) {
+                window.DataStore.set(key, childBackups[key]);
+            }
+            if (window.AppEventBus) window.AppEventBus.publish('DATA::UPDATED', { entityKey: this.entityName });
+        }
+        console.error("OPTIMISTIC_ROLLBACK", issueDesc);
+        this._showToast(`⚠️ Rollback Automático: ${issueDesc}. Tus cambios temporales visuales fueron desechados.`, 'danger');
+    }
+
 
     _revertButtonState() {
         this.isSaving = false;
@@ -223,28 +314,8 @@ window.UI_FormSubmitter = class UI_FormSubmitter {
 
         if (window.DataStore) {
             // [S29.7] window.DataStore.clearNested() extirpado. Los Subgrids ahora son stateless.
-            // Re-hidratación Asíncrona del Grafo O(1): Evitamos destruir el caché base y en su lugar
-            // pedimos al backend los nuevos edges silenciosamente para no bloquear la Interfaz UI.
-            if (this.apiService && typeof this.apiService.call === 'function') {
-                this.apiService.call('getInitialPayload', 'Sys_Graph_Edges').then(payload => {
-                    const res = typeof payload === 'string' ? JSON.parse(payload) : payload;
-                    if (res && res.data && res.data.rows && res.data.headers) {
-                        const headers = res.data.headers;
-                        const edgesObj = res.data.rows.map(tuple => {
-                            const obj = {};
-                            headers.forEach((h, i) => obj[h] = tuple[i]);
-                            return obj;
-                        });
-                        window.DataStore.set('Sys_Graph_Edges', edgesObj);
-                        window.DataStore.set('DB_Sys_Graph_Edges', edgesObj);
-                        console.log('[Cache] Sys_Graph_Edges re-hidratado silenciosamente tras guardado.');
-                        
-                        if (window.AppEventBus) {
-                            window.AppEventBus.publish('CACHE::GRAPH_HYDRATED', { entityKey: this.entityName });
-                        }
-                    }
-                }).catch(err => console.warn('[Cache] Falla al re-hidratar aristas en 2do plano:', err));
-            }
+            // S42.1 (Fast-I/O Optimization): Extirpada la re-hidratación por red de Sys_Graph_Edges.
+            // La entidad ya se hidrata atómicamente a través de window.DataStore.reconcileOptimisticPatch usando orchestratedChildren.
             
             // Invalida el caché intermedio de Peticiones Asincronas de Formularios
             if (window.FormEngine_Resolvers && typeof window.FormEngine_Resolvers.invalidateCache === 'function') {
@@ -276,87 +347,5 @@ window.UI_FormSubmitter = class UI_FormSubmitter {
         await window.PresentSafe(toast);
     }
 
-    _patchFrontendCache(entityName, response, payload) {
-        if (!window.DataStore) return;
 
-        // 1. Root Entity Injection
-        if (window.DataStore.get(entityName) && Array.isArray(window.DataStore.get(entityName))) {
-            let pkField = response.pk;
-            let pkValue = response.pkValue;
-
-            if (!pkField || !pkValue) {
-                pkField = window.Schema_Utils.getPrimaryKey(entityName);
-                pkValue = pkField ? payload[pkField] : null;
-            }
-
-            if (pkField && pkValue) {
-                let freshVersion = payload._version || 1;
-                let freshLexical = payload.lexical_id;
-                try {
-                    if (response.lexical_id) freshLexical = response.lexical_id;
-                    if (response.data && response.data.adapter_results && response.data.adapter_results.sheets) {
-                        if (response.data.adapter_results.sheets.version) freshVersion = response.data.adapter_results.sheets.version;
-                        if (response.data.adapter_results.sheets.lexical_id) freshLexical = response.data.adapter_results.sheets.lexical_id;
-                    }
-                } catch(e) {}
-                
-                const cleanRecord = { ...payload, [pkField]: pkValue, _version: freshVersion, version: freshVersion };
-                if (freshLexical) cleanRecord.lexical_id = freshLexical;
-                const liveData = window.DataStore.get(entityName);
-                const existingIdx = liveData.findIndex(r => window.UI_FormUtils.normalizeId(r[pkField]) === window.UI_FormUtils.normalizeId(pkValue));
-
-                let finalRecord = cleanRecord;
-                if (existingIdx !== -1) {
-                    finalRecord = Object.assign({}, liveData[existingIdx], cleanRecord);
-                }
-
-                window.DataStore.set(entityName, existingIdx !== -1
-                    ? [...liveData.slice(0, existingIdx), finalRecord, ...liveData.slice(existingIdx + 1)]
-                    : [finalRecord, ...liveData]);
-                
-                console.log(`[Cache] ${existingIdx !== -1 ? 'UPDATE' : 'INSERT'} para: ${entityName} optimizado a versión ${freshVersion}.`);
-            }
-        }
-
-        // 2. Inyección Dinámica para Entidades Anidadas (Subgrids 0.0s latency)
-        if (response.data && response.data.orchestratedChildren) {
-            const orch = response.data.orchestratedChildren;
-            Object.keys(orch).forEach(childEntity => {
-                if (window.DataStore && Array.isArray(window.DataStore.get(childEntity))) {
-                    const freshChildren = orch[childEntity] || [];
-                    const childPkField = window.Schema_Utils.getPrimaryKey(childEntity) || ('id_' + childEntity.toLowerCase().replace(/s$/, '').replace(/es$/, ''));
-                    
-                    let currentCache = [...window.DataStore.get(childEntity)];
-                    freshChildren.forEach(newChild => {
-                        const cid = newChild[childPkField] || newChild['id_' + childEntity.toLowerCase()];
-                        if (!cid) {
-                            console.warn(`[UI_FormSubmitter] Ignorando hijo sin PK para ${childEntity}:`, newChild);
-                            return; // Failsafe against Index 0 corruption
-                        }
-                        const idx = currentCache.findIndex(c => (c[childPkField] === cid) || (c['id_' + childEntity.toLowerCase()] === cid));
-                        if (idx !== -1) {
-                            currentCache = [...currentCache.slice(0, idx), newChild, ...currentCache.slice(idx + 1)];
-                        } else {
-                            currentCache = [newChild, ...currentCache];
-                        }
-                    });
-                    
-                    window.DataStore.set(childEntity, currentCache);
-                    
-                    if (window.AppEventBus) {
-                        if (childEntity === 'Sys_Graph_Edges') {
-                            window.AppEventBus.publish('CACHE::GRAPH_HYDRATED', { source: 'FormSubmitter', count: freshChildren.length });
-                        } else {
-                            window.AppEventBus.publish('DATA::UPDATED', { entityKey: childEntity });
-                        }
-                    }
-                }
-            });
-        }
-        
-        // Notificar globalmente mutación de entidad (Ej. DataGrid Re-render)
-        if (window.AppEventBus) {
-            window.AppEventBus.publish('DATA::UPDATED', { entityKey: entityName });
-        }
-    }
 };

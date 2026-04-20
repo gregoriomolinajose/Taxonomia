@@ -4,7 +4,7 @@
     "rootDir": "C:/Users/grego/Antigravity/Taxonomia Project/__tests__/e2e",
     "forbidOnly": false,
     "fullyParallel": false,
-    "globalSetup": null,
+    "globalSetup": "C:\\Users\\grego\\Antigravity\\Taxonomia Project\\__tests__\\e2e\\global-setup.js",
     "globalTeardown": null,
     "globalTimeout": 0,
     "grep": {},
@@ -59,25 +59,25 @@
   },
   "suites": [
     {
-      "title": "ui-resilience.spec.js",
-      "file": "ui-resilience.spec.js",
+      "title": "css-purity.spec.js",
+      "file": "css-purity.spec.js",
       "column": 0,
       "line": 0,
       "specs": [],
       "suites": [
         {
-          "title": "E2E UI Resilience & Interaction Stability",
-          "file": "ui-resilience.spec.js",
-          "line": 8,
+          "title": "CSS Purity & Design System Coverage",
+          "file": "css-purity.spec.js",
+          "line": 3,
           "column": 6,
           "specs": [
             {
-              "title": "Validar Resiliencia en FormEngine_UI (Drawers Principales y Satélites) sin generar ReferenceExceptions",
-              "ok": true,
+              "title": "El DOM dinámico de la app compilada rechaza atributos in-line fijos de color o fondos",
+              "ok": false,
               "tags": [],
               "tests": [
                 {
-                  "timeout": 180000,
+                  "timeout": 60000,
                   "annotations": [],
                   "expectedStatus": "passed",
                   "projectId": "chromium",
@@ -86,40 +86,51 @@
                     {
                       "workerIndex": 0,
                       "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 6362,
-                      "errors": [],
-                      "stdout": [
+                      "status": "timedOut",
+                      "duration": 60202,
+                      "error": {
+                        "message": "\u001b[31mTest timeout of 60000ms exceeded.\u001b[39m",
+                        "stack": "\u001b[31mTest timeout of 60000ms exceeded.\u001b[39m"
+                      },
+                      "errors": [
                         {
-                          "text": "[E2E] Abriendo Formulario Entidad...\n"
+                          "message": "\u001b[31mTest timeout of 60000ms exceeded.\u001b[39m"
                         },
                         {
-                          "text": "[E2E] Tecleando título principal...\n"
-                        },
-                        {
-                          "text": "[E2E] Explorando Searchable Proxy...\n"
-                        },
-                        {
-                          "text": "[E2E] Explorando SearchableMulti Modal...\n"
-                        },
-                        {
-                          "text": "✅ Monkey Tester completado. Sin rastro de Ghost Listeners ni Excepciones Fatales.\n"
+                          "location": {
+                            "file": "C:\\Users\\grego\\Antigravity\\Taxonomia Project\\__tests__\\e2e\\css-purity.spec.js",
+                            "column": 47,
+                            "line": 15
+                          },
+                          "message": "Error: locator.waitFor: Test timeout of 60000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('iframe').first().contentFrame().locator('#app-container')\u001b[22m\n\u001b[2m    - waiting for\" https://accounts.google.co.ve/accounts/SetSID?ssdc=1&sidt=ALWU2ctqK9GYGnC1lWE4kD4AlSHvaX3wUAt%2BCkKLfxsHRCu%2BUFsZIX2iSqSSY1Jg%2BD3dzFbhynO8scIXNfylUbItMbv7kIXqH/7Q85BnI%2B98vRqCkbUTdqnq0L564800ubFH0…\" navigation to finish...\u001b[22m\n\u001b[2m    - navigated to \"https://script.google.com/macros/s/AKfycbwqj4uQA67maFDe1vsF-wvLH6pGs5-1j7U83YD-R2yY/dev?authuser=0\"\u001b[22m\n\n\n  13 |         // En adición estático a Stylelint (npm run lint:css), validamos que JS no ensucie el render.\n  14 |         const frame = page.frameLocator('iframe').first();\n> 15 |         await frame.locator('#app-container').waitFor({ state: 'attached' });\n     |                                               ^\n  16 |\n  17 |         const violations = await frame.evaluate(() => {\n  18 |             const forbiddenColors = /color\\s*:\\s*(#|rgb)/i;\n    at C:\\Users\\grego\\Antigravity\\Taxonomia Project\\__tests__\\e2e\\css-purity.spec.js:15:47"
                         }
                       ],
+                      "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-04-18T08:33:39.965Z",
+                      "startTime": "2026-04-18T23:59:14.898Z",
                       "annotations": [],
-                      "attachments": []
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "C:\\Users\\grego\\Antigravity\\Taxonomia Project\\test-results\\css-purity-CSS-Purity-Desi-b6860-ine-fijos-de-color-o-fondos-chromium\\test-failed-1.png"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "C:\\Users\\grego\\Antigravity\\Taxonomia Project\\test-results\\css-purity-CSS-Purity-Desi-b6860-ine-fijos-de-color-o-fondos-chromium\\error-context.md"
+                        }
+                      ]
                     }
                   ],
-                  "status": "expected"
+                  "status": "unexpected"
                 }
               ],
-              "id": "a6ca329089183d52eb83-0a370e93c314a83fee9a",
-              "file": "ui-resilience.spec.js",
-              "line": 57,
-              "column": 3
+              "id": "df7e0cad78dcefda234b-85c42e9fd2485a364967",
+              "file": "css-purity.spec.js",
+              "line": 12,
+              "column": 9
             }
           ]
         }
@@ -128,11 +139,11 @@
   ],
   "errors": [],
   "stats": {
-    "startTime": "2026-04-18T08:33:39.356Z",
-    "duration": 7694.987999999999,
-    "expected": 1,
+    "startTime": "2026-04-18T23:59:14.337Z",
+    "duration": 61241.135,
+    "expected": 0,
     "skipped": 0,
-    "unexpected": 0,
+    "unexpected": 1,
     "flaky": 0
   }
 }
