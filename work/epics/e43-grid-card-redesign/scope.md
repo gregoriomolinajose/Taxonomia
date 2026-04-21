@@ -14,9 +14,10 @@
 - Alteraciones en la "Vista Tabla" ni el formulario interior del registro, esto ataca estrictamente al Grid Layout.
 
 ### Planned Stories
-- **S43.1**: Rediseño de Card de Entidades e Inyección de metadata relacional en HTML.
+- [x] **S43.1**: Refactorización de UX en Dataview Cuadrícula: Eliminar paginador, lazy load, botón basura (Ex-S42.2).
+- [x] **S43.2**: Refinamiento Premium UX Grid: Nuevo Flex Header nativo, Back-to-Top, y Tokens de CSS Puro (Ex-S42.3).
 
 ### Done Criteria
-- [ ] La UI concuerda con las especificaciones de diseño dadas por el requerimiento (Badge, 2-line title, 3 dot menu).
-- [ ] Los grafos tipo "padre" y tipo "hijos" se muestran acorde a su metadata jerárquica con los respectivos nombres e íconos.
-- [ ] El menú de opciones permite eliminar el registro expuesto sin necesidad de abrir el form.
+- [x] La UI concuerda con las especificaciones de diseño dadas por el requerimiento (Badge, 2-line title, 3 dot menu).
+- [x] Los grafos tipo "padre" y tipo "hijos" se muestran acorde a su metadata jerárquica con los respectivos nombres e íconos.
+- [x] El menú de opciones permite eliminar el registro expuesto sin necesidad de abrir el form.
