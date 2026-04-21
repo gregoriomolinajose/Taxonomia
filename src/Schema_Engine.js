@@ -356,8 +356,8 @@ const APP_SCHEMAS = {
       { name: "valido_desde", type: "hidden" },
       { name: "valido_hasta", type: "hidden" },
       { name: "es_version_actual", type: "hidden", defaultValue: true },
-      { name: "peso_capacidad", type: "number", label: "Dedicación (%)", defaultValue: 100, width: 6 },
-      { name: "metadata_config", type: "textarea", label: "Configuración Adicional (JSON)", required: false, width: 12, showInList: false }
+      { name: "peso_capacidad", type: "number", label: "Dedicación (%)", defaultValue: 100, width: 6, validators: ["min:0", "max:100"] },
+      { name: "metadata_config", type: "textarea", label: "Configuración Adicional (JSON)", required: false, width: 12, showInList: false, validators: ["json"] }
     ]
   },
   Sys_Roles: {
