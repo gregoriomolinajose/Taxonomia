@@ -280,6 +280,13 @@
                     container.appendChild(hiddenInput); // Global persistency
                     return; // Skip drawing UI columns
                 }
+                
+                // [S44.4] ABAC Field-Level Shielding: Omitir completamente del DOM para prevenir fisgoneo o inyección
+                if (field.secureAccess === 'admin_only') {
+                    if (!window.ABAC || !window.ABAC.can('update', 'Sys_Permissions')) {
+                        return; // Omitir (El FormSubmitter lo ignorará, manteniendo la DB a salvo)
+                    }
+                }
 
                 // REGLA DE EXCLUSIÓN: Campos 'relation' sin uiComponent son manejados por el Subgrid component.
                 if ((field.type === 'relation' && !field.uiComponent) || field.type === 'subgrid') {
