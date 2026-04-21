@@ -1,0 +1,85 @@
+# Epic E44: Visibilidad y Control de Topología Organizacional — Scope
+
+> **Status:** IN PROGRESS
+> **Release:** REL-4 (Visibilidad Operativa)
+> **Created:** 2026-04-21
+
+## Objective
+
+Otorgar visibilidad centralizada sobre la composición de equipos, la ocupación (capacidad) detallada de las personas y los roles que fungen, extendiendo la arquitectura del grafo relacional e interfaces sin sobre-ingeniería.
+
+**Value:** Erradicar el tiempo consumido en hojas de cálculo aisladas. Dotar al liderazgo tecnológico de la habilidad visual de entender quién está sobrecargado (>100%) y qué células tienen roles críticos descubiertos (sin SM / vacío).
+
+## Stories 
+
+| ID | Story | Size | Status | Description |
+|----|-------|:----:|:------:|-------------|
+| S44.1 | Entidad Rol | S | Pending | Crear entidad genérica Rol en Schema_Engine empleando prefijo ROLE e ícono de construcción. |
+| S44.2 | Extensión Grafo | M | Pending | Extender Sys_Graph_Edges con metadata para guardar capacidad dedicada (%) sin corromper SCD-2. |
+| S44.3 | Mutación DataStore | S | Pending | Fusionar Nombre+Apellido desde la Ingesta OnLoad para todas las vistas visuales de la aplicación. |
+| S44.4 | Shielding ABAC | M | Pending | Implementar lógica de Field-Level Security para Rol y candado Workspace usando Engine_ABAC. |
+| S44.5 | Alertas Capacity Map | L | Pending | Refactor de UI_View_CapacityMap para pintar alarmas rojas en base a sumas topológicas (>100% y sin Roles). |
+
+**Total:** 5 stories
+
+## Scope
+
+**In scope (MUST):**
+- Entidad de Roles dinámica.
+- Refactor de tarjeta UI de Persona (Merge estético y fotografía).
+- Soporte porcentual de tiempo de asignación en grafo universal.
+- Validaciones matemáticas rojas contra escases / saturación.
+
+**In scope (SHOULD):**
+- Tokens semánticos en `Config_Typography` o Custom Vars CSS para distinguir color de los Roles.
+
+**Out of scope:**
+- Script de migración automática de datos hardcodeados viejos a topológicos (se hará un bulk import post-épica).
+- Entidad `Asignacion` aislada (Cancelado en AR).
+
+## Done Criteria
+
+**Per story:**
+- [ ] Code with type annotations
+- [ ] Tests passing
+- [ ] Quality checks pass (ruff/eslint, playwright)
+
+**Epic complete:**
+- [ ] All stories complete (S44.1–S44.5)
+- [ ] Los líderes pueden entrar al Capacity Map y detectar equipos sin SM y gente saturada.
+- [ ] Epic retrospective done
+- [ ] Merged to `main`
+
+## Dependencies
+
+```
+S44.1 ──┐
+        ↓
+S44.2 ──┼── S44.5
+        ↓
+S44.3 ──┘
+        
+S44.4 (parallel)
+```
+
+**External:** Confirmación de campos Workspace con TI o Mockup de carga (Ninguno bloqueante crítico).
+
+## Architecture
+
+| Decision | ADR | Summary |
+|----------|-----|---------|
+| Extensión Metadata Grafo | ADR-44.1 | Evitar tabla transversal `Asignacion` guardando carga (%) directo en la arista. |
+| Fusión en Ingesta Front | ADR-44.2 | Destruir Nombre y Apellido visualmente solo a partir de Ingesta DataStore. |
+
+> Problem Brief: `work/problem-briefs/organizational-topology-2026-04-21.md`
+
+## Risks
+
+| Risk | L/I | Mitigation |
+|------|:---:|------------|
+| Rendimiento al sumar pesos en Grafo | M/M | Cache_Utils interceptará arrays mapeados on-demand para evitar freeze. |
+| Conflictos Workspace Schema | L/H | Prevenir mutación física de bd; solo mutar estado. |
+
+## Parking Lot
+
+- Migración Masiva CSV del viejo select `rol_agil` hacia los nuevos Pointers topológicos de `Rol`.
