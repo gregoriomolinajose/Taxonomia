@@ -333,7 +333,7 @@ const APP_SCHEMAS = {
       
       { name: "separator_3", type: "divider", label: "Organización y Agilidad", width: 12 },
       { name: "equipo", type: "relation", relationType: "padre", targetEntity: "Equipo", graphEntity: "Sys_Graph_Edges", label: "Equipo Asignado", isTemporalGraph: true, graphEdgeType: "PERSONA_EQUIPO", required: false, width: 12, uiComponent: "select_single", valueField: "id_equipo", labelField: "nombre" },
-      { name: "roles_asignados", type: "relation", relationType: "padre", targetEntity: "Rol", graphEntity: "Sys_Graph_Edges", label: "Roles Organizacionales", isTemporalGraph: true, graphEdgeType: "PERSONA_ROL", virtual: true, uiBehavior: "subgrid", width: 12 },
+      { name: "roles_asignados", type: "relation", relationType: "padre", targetEntity: "Rol", graphEntity: "Sys_Graph_Edges", label: "Roles Organizacionales", isTemporalGraph: true, graphEdgeType: "PERSONA_ROL", valueField: "id_rol", labelField: "nombre", uiComponent: "searchable_multi", topologyCardinality: "1:N", width: 12 },
       { name: "porcentaje_asignacion", type: "select", label: "Asignación", options: ["Full Time", "Part Time", "Por Proyecto"], width: 12 },
       { name: "separator_4", type: "divider", label: "Grafo de Liderazgo y Accesos", width: 12 },
       { name: "lider_directo", type: "relation", relationType: "padre", targetEntity: "Persona", graphEntity: "Sys_Graph_Edges", valueField: "email", labelField: "email", topologyCardinality: "1:N", isTemporalGraph: true, graphEdgeType: "PERSONA_LIDER_DIRECTO", label: "Líder Directo", required: false, width: 12 },
