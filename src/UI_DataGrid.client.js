@@ -319,9 +319,23 @@
                 badgeEl.className = 'dv-badge-circular dv-badge-lg';
                 
                 const baseIcon = meta.iconName ? meta.iconName.replace('-outline', '') : 'cube';
-                const iconBadge = document.createElement('ion-icon');
-                iconBadge.setAttribute('name', baseIcon);
-                badgeEl.appendChild(iconBadge);
+                
+                if (row.avatar && String(row.avatar).startsWith('http')) {
+                    const imgAvatar = document.createElement('img');
+                    imgAvatar.src = row.avatar;
+                    imgAvatar.style.width = '100%';
+                    imgAvatar.style.height = '100%';
+                    imgAvatar.style.borderRadius = '50%';
+                    imgAvatar.style.objectFit = 'cover';
+                    badgeEl.appendChild(imgAvatar);
+                    badgeEl.style.background = 'transparent';
+                    badgeEl.style.boxShadow = 'var(--dv-elevation-1)';
+                } else {
+                    const iconBadge = document.createElement('ion-icon');
+                    iconBadge.setAttribute('name', baseIcon);
+                    badgeEl.appendChild(iconBadge);
+                }
+
                 
                 const leftWrap = document.createElement('div');
                 leftWrap.className = 'dv-card-left-wrap';
@@ -366,6 +380,35 @@
                 
                 metaWrap.appendChild(metaTopRow);
                 metaWrap.appendChild(h3Title);
+                
+                if (this.cfg.entityName === 'Persona') {
+                    if (row.email) {
+                        const emlWrap = document.createElement('div');
+                        emlWrap.className = 'dv-card-meta-subtitle';
+                        emlWrap.style.marginTop = '4px';
+                        emlWrap.style.fontSize = '0.85em';
+                        emlWrap.style.color = 'var(--ion-color-medium)';
+                        
+                        const emlIcon = document.createElement('ion-icon');
+                        emlIcon.setAttribute('name', 'mail-outline');
+                        emlWrap.appendChild(emlIcon);
+                        emlWrap.appendChild(document.createTextNode(' ' + row.email));
+                        metaWrap.appendChild(emlWrap);
+                    }
+                    if (row.departamento) {
+                        const deptWrap = document.createElement('div');
+                        deptWrap.className = 'dv-card-meta-subtitle';
+                        deptWrap.style.marginTop = '2px';
+                        deptWrap.style.fontSize = '0.85em';
+                        deptWrap.style.color = 'var(--ion-color-medium)';
+                        
+                        const dptIcon = document.createElement('ion-icon');
+                        dptIcon.setAttribute('name', 'business-outline');
+                        deptWrap.appendChild(dptIcon);
+                        deptWrap.appendChild(document.createTextNode(' ' + row.departamento));
+                        metaWrap.appendChild(deptWrap);
+                    }
+                }
                 
                 leftWrap.appendChild(metaWrap);
                 cardHeader.appendChild(leftWrap);

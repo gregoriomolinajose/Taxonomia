@@ -287,7 +287,7 @@ const APP_SCHEMAS = {
   },
   Persona: {
     uiConfig: { dashboardCard: { iconName: 'person-outline', color: 'var(--ion-color-warning)' } },
-    metadata: { showInMenu: true, order:8, iconName:'person-outline', color:'warning', label:'Personas', titleField:'email', idField:'id_persona', fkField:null },
+    metadata: { showInMenu: true, order:8, iconName:'person-outline', color:'warning', label:'Personas', titleField:'_nombre_completo', idField:'id_persona', fkField:null },
     primaryKey: "id_persona",
     topologyRules: TOPOLOGY_PRESETS.JERARQUICA_PERSONA,
     fields: [

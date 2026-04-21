@@ -241,6 +241,13 @@
         return allData.filter(function(r) { return r.estado !== 'Eliminado' && r.estado !== 'eliminado'; });
     },
     set: function(entityName, data) { 
+        if (entityName === 'Persona' && Array.isArray(data)) {
+            for (var j = 0; j < data.length; j++) {
+                var nom = data[j].nombre || '';
+                var ape = data[j].apellidos || '';
+                data[j]._nombre_completo = (nom + ' ' + ape).trim() || data[j].email || data[j].id_persona;
+            }
+        }
         this._cache[entityName] = data; 
         if (entityName === 'Sys_Graph_Edges') this._buildTopologyIndex();
         if (window.AppEventBus) window.AppEventBus.publish('DATASTORE::CHANGED', { action: 'set', entityName: entityName });
@@ -292,6 +299,13 @@
                 
                 const cleanRecord = { ...payload, [pkField]: pkValue, _version: freshVersion, version: freshVersion };
                 if (freshLexical) cleanRecord.lexical_id = freshLexical;
+                
+                if (entityName === 'Persona') {
+                    let nom = cleanRecord.nombre || '';
+                    let ape = cleanRecord.apellidos || '';
+                    cleanRecord._nombre_completo = (nom + ' ' + ape).trim() || cleanRecord.email || cleanRecord.id_persona;
+                }
+                
                 const liveData = this.get(entityName);
                 const existingIdx = liveData.findIndex(r => window.UI_FormUtils.normalizeId(r[pkField]) === window.UI_FormUtils.normalizeId(pkValue));
 
