@@ -188,30 +188,23 @@ window.CapacityMapEngine = (function() {
         return card;
     }
 
-    function getPersonsByTeam(eqPk) {
-         if (!window.DataStore) return { count: 0, capacity: 0 };
-         const personas = window.DataStore.get('Persona');
-         if (!personas) return { count: 0, capacity: 0 };
+    let _teamCapacityMap = null;
 
-         const edges = window.DataStore.get('Sys_Graph_Edges');
-         if (edges && edges.length > 0) {
-             const teamEdges = edges.filter(e => e.tipo_relacion === 'PERSONA_EQUIPO' && String(e.id_nodo_padre) === String(eqPk) && e.es_version_actual !== false);
-             if (teamEdges.length > 0) {
-                 const ftes = teamEdges.reduce((acc, currentEdge) => {
-                     let weight = parseFloat(currentEdge.peso_capacidad);
-                     if (isNaN(weight)) weight = 100;
-                     return acc + (weight / 100);
-                 }, 0);
-                 // Redondea a 1 decimal
-                 return { count: teamEdges.length, capacity: Math.round(ftes * 10)/10 };
-             }
+    function getPersonsByTeam(eqPk) {
+         if (_teamCapacityMap && _teamCapacityMap.has(String(eqPk))) {
+             return _teamCapacityMap.get(String(eqPk));
          }
 
-         // Fallback a FK física si no hay grafo activo
-         const teamPersonas = personas.filter(p => String(p.equipo) === String(eqPk) || String(p.id_equipo) === String(eqPk));
-         return { count: teamPersonas.length, capacity: teamPersonas.length }; // Asume full-time si no hay grafo
+         // Fallback a FK física si no hay grafo activo para este equipo particular o si el grafo falló
+         if (window.DataStore) {
+             const personas = window.DataStore.get('Persona');
+             if (personas) {
+                 const teamPersonas = personas.filter(p => String(p.equipo) === String(eqPk) || String(p.id_equipo) === String(eqPk));
+                 return { count: teamPersonas.length, capacity: teamPersonas.length };
+             }
+         }
+         return { count: 0, capacity: 0 };
     }
-
 
 
     function render(containerElement) {
@@ -253,6 +246,26 @@ window.CapacityMapEngine = (function() {
         const storePT = window.DataStore.getActive('Portafolio');
         const storeGP = window.DataStore.getActive('Grupo_Productos');
         const storeEQ = window.DataStore.getActive('Equipo');
+
+        // PRE-CÓMPUTO O(N): Hashmap de Pesos para Reducir N+1 Queries
+        _teamCapacityMap = new Map();
+        const edges = window.DataStore.get('Sys_Graph_Edges') || [];
+        edges.forEach(e => {
+            if (e.tipo_relacion === 'PERSONA_EQUIPO' && e.es_version_actual !== false) {
+                const teamId = String(e.id_nodo_padre);
+                if (!_teamCapacityMap.has(teamId)) _teamCapacityMap.set(teamId, { count: 0, capacity: 0 });
+                const metrics = _teamCapacityMap.get(teamId);
+                let w = parseFloat(e.peso_capacidad);
+                if (isNaN(w)) w = 100;
+                metrics.count += 1;
+                metrics.capacity += (w / 100);
+            }
+        });
+        
+        // Redondeo Global O(M) tras acumular
+        _teamCapacityMap.forEach(metrics => {
+             metrics.capacity = Math.round(metrics.capacity * 10) / 10;
+        });
 
         const wrapper = document.createElement('div');
         wrapper.className = 'capmap-container';
