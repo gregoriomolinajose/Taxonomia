@@ -254,36 +254,7 @@ class TXSearchable extends HTMLElement {
                             </ion-button>
                         </div>
                         
-                        <!-- ESTADO INLINE CHECKLIST (ABIERTO) S41.10 -->
-                        <div id="${this._componentId}-inline-list-container" data-tx-state="hidden" style="flex-direction: column; margin-bottom: 12px; border: 1px solid var(--color-border, #cccccc); border-radius: 8px; overflow: hidden; background: var(--ion-background-color, #ffffff);">
-                            <!-- HEADER / CLOSER -->
-                            <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 16px; border-bottom: 1px solid var(--color-border, #e0e0e0); background: var(--ion-color-secondary, #f8f9fa);">
-                                <div style="display: flex; align-items: center; gap: 8px;">
-                                    <strong style="color: var(--ion-color-dark); font-size: 14px;">${this._entityName}</strong>
-                                    <span id="${this._componentId}-inline-counter" style="font-size: 11px; background: var(--color-border, #e0e0e0); padding: 2px 8px; border-radius: 12px; color: var(--ion-color-dark);"></span>
-                                </div>
-                                <ion-button id="${this._componentId}-inline-close" size="small" fill="clear" color="medium" style="margin: 0; font-family: var(--sys-font-family, inherit); font-weight: bold;">
-                                    <ion-icon slot="start" name="close-circle"></ion-icon> Cerrar
-                                </ion-button>
-                            </div>
-                            <!-- SEARCHBAR -->
-                            <div style="border-bottom: 1px solid var(--color-border, #e0e0e0);">
-                                <ion-searchbar id="${this._componentId}-inline-searchbar" placeholder="Buscar por nombre o ID..." mode="md" style="padding: 4px 8px; --box-shadow: none;"></ion-searchbar>
-                            </div>
-                            <!-- LIST SPINNER -->
-                            <div style="text-align:center; padding: 15px;" id="${this._componentId}-inline-spinner">
-                                <ion-spinner></ion-spinner>
-                            </div>
-                            <!-- LIST -->
-                            <ion-list id="${this._componentId}-inline-list" style="padding-top: 0; margin-bottom: 0; max-height: 280px; overflow-y: auto;"></ion-list>
-                            <!-- ACTION CREAR -->
-                            <div style="border-top: 1px solid var(--color-border, #e0e0e0);">
-                                <ion-item id="${this._componentId}-btn-create-inline" button lines="none" detail="false" style="--background: transparent; margin: 0;">
-                                    <ion-icon slot="start" name="add-outline" style="color: var(--ion-color-primary, #3880ff);"></ion-icon>
-                                    <ion-label style="color: var(--ion-color-primary, #3880ff); font-weight: 600;">Crear ${this._entityName}</ion-label>
-                                </ion-item>
-                            </div>
-                        </div>
+                        ${this._getInlineOverlayTemplate()}
 
                         <!-- CARDS SIEMPRE VISIBLES DEBAJO -->
                         <div class="tx-multi-cards-container" style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 24px;"></div>
@@ -302,6 +273,8 @@ class TXSearchable extends HTMLElement {
                                 CAMBIAR
                             </ion-button>
                         </div>
+                        
+                        ${this._getInlineOverlayTemplate()}
                         
                         <!-- ESTADO LLENO CARD (SINGLE SELECT) -->
                         <div id="${this._componentId}-single-filled" data-tx-state="hidden" style="width: 100%; margin-bottom: 24px;">
@@ -401,7 +374,7 @@ class TXSearchable extends HTMLElement {
     
     // H9: Overlay Context Strategy Pattern
     executeSearchAndOpen() {
-        if (this._isMultiple && !this.isMobile()) {
+        if (!this.isMobile()) {
             if (!this._inlineMode) {
                 this._inlineMode = true;
                 this._scheduleRender();
@@ -523,6 +496,41 @@ class TXSearchable extends HTMLElement {
         `;
     }
 
+    // S44.6: Refactor UX Búsqueda Inline
+    _getInlineOverlayTemplate() {
+        return `
+            <div id="${this._componentId}-inline-list-container" data-tx-state="hidden" style="flex-direction: column; margin-bottom: 12px; border: 1px solid var(--color-border, #cccccc); border-radius: 8px; overflow: hidden; background: var(--ion-background-color, #ffffff);">
+                <!-- HEADER / CLOSER -->
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 16px; border-bottom: 1px solid var(--color-border, #e0e0e0); background: var(--ion-color-secondary, #f8f9fa);">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <strong style="color: var(--ion-color-dark); font-size: 14px;">${this._entityName}</strong>
+                        <span id="${this._componentId}-inline-counter" style="font-size: 11px; background: var(--color-border, #e0e0e0); padding: 2px 8px; border-radius: 12px; color: var(--ion-color-dark); ${!this._isMultiple ? 'display:none;' : ''}"></span>
+                    </div>
+                    <ion-button id="${this._componentId}-inline-close" size="small" fill="clear" color="medium" style="margin: 0; font-family: var(--sys-font-family, inherit); font-weight: bold;">
+                        <ion-icon slot="start" name="close-circle"></ion-icon> Cerrar
+                    </ion-button>
+                </div>
+                <!-- SEARCHBAR -->
+                <div style="border-bottom: 1px solid var(--color-border, #e0e0e0);">
+                    <ion-searchbar id="${this._componentId}-inline-searchbar" placeholder="Buscar por nombre o ID..." mode="md" style="padding: 4px 8px; --box-shadow: none;"></ion-searchbar>
+                </div>
+                <!-- LIST SPINNER -->
+                <div style="text-align:center; padding: 15px;" id="${this._componentId}-inline-spinner">
+                    <ion-spinner></ion-spinner>
+                </div>
+                <!-- LIST -->
+                <ion-list id="${this._componentId}-inline-list" style="padding-top: 0; margin-bottom: 0; max-height: 280px; overflow-y: auto;"></ion-list>
+                <!-- ACTION CREAR -->
+                <div style="border-top: 1px solid var(--color-border, #e0e0e0);">
+                    <ion-item id="${this._componentId}-btn-create-inline" button lines="none" detail="false" style="--background: transparent; margin: 0;">
+                        <ion-icon slot="start" name="add-outline" style="color: var(--ion-color-primary, #3880ff);"></ion-icon>
+                        <ion-label style="color: var(--ion-color-primary, #3880ff); font-weight: 600;">Crear ${this._entityName}</ion-label>
+                    </ion-item>
+                </div>
+            </div>
+        `;
+    }
+
     // S41.13: Refactorización Estructural (DRY UI Factories)
     _getPlaceholderTemplate(domId, hidden, iconName) {
         return `
@@ -583,72 +591,6 @@ class TXSearchable extends HTMLElement {
         });
     }
 
-    _openDesktopDropdown() {
-        const popoverNode = document.createElement('div');
-        popoverNode.className = 'tx-desktop-dropdown';
-        popoverNode.style.position = 'absolute';
-        popoverNode.style.zIndex = '999999';
-        popoverNode.style.background = 'var(--ion-background-color, #fff)';
-        popoverNode.style.borderRadius = 'var(--border-radius, 8px)';
-        popoverNode.style.border = '1px solid var(--sidebar-border, #ccc)';
-        popoverNode.style.boxShadow = 'var(--shadow-floating, 0 4px 16px rgba(0,0,0,0.12))';
-        popoverNode.style.maxHeight = '350px';
-        popoverNode.style.overflowY = 'auto'; // scroll local
-        popoverNode.style.display = 'flex';
-        popoverNode.style.flexDirection = 'column';
-        
-        // S41.7: H9 Refactor - Extraer el contenido interior estricto para Desktop list
-        const desktopHtml = `
-            <div style="padding: 0px 8px; border-bottom: 1px solid var(--ion-color-step-100, #e0e0e0); background: var(--ion-color-step-50, #f4f5f8); border-radius: 8px 8px 0 0;">
-                <ion-searchbar id="${this._componentId}-searchbar" placeholder="Buscar..." mode="md" style="padding: 4px 0 0 0; --box-shadow: none; --background: transparent;"></ion-searchbar>
-            </div>
-            ${this._isMultiple ? `
-            <div style="padding: 8px 8px 0 8px;">
-                <ion-button expand="block" fill="clear" id="${this._componentId}-btn-apply" style="margin: 0;">Listo</ion-button>
-            </div>
-            ` : ''}
-            <div style="text-align:center; padding: 15px;" id="${this._componentId}-spinner">
-                <ion-spinner></ion-spinner>
-            </div>
-            <ion-list id="${this._componentId}-list" style="padding-top: 0;"></ion-list>
-            <div style="border-top: 1px solid var(--color-border, #e0e0e0);">
-                <ion-item id="${this._componentId}-btn-create-desk" button lines="none" detail="false" style="--background: transparent; margin: 0;">
-                    <ion-icon slot="start" name="add-outline" style="color: var(--ion-color-primary, #3880ff);"></ion-icon>
-                    <ion-label style="color: var(--ion-color-primary, #3880ff); font-weight: 600;">Crear ${this._entityName}</ion-label>
-                </ion-item>
-            </div>
-        `;
-        popoverNode.innerHTML = desktopHtml;
-
-        const anchorNode = this.querySelector('ion-input.tx-search-input') || this.querySelector('.tx-searchable-root') || this;
-        const boxRect = anchorNode.getBoundingClientRect();
-        // Anclar directo al padre rect
-        popoverNode.style.width = `${boxRect.width}px`;
-        popoverNode.style.top = `${boxRect.bottom + 4 + window.scrollY}px`;
-        popoverNode.style.left = `${boxRect.left + window.scrollX}px`;
-        
-        // Bridge para eventos internos que llaman dismiss()
-        popoverNode.dismiss = () => this._cleanupOverlay();
-
-        document.body.appendChild(popoverNode);
-        this._overlayNode = popoverNode;
-
-        // En un DIV es síncrono, no hay `.present().then()`
-        this._bindOverlayInternalEvents();
-        this.buildListItems(this._searchTerm || ''); 
-        
-        const searchbar = popoverNode.querySelector('ion-searchbar');
-        if (searchbar) {
-            this._temporaryBlurFlag = true; // Proteger de la posible pérdida inmediata de foco del input padre
-            setTimeout(() => { 
-                searchbar.setFocus(); 
-                setTimeout(() => this._temporaryBlurFlag = false, 350); 
-            }, 100);
-        } else if (!this._isMultiple && anchorNode.tagName === 'ION-INPUT') {
-            setTimeout(() => anchorNode.setFocus(), 50);
-        }
-    }
-
     _bindOverlayInternalEvents() {
         const closeBtn = this._overlayNode.querySelector(`#${this._componentId}-btn-close`);
         if (closeBtn) closeBtn.addEventListener('click', () => { 
@@ -696,11 +638,11 @@ class TXSearchable extends HTMLElement {
     }
 
     buildListItems(query = '') {
-        const listNode = (this._isMultiple && this._inlineMode) 
+        const listNode = (this._inlineMode) 
             ? this.querySelector(`#${this._componentId}-inline-list`)
             : (this._overlayNode ? this._overlayNode.querySelector(`#${this._componentId}-list`) : null);
             
-        const spinner = (this._isMultiple && this._inlineMode)
+        const spinner = (this._inlineMode)
             ? this.querySelector(`#${this._componentId}-inline-spinner`)
             : (this._overlayNode ? this._overlayNode.querySelector(`#${this._componentId}-spinner`) : null);
             
@@ -816,7 +758,12 @@ class TXSearchable extends HTMLElement {
                     
                     this._scheduleRender();
                     this.dispatchSelection(); // Disparo automático inmediato si es Single
-                    if (this._overlayNode && typeof this._overlayNode.dismiss === 'function') {
+                    
+                    if (this._inlineMode) {
+                        this._inlineMode = false;
+                        this._searchTerm = '';
+                        this._scheduleRender();
+                    } else if (this._overlayNode && typeof this._overlayNode.dismiss === 'function') {
                         this._overlayNode.dismiss();
                     } else {
                         this._cleanupOverlay();
@@ -847,26 +794,45 @@ class TXSearchable extends HTMLElement {
             const textNode = this.querySelector(`#${this._componentId}-single-text`);
             const subNode = this.querySelector(`#${this._componentId}-single-sub`);
             const btnClear = this.querySelector(`#${this._componentId}-mobile-clear`); // Reusando ID del listener
+            const inlineContainerNode = this.querySelector(`#${this._componentId}-inline-list-container`);
             
-            if (hasSelection) {
+            if (this._inlineMode) {
                 if (phNode) phNode.setAttribute('data-tx-state', 'hidden');
-                if (filledHeader) filledHeader.setAttribute('data-tx-state', 'flex');
-                if (filledNode) filledNode.setAttribute('data-tx-state', 'block');
-                if (btnClear) btnClear.setAttribute('data-tx-state', 'block');
-                
-                if (textNode) {
-                    const rawId = this._selectedState;
-                    const found = this._dataSource.find(item => String(this._extractPayloadId(item)) === String(rawId));
-                    textNode.textContent = found ? this._extractPayloadTitle(found) : rawId;
-                    if (subNode) {
-                        subNode.textContent = found ? (found.lexical_id || found.id_numero || rawId) : rawId;
+                if (filledHeader) filledHeader.setAttribute('data-tx-state', 'hidden');
+                if (filledNode) filledNode.setAttribute('data-tx-state', 'hidden');
+                if (inlineContainerNode) {
+                    inlineContainerNode.setAttribute('data-tx-state', 'flex');
+                    if (inlineContainerNode.dataset.focused !== 'true') {
+                        inlineContainerNode.dataset.focused = 'true';
+                        setTimeout(() => inlineContainerNode.querySelector('ion-searchbar')?.setFocus(), 100);
                     }
                 }
             } else {
-                if (phNode) phNode.setAttribute('data-tx-state', 'block');
-                if (filledHeader) filledHeader.setAttribute('data-tx-state', 'hidden');
-                if (filledNode) filledNode.setAttribute('data-tx-state', 'hidden');
-                if (btnClear) btnClear.setAttribute('data-tx-state', 'hidden');
+                if (inlineContainerNode) {
+                    inlineContainerNode.setAttribute('data-tx-state', 'hidden');
+                    delete inlineContainerNode.dataset.focused;
+                }
+                
+                if (hasSelection) {
+                    if (phNode) phNode.setAttribute('data-tx-state', 'hidden');
+                    if (filledHeader) filledHeader.setAttribute('data-tx-state', 'flex');
+                    if (filledNode) filledNode.setAttribute('data-tx-state', 'block');
+                    if (btnClear) btnClear.setAttribute('data-tx-state', 'block');
+                    
+                    if (textNode) {
+                        const rawId = this._selectedState;
+                        const found = this._dataSource.find(item => String(this._extractPayloadId(item)) === String(rawId));
+                        textNode.textContent = found ? this._extractPayloadTitle(found) : rawId;
+                        if (subNode) {
+                            subNode.textContent = found ? (found.lexical_id || found.id_numero || rawId) : rawId;
+                        }
+                    }
+                } else {
+                    if (phNode) phNode.setAttribute('data-tx-state', 'block');
+                    if (filledHeader) filledHeader.setAttribute('data-tx-state', 'hidden');
+                    if (filledNode) filledNode.setAttribute('data-tx-state', 'hidden');
+                    if (btnClear) btnClear.setAttribute('data-tx-state', 'hidden');
+                }
             }
         }
 
