@@ -241,13 +241,28 @@
         return allData.filter(function(r) { return r.estado !== 'Eliminado' && r.estado !== 'eliminado'; });
     },
     set: function(entityName, data) { 
-        if (entityName === 'Persona' && Array.isArray(data)) {
-            for (var j = 0; j < data.length; j++) {
-                var nom = data[j].nombre || '';
-                var ape = data[j].apellidos || '';
-                data[j]._nombre_completo = (nom + ' ' + ape).trim() || data[j].email || data[j].id_persona;
+        var schema = window.APP_SCHEMAS && window.APP_SCHEMAS[entityName];
+        if (schema && schema.computedFields && Array.isArray(data)) {
+            for (var i = 0; i < schema.computedFields.length; i++) {
+                var ctrl = schema.computedFields[i];
+                if (ctrl.concat && ctrl.separator !== undefined) {
+                    for (var j = 0; j < data.length; j++) {
+                        var parts = [];
+                        for (var k = 0; k < ctrl.concat.length; k++) {
+                            if (data[j][ctrl.concat[k]]) parts.push(String(data[j][ctrl.concat[k]]).trim());
+                        }
+                        var joined = parts.join(ctrl.separator).trim();
+                        if (!joined && ctrl.fallback) {
+                            for (var f = 0; f < ctrl.fallback.length; f++) {
+                                if (data[j][ctrl.fallback[f]]) { joined = data[j][ctrl.fallback[f]]; break; }
+                            }
+                        }
+                        data[j][ctrl.name] = joined;
+                    }
+                }
             }
         }
+
         this._cache[entityName] = data; 
         if (entityName === 'Sys_Graph_Edges') this._buildTopologyIndex();
         if (window.AppEventBus) window.AppEventBus.publish('DATASTORE::CHANGED', { action: 'set', entityName: entityName });
@@ -300,10 +315,24 @@
                 const cleanRecord = { ...payload, [pkField]: pkValue, _version: freshVersion, version: freshVersion };
                 if (freshLexical) cleanRecord.lexical_id = freshLexical;
                 
-                if (entityName === 'Persona') {
-                    let nom = cleanRecord.nombre || '';
-                    let ape = cleanRecord.apellidos || '';
-                    cleanRecord._nombre_completo = (nom + ' ' + ape).trim() || cleanRecord.email || cleanRecord.id_persona;
+                var schema = window.APP_SCHEMAS && window.APP_SCHEMAS[entityName];
+                if (schema && schema.computedFields) {
+                    for (var cfi = 0; cfi < schema.computedFields.length; cfi++) {
+                        var ctrl = schema.computedFields[cfi];
+                        if (ctrl.concat && ctrl.separator !== undefined) {
+                            var parts = [];
+                            for (var cfk = 0; cfk < ctrl.concat.length; cfk++) {
+                                if (cleanRecord[ctrl.concat[cfk]]) parts.push(String(cleanRecord[ctrl.concat[cfk]]).trim());
+                            }
+                            var joined = parts.join(ctrl.separator).trim();
+                            if (!joined && ctrl.fallback) {
+                                for (var ffb = 0; ffb < ctrl.fallback.length; ffb++) {
+                                    if (cleanRecord[ctrl.fallback[ffb]]) { joined = cleanRecord[ctrl.fallback[ffb]]; break; }
+                                }
+                            }
+                            cleanRecord[ctrl.name] = joined;
+                        }
+                    }
                 }
                 
                 const liveData = this.get(entityName);

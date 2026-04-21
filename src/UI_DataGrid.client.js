@@ -285,6 +285,8 @@
             if (rows.length === 0) return this._renderEmpty();
 
             const meta = (window.ENTITY_META && window.ENTITY_META[this.cfg.entityName]) || { titleField: 'nombre', idField: 'id', fkField: null, iconName: 'cube', color: 'primary' };
+            const schemaDef = window.APP_SCHEMAS && window.APP_SCHEMAS[this.cfg.entityName];
+            const dCard = (schemaDef && schemaDef.uiConfig && schemaDef.uiConfig.dashboardCard) ? schemaDef.uiConfig.dashboardCard : null;
             
             const frag = document.createDocumentFragment();
             const grid = document.createElement('ion-grid');
@@ -319,10 +321,11 @@
                 badgeEl.className = 'dv-badge-circular dv-badge-lg';
                 
                 const baseIcon = meta.iconName ? meta.iconName.replace('-outline', '') : 'cube';
+                const avatarVal = (dCard && dCard.avatarField) ? row[dCard.avatarField] : null;
                 
-                if (row.avatar && String(row.avatar).startsWith('http')) {
+                if (avatarVal && String(avatarVal).startsWith('http')) {
                     const imgAvatar = document.createElement('img');
-                    imgAvatar.src = row.avatar;
+                    imgAvatar.src = avatarVal;
                     imgAvatar.style.width = '100%';
                     imgAvatar.style.height = '100%';
                     imgAvatar.style.borderRadius = '50%';
@@ -381,32 +384,24 @@
                 metaWrap.appendChild(metaTopRow);
                 metaWrap.appendChild(h3Title);
                 
-                if (this.cfg.entityName === 'Persona') {
-                    if (row.email) {
-                        const emlWrap = document.createElement('div');
-                        emlWrap.className = 'dv-card-meta-subtitle';
-                        emlWrap.style.marginTop = '4px';
-                        emlWrap.style.fontSize = '0.85em';
-                        emlWrap.style.color = 'var(--ion-color-medium)';
-                        
-                        const emlIcon = document.createElement('ion-icon');
-                        emlIcon.setAttribute('name', 'mail-outline');
-                        emlWrap.appendChild(emlIcon);
-                        emlWrap.appendChild(document.createTextNode(' ' + row.email));
-                        metaWrap.appendChild(emlWrap);
-                    }
-                    if (row.departamento) {
-                        const deptWrap = document.createElement('div');
-                        deptWrap.className = 'dv-card-meta-subtitle';
-                        deptWrap.style.marginTop = '2px';
-                        deptWrap.style.fontSize = '0.85em';
-                        deptWrap.style.color = 'var(--ion-color-medium)';
-                        
-                        const dptIcon = document.createElement('ion-icon');
-                        dptIcon.setAttribute('name', 'business-outline');
-                        deptWrap.appendChild(dptIcon);
-                        deptWrap.appendChild(document.createTextNode(' ' + row.departamento));
-                        metaWrap.appendChild(deptWrap);
+                if (dCard && dCard.subtitleFields) {
+                    for (var iter = 0; iter < dCard.subtitleFields.length; iter++) {
+                        var subItem = dCard.subtitleFields[iter];
+                        if (row[subItem.field]) {
+                            const subWrap = document.createElement('div');
+                            subWrap.className = 'dv-card-meta-subtitle';
+                            subWrap.style.marginTop = (iter === 0) ? '4px' : '2px';
+                            subWrap.style.fontSize = '0.85em';
+                            subWrap.style.color = 'var(--ion-color-medium)';
+                            
+                            if (subItem.icon) {
+                                const sIcon = document.createElement('ion-icon');
+                                sIcon.setAttribute('name', subItem.icon);
+                                subWrap.appendChild(sIcon);
+                            }
+                            subWrap.appendChild(document.createTextNode(' ' + row[subItem.field]));
+                            metaWrap.appendChild(subWrap);
+                        }
                     }
                 }
                 

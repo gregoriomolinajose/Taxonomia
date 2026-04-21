@@ -286,7 +286,20 @@ const APP_SCHEMAS = {
     ]
   },
   Persona: {
-    uiConfig: { dashboardCard: { iconName: 'person-outline', color: 'var(--ion-color-warning)' } },
+    uiConfig: { 
+      dashboardCard: { 
+        iconName: 'person-outline', 
+        color: 'var(--ion-color-warning)',
+        avatarField: 'avatar',
+        subtitleFields: [
+          { field: 'email', icon: 'mail-outline' },
+          { field: 'departamento', icon: 'business-outline' }
+        ]
+      } 
+    },
+    computedFields: [
+      { name: '_nombre_completo', concat: ['nombre', 'apellidos'], separator: ' ', fallback: ['email', 'id_persona'] }
+    ],
     metadata: { showInMenu: true, order:8, iconName:'person-outline', color:'warning', label:'Personas', titleField:'_nombre_completo', idField:'id_persona', fkField:null },
     primaryKey: "id_persona",
     topologyRules: TOPOLOGY_PRESETS.JERARQUICA_PERSONA,
