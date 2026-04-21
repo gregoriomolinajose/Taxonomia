@@ -282,9 +282,9 @@
                 }
                 
                 // [S44.4] ABAC Field-Level Shielding: Omitir completamente del DOM para prevenir fisgoneo o inyección
-                if (field.secureAccess === 'admin_only') {
-                    if (!window.ABAC || !window.ABAC.can('update', 'Sys_Permissions')) {
-                        return; // Omitir (El FormSubmitter lo ignorará, manteniendo la DB a salvo)
+                if (field.abacRule && window.ABAC) {
+                    if (!window.ABAC.can(field.abacRule.action, field.abacRule.target)) {
+                        return; // Omitir topológicamente (El FormSubmitter lo ignorará en el payload)
                     }
                 }
 
