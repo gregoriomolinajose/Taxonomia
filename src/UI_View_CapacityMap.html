@@ -173,14 +173,9 @@ window.CapacityMapEngine = (function() {
         const badge = document.createElement('span');
         badge.className = 'capmap-badge ' + colorClass;
         
-        let displayStr = '';
-        if (typeof personasCount === 'object') {
-            displayStr = `<ion-icon name="person"></ion-icon> ${personasCount.count} HC (${personasCount.capacity} FTE)`;
-        } else {
-            displayStr = `<ion-icon name="person"></ion-icon> ${personasCount} HC`;
-        }
-        
-        badge.innerHTML = displayStr;
+        // [S44.5] QR Fix: Tipado estructurado O(1) con asimetría visual en Empty States
+        const isMuted = personasCount.count === 0 ? 'opacity: 0.6;' : '';
+        badge.innerHTML = `<span style="${isMuted}"><ion-icon name="person"></ion-icon> ${personasCount.count} HC (${personasCount.capacity} FTE)</span>`;
         badge.style.flexShrink = '0';
         header.appendChild(badge);
         
@@ -249,6 +244,13 @@ window.CapacityMapEngine = (function() {
 
         // PRE-CÓMPUTO O(N): Hashmap de Pesos para Reducir N+1 Queries
         _teamCapacityMap = new Map();
+        
+        // [QR Fix]: Seedear equipos vacíos primero previene el Fallback asfixiante O(N)
+        storeEQ.forEach(eq => {
+             const pk = eq.id_equipo || eq.id_registro;
+             if (pk) _teamCapacityMap.set(String(pk), { count: 0, capacity: 0 });
+        });
+
         const edges = window.DataStore.get('Sys_Graph_Edges') || [];
         edges.forEach(e => {
             if (e.tipo_relacion === 'PERSONA_EQUIPO' && e.es_version_actual !== false) {
