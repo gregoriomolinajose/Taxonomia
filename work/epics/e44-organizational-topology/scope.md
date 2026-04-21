@@ -14,7 +14,7 @@ Otorgar visibilidad centralizada sobre la composición de equipos, la ocupación
 
 | ID | Story | Size | Status | Description |
 |----|-------|:----:|:------:|-------------|
-| S44.1 | Entidad Rol | S | Pending | Crear entidad genérica Rol en Schema_Engine empleando prefijo ROLE e ícono de construcción. |
+| S44.1 | Entidad Rol | S | Done | Crear entidad genérica Rol en Schema_Engine empleando prefijo ROLE e ícono de construcción. |
 | S44.2 | Extensión Grafo | M | Pending | Extender Sys_Graph_Edges con metadata para guardar capacidad dedicada (%) sin corromper SCD-2. |
 | S44.3 | Mutación DataStore | S | Pending | Fusionar Nombre+Apellido desde la Ingesta OnLoad para todas las vistas visuales de la aplicación. |
 | S44.4 | Shielding ABAC | M | Pending | Implementar lógica de Field-Level Security para Rol y candado Workspace usando Engine_ABAC. |
@@ -45,7 +45,7 @@ Otorgar visibilidad centralizada sobre la composición de equipos, la ocupación
 - [ ] Quality checks pass (ruff/eslint, playwright)
 
 **Epic complete:**
-- [ ] All stories complete (S44.1–S44.5)
+- [x] S44.1 completado
 - [ ] Los líderes pueden entrar al Capacity Map y detectar equipos sin SM y gente saturada.
 - [ ] Epic retrospective done
 - [ ] Merged to `main`
