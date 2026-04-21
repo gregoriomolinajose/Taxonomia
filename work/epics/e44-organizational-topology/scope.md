@@ -19,8 +19,9 @@ Otorgar visibilidad centralizada sobre la composición de equipos, la ocupación
 | S44.3 | Mutación DataStore | S | Pending | Fusionar Nombre+Apellido desde la Ingesta OnLoad para todas las vistas visuales de la aplicación. |
 | S44.4 | Shielding ABAC | M | Pending | Implementar lógica de Field-Level Security para Rol y candado Workspace usando Engine_ABAC. |
 | S44.5 | Alertas Capacity Map | L | Pending | Refactor de UI_View_CapacityMap para pintar alarmas rojas en base a sumas topológicas (>100% y sin Roles). |
+| S44.6 | Refactor UX Búsqueda Inline | S | Pending | Unificar el comportamiento Inline en TXSearchable para Single Select en lugar del popover flotante viejo. |
 
-**Total:** 5 stories
+**Total:** 6 stories
 
 ## Scope
 
