@@ -11,7 +11,7 @@
 - Reescritura del Engine DB más allá de exponer o adaptar un entrypoint de guardado agrupado.
 
 ### Planned Stories
-- **S42.1**: Optimización de tiempos de guardado.
+- [x] **S42.1**: Optimización de tiempos de guardado.
 - [x] **S42.2**: Refactorización de UX en Dataview Cuadrícula:
   - Eliminar paginador físico y filtro de cantidad de registros para la vista en cuadrícula.
   - Implementar paginado infinito por scroll (lazy loading visual).
@@ -23,5 +23,5 @@
   - Títulos formateados de Nodos (truncados) y Footer iconográfico compacto.
 
 ### Done Criteria
-- [ ] Tiempo de guardado medido en DevTools muestra una reducción sustancial (e.g. desde 10s hasta <3s o lo mínimo posible).
-- [ ] No existen peticiones individuales innecesarias.
+- [x] Tiempo de guardado medido en DevTools muestra una reducción sustancial (e.g. desde 10s hasta <3s o lo mínimo posible).
+- [x] No existen peticiones individuales innecesarias.
