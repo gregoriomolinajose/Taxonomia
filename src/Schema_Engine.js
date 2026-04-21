@@ -320,11 +320,27 @@ const APP_SCHEMAS = {
       
       { name: "separator_3", type: "divider", label: "Organización y Agilidad", width: 12 },
       { name: "equipo", type: "relation", relationType: "padre", targetEntity: "Equipo", graphEntity: "Sys_Graph_Edges", label: "Equipo Asignado", isTemporalGraph: true, graphEdgeType: "PERSONA_EQUIPO", required: false, width: 12, uiComponent: "select_single", valueField: "id_equipo", labelField: "nombre" },
-      { name: "rol_agil", type: "select", label: "Rol Ágil Asignado", options: ["Product Manager", "Product Owner", "Team Coach", "RTE", "Developer", "Tech Lead", "Tester", "N/A"], required: true, width: 6 },
+      { name: "roles_asignados", type: "relation", relationType: "hijo", targetEntity: "Rol", graphEntity: "Sys_Graph_Edges", label: "Roles Organizacionales", isTemporalGraph: true, graphEdgeType: "PERSONA_ROL", virtual: true, uiBehavior: "subgrid", width: 12 },
       { name: "porcentaje_asignacion", type: "select", label: "Asignación", options: ["Full Time", "Part Time", "Por Proyecto"], width: 6 },
       { name: "separator_4", type: "divider", label: "Grafo de Liderazgo y Accesos", width: 12 },
       { name: "lider_directo", type: "relation", relationType: "padre", targetEntity: "Persona", graphEntity: "Sys_Graph_Edges", valueField: "email", labelField: "email", topologyCardinality: "1:N", isTemporalGraph: true, graphEdgeType: "PERSONA_LIDER_DIRECTO", label: "Líder Directo", required: false, width: 12 },
       { name: "id_rol", type: "select", label: "Rol de Autorización", required: false, width: 12, lookupSource: "getSysRolesOptions" }
+    ]
+  },
+  Rol: {
+    uiConfig: { dashboardCard: { iconName: 'construct-outline', color: 'var(--ion-color-primary)' } },
+    metadata: { prefix: 'ROLE', showInMenu: true, order: 8.5, iconName: 'construct-outline', color: 'primary', label: 'Roles', titleField: 'nombre', idField: 'id_rol', fkField: null },
+    primaryKey: "id_rol",
+    titleField: "nombre",
+    fields: [
+      { name: "id_rol", type: "hidden", primaryKey: true },
+      ...FIELD_TEMPLATES.SYSTEM_FIELDS(),
+      ...FIELD_TEMPLATES.AUDIT_FIELDS(),
+      ...FIELD_TEMPLATES.VERSION_FIELD(),
+      ...FIELD_TEMPLATES.ESTADO_FIELD(),
+      ...FIELD_TEMPLATES.NAME_FIELD("Nombre de Rol"),
+      { name: "descripcion", type: "textarea", label: "Descripción", required: false, width: 12, showInList: false },
+      { name: "personas_asignadas", type: "relation", relationType: "padre", targetEntity: "Persona", graphEntity: "Sys_Graph_Edges", label: "Personas Asignadas", isTemporalGraph: true, graphEdgeType: "PERSONA_ROL", virtual: true, uiBehavior: "subgrid", width: 12 }
     ]
   },
   Sys_Graph_Edges: {
