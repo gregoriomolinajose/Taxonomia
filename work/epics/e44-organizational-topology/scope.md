@@ -20,8 +20,8 @@ Otorgar visibilidad centralizada sobre la composición de equipos, la ocupación
 | S44.4 | Shielding ABAC | M | Done | Implementar lógica de Field-Level Security para Rol y candado Workspace usando Engine_ABAC. |
 | S44.5 | Alertas Capacity Map | L | Done | Refactor de UI_View_CapacityMap para pintar alarmas rojas en base a sumas topológicas (>100% y sin Roles). |
 | S44.6 | Refactor UX Búsqueda Inline | S | Done | Unificar el comportamiento Inline en TXSearchable para Single Select en lugar del popover flotante viejo. |
-| S44.7 | Reorganización Estructural Persona | S | Pending | Dividir en bloques lógicos y asignar layouts en Schema_Engine para la entidad Persona. |
-
+| S44.7 | Reorganización Estructural Persona | S | Done | Dividir en bloques lógicos y asignar layouts en Schema_Engine para la entidad Persona. |
+| S44.8 | Entidad Cargo (Diccionario Vivo) | S | Done | Extraer cargo a nueva entidad resolviendo conflicto de workspace sync con schemas. |
 **Total:** 7 stories
 
 ## Scope
