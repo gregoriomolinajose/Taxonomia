@@ -76,7 +76,7 @@ function resolverDirectorioWorkspace(queryEmail) {
     };
 
     // [S44.9] Auto-Provisionamiento y Mapeo Topológico del Cargo
-    if (title && String(title).trim() !== '') {
+    if (title && String(title).trim() !== '' && String(title).trim().toLowerCase() !== 'undefined') {
       var titleStr = String(title).trim();
       var cargoUUID = null;
       
@@ -84,7 +84,8 @@ function resolverDirectorioWorkspace(queryEmail) {
         var cargosResponse = typeof Engine_DB !== 'undefined' ? Engine_DB.list('Cargo', 'objects') : null;
         var cargosInDB = (cargosResponse && cargosResponse.rows) ? cargosResponse.rows : [];
         var match = cargosInDB.find(function(c) {
-            return String(c.id_externo_workspace).trim() === titleStr || String(c.nombre).trim() === titleStr;
+            return (c.id_externo_workspace && String(c.id_externo_workspace).trim() === titleStr) || 
+                   (c.nombre && String(c.nombre).trim() === titleStr);
         });
 
         if (match) {
@@ -92,14 +93,16 @@ function resolverDirectorioWorkspace(queryEmail) {
             Logger.log("[S44.9] Cargo Match Found: " + titleStr + " -> " + cargoUUID);
         } else {
             // Auto-provision of missing dictionary entry
+            var newLexicalId = "CARG-" + Math.random().toString(36).substring(2, 7).toUpperCase();
             var newCargoPayload = {
+                id_cargo: newLexicalId,
                 id_externo_workspace: titleStr,
                 nombre: titleStr + " pendiente por identificar",
                 estado: "Activo"
             };
             var result = typeof Engine_DB !== 'undefined' ? Engine_DB.create('Cargo', newCargoPayload) : null;
-            if (result && result.adapter_results && result.adapter_results.sheets && result.adapter_results.sheets.length > 0) {
-                cargoUUID = result.adapter_results.sheets[0].val; // Extracts Lexical/UUID PK
+            if (result && result.success) {
+                cargoUUID = newLexicalId; // Map directly through deterministic ID
                 Logger.log("[S44.9] Auto-Provisioned Cargo: " + titleStr + " -> " + cargoUUID);
             }
         }
