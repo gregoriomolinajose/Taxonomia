@@ -289,7 +289,7 @@ window.CapacityMapEngine = (function() {
 
         const edges = window.DataStore.get('Sys_Graph_Edges') || [];
         edges.forEach(e => {
-            if (e.es_version_actual === false) return;
+            if (e.es_version_actual === false || String(e.es_version_actual).toUpperCase() === 'FALSE') return;
             const edgeType = e.tipo_relacion;
 
             if (edgeType === 'PERSONA_EQUIPO') {
@@ -325,7 +325,7 @@ window.CapacityMapEngine = (function() {
         // [S44.5] Segundo Pase O(N): Detectar equipos que tienen miembros sobrecargados (>100%)
         const _teamsWithOverload = new Set();
         edges.forEach(e => {
-             if (e.es_version_actual === false || e.tipo_relacion !== 'PERSONA_EQUIPO') return;
+             if (e.es_version_actual === false || String(e.es_version_actual).toUpperCase() === 'FALSE' || e.tipo_relacion !== 'PERSONA_EQUIPO') return;
              const personaId = String(e.id_nodo_hijo);
              const teamId = String(e.id_nodo_padre);
              if (_personaGlobalCapacity.get(personaId) > 100) {
