@@ -22,6 +22,7 @@ Otorgar visibilidad centralizada sobre la composición de equipos, la ocupación
 | S44.6 | Refactor UX Búsqueda Inline | S | Done | Unificar el comportamiento Inline en TXSearchable para Single Select en lugar del popover flotante viejo. |
 | S44.7 | Reorganización Estructural Persona | S | Done | Dividir en bloques lógicos y asignar layouts en Schema_Engine para la entidad Persona. |
 | S44.8 | Entidad Cargo (Diccionario Vivo) | S | Done | Extraer cargo a nueva entidad resolviendo conflicto de workspace sync con schemas. |
+| S44.9 | Mapeo Automático Ingesta | M | Done | Implementar Workspace Interceptor para autoprovisionar o enlazar ID interno de Cargo mediante diccionarios en cache O(1). |
 **Total:** 7 stories
 
 ## Scope
