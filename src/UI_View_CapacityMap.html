@@ -136,7 +136,7 @@ window.CapacityMapEngine = (function() {
         return parentId; // Direct literal match para el buscador Omnibar
     }
 
-    function createClickableCard(title, subtitle, personasCount, actionObj, colorClass) {
+    function createClickableCard(title, subtitle, personasCount, actionObj, colorClass, alerts = []) {
         const card = document.createElement('ion-card');
         card.className = 'capmap-card';
         card.onclick = function() {
@@ -169,6 +169,26 @@ window.CapacityMapEngine = (function() {
         textContainer.appendChild(ttl);
         
         header.appendChild(textContainer);
+        
+        // [S44.5] Alarms Injection
+        if (alerts && alerts.length > 0) {
+            const alarmsContainer = document.createElement('div');
+            alarmsContainer.style.display = 'flex';
+            alarmsContainer.style.gap = '4px';
+            alarmsContainer.style.alignItems = 'center';
+            alarmsContainer.style.marginRight = '8px';
+            
+            alerts.forEach(al => {
+                const icon = document.createElement('ion-icon');
+                icon.name = al.icon || 'warning';
+                icon.color = al.color || 'danger';
+                icon.title = al.message;
+                icon.style.fontSize = '1.2rem';
+                icon.style.cursor = 'help';
+                alarmsContainer.appendChild(icon);
+            });
+            header.appendChild(alarmsContainer);
+        }
         
         const badge = document.createElement('span');
         badge.className = 'capmap-badge ' + colorClass;
@@ -254,16 +274,45 @@ window.CapacityMapEngine = (function() {
              if (pk) _teamCapacityMap.set(String(pk), { count: 0, capacity: 0 });
         });
 
+        // [S44.5] H9 Fix: Sacar roles de liderazgo metodológico dinámicamente del Schema para no hardcodear (EQUIPO_SM, etc.)
+        const expectedLeadershipEdges = new Set();
+        if (window.APP_SCHEMAS && window.APP_SCHEMAS['Equipo']) {
+            window.APP_SCHEMAS['Equipo'].fields.forEach(f => {
+                if (f.type === 'relation' && f.targetEntity === 'Persona' && f.isTemporalGraph && f.graphEdgeType && f.graphEdgeType !== 'PERSONA_EQUIPO') {
+                    expectedLeadershipEdges.add(f.graphEdgeType);
+                }
+            });
+        }
+
+        const _personaGlobalCapacity = new Map();
+        const _teamLeadershipFulfilled = new Map(); // id_equipo -> Set de roles cumplidos
+
         const edges = window.DataStore.get('Sys_Graph_Edges') || [];
         edges.forEach(e => {
-            if (e.tipo_relacion === 'PERSONA_EQUIPO' && e.es_version_actual !== false) {
+            if (e.es_version_actual === false) return;
+            const edgeType = e.tipo_relacion;
+
+            if (edgeType === 'PERSONA_EQUIPO') {
                 const teamId = String(e.id_nodo_padre);
+                const personaId = String(e.id_nodo_hijo);
+                
                 if (!_teamCapacityMap.has(teamId)) _teamCapacityMap.set(teamId, { count: 0, capacity: 0 });
                 const metrics = _teamCapacityMap.get(teamId);
                 let w = parseFloat(e.peso_capacidad);
                 if (isNaN(w)) w = 100;
                 metrics.count += 1;
                 metrics.capacity += (w / 100);
+
+                // Computar sumatoria global del individuo
+                const currentPxW = _personaGlobalCapacity.get(personaId) || 0;
+                _personaGlobalCapacity.set(personaId, currentPxW + w);
+                
+            } else if (expectedLeadershipEdges.has(edgeType)) {
+                // En un select relationType:"padre" (como Scrum Master para Equipo), el equipo almacena la selección. 
+                // Por ende, el Equipo es hijo, y la Persona referenciada es padre.
+                const teamId = String(e.id_nodo_hijo);
+                if (!_teamLeadershipFulfilled.has(teamId)) _teamLeadershipFulfilled.set(teamId, new Set());
+                _teamLeadershipFulfilled.get(teamId).add(edgeType);
             }
         });
         
@@ -271,6 +320,17 @@ window.CapacityMapEngine = (function() {
         _teamCapacityMap.forEach(metrics => {
              metrics.capacity = Number(metrics.capacity.toFixed(1));
 
+        });
+        
+        // [S44.5] Segundo Pase O(N): Detectar equipos que tienen miembros sobrecargados (>100%)
+        const _teamsWithOverload = new Set();
+        edges.forEach(e => {
+             if (e.es_version_actual === false || e.tipo_relacion !== 'PERSONA_EQUIPO') return;
+             const personaId = String(e.id_nodo_hijo);
+             const teamId = String(e.id_nodo_padre);
+             if (_personaGlobalCapacity.get(personaId) > 100) {
+                 _teamsWithOverload.add(teamId);
+             }
         });
 
         const wrapper = document.createElement('div');
@@ -393,12 +453,26 @@ window.CapacityMapEngine = (function() {
                         totalGPPersonas.count += eqPersonas.count;
                         totalGPPersonas.capacity += eqPersonas.capacity;
 
+                        const teamAlerts = [];
+                        if (expectedLeadershipEdges.size > 0) {
+                            const fulfilled = _teamLeadershipFulfilled.get(eqPk) || new Set();
+                            if (fulfilled.size === 0) {
+                                teamAlerts.push({ message: 'Sin Liderazgo Metodológico (Orfandad)', icon: 'alert-circle', color: 'danger' });
+                            } else if (fulfilled.size < expectedLeadershipEdges.size) {
+                                teamAlerts.push({ message: 'Liderazgo Metodológico Incompleto', icon: 'warning', color: 'warning' });
+                            }
+                        }
+                        if (_teamsWithOverload.has(eqPk)) {
+                            teamAlerts.push({ message: 'Miembros con Saturación (>100% Topológico)', icon: 'flame', color: 'danger' });
+                        }
+
                         const teamCard = createClickableCard(
                             eqNombre, 
                             eq.metodologia || 'Equipo', 
                             eqPersonas,
                             { target: 'Persona', strict: { key: 'equipo', value: eqPk, label: eqNombre } },
-                            'badge-eq'
+                            'badge-eq',
+                            teamAlerts
                         );
                         eqContainer.appendChild(teamCard);
                     });
