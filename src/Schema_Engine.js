@@ -338,7 +338,8 @@ const APP_SCHEMAS = {
       
       { name: "separator_5", type: "divider", label: "Control de Accesos (Admin)", width: 12, abacRule: { action: 'update', target: 'Sys_Permissions' } },
       { name: "id_rol", type: "select", label: "Rol de Autorización", required: false, width: 12, lookupSource: "getSysRolesOptions", abacRule: { action: 'update', target: 'Sys_Permissions' } },
-      { name: "workspace_sync_status", type: "hidden", label: "Estado Sincronización WS" }
+      { name: "workspace_sync_status", type: "hidden", label: "Estado Sincronización WS" },
+      { name: "avatar", type: "hidden", label: "Avatar URL" }
     ]
   },
   Cargo: {

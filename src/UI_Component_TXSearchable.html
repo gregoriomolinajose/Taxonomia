@@ -135,8 +135,24 @@ class TXSearchable extends HTMLElement {
         return this._selectedState || null;
     }
 
+    setValidatedValue(val) {
+        if (!val) {
+            this._selectedState = this._isMultiple ? new Set() : null;
+        } else if (this._isMultiple) {
+            this._selectedState = new Set(Array.isArray(val) ? val.map(String) : [String(val)]);
+        } else {
+            this._selectedState = String(val);
+        }
+        this._scheduleRender();
+        this.dispatchSelection();
+    }
+
     get value() {
         return this.getValidatedValue();
+    }
+
+    set value(val) {
+        this.setValidatedValue(val);
     }
 
     // ===============================================
