@@ -42,6 +42,12 @@ function _handleRead(entityName) {
 function _handleCreate(entityName, payload) {
   _guardAbac('create', entityName, null);
   _applyAdminBypass(entityName, payload);
+  
+  if (typeof Engine_ABAC !== 'undefined') {
+    let email = "";
+    try { if (typeof Session !== 'undefined') email = Session.getActiveUser().getEmail(); } catch(e) {}
+    payload = Engine_ABAC.stripProtectedFields(email, entityName, payload);
+  }
 
   const result = Engine_DB.create(entityName, payload);
   return result;
@@ -54,6 +60,12 @@ function _handleCreate(entityName, payload) {
 function _handleUpdate(entityName, id, payload) {
   _guardAbac('update', entityName, id);
   _applyAdminBypass(entityName, payload);
+  
+  if (typeof Engine_ABAC !== 'undefined') {
+    let email = "";
+    try { if (typeof Session !== 'undefined') email = Session.getActiveUser().getEmail(); } catch(e) {}
+    payload = Engine_ABAC.stripProtectedFields(email, entityName, payload);
+  }
 
   const result = Engine_DB.update(entityName, id, payload);
   return result;

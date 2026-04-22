@@ -460,7 +460,7 @@ const APP_SCHEMAS = {
     ]
   },
   Config_Workspace: {
-    metadata: { showInMenu: false, order:93, iconName:'business-outline', color:'primary', label:'Seguridad: Workspaces', titleField:'dominio_principal', idField:'id_workspace', fkField:null },
+    metadata: { showInMenu: false, order:93, iconName:'business-outline', color:'primary', label:'Seguridad: Workspaces', titleField:'dominio_principal', idField:'id_workspace', fkField:null, requireStrictMatrixAccess: true },
     primaryKey: "id_workspace",
     fields: [
       { name: "id_workspace", type: "text", primaryKey: true, readonly: true, label: "ID Workspace", width: 12 },

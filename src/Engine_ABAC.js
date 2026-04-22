@@ -172,6 +172,9 @@ const Engine_ABAC = {
     // S18.2: Regla Opcional Bypass. Si no hay regla Matrix definida explícitamente para esta entidad, 
     // somos tolerantes y permitimos el flujo clásico (Graceful Degradation de Gobernanza)
     if (!rule) {
+      if (typeof APP_SCHEMAS !== 'undefined' && APP_SCHEMAS[entityName] && APP_SCHEMAS[entityName].metadata && APP_SCHEMAS[entityName].metadata.requireStrictMatrixAccess) {
+        return false;
+      }
       return true;
     }
     
@@ -201,6 +204,35 @@ const Engine_ABAC = {
     }
     
     return false; // Default safe closed
+  },
+
+  /**
+   * Field-Level Security (FLS) Stripper
+   * Escanea el Payload en busca de campos que tengan una regla declarativa \`abacRule\`.
+   * Si el emisor no posee los privilegios dictados por el campo, lo borra silenciosamente del payload.
+   */
+  stripProtectedFields: function(email, entityName, payload) {
+    if (!payload || typeof payload !== 'object' || typeof APP_SCHEMAS === 'undefined') return payload;
+    const schema = APP_SCHEMAS[entityName];
+    if (!schema || !schema.fields) return payload;
+
+    schema.fields.forEach(field => {
+      if (field.abacRule && field.name in payload) {
+        const targetPerm = field.abacRule.target;
+        const targetAction = field.abacRule.action;
+        if (targetPerm && targetAction) {
+          const isAllowed = this.validatePermission(email, targetAction, targetPerm, null);
+          if (!isAllowed) {
+            delete payload[field.name];
+            if (typeof Logger !== 'undefined') {
+              Logger.log(`[ABAC_FLS] Security Exception interceptada: Campo '${field.name}' segregado en '${entityName}' por usuario ${email}.`);
+            }
+          }
+        }
+      }
+    });
+
+    return payload;
   }
 };
 
