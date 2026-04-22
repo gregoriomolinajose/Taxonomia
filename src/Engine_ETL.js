@@ -144,7 +144,7 @@ var Engine_ETL = (function() {
    * @param {Array<Object>} items 
    */
   function hydrateAndDeduplicate(entityName, items) {
-       if (!Array.isArray(items) || items.length === 0) return;
+       if (!Array.isArray(items) || items.length === 0) return { data: items }; // Returns an object now for Extensibility
        
        const schema = (typeof APP_SCHEMAS !== 'undefined') ? APP_SCHEMAS[entityName] : null;
        const pkField = schema && schema.primaryKey ? schema.primaryKey : 'id';
@@ -153,7 +153,7 @@ var Engine_ETL = (function() {
        let dbRowsForLookup = null;
        const lookupMaps = {}; // { 'email': { 'test@...': row }, 'numero_empleado': { '123': row } }
 
-       if (uniqueFields.length > 0 || entityName === 'Persona') {
+       if (uniqueFields.length > 0) {
            if (typeof Engine_DB !== 'undefined') {
               const listResult = Engine_DB.list(entityName, 'objects'); // Obtenemos contexto en caché O(1)
               dbRowsForLookup = listResult.rows || [];
@@ -175,24 +175,91 @@ var Engine_ETL = (function() {
            }
        }
 
-       items.forEach(payload => {
-           // A. Re-hidratación Silenciosa al vuelo para Workspace (Zero-Touch Population)
-           if (entityName === 'Persona' && typeof resolverDirectorioWorkspace !== 'undefined') {
-               // Solo disparamos el hook si tiene email y viene con nombre en blanco/indefinido
-               if (payload.email && (!payload.nombre || String(payload.nombre).trim() === '')) {
-                   try {
-                       const wsData = resolverDirectorioWorkspace(payload.email);
-                       if (wsData && wsData.__status !== "DISABLED" && wsData.__status !== "ERROR") {
-                           Object.keys(wsData).forEach(k => {
-                               if (payload[k] === undefined || payload[k] === null || payload[k] === '') {
-                                   payload[k] = wsData[k];
-                               }
-                           });
-                           if (typeof Logger !== 'undefined') Logger.log(`[Batch Hook] Persona Re-Hidratada Automáticamente: ${payload.email}`);
+       let cargoExternoMap = {};
+       let batchCargosToCreate = [];
+       let createdCargosCache = {};
+
+       // S44.9 Pre-Load Dictionary
+       if (entityName === 'Persona') {
+           try {
+               if (typeof Engine_DB !== 'undefined') {
+                   const allCargos = Engine_DB.read('Cargo') || [];
+                   allCargos.forEach(c => {
+                       if (c.id_cargo) {
+                           if (c.nombre) cargoExternoMap[String(c.nombre).trim().toLowerCase()] = c.id_cargo;
+                           if (c.id_externo_workspace) cargoExternoMap[String(c.id_externo_workspace).trim().toLowerCase()] = c.id_cargo;
                        }
-                   } catch(e) {
-                        // Fallback silencioso: no truncar el batch si Workspace API rate-limitea
-                       if (typeof Logger !== 'undefined') Logger.log(`[Batch Hook] Ignorando error WS para ${payload.email}: ${e.message}`);
+                   });
+               }
+           } catch(e) {
+               if (typeof Logger !== 'undefined') Logger.log("Error precargando diccionario de Cargos: " + e.message);
+           }
+       }
+
+       items.forEach(payload => {
+           // A. Re-hidratación Silenciosa al vuelo para Workspace (S15.1 + S44.11)
+            if (entityName === 'Persona' && typeof resolverDirectorioWorkspace !== 'undefined') {
+                const lacksName = (!payload.nombre || String(payload.nombre).trim() === '');
+                const lacksCargo = (!payload.id_cargo || String(payload.id_cargo).trim() === '');
+                const lacksNum = (!payload.numero_empleado || String(payload.numero_empleado).trim() === '');
+                const lacksAvatar = (!payload.avatar || String(payload.avatar).trim() === '');
+                const isAnyFieldMissing = (lacksName || lacksCargo || lacksNum || lacksAvatar);
+                
+                const wantsSync = !payload.workspace_sync_status || payload.workspace_sync_status === 'pending' || payload.workspace_sync_status === 'failed';
+                
+                // Solo revaluamos el estado si nos piden Sync (falta o pending).
+                if (payload.email && wantsSync) {
+                    if (isAnyFieldMissing) {
+                        try {
+                           const wsData = resolverDirectorioWorkspace(payload.email);
+                           if (wsData && wsData.__status !== "DISABLED" && wsData.__status !== "ERROR") {
+                               Object.keys(wsData).forEach(k => {
+                                   if (payload[k] === undefined || payload[k] === null || payload[k] === '') {
+                                       payload[k] = wsData[k];
+                                   }
+                               });
+                               payload.workspace_sync_status = 'synced';
+                               if (typeof Logger !== 'undefined') Logger.log(`[Batch Hook] Persona Re-Hidratada Automáticamente: ${payload.email}`);
+                           } else if (wsData && wsData.__status === "ERROR") {
+                               payload.workspace_sync_status = 'failed';
+                           }
+                       } catch(e) {
+                            // Fallback silencioso: no truncar el batch si Workspace API rate-limitea
+                            payload.workspace_sync_status = 'failed';
+                           if (typeof Logger !== 'undefined') Logger.log(`[Batch Hook] Ignorando error WS para ${payload.email}: ${e.message}`);
+                       }
+                    } else {
+                        // Optimización: Si Ninguno está vacío, marcamos como sincronizado sin gastar cuota de API ni retrasar el Job.
+                        payload.workspace_sync_status = 'synced';
+                        if (typeof Logger !== 'undefined') Logger.log(`[Batch Hook] Persona ${payload.email} auto-validada sin llamar WS API (datos completos).`);
+                    }
+                }
+            }
+
+           // [S44.9] Mapeo Automático de Ingesta (Cargo Workspace Interceptor)
+           if (entityName === 'Persona') {
+               const rawCargo = payload.cargo !== undefined ? payload.cargo : payload.id_cargo;
+               if (rawCargo !== undefined && rawCargo !== null && rawCargo !== '') {
+                   const rawKey = String(rawCargo).trim();
+                   const normalizedKey = rawKey.toLowerCase();
+                   if (cargoExternoMap[normalizedKey]) {
+                       payload.id_cargo = cargoExternoMap[normalizedKey];
+                   } else if (rawKey !== payload.id_cargo) {
+                       if (!createdCargosCache[normalizedKey]) {
+                           const tempCargoId = "CARG-" + (Math.random().toString(36).substring(2, 10));
+                           batchCargosToCreate.push({
+                               id_cargo: tempCargoId,
+                               nombre: rawKey + " (Por definir)",
+                               nivel: "Nivel Base",
+                               id_externo_workspace: rawKey,
+                               estado: "Activo"
+                           });
+                           createdCargosCache[normalizedKey] = tempCargoId;
+                           payload.id_cargo = tempCargoId;
+                           cargoExternoMap[normalizedKey] = tempCargoId;
+                       } else {
+                           payload.id_cargo = createdCargosCache[normalizedKey];
+                       }
                    }
                }
            }
@@ -216,6 +283,18 @@ var Engine_ETL = (function() {
                }
            }
        });
+
+       // [S44.11] Commit batch creations before closing pipeline
+       if (batchCargosToCreate.length > 0 && typeof Engine_DB !== 'undefined') {
+           try {
+               Engine_DB.upsertBatch('Cargo', batchCargosToCreate, { muteTriggers: true });
+               if (typeof Logger !== 'undefined') Logger.log(`Se auto-generaron ${batchCargosToCreate.length} cargos nuevos "Por definir" desde el Ingestor de Personas.`);
+           } catch(e) {
+               if (typeof Logger !== 'undefined') Logger.log("Error creando batch de cargos: " + e.message);
+           }
+       }
+
+       return { data: items }; // Return payload wrapped in object
   }
 
   // --- Public API ---

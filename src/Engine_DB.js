@@ -300,7 +300,15 @@ const Engine_DB = {
                                             
                     // [S27.4/Rx] Normalize passive field metadata into active topological enforcement
                     const cardinality = f.topologyCardinality || "M:N";
-                    if (cardinality === "1:N") topologyRules.enforceSingleParent = true;
+                    if (cardinality === "1:N") {
+                        topologyRules.enforceSingleParent = true;
+                    } else if (cardinality === "M:N") {
+                        topologyRules.enforceSingleParent = false;
+                        topologyRules.allowOrphanStealing = false;
+                        if (topologyRules.topologyType === "JERARQUICA_ESTRICTA" || topologyRules.topologyType === "JERARQUICA_ORGANICA") {
+                            topologyRules.topologyType = "FLAT"; // S44.2 Evitar que reglas estructurales strict generen robos M:N
+                        }
+                    }
                     
                     const edgeName = (f.graphEdgeType || f.name).toUpperCase();
                     topologyRules.edgeType = edgeName; // For precise stealing checks
@@ -365,6 +373,7 @@ const Engine_DB = {
         // Paso C y D: Inyección de FK y Transacción Hijos
         const globalBatches = {};
         const globalCachesToBust = new Set();
+        globalCachesToBust.add(entityName); // [FIX] Invalidate parent entity cache to prevent UI staleness and Job idempotency failure
 
         if (schema) {
             const fields = schema.fields || (typeof schema === 'object' ? Object.keys(schema).map(k => ({ name: k, ...schema[k] })) : []);
@@ -499,7 +508,17 @@ const Engine_DB = {
         if (config.useSheets) {
             Object.keys(globalBatches).forEach(tableName => {
                 if (globalBatches[tableName].length > 0) {
-                    _Adapter_Sheets.upsertBatch(tableName, globalBatches[tableName], config);
+                    try {
+                        if (typeof Logger !== 'undefined') {
+                            Logger.log(`[Engine_DB] Ejecuando UpsertBatch para Entity=${tableName}. Tratando de persistir ${globalBatches[tableName].length} aristas (M:N).`);
+                        }
+                        _Adapter_Sheets.upsertBatch(tableName, globalBatches[tableName], config);
+                        if (typeof Logger !== 'undefined') Logger.log(`[Engine_DB] UpsertBatch Exitoso para ${tableName}.`);
+                    } catch (e) {
+                        if (typeof Logger !== 'undefined') {
+                            Logger.log(`[Engine_DB CRTICAL] Fallo Persistencia de Grafo (M:N) en ${tableName}! Error: ${e.message}`);
+                        }
+                    }
                 }
             });
         }

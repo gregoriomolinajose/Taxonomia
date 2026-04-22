@@ -19,15 +19,16 @@ Otorgar visibilidad centralizada sobre la composición de equipos, la ocupación
 | S44.3 | Mutación DataStore | S | Pending | Fusionar Nombre+Apellido desde la Ingesta OnLoad para todas las vistas visuales de la aplicación. |
 | S44.4 | Shielding ABAC | M | Pending | Implementar lógica de Field-Level Security para Rol y candado Workspace usando Engine_ABAC. |
 | S44.5 | Alertas Capacity Map | L | Pending | Refactor de UI_View_CapacityMap para pintar alarmas rojas en base a sumas topológicas (>100% y sin Roles). |
-| S44.6 | Refactor UX Búsqueda Inline | S | Pending | Unificar el comportamiento Inline en TXSearchable para Single Select en lugar del popover flotante viejo. |
+| S44.6 | Refactor UX Búsqueda Inline | S | Done | Unificar el comportamiento Inline en TXSearchable para Single Select en lugar del popover flotante viejo. |
+| S44.7 | Reorganización Estructural Persona | S | Pending | Dividir en bloques lógicos y asignar layouts en Schema_Engine para la entidad Persona. |
 
-**Total:** 6 stories
+**Total:** 7 stories
 
 ## Scope
 
 **In scope (MUST):**
 - Entidad de Roles dinámica.
-- Refactor de tarjeta UI de Persona (Merge estético y fotografía).
+- Refactor estructural y lógico de la UI de la Persona (agrupada en Datos Empresariales, Agil, etc).
 - Soporte porcentual de tiempo de asignación en grafo universal.
 - Validaciones matemáticas rojas contra escases / saturación.
 
@@ -41,12 +42,13 @@ Otorgar visibilidad centralizada sobre la composición de equipos, la ocupación
 ## Done Criteria
 
 **Per story:**
-- [ ] Code with type annotations
-- [ ] Tests passing
-- [ ] Quality checks pass (ruff/eslint, playwright)
+- [x] Code with type annotations
+- [x] Tests passing
+- [x] Quality checks pass (ruff/eslint, playwright)
 
 **Epic complete:**
 - [x] S44.1 completado
+- [x] S44.6 completado
 - [ ] Los líderes pueden entrar al Capacity Map y detectar equipos sin SM y gente saturada.
 - [ ] Epic retrospective done
 - [ ] Merged to `main`
@@ -61,6 +63,7 @@ S44.2 ──┼── S44.5
 S44.3 ──┘
         
 S44.4 (parallel)
+S44.7 (UI Layer)
 ```
 
 **External:** Confirmación de campos Workspace con TI o Mockup de carga (Ninguno bloqueante crítico).

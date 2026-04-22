@@ -60,7 +60,7 @@ const Adapter_Sheets = {
 
         const primaryKeyValue = payload[primaryKeyField];
 
-        const spreadsheetId = config ? config.SPREADSHEET_ID_DB : CONFIG.SPREADSHEET_ID_DB;
+        const spreadsheetId = (config && config.SPREADSHEET_ID_DB) ? config.SPREADSHEET_ID_DB : CONFIG.SPREADSHEET_ID_DB;
         Logger.log("Adapter_Sheets.upsert: Usando SPREADSHEET_ID_DB = " + spreadsheetId);
 
         const lock = LockService.getScriptLock();
@@ -217,7 +217,7 @@ const Adapter_Sheets = {
             throw new Error(`Primary Key requerida para upsertBatch.`);
         }
 
-        const spreadsheetId = config ? config.SPREADSHEET_ID_DB : CONFIG.SPREADSHEET_ID_DB;
+        const spreadsheetId = (config && config.SPREADSHEET_ID_DB) ? config.SPREADSHEET_ID_DB : CONFIG.SPREADSHEET_ID_DB;
         const ss = this._getSpreadsheet(spreadsheetId);
 
         const lock = LockService.getScriptLock();
@@ -314,7 +314,11 @@ const Adapter_Sheets = {
                     const h = normalizedHeaders[i];
                     if (h === 'created_at' || h === 'created_by') {
                         rowToInsert.push(existingRow[i]);
-                    } else if (payload.hasOwnProperty(h)) {
+                    } else if (h === 'updated_at') {
+                        rowToInsert.push(timestamp);
+                    } else if (h === 'updated_by') {
+                        rowToInsert.push(currentUser);
+                    } else if (payload[h] !== undefined) {
                         rowToInsert.push(payload[h]);
                     } else {
                         rowToInsert.push(existingRow[i]);
@@ -335,7 +339,11 @@ const Adapter_Sheets = {
 
                 for (let i = 0; i < normalizedHeaders.length; i++) {
                     const h = normalizedHeaders[i];
-                    if (payload.hasOwnProperty(h) && payload[h] !== null && payload[h] !== undefined) {
+                    if (h === 'created_at' || h === 'updated_at') {
+                        rowToInsert.push(currentTimestamp);
+                    } else if (h === 'created_by' || h === 'updated_by') {
+                        rowToInsert.push(currentUser);
+                    } else if (payload.hasOwnProperty(h) && payload[h] !== null && payload[h] !== undefined) {
                         rowToInsert.push(payload[h]);
                     } else if (defaultValuesMap[h] !== undefined) {
                         rowToInsert.push(defaultValuesMap[h]);
@@ -395,7 +403,7 @@ const Adapter_Sheets = {
     },
 
     remove: function (tableName, id, config) {
-        const spreadsheetId = config ? config.SPREADSHEET_ID_DB : CONFIG.SPREADSHEET_ID_DB;
+        const spreadsheetId = (config && config.SPREADSHEET_ID_DB) ? config.SPREADSHEET_ID_DB : CONFIG.SPREADSHEET_ID_DB;
         const ss = this._getSpreadsheet(spreadsheetId);
         const sheet = this._ensureSheetExists(ss, tableName);
 

@@ -174,8 +174,11 @@ window.CapacityMapEngine = (function() {
         badge.className = 'capmap-badge ' + colorClass;
         
         // [S44.5] QR Fix: Tipado estructurado O(1) con asimetría visual en Empty States
-        const isMuted = personasCount.count === 0 ? 'opacity: 0.6;' : '';
-        badge.innerHTML = `<span style="${isMuted}"><ion-icon name="person"></ion-icon> ${personasCount.count} HC (${personasCount.capacity} FTE)</span>`;
+        // Truthiness JS Trap fix: prevent null pointer exception if personasCount is arbitrarily passed as scalar or null.
+        const safeCount = (personasCount && typeof personasCount === 'object' && 'count' in personasCount) ? personasCount.count : (personasCount || 0);
+        const safeCapacity = (personasCount && typeof personasCount === 'object' && 'capacity' in personasCount) ? personasCount.capacity : (personasCount || 0);
+        const isMuted = safeCount === 0 ? 'opacity: 0.6;' : '';
+        badge.innerHTML = `<span style="${isMuted}"><ion-icon name="person"></ion-icon> ${safeCount} HC (${Number(safeCapacity.toFixed(1))} FTE)</span>`;
         badge.style.flexShrink = '0';
         header.appendChild(badge);
         
@@ -264,9 +267,10 @@ window.CapacityMapEngine = (function() {
             }
         });
         
-        // Redondeo Global O(M) tras acumular
+        // Redondeo Global estricto tras acumular floats
         _teamCapacityMap.forEach(metrics => {
-             metrics.capacity = Math.round(metrics.capacity * 10) / 10;
+             metrics.capacity = Number(metrics.capacity.toFixed(1));
+
         });
 
         const wrapper = document.createElement('div');
@@ -404,7 +408,7 @@ window.CapacityMapEngine = (function() {
                         eqContainer.innerHTML = '<div style="font-size:0.8rem;color:var(--ion-color-medium)">Sin equipos asignados.</div>';
                     }
 
-                    gpBadge.innerHTML = `<ion-icon name="people"></ion-icon> ${totalGPPersonas.count} HC (${Math.round(totalGPPersonas.capacity*10)/10} FTE)`;
+                    gpBadge.innerHTML = `<ion-icon name="people"></ion-icon> ${totalGPPersonas.count} HC (${Number(totalGPPersonas.capacity.toFixed(1))} FTE)`;
                     gpNode.appendChild(eqContainer);
                     gpContainer.appendChild(gpNode);
 
@@ -417,7 +421,7 @@ window.CapacityMapEngine = (function() {
                     gpContainer.innerHTML = '<div style="font-size:0.9rem;color:var(--ion-color-medium);padding:1rem;">No hay Grupos de Productos asignados.</div>';
                 }
 
-                ptBadge.innerHTML = `<ion-icon name="people"></ion-icon> ${totalPTPersonas.count} HC (${Math.round(totalPTPersonas.capacity*10)/10} FTE)`;
+                ptBadge.innerHTML = `<ion-icon name="people"></ion-icon> ${totalPTPersonas.count} HC (${Number(totalPTPersonas.capacity.toFixed(1))} FTE)`;
                 ptNode.appendChild(gpContainer);
                 ptContainer.appendChild(ptNode);
 
@@ -429,7 +433,7 @@ window.CapacityMapEngine = (function() {
                 ptContainer.innerHTML = '<div style="font-size:1rem;color:var(--ion-color-medium);padding:2rem;text-align:center;">No hay portafolios en esta Unidad.</div>';
             }
 
-            unBadge.innerHTML = `<ion-icon name="people"></ion-icon> ${totalUNPersonas.count} Headcount / ${Math.round(totalUNPersonas.capacity*10)/10} FTEs Activos`;
+            unBadge.innerHTML = `<ion-icon name="people"></ion-icon> ${totalUNPersonas.count} Headcount / ${Number(totalUNPersonas.capacity.toFixed(1))} FTEs Activos`;
             unNode.appendChild(ptContainer);
             wrapper.appendChild(unNode);
         });
