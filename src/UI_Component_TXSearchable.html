@@ -810,7 +810,16 @@ class TXSearchable extends HTMLElement {
                     inlineContainerNode.setAttribute('data-tx-state', 'flex');
                     if (inlineContainerNode.dataset.focused !== 'true') {
                         inlineContainerNode.dataset.focused = 'true';
-                        setTimeout(() => inlineContainerNode.querySelector('ion-searchbar')?.setFocus(), 100);
+                        requestAnimationFrame(() => {
+                            const searchbar = inlineContainerNode.querySelector('ion-searchbar');
+                            if (searchbar) {
+                                if (typeof searchbar.componentOnReady === 'function') {
+                                    searchbar.componentOnReady().then(el => el.setFocus());
+                                } else {
+                                    setTimeout(() => searchbar.setFocus(), 100);
+                                }
+                            }
+                        });
                     }
                 }
             } else {
@@ -861,10 +870,16 @@ class TXSearchable extends HTMLElement {
                     // Auto-focus de searchbar al transicionar a Inline abierto
                     if (inlineContainerNode.dataset.focused !== 'true') {
                         inlineContainerNode.dataset.focused = 'true';
-                        setTimeout(() => {
+                        requestAnimationFrame(() => {
                             const searchbar = inlineContainerNode.querySelector('ion-searchbar');
-                            if (searchbar) searchbar.setFocus();
-                        }, 100);
+                            if (searchbar) {
+                                if (typeof searchbar.componentOnReady === 'function') {
+                                    searchbar.componentOnReady().then(el => el.setFocus());
+                                } else {
+                                    setTimeout(() => searchbar.setFocus(), 100);
+                                }
+                            }
+                        });
                     }
                 }
                 if (inlineCounterNode) inlineCounterNode.textContent = hasItems ? `${this._selectedState.size} seleccionados` : 'Ninguno';
