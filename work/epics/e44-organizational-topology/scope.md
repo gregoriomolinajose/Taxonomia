@@ -18,7 +18,7 @@ Otorgar visibilidad centralizada sobre la composición de equipos, la ocupación
 | S44.2 | Extensión Grafo | M | Done | Extender Sys_Graph_Edges con metadata para guardar capacidad dedicada (%) sin corromper SCD-2. |
 | S44.3 | Mutación DataStore | S | Done | Fusionar Nombre+Apellido desde la Ingesta OnLoad para todas las vistas visuales de la aplicación. |
 | S44.4 | Shielding ABAC | M | Done | Implementar lógica de Field-Level Security para Rol y candado Workspace usando Engine_ABAC. |
-| S44.5 | Alertas Capacity Map | L | Pending | Refactor de UI_View_CapacityMap para pintar alarmas rojas en base a sumas topológicas (>100% y sin Roles). |
+| S44.5 | Alertas Capacity Map | L | Done | Refactor de UI_View_CapacityMap para pintar alarmas rojas en base a sumas topológicas (>100% y sin Roles). |
 | S44.6 | Refactor UX Búsqueda Inline | S | Done | Unificar el comportamiento Inline en TXSearchable para Single Select en lugar del popover flotante viejo. |
 | S44.7 | Reorganización Estructural Persona | S | Pending | Dividir en bloques lógicos y asignar layouts en Schema_Engine para la entidad Persona. |
 
@@ -51,7 +51,7 @@ Otorgar visibilidad centralizada sobre la composición de equipos, la ocupación
 - [x] S44.3 completado
 - [x] S44.4 completado
 - [x] S44.6 completado
-- [ ] Los líderes pueden entrar al Capacity Map y detectar equipos sin SM y gente saturada.
+- [x] Los líderes pueden entrar al Capacity Map y detectar equipos sin SM y gente saturada.
 - [ ] Epic retrospective done
 - [ ] Merged to `main`
 
