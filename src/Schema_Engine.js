@@ -352,7 +352,7 @@ const APP_SCHEMAS = {
       ...FIELD_TEMPLATES.AUDIT_FIELDS(),
       ...FIELD_TEMPLATES.VERSION_FIELD(),
       ...FIELD_TEMPLATES.ESTADO_FIELD(),
-      { name: "id_externo_workspace", type: "text", label: "ID Workspace (Ext)", required: true, width: 12, unique: true, readonly: true, helpText: "Identificador inmutable proveniente de la integración externa." },
+      { name: "id_externo_workspace", type: "text", label: "ID Workspace (Ext)", required: false, width: 12, unique: true, readonly: true, showInForm: false, helpText: "Generado auto. Se oculta del motor form ya que no requiere captura humana." },
       ...FIELD_TEMPLATES.NAME_FIELD("Nombre de Cargo"),
       { name: "personas_asignadas", type: "relation", relationType: "hijo", targetEntity: "Persona", graphEntity: "Sys_Graph_Edges", label: "Personas Asignadas", isTemporalGraph: true, graphEdgeType: "CARGO_PERSONA", valueField: "id_persona", labelField: "_nombre_completo", uiComponent: "searchable_multi", topologyCardinality: "1:N", width: 12 }
     ]
