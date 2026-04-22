@@ -358,8 +358,8 @@ const APP_SCHEMAS = {
     ]
   },
   Rol: {
-    uiConfig: { dashboardCard: { iconName: 'construct-outline', color: 'var(--ion-color-primary)' } },
-    metadata: { prefix: 'ROLE', showInMenu: true, order: 9, iconName: 'construct-outline', color: 'primary', label: 'Roles', titleField: 'nombre', idField: 'id_rol', fkField: null },
+    uiConfig: { dashboardCard: { iconName: 'shirt-outline', color: 'var(--ion-color-primary)' } },
+    metadata: { prefix: 'ROLE', showInMenu: true, order: 9, iconName: 'shirt-outline', color: 'primary', label: 'Roles', titleField: 'nombre', idField: 'id_rol', fkField: null },
     primaryKey: "id_rol",
     titleField: "nombre",
     fields: [
