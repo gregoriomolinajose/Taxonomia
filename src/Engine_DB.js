@@ -286,8 +286,12 @@ const Engine_DB = {
             });
 
             // Paso A.1: Pre-Validación Topológica Atómica (Evita Padre Huérfano)
-            const parentIdField = Object.keys(flatPayload).find(k => k.startsWith('id_')) || "id_dominio";
-            const tempParentPK = flatPayload[parentIdField];
+            // [S-Tier Fix] Use explicit Schema schema.primaryKey instead of naive regex matching
+            const parentIdField = schema.primaryKey || (typeof JS_SchemaUtils !== 'undefined' ? JS_SchemaUtils.getPrimaryKey(entityName) : 'id_' + entityName.toLowerCase());
+            let tempParentPK = flatPayload[parentIdField];
+            
+            // Fallback para IDs dinámicamente generados o injectados (si aplica)
+            if (!tempParentPK && payload.id) tempParentPK = payload.id;
             
             fields.forEach(f => {
                 if (f.type === 'relation' && nestedData[f.name] && f.isTemporalGraph && typeof Engine_Graph !== 'undefined') {
@@ -365,12 +369,16 @@ const Engine_DB = {
         const parentResults = this.save(entityName, flatPayload, config);
         
         // Determinar la PK extrayéndola del flatPayload
-        const parentIdField = Object.keys(flatPayload).find(k => k.startsWith('id_')) || "id_dominio";
-        const parentPK = flatPayload[parentIdField];
-
-        // [S5.6] Legacy Graph Edge SCD-2 Orchestrator eliminado (Delegado al bloque de relaciones)
-
-        // Paso C y D: Inyección de FK y Transacción Hijos
+        const parentIdField = schema ? schema.primaryKey : "id_dominio";
+        
+        // S-Tier Fix 2: Adapter_Sheets returns .pk as the Column Name (e.g. 'id_persona'), NOT the value.
+        // The value is in .val or .lexical_id.
+        let parentPK = parentResults.val || parentResults.lexical_id || flatPayload[parentIdField];
+        
+        // Mapeo exhaustivo en cascada en caso de adaptadores anidados
+        if (!parentPK && parentResults.adapter_results && parentResults.adapter_results.sheets) {
+            parentPK = parentResults.adapter_results.sheets.val || parentResults.adapter_results.sheets.lexical_id;
+        }
         const globalBatches = {};
         const globalCachesToBust = new Set();
         globalCachesToBust.add(entityName); // [FIX] Invalidate parent entity cache to prevent UI staleness and Job idempotency failure

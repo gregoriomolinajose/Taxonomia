@@ -205,9 +205,8 @@
                                                     if (cmpInput) {
                                                         if (typeof cmpInput.setValidatedValue === 'function') {
                                                             cmpInput.setValidatedValue(fetchedValue);
-                                                        } else if (cmpInput.tagName.includes('-SEARCHABLE') || cmpInput.tagName.includes('-RELATION')) {
-                                                            cmpInput.dataset.prefill = JSON.stringify([{ id_registro: fetchedValue }]);
-                                                            window.Schema_Utils && window.Schema_Utils.triggerNativeInject(cmpInput);
+                                                        } else {
+                                                            cmpInput.value = fetchedValue;
                                                         }
                                                     } else if (stdInput) {
                                                         // Fallback a Primitivos Estándar

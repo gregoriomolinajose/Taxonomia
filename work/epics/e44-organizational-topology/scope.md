@@ -49,9 +49,14 @@ Otorgar visibilidad centralizada sobre la composición de equipos, la ocupación
 
 **Epic complete:**
 - [x] S44.1 completado
+- [x] S44.2 completado
 - [x] S44.3 completado
 - [x] S44.4 completado
+- [x] S44.5 completado
 - [x] S44.6 completado
+- [x] S44.7 completado
+- [x] S44.8 completado
+- [x] S44.9 completado
 - [x] Los líderes pueden entrar al Capacity Map y detectar equipos sin SM y gente saturada.
 - [ ] Epic retrospective done
 - [ ] Merged to `main`

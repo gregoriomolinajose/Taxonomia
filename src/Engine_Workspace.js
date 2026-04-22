@@ -38,7 +38,17 @@ function resolverDirectorioWorkspace(queryEmail) {
     var dept = (user.organizations && user.organizations.length > 0) ? user.organizations[0].department : "";
     var orgName = (user.organizations && user.organizations.length > 0) ? user.organizations[0].name : "";
     var costCenter = (user.organizations && user.organizations.length > 0) ? user.organizations[0].costCenter : "";
-    var location = (user.locations && user.locations.length > 0) ? user.locations[0].deskCode : "";
+    
+    var locParts = [];
+    if (user.locations && user.locations.length > 0) {
+      var baseLoc = user.locations[0];
+      if (baseLoc.buildingId) locParts.push(baseLoc.buildingId);
+      if (baseLoc.area) locParts.push(baseLoc.area);
+      if (baseLoc.deskCode) locParts.push(baseLoc.deskCode);
+    }
+    var orgLocation = (user.organizations && user.organizations.length > 0) ? user.organizations[0].location : "";
+    var location = locParts.length > 0 ? locParts.join(" - ") : (orgLocation || "");
+    
     var avatar = user.thumbnailPhotoUrl || "";
     
     // Extracción de ID de Empleado y Líder
