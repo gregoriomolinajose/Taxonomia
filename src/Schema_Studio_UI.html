@@ -1,4 +1,4 @@
-﻿<!-- [E31-S31.5/S31.6] Schema_Studio_UI.html
+<!-- [E31-S31.5/S31.6] Schema_Studio_UI.html
      Schema Governance Config Studio — Viewer + Blueprint Composer (Code Export)
      Acceso: SUPER_ADMIN exclusivo — revelado desde icono de perfil → Sistema
      Inyectado via: <?!= include('Schema_Studio_UI'); ?>
@@ -104,6 +104,17 @@
       ">
         <ion-icon name="hardware-chip-outline"></ion-icon> DB Health
       </button>
+      
+      <!-- [S44.11] Workspace Sync Trigger -->
+      <button class="ss-tab" id="ss-btn-sync-ws" onclick="window.SchemaStudio.triggerWsSync()" style="
+        padding:10px 20px;border:none;background:none;cursor:pointer;
+        font-weight:600;font-size:0.85rem;color:var(--ion-color-primary);
+        border-bottom:2px solid transparent;margin-bottom:-1px;
+        display:flex;align-items:center;gap:6px;transition:all 0.2s;
+      " title="Forzar Sincronización Manual de Personas contra Directorio Workspace">
+        <ion-icon name="sync-circle-outline"></ion-icon> Sincronizar Workspace
+      </button>
+
       <!-- [E31-S31.6] Blueprint Composer Tab -->
       <button class="ss-tab" data-tab="composer" onclick="window.SchemaStudio.switchTab('composer')" style="
         padding:10px 20px;border:none;background:none;cursor:pointer;
@@ -1913,6 +1924,33 @@
     // Tab-specific exports [Debug-fix]
     copyTemplatesGas: copyTemplatesGas,
     copyPresetsGas:   copyPresetsGas,
+    
+    // [S44.11] Workspace Sync
+    triggerWsSync: function() {
+      if (confirm('¿Ejecutar Job Sincronizador de Workspace? Esto consumirá cuotas de AdminDirectory.')) {
+        if (typeof DataAPI !== 'undefined') {
+            const btn = document.getElementById('ss-btn-sync-ws');
+            if(btn) btn.innerHTML = '<ion-spinner name="dots"></ion-spinner> Sincronizando...';
+            DataAPI.call('runWorkspaceSyncJob', { manual: true })
+              .then(res => {
+                  var msg = "Sincronización finalizada.\n\n" + 
+                            "Archivo: " + (res.db_id || 'N/A') + "\n" +
+                            "Registros Evaluados: " + (res.evaluados || 0) + "\n" +
+                            "Registros Actualizados: " + (res.actualizados || 0) + "\n" +
+                            "Registros Sin Resultados: " + (res.sin_resultados || 0) + "\n\n" +
+                            "Info del Motor: " + (res.message || 'Sin mensaje');
+
+                  alert(msg);
+                  if(btn) btn.innerHTML = '<ion-icon name="sync-circle-outline"></ion-icon> Sincronizar Workspace';
+              })
+              .catch(err => {
+                  alert("Error en Job: " + err.message);
+                  if(btn) btn.innerHTML = '<ion-icon name="sync-circle-outline"></ion-icon> Sincronizar Workspace';
+              });
+        }
+      }
+    },
+
     // Template Composer [S31.11]
     composerTemplateSelect:     composerTemplateSelect,
     composerTemplateAddField:   composerTemplateAddField,

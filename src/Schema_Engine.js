@@ -305,39 +305,56 @@ const APP_SCHEMAS = {
     topologyRules: TOPOLOGY_PRESETS.JERARQUICA_PERSONA,
     fields: [
       { name: "id_persona", type: "hidden", primaryKey: true },
-      { name: "email", type: "email", primaryKey: false, label: "Correo Corporativo", required: true, width: 12, validators: ["regex:^[a-zA-Z0-9._%+-]+@(coppel\\.com|bancoppel\\.com|kairosds\\.com|nttdata\\.com)$"], triggers_workspace_resolve: true, unique: true },
       ...FIELD_TEMPLATES.SYSTEM_FIELDS(),
       ...FIELD_TEMPLATES.AUDIT_FIELDS(),
       ...FIELD_TEMPLATES.VERSION_FIELD(),
       ...FIELD_TEMPLATES.ESTADO_FIELD(),
       
-      { name: "separator_1", type: "divider", label: "Datos Personales y Contacto", width: 12 },
-      { name: "avatar", type: "avatar", label: "Fotografía", width: 12, readonly: true },
+      { name: "separator_1", type: "divider", label: "Datos Personales", icon: "person-outline", width: 12 },
       { name: "nombre", type: "text", label: "Nombre(s)", required: true, width: 6, validators: ["minLength:2"], triggers_workspace_resolve: true },
       { name: "apellidos", type: "text", label: "Apellidos", required: true, width: 6, validators: ["minLength:2"] },
-      { name: "telefono", type: "tel", label: "Teléfono", required: false, width: 6 },
-      { name: "numero_empleado", type: "number", label: "Número de Empleado", required: true, width: 12, validators: ["regex:^\\d{8}$"], unique: true },
+      
+      { name: "separator_2", type: "divider", label: "Datos de Contacto", icon: "mail-outline", width: 12 },
+      { name: "email", type: "email", primaryKey: false, label: "Correo Corporativo", required: true, width: 12, validators: ["regex:^[a-zA-Z0-9._%+-]+@(coppel\\.com|bancoppel\\.com|kairosds\\.com|nttdata\\.com)$"], triggers_workspace_resolve: true, unique: true },
+      { name: "telefono", type: "tel", label: "Teléfono", required: false, width: 12 },
 
-      
-      { name: "separator_2", type: "divider", label: "Datos Contractuales y Logísticos", width: 12 },
-      { name: "unidad_negocio", type: "lookup", lookupTarget: "Unidad_Negocio", label: "Unidad de Negocio", required: true, width: 12 },
-      { name: "departamento", type: "text", label: "Departamento", required: true, width: 6 },
-      { name: "centro_costo", type: "text", label: "Centro de Costos", required: true, width: 6 },
-      { name: "cargo", type: "text", label: "Cargo Oficial", required: true, width: 6 },
-      { name: "proveedor", type: "text", label: "Proveedor", required: true, width: 6, dependencies: {"showIf": {"field": "esquema", "value": "Externo"}} },
-      { name: "modalidad", type: "select", label: "Modalidad", options: ["Presencial", "Virtual", "Híbrido"], required: true, width: 6 },
-      { name: "ubicacion", type: "text", label: "Ubicación Geográfica", required: false, width: 6 },
-      { name: "herradura", type: "text", label: "Herradura", required: true, width: 6 },
-      { name: "esquema", type: "select", label: "Esquema Laboral", options: ["Interno", "Externo"], required: true, width: 6 },
-      
-      
-      { name: "separator_3", type: "divider", label: "Organización y Agilidad", width: 12 },
-      { name: "equipo", type: "relation", relationType: "padre", targetEntity: "Equipo", graphEntity: "Sys_Graph_Edges", label: "Equipo Asignado", isTemporalGraph: true, graphEdgeType: "PERSONA_EQUIPO", required: false, width: 12, uiComponent: "select_single", valueField: "id_equipo", labelField: "nombre" },
-      { name: "roles_asignados", type: "relation", relationType: "padre", targetEntity: "Rol", graphEntity: "Sys_Graph_Edges", label: "Roles Organizacionales", isTemporalGraph: true, graphEdgeType: "PERSONA_ROL", valueField: "id_rol", labelField: "nombre", uiComponent: "searchable_multi", topologyCardinality: "1:N", width: 12 },
+      { name: "separator_4", type: "divider", label: "Datos Agilidad", icon: "git-network-outline", width: 12 },
+      { name: "roles_asignados", type: "relation", relationType: "padre", targetEntity: "Rol", graphEntity: "Sys_Graph_Edges", label: "Roles Organizacionales", isTemporalGraph: true, graphEdgeType: "PERSONA_ROL", valueField: "id_rol", labelField: "nombre", uiComponent: "searchable_multi", topologyCardinality: "M:N", width: 12 },
+      { name: "equipo", type: "relation", relationType: "padre", targetEntity: "Equipo", graphEntity: "Sys_Graph_Edges", label: "Equipos Asignados", isTemporalGraph: true, graphEdgeType: "PERSONA_EQUIPO", required: false, width: 12, uiComponent: "searchable_multi", topologyCardinality: "M:N", valueField: "id_equipo", labelField: "nombre" },
       { name: "porcentaje_asignacion", type: "select", label: "Asignación", options: ["Full Time", "Part Time", "Por Proyecto"], width: 12 },
-      { name: "separator_4", type: "divider", label: "Grafo de Liderazgo y Accesos", width: 12 },
+
+      { name: "separator_3", type: "divider", label: "Datos Empresariales", icon: "business-outline", width: 12 },
+      { name: "unidad_negocio", type: "lookup", lookupTarget: "Unidad_Negocio", label: "Unidad de Negocio", required: true, width: 12 },
+      { name: "departamento", type: "text", label: "Departamento", required: true, width: 12 },
       { name: "lider_directo", type: "relation", relationType: "padre", targetEntity: "Persona", graphEntity: "Sys_Graph_Edges", valueField: "email", labelField: "email", topologyCardinality: "1:N", isTemporalGraph: true, graphEdgeType: "PERSONA_LIDER_DIRECTO", label: "Líder Directo", required: false, width: 12 },
-      { name: "id_rol", type: "select", label: "Rol de Autorización", required: false, width: 12, lookupSource: "getSysRolesOptions", abacRule: { action: 'update', target: 'Sys_Permissions' } }
+      { name: "id_cargo", type: "relation", relationType: "padre", targetEntity: "Cargo", graphEntity: "Sys_Graph_Edges", label: "Cargo Oficial", isTemporalGraph: true, topologyCardinality: "1:N", graphEdgeType: "CARGO_PERSONA", uiComponent: "select_single", valueField: "id_cargo", labelField: "nombre", required: true, width: 12 },
+      { name: "cargo__legacy", type: "hidden", label: "Cargo Oficial Workspace (Plano)" },
+      { name: "centro_costo", type: "text", label: "Centro de Costos", required: true, width: 6 },
+      { name: "numero_empleado", type: "number", label: "Número de Empleado", required: true, width: 6, validators: ["regex:^\\d{8}$"], unique: true },
+      { name: "modalidad", type: "select", label: "Modalidad", options: ["Presencial", "Virtual", "Híbrido"], required: true, width: 6 },
+      { name: "esquema", type: "select", label: "Esquema Laboral", options: ["Interno", "Externo"], required: true, width: 6 },
+      { name: "proveedor", type: "text", label: "Empresa Contratante", required: true, width: 6 },
+      { name: "ubicacion", type: "text", label: "Ubicación Geográfica", required: false, width: 12 },
+      
+      { name: "separator_5", type: "divider", label: "Control de Accesos (Admin)", width: 12, abacRule: { action: 'update', target: 'Sys_Permissions' } },
+      { name: "id_rol", type: "select", label: "Rol de Autorización", required: false, width: 12, lookupSource: "getSysRolesOptions", abacRule: { action: 'update', target: 'Sys_Permissions' } },
+      { name: "workspace_sync_status", type: "hidden", label: "Estado Sincronización WS" }
+    ]
+  },
+  Cargo: {
+    uiConfig: { dashboardCard: { iconName: 'briefcase-outline', color: 'var(--ion-color-secondary)' } },
+    metadata: { prefix: 'CARG', showInMenu: true, order: 8, iconName: 'briefcase-outline', color: 'secondary', label: 'Cargos y Posiciones', titleField: 'nombre', idField: 'id_cargo', fkField: null },
+    primaryKey: "id_cargo",
+    titleField: "nombre",
+    fields: [
+      { name: "id_cargo", type: "hidden", primaryKey: true },
+      ...FIELD_TEMPLATES.SYSTEM_FIELDS(),
+      ...FIELD_TEMPLATES.AUDIT_FIELDS(),
+      ...FIELD_TEMPLATES.VERSION_FIELD(),
+      ...FIELD_TEMPLATES.ESTADO_FIELD(),
+      { name: "id_externo_workspace", type: "text", label: "ID Workspace (Ext)", required: true, width: 12, unique: true, readonly: true, helpText: "Identificador inmutable proveniente de la integración externa." },
+      ...FIELD_TEMPLATES.NAME_FIELD("Nombre de Cargo"),
+      { name: "personas_asignadas", type: "relation", relationType: "hijo", targetEntity: "Persona", graphEntity: "Sys_Graph_Edges", label: "Personas Asignadas", isTemporalGraph: true, graphEdgeType: "CARGO_PERSONA", valueField: "id_persona", labelField: "_nombre_completo", uiComponent: "searchable_multi", topologyCardinality: "1:N", width: 12 }
     ]
   },
   Rol: {
@@ -353,7 +370,7 @@ const APP_SCHEMAS = {
       ...FIELD_TEMPLATES.ESTADO_FIELD(),
       ...FIELD_TEMPLATES.NAME_FIELD("Nombre de Rol"),
       { name: "descripcion", type: "textarea", label: "Descripción", required: false, width: 12, showInList: false },
-      { name: "personas_asignadas", type: "relation", relationType: "hijo", targetEntity: "Persona", graphEntity: "Sys_Graph_Edges", label: "Personas Asignadas", isTemporalGraph: true, graphEdgeType: "PERSONA_ROL", virtual: true, uiBehavior: "subgrid", width: 12 }
+      { name: "personas_asignadas", type: "relation", relationType: "hijo", targetEntity: "Persona", graphEntity: "Sys_Graph_Edges", label: "Personas Asignadas", isTemporalGraph: true, graphEdgeType: "PERSONA_ROL", valueField: "id_persona", labelField: "_nombre_completo", uiComponent: "searchable_multi", topologyCardinality: "M:N", width: 12 }
     ]
   },
   Sys_Graph_Edges: {

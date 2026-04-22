@@ -132,16 +132,16 @@ const Engine_Graph = {
             // 4. Orphan Stealing Check & O(1) Extraction
             // [S27.4/Rx] Enforce orphan stealing globally for EXCLUSIVE parents (replaces passive 1:N literal check)
             if (rules.enforceSingleParent || rules.topologyType === "JERARQUICA_ESTRICTA" || rules.topologyType === "JERARQUICA_ORGANICA") {
-                const oldParents = parentsOf[childId] || [];
-                oldParents.forEach(oldParent => {
+                const childEdges = edgesOf[childId] || [];
+                childEdges.forEach(oldEdge => {
+                    if (rules.edgeType && oldEdge.tipo_relacion !== rules.edgeType) return;
+                    
+                    const oldParent = String(oldEdge.id_nodo_padre);
                     if (oldParent !== parentId) {
                         if (rules.allowOrphanStealing === false) {
                             throw new Error(`[Topology Error] Exclusividad de Orfandad: El nodo ${childId} ya pertenece a ${oldParent} y el robo de nodos está deshabilitado.`);
                         }
-                        const childEdges = edgesOf[childId] || [];
-                        // Ensure we only steal edges of the SAME type
-                        const oldEdge = childEdges.find(e => String(e.id_nodo_padre) === oldParent && (!rules.edgeType || e.tipo_relacion === rules.edgeType));
-                        if (oldEdge) result.stolenEdges.push(oldEdge);
+                        result.stolenEdges.push(oldEdge);
                     }
                 });
                 // Wipe arrays so we don't double loop inside the same array iteration
