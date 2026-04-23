@@ -45,7 +45,7 @@
                         
                         const avatar = document.createElement('ion-avatar');
                         avatar.slot = 'start';
-                        if (dto.avatar) {
+                        if (dto.avatar && String(dto.avatar).startsWith('http')) {
                             const img = document.createElement('img');
                             img.src = dto.avatar;
                             avatar.appendChild(img);

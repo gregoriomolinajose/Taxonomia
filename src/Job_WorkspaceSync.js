@@ -20,7 +20,7 @@ function runWorkspaceSyncJob(params) {
             throw new Error("Librerías Core no disponibles. El motor no se cargó.");
         }
 
-        var dbConfig = { SPREADSHEET_ID_DB: '' };
+        var dbConfig = { SPREADSHEET_ID_DB: '', useSheets: true };
         try {
             var envStr = PropertiesService.getScriptProperties().getProperty('ENV_CONFIG');
             if (envStr) {
@@ -96,6 +96,57 @@ function runWorkspaceSyncJob(params) {
         Logger.log("[Job Sync] Procesando lote de " + batch.length + " Personas (Restantes: " + (candidates.length - batch.length) + ")");
 
         // 4. Invocación de Capa ETL (Reutilización de Lógica de Ingesta S44.10 / KISS)
+                // 4A. Pre-Procesamiento de Workspace (Mapeo On-Demand)
+        if (typeof resolverDirectorioWorkspace !== 'undefined') {
+            const isBlank = (val) => (!val || String(val).trim() === '');
+            batch.forEach(payload => {
+                const lacksName = isBlank(payload.nombre);
+                const lacksCargo = isBlank(payload.id_cargo) && isBlank(payload.cargo);
+                const lacksNum = isBlank(payload.numero_empleado);
+                const lacksAvatar = isBlank(payload.avatar);
+                const lacksDept = isBlank(payload.departamento);
+                const lacksCC = isBlank(payload.centro_costo);
+                const lacksUbi = isBlank(payload.ubicacion);
+                const lacksLider = isBlank(payload.lider_directo);
+                
+                const isAnyFieldMissing = (lacksName || lacksCargo || lacksNum || lacksAvatar || lacksDept || lacksCC || lacksUbi || lacksLider);
+                
+                const status = String(payload.workspace_sync_status || '').trim();
+                const wantsSync = (status === '' || status === 'pending' || status === 'failed');
+                
+                if (payload.email && (wantsSync || isAnyFieldMissing)) {
+                    try {
+                        const wsData = resolverDirectorioWorkspace(payload.email);
+                        if (wsData && wsData.__status !== 'DISABLED' && wsData.__status !== 'ERROR') {
+                            Object.keys(wsData).forEach(k => {
+                                if (isBlank(payload[k])) {
+                                    payload[k] = wsData[k];
+                                }
+                            });
+                            
+                            // S44.11: Relleno Obligatorio '---' for failing/hidden fields
+                            const criticalFields = ['nombre', 'apellidos', 'telefono', 'departamento', 'centro_costo', 'cargo', 'ubicacion', 'numero_empleado', 'lider_directo', 'avatar'];
+                            criticalFields.forEach(f => {
+                                if (isBlank(payload[f])) {
+                                    payload[f] = '---';
+                                }
+                            });
+                            
+                            payload.workspace_sync_status = 'synced';
+                            if (typeof Logger !== 'undefined') Logger.log(`[Job Sync] Persona hidratada con Fallbacks: ${payload.email}`);
+                        } else if (wsData && wsData.__status === 'ERROR') {
+                            payload.workspace_sync_status = 'failed';
+                        }
+                    } catch(e) {
+                        payload.workspace_sync_status = 'failed';
+                    }
+                } else {
+                    payload.workspace_sync_status = 'synced';
+                }
+            });
+        }
+
+        // 4B. Invocación de Capa ETL (Resolución de UUIDs Cargo e Identidad)
         var hydrationResult = Engine_ETL.hydrateAndDeduplicate('Persona', batch);
 
         // 5. Escritura Activa y Creación de Grafos (M:N)
@@ -123,31 +174,7 @@ function runWorkspaceSyncJob(params) {
                     throw orchestrateError;
                 }
                 
-                // [HOTFIX] Hard Fallback for V8/Adapter_Sheets sync mismatch
-                try {
-                    if (saveResult && saveResult.adapter_results && saveResult.adapter_results.rowIndex) {
-                        var _ssId = dbConfig.SPREADSHEET_ID_DB || (typeof CONFIG !== 'undefined' ? CONFIG.SPREADSHEET_ID_DB : null);
-                        if (_ssId) {
-                            var _sheet = SpreadsheetApp.openById(_ssId).getSheetByName('DB_Persona');
-                            if (_sheet) {
-                                var _headers = _sheet.getRange(1, 1, 1, _sheet.getLastColumn()).getValues()[0];
-                                var _colIdx = -1;
-                                for (var c = 0; c < _headers.length; c++) {
-                                    if (String(_headers[c]).trim().toLowerCase() === 'workspace_sync_status') {
-                                        _colIdx = c + 1;
-                                        break;
-                                    }
-                                }
-                                if (_colIdx > -1) {
-                                    _sheet.getRange(saveResult.adapter_results.rowIndex, _colIdx).setValue(pToSave.workspace_sync_status);
-                                    if (typeof Logger !== 'undefined') Logger.log("[HOTFIX] Forced workspace_sync_status write at Row: " + saveResult.adapter_results.rowIndex + " Col: " + _colIdx);
-                                }
-                            }
-                        }
-                    }
-                } catch(fallbackError) {
-                    if (typeof Logger !== 'undefined') Logger.log("[HOTFIX] Failed fallback write for " + pToSave.email + ": " + fallbackError.message);
-                }
+
 
                 if (pToSave.workspace_sync_status === 'synced') actualizados++;
                 if (pToSave.workspace_sync_status === 'failed') fallidos++;
@@ -179,3 +206,4 @@ function runWorkspaceSyncJob(params) {
         return { status: 'ERROR', message: e.message };
     }
 }
+

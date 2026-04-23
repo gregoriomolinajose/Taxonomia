@@ -183,59 +183,21 @@ var Engine_ETL = (function() {
        if (entityName === 'Persona') {
            try {
                if (typeof Engine_DB !== 'undefined') {
-                   const allCargos = Engine_DB.read('Cargo') || [];
-                   allCargos.forEach(c => {
-                       if (c.id_cargo) {
-                           if (c.nombre) cargoExternoMap[String(c.nombre).trim().toLowerCase()] = c.id_cargo;
-                           if (c.id_externo_workspace) cargoExternoMap[String(c.id_externo_workspace).trim().toLowerCase()] = c.id_cargo;
-                       }
-                   });
+                    const allCargos = Engine_DB.read('Cargo') || [];
+                    allCargos.forEach(c => {
+                        if (c.id_cargo) {
+                            if (c.nombre) cargoExternoMap[String(c.nombre).replace(' (Por definir)', '').trim().toLowerCase()] = c.id_cargo;
+                            if (c.id_externo_workspace) cargoExternoMap[String(c.id_externo_workspace).trim().toLowerCase()] = c.id_cargo;
+                        }
+                    });
                }
            } catch(e) {
-               if (typeof Logger !== 'undefined') Logger.log("Error precargando diccionario de Cargos: " + e.message);
+               if (typeof Logger !== 'undefined') Logger.log("Error fatal precargando diccionario de Cargos: " + e.message);
+               throw new Error("Fail-Fast: Diccionario de Cargos inaccesible. Sincronización abortada para prevenir duplicidad. " + e.message);
            }
        }
 
        items.forEach(payload => {
-           // A. Re-hidratación Silenciosa al vuelo para Workspace (S15.1 + S44.11)
-            if (entityName === 'Persona' && typeof resolverDirectorioWorkspace !== 'undefined') {
-                const lacksName = (!payload.nombre || String(payload.nombre).trim() === '');
-                const lacksCargo = (!payload.id_cargo || String(payload.id_cargo).trim() === '');
-                const lacksNum = (!payload.numero_empleado || String(payload.numero_empleado).trim() === '');
-                const lacksAvatar = (!payload.avatar || String(payload.avatar).trim() === '');
-                const isAnyFieldMissing = (lacksName || lacksCargo || lacksNum || lacksAvatar);
-                
-                const wantsSync = !payload.workspace_sync_status || payload.workspace_sync_status === 'pending' || payload.workspace_sync_status === 'failed';
-                
-                // Solo revaluamos el estado si nos piden Sync (falta o pending).
-                if (payload.email && wantsSync) {
-                    if (isAnyFieldMissing) {
-                        try {
-                           const wsData = resolverDirectorioWorkspace(payload.email);
-                           if (wsData && wsData.__status !== "DISABLED" && wsData.__status !== "ERROR") {
-                               Object.keys(wsData).forEach(k => {
-                                   if (payload[k] === undefined || payload[k] === null || payload[k] === '') {
-                                       payload[k] = wsData[k];
-                                   }
-                               });
-                               payload.workspace_sync_status = 'synced';
-                               if (typeof Logger !== 'undefined') Logger.log(`[Batch Hook] Persona Re-Hidratada Automáticamente: ${payload.email}`);
-                           } else if (wsData && wsData.__status === "ERROR") {
-                               payload.workspace_sync_status = 'failed';
-                           }
-                       } catch(e) {
-                            // Fallback silencioso: no truncar el batch si Workspace API rate-limitea
-                            payload.workspace_sync_status = 'failed';
-                           if (typeof Logger !== 'undefined') Logger.log(`[Batch Hook] Ignorando error WS para ${payload.email}: ${e.message}`);
-                       }
-                    } else {
-                        // Optimización: Si Ninguno está vacío, marcamos como sincronizado sin gastar cuota de API ni retrasar el Job.
-                        payload.workspace_sync_status = 'synced';
-                        if (typeof Logger !== 'undefined') Logger.log(`[Batch Hook] Persona ${payload.email} auto-validada sin llamar WS API (datos completos).`);
-                    }
-                }
-            }
-
            // [S44.9] Mapeo Automático de Ingesta (Cargo Workspace Interceptor)
            if (entityName === 'Persona') {
                const rawCargo = payload.cargo !== undefined ? payload.cargo : payload.id_cargo;
