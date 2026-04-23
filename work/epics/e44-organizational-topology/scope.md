@@ -24,7 +24,7 @@ Otorgar visibilidad centralizada sobre la composición de equipos, la ocupación
 | S44.8 | Entidad Cargo (Diccionario Vivo) | S | Done | Extraer cargo a nueva entidad resolviendo conflicto de workspace sync con schemas. |
 | S44.9 | Mapeo Automático Ingesta | M | Done | Implementar Workspace Interceptor para autoprovisionar o enlazar ID interno de Cargo mediante diccionarios en cache O(1). |
 | S44.10 | Migración Masiva Lógica Roles | M | In Progress | Migración Masiva CSV del viejo select rol_agil hacia los nuevos Pointers topológicos de Rol. |
-| S44.11 | Sincronización Programada y On-Demand (Workspace Sync) | M | Pending |  Implementar Time-Driven triggers para la base de datos completa. |
+| S44.11 | Sincronización On-Demand (Workspace Sync) | M | Done | Implementar endpoint on-demand ligado a UI_Admin para rescate de Workspace data. |
 **Total:** 9 stories
 
 ## Scope
@@ -59,6 +59,8 @@ Otorgar visibilidad centralizada sobre la composición de equipos, la ocupación
 - [x] S44.7 completado
 - [x] S44.8 completado
 - [x] S44.9 completado
+- [ ] S44.10 completado
+- [x] S44.11 completado
 - [x] Los líderes pueden entrar al Capacity Map y detectar equipos sin SM y gente saturada.
 - [ ] Epic retrospective done
 - [ ] Merged to `main`
