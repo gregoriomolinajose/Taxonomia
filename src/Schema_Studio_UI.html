@@ -1958,17 +1958,39 @@
                           "Registros Sin Resultados: " + acc.sin_resultados + "\n\n" +
                           "Info del Motor: " + (res.message || 'Sin mensaje');
 
-                if (window.DataStore) {
-                    window.DataStore.invalidate('Persona');
-                    window.DataStore.invalidate('Cargo');
+                if (window.DataStore && window.DataAPI) {
+                    if (btn) btn.innerHTML = '<ion-spinner name="crescent"></ion-spinner> Refrescando memoria local...';
+                    
+                    // Disparar hidratación silenciosa paralela (JIT Cache Refresh)
+                    Promise.all([
+                        window.DataAPI.call('getInitialPayload', 'Persona'),
+                        window.DataAPI.call('getInitialPayload', 'Cargo')
+                    ]).then(payloads => {
+                        ['Persona', 'Cargo'].forEach((entity, idx) => {
+                            const raw = payloads[idx];
+                            const res = typeof raw === 'string' ? JSON.parse(raw) : raw;
+                            if (res && res.status === 'success') {
+                                const rows = window.Schema_Utils.inflateTuples(res.data);
+                                window.DataStore.set(entity, rows);
+                                if (window.AppEventBus) window.AppEventBus.publish('DATA::UPDATED', { entityKey: entity });
+                            }
+                        });
+                        
+                        alert(msg);
+                        if (btn) btn.innerHTML = '<ion-icon name="sync-circle-outline"></ion-icon> Sincronizar Workspace';
+                    }).catch(err => {
+                        console.error('[Sync] Error refrescando caché local', err);
+                        alert(msg + "\\n\\n(Nota: Haz un refresh manual F5 para visualizar los cambios.)");
+                        if (btn) btn.innerHTML = '<ion-icon name="sync-circle-outline"></ion-icon> Sincronizar Workspace';
+                    });
+                } else {
+                    if (window.DataStore) {
+                        window.DataStore.invalidate('Persona');
+                        window.DataStore.invalidate('Cargo');
+                    }
+                    alert(msg);
+                    if(btn) btn.innerHTML = '<ion-icon name="sync-circle-outline"></ion-icon> Sincronizar Workspace';
                 }
-                if (window.AppEventBus) {
-                    window.AppEventBus.publish('DATA::UPDATED', { entityKey: 'Persona' });
-                    window.AppEventBus.publish('DATA::UPDATED', { entityKey: 'Cargo' });
-                }
-
-                alert(msg);
-                if(btn) btn.innerHTML = '<ion-icon name="sync-circle-outline"></ion-icon> Sincronizar Workspace';
             })
             .catch(err => {
                 alert("Error en Job: " + err.message);

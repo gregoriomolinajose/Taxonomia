@@ -55,10 +55,32 @@ window.Schema_Utils = (function () {
         return "N/A";
     }
 
+    /**
+     * Infla un payload de red compacto (tuplas) a una matriz de objetos literales (H10 - Deduplication).
+     * @param {Object} responseData - Objeto con {headers: [...], rows: [...]} o un array simple.
+     * @returns {Array<Object>} Arreglo de objetos hidratados.
+     */
+    function inflateTuples(responseData) {
+        if (!responseData) return [];
+        if (responseData.headers && Array.isArray(responseData.rows)) {
+            const headers = responseData.headers;
+            return responseData.rows.map(tuple => {
+                const obj = {};
+                headers.forEach((h, i) => obj[h] = tuple[i]);
+                return obj;
+            });
+        }
+        if (Array.isArray(responseData)) {
+            return responseData;
+        }
+        return [];
+    }
+
     return {
         getPrimaryKey,
         getSemanticTitle,
-        getAvatarInitials
+        getAvatarInitials,
+        inflateTuples
     };
 
 })();

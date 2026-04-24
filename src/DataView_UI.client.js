@@ -173,17 +173,8 @@
                     window._LOOKUP_DATA = response.lookups || {};
                     
                     // Inflar Tuplas a Objetos (Data Compression) si vienen en formato tupla
-                    let rows = [];
-                    if (response.data && response.data.headers && response.data.rows) {
-                        const headers = response.data.headers;
-                        rows = response.data.rows.map(tuple => {
-                            const obj = {};
-                            headers.forEach((h, i) => obj[h] = tuple[i]);
-                            return obj;
-                        });
-                    } else if (response.data && Array.isArray(response.data)) {
-                        rows = response.data;
-                    }
+                    // Inflar Tuplas a Objetos (Data Compression)
+                    const rows = window.Schema_Utils.inflateTuples(response.data);
 
                     // Store in Frontend Cache for 0.0s subsequent transitions
                     if (window.DataStore) {

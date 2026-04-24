@@ -343,8 +343,8 @@ const APP_SCHEMAS = {
     ]
   },
   Cargo: {
-    uiConfig: { dashboardCard: { iconName: 'briefcase-outline', color: 'var(--ion-color-secondary)' } },
-    metadata: { prefix: 'CARG', showInMenu: true, order: 8, iconName: 'briefcase-outline', color: 'secondary', label: 'Cargos y Posiciones', titleField: 'nombre', idField: 'id_cargo', fkField: null },
+    uiConfig: { dashboardCard: { iconName: 'id-card-outline', color: 'var(--ion-color-tertiary)' } },
+    metadata: { prefix: 'CARG', showInMenu: true, order: 8, iconName: 'id-card-outline', color: 'tertiary', label: 'Cargos y Posiciones', titleField: 'nombre', idField: 'id_cargo', fkField: null },
     primaryKey: "id_cargo",
     titleField: "nombre",
     fields: [

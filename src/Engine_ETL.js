@@ -183,7 +183,8 @@ var Engine_ETL = (function() {
        if (entityName === 'Persona') {
            try {
                if (typeof Engine_DB !== 'undefined') {
-                    const allCargos = Engine_DB.read('Cargo') || [];
+                    const cargoList = Engine_DB.list('Cargo', 'objects');
+                    const allCargos = (cargoList && cargoList.rows) ? cargoList.rows : [];
                     allCargos.forEach(c => {
                         if (c.id_cargo) {
                             if (c.nombre) cargoExternoMap[String(c.nombre).replace(' (Por definir)', '').trim().toLowerCase()] = c.id_cargo;
@@ -208,7 +209,7 @@ var Engine_ETL = (function() {
                         payload.id_cargo = cargoExternoMap[normalizedKey];
                     } else if (!String(payload.id_cargo || '').startsWith('CARG-')) {
                         if (!createdCargosCache[normalizedKey]) {
-                            const tempCargoId = "CARG-" + (Math.random().toString(36).substring(2, 10));
+                            const tempCargoId = "CARG-" + (Math.random().toString(36).substring(2, 10).toUpperCase());
                             batchCargosToCreate.push({
                                 id_cargo: tempCargoId,
                                 nombre: rawKey + " (Por definir)",
