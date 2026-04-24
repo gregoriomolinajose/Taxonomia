@@ -760,13 +760,27 @@
                                             if (window.UI_ETL_Modal && window.UI_ETL_Modal.updateProgress) {
                                                 window.UI_ETL_Modal.updateProgress(chunkIndex, totalChunks);
                                             }
-                                        }).then(() => {
-                                            modal.dismiss();
+                                        }).then((metrics) => {
                                             if (window.DataStore) window.DataStore.set(entity, null); // Invocar Soft-Reload
-                                            _showToast(`¡Importación Nativa de ${res.data.length} registros finalizada!`, 'success');
+                                            
+                                            // Fallback if metrics not returned correctly
+                                            const m = metrics || { success: res.data.length, duplicate: 0, error: 0 };
+                                            
+                                            if (window.UI_ETL_Modal && window.UI_ETL_Modal.showResults) {
+                                                window.UI_ETL_Modal.showResults(m);
+                                            } else {
+                                                // Fallback si no está el método
+                                                modal.dismiss();
+                                                alert(`Resumen:\n✅ ${m.success || 0} satisfactorios\n⚠️ ${m.duplicate || 0} ya existentes\n❌ ${m.error || 0} no realizados`);
+                                            }
+                                            
+                                            // Refrescar UI automáticamente
+                                            setTimeout(() => {
+                                                if (window.AppEventBus) window.AppEventBus.publish('DATASTORE::CHANGED', { entityKey: entity });
+                                            }, 500);
                                         }).catch(err => {
                                             console.error('[Chunker Error]', err);
-                                            _showToast(`Fallo crítico inyectando lote: ${err.message}`, 'danger');
+                                            alert(`Error general de procesamiento:\n${err.message}`);
                                         });
                                     } else {
                                         modal.dismiss();

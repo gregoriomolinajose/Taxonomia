@@ -91,15 +91,65 @@
             const CHUNK_SIZE = 50; 
             const totalChunks = Math.ceil(parsedData.length / CHUNK_SIZE);
             
+            let accumulatedFeedback = [];
+            let metrics = { success: 0, duplicate: 0, error: 0 };
+            let currentSheetId = null;
+            
             for (let i = 0; i < totalChunks; i++) {
                 const chunk = parsedData.slice(i * CHUNK_SIZE, (i + 1) * CHUNK_SIZE);
                 if (progressCallback) progressCallback(i + 1, totalChunks, false);
                 console.log(`[ETL Chunker] Enviando Lote ${i + 1} de ${totalChunks} (${chunk.length} filas)...`);
-                await window.DataAPI.call('bulkInsert', entityName, chunk);
+                
+                // Extraemos sheetId para el writeback (todas las filas de un lote provienen del mismo sheet)
+                if (!currentSheetId && chunk.length > 0 && chunk[0]._sheetId) {
+                    currentSheetId = chunk[0]._sheetId;
+                }
+                
+                try {
+                    const res = await window.DataAPI.call('bulkInsert', entityName, chunk);
+                    
+                    if (res && res.data && Array.isArray(res.data.details)) {
+                        res.data.details.forEach(detail => {
+                            if (detail.status === 'success') metrics.success++;
+                            else if (detail.status === 'duplicate') {
+                                metrics.duplicate++;
+                                accumulatedFeedback.push(detail);
+                            } else if (detail.status === 'error') {
+                                metrics.error++;
+                                accumulatedFeedback.push(detail);
+                            }
+                        });
+                    } else {
+                        // Fallback si el backend es legacy
+                        metrics.success += chunk.length;
+                    }
+                } catch(err) {
+                    // Si un chunk falla categóricamente (ej. timeout de Apps Script), marcamos todos como error
+                    metrics.error += chunk.length;
+                    chunk.forEach(row => {
+                        accumulatedFeedback.push({
+                            status: 'error',
+                            _rowIndex: row._rowIndex,
+                            message: 'Fallo crítico de red o límite de ejecución.'
+                        });
+                    });
+                }
             }
 
-            if (progressCallback) progressCallback(totalChunks, totalChunks, true);
-            return true;
+            if (accumulatedFeedback.length > 0 && currentSheetId) {
+                console.log(`[ETL Feedback] Procesando writeback para ${accumulatedFeedback.length} registros problemáticos.`);
+                try {
+                    await window.DataAPI.call('etl_writeback_feedback', entityName, {
+                        sheetId: currentSheetId,
+                        feedback: accumulatedFeedback
+                    });
+                } catch(e) {
+                    console.error('[ETL Feedback] No se pudo pintar la plantilla original.', e);
+                }
+            }
+
+            if (progressCallback) progressCallback(totalChunks, totalChunks, true, metrics);
+            return metrics;
         },
 
         /**

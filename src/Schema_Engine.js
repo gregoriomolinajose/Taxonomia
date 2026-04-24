@@ -8,7 +8,7 @@
  * All presets are frozen (immutable) to prevent accidental mutation.
  */
 
-const TOPOLOGY_PRESETS = Object.freeze({
+var TOPOLOGY_PRESETS = Object.freeze({
 
   /**
    * Standard hierarchical topology for graph-linked business entities.
@@ -73,7 +73,7 @@ const TOPOLOGY_PRESETS = Object.freeze({
  *
  * All factories return frozen arrays — immutable source, safe for spread.
  */
-const FIELD_TEMPLATES = Object.freeze({
+var FIELD_TEMPLATES = Object.freeze({
 
   /**
    * Identity Name field.
@@ -138,7 +138,7 @@ const FIELD_TEMPLATES = Object.freeze({
 
 });
 
-const APP_SCHEMAS = {
+var APP_SCHEMAS = {
   Unidad_Negocio: {
     metadata: { prefix: 'UNDN', showInMenu: true, order:1, iconName:'business-outline', color:'primary', label:'Unidades de Negocio', titleField:'nombre', idField:'id_unidad_negocio', fkField:null },
     primaryKey: "id_unidad_negocio",

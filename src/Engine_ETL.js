@@ -129,6 +129,8 @@ var Engine_ETL = (function() {
         }
         
         if (!isEmptyRow) {
+            record._sheetId = sheetId;
+            record._rowIndex = i + 1; // 1-indexed for SpreadsheetApp (row 1 is header)
             records.push(record);
         }
     }
@@ -242,6 +244,9 @@ var Engine_ETL = (function() {
                }
                
                if (matchedRow) {
+                   if (payload._isNewIngest) {
+                       payload._isDuplicateMatch = true;
+                   }
                    payload[pkField] = matchedRow[pkField]; // Subsumimos el Temp UUID y forzamos modo UPDATE
                }
            }
@@ -260,11 +265,61 @@ var Engine_ETL = (function() {
        return { data: items }; // Return payload wrapped in object
   }
 
+  /**
+   * writebackFeedback
+   * Abre la plantilla de origen y pinta las filas según el feedback (Amarillo para duplicados, Rojo para errores).
+   * Añade el mensaje a la última columna de datos.
+   */
+  function writebackFeedback(sheetId, feedbackArray) {
+      if (!sheetId || !feedbackArray || feedbackArray.length === 0) return false;
+      
+      let ss;
+      try {
+          ss = SpreadsheetApp.openById(sheetId);
+      } catch (e) {
+          Logger.log("[ETL Writeback Error] No se pudo abrir Spreadsheet: " + sheetId);
+          return false;
+      }
+      
+      const sheet = ss.getSheets()[0]; // La misma hoja usada en extractDataFromDrive
+      const numCols = sheet.getLastColumn() || 1;
+      
+      // Buscar si la columna de Estado ya existe
+      let feedbackCol = numCols;
+      let headerCell = sheet.getRange(1, feedbackCol);
+      
+      if (headerCell.getValue() !== 'Estado Ingesta') {
+          // Si no existe en la última, agregamos una nueva
+          feedbackCol = numCols + 1;
+          headerCell = sheet.getRange(1, feedbackCol);
+          headerCell.setValue('Estado Ingesta');
+          headerCell.setFontWeight('bold');
+      }
+      // Procesar fila por fila (al ser pocas, no importa tanto el timeout, pero lo hacemos rápido)
+      feedbackArray.forEach(fb => {
+          if (!fb._rowIndex) return;
+          
+          const range = sheet.getRange(fb._rowIndex, 1, 1, feedbackCol);
+          
+          if (fb.status === 'duplicate') {
+              range.setBackground('#FFF2CC'); // Amarillo pastel
+          } else if (fb.status === 'error') {
+              range.setBackground('#FCE8E6'); // Rojo pastel
+          }
+          
+          // Setear el mensaje en la última columna
+          sheet.getRange(fb._rowIndex, feedbackCol).setValue(fb.message || fb.reason || 'Error');
+      });
+      
+      return true;
+  }
+
   // --- Public API ---
   return {
     generateDriveTemplate: generateDriveTemplate,
     extractDataFromDrive: extractDataFromDrive,
-    hydrateAndDeduplicate: hydrateAndDeduplicate
+    hydrateAndDeduplicate: hydrateAndDeduplicate,
+    writebackFeedback: writebackFeedback
   };
 
 })();

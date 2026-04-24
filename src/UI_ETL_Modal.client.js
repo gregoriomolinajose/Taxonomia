@@ -443,6 +443,51 @@ window.UI_ETL_Modal = (function() {
                     }, 2000);
                 }
             }
+        },
+        showResults: function(metrics) {
+            const modal = document.getElementById('dv-etl-modal');
+            if (!modal) return;
+            
+            const body = modal.querySelector('.etl-body');
+            if (!body) return;
+            
+            // Construir el template de resultados
+            const hasIssues = (metrics.duplicate > 0 || metrics.error > 0);
+            
+            body.innerHTML = `
+                <div style="text-align: center; padding: 20px 10px;">
+                    <ion-icon name="checkmark-circle" color="success" style="font-size: 64px;"></ion-icon>
+                    <h2 style="font-weight: 600; color: var(--ion-color-dark); margin-top: 16px;">Ingesta Finalizada</h2>
+                    
+                    <div style="background: var(--ion-color-light); border-radius: 12px; padding: 20px; margin-top: 24px; text-align: left; display: inline-block; width: 100%; max-width: 400px; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
+                        <div style="display: flex; align-items: center; margin-bottom: 12px;">
+                            <ion-icon name="checkmark-circle" color="success" style="font-size: 24px; margin-right: 12px;"></ion-icon>
+                            <div style="flex: 1; font-size: 14px; color: var(--ion-color-dark);"><b>${metrics.success || 0}</b> registros satisfactorios</div>
+                        </div>
+                        <div style="display: flex; align-items: center; margin-bottom: 12px;">
+                            <ion-icon name="warning" color="warning" style="font-size: 24px; margin-right: 12px;"></ion-icon>
+                            <div style="flex: 1; font-size: 14px; color: var(--ion-color-dark);"><b>${metrics.duplicate || 0}</b> registros ya existentes</div>
+                        </div>
+                        <div style="display: flex; align-items: center;">
+                            <ion-icon name="close-circle" color="danger" style="font-size: 24px; margin-right: 12px;"></ion-icon>
+                            <div style="flex: 1; font-size: 14px; color: var(--ion-color-dark);"><b>${metrics.error || 0}</b> registros no realizados</div>
+                        </div>
+                    </div>
+                    
+                    ${hasIssues ? `
+                    <div style="margin-top: 20px; color: var(--ion-color-medium); font-size: 13px; max-width: 400px; margin-left: auto; margin-right: auto; line-height: 1.4;">
+                        <ion-icon name="information-circle-outline" style="vertical-align: middle;"></ion-icon> 
+                        Revisa la plantilla de origen en Drive para ver el detalle de los registros fallidos en la última columna.
+                    </div>
+                    ` : ''}
+                    
+                    <div style="margin-top: 32px;">
+                        <ion-button fill="solid" color="primary" onclick="document.getElementById('dv-etl-modal').dismiss()" style="--border-radius: 8px; width: 200px;">
+                            Aceptar
+                        </ion-button>
+                    </div>
+                </div>
+            `;
         }
     };
 })();

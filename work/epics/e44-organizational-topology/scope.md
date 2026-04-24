@@ -28,7 +28,8 @@ Otorgar visibilidad centralizada sobre la composición de equipos, la ocupación
 | S44.12 | Consolidación de FormValidators | S | Done | Refactorizar dependencias de validación unificándolas en UI_FormUtils. |
 | S44.13 | JIT Workspace Fallback | M | Done | Resolver renderizado optimista de cargos virtuales cruzando IDs desde Workspace. |
 | S44.14 | Desacoplar Interceptor Workspace | M | Todo | Extraer lógica de auto-provisionamiento desde Engine_ETL a Schema_Engine (Middleware) para respetar arquitectura. |
-**Total:** 14 stories
+| S44.15 | Estabilización UI y JIT Cache Refresh | S | Done | Corregir bugs de ingesta Workspace, estandarizar iconografía e implementar recarga silenciosa reactiva (JIT Refresh). |
+**Total:** 15 stories
 
 ## Scope
 
@@ -67,6 +68,7 @@ Otorgar visibilidad centralizada sobre la composición de equipos, la ocupación
 - [x] S44.12 completado
 - [x] S44.13 completado
 - [ ] S44.14 completado
+- [x] S44.15 completado
 - [x] Los líderes pueden entrar al Capacity Map y detectar equipos sin SM y gente saturada.
 - [x] Epic retrospective done
 - [x] Merged to `main`

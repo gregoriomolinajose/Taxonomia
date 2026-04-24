@@ -287,94 +287,109 @@ const Adapter_Sheets = {
         for (const payload of items) {
             const primaryKeyValue = payload[primaryKeyField];
             if (!primaryKeyValue) continue;
-            
             const routerIndex = idToIndexMap.get(String(primaryKeyValue));
             let rowToInsert = [];
             
-            if (routerIndex !== undefined) {
-                // Determine existing row fetch mechanism
-                let existingRow = [];
-                let sheetTargetIndex = -1;
-                
-                if (useNuclearDump) {
-                    existingRow = originalData[routerIndex];
-                    sheetTargetIndex = routerIndex + 1; // Translate back to 1-indexed for fallback mechanics
+            try {
+                if (routerIndex !== undefined) {
+                    if (payload._isDuplicateMatch) {
+                        throw new Error(`ERROR_CONCURRENCY: Registro ya existe según criterios de unicidad.`);
+                    }
+                    // Determine existing row fetch mechanism
+                    let existingRow = [];
+                    let sheetTargetIndex = -1;
+                    
+                    if (useNuclearDump) {
+                        existingRow = originalData[routerIndex];
+                        sheetTargetIndex = routerIndex + 1; // Translate back to 1-indexed for fallback mechanics
+                    } else {
+                        sheetTargetIndex = routerIndex; // Already absolute sheet index
+                        existingRow = sheet.getRange(sheetTargetIndex, 1, 1, normalizedHeaders.length).getValues()[0];
+                    }
+
+                    if (this._isNodeLogicallyDeleted(normalizedHeaders, existingRow)) {
+                        throw new Error(`ERROR_ARCHIVED: No se puede modificar la entidad con ID '${primaryKeyValue}' por estar eliminada lógicamente.`);
+                    }
+
+                    this._validateAndIncrementOCC(idxVersion, existingRow, payload, primaryKeyValue);
+
+                    for (let i = 0; i < normalizedHeaders.length; i++) {
+                        const h = normalizedHeaders[i];
+                        if (h === 'created_at' || h === 'created_by') {
+                            rowToInsert.push(existingRow[i]);
+                        } else if (h === 'updated_at') {
+                            rowToInsert.push(currentTimestamp);
+                        } else if (h === 'updated_by') {
+                            rowToInsert.push(currentUser);
+                        } else if (payload[h] !== undefined) {
+                            rowToInsert.push(payload[h]);
+                        } else {
+                            rowToInsert.push(existingRow[i]);
+                        }
+                    }
+                    if (idxUpdatedAt > -1) rowToInsert[idxUpdatedAt] = currentTimestamp;
+                    if (idxUpdatedBy > -1) rowToInsert[idxUpdatedBy] = currentUser;
+                    
+                    if (useNuclearDump) {
+                        originalData[routerIndex] = rowToInsert;
+                    }
+                    
+                    rowsToUpdate.push({ rowIndex: sheetTargetIndex, rowData: rowToInsert });
+                    results.push({ status: 'success', action: 'updated', pk: primaryKeyField, val: primaryKeyValue, version: payload.version });
                 } else {
-                    sheetTargetIndex = routerIndex; // Already absolute sheet index
-                    existingRow = sheet.getRange(sheetTargetIndex, 1, 1, normalizedHeaders.length).getValues()[0];
-                }
+                    payload.version = 1;
+                    payload._version = 1;
 
-                if (this._isNodeLogicallyDeleted(normalizedHeaders, existingRow)) {
-                    throw new Error(`ERROR_ARCHIVED: No se puede modificar la entidad con ID '${primaryKeyValue}' por estar eliminada lógicamente.`);
-                }
-
-                this._validateAndIncrementOCC(idxVersion, existingRow, payload, primaryKeyValue);
-
-                for (let i = 0; i < normalizedHeaders.length; i++) {
-                    const h = normalizedHeaders[i];
-                    if (h === 'created_at' || h === 'created_by') {
-                        rowToInsert.push(existingRow[i]);
-                    } else if (h === 'updated_at') {
-                        rowToInsert.push(timestamp);
-                    } else if (h === 'updated_by') {
-                        rowToInsert.push(currentUser);
-                    } else if (payload[h] !== undefined) {
-                        rowToInsert.push(payload[h]);
-                    } else {
-                        rowToInsert.push(existingRow[i]);
+                    for (let i = 0; i < normalizedHeaders.length; i++) {
+                        const h = normalizedHeaders[i];
+                        if (h === 'created_at' || h === 'updated_at') {
+                            rowToInsert.push(currentTimestamp);
+                        } else if (h === 'created_by' || h === 'updated_by') {
+                            rowToInsert.push(currentUser);
+                        } else if (payload.hasOwnProperty(h) && payload[h] !== null && payload[h] !== undefined) {
+                            rowToInsert.push(payload[h]);
+                        } else if (defaultValuesMap[h] !== undefined) {
+                            rowToInsert.push(defaultValuesMap[h]);
+                        } else {
+                            rowToInsert.push('');
+                        }
                     }
-                }
-                if (idxUpdatedAt > -1) rowToInsert[idxUpdatedAt] = currentTimestamp;
-                if (idxUpdatedBy > -1) rowToInsert[idxUpdatedBy] = currentUser;
-                
-                if (useNuclearDump) {
-                    originalData[routerIndex] = rowToInsert;
-                }
-                
-                rowsToUpdate.push({ rowIndex: sheetTargetIndex, rowData: rowToInsert });
-                results.push({ status: 'success', action: 'updated', pk: primaryKeyField, val: primaryKeyValue, version: payload.version });
-            } else {
-                payload.version = 1;
-                payload._version = 1;
-
-                for (let i = 0; i < normalizedHeaders.length; i++) {
-                    const h = normalizedHeaders[i];
-                    if (h === 'created_at' || h === 'updated_at') {
-                        rowToInsert.push(currentTimestamp);
-                    } else if (h === 'created_by' || h === 'updated_by') {
-                        rowToInsert.push(currentUser);
-                    } else if (payload.hasOwnProperty(h) && payload[h] !== null && payload[h] !== undefined) {
-                        rowToInsert.push(payload[h]);
-                    } else if (defaultValuesMap[h] !== undefined) {
-                        rowToInsert.push(defaultValuesMap[h]);
-                    } else {
-                        rowToInsert.push('');
+                    if (idxCreatedAt > -1 && (!rowToInsert[idxCreatedAt] || String(rowToInsert[idxCreatedAt]).trim() === '')) {
+                        rowToInsert[idxCreatedAt] = currentTimestamp;
                     }
-                }
-                if (idxCreatedAt > -1 && (!rowToInsert[idxCreatedAt] || String(rowToInsert[idxCreatedAt]).trim() === '')) {
-                    rowToInsert[idxCreatedAt] = currentTimestamp;
-                }
-                if (idxCreatedBy > -1 && (!rowToInsert[idxCreatedBy] || String(rowToInsert[idxCreatedBy]).trim() === '')) {
-                    rowToInsert[idxCreatedBy] = currentUser;
-                }
-                if (idxUpdatedAt > -1) rowToInsert[idxUpdatedAt] = currentTimestamp;
-                if (idxUpdatedBy > -1) rowToInsert[idxUpdatedBy] = currentUser;
-                
-                const idxLexical = normalizedHeaders.indexOf('lexical_id');
-                let lexicalValue = null;
-                if (idxLexical > -1) {
-                    lexicalValue = this._calculateNextLexicalId(sheet, normalizedHeaders, tableName, schema);
-                    rowToInsert[idxLexical] = lexicalValue;
-                    payload.lexical_id = lexicalValue;
-                }
+                    if (idxCreatedBy > -1 && (!rowToInsert[idxCreatedBy] || String(rowToInsert[idxCreatedBy]).trim() === '')) {
+                        rowToInsert[idxCreatedBy] = currentUser;
+                    }
+                    if (idxUpdatedAt > -1) rowToInsert[idxUpdatedAt] = currentTimestamp;
+                    if (idxUpdatedBy > -1) rowToInsert[idxUpdatedBy] = currentUser;
+                    
+                    const idxLexical = normalizedHeaders.indexOf('lexical_id');
+                    let lexicalValue = null;
+                    if (idxLexical > -1) {
+                        lexicalValue = this._calculateNextLexicalId(sheet, normalizedHeaders, tableName, schema);
+                        rowToInsert[idxLexical] = lexicalValue;
+                        payload.lexical_id = lexicalValue;
+                    }
 
-                if (useNuclearDump) {
-                    originalData.push(rowToInsert);
-                    idToIndexMap.set(String(primaryKeyValue), originalData.length - 1);
+                    if (useNuclearDump) {
+                        originalData.push(rowToInsert);
+                        idToIndexMap.set(String(primaryKeyValue), originalData.length - 1);
+                    }
+                    
+                    rowsToAppend.push(rowToInsert);
+                    results.push({ status: 'success', action: 'created', pk: primaryKeyField, val: primaryKeyValue, lexical_id: lexicalValue, version: payload.version });
                 }
-                
-                rowsToAppend.push(rowToInsert);
-                results.push({ status: 'success', action: 'created', pk: primaryKeyField, val: primaryKeyValue, lexical_id: lexicalValue, version: payload.version });
+            } catch (err) {
+                const isDuplicate = err.message.includes('ERROR_CONCURRENCY');
+                results.push({
+                    status: isDuplicate ? 'duplicate' : 'error',
+                    pk: primaryKeyField,
+                    val: primaryKeyValue,
+                    _sheetId: payload._sheetId,
+                    _rowIndex: payload._rowIndex,
+                    reason: isDuplicate ? 'Registro ya existe' : err.message
+                });
+                continue; // Skip appending/updating this row, proceed with batch
             }
         }
         
