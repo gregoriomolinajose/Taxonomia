@@ -19,15 +19,24 @@ if (typeof require !== 'undefined') {
 }
 
 /**
+ * _getAppVersionHash (Cache Strategy)
+ * Provee un hash único para evitar Cache-Pollution cross-deployments.
+ */
+function _getAppVersionHash() {
+    return (typeof CONFIG !== 'undefined' && CONFIG.APP_VERSION) ? String(CONFIG.APP_VERSION).replace(/[^a-zA-Z0-9]/g, '') : 'V0';
+}
+
+/**
  * _invalidateCache (Directiva Architect: Cache Busting)
  * Purga la RAM para forzar lectura fresca tras mutaciones.
  */
 function _invalidateCache(entityName) {
     if (typeof CacheService === 'undefined') return;
     const cache = CacheService.getScriptCache();
-    
-    // Invalidación de lista principal
-    cache.remove('CACHE_LIST_' + entityName);
+
+    // Invalidación de lista principal (soportando Chunking y versionado dinámico)
+    _removeCacheChunked(cache, 'CACHE_LIST_' + entityName);
+    _removeCacheChunked(cache, `CACHE_LIST_${_getAppVersionHash()}_${entityName}`);
     
     // Invalidación de lookups asociados
     const lookupMap = {
@@ -38,10 +47,69 @@ function _invalidateCache(entityName) {
         'Equipo': 'getEquiposOptions'
     };
     if (lookupMap[entityName]) {
-        cache.remove('CACHE_LOOKUP_' + lookupMap[entityName]);
+        _removeCacheChunked(cache, 'CACHE_LOOKUP_' + lookupMap[entityName]);
     }
     
     if (typeof Logger !== 'undefined') Logger.log(`[Cache] BUSTED para ${entityName}`);
+}
+
+/**
+ * [S42.1] Fragmentación Dinámica de RAM (Chunking O(1))
+ * Soluciona el Límite Crítico Físico de 100KB de Google Apps Script CacheService
+ */
+function _getCacheChunked(cache, key) {
+    const metaStr = cache.get(key);
+    if (!metaStr) return null;
+    if (!metaStr.startsWith('{"isChunked":true')) return metaStr; // Legacy Support
+    
+    const meta = JSON.parse(metaStr);
+    let fullData = "";
+    for (let i = 0; i < meta.chunks; i++) {
+        const chunk = cache.get(key + '_chunk_' + i);
+        if (!chunk) return null; // Cache truncado / evadido prematuramente
+        fullData += chunk;
+    }
+    return fullData;
+}
+
+function _putCacheChunked(cache, key, strData, expiration) {
+    try {
+        const CHUNK_SIZE = 90000; // Safety threshold de 90KB
+        if (strData.length <= CHUNK_SIZE) {
+            cache.put(key, strData, expiration);
+            return;
+        }
+        
+        const chunks = Math.ceil(strData.length / CHUNK_SIZE);
+        const meta = JSON.stringify({ isChunked: true, chunks: chunks });
+        
+        const payloadDict = {};
+        payloadDict[key] = meta;
+        for (let i = 0; i < chunks; i++) {
+            payloadDict[key + '_chunk_' + i] = strData.substring(i * CHUNK_SIZE, (i + 1) * CHUNK_SIZE);
+        }
+        
+        cache.putAll(payloadDict, expiration);
+        if (typeof Logger !== 'undefined') Logger.log(`[Cache Chunking] Clave ${key} fragmentada en ${chunks} pedazos.`);
+    } catch(e) {
+        if (typeof Logger !== 'undefined') Logger.log(`[Cache Error] Falló al inyectar caché para ${key}: ` + e.message);
+    }
+}
+
+function _removeCacheChunked(cache, key) {
+    const metaStr = cache.get(key);
+    if (metaStr && metaStr.startsWith('{"isChunked":true')) {
+        try {
+            const meta = JSON.parse(metaStr);
+            const keysToRemove = [key];
+            for (let i = 0; i < meta.chunks; i++) {
+                keysToRemove.push(key + '_chunk_' + i);
+            }
+            cache.removeAll(keysToRemove);
+            return;
+        } catch(e) {}
+    }
+    cache.remove(key);
 }
 
 /**
@@ -218,8 +286,12 @@ const Engine_DB = {
             });
 
             // Paso A.1: Pre-Validación Topológica Atómica (Evita Padre Huérfano)
-            const parentIdField = Object.keys(flatPayload).find(k => k.startsWith('id_')) || "id_dominio";
-            const tempParentPK = flatPayload[parentIdField];
+            // [S-Tier Fix] Use explicit Schema schema.primaryKey instead of naive regex matching
+            const parentIdField = schema.primaryKey || (typeof JS_SchemaUtils !== 'undefined' ? JS_SchemaUtils.getPrimaryKey(entityName) : 'id_' + entityName.toLowerCase());
+            let tempParentPK = flatPayload[parentIdField];
+            
+            // Fallback para IDs dinámicamente generados o injectados (si aplica)
+            if (!tempParentPK && payload.id) tempParentPK = payload.id;
             
             fields.forEach(f => {
                 if (f.type === 'relation' && nestedData[f.name] && f.isTemporalGraph && typeof Engine_Graph !== 'undefined') {
@@ -232,17 +304,25 @@ const Engine_DB = {
                                             
                     // [S27.4/Rx] Normalize passive field metadata into active topological enforcement
                     const cardinality = f.topologyCardinality || "M:N";
-                    if (cardinality === "1:N") topologyRules.enforceSingleParent = true;
+                    if (cardinality === "1:N") {
+                        topologyRules.enforceSingleParent = true;
+                    } else if (cardinality === "M:N") {
+                        topologyRules.enforceSingleParent = false;
+                        topologyRules.allowOrphanStealing = false;
+                        if (topologyRules.topologyType === "JERARQUICA_ESTRICTA" || topologyRules.topologyType === "JERARQUICA_ORGANICA") {
+                            topologyRules.topologyType = "FLAT"; // S44.2 Evitar que reglas estructurales strict generen robos M:N
+                        }
+                    }
                     
                     const edgeName = (f.graphEdgeType || f.name).toUpperCase();
                     topologyRules.edgeType = edgeName; // For precise stealing checks
                     
                     let fullGraph;
                     if (f.graphEntity === 'Sys_Graph_Edges') {
-                        if (!cachedGraphFull) cachedGraphFull = _Adapter_Sheets.list('Sys_Graph_Edges', config, 'objects').rows || [];
+                        if (!cachedGraphFull) cachedGraphFull = this.list('Sys_Graph_Edges', 'objects').rows || [];
                         fullGraph = cachedGraphFull;
                     } else {
-                        fullGraph = _Adapter_Sheets.list(f.graphEntity, config, 'objects').rows || [];
+                        fullGraph = this.list(f.graphEntity, 'objects').rows || [];
                     }
                     const activeGraph = fullGraph.filter(e => e.es_version_actual !== false);
 
@@ -289,12 +369,20 @@ const Engine_DB = {
         const parentResults = this.save(entityName, flatPayload, config);
         
         // Determinar la PK extrayéndola del flatPayload
-        const parentIdField = Object.keys(flatPayload).find(k => k.startsWith('id_')) || "id_dominio";
-        const parentPK = flatPayload[parentIdField];
+        const parentIdField = schema ? schema.primaryKey : "id_dominio";
+        
+        // S-Tier Fix 2: Adapter_Sheets returns .pk as the Column Name (e.g. 'id_persona'), NOT the value.
+        // The value is in .val or .lexical_id.
+        let parentPK = parentResults.val || parentResults.lexical_id || flatPayload[parentIdField];
+        
+        // Mapeo exhaustivo en cascada en caso de adaptadores anidados
+        if (!parentPK && parentResults.adapter_results && parentResults.adapter_results.sheets) {
+            parentPK = parentResults.adapter_results.sheets.val || parentResults.adapter_results.sheets.lexical_id;
+        }
+        const globalBatches = {};
+        const globalCachesToBust = new Set();
+        globalCachesToBust.add(entityName); // [FIX] Invalidate parent entity cache to prevent UI staleness and Job idempotency failure
 
-        // [S5.6] Legacy Graph Edge SCD-2 Orchestrator eliminado (Delegado al bloque de relaciones)
-
-        // Paso C y D: Inyección de FK y Transacción Hijos
         if (schema) {
             const fields = schema.fields || (typeof schema === 'object' ? Object.keys(schema).map(k => ({ name: k, ...schema[k] })) : []);
             fields.forEach(f => {
@@ -305,7 +393,7 @@ const Engine_DB = {
 
                     // --- RECONCILIACIÓN (DIFFING) ---
                     // Paso A: Buscar hijos huérfanos antes de actualizar
-                    const currentInDB = _Adapter_Sheets.list(targetEntity, config, 'objects') || { rows: [] };
+                    const currentInDB = this.list(targetEntity, 'objects') || { rows: [] };
                     const orphanMatches = (currentInDB.rows || []).filter(c => c[fkField] == parentPK);
                     
                     // Paso B: Determinar cuáles ya no están en el nuevo payload
@@ -348,9 +436,12 @@ const Engine_DB = {
                         }
                     }
 
+                    const targetTableForOrphans = f.isTemporalGraph ? f.graphEntity : targetEntity;
                     if (orphansToProcess.length > 0) {
                         if (typeof Logger !== 'undefined') Logger.log(`[Diffing] Detectados ${orphansToProcess.length} huérfanos para desvincular.`);
-                        _Adapter_Sheets.upsertBatch(f.isTemporalGraph ? f.graphEntity : targetEntity, orphansToProcess, config);
+                        if (!globalBatches[targetTableForOrphans]) globalBatches[targetTableForOrphans] = [];
+                        globalBatches[targetTableForOrphans].push(...orphansToProcess);
+                        globalCachesToBust.add(targetTableForOrphans);
                     }
 
                     // Inyectar FK y Guardar Masivamente (Batch)
@@ -359,7 +450,6 @@ const Engine_DB = {
                         
                         // Idempotent Guard: Diff already calculated in Engine_Graph (O(1))
                         const newChildrenToInsert = precalculatedGraphContext[f.name] ? precalculatedGraphContext[f.name].edgesToInsert || [] : [];
-
 
                         const edgeRecords = newChildrenToInsert.map(child => {
                             const newId = "RELA-" + uuidFn().substring(0, 8).toUpperCase();
@@ -377,8 +467,10 @@ const Engine_DB = {
                         });
                         
                         if (typeof Logger !== 'undefined') Logger.log(`[Diffing] Ignorados ${children.length - newChildrenToInsert.length} nodos idénticos. Insertando ${newChildrenToInsert.length} aristas nuevas.`);
-                        if (config.useSheets && edgeRecords.length > 0) {
-                            _Adapter_Sheets.upsertBatch(f.graphEntity, edgeRecords, config);
+                        if (edgeRecords.length > 0) {
+                            if (!globalBatches[f.graphEntity]) globalBatches[f.graphEntity] = [];
+                            globalBatches[f.graphEntity].push(...edgeRecords);
+                            globalCachesToBust.add(f.graphEntity);
                         }
 
                         if (!parentResults.orchestratedChildren) parentResults.orchestratedChildren = {};
@@ -387,8 +479,6 @@ const Engine_DB = {
                         if (orphansToProcess.length > 0) {
                             parentResults.orchestratedChildren[f.graphEntity].push(...orphansToProcess);
                         }
-                        
-                        _invalidateCache(f.graphEntity);
                     } else {
                         children.forEach(child => {
                             child[fkField] = parentPK;
@@ -403,8 +493,10 @@ const Engine_DB = {
                             }
                         });
 
-                        if (config.useSheets) {
-                            _Adapter_Sheets.upsertBatch(targetEntity, children, config);
+                        if (children.length > 0) {
+                            if (!globalBatches[targetEntity]) globalBatches[targetEntity] = [];
+                            globalBatches[targetEntity].push(...children);
+                            globalCachesToBust.add(targetEntity);
                         }
                         
                         if (!parentResults.orchestratedChildren) parentResults.orchestratedChildren = {};
@@ -415,11 +507,34 @@ const Engine_DB = {
                         // Omitido para brevedad o implementado si el adapter soporta batch
                     }
                     
-                    // IMPORTANTE: Invalidar Backend Cache del hijo recién modificado en el Subgrid
-                    _invalidateCache(targetEntity);
+                    // Removido: _invalidateCache recursivo intermedio. Se ejecutará externamente.
                 }
             });
         }
+        
+        // --- S42.3 EJECUCIÓN CONSOLIDADA O(1) ---
+        if (config.useSheets) {
+            Object.keys(globalBatches).forEach(tableName => {
+                if (globalBatches[tableName].length > 0) {
+                    try {
+                        if (typeof Logger !== 'undefined') {
+                            Logger.log(`[Engine_DB] Ejecuando UpsertBatch para Entity=${tableName}. Tratando de persistir ${globalBatches[tableName].length} aristas (M:N).`);
+                        }
+                        _Adapter_Sheets.upsertBatch(tableName, globalBatches[tableName], config);
+                        if (typeof Logger !== 'undefined') Logger.log(`[Engine_DB] UpsertBatch Exitoso para ${tableName}.`);
+                    } catch (e) {
+                        if (typeof Logger !== 'undefined') {
+                            Logger.log(`[Engine_DB CRTICAL] Fallo Persistencia de Grafo (M:N) en ${tableName}! Error: ${e.message}`);
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Purgar la RAM agrupadamente (Rule 2: No Duplication, AR Request)
+        globalCachesToBust.forEach(tableName => {
+            _invalidateCache(tableName);
+        });
 
         // [S34.2] Materialized View Headcount Aggregation
         try {
@@ -572,12 +687,12 @@ const Engine_DB = {
     list: function (entityName, format) {
         const config = (typeof CONFIG !== 'undefined') ? CONFIG : { useSheets: true, SPREADSHEET_ID_DB: '' };
         
-        // Intentar leer de RAM (CacheService) con versionado dinámico
-        const versionHash = (typeof CONFIG !== 'undefined' && CONFIG.APP_VERSION) ? CONFIG.APP_VERSION.replace(/[^a-zA-Z0-9]/g, '') : 'V0';
-        const cacheKey = `CACHE_LIST_${versionHash}_${entityName}`;
+        // Intentar leer de RAM (CacheService) con Fragmentación Inteligente S42.1
+        const cacheKey = `CACHE_LIST_${_getAppVersionHash()}_${entityName}`;
         if (typeof CacheService !== 'undefined') {
-            const cached = CacheService.getScriptCache().get(cacheKey);
-            if (cached && format !== 'tuples') { // No cacheamos tuplas por ahora para evitar colisiones de formato
+            const cache = CacheService.getScriptCache();
+            const cached = _getCacheChunked(cache, cacheKey);
+            if (cached && format !== 'tuples') {
                 Logger.log(`[Cache Engine] HIT para ${entityName}`);
                 return JSON.parse(cached);
             }
@@ -586,9 +701,10 @@ const Engine_DB = {
         Logger.log(`[Cache Engine] MISS para ${entityName}. Leyendo de DB...`);
         const result = _Adapter_Sheets.list(entityName, config, format);
         
-        // Guardar en caché si no es formato tuplas (para simplificar)
+        // Guardar en caché si no es formato tuplas (Chunked blindado)
         if (typeof CacheService !== 'undefined' && format !== 'tuples' && result) {
-            CacheService.getScriptCache().put(cacheKey, JSON.stringify(result), 3600);
+            const cache = CacheService.getScriptCache();
+            _putCacheChunked(cache, cacheKey, JSON.stringify(result), 3600);
         }
         
         return result;

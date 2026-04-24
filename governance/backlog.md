@@ -31,6 +31,12 @@
 | E31| Schema Governance Studio                              | ✅ Complete  | Catálogos de Presets/Templates y Blueprint Composer multi-contexto   | Alta     |
 | E32| Bug Bash: Visual & Persistence                        | ✅ Complete  | Fix: Carga en caliente reactiva y Persistencia en Engine DB          | Alta     |
 | E33| Ghost Stealing Resilience Bug Bash                      | ✅ Complete  | Mitigar omisión de hidratación SCD-2 de relaciones en subgrids 1:N   | Máxima   |
+| E35| Detalles Estéticos y Refinamiento UX                    | ✅ Complete  | UI Header & Bugfixes                                                 | Alta     |
+| E38| Hub de Ingesta Inteligente y Sincronización             | ✅ Complete  | Modal Híbrido ETL, Drive Native Provider, Duplicate Tolerable Batch  | Alta     |
+| E40| Bug Bash Sprint                                       | ✅ Complete  | Estabilización de defectos técnicos y operativos                   | Alta     |
+| E41| Searchable Multi Component PWA                      | ✅ Complete   | Evolucionar selección múltiple a Web Component puro PWA/Capacitor  | Alta     |
+| E42| Optimización de Tiempos de Guardado                 | ✅ Complete   | Minimizar latencia de red y peticiones XHR innecesarias al guardar| Máxima   |
+| E43| Rediseño de Cards (Vista Grid)                      | ⏳ In Progress| Mejorar UI/UX de cards inyectando grafos, badge lexicológico e íconos | Alta     |
 
 ## Parking Lot / Deuda Técnica (Post-Epic 11)
 
@@ -64,5 +70,4 @@
 >   - *Arch Review*: Deshardcodear el umbral estático `MAX_ATTRS = 5` en Tarjetas `UI_DataGrid` para delegarlo a `UI_CONFIG` (Vistas Sensibles/Densas); monitorear métricas de Developer Experience (DX) tras pulverizar God Objects en micro-fragmentos de 150 líneas.
 >   - *Quality Review*: Evaluar seriamente incluir un paso constructivo formal de Transpilación vía Babel (ES6 a ES5) garantizando el Polyfill si las corporaciones clientes manejan Chrome obsoleto.
 >   - *Arch Review*: Abstraer el "Bypass Profile Path" (`.auth/chrome-profile`) de Playwright como variable paramétrica vía `.env` global para evitar conflictos locales de sesión de Google entre desarrolladores o servidores de CI/CD externos durante ejecuciones E2E persistentes.
-
-| E35 | Detalles Estéticos y Refinamiento UX | ✅ Complete | ui, ux | e35-detalles-esteticos-ui | UI Header & Bugfixes |
+

@@ -1,0 +1,35 @@
+artifact_type: story-design
+version: 1
+skill: rai-story-design
+created: '2026-04-16T14:23:00Z'
+story: 'S40.2'
+epic: 'E40'
+content:
+  summary: 'Implementar simulación Monkey Tester en el entorno Dev usando Playwright para garantizar la resiliencia UI en drawers y componentes satélites.'
+  complexity: moderate
+  acceptance_criteria:
+    - id: AC1
+      description: 'Crear ui-resilience.spec.js usando Playwright E2E que conecte al DEV_URL de Apps Script.'
+      verifiable: true
+    - id: AC2
+      description: 'Verificar la ausencia de ReferenceError o Exceptions en consola via page.on("pageerror").'
+      verifiable: true
+    - id: AC3
+      description: 'Probar typing físico sobre FormRenderer_UI (Drawer).'
+      verifiable: true
+    - id: AC4
+      description: 'Probar typing físico sobre componentes satélite (Searchable Single y SubgridBuilder).'
+      verifiable: true
+  integration_points:
+    - module: 'tests.e2e'
+      change_type: new
+      files: ['__tests__/e2e/ui-resilience.spec.js']
+  decisions:
+    - id: D1
+      choice: 'Reemplazar Vitest DOM Simulation con E2E Playwright Apps Script.'
+      rationale: 'Aprovechar entorno e interacciones reales de navegador evadiendo limitaciones de simulación JSDOM.'
+      alternatives_considered: ['Crear test iterativo en JSDOM']
+refs:
+  backlog_item: 'E40-S40.2'
+  epic_scope: 'work/epics/e40-bug-bash/scope.md'
+metadata: {}

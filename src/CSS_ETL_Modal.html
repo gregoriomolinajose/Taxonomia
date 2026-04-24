@@ -1,0 +1,326 @@
+<style>
+/* =====================================================================
+   CSS_ETL_Modal.html — Sistema de Estilos Mobile-First para Ingesta 
+   > Consumo O(1) de tokens globales (Arquitectura v4)
+   ===================================================================== */
+
+/* 1. COMPONENTES ESTRUCTURALES Y LIMITADORES */
+ion-modal.etl-central-modal {
+  --width: 100%;
+  --height: 100%;
+}
+@media (min-width: 768px) {
+  ion-modal.etl-central-modal {
+    --width: 50vw;
+    --max-width: 500px;
+    --height: auto;
+    --max-height: 90vh;
+    --border-radius: var(--rounded-md, 16px);
+  }
+}
+
+.etl-header {
+  background: var(--ion-color-primary, #1c42e8);
+  color: var(--ion-color-primary-contrast, #fff);
+  padding: 12px 16px;
+  min-height: 56px;
+  display: flex;
+  align-items: center;
+}
+.etl-header-box {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-3, 12px);
+}
+.etl-header-icon {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: var(--rounded-sm, 8px);
+  padding: var(--spacing-2, 8px);
+  font-size: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.etl-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-4, 16px);
+  padding: var(--spacing-4, 16px);
+  background: var(--ion-background-color, #fff);
+}
+
+/* 2. TIPOGRAFÍA Y DIVISORES */
+.etl-section-title {
+  font-size: var(--sys-font-small, 12px);
+  font-weight: 600;
+  color: var(--ion-color-medium, #8C8C8C);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2, 8px);
+}
+
+/* 3. SISTEMA DE RADIO TARJETAS */
+.etl-radio-grid {
+  display: flex;
+  flex-direction: row;
+  gap: var(--spacing-3, 12px);
+  width: 100%;
+}
+
+.etl-radio-card {
+  flex: 1;
+  border: 1px solid var(--ion-color-step-100, #E0E0E0);
+  border-radius: var(--rounded-md, 16px);
+  padding: var(--spacing-3, 12px);
+  cursor: pointer;
+  position: relative;
+  transition: all 0.2s ease;
+  background: var(--ion-card-background, #fff);
+}
+.etl-radio-content-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: var(--spacing-3, 12px);
+}
+.etl-radio-text-col {
+  display: flex;
+  flex-direction: column;
+}
+.etl-radio-card:hover {
+  border-color: var(--ion-color-primary, #1c42e8);
+}
+.etl-radio-card.active {
+  border: 2px solid var(--ion-color-primary, #1c42e8);
+  background: rgba(28, 66, 232, 0.02);
+}
+
+.etl-radio-card-check {
+  display: none;
+}
+.etl-radio-card.active .etl-radio-card-check {
+  display: block;
+  position: absolute;
+  right: -8px;
+  top: -8px;
+  font-size: 24px;
+  color: var(--ion-color-success, #0abf4f);
+  background: #fff;
+  border-radius: 50%;
+  z-index: 5;
+}
+.etl-radio-icon {
+  font-size: 20px;
+  color: var(--ion-color-success, #0abf4f);
+  background: rgba(10, 191, 79, 0.1);
+  padding: var(--spacing-2, 8px);
+  border-radius: var(--rounded-sm, 8px);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.etl-radio-card.csv .etl-radio-icon {
+  color: var(--ion-color-primary, #1c42e8);
+  background: rgba(28, 66, 232, 0.1);
+}
+.etl-radio-card.active.csv {
+  border-color: var(--ion-color-primary, #1c42e8);
+  background: rgba(28, 66, 232, 0.02);
+}
+.etl-radio-card.active.csv .etl-radio-card-check {
+  color: var(--ion-color-primary, #1c42e8);
+}
+
+.etl-radio-title {
+  font-weight: 600;
+  font-size: var(--sys-font-body, 14px);
+  margin-bottom: 2px;
+}
+.etl-radio-desc {
+  font-size: var(--sys-font-small, 12px);
+  color: var(--ion-color-medium, #8C8C8C);
+  line-height: 1.25;
+}
+
+.etl-badge-recommended {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: transparent;
+  color: var(--ion-color-medium, #8C8C8C);
+  border: 1px solid var(--ion-color-step-100, #E0E0E0);
+  font-size: var(--sys-font-mini, 10px);
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-weight: 600;
+}
+
+/* 4. VERTICAL STEPPER / LISTA DE VIÑETAS */
+.etl-stepper {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-5, 20px);
+  flex-grow: 1;
+}
+.etl-step {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--spacing-3, 12px);
+}
+.etl-step:last-child {
+  margin-top: auto;
+}
+.etl-step-badge {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: var(--sys-font-small, 12px);
+  flex-shrink: 0;
+  background: var(--ion-color-primary, #1c42e8);
+  color: var(--ion-color-primary-contrast, #fff);
+}
+
+.etl-step-content {
+  flex-grow: 1;
+}
+.etl-step-title {
+  font-weight: 600;
+  font-size: var(--sys-font-body, 14px);
+  margin-bottom: 2px;
+}
+.etl-step-desc {
+  font-size: var(--sys-font-small, 12px);
+  color: var(--ion-color-medium, #8C8C8C);
+  line-height: 1.3;
+  margin-bottom: var(--spacing-3, 12px);
+}
+
+/* 5. TARJETA DE DESCARGA (SUSTITUTO DE BOTÓN) */
+.etl-download-card {
+  border: 1px solid var(--ion-color-step-100, #E0E0E0);
+  border-radius: var(--rounded-md, 16px);
+  padding: var(--spacing-3, 12px);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-3, 12px);
+  cursor: pointer;
+  background: var(--ion-card-background, #fff);
+  transition: background 0.2s ease;
+}
+.etl-download-card:hover {
+  background: var(--ion-color-step-50, #F9F9F9);
+}
+.etl-download-icon {
+  font-size: 24px;
+  color: var(--ion-color-primary, #1C42E8);
+}
+.etl-download-title {
+  font-weight: 600;
+  font-size: var(--sys-font-body, 14px);
+}
+.etl-download-hint {
+  font-size: var(--sys-font-mini, 10px);
+  color: var(--ion-color-primary, #1C42E8);
+  margin-top: 2px;
+}
+.etl-download-action {
+  margin-left: auto;
+  color: var(--ion-color-medium, #8C8C8C);
+  font-size: 20px;
+}
+
+/* 6. INPUT Y DROPZONE REFINADOS */
+.etl-input-item {
+  --border-radius: var(--rounded-sm, 8px);
+  --border-color: var(--ion-color-step-100, #E0E0E0);
+  --border-width: 1px;
+  --border-style: solid;
+  border-radius: var(--rounded-sm, 8px);
+  --background: transparent;
+  width: 100%;
+}
+.etl-hint-text {
+  font-size: var(--sys-font-caption, 11px);
+  color: var(--ion-color-medium, #8C8C8C);
+  margin-top: var(--spacing-1, 4px);
+  margin-left: var(--spacing-1, 4px);
+  margin-bottom: 0px;
+}
+
+/* 7. PROGRESS BAR OVERRIDES */
+.etl-btn-execute {
+  margin-top: 0;
+  --border-radius: var(--rounded-sm, 8px);
+  font-family: var(--sys-font-primary, inherit) !important;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+.etl-bottom-exec {
+  display: flex;
+  justify-content: flex-start;
+  gap: var(--spacing-3, 12px);
+}
+
+.etl-progress-wrap {
+  height: 6px;
+  background-color: var(--color-bg-0, #F3F3F3);
+  border-radius: var(--rounded-full, 999px);
+  overflow: hidden;
+  margin-top: var(--spacing-2, 8px);
+}
+.etl-progress-bar {
+  height: 100%;
+  background-color: var(--color-interactive-primary, #1C42E8);
+  transition: width 0.3s ease;
+  width: 0%;
+}
+.etl-progress-label {
+  font-size: var(--sys-font-small, 12px);
+  color: var(--ion-color-medium, #8C8C8C);
+  display: block;
+}
+
+/* Base original Dropzone adaptada a la nueva escala de layout */
+.etl-dropzone {
+  display: none;
+}
+@media (hover: hover) and (pointer: fine) {
+  .etl-dropzone {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    border: 2px dashed var(--ion-color-primary, #1C42E8);
+    border-radius: var(--rounded-md, 16px);
+    padding: var(--spacing-4, 16px);
+    background-color: transparent;
+    transition: all 0.2s ease;
+    cursor: pointer;
+  }
+  .etl-dropzone.dragover, .etl-dropzone:hover {
+    background-color: rgba(28, 66, 232, 0.05);
+  }
+  .etl-dropzone.filled {
+    border-style: solid;
+    border-color: var(--ion-color-success, #0abf4f);
+    background-color: rgba(10, 191, 79, 0.05);
+  }
+  .etl-dropzone-msg {
+    margin-top: var(--spacing-3, 12px);
+    font-size: var(--sys-font-small, 12px);
+    color: var(--ion-color-medium, #8C8C8C);
+    font-weight: 500;
+    text-align: center;
+    pointer-events: none;
+  }
+}
+</style>

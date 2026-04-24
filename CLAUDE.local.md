@@ -4,9 +4,10 @@
 
 ## Session
 
-- **Active Session**: None (E33 Ghost Stealing Bug Bash Completed)
-- **Last Summary**: Finalizada la épica crítica E33 (Ghost Stealing Bug Bash). Se implementó JIT Pre-fill en draweren el FormRenderer y se aseguró rehidratación topológica SCD-2 en el Engine_DB para resolver desvinculaciones jerárquicas fantasmas 1:N.
-- **Next Focus**: Iniciar diseño de la futura E34 u obtener nuevos requerimientos del negocio (Problem Shape).
+- **Active Session**: E41 Cierre de Épica y estabilización Web Component
+- **Last Summary**: Finalizada S41.14 y Épica E41 entera. Se consolidó `<tx-searchable>`, estabilizando pruebas End-to-End con Playwright evitando el Playwright Shadow DOM Racing y eliminando código UI legacy duplicado.
+- **Last Closed**: E41
+- **Next Focus**: Empezar `/rai-epic-plan` para la nueva E42 o cualquier épica pendiente según el roadmap del proyecto.
 
 ## Patterns
 

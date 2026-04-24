@@ -58,12 +58,12 @@
          * @param {Array} rows Datos a exportar.
          */
         exportCSV: function(entityName, columns, rows) {
-            if (!entityName || !rows || rows.length === 0) {
-                if (window.showGlobalToast) window.showGlobalToast('No hay datos para exportar.', 'warning');
+            if (!entityName || !columns || columns.length === 0) {
+                if (window.showGlobalToast) window.showGlobalToast('No hay configuración de columnas.', 'warning');
                 return;
             }
             
-            const SYS_COLS = window.CORE_SYS_FIELDS || [];
+            const SYS_COLS = window.CORE_SYS_FIELDS || ['created_at', 'create_by', 'created_by', 'updated_at', 'update_at', 'update_by', 'deleted_at', 'deleted_by', 'version', '_version'];
             // Omitir campos de sistema explícitamente para asegurar que la descarga sirva como "Plantilla Limpia"
             const visibleCols = columns.filter(c => c.visible && !SYS_COLS.includes(c.key || c.name));
             
@@ -122,14 +122,12 @@
                     let loadingUi;
                     
                     window.DataEngine_ETL.processFile(file, entityName, function onProgress(chunkIndex, totalChunks, isDone) {
+                        // Unificamos progreso en la barra visual del modal y omitimos blockeos innecesarios en pantalla (H10)
+                        if (window.UI_ETL_Modal && window.UI_ETL_Modal.updateProgress) {
+                            window.UI_ETL_Modal.updateProgress(chunkIndex, totalChunks);
+                        }
                         if (chunkIndex === 1 && onLoadingStart) {
                             onLoadingStart(); 
-                            loadingUi = document.getElementById('dv-import-loading');
-                        }
-                        if (loadingUi) {
-                            requestAnimationFrame(() => {
-                                loadingUi.message = `Procesando Lote ${chunkIndex} de ${totalChunks}...`;
-                            });
                         }
                     }).then(() => {
                         event.target.value = ''; // Reset input

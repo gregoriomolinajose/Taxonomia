@@ -84,3 +84,21 @@ function doGet(e) {
 function include(filename) {
   return HtmlService.createHtmlOutputFromFile(filename).getContent();
 }
+
+/**
+ * UTIL_ForcePermissions (Herramienta de Reparación OAuth)
+ * --------------------------------------------------------
+ * Las AppScripts en entornos Zero-Touch (clasp) a veces suprimen la bandera de re-autorización
+ * cuando se alteran los scopes en appsscript.json. En caso de fallas (Ej: Error 404 o Error de Conexión),
+ * el usuario debe **Ejecutar manualmente esta función desde el IDE de Apps Script**
+ * para despertar la ventana modal de "Google hasn't verified this app" (Permisos de Drive).
+ */
+function UTIL_ForcePermissions() {
+  try {
+    const ss = SpreadsheetApp.create("[Taxonomía] Link de Autorización Seguro");
+    const driveScope = DriveApp ? true : false; // Force drive scoping if implicitly requested
+    Logger.log("✅ Permisos cedidos exitosamente. Scope de Drive File Activo. URL de prueba: " + ss.getUrl());
+  } catch (e) {
+    Logger.log("❌ Fallo crítico de Permisos: " + e.message);
+  }
+}

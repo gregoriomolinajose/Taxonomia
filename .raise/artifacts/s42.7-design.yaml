@@ -1,0 +1,31 @@
+artifact_type: story-design
+version: 1
+skill: rai-story-design
+created: '2026-04-18T22:00:00Z'
+story: 'S42.7'
+epic: 'E42'
+content:
+  summary: 'Implementar UX optimista eliminando delays visuales de red mediante reconciliación de caché.'
+  complexity: moderate
+  acceptance_criteria:
+    - id: AC1
+      description: 'Modal se desliza al presionar Guardar (sin block backdrop)'
+      verifiable: true
+    - id: AC2
+      description: 'Data store repinta valores temporales antes de red'
+      verifiable: true
+    - id: AC3
+      description: 'Error asíncrono acciona un Snapshot Rollback local'
+      verifiable: true
+  integration_points:
+    - module: 'UI.Frontend'
+      change_type: modification
+      files: ['src/UI_FormSubmitter.client.js']
+  decisions:
+    - id: D1
+      choice: 'Snapshot Rollback vs API Undo'
+      rationale: 'Clonar el Store en RAM cuesta un par de bytes y es determinista ante fallos de servidor.'
+      alternatives_considered: ['Llamada de Reversión al Servidor']
+refs:
+  epic_scope: 'work/epics/e42-performance-optimization/scope.md'
+metadata: {}

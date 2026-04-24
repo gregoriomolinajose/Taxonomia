@@ -1,4 +1,5 @@
-const { test, expect, chromium } = require('@playwright/test');
+const { test, expect } = require('@playwright/test');
+const { setupPersistentContext, bypassGoogleAuth } = require('./utils/setup');
 
 let context;
 let page;
@@ -6,16 +7,9 @@ let page;
 test.describe('Ghost Stealing Bug Resistance Test', () => {
 
   test.beforeAll(async () => {
-    const authDir = process.env.TEST_CHROME_PROFILE || '.auth/chrome-profile';
-    context = await chromium.launchPersistentContext(authDir, {
-        headless: false,
-        channel: process.env.PLAYWRIGHT_CHANNEL || 'chrome',
-        args: [
-            '--disable-blink-features=AutomationControlled',
-            '--no-sandbox'
-        ]
-    });
-    page = await context.newPage();
+    const setup = await setupPersistentContext();
+    context = setup.context;
+    page = setup.page;
 
     page.on('console', async msg => {
         const values = [];
@@ -30,66 +24,52 @@ test.describe('Ghost Stealing Bug Resistance Test', () => {
   });
 
   test.beforeEach(async () => {
-    await page.goto(process.env.DEV_URL || 'https://script.google.com/macros/s/AKfycbyYY8F6scltfXdK_CycPcxIQaeNn5tDFn78VhaHGMKlcMzUjOjdrHFvks1OZl5OBqDuzQ/exec');
-    
-    if (page.url().includes('accounts.google.com')) {
-        console.log("==============================================");
-        console.log("ESPERANDO LOGIN MANUAL (Tienes 120 segundos)");
-        console.log("==============================================");
-        await page.waitForURL(/.*script\.google\.com.*/, { timeout: 120_000 });
-    }
-
-    const frame = page.frameLocator('#sandboxFrame').frameLocator('#userHtmlFrame');
-    await frame.locator('ion-app').waitFor({ state: 'visible', timeout: 150000 });
+    await bypassGoogleAuth(page);
   });
 
   // --- Helpers ---
   async function fillTopInput(frame, name, value) {
       const inputLocator = frame.locator(`[name="${name}"]`).last();
-      try {
-          await inputLocator.waitFor({ state: 'attached', timeout: 15000 });
-          if(await inputLocator.count() > 0) {
-              await inputLocator.evaluate((el, v) => {
-                  el.value = v;
-                  el.dispatchEvent(new CustomEvent('ionChange', { detail: { value: v } }));
-                  el.dispatchEvent(new Event('input', { bubbles: true }));
-              }, value).catch(e => console.log(`[ERROR] evaluate en ${name}:`, e));
-          }
-      } catch(e) {}
+      await inputLocator.waitFor({ state: 'attached', timeout: 15000 });
+      if(await inputLocator.count() > 0) {
+          await inputLocator.evaluate((el, v) => {
+              el.value = v;
+              el.dispatchEvent(new CustomEvent('ionChange', { detail: { value: v } }));
+              el.dispatchEvent(new Event('input', { bubbles: true }));
+          }, value);
+      }
   }
 
   async function setSelectValueByText(frame, selectName, txtValue) {
-      const selectLocator = frame.locator(`ion-select[name="${selectName}"]`).last();
+      const selectLocator = frame.locator(`tx-searchable[data-form-component="${selectName}"]`).last();
       try {
           await selectLocator.waitFor({ state: 'attached', timeout: 15000 });
-          // Force click to open select
-          await selectLocator.evaluate(n => n.dispatchEvent(new Event('click', { bubbles: true })));
+          // Open TXSearchable via Component API
+          await selectLocator.evaluate(el => el.executeSearchAndOpen());
           
-          const alertWindow = frame.locator('ion-alert').last();
-          await alertWindow.waitFor({ state: 'visible', timeout: 5000 });
+          // Desktop uses ion-popover, Mobile uses ion-modal, but either way it renders ion-list natively inside
+          const overlayList = frame.locator(`.tx-desktop-dropdown ion-list, ion-modal ion-list`).last();
+          await overlayList.waitFor({ state: 'visible', timeout: 5000 });
           
-          await alertWindow.locator('button').filter({ hasText: txtValue }).first().click();
-          await alertWindow.locator('button').filter({ hasText: 'OK' }).first().click();
+          await overlayList.locator('ion-item').filter({ hasText: txtValue }).first().click();
       } catch(e) {
-          console.log(`[WARN] No se pudo seleccionar ${txtValue} en ${selectName}`);
+          console.log(`[WARN] No se pudo seleccionar ${txtValue} en ${selectName}`, e);
       }
   }
 
   async function clickTopButtonByText(frame, text) {
       const btnLocator = frame.locator('ion-button').filter({ hasText: text }).last();
-      try {
-          await btnLocator.waitFor({ state: 'attached', timeout: 15000 });
-          if(await btnLocator.count() > 0) {
-              await btnLocator.click({ force: true }).catch(e => {});
-          }
-      } catch(e) {}
+      await btnLocator.waitFor({ state: 'attached', timeout: 15000 });
+      if(await btnLocator.count() > 0) {
+          await btnLocator.click({ force: true });
+      }
   }
 
   async function submitHybridForm(frame, page, text) {
       const btnGuardar = frame.locator('ion-button').filter({ hasText: text }).last();
-      await expect(btnGuardar).not.toHaveClass(/ion-hide/, { timeout: 2000 }).catch(() => {});
+      await expect.soft(btnGuardar).not.toHaveClass(/ion-hide/, { timeout: 2000 });
       await clickTopButtonByText(frame, text);
-      await btnGuardar.waitFor({ state: 'hidden', timeout: 35000 }).catch(() => {});
+      await btnGuardar.waitFor({ state: 'hidden', timeout: 35000 });
   }
 
   // --------------------------------------------------------------------------
@@ -128,15 +108,17 @@ test.describe('Ghost Stealing Bug Resistance Test', () => {
 
     // El Drawer del Portafolio se abre. El parche Ghost Stealing DEBE pre-llenar la Unidad de Negocio.
     // Agregar un Grupo de Productos sin tocar conscientemente la UN.
-    const strongGrupo = frame.locator('strong', { hasText: 'Grupos de Productos Asociados' }).last();
-    await strongGrupo.waitFor({ state: 'attached', timeout: 10000 }).catch(() => {});
-    const headerGrupo = frame.locator('div').filter({ has: strongGrupo }).last();
-    const btnAgregarGrupo = headerGrupo.locator('ion-button').filter({ hasText: 'Agregar' }).last();
+    // [S41.14 E2E Update] searchable_multi usa TXSearchable en vez de Subgrid puro.
+    const container = frame.locator('tx-searchable[data-form-component="grupos_vinculados"]').last();
+    await container.waitFor({ state: 'attached', timeout: 15000 });
     
-    await btnAgregarGrupo.waitFor({ state: 'attached', timeout: 15000 }).catch(() => {});
-    if(await btnAgregarGrupo.count() > 0) {
-        await btnAgregarGrupo.evaluate(b => b.click({ force: true }));
-    }
+    // Abrir el popup iterativamente
+    await container.evaluate(el => el.executeSearchAndOpen());
+    
+    // Esperar a que renderice y clickear en el boton CREAR
+    const btnCreate = frame.locator('#tx-searchable-multigrupos_vinculados-btn-create-desk, #tx-searchable-multigrupos_vinculados-btn-create-inline').last();
+    await btnCreate.waitFor({ state: 'attached', timeout: 5000 });
+    await btnCreate.click({ force: true });
     
     const ghostGrupoName = 'GRUPO GHOST HIJO ' + Date.now();
     await fillTopInput(frame, 'nombre', ghostGrupoName);
@@ -160,5 +142,34 @@ test.describe('Ghost Stealing Bug Resistance Test', () => {
     });
 
     console.log("✅ Ghost Stealing Regression Test superado con éxito. La UN se mantuvo íntegra.");
+
+    // 5. TEARDOWN (Limpieza de Transacciones de Prueba)
+    console.log("[TEARDOWN] Purificando la Base de Datos...");
+    const cleanupMap = [
+        {entity: 'Grupo_Producto', name: ghostGrupoName},
+        {entity: 'Portafolio', name: portName},
+        {entity: 'Unidad_Negocio', name: unName}
+    ];
+
+    const deletedIds = await frame.locator('body').evaluate(async (el, cleanupMap) => {
+        const logs = [];
+        for (const item of cleanupMap) {
+            // Refrescamos caché para asegurar que tenemos los IDs recientes
+            const request = { action: 'read', entityName: item.entity };
+            const reply = await window.DataAPI.call('API_Universal_Router', request).catch(() => null);
+            const records = reply && reply.data ? reply.data : [];
+            
+            // Busca por coincidencia exacta del nombre auto-generado
+            const target = records.find(r => r.nombre === item.name);
+            if (target && target.id) {
+                const reqDel = { action: 'delete', entityName: item.entity, payload: target.id };
+                await window.DataAPI.call('API_Universal_Router', reqDel).catch(() => null);
+                logs.push(`🗑️ Deleted ${item.entity}: ${item.name} (${target.id})`);
+            }
+        }
+        return logs;
+    }, cleanupMap);
+
+    console.log("[TEARDOWN] Resultados:", deletedIds.length > 0 ? deletedIds : "Ningún registro residual encontrado.");
   });
 });

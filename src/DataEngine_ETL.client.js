@@ -33,23 +33,8 @@
                             throw new Error("El archivo está vacío o los cabeceros no coinciden con ninguna propiedad válida del Modelo.");
                         }
 
-                        // Lotes de 50 para mitigar Timeout (OOM V8 Limit)
-                        const CHUNK_SIZE = 50; 
-                        const totalChunks = Math.ceil(parsedData.length / CHUNK_SIZE);
-                        
-                        for (let i = 0; i < totalChunks; i++) {
-                            const chunk = parsedData.slice(i * CHUNK_SIZE, (i + 1) * CHUNK_SIZE);
-                            
-                            // Emitir Progreso Activo
-                            if (progressCallback) progressCallback(i + 1, totalChunks, false);
-                            
-                            // Bloquear invocando llamada recursiva a la RED
-                            console.log(`[ETL] Enviando Lote ${i + 1} de ${totalChunks} (${chunk.length} filas)...`);
-                            await window.DataAPI.call('bulkInsert', entityName, chunk);
-                        }
-
-                        // Completado
-                        if (progressCallback) progressCallback(totalChunks, totalChunks, true);
+                        // Delegar al Motor Core
+                        await this._dispatchChunks(parsedData, entityName, progressCallback);
                         resolve(true);
 
                     } catch (error) {
@@ -64,6 +49,57 @@
 
                 reader.readAsText(file, "UTF-8"); // Ojo: Acentos requieren UTF-8
             });
+        },
+
+        /**
+         * Inyecta una matriz extraída nativamente de Cloud/Drive, sanitizando variables de auditoría.
+         * 
+         * @param {Array<Object>} rawPayload El resultado JSON plano extraído.
+         * @param {string} entityName
+         * @param {function} progressCallback
+         * @returns {Promise<boolean>}
+         */
+        processPayload: async function(rawPayload, entityName, progressCallback) {
+            if (!Array.isArray(rawPayload) || rawPayload.length === 0) {
+                throw new Error("No hay data útil en la matriz proporcionada por la Hoja de Documento.");
+            }
+
+            // Omitir cabeceras transaccionales/auditoría
+            const sanitized = rawPayload.map(row => {
+                const cleanRow = {};
+                for (const key in row) {
+                    if (row.hasOwnProperty(key)) {
+                        const lowKey = key.trim().toLowerCase();
+                        if (lowKey.startsWith('sys_') || lowKey === 'avatar' || lowKey.startsWith('file_')) {
+                            continue; // Ignorado táctico (S38.4 Tolerancia)
+                        }
+                        cleanRow[key] = row[key];
+                    }
+                }
+                return cleanRow;
+            });
+            
+            return await this._dispatchChunks(sanitized, entityName, progressCallback);
+        },
+
+        /**
+         * Envía un arreglo JSON de registros en lotes síncronos hacia la Base de Datos.
+         * (Resuelve el Timeout V8 Limit)
+         * @private
+         */
+        _dispatchChunks: async function(parsedData, entityName, progressCallback) {
+            const CHUNK_SIZE = 50; 
+            const totalChunks = Math.ceil(parsedData.length / CHUNK_SIZE);
+            
+            for (let i = 0; i < totalChunks; i++) {
+                const chunk = parsedData.slice(i * CHUNK_SIZE, (i + 1) * CHUNK_SIZE);
+                if (progressCallback) progressCallback(i + 1, totalChunks, false);
+                console.log(`[ETL Chunker] Enviando Lote ${i + 1} de ${totalChunks} (${chunk.length} filas)...`);
+                await window.DataAPI.call('bulkInsert', entityName, chunk);
+            }
+
+            if (progressCallback) progressCallback(totalChunks, totalChunks, true);
+            return true;
         },
 
         /**
@@ -95,6 +131,16 @@
                 }
             }
 
+            // Recompilar Set de fechas para mapeo O(1) de parseo de fechas ISO
+            const dateFields = new Set();
+            if (schema && schema.fields) {
+                schema.fields.forEach(f => {
+                    if (f.type === 'date' || f.type === 'datetime') {
+                        dateFields.add(f.name.toLowerCase());
+                    }
+                });
+            }
+
             const jsonPayloads = [];
 
             for (let i = 1; i < lines.length; i++) {
@@ -112,7 +158,25 @@
                     // Purgar comillas de arropamiento
                     val = val.replace(/^"|"$/g, '').trim();
                     
-                    if (val !== "") hasData = true;
+                    if (val !== "") {
+                        hasData = true;
+                        
+                        // Parseo ISO Robusto con Split de Local Time (DD/MM/YYYY)
+                        if (dateFields.has(key)) {
+                            let originalVal = val;
+                            if (val.includes('/')) {
+                                const splits = val.split('/');
+                                if (splits.length === 3 && splits[2].length === 4) {
+                                    val = `${splits[2]}-${splits[1].padStart(2, '0')}-${splits[0].padStart(2, '0')}T00:00:00.000Z`;
+                                }
+                            }
+                            const d = new Date(val);
+                            if (isNaN(d.getTime())) {
+                                throw new Error(`[ETL Error] Fecha Invalida en columna '${key}': ${originalVal}`);
+                            }
+                            val = d.toISOString();
+                        }
+                    }
                     obj[key] = val;
                 }
                 

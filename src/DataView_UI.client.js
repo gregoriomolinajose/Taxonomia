@@ -69,53 +69,63 @@
             const fallbackTitleKey = (meta && meta.titleField) ? meta.titleField : 'nombre';
             const idKey = keys.includes('lexical_id') ? 'lexical_id' : (window.Schema_Utils ? window.Schema_Utils.getPrimaryKey(entityName) : null);
 
-            if (idKey && keys.includes(idKey)) {
-                keys = keys.filter(k => k !== idKey);
-                keys.unshift(idKey);
-            }
-            
-            if (fallbackTitleKey && keys.includes(fallbackTitleKey)) {
-                keys = keys.filter(k => k !== fallbackTitleKey);
-                if (keys.length > 0 && keys[0] === idKey) {
-                    keys.splice(1, 0, fallbackTitleKey);
+            let columns = keys.map(key => {
+                let isHidden = false;
+                let isPrimaryKey = false;
+                let uiType = 'text';
+                let gridOrder = -1;
+
+                if (fields) {
+                    const f = fields.find(field => field.name === key);
+                    if (f) {
+                        if (f.primaryKey) isPrimaryKey = true;
+                        // [S32 Fix] Campos hidden nun ca se muestran en la tabla (incluyendo PKs como id_unidad_negocio)
+                        if (f.type === 'hidden') isHidden = true;
+                        if (f.showInList !== undefined) isHidden = !f.showInList;
+                        uiType = f.uiDisplay || f.type || 'text';
+                        if (f.gridOrder !== undefined) gridOrder = f.gridOrder;
+                    } else {
+                        if (SYS_COLS.includes(key)) isHidden = true;
+                    }
                 } else {
-                    keys.unshift(fallbackTitleKey);
+                    if (SYS_COLS.includes(key)) isHidden = true;
                 }
-            }
 
-            return keys.map(key => {
-    let isHidden = false;
-    let isPrimaryKey = false;
-    let uiType = 'text';
+                if (key.startsWith('id_')) {
+                    isPrimaryKey = true;
+                }
+                
+                // Fallbacks para orden natural relativo al DataGrid en caso de no definir gridOrder
+                // Asumimos que Checkbox es fisicamente 1 y Numeracion es fisicamente 2.
+                if (gridOrder === -1) {
+                    if (key === idKey) gridOrder = 3;
+                    else if (key === fallbackTitleKey) gridOrder = 4;
+                    else gridOrder = 100;
+                }
+                
+                return {
+                    key,
+                    label: window.UI_DataGrid && window.UI_DataGrid._labelFromKey ? window.UI_DataGrid._labelFromKey(key, entityName) : key,
+                    // [S32 Fix] NO forzamos true para PK. isHidden domina (generalmente los PK son hidden)
+                    visible: !isHidden,
+                    sortable: true,
+                    uiType: uiType,
+                    gridOrder: gridOrder
+                };
+            });
 
-    if (fields) {
-        const f = fields.find(field => field.name === key);
-        if (f) {
-            if (f.primaryKey) isPrimaryKey = true;
-            // [S32 Fix] Campos hidden nun ca se muestran en la tabla (incluyendo PKs como id_unidad_negocio)
-            if (f.type === 'hidden') isHidden = true;
-            if (f.showInList !== undefined) isHidden = !f.showInList;
-            uiType = f.uiDisplay || f.type || 'text';
-        } else {
-            if (SYS_COLS.includes(key)) isHidden = true;
-        }
-    } else {
-        if (SYS_COLS.includes(key)) isHidden = true;
-    }
+            // S40.5: Inyectar campos estructurales del ecosistema en indices fijos por defecto
+            columns.push({
+                key: '_checkbox_', label: '', visible: true, sortable: false, uiType: 'system-checkbox', gridOrder: 1
+            });
+            columns.push({
+                key: '_row_num_', label: '#', visible: true, sortable: false, uiType: 'system-num', gridOrder: 2
+            });
 
-    if (key.startsWith('id_')) {
-        isPrimaryKey = true;
-    }
-    
-    return {
-        key,
-        label: window.UI_DataGrid && window.UI_DataGrid._labelFromKey ? window.UI_DataGrid._labelFromKey(key, entityName) : key,
-        // [S32 Fix] NO forzamos true para PK. isHidden domina (generalmente los PK son hidden)
-        visible: !isHidden,
-        sortable: true,
-        uiType: uiType
-    };
-});
+            // S40.5: Filtrar y ordenar la coleccion de columnas por atributo gobernado en Schema_Engine
+            columns.sort((a, b) => a.gridOrder - b.gridOrder);
+
+            return columns;
         }
 
         /* ────────────────────────────────────────────
@@ -245,6 +255,7 @@
             }
             _state.filtered = window.DataEngine.applyFilter(baseData, query);
             _state.page = 1;
+            _state.lastGridScroll = 0; // Reset scroll momentum on search
             _rerenderData(); // Solo datos — el toolbar/search box NO se toca
         }
 
@@ -299,7 +310,7 @@
                     _state.filtered.length, 
                     canCreate, 
                     _exportCSV, 
-                    function(e) { window.DataViewEngine._importCSV(e); }, 
+                    function(e) { window.DataViewEngine._openETLModal(e); },
                     onAddClick
                 );
 
@@ -361,19 +372,21 @@
                     filteredData: _state.filtered,
                     selectedRows: _state.selectedRows,
                     loading: false,
-                    onSort: 'window.DataViewEngine._onSort',
-                    onDragStart: 'window.DataView_DragDrop.onDragStart',
-                    onDragOver: 'window.DataView_DragDrop.onDragOver',
-                    onDragLeave: 'window.DataView_DragDrop.onDragLeave',
-                    onDrop: 'window.DataView_DragDrop.onDrop',
-                    onDragEnd: 'window.DataView_DragDrop.onDragEnd',
-                    onDelete: 'window.DataViewEngine._confirmDelete',
-                    onRowCheck: 'window.DataViewEngine._onRowCheck',
-                    onSelectAll: 'window.DataViewEngine._onSelectAll',
-                    onRowOrderChange: 'window.DataViewEngine._onRowOrderChange',
-                    onPageSize: 'window.DataViewEngine._onPageSize',
-                    onPage: 'window.DataViewEngine._onPage',
-                    onEdit: 'window.openEditForm'
+                    onSort: _onSort,
+                    onDragStart: (typeof window !== 'undefined' && window.DataView_DragDrop) ? window.DataView_DragDrop.onDragStart : null,
+                    onDragOver: (typeof window !== 'undefined' && window.DataView_DragDrop) ? window.DataView_DragDrop.onDragOver : null,
+                    onDragLeave: (typeof window !== 'undefined' && window.DataView_DragDrop) ? window.DataView_DragDrop.onDragLeave : null,
+                    onDrop: (typeof window !== 'undefined' && window.DataView_DragDrop) ? window.DataView_DragDrop.onDrop : null,
+                    onDragEnd: (typeof window !== 'undefined' && window.DataView_DragDrop) ? window.DataView_DragDrop.onDragEnd : null,
+                    onDelete: _confirmDelete,
+                    onRowCheck: _onRowCheck,
+                    onSelectAll: _onSelectAll,
+                    onRowOrderChange: _onRowOrderChange,
+                    onPageSize: _onPageSize,
+                    onPage: _onPage,
+                    onEdit: (id) => { if (typeof window !== 'undefined' && window.openEditForm) window.openEditForm(id); },
+                    lastGridScroll: _state.lastGridScroll,
+                    onGridScroll: (top) => { _state.lastGridScroll = top; }
                 }));
             }
         }
@@ -395,15 +408,16 @@
            Render principal (entrada pública)
         ───────────────────────────────────────────── */
         function render(entityName, containerId, payload) {
-            // Mobile-first: grid por defecto en móvil (<768px), tabla en desktop
-            const defaultView = (window.innerWidth < 768) ? 'grid' : 'table';
+            // S42.2: Rediseño orienta a que cuadrícula (Card) sea el default sin importar resolución
+            const defaultView = 'grid';
 
             _state = {
                 entityName, containerId,
                 data: [], filtered: [], selectedRows: [],
                 page: 1, pageSize: 25,
                 sortCol: '', sortDir: 'asc',
-                view: defaultView, columns: [], payload: payload || null
+                view: defaultView, columns: [], payload: payload || null,
+                lastGridScroll: 0 // H10: Scroll momentum orchestration
             };
 
             // Limpiar ion-popover de la entidad anterior (si existe)
@@ -728,6 +742,113 @@
             );
         }
 
+        function _openETLModal() {
+            if (!window.UI_ETL_Modal) {
+                return _showToast('Módulo ETL no cargado.', 'danger');
+            }
+            
+            // Presentamos la instancia
+            window.UI_ETL_Modal.present(_state.entityName, {
+                onDriveSync: async function(entity, url, modal) {
+                    let loading;
+                    try {
+                        if (document.querySelector('ion-loading.loader-etl-sync')) return; // Bloquear race-condition
+                        loading = document.createElement('ion-loading');
+                        loading.className = 'loader-etl-sync';
+                        loading.message = 'Extrayendo Matriz desde Hoja de Cálculo...';
+                        document.body.appendChild(loading);
+                        await loading.present();
+
+                        window.DataAPI.call('API_Universal_Router', 'etl_extract_sheet_data', entity, { url: url })
+                            .then(res => {
+                                loading.dismiss();
+                                if (res && res.data) {
+                                    if (window.DataEngine_ETL && window.DataEngine_ETL.processPayload) {
+                                        window.DataEngine_ETL.processPayload(res.data, entity, function onProgress(chunkIndex, totalChunks, isDone) {
+                                            // H10: No crear un ion-loading redundante apilándose frente al modal, usar el progreso nativo de la ventana modal
+                                            if (window.UI_ETL_Modal && window.UI_ETL_Modal.updateProgress) {
+                                                window.UI_ETL_Modal.updateProgress(chunkIndex, totalChunks);
+                                            }
+                                        }).then(() => {
+                                            modal.dismiss();
+                                            if (window.DataStore) window.DataStore.set(entity, null); // Invocar Soft-Reload
+                                            _showToast(`¡Importación Nativa de ${res.data.length} registros finalizada!`, 'success');
+                                        }).catch(err => {
+                                            console.error('[Chunker Error]', err);
+                                            _showToast(`Fallo crítico inyectando lote: ${err.message}`, 'danger');
+                                        });
+                                    } else {
+                                        modal.dismiss();
+                                        _showToast(`Se extrajeron ${res.data.length} registros pero el Chunker no está cargado.`, 'warning');
+                                    }
+                                }
+                            })
+                            .catch(err => {
+                                loading.dismiss();
+                                console.error('[ETL Fatal Error]', err);
+                                _showToast(`Fallo al extraer registros: ${err.message}`, 'danger');
+                            });
+                    } catch (fatalErr) {
+                        if (loading) loading.dismiss();
+                        console.error('[UI Fatal Error]', fatalErr);
+                        _showToast(`Error inesperado procesando la sincronización: ${fatalErr.message}`, 'danger');
+                    }
+                },
+                onGenerateTemplate: async function(entity, modal) {
+                    // Limpieza proactiva de loaders huérfanos que provocan el "bloqueo fantasma"
+                    document.querySelectorAll('ion-loading.loader-etl').forEach(el => el.remove());
+                    
+                    const loading = document.createElement('ion-loading');
+                    loading.className = 'loader-etl';
+                    loading.message = 'Creando plantilla en Google Sheet...';
+                    document.body.appendChild(loading);
+                    await loading.present();
+
+                    window.DataAPI.call('API_Universal_Router', 'etl_generate_template', entity, {})
+                        .then(res => {
+                            loading.dismiss();
+                            if (res && res.data) {
+                                // H10: Guardado local de la URL temporal delegado nativamente al diccionario Cache del UI_ETL_Modal
+                                window.UI_ETL_Modal.urlCache[entity] = res.data;
+                                window.UI_ETL_Modal.updateUrlField(res.data);
+                                
+                                const newWin = window.open(res.data, '_blank'); // Redirigir al usuario proactivamente
+                                if (newWin) {
+                                    _showToast('¡Plantilla Creada en tu Drive! Pega tus datos en ella.', 'success');
+                                } else {
+                                    _showToast('Plantilla creada, pero tu navegador bloqueó la pestaña. Usa la opción "Abrir archivo" para acceder a ella.', 'warning');
+                                }
+                            }
+                        })
+                        .catch(err => {
+                            loading.dismiss();
+                            _showToast(`Fallo crítico al forjar plantilla: ${err.message}`, 'danger');
+                        });
+                },
+                onDownloadCSVTpl: function(entity) {
+                    window.DataEngine.exportCSV(entity, _state.columns, []);
+                },
+                onLocalUpload: function(entity, event, modal) {
+                    modal.dismiss();
+                    _importCSV(event); // Mantenemos el baseline Legacy intacto
+                }
+            });
+
+            // Si el state del sub-módulo guarda que ya se generó una plantilla en esta pre-sesión, evitamos sobrecarga de red de forma reactiva al ciclo de vida
+            const cachedUrl = window.UI_ETL_Modal.urlCache[_state.entityName];
+            if (cachedUrl) {
+                // H3 Quality Replace: Usar requestAnimationFrame para no desestabilizar hilos bloqueados 
+                // o iterar sobre el elemento en sí post-append. Ya que modalPromise no está expuesto aquí.
+                requestAnimationFrame(() => {
+                    requestAnimationFrame(() => {
+                        if (window.UI_ETL_Modal && window.UI_ETL_Modal.updateUrlField) {
+                            window.UI_ETL_Modal.updateUrlField(cachedUrl);
+                        }
+                    });
+                });
+            }
+        }
+
         /* ────────────────────────────────────────────
            Event Bus Subscribers
         ───────────────────────────────────────────── */
@@ -780,7 +901,7 @@
                     entityMeta: ENTITY_META[_state.entityName]
                 };
             },
-            _exportCSV, _importCSV,
+            _exportCSV, _importCSV, _openETLModal,
             _onSearch, _onSort, _onPage, _onPageSize,
             _onRowCheck, _onSelectAll, _onRowOrderChange,
             _onColToggle, _toggleColPopover, _onViewToggle,

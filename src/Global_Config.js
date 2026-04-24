@@ -1,14 +1,12 @@
 const CONFIG = {
-    APP_VERSION: 'v1.4.0 - 2604011813',
-    // ID inyectado puramente por variable de entorno (ENV_CONFIG)
+    APP_VERSION: 'v1.2.19 - 2604212339',
     SPREADSHEET_ID_DB: '',
     ALLOWED_DOMAINS: ['@gmail.com', '@bellfy.app', '@coppel.com', '@bancoppel.com'],
     useSheets: true,
     useCloudDB: false,
-    WORKSPACE_INTEGRATION: true // Enabled by default now, can be disabled via ENV
+    WORKSPACE_INTEGRATION: true
 };
 
-// Override dinámico para entornos de Producción (Zero-Code CI/CD)
 if (typeof PropertiesService !== 'undefined') {
     try {
         const envStr = PropertiesService.getScriptProperties().getProperty('ENV_CONFIG');
@@ -20,7 +18,7 @@ if (typeof PropertiesService !== 'undefined') {
             if (envObj.WORKSPACE_INTEGRATION !== undefined) CONFIG.WORKSPACE_INTEGRATION = envObj.WORKSPACE_INTEGRATION;
         }
     } catch(e) {
-        console.error("Global_Config: Fallo parseando ENV_CONFIG", e);
+        console.error("Config: Fallo parseando ENV_CONFIG", e);
     }
 }
 

@@ -241,6 +241,28 @@
         return allData.filter(function(r) { return r.estado !== 'Eliminado' && r.estado !== 'eliminado'; });
     },
     set: function(entityName, data) { 
+        var schema = window.APP_SCHEMAS && window.APP_SCHEMAS[entityName];
+        if (schema && schema.computedFields && Array.isArray(data)) {
+            for (var i = 0; i < schema.computedFields.length; i++) {
+                var ctrl = schema.computedFields[i];
+                if (ctrl.concat && ctrl.separator !== undefined) {
+                    for (var j = 0; j < data.length; j++) {
+                        var parts = [];
+                        for (var k = 0; k < ctrl.concat.length; k++) {
+                            if (data[j][ctrl.concat[k]]) parts.push(String(data[j][ctrl.concat[k]]).trim());
+                        }
+                        var joined = parts.join(ctrl.separator).trim();
+                        if (!joined && ctrl.fallback) {
+                            for (var f = 0; f < ctrl.fallback.length; f++) {
+                                if (data[j][ctrl.fallback[f]]) { joined = data[j][ctrl.fallback[f]]; break; }
+                            }
+                        }
+                        data[j][ctrl.name] = joined;
+                    }
+                }
+            }
+        }
+
         this._cache[entityName] = data; 
         if (entityName === 'Sys_Graph_Edges') this._buildTopologyIndex();
         if (window.AppEventBus) window.AppEventBus.publish('DATASTORE::CHANGED', { action: 'set', entityName: entityName });
@@ -263,6 +285,119 @@
     clearNested: function() { 
         this._cache.nestedData = {}; 
         if (window.AppEventBus) window.AppEventBus.publish('DATASTORE::CHANGED', { action: 'clearNested' });
+    },
+    
+    // S42.8 SRP UI_FormSubmitter Decoupling: In-Memory Reconciler Cache Diffing
+    reconcileOptimisticPatch: function(entityName, response, payload) {
+        // 1. Root Entity Injection
+        if (this.get(entityName) && Array.isArray(this.get(entityName))) {
+            let pkField = response.pk;
+            let pkValue = response.pkValue;
+
+            if (!pkField || !pkValue) {
+                pkField = window.Schema_Utils.getPrimaryKey(entityName);
+                pkValue = pkField ? payload[pkField] : null;
+            }
+
+            if (pkField && pkValue) {
+                let freshVersion = payload._version || 1;
+                let freshLexical = payload.lexical_id;
+                try {
+                    if (response.lexical_id) freshLexical = response.lexical_id;
+                    if (response.data && response.data.adapter_results && response.data.adapter_results.sheets) {
+                        if (response.data.adapter_results.sheets.version) freshVersion = response.data.adapter_results.sheets.version;
+                        if (response.data.adapter_results.sheets.lexical_id) freshLexical = response.data.adapter_results.sheets.lexical_id;
+                    }
+                } catch(e) {
+                    console.warn('[Cache] Fallo al leer payload sheet:', e);
+                }
+                
+                const cleanRecord = { ...payload, [pkField]: pkValue, _version: freshVersion, version: freshVersion };
+                if (freshLexical) cleanRecord.lexical_id = freshLexical;
+                
+                var schema = window.APP_SCHEMAS && window.APP_SCHEMAS[entityName];
+                if (schema && schema.computedFields) {
+                    for (var cfi = 0; cfi < schema.computedFields.length; cfi++) {
+                        var ctrl = schema.computedFields[cfi];
+                        if (ctrl.concat && ctrl.separator !== undefined) {
+                            var parts = [];
+                            for (var cfk = 0; cfk < ctrl.concat.length; cfk++) {
+                                if (cleanRecord[ctrl.concat[cfk]]) parts.push(String(cleanRecord[ctrl.concat[cfk]]).trim());
+                            }
+                            var joined = parts.join(ctrl.separator).trim();
+                            if (!joined && ctrl.fallback) {
+                                for (var ffb = 0; ffb < ctrl.fallback.length; ffb++) {
+                                    if (cleanRecord[ctrl.fallback[ffb]]) { joined = cleanRecord[ctrl.fallback[ffb]]; break; }
+                                }
+                            }
+                            cleanRecord[ctrl.name] = joined;
+                        }
+                    }
+                }
+                
+                const liveData = this.get(entityName);
+                const existingIdx = liveData.findIndex(r => window.UI_FormUtils.normalizeId(r[pkField]) === window.UI_FormUtils.normalizeId(pkValue));
+
+                let finalRecord = cleanRecord;
+                if (existingIdx !== -1) {
+                    finalRecord = Object.assign({}, liveData[existingIdx], cleanRecord);
+                }
+
+                this.set(entityName, existingIdx !== -1
+                    ? [...liveData.slice(0, existingIdx), finalRecord, ...liveData.slice(existingIdx + 1)]
+                    : [finalRecord, ...liveData]);
+                
+                console.log(`[Cache] ${existingIdx !== -1 ? 'UPDATE' : 'INSERT'} para: ${entityName} optimizado a versión ${freshVersion}.`);
+            }
+        }
+
+        // 2. Inyección Dinámica para Entidades Anidadas (Subgrids 0.0s latency)
+        let orch = null;
+        if (response.data && response.data.orchestratedChildren) {
+            orch = response.data.orchestratedChildren;
+        } else if (response.data && response.data.adapter_results && response.data.adapter_results.orchestratedChildren) {
+            orch = response.data.adapter_results.orchestratedChildren;
+        }
+
+        if (orch) {
+            const self = this;
+            Object.keys(orch).forEach(childEntity => {
+                if (self.get(childEntity) && Array.isArray(self.get(childEntity))) {
+                    const freshChildren = orch[childEntity] || [];
+                    const childPkField = window.Schema_Utils.getPrimaryKey(childEntity) || ('id_' + childEntity.toLowerCase().replace(/s$/, '').replace(/es$/, ''));
+                    
+                    let currentCache = [...self.get(childEntity)];
+                    freshChildren.forEach(newChild => {
+                        const cid = newChild[childPkField] || newChild['id_' + childEntity.toLowerCase()];
+                        if (!cid) {
+                            console.warn(`[UI_FormSubmitter] Ignorando hijo sin PK para ${childEntity}:`, newChild);
+                            return; // Failsafe against Index 0 corruption
+                        }
+                        const idx = currentCache.findIndex(c => (c[childPkField] === cid) || (c['id_' + childEntity.toLowerCase()] === cid));
+                        if (idx !== -1) {
+                            currentCache = [...currentCache.slice(0, idx), newChild, ...currentCache.slice(idx + 1)];
+                        } else {
+                            currentCache = [newChild, ...currentCache];
+                        }
+                    });
+                    
+                    self.set(childEntity, currentCache);
+                    
+                    if (window.AppEventBus) {
+                        if (childEntity === 'Sys_Graph_Edges') {
+                            window.AppEventBus.publish('CACHE::GRAPH_HYDRATED', { source: 'FormSubmitter', count: freshChildren.length });
+                        } else {
+                            window.AppEventBus.publish('DATA::UPDATED', { entityKey: childEntity });
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Notificar globalmente mutación de entidad (Ej. DataGrid Re-render)
+        if (window.AppEventBus) {
+            window.AppEventBus.publish('DATA::UPDATED', { entityKey: entityName });
+        }
     }
   };
 

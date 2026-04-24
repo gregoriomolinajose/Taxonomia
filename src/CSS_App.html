@@ -100,4 +100,29 @@ body.drawer-max-depth ion-button[onclick*="openForm"] {
   flex-shrink: 0;
 }
 
+/* --- MÓDULO S44: Form Separators (CSS-Purity) --- */
+.tx-form-separator {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    margin: var(--spacing-4) 0;
+    gap: var(--spacing-2);
+}
+.tx-form-separator ion-icon {
+    font-size: 16px;
+    color: var(--ion-color-medium, #92949c);
+}
+.tx-form-separator span {
+    color: var(--ion-color-dark, #222428);
+    font-size: var(--sys-font-small, 13px);
+    font-weight: var(--fw-bold, 700);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+.tx-form-separator hr {
+    flex-grow: 1;
+    border: none;
+    border-top: 1px solid var(--ion-color-step-200, #e6e8eb);
+    margin: 0;
+}
 </style>

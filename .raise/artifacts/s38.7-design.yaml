@@ -1,0 +1,71 @@
+artifact_type: story-design
+version: 4
+skill: rai-story-design
+created: '2026-04-16T16:55:00Z'
+story: 'S38.7'
+epic: 'E38'
+content:
+  summary: >
+    Rediseño del modal ETL basado en auditoría UX (6 hallazgos) y resolución
+    de 4 heurísticas del Architecture Review. CSS modularizado en archivo
+    propio, 7 clases semánticas (≥2 props cada una), drag-and-drop complementario,
+    barra de progreso visual y consumo directo de tokens globales.
+  complexity: moderate
+  acceptance_criteria:
+    - id: AC1
+      description: 'Cero instancias de element.style.* en UI_ETL_Modal.client.js (excepto width dinámico del progress bar)'
+      verifiable: true
+    - id: AC2
+      description: 'Todas las clases CSS usan exclusivamente tokens del Design System de manera directa'
+      verifiable: true
+    - id: AC3
+      description: 'Indicador de progreso visible durante chunking'
+      verifiable: true
+    - id: AC4
+      description: 'Dark Mode y Light Mode renderizan correctamente'
+      verifiable: true
+    - id: AC5
+      description: 'CSS vive en módulo propio CSS_ETL_Modal.html (H11)'
+      verifiable: true
+    - id: AC6
+      description: 'Drag-and-drop complementa el botón CSV con affordance visual (H6)'
+      verifiable: true
+    - id: AC7
+      description: 'Toasts de error mapean a errorType semántico de S38.6 (SHOULD)'
+      verifiable: true
+    - id: AC9
+      description: 'Ninguna clase CSS aporta <2 propiedades propias (H7)'
+      verifiable: true
+  integration_points:
+    - module: 'UI_ETL_Modal'
+      change_type: modification
+      files: ['src/UI_ETL_Modal.client.js']
+    - module: 'CSS_ETL_Modal'
+      change_type: new
+      files: ['src/CSS_ETL_Modal.html']
+    - module: 'Index'
+      change_type: modification
+      files: ['src/Index.html']
+  decisions:
+    - id: D1
+      choice: 'Archivo CSS modular CSS_ETL_Modal.html en lugar de CSS_App.html'
+      rationale: 'CSS_App.html ya acumula 4 dominios (H11). Archivo propio sigue patrón de CSS_DesignSystem.html'
+      alternatives_considered: ['Agregar a CSS_App.html (descartado por SRP)']
+    - id: D2
+      choice: '7 clases CSS, cada una con ≥2 propiedades propias'
+      rationale: 'H7: evitar wrappers vacíos sobre Ionic. Clases eliminadas que Ionic resuelve nativamente'
+      alternatives_considered: ['11 clases (v1, descartado por over-abstraction)']
+    - id: D3
+      choice: 'Consumo directo de tokens globales sin inyectar alias'
+      rationale: 'H9 / H8: evitar polución del Design System con tokens para componentes específicos'
+      alternatives_considered: ['Crear alias globales (v3, descartado por AR H9)']
+    - id: D4
+      choice: 'Dropzone complementa botón CSV, no lo reemplaza'
+      rationale: 'H6: ambas interacciones coexisten. Click para usuarios conservadores, drag para power users'
+      alternatives_considered: ['Reemplazar botón (descartado por accesibilidad)']
+refs:
+  backlog_item: 'S38.7'
+  epic_scope: 'work/epics/e38-hub-ingesta-inteligente/scope.md'
+  architecture_review: 'AR-S38.7 (pre-implementation, inline)'
+metadata:
+  ar_resolutions: ['H6', 'H7', 'H8', 'H9', 'H11']

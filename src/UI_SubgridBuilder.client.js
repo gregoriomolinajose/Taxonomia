@@ -16,7 +16,6 @@ window.UI_SubgridBuilder = {
 
         const subgridDiv = document.createElement('div');
         subgridDiv.style.border = '1px solid var(--ion-border-color)';
-        subgridDiv.style.borderRadius = 'var(--rounded-sm)';
         subgridDiv.style.overflow = 'hidden';
         subgridDiv.style.marginBottom = 'var(--spacing-5)';
         subgridDiv.setAttribute('data-form-component', field.name);

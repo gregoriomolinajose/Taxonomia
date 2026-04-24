@@ -96,9 +96,15 @@ async function submitHybridForm(frame, page, text) {
         await frame.locator('body').evaluate(() => window.renderForm('Unidad_Negocio', {}));
         await fillTopInput(frame, 'nombre', 'UN A (Padre Original) ' + Date.now());
         
-        await clickTopButtonByText(frame, 'Agregar');
-
-        await clickTopButtonById(frame, 'btn-create-new'); 
+        const containerPortA = frame.locator('tx-searchable[data-form-component="portafolios_vinculados"]').last();
+        await containerPortA.waitFor({ state: 'attached', timeout: 15000 }).catch(() => {});
+        
+        if (await containerPortA.isVisible()) {
+            await containerPortA.evaluate(el => el.executeSearchAndOpen());
+            const btnCreatePort = containerPortA.locator('ion-item').filter({ hasText: 'Crear' }).last();
+            await btnCreatePort.waitFor({ state: 'visible', timeout: 8000 });
+            await btnCreatePort.click({ force: true });
+        }
  
         await fillTopInput(frame, 'nombre', portafolioName);
         console.log("Saving new portafolio...");
@@ -114,14 +120,16 @@ async function submitHybridForm(frame, page, text) {
         await fillTopInput(frame, 'nombre', 'UN B (Padre LadrÃ³n) ' + Date.now());
         
         console.log("Linking UN B...");
-        await clickTopButtonByText(frame, 'Agregar');
- // Wait relation builder modal
+        const containerPortB = frame.locator('tx-searchable[data-form-component="portafolios_vinculados"]').last();
+        await containerPortB.evaluate(el => el.executeSearchAndOpen());
         
-        // Seleccionar el Portafolio que pertenece a la UN A
-        const listItems = frame.locator('ion-item').filter({ hasText: portafolioName });
-        await listItems.first().click({ force: true });
-        await clickTopButtonByText(frame, 'Vincular');
- 
+        // Seleccionar el Portafolio interactivo (puede venir del inline-list)
+        const popoverPortListB = containerPortB.locator('ion-item').filter({ hasText: portafolioName }).first();
+        await popoverPortListB.waitFor({ state: 'visible', timeout: 8000 });
+        await popoverPortListB.click({ force: true });
+        
+        // Modal cierra por Escape
+        await page.keyboard.press('Escape');
         
         // UN B ahora reclama tener a ese Portafolio
         await submitHybridForm(frame, page, 'Guardar Unidad');
@@ -132,16 +140,22 @@ async function submitHybridForm(frame, page, text) {
         await fillTopInput(frame, 'nombre', 'UN C (Empty) ' + Date.now());
         
         console.log("Linking UN C...");
-        await clickTopButtonByText(frame, 'Agregar');
+        const containerPortC = frame.locator('tx-searchable[data-form-component="portafolios_vinculados"]').last();
+        await containerPortC.evaluate(el => el.executeSearchAndOpen());
 
-        const someItems = frame.locator('ion-label').filter({ hasText: 'Portafolio' }).first();
+        const someItems = containerPortC.locator('ion-item').filter({ hasText: 'Portafolio' }).first();
+        await someItems.waitFor({ state: 'visible', timeout: 8000 });
         await someItems.click({ force: true });
-        await clickTopButtonByText(frame, 'Vincular');
- 
+        
+        // Salir
+        await page.keyboard.press('Escape');
+  
 
-        // Limpiar (Desvincular con X)
-        const removeBtn = frame.locator('ion-button[color="danger"]').first();
-        await removeBtn.click({ force: true });
+        // Limpiar (Desvincular con X - Badge de TXSearchable)
+        const removeBtn = containerPortC.locator('ion-chip ion-icon[name="close-circle"]').first();
+        if (await removeBtn.isVisible()) {
+            await removeBtn.click({ force: true });
+        }
 
 
         // Guardar (Subgrid vacÃ­o)
