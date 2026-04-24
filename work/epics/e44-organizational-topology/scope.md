@@ -25,7 +25,10 @@ Otorgar visibilidad centralizada sobre la composición de equipos, la ocupación
 | S44.9 | Mapeo Automático Ingesta | M | Done | Implementar Workspace Interceptor para autoprovisionar o enlazar ID interno de Cargo mediante diccionarios en cache O(1). |
 | S44.10 | Migración Masiva Lógica Roles | M | Done | Migración Masiva CSV del viejo select rol_agil hacia los nuevos Pointers topológicos de Rol. |
 | S44.11 | Sincronización On-Demand (Workspace Sync) | M | Done | Implementar endpoint on-demand ligado a UI_Admin para rescate de Workspace data. |
-**Total:** 9 stories
+| S44.12 | Consolidación de FormValidators | S | Done | Refactorizar dependencias de validación unificándolas en UI_FormUtils. |
+| S44.13 | JIT Workspace Fallback | M | Done | Resolver renderizado optimista de cargos virtuales cruzando IDs desde Workspace. |
+| S44.14 | Desacoplar Interceptor Workspace | M | Todo | Extraer lógica de auto-provisionamiento desde Engine_ETL a Schema_Engine (Middleware) para respetar arquitectura. |
+**Total:** 14 stories
 
 ## Scope
 
@@ -61,6 +64,9 @@ Otorgar visibilidad centralizada sobre la composición de equipos, la ocupación
 - [x] S44.9 completado
 - [x] S44.10 completado
 - [x] S44.11 completado
+- [x] S44.12 completado
+- [x] S44.13 completado
+- [ ] S44.14 completado
 - [x] Los líderes pueden entrar al Capacity Map y detectar equipos sin SM y gente saturada.
 - [x] Epic retrospective done
 - [x] Merged to `main`

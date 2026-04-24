@@ -409,9 +409,9 @@
             footerContainer.appendChild(btnGrid);
             // Fin de armado de Header/Footer Híbrido
 
-            // --- Delegación de Business Rules UI_Validators ---
-            if (global.UI_Validators && typeof global.UI_Validators.attachBusinessRulesListeners === 'function') {
-                global.UI_Validators.attachBusinessRulesListeners(container, entityName);
+            // --- Delegación de Business Rules UI_FormUtils ---
+            if (global.UI_FormUtils && typeof global.UI_FormUtils.attachBusinessRulesListeners === 'function') {
+                global.UI_FormUtils.attachBusinessRulesListeners(container, entityName);
             }
             // --------------------------------------------------------------------
 

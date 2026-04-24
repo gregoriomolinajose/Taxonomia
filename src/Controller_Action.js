@@ -43,6 +43,15 @@ function _handleCreate(entityName, payload) {
   _guardAbac('create', entityName, null);
   _applyAdminBypass(entityName, payload);
   
+  if (entityName === 'Persona' && typeof Engine_ETL !== 'undefined') {
+      try {
+          const hyd = Engine_ETL.hydrateAndDeduplicate(entityName, [payload]);
+          if (hyd && hyd.data && hyd.data.length > 0) Object.assign(payload, hyd.data[0]);
+      } catch(e) { 
+          throw new Error("FALLO DE INTEGRIDAD (ETL): No se pudo provisionar el Cargo de la Persona. " + e.message); 
+      }
+  }
+  
   if (typeof Engine_ABAC !== 'undefined') {
     let email = "";
     try { if (typeof Session !== 'undefined') email = Session.getActiveUser().getEmail(); } catch(e) {}
@@ -60,6 +69,15 @@ function _handleCreate(entityName, payload) {
 function _handleUpdate(entityName, id, payload) {
   _guardAbac('update', entityName, id);
   _applyAdminBypass(entityName, payload);
+  
+  if (entityName === 'Persona' && typeof Engine_ETL !== 'undefined') {
+      try {
+          const hyd = Engine_ETL.hydrateAndDeduplicate(entityName, [payload]);
+          if (hyd && hyd.data && hyd.data.length > 0) Object.assign(payload, hyd.data[0]);
+      } catch(e) { 
+          throw new Error("FALLO DE INTEGRIDAD (ETL): No se pudo provisionar el Cargo de la Persona. " + e.message); 
+      }
+  }
   
   if (typeof Engine_ABAC !== 'undefined') {
     let email = "";

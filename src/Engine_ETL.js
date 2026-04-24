@@ -204,25 +204,25 @@ var Engine_ETL = (function() {
                if (rawCargo !== undefined && rawCargo !== null && rawCargo !== '') {
                    const rawKey = String(rawCargo).trim();
                    const normalizedKey = rawKey.toLowerCase();
-                   if (cargoExternoMap[normalizedKey]) {
-                       payload.id_cargo = cargoExternoMap[normalizedKey];
-                   } else if (rawKey !== payload.id_cargo) {
-                       if (!createdCargosCache[normalizedKey]) {
-                           const tempCargoId = "CARG-" + (Math.random().toString(36).substring(2, 10));
-                           batchCargosToCreate.push({
-                               id_cargo: tempCargoId,
-                               nombre: rawKey + " (Por definir)",
-                               nivel: "Nivel Base",
-                               id_externo_workspace: rawKey,
-                               estado: "Activo"
-                           });
-                           createdCargosCache[normalizedKey] = tempCargoId;
-                           payload.id_cargo = tempCargoId;
-                           cargoExternoMap[normalizedKey] = tempCargoId;
-                       } else {
-                           payload.id_cargo = createdCargosCache[normalizedKey];
-                       }
-                   }
+                    if (cargoExternoMap[normalizedKey]) {
+                        payload.id_cargo = cargoExternoMap[normalizedKey];
+                    } else if (!String(payload.id_cargo || '').startsWith('CARG-')) {
+                        if (!createdCargosCache[normalizedKey]) {
+                            const tempCargoId = "CARG-" + (Math.random().toString(36).substring(2, 10));
+                            batchCargosToCreate.push({
+                                id_cargo: tempCargoId,
+                                nombre: rawKey + " (Por definir)",
+                                nivel: "Nivel Base",
+                                id_externo_workspace: rawKey,
+                                estado: "Activo"
+                            });
+                            createdCargosCache[normalizedKey] = tempCargoId;
+                            payload.id_cargo = tempCargoId;
+                            cargoExternoMap[normalizedKey] = tempCargoId;
+                        } else {
+                            payload.id_cargo = createdCargosCache[normalizedKey];
+                        }
+                    }
                }
            }
 
