@@ -159,6 +159,23 @@
                 }
             }
 
+            // S44.17: Auto-Provisionamiento JIT Workspace Post-ETL (Solo Persona)
+            if (entityName === 'Persona') {
+                if (window.UI_ETL_Modal) {
+                    const progressLabel = document.getElementById('etl-progress-label');
+                    if (progressLabel) progressLabel.textContent = "Configurando Topología Workspace...";
+                }
+                console.log(`[ETL Workspace] Ingesta de Persona finalizada. Disparando Sync Job en lote paralelo...`);
+                try {
+                    // Ejecutamos silenciosamente el Sync. El Backend se encargará de crear los Cargos y las Aristas Topológicas.
+                    await window.DataAPI.call('runWorkspaceSyncJob', { manual: true });
+                    // Avisamos al sistema que la topología mutó, para que la UI recargue las relaciones en caliente
+                    if (window.AppEventBus) window.AppEventBus.publish('CACHE::GRAPH_HYDRATED', { source: 'ETL_WorkspaceSync' });
+                } catch(e) {
+                    console.error("[ETL Workspace] Error aprovisionando cargos o topología:", e);
+                }
+            }
+
             if (progressCallback) progressCallback(totalChunks, totalChunks, true, metrics);
             return metrics;
         },

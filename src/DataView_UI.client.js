@@ -755,10 +755,10 @@
                                 loading.dismiss();
                                 if (res && res.data) {
                                     if (window.DataEngine_ETL && window.DataEngine_ETL.processPayload) {
-                                        window.DataEngine_ETL.processPayload(res.data, entity, function onProgress(chunkIndex, totalChunks, isDone) {
+                                        window.DataEngine_ETL.processPayload(res.data, entity, function onProgress(chunkIndex, totalChunks, isDone, metrics, customText) {
                                             // H10: No crear un ion-loading redundante apilándose frente al modal, usar el progreso nativo de la ventana modal
                                             if (window.UI_ETL_Modal && window.UI_ETL_Modal.updateProgress) {
-                                                window.UI_ETL_Modal.updateProgress(chunkIndex, totalChunks);
+                                                window.UI_ETL_Modal.updateProgress(chunkIndex, totalChunks, isDone, metrics, customText);
                                             }
                                         }).then((metrics) => {
                                             if (window.DataStore) window.DataStore.set(entity, null); // Invocar Soft-Reload
