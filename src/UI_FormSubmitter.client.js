@@ -317,6 +317,13 @@ window.UI_FormSubmitter = class UI_FormSubmitter {
             // S42.1 (Fast-I/O Optimization): Extirpada la re-hidratación por red de Sys_Graph_Edges.
             // La entidad ya se hidrata atómicamente a través de window.DataStore.reconcileOptimisticPatch usando orchestratedChildren.
             
+            // [Bugfix S45.2] Invalidate cache for auto-provisioned entities
+            if (this.entityName === 'Persona') {
+                window.DataStore.set('Persona', null);
+                window.DataStore.set('Cargo', null);
+                window.DataStore.set('Sys_Graph_Edges', null);
+            }
+            
             // Invalida el caché intermedio de Peticiones Asincronas de Formularios
             if (window.FormEngine_Resolvers && typeof window.FormEngine_Resolvers.invalidateCache === 'function') {
                 window.FormEngine_Resolvers.invalidateCache();
