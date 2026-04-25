@@ -302,7 +302,7 @@ var APP_SCHEMAS = {
     ],
     metadata: { showInMenu: true, order:8, iconName:'person-outline', color:'warning', label:'Personas', titleField:'_nombre_completo', idField:'id_persona', fkField:null },
     primaryKey: "id_persona",
-    mutationInterceptors: ['AutoProvisionCargo'],
+    mutationInterceptors: ['AutoProvisionCargo', 'AutoProvisionLiderDirecto'],
     topologyRules: TOPOLOGY_PRESETS.JERARQUICA_PERSONA,
     fields: [
       { name: "id_persona", type: "hidden", primaryKey: true },

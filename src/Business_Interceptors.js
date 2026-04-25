@@ -6,97 +6,151 @@
 
 var Business_Interceptors = (function() {
 
+    /**
+     * Motor DRY para generar Stubs en O(1) de memoria,
+     * mitigando N+1 y manteniendo SCD-2 / Integridad de Grafos.
+     */
+    function _provisionStubs(config) {
+        if (!config.items || config.items.length === 0) return;
+
+        let memoryMap = {};
+        let batchToCreate = [];
+        let createdCache = {};
+
+        // 1. Optimización Memoria O(1) vs Batch completo
+        if (config.items.length === 1) {
+            const rawKey = config.extractKeyFn(config.items[0]);
+            if (rawKey && typeof Adapter_Sheets !== 'undefined') {
+                const normSearch = String(rawKey).trim().toLowerCase();
+                const rawFilter = (rowArray, headerMap) => config.matchRecordFn(rowArray, headerMap, normSearch);
+                const res = Adapter_Sheets.list(config.targetEntity, { rawFilterFn: rawFilter, limit: 1 });
+                if (res && res.rows && res.rows.length > 0) {
+                    config.extractCacheValuesFn(res.rows[0], memoryMap);
+                }
+            }
+        } else {
+            if (typeof Engine_DB !== 'undefined') {
+                const res = Engine_DB.list(config.targetEntity, 'objects');
+                const all = (res && res.rows) ? res.rows : [];
+                all.forEach(r => config.extractCacheValuesFn(r, memoryMap));
+            }
+        }
+
+        // 2. Procesamiento y Generación de Stubs
+        config.items.forEach(payload => {
+            const rawKey = config.extractKeyFn(payload);
+            if (rawKey !== undefined && rawKey !== null && String(rawKey).trim() !== '') {
+                const normKey = String(rawKey).trim().toLowerCase();
+                
+                let resolvedId = null;
+                if (memoryMap[normKey]) {
+                    resolvedId = memoryMap[normKey];
+                } else if (config.shouldCreateStubFn ? config.shouldCreateStubFn(payload, normKey) : true) {
+                    if (!createdCache[normKey]) {
+                        const stub = config.stubFactory(String(rawKey).trim());
+                        batchToCreate.push(stub.record);
+                        createdCache[normKey] = stub.id;
+                        resolvedId = stub.id;
+                        memoryMap[normKey] = stub.id;
+                    } else {
+                        resolvedId = createdCache[normKey];
+                    }
+                } else {
+                    resolvedId = payload[config.primaryKeyField]; // Mantener ID existente si no creamos stub
+                }
+                
+                if (resolvedId && config.updatePayloadFn) {
+                    config.updatePayloadFn(payload, resolvedId);
+                }
+            }
+        });
+
+        // 3. Persistencia Atómica (Bulk)
+        if (batchToCreate.length > 0 && typeof Engine_DB !== 'undefined') {
+            try {
+                Engine_DB.upsertBatch(config.targetEntity, batchToCreate, { muteTriggers: true });
+                if (typeof Logger !== 'undefined') Logger.log(config.logMessage.replace('{N}', batchToCreate.length));
+            } catch(e) {
+                if (typeof console !== 'undefined') console.error(`[CRITICAL] Error batch interceptor para ${config.targetEntity}: ${e.message}`);
+                if (typeof Logger !== 'undefined') Logger.log(`[CRITICAL] Error batch interceptor para ${config.targetEntity}: ${e.message}`);
+            }
+        }
+    }
+
     const INTERCEPTORS = {
         /**
          * AutoProvisionCargo
-         * Resuelve cargos virtuales desde strings crudos. Genera Cargos temporales 
-         * si no existen, garantizando que Engine_DB siempre reciba IDs válidos.
          */
         AutoProvisionCargo: function(entityName, items) {
-            if (entityName !== 'Persona' || !items || items.length === 0) return;
-
-            let cargoExternoMap = {};
-            let batchCargosToCreate = [];
-            let createdCargosCache = {};
-
-            // Optimización de Memoria (S44.18/S44.14)
-            if (items.length === 1) {
-                // Mutación atómica (1 registro): Solo buscamos coincidencia exacta mediante rawFilter
-                const rawCargo = items[0].cargo !== undefined ? items[0].cargo : items[0].id_cargo;
-                if (rawCargo && typeof Engine_DB !== 'undefined' && typeof Adapter_Sheets !== 'undefined') {
-                    const normalizedSearch = String(rawCargo).trim().toLowerCase();
-                    const rawFilter = (rowArray, headerMap) => {
-                        const hIdExt = headerMap['id_externo_workspace'];
-                        const hNombre = headerMap['nombre'];
-                        const valExt = hIdExt !== undefined ? String(rowArray[hIdExt] || '').toLowerCase() : '';
-                        const valNom = hNombre !== undefined ? String(rowArray[hNombre] || '').replace(' (Por definir)', '').trim().toLowerCase() : '';
-                        return valExt === normalizedSearch || valNom === normalizedSearch;
+            if (entityName !== 'Persona') return;
+            _provisionStubs({
+                items: items,
+                targetEntity: 'Cargo',
+                primaryKeyField: 'id_cargo',
+                extractKeyFn: (p) => p.cargo !== undefined ? p.cargo : p.id_cargo,
+                matchRecordFn: (row, headers, search) => {
+                    const hExt = headers['id_externo_workspace'];
+                    const hNom = headers['nombre'];
+                    const vExt = hExt !== undefined ? String(row[hExt] || '').toLowerCase() : '';
+                    const vNom = hNom !== undefined ? String(row[hNom] || '').replace(' (Por definir)', '').trim().toLowerCase() : '';
+                    return vExt === search || vNom === search;
+                },
+                extractCacheValuesFn: (row, map) => {
+                    if (!row.id_cargo) return;
+                    if (row.nombre) map[String(row.nombre).replace(' (Por definir)', '').trim().toLowerCase()] = row.id_cargo;
+                    if (row.id_externo_workspace) map[String(row.id_externo_workspace).trim().toLowerCase()] = row.id_cargo;
+                },
+                shouldCreateStubFn: (p) => !String(p.id_cargo || '').startsWith('CARG-'),
+                stubFactory: (key) => {
+                    const tempId = "CARG-" + (Math.random().toString(36).substring(2, 10).toUpperCase());
+                    return {
+                        id: tempId,
+                        record: {
+                            id_cargo: tempId,
+                            nombre: key + " (Por definir)",
+                            nivel: "Nivel Base",
+                            id_externo_workspace: key,
+                            estado: "Activo"
+                        }
                     };
-                    const cargoList = Adapter_Sheets.list('Cargo', { rawFilterFn: rawFilter, limit: 1 });
-                    if (cargoList && cargoList.rows && cargoList.rows.length > 0) {
-                        const c = cargoList.rows[0];
-                        if (c.nombre) cargoExternoMap[String(c.nombre).replace(' (Por definir)', '').trim().toLowerCase()] = c.id_cargo;
-                        if (c.id_externo_workspace) cargoExternoMap[String(c.id_externo_workspace).trim().toLowerCase()] = c.id_cargo;
-                    }
-                }
-            } else {
-                // Sincronización Masiva (N registros): Cargamos todo el catálogo a memoria para O(1)
-                if (typeof Engine_DB !== 'undefined') {
-                    const cargoList = Engine_DB.list('Cargo', 'objects');
-                    const allCargos = (cargoList && cargoList.rows) ? cargoList.rows : [];
-                    allCargos.forEach(c => {
-                        if (c.id_cargo) {
-                            if (c.nombre) cargoExternoMap[String(c.nombre).replace(' (Por definir)', '').trim().toLowerCase()] = c.id_cargo;
-                            if (c.id_externo_workspace) cargoExternoMap[String(c.id_externo_workspace).trim().toLowerCase()] = c.id_cargo;
-                        }
-                    });
-                }
-            }
-
-            // Aplicar lógica
-            items.forEach(payload => {
-                const rawCargo = payload.cargo !== undefined ? payload.cargo : payload.id_cargo;
-                if (rawCargo !== undefined && rawCargo !== null && rawCargo !== '') {
-                    const rawKey = String(rawCargo).trim();
-                    const normalizedKey = rawKey.toLowerCase();
-                    if (cargoExternoMap[normalizedKey]) {
-                        payload.id_cargo = cargoExternoMap[normalizedKey];
-                    } else if (!String(payload.id_cargo || '').startsWith('CARG-')) {
-                        if (!createdCargosCache[normalizedKey]) {
-                            const tempCargoId = "CARG-" + (Math.random().toString(36).substring(2, 10).toUpperCase());
-                            batchCargosToCreate.push({
-                                id_cargo: tempCargoId,
-                                nombre: rawKey + " (Por definir)",
-                                nivel: "Nivel Base",
-                                id_externo_workspace: rawKey,
-                                estado: "Activo"
-                            });
-                            createdCargosCache[normalizedKey] = tempCargoId;
-                            payload.id_cargo = tempCargoId;
-                            cargoExternoMap[normalizedKey] = tempCargoId;
-                        } else {
-                            payload.id_cargo = createdCargosCache[normalizedKey];
-                        }
-                    }
-                }
+                },
+                updatePayloadFn: (p, resolvedId) => p.id_cargo = resolvedId,
+                logMessage: 'Se auto-generaron {N} cargos nuevos "Por definir" (Interceptor DRY).'
             });
+        },
 
-            // Commit batch creations before closing pipeline
-            if (batchCargosToCreate.length > 0 && typeof Engine_DB !== 'undefined') {
-                try {
-                    Engine_DB.upsertBatch('Cargo', batchCargosToCreate, { muteTriggers: true });
-                    if (typeof Logger !== 'undefined') Logger.log(`Se auto-generaron ${batchCargosToCreate.length} cargos nuevos "Por definir" (Interceptor).`);
-                } catch(e) {
-                    if (typeof Logger !== 'undefined') Logger.log("Error creando batch de cargos en interceptor: " + e.message);
-                }
-            }
+        /**
+         * AutoProvisionLiderDirecto
+         */
+        AutoProvisionLiderDirecto: function(entityName, items) {
+            if (entityName !== 'Persona') return;
+            _provisionStubs({
+                items: items,
+                targetEntity: 'Persona',
+                primaryKeyField: 'id_persona',
+                extractKeyFn: (p) => p.lider_directo,
+                matchRecordFn: (row, headers, search) => {
+                    const hEmail = headers['email'];
+                    return hEmail !== undefined && String(row[hEmail] || '').trim().toLowerCase() === search;
+                },
+                extractCacheValuesFn: (row, map) => {
+                    if (row.email) map[String(row.email).trim().toLowerCase()] = row.email;
+                },
+                stubFactory: (key) => ({
+                    id: key, // Usamos el email como ID
+                    record: {
+                        id_persona: key,
+                        email: key,
+                        nombre: key.split('@')[0] + " (Pendiente Sync)",
+                        estado: "Activo",
+                        workspace_sync_status: 'pending'
+                    }
+                }),
+                logMessage: 'Se auto-generaron {N} líderes stubs "Pendiente Sync" (Interceptor DRY).'
+            });
         }
     };
 
-    /**
-     * apply
-     * Invoca secuencialmente todos los interceptores declarados en el esquema de la entidad.
-     */
     function apply(entityName, items) {
         if (!items || items.length === 0) return;
         if (typeof getAppSchema === 'undefined') return;
@@ -112,13 +166,9 @@ var Business_Interceptors = (function() {
         }
     }
 
-    return {
-        apply: apply
-    };
-
+    return { apply: apply };
 })();
 
-// Export for Node.js environments (Jest)
 if (typeof module !== 'undefined') {
     module.exports = { Business_Interceptors };
 }

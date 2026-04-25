@@ -146,6 +146,16 @@ function runWorkspaceSyncJob(params) {
                 });
             }
             
+            // [S45.2] Si existe lider_directo, construimos su arista
+            var safeLiderDirecto = pToSave.lider_directo ? String(pToSave.lider_directo).trim() : '';
+            if (safeLiderDirecto && personaId) {
+                incomingEdgesMock.push({
+                    id_nodo_padre: safeLiderDirecto,
+                    id_nodo_hijo: personaId,
+                    tipo_relacion: 'PERSONA_LIDER_DIRECTO'
+                });
+            }
+            
             if (pToSave.workspace_sync_status === 'synced') actualizados++;
             if (pToSave.workspace_sync_status === 'failed') fallidos++;
             
