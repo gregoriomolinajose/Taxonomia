@@ -27,11 +27,18 @@ content:
     - module: 'Backend_Adapter'
       change_type: modification
       files: ['src/Adapter_Sheets.js']
+    - module: 'Backend_Topology'
+      change_type: modification
+      files: ['src/Topology_Strategies.js']
   decisions:
     - id: D1
-      choice: 'Mantener lógica de SCD-2 en memoria de Apps Script antes de inyectar en upsertBatch.'
-      rationale: 'upsertBatch procesa los datos de forma plana, no sabe interpretar árboles de dependencias. Calcular los cierres y las aperturas de arista en memoria permite a upsertBatch solo recibir una lista plana de modificaciones que impactar en Sheets.'
-      alternatives_considered: ['Reescribir upsertBatch para que analice relaciones recursivamente', 'Usar CloudDB']
+      choice: 'Mantener lógica de SCD-2 extraída en Topology_Strategies en lugar de duplicarla.'
+      rationale: 'upsertBatch procesa los datos de forma plana. Extraer la lógica SCD-2 desde orchestrateNestedSave hacia una función pura (calculateSCD2Transitions) evita duplicación de reglas de negocio topológicas (Resolución de H10).'
+      alternatives_considered: ['Duplicar lógica en Job_WorkspaceSync', 'Sobrecargar upsertBatch']
+    - id: D2
+      choice: 'Filtrado Server-Side mediante Lambda Crudo (rawFilterFn) en Adapter_Sheets.'
+      rationale: 'Evita crear un mini-ORM complejo para un entorno sin motor SQL como Google Sheets. Filtrar el arreglo 2D antes de mapear ahorra RAM sin agregar abstracciones innecesarias (Resolución de H7).'
+      alternatives_considered: ['Crear método query con objetos de filtro estilo Mongo', 'Cargar todo y filtrar en memoria']
 refs:
   backlog_item: ''
   epic_scope: 'work/epics/e44-organizational-topology/scope.md'
