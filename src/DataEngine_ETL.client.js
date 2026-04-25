@@ -161,9 +161,8 @@
 
             // S44.17: Auto-Provisionamiento JIT Workspace Post-ETL (Solo Persona)
             if (entityName === 'Persona') {
-                if (window.UI_ETL_Modal) {
-                    const progressLabel = document.getElementById('etl-progress-label');
-                    if (progressLabel) progressLabel.textContent = "Configurando Topología Workspace...";
+                if (progressCallback) {
+                    progressCallback(totalChunks, totalChunks, false, null, "Configurando Topología Workspace...");
                 }
                 console.log(`[ETL Workspace] Ingesta de Persona finalizada. Disparando Sync Job en lote paralelo...`);
                 try {
