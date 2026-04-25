@@ -1,0 +1,38 @@
+artifact_type: story-design
+version: 1
+skill: rai-story-design
+created: '2026-04-24T22:20:00Z'
+story: 'S44.18'
+epic: 'E44'
+content:
+  summary: 'Reducir la latencia y la saturación de memoria de Job_WorkspaceSync reemplazando lecturas masivas en RAM por queries filtrados en base de datos, y escrituras iterativas O(N) por escrituras en lote (Bulk Inserts).'
+  complexity: moderate
+  acceptance_criteria:
+    - id: AC1
+      description: 'Filtrado Server-Side: Job_WorkspaceSync descarga solo las personas pendientes/fallidas.'
+      verifiable: true
+    - id: AC2
+      description: 'Escritura Masiva: Se eliminan las 50 peticiones de red por un par de llamadas upsertBatch (Entidad + Grafo).'
+      verifiable: true
+    - id: AC3
+      description: 'Preservación Topológica: Las aristas creadas en lote mantienen el versionamiento SCD-2.'
+      verifiable: true
+  integration_points:
+    - module: 'Backend_Jobs'
+      change_type: modification
+      files: ['src/Job_WorkspaceSync.js']
+    - module: 'Backend_Engine'
+      change_type: modification
+      files: ['src/Engine_DB.js']
+    - module: 'Backend_Adapter'
+      change_type: modification
+      files: ['src/Adapter_Sheets.js']
+  decisions:
+    - id: D1
+      choice: 'Mantener lógica de SCD-2 en memoria de Apps Script antes de inyectar en upsertBatch.'
+      rationale: 'upsertBatch procesa los datos de forma plana, no sabe interpretar árboles de dependencias. Calcular los cierres y las aperturas de arista en memoria permite a upsertBatch solo recibir una lista plana de modificaciones que impactar en Sheets.'
+      alternatives_considered: ['Reescribir upsertBatch para que analice relaciones recursivamente', 'Usar CloudDB']
+refs:
+  backlog_item: ''
+  epic_scope: 'work/epics/e44-organizational-topology/scope.md'
+metadata: {}
