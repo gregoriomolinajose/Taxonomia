@@ -1964,15 +1964,21 @@
                     // Disparar hidratación silenciosa paralela (JIT Cache Refresh)
                     Promise.all([
                         window.DataAPI.call('getInitialPayload', 'Persona'),
-                        window.DataAPI.call('getInitialPayload', 'Cargo')
+                        window.DataAPI.call('getInitialPayload', 'Cargo'),
+                        window.DataAPI.call('getInitialPayload', 'Sys_Graph_Edges')
                     ]).then(payloads => {
-                        ['Persona', 'Cargo'].forEach((entity, idx) => {
+                        ['Persona', 'Cargo', 'Sys_Graph_Edges'].forEach((entity, idx) => {
                             const raw = payloads[idx];
                             const res = typeof raw === 'string' ? JSON.parse(raw) : raw;
                             if (res && res.status === 'success') {
                                 const rows = window.Schema_Utils.inflateTuples(res.data);
                                 window.DataStore.set(entity, rows);
                                 if (window.AppEventBus) window.AppEventBus.publish('DATA::UPDATED', { entityKey: entity });
+                                
+                                // Si acabamos de hidratar el grafo, avisar al UI que repinte relaciones
+                                if (entity === 'Sys_Graph_Edges' && window.AppEventBus) {
+                                    window.AppEventBus.publish('CACHE::GRAPH_HYDRATED', { source: 'WorkspaceSync' });
+                                }
                             }
                         });
                         
@@ -1987,6 +1993,7 @@
                     if (window.DataStore) {
                         window.DataStore.invalidate('Persona');
                         window.DataStore.invalidate('Cargo');
+                        window.DataStore.invalidate('Sys_Graph_Edges');
                     }
                     alert(msg);
                     if(btn) btn.innerHTML = '<ion-icon name="sync-circle-outline"></ion-icon> Sincronizar Workspace';
