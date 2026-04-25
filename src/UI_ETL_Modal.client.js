@@ -425,7 +425,7 @@ window.UI_ETL_Modal = (function() {
                 if (hint) hint.style.display = 'block';
             }
         },
-        updateProgress: function(chunkIndex, totalChunks) {
+        updateProgress: function(chunkIndex, totalChunks, isDone, metrics, customText) {
             const progressContainer = document.getElementById('etl-progress-container');
             const progressBar = document.getElementById('etl-progress-bar');
             const progressLabel = document.getElementById('etl-progress-label');
@@ -434,9 +434,14 @@ window.UI_ETL_Modal = (function() {
                 progressContainer.style.display = 'block';
                 const pc = (chunkIndex / totalChunks) * 100;
                 progressBar.style.width = `${pc}%`;
-                progressLabel.textContent = `Procesando Lote ${chunkIndex} de ${totalChunks} (${Math.round(pc)}%)`;
                 
-                if (chunkIndex >= totalChunks) {
+                if (customText) {
+                    progressLabel.textContent = customText;
+                } else {
+                    progressLabel.textContent = `Procesando Lote ${chunkIndex} de ${totalChunks} (${Math.round(pc)}%)`;
+                }
+                
+                if (chunkIndex >= totalChunks && !customText) {
                     setTimeout(() => {
                         progressContainer.style.display = 'none';
                         progressBar.style.width = '0%';

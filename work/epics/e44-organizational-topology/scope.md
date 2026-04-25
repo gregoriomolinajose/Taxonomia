@@ -21,6 +21,29 @@ Otorgar visibilidad centralizada sobre la composición de equipos, la ocupación
 | S44.5 | Alertas Capacity Map | L | Done | Refactor de UI_View_CapacityMap para pintar alarmas rojas en base a sumas topológicas (>100% y sin Roles). |
 | S44.6 | Refactor UX Búsqueda Inline | S | Done | Unificar el comportamiento Inline en TXSearchable para Single Select en lugar del popover flotante viejo. |
 | S44.7 | Reorganización Estructural Persona | S | Done | Dividir en bloques lógicos y asignar layouts en Schema_Engine para la entidad Persona. |
+# Epic E44: Visibilidad y Control de Topología Organizacional — Scope
+
+> **Status:** IN PROGRESS
+> **Release:** REL-4 (Visibilidad Operativa)
+> **Created:** 2026-04-21
+
+## Objective
+
+Otorgar visibilidad centralizada sobre la composición de equipos, la ocupación (capacidad) detallada de las personas y los roles que fungen, extendiendo la arquitectura del grafo relacional e interfaces sin sobre-ingeniería.
+
+**Value:** Erradicar el tiempo consumido en hojas de cálculo aisladas. Dotar al liderazgo tecnológico de la habilidad visual de entender quién está sobrecargado (>100%) y qué células tienen roles críticos descubiertos (sin SM / vacío).
+
+## Stories 
+
+| ID | Story | Size | Status | Description |
+|----|-------|:----:|:------:|-------------|
+| S44.1 | Entidad Rol | S | Done | Crear entidad genérica Rol en Schema_Engine empleando prefijo ROLE e ícono de construcción. |
+| S44.2 | Extensión Grafo | M | Done | Extender Sys_Graph_Edges con metadata para guardar capacidad dedicada (%) sin corromper SCD-2. |
+| S44.3 | Mutación DataStore | S | Done | Fusionar Nombre+Apellido desde la Ingesta OnLoad para todas las vistas visuales de la aplicación. |
+| S44.4 | Shielding ABAC | M | Done | Implementar lógica de Field-Level Security para Rol y candado Workspace usando Engine_ABAC. |
+| S44.5 | Alertas Capacity Map | L | Done | Refactor de UI_View_CapacityMap para pintar alarmas rojas en base a sumas topológicas (>100% y sin Roles). |
+| S44.6 | Refactor UX Búsqueda Inline | S | Done | Unificar el comportamiento Inline en TXSearchable para Single Select en lugar del popover flotante viejo. |
+| S44.7 | Reorganización Estructural Persona | S | Done | Dividir en bloques lógicos y asignar layouts en Schema_Engine para la entidad Persona. |
 | S44.8 | Entidad Cargo (Diccionario Vivo) | S | Done | Extraer cargo a nueva entidad resolviendo conflicto de workspace sync con schemas. |
 | S44.9 | Mapeo Automático Ingesta | M | Done | Implementar Workspace Interceptor para autoprovisionar o enlazar ID interno de Cargo mediante diccionarios en cache O(1). |
 | S44.10 | Migración Masiva Lógica Roles | M | Done | Migración Masiva CSV del viejo select rol_agil hacia los nuevos Pointers topológicos de Rol. |
@@ -28,8 +51,10 @@ Otorgar visibilidad centralizada sobre la composición de equipos, la ocupación
 | S44.12 | Consolidación de FormValidators | S | Done | Refactorizar dependencias de validación unificándolas en UI_FormUtils. |
 | S44.13 | JIT Workspace Fallback | M | Done | Resolver renderizado optimista de cargos virtuales cruzando IDs desde Workspace. |
 | S44.14 | Desacoplar Interceptor Workspace | M | Todo | Extraer lógica de auto-provisionamiento desde Engine_ETL a Schema_Engine (Middleware) para respetar arquitectura. |
+| S44.16 | Resolución de Falsos Positivos ETL | S | Done | Parchear errores OCC en adaptador, envolver parseo de respuesta en cliente, y exponer writeback de forma global. |
 | S44.15 | Estabilización UI y JIT Cache Refresh | S | Done | Corregir bugs de ingesta Workspace, estandarizar iconografía e implementar recarga silenciosa reactiva (JIT Refresh). |
-**Total:** 15 stories
+| S44.17 | Ingesta JIT de Workspace (ETL) | M | Todo | Reutilizar la lógica de Workspace Sync dentro del pipeline de Carga Masiva para resolver Cargo y crear aristas topológicas al vuelo. |
+**Total:** 17 stories
 
 ## Scope
 
@@ -69,13 +94,6 @@ Otorgar visibilidad centralizada sobre la composición de equipos, la ocupación
 - [x] S44.13 completado
 - [ ] S44.14 completado
 - [x] S44.15 completado
-- [x] Los líderes pueden entrar al Capacity Map y detectar equipos sin SM y gente saturada.
-- [x] Epic retrospective done
-- [x] Merged to `main`
-
-## Dependencies
-
-```
 S44.1 ──┐
         ↓
 S44.2 ──┼── S44.5
