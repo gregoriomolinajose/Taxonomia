@@ -186,59 +186,11 @@ var Engine_ETL = (function() {
             }
         }
 
-       let cargoExternoMap = {};
-       let batchCargosToCreate = [];
-       let createdCargosCache = {};
-
-       // S44.9 Pre-Load Dictionary
-       if (entityName === 'Persona') {
-           try {
-               if (typeof Engine_DB !== 'undefined') {
-                    const cargoList = Engine_DB.list('Cargo', 'objects');
-                    const allCargos = (cargoList && cargoList.rows) ? cargoList.rows : [];
-                    allCargos.forEach(c => {
-                        if (c.id_cargo) {
-                            if (c.nombre) cargoExternoMap[String(c.nombre).replace(' (Por definir)', '').trim().toLowerCase()] = c.id_cargo;
-                            if (c.id_externo_workspace) cargoExternoMap[String(c.id_externo_workspace).trim().toLowerCase()] = c.id_cargo;
-                        }
-                    });
-               }
-           } catch(e) {
-               if (typeof Logger !== 'undefined') Logger.log("Error fatal precargando diccionario de Cargos: " + e.message);
-               throw new Error("Fail-Fast: Diccionario de Cargos inaccesible. Sincronización abortada para prevenir duplicidad. " + e.message);
-           }
+       if (typeof Business_Interceptors !== 'undefined') {
+           Business_Interceptors.apply(entityName, items);
        }
 
-       items.forEach(payload => {
-           // [S44.9] Mapeo Automático de Ingesta (Cargo Workspace Interceptor)
-           if (entityName === 'Persona') {
-               const rawCargo = payload.cargo !== undefined ? payload.cargo : payload.id_cargo;
-               if (rawCargo !== undefined && rawCargo !== null && rawCargo !== '') {
-                   const rawKey = String(rawCargo).trim();
-                   const normalizedKey = rawKey.toLowerCase();
-                    if (cargoExternoMap[normalizedKey]) {
-                        payload.id_cargo = cargoExternoMap[normalizedKey];
-                    } else if (!String(payload.id_cargo || '').startsWith('CARG-')) {
-                        if (!createdCargosCache[normalizedKey]) {
-                            const tempCargoId = "CARG-" + (Math.random().toString(36).substring(2, 10).toUpperCase());
-                            batchCargosToCreate.push({
-                                id_cargo: tempCargoId,
-                                nombre: rawKey + " (Por definir)",
-                                nivel: "Nivel Base",
-                                id_externo_workspace: rawKey,
-                                estado: "Activo"
-                            });
-                            createdCargosCache[normalizedKey] = tempCargoId;
-                            payload.id_cargo = tempCargoId;
-                            cargoExternoMap[normalizedKey] = tempCargoId;
-                        } else {
-                            payload.id_cargo = createdCargosCache[normalizedKey];
-                        }
-                    }
-               }
-           }
-
-           // B. Deduplicación Pasiva (Identity Resolution) O(1) Search Mode
+       // B. Deduplicación Pasiva (Identity Resolution) O(1) Search Mode
                if (uniqueFields.length > 0) {
                    let matchedRow = null;
                    let evalKeys = [];
@@ -268,15 +220,7 @@ var Engine_ETL = (function() {
                }
        });
 
-       // [S44.11] Commit batch creations before closing pipeline
-       if (batchCargosToCreate.length > 0 && typeof Engine_DB !== 'undefined') {
-           try {
-               Engine_DB.upsertBatch('Cargo', batchCargosToCreate, { muteTriggers: true });
-               if (typeof Logger !== 'undefined') Logger.log(`Se auto-generaron ${batchCargosToCreate.length} cargos nuevos "Por definir" desde el Ingestor de Personas.`);
-           } catch(e) {
-               if (typeof Logger !== 'undefined') Logger.log("Error creando batch de cargos: " + e.message);
-           }
-       }
+       // [S44.11] Commit batch creations before closing pipeline - REMOVIDO (Movido a Interceptor)
 
        return { data: items }; // Return payload wrapped in object
   }

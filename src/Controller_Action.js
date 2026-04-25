@@ -43,12 +43,11 @@ function _handleCreate(entityName, payload) {
   _guardAbac('create', entityName, null);
   _applyAdminBypass(entityName, payload);
   
-  if (entityName === 'Persona' && typeof Engine_ETL !== 'undefined') {
+  if (typeof Business_Interceptors !== 'undefined') {
       try {
-          const hyd = Engine_ETL.hydrateAndDeduplicate(entityName, [payload]);
-          if (hyd && hyd.data && hyd.data.length > 0) Object.assign(payload, hyd.data[0]);
+          Business_Interceptors.apply(entityName, [payload]);
       } catch(e) { 
-          throw new Error("FALLO DE INTEGRIDAD (ETL): No se pudo provisionar el Cargo de la Persona. " + e.message); 
+          throw new Error("FALLO DE INTEGRIDAD (Middleware): No se pudo provisionar entidades relacionadas. " + e.message); 
       }
   }
   
@@ -70,12 +69,11 @@ function _handleUpdate(entityName, id, payload) {
   _guardAbac('update', entityName, id);
   _applyAdminBypass(entityName, payload);
   
-  if (entityName === 'Persona' && typeof Engine_ETL !== 'undefined') {
+  if (typeof Business_Interceptors !== 'undefined') {
       try {
-          const hyd = Engine_ETL.hydrateAndDeduplicate(entityName, [payload]);
-          if (hyd && hyd.data && hyd.data.length > 0) Object.assign(payload, hyd.data[0]);
+          Business_Interceptors.apply(entityName, [payload]);
       } catch(e) { 
-          throw new Error("FALLO DE INTEGRIDAD (ETL): No se pudo provisionar el Cargo de la Persona. " + e.message); 
+          throw new Error("FALLO DE INTEGRIDAD (Middleware): No se pudo provisionar entidades relacionadas. " + e.message); 
       }
   }
   
