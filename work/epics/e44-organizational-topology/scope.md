@@ -28,7 +28,7 @@ Otorgar visibilidad centralizada sobre la composición de equipos, la ocupación
 | S44.11 | Sincronización On-Demand (Workspace Sync) | M | Done | Implementar endpoint on-demand ligado a UI_Admin para rescate de Workspace data. |
 | S44.12 | Consolidación de FormValidators | S | Done | Refactorizar dependencias de validación unificándolas en UI_FormUtils. |
 | S44.13 | JIT Workspace Fallback | M | Done | Resolver renderizado optimista de cargos virtuales cruzando IDs desde Workspace. |
-| S44.14 | Desacoplar Interceptor Workspace | M | Todo | Extraer lógica de auto-provisionamiento desde Engine_ETL a Schema_Engine (Middleware) para respetar arquitectura. |
+| S44.14 | Desacoplar Interceptor Workspace | M | Done | Extraer lógica de auto-provisionamiento desde Engine_ETL a Schema_Engine (Middleware) para respetar arquitectura. |
 | S44.16 | Resolución de Falsos Positivos ETL | S | Done | Parchear errores OCC en adaptador, envolver parseo de respuesta en cliente, y exponer writeback de forma global. |
 | S44.15 | Estabilización UI y JIT Cache Refresh | S | Done | Corregir bugs de ingesta Workspace, estandarizar iconografía e implementar recarga silenciosa reactiva (JIT Refresh). |
 | S44.17 | Ingesta JIT de Workspace (ETL) | M | Done | Reutilizar la lógica de Workspace Sync dentro del pipeline de Carga Masiva para resolver Cargo y crear aristas topológicas al vuelo. |
@@ -71,7 +71,7 @@ Otorgar visibilidad centralizada sobre la composición de equipos, la ocupación
 - [x] S44.11 completado
 - [x] S44.12 completado
 - [x] S44.13 completado
-- [ ] S44.14 completado
+- [x] S44.14 completado
 - [x] S44.15 completado
 - [x] S44.16 completado
 - [x] S44.17 completado
