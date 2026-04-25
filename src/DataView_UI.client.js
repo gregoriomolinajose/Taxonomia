@@ -777,10 +777,8 @@
                                             // Refrescar UI automáticamente una vez que el usuario cierra el modal de feedback.
                                             // Esto asegura que la DataStore se rehidrate desde el backend y FormEngine tenga el caché listo.
                                             modal.addEventListener('ionModalDidDismiss', () => {
-                                                if (window.DataViewEngine && typeof window.DataViewEngine.render === 'function') {
-                                                    console.log(`[DataViewEngine] ETL finalizado, forzando re-render de ${entity} para hidratar DataStore.`);
-                                                    window.DataViewEngine.render(entity);
-                                                }
+                                                console.log(`[DataViewEngine] ETL finalizado, forzando re-render de ${entity} para hidratar DataStore.`);
+                                                render(_state.entityName, _state.containerId);
                                             }, { once: true });
                                         }).catch(err => {
                                             console.error('[Chunker Error]', err);
