@@ -142,7 +142,7 @@ function runWorkspaceSyncJob(params) {
                 incomingEdgesMock.push({
                     id_nodo_padre: String(pToSave.id_cargo).trim(),
                     id_nodo_hijo: personaId,
-                    tipo_relacion: 'CARGO'
+                    tipo_relacion: 'CARGO_PERSONA'
                 });
             }
             
