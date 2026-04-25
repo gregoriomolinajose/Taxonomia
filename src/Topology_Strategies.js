@@ -85,7 +85,74 @@ const strategy_MtoN = function(incomingEdges, currentActiveEdges) {
 
 const TOPOLOGY_STRATEGIES = {
     "1:N": { evaluateTransition: strategy_1toN },
-    "M:N": { evaluateTransition: strategy_MtoN }
+    "M:N": { evaluateTransition: strategy_MtoN },
+
+    /**
+     * S44.18: Extraído de orchestrateNestedSave para prevenir duplicidad O(N).
+     * @param {Array} incomingEdgesMock - Array of tentative edge objects
+     * @param {Array} activeGraph - The current active edges from Sys_Graph_Edges
+     * @param {String} cardinality - "1:N" or "M:N"
+     * @returns {Object} { edgesToClose: [], edgesToInsert: [] }
+     */
+    calculateSCD2Transitions: function(incomingEdgesMock, activeGraph, cardinality) {
+        const sysDate = new Date().toISOString();
+        const activeTopology = cardinality || '1:N';
+        let edgesToClose = [];
+
+        // 1. Delegar a la Estrategia Topológica Inyectada (Polymorphism)
+        const strategy = this[activeTopology];
+        if (strategy && typeof strategy.evaluateTransition === 'function') {
+            const result = strategy.evaluateTransition(incomingEdgesMock, activeGraph || []);
+            edgesToClose = result.edgesToClose || [];
+        }
+
+        // 2. Transición SCD-2 (Auto-Close) - Aplicar Sello de Tiempo
+        if (edgesToClose && edgesToClose.length > 0) {
+            edgesToClose.forEach(o => {
+                if (o.es_version_actual !== false) {
+                    o.es_version_actual = false;
+                    o.valido_hasta = sysDate;
+                    o.updated_at = sysDate;
+                }
+            });
+        }
+
+        // 3. Diff O(1) para Novedades (Insertions)
+        const activeHash = new Set();
+        (activeGraph || []).forEach(e => {
+            if (e.es_version_actual !== false) {
+                activeHash.add(String(e.id_nodo_padre) + '::' + String(e.id_nodo_hijo) + '::' + String(e.tipo_relacion));
+            }
+        });
+
+        const edgesToInsert = [];
+        if (incomingEdgesMock && incomingEdgesMock.length > 0) {
+            incomingEdgesMock.forEach(child => {
+                const pId = String(child.id_nodo_padre);
+                const cId = String(child.id_nodo_hijo);
+                const relType = String(child.tipo_relacion);
+                const isMatch = activeHash.has(pId + '::' + cId + '::' + relType);
+                
+                if (!isMatch) {
+                    const uuidFn = (typeof Utilities !== 'undefined') ? Utilities.getUuid : () => Math.random().toString(36).substring(2,10);
+                    const newId = "RELA-" + uuidFn().substring(0, 8).toUpperCase();
+                    
+                    edgesToInsert.push({
+                        id_relacion: newId,
+                        id_nodo_padre: pId,
+                        id_nodo_hijo: cId,
+                        tipo_relacion: relType,
+                        valido_desde: child.valido_desde || sysDate,
+                        valido_hasta: "",
+                        es_version_actual: true,
+                        estado: "Activo"
+                    });
+                }
+            });
+        }
+
+        return { edgesToClose: edgesToClose, edgesToInsert: edgesToInsert };
+    }
 };
 
 // Export for Node/Jest testing environment

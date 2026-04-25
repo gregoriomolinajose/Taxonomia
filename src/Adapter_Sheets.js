@@ -611,7 +611,7 @@ const Adapter_Sheets = {
      * R-01: includeAudit flag — when true, audit columns (created_at etc.) are NOT stripped.
      * Use this in openEditForm to display the Audit Trail badge correctly.
      */
-    list: function (entityName, config, format, includeAudit) {
+    list: function (entityName, config, format, includeAudit, options) {
         const spreadsheetId = (config && config.SPREADSHEET_ID_DB)
             ? config.SPREADSHEET_ID_DB
             : CONFIG.SPREADSHEET_ID_DB;
@@ -653,6 +653,12 @@ const Adapter_Sheets = {
             return { headers: filteredHeaders, rows: [] };
         }
 
+        let headerMap = null;
+        if (options && typeof options.rawFilterFn === 'function') {
+            headerMap = {};
+            for(let i=0; i<headers.length; i++) headerMap[headers[i]] = i;
+        }
+
         const rows = [];
         const isTuples = (format === 'tuples');
 
@@ -662,6 +668,13 @@ const Adapter_Sheets = {
             // Excluir nodos eliminados globalmente de Cache y UI
             if (this._isNodeLogicallyDeleted(headers, rowData)) {
                 continue;
+            }
+
+            // S44.18: Server-Side Raw Filtering to prevent O(N) object mapping (OOM protection)
+            if (headerMap && options && typeof options.rawFilterFn === 'function') {
+                if (!options.rawFilterFn(rowData, headerMap)) {
+                    continue;
+                }
             }
 
             if (isTuples) {
