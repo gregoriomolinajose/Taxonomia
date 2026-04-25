@@ -232,17 +232,10 @@ window.UI_FormSubmitter = class UI_FormSubmitter {
                         this._showToast(`¡${itemName} guardado en nube!`, 'success');
                     }
 
-                    // [Bugfix S45.2] Hydrate auto-provisioned entities automatically AFTER backend finishes
+                    // [S45.2] We no longer blindly invalidate Cargo and Sys_Graph_Edges on UI save
+                    // because Engine_DB.upsert handles graph edges and UI_FormSubmitter reconciles locally.
+                    // This restores the 0ms instant-render performance.
                     if (this.entityName === 'Persona' && response.action !== 'updated') {
-                        if (window.DataStore && typeof window.DataStore.invalidate === 'function') {
-                            window.DataStore.invalidate('Persona');
-                            window.DataStore.invalidate('Cargo');
-                            window.DataStore.invalidate('Sys_Graph_Edges');
-                        } else {
-                            window.DataStore.set('Persona', null);
-                            window.DataStore.set('Cargo', null);
-                            window.DataStore.set('Sys_Graph_Edges', null);
-                        }
                         if (window.UI_Router) window.UI_Router.navigateTo('dataview', 'Persona');
                     }
                 } else {

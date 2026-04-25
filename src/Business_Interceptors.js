@@ -231,8 +231,9 @@ var Business_Interceptors = (function() {
                             });
                         }
                         if (r.lider_directo) {
-                            const liderEmailNorm = String(r.lider_directo).trim().toLowerCase();
-                            const liderUUID = map[liderEmailNorm] || cache[liderEmailNorm] || liderEmailNorm;
+                            const liderStr = String(r.lider_directo).trim();
+                            const liderEmailNorm = liderStr.toLowerCase();
+                            const liderUUID = map[liderEmailNorm] || cache[liderEmailNorm] || liderStr;
                             edgesBatch.push({
                                 id_relacion: "RELA-" + (Math.random().toString(36).substring(2, 10).toUpperCase()),
                                 id_nodo_padre: liderUUID,
