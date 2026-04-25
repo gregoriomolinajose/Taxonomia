@@ -278,9 +278,9 @@ var APP_SCHEMAS = {
       { name: "seudonimo", type: "text", label: "Seudónimo", required: false, width: 6 },
       { name: "metodologia", type: "select", label: "Metodología", required: true, width: 6, options: ["Scrum", "Kanban", "Híbrido"] },
       { name: "proposito", type: "textarea", label: "Propósito", required: false, width: 12 },
-      { name: "scrum_master_id", type: "relation", relationType: "padre", targetEntity: "Persona", graphEntity: "Sys_Graph_Edges", label: "Scrum Master / Team Coach", isTemporalGraph: true, graphEdgeType: "EQUIPO_SM", uiComponent: "select_single", valueField: "email", labelField: "nombre", required: false, width: 6 },
-      { name: "product_owner_id", type: "relation", relationType: "padre", targetEntity: "Persona", graphEntity: "Sys_Graph_Edges", label: "Product Owner", isTemporalGraph: true, graphEdgeType: "EQUIPO_PO", uiComponent: "select_single", valueField: "email", labelField: "nombre", required: false, width: 6 },
-      { name: "rte_id", type: "relation", relationType: "padre", targetEntity: "Persona", graphEntity: "Sys_Graph_Edges", label: "Release Train Engineer (RTE)", isTemporalGraph: true, graphEdgeType: "EQUIPO_RTE", uiComponent: "select_single", valueField: "email", labelField: "nombre", required: false, width: 12 },
+      { name: "scrum_master_id", type: "relation", relationType: "padre", targetEntity: "Persona", graphEntity: "Sys_Graph_Edges", label: "Scrum Master / Team Coach", isTemporalGraph: true, graphEdgeType: "EQUIPO_SM", uiComponent: "select_single", valueField: "email", labelField: "_nombre_completo", required: false, width: 6 },
+      { name: "product_owner_id", type: "relation", relationType: "padre", targetEntity: "Persona", graphEntity: "Sys_Graph_Edges", label: "Product Owner", isTemporalGraph: true, graphEdgeType: "EQUIPO_PO", uiComponent: "select_single", valueField: "email", labelField: "_nombre_completo", required: false, width: 6 },
+      { name: "rte_id", type: "relation", relationType: "padre", targetEntity: "Persona", graphEntity: "Sys_Graph_Edges", label: "Release Train Engineer (RTE)", isTemporalGraph: true, graphEdgeType: "EQUIPO_RTE", uiComponent: "select_single", valueField: "email", labelField: "_nombre_completo", required: false, width: 12 },
       { name: "cant_team_coach", type: "number", label: "Cant. Team Coach", required: false, width: 6 },
       { name: "total_integrantes", type: "number", label: "Total Integrantes", required: false, width: 6 }
     ]
@@ -329,7 +329,7 @@ var APP_SCHEMAS = {
       { name: "departamento", type: "text", label: "Departamento", required: true, width: 12 },
       { name: "id_cargo", type: "relation", relationType: "padre", targetEntity: "Cargo", graphEntity: "Sys_Graph_Edges", label: "Cargo Oficial", isTemporalGraph: true, topologyCardinality: "1:N", graphEdgeType: "CARGO_PERSONA", uiComponent: "select_single", valueField: "id_cargo", labelField: "nombre", required: true, width: 12 },
       { name: "cargo", type: "hidden", label: "Cargo Oficial Workspace (Plano)" },
-      { name: "lider_directo", type: "relation", relationType: "padre", targetEntity: "Persona", graphEntity: "Sys_Graph_Edges", valueField: "id_persona", labelField: "nombre", topologyCardinality: "1:N", isTemporalGraph: true, graphEdgeType: "PERSONA_LIDER_DIRECTO", label: "Líder Directo", required: false, width: 12, uiComponent: "select_single" },
+      { name: "lider_directo", type: "relation", relationType: "padre", targetEntity: "Persona", graphEntity: "Sys_Graph_Edges", valueField: "id_persona", labelField: "_nombre_completo", topologyCardinality: "1:N", isTemporalGraph: true, graphEdgeType: "PERSONA_LIDER_DIRECTO", label: "Líder Directo", required: false, width: 12, uiComponent: "select_single" },
       { name: "centro_costo", type: "text", label: "Centro de Costos", required: true, width: 6 },
       { name: "numero_empleado", type: "number", label: "Número de Empleado", required: true, width: 6, validators: ["regex:^\\d{8}$"], unique: true },
       { name: "modalidad", type: "select", label: "Modalidad", options: ["Presencial", "Virtual", "Híbrido"], required: true, width: 6 },
