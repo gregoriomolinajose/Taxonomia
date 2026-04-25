@@ -29,7 +29,7 @@ var Business_Interceptors = (function() {
                         const hIdExt = headerMap['id_externo_workspace'];
                         const hNombre = headerMap['nombre'];
                         const valExt = hIdExt !== undefined ? String(rowArray[hIdExt] || '').toLowerCase() : '';
-                        const valNom = hNombre !== undefined ? String(rowArray[hNombre] || '').replace(' (por definir)', '').trim().toLowerCase() : '';
+                        const valNom = hNombre !== undefined ? String(rowArray[hNombre] || '').replace(' (Por definir)', '').trim().toLowerCase() : '';
                         return valExt === normalizedSearch || valNom === normalizedSearch;
                     };
                     const cargoList = Adapter_Sheets.list('Cargo', { rawFilterFn: rawFilter, limit: 1 });
