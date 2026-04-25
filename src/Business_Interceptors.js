@@ -142,7 +142,7 @@ var Business_Interceptors = (function() {
                     return hEmail !== undefined && String(row[hEmail] || '').trim().toLowerCase() === search;
                 },
                 extractCacheValuesFn: (row, map) => {
-                    if (row.email) map[String(row.email).trim().toLowerCase()] = row.email;
+                    if (row.email && row.id_persona) map[String(row.email).trim().toLowerCase()] = row.id_persona;
                 },
                 recursiveFactory: (initialEmail, map, cache) => {
                     let records = [];
@@ -153,15 +153,29 @@ var Business_Interceptors = (function() {
                         if (map[normKey] || cache[normKey]) {
                             break; 
                         }
+
+                        // Check DB Cache for existing record (to prevent duplicates if they were not in memoryMap)
+                        if (typeof Engine_DB !== 'undefined') {
+                            try {
+                                const dbRes = Engine_DB.list('Persona', 'objects');
+                                const found = (dbRes && dbRes.rows ? dbRes.rows : []).find(p => String(p.email).trim().toLowerCase() === normKey);
+                                if (found && found.id_persona) {
+                                    map[normKey] = found.id_persona;
+                                    break;
+                                }
+                            } catch(e) {}
+                        }
                         
                         let wsData = null;
                         if (typeof resolverDirectorioWorkspace !== 'undefined') {
                             try { wsData = resolverDirectorioWorkspace(currentEmail); } catch(e) {}
                         }
                         
+                        const tempId = "PERS-" + (Math.random().toString(36).substring(2, 10).toUpperCase());
+
                         if (wsData && wsData.__status !== 'DISABLED' && wsData.__status !== 'ERROR') {
                             const newRecord = {
-                                id_persona: currentEmail,
+                                id_persona: tempId,
                                 email: currentEmail,
                                 nombre: wsData.nombre || '---',
                                 apellidos: wsData.apellidos || '---',
@@ -177,20 +191,20 @@ var Business_Interceptors = (function() {
                                 workspace_sync_status: 'synced' 
                             };
                             records.push(newRecord);
-                            cache[normKey] = currentEmail;
-                            map[normKey] = currentEmail;
+                            cache[normKey] = tempId;
+                            map[normKey] = tempId;
                             currentEmail = wsData.lider_directo;
                         } else {
                             const stubRecord = {
-                                id_persona: currentEmail,
+                                id_persona: tempId,
                                 email: currentEmail,
                                 nombre: currentEmail.split('@')[0] + " (Pendiente Sync)",
                                 estado: "Activo",
                                 workspace_sync_status: 'pending'
                             };
                             records.push(stubRecord);
-                            cache[normKey] = currentEmail;
-                            map[normKey] = currentEmail;
+                            cache[normKey] = tempId;
+                            map[normKey] = tempId;
                             break; 
                         }
                     }
@@ -199,8 +213,46 @@ var Business_Interceptors = (function() {
                     if (records.length > 0 && typeof INTERCEPTORS.AutoProvisionCargo === 'function') {
                         INTERCEPTORS.AutoProvisionCargo('Persona', records);
                     }
+
+                    // [Bugfix S45.2] Generar las aristas CARGO_PERSONA y PERSONA_LIDER_DIRECTO para los líderes
+                    let edgesBatch = [];
+                    const sysDate = new Date().toISOString();
+                    records.forEach(r => {
+                        if (r.id_cargo) {
+                            edgesBatch.push({
+                                id_relacion: "RELA-" + (Math.random().toString(36).substring(2, 10).toUpperCase()),
+                                id_nodo_padre: r.id_cargo,
+                                id_nodo_hijo: r.id_persona,
+                                tipo_relacion: "CARGO_PERSONA",
+                                valido_desde: sysDate,
+                                valido_hasta: "",
+                                es_version_actual: true,
+                                estado: "Activo"
+                            });
+                        }
+                        if (r.lider_directo) {
+                            const liderEmailNorm = String(r.lider_directo).trim().toLowerCase();
+                            const liderUUID = map[liderEmailNorm] || cache[liderEmailNorm] || liderEmailNorm;
+                            edgesBatch.push({
+                                id_relacion: "RELA-" + (Math.random().toString(36).substring(2, 10).toUpperCase()),
+                                id_nodo_padre: liderUUID,
+                                id_nodo_hijo: r.id_persona,
+                                tipo_relacion: "PERSONA_LIDER_DIRECTO",
+                                valido_desde: sysDate,
+                                valido_hasta: "",
+                                es_version_actual: true,
+                                estado: "Activo"
+                            });
+                        }
+                    });
+
+                    if (edgesBatch.length > 0 && typeof Engine_DB !== 'undefined') {
+                        try { Engine_DB.upsertBatch('Sys_Graph_Edges', edgesBatch, { muteTriggers: true }); } catch(e) {}
+                    }
+
                     return records;
                 },
+                updatePayloadFn: (p, resolvedId) => p.lider_directo = resolvedId,
                 logMessage: 'Se auto-generaron e hidrataron {N} líderes recursivamente (Interceptor DRY).'
             });
         }
