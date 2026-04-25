@@ -53,7 +53,7 @@ Otorgar visibilidad centralizada sobre la composición de equipos, la ocupación
 | S44.14 | Desacoplar Interceptor Workspace | M | Todo | Extraer lógica de auto-provisionamiento desde Engine_ETL a Schema_Engine (Middleware) para respetar arquitectura. |
 | S44.16 | Resolución de Falsos Positivos ETL | S | Done | Parchear errores OCC en adaptador, envolver parseo de respuesta en cliente, y exponer writeback de forma global. |
 | S44.15 | Estabilización UI y JIT Cache Refresh | S | Done | Corregir bugs de ingesta Workspace, estandarizar iconografía e implementar recarga silenciosa reactiva (JIT Refresh). |
-| S44.17 | Ingesta JIT de Workspace (ETL) | M | Todo | Reutilizar la lógica de Workspace Sync dentro del pipeline de Carga Masiva para resolver Cargo y crear aristas topológicas al vuelo. |
+| S44.17 | Ingesta JIT de Workspace (ETL) | M | Done | Reutilizar la lógica de Workspace Sync dentro del pipeline de Carga Masiva para resolver Cargo y crear aristas topológicas al vuelo. |
 **Total:** 17 stories
 
 ## Scope
@@ -94,6 +94,8 @@ Otorgar visibilidad centralizada sobre la composición de equipos, la ocupación
 - [x] S44.13 completado
 - [ ] S44.14 completado
 - [x] S44.15 completado
+- [x] S44.16 completado
+- [x] S44.17 completado
 S44.1 ──┐
         ↓
 S44.2 ──┼── S44.5
