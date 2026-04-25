@@ -190,7 +190,8 @@ var Engine_ETL = (function() {
            Business_Interceptors.apply(entityName, items);
        }
 
-       // B. Deduplicación Pasiva (Identity Resolution) O(1) Search Mode
+       items.forEach(payload => {
+           // B. Deduplicación Pasiva (Identity Resolution) O(1) Search Mode
                if (uniqueFields.length > 0) {
                    let matchedRow = null;
                    let evalKeys = [];
