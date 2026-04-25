@@ -226,23 +226,43 @@ function getInitialPayload(entityName) {
 }
 
 /**
+ * Helper interno para estandarizar el consumo de la pasarela API Universal.
+ * Resuelve el parseo de JSON y el manejo de errores fatal a nivel RPC.
+ */
+function _proxyRpcCall(route, entityName, payload) {
+    const resString = API_Universal_Router(route, entityName, payload);
+    const res = JSON.parse(resString);
+    if (res.status === 'error') {
+        throw new Error(res.message);
+    }
+    return res;
+}
+
+/**
  * bulkInsert (Operating as Bulk Upsert in Memory)
  * Inserción y actualización masiva de registros en hoja (Universal Bulk Data Engine)
  */
 function bulkInsert(entityName, recordsArray) {
     // [BugFix S40.3] Redireccionamos la llamada legacy del frontend hacia nuestro enrutador principal universal
-    const resString = API_Universal_Router('bulkInsert', entityName, recordsArray);
-    const res = JSON.parse(resString);
-    if (res.status === 'error') {
-        throw new Error(res.message);
-    }
+    const res = _proxyRpcCall('bulkInsert', entityName, recordsArray);
     return {
         status: 'success',
         insertedCount: res.insertedCount || recordsArray.length,
         newRecords: recordsArray.length, // Compat
         updatedRecords: 0,
-        details: res.data ? res.data.details : (res.data || [])
+        details: (res.data && res.data.details) ? res.data.details : (res.data || [])
     };
+}
+
+/**
+ * Endpoint expuesto para Google Apps Script RPC que procesa el feedback visual hacia la hoja de cálculo.
+ * @param {string} entityName 
+ * @param {Object} payload - { sheetId, feedback }
+ * @returns {Object} 
+ */
+function etl_writeback_feedback(entityName, payload) {
+    const res = _proxyRpcCall('etl_writeback_feedback', entityName, payload);
+    return res.data;
 }
 
 /**

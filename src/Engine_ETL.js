@@ -155,27 +155,36 @@ var Engine_ETL = (function() {
        let dbRowsForLookup = null;
        const lookupMaps = {}; // { 'email': { 'test@...': row }, 'numero_empleado': { '123': row } }
 
-       if (uniqueFields.length > 0) {
-           if (typeof Engine_DB !== 'undefined') {
-              const listResult = Engine_DB.list(entityName, 'objects'); // Obtenemos contexto en caché O(1)
-              dbRowsForLookup = listResult.rows || [];
-              
-              // Inicializar diccionarios por cada Unique Field
-              uniqueFields.forEach(uf => { lookupMaps[uf] = {}; });
-              
-              // Pre-indexar O(M)
-              if (uniqueFields.length > 0) {
-                  dbRowsForLookup.forEach(row => {
-                      uniqueFields.forEach(uf => {
-                          if (row[uf]) {
-                              const normKey = String(row[uf]).trim().toLowerCase();
-                              lookupMaps[uf][normKey] = row;
-                          }
-                      });
-                  });
-              }
-           }
-       }
+        if (uniqueFields.length > 0) {
+            if (typeof Engine_DB !== 'undefined') {
+               if (typeof Logger !== 'undefined') Logger.log(`[ETL Debug] Fetching dbRowsForLookup for entity: ${entityName} with uniqueFields: ${uniqueFields}`);
+               const listResult = Engine_DB.list(entityName, 'objects'); // Obtenemos contexto en caché O(1)
+               dbRowsForLookup = listResult.rows || [];
+               
+               if (typeof Logger !== 'undefined') Logger.log(`[ETL Debug] dbRowsForLookup size: ${dbRowsForLookup.length}`);
+               
+               // Inicializar diccionarios por cada Unique Field
+               uniqueFields.forEach(uf => { lookupMaps[uf] = {}; });
+               
+               // Pre-indexar O(M)
+               if (uniqueFields.length > 0) {
+                   dbRowsForLookup.forEach(row => {
+                       uniqueFields.forEach(uf => {
+                           if (row[uf]) {
+                               const normKey = String(row[uf]).trim().toLowerCase();
+                               lookupMaps[uf][normKey] = row;
+                           }
+                       });
+                   });
+               }
+               
+               if (typeof Logger !== 'undefined') {
+                   uniqueFields.forEach(uf => {
+                       Logger.log(`[ETL Debug] lookupMaps[${uf}] size: ${Object.keys(lookupMaps[uf]).length}`);
+                   });
+               }
+            }
+        }
 
        let cargoExternoMap = {};
        let batchCargosToCreate = [];
@@ -230,26 +239,33 @@ var Engine_ETL = (function() {
            }
 
            // B. Deduplicación Pasiva (Identity Resolution) O(1) Search Mode
-           if (uniqueFields.length > 0) {
-               let matchedRow = null;
-               for (let j = 0; j < uniqueFields.length; j++) {
-                   const uField = uniqueFields[j];
-                   if (payload[uField]) {
-                       const searchKey = String(payload[uField]).trim().toLowerCase();
-                       if (lookupMaps[uField] && lookupMaps[uField][searchKey]) {
-                           matchedRow = lookupMaps[uField][searchKey];
-                           break; // Un solo match lógico es suficiente para sobreescribir la PK
+               if (uniqueFields.length > 0) {
+                   let matchedRow = null;
+                   let evalKeys = [];
+                   for (let j = 0; j < uniqueFields.length; j++) {
+                       const uField = uniqueFields[j];
+                       if (payload[uField]) {
+                           const searchKey = String(payload[uField]).trim().toLowerCase();
+                           evalKeys.push(`${uField}=${searchKey}`);
+                           if (lookupMaps[uField] && lookupMaps[uField][searchKey]) {
+                               matchedRow = lookupMaps[uField][searchKey];
+                               break; // Un solo match lógico es suficiente para sobreescribir la PK
+                           }
                        }
                    }
-               }
-               
-               if (matchedRow) {
-                   if (payload._isNewIngest) {
-                       payload._isDuplicateMatch = true;
+                   
+                   if (typeof Logger !== 'undefined') {
+                       Logger.log(`[ETL Debug] payload eval keys: ${evalKeys.join(', ')} -> matchedRow: ${matchedRow ? matchedRow[pkField] : 'NULL'} | _isNewIngest: ${payload._isNewIngest}`);
                    }
-                   payload[pkField] = matchedRow[pkField]; // Subsumimos el Temp UUID y forzamos modo UPDATE
+                   
+                   if (matchedRow) {
+                       if (payload._isNewIngest) {
+                           payload._isDuplicateMatch = true;
+                           if (typeof Logger !== 'undefined') Logger.log(`[ETL Debug] SET _isDuplicateMatch = true FOR ${matchedRow[pkField]}`);
+                       }
+                       payload[pkField] = matchedRow[pkField]; // Subsumimos el Temp UUID y forzamos modo UPDATE
+                   }
                }
-           }
        });
 
        // [S44.11] Commit batch creations before closing pipeline

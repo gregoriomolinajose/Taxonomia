@@ -108,8 +108,19 @@
                 try {
                     const res = await window.DataAPI.call('bulkInsert', entityName, chunk);
                     
-                    if (res && res.data && Array.isArray(res.data.details)) {
-                        res.data.details.forEach(detail => {
+                    let detailsArray = null;
+                    if (Array.isArray(res)) {
+                        detailsArray = res;
+                    } else if (res && Array.isArray(res.details)) {
+                        detailsArray = res.details;
+                    } else if (res && res.data && Array.isArray(res.data.details)) {
+                        detailsArray = res.data.details;
+                    } else if (res && Array.isArray(res.data)) {
+                        detailsArray = res.data;
+                    }
+                    
+                    if (detailsArray) {
+                        detailsArray.forEach(detail => {
                             if (detail.status === 'success') metrics.success++;
                             else if (detail.status === 'duplicate') {
                                 metrics.duplicate++;

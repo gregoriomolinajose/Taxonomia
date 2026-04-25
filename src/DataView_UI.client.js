@@ -774,10 +774,14 @@
                                                 alert(`Resumen:\n✅ ${m.success || 0} satisfactorios\n⚠️ ${m.duplicate || 0} ya existentes\n❌ ${m.error || 0} no realizados`);
                                             }
                                             
-                                            // Refrescar UI automáticamente
-                                            setTimeout(() => {
-                                                if (window.AppEventBus) window.AppEventBus.publish('DATASTORE::CHANGED', { entityKey: entity });
-                                            }, 500);
+                                            // Refrescar UI automáticamente una vez que el usuario cierra el modal de feedback.
+                                            // Esto asegura que la DataStore se rehidrate desde el backend y FormEngine tenga el caché listo.
+                                            modal.addEventListener('ionModalDidDismiss', () => {
+                                                if (window.DataViewEngine && typeof window.DataViewEngine.render === 'function') {
+                                                    console.log(`[DataViewEngine] ETL finalizado, forzando re-render de ${entity} para hidratar DataStore.`);
+                                                    window.DataViewEngine.render(entity);
+                                                }
+                                            }, { once: true });
                                         }).catch(err => {
                                             console.error('[Chunker Error]', err);
                                             alert(`Error general de procesamiento:\n${err.message}`);
