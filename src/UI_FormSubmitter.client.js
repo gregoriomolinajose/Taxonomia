@@ -231,6 +231,20 @@ window.UI_FormSubmitter = class UI_FormSubmitter {
                         const itemName = (response.data && response.data.Entity) ? response.data.Entity : this.entityName;
                         this._showToast(`¡${itemName} guardado en nube!`, 'success');
                     }
+
+                    // [Bugfix S45.2] Hydrate auto-provisioned entities automatically AFTER backend finishes
+                    if (this.entityName === 'Persona' && response.action !== 'updated') {
+                        if (window.DataStore && typeof window.DataStore.invalidate === 'function') {
+                            window.DataStore.invalidate('Persona');
+                            window.DataStore.invalidate('Cargo');
+                            window.DataStore.invalidate('Sys_Graph_Edges');
+                        } else {
+                            window.DataStore.set('Persona', null);
+                            window.DataStore.set('Cargo', null);
+                            window.DataStore.set('Sys_Graph_Edges', null);
+                        }
+                        if (window.UI_Router) window.UI_Router.navigateTo('dataview', 'Persona');
+                    }
                 } else {
                     if (response && response.errorType === 'CONCURRENCY') {
                         this._handleOptimisticRollback(stateBackup, childBackups, 'Choque de concurrencia OCC en Base de datos.');
@@ -316,13 +330,6 @@ window.UI_FormSubmitter = class UI_FormSubmitter {
             // [S29.7] window.DataStore.clearNested() extirpado. Los Subgrids ahora son stateless.
             // S42.1 (Fast-I/O Optimization): Extirpada la re-hidratación por red de Sys_Graph_Edges.
             // La entidad ya se hidrata atómicamente a través de window.DataStore.reconcileOptimisticPatch usando orchestratedChildren.
-            
-            // [Bugfix S45.2] Invalidate cache for auto-provisioned entities
-            if (this.entityName === 'Persona') {
-                window.DataStore.set('Persona', null);
-                window.DataStore.set('Cargo', null);
-                window.DataStore.set('Sys_Graph_Edges', null);
-            }
             
             // Invalida el caché intermedio de Peticiones Asincronas de Formularios
             if (window.FormEngine_Resolvers && typeof window.FormEngine_Resolvers.invalidateCache === 'function') {
