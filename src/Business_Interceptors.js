@@ -47,11 +47,19 @@ var Business_Interceptors = (function() {
                     resolvedId = memoryMap[normKey];
                 } else if (config.shouldCreateStubFn ? config.shouldCreateStubFn(payload, normKey) : true) {
                     if (!createdCache[normKey]) {
-                        const stub = config.stubFactory(String(rawKey).trim());
-                        batchToCreate.push(stub.record);
-                        createdCache[normKey] = stub.id;
-                        resolvedId = stub.id;
-                        memoryMap[normKey] = stub.id;
+                        if (config.recursiveFactory) {
+                            const records = config.recursiveFactory(String(rawKey).trim(), memoryMap, createdCache);
+                            if (records && records.length > 0) {
+                                records.forEach(r => batchToCreate.push(r));
+                                resolvedId = records[0][config.primaryKeyField]; // El primero es el buscado
+                            }
+                        } else {
+                            const stub = config.stubFactory(String(rawKey).trim());
+                            batchToCreate.push(stub.record);
+                            createdCache[normKey] = stub.id;
+                            resolvedId = stub.id;
+                            memoryMap[normKey] = stub.id;
+                        }
                     } else {
                         resolvedId = createdCache[normKey];
                     }
@@ -136,17 +144,64 @@ var Business_Interceptors = (function() {
                 extractCacheValuesFn: (row, map) => {
                     if (row.email) map[String(row.email).trim().toLowerCase()] = row.email;
                 },
-                stubFactory: (key) => ({
-                    id: key, // Usamos el email como ID
-                    record: {
-                        id_persona: key,
-                        email: key,
-                        nombre: key.split('@')[0] + " (Pendiente Sync)",
-                        estado: "Activo",
-                        workspace_sync_status: 'pending'
+                recursiveFactory: (initialEmail, map, cache) => {
+                    let records = [];
+                    let currentEmail = String(initialEmail).trim();
+                    
+                    while (currentEmail && currentEmail !== '') {
+                        const normKey = currentEmail.toLowerCase();
+                        if (map[normKey] || cache[normKey]) {
+                            break; 
+                        }
+                        
+                        let wsData = null;
+                        if (typeof resolverDirectorioWorkspace !== 'undefined') {
+                            try { wsData = resolverDirectorioWorkspace(currentEmail); } catch(e) {}
+                        }
+                        
+                        if (wsData && wsData.__status !== 'DISABLED' && wsData.__status !== 'ERROR') {
+                            const newRecord = {
+                                id_persona: currentEmail,
+                                email: currentEmail,
+                                nombre: wsData.nombre || '---',
+                                apellidos: wsData.apellidos || '---',
+                                telefono: wsData.telefono || '---',
+                                departamento: wsData.departamento || '---',
+                                centro_costo: wsData.centro_costo || '---',
+                                cargo: wsData.cargo || '---',
+                                ubicacion: wsData.ubicacion || '---',
+                                numero_empleado: wsData.numero_empleado || '---',
+                                lider_directo: wsData.lider_directo || '',
+                                avatar: wsData.avatar || '',
+                                estado: "Activo",
+                                workspace_sync_status: 'synced' 
+                            };
+                            records.push(newRecord);
+                            cache[normKey] = currentEmail;
+                            map[normKey] = currentEmail;
+                            currentEmail = wsData.lider_directo;
+                        } else {
+                            const stubRecord = {
+                                id_persona: currentEmail,
+                                email: currentEmail,
+                                nombre: currentEmail.split('@')[0] + " (Pendiente Sync)",
+                                estado: "Activo",
+                                workspace_sync_status: 'pending'
+                            };
+                            records.push(stubRecord);
+                            cache[normKey] = currentEmail;
+                            map[normKey] = currentEmail;
+                            break; 
+                        }
                     }
-                }),
-                logMessage: 'Se auto-generaron {N} líderes stubs "Pendiente Sync" (Interceptor DRY).'
+                    
+                    // Si encontramos cargos nuevos, llamamos al interceptor manualmente para provisionarlos
+                    if (records.length > 0 && typeof INTERCEPTORS.AutoProvisionCargo === 'function') {
+                        INTERCEPTORS.AutoProvisionCargo('Persona', records);
+                    }
+                    return records;
+                },
+                logMessage: 'Se auto-generaron e hidrataron {N} líderes recursivamente (Interceptor DRY).'
             });
         }
     };

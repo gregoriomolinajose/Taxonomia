@@ -95,7 +95,7 @@ function runWorkspaceSyncJob(params) {
                         const wsData = resolverDirectorioWorkspace(payload.email);
                         if (wsData && wsData.__status !== 'DISABLED' && wsData.__status !== 'ERROR') {
                             Object.keys(wsData).forEach(k => {
-                                if (isBlank(payload[k])) {
+                                if (isBlank(payload[k]) || String(payload[k]).indexOf('(Pendiente Sync)') !== -1) {
                                     payload[k] = wsData[k];
                                 }
                             });
