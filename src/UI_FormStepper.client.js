@@ -106,7 +106,7 @@ window.UI_FormStepper = class UI_FormStepper {
 
         this.btnNext.addEventListener('click', () => {
             const currentContainer = this.stepContainers[this.steps[this.currentStepIndex]];
-            const isValid = window.UI_Validators ? window.UI_Validators.validateRequiredFields(currentContainer) : true;
+            const isValid = window.UI_FormUtils ? window.UI_FormUtils.validateRequiredFields(currentContainer) : true;
 
             if (isValid && this.currentStepIndex < this.totalSteps - 1) {
                 this.goToSection(this.steps[this.currentStepIndex + 1]);

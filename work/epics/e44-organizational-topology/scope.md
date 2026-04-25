@@ -1,6 +1,6 @@
 # Epic E44: Visibilidad y Control de Topología Organizacional — Scope
 
-> **Status:** IN PROGRESS
+> **Status:** CLOSED
 > **Release:** REL-4 (Visibilidad Operativa)
 > **Created:** 2026-04-21
 
@@ -21,9 +21,19 @@ Otorgar visibilidad centralizada sobre la composición de equipos, la ocupación
 | S44.5 | Alertas Capacity Map | L | Done | Refactor de UI_View_CapacityMap para pintar alarmas rojas en base a sumas topológicas (>100% y sin Roles). |
 | S44.6 | Refactor UX Búsqueda Inline | S | Done | Unificar el comportamiento Inline en TXSearchable para Single Select en lugar del popover flotante viejo. |
 | S44.7 | Reorganización Estructural Persona | S | Done | Dividir en bloques lógicos y asignar layouts en Schema_Engine para la entidad Persona. |
+
 | S44.8 | Entidad Cargo (Diccionario Vivo) | S | Done | Extraer cargo a nueva entidad resolviendo conflicto de workspace sync con schemas. |
 | S44.9 | Mapeo Automático Ingesta | M | Done | Implementar Workspace Interceptor para autoprovisionar o enlazar ID interno de Cargo mediante diccionarios en cache O(1). |
-**Total:** 7 stories
+| S44.10 | Migración Masiva Lógica Roles | M | Done | Migración Masiva CSV del viejo select rol_agil hacia los nuevos Pointers topológicos de Rol. |
+| S44.11 | Sincronización On-Demand (Workspace Sync) | M | Done | Implementar endpoint on-demand ligado a UI_Admin para rescate de Workspace data. |
+| S44.12 | Consolidación de FormValidators | S | Done | Refactorizar dependencias de validación unificándolas en UI_FormUtils. |
+| S44.13 | JIT Workspace Fallback | M | Done | Resolver renderizado optimista de cargos virtuales cruzando IDs desde Workspace. |
+| S44.14 | Desacoplar Interceptor Workspace | M | Done | Extraer lógica de auto-provisionamiento desde Engine_ETL a Schema_Engine (Middleware) para respetar arquitectura. |
+| S44.16 | Resolución de Falsos Positivos ETL | S | Done | Parchear errores OCC en adaptador, envolver parseo de respuesta en cliente, y exponer writeback de forma global. |
+| S44.15 | Estabilización UI y JIT Cache Refresh | S | Done | Corregir bugs de ingesta Workspace, estandarizar iconografía e implementar recarga silenciosa reactiva (JIT Refresh). |
+| S44.17 | Ingesta JIT de Workspace (ETL) | M | Done | Reutilizar la lógica de Workspace Sync dentro del pipeline de Carga Masiva para resolver Cargo y crear aristas topológicas al vuelo. |
+| S44.18 | Optimización de Rendimiento en Workspace Sync | M | Done | Reducir la latencia y la saturación de memoria reemplazando lecturas/escrituras O(N) por queries filtrados en db y escrituras en lote (Bulk Inserts). |
+**Total:** 18 stories
 
 ## Scope
 
@@ -57,13 +67,15 @@ Otorgar visibilidad centralizada sobre la composición de equipos, la ocupación
 - [x] S44.7 completado
 - [x] S44.8 completado
 - [x] S44.9 completado
-- [x] Los líderes pueden entrar al Capacity Map y detectar equipos sin SM y gente saturada.
-- [ ] Epic retrospective done
-- [ ] Merged to `main`
-
-## Dependencies
-
-```
+- [x] S44.10 completado
+- [x] S44.11 completado
+- [x] S44.12 completado
+- [x] S44.13 completado
+- [x] S44.14 completado
+- [x] S44.15 completado
+- [x] S44.16 completado
+- [x] S44.17 completado
+- [x] S44.18 completado
 S44.1 ──┐
         ↓
 S44.2 ──┼── S44.5

@@ -91,15 +91,110 @@
             const CHUNK_SIZE = 50; 
             const totalChunks = Math.ceil(parsedData.length / CHUNK_SIZE);
             
+            let accumulatedFeedback = [];
+            let metrics = { success: 0, duplicate: 0, error: 0 };
+            let currentSheetId = null;
+            
             for (let i = 0; i < totalChunks; i++) {
                 const chunk = parsedData.slice(i * CHUNK_SIZE, (i + 1) * CHUNK_SIZE);
                 if (progressCallback) progressCallback(i + 1, totalChunks, false);
                 console.log(`[ETL Chunker] Enviando Lote ${i + 1} de ${totalChunks} (${chunk.length} filas)...`);
-                await window.DataAPI.call('bulkInsert', entityName, chunk);
+                
+                // Extraemos sheetId para el writeback (todas las filas de un lote provienen del mismo sheet)
+                if (!currentSheetId && chunk.length > 0 && chunk[0]._sheetId) {
+                    currentSheetId = chunk[0]._sheetId;
+                }
+                
+                try {
+                    const res = await window.DataAPI.call('bulkInsert', entityName, chunk);
+                    
+                    let detailsArray = null;
+                    if (Array.isArray(res)) {
+                        detailsArray = res;
+                    } else if (res && Array.isArray(res.details)) {
+                        detailsArray = res.details;
+                    } else if (res && res.data && Array.isArray(res.data.details)) {
+                        detailsArray = res.data.details;
+                    } else if (res && Array.isArray(res.data)) {
+                        detailsArray = res.data;
+                    }
+                    
+                    if (detailsArray) {
+                        detailsArray.forEach(detail => {
+                            if (detail.status === 'success') metrics.success++;
+                            else if (detail.status === 'duplicate') {
+                                metrics.duplicate++;
+                                accumulatedFeedback.push(detail);
+                            } else if (detail.status === 'error') {
+                                metrics.error++;
+                                accumulatedFeedback.push(detail);
+                            }
+                        });
+                    } else {
+                        // Fallback si el backend es legacy
+                        metrics.success += chunk.length;
+                    }
+                } catch(err) {
+                    // Si un chunk falla categóricamente (ej. timeout de Apps Script), marcamos todos como error
+                    metrics.error += chunk.length;
+                    chunk.forEach(row => {
+                        accumulatedFeedback.push({
+                            status: 'error',
+                            _rowIndex: row._rowIndex,
+                            message: 'Fallo crítico de red o límite de ejecución.'
+                        });
+                    });
+                }
             }
 
-            if (progressCallback) progressCallback(totalChunks, totalChunks, true);
-            return true;
+            if (accumulatedFeedback.length > 0 && currentSheetId) {
+                console.log(`[ETL Feedback] Procesando writeback para ${accumulatedFeedback.length} registros problemáticos.`);
+                try {
+                    await window.DataAPI.call('etl_writeback_feedback', entityName, {
+                        sheetId: currentSheetId,
+                        feedback: accumulatedFeedback
+                    });
+                } catch(e) {
+                    console.error('[ETL Feedback] No se pudo pintar la plantilla original.', e);
+                }
+            }
+
+            // S44.17: Auto-Provisionamiento JIT Workspace Post-ETL (Solo Persona)
+            if (entityName === 'Persona') {
+                if (progressCallback) {
+                    progressCallback(totalChunks, totalChunks, false, null, "Configurando Topología Workspace...");
+                }
+                console.log(`[ETL Workspace] Ingesta de Persona finalizada. Disparando Sync Job en lote paralelo...`);
+                try {
+                    // Ejecutamos silenciosamente el Sync. El Backend se encargará de crear los Cargos y las Aristas Topológicas.
+                    await window.DataAPI.call('runWorkspaceSyncJob', { manual: true });
+                    
+                    // Re-hidratar el caché topológico (JIT Cache Refresh) antes de devolver el control a la UI
+                    if (window.DataStore && window.DataAPI) {
+                        const payloads = await Promise.all([
+                            window.DataAPI.call('getInitialPayload', 'Cargo'),
+                            window.DataAPI.call('getInitialPayload', 'Sys_Graph_Edges')
+                        ]);
+                        
+                        ['Cargo', 'Sys_Graph_Edges'].forEach((ent, idx) => {
+                            const raw = payloads[idx];
+                            const res = typeof raw === 'string' ? JSON.parse(raw) : raw;
+                            if (res && res.status === 'success') {
+                                const rows = window.Schema_Utils.inflateTuples(res.data);
+                                window.DataStore.set(ent, rows);
+                            }
+                        });
+                    }
+                    
+                    // Avisamos al sistema que la topología mutó, para que la UI recargue las relaciones en caliente
+                    if (window.AppEventBus) window.AppEventBus.publish('CACHE::GRAPH_HYDRATED', { source: 'ETL_WorkspaceSync' });
+                } catch(e) {
+                    console.error("[ETL Workspace] Error aprovisionando cargos o topología:", e);
+                }
+            }
+
+            if (progressCallback) progressCallback(totalChunks, totalChunks, true, metrics);
+            return metrics;
         },
 
         /**

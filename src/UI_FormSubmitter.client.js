@@ -231,6 +231,13 @@ window.UI_FormSubmitter = class UI_FormSubmitter {
                         const itemName = (response.data && response.data.Entity) ? response.data.Entity : this.entityName;
                         this._showToast(`¡${itemName} guardado en nube!`, 'success');
                     }
+
+                    // [S45.2] We no longer blindly invalidate Cargo and Sys_Graph_Edges on UI save
+                    // because Engine_DB.upsert handles graph edges and UI_FormSubmitter reconciles locally.
+                    // This restores the 0ms instant-render performance.
+                    if (this.entityName === 'Persona' && response.action !== 'updated') {
+                        if (window.UI_Router) window.UI_Router.navigateTo('dataview', 'Persona');
+                    }
                 } else {
                     if (response && response.errorType === 'CONCURRENCY') {
                         this._handleOptimisticRollback(stateBackup, childBackups, 'Choque de concurrencia OCC en Base de datos.');

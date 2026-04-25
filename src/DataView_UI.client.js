@@ -173,17 +173,8 @@
                     window._LOOKUP_DATA = response.lookups || {};
                     
                     // Inflar Tuplas a Objetos (Data Compression) si vienen en formato tupla
-                    let rows = [];
-                    if (response.data && response.data.headers && response.data.rows) {
-                        const headers = response.data.headers;
-                        rows = response.data.rows.map(tuple => {
-                            const obj = {};
-                            headers.forEach((h, i) => obj[h] = tuple[i]);
-                            return obj;
-                        });
-                    } else if (response.data && Array.isArray(response.data)) {
-                        rows = response.data;
-                    }
+                    // Inflar Tuplas a Objetos (Data Compression)
+                    const rows = window.Schema_Utils.inflateTuples(response.data);
 
                     // Store in Frontend Cache for 0.0s subsequent transitions
                     if (window.DataStore) {
@@ -764,18 +755,34 @@
                                 loading.dismiss();
                                 if (res && res.data) {
                                     if (window.DataEngine_ETL && window.DataEngine_ETL.processPayload) {
-                                        window.DataEngine_ETL.processPayload(res.data, entity, function onProgress(chunkIndex, totalChunks, isDone) {
+                                        window.DataEngine_ETL.processPayload(res.data, entity, function onProgress(chunkIndex, totalChunks, isDone, metrics, customText) {
                                             // H10: No crear un ion-loading redundante apilándose frente al modal, usar el progreso nativo de la ventana modal
                                             if (window.UI_ETL_Modal && window.UI_ETL_Modal.updateProgress) {
-                                                window.UI_ETL_Modal.updateProgress(chunkIndex, totalChunks);
+                                                window.UI_ETL_Modal.updateProgress(chunkIndex, totalChunks, isDone, metrics, customText);
                                             }
-                                        }).then(() => {
-                                            modal.dismiss();
+                                        }).then((metrics) => {
                                             if (window.DataStore) window.DataStore.set(entity, null); // Invocar Soft-Reload
-                                            _showToast(`¡Importación Nativa de ${res.data.length} registros finalizada!`, 'success');
+                                            
+                                            // Fallback if metrics not returned correctly
+                                            const m = metrics || { success: res.data.length, duplicate: 0, error: 0 };
+                                            
+                                            if (window.UI_ETL_Modal && window.UI_ETL_Modal.showResults) {
+                                                window.UI_ETL_Modal.showResults(m);
+                                            } else {
+                                                // Fallback si no está el método
+                                                modal.dismiss();
+                                                alert(`Resumen:\n✅ ${m.success || 0} satisfactorios\n⚠️ ${m.duplicate || 0} ya existentes\n❌ ${m.error || 0} no realizados`);
+                                            }
+                                            
+                                            // Refrescar UI automáticamente una vez que el usuario cierra el modal de feedback.
+                                            // Esto asegura que la DataStore se rehidrate desde el backend y FormEngine tenga el caché listo.
+                                            modal.addEventListener('ionModalDidDismiss', () => {
+                                                console.log(`[DataViewEngine] ETL finalizado, forzando re-render de ${entity} para hidratar DataStore.`);
+                                                render(_state.entityName, _state.containerId);
+                                            }, { once: true });
                                         }).catch(err => {
                                             console.error('[Chunker Error]', err);
-                                            _showToast(`Fallo crítico inyectando lote: ${err.message}`, 'danger');
+                                            alert(`Error general de procesamiento:\n${err.message}`);
                                         });
                                     } else {
                                         modal.dismiss();

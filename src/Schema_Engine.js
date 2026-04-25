@@ -1,4 +1,4 @@
-﻿/**
+/**
  * EPT-OMR Project: APP_SCHEMAS Configuration (Server-Side)
  *
  * This object is the Single Source of Truth for the FormEngine.
@@ -8,7 +8,7 @@
  * All presets are frozen (immutable) to prevent accidental mutation.
  */
 
-const TOPOLOGY_PRESETS = Object.freeze({
+var TOPOLOGY_PRESETS = Object.freeze({
 
   /**
    * Standard hierarchical topology for graph-linked business entities.
@@ -73,7 +73,7 @@ const TOPOLOGY_PRESETS = Object.freeze({
  *
  * All factories return frozen arrays — immutable source, safe for spread.
  */
-const FIELD_TEMPLATES = Object.freeze({
+var FIELD_TEMPLATES = Object.freeze({
 
   /**
    * Identity Name field.
@@ -138,7 +138,7 @@ const FIELD_TEMPLATES = Object.freeze({
 
 });
 
-const APP_SCHEMAS = {
+var APP_SCHEMAS = {
   Unidad_Negocio: {
     metadata: { prefix: 'UNDN', showInMenu: true, order:1, iconName:'business-outline', color:'primary', label:'Unidades de Negocio', titleField:'nombre', idField:'id_unidad_negocio', fkField:null },
     primaryKey: "id_unidad_negocio",
@@ -278,9 +278,9 @@ const APP_SCHEMAS = {
       { name: "seudonimo", type: "text", label: "Seudónimo", required: false, width: 6 },
       { name: "metodologia", type: "select", label: "Metodología", required: true, width: 6, options: ["Scrum", "Kanban", "Híbrido"] },
       { name: "proposito", type: "textarea", label: "Propósito", required: false, width: 12 },
-      { name: "scrum_master_id", type: "relation", relationType: "padre", targetEntity: "Persona", graphEntity: "Sys_Graph_Edges", label: "Scrum Master / Team Coach", isTemporalGraph: true, graphEdgeType: "EQUIPO_SM", uiComponent: "select_single", valueField: "email", labelField: "nombre", required: false, width: 6 },
-      { name: "product_owner_id", type: "relation", relationType: "padre", targetEntity: "Persona", graphEntity: "Sys_Graph_Edges", label: "Product Owner", isTemporalGraph: true, graphEdgeType: "EQUIPO_PO", uiComponent: "select_single", valueField: "email", labelField: "nombre", required: false, width: 6 },
-      { name: "rte_id", type: "relation", relationType: "padre", targetEntity: "Persona", graphEntity: "Sys_Graph_Edges", label: "Release Train Engineer (RTE)", isTemporalGraph: true, graphEdgeType: "EQUIPO_RTE", uiComponent: "select_single", valueField: "email", labelField: "nombre", required: false, width: 12 },
+      { name: "scrum_master_id", type: "relation", relationType: "padre", targetEntity: "Persona", graphEntity: "Sys_Graph_Edges", label: "Scrum Master / Team Coach", isTemporalGraph: true, graphEdgeType: "EQUIPO_SM", uiComponent: "select_single", valueField: "email", labelField: "_nombre_completo", required: false, width: 6 },
+      { name: "product_owner_id", type: "relation", relationType: "padre", targetEntity: "Persona", graphEntity: "Sys_Graph_Edges", label: "Product Owner", isTemporalGraph: true, graphEdgeType: "EQUIPO_PO", uiComponent: "select_single", valueField: "email", labelField: "_nombre_completo", required: false, width: 6 },
+      { name: "rte_id", type: "relation", relationType: "padre", targetEntity: "Persona", graphEntity: "Sys_Graph_Edges", label: "Release Train Engineer (RTE)", isTemporalGraph: true, graphEdgeType: "EQUIPO_RTE", uiComponent: "select_single", valueField: "email", labelField: "_nombre_completo", required: false, width: 12 },
       { name: "cant_team_coach", type: "number", label: "Cant. Team Coach", required: false, width: 6 },
       { name: "total_integrantes", type: "number", label: "Total Integrantes", required: false, width: 6 }
     ]
@@ -302,6 +302,7 @@ const APP_SCHEMAS = {
     ],
     metadata: { showInMenu: true, order:8, iconName:'person-outline', color:'warning', label:'Personas', titleField:'_nombre_completo', idField:'id_persona', fkField:null },
     primaryKey: "id_persona",
+    mutationInterceptors: ['AutoProvisionCargo', 'AutoProvisionLiderDirecto'],
     topologyRules: TOPOLOGY_PRESETS.JERARQUICA_PERSONA,
     fields: [
       { name: "id_persona", type: "hidden", primaryKey: true },
@@ -326,9 +327,9 @@ const APP_SCHEMAS = {
       { name: "separator_3", type: "divider", label: "Datos Empresariales", icon: "business-outline", width: 12 },
       { name: "unidad_negocio", type: "lookup", lookupTarget: "Unidad_Negocio", label: "Unidad de Negocio", required: true, width: 12 },
       { name: "departamento", type: "text", label: "Departamento", required: true, width: 12 },
-      { name: "lider_directo", type: "relation", relationType: "padre", targetEntity: "Persona", graphEntity: "Sys_Graph_Edges", valueField: "email", labelField: "email", topologyCardinality: "1:N", isTemporalGraph: true, graphEdgeType: "PERSONA_LIDER_DIRECTO", label: "Líder Directo", required: false, width: 12 },
       { name: "id_cargo", type: "relation", relationType: "padre", targetEntity: "Cargo", graphEntity: "Sys_Graph_Edges", label: "Cargo Oficial", isTemporalGraph: true, topologyCardinality: "1:N", graphEdgeType: "CARGO_PERSONA", uiComponent: "select_single", valueField: "id_cargo", labelField: "nombre", required: true, width: 12 },
       { name: "cargo", type: "hidden", label: "Cargo Oficial Workspace (Plano)" },
+      { name: "lider_directo", type: "relation", relationType: "padre", targetEntity: "Persona", graphEntity: "Sys_Graph_Edges", valueField: "id_persona", labelField: "_nombre_completo", topologyCardinality: "1:N", isTemporalGraph: true, graphEdgeType: "PERSONA_LIDER_DIRECTO", label: "Líder Directo", required: false, width: 12, uiComponent: "select_single" },
       { name: "centro_costo", type: "text", label: "Centro de Costos", required: true, width: 6 },
       { name: "numero_empleado", type: "number", label: "Número de Empleado", required: true, width: 6, validators: ["regex:^\\d{8}$"], unique: true },
       { name: "modalidad", type: "select", label: "Modalidad", options: ["Presencial", "Virtual", "Híbrido"], required: true, width: 6 },
@@ -343,8 +344,8 @@ const APP_SCHEMAS = {
     ]
   },
   Cargo: {
-    uiConfig: { dashboardCard: { iconName: 'briefcase-outline', color: 'var(--ion-color-secondary)' } },
-    metadata: { prefix: 'CARG', showInMenu: true, order: 8, iconName: 'briefcase-outline', color: 'secondary', label: 'Cargos y Posiciones', titleField: 'nombre', idField: 'id_cargo', fkField: null },
+    uiConfig: { dashboardCard: { iconName: 'id-card-outline', color: 'var(--ion-color-tertiary)' } },
+    metadata: { prefix: 'CARG', showInMenu: true, order: 8, iconName: 'id-card-outline', color: 'tertiary', label: 'Cargos y Posiciones', titleField: 'nombre', idField: 'id_cargo', fkField: null },
     primaryKey: "id_cargo",
     titleField: "nombre",
     fields: [

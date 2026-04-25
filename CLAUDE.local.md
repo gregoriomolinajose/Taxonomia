@@ -4,10 +4,10 @@
 
 ## Session
 
-- **Active Session**: E41 Cierre de Épica y estabilización Web Component
-- **Last Summary**: Finalizada S41.14 y Épica E41 entera. Se consolidó `<tx-searchable>`, estabilizando pruebas End-to-End con Playwright evitando el Playwright Shadow DOM Racing y eliminando código UI legacy duplicado.
-- **Last Closed**: E41
-- **Next Focus**: Empezar `/rai-epic-plan` para la nueva E42 o cualquier épica pendiente según el roadmap del proyecto.
+- **Active Session**: E44 - Estabilización de Ingesta y Workspace JIT Refresh
+- **Last Summary**: Finalizada S44.16 (hotfix/stabilization). Se resolvió el bug de falsos positivos en el ETL (Adapter OCC Error + Client Payload Parser) y se corrigió el error catastrófico de FormEngine por desincronización de caché global tras el cierre del modal de feedback.
+- **Last Closed**: S44.16
+- **Next Focus**: Continuar con S44.14 (Desacoplar Interceptor Workspace) o cerrar la épica E44.
 
 ## Patterns
 

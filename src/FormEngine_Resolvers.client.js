@@ -32,16 +32,33 @@
              */
             hydrateLookupSources: async function(fields) {
                 const fieldsWithLookup = [];
+                let needsGraphEdges = false;
+                
                 fields.forEach(f => {
                     if (f.lookupSource || (f.type === 'relation' && f.targetEntity)) {
                         fieldsWithLookup.push(f);
                     }
+                    if (f.graphEntity === 'Sys_Graph_Edges' || f.isTemporalGraph) {
+                        needsGraphEdges = true;
+                    }
                     if (f.type === 'dynamic_list' && f.subFields) {
                         f.subFields.forEach(sub => {
                             if (sub.lookupSource) fieldsWithLookup.push(sub);
+                            if (sub.graphEntity === 'Sys_Graph_Edges' || sub.isTemporalGraph) {
+                                needsGraphEdges = true;
+                            }
                         });
                     }
                 });
+                
+                // [Bugfix S45.2] Explicitly fetch Sys_Graph_Edges if topology dependencies exist
+                if (needsGraphEdges) {
+                    fieldsWithLookup.push({
+                        name: '_virtual_graph_edges_',
+                        type: 'relation',
+                        targetEntity: 'Sys_Graph_Edges'
+                    });
+                }
                 
                 if (fieldsWithLookup.length === 0) return;
 
@@ -106,6 +123,16 @@
                                     // Mantener la estructura original (Soporte mixto para Arrays puros o Tuplas de Subgrid)
                                     const finalData = opts; 
                                     EngineResolvers._cache[cacheKey] = finalData; // Upgrade Promise to raw Data in Cache
+                                    
+                                    // [Bugfix S45.2] Sync with global DataStore so UI_SubgridBuilder can find it
+                                    if (window.DataStore && apiMethod === 'getInitialPayload' && apiArgs.length > 0) {
+                                        const entityName = apiArgs[0];
+                                        if (entityName) {
+                                            const inflated = (finalData && finalData.data && finalData.lookups) ? window.Schema_Utils.inflateTuples(finalData.data) : finalData;
+                                            window.DataStore.set(entityName, inflated);
+                                        }
+                                    }
+                                    
                                     dispatchHydration(field, finalData);
                                     resolve();
                                     return finalData;

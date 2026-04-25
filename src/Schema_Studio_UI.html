@@ -1926,28 +1926,83 @@
     copyPresetsGas:   copyPresetsGas,
     
     // [S44.11] Workspace Sync
-    triggerWsSync: function() {
-      if (confirm('¿Ejecutar Job Sincronizador de Workspace? Esto consumirá cuotas de AdminDirectory.')) {
-        if (typeof DataAPI !== 'undefined') {
-            const btn = document.getElementById('ss-btn-sync-ws');
-            if(btn) btn.innerHTML = '<ion-spinner name="dots"></ion-spinner> Sincronizando...';
-            DataAPI.call('runWorkspaceSyncJob', { manual: true })
-              .then(res => {
-                  var msg = "Sincronización finalizada.\n\n" + 
-                            "Archivo: " + (res.db_id || 'N/A') + "\n" +
-                            "Registros Evaluados: " + (res.evaluados || 0) + "\n" +
-                            "Registros Actualizados: " + (res.actualizados || 0) + "\n" +
-                            "Registros Sin Resultados: " + (res.sin_resultados || 0) + "\n\n" +
-                            "Info del Motor: " + (res.message || 'Sin mensaje');
+    triggerWsSync: function(recurseMode = false, acc = { evaluados: 0, actualizados: 0, sin_resultados: 0 }) {
+      if (!recurseMode) {
+        if (!confirm('¿Ejecutar Job Sincronizador de Workspace? Esto consumirá cuotas de AdminDirectory.')) return;
+      }
+      if (typeof DataAPI !== 'undefined') {
+          const btn = document.getElementById('ss-btn-sync-ws');
+          if(btn) btn.innerHTML = '<ion-spinner name="dots"></ion-spinner>' + (recurseMode ? ' Sincronizando (Lote Adicional)...' : ' Sincronizando...');
+          
+          DataAPI.call('runWorkspaceSyncJob', { manual: true })
+            .then(res => {
+                const stepEvaluados = res.evaluados || 0;
+                const stepActualizados = res.actualizados || 0;
+                const stepSinResultados = res.sin_resultados || 0;
+                
+                acc.evaluados += stepEvaluados;
+                acc.actualizados += stepActualizados;
+                acc.sin_resultados += stepSinResultados;
+                
+                if (res && res.status === 'OK' && res.remaining > 0) {
+                    if(btn) btn.innerHTML = `<ion-spinner name="lines"></ion-spinner> Sincronizando (~${res.remaining} restantes)...`;
+                    // Wait a second to cool down API quota, then run next batch
+                    setTimeout(() => window.SchemaStudio.triggerWsSync(true, acc), 1000);
+                    return;
+                }
 
-                  alert(msg);
-                  if(btn) btn.innerHTML = '<ion-icon name="sync-circle-outline"></ion-icon> Sincronizar Workspace';
-              })
-              .catch(err => {
-                  alert("Error en Job: " + err.message);
-                  if(btn) btn.innerHTML = '<ion-icon name="sync-circle-outline"></ion-icon> Sincronizar Workspace';
-              });
-        }
+                var msg = "Sincronización total finalizada.\n\n" + 
+                          "Archivo: " + (res.db_id || 'N/A') + "\n" +
+                          "Registros Evaluados: " + acc.evaluados + "\n" +
+                          "Registros Actualizados: " + acc.actualizados + "\n" +
+                          "Registros Sin Resultados: " + acc.sin_resultados + "\n\n" +
+                          "Info del Motor: " + (res.message || 'Sin mensaje');
+
+                if (window.DataStore && window.DataAPI) {
+                    if (btn) btn.innerHTML = '<ion-spinner name="crescent"></ion-spinner> Refrescando memoria local...';
+                    
+                    // Disparar hidratación silenciosa paralela (JIT Cache Refresh)
+                    Promise.all([
+                        window.DataAPI.call('getInitialPayload', 'Persona'),
+                        window.DataAPI.call('getInitialPayload', 'Cargo'),
+                        window.DataAPI.call('getInitialPayload', 'Sys_Graph_Edges')
+                    ]).then(payloads => {
+                        ['Persona', 'Cargo', 'Sys_Graph_Edges'].forEach((entity, idx) => {
+                            const raw = payloads[idx];
+                            const res = typeof raw === 'string' ? JSON.parse(raw) : raw;
+                            if (res && res.status === 'success') {
+                                const rows = window.Schema_Utils.inflateTuples(res.data);
+                                window.DataStore.set(entity, rows);
+                                if (window.AppEventBus) window.AppEventBus.publish('DATA::UPDATED', { entityKey: entity });
+                                
+                                // Si acabamos de hidratar el grafo, avisar al UI que repinte relaciones
+                                if (entity === 'Sys_Graph_Edges' && window.AppEventBus) {
+                                    window.AppEventBus.publish('CACHE::GRAPH_HYDRATED', { source: 'WorkspaceSync' });
+                                }
+                            }
+                        });
+                        
+                        alert(msg);
+                        if (btn) btn.innerHTML = '<ion-icon name="sync-circle-outline"></ion-icon> Sincronizar Workspace';
+                    }).catch(err => {
+                        console.error('[Sync] Error refrescando caché local', err);
+                        alert(msg + "\\n\\n(Nota: Haz un refresh manual F5 para visualizar los cambios.)");
+                        if (btn) btn.innerHTML = '<ion-icon name="sync-circle-outline"></ion-icon> Sincronizar Workspace';
+                    });
+                } else {
+                    if (window.DataStore) {
+                        window.DataStore.invalidate('Persona');
+                        window.DataStore.invalidate('Cargo');
+                        window.DataStore.invalidate('Sys_Graph_Edges');
+                    }
+                    alert(msg);
+                    if(btn) btn.innerHTML = '<ion-icon name="sync-circle-outline"></ion-icon> Sincronizar Workspace';
+                }
+            })
+            .catch(err => {
+                alert("Error en Job: " + err.message);
+                if(btn) btn.innerHTML = '<ion-icon name="sync-circle-outline"></ion-icon> Sincronizar Workspace';
+            });
       }
     },
 

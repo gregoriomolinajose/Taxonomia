@@ -725,8 +725,7 @@
 /* -- PREMIUM GRID CARDS -- */
 .dv-card-grid-modern {
     padding: 20px;
-    display: flex;
-    flex-direction: column;
+    display: grid;
     gap: 16px;
     border: 1px solid var(--dv-border);
     border-radius: var(--dv-radius);

@@ -24,6 +24,77 @@
                     _typeaheadNode = null;
                 };
 
+                const _applyWorkspaceDto = (dto, modalContext, fieldsArr) => {
+                    Object.keys(dto).forEach(key => {
+                        const stdInput = modalContext.querySelector(`ion-input[name="${key}"], ion-textarea[name="${key}"], input[type="hidden"][name="${key}"]`);
+                        const cmpInput = modalContext.querySelector(`[data-form-component="${key}"]`);
+                        const fetchedValue = dto[key];
+
+                        if (cmpInput) {
+                            if (typeof cmpInput.setValidatedValue === 'function') {
+                                cmpInput.setValidatedValue(fetchedValue);
+                            } else {
+                                cmpInput.value = fetchedValue;
+                            }
+                        } else if (stdInput) {
+                            stdInput.value = fetchedValue;
+                            if (fetchedValue !== undefined && fetchedValue !== null && String(fetchedValue).trim() !== '' && stdInput.tagName !== 'INPUT') {
+                                stdInput.setAttribute('readonly', 'true');
+                                stdInput.readonly = true;
+                                stdInput.style.color = 'var(--ion-color-primary)';
+                            } else if (stdInput.tagName !== 'INPUT') {
+                                stdInput.removeAttribute('readonly');
+                                stdInput.readonly = false;
+                                stdInput.style.color = '';
+                            }
+                            stdInput.dispatchEvent(new CustomEvent('ionChange', { detail: { value: fetchedValue }, bubbles: true }));
+                            stdInput.dispatchEvent(new CustomEvent('FormHydrated', { detail: fetchedValue, bubbles: false }));
+                        }
+
+                        // [S44.13] JIT Workspace Fallback (Live Sync)
+                        const relationMeta = fieldsArr.find(f => f.name === `id_${key}` && f.isTemporalGraph && f.targetEntity);
+                        if (relationMeta && window.DataStore && window.DataStore.get(relationMeta.targetEntity) && fetchedValue) {
+                            const targetTable = window.DataStore.get(relationMeta.targetEntity);
+                            const matchTarget = targetTable.find(t => 
+                                String(t.id_externo_workspace).trim().toLowerCase() === String(fetchedValue).trim().toLowerCase() || 
+                                String(t[relationMeta.valueField]).trim().toLowerCase() === String(fetchedValue).trim().toLowerCase() || 
+                                String(t.id_registro).trim().toLowerCase() === String(fetchedValue).trim().toLowerCase() ||
+                                String(t.nombre || '').trim().toLowerCase() === String(fetchedValue).trim().toLowerCase()
+                            );
+                            
+                            const selectCmp = modalContext.querySelector(`[data-form-component="id_${key}"]`);
+                            const ionSelect = modalContext.querySelector(`ion-select[name="id_${key}"]`);
+                            
+                            if (matchTarget) {
+                                const resolvedId = matchTarget[relationMeta.valueField] || matchTarget.id_registro;
+                                if (selectCmp) {
+                                    if (typeof selectCmp.setValidatedValue === 'function') selectCmp.setValidatedValue(resolvedId);
+                                    else selectCmp.value = resolvedId;
+                                } else if (ionSelect) {
+                                    ionSelect.value = resolvedId;
+                                }
+                                console.log(`[FormEngine] Live Sync JIT Fallback Resuelto para id_${key}: ${fetchedValue} -> ${resolvedId}`);
+                            } else {
+                                // NO EXISTE EN DB: Agregar la opción al vuelo para que se renderice y pase al backend
+                                if (ionSelect) {
+                                    let existOpt = Array.from(ionSelect.querySelectorAll('ion-select-option')).find(o => o.value === fetchedValue);
+                                    if (!existOpt) {
+                                        const newOpt = document.createElement('ion-select-option');
+                                        newOpt.value = fetchedValue;
+                                        newOpt.textContent = fetchedValue + ' (Workspace)';
+                                        ionSelect.appendChild(newOpt);
+                                    }
+                                    ionSelect.value = fetchedValue;
+                                } else if (selectCmp) {
+                                    if (typeof selectCmp.setValidatedValue === 'function') selectCmp.setValidatedValue(fetchedValue);
+                                    else selectCmp.value = fetchedValue;
+                                }
+                                console.log(`[FormEngine] Live Sync JIT Fallback CREANDO OPCIÓN VIRTUAL para id_${key}: ${fetchedValue}`);
+                            }
+                        }
+                    });
+                };
+
                 const _renderWorkspaceTypeahead = (triggerInput, dtos, formModal) => {
                     _closeWorkspaceTypeahead();
                     const rect = triggerInput.getBoundingClientRect();
@@ -45,7 +116,7 @@
                         
                         const avatar = document.createElement('ion-avatar');
                         avatar.slot = 'start';
-                        if (dto.avatar) {
+                        if (dto.avatar && String(dto.avatar).startsWith('http')) {
                             const img = document.createElement('img');
                             img.src = dto.avatar;
                             avatar.appendChild(img);
@@ -81,18 +152,7 @@
                             const currentInputs = formModal.querySelectorAll('ion-input, ion-select, ion-textarea, input[type="hidden"]');
                             currentInputs.forEach(inp => formStateObj[inp.name] = inp.value);
                             
-                            Object.keys(dto).forEach(key => {
-                                const autoInput = formModal.querySelector(`ion-input[name="${key}"]`);
-                                if (autoInput) {
-                                    autoInput.value = dto[key];
-                                    if (dto[key]) {
-                                        autoInput.readonly = true;
-                                        autoInput.setAttribute('readonly', 'true');
-                                        autoInput.style.color = 'var(--ion-color-primary)';
-                                    }
-                                    autoInput.dispatchEvent(new CustomEvent('FormHydrated', { detail: dto[key] }));
-                                }
-                            });
+                            _applyWorkspaceDto(dto, formModal, fields);
                             triggerInput.dispatchEvent(new Event('ionChange'));
                             _closeWorkspaceTypeahead();
                         };
@@ -194,39 +254,8 @@
                                             }
                                             
                                             if (dto) {
-                                                // Hidratar Formulario (Reactive Defense)
-                                                Object.keys(dto).forEach(key => {
-                                                    const stdInput = modal.querySelector(`ion-input[name="${key}"], ion-textarea[name="${key}"], input[type="hidden"][name="${key}"]`);
-                                                    const cmpInput = modal.querySelector(`[data-form-component="${key}"]`);
-                                                    
-                                                    const fetchedValue = dto[key];
-                                                    
-                                                    // H10 Mitigación: Primero intentar Inyección Reactiva p/WebComponents Complejos
-                                                    if (cmpInput) {
-                                                        if (typeof cmpInput.setValidatedValue === 'function') {
-                                                            cmpInput.setValidatedValue(fetchedValue);
-                                                        } else {
-                                                            cmpInput.value = fetchedValue;
-                                                        }
-                                                    } else if (stdInput) {
-                                                        // Fallback a Primitivos Estándar
-                                                        stdInput.value = fetchedValue;
-                                                        
-                                                        // Bloqueo Inteligente si el Backend resolvió el valor
-                                                        if (fetchedValue !== undefined && fetchedValue !== null && String(fetchedValue).trim() !== '') {
-                                                            stdInput.setAttribute('readonly', 'true');
-                                                            stdInput.readonly = true;
-                                                            stdInput.style.color = 'var(--ion-color-primary)';
-                                                        } else {
-                                                            stdInput.removeAttribute('readonly');
-                                                            stdInput.readonly = false;
-                                                            stdInput.style.color = '';
-                                                        }
-                                                        
-                                                        // Despachar Burbujeo Nodal
-                                                        stdInput.dispatchEvent(new CustomEvent('ionChange', { detail: { value: fetchedValue }, bubbles: true }));
-                                                    }
-                                                });
+                                                // Hidratar Formulario (Reactive Defense & JIT Fallback)
+                                                _applyWorkspaceDto(dto, modal, fields);
                                                 
                                                 // Trigger Collision Warning explícito después del barrido
                                                 if (window.DataStore && window.DataStore.get) {

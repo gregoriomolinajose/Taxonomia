@@ -117,6 +117,14 @@ function API_Universal_Router(action, entityName, payload) {
       // Para delete, el payload puede ser solo el ID como string o un obj {id: ...}
       const id = (typeof payload === 'object') ? payload[pkField] || payload.id : payload;
       responseData = _handleDelete(entityName, id);
+    } else if (action === 'etl_writeback_feedback') {
+      if (typeof _guardAbac === 'function') {
+         _guardAbac('create', entityName, null);
+      }
+      if (!payload || !payload.sheetId || !payload.feedback) throw new Error("Falta sheetId o feedback para writeback.");
+      responseData = Engine_ETL.writebackFeedback(payload.sheetId, payload.feedback);
+      return JSON.stringify({ status: "success", data: responseData, action });
+      
     } else if (action === 'bulkInsert') {
       if (!Array.isArray(payload)) {
         throw new Error("Payload for bulkInsert must be an array of objects.");
@@ -126,6 +134,7 @@ function API_Universal_Router(action, entityName, payload) {
       payload.forEach(record => {
         if (!record[pkField] || String(record[pkField]).trim() === '') {
           record[pkField] = _generateShortUUID(entityName);
+          record._isNewIngest = true; // Flag for ETL pipeline
         }
       });
       
@@ -143,7 +152,7 @@ function API_Universal_Router(action, entityName, payload) {
       return JSON.stringify({
         status: "success",
         data: responseData,
-        insertedCount: payload.length
+        insertedCount: responseData.count || 0
       });
     } else {
       throw new Error(`Action '${action}' not supported yet.`);

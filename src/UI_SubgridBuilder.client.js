@@ -16,7 +16,6 @@ window.UI_SubgridBuilder = {
 
         const subgridDiv = document.createElement('div');
         subgridDiv.style.border = '1px solid var(--ion-border-color)';
-        subgridDiv.style.borderRadius = 'var(--rounded-sm)';
         subgridDiv.style.overflow = 'hidden';
         subgridDiv.style.marginBottom = 'var(--spacing-5)';
         subgridDiv.setAttribute('data-form-component', field.name);
@@ -257,12 +256,7 @@ window.UI_SubgridBuilder = {
             
             if (lookupSource && lookupSource.data && lookupSource.lookups) {
                  // If it came from getInitialPayload (Tuples)
-                 const headers = lookupSource.data.headers;
-                 const rows = lookupSource.data.rows.map(tuple => {
-                     const obj = {};
-                     headers.forEach((h, i) => obj[h] = tuple[i]);
-                     return obj;
-                 });
+                 const rows = window.Schema_Utils.inflateTuples(lookupSource.data);
                  // Map to {value, label}
                  const pkField = Object.keys(rows[0] || {}).find(k => k.startsWith('id_'));
                  if (pkField) {

@@ -129,6 +129,8 @@ var Engine_ETL = (function() {
         }
         
         if (!isEmptyRow) {
+            record._sheetId = sheetId;
+            record._rowIndex = i + 1; // 1-indexed for SpreadsheetApp (row 1 is header)
             records.push(record);
         }
     }
@@ -153,155 +155,132 @@ var Engine_ETL = (function() {
        let dbRowsForLookup = null;
        const lookupMaps = {}; // { 'email': { 'test@...': row }, 'numero_empleado': { '123': row } }
 
-       if (uniqueFields.length > 0) {
-           if (typeof Engine_DB !== 'undefined') {
-              const listResult = Engine_DB.list(entityName, 'objects'); // Obtenemos contexto en caché O(1)
-              dbRowsForLookup = listResult.rows || [];
-              
-              // Inicializar diccionarios por cada Unique Field
-              uniqueFields.forEach(uf => { lookupMaps[uf] = {}; });
-              
-              // Pre-indexar O(M)
-              if (uniqueFields.length > 0) {
-                  dbRowsForLookup.forEach(row => {
-                      uniqueFields.forEach(uf => {
-                          if (row[uf]) {
-                              const normKey = String(row[uf]).trim().toLowerCase();
-                              lookupMaps[uf][normKey] = row;
-                          }
-                      });
-                  });
-              }
-           }
-       }
-
-       let cargoExternoMap = {};
-       let batchCargosToCreate = [];
-       let createdCargosCache = {};
-
-       // S44.9 Pre-Load Dictionary
-       if (entityName === 'Persona') {
-           try {
-               if (typeof Engine_DB !== 'undefined') {
-                   const allCargos = Engine_DB.read('Cargo') || [];
-                   allCargos.forEach(c => {
-                       if (c.id_cargo) {
-                           if (c.nombre) cargoExternoMap[String(c.nombre).trim().toLowerCase()] = c.id_cargo;
-                           if (c.id_externo_workspace) cargoExternoMap[String(c.id_externo_workspace).trim().toLowerCase()] = c.id_cargo;
-                       }
+        if (uniqueFields.length > 0) {
+            if (typeof Engine_DB !== 'undefined') {
+               if (typeof Logger !== 'undefined') Logger.log(`[ETL Debug] Fetching dbRowsForLookup for entity: ${entityName} with uniqueFields: ${uniqueFields}`);
+               const listResult = Engine_DB.list(entityName, 'objects'); // Obtenemos contexto en caché O(1)
+               dbRowsForLookup = listResult.rows || [];
+               
+               if (typeof Logger !== 'undefined') Logger.log(`[ETL Debug] dbRowsForLookup size: ${dbRowsForLookup.length}`);
+               
+               // Inicializar diccionarios por cada Unique Field
+               uniqueFields.forEach(uf => { lookupMaps[uf] = {}; });
+               
+               // Pre-indexar O(M)
+               if (uniqueFields.length > 0) {
+                   dbRowsForLookup.forEach(row => {
+                       uniqueFields.forEach(uf => {
+                           if (row[uf]) {
+                               const normKey = String(row[uf]).trim().toLowerCase();
+                               lookupMaps[uf][normKey] = row;
+                           }
+                       });
                    });
                }
-           } catch(e) {
-               if (typeof Logger !== 'undefined') Logger.log("Error precargando diccionario de Cargos: " + e.message);
-           }
+               
+               if (typeof Logger !== 'undefined') {
+                   uniqueFields.forEach(uf => {
+                       Logger.log(`[ETL Debug] lookupMaps[${uf}] size: ${Object.keys(lookupMaps[uf]).length}`);
+                   });
+               }
+            }
+        }
+
+       if (typeof Business_Interceptors !== 'undefined') {
+           Business_Interceptors.apply(entityName, items);
        }
 
        items.forEach(payload => {
-           // A. Re-hidratación Silenciosa al vuelo para Workspace (S15.1 + S44.11)
-            if (entityName === 'Persona' && typeof resolverDirectorioWorkspace !== 'undefined') {
-                const lacksName = (!payload.nombre || String(payload.nombre).trim() === '');
-                const lacksCargo = (!payload.id_cargo || String(payload.id_cargo).trim() === '');
-                const lacksNum = (!payload.numero_empleado || String(payload.numero_empleado).trim() === '');
-                const lacksAvatar = (!payload.avatar || String(payload.avatar).trim() === '');
-                const isAnyFieldMissing = (lacksName || lacksCargo || lacksNum || lacksAvatar);
-                
-                const wantsSync = !payload.workspace_sync_status || payload.workspace_sync_status === 'pending' || payload.workspace_sync_status === 'failed';
-                
-                // Solo revaluamos el estado si nos piden Sync (falta o pending).
-                if (payload.email && wantsSync) {
-                    if (isAnyFieldMissing) {
-                        try {
-                           const wsData = resolverDirectorioWorkspace(payload.email);
-                           if (wsData && wsData.__status !== "DISABLED" && wsData.__status !== "ERROR") {
-                               Object.keys(wsData).forEach(k => {
-                                   if (payload[k] === undefined || payload[k] === null || payload[k] === '') {
-                                       payload[k] = wsData[k];
-                                   }
-                               });
-                               payload.workspace_sync_status = 'synced';
-                               if (typeof Logger !== 'undefined') Logger.log(`[Batch Hook] Persona Re-Hidratada Automáticamente: ${payload.email}`);
-                           } else if (wsData && wsData.__status === "ERROR") {
-                               payload.workspace_sync_status = 'failed';
-                           }
-                       } catch(e) {
-                            // Fallback silencioso: no truncar el batch si Workspace API rate-limitea
-                            payload.workspace_sync_status = 'failed';
-                           if (typeof Logger !== 'undefined') Logger.log(`[Batch Hook] Ignorando error WS para ${payload.email}: ${e.message}`);
-                       }
-                    } else {
-                        // Optimización: Si Ninguno está vacío, marcamos como sincronizado sin gastar cuota de API ni retrasar el Job.
-                        payload.workspace_sync_status = 'synced';
-                        if (typeof Logger !== 'undefined') Logger.log(`[Batch Hook] Persona ${payload.email} auto-validada sin llamar WS API (datos completos).`);
-                    }
-                }
-            }
-
-           // [S44.9] Mapeo Automático de Ingesta (Cargo Workspace Interceptor)
-           if (entityName === 'Persona') {
-               const rawCargo = payload.cargo !== undefined ? payload.cargo : payload.id_cargo;
-               if (rawCargo !== undefined && rawCargo !== null && rawCargo !== '') {
-                   const rawKey = String(rawCargo).trim();
-                   const normalizedKey = rawKey.toLowerCase();
-                   if (cargoExternoMap[normalizedKey]) {
-                       payload.id_cargo = cargoExternoMap[normalizedKey];
-                   } else if (rawKey !== payload.id_cargo) {
-                       if (!createdCargosCache[normalizedKey]) {
-                           const tempCargoId = "CARG-" + (Math.random().toString(36).substring(2, 10));
-                           batchCargosToCreate.push({
-                               id_cargo: tempCargoId,
-                               nombre: rawKey + " (Por definir)",
-                               nivel: "Nivel Base",
-                               id_externo_workspace: rawKey,
-                               estado: "Activo"
-                           });
-                           createdCargosCache[normalizedKey] = tempCargoId;
-                           payload.id_cargo = tempCargoId;
-                           cargoExternoMap[normalizedKey] = tempCargoId;
-                       } else {
-                           payload.id_cargo = createdCargosCache[normalizedKey];
-                       }
-                   }
-               }
-           }
-
            // B. Deduplicación Pasiva (Identity Resolution) O(1) Search Mode
-           if (uniqueFields.length > 0) {
-               let matchedRow = null;
-               for (let j = 0; j < uniqueFields.length; j++) {
-                   const uField = uniqueFields[j];
-                   if (payload[uField]) {
-                       const searchKey = String(payload[uField]).trim().toLowerCase();
-                       if (lookupMaps[uField] && lookupMaps[uField][searchKey]) {
-                           matchedRow = lookupMaps[uField][searchKey];
-                           break; // Un solo match lógico es suficiente para sobreescribir la PK
+               if (uniqueFields.length > 0) {
+                   let matchedRow = null;
+                   let evalKeys = [];
+                   for (let j = 0; j < uniqueFields.length; j++) {
+                       const uField = uniqueFields[j];
+                       if (payload[uField]) {
+                           const searchKey = String(payload[uField]).trim().toLowerCase();
+                           evalKeys.push(`${uField}=${searchKey}`);
+                           if (lookupMaps[uField] && lookupMaps[uField][searchKey]) {
+                               matchedRow = lookupMaps[uField][searchKey];
+                               break; // Un solo match lógico es suficiente para sobreescribir la PK
+                           }
                        }
                    }
+                   
+                   if (typeof Logger !== 'undefined') {
+                       Logger.log(`[ETL Debug] payload eval keys: ${evalKeys.join(', ')} -> matchedRow: ${matchedRow ? matchedRow[pkField] : 'NULL'} | _isNewIngest: ${payload._isNewIngest}`);
+                   }
+                   
+                   if (matchedRow) {
+                       if (payload._isNewIngest) {
+                           payload._isDuplicateMatch = true;
+                           if (typeof Logger !== 'undefined') Logger.log(`[ETL Debug] SET _isDuplicateMatch = true FOR ${matchedRow[pkField]}`);
+                       }
+                       payload[pkField] = matchedRow[pkField]; // Subsumimos el Temp UUID y forzamos modo UPDATE
+                   }
                }
-               
-               if (matchedRow) {
-                   payload[pkField] = matchedRow[pkField]; // Subsumimos el Temp UUID y forzamos modo UPDATE
-               }
-           }
        });
 
-       // [S44.11] Commit batch creations before closing pipeline
-       if (batchCargosToCreate.length > 0 && typeof Engine_DB !== 'undefined') {
-           try {
-               Engine_DB.upsertBatch('Cargo', batchCargosToCreate, { muteTriggers: true });
-               if (typeof Logger !== 'undefined') Logger.log(`Se auto-generaron ${batchCargosToCreate.length} cargos nuevos "Por definir" desde el Ingestor de Personas.`);
-           } catch(e) {
-               if (typeof Logger !== 'undefined') Logger.log("Error creando batch de cargos: " + e.message);
-           }
-       }
+       // [S44.11] Commit batch creations before closing pipeline - REMOVIDO (Movido a Interceptor)
 
        return { data: items }; // Return payload wrapped in object
+  }
+
+  /**
+   * writebackFeedback
+   * Abre la plantilla de origen y pinta las filas según el feedback (Amarillo para duplicados, Rojo para errores).
+   * Añade el mensaje a la última columna de datos.
+   */
+  function writebackFeedback(sheetId, feedbackArray) {
+      if (!sheetId || !feedbackArray || feedbackArray.length === 0) return false;
+      
+      let ss;
+      try {
+          ss = SpreadsheetApp.openById(sheetId);
+      } catch (e) {
+          Logger.log("[ETL Writeback Error] No se pudo abrir Spreadsheet: " + sheetId);
+          return false;
+      }
+      
+      const sheet = ss.getSheets()[0]; // La misma hoja usada en extractDataFromDrive
+      const numCols = sheet.getLastColumn() || 1;
+      
+      // Buscar si la columna de Estado ya existe
+      let feedbackCol = numCols;
+      let headerCell = sheet.getRange(1, feedbackCol);
+      
+      if (headerCell.getValue() !== 'Estado Ingesta') {
+          // Si no existe en la última, agregamos una nueva
+          feedbackCol = numCols + 1;
+          headerCell = sheet.getRange(1, feedbackCol);
+          headerCell.setValue('Estado Ingesta');
+          headerCell.setFontWeight('bold');
+      }
+      // Procesar fila por fila (al ser pocas, no importa tanto el timeout, pero lo hacemos rápido)
+      feedbackArray.forEach(fb => {
+          if (!fb._rowIndex) return;
+          
+          const range = sheet.getRange(fb._rowIndex, 1, 1, feedbackCol);
+          
+          if (fb.status === 'duplicate') {
+              range.setBackground('#FFF2CC'); // Amarillo pastel
+          } else if (fb.status === 'error') {
+              range.setBackground('#FCE8E6'); // Rojo pastel
+          }
+          
+          // Setear el mensaje en la última columna
+          sheet.getRange(fb._rowIndex, feedbackCol).setValue(fb.message || fb.reason || 'Error');
+      });
+      
+      return true;
   }
 
   // --- Public API ---
   return {
     generateDriveTemplate: generateDriveTemplate,
     extractDataFromDrive: extractDataFromDrive,
-    hydrateAndDeduplicate: hydrateAndDeduplicate
+    hydrateAndDeduplicate: hydrateAndDeduplicate,
+    writebackFeedback: writebackFeedback
   };
 
 })();

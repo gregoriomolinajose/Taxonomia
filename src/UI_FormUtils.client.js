@@ -181,12 +181,122 @@ window.UI_FormUtils = (function () {
         return filtered;
     }
 
+    /**
+     * @function validateRequiredFields
+     * Valida de manera superficial y rápida (JIT) todos los inputs requeridos 
+     * dentro del contenedor especificado. Ideal para Steppers.
+     */
+    function validateRequiredFields(currentContainer) {
+        const inputs = currentContainer.querySelectorAll('ion-input, ion-select');
+        let isValid = true;
+
+        inputs.forEach(input => {
+            let fieldIsValid = true;
+            const reqAttr = input.getAttribute('required');
+            const valAttr = input.getAttribute('data-validators');
+            
+            if (reqAttr === 'true' && (input.value === undefined || input.value === null || input.value === '')) {
+                fieldIsValid = false;
+            }
+            
+            if (fieldIsValid && valAttr && input.value) {
+                try {
+                    const validators = JSON.parse(valAttr);
+                    validators.forEach(rule => {
+                        if (rule.startsWith('regex:')) {
+                            const pattern = rule.split('regex:')[1];
+                            const re = new RegExp(pattern);
+                            if (!re.test(input.value)) {
+                                fieldIsValid = false;
+                            }
+                        }
+                    });
+                } catch (e) {
+                    console.warn('[Validators] Error parseando data-validators: ', e);
+                }
+            }
+            
+            if (!fieldIsValid) {
+                isValid = false;
+                input.classList.add('ion-touched', 'ion-invalid');
+            } else {
+                input.classList.remove('ion-invalid');
+            }
+        });
+
+        return isValid;
+    }
+
+    /**
+     * @function attachBusinessRulesListeners
+     * Aplica listeners locales para calcular dinámicamente campos computados en frontend
+     * Basado en meta-declaraciones en APP_SCHEMAS (Config-Driven), sin hardcoding OCP.
+     */
+    function attachBusinessRulesListeners(container, entityName) {
+        if (!entityName || !window.APP_SCHEMAS || !window.APP_SCHEMAS[entityName]) return;
+        
+        const rules = window.APP_SCHEMAS[entityName].businessRules || [];
+        if (rules.length === 0) return;
+
+        container.addEventListener('ionInput', (e) => {
+            const target = e.target;
+            if (!target.tagName || target.tagName.toLowerCase() !== 'ion-input' || !target.name) return;
+
+            rules.forEach(rule => {
+                if (rule.trigger === 'onInput' && rule.action === 'sumPrefix') {
+                    if (target.name.startsWith(rule.prefix)) {
+                        const allInputs = container.querySelectorAll(`ion-input[name^="${rule.prefix}"]`);
+                        let total = 0;
+                        allInputs.forEach(input => {
+                            const val = parseInt(input.value, 10);
+                            if (!isNaN(val)) total += val;
+                        });
+                        
+                        const targetInput = container.querySelector(`ion-input[name="${rule.target}"]`);
+                        if (targetInput) {
+                            targetInput.value = total;
+                            targetInput.style.transition = 'color 0.3s ease';
+                            targetInput.style.color = 'var(--ion-color-secondary)';
+                            setTimeout(() => targetInput.style.color = '', 300);
+                        }
+                    }
+                }
+            });
+        });
+    }
+
+    /**
+     * [S44.12] executeAsyncValidations
+     * Función pura para ejecutar pre-requisitos de validación en paralelo (KISS/YAGNI)
+     * Reemplaza la necesidad de un árbol de dependencias dinámico.
+     */
+    async function executeAsyncValidations(schema, formData) {
+        if (!schema || !schema.preRequisites || !Array.isArray(schema.preRequisites)) {
+            return true;
+        }
+
+        const promises = schema.preRequisites.map(async (reqName) => {
+            const validatorFn = window[reqName] || (window.UI_FormUtils && window.UI_FormUtils[reqName]);
+            if (typeof validatorFn === 'function') {
+                return await validatorFn(formData);
+            }
+            console.warn(`[Validators] Pre-requisito no encontrado: ${reqName}`);
+            return true; 
+        });
+
+        await Promise.all(promises);
+        return true;
+    }
+
     return {
         getDominioOptions,
         getDominiosPadreOptions,
         normalizeId,
         isRecordLinked,
         applyReadOnlyLock,
-        filterByTopology
+        filterByTopology,
+        validateRequiredFields,
+        attachBusinessRulesListeners,
+        executeAsyncValidations
     };
 })();

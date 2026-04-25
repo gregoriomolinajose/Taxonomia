@@ -405,9 +405,9 @@
             footerContainer.appendChild(btnGrid);
             // Fin de armado de Header/Footer Híbrido
 
-            // --- Delegación de Business Rules UI_Validators ---
-            if (global.UI_Validators && typeof global.UI_Validators.attachBusinessRulesListeners === 'function') {
-                global.UI_Validators.attachBusinessRulesListeners(container, entityName);
+            // --- Delegación de Business Rules UI_FormUtils ---
+            if (global.UI_FormUtils && typeof global.UI_FormUtils.attachBusinessRulesListeners === 'function') {
+                global.UI_FormUtils.attachBusinessRulesListeners(container, entityName);
             }
             // --------------------------------------------------------------------
 
@@ -581,6 +581,39 @@
                             } else {
                                 const match = activeEdges.find(e => String(e.id_nodo_padre) === String(currentPK) && e.tipo_relacion === edgeName);
                                 if (match) valToSet = match.id_nodo_hijo;
+                            }
+                        }
+                        
+                        // [S44.13] JIT Workspace Fallback: Si no hay arista en el grafo, buscar si existe la referencia plana (ej. cargo=4826)
+                        if (valToSet === undefined) {
+                            const flatName = name.replace('id_', ''); // ej. 'id_cargo' -> 'cargo'
+                            const flatVal = record[flatName];
+                            if (flatVal && fieldMeta.targetEntity && window.DataStore.get(fieldMeta.targetEntity)) {
+                                const targetTable = window.DataStore.get(fieldMeta.targetEntity);
+                                // Buscar coincidencia por id_externo_workspace o ID directo o nombre
+                                const matchTarget = targetTable.find(t => 
+                                    String(t.id_externo_workspace).trim().toLowerCase() === String(flatVal).trim().toLowerCase() || 
+                                    String(t[fieldMeta.valueField]).trim().toLowerCase() === String(flatVal).trim().toLowerCase() || 
+                                    String(t.id_registro).trim().toLowerCase() === String(flatVal).trim().toLowerCase() ||
+                                    String(t.nombre || '').trim().toLowerCase() === String(flatVal).trim().toLowerCase()
+                                );
+                                if (matchTarget) {
+                                    valToSet = matchTarget[fieldMeta.valueField] || matchTarget.id_registro;
+                                    console.log(`[FormEngine] JIT Workspace Fallback Resuelto para ${name}: ${flatVal} -> ${valToSet}`);
+                                } else {
+                                    // NO EXISTE EN DB: Agregar la opción virtual si es un select
+                                    if (input.tagName === 'ION-SELECT') {
+                                        let existOpt = Array.from(input.querySelectorAll('ion-select-option')).find(o => o.value === flatVal);
+                                        if (!existOpt) {
+                                            const newOpt = document.createElement('ion-select-option');
+                                            newOpt.value = flatVal;
+                                            newOpt.textContent = flatVal + ' (Workspace)';
+                                            input.appendChild(newOpt);
+                                        }
+                                    }
+                                    valToSet = flatVal;
+                                    console.log(`[FormEngine] JIT Workspace Fallback CREANDO OPCIÓN VIRTUAL para ${name}: ${flatVal}`);
+                                }
                             }
                         }
                     }
