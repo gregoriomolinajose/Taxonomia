@@ -168,6 +168,13 @@
                 try {
                     // Ejecutamos silenciosamente el Sync. El Backend se encargará de crear los Cargos y las Aristas Topológicas.
                     await window.DataAPI.call('runWorkspaceSyncJob', { manual: true });
+                    
+                    // Invalidar el caché topológico para que la UI los re-descargue al renderizar
+                    if (window.DataStore) {
+                        window.DataStore.set('Cargo', null);
+                        window.DataStore.set('Sys_Graph_Edges', null);
+                    }
+                    
                     // Avisamos al sistema que la topología mutó, para que la UI recargue las relaciones en caliente
                     if (window.AppEventBus) window.AppEventBus.publish('CACHE::GRAPH_HYDRATED', { source: 'ETL_WorkspaceSync' });
                 } catch(e) {
