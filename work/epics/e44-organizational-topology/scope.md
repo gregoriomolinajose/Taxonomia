@@ -1,6 +1,6 @@
 # Epic E44: Visibilidad y Control de Topología Organizacional — Scope
 
-> **Status:** IN PROGRESS
+> **Status:** CLOSED
 > **Release:** REL-4 (Visibilidad Operativa)
 > **Created:** 2026-04-21
 
@@ -21,29 +21,7 @@ Otorgar visibilidad centralizada sobre la composición de equipos, la ocupación
 | S44.5 | Alertas Capacity Map | L | Done | Refactor de UI_View_CapacityMap para pintar alarmas rojas en base a sumas topológicas (>100% y sin Roles). |
 | S44.6 | Refactor UX Búsqueda Inline | S | Done | Unificar el comportamiento Inline en TXSearchable para Single Select en lugar del popover flotante viejo. |
 | S44.7 | Reorganización Estructural Persona | S | Done | Dividir en bloques lógicos y asignar layouts en Schema_Engine para la entidad Persona. |
-# Epic E44: Visibilidad y Control de Topología Organizacional — Scope
 
-> **Status:** IN PROGRESS
-> **Release:** REL-4 (Visibilidad Operativa)
-> **Created:** 2026-04-21
-
-## Objective
-
-Otorgar visibilidad centralizada sobre la composición de equipos, la ocupación (capacidad) detallada de las personas y los roles que fungen, extendiendo la arquitectura del grafo relacional e interfaces sin sobre-ingeniería.
-
-**Value:** Erradicar el tiempo consumido en hojas de cálculo aisladas. Dotar al liderazgo tecnológico de la habilidad visual de entender quién está sobrecargado (>100%) y qué células tienen roles críticos descubiertos (sin SM / vacío).
-
-## Stories 
-
-| ID | Story | Size | Status | Description |
-|----|-------|:----:|:------:|-------------|
-| S44.1 | Entidad Rol | S | Done | Crear entidad genérica Rol en Schema_Engine empleando prefijo ROLE e ícono de construcción. |
-| S44.2 | Extensión Grafo | M | Done | Extender Sys_Graph_Edges con metadata para guardar capacidad dedicada (%) sin corromper SCD-2. |
-| S44.3 | Mutación DataStore | S | Done | Fusionar Nombre+Apellido desde la Ingesta OnLoad para todas las vistas visuales de la aplicación. |
-| S44.4 | Shielding ABAC | M | Done | Implementar lógica de Field-Level Security para Rol y candado Workspace usando Engine_ABAC. |
-| S44.5 | Alertas Capacity Map | L | Done | Refactor de UI_View_CapacityMap para pintar alarmas rojas en base a sumas topológicas (>100% y sin Roles). |
-| S44.6 | Refactor UX Búsqueda Inline | S | Done | Unificar el comportamiento Inline en TXSearchable para Single Select en lugar del popover flotante viejo. |
-| S44.7 | Reorganización Estructural Persona | S | Done | Dividir en bloques lógicos y asignar layouts en Schema_Engine para la entidad Persona. |
 | S44.8 | Entidad Cargo (Diccionario Vivo) | S | Done | Extraer cargo a nueva entidad resolviendo conflicto de workspace sync con schemas. |
 | S44.9 | Mapeo Automático Ingesta | M | Done | Implementar Workspace Interceptor para autoprovisionar o enlazar ID interno de Cargo mediante diccionarios en cache O(1). |
 | S44.10 | Migración Masiva Lógica Roles | M | Done | Migración Masiva CSV del viejo select rol_agil hacia los nuevos Pointers topológicos de Rol. |
@@ -54,7 +32,7 @@ Otorgar visibilidad centralizada sobre la composición de equipos, la ocupación
 | S44.16 | Resolución de Falsos Positivos ETL | S | Done | Parchear errores OCC en adaptador, envolver parseo de respuesta en cliente, y exponer writeback de forma global. |
 | S44.15 | Estabilización UI y JIT Cache Refresh | S | Done | Corregir bugs de ingesta Workspace, estandarizar iconografía e implementar recarga silenciosa reactiva (JIT Refresh). |
 | S44.17 | Ingesta JIT de Workspace (ETL) | M | Done | Reutilizar la lógica de Workspace Sync dentro del pipeline de Carga Masiva para resolver Cargo y crear aristas topológicas al vuelo. |
-| S44.18 | Optimización de Rendimiento en Workspace Sync | M | Todo | Reducir la latencia y la saturación de memoria reemplazando lecturas/escrituras O(N) por queries filtrados en db y escrituras en lote (Bulk Inserts). |
+| S44.18 | Optimización de Rendimiento en Workspace Sync | M | Done | Reducir la latencia y la saturación de memoria reemplazando lecturas/escrituras O(N) por queries filtrados en db y escrituras en lote (Bulk Inserts). |
 **Total:** 18 stories
 
 ## Scope
@@ -97,7 +75,7 @@ Otorgar visibilidad centralizada sobre la composición de equipos, la ocupación
 - [x] S44.15 completado
 - [x] S44.16 completado
 - [x] S44.17 completado
-- [ ] S44.18 completado
+- [x] S44.18 completado
 S44.1 ──┐
         ↓
 S44.2 ──┼── S44.5
