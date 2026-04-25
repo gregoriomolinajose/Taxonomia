@@ -575,12 +575,25 @@
                         const edgeName = (fieldMeta.graphEdgeType || fieldMeta.name).toUpperCase();
                         const currentPK = record[pkFieldLocal];
                         if (currentPK) {
+                            const resolveEdgeValue = (edgeVal) => {
+                                let finalVal = edgeVal;
+                                if (fieldMeta.valueField && fieldMeta.targetEntity && window.DataStore && window.DataStore.get(fieldMeta.targetEntity)) {
+                                    const targetTable = window.DataStore.get(fieldMeta.targetEntity);
+                                    const targetPk = window.Schema_Utils ? window.Schema_Utils.getPrimaryKey(fieldMeta.targetEntity) : 'id';
+                                    const matchedRow = targetTable.find(r => String(r[targetPk] || r.id_registro) === String(edgeVal));
+                                    if (matchedRow && matchedRow[fieldMeta.valueField]) {
+                                        finalVal = matchedRow[fieldMeta.valueField];
+                                    }
+                                }
+                                return finalVal;
+                            };
+
                             if (fieldMeta.relationType === 'padre') {
                                 const match = activeEdges.find(e => String(e.id_nodo_hijo) === String(currentPK) && e.tipo_relacion === edgeName);
-                                if (match) valToSet = match.id_nodo_padre;
+                                if (match) valToSet = resolveEdgeValue(match.id_nodo_padre);
                             } else {
                                 const match = activeEdges.find(e => String(e.id_nodo_padre) === String(currentPK) && e.tipo_relacion === edgeName);
-                                if (match) valToSet = match.id_nodo_hijo;
+                                if (match) valToSet = resolveEdgeValue(match.id_nodo_hijo);
                             }
                         }
                         
