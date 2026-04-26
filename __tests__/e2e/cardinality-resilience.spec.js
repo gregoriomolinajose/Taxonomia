@@ -77,17 +77,23 @@ async function submitHybridForm(frame, page, text) {
         iter++;
     }
     const btnGuardar = frame.locator('ion-button').filter({ hasText: text }).last();
-    // Bypass strict expect which often fails with Ionic Web Components
-    await btnGuardar.waitFor({ state: 'attached', timeout: 15000 }).catch(()=>{});
-    await btnGuardar.evaluate(btn => {
-        if (!btn.disabled) btn.click({ force: true });
-    });
+    // Fail fast if button is not present
+    const allButtons = await frame.locator('ion-button').evaluateAll(btns => btns.map(b => b.textContent.trim()));
+    console.log(`Available buttons (looking for "${text}"):`, allButtons);
+    
+    await btnGuardar.waitFor({ state: 'attached', timeout: 3000 });
+    
+    // Check disabled state via Playwright instead of evaluate
+    const isDisabled = await btnGuardar.evaluate(btn => btn.disabled).catch(() => true);
+    if (!isDisabled) {
+        await btnGuardar.click({ force: true, timeout: 3000 });
+    }
 }
 
 // -------------------------------------------------------------
 
   test('Escenario 1.1 y 1.3: Exclusividad 1:N y Limpieza Absoluta de Subgrids', async () => {
-    test.setTimeout(280_000);
+    test.setTimeout(60_000);
     try {
         const frame = page.frameLocator('#sandboxFrame').frameLocator('#userHtmlFrame');
         const portafolioName = 'Portafolio Robado ' + Date.now();
@@ -97,14 +103,15 @@ async function submitHybridForm(frame, page, text) {
         await fillTopInput(frame, 'nombre', 'UN A (Padre Original) ' + Date.now());
         
         const containerPortA = frame.locator('tx-searchable[data-form-component="portafolios_vinculados"]').last();
-        await containerPortA.waitFor({ state: 'attached', timeout: 15000 }).catch(() => {});
+        await containerPortA.waitFor({ state: 'attached', timeout: 15000 });
         
-        if (await containerPortA.isVisible()) {
-            await containerPortA.evaluate(el => el.executeSearchAndOpen());
-            const btnCreatePort = containerPortA.locator('ion-item').filter({ hasText: 'Crear' }).last();
-            await btnCreatePort.waitFor({ state: 'visible', timeout: 8000 });
-            await btnCreatePort.click({ force: true });
-        }
+        // Remove flaky isVisible check and force the evaluation
+        await containerPortA.evaluate(el => el.executeSearchAndOpen());
+        
+        // Wait for the popover/modal to render the 'Crear' item
+        const btnCreatePort = frame.locator('ion-item').filter({ hasText: 'Crear' }).last();
+        await btnCreatePort.waitFor({ state: 'attached', timeout: 8000 });
+        await btnCreatePort.click({ force: true });
  
         await fillTopInput(frame, 'nombre', portafolioName);
         console.log("Saving new portafolio...");

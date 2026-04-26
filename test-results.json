@@ -59,20 +59,20 @@
   },
   "suites": [
     {
-      "title": "css-purity.spec.js",
-      "file": "css-purity.spec.js",
+      "title": "cardinality-resilience.spec.js",
+      "file": "cardinality-resilience.spec.js",
       "column": 0,
       "line": 0,
       "specs": [],
       "suites": [
         {
-          "title": "CSS Purity & Design System Coverage",
-          "file": "css-purity.spec.js",
-          "line": 3,
+          "title": "E23: Cardinilidad TopolÃ³gica y Resiliencia SCD-2",
+          "file": "cardinality-resilience.spec.js",
+          "line": 6,
           "column": 6,
           "specs": [
             {
-              "title": "El DOM dinámico de la app compilada rechaza atributos in-line fijos de color o fondos",
+              "title": "Escenario 1.1 y 1.3: Exclusividad 1:N y Limpieza Absoluta de Subgrids",
               "ok": false,
               "tags": [],
               "tests": [
@@ -86,51 +86,110 @@
                     {
                       "workerIndex": 0,
                       "parallelIndex": 0,
-                      "status": "timedOut",
-                      "duration": 60202,
+                      "status": "failed",
+                      "duration": 6488,
                       "error": {
-                        "message": "\u001b[31mTest timeout of 60000ms exceeded.\u001b[39m",
-                        "stack": "\u001b[31mTest timeout of 60000ms exceeded.\u001b[39m"
+                        "message": "TimeoutError: locator.waitFor: Timeout 3000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#sandboxFrame').contentFrame().locator('#userHtmlFrame').contentFrame().locator('ion-button').filter({ hasText: 'Guardar Portafolio' }).last()\u001b[22m\n",
+                        "stack": "TimeoutError: locator.waitFor: Timeout 3000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#sandboxFrame').contentFrame().locator('#userHtmlFrame').contentFrame().locator('ion-button').filter({ hasText: 'Guardar Portafolio' }).last()\u001b[22m\n\n    at submitHybridForm (C:\\Users\\grego\\Antigravity\\Taxonomia Project\\__tests__\\e2e\\cardinality-resilience.spec.js:84:22)\n    at C:\\Users\\grego\\Antigravity\\Taxonomia Project\\__tests__\\e2e\\cardinality-resilience.spec.js:118:9",
+                        "location": {
+                          "file": "C:\\Users\\grego\\Antigravity\\Taxonomia Project\\__tests__\\e2e\\cardinality-resilience.spec.js",
+                          "column": 22,
+                          "line": 84
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 82 |\u001b[39m     console\u001b[33m.\u001b[39mlog(\u001b[32m`Available buttons (looking for \"${text}\"):`\u001b[39m\u001b[33m,\u001b[39m allButtons)\u001b[33m;\u001b[39m\n \u001b[90m 83 |\u001b[39m     \n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 84 |\u001b[39m     \u001b[36mawait\u001b[39m btnGuardar\u001b[33m.\u001b[39mwaitFor({ state\u001b[33m:\u001b[39m \u001b[32m'attached'\u001b[39m\u001b[33m,\u001b[39m timeout\u001b[33m:\u001b[39m \u001b[35m3000\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                      \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 85 |\u001b[39m     \n \u001b[90m 86 |\u001b[39m     \u001b[90m// Check disabled state via Playwright instead of evaluate\u001b[39m\n \u001b[90m 87 |\u001b[39m     \u001b[36mconst\u001b[39m isDisabled \u001b[33m=\u001b[39m \u001b[36mawait\u001b[39m btnGuardar\u001b[33m.\u001b[39mevaluate(btn \u001b[33m=>\u001b[39m btn\u001b[33m.\u001b[39mdisabled)\u001b[33m.\u001b[39m\u001b[36mcatch\u001b[39m(() \u001b[33m=>\u001b[39m \u001b[36mtrue\u001b[39m)\u001b[33m;\u001b[39m\u001b[0m"
                       },
                       "errors": [
                         {
-                          "message": "\u001b[31mTest timeout of 60000ms exceeded.\u001b[39m"
-                        },
-                        {
                           "location": {
-                            "file": "C:\\Users\\grego\\Antigravity\\Taxonomia Project\\__tests__\\e2e\\css-purity.spec.js",
-                            "column": 47,
-                            "line": 15
+                            "file": "C:\\Users\\grego\\Antigravity\\Taxonomia Project\\__tests__\\e2e\\cardinality-resilience.spec.js",
+                            "column": 22,
+                            "line": 84
                           },
-                          "message": "Error: locator.waitFor: Test timeout of 60000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('iframe').first().contentFrame().locator('#app-container')\u001b[22m\n\u001b[2m    - waiting for\" https://accounts.google.co.ve/accounts/SetSID?ssdc=1&sidt=ALWU2ctqK9GYGnC1lWE4kD4AlSHvaX3wUAt%2BCkKLfxsHRCu%2BUFsZIX2iSqSSY1Jg%2BD3dzFbhynO8scIXNfylUbItMbv7kIXqH/7Q85BnI%2B98vRqCkbUTdqnq0L564800ubFH0…\" navigation to finish...\u001b[22m\n\u001b[2m    - navigated to \"https://script.google.com/macros/s/AKfycbwqj4uQA67maFDe1vsF-wvLH6pGs5-1j7U83YD-R2yY/dev?authuser=0\"\u001b[22m\n\n\n  13 |         // En adición estático a Stylelint (npm run lint:css), validamos que JS no ensucie el render.\n  14 |         const frame = page.frameLocator('iframe').first();\n> 15 |         await frame.locator('#app-container').waitFor({ state: 'attached' });\n     |                                               ^\n  16 |\n  17 |         const violations = await frame.evaluate(() => {\n  18 |             const forbiddenColors = /color\\s*:\\s*(#|rgb)/i;\n    at C:\\Users\\grego\\Antigravity\\Taxonomia Project\\__tests__\\e2e\\css-purity.spec.js:15:47"
+                          "message": "TimeoutError: locator.waitFor: Timeout 3000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#sandboxFrame').contentFrame().locator('#userHtmlFrame').contentFrame().locator('ion-button').filter({ hasText: 'Guardar Portafolio' }).last()\u001b[22m\n\n\n  82 |     console.log(`Available buttons (looking for \"${text}\"):`, allButtons);\n  83 |     \n> 84 |     await btnGuardar.waitFor({ state: 'attached', timeout: 3000 });\n     |                      ^\n  85 |     \n  86 |     // Check disabled state via Playwright instead of evaluate\n  87 |     const isDisabled = await btnGuardar.evaluate(btn => btn.disabled).catch(() => true);\n    at submitHybridForm (C:\\Users\\grego\\Antigravity\\Taxonomia Project\\__tests__\\e2e\\cardinality-resilience.spec.js:84:22)\n    at C:\\Users\\grego\\Antigravity\\Taxonomia Project\\__tests__\\e2e\\cardinality-resilience.spec.js:118:9"
                         }
                       ],
-                      "stdout": [],
-                      "stderr": [],
+                      "stdout": [
+                        {
+                          "text": "PAGE LOG [warning]: Unrecognized feature: 'ambient-light-sensor'.\n"
+                        },
+                        {
+                          "text": "PAGE LOG [warning]: Unrecognized feature: 'speaker'.\n"
+                        },
+                        {
+                          "text": "PAGE LOG [warning]: Unrecognized feature: 'vibrate'.\n"
+                        },
+                        {
+                          "text": "PAGE LOG [warning]: Unrecognized feature: 'vr'.\n"
+                        },
+                        {
+                          "text": "PAGE LOG [warning]: An iframe which has both allow-scripts and allow-same-origin for its sandbox attribute can escape its sandboxing.\n"
+                        },
+                        {
+                          "text": "PAGE LOG [warning]: Unrecognized feature: 'ambient-light-sensor'.\n"
+                        },
+                        {
+                          "text": "PAGE LOG [warning]: Unrecognized feature: 'speaker'.\n"
+                        },
+                        {
+                          "text": "PAGE LOG [warning]: Unrecognized feature: 'vibrate'.\n"
+                        },
+                        {
+                          "text": "PAGE LOG [warning]: Unrecognized feature: 'vr'.\n"
+                        },
+                        {
+                          "text": "PAGE LOG [info]: Net state changed from IDLE to BUSY Net state changed from IDLE to BUSY\n"
+                        },
+                        {
+                          "text": "Saving new portafolio...\n"
+                        },
+                        {
+                          "text": "Available buttons (looking for \"Guardar Portafolio\"): [\n  \u001b[32m''\u001b[39m,\n  \u001b[32m''\u001b[39m,\n  \u001b[32m''\u001b[39m,\n  \u001b[32m'?'\u001b[39m,\n  \u001b[32m''\u001b[39m,\n  \u001b[32m'+ AGREGAR'\u001b[39m,\n  \u001b[32m'+ AGREGAR'\u001b[39m,\n  \u001b[32m'Cerrar'\u001b[39m,\n  \u001b[32m'Guardar Unidad Negocio'\u001b[39m,\n  \u001b[32m''\u001b[39m\n]\n"
+                        }
+                      ],
+                      "stderr": [
+                        {
+                          "text": "DEBUG FATAL PLAYWRIGHT: locator.waitFor: Timeout 3000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#sandboxFrame').contentFrame().locator('#userHtmlFrame').contentFrame().locator('ion-button').filter({ hasText: 'Guardar Portafolio' }).last()\u001b[22m\n\n    at submitHybridForm \u001b[90m(C:\\Users\\grego\\Antigravity\\Taxonomia Project\\\u001b[39m__tests__\\e2e\\cardinality-resilience.spec.js:84:22\u001b[90m)\u001b[39m\n    at \u001b[90mC:\\Users\\grego\\Antigravity\\Taxonomia Project\\\u001b[39m__tests__\\e2e\\cardinality-resilience.spec.js:118:9 {\n  name: \u001b[32m'TimeoutError'\u001b[39m,\n  \u001b[32mSymbol(step)\u001b[39m: {\n    location: {\n      file: \u001b[32m'C:\\\\Users\\\\grego\\\\Antigravity\\\\Taxonomia Project\\\\__tests__\\\\e2e\\\\cardinality-resilience.spec.js'\u001b[39m,\n      line: \u001b[33m84\u001b[39m,\n      column: \u001b[33m22\u001b[39m,\n      function: \u001b[32m'submitHybridForm'\u001b[39m\n    },\n    category: \u001b[32m'pw:api'\u001b[39m,\n    title: \u001b[32m\"Wait for selector locator('#sandboxFrame').contentFrame().locator('#userHtmlFrame').contentFrame().locator('ion-button').filter({ hasText: 'Guardar Portafolio' }).last()\"\u001b[39m,\n    apiName: \u001b[32m'locator.waitFor'\u001b[39m,\n    params: {\n      selector: \u001b[32m'#sandboxFrame >> internal:control=enter-frame >> #userHtmlFrame >> internal:control=enter-frame >> ion-button >> internal:has-text=\"Guardar Portafolio\"i >> nth=-1'\u001b[39m,\n      strict: \u001b[33mtrue\u001b[39m,\n      omitReturnValue: \u001b[33mtrue\u001b[39m,\n      state: \u001b[32m'attached'\u001b[39m,\n      timeout: \u001b[33m3000\u001b[39m\n    },\n    group: \u001b[90mundefined\u001b[39m,\n    stepId: \u001b[32m'pw:api@88'\u001b[39m,\n    boxedStack: \u001b[90mundefined\u001b[39m,\n    steps: [],\n    attachmentIndices: [],\n    info: TestStepInfoImpl {\n      annotations: [],\n      _testInfo: \u001b[36m[TestInfoImpl]\u001b[39m,\n      _stepId: \u001b[32m'pw:api@88'\u001b[39m,\n      _title: \u001b[32m\"Wait for selector locator('#sandboxFrame').contentFrame().locator('#userHtmlFrame').contentFrame().locator('ion-button').filter({ hasText: 'Guardar Portafolio' }).last()\"\u001b[39m,\n      _parentStep: \u001b[90mundefined\u001b[39m,\n      skip: \u001b[36m[Function (anonymous)]\u001b[39m\n    },\n    complete: \u001b[36m[Function: complete]\u001b[39m,\n    endWallTime: \u001b[33m1777156066751\u001b[39m,\n    error: {\n      message: \u001b[32m'TimeoutError: locator.waitFor: Timeout 3000ms exceeded.\\n'\u001b[39m +\n        \u001b[32m'Call log:\\n'\u001b[39m +\n        \u001b[32m\"\\x1B[2m  - waiting for locator('#sandboxFrame').contentFrame().locator('#userHtmlFrame').contentFrame().locator('ion-button').filter({ hasText: 'Guardar Portafolio' }).last()\\x1B[22m\\n\"\u001b[39m,\n      stack: \u001b[32m'TimeoutError: locator.waitFor: Timeout 3000ms exceeded.\\n'\u001b[39m +\n        \u001b[32m'Call log:\\n'\u001b[39m +\n        \u001b[32m\"\\x1B[2m  - waiting for locator('#sandboxFrame').contentFrame().locator('#userHtmlFrame').contentFrame().locator('ion-button').filter({ hasText: 'Guardar Portafolio' }).last()\\x1B[22m\\n\"\u001b[39m +\n        \u001b[32m'\\n'\u001b[39m +\n        \u001b[32m'    at submitHybridForm (C:\\\\Users\\\\grego\\\\Antigravity\\\\Taxonomia Project\\\\__tests__\\\\e2e\\\\cardinality-resilience.spec.js:84:22)\\n'\u001b[39m +\n        \u001b[32m'    at C:\\\\Users\\\\grego\\\\Antigravity\\\\Taxonomia Project\\\\__tests__\\\\e2e\\\\cardinality-resilience.spec.js:118:9'\u001b[39m,\n      cause: \u001b[90mundefined\u001b[39m\n    }\n  }\n}\n"
+                        }
+                      ],
                       "retry": 0,
-                      "startTime": "2026-04-18T23:59:14.898Z",
+                      "startTime": "2026-04-25T22:27:39.886Z",
                       "annotations": [],
                       "attachments": [
                         {
                           "name": "screenshot",
                           "contentType": "image/png",
-                          "path": "C:\\Users\\grego\\Antigravity\\Taxonomia Project\\test-results\\css-purity-CSS-Purity-Desi-b6860-ine-fijos-de-color-o-fondos-chromium\\test-failed-1.png"
+                          "path": "C:\\Users\\grego\\Antigravity\\Taxonomia Project\\test-results\\cardinality-resilience-E23-bbb51-mpieza-Absoluta-de-Subgrids-chromium\\test-failed-1.png"
+                        },
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "C:\\Users\\grego\\Antigravity\\Taxonomia Project\\test-results\\cardinality-resilience-E23-bbb51-mpieza-Absoluta-de-Subgrids-chromium\\test-failed-2.png"
                         },
                         {
                           "name": "error-context",
                           "contentType": "text/markdown",
-                          "path": "C:\\Users\\grego\\Antigravity\\Taxonomia Project\\test-results\\css-purity-CSS-Purity-Desi-b6860-ine-fijos-de-color-o-fondos-chromium\\error-context.md"
+                          "path": "C:\\Users\\grego\\Antigravity\\Taxonomia Project\\test-results\\cardinality-resilience-E23-bbb51-mpieza-Absoluta-de-Subgrids-chromium\\error-context.md"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "C:\\Users\\grego\\Antigravity\\Taxonomia Project\\test-results\\cardinality-resilience-E23-bbb51-mpieza-Absoluta-de-Subgrids-chromium\\error-context.md"
                         }
-                      ]
+                      ],
+                      "errorLocation": {
+                        "file": "C:\\Users\\grego\\Antigravity\\Taxonomia Project\\__tests__\\e2e\\cardinality-resilience.spec.js",
+                        "column": 22,
+                        "line": 84
+                      }
                     }
                   ],
                   "status": "unexpected"
                 }
               ],
-              "id": "df7e0cad78dcefda234b-85c42e9fd2485a364967",
-              "file": "css-purity.spec.js",
-              "line": 12,
-              "column": 9
+              "id": "45605d459925de8918e4-3f4458f08e6a904df2ca",
+              "file": "cardinality-resilience.spec.js",
+              "line": 95,
+              "column": 3
             }
           ]
         }
@@ -139,8 +198,8 @@
   ],
   "errors": [],
   "stats": {
-    "startTime": "2026-04-18T23:59:14.337Z",
-    "duration": 61241.135,
+    "startTime": "2026-04-25T22:27:39.173Z",
+    "duration": 8161.6089999999995,
     "expected": 0,
     "skipped": 0,
     "unexpected": 1,

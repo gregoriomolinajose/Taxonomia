@@ -743,7 +743,9 @@
                 onDriveSync: async function(entity, url, modal) {
                     let loading;
                     try {
-                        if (document.querySelector('ion-loading.loader-etl-sync')) return; // Bloquear race-condition
+                        // H10: Limpiar preventivamente cualquier loader previo atascado para evitar que el botón quede bloqueado permanentemente
+                        document.querySelectorAll('ion-loading.loader-etl-sync').forEach(el => el.remove());
+                        
                         loading = document.createElement('ion-loading');
                         loading.className = 'loader-etl-sync';
                         loading.message = 'Extrayendo Matriz desde Hoja de Cálculo...';

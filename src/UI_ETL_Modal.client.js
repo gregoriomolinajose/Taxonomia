@@ -50,28 +50,7 @@ window.UI_ETL_Modal = (function() {
         const container = document.createElement('div');
         container.className = 'etl-body';
 
-        // --- Progress Tracker ---
-        const progressContainer = document.createElement('div');
-        progressContainer.id = 'etl-progress-container';
-        progressContainer.style.display = 'none';
-        
-        const progressLabel = document.createElement('span');
-        progressLabel.id = 'etl-progress-label';
-        progressLabel.className = 'etl-progress-label';
-        progressLabel.textContent = 'Procesando Lote...';
-
-        const progressWrap = document.createElement('div');
-        progressWrap.className = 'etl-progress-wrap';
-
-        const progressBar = document.createElement('div');
-        progressBar.id = 'etl-progress-bar';
-        progressBar.className = 'etl-progress-bar';
-        
-        progressWrap.appendChild(progressBar);
-        progressContainer.appendChild(progressLabel);
-        progressContainer.appendChild(progressWrap);
-
-        container.appendChild(progressContainer);
+        // (Barra superior estática eliminada en favor de vista inmersiva)
 
         // --- SECTION 0: Fuente de Datos (Radio Cards) ---
         const sectionTitle1 = document.createElement('div');
@@ -152,16 +131,17 @@ window.UI_ETL_Modal = (function() {
             <div class="etl-step-content">
                 <div class="etl-step-title">Pegar URL, ID de la hoja</div>
                 <div class="etl-step-desc">Copia el enlace desde la barra de tu navegador o inspecciona directamente desde google drive.</div>
-                <ion-item class="etl-input-item" lines="none">
-                    <ion-input id="etl-drive-url" placeholder="https://docs..."></ion-input>
-                    <ion-button fill="clear" slot="end" color="primary" id="btn-open-drive-link" style="display:none; margin:0;" title="Abrir archivo">
-                        <ion-icon name="open-outline"></ion-icon>
-                    </ion-button>
-                    <ion-button fill="clear" slot="end" color="medium" id="btn-inspect-drive" style="margin:0;">
-                        <ion-icon name="search-outline"></ion-icon>
-                    </ion-button>
-                </ion-item>
-                <p class="etl-hint-text" id="etl-drive-hint" style="display:none; color: var(--ion-color-success);">Hemos agregado la liga de tu plantilla descargada automáticamente</p>
+                <div style="position: relative; margin-bottom: 8px;">
+                    <ion-input id="etl-drive-url" fill="outline" label="Enlace del archivo Google Sheets" label-placement="floating" error-text="La URL proporcionada no corresponde a un archivo de googlesheet valido" placeholder="https://docs.google.com/spreadsheets/d/..."></ion-input>
+                    <div style="position: absolute; right: 0; top: 0; height: 56px; display: flex; align-items: center; padding-right: 4px; z-index: 10;">
+                        <ion-button fill="clear" color="primary" id="btn-open-drive-link" style="display:none; margin:0;" title="Abrir archivo">
+                            <ion-icon name="open-outline"></ion-icon>
+                        </ion-button>
+                        <ion-button fill="clear" color="medium" id="btn-inspect-drive" style="margin:0;">
+                            <ion-icon name="search-outline"></ion-icon>
+                        </ion-button>
+                    </div>
+                </div>
             </div>
         `;
 
@@ -301,9 +281,21 @@ window.UI_ETL_Modal = (function() {
 
         urlInput.addEventListener('ionInput', (e) => {
             const val = (e.currentTarget.value || '').trim();
-            btnSyncDrive.disabled = val.length === 0;
-            const hint = modal.querySelector('#etl-drive-hint');
-            if (hint && val.length === 0) hint.style.display = 'none';
+            const isValid = val.length > 0 && /^https?:\/\/docs\.google\.com\/spreadsheets\/d\/[a-zA-Z0-9-_]+/.test(val);
+            btnSyncDrive.disabled = !isValid;
+            
+            const errorNote = modal.querySelector('#etl-url-error');
+            const item = urlInput.closest('ion-item');
+            
+            if (val.length > 0 && !isValid) {
+                urlInput.classList.add('ion-invalid', 'ion-touched');
+            } else {
+                urlInput.classList.remove('ion-invalid', 'ion-touched');
+            }
+            
+            if (val.length === 0) {
+                urlInput.removeAttribute('helper-text');
+            }
             
             const btnOpenLink = modal.querySelector('#btn-open-drive-link');
             if (btnOpenLink) {
@@ -420,32 +412,55 @@ window.UI_ETL_Modal = (function() {
             const input = document.getElementById('etl-drive-url');
             if (input) {
                 input.value = urlStr;
+                input.setAttribute('helper-text', 'Hemos agregado la liga de tu plantilla descargada automáticamente');
                 input.dispatchEvent(new CustomEvent('ionInput', { detail: { value: urlStr } }));
-                const hint = document.getElementById('etl-drive-hint');
-                if (hint) hint.style.display = 'block';
             }
         },
         updateProgress: function(chunkIndex, totalChunks, isDone, metrics, customText) {
-            const progressContainer = document.getElementById('etl-progress-container');
+            const modal = document.getElementById('dv-etl-modal');
+            if (!modal) return;
+            
+            let progressContainer = document.getElementById('etl-progress-container');
+            
+            // Si el contenedor inmersivo no existe, limpiamos la pantalla y lo creamos
+            if (!progressContainer) {
+                const body = modal.querySelector('.etl-body');
+                if (body) {
+                    body.innerHTML = `
+                        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; padding: 40px 20px;">
+                            <ion-icon name="cloud-upload" color="primary" style="font-size: 64px; margin-bottom: 20px;"></ion-icon>
+                            <h2 style="font-weight: 600; color: var(--ion-color-dark); margin-bottom: 8px;">Sincronizando Registros</h2>
+                            <p style="color: var(--ion-color-medium); text-align: center; margin-bottom: 40px; font-size: 14px;">Por favor, no cierres esta ventana. El proceso puede tomar unos momentos.</p>
+                            
+                            <div id="etl-progress-container" style="width: 100%; max-width: 400px; text-align: center;">
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 12px; font-size: 14px; font-weight: 500; color: var(--ion-color-dark);">
+                                    <span id="etl-progress-label">Iniciando...</span>
+                                    <span id="etl-progress-percent">0%</span>
+                                </div>
+                                <div style="width: 100%; height: 16px; background: var(--ion-color-light); border-radius: 8px; overflow: hidden; position: relative; border: 1px solid rgba(0,0,0,0.05);">
+                                    <div id="etl-progress-bar" style="height: 100%; width: 0%; background: var(--ion-color-primary); transition: width 0.4s ease; border-radius: 8px;"></div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    progressContainer = document.getElementById('etl-progress-container');
+                }
+            }
+            
             const progressBar = document.getElementById('etl-progress-bar');
             const progressLabel = document.getElementById('etl-progress-label');
+            const progressPercent = document.getElementById('etl-progress-percent');
             
             if (progressContainer && progressBar && progressLabel) {
-                progressContainer.style.display = 'block';
-                const pc = (chunkIndex / totalChunks) * 100;
+                const pc = totalChunks > 0 ? (chunkIndex / totalChunks) * 100 : (isDone ? 100 : 0);
                 progressBar.style.width = `${pc}%`;
+                
+                if (progressPercent) progressPercent.textContent = `${Math.round(pc)}%`;
                 
                 if (customText) {
                     progressLabel.textContent = customText;
                 } else {
-                    progressLabel.textContent = `Procesando Lote ${chunkIndex} de ${totalChunks} (${Math.round(pc)}%)`;
-                }
-                
-                if (chunkIndex >= totalChunks && !customText) {
-                    setTimeout(() => {
-                        progressContainer.style.display = 'none';
-                        progressBar.style.width = '0%';
-                    }, 2000);
+                    progressLabel.textContent = `Procesando Lote ${chunkIndex} de ${totalChunks}`;
                 }
             }
         },
@@ -487,7 +502,7 @@ window.UI_ETL_Modal = (function() {
                     ` : ''}
                     
                     <div style="margin-top: 32px;">
-                        <ion-button fill="solid" color="primary" onclick="document.getElementById('dv-etl-modal').dismiss()" style="--border-radius: 8px; width: 200px;">
+                        <ion-button fill="solid" color="primary" onclick="document.getElementById('dv-etl-modal').dismiss()" style="--border-radius: 8px; width: 200px; font-family: var(--ion-font-family, inherit);">
                             Aceptar
                         </ion-button>
                     </div>
