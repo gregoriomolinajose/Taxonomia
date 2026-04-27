@@ -156,13 +156,28 @@
             // Determinar la llave primaria dinámica de Persona (fallback a 'id_persona')
             const pkCol = window.Schema_Utils ? window.Schema_Utils.getPrimaryKey('Persona') : 'id_persona';
             let parentCol = 'lider_directo'; // fallback safe default
+            let edgeType = 'PERSONA_LIDER_DIRECTO';
             
             if (window.Schema_Utils && typeof window.Schema_Utils.getSchema === 'function') {
                 const schema = window.Schema_Utils.getSchema('Persona');
                 if (schema && schema.fields) {
                     const parentField = schema.fields.find(f => f.type === 'relation' && f.relationType === 'padre');
-                    if (parentField) parentCol = parentField.name;
+                    if (parentField) {
+                        parentCol = parentField.name;
+                        if (parentField.graphEdgeType) edgeType = parentField.graphEdgeType;
+                    }
                 }
+            }
+
+            // Construir mapa de aristas de grafo temporal (Sys_Graph_Edges) para resolver relaciones no físicas
+            const hijoToPadre = {};
+            if (window.DataStore && window.DataStore.get) {
+                const allEdges = window.DataStore.get('Sys_Graph_Edges') || [];
+                allEdges.forEach(e => {
+                    if (e.es_version_actual !== false && e.estado !== 'Eliminado' && e.estado !== 'eliminado' && e.tipo_relacion === edgeType) {
+                        hijoToPadre[String(e.id_nodo_hijo)] = String(e.id_nodo_padre);
+                    }
+                });
             }
 
             const map = {};
@@ -180,7 +195,9 @@
             // 2. Anidar hijos en padres
             records.forEach(r => {
                 const node = map[String(r[pkCol])];
-                let parentId = r[parentCol];
+                
+                // Resolver el ID del padre (primero intentar físicamente, luego mediante el grafo)
+                let parentId = r[parentCol] || hijoToPadre[String(r[pkCol])];
                 
                 // Si el Líder viene resuelto como array de objetos relacionales, extraer ID
                 if (Array.isArray(parentId) && parentId.length > 0) {
