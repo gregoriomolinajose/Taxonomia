@@ -36,6 +36,8 @@
                             childrenSpacing: 60,
                             siblingSpacing: 24,
                             direction: 'top',
+                            enableToolbar: true,
+                            enableSearch: true,
                             nodeTemplate: this._buildNodeTemplate
                         };
                         try {
