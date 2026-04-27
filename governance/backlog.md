@@ -37,6 +37,9 @@
 | E41| Searchable Multi Component PWA                      | ✅ Complete   | Evolucionar selección múltiple a Web Component puro PWA/Capacitor  | Alta     |
 | E42| Optimización de Tiempos de Guardado                 | ✅ Complete   | Minimizar latencia de red y peticiones XHR innecesarias al guardar| Máxima   |
 | E43| Rediseño de Cards (Vista Grid)                      | ⏳ In Progress| Mejorar UI/UX de cards inyectando grafos, badge lexicológico e íconos | Alta     |
+| E44| Visibilidad y Control de Topología                  | ✅ Complete  | Decoupling auto-provisioning logic & UI latency          | Alta     |
+| E45| Architecture Refactoring                            | ✅ Complete  | DOM-based hydration state & centralize logic             | Alta     |
+| E46| Org Chart Visualization                             | ⏳ In Progress| Implementar diagrama piramidal ApexTree para relaciones de empleados | Alta     |
 
 ## Parking Lot / Deuda Técnica (Post-Epic 11)
 
