@@ -94,9 +94,11 @@
             return `<div class="org-node-card">
                 <div class="org-node-accent" style="background-color: ${accentColor}"></div>
                 <div class="org-node-avatar" style="background-color: ${avatarUrl ? 'transparent' : accentColor}">${avatarHTML}</div>
-                <div class="org-node-name" title="${nombre}">${nombre}</div>
-                <div class="org-node-role" title="${cargo}">${cargo}</div>
-                ${dept ? `<div class="org-node-dept" style="color: ${accentColor}; border: 1px solid ${accentColor}" title="${dept}">${dept}</div>` : ''}
+                <div class="org-node-content">
+                    <div class="org-node-name" title="${nombre}">${nombre}</div>
+                    <div class="org-node-role" title="${cargo}">${cargo}</div>
+                    ${dept ? `<div class="org-node-dept" style="color: ${accentColor}; border: 1px solid ${accentColor}" title="${dept}">${dept}</div>` : ''}
+                </div>
             </div>`;
         }
     };
