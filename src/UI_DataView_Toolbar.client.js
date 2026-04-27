@@ -131,6 +131,18 @@ window.UI_DataView_Toolbar = (function () {
         btnGrid.addEventListener('click', () => onViewToggle('grid'));
         left.appendChild(btnGrid);
         
+        if (entityName === 'Persona') {
+            const btnTree = document.createElement('button');
+            btnTree.className = `dv-btn-icon ${viewType === 'tree' ? 'active' : ''}`;
+            btnTree.id = 'dv-view-tree-btn';
+            btnTree.title = 'Diagrama de Organigrama';
+            const iconTree = document.createElement('ion-icon');
+            iconTree.setAttribute('name', 'git-network-outline');
+            btnTree.appendChild(iconTree);
+            btnTree.addEventListener('click', () => onViewToggle('tree'));
+            left.appendChild(btnTree);
+        }
+
         if (entityName === 'Dominio') {
             const btnMap = document.createElement('button');
             btnMap.className = `dv-btn-icon ${viewType === 'map' ? 'active' : ''}`;

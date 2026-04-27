@@ -349,6 +349,22 @@
                     errNode.textContent = 'Motor de Mapa no disponible.';
                     dataZone.appendChild(errNode);
                 }
+            } else if (_state.view === 'tree') {
+                const treeContainer = document.createElement('div');
+                treeContainer.id = 'org-chart-container';
+                treeContainer.style.width = '100%';
+                treeContainer.style.height = 'calc(100vh - 150px)';
+                
+                const placeholder = document.createElement('div');
+                placeholder.className = 'dv-empty';
+                placeholder.style.display = 'flex';
+                placeholder.style.alignItems = 'center';
+                placeholder.style.justifyContent = 'center';
+                placeholder.style.height = '100%';
+                placeholder.textContent = 'Diagrama de Árbol / Organigrama (Pendiente de renderizado)';
+                treeContainer.appendChild(placeholder);
+                
+                dataZone.appendChild(treeContainer);
             } else if (window.UI_DataGrid) {
                 window.DOM.clear(dataZone);
                 dataZone.appendChild(window.UI_DataGrid.buildLayout({
