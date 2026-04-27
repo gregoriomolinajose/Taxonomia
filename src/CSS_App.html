@@ -129,11 +129,15 @@ body.drawer-max-depth ion-button[onclick*="openForm"] {
 /* --- S46.3: Org Chart Node Aesthetics --- */
 
 /* Destruir la marca de agua (Watermark) de ApexTree */
+[data-apexcharts-watermark],
+div[data-apexcharts-watermark],
 [class*="watermark"],
 .apextree-watermark, 
 .apexcharts-watermark {
     display: none !important;
     opacity: 0 !important;
+    background-image: none !important;
+    visibility: hidden !important;
 }
 
 #org-chart-container svg text {
