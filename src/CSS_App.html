@@ -125,4 +125,96 @@ body.drawer-max-depth ion-button[onclick*="openForm"] {
     border-top: 1px solid var(--ion-color-step-200, #e6e8eb);
     margin: 0;
 }
+
+/* --- S46.3: Org Chart Node Aesthetics --- */
+.org-node-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: var(--ion-card-background, #ffffff);
+    border: 1px solid var(--color-border, #e0e0e0);
+    border-radius: var(--rounded-md, 8px);
+    padding: 16px;
+    box-shadow: var(--shadow-sm, 0 2px 8px rgba(0,0,0,0.05));
+    width: 220px;
+    height: 120px;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.org-node-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md, 0 4px 12px rgba(0,0,0,0.1));
+}
+
+.org-node-accent {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 6px;
+}
+
+.org-node-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--ion-color-primary, #3880ff);
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 8px;
+    flex-shrink: 0;
+}
+
+.org-node-avatar img {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.org-node-name {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--ion-text-color, #222428);
+    text-align: center;
+    width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-bottom: 2px;
+}
+
+.org-node-role {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--ion-color-medium, #92949c);
+    text-align: center;
+    width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-bottom: 4px;
+}
+
+.org-node-dept {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--ion-text-color, #222428);
+    text-transform: uppercase;
+    background: var(--ion-color-light, #f4f5f8);
+    padding: 2px 6px;
+    border-radius: 4px;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 90%;
+}
 </style>

@@ -351,49 +351,13 @@
                 }
 
             } else if (_state.view === 'tree') {
-                const treeContainer = document.createElement('div');
-                treeContainer.id = 'org-chart-container';
-                treeContainer.style.width = '100%';
-                treeContainer.style.height = 'calc(100vh - 150px)';
-                dataZone.appendChild(treeContainer);
-                
-                if (typeof window.ApexTree !== 'undefined' && window.DataEngine && window.DataEngine.buildHierarchyTree) {
-                    const treeData = window.DataEngine.buildHierarchyTree(_state.filtered);
-                    
-                    if (treeData) {
-                        const options = {
-                            contentKey: 'data',
-                            width: treeContainer.offsetWidth || 800,
-                            height: treeContainer.offsetHeight || 600,
-                            nodeWidth: 200,
-                            nodeHeight: 100,
-                            childrenSpacing: 50,
-                            siblingSpacing: 20,
-                            direction: 'top',
-                            nodeTemplate: function(content) {
-                                const escapeHTML = (str) => String(str || '').replace(/[&<>'"]/g, 
-                                    tag => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'}[tag])
-                                );
-                                return `<div style="padding:10px; border:1px solid #ccc; background:#fff; border-radius:4px; text-align:center;">
-                                    <strong>${escapeHTML(content.nombre) || 'Desconocido'}</strong>
-                                    <div style="font-size:0.8em; color:#666;">${escapeHTML(content.cargo) || ''}</div>
-                                </div>`;
-                            }
-                        };
-                        try {
-                            const tree = new window.ApexTree(document.getElementById('org-chart-container'), options);
-                            tree.render(treeData);
-                        } catch(e) {
-                            treeContainer.innerHTML = `<div class="dv-empty">Error renderizando ApexTree: ${e.message}</div>`;
-                        }
-                    } else {
-                        treeContainer.innerHTML = `<div class="dv-empty">No hay datos jerárquicos o no hay líder definido.</div>`;
-                    }
+                if (window.UI_View_Tree) {
+                    window.UI_View_Tree.render(dataZone, _state);
                 } else {
-                    const placeholder = document.createElement('div');
-                    placeholder.className = 'dv-empty';
-                    placeholder.textContent = 'Diagrama de Árbol / Organigrama (Motor no disponible)';
-                    treeContainer.appendChild(placeholder);
+                    const errNode = document.createElement('div');
+                    errNode.className = 'dv-empty';
+                    errNode.textContent = 'Módulo UI_View_Tree no disponible.';
+                    dataZone.appendChild(errNode);
                 }
             } else if (window.UI_DataGrid) {
                 window.DOM.clear(dataZone);
