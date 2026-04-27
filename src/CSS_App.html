@@ -129,16 +129,16 @@ body.drawer-max-depth ion-button[onclick*="openForm"] {
 /* --- S46.3: Org Chart Node Aesthetics --- */
 .org-node-card {
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-start;
     background: var(--ion-card-background, #ffffff);
     border: 1px solid var(--color-border, #e0e0e0);
     border-radius: var(--rounded-md, 8px);
-    padding: 16px;
+    padding: 12px 16px;
     box-shadow: var(--shadow-sm, 0 2px 8px rgba(0,0,0,0.05));
-    width: 220px;
-    height: 120px;
+    width: 260px;
+    height: 90px;
     position: relative;
     overflow: hidden;
     transition: transform 0.2s, box-shadow 0.2s;
@@ -153,13 +153,13 @@ body.drawer-max-depth ion-button[onclick*="openForm"] {
     position: absolute;
     top: 0;
     left: 0;
-    width: 100%;
-    height: 6px;
+    width: 6px;
+    height: 100%;
 }
 
 .org-node-avatar {
-    width: 40px;
-    height: 40px;
+    width: 44px;
+    height: 44px;
     border-radius: 50%;
     background: var(--ion-color-primary, #3880ff);
     color: #ffffff;
@@ -168,8 +168,17 @@ body.drawer-max-depth ion-button[onclick*="openForm"] {
     justify-content: center;
     font-size: 16px;
     font-weight: 600;
-    margin-bottom: 8px;
+    margin-right: 12px;
     flex-shrink: 0;
+}
+
+.org-node-content {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    overflow: hidden;
+    width: 100%;
 }
 
 .org-node-avatar img {
@@ -183,7 +192,7 @@ body.drawer-max-depth ion-button[onclick*="openForm"] {
     font-size: 13px;
     font-weight: 700;
     color: var(--ion-text-color, #222428);
-    text-align: center;
+    text-align: left;
     width: 100%;
     white-space: nowrap;
     overflow: hidden;
@@ -195,7 +204,7 @@ body.drawer-max-depth ion-button[onclick*="openForm"] {
     font-size: 11px;
     font-weight: 500;
     color: var(--ion-color-medium, #92949c);
-    text-align: center;
+    text-align: left;
     width: 100%;
     white-space: nowrap;
     overflow: hidden;
@@ -211,10 +220,10 @@ body.drawer-max-depth ion-button[onclick*="openForm"] {
     background: var(--ion-color-light, #f4f5f8);
     padding: 2px 6px;
     border-radius: 4px;
-    text-align: center;
+    text-align: left;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    max-width: 90%;
+    max-width: 100%;
 }
 </style>
