@@ -15,9 +15,9 @@ Implement a visual organizational chart using APEXCHART (ApexTree or similar) th
 - Exporting the chart to PDF/Image (unless trivial).
 
 ## Planned Stories
-- **S46.1**: Setup ApexCharts / ApexTree dependencies and build the data transformer to generate the tree structure.
-- **S46.2**: Implement the base Chart UI Card and render the tree.
-- **S46.3**: Refine the visual design (Department color coding, formatting Name/Role).
+- [x] **S46.1**: Setup ApexCharts / ApexTree dependencies and build the data transformer to generate the tree structure.
+- [ ] **S46.2**: Implement the base Chart UI Card and render the tree.
+- [ ] **S46.3**: Refine the visual design (Department color coding, formatting Name/Role).
 
 ## Done Criteria
 - The Organizational chart is available in the UI.
