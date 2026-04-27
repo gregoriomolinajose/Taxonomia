@@ -143,5 +143,62 @@
             } else {
                 event.target.value = '';
             }
+        },
+
+        /**
+         * Transforma un arreglo plano de registros (Persona) en un árbol anidado para ApexTree.
+         * @param {Array} records Arreglo de registros planos.
+         * @returns {Object} Nodo raíz jerárquico.
+         */
+        buildHierarchyTree: function(records) {
+            if (!records || !Array.isArray(records)) return null;
+
+            // Determinar la llave primaria dinámica de Persona (fallback a 'id_persona')
+            const pkCol = window.Schema_Utils ? window.Schema_Utils.getPrimaryKey('Persona') : 'id_persona';
+            const parentCol = 'Líder';
+
+            const map = {};
+            const roots = [];
+
+            // 1. Inicializar el mapa de nodos compatibles con ApexTree
+            records.forEach(r => {
+                map[String(r[pkCol])] = {
+                    id: String(r[pkCol]),
+                    data: { ...r },
+                    children: []
+                };
+            });
+
+            // 2. Anidar hijos en padres
+            records.forEach(r => {
+                const node = map[String(r[pkCol])];
+                let parentId = r[parentCol];
+                
+                // Si el Líder viene resuelto como array de objetos relacionales, extraer ID
+                if (Array.isArray(parentId) && parentId.length > 0) {
+                    parentId = parentId[0].id || parentId[0][pkCol] || parentId[0];
+                }
+
+                if (parentId && map[String(parentId)]) {
+                    map[String(parentId)].children.push(node);
+                } else {
+                    roots.push(node);
+                }
+            });
+
+            if (roots.length === 1) {
+                return roots[0];
+            } else if (roots.length > 1) {
+                return {
+                    id: 'root-company',
+                    data: {
+                        nombre: 'Empresa',
+                        departamento: 'Global',
+                        cargo: 'Organización'
+                    },
+                    children: roots
+                };
+            }
+            return null;
         }
     };
