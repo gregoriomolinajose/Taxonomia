@@ -371,9 +371,12 @@
                             siblingSpacing: 20,
                             direction: 'top',
                             nodeTemplate: function(content) {
+                                const escapeHTML = (str) => String(str || '').replace(/[&<>'"]/g, 
+                                    tag => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'}[tag])
+                                );
                                 return `<div style="padding:10px; border:1px solid #ccc; background:#fff; border-radius:4px; text-align:center;">
-                                    <strong>${content.nombre || 'Desconocido'}</strong>
-                                    <div style="font-size:0.8em; color:#666;">${content.cargo || ''}</div>
+                                    <strong>${escapeHTML(content.nombre) || 'Desconocido'}</strong>
+                                    <div style="font-size:0.8em; color:#666;">${escapeHTML(content.cargo) || ''}</div>
                                 </div>`;
                             }
                         };
