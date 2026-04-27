@@ -127,6 +127,25 @@ body.drawer-max-depth ion-button[onclick*="openForm"] {
 }
 
 /* --- S46.3: Org Chart Node Aesthetics --- */
+
+/* Destruir la marca de agua (Watermark) de ApexTree */
+[class*="watermark"],
+.apextree-watermark, 
+.apexcharts-watermark {
+    display: none !important;
+    opacity: 0 !important;
+}
+
+#org-chart-container svg text {
+    /* Ocultar textos SVG crudos (la marca de agua). Nuestros nodos usan HTML puro, no se afectarán. */
+    display: none !important;
+}
+
+#org-chart-container svg > rect:first-of-type {
+    /* Ocultar el patrón (pattern) de fondo SVG si está aplicado al primer rect */
+    fill: transparent !important;
+}
+
 /* Ocultar el rectángulo por defecto de ApexTree para usar puramente nuestro HTML */
 #org-chart-container svg g.node > rect {
     fill: transparent !important;
