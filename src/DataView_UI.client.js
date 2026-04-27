@@ -794,18 +794,35 @@
                                             }, { once: true });
                                         }).catch(err => {
                                             console.error('[Chunker Error]', err);
-                                            alert(`Error general de procesamiento:\n${err.message}`);
+                                            const urlInput = modal.querySelector('#etl-drive-url');
+                                            if (urlInput && err.message && (err.message.includes('vací') || err.message.includes('data útil') || err.message.includes('vacio') || err.message.includes('columna correo'))) {
+                                                const displayMsg = err.message.includes('columna correo') ? err.message : 'El archivo proporcionado se encuentra vacío o sin data útil.';
+                                                urlInput.setAttribute('error-text', displayMsg);
+                                                urlInput.classList.add('ion-invalid', 'ion-touched');
+                                            } else {
+                                                alert(`Error general de procesamiento:\n${err.message}`);
+                                            }
                                         });
                                     } else {
                                         modal.dismiss();
                                         _showToast(`Se extrajeron ${res.data.length} registros pero el Chunker no está cargado.`, 'warning');
                                     }
+                                } else if (res && res.status === 'error') {
+                                    // El backend capturó el error pero lo devolvió como éxito 200 en capa HTTP (API_Universal_Router)
+                                    throw new Error(res.message || "Error desconocido devuelto por el servidor.");
                                 }
                             })
                             .catch(err => {
                                 loading.dismiss();
                                 console.error('[ETL Fatal Error]', err);
-                                _showToast(`Fallo al extraer registros: ${err.message}`, 'danger');
+                                const urlInput = modal.querySelector('#etl-drive-url');
+                                if (urlInput && err.message && (err.message.includes('vací') || err.message.includes('data útil') || err.message.includes('vacio') || err.message.includes('columna correo'))) {
+                                    const displayMsg = err.message.includes('columna correo') ? err.message : 'El archivo proporcionado se encuentra vacío o sin data útil.';
+                                    urlInput.setAttribute('error-text', displayMsg);
+                                    urlInput.classList.add('ion-invalid', 'ion-touched');
+                                } else {
+                                    _showToast(`Fallo al extraer registros: ${err.message}`, 'danger');
+                                }
                             });
                     } catch (fatalErr) {
                         if (loading) loading.dismiss();

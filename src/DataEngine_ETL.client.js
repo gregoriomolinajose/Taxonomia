@@ -64,6 +64,15 @@
                 throw new Error("No hay data útil en la matriz proporcionada por la Hoja de Documento.");
             }
 
+            // S45.6 Fast-fail: Validar la existencia de la columna requerida antes de iterar
+            if (entityName === 'Persona') {
+                const firstRow = rawPayload[0];
+                const hasEmailColumn = Object.keys(firstRow).some(k => k.trim().toLowerCase() === 'correo' || k.trim().toLowerCase() === 'email');
+                if (!hasEmailColumn) {
+                    throw new Error("El archivo no contiene la columna correo");
+                }
+            }
+
             // Omitir cabeceras transaccionales/auditoría
             const sanitized = rawPayload.map(row => {
                 const cleanRow = {};
@@ -83,27 +92,124 @@
         },
 
         /**
+         * Orchestrator class to manage continuous UX progress from 0 to 100
+         */
+        _createProgressOrchestrator: function(entityName, totalChunks, progressCallback) {
+            const isPersona = (entityName === 'Persona');
+            const wIngest = isPersona ? 50 : 90;
+            const wSync = isPersona ? 40 : 0;
+            
+            let currentPhase = 'ingest';
+            let syncIteration = 1;
+            let totalSyncEstimated = 1;
+            
+            return {
+                reportIngest: (currentChunk) => {
+                    if (!progressCallback) return;
+                    const pc = totalChunks > 0 ? Math.round((currentChunk / totalChunks) * wIngest) : wIngest;
+                    progressCallback(pc, 100, false, null, `Analizando y guardando lote ${currentChunk} de ${totalChunks}...`);
+                },
+                startSync: () => {
+                    if (!progressCallback) return;
+                    currentPhase = 'sync';
+                    progressCallback(wIngest, 100, false, null, "Preparando Sincronización con Google Workspace...");
+                },
+                reportSyncIteration: (remainingItems) => {
+                    if (!progressCallback) return;
+                    if (syncIteration === 1) {
+                        totalSyncEstimated = Math.ceil((remainingItems + 50) / 50);
+                    }
+                    const syncPercent = Math.round(wIngest + ((syncIteration / totalSyncEstimated) * wSync));
+                    const safePercent = Math.min(syncPercent, 89);
+                    progressCallback(safePercent, 100, false, null, `Sincronizando cuentas con Google Workspace (Lote ${syncIteration})...`);
+                    syncIteration++;
+                },
+                finishSync: () => {
+                    if (!progressCallback) return;
+                    progressCallback(wIngest + wSync, 100, false, null, `Sincronización con Workspace completada.`);
+                },
+                reportRefresh: () => {
+                    if (!progressCallback) return;
+                    progressCallback(95, 100, false, null, `Refrescando grafo relacional y topología...`);
+                },
+                reportComplete: (metrics) => {
+                    if (!progressCallback) return;
+                    progressCallback(100, 100, true, metrics, `Ingesta completada satisfactoriamente.`);
+                }
+            };
+        },
+
+        /**
          * Envía un arreglo JSON de registros en lotes síncronos hacia la Base de Datos.
          * (Resuelve el Timeout V8 Limit)
          * @private
          */
         _dispatchChunks: async function(parsedData, entityName, progressCallback) {
-            const CHUNK_SIZE = 50; 
-            const totalChunks = Math.ceil(parsedData.length / CHUNK_SIZE);
-            
             let accumulatedFeedback = [];
             let metrics = { success: 0, duplicate: 0, error: 0 };
-            let currentSheetId = null;
+            
+            // Extract sheetId universally from the first record if it exists
+            let currentSheetId = (parsedData.length > 0 && parsedData[0]._sheetId) ? parsedData[0]._sheetId : null;
+
+            // S45.6 Validación Pre-Vuelo Estricta (Solo Persona)
+            let validData = [];
+            if (entityName === 'Persona') {
+                const allowedDomains = (window.ENV_CONFIG && window.ENV_CONFIG.ALLOWED_DOMAINS) ? window.ENV_CONFIG.ALLOWED_DOMAINS : ['@coppel.com', '@bancoppel.com'];
+                
+                parsedData.forEach((row, index) => {
+                    // Buscar la llave "correo" o "email" ignorando mayúsculas
+                    const emailKey = Object.keys(row).find(k => k.trim().toLowerCase() === 'correo' || k.trim().toLowerCase() === 'email');
+                    const email = (emailKey && row[emailKey] ? String(row[emailKey]) : "").trim().toLowerCase();
+                    
+                    if (!email) {
+                        metrics.error++;
+                        accumulatedFeedback.push({
+                            status: 'error',
+                            _rowIndex: row._rowIndex || (index + 2), // Fallback to assumed CSV line if no sheet index
+                            message: 'El correo es necesario para realizar un registro'
+                        });
+                        return;
+                    }
+                    
+                    // Validar formato de correo básico
+                    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                    if (!emailRegex.test(email)) {
+                        metrics.error++;
+                        accumulatedFeedback.push({
+                            status: 'error',
+                            _rowIndex: row._rowIndex || (index + 2),
+                            message: 'El formato del correo no es valido'
+                        });
+                        return;
+                    }
+                    
+                    // Validar dominio
+                    const domainMatch = allowedDomains.some(d => email.endsWith(d.toLowerCase()));
+                    if (!domainMatch) {
+                        metrics.error++;
+                        accumulatedFeedback.push({
+                            status: 'error',
+                            _rowIndex: row._rowIndex || (index + 2),
+                            message: 'El dominio del correo no es valido'
+                        });
+                        return;
+                    }
+                    
+                    validData.push(row);
+                });
+            } else {
+                validData = parsedData;
+            }
+
+            const CHUNK_SIZE = 50; 
+            const totalChunks = Math.ceil(validData.length / CHUNK_SIZE);
+            
+            const orchestrator = this._createProgressOrchestrator(entityName, totalChunks, progressCallback);
             
             for (let i = 0; i < totalChunks; i++) {
-                const chunk = parsedData.slice(i * CHUNK_SIZE, (i + 1) * CHUNK_SIZE);
-                if (progressCallback) progressCallback(i + 1, totalChunks, false);
+                const chunk = validData.slice(i * CHUNK_SIZE, (i + 1) * CHUNK_SIZE);
+                orchestrator.reportIngest(i + 1);
                 console.log(`[ETL Chunker] Enviando Lote ${i + 1} de ${totalChunks} (${chunk.length} filas)...`);
-                
-                // Extraemos sheetId para el writeback (todas las filas de un lote provienen del mismo sheet)
-                if (!currentSheetId && chunk.length > 0 && chunk[0]._sheetId) {
-                    currentSheetId = chunk[0]._sheetId;
-                }
                 
                 try {
                     const res = await window.DataAPI.call('bulkInsert', entityName, chunk);
@@ -161,15 +267,26 @@
 
             // S44.17: Auto-Provisionamiento JIT Workspace Post-ETL (Solo Persona)
             if (entityName === 'Persona') {
-                if (progressCallback) {
-                    progressCallback(totalChunks, totalChunks, false, null, "Configurando Topología Workspace...");
-                }
+                orchestrator.startSync();
                 console.log(`[ETL Workspace] Ingesta de Persona finalizada. Disparando Sync Job en lote paralelo...`);
                 try {
-                    // Ejecutamos silenciosamente el Sync. El Backend se encargará de crear los Cargos y las Aristas Topológicas.
-                    await window.DataAPI.call('runWorkspaceSyncJob', { manual: true });
+                    // Ejecutamos el Sync en bucle hasta que no queden pendientes (ya que el backend procesa de a 50)
+                    let syncDone = false;
+
+                    while (!syncDone) {
+                        const syncRes = await window.DataAPI.call('runWorkspaceSyncJob', { manual: false });
+                        if (syncRes && syncRes.status === 'OK' && syncRes.remaining > 0) {
+                            orchestrator.reportSyncIteration(syncRes.remaining);
+                            console.log(`[ETL Workspace] Quedan ${syncRes.remaining} personas por sincronizar. Siguiente lote...`);
+                        } else {
+                            syncDone = true;
+                            orchestrator.finishSync();
+                        }
+                    }
                     
                     // Re-hidratar el caché topológico (JIT Cache Refresh) antes de devolver el control a la UI
+                    orchestrator.reportRefresh();
+                    
                     if (window.DataStore && window.DataAPI) {
                         const payloads = await Promise.all([
                             window.DataAPI.call('getInitialPayload', 'Cargo'),
@@ -190,10 +307,11 @@
                     if (window.AppEventBus) window.AppEventBus.publish('CACHE::GRAPH_HYDRATED', { source: 'ETL_WorkspaceSync' });
                 } catch(e) {
                     console.error("[ETL Workspace] Error aprovisionando cargos o topología:", e);
+                    metrics.error++;
                 }
             }
 
-            if (progressCallback) progressCallback(totalChunks, totalChunks, true, metrics);
+            orchestrator.reportComplete(metrics);
             return metrics;
         },
 

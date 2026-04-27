@@ -23,14 +23,15 @@ var Business_Interceptors = (function() {
             if (rawKey && typeof Adapter_Sheets !== 'undefined') {
                 const normSearch = String(rawKey).trim().toLowerCase();
                 const rawFilter = (rowArray, headerMap) => config.matchRecordFn(rowArray, headerMap, normSearch);
-                const res = Adapter_Sheets.list(config.targetEntity, { rawFilterFn: rawFilter, limit: 1 });
+                const dbConfig = (typeof CONFIG !== 'undefined') ? CONFIG : { useSheets: true, SPREADSHEET_ID_DB: '' };
+                const res = Adapter_Sheets.list(config.targetEntity, dbConfig, 'objects', false, { rawFilterFn: rawFilter });
                 if (res && res.rows && res.rows.length > 0) {
                     config.extractCacheValuesFn(res.rows[0], memoryMap);
                 }
             }
         } else {
             if (typeof Engine_DB !== 'undefined') {
-                const res = Engine_DB.list(config.targetEntity, 'objects');
+                const res = Engine_DB.list(config.targetEntity, 'objects', { skipCache: true });
                 const all = (res && res.rows) ? res.rows : [];
                 all.forEach(r => config.extractCacheValuesFn(r, memoryMap));
             }
@@ -148,7 +149,7 @@ var Business_Interceptors = (function() {
                     let records = [];
                     let currentEmail = String(initialEmail).trim();
                     
-                    while (currentEmail && currentEmail !== '') {
+                    while (currentEmail && currentEmail !== '' && currentEmail !== '---') {
                         const normKey = currentEmail.toLowerCase();
                         if (map[normKey] || cache[normKey]) {
                             break; 
@@ -157,7 +158,7 @@ var Business_Interceptors = (function() {
                         // Check DB Cache for existing record (to prevent duplicates if they were not in memoryMap)
                         if (typeof Engine_DB !== 'undefined') {
                             try {
-                                const dbRes = Engine_DB.list('Persona', 'objects');
+                                const dbRes = Engine_DB.list('Persona', 'objects', { skipCache: true });
                                 const found = (dbRes && dbRes.rows ? dbRes.rows : []).find(p => String(p.email).trim().toLowerCase() === normKey);
                                 if (found && found.id_persona) {
                                     map[normKey] = found.id_persona;
