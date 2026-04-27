@@ -21,6 +21,9 @@
             if (typeof global.ApexTree !== 'undefined' && global.DataEngine && global.DataEngine.buildHierarchyTree) {
                 // Utiliza requestAnimationFrame para asegurar que el contenedor tenga dimensiones reales antes de leer offsetWidth
                 requestAnimationFrame(() => {
+                    // Previene race condition si el usuario cambia de vista antes de que se ejecute el frame
+                    if (!document.getElementById('org-chart-container')) return;
+                    
                     const treeData = global.DataEngine.buildHierarchyTree(state.filtered);
                     
                     if (treeData) {
