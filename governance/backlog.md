@@ -39,7 +39,7 @@
 | E43| Rediseño de Cards (Vista Grid)                      | ⏳ In Progress| Mejorar UI/UX de cards inyectando grafos, badge lexicológico e íconos | Alta     |
 | E44| Visibilidad y Control de Topología                  | ✅ Complete  | Decoupling auto-provisioning logic & UI latency          | Alta     |
 | E45| Architecture Refactoring                            | ✅ Complete  | DOM-based hydration state & centralize logic             | Alta     |
-| E46| Org Chart Visualization                             | ⏳ In Progress| Implementar diagrama piramidal ApexTree para relaciones de empleados | Alta     |
+| E46| Org Chart Visualization                             | ✅ Complete  | Implementar diagrama piramidal ApexTree para relaciones de empleados | Alta     |
 
 ## Parking Lot / Deuda Técnica (Post-Epic 11)
 
