@@ -155,7 +155,7 @@
 
             // Determinar la llave primaria dinámica de Persona (fallback a 'id_persona')
             const pkCol = window.Schema_Utils ? window.Schema_Utils.getPrimaryKey('Persona') : 'id_persona';
-            const parentCol = 'Líder';
+            const parentCol = 'lider_directo';
 
             const map = {};
             const roots = [];
