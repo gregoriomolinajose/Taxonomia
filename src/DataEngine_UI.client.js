@@ -155,7 +155,15 @@
 
             // Determinar la llave primaria dinámica de Persona (fallback a 'id_persona')
             const pkCol = window.Schema_Utils ? window.Schema_Utils.getPrimaryKey('Persona') : 'id_persona';
-            const parentCol = 'lider_directo';
+            let parentCol = 'lider_directo'; // fallback safe default
+            
+            if (window.Schema_Utils && typeof window.Schema_Utils.getSchema === 'function') {
+                const schema = window.Schema_Utils.getSchema('Persona');
+                if (schema && schema.fields) {
+                    const parentField = schema.fields.find(f => f.type === 'relation' && f.relationType === 'padre');
+                    if (parentField) parentCol = parentField.name;
+                }
+            }
 
             const map = {};
             const roots = [];
