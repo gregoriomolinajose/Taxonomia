@@ -14,7 +14,7 @@
 ### S46.2: ApexTree Library Setup & Base Initialization
 **Objective**: Render a basic tree diagram inside the new DataView layout.
 - **Tasks**:
-  1. Integrate the `ApexTree.js` dependency into the project build/load pipeline.
+  1. Download and integrate the `ApexTree.js` dependency locally into `src/vendor/`.
   2. Hook into the `DataView` render lifecycle so that when `currentView === 'tree'`, the ApexTree instance is initialized on a target container.
   3. Feed the tree with the transformed hierarchical data and ensure basic nodes render correctly.
 - **Dependencies**: S46.1.

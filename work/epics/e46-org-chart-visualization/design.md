@@ -11,7 +11,7 @@ The `UI_DataView` currently supports `list` and `grid` views. We will extend thi
 ### 2. Data Transformation (Linear to Tree)
 The existing data arrives as a flat array of records. To feed ApexTree, we need a nested JSON structure.
 - **Dependency Mapping**: We will utilize the `Líder` field (or equivalent parent reference) to group records.
-- **Transformer Utility**: Create a function `buildHierarchyTree(records, parentKey, idKey)` that returns a tree object.
+- **Transformer Utility**: Create a function `buildHierarchyTree(records)` that returns a tree object. (Keys are statically mapped to `Líder` and `_id` to avoid speculative generality).
   - Nodes will need: `id`, `data` (containing Name, Surname, Avatar, Cargo, Department), and `children`.
 
 ### 3. ApexTree Rendering & Customization
@@ -29,7 +29,7 @@ The existing data arrives as a flat array of records. To feed ApexTree, we need 
 - **Styling**: Add CSS rules in the main stylesheet or a component-specific stylesheet to color code `.tree-node` based on the Department value.
 
 ## External Dependencies
-- **ApexTree.js**: To be included via CDN or local vendor file. (Need to confirm the best import strategy for the project, likely adding it to JS globals).
+- **ApexTree.js**: To be included locally as a vendor file (`src/vendor/apextree.min.js`) to ensure Zero-Trust compliance, prevent CSP issues, and guarantee offline availability.
 
 ## Bounded Context
 This visualization strictly reads from the local data store model. Any edits (CRUD) must still happen via the existing forms; the chart is a pure reactive visualizer of the current hydration state.
