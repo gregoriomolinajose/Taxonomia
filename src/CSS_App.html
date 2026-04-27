@@ -127,6 +127,14 @@ body.drawer-max-depth ion-button[onclick*="openForm"] {
 }
 
 /* --- S46.3: Org Chart Node Aesthetics --- */
+/* Ocultar el rectángulo por defecto de ApexTree para usar puramente nuestro HTML */
+#org-chart-container svg g.node > rect {
+    fill: transparent !important;
+    stroke: transparent !important;
+    box-shadow: none !important;
+    filter: none !important;
+}
+
 .org-node-card {
     display: flex;
     flex-direction: row;
@@ -139,6 +147,8 @@ body.drawer-max-depth ion-button[onclick*="openForm"] {
     box-shadow: var(--shadow-sm, 0 2px 8px rgba(0,0,0,0.05));
     width: 260px;
     height: 90px;
+    margin: 0;
+    box-sizing: border-box;
     position: relative;
     overflow: hidden;
     transition: transform 0.2s, box-shadow 0.2s;
