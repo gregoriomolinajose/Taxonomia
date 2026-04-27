@@ -351,80 +351,13 @@
                 }
 
             } else if (_state.view === 'tree') {
-                const treeContainer = document.createElement('div');
-                treeContainer.id = 'org-chart-container';
-                treeContainer.style.width = '100%';
-                treeContainer.style.height = 'calc(100vh - 150px)';
-                dataZone.appendChild(treeContainer);
-                
-                if (typeof window.ApexTree !== 'undefined' && window.DataEngine && window.DataEngine.buildHierarchyTree) {
-                    const treeData = window.DataEngine.buildHierarchyTree(_state.filtered);
-                    
-                    if (treeData) {
-                        const options = {
-                            contentKey: 'data',
-                            width: treeContainer.offsetWidth || 800,
-                            height: treeContainer.offsetHeight || 600,
-                            nodeWidth: 220,
-                            nodeHeight: 130,
-                            childrenSpacing: 60,
-                            siblingSpacing: 24,
-                            direction: 'top',
-                            nodeTemplate: function(content) {
-                                const escapeHTML = (str) => String(str || '').replace(/[&<>'"]/g, 
-                                    tag => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'}[tag])
-                                );
-                                
-                                const getInitials = (name) => {
-                                    if (!name) return '?';
-                                    const parts = name.split(' ').filter(Boolean);
-                                    return parts.length > 1 ? (parts[0][0] + parts[parts.length-1][0]).toUpperCase() : parts[0].substring(0, 2).toUpperCase();
-                                };
-
-                                const getDeptColor = (dept) => {
-                                    if (!dept) return '#607d8b'; // Default Grey
-                                    let hash = 0;
-                                    for (let i = 0; i < dept.length; i++) {
-                                        hash = dept.charCodeAt(i) + ((hash << 5) - hash);
-                                    }
-                                    return `hsl(${Math.abs(hash % 360)}, 65%, 45%)`;
-                                };
-
-                                const nombre = escapeHTML(content._nombre_completo || content.nombre || 'Desconocido');
-                                const cargo = escapeHTML(content.cargo || '');
-                                const dept = escapeHTML(content['Área'] || content.departamento || '');
-                                
-                                // Parse avatar (could be an array if it's a file attachment in GAS)
-                                let avatarUrl = '';
-                                if (content.Avatar) {
-                                    avatarUrl = Array.isArray(content.Avatar) ? (content.Avatar[0]?.url || '') : content.Avatar;
-                                }
-                                const avatarHTML = avatarUrl ? `<img src="${escapeHTML(avatarUrl)}" alt="Avatar" onerror="this.style.display='none'">` : getInitials(nombre);
-                                const accentColor = getDeptColor(content['Área'] || content.departamento);
-
-                                return `<div class="org-node-card">
-                                    <div class="org-node-accent" style="background-color: ${accentColor}"></div>
-                                    <div class="org-node-avatar" style="background-color: ${avatarUrl ? 'transparent' : accentColor}">${avatarHTML}</div>
-                                    <div class="org-node-name" title="${nombre}">${nombre}</div>
-                                    <div class="org-node-role" title="${cargo}">${cargo}</div>
-                                    ${dept ? `<div class="org-node-dept" style="color: ${accentColor}; border: 1px solid ${accentColor}" title="${dept}">${dept}</div>` : ''}
-                                </div>`;
-                            }
-                        };
-                        try {
-                            const tree = new window.ApexTree(document.getElementById('org-chart-container'), options);
-                            tree.render(treeData);
-                        } catch(e) {
-                            treeContainer.innerHTML = `<div class="dv-empty">Error renderizando ApexTree: ${e.message}</div>`;
-                        }
-                    } else {
-                        treeContainer.innerHTML = `<div class="dv-empty">No hay datos jerárquicos o no hay líder definido.</div>`;
-                    }
+                if (window.UI_View_Tree) {
+                    window.UI_View_Tree.render(dataZone, _state);
                 } else {
-                    const placeholder = document.createElement('div');
-                    placeholder.className = 'dv-empty';
-                    placeholder.textContent = 'Diagrama de Árbol / Organigrama (Motor no disponible)';
-                    treeContainer.appendChild(placeholder);
+                    const errNode = document.createElement('div');
+                    errNode.className = 'dv-empty';
+                    errNode.textContent = 'Módulo UI_View_Tree no disponible.';
+                    dataZone.appendChild(errNode);
                 }
             } else if (window.UI_DataGrid) {
                 window.DOM.clear(dataZone);
