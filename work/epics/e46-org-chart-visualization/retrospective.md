@@ -1,19 +1,31 @@
-# Epic 46 Retrospective: Organizational Chart Visualization
+# Retrospective: E46 - Organizational Chart Visualization
 
-## Objective Status
-**Status:** Completed
-**Objective:** Modernize the Taxonomia platform by integrating an interactive organizational hierarchy diagram using ApexTree, providing a visual representation of team structures, roles, and departmental boundaries.
+## 📊 Quick Metrics
 
-## Key Outcomes
-1. **Interactive Visualization:** Successfully integrated `ApexTree.js` via a Zero-Trust local wrapper (`Vendor_ApexTree.html`), enabling real-time hierarchy rendering directly from workspace data without external CDN dependencies.
-2. **Data Transformation Engine:** Built a robust `buildHierarchyTree` algorithm in `DataEngine_UI` capable of resolving single-parent relationships and creating synthetic root nodes ("Empresa") when multiple disconnected sub-trees exist.
-3. **Rich UI Components:** Engineered a custom `nodeTemplate` featuring dynamic initials generation, Avatar rendering, and a deterministic color-hashing algorithm for Departmental distinction.
-4. **Architectural Purity:** Extracted the complex DOM orchestration logic into an independent `UI_View_Tree.client.js` module, adhering strictly to Single Responsibility Principles and preventing bloat in the main DataView controller.
+- **Total Stories:** 4
+- **Completed:** 4
+- **Abandoned:** 0
 
-## Learnings & Insights
-- **Zero-Trust Workarounds:** We proved that large vendor libraries can be safely included in Google Apps Script by downloading the minified source and wrapping it in an `include()` directive, successfully bypassing strict Content Security Policies.
-- **Continuous Refactoring:** Applying Kent Beck's design rules after each story allowed us to catch architectural drift (specifically the overloading of `_rerenderData`) before it became cemented technical debt.
+## 🎯 Outcomes
 
-## Next Steps
-- The Epic is officially closed. All new visualization capabilities are active in the `develop` and `production` branches.
-- Future epics may explore adding interactive CRUD operations (e.g., drag-and-drop hierarchy restructuring) directly within the `UI_View_Tree` canvas.
+### What went well?
+- Successfully integrated `ApexTree` to dynamically render recursive organizational hierarchies.
+- The UI/UX was polished correctly, changing default vertical trees to rich horizontal card designs mimicking the Premium DataGrid.
+- We aggressively resolved a library rendering issue by decoding the bundle and intercepting DOM injection, eliminating unwanted watermarks without modifying the third-party binary file.
+- The hierarchy algorithm was refactored from static "department" based groups to a true graph traversal based on the `Sys_Graph_Edges` system (relationship `PERSONA_LIDER_DIRECTO`), ensuring data topological integrity.
+
+### What didn't go well?
+- Deployment and testing in Google Apps Script is slow due to lack of local testing capabilities and domain restrictions, requiring manual user intervention to update the executable version for every test cycle.
+- Library documentation (ApexTree) was opaque regarding its watermark generation and SVG injection mechanisms, requiring a reverse-engineering session.
+
+### Process Improvements
+- Whenever utilizing heavy third-party UI libraries, we should immediately verify their "premium/watermark" behaviors to isolate them before focusing on data rendering.
+
+## 🧠 Architectural Decisions & Patterns
+
+- **Schema-Driven Resolution:** Adopted a dynamic schema lookup methodology to discover the 'padre' and 'hijo' foreign key definitions in `Schema_Utils`, decoupling hardcoded references from `DataEngine_UI`.
+- **Topological Graph:** Deprecated standard array `.filter()` techniques for tree building in favor of JIT querying against the pre-computed `Sys_Graph_Edges` table, aligning UI with the backend persistence architecture.
+- **Visual Sovereignty:** Overrode default SVG rendering behaviors by treating the charting library strictly as an XY coordinate layout engine, regaining full aesthetic control using custom HTML/CSS nodes.
+
+## 📝 Final Status
+The epic has met all its acceptance criteria and provides a robust visual representation of organizational structures. The Epic E46 is now closed.
