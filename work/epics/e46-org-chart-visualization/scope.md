@@ -1,12 +1,12 @@
 # Epic Scope: E46 - Organizational Chart Visualization
 
 ## Objective
-Implement a visual organizational chart using APEXCHART (ApexTree or similar) that displays employee hierarchies, including name, surname, role (cargo), and department (color-coded).
+Implement a visual organizational chart using APEXCHART (ApexTree or similar) that displays employee hierarchies, including avatar, name, surname, role (cargo), and department (color-coded).
 
 ## In Scope
 - Setup and integration of ApexCharts (or specific ApexTree module) into the application.
 - Data transformation logic to convert the existing linear or relational employee data into a hierarchical tree format.
-- UI implementation of the Chart Card showing Name, Surname, Role, and Department.
+- UI implementation of the Chart Card showing Avatar, Name, Surname, Role, and Department.
 - Styling node colors based on Department.
 
 ## Out of Scope
