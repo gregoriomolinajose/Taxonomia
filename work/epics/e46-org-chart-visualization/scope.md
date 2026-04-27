@@ -18,7 +18,7 @@ Implement a visual organizational chart using APEXCHART (ApexTree or similar) th
 - [x] **S46.1**: Setup ApexCharts / ApexTree dependencies and build the data transformer to generate the tree structure.
 - [x] **S46.2**: Implement the base Chart UI Card and render the tree.
 - [x] **S46.3**: Refine the visual design (Department color coding, formatting Name/Role).
-- [ ] **S46.4**: Refactor hierarchy logic to strictly use the `lider_directo` edge.
+- [x] **S46.4**: Refactor hierarchy logic to strictly use the `lider_directo` edge.
 
 ## Done Criteria
 - The Organizational chart is available in the UI.
