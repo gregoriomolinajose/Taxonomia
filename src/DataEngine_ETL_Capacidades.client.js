@@ -72,17 +72,16 @@ window.DataEngine_ETL_Capacidades = (function() {
                         let rawComp = row[5];
                         let rawDescComp = row[6];
 
-                        // Fill-Down Logic
+                        // Fill-Down Logic con Reseteo de Hijos
                         if (rawMacro !== undefined && rawMacro !== null && String(rawMacro).trim() !== '') {
                             lastMacro = String(rawMacro).trim();
-                            // Resetear hijos si cambia el padre? (Opcional, pero usualmente Fill-Down asume reseteo o sobreescritura explícita)
-                            // lastCapacidad = ''; 
-                            // lastSubcapacidad = '';
+                            lastCapacidad = ''; 
+                            lastSubcapacidad = '';
                         }
                         
                         if (rawCap !== undefined && rawCap !== null && String(rawCap).trim() !== '') {
                             lastCapacidad = String(rawCap).trim();
-                            // lastSubcapacidad = '';
+                            lastSubcapacidad = '';
                         }
 
                         if (rawSubcap !== undefined && rawSubcap !== null && String(rawSubcap).trim() !== '') {
