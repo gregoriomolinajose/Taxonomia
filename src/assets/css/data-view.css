@@ -732,6 +732,7 @@
     background: var(--dv-surface);
     box-shadow: 0 2px 8px rgba(0,0,0,0.04);
     transition: transform 0.2s ease, box-shadow 0.2s ease;
+    position: relative;
 }
 .dv-card-grid-modern:hover {
     transform: translateY(-3px);
@@ -810,11 +811,16 @@
     gap: 8px;
     min-width: 0;
     flex: 1;
+    padding-right: 32px;
 }
 .dv-card-top-right {
+    position: absolute;
+    top: 16px;
+    right: 16px;
     display: flex;
     align-items: center;
     flex-shrink: 0;
+    z-index: 2;
 }
 .dv-card-profile-row {
     display: flex;
@@ -979,6 +985,7 @@
     flex-direction: column;
     min-width: 0;
     max-width: 100%;
+    position: relative;
 }
 
 .dv-node-pill {
