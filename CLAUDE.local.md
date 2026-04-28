@@ -4,10 +4,10 @@
 
 ## Session
 
-- **Active Session**: E46 - Org Chart Visualization
-- **Last Summary**: Finalizada Epic E46. Implementado ApexTree de manera estética, integrando búsqueda, zoom y controles. Ajuste final a la marca de agua del render.
-- **Last Closed**: E46
-- **Next Focus**: Esperando próxima épica.
+- **Active Session**: None
+- **Last Summary**: Finalizadas Epic E46 y Epic E45 (Architecture Refactoring / ETL Stabilization).
+- **Last Closed**: E45
+- **Next Focus**: Esperando próxima épica (potencialmente E43 que está "In Progress").
 
 ## Patterns
 
