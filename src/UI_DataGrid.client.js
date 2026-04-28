@@ -400,44 +400,28 @@
                 h3Title.title = titleStr;
                 profileInfo.appendChild(h3Title);
                 
-                let remainingSubtitles = [];
-                if (dCard && dCard.subtitleFields && dCard.subtitleFields.length > 0) {
-                    const firstSub = dCard.subtitleFields[0];
-                    if (row[firstSub.field]) {
-                        const subWrap = document.createElement('div');
-                        subWrap.className = 'dv-card-meta-subtitle dv-title-1-line';
-                        subWrap.style.color = 'var(--ion-color-medium)';
-                        if (firstSub.icon) {
-                            const sIcon = document.createElement('ion-icon');
-                            sIcon.setAttribute('name', firstSub.icon);
-                            sIcon.style.verticalAlign = 'middle';
-                            sIcon.style.marginRight = '4px';
-                            subWrap.appendChild(sIcon);
-                        }
-                        subWrap.appendChild(document.createTextNode(row[firstSub.field]));
-                        profileInfo.appendChild(subWrap);
-                    }
-                    if (dCard.subtitleFields.length > 1) {
-                        remainingSubtitles = dCard.subtitleFields.slice(1);
-                    }
-                }
                 profileRow.appendChild(profileInfo);
                 cardEl.appendChild(profileRow);
                 
-                // Row 3: Remaining Subtitles (e.g. Departamento)
-                remainingSubtitles.forEach(subItem => {
-                    if (row[subItem.field]) {
-                        const deptoWrap = document.createElement('div');
-                        deptoWrap.className = 'dv-card-department dv-title-2-lines';
-                        if (subItem.icon) {
-                            const sIcon = document.createElement('ion-icon');
-                            sIcon.setAttribute('name', subItem.icon);
-                            deptoWrap.appendChild(sIcon);
+                // Row 3 & 4: Subtitles (Email, Departamento)
+                if (dCard && dCard.subtitleFields && dCard.subtitleFields.length > 0) {
+                    dCard.subtitleFields.forEach((subItem, index) => {
+                        if (row[subItem.field]) {
+                            const subWrap = document.createElement('div');
+                            // First subtitle (Email) 1-line, others 2-lines
+                            const lineClass = index === 0 ? 'dv-title-1-line' : 'dv-title-2-lines';
+                            subWrap.className = `dv-card-department ${lineClass}`;
+                            
+                            if (subItem.icon) {
+                                const sIcon = document.createElement('ion-icon');
+                                sIcon.setAttribute('name', subItem.icon);
+                                subWrap.appendChild(sIcon);
+                            }
+                            subWrap.appendChild(document.createTextNode(row[subItem.field]));
+                            cardEl.appendChild(subWrap);
                         }
-                        deptoWrap.appendChild(document.createTextNode(row[subItem.field]));
-                        cardEl.appendChild(deptoWrap);
-                    }
-                });
+                    });
+                }
                 
                 // Extract Graphs
                 let graphData = this._extractGraphMetadata(row, this.cfg.entityName);
