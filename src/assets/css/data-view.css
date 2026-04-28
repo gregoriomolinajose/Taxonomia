@@ -806,6 +806,7 @@
     display: flex;
     align-items: flex-start;
     gap: 12px;
+    min-width: 0;
 }
 
 .dv-badge-lg {
@@ -818,6 +819,7 @@
     display: flex;
     flex-direction: column;
     gap: 2px;
+    min-width: 0;
 }
 
 .dv-card-meta-top-row {
@@ -850,6 +852,13 @@
 
 .dv-status--inactive .dv-card-status-dot { background-color: var(--dv-danger, var(--ion-color-danger, #eb445a)); }
 .dv-status--inactive .dv-card-status-text { color: var(--dv-danger, var(--ion-color-danger, #eb445a)); }
+
+.dv-card-meta-subtitle {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+}
 
 .dv-card-hero-title {
     margin: 0;
@@ -887,6 +896,8 @@
     padding: 4px 8px;
     border-radius: 6px;
     border: 1px solid var(--dv-border);
+    max-width: 100%;
+    min-width: 0;
 }
 
 .dv-node-pill ion-icon {
@@ -898,11 +909,14 @@
     display: flex;
     align-items: center;
     gap: 4px;
+    min-width: 0;
+    flex: 1;
 }
 
 .dv-node-label {
     color: var(--dv-text-secondary);
     font-weight: 500;
+    flex-shrink: 0;
 }
 
 .dv-node-value {
