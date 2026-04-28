@@ -73,6 +73,27 @@
                 }
             }
 
+            // S47.4 Proactive Detection: Ensure the file actually matches the entity
+            const firstRow = rawPayload[0];
+            const fileHeaders = Object.keys(firstRow).map(k => k.trim().toLowerCase());
+            
+            if (window.APP_SCHEMAS && window.APP_SCHEMAS[entityName]) {
+                const schemaFields = window.APP_SCHEMAS[entityName].fields.map(f => String(f.name).toLowerCase());
+                let matchCount = 0;
+                fileHeaders.forEach(h => {
+                    if (schemaFields.includes(h) || h === 'id' || h.startsWith('sys_') || h.startsWith('file_')) {
+                        matchCount++;
+                    }
+                });
+                
+                // If less than 15% of the columns match our schema, it's definitively the wrong file
+                // We use 15% to be extremely permissive (e.g., tiny schemas vs wide files) while still catching completely unrelated files
+                const overlapRatio = matchCount / fileHeaders.length;
+                if (overlapRatio < 0.15 && fileHeaders.length > 0) {
+                    throw new Error(`El archivo no parece corresponder a la entidad '${entityName}'. Por favor verifica que estás subiendo el documento correcto.`);
+                }
+            }
+
             // Omitir cabeceras transaccionales/auditoría
             const sanitized = rawPayload.map(row => {
                 const cleanRow = {};

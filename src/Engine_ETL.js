@@ -81,9 +81,10 @@ var Engine_ETL = (function() {
    * 
    * @param {string} entityName 
    * @param {string} urlOrId 
-   * @returns {Array<Object>} Arreglo de Registros
+   * @param {object} options
+   * @returns {Array<Object>|Array<Array>} Arreglo de Registros o Matriz 2D
    */
-  function extractDataFromDrive(entityName, urlOrId) {
+  function extractDataFromDrive(entityName, urlOrId, options = {}) {
     if (!urlOrId || urlOrId.trim() === '') {
       throw new Error("URL o ID ausente.");
     }
@@ -107,6 +108,10 @@ var Engine_ETL = (function() {
     
     if (!data || data.length < 2) {
       throw new Error("La hoja de cálculo está vacía o carece de registros.");
+    }
+
+    if (options.rawMatrix) {
+        return data; // Return 2D array directly for specialized parsers
     }
     
     const headers = data[0]; // Fila 0 es el Diccionario de Cabeceras

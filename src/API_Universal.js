@@ -78,7 +78,8 @@ function API_Universal_Router(action, entityName, payload) {
          _guardAbac('update', entityName, null); 
       }
       if (!payload || !payload.url) throw new Error("Parámetro URL faltante en request ETL.");
-      responseData = Engine_ETL.extractDataFromDrive(entityName, payload.url);
+      const options = payload.options || {};
+      responseData = Engine_ETL.extractDataFromDrive(entityName, payload.url, options);
       return JSON.stringify({ status: "success", data: responseData, action });
     }
 
