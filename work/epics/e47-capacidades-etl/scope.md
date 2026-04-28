@@ -22,6 +22,30 @@ Desarrollar un ETL para la carga masiva de capacidades desde un archivo plano, t
 - Exportación del catálogo a este mismo formato.
 
 ## Stories
-- S47.1: ETL Parser y Mapeo Estructural Básico.
+- S47.1: ETL Parser y Mapeo Estructural Básico (Niveles 0-3).
 - S47.2: Algoritmos de auto-generación de topología (`order_path` y `path_completo_es`).
 - S47.3: Integración y pruebas de carga con la base de datos / UI.
+
+## Implementation Plan
+
+### Sequencing Rationale
+Hemos priorizado un enfoque "Walking Skeleton" (S47.1) para mitigar el riesgo de que el Excel no pueda ser leído correctamente o las celdas combinadas fallen. Una vez garantizada la lectura, agregamos la complejidad topológica (S47.2) y cerramos con la integración de Inyección Masiva (S47.3).
+
+| Seq | Story | Descripción | Riesgo/Dependencia | T-Shirt |
+|---|---|---|---|---|
+| 1 | S47.1 | UI File Interception & Offset Parser (Fill-Down) | Riesgo Frontend (Lectura Excel nativa) | M |
+| 2 | S47.2 | Graph Flattening & Math_Engine Consumption | Depende de S47.1 | M |
+| 3 | S47.3 | Database Batch Dispatch & E2E Verification | Depende de S47.2 (PAT-E-539 E2E req) | S |
+
+### Milestones
+- **M1: Walking Skeleton (Fin de S47.1):** El usuario suelta el archivo, el sistema detecta el formato, lo lee desde la Fila 6 y muestra la jerarquía básica en consola sin que las celdas vacías rompan la continuidad.
+- **M2: Core MVP (Fin de S47.2):** La estructura leída genera objetos JSON completamente válidos con sus `order_path` y `path_completo_es` matemáticamente correctos listos para insertar.
+- **M3: Feature Complete (Fin de S47.3):** Integración E2E. El modal inyecta de 50 en 50 registros hacia Google Sheets mediante `_dispatchChunks`.
+
+### Progress Tracking
+| Story | Status | Actual | Velocity |
+|---|---|---|---|
+| S47.1 | 📝 Todo | - | - |
+| S47.2 | 📝 Todo | - | - |
+| S47.3 | 📝 Todo | - | - |
+
