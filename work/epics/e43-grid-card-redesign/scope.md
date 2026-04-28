@@ -17,6 +17,7 @@
 - [x] **S43.1**: Refactorización de UX en Dataview Cuadrícula: Eliminar paginador, lazy load, botón basura (Ex-S42.2).
 - [x] **S43.2**: Refinamiento Premium UX Grid: Nuevo Flex Header nativo, Back-to-Top, y Tokens de CSS Puro (Ex-S42.3).
 - [x] **S43.3**: Solución a desbordamientos de contenido en las tarjetas (Nombres largos, insignias de Lider/Cargo y textos descriptivos).
+- [x] **S43.4**: Refinamiento estético de Card Spacing, fijación del Trash Can mediante posición absoluta y estabilización de divisores lineales.
 
 ### Done Criteria
 - [x] La UI concuerda con las especificaciones de diseño dadas por el requerimiento (Badge, 2-line title, 3 dot menu).
