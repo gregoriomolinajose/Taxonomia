@@ -4,6 +4,8 @@
 Desarrollar un ETL para la carga masiva de capacidades desde un archivo plano, transformando la estructura de 4 niveles (Macrocapacidad, Capacidad, Subcapacidad, Componente) al esquema interno del sistema con auto-generación de rutas lógicas (`order_path` y `path_completo_es`).
 
 ## In Scope
+- **Auto-detección en Modal ETL:** Capacidad del modal de importación existente para detectar proactivamente la firma de este archivo (ej. columnas específicas o título "Modelo de Capacidades de Grupo 2.0" en las primeras filas) y enrutarlo automáticamente a este nuevo parser, simplificando la UX.
+- **Parsing Avanzado:** Lógica para ignorar las primeras 5 filas (títulos/logos), leer los headers en la fila 6 y resolver la herencia de celdas combinadas (merged cells) en las columnas de niveles superiores.
 - Adaptación o creación del parser ETL para leer el archivo de capacidades en su formato origen.
 - Lógica de mapeo y transformación:
   - Nivel 0: Macrocapacidad (Etiqueta "Macrocapacidad"). Sin descripción.
