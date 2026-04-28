@@ -298,7 +298,9 @@
                     if (extractedSections?.length > 0) {
                         console.warn(`[FormEngine] ALERTA: La entidad ${entityName} usa Secciones, pero el campo '${field.name}' carece de 'section' o 'width'. Este campo quedará huérfano en el Stepper. Actualice al Blueprint V3.`);
                     }
-                    field.section = field.section || "Datos Generales";
+                    if (useStepper && !field.section) {
+                        field.section = "Datos Generales";
+                    }
                     field.width = field.width || 12;
                 }
                 const targetRowName = field.section || steps[0];
