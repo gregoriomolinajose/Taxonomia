@@ -60,7 +60,7 @@ function buildPathName(formStateObj, params, cache) {
     const idPadre = formStateObj[params.parentField];
     
     if (!idPadre || idPadre === '') {
-        return `PATH: ${nombre}`;
+        return `${nombre}`;
     }
     
     const safeCache = cache || [];
@@ -68,11 +68,11 @@ function buildPathName(formStateObj, params, cache) {
     const padreRecord = safeCache.find(r => String(r[pkField]) === String(idPadre));
     
     if (!padreRecord || !padreRecord[params.pathField]) {
-        return `PATH: ... > ${nombre}`;
+        return `... > ${nombre}`;
     }
     
     const cleanParentPath = padreRecord[params.pathField].replace(/^PATH:\s*/, '').trim();
-    return `PATH: ${cleanParentPath} > ${nombre}`;
+    return `${cleanParentPath} > ${nombre}`;
 }
 
 function buildEChartsTreemapData(cacheObject) {
