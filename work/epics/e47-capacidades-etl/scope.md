@@ -22,7 +22,7 @@ Desarrollar un ETL para la carga masiva de capacidades desde un archivo plano, t
 - Exportación del catálogo a este mismo formato.
 
 ## Stories
-- S47.1: ETL Parser y Mapeo Estructural Básico (Niveles 0-3).
+- [x] S47.1: ETL Parser y Mapeo Estructural Básico (Niveles 0-3).
 - S47.2: Algoritmos de auto-generación de topología (`order_path` y `path_completo_es`) integrando un índice Hash Map O(1) en el `Math_Engine` para evitar bloqueos por complejidad O(N^2) en grandes volúmenes.
 - S47.3: Integración y pruebas de carga con la base de datos / UI.
 
@@ -43,9 +43,8 @@ Hemos priorizado un enfoque "Walking Skeleton" (S47.1) para mitigar el riesgo de
 - **M3: Feature Complete (Fin de S47.3):** Integración E2E. El modal inyecta de 50 en 50 registros hacia Google Sheets mediante `_dispatchChunks`.
 
 ### Progress Tracking
-| Story | Status | Actual | Velocity |
-|---|---|---|---|
-| S47.1 | 📝 Todo | - | - |
-| S47.2 | 📝 Todo | - | - |
-| S47.3 | 📝 Todo | - | - |
-
+| Story | Size | Status | Actual | Velocity | Notes |
+|-------|:----:|--------|--------|----------|-------|
+| S47.1 | M | Done | 45m | 🚀 | Fill-down parser implementado |
+| S47.2 | M | Pending| - | - | - |
+| S47.3 | S | Pending| - | - | - |
