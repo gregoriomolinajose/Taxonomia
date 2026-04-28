@@ -122,7 +122,7 @@ window.DataEngine_ETL_Capacidades = (function() {
                         if (nodesMap.has(id) || !nombre) return id;
                         
                         const nodo = {
-                            _id: id,
+                            _id: id, // [S47.2] Virtual/Temporary Client-Side UUID. Será ignorado/re-generado por Backend.
                             nombre: nombre,
                             descripcion: desc || '',
                             _etiqueta: etiqueta,
