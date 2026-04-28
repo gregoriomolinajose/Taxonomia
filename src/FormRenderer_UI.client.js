@@ -249,10 +249,10 @@
                     // Evaluar la topología del Schema (Inyección manual del Auto-Divider en Linear)
                     const exactDivider = fields.find(f => f.section === stepName && f.type === 'divider' && f.label === stepName);
                     
-                    if (!exactDivider) {
+                    if (!exactDivider && stepName !== 'Configuración General') {
                         const dividerCol = document.createElement('ion-col');
                         dividerCol.setAttribute('size', '12');
-                        dividerCol.appendChild(global.UI_Factory.buildDivider({ label: stepName === 'Configuración General' ? '' : stepName }));
+                        dividerCol.appendChild(global.UI_Factory.buildDivider({ label: stepName }));
                         stepRow.appendChild(dividerCol);
                     }
 
