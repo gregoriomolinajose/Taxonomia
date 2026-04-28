@@ -23,7 +23,7 @@ Desarrollar un ETL para la carga masiva de capacidades desde un archivo plano, t
 
 ## Stories
 - S47.1: ETL Parser y Mapeo Estructural Básico (Niveles 0-3).
-- S47.2: Algoritmos de auto-generación de topología (`order_path` y `path_completo_es`).
+- S47.2: Algoritmos de auto-generación de topología (`order_path` y `path_completo_es`) integrando un índice Hash Map O(1) en el `Math_Engine` para evitar bloqueos por complejidad O(N^2) en grandes volúmenes.
 - S47.3: Integración y pruebas de carga con la base de datos / UI.
 
 ## Implementation Plan
