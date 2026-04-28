@@ -38,13 +38,13 @@ Hemos priorizado un enfoque "Walking Skeleton" (S47.1) para mitigar el riesgo de
 | 3 | S47.3 | Database Batch Dispatch & E2E Verification | Depende de S47.2 (PAT-E-539 E2E req) | S |
 
 ### Milestones
-- **M1: Walking Skeleton (Fin de S47.1):** El usuario suelta el archivo, el sistema detecta el formato, lo lee desde la Fila 6 y muestra la jerarquía básica en consola sin que las celdas vacías rompan la continuidad.
-- **M2: Core MVP (Fin de S47.2):** La estructura leída genera objetos JSON completamente válidos con sus `order_path` y `path_completo_es` matemáticamente correctos listos para insertar.
+- **M1: File Parser (Fin de S47.1):** Capacidad de leer archivos `.xlsx` y exportar un log en consola con los renglones extraídos.
+- **M2: Data Integrator (Fin de S47.2):** Los registros del archivo cuentan con metadata obligatoria lista (`_nivel`, `_order_path`, etc.) pero aún no persisten.
 - **M3: Feature Complete (Fin de S47.3):** Integración E2E. El modal inyecta de 50 en 50 registros hacia Google Sheets mediante `_dispatchChunks`.
 
 ### Progress Tracking
 | Story | Size | Status | Actual | Velocity | Notes |
 |-------|:----:|--------|--------|----------|-------|
 | S47.1 | M | Done | 45m | 🚀 | Fill-down parser implementado |
-| S47.2 | M | Pending| - | - | - |
+| S47.2 | M | Done | 55m | 🚀 | Flattening + Math_Engine O(1) completado |
 | S47.3 | S | Pending| - | - | - |
