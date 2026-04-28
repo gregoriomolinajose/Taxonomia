@@ -19,6 +19,25 @@ function buildOrdenPath(formStateObj, params, cache) {
     const nivel = parseInt(nivelStr, 10);
     if (isNaN(nivel)) return '';
     
+    // [S47.2] Soporte O(1) para Ingestiones Masivas
+    if (cache && cache.isFastCache) {
+        if (nivel === 0) {
+            const maxRoot = cache.childrenCount.get('ROOT') || 0;
+            return String(maxRoot + 1).padStart(2, '0');
+        } else {
+            const idPadre = formStateObj[parentField];
+            if (!idPadre || idPadre === '') return '';
+            
+            const padre = cache.nodesById.get(idPadre);
+            if (!padre || !padre[orderField]) return '';
+            
+            const parentPathStr = String(padre[orderField]).split('.').map(p => p.padStart(2, '0')).join('.');
+            const maxSuffix = cache.childrenCount.get(idPadre) || 0;
+            
+            return parentPathStr + '.' + String(maxSuffix + 1).padStart(2, '0');
+        }
+    }
+
     const safeCache = cache || [];
     
     if (nivel === 0) {
@@ -63,6 +82,16 @@ function buildPathName(formStateObj, params, cache) {
         return `${nombre}`;
     }
     
+    // [S47.2] Soporte O(1) para Ingestiones Masivas
+    if (cache && cache.isFastCache) {
+        const padreRecord = cache.nodesById.get(idPadre);
+        if (!padreRecord || !padreRecord[params.pathField]) {
+            return `... > ${nombre}`;
+        }
+        const cleanParentPath = padreRecord[params.pathField].replace(/^PATH:\s*/, '').trim();
+        return `${cleanParentPath} > ${nombre}`;
+    }
+
     const safeCache = cache || [];
     const pkField = params.pkField || 'id_' + params.entity.toLowerCase();
     const padreRecord = safeCache.find(r => String(r[pkField]) === String(idPadre));

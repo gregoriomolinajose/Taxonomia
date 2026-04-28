@@ -104,16 +104,87 @@ window.DataEngine_ETL_Capacidades = (function() {
 
                     console.log("Extracción y Fill-Down Completado:", payloads);
                     
-                    // S47.1 se considera terminada imprimiendo el array
+                    // S47.2: Graph Flattening O(1)
+                    const nodesMap = new Map();
+                    const fastCache = { isFastCache: true, nodesById: new Map(), childrenCount: new Map() };
+                    
+                    const MathParams = {
+                        entity: 'Capacidades',
+                        levelField: '_nivel',
+                        parentField: 'id_dominio_padre',
+                        pkField: '_id',
+                        orderField: '_order_path',
+                        nameField: 'nombre',
+                        pathField: '_path_completo_es'
+                    };
+
+                    const createNode = (id, nombre, desc, etiqueta, nivel, idPadre) => {
+                        if (nodesMap.has(id) || !nombre) return id;
+                        
+                        const nodo = {
+                            _id: id, // [S47.2] Virtual/Temporary Client-Side UUID. Será ignorado/re-generado por Backend.
+                            nombre: nombre,
+                            descripcion: desc || '',
+                            _etiqueta: etiqueta,
+                            _tipo_nodo: etiqueta,
+                            _nivel: nivel,
+                            id_dominio_padre: idPadre || null
+                        };
+                        
+                        // Computar topología con Math_Engine O(1)
+                        if (window.Math_Engine) {
+                            nodo._order_path = window.Math_Engine.buildOrdenPath(nodo, MathParams, fastCache);
+                            nodo._path_completo_es = window.Math_Engine.buildPathName(nodo, MathParams, fastCache);
+                        } else {
+                            nodo._order_path = '';
+                            nodo._path_completo_es = nombre;
+                        }
+                        
+                        // Registrar en caché para siguientes hermanos/hijos
+                        fastCache.nodesById.set(id, nodo);
+                        const parentKey = idPadre || 'ROOT';
+                        const currentCount = fastCache.childrenCount.get(parentKey) || 0;
+                        fastCache.childrenCount.set(parentKey, currentCount + 1);
+                        
+                        nodesMap.set(id, nodo);
+                        return id;
+                    };
+
+                    payloads.forEach(record => {
+                        const mName = record["Macrocapacidad"];
+                        const cName = record["Capacidad"];
+                        const sName = record["Subcapacidad"];
+                        const compName = record["Componente"];
+
+                        // Construimos IDs compuestos para evitar colisiones
+                        let idMacro = mName ? `M|||${mName}` : null;
+                        let idCap = cName && idMacro ? `${idMacro}|||C|||${cName}` : null;
+                        let idSub = sName && idCap ? `${idCap}|||S|||${sName}` : null;
+                        let idComp = compName && idSub ? `${idSub}|||COMP|||${compName}` : null;
+
+                        // Insertar Nivel 0
+                        if (mName) createNode(idMacro, mName, '', 'Macrocapacidad', 0, null);
+                        // Insertar Nivel 1
+                        if (cName) createNode(idCap, cName, record["Descripción de la capacidad"], 'Capacidad', 1, idMacro);
+                        // Insertar Nivel 2
+                        if (sName) createNode(idSub, sName, record["Descripción de la Subcapacidad"], 'Sub capacidad', 2, idCap);
+                        // Insertar Nivel 3
+                        if (compName) createNode(idComp, compName, record["Descripción del componente"], 'Componente', 3, idSub);
+                    });
+
+                    const finalPayloads = Array.from(nodesMap.values());
+                    console.log("Graph Flattening Completado. Nodos Totales:", finalPayloads.length, finalPayloads);
+
+                    // S47.2 se considera terminada imprimiendo el array
                     // Simulamos UI success
                     if (typeof window.UI_ETL_Modal !== 'undefined' && window.UI_ETL_Modal.showResults) {
-                        window.UI_ETL_Modal.updateProgress(1, 1, true, null, 'Análisis Estructural Completo');
+                        window.UI_ETL_Modal.updateProgress(1, 1, true, null, 'Análisis Topológico Completo');
                         setTimeout(() => {
-                            window.UI_ETL_Modal.showResults({ success: payloads.length, duplicate: 0, error: 0 });
+                            window.UI_ETL_Modal.showResults({ success: finalPayloads.length, duplicate: 0, error: 0 });
                         }, 500);
                     }
                     
-                    resolve(payloads);
+                    resolve(finalPayloads);
 
                 } catch (err) {
                     console.error("Error parseando XLSX:", err);
