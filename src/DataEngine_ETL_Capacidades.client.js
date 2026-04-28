@@ -93,33 +93,31 @@ window.DataEngine_ETL_Capacidades = (function() {
                     
                     const MathParams = {
                         entity: 'Capacidades',
-                        levelField: '_nivel',
+                        levelField: 'nivel_tipo',
                         parentField: 'id_dominio_padre',
-                        pkField: '_id',
-                        orderField: '_order_path',
+                        pkField: 'id_capacidad',
+                        orderField: 'orden_path',
                         nameField: 'nombre',
-                        pathField: '_path_completo_es'
+                        pathField: 'path_completo_es'
                     };
 
                     const createNode = (id, nombre, desc, etiqueta, nivel, idPadre) => {
                         if (nodesMap.has(id) || !nombre) return id;
                         
                         const nodo = {
-                            _id: id, // [S47.2] Virtual/Temporary Client-Side UUID. Será ignorado/re-generado por Backend.
+                            id_capacidad: id, // Debe matchear PK del Schema
                             nombre: nombre,
                             descripcion: desc || '',
-                            _etiqueta: etiqueta,
-                            _tipo_nodo: etiqueta,
-                            _nivel: nivel,
+                            nivel_tipo: nivel,
                             id_dominio_padre: idPadre || null
                         };
                         
                         if (window.Math_Engine) {
-                            nodo._order_path = window.Math_Engine.buildOrdenPath(nodo, MathParams, fastCache);
-                            nodo._path_completo_es = window.Math_Engine.buildPathName(nodo, MathParams, fastCache);
+                            nodo.orden_path = window.Math_Engine.buildOrdenPath(nodo, MathParams, fastCache);
+                            nodo.path_completo_es = window.Math_Engine.buildPathName(nodo, MathParams, fastCache);
                         } else {
-                            nodo._order_path = '';
-                            nodo._path_completo_es = nombre;
+                            nodo.orden_path = '';
+                            nodo.path_completo_es = nombre;
                         }
                         
                         fastCache.nodesById.set(id, nodo);
