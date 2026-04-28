@@ -388,13 +388,22 @@ window.UI_ETL_Modal = (function() {
             // [S47.1] Sniffing Logic for Capacidades
             if (cachedFile.name && cachedFile.name.toLowerCase().includes('modelo de capacidades')) {
                 if (window.DataEngine_ETL_Capacidades) {
-                    window.DataEngine_ETL_Capacidades.processFile(entityName, cachedFile)
-                        .then(data => {
-                            console.log("S47.1 Sniffing Success. Data:", data);
-                        })
-                        .catch(err => {
-                            console.error("Error en Capacidades ETL:", err);
-                        });
+                    window.DataEngine_ETL_Capacidades.processFile(entityName, cachedFile, {
+                        progressCallback: function(chunkIndex, totalChunks, isDone, metrics, customText) {
+                            if (window.UI_ETL_Modal && window.UI_ETL_Modal.updateProgress) {
+                                window.UI_ETL_Modal.updateProgress(chunkIndex, totalChunks, isDone, metrics, customText);
+                            }
+                        },
+                        completionCallback: function(metrics) {
+                            if (window.UI_ETL_Modal && window.UI_ETL_Modal.showResults) {
+                                window.UI_ETL_Modal.showResults(metrics);
+                            }
+                        }
+                    }).then(data => {
+                        console.log("S47.1 Sniffing Success. Data:", data);
+                    }).catch(err => {
+                        console.error("Error en Capacidades ETL:", err);
+                    });
                     return; // Detenemos la ejecución estándar
                 } else {
                     console.warn("DataEngine_ETL_Capacidades not available. Falling back to standard CSV processing.");
