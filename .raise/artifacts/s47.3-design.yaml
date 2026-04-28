@@ -1,0 +1,12 @@
+id: S47.3
+title: Database Batch Dispatch
+status: approved
+architecture:
+  components:
+    - name: DataEngine_ETL_Capacidades
+      type: parser_integration
+      description: Binds the flattened graph to the chunk dispatcher and hooks UI callbacks.
+  data_flow: Object Array -> _dispatchChunks (50 items/batch) -> GAS Endpoint -> DataView_UI Auto-Refresh
+  patterns:
+    - Asynchronous Batch Processing
+    - Progress Callback Hooking
