@@ -6,7 +6,7 @@ Si creamos un proceso ETL de carga masiva, los usuarios podrán poblar eficiente
 ## Success Metrics
 - El sistema puede procesar un archivo plano con la estructura definida.
 - Las capacidades se ingieren correctamente asociando el nivel (0-3) y las etiquetas correspondientes.
-- Los campos auto-generados (`order_path` y `path_completo_es`) se construyen con precisión matemática (ej: 1.1.2 y Canal>Manejo de canales).
+- Los campos auto-generados (`order_path` y `path_completo_es`) se construyen consumiendo las funciones nativas `buildOrdenPath` y `buildPathName` del `Math_Engine.html`.
 - Los campos vacíos (`external_id`, `nombre_en_ingles`, `abreviacion`, `contexto_completo`) se procesan sin errores.
 - Descripciones y nombres se mapean a los campos correctos de nuestro esquema según las reglas de nivel.
 

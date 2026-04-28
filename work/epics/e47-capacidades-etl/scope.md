@@ -10,8 +10,7 @@ Desarrollar un ETL para la carga masiva de capacidades desde un archivo plano, t
   - Nivel 1: Capacidad (Etiqueta "Capacidad"). Sin descripción.
   - Nivel 2: Subcapacidad (Etiqueta "Sub capacidad"). Mapea "Descripción de la Subcapacidad".
   - Nivel 3: Componente (Etiqueta "Componente"). Mapea "Descripción del componente".
-- Auto-generación del campo `order_path` (ej. 1.1.2) basado en la jerarquía calculada del archivo.
-- Auto-generación del campo `path_completo_es` (ej. Canal>Manejo de canales).
+- Auto-generación del campo `order_path` y `path_completo_es` consumiendo estrictamente las funciones pre-existentes `buildOrdenPath` y `buildPathName` del `Math_Engine.html` (re-evaluando su compatibilidad para ingesta masiva si es necesario, pero evitando re-desarrollarlas).
 - Tratamiento explícito de campos no mapeados como vacíos: `external_id`, `nombre_en_ingles`, `abreviacion`, `contexto_completo`.
 - Persistencia de los datos en la entidad de Capacidades.
 
