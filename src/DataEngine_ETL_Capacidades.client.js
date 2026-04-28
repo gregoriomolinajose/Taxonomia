@@ -175,16 +175,38 @@ window.DataEngine_ETL_Capacidades = (function() {
                     const finalPayloads = Array.from(nodesMap.values());
                     console.log("Graph Flattening Completado. Nodos Totales:", finalPayloads.length, finalPayloads);
 
-                    // S47.2 se considera terminada imprimiendo el array
-                    // Simulamos UI success
-                    if (typeof window.UI_ETL_Modal !== 'undefined' && window.UI_ETL_Modal.showResults) {
-                        window.UI_ETL_Modal.updateProgress(1, 1, true, null, 'Análisis Topológico Completo');
-                        setTimeout(() => {
-                            window.UI_ETL_Modal.showResults({ success: finalPayloads.length, duplicate: 0, error: 0 });
-                        }, 500);
+                    // S47.3: Database Batch Dispatch
+                    if (window.DataEngine_ETL && window.DataEngine_ETL._dispatchChunks) {
+                        const progressCb = (chunk, total, isDone, metrics, text) => {
+                            if (window.UI_ETL_Modal && window.UI_ETL_Modal.updateProgress) {
+                                window.UI_ETL_Modal.updateProgress(chunk, total, isDone, metrics, text);
+                            }
+                            if (isDone && window.UI_ETL_Modal && window.UI_ETL_Modal.showResults) {
+                                window.UI_ETL_Modal.showResults(metrics || { success: finalPayloads.length, duplicate: 0, error: 0 });
+                            }
+                        };
+                        
+                        // _dispatchChunks es async
+                        window.DataEngine_ETL._dispatchChunks(finalPayloads, entityName, progressCb)
+                            .then(() => resolve(finalPayloads))
+                            .catch(err => {
+                                console.error("Error en _dispatchChunks:", err);
+                                if (window.UI_ETL_Modal && window.UI_ETL_Modal.showResults) {
+                                    window.UI_ETL_Modal.showResults({ success: 0, duplicate: 0, error: finalPayloads.length });
+                                }
+                                reject(err);
+                            });
+                    } else {
+                        // Fallback Testing if not available
+                        console.warn("DataEngine_ETL._dispatchChunks no disponible. Usando fallback UX.");
+                        if (typeof window.UI_ETL_Modal !== 'undefined' && window.UI_ETL_Modal.showResults) {
+                            window.UI_ETL_Modal.updateProgress(1, 1, true, null, 'Análisis Topológico Completo');
+                            setTimeout(() => {
+                                window.UI_ETL_Modal.showResults({ success: finalPayloads.length, duplicate: 0, error: 0 });
+                            }, 500);
+                        }
+                        resolve(finalPayloads);
                     }
-                    
-                    resolve(finalPayloads);
 
                 } catch (err) {
                     console.error("Error parseando XLSX:", err);
