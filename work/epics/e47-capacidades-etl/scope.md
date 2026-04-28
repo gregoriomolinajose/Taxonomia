@@ -47,4 +47,4 @@ Hemos priorizado un enfoque "Walking Skeleton" (S47.1) para mitigar el riesgo de
 |-------|:----:|--------|--------|----------|-------|
 | S47.1 | M | Done | 45m | 🚀 | Fill-down parser implementado |
 | S47.2 | M | Done | 55m | 🚀 | Flattening + Math_Engine O(1) completado |
-| S47.3 | S | Pending| - | - | - |
+| S47.3 | S | Done | 20m | 🚀 | Dispatcher asíncrono y UX acoplada |
