@@ -198,7 +198,7 @@ window.UI_ETL_Modal = (function() {
                 <div class="etl-step-title">Adjunta tu archivo</div>
                 <div class="etl-step-desc">Asegúrate que el archivo sea menor a 15MB.</div>
                 
-                <input type="file" id="etl-csv-input" accept=".csv" style="display:none;" />
+                <input type="file" id="etl-csv-input" accept=".csv,.xlsx" style="display:none;" />
                 
                 <!-- Fallback Button para Movil -->
                 <ion-button fill="outline" color="medium" id="btn-upload-mobile" style="margin-bottom: 12px; --border-radius: 8px;">
@@ -384,6 +384,23 @@ window.UI_ETL_Modal = (function() {
         // Execute CSV
         btnSyncCsv.addEventListener('click', () => {
             if (!cachedFile) return _showToast('Adjunta un archivo primero.', 'warning');
+            
+            // [S47.1] Sniffing Logic for Capacidades
+            if (cachedFile.name && cachedFile.name.toLowerCase().includes('modelo de capacidades')) {
+                if (window.DataEngine_ETL_Capacidades) {
+                    window.DataEngine_ETL_Capacidades.processFile(entityName, cachedFile)
+                        .then(data => {
+                            console.log("S47.1 Sniffing Success. Data:", data);
+                        })
+                        .catch(err => {
+                            console.error("Error en Capacidades ETL:", err);
+                        });
+                    return; // Detenemos la ejecución estándar
+                } else {
+                    console.warn("DataEngine_ETL_Capacidades not available. Falling back to standard CSV processing.");
+                }
+            }
+
             if (options && typeof options.onLocalUpload === 'function') {
                 options.onLocalUpload(entityName, { target: { files: [cachedFile] } }, modal);
             }
