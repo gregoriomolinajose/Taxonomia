@@ -165,6 +165,7 @@
                     if (parentField) {
                         parentCol = parentField.name;
                         if (parentField.graphEdgeType) edgeType = parentField.graphEdgeType;
+                        else edgeType = parentField.name.toUpperCase();
                     }
                 }
             }
