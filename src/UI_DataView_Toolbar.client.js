@@ -131,11 +131,11 @@ window.UI_DataView_Toolbar = (function () {
         btnGrid.addEventListener('click', () => onViewToggle('grid'));
         left.appendChild(btnGrid);
         
-        if (entityName === 'Persona') {
+        if (entityName === 'Persona' || entityName === 'Capacidad') {
             const btnTree = document.createElement('button');
             btnTree.className = `dv-btn-icon ${viewType === 'tree' ? 'active' : ''}`;
             btnTree.id = 'dv-view-tree-btn';
-            btnTree.title = 'Diagrama de Organigrama';
+            btnTree.title = entityName === 'Capacidad' ? 'Jerarquía de Capacidades' : 'Diagrama de Organigrama';
             const iconTree = document.createElement('ion-icon');
             iconTree.setAttribute('name', 'git-network-outline');
             btnTree.appendChild(iconTree);
