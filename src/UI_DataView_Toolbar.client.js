@@ -1,5 +1,6 @@
 window.UI_DataView_Toolbar = (function () {
     const ENTITY_META = window.ENTITY_META || {};
+    let isGlobalFullscreen = false;
 
     /* ────────────────────────────────────────────
        1. Column Popover (Configuraciones de Visibilidad)
@@ -131,16 +132,29 @@ window.UI_DataView_Toolbar = (function () {
         btnGrid.addEventListener('click', () => onViewToggle('grid'));
         left.appendChild(btnGrid);
         
-        if (entityName === 'Persona' || entityName === 'Capacidad') {
+        if (entityName === 'Persona' || entityName === 'Capacidad' || entityName === 'Dominio') {
             const btnTree = document.createElement('button');
             btnTree.className = `dv-btn-icon ${viewType === 'tree' ? 'active' : ''}`;
             btnTree.id = 'dv-view-tree-btn';
-            btnTree.title = entityName === 'Capacidad' ? 'Jerarquía de Capacidades' : 'Diagrama de Organigrama';
+            btnTree.title = (entityName === 'Capacidad' || entityName === 'Dominio') ? `Jerarquía de ${entityName}s` : 'Diagrama de Organigrama';
             const iconTree = document.createElement('ion-icon');
+            iconTree.setAttribute('name', 'git-network-outline');
             iconTree.setAttribute('name', 'git-network-outline');
             btnTree.appendChild(iconTree);
             btnTree.addEventListener('click', () => onViewToggle('tree'));
             left.appendChild(btnTree);
+        }
+
+        if (entityName === 'Capacidad') {
+            const btnChart = document.createElement('button');
+            btnChart.className = `dv-btn-icon ${viewType === 'echarts' ? 'active' : ''}`;
+            btnChart.id = 'dv-view-echarts-btn';
+            btnChart.title = 'Mapa de Capacidades (Avanzado)';
+            const iconChart = document.createElement('ion-icon');
+            iconChart.setAttribute('name', 'apps-outline');
+            btnChart.appendChild(iconChart);
+            btnChart.addEventListener('click', () => onViewToggle('echarts'));
+            left.appendChild(btnChart);
         }
 
         if (entityName === 'Dominio') {
@@ -214,6 +228,68 @@ window.UI_DataView_Toolbar = (function () {
         btnExp.appendChild(iconExp);
         btnExp.appendChild(document.createTextNode(' Exportar CSV'));
         
+        // Botón Fullscreen JIRA Style
+        const btnExpFull = document.createElement('button');
+        btnExpFull.className = 'dv-btn dv-btn-ghost';
+        btnExpFull.id = 'dv-global-fullscreen-btn';
+        btnExpFull.innerHTML = isGlobalFullscreen 
+            ? '<ion-icon name="contract-outline" slot="start"></ion-icon> Colapsar' 
+            : '<ion-icon name="expand-outline" slot="start"></ion-icon> Expandir';
+            
+        btnExpFull.onclick = () => {
+            isGlobalFullscreen = !isGlobalFullscreen;
+            const toolbar = document.querySelector('.dv-toolbar');
+            const menu = document.querySelector('ion-menu');
+            const splitPane = document.querySelector('ion-split-pane');
+            const globalHeader = document.querySelector('#main-content > ion-header');
+            const appContainer = document.getElementById('app-container');
+            
+            if (isGlobalFullscreen) {
+                btnExpFull.innerHTML = '<ion-icon name="contract-outline" slot="start"></ion-icon> Colapsar';
+                if (menu) menu.style.display = 'none';
+                if (splitPane) {
+                    splitPane.style.setProperty('--side-width', '0px');
+                    splitPane.style.setProperty('--side-min-width', '0px');
+                    splitPane.style.setProperty('--side-max-width', '0px');
+                }
+                if (appContainer) {
+                    appContainer.style.paddingLeft = '24px';
+                    appContainer.style.paddingRight = '24px';
+                }
+                if (globalHeader) {
+                    globalHeader.style.transition = 'transform 0.3s ease, opacity 0.3s ease';
+                    globalHeader.style.transform = 'translateY(-100%)';
+                    globalHeader.style.opacity = '0';
+                    setTimeout(() => { globalHeader.style.display = 'none'; window.dispatchEvent(new Event('resize')); }, 300);
+                } else {
+                    window.dispatchEvent(new Event('resize'));
+                }
+            } else {
+                btnExpFull.innerHTML = '<ion-icon name="expand-outline" slot="start"></ion-icon> Expandir';
+                if (menu) menu.style.display = '';
+                if (splitPane) {
+                    splitPane.style.removeProperty('--side-width');
+                    splitPane.style.removeProperty('--side-min-width');
+                    splitPane.style.removeProperty('--side-max-width');
+                }
+                if (appContainer) {
+                    appContainer.style.removeProperty('padding-left');
+                    appContainer.style.removeProperty('padding-right');
+                }
+                if (globalHeader) {
+                    globalHeader.style.display = '';
+                    setTimeout(() => {
+                        globalHeader.style.transform = 'translateY(0)';
+                        globalHeader.style.opacity = '1';
+                        window.dispatchEvent(new Event('resize'));
+                    }, 10);
+                } else {
+                    window.dispatchEvent(new Event('resize'));
+                }
+            }
+            
+        };
+        
         const btnImp = document.createElement('button');
         btnImp.className = 'dv-btn dv-btn-ghost';
         if (typeof onImportCSVTrigger === 'function') btnImp.addEventListener('click', onImportCSVTrigger);
@@ -231,6 +307,8 @@ window.UI_DataView_Toolbar = (function () {
         iconAdd.setAttribute('slot', 'start');
         btnAdd.appendChild(iconAdd);
         btnAdd.appendChild(document.createTextNode(` Crear ${displayLabel.replace(/s$/, '')}`));
+        
+        rightDiv.appendChild(btnExpFull);
         rightDiv.appendChild(btnExp);
         // btnImp se inyecta condicionalmente más abajo
 

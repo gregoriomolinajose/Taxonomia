@@ -94,12 +94,25 @@
                 }
             }
 
-            // Omitir cabeceras transaccionales/auditoría
+            // Omitir cabeceras transaccionales/auditoría y aplicar mapeo de alias
             const sanitized = rawPayload.map(row => {
                 const cleanRow = {};
-                for (const key in row) {
+                for (let key in row) {
                     if (row.hasOwnProperty(key)) {
-                        const lowKey = key.trim().toLowerCase();
+                        let lowKey = key.trim().toLowerCase();
+                        
+                        // S47: Resolución de alias visuales para Dominios
+                        if (entityName === 'Dominio') {
+                            if (lowKey === 'nivel subdominio') key = 'nivel_tipo';
+                            else if (lowKey === 'orden. subdominio' || lowKey === 'orden subdominio') key = 'orden_path';
+                            else if (lowKey === 'subdominio') key = 'nombre_ingles';
+                            else if (lowKey === 'nombre español') key = 'nombre';
+                            else if (lowKey === 'definición' || lowKey === 'definicion') key = 'descripcion';
+                            else if (lowKey === 'abreviación (nombre servicio)' || lowKey === 'abreviacion (nombre servicio)') key = 'abreviacion';
+                            else if (lowKey === 'abreviación (path servicio)' || lowKey === 'abreviacion (path servicio)') key = 'path_completo_es';
+                            lowKey = key.toLowerCase();
+                        }
+
                         if (lowKey.startsWith('sys_') || lowKey === 'avatar' || lowKey.startsWith('file_')) {
                             continue; // Ignorado táctico (S38.4 Tolerancia)
                         }
@@ -350,9 +363,22 @@
             const delimiterRegex = /,(?=(?:(?:[^"]*"){2})*[^"]*$)/;
 
             // Limpieza Defensiva de Cabezales (Minúsculas, sin espacios)
-            const headers = lines[0].split(delimiterRegex).map(h => 
-                h.replace(/^"|"$/g, '').trim().toLowerCase().replace(/\s+/g, '_')
-            );
+            const headers = lines[0].split(delimiterRegex).map(h => {
+                let clean = h.replace(/^"|"$/g, '').trim().toLowerCase().replace(/\s+/g, '_');
+                
+                // S47: Alias de Mapeo CSV para Dominios
+                if (entityName === 'Dominio') {
+                    if (clean === 'nivel_subdominio') clean = 'nivel_tipo';
+                    else if (clean === 'orden._subdominio' || clean === 'orden_subdominio') clean = 'orden_path';
+                    else if (clean === 'subdominio') clean = 'nombre_ingles';
+                    else if (clean === 'nombre_español' || clean === 'nombre_espanol') clean = 'nombre';
+                    else if (clean === 'definición' || clean === 'definicion') clean = 'descripcion';
+                    else if (clean === 'abreviación_(nombre_servicio)' || clean === 'abreviacion_(nombre_servicio)') clean = 'abreviacion';
+                    else if (clean === 'abreviación_(path_servicio)' || clean === 'abreviacion_(path_servicio)') clean = 'path_completo_es';
+                }
+                
+                return clean;
+            });
             
             // Verificación Temprana (Fail-Fast): Al menos una columna debe coincidir con el schema
             const schema = (window.APP_SCHEMAS && window.APP_SCHEMAS[entityName]) 

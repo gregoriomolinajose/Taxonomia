@@ -181,15 +181,16 @@ const TopologyGuard = {
     }
 };
 
-function buildEChartsCapacidadesTreemapData(capacidadesData) {
-    if (!capacidadesData || capacidadesData.length === 0) return [];
+function buildEChartsCapacidadesTreemapData(data, entityName) {
+    if (!data || data.length === 0) return [];
+    entityName = entityName || 'Capacidad';
     var mapData = {};
     var rootNodes = [];
     var hasParentMap = {};
     
-    var pkField = window.Schema_Utils ? window.Schema_Utils.getPrimaryKey('Capacidad') : 'id_capacidad';
+    var pkField = window.Schema_Utils ? window.Schema_Utils.getPrimaryKey(entityName) : (entityName === 'Dominio' ? 'id_dominio' : 'id_capacidad');
     
-    capacidadesData.forEach(function(row) {
+    data.forEach(function(row) {
         var id = row[pkField] || row.id_registro || row.lexical_id;
         mapData[id] = {
             id: id,
@@ -199,9 +200,9 @@ function buildEChartsCapacidadesTreemapData(capacidadesData) {
         };
     });
     
-    capacidadesData.forEach(function(row) {
+    data.forEach(function(row) {
         var id = row[pkField] || row.id_registro || row.lexical_id;
-        var idPadre = row.id_capacidad_padre || row.id_dominio_padre || row.lider_directo || row.padre_id; 
+        var idPadre = row.id_capacidad_padre || row.id_dominio_padre || row.lider_directo || row.padre_id || row.relaciones_padre;  
         
         if (idPadre && String(idPadre).trim() !== '' && mapData[idPadre] && idPadre !== id) {
             var parentNode = mapData[idPadre];
@@ -237,8 +238,8 @@ function buildEChartsCapacidadesTreemapData(capacidadesData) {
     return rootNodes;
 }
 
-function buildEChartsCapacidadesOption(capacidadesData, isPrebuilt, gapColor, textColor, borderColor, primaryColor, primaryContrast) {
-    var data = isPrebuilt ? capacidadesData : buildEChartsCapacidadesTreemapData(capacidadesData);
+function buildEChartsCapacidadesOption(capacidadesData, isPrebuilt, gapColor, textColor, borderColor, primaryColor, primaryContrast, entityName) {
+    var data = isPrebuilt ? capacidadesData : buildEChartsCapacidadesTreemapData(capacidadesData, entityName);
     var bgColor = gapColor || 'transparent';
     var txtColor = textColor || '#333333';
     var brdColor = borderColor || '#cccccc';
