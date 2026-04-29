@@ -494,30 +494,10 @@ window.UI_ETL_Modal = (function() {
             const body = modal.querySelector('.etl-body');
             if (!body) return;
             
-            window._etlFeedbackCache = feedback || [];
+            const localFeedback = feedback || [];
             
-            window.downloadFeedbackCSV = function() {
-                const fb = window._etlFeedbackCache;
-                if (!fb || !fb.length) return;
-                let csvContent = "data:text/csv;charset=utf-8,Fila,Estado,Identificador,Motivo\n";
-                fb.forEach(f => {
-                    const fila = f._rowIndex || '-';
-                    const estado = f.status || '-';
-                    const id = (f.val || f.lexical_id || '-').toString().replace(/,/g, ' ');
-                    const motivo = (f.reason || f.message || '-').toString().replace(/,/g, ' ');
-                    csvContent += `${fila},${estado},${id},${motivo}\n`;
-                });
-                const encodedUri = encodeURI(csvContent);
-                const link = document.createElement("a");
-                link.setAttribute("href", encodedUri);
-                link.setAttribute("download", "reporte_errores_ingesta.csv");
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-            };
-
             // Construir el template de resultados
-            const hasIssues = (metrics.duplicate > 0 || metrics.error > 0) && window._etlFeedbackCache.length > 0;
+            const hasIssues = (metrics.duplicate > 0 || metrics.error > 0) && localFeedback.length > 0;
             
             body.innerHTML = `
                 <div style="text-align: center; padding: 20px 10px;">
@@ -544,7 +524,7 @@ window.UI_ETL_Modal = (function() {
                         <ion-icon name="information-circle-outline" style="vertical-align: middle;"></ion-icon> 
                         Por tu seguridad, la plataforma no puede alterar tu archivo original. Puedes descargar el reporte de los registros ignorados:
                         <div style="margin-top: 12px; text-align: center;">
-                            <ion-button fill="outline" color="warning" size="small" onclick="window.downloadFeedbackCSV()" style="--border-radius: 6px;">
+                            <ion-button id="btn-etl-download-csv" fill="outline" color="warning" size="small" style="--border-radius: 6px;">
                                 <ion-icon slot="start" name="download-outline"></ion-icon>
                                 Descargar Reporte CSV
                             </ion-button>
@@ -559,6 +539,29 @@ window.UI_ETL_Modal = (function() {
                     </div>
                 </div>
             `;
+            
+            if (hasIssues) {
+                const btnDownload = document.getElementById('btn-etl-download-csv');
+                if (btnDownload) {
+                    btnDownload.addEventListener('click', () => {
+                        let csvContent = "data:text/csv;charset=utf-8,Fila,Estado,Identificador,Motivo\n";
+                        localFeedback.forEach(f => {
+                            const fila = f._rowIndex || '-';
+                            const estado = f.status || '-';
+                            const id = (f.val || f.lexical_id || '-').toString().replace(/,/g, ' ');
+                            const motivo = (f.reason || f.message || '-').toString().replace(/,/g, ' ');
+                            csvContent += `${fila},${estado},${id},${motivo}\n`;
+                        });
+                        const encodedUri = encodeURI(csvContent);
+                        const link = document.createElement("a");
+                        link.setAttribute("href", encodedUri);
+                        link.setAttribute("download", "reporte_errores_ingesta.csv");
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                    });
+                }
+            }
         }
     };
 })();
