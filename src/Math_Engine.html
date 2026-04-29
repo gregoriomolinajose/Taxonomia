@@ -181,10 +181,268 @@ const TopologyGuard = {
     }
 };
 
+function buildEChartsCapacidadesTreemapData(capacidadesData) {
+    if (!capacidadesData || capacidadesData.length === 0) return [];
+    var mapData = {};
+    var rootNodes = [];
+    var hasParentMap = {};
+    
+    var pkField = window.Schema_Utils ? window.Schema_Utils.getPrimaryKey('Capacidad') : 'id_capacidad';
+    
+    capacidadesData.forEach(function(row) {
+        var id = row[pkField] || row.id_registro || row.lexical_id;
+        mapData[id] = {
+            id: id,
+            name: (row.nombre || row.n0_es || row.lexical_id || 'Sin Nombre').trim(),
+            value: 1,
+            _record: row
+        };
+    });
+    
+    capacidadesData.forEach(function(row) {
+        var id = row[pkField] || row.id_registro || row.lexical_id;
+        var idPadre = row.id_capacidad_padre || row.id_dominio_padre || row.lider_directo || row.padre_id; 
+        
+        if (idPadre && String(idPadre).trim() !== '' && mapData[idPadre] && idPadre !== id) {
+            var parentNode = mapData[idPadre];
+            var node = mapData[id];
+            if (!parentNode.children) parentNode.children = [];
+            parentNode.children.push(node);
+            hasParentMap[id] = true;
+        }
+    });
+
+    capacidadesData.forEach(function(row) {
+        var id = row[pkField] || row.id_registro || row.lexical_id;
+        if (!hasParentMap[id]) {
+            rootNodes.push(mapData[id]);
+        }
+    });
+    
+    // Normalizar pesos: Forza que todas las tarjetas hermanas tengan exactamente el mismo tamaño visual
+    function normalizeValues(nodes, targetSum) {
+        if (!nodes || nodes.length === 0) return;
+        var weightPerNode = targetSum / nodes.length;
+        nodes.forEach(function(n) {
+            n.value = weightPerNode; // ECharts usará este valor en lugar de la suma bruta
+            if (n.children && n.children.length > 0) {
+                normalizeValues(n.children, weightPerNode);
+            }
+        });
+    }
+    
+    // Asignar un peso total arbitrario al nivel raíz para iniciar la división equitativa
+    normalizeValues(rootNodes, 100000);
+    
+    return rootNodes;
+}
+
+function buildEChartsCapacidadesOption(capacidadesData, isPrebuilt, gapColor, textColor, borderColor, primaryColor, primaryContrast) {
+    var data = isPrebuilt ? capacidadesData : buildEChartsCapacidadesTreemapData(capacidadesData);
+    var bgColor = gapColor || 'transparent';
+    var txtColor = textColor || '#333333';
+    var brdColor = borderColor || '#cccccc';
+    var primColor = primaryColor || '#3880ff';
+    var primContrast = primaryContrast || '#ffffff';
+    
+    return {
+        backgroundColor: bgColor,
+        tooltip: {
+            formatter: function (info) {
+                var value = info.value;
+                var treePathInfo = info.treePathInfo;
+                var treePath = [];
+                for (var i = 1; i < treePathInfo.length; i++) {
+                    treePath.push(treePathInfo[i].name);
+                }
+                return '<div class="tooltip-title">' + echarts.format.encodeHTML(treePath.join(' > ')) + '</div>';
+            }
+        },
+        series: [
+            {
+                type: 'treemap',
+                data: data,
+                leafDepth: 1,
+                roam: false,
+                nodeClick: 'zoomToNode',
+                left: '2%',
+                right: '2%',
+                top: '40px',
+                bottom: '2%',
+                breadcrumb: {
+                    show: true,
+                    top: '0',
+                    left: '2%',
+                    itemStyle: {
+                        color: 'rgba(0,0,0,0)',
+                        borderColor: brdColor,
+                        borderWidth: 1,
+                        textStyle: {
+                            color: txtColor
+                        }
+                    },
+                    emphasis: {
+                        itemStyle: {
+                            color: primColor,
+                            textStyle: {
+                                color: primContrast
+                            }
+                        },
+                        textStyle: {
+                            color: primContrast
+                        }
+                    },
+                    textStyle: {
+                        color: txtColor,
+                        fontSize: 14
+                    },
+                    emptyItemWidth: 25
+                },
+                label: {
+                    show: true,
+                    formatter: function(info) {
+                        var words = info.name.split(' ');
+                        var lines = [];
+                        var currentLine = '';
+                        for (var i = 0; i < words.length; i++) {
+                            if ((currentLine + words[i]).length > 35 && currentLine.length > 0) {
+                                lines.push(currentLine.trim());
+                                currentLine = words[i] + ' ';
+                            } else {
+                                currentLine += words[i] + ' ';
+                            }
+                        }
+                        if (currentLine) lines.push(currentLine.trim());
+                        
+                        var titleText = lines.join('\n');
+                        var desc = info.data.descripcion;
+                        
+                        if (desc && String(desc).trim() !== '') {
+                            var descWords = String(desc).split(' ');
+                            var descLines = [];
+                            var dLine = '';
+                            for (var j = 0; j < descWords.length; j++) {
+                                if ((dLine + descWords[j]).length > 35 && dLine.length > 0) {
+                                    descLines.push(dLine.trim());
+                                    dLine = descWords[j] + ' ';
+                                } else {
+                                    dLine += descWords[j] + ' ';
+                                }
+                            }
+                            if (dLine) descLines.push(dLine.trim());
+                            
+                            return '{title|' + titleText + '}\n{gap|}\n{desc|' + descLines.join('\n') + '}';
+                        }
+                        return '{title|' + titleText + '}';
+                    },
+                    rich: {
+                        title: {
+                            fontSize: 13,
+                            fontWeight: 'bold',
+                            lineHeight: 16
+                        },
+                        gap: {
+                            fontSize: 8,
+                            lineHeight: 8
+                        },
+                        desc: {
+                            fontSize: 11,
+                            lineHeight: 15,
+                            opacity: 0.85
+                        }
+                    },
+                    align: 'left',
+                    verticalAlign: 'top',
+                    position: 'insideTopLeft',
+                    padding: [12, 12, 12, 12]
+                },
+                itemStyle: {
+                    borderColor: bgColor,
+                    borderWidth: 0,
+                    gapWidth: 1
+                },
+                levels: [
+                    {
+                        itemStyle: {
+                            borderColor: bgColor,
+                            borderWidth: 4,
+                            gapWidth: 4
+                        },
+                        upperLabel: {
+                            show: false
+                        }
+                    },
+                    {
+                        itemStyle: {
+                            borderColor: bgColor,
+                            borderWidth: 4,
+                            gapWidth: 4
+                        },
+                        upperLabel: {
+                            show: true,
+                            height: 24,
+                            position: 'inside',
+                            padding: 3,
+                            color: '#333333',
+                            overflow: 'truncate',
+                            ellipsis: '...',
+                            formatter: function(info) { return info.name; }
+                        }
+                    },
+                    {
+                        colorSaturation: [0.35, 0.5],
+                        itemStyle: {
+                            borderColor: bgColor,
+                            borderWidth: 2,
+                            gapWidth: 2
+                        },
+                        upperLabel: {
+                            show: true,
+                            height: 24,
+                            position: 'inside',
+                            padding: 3,
+                            color: '#333333',
+                            overflow: 'truncate',
+                            ellipsis: '...',
+                            formatter: function(info) { return info.name; }
+                        }
+                    },
+                    {
+                        colorSaturation: [0.4, 0.6],
+                        itemStyle: {
+                            borderColor: bgColor,
+                            borderWidth: 1,
+                            gapWidth: 1
+                        },
+                        upperLabel: {
+                            show: true,
+                            height: 24,
+                            position: 'inside',
+                            padding: 3,
+                            color: '#333333',
+                            overflow: 'truncate',
+                            ellipsis: '...',
+                            formatter: function(info) { return info.name; }
+                        }
+                    },
+                    {
+                        colorSaturation: [0.45, 0.7],
+                        itemStyle: {
+                            borderColor: bgColor,
+                            borderWidth: 1,
+                            gapWidth: 1
+                        }
+                    }
+                ]
+            }
+        ]
+    };
+}
+
 // Universal Wrapper
 if (typeof module !== 'undefined' && module.exports) {
-    module.exports = { buildOrdenPath, buildPathName, buildEChartsTreemapData, TopologyGuard };
+    module.exports = { buildOrdenPath, buildPathName, buildEChartsTreemapData, buildEChartsCapacidadesTreemapData, buildEChartsCapacidadesOption, TopologyGuard };
 } else if (typeof window !== 'undefined') {
-    window.Math_Engine = { buildOrdenPath, buildPathName, buildEChartsTreemapData, TopologyGuard };
+    window.Math_Engine = { buildOrdenPath, buildPathName, buildEChartsTreemapData, buildEChartsCapacidadesTreemapData, buildEChartsCapacidadesOption, TopologyGuard };
 }
 </script>
