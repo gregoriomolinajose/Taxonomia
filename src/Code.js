@@ -95,10 +95,15 @@ function include(filename) {
  */
 function UTIL_ForcePermissions() {
   try {
-    const ss = SpreadsheetApp.create("[Taxonomía] Link de Autorización Seguro");
-    const driveScope = DriveApp ? true : false; // Force drive scoping if implicitly requested
-    Logger.log("✅ Permisos cedidos exitosamente. Scope de Drive File Activo. URL de prueba: " + ss.getUrl());
+    const ss = SpreadsheetApp.getActive();
+    if (DriveApp && typeof DriveApp.getFiles === 'function') {
+      DriveApp.getFiles().hasNext(); // Force drive.readonly scope detection
+    }
+    if (typeof AdminDirectory !== 'undefined') {
+      AdminDirectory.Users.list({domain: 'example.com', maxResults: 1}); // Force admin directory scope
+    }
+    Logger.log("✅ Permisos actualizados y verificados por el motor de Google.");
   } catch (e) {
-    Logger.log("❌ Fallo crítico de Permisos: " + e.message);
+    Logger.log("❌ Error o interrupción: " + e.message);
   }
 }
