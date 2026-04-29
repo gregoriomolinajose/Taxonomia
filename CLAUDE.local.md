@@ -5,8 +5,8 @@
 ## Session
 
 - **Active Session**: None
-- **Last Summary**: Finalizadas Epic E43 (Grid Card Layout Polish) y E46.
-- **Last Closed**: E43
+- **Last Summary**: Finalizada Historia S47.4 (Importación Capacidades vía Drive Sync) y Epica E47.
+- **Last Closed**: E47
 - **Next Focus**: Pending next epic.
 
 ## Patterns

@@ -3,7 +3,7 @@
    Story S47.1: UI File Interception & Offset Parser
    ============================================================ */
 
-window.DataEngine_ETL_Capacidades = (function() {
+window.DataEngine_ETL_Capacidad = (function() {
 
     function processFile(entityName, file, options = {}) {
         return new Promise((resolve, reject) => {
@@ -76,13 +76,13 @@ window.DataEngine_ETL_Capacidades = (function() {
                 const isRowEmpty = row.every(cell => cell === undefined || cell === null || String(cell).trim() === '');
                 if (isRowEmpty) continue;
 
-                let rawMacro = row[0];
-                let rawCap = row[1];
-                let rawDescCap = row[2];
-                let rawSubcap = row[3];
-                let rawDescSubcap = row[4];
-                let rawComp = row[5];
-                let rawDescComp = row[6];
+                let rawMacro = row[1];
+                let rawCap = row[2];
+                let rawDescCap = row[3];
+                let rawSubcap = row[4];
+                let rawDescSubcap = row[5];
+                let rawComp = row[6];
+                let rawDescComp = row[7];
 
                 if (rawMacro !== undefined && rawMacro !== null && String(rawMacro).trim() !== '') {
                     lastMacro = String(rawMacro).trim();
@@ -121,7 +121,7 @@ window.DataEngine_ETL_Capacidades = (function() {
             const nodesMap = new Map();
             
             const MathParams = {
-                entity: 'Capacidades',
+                entity: 'Capacidad',
                 levelField: 'nivel_tipo',
                 parentField: 'id_dominio_padre',
                 pkField: 'id_capacidad',
@@ -183,27 +183,96 @@ window.DataEngine_ETL_Capacidades = (function() {
                 return reject(err);
             }
 
-            if (window.DataEngine_ETL && window.DataEngine_ETL._dispatchChunks) {
-                const progressCb = (chunk, total, isDone, metrics, text) => {
-                    updateProgress(chunk, total, isDone, metrics, text);
-                    if (isDone) {
-                        showResults(metrics || { success: finalPayloads.length, duplicate: 0, error: 0 });
-                    }
-                };
-                
-                window.DataEngine_ETL._dispatchChunks(finalPayloads, entityName, progressCb)
-                    .then(() => resolve(finalPayloads))
+            // S47.3: UUID Generation & Idempotency Resolution
+            updateProgress(0, 1, false, null, 'Resolviendo identidades topológicas...');
+            
+            const uuidFn = () => "CAPA-" + Math.random().toString(36).substring(2, 10).toUpperCase();
+            const topoToUuidMap = new Map();
+
+            const finishProcess = () => {
+                if (window.DataEngine_ETL && window.DataEngine_ETL._dispatchChunks) {
+                    const progressCb = (chunk, total, isDone, metrics, text, feedbackList) => {
+                        updateProgress(chunk, total, isDone, metrics, text);
+                        if (isDone) {
+                            showResults(metrics || { success: finalPayloads.length, duplicate: 0, error: 0 }, feedbackList);
+                        }
+                    };
+                    
+                    window.DataEngine_ETL._dispatchChunks(finalPayloads, entityName, progressCb)
+                        .then((metrics) => resolve(metrics))
+                        .catch(err => {
+                            console.error("Error en _dispatchChunks:", err);
+                            reject(err);
+                        });
+                } else {
+                    console.warn("DataEngine_ETL._dispatchChunks no disponible. Usando fallback UX.");
+                    updateProgress(1, 1, true, null, 'Análisis Topológico Completo');
+                    setTimeout(() => {
+                        showResults({ success: finalPayloads.length, duplicate: 0, error: 0 });
+                    }, 500);
+                    resolve(finalPayloads);
+                }
+            };
+
+            if (window.DataAPI) {
+                window.DataAPI.call('list', entityName)
+                    .then(existingRes => {
+                        const existingRecords = (existingRes && existingRes.data && existingRes.data.rows) ? existingRes.data.rows : [];
+                        const pathToUuidMap = new Map();
+                        existingRecords.forEach(r => {
+                            if (r.path_completo_es && r.id_capacidad) {
+                                pathToUuidMap.set(String(r.path_completo_es).trim(), r.id_capacidad);
+                            }
+                        });
+
+                        // 1. Asignar/Resolver UUIDs
+                        finalPayloads.forEach(node => {
+                            const topoId = node.id_capacidad;
+                            const pathStr = String(node.path_completo_es).trim();
+                            let uuid = pathToUuidMap.get(pathStr);
+                            if (!uuid) {
+                                uuid = uuidFn();
+                                pathToUuidMap.set(pathStr, uuid);
+                            }
+                            topoToUuidMap.set(topoId, uuid);
+                            node.id_capacidad = uuid;
+                        });
+
+                        // 2. Resolver Referencias de Padre
+                        finalPayloads.forEach(node => {
+                            if (node.id_dominio_padre && topoToUuidMap.has(node.id_dominio_padre)) {
+                                node.id_dominio_padre = topoToUuidMap.get(node.id_dominio_padre);
+                            } else if (node.id_dominio_padre && !topoToUuidMap.has(node.id_dominio_padre)) {
+                                node.id_dominio_padre = null; 
+                            }
+                        });
+
+                        finishProcess();
+                    })
                     .catch(err => {
-                        console.error("Error en _dispatchChunks:", err);
-                        reject(err);
+                        console.error("Error resolviendo UUIDs, fallback a generacion nueva", err);
+                        finalPayloads.forEach(node => {
+                            const topoId = node.id_capacidad;
+                            const uuid = uuidFn();
+                            topoToUuidMap.set(topoId, uuid);
+                            node.id_capacidad = uuid;
+                        });
+                        finalPayloads.forEach(node => {
+                            if (node.id_dominio_padre) node.id_dominio_padre = topoToUuidMap.get(node.id_dominio_padre) || null;
+                        });
+                        finishProcess();
                     });
             } else {
-                console.warn("DataEngine_ETL._dispatchChunks no disponible. Usando fallback UX.");
-                updateProgress(1, 1, true, null, 'Análisis Topológico Completo');
-                setTimeout(() => {
-                    showResults({ success: finalPayloads.length, duplicate: 0, error: 0 });
-                }, 500);
-                resolve(finalPayloads);
+                finalPayloads.forEach(node => {
+                    const topoId = node.id_capacidad;
+                    const uuid = uuidFn();
+                    topoToUuidMap.set(topoId, uuid);
+                    node.id_capacidad = uuid;
+                });
+                finalPayloads.forEach(node => {
+                    if (node.id_dominio_padre) node.id_dominio_padre = topoToUuidMap.get(node.id_dominio_padre) || null;
+                });
+                finishProcess();
             }
         });
     }
