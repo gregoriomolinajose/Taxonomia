@@ -172,13 +172,19 @@
                     // Guardar lookups para el formateador
                     window._LOOKUP_DATA = response.lookups || {};
                     
-                    // Inflar Tuplas a Objetos (Data Compression) si vienen en formato tupla
                     // Inflar Tuplas a Objetos (Data Compression)
                     const rows = window.Schema_Utils.inflateTuples(response.data);
 
                     // Store in Frontend Cache for 0.0s subsequent transitions
                     if (window.DataStore) {
                         window.DataStore.set(entityName, rows);
+                        
+                        // [S47.6] Graph Topology Hydration JIT
+                        if (response.sysGraphEdges) {
+                            const inflatedEdges = window.Schema_Utils.inflateTuples(response.sysGraphEdges);
+                            window.DataStore.set('Sys_Graph_Edges', inflatedEdges);
+                            if (window.AppEventBus) window.AppEventBus.publish('CACHE::GRAPH_HYDRATED', { source: 'DataView' });
+                        }
                     }
 
                     const activeRows = window.DataStore && window.DataStore.getActive ? window.DataStore.getActive(entityName) : rows.filter(r => r.estado !== 'Eliminado' && r.estado !== 'eliminado');

@@ -171,8 +171,13 @@ function getInitialPayload(entityName) {
     // 3. Obtener Lookups requeridos
     const lookups = {};
     const fields = schema.fields || Object.keys(schema).filter(k => typeof schema[k] === 'object').map(k => ({...schema[k], name: k}));
+    let requiresGraphEdges = false;
     
     fields.forEach(field => {
+      if (field.isTemporalGraph || field.graphEntity === 'Sys_Graph_Edges') {
+          requiresGraphEdges = true;
+      }
+      
       if (field.lookupSource) {
         lookups[field.name] = _getCachedLookup(field.lookupSource);
       } else if (field.lookupTarget) {
@@ -208,12 +213,18 @@ function getInitialPayload(entityName) {
     const executionTime = Date.now() - t0;
     Logger.log(`[Perf] getInitialPayload(${entityName}) completado en ${executionTime}ms`);
 
+    let sysGraphEdges = null;
+    if (requiresGraphEdges) {
+        sysGraphEdges = Engine_DB.list('Sys_Graph_Edges', 'tuples');
+    }
+
     // Transmitir en formato String crudo para evadir el crash del Serializador IPC de GAS
     const sanitizedReturn = JSON.stringify({
       status: "success",
       schema: schema,
       data: dataResponse,
       lookups: lookups,
+      sysGraphEdges: sysGraphEdges,
       executionTimeMs: executionTime
     });
     return sanitizedReturn;
