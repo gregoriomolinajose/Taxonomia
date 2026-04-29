@@ -1,0 +1,31 @@
+artifact_type: story-design
+version: 1
+skill: rai-story-design
+created: '2026-04-29T00:58:00Z'
+story: 'S47.5'
+epic: 'E47'
+content:
+  summary: 'Añadir mapeo topológico recursivo para las Capacidades (padre/hijo) permitiendo visualizar la jerarquía importada.'
+  complexity: simple
+  acceptance_criteria:
+    - id: AC1
+      description: 'El esquema Capacidad tiene topological_metadata configurado'
+      verifiable: true
+    - id: AC2
+      description: 'El campo id_dominio_padre es explícitamente un field de relation'
+      verifiable: true
+    - id: AC3
+      description: 'La ingesta de datos de ETL persiste con edges en Sys_Graph_Edges (CAPACIDAD_HIJO)'
+      verifiable: true
+  integration_points:
+    - module: 'Schema_Engine'
+      change_type: modification
+      files: ['src/Schema_Engine.js']
+  decisions:
+    - id: D1
+      choice: 'Mapear id_dominio_padre como campo relation'
+      rationale: 'Engine_DB.orchestrateNestedSave utiliza esta tipología para interceptar y persistir Edges (Graph DB pattern).'
+      alternatives_considered: ['Escribir lógica custom en el Engine_DB para Capacidad (descartado por anti-patrón).']
+refs:
+  epic_scope: 'work/epics/e47-capacidades-etl/scope.md'
+metadata: {}

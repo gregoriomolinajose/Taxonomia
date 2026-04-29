@@ -172,13 +172,19 @@
                     // Guardar lookups para el formateador
                     window._LOOKUP_DATA = response.lookups || {};
                     
-                    // Inflar Tuplas a Objetos (Data Compression) si vienen en formato tupla
                     // Inflar Tuplas a Objetos (Data Compression)
                     const rows = window.Schema_Utils.inflateTuples(response.data);
 
                     // Store in Frontend Cache for 0.0s subsequent transitions
                     if (window.DataStore) {
                         window.DataStore.set(entityName, rows);
+                        
+                        // [S47.6] Graph Topology Hydration JIT
+                        if (response.sysGraphEdges) {
+                            const inflatedEdges = window.Schema_Utils.inflateTuples(response.sysGraphEdges);
+                            window.DataStore.set('Sys_Graph_Edges', inflatedEdges);
+                            if (window.AppEventBus) window.AppEventBus.publish('CACHE::GRAPH_HYDRATED', { source: 'DataView' });
+                        }
                     }
 
                     const activeRows = window.DataStore && window.DataStore.getActive ? window.DataStore.getActive(entityName) : rows.filter(r => r.estado !== 'Eliminado' && r.estado !== 'eliminado');
@@ -808,8 +814,9 @@
                                     etlPromise.then((metrics) => {
                                         if (window.DataStore) window.DataStore.set(entity, null); 
                                         const m = metrics || { success: res.data.length, duplicate: 0, error: 0 };
+                                        const feedbackArray = m._feedback || [];
                                         if (window.UI_ETL_Modal && window.UI_ETL_Modal.showResults) {
-                                            window.UI_ETL_Modal.showResults(m);
+                                            window.UI_ETL_Modal.showResults(m, feedbackArray);
                                         } else {
                                             modal.dismiss();
                                             alert(`Resumen:\n✅ ${m.success || 0} satisfactorios\n⚠️ ${m.duplicate || 0} ya existentes\n❌ ${m.error || 0} no realizados`);
@@ -838,8 +845,13 @@
                                 loading.dismiss();
                                 console.error('[ETL Fatal Error]', err);
                                 const urlInput = modal.querySelector('#etl-drive-url');
-                                if (urlInput && err.message && (err.message.includes('vací') || err.message.includes('data útil') || err.message.includes('vacio') || err.message.includes('columna correo'))) {
-                                    const displayMsg = err.message.includes('columna correo') ? err.message : 'El archivo proporcionado se encuentra vacío o sin data útil.';
+                                if (urlInput && err.message && (err.message.includes('vací') || err.message.includes('data útil') || err.message.includes('vacio') || err.message.includes('columna correo') || err.message.includes('acceder al documento') || err.message.includes('inaccesible') || err.message.includes('MimeType'))) {
+                                    let displayMsg = 'El archivo proporcionado se encuentra vacío o sin data útil.';
+                                    if (err.message.includes('columna correo')) displayMsg = err.message;
+                                    if (err.message.includes('acceder al documento') || err.message.includes('inaccesible') || err.message.includes('MimeType')) {
+                                        displayMsg = 'El enlace es incorrecto, no tienes permisos, o el archivo es un Excel (.xlsx) antiguo. Asegúrate de usar el enlace del nuevo Google Sheet convertido.';
+                                    }
+                                    
                                     urlInput.setAttribute('error-text', displayMsg);
                                     urlInput.classList.add('ion-invalid', 'ion-touched');
                                 } else {

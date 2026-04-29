@@ -26,11 +26,12 @@ Desarrollar un ETL para la carga masiva de capacidades desde un archivo plano, t
 - [x] S47.2: Algoritmos de auto-generación de topología (`order_path` y `path_completo_es`) integrando un índice Hash Map O(1) en el `Math_Engine` para evitar bloqueos por complejidad O(N^2) en grandes volúmenes.
 - [x] S47.3: Integración y pruebas de carga con la base de datos / UI.
 - [x] S47.4: Importación de Capacidades vía Sincronización Google Drive.
+- [x] S47.5: Mapeo de Relaciones Jerárquicas para Capacidades y Refactorización Topológica.
 
 ## Implementation Plan
 
 ### Sequencing Rationale
-Hemos priorizado un enfoque "Walking Skeleton" (S47.1) para mitigar el riesgo de que el Excel no pueda ser leído correctamente o las celdas combinadas fallen. Una vez garantizada la lectura, agregamos la complejidad topológica (S47.2) y cerramos con la integración de Inyección Masiva (S47.3). Posteriormente se acopló la S47.4 para omitir el uso de archivos locales a favor de la sincronización Drive.
+Hemos priorizado un enfoque "Walking Skeleton" (S47.1) para mitigar el riesgo de que el Excel no pueda ser leído correctamente o las celdas combinadas fallen. Una vez garantizada la lectura, agregamos la complejidad topológica (S47.2) y cerramos con la integración de Inyección Masiva (S47.3). Posteriormente se acopló la S47.4 para omitir el uso de archivos locales a favor de la sincronización Drive. S47.5 estabiliza el motor de relaciones.
 
 | Seq | Story | Descripción | Riesgo/Dependencia | T-Shirt |
 |---|---|---|---|---|
@@ -38,12 +39,14 @@ Hemos priorizado un enfoque "Walking Skeleton" (S47.1) para mitigar el riesgo de
 | 2 | S47.2 | Graph Flattening & Math_Engine Consumption | Depende de S47.1 | M |
 | 3 | S47.3 | Database Batch Dispatch & E2E Verification | Depende de S47.2 (PAT-E-539 E2E req) | S |
 | 4 | S47.4 | Importación desde Google Drive Sync | Depende de S47.3 | S |
+| 5 | S47.5 | Estabilización Jerárquica | Depende de Integración UI | S |
 
 ### Milestones
 - **M1: File Parser (Fin de S47.1):** Capacidad de leer archivos `.xlsx` y exportar un log en consola con los renglones extraídos.
 - **M2: Data Integrator (Fin de S47.2):** Los registros del archivo cuentan con metadata obligatoria lista (`_nivel`, `_order_path`, etc.) pero aún no persisten.
 - **M3: Feature Complete (Fin de S47.3):** Integración E2E. El modal inyecta de 50 en 50 registros hacia Google Sheets mediante `_dispatchChunks`.
 - **M4: Drive Sync (Fin de S47.4):** Capacidad de inyectar sin intermediario local, bajando la matriz pura directamente desde Google Sheets (Drive Sync).
+- **M5: Topología (Fin de S47.5):** El árbol de capacidades y personas mapea sus aristas de grafos consistentemente.
 
 ### Progress Tracking
 | Story | Size | Status | Actual | Velocity | Notes |
@@ -52,3 +55,4 @@ Hemos priorizado un enfoque "Walking Skeleton" (S47.1) para mitigar el riesgo de
 | S47.2 | M | Done | 55m | 🚀 | Flattening + Math_Engine O(1) completado |
 | S47.3 | S | Done | 20m | 🚀 | Dispatcher asíncrono y UX acoplada |
 | S47.4 | S | Done | 35m | 🚀 | Sincronización de Drive y abstracción de ETL completada |
+| S47.5 | S | Done | 120m | ⚠️ | Diagnóstico prolongado de lógica `find()` en schema |

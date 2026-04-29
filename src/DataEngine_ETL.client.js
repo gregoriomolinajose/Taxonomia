@@ -153,9 +153,9 @@
                     if (!progressCallback) return;
                     progressCallback(95, 100, false, null, `Refrescando grafo relacional y topología...`);
                 },
-                reportComplete: (metrics) => {
+                reportComplete: (metrics, feedback) => {
                     if (!progressCallback) return;
-                    progressCallback(100, 100, true, metrics, `Ingesta completada satisfactoriamente.`);
+                    progressCallback(100, 100, true, metrics, `Ingesta completada satisfactoriamente.`, feedback);
                 }
             };
         },
@@ -332,7 +332,8 @@
                 }
             }
 
-            orchestrator.reportComplete(metrics);
+            metrics._feedback = accumulatedFeedback;
+            orchestrator.reportComplete(metrics, accumulatedFeedback);
             return metrics;
         },
 

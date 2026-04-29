@@ -150,18 +150,18 @@
          * @param {Array} records Arreglo de registros planos.
          * @returns {Object} Nodo raíz jerárquico.
          */
-        buildHierarchyTree: function(records) {
+        buildHierarchyTree: function(records, entityName = 'Persona', perNodeOptions = null) {
             if (!records || !Array.isArray(records)) return null;
 
-            // Determinar la llave primaria dinámica de Persona (fallback a 'id_persona')
-            const pkCol = window.Schema_Utils ? window.Schema_Utils.getPrimaryKey('Persona') : 'id_persona';
-            let parentCol = 'lider_directo'; // fallback safe default
-            let edgeType = 'PERSONA_LIDER_DIRECTO';
+            // Determinar la llave primaria dinámica de la entidad
+            const pkCol = window.Schema_Utils ? window.Schema_Utils.getPrimaryKey(entityName) : ('id_' + entityName.toLowerCase());
+            let parentCol = entityName === 'Persona' ? 'lider_directo' : 'id_dominio_padre'; 
+            let edgeType = entityName === 'Persona' ? 'PERSONA_LIDER_DIRECTO' : 'CAPACIDAD_HIJO';
             
             if (window.Schema_Utils && typeof window.Schema_Utils.getSchema === 'function') {
-                const schema = window.Schema_Utils.getSchema('Persona');
+                const schema = window.Schema_Utils.getSchema(entityName);
                 if (schema && schema.fields) {
-                    const parentField = schema.fields.find(f => f.type === 'relation' && f.relationType === 'padre');
+                    const parentField = schema.fields.find(f => f.type === 'relation' && f.relationType === 'padre' && f.targetEntity === entityName);
                     if (parentField) {
                         parentCol = parentField.name;
                         if (parentField.graphEdgeType) edgeType = parentField.graphEdgeType;
@@ -188,6 +188,7 @@
                 map[String(r[pkCol])] = {
                     id: String(r[pkCol]),
                     data: { ...r },
+                    options: perNodeOptions || undefined,
                     children: []
                 };
             });
@@ -217,10 +218,13 @@
                 return {
                     id: 'root-company',
                     data: {
-                        nombre: 'Empresa',
+                        nombre: entityName === 'Capacidad' ? 'Taxonomía de Capacidades' : 'Empresa',
                         departamento: 'Global',
                         cargo: 'Organización'
                     },
+                    options: entityName === 'Capacidad' ? {
+                        nodeTemplate: () => `<div class="org-node-card" style="border-left: 5px solid #333; padding: 10px; background: white; border-radius: 6px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);"><div style="font-weight:bold;">Taxonomía Global</div></div>`
+                    } : undefined,
                     children: roots
                 };
             }

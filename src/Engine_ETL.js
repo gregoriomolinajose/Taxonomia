@@ -98,8 +98,14 @@ var Engine_ETL = (function() {
 
     let ss;
     try {
+      const file = DriveApp.getFileById(sheetId);
+      const mime = file.getMimeType();
+      if (mime !== MimeType.GOOGLE_SHEETS) {
+        throw new Error("El archivo no es un Google Sheet nativo (MimeType: " + mime + "). Si es un archivo de Excel (.xlsx), ábrelo y selecciona 'Archivo > Guardar como hoja de cálculo de Google'.");
+      }
       ss = SpreadsheetApp.openById(sheetId);
     } catch (e) {
+      if (e.message.includes("MimeType")) throw e; // Re-throw our explicit error
       throw new Error("El archivo introducido es inaccesible o no es una Hoja de Cálculo válida de Google Sheets. Verifica los permisos de Drive.");
     }
     
@@ -221,7 +227,7 @@ var Engine_ETL = (function() {
                            payload._isDuplicateMatch = true;
                            if (typeof Logger !== 'undefined') Logger.log(`[ETL Debug] SET _isDuplicateMatch = true FOR ${matchedRow[pkField]}`);
                        }
-                       payload[pkField] = matchedRow[pkField]; // Subsumimos el Temp UUID y forzamos modo UPDATE
+                       payload._tempId = payload[pkField]; payload[pkField] = matchedRow[pkField]; // Subsumimos el Temp UUID y forzamos modo UPDATE
                    }
                }
        });

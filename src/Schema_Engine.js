@@ -239,8 +239,13 @@ var APP_SCHEMAS = {
   },
   Capacidad: {
     metadata: { showInMenu: true, order:6, iconName:'layers-outline', color:'warning', label:'Capacidades', titleField:'nombre', idField:'id_capacidad', fkField:null },
+    topological_metadata: {
+        parentEntity: "Capacidad",
+        parentField: "id_dominio_padre"
+    },
     primaryKey: "id_capacidad",
     titleField: "nombre",
+    topologyRules: TOPOLOGY_PRESETS.JERARQUICA_ESTRICTA_DOMAIN,
     fields: [
       { name: "id_capacidad", type: "hidden", primaryKey: true },
       ...FIELD_TEMPLATES.SYSTEM_FIELDS(),
@@ -254,7 +259,9 @@ var APP_SCHEMAS = {
       { name: "abreviacion", type: "text", label: "Abreviación", required: false, width: 6 },
       { name: "descripcion", type: "textarea", label: "Descripción", required: false, width: 12, showInList: false },
       { name: "contexto_completo_analisis", type: "textarea", label: "Contexto Análisis", required: false, width: 12, showInList: false },
-      { name: "path_completo_es", type: "text", label: "Path Completo", required: false, width: 12 }
+      { name: "path_completo_es", type: "text", label: "Path Completo", required: false, width: 12 },
+      { name: "id_dominio_padre", type: "relation", relationType: "padre", targetEntity: "Capacidad", graphEntity: "Sys_Graph_Edges", label: "Capacidad Padre", isTemporalGraph: true, topologyCardinality: "1:N", graphEdgeType: "CAPACIDAD_HIJO", required: false, width: 12, uiComponent: "select_single", valueField: "id_capacidad", labelField: "nombre" },
+      { name: "capacidades_hijas", type: "relation", relationType: "hijo", targetEntity: "Capacidad", graphEntity: "Sys_Graph_Edges", label: "Capacidades Subordinadas", isTemporalGraph: true, topologyCardinality: "1:N", graphEdgeType: "CAPACIDAD_HIJO", required: false, width: 12, uiComponent: "searchable_multi", valueField: "id_capacidad", labelField: "nombre" }
     ]
   },
   Equipo: {
