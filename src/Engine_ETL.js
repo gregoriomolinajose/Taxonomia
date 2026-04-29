@@ -227,7 +227,7 @@ var Engine_ETL = (function() {
                            payload._isDuplicateMatch = true;
                            if (typeof Logger !== 'undefined') Logger.log(`[ETL Debug] SET _isDuplicateMatch = true FOR ${matchedRow[pkField]}`);
                        }
-                       payload[pkField] = matchedRow[pkField]; // Subsumimos el Temp UUID y forzamos modo UPDATE
+                       payload._tempId = payload[pkField]; payload[pkField] = matchedRow[pkField]; // Subsumimos el Temp UUID y forzamos modo UPDATE
                    }
                }
        });

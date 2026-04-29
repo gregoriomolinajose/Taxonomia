@@ -155,13 +155,13 @@
 
             // Determinar la llave primaria dinámica de la entidad
             const pkCol = window.Schema_Utils ? window.Schema_Utils.getPrimaryKey(entityName) : ('id_' + entityName.toLowerCase());
-            let parentCol = entityName === 'Persona' ? 'lider_directo' : null;
-            let edgeType = null;
+            let parentCol = entityName === 'Persona' ? 'lider_directo' : 'id_dominio_padre'; 
+            let edgeType = entityName === 'Persona' ? 'PERSONA_LIDER_DIRECTO' : 'CAPACIDAD_HIJO';
             
             if (window.Schema_Utils && typeof window.Schema_Utils.getSchema === 'function') {
                 const schema = window.Schema_Utils.getSchema(entityName);
                 if (schema && schema.fields) {
-                    const parentField = schema.fields.find(f => f.type === 'relation' && f.relationType === 'padre');
+                    const parentField = schema.fields.find(f => f.type === 'relation' && f.relationType === 'padre' && f.targetEntity === entityName);
                     if (parentField) {
                         parentCol = parentField.name;
                         if (parentField.graphEdgeType) edgeType = parentField.graphEdgeType;
@@ -174,10 +174,8 @@
             if (window.DataStore && window.DataStore.get) {
                 const allEdges = window.DataStore.get('Sys_Graph_Edges') || [];
                 allEdges.forEach(e => {
-                    const isValidVersion = e.es_version_actual === true || String(e.es_version_actual).toUpperCase() === 'TRUE' || String(e.es_version_actual) === '1' || e.es_version_actual === '';
-                    const isNotDeleted = e.estado && String(e.estado).toUpperCase() !== 'ELIMINADO';
-                    if (isValidVersion && isNotDeleted && e.tipo_relacion === edgeType) {
-                        hijoToPadre[String(e.id_nodo_hijo).trim()] = String(e.id_nodo_padre).trim();
+                    if (e.es_version_actual !== false && e.estado !== 'Eliminado' && e.estado !== 'eliminado' && e.tipo_relacion === edgeType) {
+                        hijoToPadre[String(e.id_nodo_hijo)] = String(e.id_nodo_padre);
                     }
                 });
             }
@@ -200,7 +198,7 @@
                 const node = map[String(r[pkCol])];
                 
                 // Resolver el ID del padre (primero intentar físicamente, luego mediante el grafo)
-                let parentId = r[parentCol] ? String(r[parentCol]).trim() : hijoToPadre[String(r[pkCol]).trim()];
+                let parentId = r[parentCol] || hijoToPadre[String(r[pkCol])];
                 
                 // Si el Líder viene resuelto como array de objetos relacionales, extraer ID
                 if (Array.isArray(parentId) && parentId.length > 0) {
