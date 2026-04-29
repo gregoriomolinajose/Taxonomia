@@ -174,8 +174,10 @@
             if (window.DataStore && window.DataStore.get) {
                 const allEdges = window.DataStore.get('Sys_Graph_Edges') || [];
                 allEdges.forEach(e => {
-                    if (e.es_version_actual !== false && e.estado !== 'Eliminado' && e.estado !== 'eliminado' && e.tipo_relacion === edgeType) {
-                        hijoToPadre[String(e.id_nodo_hijo)] = String(e.id_nodo_padre);
+                    const isValidVersion = e.es_version_actual === true || String(e.es_version_actual).toUpperCase() === 'TRUE' || String(e.es_version_actual) === '1' || e.es_version_actual === '';
+                    const isNotDeleted = e.estado && String(e.estado).toUpperCase() !== 'ELIMINADO';
+                    if (isValidVersion && isNotDeleted && e.tipo_relacion === edgeType) {
+                        hijoToPadre[String(e.id_nodo_hijo).trim()] = String(e.id_nodo_padre).trim();
                     }
                 });
             }
@@ -198,7 +200,7 @@
                 const node = map[String(r[pkCol])];
                 
                 // Resolver el ID del padre (primero intentar físicamente, luego mediante el grafo)
-                let parentId = r[parentCol] || hijoToPadre[String(r[pkCol])];
+                let parentId = r[parentCol] ? String(r[parentCol]).trim() : hijoToPadre[String(r[pkCol]).trim()];
                 
                 // Si el Líder viene resuelto como array de objetos relacionales, extraer ID
                 if (Array.isArray(parentId) && parentId.length > 0) {
