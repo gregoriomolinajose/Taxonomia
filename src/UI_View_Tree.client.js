@@ -24,7 +24,7 @@
                     // Previene race condition si el usuario cambia de vista antes de que se ejecute el frame
                     if (!document.getElementById('org-chart-container')) return;
                     
-                    const treeData = global.DataEngine.buildHierarchyTree(state.filtered);
+                    const treeData = global.DataEngine.buildHierarchyTree(state.filtered, state.entityName);
                     
                     if (treeData) {
                         const options = {

@@ -150,16 +150,16 @@
          * @param {Array} records Arreglo de registros planos.
          * @returns {Object} Nodo raíz jerárquico.
          */
-        buildHierarchyTree: function(records) {
+        buildHierarchyTree: function(records, entityName = 'Persona') {
             if (!records || !Array.isArray(records)) return null;
 
-            // Determinar la llave primaria dinámica de Persona (fallback a 'id_persona')
-            const pkCol = window.Schema_Utils ? window.Schema_Utils.getPrimaryKey('Persona') : 'id_persona';
-            let parentCol = 'lider_directo'; // fallback safe default
-            let edgeType = 'PERSONA_LIDER_DIRECTO';
+            // Determinar la llave primaria dinámica de la entidad
+            const pkCol = window.Schema_Utils ? window.Schema_Utils.getPrimaryKey(entityName) : ('id_' + entityName.toLowerCase());
+            let parentCol = entityName === 'Persona' ? 'lider_directo' : null;
+            let edgeType = null;
             
             if (window.Schema_Utils && typeof window.Schema_Utils.getSchema === 'function') {
-                const schema = window.Schema_Utils.getSchema('Persona');
+                const schema = window.Schema_Utils.getSchema(entityName);
                 if (schema && schema.fields) {
                     const parentField = schema.fields.find(f => f.type === 'relation' && f.relationType === 'padre');
                     if (parentField) {
@@ -185,9 +185,39 @@
 
             // 1. Inicializar el mapa de nodos compatibles con ApexTree
             records.forEach(r => {
+                let nodeOptions = {};
+                if (entityName === 'Capacidad') {
+                    nodeOptions = {
+                        nodeTemplate: function(content) {
+                            const escapeHTML = (str) => String(str || '').replace(/[&<>'"]/g, 
+                                tag => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'}[tag])
+                            );
+                            const nombre = escapeHTML(content.nombre || 'Capacidad Desconocida');
+                            const nivel = escapeHTML(content.nivel_tipo || '');
+                            const codigo = escapeHTML(content.abreviacion || content.id_externo || '');
+                            const path = escapeHTML(content.path_completo_es || '');
+                            
+                            const bgColors = {
+                                '1': '#1976d2', // Macrocapacidad (Azul oscuro)
+                                '2': '#0288d1', // Capacidad
+                                '3': '#0097a7', // Subcapacidad
+                                '4': '#00796b'  // Componente (Verde azulado)
+                            };
+                            const bgColor = bgColors[nivel] || '#455a64';
+                            
+                            return `<div class="org-node-card" style="border-left: 5px solid ${bgColor}; padding: 10px; min-width: 240px; background: white; border-radius: 6px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); display: flex; flex-direction: column; justify-content: center;">
+                                <div style="font-size: 11px; color: ${bgColor}; font-weight: 600; text-transform: uppercase; margin-bottom: 4px;">Nivel ${nivel} ${codigo ? ` • ${codigo}` : ''}</div>
+                                <div class="org-node-name" style="font-size: 14px; font-weight: bold; color: #333; margin-bottom: 6px;" title="${nombre}">${nombre}</div>
+                                <div class="org-node-dept" style="font-size: 10px; color: #777; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${path}">${path}</div>
+                            </div>`;
+                        }
+                    };
+                }
+
                 map[String(r[pkCol])] = {
                     id: String(r[pkCol]),
                     data: { ...r },
+                    options: entityName === 'Capacidad' ? nodeOptions : undefined,
                     children: []
                 };
             });
@@ -217,10 +247,13 @@
                 return {
                     id: 'root-company',
                     data: {
-                        nombre: 'Empresa',
+                        nombre: entityName === 'Capacidad' ? 'Taxonomía de Capacidades' : 'Empresa',
                         departamento: 'Global',
                         cargo: 'Organización'
                     },
+                    options: entityName === 'Capacidad' ? {
+                        nodeTemplate: () => `<div class="org-node-card" style="border-left: 5px solid #333; padding: 10px; background: white; border-radius: 6px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);"><div style="font-weight:bold;">Taxonomía Global</div></div>`
+                    } : undefined,
                     children: roots
                 };
             }
