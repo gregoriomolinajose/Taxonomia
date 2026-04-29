@@ -17,6 +17,8 @@
 
 ## What to Improve
 - Inicialmente nos confiamos con la creación de los ciclos, pero detectamos en `/rai-architecture-review` que estábamos reescribiendo la lógica topológica en el ETL. Usar los scripts de QA automatizados de la metodología RaiSE ahorra mucho retrabajo.
+- En S47.5 tuvimos una fuga arquitectónica donde las configuraciones del modelo de datos de las aristas estaban asumiendo un formato único de entidad en el Frontend, lo cual obligó a un análisis arqueológico de git para recuperar el árbol.
 
 ## Action Items
 - Para futuras cargas masivas (ej. Riesgos o Personas jerárquicas), aplicar el patrón `isFastCache` y `nodesMap`.
+- Al generar esquemas en `Schema_Engine.js` siempre declarar el padre único a través de dependencias estrictamente auto-referenciadas. La UI debe ser agnóstica o resiliente a los formatos nativos ("VERDADERO" vs booleanos) que regrese la capa del `DataStore`.
