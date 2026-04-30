@@ -96,6 +96,14 @@
       ">
         <ion-icon name="git-network-outline"></ion-icon> Graph Behavior
       </button>
+      <button class="ss-tab" data-tab="branding" onclick="window.SchemaStudio.switchTab('branding')" style="
+        padding:10px 20px;border:none;background:none;cursor:pointer;
+        font-weight:600;font-size:0.85rem;color:var(--ion-color-medium);
+        border-bottom:2px solid transparent;margin-bottom:-1px;
+        display:flex;align-items:center;gap:6px;transition:all 0.2s;
+      ">
+        <ion-icon name="color-palette-outline"></ion-icon> Branding
+      </button>
       <button class="ss-tab" data-tab="db" onclick="window.SchemaStudio.switchTab('db')" style="
         padding:10px 20px;border:none;background:none;cursor:pointer;
         font-weight:600;font-size:0.85rem;color:var(--ion-color-medium);
@@ -500,7 +508,7 @@
   // ── Tabs ──────────────────────────────────────────────────────────────────
   function switchTab(tabId) {
     // [S31.10] Track _lastContentTab for Composer multi-context mode
-    if (tabId === 'entities' || tabId === 'templates' || tabId === 'presets') {
+    if (tabId === 'entities' || tabId === 'templates' || tabId === 'presets' || tabId === 'branding') {
       _lastContentTab = tabId;
     }
     var tabs = document.querySelectorAll('.ss-tab');
@@ -547,6 +555,7 @@
     else if (tabId === 'templates') renderTemplatesTab(container);
     else if (tabId === 'presets')   renderPresetsTab(container);
     else if (tabId === 'db')        renderDbHealthTab(container);
+    else if (tabId === 'branding')  renderBrandingTab(container);
     else if (tabId === 'composer')  renderComposerTab(container);
   }
 
@@ -747,6 +756,29 @@
       html += '<div style="text-align:center;padding:40px;color:var(--ion-color-medium);">No se detectaron Graph Behaviors activos en APP_SCHEMAS.</div>';
     }
 
+    container.innerHTML = html;
+  }
+
+  // ── Branding Tab ──────────────────────────────────────────────────────────
+  function renderBrandingTab(container) {
+    var html = '<div style="max-width: 600px; margin: 0 auto; padding: 20px 0;">' +
+      '<div style="font-weight:700;font-size:1.1rem;margin-bottom:16px;">Identidad Visual (Branding)</div>' +
+      '<div class="ss-template-card">' +
+        '<div style="margin-bottom: 12px;">' +
+          '<label class="ss-label">Título de la Pestaña del Navegador</label>' +
+          '<input type="text" id="input-branding-title" class="ss-input" placeholder="Ej. Sistema de Taxonomía OMR" />' +
+        '</div>' +
+        '<div style="margin-bottom: 20px;">' +
+          '<label class="ss-label">URL del Favicon (Ícono)</label>' +
+          '<input type="text" id="input-branding-favicon" class="ss-input" placeholder="https://www.coppel.com/favicon.ico" />' +
+        '</div>' +
+        '<div style="text-align: right;">' +
+          '<button class="ss-btn-primary" id="btn-save-branding" onclick="window.SchemaStudio.saveBrandingConfig()">' +
+            '<ion-icon name="save-outline"></ion-icon> Guardar Apariencia' +
+          '</button>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
     container.innerHTML = html;
   }
 
@@ -1914,6 +1946,52 @@
     },
     switchTab:              switchTab,
     runReconcile:           runReconcile,
+    
+    saveBrandingConfig: function() {
+        const titleInput = document.getElementById('input-branding-title');
+        const faviconInput = document.getElementById('input-branding-favicon');
+        if (!titleInput || !faviconInput) return;
+        
+        const btn = document.getElementById('btn-save-branding');
+        const origText = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = 'Guardando...';
+
+        try {
+            const payload = {
+                appTitle: titleInput.value.trim(),
+                faviconUrl: faviconInput.value.trim()
+            };
+            if (!google || !google.script || !google.script.run) {
+                alert("GAS context missing (local dev)");
+                btn.disabled = false;
+                btn.innerHTML = origText;
+                return;
+            }
+            google.script.run
+                .withSuccessHandler(function(res) {
+                    btn.disabled = false;
+                    btn.innerHTML = origText;
+                    if (res && res.success) {
+                        alert('Identidad guardada exitosamente. Recarga la pestaña (F5) para aplicar.');
+                    } else {
+                        alert('Error: ' + (res ? res.message : 'desconocido'));
+                    }
+                })
+                .withFailureHandler(function(err) {
+                    btn.disabled = false;
+                    btn.innerHTML = origText;
+                    alert('Error de red: ' + err.message);
+                })
+                .API_Admin_SaveBrandingConfig(payload);
+        } catch(e) {
+            console.error(e);
+            alert('Error al guardar branding: ' + e.message);
+            btn.disabled = false;
+            btn.innerHTML = origText;
+        }
+    },
+
     // Composer
     composerAddField:       composerAddField,
     composerRemoveField:    composerRemoveField,
