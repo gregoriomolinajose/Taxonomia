@@ -104,6 +104,44 @@ function buildPathName(formStateObj, params, cache) {
     return `${cleanParentPath} > ${nombre}`;
 }
 
+function inferParentIdFromOrdenPath(ordenPath, entityName, records, pkCol) {
+    if (!ordenPath || String(ordenPath).trim() === '') return null;
+    
+    // Lazy build of the normalized map
+    if (!inferParentIdFromOrdenPath._cache) {
+        inferParentIdFromOrdenPath._cache = {
+            entity: null,
+            recordCount: 0,
+            map: {}
+        };
+    }
+    
+    const currentLength = Array.isArray(records) ? records.length : 0;
+
+    // Invalidate if entity changed, or if records count changed (prevents Stale Cache on ETL)
+    if (inferParentIdFromOrdenPath._cache.entity !== entityName || inferParentIdFromOrdenPath._cache.recordCount !== currentLength) {
+        inferParentIdFromOrdenPath._cache.entity = entityName;
+        inferParentIdFromOrdenPath._cache.recordCount = currentLength;
+        inferParentIdFromOrdenPath._cache.map = {};
+        if (Array.isArray(records)) {
+            records.forEach(r => {
+                if (r.orden_path) {
+                    const norm = String(r.orden_path).split('.').map(n => parseInt(n, 10)).join('.');
+                    inferParentIdFromOrdenPath._cache.map[norm] = String(r[pkCol]).trim();
+                }
+            });
+        }
+    }
+    
+    const parts = String(ordenPath).split('.');
+    if (parts.length > 1) {
+        parts.pop(); // remover el último nivel
+        const parentNorm = parts.map(n => parseInt(n, 10)).join('.');
+        return inferParentIdFromOrdenPath._cache.map[parentNorm] || null;
+    }
+    return null;
+}
+
 function buildEChartsTreemapData(cacheObject) {
     var rawData = [];
     if (cacheObject && Array.isArray(cacheObject['Dominio'])) {
@@ -181,15 +219,16 @@ const TopologyGuard = {
     }
 };
 
-function buildEChartsCapacidadesTreemapData(capacidadesData) {
-    if (!capacidadesData || capacidadesData.length === 0) return [];
+function buildEChartsCapacidadesTreemapData(data, entityName) {
+    if (!data || data.length === 0) return [];
+    entityName = entityName || 'Capacidad';
     var mapData = {};
     var rootNodes = [];
     var hasParentMap = {};
     
-    var pkField = window.Schema_Utils ? window.Schema_Utils.getPrimaryKey('Capacidad') : 'id_capacidad';
+    var pkField = window.Schema_Utils ? window.Schema_Utils.getPrimaryKey(entityName) : (entityName === 'Dominio' ? 'id_dominio' : 'id_capacidad');
     
-    capacidadesData.forEach(function(row) {
+    data.forEach(function(row) {
         var id = row[pkField] || row.id_registro || row.lexical_id;
         mapData[id] = {
             id: id,
@@ -199,9 +238,9 @@ function buildEChartsCapacidadesTreemapData(capacidadesData) {
         };
     });
     
-    capacidadesData.forEach(function(row) {
+    data.forEach(function(row) {
         var id = row[pkField] || row.id_registro || row.lexical_id;
-        var idPadre = row.id_capacidad_padre || row.id_dominio_padre || row.lider_directo || row.padre_id; 
+        var idPadre = row.id_capacidad_padre || row.id_dominio_padre || row.lider_directo || row.padre_id || row.relaciones_padre;  
         
         if (idPadre && String(idPadre).trim() !== '' && mapData[idPadre] && idPadre !== id) {
             var parentNode = mapData[idPadre];
@@ -237,8 +276,8 @@ function buildEChartsCapacidadesTreemapData(capacidadesData) {
     return rootNodes;
 }
 
-function buildEChartsCapacidadesOption(capacidadesData, isPrebuilt, gapColor, textColor, borderColor, primaryColor, primaryContrast) {
-    var data = isPrebuilt ? capacidadesData : buildEChartsCapacidadesTreemapData(capacidadesData);
+function buildEChartsCapacidadesOption(capacidadesData, isPrebuilt, gapColor, textColor, borderColor, primaryColor, primaryContrast, entityName) {
+    var data = isPrebuilt ? capacidadesData : buildEChartsCapacidadesTreemapData(capacidadesData, entityName);
     var bgColor = gapColor || 'transparent';
     var txtColor = textColor || '#333333';
     var brdColor = borderColor || '#cccccc';
@@ -262,7 +301,7 @@ function buildEChartsCapacidadesOption(capacidadesData, isPrebuilt, gapColor, te
             {
                 type: 'treemap',
                 data: data,
-                leafDepth: 1,
+                leafDepth: 2,
                 roam: false,
                 nodeClick: 'zoomToNode',
                 left: '2%',
@@ -441,8 +480,8 @@ function buildEChartsCapacidadesOption(capacidadesData, isPrebuilt, gapColor, te
 
 // Universal Wrapper
 if (typeof module !== 'undefined' && module.exports) {
-    module.exports = { buildOrdenPath, buildPathName, buildEChartsTreemapData, buildEChartsCapacidadesTreemapData, buildEChartsCapacidadesOption, TopologyGuard };
+    module.exports = { buildOrdenPath, buildPathName, inferParentIdFromOrdenPath, buildEChartsTreemapData, buildEChartsCapacidadesTreemapData, buildEChartsCapacidadesOption, TopologyGuard };
 } else if (typeof window !== 'undefined') {
-    window.Math_Engine = { buildOrdenPath, buildPathName, buildEChartsTreemapData, buildEChartsCapacidadesTreemapData, buildEChartsCapacidadesOption, TopologyGuard };
+    window.Math_Engine = { buildOrdenPath, buildPathName, inferParentIdFromOrdenPath, buildEChartsTreemapData, buildEChartsCapacidadesTreemapData, buildEChartsCapacidadesOption, TopologyGuard };
 }
 </script>

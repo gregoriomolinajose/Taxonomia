@@ -75,7 +75,19 @@
 
             // S47.4 Proactive Detection: Ensure the file actually matches the entity
             const firstRow = rawPayload[0];
-            const fileHeaders = Object.keys(firstRow).map(k => k.trim().toLowerCase());
+            const fileHeaders = Object.keys(firstRow).map(k => {
+                let lowKey = k.trim().toLowerCase().replace(/\s+/g, ' ');
+                if (entityName === 'Dominio') {
+                    if (lowKey === 'nivel subdominio') lowKey = 'nivel_tipo';
+                    else if (lowKey === 'orden. subdominio' || lowKey === 'orden subdominio' || lowKey === 'orden') lowKey = 'orden_path';
+                    else if (lowKey === 'subdominio') lowKey = 'nombre_ingles';
+                    else if (lowKey === 'nombre español' || lowKey === 'nombre espanol') lowKey = 'nombre';
+                    else if (lowKey === 'definición' || lowKey === 'definicion') lowKey = 'descripcion';
+                    else if (lowKey === 'abreviación (nombre servicio)' || lowKey === 'abreviacion (nombre servicio)') lowKey = 'abreviacion';
+                    else if (lowKey === 'abreviación (path servicio)' || lowKey === 'abreviacion (path servicio)') lowKey = 'path_completo_es';
+                }
+                return lowKey;
+            });
             
             if (window.APP_SCHEMAS && window.APP_SCHEMAS[entityName]) {
                 const schemaFields = window.APP_SCHEMAS[entityName].fields.map(f => String(f.name).toLowerCase());
@@ -87,28 +99,100 @@
                 });
                 
                 // If less than 15% of the columns match our schema, it's definitively the wrong file
-                // We use 15% to be extremely permissive (e.g., tiny schemas vs wide files) while still catching completely unrelated files
+                // We use 30% to ensure enough confidence in matching the entity schema
                 const overlapRatio = matchCount / fileHeaders.length;
-                if (overlapRatio < 0.15 && fileHeaders.length > 0) {
+                if (overlapRatio < 0.30 && fileHeaders.length > 0) {
                     throw new Error(`El archivo no parece corresponder a la entidad '${entityName}'. Por favor verifica que estás subiendo el documento correcto.`);
                 }
             }
 
-            // Omitir cabeceras transaccionales/auditoría
+            // Omitir cabeceras transaccionales/auditoría y aplicar mapeo de alias
             const sanitized = rawPayload.map(row => {
                 const cleanRow = {};
-                for (const key in row) {
-                    if (row.hasOwnProperty(key)) {
-                        const lowKey = key.trim().toLowerCase();
+                for (let originalKey in row) {
+                    if (row.hasOwnProperty(originalKey)) {
+                        let key = originalKey;
+                        const value = row[originalKey];
+                        let lowKey = key.trim().toLowerCase().replace(/\s+/g, ' ');
+                        
+                        // S47: Resolución de alias visuales para Dominios
+                        if (entityName === 'Dominio') {
+                            if (lowKey === 'nivel subdominio') key = 'nivel_tipo';
+                            else if (lowKey === 'orden. subdominio' || lowKey === 'orden subdominio' || lowKey === 'orden') key = 'orden_path';
+                            else if (lowKey === 'subdominio') key = 'nombre_ingles';
+                            else if (lowKey === 'nombre español' || lowKey === 'nombre espanol') key = 'nombre';
+                            else if (lowKey === 'definición' || lowKey === 'definicion') key = 'descripcion';
+                            else if (lowKey === 'abreviación (nombre servicio)' || lowKey === 'abreviacion (nombre servicio)') key = 'abreviacion';
+                            else if (lowKey === 'abreviación (path servicio)' || lowKey === 'abreviacion (path servicio)') key = 'path_completo_es';
+                            lowKey = key.toLowerCase();
+                        }
+
                         if (lowKey.startsWith('sys_') || lowKey === 'avatar' || lowKey.startsWith('file_')) {
                             continue; // Ignorado táctico (S38.4 Tolerancia)
                         }
-                        cleanRow[key] = row[key];
+                        
+                        // S47.8: Sanitización Global (Neutralizar trailing whitespaces de Google Sheets)
+                        if (typeof value === 'string') {
+                            value = value.trim();
+                        }
+                        
+                        cleanRow[key] = value;
                     }
                 }
                 return cleanRow;
             });
             
+            // Topología dinámica para Dominio
+            if (entityName === 'Dominio') {
+                sanitized.forEach(r => {
+                    // Normalize Nivel (e.g. "Nivel 3" -> 3)
+                    if (r.nivel_tipo && typeof r.nivel_tipo === 'string' && r.nivel_tipo.toLowerCase().includes('nivel')) {
+                        const parsed = parseInt(r.nivel_tipo.toLowerCase().replace('nivel', '').trim(), 10);
+                        if (!isNaN(parsed)) r.nivel_tipo = parsed;
+                    }
+                    if (!r.id_dominio) {
+                        r.id_dominio = ('DOM-' + Math.random().toString(36).substr(2, 9)).toUpperCase();
+                    }
+                });
+
+                // Sort by orden_path to ensure parents are processed before children
+                sanitized.sort((a, b) => (a.orden_path || '').localeCompare(b.orden_path || ''));
+
+                const pathMap = {};
+                sanitized.forEach(r => {
+                    const orden = (r.orden_path || '').trim();
+                    if (!orden) return;
+                    
+                    pathMap[orden] = r;
+                    
+                    const parts = orden.split('.');
+                    if (parts.length > 1) {
+                        parts.pop();
+                        const parentOrden = parts.join('.');
+                        const parent = pathMap[parentOrden];
+                        if (parent) {
+                            r.relaciones_padre = parent.id_dominio;
+                        }
+                    }
+                });
+                
+                // Generar Path Completo utilizando el Math_Engine (Fuente Única de Verdad)
+                const fastCache = { isFastCache: true, nodesById: new Map() };
+                sanitized.forEach(r => fastCache.nodesById.set(r.id_dominio, r));
+                
+                const MathParams = {
+                    entity: 'Dominio',
+                    parentField: 'relaciones_padre',
+                    nameField: 'nombre',
+                    pathField: 'path_completo_es',
+                    pkField: 'id_dominio'
+                };
+
+                sanitized.forEach(r => {
+                    r.path_completo_es = window.Math_Engine.buildPathName(r, MathParams, fastCache);
+                });
+            }
+
             return await this._dispatchChunks(sanitized, entityName, progressCallback);
         },
 
@@ -169,8 +253,9 @@
             let accumulatedFeedback = [];
             let metrics = { success: 0, duplicate: 0, error: 0 };
             
-            // Extract sheetId universally from the first record if it exists
+            // Extract sheetId and sheetName universally from the first record if it exists
             let currentSheetId = (parsedData.length > 0 && parsedData[0]._sheetId) ? parsedData[0]._sheetId : null;
+            let currentSheetName = (parsedData.length > 0 && parsedData[0]._sheetName) ? parsedData[0]._sheetName : null;
 
             // S45.6 Validación Pre-Vuelo Estricta (Solo Persona)
             let validData = [];
@@ -279,6 +364,7 @@
                 try {
                     await window.DataAPI.call('etl_writeback_feedback', entityName, {
                         sheetId: currentSheetId,
+                        sheetName: currentSheetName,
                         feedback: accumulatedFeedback
                     });
                 } catch(e) {
@@ -350,9 +436,22 @@
             const delimiterRegex = /,(?=(?:(?:[^"]*"){2})*[^"]*$)/;
 
             // Limpieza Defensiva de Cabezales (Minúsculas, sin espacios)
-            const headers = lines[0].split(delimiterRegex).map(h => 
-                h.replace(/^"|"$/g, '').trim().toLowerCase().replace(/\s+/g, '_')
-            );
+            const headers = lines[0].split(delimiterRegex).map(h => {
+                let clean = h.replace(/^"|"$/g, '').trim().toLowerCase().replace(/\s+/g, '_');
+                
+                // S47: Alias de Mapeo CSV para Dominios
+                if (entityName === 'Dominio') {
+                    if (clean === 'nivel_subdominio') clean = 'nivel_tipo';
+                    else if (clean === 'orden._subdominio' || clean === 'orden_subdominio') clean = 'orden_path';
+                    else if (clean === 'subdominio') clean = 'nombre_ingles';
+                    else if (clean === 'nombre_español' || clean === 'nombre_espanol') clean = 'nombre';
+                    else if (clean === 'definición' || clean === 'definicion') clean = 'descripcion';
+                    else if (clean === 'abreviación_(nombre_servicio)' || clean === 'abreviacion_(nombre_servicio)') clean = 'abreviacion';
+                    else if (clean === 'abreviación_(path_servicio)' || clean === 'abreviacion_(path_servicio)') clean = 'path_completo_es';
+                }
+                
+                return clean;
+            });
             
             // Verificación Temprana (Fail-Fast): Al menos una columna debe coincidir con el schema
             const schema = (window.APP_SCHEMAS && window.APP_SCHEMAS[entityName]) 
