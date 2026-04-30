@@ -403,10 +403,12 @@ var Engine_ETL = (function() {
               range.setBackground('#FFF2CC'); // Amarillo pastel
           } else if (fb.status === 'error') {
               range.setBackground('#FCE8E6'); // Rojo pastel
+          } else if (fb.status === 'success') {
+              range.setBackground('#E6F4EA'); // Verde pastel (éxito)
           }
           
           // Setear el mensaje en la última columna
-          sheet.getRange(fb._rowIndex, feedbackCol).setValue(fb.message || fb.reason || 'Error');
+          sheet.getRange(fb._rowIndex, feedbackCol).setValue(fb.message || fb.reason || 'Operación exitosa');
       });
       
       return true;
