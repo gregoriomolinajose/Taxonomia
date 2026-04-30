@@ -1,5 +1,39 @@
 <template id="tmpl-governance-admin">
     <ion-grid>
+        <!-- S48.1: Identidad de la Aplicación (Branding) -->
+        <ion-row>
+            <ion-col size="12">
+                <ion-card class="dv-card" style="box-shadow: var(--shadow-floating); margin-bottom: 1rem;">
+                   <ion-card-header>
+                       <ion-item lines="none" class="ion-no-margin ion-no-padding" style="--background:transparent;">
+                           <ion-card-title>
+                               <ion-icon name="color-palette-outline" style="vertical-align:middle;"></ion-icon>
+                               Identidad Visual (Branding)
+                           </ion-card-title>
+                       </ion-item>
+                   </ion-card-header>
+                   <ion-card-content style="padding: 1rem;">
+                       <ion-list lines="full">
+                           <ion-item>
+                               <ion-label position="stacked">Título de la Pestaña del Navegador</ion-label>
+                               <ion-input id="input-branding-title" placeholder="Ej. Sistema de Taxonomía OMR"></ion-input>
+                           </ion-item>
+                           <ion-item>
+                               <ion-label position="stacked">URL del Favicon (Ícono)</ion-label>
+                               <ion-input id="input-branding-favicon" placeholder="https://www.coppel.com/favicon.ico"></ion-input>
+                           </ion-item>
+                       </ion-list>
+                       <div style="margin-top: 1rem; text-align: right;">
+                           <ion-button id="btn-save-branding" color="primary" onclick="window.GovernanceEngine.saveBranding()">
+                               <ion-icon name="save-outline" slot="start"></ion-icon>
+                               Guardar Apariencia
+                           </ion-button>
+                       </div>
+                   </ion-card-content>
+                </ion-card>
+            </ion-col>
+        </ion-row>
+
         <ion-row>
             <ion-col size="12">
                 <ion-card class="dv-card" style="box-shadow: var(--shadow-floating);">
@@ -36,6 +70,45 @@
 
 <script>
 window.GovernanceEngine = {
+    saveBranding: async function() {
+        const titleInput = document.getElementById('input-branding-title');
+        const faviconInput = document.getElementById('input-branding-favicon');
+        if (!titleInput || !faviconInput) return;
+        
+        const btn = document.getElementById('btn-save-branding');
+        const origText = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<ion-spinner name="dots"></ion-spinner>';
+
+        try {
+            const payload = {
+                appTitle: titleInput.value.trim(),
+                faviconUrl: faviconInput.value.trim()
+            };
+            const res = await new Promise((resolve, reject) => {
+                if (!google || !google.script || !google.script.run) {
+                    reject(new Error("GAS context missing (local dev)"));
+                    return;
+                }
+                google.script.run
+                    .withSuccessHandler(resolve)
+                    .withFailureHandler(reject)
+                    .API_Admin_SaveBrandingConfig(payload);
+            });
+            if (res && res.success) {
+                if (window.showToast) window.showToast('Identidad guardada. Presiona F5 (recargar pestaña) para ver los cambios.', 'success');
+            } else {
+                throw new Error(res ? res.message : "Error desconocido");
+            }
+        } catch(e) {
+            console.error(e);
+            if (window.showToast) window.showToast('Error al guardar branding: ' + e.message, 'danger');
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = origText;
+        }
+    },
+
     renderMatrix: async function(container) {
         // [S23.2] Gatekeeper visual para Workspaces
         const wsBtn = document.getElementById('btn-nav-workspaces');
