@@ -56,6 +56,29 @@ function ensureEntityProvisioned(entityName) {
   return ensureProvisioned(entityName, _getSpreadsheet());
 }
 
+// ─── Branding Endpoints ────────────────────────────────────────────────────────
+
+/**
+ * Guarda la configuración de la identidad visual de la aplicación.
+ * @param {Object} payload { appTitle: string, faviconUrl: string }
+ * @returns {Object} { success: boolean, message: string }
+ */
+function API_Admin_SaveBrandingConfig(payload) {
+  try {
+    payload = payload || {};
+    const configToSave = {
+      appTitle: payload.appTitle || 'Gobierno de Modelo de Producto — EPT OMR',
+      faviconUrl: payload.faviconUrl || 'https://www.coppel.com/favicon.ico'
+    };
+    
+    PropertiesService.getScriptProperties().setProperty('APP_BRANDING_CONFIG', JSON.stringify(configToSave));
+    return { success: true, message: "Configuración de apariencia guardada correctamente." };
+  } catch(e) {
+    console.error("Error en API_Admin_SaveBrandingConfig:", e);
+    return { success: false, message: "Error al guardar: " + e.message };
+  }
+}
+
 // ─── Private Helpers ──────────────────────────────────────────────────────────
 
 /**

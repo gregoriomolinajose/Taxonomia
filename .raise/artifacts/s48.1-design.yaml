@@ -1,0 +1,41 @@
+artifact_type: story-design
+version: 1
+skill: rai-story-design
+created: '2026-04-30T10:10:00-06:00'
+story: 'S48.1'
+epic: 'E48'
+content:
+  summary: 'Permitir a los administradores personalizar el título y el ícono de la pestaña de la aplicación desde una interfaz gráfica sin tocar código.'
+  complexity: moderate
+  acceptance_criteria:
+    - id: AC1
+      description: 'El panel de administración debe contener una nueva sección "Configuración".'
+      verifiable: true
+    - id: AC2
+      description: 'El formulario debe permitir ingresar y guardar la URL del Favicon y el Título de la Aplicación en PropertiesService.'
+      verifiable: true
+    - id: AC3
+      description: 'La función doGet debe leer la configuración y aplicarla dinámicamente al HtmlOutput (setTitle, setFaviconUrl).'
+      verifiable: true
+    - id: AC4
+      description: 'Si no hay configuración guardada, se deben usar valores por defecto (ej. ícono corporativo actual).'
+      verifiable: true
+  integration_points:
+    - module: 'UI_Admin.Governance'
+      change_type: modification
+      files: ['src/Governance_Admin_UI.html']
+    - module: 'API.Admin'
+      change_type: modification
+      files: ['src/API_Admin.js']
+    - module: 'Core.Routing'
+      change_type: modification
+      files: ['src/Code.js']
+  decisions:
+    - id: D1
+      choice: 'Usar PropertiesService.getScriptProperties()'
+      rationale: 'Es el almacenamiento más rápido, de acceso global y adecuado para configuraciones clave del sistema que deben leerse en el doGet() sin overhead de BDD.'
+      alternatives_considered: ['Google Sheets', 'CacheService']
+refs:
+  backlog_item: 'S48.1'
+  epic_scope: 'work/epics/e48-admin-settings/scope.md'
+metadata: {}
