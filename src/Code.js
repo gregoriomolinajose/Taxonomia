@@ -84,19 +84,7 @@ function doGet(e) {
   }
 
   // Workspace Sync Config Load (S48.3)
-  let wsSyncEnabled = true;
-  try {
-    if (typeof CONFIG !== 'undefined' && CONFIG.WORKSPACE_INTEGRATION === false) {
-      wsSyncEnabled = false;
-    } else {
-      var wsStr = PropertiesService.getScriptProperties().getProperty('APP_WORKSPACE_CONFIG');
-      if (wsStr) {
-        var parsedWs = JSON.parse(wsStr);
-        if (parsedWs.syncEnabled === false) wsSyncEnabled = false;
-      }
-    }
-  } catch(e) {}
-  template.WORKSPACE_SYNC_ENABLED = wsSyncEnabled;
+  template.WORKSPACE_SYNC_ENABLED = (typeof isWorkspaceSyncEnabled !== 'undefined') ? isWorkspaceSyncEnabled() : true;
 
   return template.evaluate()
     .setTitle(brandingConfig.appTitle)
