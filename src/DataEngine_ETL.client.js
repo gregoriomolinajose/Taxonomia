@@ -99,9 +99,9 @@
                 });
                 
                 // If less than 15% of the columns match our schema, it's definitively the wrong file
-                // We use 15% to be extremely permissive (e.g., tiny schemas vs wide files) while still catching completely unrelated files
+                // We use 30% to ensure enough confidence in matching the entity schema
                 const overlapRatio = matchCount / fileHeaders.length;
-                if (overlapRatio < 0.15 && fileHeaders.length > 0) {
+                if (overlapRatio < 0.30 && fileHeaders.length > 0) {
                     throw new Error(`El archivo no parece corresponder a la entidad '${entityName}'. Por favor verifica que estás subiendo el documento correcto.`);
                 }
             }

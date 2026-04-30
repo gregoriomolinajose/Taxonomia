@@ -157,7 +157,7 @@ var Engine_ETL = (function() {
         }
     }
     
-    const sheet = (maxOverlap >= 0.15) ? bestSheet : sheets[0];
+    const sheet = (maxOverlap >= 0.30) ? bestSheet : sheets[0];
     const data = sheet.getDataRange().getValues();
     
     if (!data || data.length < 2) {
