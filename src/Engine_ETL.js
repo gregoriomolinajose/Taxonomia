@@ -109,7 +109,55 @@ var Engine_ETL = (function() {
       throw new Error("El archivo introducido es inaccesible o no es una Hoja de Cálculo válida de Google Sheets. Verifica los permisos de Drive.");
     }
     
-    const sheet = ss.getSheets()[0]; // Leemos la hoja maestra / primera posición
+    const sheets = ss.getSheets();
+    let bestSheet = sheets[0];
+    let maxOverlap = -1;
+    let schema = null;
+    
+    try {
+        if (typeof getAppSchema === 'function') schema = getAppSchema(entityName);
+    } catch(e) {}
+    
+    if (schema && schema.fields) {
+        const schemaFields = schema.fields.map(f => String(f.name).toLowerCase());
+        
+        for (let i = 0; i < sheets.length; i++) {
+            const tempSheet = sheets[i];
+            const lastCol = tempSheet.getLastColumn();
+            const lastRow = tempSheet.getLastRow();
+            if (lastCol === 0 || lastRow < 2) continue;
+            
+            const firstRow = tempSheet.getRange(1, 1, 1, lastCol).getValues()[0];
+            const fileHeaders = firstRow.map(k => {
+                let lowKey = String(k).trim().toLowerCase();
+                if (entityName === 'Dominio') {
+                    if (lowKey === 'nivel subdominio') lowKey = 'nivel_tipo';
+                    else if (lowKey === 'orden. subdominio' || lowKey === 'orden subdominio') lowKey = 'orden_path';
+                    else if (lowKey === 'subdominio') lowKey = 'nombre_ingles';
+                    else if (lowKey === 'nombre español') lowKey = 'nombre';
+                    else if (lowKey === 'definición' || lowKey === 'definicion') lowKey = 'descripcion';
+                    else if (lowKey === 'abreviación (nombre servicio)' || lowKey === 'abreviacion (nombre servicio)') lowKey = 'abreviacion';
+                    else if (lowKey === 'abreviación (path servicio)' || lowKey === 'abreviacion (path servicio)') lowKey = 'path_completo_es';
+                }
+                return lowKey;
+            });
+
+            let matchCount = 0;
+            fileHeaders.forEach(h => {
+                if (schemaFields.includes(h) || h === 'id' || h.startsWith('sys_') || h.startsWith('file_')) {
+                    matchCount++;
+                }
+            });
+            
+            const overlapRatio = fileHeaders.length > 0 ? matchCount / fileHeaders.length : 0;
+            if (overlapRatio > maxOverlap) {
+                maxOverlap = overlapRatio;
+                bestSheet = tempSheet;
+            }
+        }
+    }
+    
+    const sheet = (maxOverlap >= 0.15) ? bestSheet : sheets[0];
     const data = sheet.getDataRange().getValues();
     
     if (!data || data.length < 2) {
@@ -141,6 +189,7 @@ var Engine_ETL = (function() {
         
         if (!isEmptyRow) {
             record._sheetId = sheetId;
+            record._sheetName = sheet.getName();
             record._rowIndex = i + 1; // 1-indexed for SpreadsheetApp (row 1 is header)
             records.push(record);
         }
@@ -253,7 +302,10 @@ var Engine_ETL = (function() {
           return false;
       }
       
-      const sheet = ss.getSheets()[0]; // La misma hoja usada en extractDataFromDrive
+      // Determinar qué hoja usar (usamos el _sheetName del primer feedback si existe)
+      let targetSheetName = feedbackArray[0]._sheetName;
+      let sheet = targetSheetName ? ss.getSheetByName(targetSheetName) : ss.getSheets()[0];
+      if (!sheet) sheet = ss.getSheets()[0];
       const numCols = sheet.getLastColumn() || 1;
       
       // Buscar si la columna de Estado ya existe

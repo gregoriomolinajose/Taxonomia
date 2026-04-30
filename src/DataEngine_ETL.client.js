@@ -194,8 +194,9 @@
             let accumulatedFeedback = [];
             let metrics = { success: 0, duplicate: 0, error: 0 };
             
-            // Extract sheetId universally from the first record if it exists
+            // Extract sheetId and sheetName universally from the first record if it exists
             let currentSheetId = (parsedData.length > 0 && parsedData[0]._sheetId) ? parsedData[0]._sheetId : null;
+            let currentSheetName = (parsedData.length > 0 && parsedData[0]._sheetName) ? parsedData[0]._sheetName : null;
 
             // S45.6 Validación Pre-Vuelo Estricta (Solo Persona)
             let validData = [];
@@ -304,6 +305,7 @@
                 try {
                     await window.DataAPI.call('etl_writeback_feedback', entityName, {
                         sheetId: currentSheetId,
+                        sheetName: currentSheetName,
                         feedback: accumulatedFeedback
                     });
                 } catch(e) {
