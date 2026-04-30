@@ -41,9 +41,14 @@ var Engine_ETL = (function() {
       if (f.type === 'divider' || f.type === 'title') return;
       if (f.type === 'hidden') return;  // Omitir ocultos por defecto
       if (f.primaryKey === true) return; // El Motor DB genera los UUID de PK solos, no se piden al usuario
-      if (f.type === 'relation' || f.isTemporalGraph || f.isEdge) return; // Las topologías Padre-Hijo no se inyectan en cargas planas
+      
+      if (f.excludeFromETL === true) return; // Exclusión explícita manual
+      
+      if ((f.type === 'relation' || f.isTemporalGraph || f.isEdge) && !f.allowInETL) return; // Topologías Padre-Hijo excluidas por defecto, salvo flag
+      
       if (f.type === 'image' || f.type === 'file' || f.name === 'avatar') return; // Elementos multimedia o binarios estorbosos excluidos
       if (excludedFields.includes(f.name)) return;
+      
       headers.push(f.name);
     });
 
@@ -69,9 +74,55 @@ var Engine_ETL = (function() {
     // Opcional: Forzar ancho uniforme requerido por UX
     for (let i = 1; i <= headers.length; i++) {
       sheet.setColumnWidth(i, 200);
+      const colName = headers[i - 1];
+      if (colName === 'roles_asignados') {
+        headerRange.getCell(1, i).setNote("Escribe los nombres de los Roles separados por comas.\nEjemplo: Scrum Master, Product Owner\nPuedes consultar los nombres exactos en la pestaña _Catalogos.");
+      }
+      if (colName === 'equipo') {
+        headerRange.getCell(1, i).setNote("Escribe los nombres de los Equipos separados por comas.\nEjemplo: Equipo Alpha, Equipo Beta\nPuedes consultar los nombres exactos en la pestaña _Catalogos.");
+      }
     }
 
-    // 4. Retornar link
+    // 4. Inyectar Pestaña de Catálogos
+    try {
+      const catalogSheet = ss.insertSheet('_Catalogos');
+      catalogSheet.hideSheet(); // Ocultar para no ensuciar la vista principal
+      
+      let colIndex = 1;
+      
+      // Catálogo de Roles
+      if (typeof Engine_DB !== 'undefined') {
+        const rolesObj = Engine_DB.list('Rol');
+        if (rolesObj && rolesObj.rows && rolesObj.rows.length > 0) {
+          catalogSheet.getRange(1, colIndex).setValue("Catálogo de Roles").setFontWeight("bold");
+          const rolesList = rolesObj.rows.map(r => [r.nombre]);
+          catalogSheet.getRange(2, colIndex, rolesList.length, 1).setValues(rolesList);
+          colIndex++;
+        }
+      }
+      
+      // Catálogo de Equipos
+      if (typeof Engine_DB !== 'undefined') {
+        const equiposObj = Engine_DB.list('Equipo');
+        if (equiposObj && equiposObj.rows && equiposObj.rows.length > 0) {
+          catalogSheet.getRange(1, colIndex).setValue("Catálogo de Equipos").setFontWeight("bold");
+          const equiposList = equiposObj.rows.map(r => [r.nombre]);
+          catalogSheet.getRange(2, colIndex, equiposList.length, 1).setValues(equiposList);
+          colIndex++;
+        }
+      }
+      
+      // Auto-resize
+      if (colIndex > 1) {
+        for (let j = 1; j < colIndex; j++) {
+          catalogSheet.autoResizeColumn(j);
+        }
+      }
+    } catch(e) {
+      if (typeof Logger !== 'undefined') Logger.log("No se pudo inyectar el catálogo: " + e.toString());
+    }
+
+    // 5. Retornar link
     return ss.getUrl();
   }
 
