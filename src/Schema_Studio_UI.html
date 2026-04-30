@@ -2025,6 +2025,38 @@
     _copyTabContent(lines.join('\n'), 'ss-copy-presets-btn', 'Copiar Presets GAS');
   }
 
+  function _saveGlobalConfig(configKey, payload, btnId, successMessage) {
+    var btn = document.getElementById(btnId);
+    if (!btn) return;
+    var origText = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = 'Guardando...';
+
+    if (!window.google || !window.google.script || !window.google.script.run) {
+        alert("GAS context missing (local dev)");
+        btn.disabled = false;
+        btn.innerHTML = origText;
+        return;
+    }
+    
+    window.google.script.run
+        .withSuccessHandler(function(res) {
+            btn.disabled = false;
+            btn.innerHTML = origText;
+            if (res && res.success) {
+                alert(successMessage || 'Configuración guardada exitosamente.');
+            } else {
+                alert('Error: ' + (res ? res.message : 'desconocido'));
+            }
+        })
+        .withFailureHandler(function(err) {
+            btn.disabled = false;
+            btn.innerHTML = origText;
+            alert('Error de red: ' + err.message);
+        })
+        .API_Admin_SaveGlobalConfig(configKey, payload);
+  }
+
   // ── Public API ────────────────────────────────────────────────────────────
   window.SchemaStudio = {
     mount: function() {
@@ -2035,56 +2067,18 @@
     runReconcile:           runReconcile,
     
     saveBrandingConfig: function() {
-        const titleInput = document.getElementById('input-branding-title');
-        const faviconInput = document.getElementById('input-branding-favicon');
+        var titleInput = document.getElementById('input-branding-title');
+        var faviconInput = document.getElementById('input-branding-favicon');
         if (!titleInput || !faviconInput) return;
-        
-        const btn = document.getElementById('btn-save-branding');
-        const origText = btn.innerHTML;
-        btn.disabled = true;
-        btn.innerHTML = 'Guardando...';
-
-        try {
-            const payload = {
-                appTitle: titleInput.value.trim(),
-                faviconUrl: faviconInput.value.trim()
-            };
-            if (!google || !google.script || !google.script.run) {
-                alert("GAS context missing (local dev)");
-                btn.disabled = false;
-                btn.innerHTML = origText;
-                return;
-            }
-            google.script.run
-                .withSuccessHandler(function(res) {
-                    btn.disabled = false;
-                    btn.innerHTML = origText;
-                    if (res && res.success) {
-                        alert('Identidad guardada exitosamente. Recarga la pestaña (F5) para aplicar.');
-                    } else {
-                        alert('Error: ' + (res ? res.message : 'desconocido'));
-                    }
-                })
-                .withFailureHandler(function(err) {
-                    btn.disabled = false;
-                    btn.innerHTML = origText;
-                    alert('Error de red: ' + err.message);
-                })
-                .API_Admin_SaveGlobalConfig('APP_BRANDING_CONFIG', payload);
-        } catch(e) {
-            console.error(e);
-            alert('Error al guardar branding: ' + e.message);
-            btn.disabled = false;
-            btn.innerHTML = origText;
-        }
+        var payload = { appTitle: titleInput.value.trim(), faviconUrl: faviconInput.value.trim() };
+        _saveGlobalConfig('APP_BRANDING_CONFIG', payload, 'btn-save-branding', 'Identidad guardada exitosamente. Recarga la pestaña (F5) para aplicar.');
     },
 
     saveSecurityConfig: function() {
-        const domainsInput = document.getElementById('input-security-domains');
+        var domainsInput = document.getElementById('input-security-domains');
         if (!domainsInput) return;
-        
-        let domainsRaw = domainsInput.value || '';
-        let domainsArray = domainsRaw.split(',')
+        var domainsRaw = domainsInput.value || '';
+        var domainsArray = domainsRaw.split(',')
             .map(function(d) { return d.trim().toLowerCase(); })
             .filter(function(d) { return d.length > 0 && d.startsWith('@'); });
 
@@ -2092,85 +2086,15 @@
             alert("Error: Los dominios deben comenzar con '@' (ej. @coppel.com)");
             return;
         }
-
-        const btn = document.getElementById('btn-save-security');
-        const origText = btn.innerHTML;
-        btn.disabled = true;
-        btn.innerHTML = 'Guardando...';
-
-        try {
-            const payload = {
-                allowedDomains: domainsArray
-            };
-            if (!google || !google.script || !google.script.run) {
-                alert("GAS context missing (local dev)");
-                btn.disabled = false;
-                btn.innerHTML = origText;
-                return;
-            }
-            google.script.run
-                .withSuccessHandler(function(res) {
-                    btn.disabled = false;
-                    btn.innerHTML = origText;
-                    if (res && res.success) {
-                        alert('Accesos SSO guardados exitosamente. Aplicarán en los siguientes inicios de sesión.');
-                    } else {
-                        alert('Error: ' + (res ? res.message : 'desconocido'));
-                    }
-                })
-                .withFailureHandler(function(err) {
-                    btn.disabled = false;
-                    btn.innerHTML = origText;
-                    alert('Error de red: ' + err.message);
-                })
-                .API_Admin_SaveGlobalConfig('APP_SECURITY_CONFIG', payload);
-        } catch(e) {
-            console.error(e);
-            alert('Error al guardar accesos: ' + e.message);
-            btn.disabled = false;
-            btn.innerHTML = origText;
-        }
+        var payload = { allowedDomains: domainsArray };
+        _saveGlobalConfig('APP_SECURITY_CONFIG', payload, 'btn-save-security', 'Accesos SSO guardados exitosamente. Aplicarán en los siguientes inicios de sesión.');
     },
     
     saveWorkspaceConfig: function() {
-        const chk = document.getElementById('ss-workspace-sync-enabled');
+        var chk = document.getElementById('ss-workspace-sync-enabled');
         if (!chk) return;
-        
-        const btn = document.getElementById('btn-save-workspace');
-        const origText = btn.innerHTML;
-        btn.disabled = true;
-        btn.innerHTML = 'Guardando...';
-
-        try {
-            const payload = { syncEnabled: chk.checked };
-            if (!google || !google.script || !google.script.run) {
-                alert("GAS context missing (local dev)");
-                btn.disabled = false;
-                btn.innerHTML = origText;
-                return;
-            }
-            google.script.run
-                .withSuccessHandler(function(res) {
-                    btn.disabled = false;
-                    btn.innerHTML = origText;
-                    if (res && res.success) {
-                        alert('Configuración guardada exitosamente.');
-                    } else {
-                        alert('Error: ' + (res ? res.message : 'desconocido'));
-                    }
-                })
-                .withFailureHandler(function(err) {
-                    btn.disabled = false;
-                    btn.innerHTML = origText;
-                    alert('Error de red: ' + err.message);
-                })
-                .API_Admin_SaveGlobalConfig('APP_WORKSPACE_CONFIG', payload);
-        } catch(e) {
-            console.error(e);
-            alert('Error al guardar: ' + e.message);
-            btn.disabled = false;
-            btn.innerHTML = origText;
-        }
+        var payload = { syncEnabled: chk.checked };
+        _saveGlobalConfig('APP_WORKSPACE_CONFIG', payload, 'btn-save-workspace', 'Configuración de sincronización guardada exitosamente.');
     },
 
     // Composer
