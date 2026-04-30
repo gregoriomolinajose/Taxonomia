@@ -346,6 +346,8 @@ var APP_SCHEMAS = {
       { name: "esquema", type: "select", label: "Esquema Laboral", options: ["Interno", "Externo"], required: true, width: 6 },
       { name: "proveedor", type: "text", label: "Empresa Contratante", required: true, width: 6 },
       { name: "ubicacion", type: "text", label: "Ubicación Geográfica", required: false, width: 12 },
+      { name: "estado_geo", type: "text", label: "Estado", required: false, width: 6 },
+      { name: "ciudad", type: "text", label: "Ciudad", required: false, width: 6 },
       
       { name: "separator_5", type: "divider", label: "Control de Accesos (Admin)", width: 12, abacRule: { action: 'update', target: 'Sys_Permissions' } },
       { name: "id_rol", type: "select", label: "Rol de Autorización", required: false, width: 12, lookupSource: "getSysRolesOptions", abacRule: { action: 'update', target: 'Sys_Permissions' } },
