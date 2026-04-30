@@ -255,10 +255,10 @@ var Engine_ETL = (function() {
             if (!header || header.trim() === '') continue; // Cabecera vacía no sirve
             
             const value = row[j];
-            if (value !== undefined && value !== null && value !== '') {
+            if (value !== undefined && value !== null && String(value).trim() !== '') {
                isEmptyRow = false;
+               record[header] = value;
             }
-            record[header] = value;
         }
         
         if (!isEmptyRow) {
