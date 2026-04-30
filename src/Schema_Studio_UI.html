@@ -2094,6 +2094,10 @@
         var chk = document.getElementById('ss-workspace-sync-enabled');
         if (!chk) return;
         var payload = { syncEnabled: chk.checked };
+        
+        // Actualizar el estado global en tiempo real para evitar requerir F5
+        window.WORKSPACE_SYNC_ENABLED = chk.checked;
+        
         _saveGlobalConfig('APP_WORKSPACE_CONFIG', payload, 'btn-save-workspace', 'Configuración de sincronización guardada exitosamente.');
     },
 

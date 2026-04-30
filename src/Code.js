@@ -83,6 +83,21 @@ function doGet(e) {
     console.error("Error leyendo APP_BRANDING_CONFIG. Usando defaults.", e);
   }
 
+  // Workspace Sync Config Load (S48.3)
+  let wsSyncEnabled = true;
+  try {
+    if (typeof CONFIG !== 'undefined' && CONFIG.WORKSPACE_INTEGRATION === false) {
+      wsSyncEnabled = false;
+    } else {
+      var wsStr = PropertiesService.getScriptProperties().getProperty('APP_WORKSPACE_CONFIG');
+      if (wsStr) {
+        var parsedWs = JSON.parse(wsStr);
+        if (parsedWs.syncEnabled === false) wsSyncEnabled = false;
+      }
+    }
+  } catch(e) {}
+  template.WORKSPACE_SYNC_ENABLED = wsSyncEnabled;
+
   return template.evaluate()
     .setTitle(brandingConfig.appTitle)
     .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL)

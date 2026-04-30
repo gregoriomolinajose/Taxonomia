@@ -201,6 +201,7 @@
 
                             // --- NUEVO: C.2) Workspace Typeahead (S37.4) ---
                             if (schemaField.triggers_workspace_resolve && eventType === 'ionInput') {
+                                if (window.WORKSPACE_SYNC_ENABLED === false) return; // Short-circuit: Disabled globally
                                 const term = formStateObj[fieldName] || "";
                                 if (term.length >= 3) {
                                     if (window.DataAPI) {
@@ -224,6 +225,7 @@
 
                             // --- NUEVO: C) Smart API Lookup Full Profile (Workspace Resolve Blur) ---
                             if (schemaField.triggers_workspace_resolve && formStateObj[fieldName] && (eventType === 'ionChange' || eventType === 'ionBlur')) {
+                                if (window.WORKSPACE_SYNC_ENABLED === false) return; // Short-circuit: Disabled globally
                                 if (window.DataAPI) {
                                     // Bloquear modal temporalmente con retraso p/evitar flash (UX)
                                     const loadingUI = document.createElement('ion-loading');

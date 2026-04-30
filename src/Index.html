@@ -51,6 +51,7 @@
 
   <script>
     window.ENV_CONFIG = <?!= typeof ENV_CONFIG !== 'undefined' ? ENV_CONFIG : '{"AuthMode":"SSO","ALLOWED_DOMAINS":["@coppel.com","@bancoppel.com"]}' ?>;
+    window.WORKSPACE_SYNC_ENABLED = <?!= typeof WORKSPACE_SYNC_ENABLED !== 'undefined' ? WORKSPACE_SYNC_ENABLED : true ?>;
 
     window.WHITE_LABEL = <?!= typeof WHITE_LABEL_CONFIG !== 'undefined' ? WHITE_LABEL_CONFIG : '{"bodyFont":"Poppins, sans-serif","displayFont":"Playfair Display, serif"}' ?>;
     // UI Branding Rule (Zero-FOUC Injection)
