@@ -7,6 +7,26 @@
  */
 
 /**
+ * Evalúa si la sincronización Workspace está habilitada,
+ * revisando tanto el flag estático (CONFIG) como la configuración dinámica del Admin.
+ */
+function isWorkspaceSyncEnabled() {
+  if (typeof CONFIG !== 'undefined' && CONFIG.WORKSPACE_INTEGRATION === false) return false;
+  try {
+    if (typeof PropertiesService !== 'undefined') {
+      var cfgStr = PropertiesService.getScriptProperties().getProperty('APP_WORKSPACE_CONFIG');
+      if (cfgStr) {
+        var cfg = JSON.parse(cfgStr);
+        if (cfg.syncEnabled === false) return false;
+      }
+    }
+  } catch (e) {
+    Logger.log("Error parseando APP_WORKSPACE_CONFIG: " + e.message);
+  }
+  return true;
+}
+
+/**
  * Busca a un usuario por correo electrónico en el AdminDirectory y extrae su DTO.
  * Se expone al cliente mediante google.script.run
  * 
@@ -15,9 +35,9 @@
  */
 function resolverDirectorioWorkspace(queryEmail) {
   try {
-    // Zero-Touch CI/CD Environment flag guard
-    if (typeof CONFIG !== 'undefined' && CONFIG.WORKSPACE_INTEGRATION === false) {
-      Logger.log("Workspace API Bypassed: WORKSPACE_INTEGRATION is disabled in ENV_CONFIG");
+    // Zero-Touch CI/CD Environment & Admin Config flag guard
+    if (!isWorkspaceSyncEnabled()) {
+      Logger.log("Workspace API Bypassed: Sync is disabled globally or by admin config.");
       return { __status: "DISABLED" };
     }
     if (!AdminDirectory || !AdminDirectory.Users) {
@@ -108,7 +128,7 @@ function resolverDirectorioWorkspace(queryEmail) {
  */
 function searchDirectoryByName(queryName) {
   try {
-    if (typeof CONFIG !== 'undefined' && CONFIG.WORKSPACE_INTEGRATION === false) {
+    if (!isWorkspaceSyncEnabled()) {
       return { __status: "DISABLED" };
     }
     if (!AdminDirectory || !AdminDirectory.Users) {

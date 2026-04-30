@@ -113,14 +113,14 @@
         <ion-icon name="hardware-chip-outline"></ion-icon> DB Health
       </button>
       
-      <!-- [S44.11] Workspace Sync Trigger -->
-      <button class="ss-tab" id="ss-btn-sync-ws" onclick="window.SchemaStudio.triggerWsSync()" style="
+      <!-- [S48.3] Workspace Sync Config Tab -->
+      <button class="ss-tab" data-tab="workspace" onclick="window.SchemaStudio.switchTab('workspace')" style="
         padding:10px 20px;border:none;background:none;cursor:pointer;
-        font-weight:600;font-size:0.85rem;color:var(--ion-color-primary);
+        font-weight:600;font-size:0.85rem;color:var(--ion-color-medium);
         border-bottom:2px solid transparent;margin-bottom:-1px;
         display:flex;align-items:center;gap:6px;transition:all 0.2s;
-      " title="Forzar Sincronización Manual de Personas contra Directorio Workspace">
-        <ion-icon name="sync-circle-outline"></ion-icon> Sincronizar Workspace
+      ">
+        <ion-icon name="sync-circle-outline"></ion-icon> Workspace Sync
       </button>
 
       <!-- [E31-S31.6] Blueprint Composer Tab -->
@@ -556,6 +556,7 @@
     else if (tabId === 'presets')   renderPresetsTab(container);
     else if (tabId === 'db')        renderDbHealthTab(container);
     else if (tabId === 'global')    renderGlobalTab(container);
+    else if (tabId === 'workspace') renderWorkspaceTab(container);
     else if (tabId === 'composer')  renderComposerTab(container);
   }
 
@@ -796,6 +797,76 @@
       '</div>' +
     '</div>';
     container.innerHTML = html;
+  }
+
+  // ── Workspace Sync Tab ─────────────────────────────────────────────────────────
+  function renderWorkspaceTab(container) {
+    var html = '<div style="max-width: 600px; margin: 0 auto; padding: 20px 0;">' +
+      '<div style="font-weight:700;font-size:1.1rem;margin-bottom:8px;">Workspace Sync Configuration</div>' +
+      '<div style="font-size:0.85rem;color:var(--ion-color-medium);line-height:1.4;margin-bottom:20px;">' +
+      'Configura la sincronización con Google Workspace. Activa o desactiva la conexión global, y administra los dominios autorizados vía OAuth2.' +
+      '</div>' +
+      
+      '<div class="ss-entity-card" style="flex-direction:column;gap:16px;">' +
+        '<div style="font-weight:600;font-size:0.95rem;color:var(--ion-color-dark);display:flex;align-items:center;gap:8px;">' +
+          '<ion-icon name="power-outline"></ion-icon> Sincronización Global' +
+        '</div>' +
+        '<label style="display:flex;align-items:center;gap:12px;cursor:pointer;font-size:0.85rem;color:var(--ion-color-dark);">' +
+          '<input type="checkbox" id="ss-workspace-sync-enabled" checked style="width:18px;height:18px;cursor:pointer;">' +
+          'Habilitar interceptor de Workspace en la creación de Personas' +
+        '</label>' +
+        '<div style="font-size:0.75rem;color:var(--ion-color-medium);">' +
+          'Si está desactivado, el sistema no consultará el directorio de Google y creará perfiles básicos.' +
+        '</div>' +
+        '<div style="margin-top:10px;text-align:right;">' +
+          '<button id="btn-save-workspace" class="ss-btn-primary" onclick="window.SchemaStudio.saveWorkspaceConfig()">' +
+            '<ion-icon name="save-outline"></ion-icon> Guardar Configuración' +
+          '</button>' +
+        '</div>' +
+      '</div>' +
+
+      '<div class="ss-entity-card" style="flex-direction:column;gap:16px;margin-top:16px;">' +
+        '<div style="font-weight:600;font-size:0.95rem;color:var(--ion-color-dark);display:flex;align-items:center;gap:8px;">' +
+          '<ion-icon name="globe-outline"></ion-icon> Dominios Conectados (OAuth2)' +
+        '</div>' +
+        '<div style="font-size:0.8rem;color:var(--ion-color-medium);background:var(--ion-color-step-100);padding:12px;border-radius:8px;border-left:3px solid var(--ion-color-warning);">' +
+          '<strong>Próximamente:</strong> La autorización de dominios externos mediante 3-Legged OAuth2 será habilitada en la siguiente fase de desarrollo (S48.4).' +
+        '</div>' +
+        '<div style="text-align:right;margin-top:8px;">' +
+          '<button disabled style="background:var(--ion-color-step-200);color:var(--ion-color-medium);border:none;padding:8px 16px;border-radius:6px;font-weight:600;cursor:not-allowed;display:inline-flex;align-items:center;gap:6px;font-size:0.8rem;">' +
+            '<ion-icon name="add-circle-outline"></ion-icon> Conectar Dominio' +
+          '</button>' +
+        '</div>' +
+      '</div>' +
+
+      '<div class="ss-entity-card" style="flex-direction:column;gap:16px;margin-top:16px;">' +
+        '<div style="font-weight:600;font-size:0.95rem;color:var(--ion-color-dark);display:flex;align-items:center;gap:8px;">' +
+          '<ion-icon name="sync-circle-outline"></ion-icon> Ejecución Manual' +
+        '</div>' +
+        '<div style="font-size:0.8rem;color:var(--ion-color-medium);">' +
+          'Fuerza un barrido completo de hidratación contra el directorio base. Consumirá cuotas masivas de la API.' +
+        '</div>' +
+        '<div style="text-align:right;">' +
+          '<button id="ss-btn-sync-ws" onclick="window.SchemaStudio.triggerWsSync()" style="background:var(--ion-color-step-100);color:var(--ion-color-primary);border:1px solid var(--ion-color-step-200);padding:8px 16px;border-radius:6px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:6px;font-size:0.8rem;">' +
+            '<ion-icon name="play-circle-outline"></ion-icon> Forzar Sincronización' +
+          '</button>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+    
+    container.innerHTML = html;
+
+    if (typeof google !== 'undefined' && google.script && google.script.run) {
+      google.script.run.withSuccessHandler(function(res) {
+        if (res && res.success && res.data) {
+          try {
+            var cfg = JSON.parse(res.data);
+            var chk = document.getElementById('ss-workspace-sync-enabled');
+            if (chk) chk.checked = (cfg.syncEnabled !== false);
+          } catch(e){}
+        }
+      }).API_Admin_GetGlobalConfig('APP_WORKSPACE_CONFIG');
+    }
   }
 
   // ── DB Health Tab ─────────────────────────────────────────────────────────
@@ -2056,6 +2127,47 @@
         } catch(e) {
             console.error(e);
             alert('Error al guardar accesos: ' + e.message);
+            btn.disabled = false;
+            btn.innerHTML = origText;
+        }
+    },
+    
+    saveWorkspaceConfig: function() {
+        const chk = document.getElementById('ss-workspace-sync-enabled');
+        if (!chk) return;
+        
+        const btn = document.getElementById('btn-save-workspace');
+        const origText = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = 'Guardando...';
+
+        try {
+            const payload = { syncEnabled: chk.checked };
+            if (!google || !google.script || !google.script.run) {
+                alert("GAS context missing (local dev)");
+                btn.disabled = false;
+                btn.innerHTML = origText;
+                return;
+            }
+            google.script.run
+                .withSuccessHandler(function(res) {
+                    btn.disabled = false;
+                    btn.innerHTML = origText;
+                    if (res && res.success) {
+                        alert('Configuración guardada exitosamente.');
+                    } else {
+                        alert('Error: ' + (res ? res.message : 'desconocido'));
+                    }
+                })
+                .withFailureHandler(function(err) {
+                    btn.disabled = false;
+                    btn.innerHTML = origText;
+                    alert('Error de red: ' + err.message);
+                })
+                .API_Admin_SaveGlobalConfig('APP_WORKSPACE_CONFIG', payload);
+        } catch(e) {
+            console.error(e);
+            alert('Error al guardar: ' + e.message);
             btn.disabled = false;
             btn.innerHTML = origText;
         }
