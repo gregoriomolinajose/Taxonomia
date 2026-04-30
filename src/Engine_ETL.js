@@ -158,7 +158,7 @@ var Engine_ETL = (function() {
     }
     
     const sheet = (maxOverlap >= 0.30) ? bestSheet : sheets[0];
-    const data = sheet.getDataRange().getValues();
+    const data = sheet.getDataRange().getDisplayValues();
     
     if (!data || data.length < 2) {
       throw new Error("La hoja de cálculo está vacía o carece de registros.");
