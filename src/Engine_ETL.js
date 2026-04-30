@@ -129,7 +129,7 @@ var Engine_ETL = (function() {
             
             const firstRow = tempSheet.getRange(1, 1, 1, lastCol).getValues()[0];
             const fileHeaders = firstRow.map(k => {
-                let lowKey = String(k).trim().toLowerCase();
+                let lowKey = String(k).trim().toLowerCase().replace(/\s+/g, ' ');
                 if (entityName === 'Dominio') {
                     if (lowKey === 'nivel subdominio') lowKey = 'nivel_tipo';
                     else if (lowKey === 'orden. subdominio' || lowKey === 'orden subdominio' || lowKey === 'orden') lowKey = 'orden_path';

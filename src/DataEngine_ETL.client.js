@@ -76,7 +76,7 @@
             // S47.4 Proactive Detection: Ensure the file actually matches the entity
             const firstRow = rawPayload[0];
             const fileHeaders = Object.keys(firstRow).map(k => {
-                let lowKey = k.trim().toLowerCase();
+                let lowKey = k.trim().toLowerCase().replace(/\s+/g, ' ');
                 if (entityName === 'Dominio') {
                     if (lowKey === 'nivel subdominio') lowKey = 'nivel_tipo';
                     else if (lowKey === 'orden. subdominio' || lowKey === 'orden subdominio' || lowKey === 'orden') lowKey = 'orden_path';
@@ -113,7 +113,7 @@
                     if (row.hasOwnProperty(originalKey)) {
                         let key = originalKey;
                         const value = row[originalKey];
-                        let lowKey = key.trim().toLowerCase();
+                        let lowKey = key.trim().toLowerCase().replace(/\s+/g, ' ');
                         
                         // S47: Resolución de alias visuales para Dominios
                         if (entityName === 'Dominio') {
