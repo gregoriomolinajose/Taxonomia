@@ -65,6 +65,7 @@ function ensureEntityProvisioned(entityName) {
  */
 function API_Admin_SaveBrandingConfig(payload) {
   try {
+    payload = payload || {};
     const configToSave = {
       appTitle: payload.appTitle || 'Gobierno de Modelo de Producto — EPT OMR',
       faviconUrl: payload.faviconUrl || 'https://www.coppel.com/favicon.ico'
