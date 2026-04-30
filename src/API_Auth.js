@@ -44,9 +44,21 @@ const API_Auth = {
         let domains = ['@coppel.com', '@bancoppel.com']; 
         if (typeof PropertiesService !== 'undefined') {
             try {
-                const envStr = PropertiesService.getScriptProperties().getProperty('ENV_CONFIG');
-                if (envStr && JSON.parse(envStr).ALLOWED_DOMAINS) domains = JSON.parse(envStr).ALLOWED_DOMAINS;
-            } catch(e) {}
+                // S48.2 Dynamic SSO Domains (Source of Truth)
+                const secStr = PropertiesService.getScriptProperties().getProperty('APP_SECURITY_CONFIG');
+                if (secStr) {
+                    const parsedSec = JSON.parse(secStr);
+                    if (parsedSec.allowedDomains && parsedSec.allowedDomains.length > 0) {
+                        domains = parsedSec.allowedDomains;
+                    }
+                } else {
+                    // Fallback to static ENV_CONFIG
+                    const envStr = PropertiesService.getScriptProperties().getProperty('ENV_CONFIG');
+                    if (envStr && JSON.parse(envStr).ALLOWED_DOMAINS) domains = JSON.parse(envStr).ALLOWED_DOMAINS;
+                }
+            } catch(e) {
+                console.error("API_Auth: Error leyendo config de seguridad", e);
+            }
         } else if (typeof CONFIG !== 'undefined' && CONFIG.ALLOWED_DOMAINS) {
             domains = CONFIG.ALLOWED_DOMAINS;
         }
