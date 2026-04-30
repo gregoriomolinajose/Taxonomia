@@ -257,7 +257,6 @@ var Business_Interceptors = (function() {
                 updatePayloadFn: (p, resolvedId) => p.lider_directo = resolvedId,
                 logMessage: 'Se auto-generaron e hidrataron {N} líderes recursivamente (Interceptor DRY).'
             });
-        }
         },
 
         /**
