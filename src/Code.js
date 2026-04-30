@@ -67,10 +67,27 @@ function doGet(e) {
       
   template.__ABAC_CONTEXT__ = JSON.stringify(abacContext).replace(/</g, '\\u003c');
 
+  // Branding Config Load (S48.1)
+  let brandingConfig = {
+    appTitle: 'Gobierno de Modelo de Producto — EPT OMR',
+    faviconUrl: 'https://www.coppel.com/favicon.ico'
+  };
+  try {
+    var brandingStr = PropertiesService.getScriptProperties().getProperty('APP_BRANDING_CONFIG');
+    if (brandingStr) {
+      var parsedBranding = JSON.parse(brandingStr);
+      if (parsedBranding.appTitle) brandingConfig.appTitle = parsedBranding.appTitle;
+      if (parsedBranding.faviconUrl) brandingConfig.faviconUrl = parsedBranding.faviconUrl;
+    }
+  } catch(e) {
+    console.error("Error leyendo APP_BRANDING_CONFIG. Usando defaults.", e);
+  }
+
   return template.evaluate()
-    .setTitle('Gobierno de Modelo de Producto — EPT OMR')
+    .setTitle(brandingConfig.appTitle)
     .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL)
-    .addMetaTag('viewport', 'width=device-width, initial-scale=1.0, viewport-fit=cover');
+    .addMetaTag('viewport', 'width=device-width, initial-scale=1.0, viewport-fit=cover')
+    .setFaviconUrl(brandingConfig.faviconUrl);
 }
 
 /**
