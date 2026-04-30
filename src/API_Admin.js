@@ -97,6 +97,31 @@ function API_Admin_GetGlobalConfig(configKey) {
   }
 }
 
+/**
+ * [S48.4] Obtiene la lista de dominios Workspace autorizados vía OAuth2.
+ * @returns {Array<string>} Lista de dominios (ej. ["@dominio.com"])
+ */
+function API_Admin_GetConnectedDomains() {
+  try {
+    var props = PropertiesService.getScriptProperties().getProperties();
+    var domains = [];
+    var prefix = 'oauth2.Workspace_';
+    
+    for (var key in props) {
+      if (key.indexOf(prefix) === 0) {
+        var domain = key.substring(prefix.length);
+        if (domains.indexOf(domain) === -1) {
+          domains.push(domain);
+        }
+      }
+    }
+    return domains;
+  } catch(e) {
+    console.error("[API_Admin] Error obteniendo dominios: ", e);
+    return [];
+  }
+}
+
 // ─── Private Helpers ──────────────────────────────────────────────────────────
 
 /**

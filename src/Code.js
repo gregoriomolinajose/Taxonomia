@@ -10,6 +10,13 @@
  * Do NOT use createHtmlOutputFromFile here — it bypasses the engine.
  */
 function doGet(e) {
+  // [S48.4] Interceptación de Callback OAuth2
+  if (e && e.parameter && e.parameter.code && e.parameter.state) {
+    if (typeof Auth_HandleOAuthCallback === 'function') {
+      return Auth_HandleOAuthCallback(e);
+    }
+  }
+
   var template = HtmlService.createTemplateFromFile('Index');
 
   // Backend variables injected into the template scope

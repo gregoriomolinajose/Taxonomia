@@ -829,11 +829,11 @@
         '<div style="font-weight:600;font-size:0.95rem;color:var(--ion-color-dark);display:flex;align-items:center;gap:8px;">' +
           '<ion-icon name="globe-outline"></ion-icon> Dominios Conectados (OAuth2)' +
         '</div>' +
-        '<div style="font-size:0.8rem;color:var(--ion-color-medium);background:var(--ion-color-step-100);padding:12px;border-radius:8px;border-left:3px solid var(--ion-color-warning);">' +
-          '<strong>Próximamente:</strong> La autorización de dominios externos mediante 3-Legged OAuth2 será habilitada en la siguiente fase de desarrollo (S48.4).' +
+        '<div id="ss-oauth2-domains-container" style="font-size:0.8rem;color:var(--ion-color-medium);padding:12px;border-radius:8px;background:var(--ion-color-step-50);">' +
+          '<div style="text-align:center;"><ion-spinner name="crescent"></ion-spinner></div>' +
         '</div>' +
         '<div style="text-align:right;margin-top:8px;">' +
-          '<button disabled style="background:var(--ion-color-step-200);color:var(--ion-color-medium);border:none;padding:8px 16px;border-radius:6px;font-weight:600;cursor:not-allowed;display:inline-flex;align-items:center;gap:6px;font-size:0.8rem;">' +
+          '<button id="btn-connect-domain" onclick="window.SchemaStudio.connectWorkspaceDomain()" style="background:var(--ion-color-primary);color:white;border:none;padding:8px 16px;border-radius:6px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:6px;font-size:0.8rem;box-shadow:0 2px 4px rgba(0,0,0,0.1);">' +
             '<ion-icon name="add-circle-outline"></ion-icon> Conectar Dominio' +
           '</button>' +
         '</div>' +
@@ -866,6 +866,12 @@
           } catch(e){}
         }
       }).API_Admin_GetGlobalConfig('APP_WORKSPACE_CONFIG');
+      
+      setTimeout(function() {
+        if (window.SchemaStudio && window.SchemaStudio._loadConnectedDomains) {
+            window.SchemaStudio._loadConnectedDomains();
+        }
+      }, 200);
     }
   }
 
@@ -2111,6 +2117,50 @@
     // Tab-specific exports [Debug-fix]
     copyTemplatesGas: copyTemplatesGas,
     copyPresetsGas:   copyPresetsGas,
+
+    connectWorkspaceDomain: function() {
+        var btn = document.getElementById('btn-connect-domain');
+        if (!btn) return;
+        var originalHtml = btn.innerHTML;
+        btn.innerHTML = '<ion-spinner name="crescent" style="width:16px;height:16px;"></ion-spinner> Generando...';
+        btn.disabled = true;
+        
+        DataAPI.call('Auth_GetWorkspaceAuthUrl').then(function(url) {
+            btn.innerHTML = originalHtml;
+            btn.disabled = false;
+            window.open(url, '_blank', 'width=600,height=700');
+            setTimeout(function() { window.SchemaStudio._loadConnectedDomains(); }, 15000);
+        }).catch(function(e) {
+            btn.innerHTML = originalHtml;
+            btn.disabled = false;
+            alert('Asegúrate de configurar las credenciales OAuth en Properties:\n\n' + e.message);
+        });
+    },
+    
+    _loadConnectedDomains: function() {
+        var container = document.getElementById('ss-oauth2-domains-container');
+        if (!container) return;
+        container.innerHTML = '<div style="text-align:center;"><ion-spinner name="crescent"></ion-spinner></div>';
+
+        DataAPI.call('API_Admin_GetConnectedDomains').then(function(domains) {
+            var container2 = document.getElementById('ss-oauth2-domains-container');
+            if (!container2) return;
+            if (!domains || domains.length === 0) {
+                container2.innerHTML = '<div style="font-style:italic;">No hay dominios secundarios conectados. Se utilizará el acceso nativo del dominio principal.</div>';
+                return;
+            }
+            var html = '<ul style="margin:0;padding-left:20px;display:flex;flex-direction:column;gap:8px;">';
+            domains.forEach(function(d) {
+                html += '<li style="font-weight:600;color:var(--ion-color-success);"><ion-icon name="checkmark-circle" style="vertical-align:middle;"></ion-icon> ' + d + '</li>';
+            });
+            html += '</ul>';
+            container2.innerHTML = html;
+        }).catch(function(e) {
+            console.error(e);
+            var container3 = document.getElementById('ss-oauth2-domains-container');
+            if (container3) container3.innerHTML = '<div style="color:red;">Error: ' + e.message + '</div>';
+        });
+    },
     
     // [S44.11] Workspace Sync
     triggerWsSync: function(recurseMode = false, acc = { evaluados: 0, actualizados: 0, sin_resultados: 0 }) {

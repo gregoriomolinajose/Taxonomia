@@ -354,7 +354,6 @@ var APP_SCHEMAS = {
     ]
   },
   Cargo: {
-    uiConfig: { dashboardCard: { iconName: 'id-card-outline', color: 'var(--ion-color-tertiary)' } },
     metadata: { prefix: 'CARG', showInMenu: true, order: 8, iconName: 'id-card-outline', color: 'tertiary', label: 'Cargos y Posiciones', titleField: 'nombre', idField: 'id_cargo', fkField: null },
     primaryKey: "id_cargo",
     titleField: "nombre",
@@ -370,7 +369,6 @@ var APP_SCHEMAS = {
     ]
   },
   Rol: {
-    uiConfig: { dashboardCard: { iconName: 'shirt-outline', color: 'var(--ion-color-primary)' } },
     metadata: { prefix: 'ROLE', showInMenu: true, order: 9, iconName: 'shirt-outline', color: 'primary', label: 'Roles', titleField: 'nombre', idField: 'id_rol', fkField: null },
     primaryKey: "id_rol",
     titleField: "nombre",

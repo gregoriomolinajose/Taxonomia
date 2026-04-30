@@ -1,0 +1,51 @@
+artifact_type: story-design
+version: 1
+skill: rai-story-design
+created: '2026-04-30T12:00:00Z'
+story: 'S48.4'
+epic: 'E48'
+content:
+  summary: 'Implementar el flujo de autorización OAuth2 (3-Legged) para permitir a administradores de múltiples dominios otorgar acceso de sólo lectura a sus directorios Workspace, permitiendo la sincronización universal.'
+  complexity: complex
+  acceptance_criteria:
+    - id: AC1
+      description: 'El botón "Conectar Dominio" en Schema Studio debe generar una URL de autorización de Google para el scope admin.directory.user.readonly.'
+      verifiable: true
+    - id: AC2
+      description: 'El endpoint de callback de OAuth2 (doGet) debe capturar el token de autorización, intercambiarlo y almacenar el Refresh Token de manera segura en PropertiesService asociado al dominio.'
+      verifiable: true
+    - id: AC3
+      description: 'Engine_Workspace debe interceptar las peticiones a dominios ajenos al principal y utilizar UrlFetchApp con el Access Token correspondiente, o caer graciosamente si no hay token.'
+      verifiable: true
+    - id: AC4
+      description: 'La librería oficial OAuth2 for Apps Script debe integrarse en el appsscript.json del proyecto.'
+      verifiable: true
+  integration_points:
+    - module: 'appsscript.json'
+      change_type: modification
+      files: ['src/appsscript.json']
+    - module: 'Code.js'
+      change_type: modification
+      files: ['src/Code.js']
+    - module: 'Auth_OAuth2.js'
+      change_type: new
+      files: ['src/Auth_OAuth2.js']
+    - module: 'Engine_Workspace.js'
+      change_type: modification
+      files: ['src/Engine_Workspace.js']
+    - module: 'Schema_Studio_UI.html'
+      change_type: modification
+      files: ['src/Schema_Studio_UI.html']
+  decisions:
+    - id: D1
+      choice: 'Uso de la librería OAuth2 oficial de Apps Script (1B7FSrk5Zi6L1rSxxTDgDEUsPzlukDsi4KGuTMorsTQHhGBzBkMun4iDF)'
+      rationale: 'Abstrae la complejidad de los flujos de redirección, intercambio de Authorization Codes, y renovación (refresh) de tokens en el ecosistema Apps Script.'
+      alternatives_considered: ['Implementación manual de flujos OAuth con UrlFetchApp', 'Domain-Wide Delegation con Cuentas de Servicio']
+    - id: D2
+      choice: 'Captura del dominio mediante el endpoint UserInfo en el callback'
+      rationale: 'Para asociar el token almacenado con el dominio correcto, el callback debe decodificar el ID Token o llamar a UserInfo para obtener el dominio del administrador autenticado.'
+      alternatives_considered: ['Pedirle al usuario que escriba su dominio antes de autenticarse (propenso a errores)']
+refs:
+  backlog_item: 'S48.4'
+  epic_scope: 'work/epics/e48-admin-settings/scope.md'
+metadata: {}
