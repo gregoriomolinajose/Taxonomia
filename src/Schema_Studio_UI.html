@@ -2133,7 +2133,7 @@
         }).catch(function(e) {
             btn.innerHTML = originalHtml;
             btn.disabled = false;
-            _showAlert('Error', 'Asegúrate de configurar las credenciales OAuth en Properties: ' + e.message);
+            alert('Asegúrate de configurar las credenciales OAuth en Properties:\n\n' + e.message);
         });
     },
     
