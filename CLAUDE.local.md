@@ -5,8 +5,8 @@
 ## Session
 
 - **Active Session**: E48 Admin Settings
-- **Last Summary**: Finalizada Historia S48.1 (Configuración Dinámica de Branding / White-Label) y desplegada a DEV y PROD.
-- **Last Closed**: S48.1
+- **Last Summary**: Finalizada Historia S48.2 (Configuración Dinámica de Dominios SSO) y desplegada a DEV y PROD.
+- **Last Closed**: S48.2
 - **Next Focus**: Continuar con las siguientes historias de la Épica E48.
 
 ## Patterns
