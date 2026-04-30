@@ -136,6 +136,46 @@
                 return cleanRow;
             });
             
+            // Topología dinámica para Dominio
+            if (entityName === 'Dominio') {
+                sanitized.forEach(r => {
+                    // Normalize Nivel (e.g. "Nivel 3" -> 3)
+                    if (r.nivel_tipo && typeof r.nivel_tipo === 'string' && r.nivel_tipo.toLowerCase().includes('nivel')) {
+                        const parsed = parseInt(r.nivel_tipo.toLowerCase().replace('nivel', '').trim(), 10);
+                        if (!isNaN(parsed)) r.nivel_tipo = parsed;
+                    }
+                    if (!r.id_dominio) {
+                        r.id_dominio = 'DOM-' + Math.random().toString(36).substr(2, 9);
+                    }
+                });
+
+                // Sort by orden_path to ensure parents are processed before children
+                sanitized.sort((a, b) => (a.orden_path || '').localeCompare(b.orden_path || ''));
+
+                const pathMap = {};
+                sanitized.forEach(r => {
+                    const orden = (r.orden_path || '').trim();
+                    if (!orden) return;
+                    
+                    pathMap[orden] = r;
+                    
+                    const parts = orden.split('.');
+                    if (parts.length > 1) {
+                        parts.pop();
+                        const parentOrden = parts.join('.');
+                        const parent = pathMap[parentOrden];
+                        if (parent) {
+                            r.relaciones_padre = parent.id_dominio;
+                            r.path_completo_es = (parent.path_completo_es ? parent.path_completo_es + ' > ' : '') + (r.nombre || '');
+                        } else {
+                            r.path_completo_es = r.nombre || '';
+                        }
+                    } else {
+                        r.path_completo_es = r.nombre || '';
+                    }
+                });
+            }
+
             return await this._dispatchChunks(sanitized, entityName, progressCallback);
         },
 
