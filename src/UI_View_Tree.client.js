@@ -12,11 +12,42 @@
          * @param {Object} state El estado actual de DataView (_state).
          */
         render: function(dataZone, state) {
+            const wrapper = document.createElement('div');
+            wrapper.style.width = '100%';
+            wrapper.style.height = '100%';
+            wrapper.style.position = 'relative';
+
+            const controlsDiv = document.createElement('div');
+            controlsDiv.style.position = 'absolute';
+            controlsDiv.style.top = '10px';
+            controlsDiv.style.left = '20px'; // Movido a la izquierda para no traslapar con el toolbar de zoom
+            controlsDiv.style.zIndex = '1000';
+            controlsDiv.style.display = 'flex';
+            controlsDiv.style.gap = '8px';
+            
+            const btnCollapse = document.createElement('button');
+            btnCollapse.className = 'dv-btn dv-btn-secondary';
+            btnCollapse.textContent = 'Colapsar Todo';
+            btnCollapse.style.padding = '4px 12px';
+            btnCollapse.style.cursor = 'pointer';
+            
+            const btnExpand = document.createElement('button');
+            btnExpand.className = 'dv-btn dv-btn-secondary';
+            btnExpand.textContent = 'Descolapsar Todo';
+            btnExpand.style.padding = '4px 12px';
+            btnExpand.style.cursor = 'pointer';
+            
+            controlsDiv.appendChild(btnCollapse);
+            controlsDiv.appendChild(btnExpand);
+            wrapper.appendChild(controlsDiv);
+
             const treeContainer = document.createElement('div');
             treeContainer.id = 'org-chart-container';
             treeContainer.style.width = '100%';
             treeContainer.style.height = 'calc(100vh - 150px)';
-            dataZone.appendChild(treeContainer);
+            
+            wrapper.appendChild(treeContainer);
+            dataZone.appendChild(wrapper);
             
             if (typeof global.ApexTree !== 'undefined' && global.DataEngine && global.DataEngine.buildHierarchyTree) {
                 // Utiliza requestAnimationFrame para asegurar que el contenedor tenga dimensiones reales antes de leer offsetWidth
@@ -36,7 +67,7 @@
                             nodeHeight: 90,
                             childrenSpacing: 60,
                             siblingSpacing: 24,
-                            direction: 'top',
+                            direction: 'left', // Configurado horizontalmente
                             enableToolbar: true,
                             enableSearch: true,
                             nodeTemplate: this._buildNodeTemplate
@@ -44,6 +75,58 @@
                         try {
                             const tree = new global.ApexTree(document.getElementById('org-chart-container'), options);
                             tree.render(treeData);
+                            
+                            const toggleAllNodes = (expand) => {
+                                console.log('--- START TOGGLE ALL ---');
+                                console.log('Target Expand State:', expand);
+                                console.log('ApexTree Instance Dump:', tree);
+                                console.log('ApexTree Keys:', Object.keys(tree));
+                                if (tree.graph) {
+                                    console.log('Graph Instance Dump:', tree.graph);
+                                    console.log('Graph Keys:', Object.keys(tree.graph));
+                                }
+                                
+                                // Approach B: DOM Click Simulation (Seguro)
+                                const nodeGroups = document.querySelectorAll('#org-chart-container g[role="treeitem"]');
+                                console.log(`[DOM] Found ${nodeGroups.length} node groups.`);
+                                
+                                let clickedCount = 0;
+                                
+                                nodeGroups.forEach(group => {
+                                    const isExpanded = group.getAttribute('aria-expanded') === 'true';
+                                    const isCollapsed = group.getAttribute('aria-expanded') === 'false';
+                                    
+                                    // Es una hoja, no tiene hijos
+                                    if (!isExpanded && !isCollapsed) return;
+                                    
+                                    // Ya está en el estado deseado
+                                    if (expand && isExpanded) return;
+                                    if (!expand && isCollapsed) return;
+                                    
+                                    // Evitar colapsar la raíz para no dejar la pantalla en blanco
+                                    const isRoot = group.getAttribute('aria-level') === '1';
+                                    if (!expand && isRoot) return;
+                                    
+                                    // El botón de expansión en ApexTree es un <circle> dentro del grupo
+                                    const circle = group.querySelector('circle');
+                                    if (circle) {
+                                        // Enviar evento de click nativo
+                                        const event = new MouseEvent('click', { bubbles: true, cancelable: true });
+                                        circle.dispatchEvent(event);
+                                        clickedCount++;
+                                    }
+                                });
+                                
+                                console.log(`[DOM] Simulated clicks on ${clickedCount} nodes.`);
+                                console.log('--- END TOGGLE ALL ---');
+                            };
+                            
+                            btnCollapse.onclick = () => {
+                                toggleAllNodes(false);
+                            };
+                            btnExpand.onclick = () => {
+                                toggleAllNodes(true);
+                            };
                         } catch(e) {
                             treeContainer.innerHTML = `<div class="dv-empty">Error renderizando ApexTree: ${e.message}</div>`;
                         }

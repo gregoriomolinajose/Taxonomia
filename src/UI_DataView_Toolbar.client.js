@@ -145,11 +145,11 @@ window.UI_DataView_Toolbar = (function () {
             left.appendChild(btnTree);
         }
 
-        if (entityName === 'Capacidad') {
+        if (entityName === 'Capacidad' || entityName === 'Dominio') {
             const btnChart = document.createElement('button');
             btnChart.className = `dv-btn-icon ${viewType === 'echarts' ? 'active' : ''}`;
             btnChart.id = 'dv-view-echarts-btn';
-            btnChart.title = 'Mapa de Capacidades (Avanzado)';
+            btnChart.title = entityName === 'Capacidad' ? 'Mapa de Capacidades (Avanzado)' : 'Mapa de Dominios (Treemap)';
             const iconChart = document.createElement('ion-icon');
             iconChart.setAttribute('name', 'apps-outline');
             btnChart.appendChild(iconChart);
@@ -157,17 +157,6 @@ window.UI_DataView_Toolbar = (function () {
             left.appendChild(btnChart);
         }
 
-        if (entityName === 'Dominio') {
-            const btnMap = document.createElement('button');
-            btnMap.className = `dv-btn-icon ${viewType === 'map' ? 'active' : ''}`;
-            btnMap.id = 'dv-view-map-btn';
-            btnMap.title = 'Formato Mapa (Treemap)';
-            const iconMap = document.createElement('ion-icon');
-            iconMap.setAttribute('name', 'git-network-outline');
-            btnMap.appendChild(iconMap);
-            btnMap.addEventListener('click', () => onViewToggle('map'));
-            left.appendChild(btnMap);
-        }
 
         const right = document.createElement('div');
         right.className = 'dv-toolbar-right';

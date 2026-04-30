@@ -130,6 +130,12 @@
                         if (lowKey.startsWith('sys_') || lowKey === 'avatar' || lowKey.startsWith('file_')) {
                             continue; // Ignorado táctico (S38.4 Tolerancia)
                         }
+                        
+                        // S47.8: Sanitización Global (Neutralizar trailing whitespaces de Google Sheets)
+                        if (typeof value === 'string') {
+                            value = value.trim();
+                        }
+                        
                         cleanRow[key] = value;
                     }
                 }

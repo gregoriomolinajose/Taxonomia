@@ -153,13 +153,16 @@
         buildHierarchyTree: function(records, entityName = 'Persona', perNodeOptions = null) {
             if (!records || !Array.isArray(records)) return null;
 
+            // [Workaround finalizado]: Ya no descartamos niveles inferiores en la carga inicial, el filtro ahora ocurre en la asignación de raíces para no mostrar huérfanos
+            // if (entityName === 'Dominio') { ... }
+
             // Determinar la llave primaria dinámica de la entidad
             const pkCol = window.Schema_Utils ? window.Schema_Utils.getPrimaryKey(entityName) : ('id_' + entityName.toLowerCase());
             let parentCol = entityName === 'Persona' ? 'lider_directo' : 'id_dominio_padre'; 
             let edgeType = entityName === 'Persona' ? 'PERSONA_LIDER_DIRECTO' : 'CAPACIDAD_HIJO';
             
-            if (window.Schema_Utils && typeof window.Schema_Utils.getSchema === 'function') {
-                const schema = window.Schema_Utils.getSchema(entityName);
+            if (window.APP_SCHEMAS && window.APP_SCHEMAS[entityName]) {
+                const schema = window.APP_SCHEMAS[entityName];
                 if (schema && schema.fields) {
                     const parentField = schema.fields.find(f => f.type === 'relation' && f.relationType === 'padre' && f.targetEntity === entityName);
                     if (parentField) {
@@ -176,7 +179,7 @@
                 const allEdges = window.DataStore.get('Sys_Graph_Edges') || [];
                 allEdges.forEach(e => {
                     if (e.es_version_actual !== false && e.estado !== 'Eliminado' && e.estado !== 'eliminado' && e.tipo_relacion === edgeType) {
-                        hijoToPadre[String(e.id_nodo_hijo)] = String(e.id_nodo_padre);
+                        hijoToPadre[String(e.id_nodo_hijo).trim()] = String(e.id_nodo_padre).trim();
                     }
                 });
             }
@@ -199,34 +202,69 @@
                 const node = map[String(r[pkCol])];
                 
                 // Resolver el ID del padre (primero intentar físicamente, luego mediante el grafo)
-                let parentId = r[parentCol] || hijoToPadre[String(r[pkCol])];
+                let phys = r[parentCol];
+                if (phys === "undefined" || phys === "null" || phys === "") phys = null;
+                if (typeof phys === 'string' && phys.startsWith('[') && phys.endsWith(']')) {
+                    try { phys = JSON.parse(phys); } catch (e) {}
+                }
+                if (Array.isArray(phys) && phys.length === 0) phys = null;
+                
+                let parentId = phys || hijoToPadre[String(r[pkCol]).trim()];
+                
+                if (typeof parentId === 'string' && parentId.startsWith('[') && parentId.endsWith(']')) {
+                    try { parentId = JSON.parse(parentId); } catch (e) {}
+                }
                 
                 // Si el Líder viene resuelto como array de objetos relacionales, extraer ID
                 if (Array.isArray(parentId) && parentId.length > 0) {
                     parentId = parentId[0].id || parentId[0][pkCol] || parentId[0];
                 }
 
-                if (parentId && map[String(parentId)]) {
+                // FALLBACK: Auto-inferir por orden_path si no hay arista en el grafo (útil para CSVs)
+                if ((!parentId || String(parentId).trim() === '') && (entityName === 'Dominio' || entityName === 'Capacidad') && r.orden_path) {
+                    if (window.Math_Engine && window.Math_Engine.inferParentIdFromOrdenPath) {
+                        parentId = window.Math_Engine.inferParentIdFromOrdenPath(r.orden_path, entityName, records, pkCol) ?? parentId;
+                    }
+                }
+
+                if (parentId && String(parentId).trim() !== '' && map[String(parentId)] && String(parentId) !== node.id) {
                     map[String(parentId)].children.push(node);
+                    node._hasParent = true;
                 } else {
                     roots.push(node);
                 }
             });
 
-            if (roots.length === 1) {
-                return roots[0];
-            } else if (roots.length > 1) {
+            // Reconstrucción estricta de roots para ECharts (limpiar falsos roots)
+            const trueRoots = [];
+            Object.values(map).forEach(n => {
+                if (!n._hasParent) {
+                    if ((entityName === 'Dominio' || entityName === 'Capacidad') && n.data.nivel_tipo !== undefined && n.data.nivel_tipo !== null && String(n.data.nivel_tipo).trim() !== '') {
+                        const nivel = parseInt(n.data.nivel_tipo, 10);
+                        if (nivel > 0) return; // Se descarta como root porque pertenece a un nivel inferior (es un huérfano)
+                    }
+                    trueRoots.push(n);
+                }
+            });
+
+            if (trueRoots.length === 1) {
+                return trueRoots[0];
+            } else if (trueRoots.length > 1) {
+                let rootNombre = 'Empresa';
+                if (entityName === 'Capacidad') rootNombre = 'Taxonomía de Capacidades';
+                if (entityName === 'Dominio') rootNombre = 'Taxonomía de Dominios';
+                
                 return {
                     id: 'root-company',
                     data: {
-                        nombre: entityName === 'Capacidad' ? 'Taxonomía de Capacidades' : 'Empresa',
+                        nombre: rootNombre,
                         departamento: 'Global',
                         cargo: 'Organización'
                     },
-                    options: entityName === 'Capacidad' ? {
+                    options: (entityName === 'Capacidad' || entityName === 'Dominio') ? {
                         nodeTemplate: () => `<div class="org-node-card" style="border-left: 5px solid #333; padding: 10px; background: white; border-radius: 6px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);"><div style="font-weight:bold;">Taxonomía Global</div></div>`
                     } : undefined,
-                    children: roots
+                    children: trueRoots
                 };
             }
             return null;
