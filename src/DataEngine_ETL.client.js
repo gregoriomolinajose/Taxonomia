@@ -112,7 +112,7 @@
                 for (let originalKey in row) {
                     if (row.hasOwnProperty(originalKey)) {
                         let key = originalKey;
-                        const value = row[originalKey];
+                        let value = row[originalKey];
                         let lowKey = key.trim().toLowerCase().replace(/\s+/g, ' ');
                         
                         // S47: Resolución de alias visuales para Dominios
