@@ -40,13 +40,31 @@ function resolverDirectorioWorkspace(queryEmail) {
       Logger.log("Workspace API Bypassed: Sync is disabled globally or by admin config.");
       return { __status: "DISABLED" };
     }
-    if (!AdminDirectory || !AdminDirectory.Users) {
-      throw new Error("AdminDirectory SDK no está inyectado o habilitado.");
+    
+    var user;
+    var domain = queryEmail.substring(queryEmail.indexOf('@'));
+    var oauthToken = (typeof Auth_GetTokenForDomain === 'function') ? Auth_GetTokenForDomain(domain) : null;
+    
+    if (oauthToken) {
+      // Modo OAuth2 Externo
+      var apiUrl = 'https://admin.googleapis.com/admin/directory/v1/users/' + encodeURIComponent(queryEmail) + '?projection=full&viewType=domain_public';
+      var res = UrlFetchApp.fetch(apiUrl, {
+        headers: { 'Authorization': 'Bearer ' + oauthToken },
+        muteHttpExceptions: true
+      });
+      if (res.getResponseCode() === 200) {
+        user = JSON.parse(res.getContentText());
+      } else {
+        throw new Error("HTTP " + res.getResponseCode() + ": " + res.getContentText());
+      }
+    } else {
+      // Modo Nativo (Dominio principal)
+      if (!AdminDirectory || !AdminDirectory.Users) {
+        throw new Error("AdminDirectory SDK no está inyectado o habilitado.");
+      }
+      user = AdminDirectory.Users.get(queryEmail, { projection: "full", viewType: "domain_public" });
     }
     
-    // Obtenemos el perfil completo desde Workspace usando la vista pública del dominio
-    // Esto permite que usuarios Non-Admin puedan consultar perfiles de compañeros (Zero-Trust/Least Privilege)
-    var user = AdminDirectory.Users.get(queryEmail, { projection: "full", viewType: "domain_public" });
     if (!user) return null;
     
     // Mapeo defensivo de los Nodos del SDK hacia los Campos del UI (Schema_Engine)
@@ -146,16 +164,47 @@ function searchDirectoryByName(queryName) {
       return JSON.parse(cached);
     }
     
-    // query simple
-    var response = AdminDirectory.Users.list({
-      customer: 'my_customer',
-      query: "name:" + q + "*",
-      maxResults: 15,
-      projection: "full",
-      viewType: "domain_public"
-    });
-    
-    var users = response.users || [];
+    // query compuesta (Nativo + OAuth2 Externos)
+    var users = [];
+
+    // 1. Nativo
+    if (typeof AdminDirectory !== 'undefined' && AdminDirectory.Users) {
+        try {
+            var response = AdminDirectory.Users.list({
+              customer: 'my_customer',
+              query: "name:" + q + "*",
+              maxResults: 15,
+              projection: "full",
+              viewType: "domain_public"
+            });
+            if (response.users) users = users.concat(response.users);
+        } catch(e){
+            Logger.log("[Typeahead] Error nativo: " + e.message);
+        }
+    }
+
+    // 2. OAuth2
+    if (typeof API_Admin_GetConnectedDomains === 'function') {
+      var domains = API_Admin_GetConnectedDomains();
+      domains.forEach(function(d) {
+        var token = typeof Auth_GetTokenForDomain === 'function' ? Auth_GetTokenForDomain(d) : null;
+        if (token) {
+          try {
+            var url = 'https://admin.googleapis.com/admin/directory/v1/users?customer=my_customer&query=name%3A' + encodeURIComponent(q + '*') + '&maxResults=10&projection=full&viewType=domain_public';
+            var res = UrlFetchApp.fetch(url, {
+              headers: { 'Authorization': 'Bearer ' + token },
+              muteHttpExceptions: true
+            });
+            if (res.getResponseCode() === 200) {
+              var payload = JSON.parse(res.getContentText());
+              if (payload && payload.users) {
+                users = users.concat(payload.users);
+              }
+            }
+          } catch(err) {}
+        }
+      });
+    }
     var dtos = users.map(function(u) {
       return {
          email: u.primaryEmail,
