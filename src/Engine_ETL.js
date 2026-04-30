@@ -83,12 +83,14 @@ var Engine_ETL = (function() {
       }
     }
 
-    // 4. Inyectar Pestaña de Catálogos
+    // 4. Inyectar Pestaña de Catálogos y Validaciones
     try {
       const catalogSheet = ss.insertSheet('_Catalogos');
       catalogSheet.hideSheet(); // Ocultar para no ensuciar la vista principal
       
       let colIndex = 1;
+      let rolesCatalogRange = null;
+      let equiposCatalogRange = null;
       
       // Catálogo de Roles
       if (typeof Engine_DB !== 'undefined') {
@@ -97,6 +99,7 @@ var Engine_ETL = (function() {
           catalogSheet.getRange(1, colIndex).setValue("Catálogo de Roles").setFontWeight("bold");
           const rolesList = rolesObj.rows.map(r => [r.nombre]);
           catalogSheet.getRange(2, colIndex, rolesList.length, 1).setValues(rolesList);
+          rolesCatalogRange = catalogSheet.getRange(2, colIndex, rolesList.length, 1);
           colIndex++;
         }
       }
@@ -108,6 +111,7 @@ var Engine_ETL = (function() {
           catalogSheet.getRange(1, colIndex).setValue("Catálogo de Equipos").setFontWeight("bold");
           const equiposList = equiposObj.rows.map(r => [r.nombre]);
           catalogSheet.getRange(2, colIndex, equiposList.length, 1).setValues(equiposList);
+          equiposCatalogRange = catalogSheet.getRange(2, colIndex, equiposList.length, 1);
           colIndex++;
         }
       }
@@ -116,6 +120,25 @@ var Engine_ETL = (function() {
       if (colIndex > 1) {
         for (let j = 1; j < colIndex; j++) {
           catalogSheet.autoResizeColumn(j);
+        }
+      }
+
+      // Aplicar las validaciones a la hoja principal
+      for (let i = 1; i <= headers.length; i++) {
+        const colName = headers[i - 1];
+        if (colName === 'roles_asignados' && rolesCatalogRange) {
+          const rule = SpreadsheetApp.newDataValidation()
+            .requireValueInRange(rolesCatalogRange, true)
+            .setAllowInvalid(true)
+            .build();
+          sheet.getRange(2, i, 1000).setDataValidation(rule);
+        }
+        if (colName === 'equipo' && equiposCatalogRange) {
+          const rule = SpreadsheetApp.newDataValidation()
+            .requireValueInRange(equiposCatalogRange, true)
+            .setAllowInvalid(true)
+            .build();
+          sheet.getRange(2, i, 1000).setDataValidation(rule);
         }
       }
     } catch(e) {
