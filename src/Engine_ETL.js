@@ -132,9 +132,9 @@ var Engine_ETL = (function() {
                 let lowKey = String(k).trim().toLowerCase();
                 if (entityName === 'Dominio') {
                     if (lowKey === 'nivel subdominio') lowKey = 'nivel_tipo';
-                    else if (lowKey === 'orden. subdominio' || lowKey === 'orden subdominio') lowKey = 'orden_path';
+                    else if (lowKey === 'orden. subdominio' || lowKey === 'orden subdominio' || lowKey === 'orden') lowKey = 'orden_path';
                     else if (lowKey === 'subdominio') lowKey = 'nombre_ingles';
-                    else if (lowKey === 'nombre español') lowKey = 'nombre';
+                    else if (lowKey === 'nombre español' || lowKey === 'nombre espanol') lowKey = 'nombre';
                     else if (lowKey === 'definición' || lowKey === 'definicion') lowKey = 'descripcion';
                     else if (lowKey === 'abreviación (nombre servicio)' || lowKey === 'abreviacion (nombre servicio)') lowKey = 'abreviacion';
                     else if (lowKey === 'abreviación (path servicio)' || lowKey === 'abreviacion (path servicio)') lowKey = 'path_completo_es';

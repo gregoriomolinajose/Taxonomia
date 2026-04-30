@@ -79,9 +79,9 @@
                 let lowKey = k.trim().toLowerCase();
                 if (entityName === 'Dominio') {
                     if (lowKey === 'nivel subdominio') lowKey = 'nivel_tipo';
-                    else if (lowKey === 'orden. subdominio' || lowKey === 'orden subdominio') lowKey = 'orden_path';
+                    else if (lowKey === 'orden. subdominio' || lowKey === 'orden subdominio' || lowKey === 'orden') lowKey = 'orden_path';
                     else if (lowKey === 'subdominio') lowKey = 'nombre_ingles';
-                    else if (lowKey === 'nombre español') lowKey = 'nombre';
+                    else if (lowKey === 'nombre español' || lowKey === 'nombre espanol') lowKey = 'nombre';
                     else if (lowKey === 'definición' || lowKey === 'definicion') lowKey = 'descripcion';
                     else if (lowKey === 'abreviación (nombre servicio)' || lowKey === 'abreviacion (nombre servicio)') lowKey = 'abreviacion';
                     else if (lowKey === 'abreviación (path servicio)' || lowKey === 'abreviacion (path servicio)') lowKey = 'path_completo_es';
@@ -109,16 +109,18 @@
             // Omitir cabeceras transaccionales/auditoría y aplicar mapeo de alias
             const sanitized = rawPayload.map(row => {
                 const cleanRow = {};
-                for (let key in row) {
-                    if (row.hasOwnProperty(key)) {
+                for (let originalKey in row) {
+                    if (row.hasOwnProperty(originalKey)) {
+                        let key = originalKey;
+                        const value = row[originalKey];
                         let lowKey = key.trim().toLowerCase();
                         
                         // S47: Resolución de alias visuales para Dominios
                         if (entityName === 'Dominio') {
                             if (lowKey === 'nivel subdominio') key = 'nivel_tipo';
-                            else if (lowKey === 'orden. subdominio' || lowKey === 'orden subdominio') key = 'orden_path';
+                            else if (lowKey === 'orden. subdominio' || lowKey === 'orden subdominio' || lowKey === 'orden') key = 'orden_path';
                             else if (lowKey === 'subdominio') key = 'nombre_ingles';
-                            else if (lowKey === 'nombre español') key = 'nombre';
+                            else if (lowKey === 'nombre español' || lowKey === 'nombre espanol') key = 'nombre';
                             else if (lowKey === 'definición' || lowKey === 'definicion') key = 'descripcion';
                             else if (lowKey === 'abreviación (nombre servicio)' || lowKey === 'abreviacion (nombre servicio)') key = 'abreviacion';
                             else if (lowKey === 'abreviación (path servicio)' || lowKey === 'abreviacion (path servicio)') key = 'path_completo_es';
@@ -128,7 +130,7 @@
                         if (lowKey.startsWith('sys_') || lowKey === 'avatar' || lowKey.startsWith('file_')) {
                             continue; // Ignorado táctico (S38.4 Tolerancia)
                         }
-                        cleanRow[key] = row[key];
+                        cleanRow[key] = value;
                     }
                 }
                 return cleanRow;
