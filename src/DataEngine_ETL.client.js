@@ -145,7 +145,7 @@
                         if (!isNaN(parsed)) r.nivel_tipo = parsed;
                     }
                     if (!r.id_dominio) {
-                        r.id_dominio = 'DOM-' + Math.random().toString(36).substr(2, 9);
+                        r.id_dominio = ('DOM-' + Math.random().toString(36).substr(2, 9)).toUpperCase();
                     }
                 });
 
