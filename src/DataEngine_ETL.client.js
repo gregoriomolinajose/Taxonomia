@@ -166,13 +166,24 @@
                         const parent = pathMap[parentOrden];
                         if (parent) {
                             r.relaciones_padre = parent.id_dominio;
-                            r.path_completo_es = (parent.path_completo_es ? parent.path_completo_es + ' > ' : '') + (r.nombre || '');
-                        } else {
-                            r.path_completo_es = r.nombre || '';
                         }
-                    } else {
-                        r.path_completo_es = r.nombre || '';
                     }
+                });
+                
+                // Generar Path Completo utilizando el Math_Engine (Fuente Única de Verdad)
+                const fastCache = { isFastCache: true, nodesById: new Map() };
+                sanitized.forEach(r => fastCache.nodesById.set(r.id_dominio, r));
+                
+                const MathParams = {
+                    entity: 'Dominio',
+                    parentField: 'relaciones_padre',
+                    nameField: 'nombre',
+                    pathField: 'path_completo_es',
+                    pkField: 'id_dominio'
+                };
+
+                sanitized.forEach(r => {
+                    r.path_completo_es = window.Math_Engine.buildPathName(r, MathParams, fastCache);
                 });
             }
 
