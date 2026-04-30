@@ -134,7 +134,7 @@ function API_Universal_Router(action, entityName, payload) {
       // Auto-generación de UUIDs temporales para la ráfaga
       payload.forEach(record => {
         if (!record[pkField] || String(record[pkField]).trim() === '') {
-          record[pkField] = _generateShortUUID(entityName);
+          record[pkField] = String(_generateShortUUID(entityName)).toUpperCase();
           record._isNewIngest = true; // Flag for ETL pipeline
         }
       });
