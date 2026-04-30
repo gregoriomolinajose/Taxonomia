@@ -19,6 +19,25 @@ function buildOrdenPath(formStateObj, params, cache) {
     const nivel = parseInt(nivelStr, 10);
     if (isNaN(nivel)) return '';
     
+    // [S47.2] Soporte O(1) para Ingestiones Masivas
+    if (cache && cache.isFastCache) {
+        if (nivel === 0) {
+            const maxRoot = cache.childrenCount.get('ROOT') || 0;
+            return String(maxRoot + 1).padStart(2, '0');
+        } else {
+            const idPadre = formStateObj[parentField];
+            if (!idPadre || idPadre === '') return '';
+            
+            const padre = cache.nodesById.get(idPadre);
+            if (!padre || !padre[orderField]) return '';
+            
+            const parentPathStr = String(padre[orderField]).split('.').map(p => p.padStart(2, '0')).join('.');
+            const maxSuffix = cache.childrenCount.get(idPadre) || 0;
+            
+            return parentPathStr + '.' + String(maxSuffix + 1).padStart(2, '0');
+        }
+    }
+
     const safeCache = cache || [];
     
     if (nivel === 0) {
@@ -60,19 +79,67 @@ function buildPathName(formStateObj, params, cache) {
     const idPadre = formStateObj[params.parentField];
     
     if (!idPadre || idPadre === '') {
-        return `PATH: ${nombre}`;
+        return `${nombre}`;
     }
     
+    // [S47.2] Soporte O(1) para Ingestiones Masivas
+    if (cache && cache.isFastCache) {
+        const padreRecord = cache.nodesById.get(idPadre);
+        if (!padreRecord || !padreRecord[params.pathField]) {
+            return `... > ${nombre}`;
+        }
+        const cleanParentPath = padreRecord[params.pathField].replace(/^PATH:\s*/, '').trim();
+        return `${cleanParentPath} > ${nombre}`;
+    }
+
     const safeCache = cache || [];
     const pkField = params.pkField || 'id_' + params.entity.toLowerCase();
     const padreRecord = safeCache.find(r => String(r[pkField]) === String(idPadre));
     
     if (!padreRecord || !padreRecord[params.pathField]) {
-        return `PATH: ... > ${nombre}`;
+        return `... > ${nombre}`;
     }
     
     const cleanParentPath = padreRecord[params.pathField].replace(/^PATH:\s*/, '').trim();
-    return `PATH: ${cleanParentPath} > ${nombre}`;
+    return `${cleanParentPath} > ${nombre}`;
+}
+
+function inferParentIdFromOrdenPath(ordenPath, entityName, records, pkCol) {
+    if (!ordenPath || String(ordenPath).trim() === '') return null;
+    
+    // Lazy build of the normalized map
+    if (!inferParentIdFromOrdenPath._cache) {
+        inferParentIdFromOrdenPath._cache = {
+            entity: null,
+            recordCount: 0,
+            map: {}
+        };
+    }
+    
+    const currentLength = Array.isArray(records) ? records.length : 0;
+
+    // Invalidate if entity changed, or if records count changed (prevents Stale Cache on ETL)
+    if (inferParentIdFromOrdenPath._cache.entity !== entityName || inferParentIdFromOrdenPath._cache.recordCount !== currentLength) {
+        inferParentIdFromOrdenPath._cache.entity = entityName;
+        inferParentIdFromOrdenPath._cache.recordCount = currentLength;
+        inferParentIdFromOrdenPath._cache.map = {};
+        if (Array.isArray(records)) {
+            records.forEach(r => {
+                if (r.orden_path) {
+                    const norm = String(r.orden_path).split('.').map(n => parseInt(n, 10)).join('.');
+                    inferParentIdFromOrdenPath._cache.map[norm] = String(r[pkCol]).trim();
+                }
+            });
+        }
+    }
+    
+    const parts = String(ordenPath).split('.');
+    if (parts.length > 1) {
+        parts.pop(); // remover el último nivel
+        const parentNorm = parts.map(n => parseInt(n, 10)).join('.');
+        return inferParentIdFromOrdenPath._cache.map[parentNorm] || null;
+    }
+    return null;
 }
 
 function buildEChartsTreemapData(cacheObject) {
@@ -152,10 +219,269 @@ const TopologyGuard = {
     }
 };
 
+function buildEChartsCapacidadesTreemapData(data, entityName) {
+    if (!data || data.length === 0) return [];
+    entityName = entityName || 'Capacidad';
+    var mapData = {};
+    var rootNodes = [];
+    var hasParentMap = {};
+    
+    var pkField = window.Schema_Utils ? window.Schema_Utils.getPrimaryKey(entityName) : (entityName === 'Dominio' ? 'id_dominio' : 'id_capacidad');
+    
+    data.forEach(function(row) {
+        var id = row[pkField] || row.id_registro || row.lexical_id;
+        mapData[id] = {
+            id: id,
+            name: (row.nombre || row.n0_es || row.lexical_id || 'Sin Nombre').trim(),
+            value: 1,
+            _record: row
+        };
+    });
+    
+    data.forEach(function(row) {
+        var id = row[pkField] || row.id_registro || row.lexical_id;
+        var idPadre = row.id_capacidad_padre || row.id_dominio_padre || row.lider_directo || row.padre_id || row.relaciones_padre;  
+        
+        if (idPadre && String(idPadre).trim() !== '' && mapData[idPadre] && idPadre !== id) {
+            var parentNode = mapData[idPadre];
+            var node = mapData[id];
+            if (!parentNode.children) parentNode.children = [];
+            parentNode.children.push(node);
+            hasParentMap[id] = true;
+        }
+    });
+
+    capacidadesData.forEach(function(row) {
+        var id = row[pkField] || row.id_registro || row.lexical_id;
+        if (!hasParentMap[id]) {
+            rootNodes.push(mapData[id]);
+        }
+    });
+    
+    // Normalizar pesos: Forza que todas las tarjetas hermanas tengan exactamente el mismo tamaño visual
+    function normalizeValues(nodes, targetSum) {
+        if (!nodes || nodes.length === 0) return;
+        var weightPerNode = targetSum / nodes.length;
+        nodes.forEach(function(n) {
+            n.value = weightPerNode; // ECharts usará este valor en lugar de la suma bruta
+            if (n.children && n.children.length > 0) {
+                normalizeValues(n.children, weightPerNode);
+            }
+        });
+    }
+    
+    // Asignar un peso total arbitrario al nivel raíz para iniciar la división equitativa
+    normalizeValues(rootNodes, 100000);
+    
+    return rootNodes;
+}
+
+function buildEChartsCapacidadesOption(capacidadesData, isPrebuilt, gapColor, textColor, borderColor, primaryColor, primaryContrast, entityName) {
+    var data = isPrebuilt ? capacidadesData : buildEChartsCapacidadesTreemapData(capacidadesData, entityName);
+    var bgColor = gapColor || 'transparent';
+    var txtColor = textColor || '#333333';
+    var brdColor = borderColor || '#cccccc';
+    var primColor = primaryColor || '#3880ff';
+    var primContrast = primaryContrast || '#ffffff';
+    
+    return {
+        backgroundColor: bgColor,
+        tooltip: {
+            formatter: function (info) {
+                var value = info.value;
+                var treePathInfo = info.treePathInfo;
+                var treePath = [];
+                for (var i = 1; i < treePathInfo.length; i++) {
+                    treePath.push(treePathInfo[i].name);
+                }
+                return '<div class="tooltip-title">' + echarts.format.encodeHTML(treePath.join(' > ')) + '</div>';
+            }
+        },
+        series: [
+            {
+                type: 'treemap',
+                data: data,
+                leafDepth: 1,
+                roam: false,
+                nodeClick: 'zoomToNode',
+                left: '2%',
+                right: '2%',
+                top: '40px',
+                bottom: '2%',
+                breadcrumb: {
+                    show: true,
+                    top: '0',
+                    left: '2%',
+                    itemStyle: {
+                        color: 'rgba(0,0,0,0)',
+                        borderColor: brdColor,
+                        borderWidth: 1,
+                        textStyle: {
+                            color: txtColor
+                        }
+                    },
+                    emphasis: {
+                        itemStyle: {
+                            color: primColor,
+                            textStyle: {
+                                color: primContrast
+                            }
+                        },
+                        textStyle: {
+                            color: primContrast
+                        }
+                    },
+                    textStyle: {
+                        color: txtColor,
+                        fontSize: 14
+                    },
+                    emptyItemWidth: 25
+                },
+                label: {
+                    show: true,
+                    formatter: function(info) {
+                        var words = info.name.split(' ');
+                        var lines = [];
+                        var currentLine = '';
+                        for (var i = 0; i < words.length; i++) {
+                            if ((currentLine + words[i]).length > 35 && currentLine.length > 0) {
+                                lines.push(currentLine.trim());
+                                currentLine = words[i] + ' ';
+                            } else {
+                                currentLine += words[i] + ' ';
+                            }
+                        }
+                        if (currentLine) lines.push(currentLine.trim());
+                        
+                        var titleText = lines.join('\n');
+                        var desc = info.data.descripcion;
+                        
+                        if (desc && String(desc).trim() !== '') {
+                            var descWords = String(desc).split(' ');
+                            var descLines = [];
+                            var dLine = '';
+                            for (var j = 0; j < descWords.length; j++) {
+                                if ((dLine + descWords[j]).length > 35 && dLine.length > 0) {
+                                    descLines.push(dLine.trim());
+                                    dLine = descWords[j] + ' ';
+                                } else {
+                                    dLine += descWords[j] + ' ';
+                                }
+                            }
+                            if (dLine) descLines.push(dLine.trim());
+                            
+                            return '{title|' + titleText + '}\n{gap|}\n{desc|' + descLines.join('\n') + '}';
+                        }
+                        return '{title|' + titleText + '}';
+                    },
+                    rich: {
+                        title: {
+                            fontSize: 13,
+                            fontWeight: 'bold',
+                            lineHeight: 16
+                        },
+                        gap: {
+                            fontSize: 8,
+                            lineHeight: 8
+                        },
+                        desc: {
+                            fontSize: 11,
+                            lineHeight: 15,
+                            opacity: 0.85
+                        }
+                    },
+                    align: 'left',
+                    verticalAlign: 'top',
+                    position: 'insideTopLeft',
+                    padding: [12, 12, 12, 12]
+                },
+                itemStyle: {
+                    borderColor: bgColor,
+                    borderWidth: 0,
+                    gapWidth: 1
+                },
+                levels: [
+                    {
+                        itemStyle: {
+                            borderColor: bgColor,
+                            borderWidth: 4,
+                            gapWidth: 4
+                        },
+                        upperLabel: {
+                            show: false
+                        }
+                    },
+                    {
+                        itemStyle: {
+                            borderColor: bgColor,
+                            borderWidth: 4,
+                            gapWidth: 4
+                        },
+                        upperLabel: {
+                            show: true,
+                            height: 24,
+                            position: 'inside',
+                            padding: 3,
+                            color: '#333333',
+                            overflow: 'truncate',
+                            ellipsis: '...',
+                            formatter: function(info) { return info.name; }
+                        }
+                    },
+                    {
+                        colorSaturation: [0.35, 0.5],
+                        itemStyle: {
+                            borderColor: bgColor,
+                            borderWidth: 2,
+                            gapWidth: 2
+                        },
+                        upperLabel: {
+                            show: true,
+                            height: 24,
+                            position: 'inside',
+                            padding: 3,
+                            color: '#333333',
+                            overflow: 'truncate',
+                            ellipsis: '...',
+                            formatter: function(info) { return info.name; }
+                        }
+                    },
+                    {
+                        colorSaturation: [0.4, 0.6],
+                        itemStyle: {
+                            borderColor: bgColor,
+                            borderWidth: 1,
+                            gapWidth: 1
+                        },
+                        upperLabel: {
+                            show: true,
+                            height: 24,
+                            position: 'inside',
+                            padding: 3,
+                            color: '#333333',
+                            overflow: 'truncate',
+                            ellipsis: '...',
+                            formatter: function(info) { return info.name; }
+                        }
+                    },
+                    {
+                        colorSaturation: [0.45, 0.7],
+                        itemStyle: {
+                            borderColor: bgColor,
+                            borderWidth: 1,
+                            gapWidth: 1
+                        }
+                    }
+                ]
+            }
+        ]
+    };
+}
+
 // Universal Wrapper
 if (typeof module !== 'undefined' && module.exports) {
-    module.exports = { buildOrdenPath, buildPathName, buildEChartsTreemapData, TopologyGuard };
+    module.exports = { buildOrdenPath, buildPathName, inferParentIdFromOrdenPath, buildEChartsTreemapData, buildEChartsCapacidadesTreemapData, buildEChartsCapacidadesOption, TopologyGuard };
 } else if (typeof window !== 'undefined') {
-    window.Math_Engine = { buildOrdenPath, buildPathName, buildEChartsTreemapData, TopologyGuard };
+    window.Math_Engine = { buildOrdenPath, buildPathName, inferParentIdFromOrdenPath, buildEChartsTreemapData, buildEChartsCapacidadesTreemapData, buildEChartsCapacidadesOption, TopologyGuard };
 }
 </script>

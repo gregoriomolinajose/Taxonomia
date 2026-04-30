@@ -78,7 +78,8 @@ function API_Universal_Router(action, entityName, payload) {
          _guardAbac('update', entityName, null); 
       }
       if (!payload || !payload.url) throw new Error("Parámetro URL faltante en request ETL.");
-      responseData = Engine_ETL.extractDataFromDrive(entityName, payload.url);
+      const options = payload.options || {};
+      responseData = Engine_ETL.extractDataFromDrive(entityName, payload.url, options);
       return JSON.stringify({ status: "success", data: responseData, action });
     }
 
@@ -133,19 +134,80 @@ function API_Universal_Router(action, entityName, payload) {
       // Auto-generación de UUIDs temporales para la ráfaga
       payload.forEach(record => {
         if (!record[pkField] || String(record[pkField]).trim() === '') {
-          record[pkField] = _generateShortUUID(entityName);
+          record[pkField] = String(_generateShortUUID(entityName)).toUpperCase();
           record._isNewIngest = true; // Flag for ETL pipeline
         }
       });
       
       // [S38.5] Pre-procesamiento de Batch: Deduplicación Lógica e Hidratación Automática
-      // Delegamos la Inteligencia de Dominio a la capa especializada ETL (Transform)
       if (typeof Engine_ETL !== 'undefined' && typeof Engine_ETL.hydrateAndDeduplicate === 'function') {
           Engine_ETL.hydrateAndDeduplicate(entityName, payload);
       }
       
+      // [S47.6] Bulk Temporal Graph Resolution (Diffing)
+      let edgesToUpsert = [];
+      const sysDate = new Date().toISOString();
+      const schema = (typeof APP_SCHEMAS !== 'undefined') ? APP_SCHEMAS[entityName] : null;
+      
+      if (schema && schema.fields) {
+          const graphFields = schema.fields.filter(f => f.isTemporalGraph && f.graphEntity === 'Sys_Graph_Edges' && f.relationType === 'padre');
+          if (graphFields.length > 0) {
+              const currentEdges = Engine_DB.list('Sys_Graph_Edges', 'objects').rows || [];
+              payload.forEach(record => {
+                  const childId = String(record[pkField]).trim();
+                  graphFields.forEach(f => {
+                      const incomingParentId = record[f.name] ? String(record[f.name]).trim() : null;
+                      
+                      const existingEdges = currentEdges.filter(e => 
+                          e.es_version_actual !== false && 
+                          e.tipo_relacion === f.graphEdgeType && 
+                          String(e.id_nodo_hijo).trim() === childId
+                      );
+                      
+                      let needsNewEdge = false;
+                      if (!incomingParentId && existingEdges.length > 0) {
+                          existingEdges.forEach(e => {
+                              e.es_version_actual = false;
+                              e.valido_hasta = sysDate;
+                              edgesToUpsert.push(e);
+                          });
+                      } else if (incomingParentId) {
+                          const alreadyCorrect = existingEdges.some(e => String(e.id_nodo_padre).trim() === incomingParentId);
+                          if (!alreadyCorrect) {
+                              needsNewEdge = true;
+                              existingEdges.forEach(e => {
+                                  e.es_version_actual = false;
+                                  e.valido_hasta = sysDate;
+                                  edgesToUpsert.push(e);
+                              });
+                          }
+                      }
+                      
+                      if (needsNewEdge) {
+                          edgesToUpsert.push({
+                              id_relacion: _generateShortUUID('Sys_Graph_Edges'),
+                              id_nodo_padre: incomingParentId,
+                              id_nodo_hijo: childId,
+                              tipo_relacion: f.graphEdgeType,
+                              valido_desde: sysDate,
+                              valido_hasta: "",
+                              es_version_actual: true,
+                              estado: "Activo"
+                          });
+                      }
+                  });
+              });
+          }
+      }
+      
       // Delegamos la unidad de trabajo cruda (Unit of Work) al backend
       responseData = Engine_DB.upsertBatch(entityName, payload);
+      
+      // Persistir Aristas del Grafo
+      if (edgesToUpsert.length > 0) {
+          Engine_DB.upsertBatch('Sys_Graph_Edges', edgesToUpsert);
+          if (typeof Logger !== 'undefined') Logger.log(`Batch Grafo completado: ${edgesToUpsert.length} aristas.`);
+      }
       
       if (typeof Logger !== 'undefined') Logger.log(`Batch Persistencia completada p/${entityName}: ${payload.length} records.`);
       

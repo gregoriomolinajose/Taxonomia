@@ -684,12 +684,12 @@ const Engine_DB = {
      * Devuelve todos los registros de una entidad como { headers[], rows[] }.
      * Delega a Adapter_Sheets con CAPA DE CACHÉ (Directiva Architect).
      */
-    list: function (entityName, format) {
+    list: function (entityName, format, options) {
         const config = (typeof CONFIG !== 'undefined') ? CONFIG : { useSheets: true, SPREADSHEET_ID_DB: '' };
         
         // Intentar leer de RAM (CacheService) con Fragmentación Inteligente S42.1
         const cacheKey = `CACHE_LIST_${_getAppVersionHash()}_${entityName}`;
-        if (typeof CacheService !== 'undefined') {
+        if (typeof CacheService !== 'undefined' && (!options || !options.skipCache)) {
             const cache = CacheService.getScriptCache();
             const cached = _getCacheChunked(cache, cacheKey);
             if (cached && format !== 'tuples') {

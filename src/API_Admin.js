@@ -56,6 +56,30 @@ function ensureEntityProvisioned(entityName) {
   return ensureProvisioned(entityName, _getSpreadsheet());
 }
 
+// ─── Global Config Endpoints ───────────────────────────────────────────────────
+
+/**
+ * Guarda una configuración global de la aplicación.
+ * @param {string} configKey La clave de PropertiesService (ej. APP_BRANDING_CONFIG)
+ * @param {Object} payload El objeto de configuración
+ * @returns {Object} { success: boolean, message: string }
+ */
+function API_Admin_SaveGlobalConfig(configKey, payload) {
+  try {
+    payload = payload || {};
+    if (!configKey) throw new Error("configKey es requerido");
+    
+    const VALID_KEYS = ['APP_BRANDING_CONFIG', 'APP_SECURITY_CONFIG'];
+    if (!VALID_KEYS.includes(configKey)) throw new Error("configKey no autorizado");
+
+    PropertiesService.getScriptProperties().setProperty(configKey, JSON.stringify(payload));
+    return { success: true, message: "Configuración global guardada correctamente." };
+  } catch(e) {
+    console.error("Error en API_Admin_SaveGlobalConfig:", e);
+    return { success: false, message: "Error al guardar: " + e.message };
+  }
+}
+
 // ─── Private Helpers ──────────────────────────────────────────────────────────
 
 /**

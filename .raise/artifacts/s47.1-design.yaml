@@ -1,0 +1,35 @@
+artifact_type: story-design
+version: 1
+skill: rai-story-design
+created: '2026-04-28T17:40:00Z'
+story: 'S47.1'
+epic: 'E47'
+content:
+  summary: 'Intercept file in UI, detect Capacidades format, and parse from row 6 with fill-down logic.'
+  complexity: moderate
+  acceptance_criteria:
+    - id: AC1
+      description: 'System detects Model 2.0 signature automatically without user prompt'
+      verifiable: true
+    - id: AC2
+      description: 'Parser ignores first 5 rows and reads header at row 6'
+      verifiable: true
+    - id: AC3
+      description: 'Fill-down correctly inherits macro and capacidad values for empty merged cells'
+      verifiable: true
+  integration_points:
+    - module: 'UI_ETL_Modal.client.js'
+      change_type: modification
+      files: ['src/UI_ETL_Modal.client.js']
+    - module: 'DataEngine_ETL_Capacidades.client.js'
+      change_type: new
+      files: ['src/DataEngine_ETL_Capacidades.client.js']
+  decisions:
+    - id: D1
+      choice: 'Use SheetJS/XLSX natively in browser'
+      rationale: 'Avoids asking user to convert to CSV and preserves structure.'
+      alternatives_considered: ['Ask user to upload CSV', 'Send to backend for parsing']
+refs:
+  backlog_item: 'E47'
+  epic_scope: 'work/epics/e47-capacidades-etl/scope.md'
+metadata: {}

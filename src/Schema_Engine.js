@@ -184,14 +184,17 @@ var APP_SCHEMAS = {
       ...FIELD_TEMPLATES.SYSTEM_FIELDS(),
       ...FIELD_TEMPLATES.AUDIT_FIELDS(),
       ...FIELD_TEMPLATES.VERSION_FIELD(),
-      { name: "id_registro", type: "text", label: "ID Externo", required: true, width: 12 },
+      { name: "id_externo", type: "text", label: "ID Externo", required: true, width: 6 },
       { name: "nivel_tipo", type: "number", label: "Nivel Tipo", required: true, width: 6 },
+      { name: "orden_path", type: "text", label: "Orden Path", required: false, width: 12 },
       ...FIELD_TEMPLATES.NAME_FIELD("Nombre (ES)", 6),
       { name: "nombre_ingles", type: "text", label: "Nombre (EN)", required: false, width: 6 },
       { name: "abreviacion", type: "text", label: "Abreviación", required: false, width: 6 },
-      { name: "definicion", type: "textarea", label: "Definición", required: true, width: 12, showInList: false },
-      { width: 12, name: "relaciones_padre", type: "relation", relationType: "padre", targetEntity: "Dominio", graphEntity: "Sys_Graph_Edges", valueField: "id_dominio", labelField: "nombre", uiComponent: "select_single", label: "Dominio Padre (1:1)", isTemporalGraph: true, topologyCardinality: "1:N" },
-      { width: 12,name: "relaciones_hijo", type: "relation", relationType: "hijo", targetEntity: "Dominio", graphEntity: "Sys_Graph_Edges", valueField: "id_dominio", labelField: "nombre", uiComponent: "searchable_multi", label: "Dominios Subordinados (1:N)", isTemporalGraph: true, topologyCardinality: "1:N" }
+      { name: "descripcion", type: "textarea", label: "Definición / Descripción", required: true, width: 12, showInList: false },
+      { name: "contexto_completo_analisis", type: "textarea", label: "Contexto Análisis", required: false, width: 12, showInList: false },
+      { name: "path_completo_es", type: "text", label: "Path Completo", required: false, width: 12 },
+      { width: 12, name: "relaciones_padre", type: "relation", relationType: "padre", targetEntity: "Dominio", graphEntity: "Sys_Graph_Edges", valueField: "id_dominio", labelField: "nombre", uiComponent: "select_single", label: "Dominio Padre (1:1)", isTemporalGraph: true, graphEdgeType: "DOMINIO_HIJO", topologyCardinality: "1:N" },
+      { width: 12, name: "relaciones_hijo", type: "relation", relationType: "hijo", targetEntity: "Dominio", graphEntity: "Sys_Graph_Edges", valueField: "id_dominio", labelField: "nombre", uiComponent: "searchable_multi", label: "Dominios Subordinados (1:N)", isTemporalGraph: true, graphEdgeType: "DOMINIO_HIJO", topologyCardinality: "1:N" }
     ]
   },
   Grupo_Productos: {
@@ -239,8 +242,13 @@ var APP_SCHEMAS = {
   },
   Capacidad: {
     metadata: { showInMenu: true, order:6, iconName:'layers-outline', color:'warning', label:'Capacidades', titleField:'nombre', idField:'id_capacidad', fkField:null },
+    topological_metadata: {
+        parentEntity: "Capacidad",
+        parentField: "id_dominio_padre"
+    },
     primaryKey: "id_capacidad",
     titleField: "nombre",
+    topologyRules: TOPOLOGY_PRESETS.JERARQUICA_ESTRICTA_DOMAIN,
     fields: [
       { name: "id_capacidad", type: "hidden", primaryKey: true },
       ...FIELD_TEMPLATES.SYSTEM_FIELDS(),
@@ -254,7 +262,9 @@ var APP_SCHEMAS = {
       { name: "abreviacion", type: "text", label: "Abreviación", required: false, width: 6 },
       { name: "descripcion", type: "textarea", label: "Descripción", required: false, width: 12, showInList: false },
       { name: "contexto_completo_analisis", type: "textarea", label: "Contexto Análisis", required: false, width: 12, showInList: false },
-      { name: "path_completo_es", type: "text", label: "Path Completo", required: false, width: 12 }
+      { name: "path_completo_es", type: "text", label: "Path Completo", required: false, width: 12 },
+      { name: "id_dominio_padre", type: "relation", relationType: "padre", targetEntity: "Capacidad", graphEntity: "Sys_Graph_Edges", label: "Capacidad Padre", isTemporalGraph: true, topologyCardinality: "1:N", graphEdgeType: "CAPACIDAD_HIJO", required: false, width: 12, uiComponent: "select_single", valueField: "id_capacidad", labelField: "nombre" },
+      { name: "capacidades_hijas", type: "relation", relationType: "hijo", targetEntity: "Capacidad", graphEntity: "Sys_Graph_Edges", label: "Capacidades Subordinadas", isTemporalGraph: true, topologyCardinality: "1:N", graphEdgeType: "CAPACIDAD_HIJO", required: false, width: 12, uiComponent: "searchable_multi", valueField: "id_capacidad", labelField: "nombre" }
     ]
   },
   Equipo: {
@@ -278,9 +288,9 @@ var APP_SCHEMAS = {
       { name: "seudonimo", type: "text", label: "Seudónimo", required: false, width: 6 },
       { name: "metodologia", type: "select", label: "Metodología", required: true, width: 6, options: ["Scrum", "Kanban", "Híbrido"] },
       { name: "proposito", type: "textarea", label: "Propósito", required: false, width: 12 },
-      { name: "scrum_master_id", type: "relation", relationType: "padre", targetEntity: "Persona", graphEntity: "Sys_Graph_Edges", label: "Scrum Master / Team Coach", isTemporalGraph: true, graphEdgeType: "EQUIPO_SM", uiComponent: "select_single", valueField: "email", labelField: "nombre", required: false, width: 6 },
-      { name: "product_owner_id", type: "relation", relationType: "padre", targetEntity: "Persona", graphEntity: "Sys_Graph_Edges", label: "Product Owner", isTemporalGraph: true, graphEdgeType: "EQUIPO_PO", uiComponent: "select_single", valueField: "email", labelField: "nombre", required: false, width: 6 },
-      { name: "rte_id", type: "relation", relationType: "padre", targetEntity: "Persona", graphEntity: "Sys_Graph_Edges", label: "Release Train Engineer (RTE)", isTemporalGraph: true, graphEdgeType: "EQUIPO_RTE", uiComponent: "select_single", valueField: "email", labelField: "nombre", required: false, width: 12 },
+      { name: "scrum_master_id", type: "relation", relationType: "padre", targetEntity: "Persona", graphEntity: "Sys_Graph_Edges", label: "Scrum Master / Team Coach", isTemporalGraph: true, graphEdgeType: "EQUIPO_SM", uiComponent: "select_single", valueField: "email", labelField: "_nombre_completo", required: false, width: 6 },
+      { name: "product_owner_id", type: "relation", relationType: "padre", targetEntity: "Persona", graphEntity: "Sys_Graph_Edges", label: "Product Owner", isTemporalGraph: true, graphEdgeType: "EQUIPO_PO", uiComponent: "select_single", valueField: "email", labelField: "_nombre_completo", required: false, width: 6 },
+      { name: "rte_id", type: "relation", relationType: "padre", targetEntity: "Persona", graphEntity: "Sys_Graph_Edges", label: "Release Train Engineer (RTE)", isTemporalGraph: true, graphEdgeType: "EQUIPO_RTE", uiComponent: "select_single", valueField: "email", labelField: "_nombre_completo", required: false, width: 12 },
       { name: "cant_team_coach", type: "number", label: "Cant. Team Coach", required: false, width: 6 },
       { name: "total_integrantes", type: "number", label: "Total Integrantes", required: false, width: 6 }
     ]
@@ -302,7 +312,7 @@ var APP_SCHEMAS = {
     ],
     metadata: { showInMenu: true, order:8, iconName:'person-outline', color:'warning', label:'Personas', titleField:'_nombre_completo', idField:'id_persona', fkField:null },
     primaryKey: "id_persona",
-    mutationInterceptors: ['AutoProvisionCargo'],
+    mutationInterceptors: ['AutoProvisionCargo', 'AutoProvisionLiderDirecto'],
     topologyRules: TOPOLOGY_PRESETS.JERARQUICA_PERSONA,
     fields: [
       { name: "id_persona", type: "hidden", primaryKey: true },
@@ -329,7 +339,7 @@ var APP_SCHEMAS = {
       { name: "departamento", type: "text", label: "Departamento", required: true, width: 12 },
       { name: "id_cargo", type: "relation", relationType: "padre", targetEntity: "Cargo", graphEntity: "Sys_Graph_Edges", label: "Cargo Oficial", isTemporalGraph: true, topologyCardinality: "1:N", graphEdgeType: "CARGO_PERSONA", uiComponent: "select_single", valueField: "id_cargo", labelField: "nombre", required: true, width: 12 },
       { name: "cargo", type: "hidden", label: "Cargo Oficial Workspace (Plano)" },
-      { name: "lider_directo", type: "relation", relationType: "padre", targetEntity: "Persona", graphEntity: "Sys_Graph_Edges", valueField: "email", labelField: "email", topologyCardinality: "1:N", isTemporalGraph: true, graphEdgeType: "PERSONA_LIDER_DIRECTO", label: "Líder Directo", required: false, width: 12, uiComponent: "select_single" },
+      { name: "lider_directo", type: "relation", relationType: "padre", targetEntity: "Persona", graphEntity: "Sys_Graph_Edges", valueField: "id_persona", labelField: "_nombre_completo", topologyCardinality: "1:N", isTemporalGraph: true, graphEdgeType: "PERSONA_LIDER_DIRECTO", label: "Líder Directo", required: false, width: 12, uiComponent: "select_single" },
       { name: "centro_costo", type: "text", label: "Centro de Costos", required: true, width: 6 },
       { name: "numero_empleado", type: "number", label: "Número de Empleado", required: true, width: 6, validators: ["regex:^\\d{8}$"], unique: true },
       { name: "modalidad", type: "select", label: "Modalidad", options: ["Presencial", "Virtual", "Híbrido"], required: true, width: 6 },

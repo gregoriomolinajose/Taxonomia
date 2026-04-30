@@ -95,22 +95,27 @@ function runWorkspaceSyncJob(params) {
                         const wsData = resolverDirectorioWorkspace(payload.email);
                         if (wsData && wsData.__status !== 'DISABLED' && wsData.__status !== 'ERROR') {
                             Object.keys(wsData).forEach(k => {
-                                if (isBlank(payload[k])) {
+                                // Prioridad Workspace: Si el Directorio tiene información, SIEMPRE sobreescribe lo del archivo
+                                if (!isBlank(wsData[k])) {
                                     payload[k] = wsData[k];
                                 }
                             });
                             
                             // S44.11: Relleno Obligatorio '---' for failing/hidden fields
-                            const criticalFields = ['nombre', 'apellidos', 'telefono', 'departamento', 'centro_costo', 'cargo', 'ubicacion', 'numero_empleado', 'lider_directo', 'avatar'];
+                            const criticalFields = ['nombre', 'apellidos', 'telefono', 'departamento', 'centro_costo', 'cargo', 'ubicacion', 'numero_empleado'];
                             criticalFields.forEach(f => {
                                 if (isBlank(payload[f])) {
                                     payload[f] = '---';
                                 }
                             });
                             
+                            // Para campos referenciales o de media, usar vacío si no existen
+                            if (isBlank(payload.lider_directo)) payload.lider_directo = '';
+                            if (isBlank(payload.avatar)) payload.avatar = '';
+                            
                             payload.workspace_sync_status = 'synced';
                             if (typeof Logger !== 'undefined') Logger.log(`[Job Sync] Persona hidratada con Fallbacks: ${payload.email}`);
-                        } else if (wsData && wsData.__status === 'ERROR') {
+                        } else {
                             payload.workspace_sync_status = 'failed';
                         }
                     } catch(e) {
@@ -143,6 +148,16 @@ function runWorkspaceSyncJob(params) {
                     id_nodo_padre: String(pToSave.id_cargo).trim(),
                     id_nodo_hijo: personaId,
                     tipo_relacion: 'CARGO_PERSONA'
+                });
+            }
+            
+            // [S45.2] Si existe lider_directo, construimos su arista
+            var safeLiderDirecto = pToSave.lider_directo ? String(pToSave.lider_directo).trim() : '';
+            if (safeLiderDirecto && personaId) {
+                incomingEdgesMock.push({
+                    id_nodo_padre: safeLiderDirecto,
+                    id_nodo_hijo: personaId,
+                    tipo_relacion: 'PERSONA_LIDER_DIRECTO'
                 });
             }
             

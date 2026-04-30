@@ -309,9 +309,60 @@
                 const cardEl = document.createElement('ion-card');
                 cardEl.className = 'dv-ion-card dv-card-grid-modern';
                 
-                // 1. Unified Card Header (S42.3 Refinamiento)
-                const cardHeader = document.createElement('div');
-                cardHeader.className = 'dv-card-header-unified';
+                // --- S43.4 Redesigned Card Layout ---
+                // Row 1: Top Bar (Lexical ID + Status + Actions)
+                const cardTopRow = document.createElement('div');
+                cardTopRow.className = 'dv-card-top-row';
+                
+                const topLeft = document.createElement('div');
+                topLeft.className = 'dv-card-top-left';
+                
+                const lexicalEl = document.createElement('span');
+                lexicalEl.className = 'dv-card-lexical-id';
+                lexicalEl.textContent = lexIdStr;
+                topLeft.appendChild(lexicalEl);
+                
+                const estadoVal = row.estado || row.status || (row.metadata ? row.metadata.estado : null);
+                if (estadoVal) {
+                    const statusWrap = document.createElement('div');
+                    statusWrap.className = 'dv-card-status-wrap';
+                    const isInactive = String(estadoVal).toLowerCase().includes('inactiv');
+                    statusWrap.classList.add(isInactive ? 'dv-status--inactive' : 'dv-status--active');
+                    
+                    const statusDot = document.createElement('div');
+                    statusDot.className = 'dv-card-status-dot';
+                    const statusText = document.createElement('span');
+                    statusText.className = 'dv-card-status-text';
+                    statusText.textContent = estadoVal;
+                    
+                    statusWrap.appendChild(statusDot);
+                    statusWrap.appendChild(statusText);
+                    topLeft.appendChild(statusWrap);
+                }
+                cardTopRow.appendChild(topLeft);
+                
+                const topRight = document.createElement('div');
+                topRight.className = 'dv-card-top-right';
+                if (!window.ABAC || window.ABAC.can('delete', this.cfg.entityName, idStr)) {
+                    const btnDel = document.createElement('button');
+                    btnDel.className = 'dv-btn-danger-lite';
+                    btnDel.title = 'Eliminar';
+                    btnDel.style.padding = '4px 6px';
+                    btnDel.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        if (typeof this.cfg.onDelete === 'function') this.cfg.onDelete(idStr);
+                    });
+                    const iconDel = document.createElement('ion-icon');
+                    iconDel.setAttribute('name', 'trash');
+                    btnDel.appendChild(iconDel);
+                    topRight.appendChild(btnDel);
+                }
+                cardTopRow.appendChild(topRight);
+                cardEl.appendChild(cardTopRow);
+
+                // Row 2: Profile (Avatar + Title + First Subtitle)
+                const profileRow = document.createElement('div');
+                profileRow.className = 'dv-card-profile-row';
                 
                 const badgeEl = document.createElement('div');
                 if (meta.color) { 
@@ -338,108 +389,72 @@
                     iconBadge.setAttribute('name', baseIcon);
                     badgeEl.appendChild(iconBadge);
                 }
-
+                profileRow.appendChild(badgeEl);
                 
-                const leftWrap = document.createElement('div');
-                leftWrap.className = 'dv-card-left-wrap';
-                leftWrap.appendChild(badgeEl);
-                
-                // Titulo y Meta
-                const metaWrap = document.createElement('div');
-                metaWrap.className = 'dv-card-meta-wrap';
-                
-                const metaTopRow = document.createElement('div');
-                metaTopRow.className = 'dv-card-meta-top-row';
-                
-                const lexicalEl = document.createElement('span');
-                lexicalEl.className = 'dv-card-lexical-id';
-                lexicalEl.textContent = lexIdStr;
-                metaTopRow.appendChild(lexicalEl);
-                
-                // Estado
-                const estadoVal = row.estado || row.status || (row.metadata ? row.metadata.estado : null);
-                if (estadoVal) {
-                    const statusWrap = document.createElement('div');
-                    statusWrap.className = 'dv-card-status-wrap';
-                    const isInactive = String(estadoVal).toLowerCase().includes('inactiv');
-                    statusWrap.classList.add(isInactive ? 'dv-status--inactive' : 'dv-status--active');
-                    
-                    const statusDot = document.createElement('div');
-                    statusDot.className = 'dv-card-status-dot';
-                    
-                    const statusText = document.createElement('span');
-                    statusText.className = 'dv-card-status-text';
-                    statusText.textContent = estadoVal;
-                    
-                    statusWrap.appendChild(statusDot);
-                    statusWrap.appendChild(statusText);
-                    metaTopRow.appendChild(statusWrap);
-                }
+                const profileInfo = document.createElement('div');
+                profileInfo.className = 'dv-card-profile-info';
                 
                 const h3Title = document.createElement('h3');
-                h3Title.className = 'dv-card-hero-title';
+                h3Title.className = 'dv-card-hero-title dv-title-2-lines';
                 h3Title.textContent = titleStr;
                 h3Title.title = titleStr;
+                profileInfo.appendChild(h3Title);
                 
-                metaWrap.appendChild(metaTopRow);
-                metaWrap.appendChild(h3Title);
+                profileRow.appendChild(profileInfo);
+                cardEl.appendChild(profileRow);
                 
-                if (dCard && dCard.subtitleFields) {
-                    for (var iter = 0; iter < dCard.subtitleFields.length; iter++) {
-                        var subItem = dCard.subtitleFields[iter];
+                // Row 3 & 4: Subtitles (Email, Departamento)
+                if (dCard && dCard.subtitleFields && dCard.subtitleFields.length > 0) {
+                    dCard.subtitleFields.forEach((subItem, index) => {
                         if (row[subItem.field]) {
                             const subWrap = document.createElement('div');
-                            subWrap.className = 'dv-card-meta-subtitle';
-                            subWrap.style.marginTop = (iter === 0) ? '4px' : '2px';
-                            subWrap.style.fontSize = '0.85em';
-                            subWrap.style.color = 'var(--ion-color-medium)';
+                            // First subtitle (Email) 1-line, others 2-lines
+                            const lineClass = index === 0 ? 'dv-title-1-line' : 'dv-title-2-lines';
+                            subWrap.className = `dv-card-department ${lineClass}`;
                             
                             if (subItem.icon) {
                                 const sIcon = document.createElement('ion-icon');
                                 sIcon.setAttribute('name', subItem.icon);
                                 subWrap.appendChild(sIcon);
                             }
-                            subWrap.appendChild(document.createTextNode(' ' + row[subItem.field]));
-                            metaWrap.appendChild(subWrap);
+                            subWrap.appendChild(document.createTextNode(row[subItem.field]));
+                            cardEl.appendChild(subWrap);
                         }
-                    }
-                }
-                
-                leftWrap.appendChild(metaWrap);
-                cardHeader.appendChild(leftWrap);
-                
-                // Actions (Trash)
-                const topActions = document.createElement('div');
-                topActions.className = 'dv-card-top-actions';
-                
-                if (!window.ABAC || window.ABAC.can('delete', this.cfg.entityName, idStr)) {
-                    const btnDel = document.createElement('button');
-                    btnDel.className = 'dv-btn-danger-lite';
-                    btnDel.title = 'Eliminar';
-                    btnDel.style.padding = '4px 6px';
-                    btnDel.style.marginLeft = '4px';
-                    btnDel.addEventListener('click', (e) => {
-                        e.stopPropagation();
-                        if (typeof this.cfg.onDelete === 'function') this.cfg.onDelete(idStr);
                     });
-                    const iconDel = document.createElement('ion-icon');
-                    iconDel.setAttribute('name', 'trash');
-                    btnDel.appendChild(iconDel);
-                    topActions.appendChild(btnDel);
                 }
                 
-                cardHeader.appendChild(topActions);
-                cardEl.appendChild(cardHeader);
-
-                // 3. Footer (Graphs)
+                // Extract Graphs
                 let graphData = this._extractGraphMetadata(row, this.cfg.entityName);
+                let cargoNodes = [];
+                let otherSingleNodes = [];
                 
-                if (graphData.singleNodes.length > 0 || graphData.multiNodes.length > 0) {
+                graphData.singleNodes.forEach(node => {
+                    const l = node.label ? String(node.label).toLowerCase() : '';
+                    if (l.includes('cargo')) cargoNodes.push(node);
+                    else otherSingleNodes.push(node);
+                });
+                
+                // Row 4: Cargo
+                cargoNodes.forEach(cNode => {
+                    const cargoWrap = document.createElement('div');
+                    cargoWrap.className = 'dv-card-cargo dv-title-1-line';
+                    const sIcon = document.createElement('ion-icon');
+                    sIcon.setAttribute('name', cNode.icon.includes('-outline') ? cNode.icon : cNode.icon + '-outline');
+                    cargoWrap.appendChild(sIcon);
+                    
+                    const cargoVal = String(cNode.value !== undefined ? cNode.value : cNode.count);
+                    cargoWrap.appendChild(document.createTextNode(cargoVal));
+                    cardEl.appendChild(cargoWrap);
+                });
+                
+                // Row 5: Division
+                if (otherSingleNodes.length > 0 || graphData.multiNodes.length > 0) {
                     const sep = document.createElement('hr');
                     sep.className = 'dv-card-graph-sep';
                     cardEl.appendChild(sep);
                 }
-
+                
+                // Row 6 & 7: Graph Pills
                 const graphWrap = document.createElement('div');
                 graphWrap.className = 'dv-card-graph-nodes';
                 
@@ -457,7 +472,6 @@
                     
                     const ndLabel = document.createElement('span');
                     ndLabel.className = 'dv-node-label';
-                    // S42.3 (Refinamiento): Devolver el nombre de la entidad pero truncado a la primera palabra
                     const fullLabel = nodeObj.label || '';
                     ndLabel.textContent = fullLabel.split(' ')[0];
                     
@@ -473,9 +487,9 @@
                     return rowNode;
                 };
 
-                graphData.singleNodes.forEach(node => graphWrap.appendChild(buildNode(node)));
+                otherSingleNodes.forEach(node => graphWrap.appendChild(buildNode(node)));
                 graphData.multiNodes.forEach(node => graphWrap.appendChild(buildNode(node)));
-
+                
                 if (graphWrap.childNodes.length > 0) {
                     cardEl.appendChild(graphWrap);
                 }

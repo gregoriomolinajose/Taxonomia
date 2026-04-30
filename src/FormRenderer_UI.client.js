@@ -249,10 +249,10 @@
                     // Evaluar la topología del Schema (Inyección manual del Auto-Divider en Linear)
                     const exactDivider = fields.find(f => f.section === stepName && f.type === 'divider' && f.label === stepName);
                     
-                    if (!exactDivider) {
+                    if (!exactDivider && stepName !== 'Configuración General') {
                         const dividerCol = document.createElement('ion-col');
                         dividerCol.setAttribute('size', '12');
-                        dividerCol.appendChild(global.UI_Factory.buildDivider({ label: stepName === 'Configuración General' ? '' : stepName }));
+                        dividerCol.appendChild(global.UI_Factory.buildDivider({ label: stepName }));
                         stepRow.appendChild(dividerCol);
                     }
 
@@ -298,7 +298,9 @@
                     if (extractedSections?.length > 0) {
                         console.warn(`[FormEngine] ALERTA: La entidad ${entityName} usa Secciones, pero el campo '${field.name}' carece de 'section' o 'width'. Este campo quedará huérfano en el Stepper. Actualice al Blueprint V3.`);
                     }
-                    field.section = field.section || "Datos Generales";
+                    if (useStepper && !field.section) {
+                        field.section = "Datos Generales";
+                    }
                     field.width = field.width || 12;
                 }
                 const targetRowName = field.section || steps[0];

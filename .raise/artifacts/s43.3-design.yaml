@@ -1,0 +1,32 @@
+artifact_type: story-design
+version: 1
+skill: rai-story-design
+created: '2026-04-27T18:05:00Z'
+story: 'S43.3'
+epic: 'E43'
+content:
+  summary: 'Ajustar CSS para forzar contención estricta en las Grid Cards, evitando desbordamientos por textos largos y manteniendo la simetría.'
+  complexity: simple
+  acceptance_criteria:
+    - id: AC1
+      description: 'El subtítulo (ej. Barril/Área) se limita estrictamente a una línea usando ellipsis.'
+      verifiable: true
+    - id: AC2
+      description: 'Los envoltorios flexibles (left-wrap, meta-wrap) implementan min-width: 0 para evitar estirar las tarjetas horizontalmente.'
+      verifiable: true
+    - id: AC3
+      description: 'Las insignias del pie (Líder, Cargo) se truncan si su valor interno excede el ancho disponible de la tarjeta.'
+      verifiable: true
+  integration_points:
+    - module: 'assets.css.data_view'
+      change_type: modification
+      files: ['src/assets/css/data-view.css']
+  decisions:
+    - id: D1
+      choice: 'Utilizar flexbox `min-width: 0` y propiedades de texto nativas.'
+      rationale: 'Es la forma más canónica y de mayor rendimiento en CSS para forzar a los flex-items a respetar el ancho del contenedor sin recalculaciones de JS.'
+      alternatives_considered: ['Recortar la cadena en JS (inviable por responsive design y SEO).']
+refs:
+  backlog_item: 'S43.3'
+  epic_scope: 'work/epics/e43-grid-card-redesign/scope.md'
+metadata: {}
