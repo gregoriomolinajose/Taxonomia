@@ -96,13 +96,13 @@
       ">
         <ion-icon name="git-network-outline"></ion-icon> Graph Behavior
       </button>
-      <button class="ss-tab" data-tab="branding" onclick="window.SchemaStudio.switchTab('branding')" style="
+      <button class="ss-tab" data-tab="global" onclick="window.SchemaStudio.switchTab('global')" style="
         padding:10px 20px;border:none;background:none;cursor:pointer;
         font-weight:600;font-size:0.85rem;color:var(--ion-color-medium);
         border-bottom:2px solid transparent;margin-bottom:-1px;
         display:flex;align-items:center;gap:6px;transition:all 0.2s;
       ">
-        <ion-icon name="color-palette-outline"></ion-icon> Branding
+        <ion-icon name="settings-outline"></ion-icon> Ajustes Globales
       </button>
       <button class="ss-tab" data-tab="db" onclick="window.SchemaStudio.switchTab('db')" style="
         padding:10px 20px;border:none;background:none;cursor:pointer;
@@ -508,7 +508,7 @@
   // ── Tabs ──────────────────────────────────────────────────────────────────
   function switchTab(tabId) {
     // [S31.10] Track _lastContentTab for Composer multi-context mode
-    if (tabId === 'entities' || tabId === 'templates' || tabId === 'presets' || tabId === 'branding') {
+    if (tabId === 'entities' || tabId === 'templates' || tabId === 'presets' || tabId === 'global') {
       _lastContentTab = tabId;
     }
     var tabs = document.querySelectorAll('.ss-tab');
@@ -555,7 +555,7 @@
     else if (tabId === 'templates') renderTemplatesTab(container);
     else if (tabId === 'presets')   renderPresetsTab(container);
     else if (tabId === 'db')        renderDbHealthTab(container);
-    else if (tabId === 'branding')  renderBrandingTab(container);
+    else if (tabId === 'global')    renderGlobalTab(container);
     else if (tabId === 'composer')  renderComposerTab(container);
   }
 
@@ -759,11 +759,11 @@
     container.innerHTML = html;
   }
 
-  // ── Branding Tab ──────────────────────────────────────────────────────────
-  function renderBrandingTab(container) {
+  // ── Global Config Tab ──────────────────────────────────────────────────────────
+  function renderGlobalTab(container) {
     var html = '<div style="max-width: 600px; margin: 0 auto; padding: 20px 0;">' +
       '<div style="font-weight:700;font-size:1.1rem;margin-bottom:16px;">Identidad Visual (Branding)</div>' +
-      '<div class="ss-template-card">' +
+      '<div class="ss-template-card" style="margin-bottom: 30px;">' +
         '<div style="margin-bottom: 12px;">' +
           '<label class="ss-label">Título de la Pestaña del Navegador</label>' +
           '<input type="text" id="input-branding-title" class="ss-input" placeholder="Ej. Sistema de Taxonomía OMR" />' +
@@ -775,6 +775,22 @@
         '<div style="text-align: right;">' +
           '<button class="ss-btn-primary" id="btn-save-branding" onclick="window.SchemaStudio.saveBrandingConfig()">' +
             '<ion-icon name="save-outline"></ion-icon> Guardar Apariencia' +
+          '</button>' +
+        '</div>' +
+      '</div>' +
+      
+      '<div style="font-weight:700;font-size:1.1rem;margin-bottom:16px;">Control de Acceso SSO (Dominios)</div>' +
+      '<div class="ss-template-card">' +
+        '<div style="margin-bottom: 20px;">' +
+          '<label class="ss-label">Dominios de Correo Permitidos (Separados por coma)</label>' +
+          '<input type="text" id="input-security-domains" class="ss-input" placeholder="Ej. @coppel.com, @bancoppel.com, @agencia.com" />' +
+          '<div style="font-size: 0.75rem; color: var(--ion-color-medium); margin-top: 6px;">' +
+            'Si esto se deja en blanco, el sistema recurrirá a la configuración estática por defecto.' +
+          '</div>' +
+        '</div>' +
+        '<div style="text-align: right;">' +
+          '<button class="ss-btn-primary" id="btn-save-security" onclick="window.SchemaStudio.saveSecurityConfig()">' +
+            '<ion-icon name="lock-closed-outline"></ion-icon> Guardar Accesos' +
           '</button>' +
         '</div>' +
       '</div>' +
@@ -1983,10 +1999,63 @@
                     btn.innerHTML = origText;
                     alert('Error de red: ' + err.message);
                 })
-                .API_Admin_SaveBrandingConfig(payload);
+                .API_Admin_SaveGlobalConfig('APP_BRANDING_CONFIG', payload);
         } catch(e) {
             console.error(e);
             alert('Error al guardar branding: ' + e.message);
+            btn.disabled = false;
+            btn.innerHTML = origText;
+        }
+    },
+
+    saveSecurityConfig: function() {
+        const domainsInput = document.getElementById('input-security-domains');
+        if (!domainsInput) return;
+        
+        let domainsRaw = domainsInput.value || '';
+        let domainsArray = domainsRaw.split(',')
+            .map(function(d) { return d.trim().toLowerCase(); })
+            .filter(function(d) { return d.length > 0 && d.startsWith('@'); });
+
+        if (domainsRaw.trim().length > 0 && domainsArray.length === 0) {
+            alert("Error: Los dominios deben comenzar con '@' (ej. @coppel.com)");
+            return;
+        }
+
+        const btn = document.getElementById('btn-save-security');
+        const origText = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = 'Guardando...';
+
+        try {
+            const payload = {
+                allowedDomains: domainsArray
+            };
+            if (!google || !google.script || !google.script.run) {
+                alert("GAS context missing (local dev)");
+                btn.disabled = false;
+                btn.innerHTML = origText;
+                return;
+            }
+            google.script.run
+                .withSuccessHandler(function(res) {
+                    btn.disabled = false;
+                    btn.innerHTML = origText;
+                    if (res && res.success) {
+                        alert('Accesos SSO guardados exitosamente. Aplicarán en los siguientes inicios de sesión.');
+                    } else {
+                        alert('Error: ' + (res ? res.message : 'desconocido'));
+                    }
+                })
+                .withFailureHandler(function(err) {
+                    btn.disabled = false;
+                    btn.innerHTML = origText;
+                    alert('Error de red: ' + err.message);
+                })
+                .API_Admin_SaveGlobalConfig('APP_SECURITY_CONFIG', payload);
+        } catch(e) {
+            console.error(e);
+            alert('Error al guardar accesos: ' + e.message);
             btn.disabled = false;
             btn.innerHTML = origText;
         }
