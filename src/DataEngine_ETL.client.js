@@ -333,8 +333,10 @@
                     
                     if (detailsArray) {
                         detailsArray.forEach(detail => {
-                            if (detail.status === 'success') metrics.success++;
-                            else if (detail.status === 'duplicate') {
+                            if (detail.status === 'success') {
+                                metrics.success++;
+                                accumulatedFeedback.push(detail);
+                            } else if (detail.status === 'duplicate') {
                                 metrics.duplicate++;
                                 accumulatedFeedback.push(detail);
                             } else if (detail.status === 'error') {

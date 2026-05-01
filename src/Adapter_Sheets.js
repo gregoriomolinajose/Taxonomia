@@ -335,7 +335,7 @@ const Adapter_Sheets = {
                     }
                     
                     rowsToUpdate.push({ rowIndex: sheetTargetIndex, rowData: rowToInsert });
-                    results.push({ status: 'success', action: 'updated', pk: primaryKeyField, val: primaryKeyValue, version: payload.version });
+                    results.push({ status: 'success', action: 'updated', pk: primaryKeyField, val: primaryKeyValue, version: payload.version, _sheetId: payload._sheetId, _rowIndex: payload._rowIndex, _sheetName: payload._sheetName, message: 'Se actualizó el registro' });
                 } else {
                     payload.version = 1;
                     payload._version = 1;
@@ -377,7 +377,7 @@ const Adapter_Sheets = {
                     }
                     
                     rowsToAppend.push(rowToInsert);
-                    results.push({ status: 'success', action: 'created', pk: primaryKeyField, val: primaryKeyValue, lexical_id: lexicalValue, version: payload.version });
+                    results.push({ status: 'success', action: 'created', pk: primaryKeyField, val: primaryKeyValue, lexical_id: lexicalValue, version: payload.version, _sheetId: payload._sheetId, _rowIndex: payload._rowIndex, _sheetName: payload._sheetName, message: 'Registro creado' });
                 }
             } catch (err) {
                 const isDuplicate = err.message.includes('ERROR_CONCURRENCY');
