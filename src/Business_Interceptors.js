@@ -86,6 +86,77 @@ var Business_Interceptors = (function() {
         }
     }
 
+    /**
+     * Motor DRY para generar Stubs Relacionales M:N (Aristas temporales).
+     * Reemplaza a las implementaciones imperativas de Roles y Equipos.
+     */
+    function _provisionRelationalStubs(entityName, items, config) {
+        if (!items || items.length === 0) return;
+
+        let dbTargets = {};
+        if (typeof Engine_DB !== 'undefined') {
+            const res = Engine_DB.list(config.targetEntity, 'objects', { skipCache: true });
+            if (res && res.rows) {
+                res.rows.forEach(r => {
+                    dbTargets[String(r.nombre).trim().toLowerCase()] = r[config.idField];
+                });
+            }
+        }
+
+        let edgesBatch = [];
+        const sysDate = new Date().toISOString();
+
+        items.forEach(p => {
+            if (p[config.field]) {
+                const valuesRaw = String(p[config.field]).split(',');
+                valuesRaw.forEach(valName => {
+                    const nameTrim = valName.trim();
+                    if (nameTrim === '') return;
+                    
+                    const normName = nameTrim.toLowerCase();
+                    let targetId = dbTargets[normName];
+                    
+                    if (!targetId) {
+                        // Crear Stub
+                        targetId = config.stubPrefix + (Math.random().toString(36).substring(2, 10).toUpperCase());
+                        let stub = {
+                            [config.idField]: targetId,
+                            nombre: nameTrim + " (Por definir)",
+                            estado: "Activo"
+                        };
+                        if (config.extraStubFields) {
+                            Object.assign(stub, config.extraStubFields);
+                        }
+                        if (typeof Engine_DB !== 'undefined') {
+                            try { Engine_DB.upsertBatch(config.targetEntity, [stub], { muteTriggers: true }); } catch(e) {}
+                        }
+                        dbTargets[normName] = targetId;
+                    }
+                    
+                    // Generar Arista
+                    edgesBatch.push({
+                        id_relacion: "RELA-" + [...Array(8)].map(() => Math.floor(Math.random() * 16).toString(16).toUpperCase()).join(''),
+                        id_nodo_padre: targetId,
+                        id_nodo_hijo: p.id_persona || p._tempId,
+                        tipo_relacion: config.edgeType,
+                        valido_desde: sysDate,
+                        valido_hasta: "",
+                        es_version_actual: true,
+                        estado: "Activo"
+                    });
+                });
+                
+                // Borramos el campo plano para que el DB engine no intente insertarlo como columna plana
+                delete p[config.field];
+            }
+        });
+
+        if (edgesBatch.length > 0 && typeof Engine_DB !== 'undefined') {
+            try { Engine_DB.upsertBatch('Sys_Graph_Edges', edgesBatch, { muteTriggers: true }); } catch(e) {}
+            if (typeof Logger !== 'undefined') Logger.log(`Se generaron ${edgesBatch.length} relaciones ${config.edgeType}.`);
+        }
+    }
+
     const INTERCEPTORS = {
         /**
          * AutoProvisionCargo
@@ -266,68 +337,14 @@ var Business_Interceptors = (function() {
          */
         AutoProvisionRoles: function(entityName, items) {
             if (entityName !== 'Persona') return;
-            if (!items || items.length === 0) return;
-
-            let dbRoles = {};
-            if (typeof Engine_DB !== 'undefined') {
-                const res = Engine_DB.list('Rol', 'objects', { skipCache: true });
-                if (res && res.rows) {
-                    res.rows.forEach(r => {
-                        dbRoles[String(r.nombre).trim().toLowerCase()] = r.id_rol;
-                    });
-                }
-            }
-
-            let edgesBatch = [];
-            const sysDate = new Date().toISOString();
-
-            items.forEach(p => {
-                if (p.roles_asignados) {
-                    const rolesRaw = String(p.roles_asignados).split(',');
-                    rolesRaw.forEach(roleName => {
-                        const nameTrim = roleName.trim();
-                        if (nameTrim === '') return;
-                        
-                        const normName = nameTrim.toLowerCase();
-                        let roleId = dbRoles[normName];
-                        
-                        if (!roleId) {
-                            // Crear Rol Stub
-                            roleId = "ROL-" + (Math.random().toString(36).substring(2, 10).toUpperCase());
-                            const stub = {
-                                id_rol: roleId,
-                                nombre: nameTrim + " (Por definir)",
-                                nivel: "Nivel Base",
-                                estado: "Activo"
-                            };
-                            if (typeof Engine_DB !== 'undefined') {
-                                try { Engine_DB.upsertBatch('Rol', [stub], { muteTriggers: true }); } catch(e) {}
-                            }
-                            dbRoles[normName] = roleId; // Caching
-                        }
-                        
-                        // Generar Arista
-                        edgesBatch.push({
-                            id_relacion: "RELA-" + [...Array(8)].map(() => Math.floor(Math.random() * 16).toString(16).toUpperCase()).join(''),
-                            id_nodo_padre: roleId,
-                            id_nodo_hijo: p.id_persona || p._tempId, // p._tempId is the primary key temporarily used during ETL if id_persona is not set
-                            tipo_relacion: "PERSONA_ROL",
-                            valido_desde: sysDate,
-                            valido_hasta: "",
-                            es_version_actual: true,
-                            estado: "Activo"
-                        });
-                    });
-                    
-                    // Borramos el campo plano para que el DB engine no intente insertarlo como columna plana
-                    delete p.roles_asignados;
-                }
+            _provisionRelationalStubs(entityName, items, {
+                field: 'roles_asignados',
+                targetEntity: 'Rol',
+                idField: 'id_rol',
+                edgeType: 'PERSONA_ROL',
+                stubPrefix: 'ROL-',
+                extraStubFields: { nivel: "Nivel Base" }
             });
-
-            if (edgesBatch.length > 0 && typeof Engine_DB !== 'undefined') {
-                try { Engine_DB.upsertBatch('Sys_Graph_Edges', edgesBatch, { muteTriggers: true }); } catch(e) {}
-                if (typeof Logger !== 'undefined') Logger.log(`Se generaron ${edgesBatch.length} relaciones PERSONA_ROL.`);
-            }
         },
 
         /**
@@ -335,65 +352,13 @@ var Business_Interceptors = (function() {
          */
         AutoProvisionEquipos: function(entityName, items) {
             if (entityName !== 'Persona') return;
-            if (!items || items.length === 0) return;
-
-            let dbEquipos = {};
-            if (typeof Engine_DB !== 'undefined') {
-                const res = Engine_DB.list('Equipo', 'objects', { skipCache: true });
-                if (res && res.rows) {
-                    res.rows.forEach(r => {
-                        dbEquipos[String(r.nombre).trim().toLowerCase()] = r.id_equipo;
-                    });
-                }
-            }
-
-            let edgesBatch = [];
-            const sysDate = new Date().toISOString();
-
-            items.forEach(p => {
-                if (p.equipo) {
-                    const equiposRaw = String(p.equipo).split(',');
-                    equiposRaw.forEach(eqName => {
-                        const nameTrim = eqName.trim();
-                        if (nameTrim === '') return;
-                        
-                        const normName = nameTrim.toLowerCase();
-                        let eqId = dbEquipos[normName];
-                        
-                        if (!eqId) {
-                            // Crear Equipo Stub
-                            eqId = "EQUI-" + (Math.random().toString(36).substring(2, 10).toUpperCase());
-                            const stub = {
-                                id_equipo: eqId,
-                                nombre: nameTrim + " (Por definir)",
-                                estado: "Activo"
-                            };
-                            if (typeof Engine_DB !== 'undefined') {
-                                try { Engine_DB.upsertBatch('Equipo', [stub], { muteTriggers: true }); } catch(e) {}
-                            }
-                            dbEquipos[normName] = eqId;
-                        }
-                        
-                        edgesBatch.push({
-                            id_relacion: "RELA-" + [...Array(8)].map(() => Math.floor(Math.random() * 16).toString(16).toUpperCase()).join(''),
-                            id_nodo_padre: eqId,
-                            id_nodo_hijo: p.id_persona || p._tempId,
-                            tipo_relacion: "PERSONA_EQUIPO",
-                            valido_desde: sysDate,
-                            valido_hasta: "",
-                            es_version_actual: true,
-                            estado: "Activo"
-                        });
-                    });
-                    
-                    delete p.equipo;
-                }
+            _provisionRelationalStubs(entityName, items, {
+                field: 'equipo',
+                targetEntity: 'Equipo',
+                idField: 'id_equipo',
+                edgeType: 'PERSONA_EQUIPO',
+                stubPrefix: 'EQUI-'
             });
-
-            if (edgesBatch.length > 0 && typeof Engine_DB !== 'undefined') {
-                try { Engine_DB.upsertBatch('Sys_Graph_Edges', edgesBatch, { muteTriggers: true }); } catch(e) {}
-                if (typeof Logger !== 'undefined') Logger.log(`Se generaron ${edgesBatch.length} relaciones PERSONA_EQUIPO.`);
-            }
         }
     };
 
