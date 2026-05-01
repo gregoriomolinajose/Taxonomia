@@ -340,36 +340,6 @@ var Business_Interceptors = (function() {
             });
         },
 
-        /**
-         * AutoProvisionRoles (M:N)
-         * Lee un string separado por comas en roles_asignados, busca los UUIDs,
-         * y genera las aristas PERSONA_ROL.
-         */
-        AutoProvisionRoles: function(entityName, items) {
-            if (entityName !== 'Persona') return;
-            _provisionRelationalStubs(entityName, items, {
-                field: 'roles_asignados',
-                targetEntity: 'Rol',
-                idField: 'id_rol',
-                edgeType: 'PERSONA_ROL',
-                stubPrefix: 'ROL-',
-                extraStubFields: { nivel: "Nivel Base" }
-            });
-        },
-
-        /**
-         * AutoProvisionEquipos (M:N)
-         */
-        AutoProvisionEquipos: function(entityName, items) {
-            if (entityName !== 'Persona') return;
-            _provisionRelationalStubs(entityName, items, {
-                field: 'equipo',
-                targetEntity: 'Equipo',
-                idField: 'id_equipo',
-                edgeType: 'PERSONA_EQUIPO',
-                stubPrefix: 'EQUI-'
-            });
-        }
     };
 
     function apply(entityName, items) {
@@ -377,12 +347,22 @@ var Business_Interceptors = (function() {
         if (typeof getAppSchema === 'undefined') return;
 
         const schema = getAppSchema(entityName);
+        
+        // 1. Ejecutar Interceptores Tradicionales
         if (schema && schema.mutationInterceptors && Array.isArray(schema.mutationInterceptors)) {
             schema.mutationInterceptors.forEach(interceptorName => {
                 if (typeof INTERCEPTORS[interceptorName] === 'function') {
                     if (typeof Logger !== 'undefined') Logger.log(`[Interceptor] Ejecutando ${interceptorName} para ${entityName} (${items.length} items)`);
                     INTERCEPTORS[interceptorName](entityName, items);
                 }
+            });
+        }
+
+        // 2. Ejecutar Provisión Relacional Dinámica (Schema-Driven)
+        if (schema && schema.relationalProvisioners && Array.isArray(schema.relationalProvisioners)) {
+            schema.relationalProvisioners.forEach(config => {
+                if (typeof Logger !== 'undefined') Logger.log(`[RelationalProvisioner] Procesando aristas ${config.edgeType} para ${entityName} (${items.length} items)`);
+                _provisionRelationalStubs(entityName, items, config);
             });
         }
     }

@@ -312,7 +312,24 @@ var APP_SCHEMAS = {
     ],
     metadata: { showInMenu: true, order:8, iconName:'person-outline', color:'warning', label:'Personas', titleField:'_nombre_completo', idField:'id_persona', fkField:null },
     primaryKey: "id_persona",
-    mutationInterceptors: ['AutoProvisionCargo', 'AutoProvisionLiderDirecto', 'AutoProvisionRoles', 'AutoProvisionEquipos'],
+    mutationInterceptors: ['AutoProvisionCargo', 'AutoProvisionLiderDirecto'],
+    relationalProvisioners: [
+        {
+            field: 'roles_asignados',
+            targetEntity: 'Rol',
+            idField: 'id_rol',
+            edgeType: 'PERSONA_ROL',
+            stubPrefix: 'ROL-',
+            extraStubFields: { nivel: "Nivel Base" }
+        },
+        {
+            field: 'equipo',
+            targetEntity: 'Equipo',
+            idField: 'id_equipo',
+            edgeType: 'PERSONA_EQUIPO',
+            stubPrefix: 'EQUI-'
+        }
+    ],
     topologyRules: TOPOLOGY_PRESETS.JERARQUICA_PERSONA,
     fields: [
       { name: "id_persona", type: "hidden", primaryKey: true },
