@@ -118,7 +118,7 @@ var Business_Interceptors = (function() {
                     
                     if (!targetId) {
                         // Crear Stub
-                        targetId = config.stubPrefix + (Math.random().toString(36).substring(2, 10).toUpperCase());
+                        targetId = config.stubPrefix + [...Array(8)].map(() => Math.floor(Math.random() * 16).toString(16).toUpperCase()).join('');
                         let stub = {
                             [config.idField]: targetId,
                             nombre: nameTrim + " (Por definir)",
@@ -128,7 +128,12 @@ var Business_Interceptors = (function() {
                             Object.assign(stub, config.extraStubFields);
                         }
                         if (typeof Engine_DB !== 'undefined') {
-                            try { Engine_DB.upsertBatch(config.targetEntity, [stub], { muteTriggers: true }); } catch(e) {}
+                            try { 
+                                Engine_DB.upsertBatch(config.targetEntity, [stub], { muteTriggers: true }); 
+                            } catch(e) {
+                                if (typeof console !== 'undefined') console.error(`Error persistiendo stub ${targetId} para ${config.targetEntity}: ${e.message}`);
+                                return; // Abortar creación de la arista
+                            }
                         }
                         dbTargets[normName] = targetId;
                     }
@@ -152,8 +157,13 @@ var Business_Interceptors = (function() {
         });
 
         if (edgesBatch.length > 0 && typeof Engine_DB !== 'undefined') {
-            try { Engine_DB.upsertBatch('Sys_Graph_Edges', edgesBatch, { muteTriggers: true }); } catch(e) {}
-            if (typeof Logger !== 'undefined') Logger.log(`Se generaron ${edgesBatch.length} relaciones ${config.edgeType}.`);
+            try { 
+                Engine_DB.upsertBatch('Sys_Graph_Edges', edgesBatch, { muteTriggers: true }); 
+                if (typeof Logger !== 'undefined') Logger.log(`Se generaron ${edgesBatch.length} relaciones ${config.edgeType}.`);
+            } catch(e) {
+                if (typeof console !== 'undefined') console.error(`[CRITICAL] Error persistiendo aristas ${config.edgeType}: ${e.message}`);
+                if (typeof Logger !== 'undefined') Logger.log(`[CRITICAL] Error persistiendo aristas ${config.edgeType}: ${e.message}`);
+            }
         }
     }
 
