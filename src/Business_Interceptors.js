@@ -308,7 +308,7 @@ var Business_Interceptors = (function() {
                         
                         // Generar Arista
                         edgesBatch.push({
-                            id_relacion: "RELA-" + (Math.random().toString(36).substring(2, 10).toUpperCase()),
+                            id_relacion: "RELA-" + [...Array(8)].map(() => Math.floor(Math.random() * 16).toString(16).toUpperCase()).join(''),
                             id_nodo_padre: roleId,
                             id_nodo_hijo: p.id_persona || p._tempId, // p._tempId is the primary key temporarily used during ETL if id_persona is not set
                             tipo_relacion: "PERSONA_ROL",
@@ -375,7 +375,7 @@ var Business_Interceptors = (function() {
                         }
                         
                         edgesBatch.push({
-                            id_relacion: "RELA-" + (Math.random().toString(36).substring(2, 10).toUpperCase()),
+                            id_relacion: "RELA-" + [...Array(8)].map(() => Math.floor(Math.random() * 16).toString(16).toUpperCase()).join(''),
                             id_nodo_padre: eqId,
                             id_nodo_hijo: p.id_persona || p._tempId,
                             tipo_relacion: "PERSONA_EQUIPO",

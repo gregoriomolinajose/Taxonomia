@@ -150,7 +150,7 @@ function API_Universal_Router(action, entityName, payload) {
       const schema = (typeof APP_SCHEMAS !== 'undefined') ? APP_SCHEMAS[entityName] : null;
       
       if (schema && schema.fields) {
-          const graphFields = schema.fields.filter(f => f.isTemporalGraph && f.graphEntity === 'Sys_Graph_Edges' && f.relationType === 'padre');
+          const graphFields = schema.fields.filter(f => f.isTemporalGraph && f.graphEntity === 'Sys_Graph_Edges' && f.relationType === 'padre' && f.topologyCardinality !== 'M:N');
           if (graphFields.length > 0) {
               const currentEdges = Engine_DB.list('Sys_Graph_Edges', 'objects').rows || [];
               payload.forEach(record => {
