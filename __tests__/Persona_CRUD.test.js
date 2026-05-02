@@ -19,7 +19,7 @@ const Engine_DB_Mock = {
 
 global.Engine_DB = Engine_DB_Mock;
 
-const API_Universal = require('../src/API_Universal.gs');
+const API_Universal = require('../src/API_Universal.js');
 const fs = require('fs');
 const path = require('path');
 
@@ -39,7 +39,7 @@ describe('Persona CRUD - Blueprint V2 Verification', () => {
     });
 
     test('Step 1: Document Schema - Should verify schema existence in Schema_Engine.gs', () => {
-        const schemaPath = path.resolve(__dirname, '../src/Schema_Engine.gs');
+        const schemaPath = path.resolve(__dirname, '../src/Schema_Engine.js');
         const content = fs.readFileSync(schemaPath, 'utf8');
         
         expect(content).toContain('Persona:');

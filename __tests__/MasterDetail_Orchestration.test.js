@@ -10,7 +10,7 @@ const Adapter_Sheets = require('../src/Adapter_Sheets.js');
 Adapter_Sheets.upsert = vi.fn();
 Adapter_Sheets.upsertBatch = vi.fn();
 Adapter_Sheets.list = vi.fn();
-const { APP_SCHEMAS } = require('../src/Schema_Engine.gs');
+const { APP_SCHEMAS } = require('../src/Schema_Engine.js');
 
 // Inyectar APP_SCHEMAS en el entorno global para que Engine_DB lo encuentre (Regla 15)
 global.APP_SCHEMAS = APP_SCHEMAS;

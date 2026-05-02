@@ -20,7 +20,7 @@ const Engine_DB_Mock = {
 global.Engine_DB = Engine_DB_Mock;
 
 // Importamos la lógica de API_Universal (requerimos que la lógica contenga el module.exports)
-const API_Universal = require('../src/API_Universal.gs');
+const API_Universal = require('../src/API_Universal.js');
 
 describe('Portafolio CRUD - Capa de Servicio API_Universal', () => {
 

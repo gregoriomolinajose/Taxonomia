@@ -13,7 +13,7 @@ describe('Blueprint V4 - Equipo & Persona Structural Integrity', () => {
     let schemaContent = '';
 
     beforeAll(() => {
-        const schemaPath = path.resolve(__dirname, '../src/Schema_Engine.gs');
+        const schemaPath = path.resolve(__dirname, '../src/Schema_Engine.js');
         schemaContent = fs.readFileSync(schemaPath, 'utf8');
     });
 
