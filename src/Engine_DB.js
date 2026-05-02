@@ -488,7 +488,7 @@ const Engine_DB = {
                                 const prefix = targetEntity.substring(0, 4).toUpperCase();
                                 const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
                                 let suffix = '';
-                                for (let i = 0; i < 5; i++) suffix += chars.charAt(Math.floor(Math.random() * chars.length));
+                                for (let i = 0; i < 8; i++) suffix += chars.charAt(Math.floor(Math.random() * chars.length));
                                 child[pkField] = `${prefix}-${suffix}`;
                             }
                         });

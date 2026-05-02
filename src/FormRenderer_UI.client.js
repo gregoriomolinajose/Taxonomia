@@ -271,7 +271,7 @@
                     
                     if (field.primaryKey) {
                         const prefix = entityName.substring(0, 4).toUpperCase();
-                        const sufix = Math.random().toString(36).substring(2, 7).toUpperCase();
+                        const sufix = Math.random().toString(36).substring(2, 10).toUpperCase();
                         hiddenInput.value = `${prefix}-${sufix}`;
                     } else if (field.defaultValue !== undefined) {
                         hiddenInput.value = field.defaultValue;

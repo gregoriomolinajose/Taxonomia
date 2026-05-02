@@ -1,4 +1,4 @@
-const { getAppSchema, getEntityTopologyRules } = require('../src/Schema_Engine.gs');
+const { getAppSchema, getEntityTopologyRules } = require('../src/Schema_Engine.js');
 
 describe('Schema_Engine Governance', () => {
 

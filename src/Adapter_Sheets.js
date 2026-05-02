@@ -1,5 +1,11 @@
 // src/Adapter_Sheets.js
 
+if (typeof process !== 'undefined' && typeof require !== 'undefined') {
+    if (typeof APP_SCHEMAS === 'undefined') {
+        global.APP_SCHEMAS = require('./Schema_Engine').APP_SCHEMAS;
+    }
+}
+
 // Global Cache per execution (GAS)
 var __HEADER_CACHE__ = {};
 
@@ -32,19 +38,20 @@ const Adapter_Sheets = {
     _cachedSS: null,
     _cachedSS_id: null,
     
-    _getSpreadsheet: function(spreadsheetId) {
-        if (!this._cachedSS || this._cachedSS_id !== spreadsheetId) {
-            this._cachedSS = SpreadsheetApp.openById(spreadsheetId);
-            this._cachedSS_id = spreadsheetId;
+    _getSpreadsheet: function (spreadsheetId) {
+        if (!this._spreadsheets) this._spreadsheets = {};
+        if (!this._spreadsheets[spreadsheetId]) {
+            this._spreadsheets[spreadsheetId] = SpreadsheetApp.openById(spreadsheetId);
         }
-        return this._cachedSS;
+        return this._spreadsheets[spreadsheetId];
     },
     // ------------------------------
     
     upsert: function (tableName, payload, config) {
         // 1. Determinar PK con soporte para entidades plurales (ej. Grupo_Productos → id_grupo_producto)
         //    Prueba: id_<tableName> → id_<singular> → find(startsWith('id_'))
-        const schema = (typeof APP_SCHEMAS !== 'undefined') ? APP_SCHEMAS[tableName] : null;
+        const localSchemas = (typeof APP_SCHEMAS !== 'undefined') ? APP_SCHEMAS : (typeof global !== 'undefined' && global.APP_SCHEMAS ? global.APP_SCHEMAS : null);
+        const schema = localSchemas ? localSchemas[tableName] : null;
         let primaryKeyField = schema && schema.primaryKey ? schema.primaryKey : null;
         
         if (!primaryKeyField) {

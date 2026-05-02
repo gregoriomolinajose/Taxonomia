@@ -8,6 +8,9 @@ global.CONFIG = {
   useCloudDB: false,
   SPREADSHEET_ID_DB: 'MOCK_ID'
 };
+global.APP_SCHEMAS = {
+  Producto: { primaryKey: 'id_producto', fields: [] }
+};
 
 // Removed individual mock, using global from vi.setup.js
 const globalSheet = global.SpreadsheetApp.openById().getSheetByName();

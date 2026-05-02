@@ -36,13 +36,13 @@ function buildInMemorySheet(headers, rows = []) {
     return {
         _store: store,
         getLastRow: () => store.length,
-        getLastColumn: () => headers.length,
+        getLastColumn: () => store[0].length,
         getDataRange: () => ({
             getValues: () => JSON.parse(JSON.stringify(store)),
             getNumRows: () => store.length
         }),
         getRange: vi.fn((row, col, numRows, numCols) => makeRange(row, col, numRows, numCols)),
-        appendRow: vi.fn(row => store.push(row))
+        appendRow: (row) => store.push(row)
     };
 }
 
@@ -69,6 +69,7 @@ describe('Engine_DB Facade — Integration with real Adapter_Sheets (QA-7)', () 
 
     beforeEach(() => {
         global.getAppSchema = vi.fn((ent) => ({ primaryKey: (ent === 'Portafolio' ? 'id_portafolio' : 'id_' + ent.toLowerCase()), fields: [] }));
+        global.APP_SCHEMAS = new Proxy({}, { get: (target, prop) => ({ primaryKey: (prop === 'Portafolio' ? 'id_portafolio' : 'id_' + String(prop).toLowerCase()) }) });
         // Fresh in-memory sheet for each test; DB_Producto starts empty (headers only)
         sheetStore = { 'DB_Producto': buildInMemorySheet(AUDIT_HEADERS) };
         global.SpreadsheetApp.openById = vi.fn(() => buildInMemorySpreadsheet(sheetStore));
@@ -76,6 +77,10 @@ describe('Engine_DB Facade — Integration with real Adapter_Sheets (QA-7)', () 
         global.Session = {
             getActiveUser: vi.fn().mockReturnValue({ getEmail: vi.fn().mockReturnValue('agent@local') })
         };
+        Adapter_Sheets._cachedSS = null;
+        Adapter_Sheets._cachedSS_id = null;
+        Adapter_Sheets._spreadsheets = {};
+        Adapter_Sheets._lexicalMaxState = {};
     });
 
     it('1. Save → creates record with audit trail in real sheet', () => {
@@ -98,8 +103,8 @@ describe('Engine_DB Facade — Integration with real Adapter_Sheets (QA-7)', () 
     it('2. Idempotency: Second save with same PK updates, does not duplicate', () => {
         const payload = { id_producto: 'PROD-BBB', nombre_producto: 'Sistema Pagos', estado: 'Activo' };
 
-        Engine_DB.save('Producto', payload, config);
-        Engine_DB.save('Producto', { ...payload, nombre_producto: 'Sistema Pagos v2' }, config);
+        const res1 = Engine_DB.save('Producto', payload, config);
+        const res2 = Engine_DB.save('Producto', { ...payload, nombre_producto: 'Sistema Pagos v2' }, config);
 
         const rows = sheetStore['DB_Producto']._store;
         // Still only 1 data row (no duplicate)

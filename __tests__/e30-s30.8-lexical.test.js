@@ -36,6 +36,15 @@ describe('S30.8: Identidad Lexical y Pure UUID', () => {
         };
     });
 
+    function buildMockSheet(rows) {
+        return {
+            getLastRow: () => rows.length,
+            getRange: (r, c, nr, nc) => ({
+                getValues: () => rows.slice(r - 1, r - 1 + nr).map(row => [row[c - 1]])
+            })
+        };
+    }
+
     test('1. Validar que la omisión de metadata.prefix hace fallback a 4 letras nativas', () => {
         const schema = global.APP_SCHEMAS.Mock_Fallback_ID;
         const normalizedHeaders = ['id', 'lexical_id', 'nombre'];
@@ -44,7 +53,7 @@ describe('S30.8: Identidad Lexical y Pure UUID', () => {
         ];
         
         // Simular cálculo atómico
-        const result = AdapterSheets._calculateNextLexicalId(mockRows, normalizedHeaders, 'Mock_Fallback_ID', schema);
+        const result = AdapterSheets._calculateNextLexicalId(buildMockSheet(mockRows), normalizedHeaders, 'Mock_Fallback_ID', schema);
         
         // Debe extraer los primeros 4 caracteres "MOCK" a pesar de no declarar prefix
         expect(result).toBe('MOCK-1');
@@ -60,7 +69,7 @@ describe('S30.8: Identidad Lexical y Pure UUID', () => {
             ['uuid-002', 'MOCK-15', 'Viejo2']
         ];
         
-        const result = AdapterSheets._calculateNextLexicalId(mockRows, normalizedHeaders, 'Mock_Normal', schema);
+        const result = AdapterSheets._calculateNextLexicalId(buildMockSheet(mockRows), normalizedHeaders, 'Mock_Normal', schema);
         
         expect(result).toBe('MOCK-16');
     });
