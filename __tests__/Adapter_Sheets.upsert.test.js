@@ -41,6 +41,10 @@ describe('Adapter_Sheets.upsert() — AC2: Audit Trail', () => {
         vi.useFakeTimers().setSystemTime(new Date(FIXED_TIME));
         sheet = buildEmptySheet();
 
+        global.APP_SCHEMAS = {
+            Dominio: { primaryKey: 'id_dominio' }
+        };
+
         global.SpreadsheetApp.openById = vi.fn(() => ({
             getSheetByName: vi.fn(() => sheet),
             insertSheet: vi.fn(() => sheet)

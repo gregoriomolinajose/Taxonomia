@@ -69,7 +69,7 @@ function API_Admin_SaveGlobalConfig(configKey, payload) {
     payload = payload || {};
     if (!configKey) throw new Error("configKey es requerido");
     
-    const VALID_KEYS = ['APP_BRANDING_CONFIG', 'APP_SECURITY_CONFIG'];
+    const VALID_KEYS = ['APP_BRANDING_CONFIG', 'APP_SECURITY_CONFIG', 'APP_WORKSPACE_CONFIG'];
     if (!VALID_KEYS.includes(configKey)) throw new Error("configKey no autorizado");
 
     PropertiesService.getScriptProperties().setProperty(configKey, JSON.stringify(payload));
@@ -77,6 +77,48 @@ function API_Admin_SaveGlobalConfig(configKey, payload) {
   } catch(e) {
     console.error("Error en API_Admin_SaveGlobalConfig:", e);
     return { success: false, message: "Error al guardar: " + e.message };
+  }
+}
+
+/**
+ * Recupera una configuración global de la aplicación.
+ * @param {string} configKey La clave de PropertiesService
+ * @returns {Object} { success: boolean, data: string|null }
+ */
+function API_Admin_GetGlobalConfig(configKey) {
+  try {
+    const VALID_KEYS = ['APP_BRANDING_CONFIG', 'APP_SECURITY_CONFIG', 'APP_WORKSPACE_CONFIG'];
+    if (!VALID_KEYS.includes(configKey)) throw new Error("configKey no autorizado");
+
+    const val = PropertiesService.getScriptProperties().getProperty(configKey);
+    return { success: true, data: val };
+  } catch(e) {
+    return { success: false, message: e.message };
+  }
+}
+
+/**
+ * [S48.4] Obtiene la lista de dominios Workspace autorizados vía OAuth2.
+ * @returns {Array<string>} Lista de dominios (ej. ["@dominio.com"])
+ */
+function API_Admin_GetConnectedDomains() {
+  try {
+    var props = PropertiesService.getScriptProperties().getProperties();
+    var domains = [];
+    var prefix = 'oauth2.Workspace_';
+    
+    for (var key in props) {
+      if (key.indexOf(prefix) === 0) {
+        var domain = key.substring(prefix.length);
+        if (domains.indexOf(domain) === -1) {
+          domains.push(domain);
+        }
+      }
+    }
+    return domains;
+  } catch(e) {
+    console.error("[API_Admin] Error obteniendo dominios: ", e);
+    return [];
   }
 }
 

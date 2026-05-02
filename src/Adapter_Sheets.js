@@ -1,5 +1,11 @@
 // src/Adapter_Sheets.js
 
+if (typeof process !== 'undefined' && typeof require !== 'undefined') {
+    if (typeof APP_SCHEMAS === 'undefined') {
+        global.APP_SCHEMAS = require('./Schema_Engine').APP_SCHEMAS;
+    }
+}
+
 // Global Cache per execution (GAS)
 var __HEADER_CACHE__ = {};
 
@@ -32,19 +38,20 @@ const Adapter_Sheets = {
     _cachedSS: null,
     _cachedSS_id: null,
     
-    _getSpreadsheet: function(spreadsheetId) {
-        if (!this._cachedSS || this._cachedSS_id !== spreadsheetId) {
-            this._cachedSS = SpreadsheetApp.openById(spreadsheetId);
-            this._cachedSS_id = spreadsheetId;
+    _getSpreadsheet: function (spreadsheetId) {
+        if (!this._spreadsheets) this._spreadsheets = {};
+        if (!this._spreadsheets[spreadsheetId]) {
+            this._spreadsheets[spreadsheetId] = SpreadsheetApp.openById(spreadsheetId);
         }
-        return this._cachedSS;
+        return this._spreadsheets[spreadsheetId];
     },
     // ------------------------------
     
     upsert: function (tableName, payload, config) {
         // 1. Determinar PK con soporte para entidades plurales (ej. Grupo_Productos → id_grupo_producto)
         //    Prueba: id_<tableName> → id_<singular> → find(startsWith('id_'))
-        const schema = (typeof APP_SCHEMAS !== 'undefined') ? APP_SCHEMAS[tableName] : null;
+        const localSchemas = (typeof APP_SCHEMAS !== 'undefined') ? APP_SCHEMAS : (typeof global !== 'undefined' && global.APP_SCHEMAS ? global.APP_SCHEMAS : null);
+        const schema = localSchemas ? localSchemas[tableName] : null;
         let primaryKeyField = schema && schema.primaryKey ? schema.primaryKey : null;
         
         if (!primaryKeyField) {
@@ -335,7 +342,7 @@ const Adapter_Sheets = {
                     }
                     
                     rowsToUpdate.push({ rowIndex: sheetTargetIndex, rowData: rowToInsert });
-                    results.push({ status: 'success', action: 'updated', pk: primaryKeyField, val: primaryKeyValue, version: payload.version });
+                    results.push({ status: 'success', action: 'updated', pk: primaryKeyField, val: primaryKeyValue, version: payload.version, _sheetId: payload._sheetId, _rowIndex: payload._rowIndex, _sheetName: payload._sheetName, message: 'Se actualizó el registro' });
                 } else {
                     payload.version = 1;
                     payload._version = 1;
@@ -377,7 +384,7 @@ const Adapter_Sheets = {
                     }
                     
                     rowsToAppend.push(rowToInsert);
-                    results.push({ status: 'success', action: 'created', pk: primaryKeyField, val: primaryKeyValue, lexical_id: lexicalValue, version: payload.version });
+                    results.push({ status: 'success', action: 'created', pk: primaryKeyField, val: primaryKeyValue, lexical_id: lexicalValue, version: payload.version, _sheetId: payload._sheetId, _rowIndex: payload._rowIndex, _sheetName: payload._sheetName, message: 'Registro creado' });
                 }
             } catch (err) {
                 const isDuplicate = err.message.includes('ERROR_CONCURRENCY');

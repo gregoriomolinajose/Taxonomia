@@ -45,7 +45,7 @@ global.Engine_DB = {
 global.resolverDirectorioWorkspace = vi.fn();
 
 // Require file AFTER setting globals
-const { Engine_ETL } = require('../src/Engine_ETL.gs');
+const { Engine_ETL } = require('../src/Engine_ETL.js');
 
 describe('Engine_ETL: hydrateAndDeduplicate (S38.6)', () => {
     

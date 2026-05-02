@@ -113,14 +113,14 @@
         <ion-icon name="hardware-chip-outline"></ion-icon> DB Health
       </button>
       
-      <!-- [S44.11] Workspace Sync Trigger -->
-      <button class="ss-tab" id="ss-btn-sync-ws" onclick="window.SchemaStudio.triggerWsSync()" style="
+      <!-- [S48.3] Workspace Sync Config Tab -->
+      <button class="ss-tab" data-tab="workspace" onclick="window.SchemaStudio.switchTab('workspace')" style="
         padding:10px 20px;border:none;background:none;cursor:pointer;
-        font-weight:600;font-size:0.85rem;color:var(--ion-color-primary);
+        font-weight:600;font-size:0.85rem;color:var(--ion-color-medium);
         border-bottom:2px solid transparent;margin-bottom:-1px;
         display:flex;align-items:center;gap:6px;transition:all 0.2s;
-      " title="Forzar Sincronización Manual de Personas contra Directorio Workspace">
-        <ion-icon name="sync-circle-outline"></ion-icon> Sincronizar Workspace
+      ">
+        <ion-icon name="sync-circle-outline"></ion-icon> Workspace Sync
       </button>
 
       <!-- [E31-S31.6] Blueprint Composer Tab -->
@@ -556,6 +556,7 @@
     else if (tabId === 'presets')   renderPresetsTab(container);
     else if (tabId === 'db')        renderDbHealthTab(container);
     else if (tabId === 'global')    renderGlobalTab(container);
+    else if (tabId === 'workspace') renderWorkspaceTab(container);
     else if (tabId === 'composer')  renderComposerTab(container);
   }
 
@@ -796,6 +797,82 @@
       '</div>' +
     '</div>';
     container.innerHTML = html;
+  }
+
+  // ── Workspace Sync Tab ─────────────────────────────────────────────────────────
+  function renderWorkspaceTab(container) {
+    var html = '<div style="max-width: 600px; margin: 0 auto; padding: 20px 0;">' +
+      '<div style="font-weight:700;font-size:1.1rem;margin-bottom:8px;">Workspace Sync Configuration</div>' +
+      '<div style="font-size:0.85rem;color:var(--ion-color-medium);line-height:1.4;margin-bottom:20px;">' +
+      'Configura la sincronización con Google Workspace. Activa o desactiva la conexión global, y administra los dominios autorizados vía OAuth2.' +
+      '</div>' +
+      
+      '<div class="ss-entity-card" style="flex-direction:column;gap:16px;">' +
+        '<div style="font-weight:600;font-size:0.95rem;color:var(--ion-color-dark);display:flex;align-items:center;gap:8px;">' +
+          '<ion-icon name="power-outline"></ion-icon> Sincronización Global' +
+        '</div>' +
+        '<label style="display:flex;align-items:center;gap:12px;cursor:pointer;font-size:0.85rem;color:var(--ion-color-dark);">' +
+          '<input type="checkbox" id="ss-workspace-sync-enabled" checked style="width:18px;height:18px;cursor:pointer;">' +
+          'Habilitar interceptor de Workspace en la creación de Personas' +
+        '</label>' +
+        '<div style="font-size:0.75rem;color:var(--ion-color-medium);">' +
+          'Si está desactivado, el sistema no consultará el directorio de Google y creará perfiles básicos.' +
+        '</div>' +
+        '<div style="margin-top:10px;text-align:right;">' +
+          '<button id="btn-save-workspace" class="ss-btn-primary" onclick="window.SchemaStudio.saveWorkspaceConfig()">' +
+            '<ion-icon name="save-outline"></ion-icon> Guardar Configuración' +
+          '</button>' +
+        '</div>' +
+      '</div>' +
+
+      '<div class="ss-entity-card" style="flex-direction:column;gap:16px;margin-top:16px;">' +
+        '<div style="font-weight:600;font-size:0.95rem;color:var(--ion-color-dark);display:flex;align-items:center;gap:8px;">' +
+          '<ion-icon name="globe-outline"></ion-icon> Dominios Conectados (OAuth2)' +
+        '</div>' +
+        '<div id="ss-oauth2-domains-container" style="font-size:0.8rem;color:var(--ion-color-medium);padding:12px;border-radius:8px;background:var(--ion-color-step-50);">' +
+          '<div style="text-align:center;"><ion-spinner name="crescent"></ion-spinner></div>' +
+        '</div>' +
+        '<div style="text-align:right;margin-top:8px;">' +
+          '<button id="btn-connect-domain" onclick="window.SchemaStudio.connectWorkspaceDomain()" style="background:var(--ion-color-primary);color:white;border:none;padding:8px 16px;border-radius:6px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:6px;font-size:0.8rem;box-shadow:0 2px 4px rgba(0,0,0,0.1);">' +
+            '<ion-icon name="add-circle-outline"></ion-icon> Conectar Dominio' +
+          '</button>' +
+        '</div>' +
+      '</div>' +
+
+      '<div class="ss-entity-card" style="flex-direction:column;gap:16px;margin-top:16px;">' +
+        '<div style="font-weight:600;font-size:0.95rem;color:var(--ion-color-dark);display:flex;align-items:center;gap:8px;">' +
+          '<ion-icon name="sync-circle-outline"></ion-icon> Ejecución Manual' +
+        '</div>' +
+        '<div style="font-size:0.8rem;color:var(--ion-color-medium);">' +
+          'Fuerza un barrido completo de hidratación contra el directorio base. Consumirá cuotas masivas de la API.' +
+        '</div>' +
+        '<div style="text-align:right;">' +
+          '<button id="ss-btn-sync-ws" onclick="window.SchemaStudio.triggerWsSync()" style="background:var(--ion-color-step-100);color:var(--ion-color-primary);border:1px solid var(--ion-color-step-200);padding:8px 16px;border-radius:6px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:6px;font-size:0.8rem;">' +
+            '<ion-icon name="play-circle-outline"></ion-icon> Forzar Sincronización' +
+          '</button>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+    
+    container.innerHTML = html;
+
+    if (typeof google !== 'undefined' && google.script && google.script.run) {
+      google.script.run.withSuccessHandler(function(res) {
+        if (res && res.success && res.data) {
+          try {
+            var cfg = JSON.parse(res.data);
+            var chk = document.getElementById('ss-workspace-sync-enabled');
+            if (chk) chk.checked = (cfg.syncEnabled !== false);
+          } catch(e){}
+        }
+      }).API_Admin_GetGlobalConfig('APP_WORKSPACE_CONFIG');
+      
+      setTimeout(function() {
+        if (window.SchemaStudio && window.SchemaStudio._loadConnectedDomains) {
+            window.SchemaStudio._loadConnectedDomains();
+        }
+      }, 200);
+    }
   }
 
   // ── DB Health Tab ─────────────────────────────────────────────────────────
@@ -1954,6 +2031,38 @@
     _copyTabContent(lines.join('\n'), 'ss-copy-presets-btn', 'Copiar Presets GAS');
   }
 
+  function _saveGlobalConfig(configKey, payload, btnId, successMessage) {
+    var btn = document.getElementById(btnId);
+    if (!btn) return;
+    var origText = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = 'Guardando...';
+
+    if (!window.google || !window.google.script || !window.google.script.run) {
+        alert("GAS context missing (local dev)");
+        btn.disabled = false;
+        btn.innerHTML = origText;
+        return;
+    }
+    
+    window.google.script.run
+        .withSuccessHandler(function(res) {
+            btn.disabled = false;
+            btn.innerHTML = origText;
+            if (res && res.success) {
+                alert(successMessage || 'Configuración guardada exitosamente.');
+            } else {
+                alert('Error: ' + (res ? res.message : 'desconocido'));
+            }
+        })
+        .withFailureHandler(function(err) {
+            btn.disabled = false;
+            btn.innerHTML = origText;
+            alert('Error de red: ' + err.message);
+        })
+        .API_Admin_SaveGlobalConfig(configKey, payload);
+  }
+
   // ── Public API ────────────────────────────────────────────────────────────
   window.SchemaStudio = {
     mount: function() {
@@ -1964,56 +2073,18 @@
     runReconcile:           runReconcile,
     
     saveBrandingConfig: function() {
-        const titleInput = document.getElementById('input-branding-title');
-        const faviconInput = document.getElementById('input-branding-favicon');
+        var titleInput = document.getElementById('input-branding-title');
+        var faviconInput = document.getElementById('input-branding-favicon');
         if (!titleInput || !faviconInput) return;
-        
-        const btn = document.getElementById('btn-save-branding');
-        const origText = btn.innerHTML;
-        btn.disabled = true;
-        btn.innerHTML = 'Guardando...';
-
-        try {
-            const payload = {
-                appTitle: titleInput.value.trim(),
-                faviconUrl: faviconInput.value.trim()
-            };
-            if (!google || !google.script || !google.script.run) {
-                alert("GAS context missing (local dev)");
-                btn.disabled = false;
-                btn.innerHTML = origText;
-                return;
-            }
-            google.script.run
-                .withSuccessHandler(function(res) {
-                    btn.disabled = false;
-                    btn.innerHTML = origText;
-                    if (res && res.success) {
-                        alert('Identidad guardada exitosamente. Recarga la pestaña (F5) para aplicar.');
-                    } else {
-                        alert('Error: ' + (res ? res.message : 'desconocido'));
-                    }
-                })
-                .withFailureHandler(function(err) {
-                    btn.disabled = false;
-                    btn.innerHTML = origText;
-                    alert('Error de red: ' + err.message);
-                })
-                .API_Admin_SaveGlobalConfig('APP_BRANDING_CONFIG', payload);
-        } catch(e) {
-            console.error(e);
-            alert('Error al guardar branding: ' + e.message);
-            btn.disabled = false;
-            btn.innerHTML = origText;
-        }
+        var payload = { appTitle: titleInput.value.trim(), faviconUrl: faviconInput.value.trim() };
+        _saveGlobalConfig('APP_BRANDING_CONFIG', payload, 'btn-save-branding', 'Identidad guardada exitosamente. Recarga la pestaña (F5) para aplicar.');
     },
 
     saveSecurityConfig: function() {
-        const domainsInput = document.getElementById('input-security-domains');
+        var domainsInput = document.getElementById('input-security-domains');
         if (!domainsInput) return;
-        
-        let domainsRaw = domainsInput.value || '';
-        let domainsArray = domainsRaw.split(',')
+        var domainsRaw = domainsInput.value || '';
+        var domainsArray = domainsRaw.split(',')
             .map(function(d) { return d.trim().toLowerCase(); })
             .filter(function(d) { return d.length > 0 && d.startsWith('@'); });
 
@@ -2021,44 +2092,19 @@
             alert("Error: Los dominios deben comenzar con '@' (ej. @coppel.com)");
             return;
         }
-
-        const btn = document.getElementById('btn-save-security');
-        const origText = btn.innerHTML;
-        btn.disabled = true;
-        btn.innerHTML = 'Guardando...';
-
-        try {
-            const payload = {
-                allowedDomains: domainsArray
-            };
-            if (!google || !google.script || !google.script.run) {
-                alert("GAS context missing (local dev)");
-                btn.disabled = false;
-                btn.innerHTML = origText;
-                return;
-            }
-            google.script.run
-                .withSuccessHandler(function(res) {
-                    btn.disabled = false;
-                    btn.innerHTML = origText;
-                    if (res && res.success) {
-                        alert('Accesos SSO guardados exitosamente. Aplicarán en los siguientes inicios de sesión.');
-                    } else {
-                        alert('Error: ' + (res ? res.message : 'desconocido'));
-                    }
-                })
-                .withFailureHandler(function(err) {
-                    btn.disabled = false;
-                    btn.innerHTML = origText;
-                    alert('Error de red: ' + err.message);
-                })
-                .API_Admin_SaveGlobalConfig('APP_SECURITY_CONFIG', payload);
-        } catch(e) {
-            console.error(e);
-            alert('Error al guardar accesos: ' + e.message);
-            btn.disabled = false;
-            btn.innerHTML = origText;
-        }
+        var payload = { allowedDomains: domainsArray };
+        _saveGlobalConfig('APP_SECURITY_CONFIG', payload, 'btn-save-security', 'Accesos SSO guardados exitosamente. Aplicarán en los siguientes inicios de sesión.');
+    },
+    
+    saveWorkspaceConfig: function() {
+        var chk = document.getElementById('ss-workspace-sync-enabled');
+        if (!chk) return;
+        var payload = { syncEnabled: chk.checked };
+        
+        // Actualizar el estado global en tiempo real para evitar requerir F5
+        window.WORKSPACE_SYNC_ENABLED = chk.checked;
+        
+        _saveGlobalConfig('APP_WORKSPACE_CONFIG', payload, 'btn-save-workspace', 'Configuración de sincronización guardada exitosamente.');
     },
 
     // Composer
@@ -2071,6 +2117,50 @@
     // Tab-specific exports [Debug-fix]
     copyTemplatesGas: copyTemplatesGas,
     copyPresetsGas:   copyPresetsGas,
+
+    connectWorkspaceDomain: function() {
+        var btn = document.getElementById('btn-connect-domain');
+        if (!btn) return;
+        var originalHtml = btn.innerHTML;
+        btn.innerHTML = '<ion-spinner name="crescent" style="width:16px;height:16px;"></ion-spinner> Generando...';
+        btn.disabled = true;
+        
+        DataAPI.call('Auth_GetWorkspaceAuthUrl').then(function(url) {
+            btn.innerHTML = originalHtml;
+            btn.disabled = false;
+            window.open(url, '_blank', 'width=600,height=700');
+            setTimeout(function() { window.SchemaStudio._loadConnectedDomains(); }, 15000);
+        }).catch(function(e) {
+            btn.innerHTML = originalHtml;
+            btn.disabled = false;
+            alert('Asegúrate de configurar las credenciales OAuth en Properties:\n\n' + e.message);
+        });
+    },
+    
+    _loadConnectedDomains: function() {
+        var container = document.getElementById('ss-oauth2-domains-container');
+        if (!container) return;
+        container.innerHTML = '<div style="text-align:center;"><ion-spinner name="crescent"></ion-spinner></div>';
+
+        DataAPI.call('API_Admin_GetConnectedDomains').then(function(domains) {
+            var container2 = document.getElementById('ss-oauth2-domains-container');
+            if (!container2) return;
+            if (!domains || domains.length === 0) {
+                container2.innerHTML = '<div style="font-style:italic;">No hay dominios secundarios conectados. Se utilizará el acceso nativo del dominio principal.</div>';
+                return;
+            }
+            var html = '<ul style="margin:0;padding-left:20px;display:flex;flex-direction:column;gap:8px;">';
+            domains.forEach(function(d) {
+                html += '<li style="font-weight:600;color:var(--ion-color-success);"><ion-icon name="checkmark-circle" style="vertical-align:middle;"></ion-icon> ' + d + '</li>';
+            });
+            html += '</ul>';
+            container2.innerHTML = html;
+        }).catch(function(e) {
+            console.error(e);
+            var container3 = document.getElementById('ss-oauth2-domains-container');
+            if (container3) container3.innerHTML = '<div style="color:red;">Error: ' + e.message + '</div>';
+        });
+    },
     
     // [S44.11] Workspace Sync
     triggerWsSync: function(recurseMode = false, acc = { evaluados: 0, actualizados: 0, sin_resultados: 0 }) {

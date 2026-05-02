@@ -86,6 +86,87 @@ var Business_Interceptors = (function() {
         }
     }
 
+    /**
+     * Motor DRY para generar Stubs Relacionales M:N (Aristas temporales).
+     * Reemplaza a las implementaciones imperativas de Roles y Equipos.
+     */
+    function _provisionRelationalStubs(entityName, items, config) {
+        if (!items || items.length === 0) return;
+
+        let dbTargets = {};
+        if (typeof Engine_DB !== 'undefined') {
+            const res = Engine_DB.list(config.targetEntity, 'objects', { skipCache: true });
+            if (res && res.rows) {
+                res.rows.forEach(r => {
+                    dbTargets[String(r.nombre).trim().toLowerCase()] = r[config.idField];
+                });
+            }
+        }
+
+        let edgesBatch = [];
+        const sysDate = new Date().toISOString();
+
+        items.forEach(p => {
+            if (p[config.field]) {
+                const valuesRaw = String(p[config.field]).split(',');
+                valuesRaw.forEach(valName => {
+                    const nameTrim = valName.trim();
+                    if (nameTrim === '') return;
+                    
+                    const normName = nameTrim.toLowerCase();
+                    let targetId = dbTargets[normName];
+                    
+                    if (!targetId) {
+                        // Crear Stub
+                        targetId = config.stubPrefix + [...Array(8)].map(() => Math.floor(Math.random() * 16).toString(16).toUpperCase()).join('');
+                        let stub = {
+                            [config.idField]: targetId,
+                            nombre: nameTrim + " (Por definir)",
+                            estado: "Activo"
+                        };
+                        if (config.extraStubFields) {
+                            Object.assign(stub, config.extraStubFields);
+                        }
+                        if (typeof Engine_DB !== 'undefined') {
+                            try { 
+                                Engine_DB.upsertBatch(config.targetEntity, [stub], { muteTriggers: true }); 
+                            } catch(e) {
+                                if (typeof console !== 'undefined') console.error(`Error persistiendo stub ${targetId} para ${config.targetEntity}: ${e.message}`);
+                                return; // Abortar creación de la arista
+                            }
+                        }
+                        dbTargets[normName] = targetId;
+                    }
+                    
+                    // Generar Arista
+                    edgesBatch.push({
+                        id_relacion: "RELA-" + [...Array(8)].map(() => Math.floor(Math.random() * 16).toString(16).toUpperCase()).join(''),
+                        id_nodo_padre: targetId,
+                        id_nodo_hijo: p.id_persona || p._tempId,
+                        tipo_relacion: config.edgeType,
+                        valido_desde: sysDate,
+                        valido_hasta: "",
+                        es_version_actual: true,
+                        estado: "Activo"
+                    });
+                });
+                
+                // Borramos el campo plano para que el DB engine no intente insertarlo como columna plana
+                delete p[config.field];
+            }
+        });
+
+        if (edgesBatch.length > 0 && typeof Engine_DB !== 'undefined') {
+            try { 
+                Engine_DB.upsertBatch('Sys_Graph_Edges', edgesBatch, { muteTriggers: true }); 
+                if (typeof Logger !== 'undefined') Logger.log(`Se generaron ${edgesBatch.length} relaciones ${config.edgeType}.`);
+            } catch(e) {
+                if (typeof console !== 'undefined') console.error(`[CRITICAL] Error persistiendo aristas ${config.edgeType}: ${e.message}`);
+                if (typeof Logger !== 'undefined') Logger.log(`[CRITICAL] Error persistiendo aristas ${config.edgeType}: ${e.message}`);
+            }
+        }
+    }
+
     const INTERCEPTORS = {
         /**
          * AutoProvisionCargo
@@ -257,7 +338,8 @@ var Business_Interceptors = (function() {
                 updatePayloadFn: (p, resolvedId) => p.lider_directo = resolvedId,
                 logMessage: 'Se auto-generaron e hidrataron {N} líderes recursivamente (Interceptor DRY).'
             });
-        }
+        },
+
     };
 
     function apply(entityName, items) {
@@ -265,12 +347,22 @@ var Business_Interceptors = (function() {
         if (typeof getAppSchema === 'undefined') return;
 
         const schema = getAppSchema(entityName);
+        
+        // 1. Ejecutar Interceptores Tradicionales
         if (schema && schema.mutationInterceptors && Array.isArray(schema.mutationInterceptors)) {
             schema.mutationInterceptors.forEach(interceptorName => {
                 if (typeof INTERCEPTORS[interceptorName] === 'function') {
                     if (typeof Logger !== 'undefined') Logger.log(`[Interceptor] Ejecutando ${interceptorName} para ${entityName} (${items.length} items)`);
                     INTERCEPTORS[interceptorName](entityName, items);
                 }
+            });
+        }
+
+        // 2. Ejecutar Provisión Relacional Dinámica (Schema-Driven)
+        if (schema && schema.relationalProvisioners && Array.isArray(schema.relationalProvisioners)) {
+            schema.relationalProvisioners.forEach(config => {
+                if (typeof Logger !== 'undefined') Logger.log(`[RelationalProvisioner] Procesando aristas ${config.edgeType} para ${entityName} (${items.length} items)`);
+                _provisionRelationalStubs(entityName, items, config);
             });
         }
     }

@@ -38,6 +38,7 @@ beforeEach(() => {
     global.APP_SCHEMAS = {
         Dominio: { fields: [] }
     };
+    Adapter_Sheets._spreadsheets = {};
 });
 
 describe('Adapter_Sheets.list() — AC1', () => {
