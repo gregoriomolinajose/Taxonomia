@@ -1,26 +1,29 @@
 artifact_type: story-design
-version: 1
+version: 2
 skill: rai-story-design
-created: '2026-05-04T14:14:00Z'
+created: '2026-05-04T14:35:00Z'
 story: 'S49.4'
 epic: 'E49'
 content:
-  summary: 'Inyección de Wizard_Taxonomia en el portal de SelfService mediante un modal interactivo en pantalla completa.'
+  summary: 'Inyección de Wizard_Taxonomia en el portal de SelfService a través de una ruta nativa a pantalla completa y rediseño de portal estilo Landing Page (iOS).'
   complexity: medium
   acceptance_criteria:
     - id: AC1
-      description: 'El clic en el Call To Action ("Diseñar Nueva Taxonomía") abre un <ion-modal>.'
+      description: 'El diseño del Self Service usa gradientes difusos (blurs), fondo claro y tipografía bold estilo iOS.'
       verifiable: true
     - id: AC2
-      description: 'Dentro del modal se renderiza correctamente el FormStepper usando FormRenderer_UI y el Schema Wizard_Taxonomia.'
+      description: 'El clic en el CTA navega a una nueva ruta nativa (viewType: wizard) en vez de abrir un modal modal.'
       verifiable: true
     - id: AC3
-      description: 'El modal incluye un botón explícito de cerrado que aborta la operación y destruye el contenedor.'
+      description: 'Dentro de la ruta "wizard" se oculta la barra lateral y se renderiza el FormRenderer_UI a pantalla completa.'
       verifiable: true
     - id: AC4
-      description: 'Al completarse el wizard, se debe cerrar el modal o dar retroalimentación de éxito al usuario.'
+      description: 'Al completarse el wizard con éxito, el enrutador captura el evento global y retorna automáticamente al portal de inicio (Self Service).'
       verifiable: true
   integration_points:
+    - module: 'UI_Router'
+      change_type: modification
+      files: ['src/UI_Router.client.js']
     - module: 'SelfService_Home'
       change_type: modification
       files: ['src/SelfService_Home_UI.client.js']
@@ -29,7 +32,7 @@ content:
       files: ['src/UI_FormSubmitter.client.js']
   decisions:
     - id: D1
-      choice: 'EventBus Pub/Sub para manejar el cierre al terminar el formulario.'
-      rationale: 'El FormRenderer y el FormSubmitter están desacoplados del contenedor modal, la única forma limpia de saber cuándo un formulario "flotante" ha sido enviado con éxito es mediante AppEventBus.'
+      choice: 'Transición a Vista Dedicada Nativa en lugar de Modal.'
+      rationale: 'El Modal restringe la usabilidad y el espacio disponible para una inserción masiva de datos como lo es el Wizard. La vista nativa ofrece una experiencia de pantalla completa sin limitaciones.'
 refs:
   epic_scope: 'work/epics/e49-taxonomia-wizard/scope.md'
