@@ -445,6 +445,11 @@
                 window.UI_FormDependencies.attachListeners(modal, fields);
             }
             // ------------------------------------------------------------
+            
+            // S49.2: Forzar recálculo inicial de estados (elimina race condition del setTimeout mágico)
+            if (useStepper && container._stepperRef && container._stepperRef.isStateful) {
+                container._stepperRef.recalculateAllStatuses();
+            }
 
             modal.appendChild(footerContainer);
             // El insertion del Drawer ya fue manejado por DrawerStackController.push

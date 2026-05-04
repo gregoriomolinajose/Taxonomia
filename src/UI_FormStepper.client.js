@@ -116,16 +116,14 @@ window.UI_FormStepper = class UI_FormStepper {
 
         if (this.isStateful) {
             // S49.2: Escuchar cambios para actualizar estado visual de las secciones
-            const recalcFn = () => this._recalculateAllStatuses();
+            const recalcFn = () => this.recalculateAllStatuses();
             this.cardContent.addEventListener('input', recalcFn);
             this.cardContent.addEventListener('ionChange', recalcFn);
             this.cardContent.addEventListener('UI_GraphEdge::Changed', recalcFn);
-            // Delay inicial para renderizado de Data Edit si existe
-            setTimeout(recalcFn, 500);
         }
     }
 
-    _recalculateAllStatuses() {
+    recalculateAllStatuses() {
         if (!this.isStateful || !this.sidebarSteps) return;
 
         this.steps.forEach((stepName, idx) => {
@@ -140,7 +138,9 @@ window.UI_FormStepper = class UI_FormStepper {
                 if (el.classList.contains('subgrid-container')) {
                     const items = el.querySelectorAll('ion-item');
                     if (items.length > 0) hasData = true;
-                } else if (el.value && el.value !== '' && el.value !== '[]') {
+                } else if (Array.isArray(el.value)) {
+                    if (el.value.length > 0) hasData = true;
+                } else if (el.value !== undefined && el.value !== null && String(el.value).trim() !== '' && String(el.value).trim() !== '[]') {
                     hasData = true;
                 }
             });
@@ -191,7 +191,7 @@ window.UI_FormStepper = class UI_FormStepper {
                     }
                 }
             });
-            if (this.isStateful) this._recalculateAllStatuses();
+            if (this.isStateful) this.recalculateAllStatuses();
         }
 
         if (this.progressLabel) {
