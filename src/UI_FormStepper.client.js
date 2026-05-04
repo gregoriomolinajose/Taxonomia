@@ -15,6 +15,7 @@ window.UI_FormStepper = class UI_FormStepper {
         this.btnNext = config.btnNext;
         this.btnSubmit = config.btnSubmit;
         this.progressLabel = config.progressLabel;
+        this.isStateful = config.stateful || false;
         
         // Estado Interno (Scoped a la Instancia del Modal)
         this.currentStepIndex = 0;
@@ -112,6 +113,51 @@ window.UI_FormStepper = class UI_FormStepper {
                 this.goToSection(this.steps[this.currentStepIndex + 1]);
             }
         });
+
+        if (this.isStateful) {
+            // S49.2: Escuchar cambios para actualizar estado visual de las secciones
+            const recalcFn = () => this._recalculateAllStatuses();
+            this.cardContent.addEventListener('input', recalcFn);
+            this.cardContent.addEventListener('ionChange', recalcFn);
+            this.cardContent.addEventListener('UI_GraphEdge::Changed', recalcFn);
+            // Delay inicial para renderizado de Data Edit si existe
+            setTimeout(recalcFn, 500);
+        }
+    }
+
+    _recalculateAllStatuses() {
+        if (!this.isStateful || !this.sidebarSteps) return;
+
+        this.steps.forEach((stepName, idx) => {
+            const mi = this.menuItems[stepName];
+            if (!mi) return;
+
+            const container = this.stepContainers[stepName];
+            const inputs = container.querySelectorAll('ion-input, ion-textarea, ion-select, input, .subgrid-container');
+            
+            let hasData = false;
+            inputs.forEach(el => {
+                if (el.classList.contains('subgrid-container')) {
+                    const items = el.querySelectorAll('ion-item');
+                    if (items.length > 0) hasData = true;
+                } else if (el.value && el.value !== '' && el.value !== '[]') {
+                    hasData = true;
+                }
+            });
+
+            const isCurrent = (idx === this.currentStepIndex);
+            const defaultIcon = this.semanticIcons[stepName] || this.defaultIcons[idx % this.defaultIcons.length];
+
+            if (hasData) {
+                mi.icon.setAttribute('name', 'checkmark-circle');
+                mi.icon.setAttribute('color', 'success');
+            } else {
+                mi.icon.setAttribute('name', defaultIcon);
+                mi.icon.setAttribute('color', isCurrent ? 'primary' : 'medium');
+            }
+            
+            mi.label.setAttribute('color', isCurrent ? 'primary' : (hasData ? 'success' : 'medium'));
+        });
     }
 
     goToSection(targetSectionName) {
@@ -129,15 +175,23 @@ window.UI_FormStepper = class UI_FormStepper {
                 if (!mi) return;
                 
                 mi.item.style.setProperty('--background', 'transparent');
-                mi.icon.setAttribute('color', 'medium');
-                mi.label.setAttribute('color', 'medium');
 
-                if (idx === this.currentStepIndex) {
-                    mi.item.style.setProperty('--background', 'var(--ion-color-step-100)');
-                    mi.icon.setAttribute('color', 'primary');
-                    mi.label.setAttribute('color', 'primary');
+                if (!this.isStateful) {
+                    mi.icon.setAttribute('color', 'medium');
+                    mi.label.setAttribute('color', 'medium');
+
+                    if (idx === this.currentStepIndex) {
+                        mi.item.style.setProperty('--background', 'var(--ion-color-step-100)');
+                        mi.icon.setAttribute('color', 'primary');
+                        mi.label.setAttribute('color', 'primary');
+                    }
+                } else {
+                    if (idx === this.currentStepIndex) {
+                        mi.item.style.setProperty('--background', 'var(--ion-color-step-100)');
+                    }
                 }
             });
+            if (this.isStateful) this._recalculateAllStatuses();
         }
 
         if (this.progressLabel) {
