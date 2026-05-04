@@ -111,12 +111,63 @@
                     
                     const wrapper = document.createElement('div');
                     wrapper.id = 'wizard-fullscreen-zone';
-                    wrapper.style.maxWidth = '1000px';
-                    wrapper.style.margin = '2rem auto';
-                    wrapper.style.background = 'var(--ion-card-background)';
-                    wrapper.style.borderRadius = 'var(--rounded-md)';
-                    wrapper.style.boxShadow = 'var(--shadow-floating)';
-                    wrapper.style.padding = 'var(--spacing-6)';
+                    
+                    // Header de estilo Landing
+                    const headerZone = document.createElement('div');
+                    headerZone.style.textAlign = 'center';
+                    headerZone.style.marginBottom = 'var(--spacing-6)';
+                    
+                    const title = document.createElement('h1');
+                    title.textContent = 'Orquestador de Taxonomía E2E';
+                    title.style.fontSize = 'var(--sys-font-h1)';
+                    title.style.color = 'var(--ion-text-color)';
+                    title.style.fontWeight = '700';
+                    title.style.letterSpacing = '-0.02em';
+                    
+                    const subtitle = document.createElement('p');
+                    subtitle.textContent = 'Diseñe la arquitectura de su organización en tres pasos estratégicos.';
+                    subtitle.style.fontSize = 'var(--sys-font-body)';
+                    subtitle.style.color = 'var(--ion-color-step-600)';
+                    
+                    headerZone.appendChild(title);
+                    headerZone.appendChild(subtitle);
+                    wrapper.appendChild(headerZone);
+
+                    // Grid del Wizard
+                    const grid = document.createElement('ion-grid');
+                    grid.style.maxWidth = '1000px';
+                    grid.style.margin = '0 auto';
+                    grid.style.background = 'var(--ion-card-background)';
+                    grid.style.borderRadius = '24px';
+                    grid.style.boxShadow = '0 20px 40px rgba(0,0,0,0.08), 0 1px 3px rgba(0,0,0,0.05)'; // iOS subtle shadow
+                    grid.style.padding = '0';
+                    grid.style.overflow = 'hidden';
+                    
+                    const row = document.createElement('ion-row');
+                    
+                    const colLeft = document.createElement('ion-col');
+                    colLeft.setAttribute('size', '12');
+                    colLeft.setAttribute('size-md', '4');
+                    colLeft.style.borderRight = '1px solid var(--ion-color-step-150)';
+                    colLeft.style.padding = 'var(--spacing-4)';
+                    colLeft.style.background = 'var(--ion-color-step-50)';
+                    
+                    const localSidebarList = document.createElement('div');
+                    localSidebarList.id = 'local-sidebar-list';
+                    colLeft.appendChild(localSidebarList);
+                    
+                    const colRight = document.createElement('ion-col');
+                    colRight.setAttribute('size', '12');
+                    colRight.setAttribute('size-md', '8');
+                    colRight.style.padding = 'var(--spacing-4)';
+                    colRight.style.position = 'relative'; // CRITICAL: Allows ion-content to fill height
+                    colRight.style.minHeight = '65vh';    // CRITICAL: Prevent 0-height collapse
+                    
+                    row.appendChild(colLeft);
+                    row.appendChild(colRight);
+                    grid.appendChild(row);
+                    wrapper.appendChild(grid);
+                    
                     container.appendChild(wrapper);
 
                     // Escucha de éxito global
@@ -137,8 +188,10 @@
                     }
 
                     if (typeof window.renderForm === 'function') {
-                        // Pasar customContainer -> wrapper
-                        window.renderForm('Wizard_Taxonomia', null, null, { customContainer: wrapper })
+                        window.renderForm('Wizard_Taxonomia', null, null, { 
+                            customContainer: colRight,
+                            customSidebarSteps: localSidebarList 
+                        })
                             .catch(e => console.error("[UI_Router] Error asíncrono inicializando Wizard:", e));
                     } else {
                         console.error("renderForm no está disponible globalmente.");

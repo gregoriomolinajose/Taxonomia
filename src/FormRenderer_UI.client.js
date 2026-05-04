@@ -189,12 +189,12 @@
             // ni el sidebar principal ni el header central para no romper la navegación.
 
             // Reparación Crítica: Instanciar variable solicitada por el Stepper
-            const sidebarList = document.getElementById('sidebarList');
-            const sidebarSteps = document.getElementById('form-steps-container');
+            const sidebarSteps = config.customSidebarSteps || document.getElementById('form-steps-container');
+            const sidebarList = config.customSidebarSteps ? config.customSidebarSteps : document.getElementById('sidebarList');
 
             // Validación de seguridad (Rule 5.3: Fault Tolerance)
             if (!sidebarList) {
-                console.error("[FormEngine] No se encontró el contenedor #sidebarList en el DOM.");
+                console.error("[FormEngine] No se encontró el contenedor del sidebar en el DOM.");
                 return;
             }
             
