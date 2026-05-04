@@ -149,7 +149,6 @@ var APP_SCHEMAS = {
     primaryKey: "id_registro",
     fields: [
         { name: "id_registro", type: "hidden", primaryKey: true },
-        ...FIELD_TEMPLATES.SYSTEM_FIELDS(),
         
         // Paso 1: Concepto Base
         { name: "nombre", type: "text", label: "Nombre de la Estructura", required: true, section: "Concepto Base", width: 12 },
