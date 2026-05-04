@@ -83,7 +83,7 @@ Stream 3 (Routing/Home): S49.3 ────────────────�
 | S49.2 | M | Done | 30m | 5 | IoC inyectado exitosamente y modo stateful validado. |
 | S49.3 | S | Done | 20m | 4 | Completada encapsulación de estilos Premium y ocultamiento de barra administrativa en el ruteador. |
 | S49.4 | L | Done | 35m | 6 | Integración de Wizard_Taxonomia en vista Fullscreen y rediseño estilo iOS del portal. |
-| S49.5 | M | Pending | — | — | |
+| S49.5 | M | Done | 25m | 5 | Inyectado Wizard_Taxonomia en APP_SCHEMAS y probado E2E con relaciones N:M. |
 
 ### Sequencing Risks
 

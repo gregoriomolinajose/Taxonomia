@@ -133,11 +133,11 @@
                         });
                     }
 
-                    if (window.FormRenderer_UI) {
+                    if (typeof window.renderForm === 'function') {
                         // Pasar customContainer -> wrapper
-                        window.FormRenderer_UI.renderForm('Wizard_Taxonomia', null, wrapper);
+                        window.renderForm('Wizard_Taxonomia', null, null, { customContainer: wrapper });
                     } else {
-                        console.error("FormRenderer_UI no está disponible.");
+                        console.error("renderForm no está disponible globalmente.");
                     }
                 }
             }
