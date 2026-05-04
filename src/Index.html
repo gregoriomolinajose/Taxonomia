@@ -224,6 +224,10 @@
             </div>
             
             <ion-buttons slot="end">
+              <!-- S49.3: Punto de acceso al portal de negocio (Self-Service) -->
+              <ion-button fill="clear" data-action="nav:self-service" title="Modo Negocio">
+                <ion-icon slot="icon-only" name="business-outline" color="tertiary"></ion-icon>
+              </ion-button>
               <ion-button fill="clear" data-action="theme:cycle" title="Cambiar Tema">
                 <ion-icon id="theme-toggle-icon" slot="icon-only" name="moon-outline"></ion-icon>
               </ion-button>
@@ -430,6 +434,7 @@
   <?!= include('UI_FormStepper'); ?>
   <?!= include('UI_FormSubmitter'); ?>
   <?!= include('FormRenderer_UI'); ?>
+  <?!= include('SelfService_Home_UI'); ?>
   <?!= include('DataEngine_UI'); ?>
   <?!= include('DataEngine_ETL'); ?>
   <?!= include('DataEngine_ETL_Capacidades'); ?>

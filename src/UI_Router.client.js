@@ -45,6 +45,9 @@
             var navItems = document.querySelectorAll('.nav-item');
             navItems.forEach(function(item) { item.classList.remove('active'); });
             
+            // 2. Restaurar Sidebar State por defecto (S49.3 Quality Fix)
+            if (typeof window.applySidebarState === 'function') window.applySidebarState();
+            
             if (viewType === 'dashboard') {
                 if (headerTitle) headerTitle.textContent = 'Plataforma de Gobernanza';
                 if (backBtn) { backBtn.classList.add('ion-hide'); backBtn.onclick = null; }
@@ -65,6 +68,27 @@
                     }
                 }
             } 
+            else if (viewType === 'selfservice') {
+                if (headerTitle) headerTitle.textContent = 'Portal de Autoservicio';
+                if (backBtn) {
+                    backBtn.classList.remove('ion-hide');
+                    backBtn.onclick = function() { window.AppEventBus.publish('NAV::CHANGE', {viewType: 'dashboard'}); };
+                }
+                
+                // Ocultar Sidebar en modo SelfService para aislamiento Premium
+                var splitPane = document.querySelector('ion-split-pane');
+                if (splitPane) {
+                    splitPane.setAttribute('when', 'false');
+                }
+
+                if (container) {
+                    if (typeof window.SelfService_Home_UI !== 'undefined') {
+                        window.SelfService_Home_UI.render(container);
+                    } else {
+                        console.error("SelfService_Home_UI no está disponible.");
+                    }
+                }
+            }
             else if (viewType === 'dataview' && entityKey) {
                 if (headerTitle && window.ENTITY_META && window.ENTITY_META[entityKey]) {
                     headerTitle.textContent = window.ENTITY_META[entityKey].label;

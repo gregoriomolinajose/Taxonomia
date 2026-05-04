@@ -1,0 +1,29 @@
+artifact_type: story-design
+version: 1
+skill: rai-story-design
+created: '2026-05-04T14:01:00Z'
+story: 'S49.3'
+epic: 'E49'
+content:
+  summary: 'Creación del SelfService_Home_UI, proveyendo un portal premium aislado de las barras administrativas tradicionales.'
+  complexity: simple
+  acceptance_criteria:
+    - id: AC1
+      description: 'Existe un punto de acceso (botón o ruta) desde el dashboard principal para cambiar a modo cliente.'
+      verifiable: true
+    - id: AC2
+      description: 'La vista de cliente renderiza el componente SelfService_Home_UI con un Hero Banner y estilos CSS de alta calidad visual.'
+      verifiable: true
+  integration_points:
+    - module: 'SelfService_Home'
+      change_type: new
+      files: ['src/SelfService_Home_UI.client.js']
+    - module: 'Core_UI'
+      change_type: modification
+      files: ['src/UI_DataView_Toolbar.client.js', 'src/Index.html']
+  decisions:
+    - id: D1
+      choice: 'Separación por componente JS (`SelfService_Home_UI`) inyectando DOM.'
+      rationale: 'Se mantiene el paradigma del proyecto donde los módulos UI generan su propio marcado, asegurando que se limpie la memoria cuando el usuario navegue a otro lado.'
+refs:
+  epic_scope: 'work/epics/e49-taxonomia-wizard/scope.md'
