@@ -109,56 +109,9 @@ window.SelfService_Home_UI = {
         // Bindings
         const btnStart = wrapper.querySelector('#btn-start-wizard');
         if (btnStart) {
-            btnStart.addEventListener('click', async () => {
-                // S49.4: Crear modal de Ionic Fullscreen
-                const modal = document.createElement('ion-modal');
-                modal.innerHTML = `
-                  <ion-header class="ion-no-border">
-                    <ion-toolbar style="--background: var(--ion-background-color)">
-                      <ion-title style="color: var(--ion-text-color)">Asistente de Diseño Organizacional</ion-title>
-                      <ion-buttons slot="end">
-                        <ion-button onclick="this.closest('ion-modal').dismiss()">Cerrar</ion-button>
-                      </ion-buttons>
-                    </ion-toolbar>
-                  </ion-header>
-                  <ion-content class="ion-padding" style="--background: var(--ion-color-secondary)">
-                    <div id="wizard-render-zone" style="max-width: 800px; margin: 2rem auto; background: var(--ion-card-background); border-radius: var(--rounded-md); box-shadow: var(--shadow-floating); padding: var(--spacing-6);">
-                      <!-- El motor inserta el stepper aquí -->
-                    </div>
-                  </ion-content>
-                `;
-                document.body.appendChild(modal);
-                await window.PresentSafe(modal);
-
-                // Escucha de éxito global
-                let unsubscribe = null;
+            btnStart.addEventListener('click', () => {
                 if (window.AppEventBus) {
-                    unsubscribe = window.AppEventBus.subscribe('FORM::SUBMIT_SUCCESS', (payload) => {
-                        if (payload.entityName === 'Wizard_Taxonomia') {
-                            modal.dismiss();
-                            if (unsubscribe) unsubscribe();
-                            // Alerta Premium
-                            const toast = document.createElement('ion-toast');
-                            toast.message = '¡Taxonomía orquestada con éxito!';
-                            toast.duration = 4000;
-                            toast.color = 'success';
-                            document.body.appendChild(toast);
-                            window.PresentSafe(toast);
-                        }
-                    });
-                }
-
-                // Limpiar la subscripción si el usuario cierra manualmente el modal
-                modal.addEventListener('ionModalDidDismiss', () => {
-                    if (unsubscribe) unsubscribe();
-                    modal.remove(); // Evitar memory leak del DOM
-                });
-
-                // Renderizar
-                if (window.FormRenderer_UI) {
-                    window.FormRenderer_UI.renderForm('Wizard_Taxonomia', null, modal.querySelector('#wizard-render-zone'));
-                } else {
-                    console.error("FormRenderer_UI no está disponible.");
+                    window.AppEventBus.publish('NAV::CHANGE', {viewType: 'wizard'});
                 }
             });
         }
