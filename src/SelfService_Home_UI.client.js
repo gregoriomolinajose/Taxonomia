@@ -139,14 +139,14 @@ window.SelfService_Home_UI = {
                 body.dark .ios-btn:hover {
                     box-shadow: 0 6px 20px rgba(255, 255, 255, 0.3);
                 }
-            \`;
+            `;
             document.head.appendChild(style);
         }
 
         // Estructura DOM
         const wrapper = document.createElement('div');
         wrapper.className = 'self-service-container';
-        wrapper.innerHTML = \`
+        wrapper.innerHTML = `
             <div class="hero-content">
                 <h1 class="premium-title">Taxonomía Organizacional para Negocios</h1>
                 <p class="premium-subtitle">Descubre el poder del diseño organizacional guiado. Orquesta portafolios, productos y capacidades en un entorno fluido y enfocado.</p>
@@ -155,7 +155,7 @@ window.SelfService_Home_UI = {
                     <ion-icon name="arrow-forward-outline" slot="end"></ion-icon>
                 </ion-button>
             </div>
-        \`;
+        `;
 
         containerElement.appendChild(wrapper);
 
