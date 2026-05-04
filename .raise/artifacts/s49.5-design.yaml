@@ -1,0 +1,29 @@
+artifact_type: story-design
+version: 1
+skill: rai-story-design
+created: '2026-05-04T14:40:00Z'
+story: 'S49.5'
+epic: 'E49'
+content:
+  summary: 'Implementación del esquema de datos transaccional Wizard_Taxonomia en APP_SCHEMAS y validación E2E.'
+  complexity: medium
+  acceptance_criteria:
+    - id: AC1
+      description: 'La entidad Wizard_Taxonomia existe en Schema_Engine.js con secciones múltiples.'
+      verifiable: true
+    - id: AC2
+      description: 'El FormRenderer_UI levanta el schema y genera los Steppers correspondientes a cada sección.'
+      verifiable: true
+    - id: AC3
+      description: 'Los campos M:N usan UI_SubgridBuilder para permitir selección múltiple de componentes arquitectónicos (Dominios, Capacidades, etc.).'
+      verifiable: true
+  integration_points:
+    - module: 'Schema_Engine'
+      change_type: modification
+      files: ['src/Schema_Engine.js']
+  decisions:
+    - id: D1
+      choice: 'Wizard_Taxonomia como Entidad Transaccional'
+      rationale: 'Se implementa como entidad estándar para que todo el motor FormSubmitter, SubgridBuilder y Reconciliador Optimista la entiendan nativamente y puedan guardar las relaciones sin requerir lógica custom.'
+refs:
+  epic_scope: 'work/epics/e49-taxonomia-wizard/scope.md'
