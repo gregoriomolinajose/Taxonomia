@@ -41,6 +41,8 @@
 | E45| Architecture Refactoring                            | ✅ Complete  | DOM-based hydration state & centralize logic             | Alta     |
 | E46| Org Chart Visualization                             | ✅ Complete  | Implementar diagrama piramidal ApexTree para relaciones de empleados | Alta     |
 | E47| ETL Carga Masiva Capacidades                        | 🔄 In Progress| Desarrollo de ETL para poblar archivo de capacidades jerárquicas    | Alta     |
+| E48| Admin Settings & Schema-Driven ETL                  | ✅ Complete   | Configuración de interceptores declarativos y utilidades de Admin   | Alta     |
+| E49| Taxonomía Wizard & Self-Service Portal              | 🔄 In Progress| Asistente a pantalla completa para agrupar arquitectura N:M         | Max      |
 
 ## Parking Lot / Deuda Técnica (Post-Epic 11)
 

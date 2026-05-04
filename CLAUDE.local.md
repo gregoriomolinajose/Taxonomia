@@ -4,10 +4,10 @@
 
 ## Session
 
-- **Active Session**: E48 Admin Settings
-- **Last Summary**: Finalizada Historia S48.7 (Schema-Driven Relational Provisioning) y desplegada a DEV. Se solucionaron problemas de estado en pruebas con Vitest.
-- **Last Closed**: S48.7
-- **Next Focus**: Continuar con validaciones finales o cierre de la Épica E48.
+- **Active Session**: E49 Taxonomía Wizard
+- **Last Summary**: Inicializada épica E49. Creados artefactos de alcance (Brief y Scope) para el portal de autoservicio de clientes.
+- **Last Closed**: E48 (Epic)
+- **Next Focus**: Diseño técnico de la épica E49 (/rai-epic-design) e inicio de la Historia 1 para definir la entidad Taxonomía en el esquema.
 
 ## Patterns
 
