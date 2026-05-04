@@ -8,8 +8,8 @@ Desarrollar un portal de autoservicio y un asistente (wizard) dinámico a pantal
 **In Scope:**
 - Entidad `Taxonomia` en `Schema_Engine.js` (relaciones N:M).
 - Portal "Home" aislado para clientes de negocio (`SelfService_Home_UI`).
-- Invocación directa del flujo de Alta de Taxonomía desde el portal de clientes (Pantalla Completa) aislándolo del `FormRenderer_UI` administrativo.
-- Extensión del componente existente `UI_FormStepper.client.js` para soportar estados de sección (Pendiente, En Proceso, Finalizado) sin duplicar código.
+- Invocación de `renderForm(..., { customContainer: modal })` desde el portal de clientes para reutilizar la lógica de `FormRenderer_UI` sin usar el Drawer lateral.
+- Extensión del componente existente `UI_FormStepper.client.js` para soportar estados de sección.
 - 9 Pasos configurados en la entidad Taxonomía:
   1. Directorio de TI
   2. Directorio de Negocio
@@ -47,10 +47,10 @@ Desarrollar un portal de autoservicio y un asistente (wizard) dinámico a pantal
 | Order | Story | Size | Dependencies | Milestone | Rationale |
 |:-----:|-------|:----:|--------------|-----------|-----------|
 | 1 | S49.1 | S | None | M1 | Proveer la entidad estructural (Data Layer) primero. |
-| 2 | S49.2 | M | None | M1 | Aislar la modificación del UI_FormStepper (UI Layer puro) y probarlo estáticamente. |
+| 2 | S49.2 | M | None | M1 | Añadir la inyección de `customContainer` al `FormRenderer_UI` y el `stateful: true` al Stepper. |
 | 3 | S49.3 | S | None | M2 | Crear el cascarón de Home de Negocio y sus rutas de acceso independiente. |
-| 4 | S49.4 | L | S49.1, S49.2, S49.3 | M2 | Ensamblar el modal a pantalla completa y conectar todos los selectores N:M. (Integration Checkpoint) |
-| 5 | S49.5 | M | S49.4 | M3 | Probar la cascada y la visualización final, puliendo detalles de UX en el Home de negocio tras concluir un wizard E2E. |
+| 4 | S49.4 | L | S49.1, S49.2, S49.3 | M2 | Ensamblar el modal a pantalla completa invocando el `FormRenderer` y conectar todos los selectores N:M. (Integration Checkpoint) |
+| 5 | S49.5 | M | S49.4 | M3 | Probar la cascada y la visualización final E2E. |
 
 ### Milestones
 
