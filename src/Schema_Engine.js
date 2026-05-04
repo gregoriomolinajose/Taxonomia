@@ -147,33 +147,22 @@ var APP_SCHEMAS = {
     form_stepper_stateful: true,
     metadata: { showInMenu: false, iconName: 'business-outline', label: 'Diseño Organizacional', titleField: 'nombre' },
     primaryKey: "id_registro",
-    sections: [
-        {
-            title: "Concepto Base",
-            fields: [
-                { name: "nombre", type: "text", label: "Nombre de la Estructura", required: true, width: 12 },
-                { name: "descripcion", type: "textarea", label: "Justificación Estratégica", width: 12 }
-            ]
-        },
-        {
-            title: "Estructura de Negocio",
-            fields: [
-                { name: "rel_unidades", type: "relation", label: "Unidades de Negocio", relationTarget: "Unidad_Negocio", relationType: "M:N", width: 12 },
-                { name: "rel_portafolios", type: "relation", label: "Portafolios Asociados", relationTarget: "Portafolio", relationType: "M:N", width: 12 },
-                { name: "rel_familias", type: "relation", label: "Familias de Productos", relationTarget: "Familia", relationType: "M:N", width: 12 }
-            ]
-        },
-        {
-            title: "Arquitectura Empresarial",
-            fields: [
-                { name: "rel_dominios", type: "relation", label: "Dominios Impactados", relationTarget: "Dominio", relationType: "M:N", width: 12 },
-                { name: "rel_capacidades", type: "relation", label: "Capacidades Asociadas", relationTarget: "Capacidad", relationType: "M:N", width: 12 }
-            ]
-        }
-    ],
     fields: [
+        { name: "id_registro", type: "hidden", primaryKey: true },
         ...FIELD_TEMPLATES.SYSTEM_FIELDS(),
-        { name: "id_registro", type: "hidden", primaryKey: true }
+        
+        // Paso 1: Concepto Base
+        { name: "nombre", type: "text", label: "Nombre de la Estructura", required: true, section: "Concepto Base", width: 12 },
+        { name: "descripcion", type: "textarea", label: "Justificación Estratégica", section: "Concepto Base", width: 12 },
+        
+        // Paso 2: Estructura de Negocio
+        { name: "rel_unidades", type: "relation", label: "Unidades de Negocio", relationTarget: "Unidad_Negocio", uiBehavior: "subgrid", section: "Estructura de Negocio", topologyCardinality: "N:M", width: 12 },
+        { name: "rel_portafolios", type: "relation", label: "Portafolios Asociados", relationTarget: "Portafolio", uiBehavior: "subgrid", section: "Estructura de Negocio", topologyCardinality: "N:M", width: 12 },
+        { name: "rel_familias", type: "relation", label: "Familias de Productos", relationTarget: "Familia", uiBehavior: "subgrid", section: "Estructura de Negocio", topologyCardinality: "N:M", width: 12 },
+        
+        // Paso 3: Arquitectura Empresarial
+        { name: "rel_dominios", type: "relation", label: "Dominios Impactados", relationTarget: "Dominio", uiBehavior: "subgrid", section: "Arquitectura Empresarial", topologyCardinality: "N:M", width: 12 },
+        { name: "rel_capacidades", type: "relation", label: "Capacidades Asociadas", relationTarget: "Capacidad", uiBehavior: "subgrid", section: "Arquitectura Empresarial", topologyCardinality: "N:M", width: 12 }
     ]
   },
 
