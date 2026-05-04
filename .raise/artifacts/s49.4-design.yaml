@@ -1,0 +1,35 @@
+artifact_type: story-design
+version: 1
+skill: rai-story-design
+created: '2026-05-04T14:14:00Z'
+story: 'S49.4'
+epic: 'E49'
+content:
+  summary: 'Inyección de Wizard_Taxonomia en el portal de SelfService mediante un modal interactivo en pantalla completa.'
+  complexity: medium
+  acceptance_criteria:
+    - id: AC1
+      description: 'El clic en el Call To Action ("Diseñar Nueva Taxonomía") abre un <ion-modal>.'
+      verifiable: true
+    - id: AC2
+      description: 'Dentro del modal se renderiza correctamente el FormStepper usando FormRenderer_UI y el Schema Wizard_Taxonomia.'
+      verifiable: true
+    - id: AC3
+      description: 'El modal incluye un botón explícito de cerrado que aborta la operación y destruye el contenedor.'
+      verifiable: true
+    - id: AC4
+      description: 'Al completarse el wizard, se debe cerrar el modal o dar retroalimentación de éxito al usuario.'
+      verifiable: true
+  integration_points:
+    - module: 'SelfService_Home'
+      change_type: modification
+      files: ['src/SelfService_Home_UI.client.js']
+    - module: 'FormSubmitter'
+      change_type: modification
+      files: ['src/UI_FormSubmitter.client.js']
+  decisions:
+    - id: D1
+      choice: 'EventBus Pub/Sub para manejar el cierre al terminar el formulario.'
+      rationale: 'El FormRenderer y el FormSubmitter están desacoplados del contenedor modal, la única forma limpia de saber cuándo un formulario "flotante" ha sido enviado con éxito es mediante AppEventBus.'
+refs:
+  epic_scope: 'work/epics/e49-taxonomia-wizard/scope.md'
