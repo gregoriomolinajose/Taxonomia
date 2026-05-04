@@ -9,17 +9,17 @@ grounded_in: "Gemba of [src/Schema_Engine.js, src/FormRenderer_UI.client.js, src
 
 | Module/File | Current State | Changes |
 |-------------|---------------|---------|
-| `src/Schema_Engine.js` | Entidad Taxonomía no existe. | Inyectar entidad `Taxonomia` con todos sus campos y relaciones N:M para los 9 directorios. No se usarán flags especiales de UI, será una entidad estándar. |
-| `src/FormRenderer_UI.client.js` | Punto de entrada global para formularios en modo Drawer. | **(Protegido)** No se modificará. El módulo administrativo seguirá intacto. |
-| `src/UI_FormStepper.client.js` | Orquestador de steps secuenciales simple. Sin estados de completitud visuales. | Añadir modo `stateful: true` para habilitar el seguimiento del progreso de cada sección (Pendiente, En Proceso, Finalizado) calculando el completado de sus campos internos. |
+| `src/Schema_Engine.js` | Entidad Taxonomía no existe. | Inyectar entidad `Taxonomia` con todos sus campos y relaciones N:M (usando `relationType: 'hijo'`) para los 9 directorios. No se usarán flags especiales de UI. |
+| `src/FormRenderer_UI.client.js` | Punto de entrada global para formularios en modo Drawer. | **(IoC Strategy)** Se modificará levemente para aceptar un parámetro `config.customContainer`. Si se recibe, el renderizador armará el DOM ahí en lugar de usar el `DrawerStackController`, protegiendo la funcionalidad core pero permitiendo reutilizarla en Fullscreen. |
+| `src/UI_FormStepper.client.js` | Orquestador de steps secuenciales simple. Sin estados de completitud visuales. | Añadir modo `stateful: true` para habilitar el seguimiento del progreso de cada sección (Pendiente, En Proceso, Finalizado). |
 | `src/UI_Router.client.js` / `Index.html` | Rutas centradas en administración (`Dashboard_UI`, etc). | Añadir soporte para una vista `SelfService_Home_UI` exclusiva para clientes/áreas de negocio. |
 
 ## Target Components
 
 | Component | Responsibility | Key Interface |
 |-----------|---------------|---------------|
-| `SelfService_Home_UI.html` | Pantalla de inicio para clientes de negocio donde visualizan sus taxonomías actuales. Al crear una nueva, **orquesta directamente un `<ion-modal>` a pantalla completa** instanciando allí a `UI_FormStepper` con el esquema de Taxonomía, aislando por completo al `FormRenderer_UI` del proceso. | `SelfService_Home_UI.render(containerId)` |
-| `UI_FormStepper.client.js` | Modalidad `stateful`. Valida el progreso por sección y renderiza los íconos (Checkmark, Círculo vacío, Cargando). Mantiene la flexibilidad no lineal nativa de los saltos desde el sidebar. | `new UI_FormStepper({ stateful: true, ... })` |
+| `SelfService_Home_UI.html` | Pantalla de inicio para clientes de negocio donde visualizan sus taxonomías actuales. Al crear una nueva, invoca a `FormRenderer_UI.renderForm(..., { customContainer: modal })`, reutilizando el motor sin usar el Drawer. | `SelfService_Home_UI.render(containerId)` |
+| `UI_FormStepper.client.js` | Modalidad `stateful`. Valida el progreso por sección y renderiza los íconos. | `new UI_FormStepper({ stateful: true, ... })` |
 
 ## Key Contracts
 
