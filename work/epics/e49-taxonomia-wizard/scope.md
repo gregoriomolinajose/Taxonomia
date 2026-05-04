@@ -80,7 +80,7 @@ Stream 3 (Routing/Home): S49.3 ────────────────�
 | Story | Size | Status | Actual | Velocity | Notes |
 |-------|:----:|:------:|:------:|:--------:|-------|
 | S49.1 | S | Done | 15m | 4 | Completada la inserción estructural |
-| S49.2 | M | Pending | — | — | |
+| S49.2 | M | Done | 30m | 5 | IoC inyectado exitosamente y modo stateful validado. |
 | S49.3 | S | Pending | — | — | |
 | S49.4 | L | Pending | — | — | |
 | S49.5 | M | Pending | — | — | |
