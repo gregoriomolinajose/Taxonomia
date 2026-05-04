@@ -48,6 +48,19 @@
             // 2. Restaurar Sidebar State por defecto (S49.3 Quality Fix)
             if (typeof window.applySidebarState === 'function') window.applySidebarState();
             
+            // 3. Restaurar Chrome de la App (Header y Sidebar físico) al salir de modos inmersivos
+            var splitPane = document.querySelector('ion-split-pane');
+            if (splitPane) splitPane.disabled = false;
+            
+            var menu = document.querySelector('ion-menu');
+            if (menu) {
+                menu.disabled = false;
+                menu.style.display = '';
+            }
+            
+            var mainHeader = document.querySelector('#main-content ion-header');
+            if (mainHeader) mainHeader.style.display = '';
+            
             if (viewType === 'dashboard') {
                 if (headerTitle) headerTitle.textContent = 'Plataforma de Gobernanza';
                 if (backBtn) { backBtn.classList.add('ion-hide'); backBtn.onclick = null; }
@@ -100,10 +113,19 @@
                     };
                 }
                 
-                // Ocultar Sidebar en modo Fullscreen
+                // Ocultar Chrome de la App (Header y Sidebar) para Fullscreen inmersivo
                 var splitPane = document.querySelector('ion-split-pane');
                 if (splitPane) {
-                    splitPane.setAttribute('when', 'false');
+                    splitPane.disabled = true;
+                }
+                var menu = document.querySelector('ion-menu');
+                if (menu) {
+                    menu.disabled = true;
+                    menu.style.display = 'none';
+                }
+                var mainHeader = document.querySelector('#main-content ion-header');
+                if (mainHeader) {
+                    mainHeader.style.display = 'none';
                 }
 
                 if (container) {
@@ -111,11 +133,30 @@
                     
                     const wrapper = document.createElement('div');
                     wrapper.id = 'wizard-fullscreen-zone';
+                    wrapper.style.width = '100%';
+                    wrapper.style.height = '100vh'; // Fullscreen real
+                    wrapper.style.display = 'flex';
+                    wrapper.style.flexDirection = 'column';
+                    wrapper.style.background = 'var(--ion-background-color)';
                     
                     // Header de estilo Landing
                     const headerZone = document.createElement('div');
                     headerZone.style.textAlign = 'center';
-                    headerZone.style.marginBottom = 'var(--spacing-6)';
+                    headerZone.style.padding = 'var(--spacing-5) var(--spacing-4)';
+                    headerZone.style.position = 'relative';
+                    
+                    // Botón para salir/volver al Dashboard
+                    const backBtn = document.createElement('ion-button');
+                    backBtn.fill = 'clear';
+                    backBtn.color = 'medium';
+                    backBtn.style.position = 'absolute';
+                    backBtn.style.left = 'var(--spacing-4)';
+                    backBtn.style.top = 'var(--spacing-5)';
+                    backBtn.innerHTML = '<ion-icon slot="start" name="arrow-back-outline"></ion-icon> Cancelar';
+                    backBtn.onclick = () => {
+                        window.AppEventBus.publish('NAV::CHANGE', {viewType: 'selfservice'});
+                    };
+                    headerZone.appendChild(backBtn);
                     
                     const title = document.createElement('h1');
                     title.textContent = 'Orquestador de Taxonomía E2E';
@@ -123,31 +164,32 @@
                     title.style.color = 'var(--ion-text-color)';
                     title.style.fontWeight = '700';
                     title.style.letterSpacing = '-0.02em';
+                    title.style.margin = '0 0 var(--spacing-2) 0';
                     
                     const subtitle = document.createElement('p');
                     subtitle.textContent = 'Diseñe la arquitectura de su organización en tres pasos estratégicos.';
                     subtitle.style.fontSize = 'var(--sys-font-body)';
                     subtitle.style.color = 'var(--ion-color-step-600)';
+                    subtitle.style.margin = '0';
                     
                     headerZone.appendChild(title);
                     headerZone.appendChild(subtitle);
                     wrapper.appendChild(headerZone);
 
-                    // Grid del Wizard
+                    // Grid del Wizard (Ocupa el 100% restante del layout flex)
                     const grid = document.createElement('ion-grid');
-                    grid.style.maxWidth = '1000px';
-                    grid.style.margin = '0 auto';
-                    grid.style.background = 'var(--ion-card-background)';
-                    grid.style.borderRadius = '24px';
-                    grid.style.boxShadow = '0 20px 40px rgba(0,0,0,0.08), 0 1px 3px rgba(0,0,0,0.05)'; // iOS subtle shadow
+                    grid.style.flex = '1';
+                    grid.style.width = '100%';
+                    grid.style.margin = '0';
                     grid.style.padding = '0';
-                    grid.style.overflow = 'hidden';
                     
                     const row = document.createElement('ion-row');
+                    row.style.height = '100%';
                     
                     const colLeft = document.createElement('ion-col');
                     colLeft.setAttribute('size', '12');
-                    colLeft.setAttribute('size-md', '4');
+                    colLeft.setAttribute('size-md', '3');
+                    colLeft.setAttribute('size-lg', '2');
                     colLeft.style.borderRight = '1px solid var(--ion-color-step-150)';
                     colLeft.style.padding = 'var(--spacing-4)';
                     colLeft.style.background = 'var(--ion-color-step-50)';
@@ -158,10 +200,10 @@
                     
                     const colRight = document.createElement('ion-col');
                     colRight.setAttribute('size', '12');
-                    colRight.setAttribute('size-md', '8');
-                    colRight.style.padding = 'var(--spacing-4)';
+                    colRight.setAttribute('size-md', '9');
+                    colRight.setAttribute('size-lg', '10');
+                    colRight.style.padding = 'var(--spacing-6) var(--spacing-8)';
                     colRight.style.position = 'relative'; // CRITICAL: Allows ion-content to fill height
-                    colRight.style.minHeight = '65vh';    // CRITICAL: Prevent 0-height collapse
                     
                     row.appendChild(colLeft);
                     row.appendChild(colRight);
