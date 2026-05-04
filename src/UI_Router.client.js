@@ -141,17 +141,17 @@
                     
                     // Header de estilo Landing
                     const headerZone = document.createElement('div');
+                    headerZone.id = 'wizard-header-zone';
                     headerZone.style.textAlign = 'center';
                     headerZone.style.padding = 'var(--spacing-5) var(--spacing-4)';
                     headerZone.style.position = 'relative';
                     
                     // Botón para salir/volver al Dashboard
                     const backBtn = document.createElement('ion-button');
+                    backBtn.id = 'wizard-back-btn';
                     backBtn.fill = 'clear';
                     backBtn.color = 'medium';
                     backBtn.style.position = 'absolute';
-                    backBtn.style.left = 'var(--spacing-4)';
-                    backBtn.style.top = 'var(--spacing-5)';
                     backBtn.innerHTML = '<ion-icon slot="start" name="arrow-back-outline"></ion-icon> Cancelar';
                     backBtn.onclick = () => {
                         window.AppEventBus.publish('NAV::CHANGE', {viewType: 'selfservice'});
@@ -176,6 +176,48 @@
                     headerZone.appendChild(subtitle);
                     wrapper.appendChild(headerZone);
 
+                    // Estilos Responsivos Integrados
+                    const style = document.createElement('style');
+                    style.innerHTML = `
+                        #wizard-fullscreen-zone { overflow-y: auto; }
+                        #local-sidebar-list {
+                            display: flex;
+                            flex-direction: row;
+                            overflow-x: auto;
+                            padding-bottom: var(--spacing-2);
+                            gap: var(--spacing-2);
+                            -webkit-overflow-scrolling: touch;
+                        }
+                        #local-sidebar-list ion-item {
+                            flex: 0 0 auto;
+                            width: auto;
+                            --padding-start: var(--spacing-3);
+                            --padding-end: var(--spacing-3);
+                        }
+                        #local-sidebar-list ion-label { white-space: nowrap !important; }
+                        #wizard-header-zone { padding-top: var(--spacing-10) !important; }
+                        #wizard-back-btn { top: var(--spacing-2) !important; left: var(--spacing-1) !important; }
+                        #wizard-col-left { border-right: none; border-bottom: 1px solid var(--ion-color-step-150); }
+
+                        /* Tablet & Desktop */
+                        @media (min-width: 768px) {
+                            #wizard-fullscreen-zone { overflow-y: hidden; }
+                            #local-sidebar-list { flex-direction: column; overflow-x: visible; padding-bottom: 0; }
+                            #local-sidebar-list ion-item { width: 100%; margin: var(--spacing-1) 0; }
+                            #local-sidebar-list ion-label { white-space: normal !important; }
+                            #wizard-header-zone { padding-top: var(--spacing-5) !important; }
+                            #wizard-back-btn { top: var(--spacing-5) !important; left: var(--spacing-4) !important; }
+                            #wizard-col-left { border-right: 1px solid var(--ion-color-step-150) !important; border-bottom: none !important; }
+                        }
+                        
+                        /* Responsive Typography fixes for mobile title */
+                        @media (max-width: 576px) {
+                            #wizard-header-zone h1 { font-size: 1.5rem !important; }
+                            #wizard-header-zone p { font-size: 0.85rem !important; }
+                        }
+                    `;
+                    wrapper.appendChild(style);
+
                     // Grid del Wizard (Ocupa el 100% restante del layout flex)
                     const grid = document.createElement('ion-grid');
                     grid.style.flex = '1';
@@ -187,10 +229,11 @@
                     row.style.height = '100%';
                     
                     const colLeft = document.createElement('ion-col');
+                    colLeft.id = 'wizard-col-left';
                     colLeft.setAttribute('size', '12');
-                    colLeft.setAttribute('size-md', '3');
-                    colLeft.setAttribute('size-lg', '2');
-                    colLeft.style.borderRight = '1px solid var(--ion-color-step-150)';
+                    colLeft.setAttribute('size-md', '4');
+                    colLeft.setAttribute('size-lg', '3');
+                    colLeft.setAttribute('size-xl', '2');
                     colLeft.style.padding = 'var(--spacing-4)';
                     colLeft.style.background = 'var(--ion-color-step-50)';
                     
@@ -200,8 +243,9 @@
                     
                     const colRight = document.createElement('ion-col');
                     colRight.setAttribute('size', '12');
-                    colRight.setAttribute('size-md', '9');
-                    colRight.setAttribute('size-lg', '10');
+                    colRight.setAttribute('size-md', '8');
+                    colRight.setAttribute('size-lg', '9');
+                    colRight.setAttribute('size-xl', '10');
                     colRight.style.padding = 'var(--spacing-6) var(--spacing-8)';
                     colRight.style.position = 'relative'; // CRITICAL: Allows ion-content to fill height
                     
