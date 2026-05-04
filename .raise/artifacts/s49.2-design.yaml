@@ -1,0 +1,27 @@
+artifact_type: story-design
+version: 1
+skill: rai-story-design
+created: '2026-05-04T13:37:00Z'
+story: 'S49.2'
+epic: 'E49'
+content:
+  summary: 'Añadir modo stateful al UI_FormStepper y soporte de Inversión de Control (IoC) al FormRenderer_UI.'
+  complexity: moderate
+  acceptance_criteria:
+    - id: AC1
+      description: 'El FormRenderer debe usar config.customContainer si se proporciona, evitando crear un Drawer.'
+      verifiable: true
+    - id: AC2
+      description: 'El UI_FormStepper debe recalcular el estado de la sección actualizando el ícono a checkmark si hay datos.'
+      verifiable: true
+  integration_points:
+    - module: 'UI_Engine'
+      change_type: modification
+      files: ['src/FormRenderer_UI.client.js', 'src/UI_FormStepper.client.js']
+  decisions:
+    - id: D1
+      choice: 'IoC para FormRenderer_UI'
+      rationale: 'Evita duplicar miles de líneas de código de parseo de schemas y binding M:N en el portal cliente.'
+      alternatives_considered: ['Reescribir el parseo de UI desde cero en SelfService_Home_UI']
+refs:
+  epic_scope: 'work/epics/e49-taxonomia-wizard/scope.md'
