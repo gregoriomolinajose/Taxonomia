@@ -91,9 +91,13 @@
             }
             else if (viewType === 'wizard') {
                 if (headerTitle) headerTitle.textContent = 'Asistente de Diseño Organizacional';
+                let wizardUnsubscribe = null;
                 if (backBtn) {
                     backBtn.classList.remove('ion-hide');
-                    backBtn.onclick = function() { window.AppEventBus.publish('NAV::CHANGE', {viewType: 'selfservice'}); };
+                    backBtn.onclick = function() { 
+                        if (wizardUnsubscribe) wizardUnsubscribe();
+                        window.AppEventBus.publish('NAV::CHANGE', {viewType: 'selfservice'}); 
+                    };
                 }
                 
                 // Ocultar Sidebar en modo Fullscreen
@@ -116,11 +120,10 @@
                     container.appendChild(wrapper);
 
                     // Escucha de éxito global
-                    let unsubscribe = null;
                     if (window.AppEventBus) {
-                        unsubscribe = window.AppEventBus.subscribe('FORM::SUBMIT_SUCCESS', (payload) => {
+                        wizardUnsubscribe = window.AppEventBus.subscribe('FORM::SUBMIT_SUCCESS', (payload) => {
                             if (payload.entityName === 'Wizard_Taxonomia') {
-                                if (unsubscribe) unsubscribe();
+                                if (wizardUnsubscribe) wizardUnsubscribe();
                                 window.AppEventBus.publish('NAV::CHANGE', {viewType: 'selfservice'});
                                 // Alerta Premium
                                 const toast = document.createElement('ion-toast');
@@ -135,7 +138,8 @@
 
                     if (typeof window.renderForm === 'function') {
                         // Pasar customContainer -> wrapper
-                        window.renderForm('Wizard_Taxonomia', null, null, { customContainer: wrapper });
+                        window.renderForm('Wizard_Taxonomia', null, null, { customContainer: wrapper })
+                            .catch(e => console.error("[UI_Router] Error asíncrono inicializando Wizard:", e));
                     } else {
                         console.error("renderForm no está disponible globalmente.");
                     }
