@@ -45,6 +45,9 @@
             var navItems = document.querySelectorAll('.nav-item');
             navItems.forEach(function(item) { item.classList.remove('active'); });
             
+            // 2. Restaurar Sidebar State por defecto (S49.3 Quality Fix)
+            if (typeof window.applySidebarState === 'function') window.applySidebarState();
+            
             if (viewType === 'dashboard') {
                 if (headerTitle) headerTitle.textContent = 'Plataforma de Gobernanza';
                 if (backBtn) { backBtn.classList.add('ion-hide'); backBtn.onclick = null; }
@@ -54,9 +57,6 @@
                 
                 var homeBtn = document.getElementById('nav-item-dashboard');
                 if (homeBtn) homeBtn.classList.add('active');
-                
-                // Restaurar menú lateral en caso de volver del portal Self-Service
-                if (typeof window.applySidebarState === 'function') window.applySidebarState();
                 
                 if (container) {
                     var tmpl = document.getElementById('tmpl-dashboard');
