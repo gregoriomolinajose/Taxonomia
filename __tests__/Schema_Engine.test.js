@@ -39,7 +39,7 @@ describe('Schema_Engine Governance', () => {
         });
         
         it('should return SAFE FLAT defaults if entity is known but has no topologyRules', () => {
-            const rules = getEntityTopologyRules('Capacidad'); // Capacidad has no topologyRules declared
+            const rules = getEntityTopologyRules('Equipo'); // Equipo has no topologyRules declared
             expect(rules).toBeDefined();
             expect(rules.topologyType).toBe('FLAT');
         });

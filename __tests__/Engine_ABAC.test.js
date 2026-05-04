@@ -52,7 +52,7 @@ global.APP_SCHEMAS = {
     }
 };
 
-const { Engine_ABAC } = require('../src/Engine_ABAC.gs');
+const { Engine_ABAC } = require('../src/Engine_ABAC.js');
 
 describe('Engine_ABAC Authorization Rules', () => {
 

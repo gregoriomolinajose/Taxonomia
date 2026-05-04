@@ -157,6 +157,6 @@ describe('Optimistic Locking Control - Adapter_Sheets.upsert', () => {
         // Verifica que la barrera de tiempo de 10s se abrió y se cerró exitosamente
         expect(mockLock.waitLock).toHaveBeenCalledWith(10000);
         expect(mockLock.releaseLock).toHaveBeenCalled();
-        expect(global.SpreadsheetApp.flush).toHaveBeenCalled(); // Verifica Flush Inmediato
+        // SpreadsheetApp.flush() was removed for batch performance optimization
     });
 });

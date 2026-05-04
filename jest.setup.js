@@ -73,7 +73,9 @@ global.getAppSchema = vi.fn((ent) => global.APP_SCHEMAS[ent] || { primaryKey: (e
 const mockCache = {
     get: vi.fn(),
     put: vi.fn(),
-    remove: vi.fn()
+    putAll: vi.fn(),
+    remove: vi.fn(),
+    removeAll: vi.fn()
 };
 global.CacheService = {
     getScriptCache: vi.fn().mockReturnValue(mockCache),

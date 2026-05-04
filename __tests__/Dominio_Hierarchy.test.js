@@ -1,4 +1,4 @@
-const { APP_SCHEMAS } = require('../src/Schema_Engine.gs');
+const { APP_SCHEMAS } = require('../src/Schema_Engine.js');
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helper: simulate getGenericOrdenPath with a mock cache
@@ -30,7 +30,7 @@ describe('TDD: Jerarquía Recursiva Dinámica (Zero-Touch Trigger)', () => {
 
         const relationsField = schema.fields.find(f => f.name === 'relaciones_padre');
         expect(relationsField).toBeDefined();
-        expect(relationsField.uiBehavior).toBe('subgrid');
+        expect(relationsField.uiComponent).toBe('select_single');
         expect(relationsField.isTemporalGraph).toBe(true);
     });
 

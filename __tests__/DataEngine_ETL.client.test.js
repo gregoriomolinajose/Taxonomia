@@ -52,14 +52,15 @@ describe('DataEngine_ETL (Frontend Client S38.6)', () => {
     });
 
     test('2. Chunker: Fragmentación matemática exacta para lotes > 50', async () => {
+        window.ENV_CONFIG = { ALLOWED_DOMAINS: ['@test.com'] };
         // Múltiples registros (105 elementos)
         const rawPayload = Array.from({ length: 105 }, (_, i) => ({ email: `test${i}@test.com` }));
         const progressCb = vi.fn();
 
         await window.DataEngine_ETL._dispatchChunks(rawPayload, 'Persona', progressCb);
 
-        // Debería haberse llamado DataAPI exactamente Math.ceil(105/50) = 3 veces
-        expect(window.DataAPI.call).toHaveBeenCalledTimes(3);
+        // Debería haberse llamado DataAPI Math.ceil(105/50) = 3 veces para bulkInsert + 1 vez para runWorkspaceSyncJob = 4 veces
+        expect(window.DataAPI.call).toHaveBeenCalledTimes(4);
 
         // Payload del Chunker #1
         expect(window.DataAPI.call).toHaveBeenNthCalledWith(1, 'bulkInsert', 'Persona', expect.any(Array));
@@ -71,8 +72,8 @@ describe('DataEngine_ETL (Frontend Client S38.6)', () => {
         // Payload del Chunker #3 (Los 5 restantes)
         expect(window.DataAPI.call.mock.calls[2][2]).toHaveLength(5);
 
-        // Progress Callback fue llamado (4 veces = 3 envíos + 1 final completion)
-        expect(progressCb).toHaveBeenCalledTimes(4);
-        expect(progressCb).toHaveBeenLastCalledWith(3, 3, true); // (current, total, isDone)
+        // Progress Callback fue llamado 7 veces (3 de ingesta + 1 inicio sync + 1 fin sync + 1 refresh + 1 complete)
+        expect(progressCb).toHaveBeenCalledTimes(7);
+        expect(progressCb).toHaveBeenLastCalledWith(100, 100, true, expect.any(Object), expect.any(String), expect.any(Array));
     });
 });
