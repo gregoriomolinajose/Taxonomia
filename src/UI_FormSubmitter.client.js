@@ -319,6 +319,11 @@ window.UI_FormSubmitter = class UI_FormSubmitter {
         this._revertButtonState();
         this._internalRetryId = null; // Liberar caché de reintentos
 
+        // S49.4 Broadcast success event for global listeners (e.g. SelfService_Home_UI modal close)
+        if (window.AppEventBus) {
+            window.AppEventBus.publish('FORM::SUBMIT_SUCCESS', { entityName: this.entityName, response: response });
+        }
+
         if (window.DataStore) {
             // [S29.7] window.DataStore.clearNested() extirpado. Los Subgrids ahora son stateless.
             // S42.1 (Fast-I/O Optimization): Extirpada la re-hidratación por red de Sys_Graph_Edges.
