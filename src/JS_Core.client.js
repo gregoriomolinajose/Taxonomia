@@ -469,6 +469,7 @@
         case 'nav:reload': location.reload(); break;
         case 'nav:toggle-menu': if (typeof window.toggleDesktopMenu === 'function') window.toggleDesktopMenu(); break;
         case 'nav:dashboard': window.AppEventBus.publish('NAV::CHANGE', {viewType: 'dashboard'}); break;
+        case 'nav:self-service': window.AppEventBus.publish('NAV::CHANGE', {viewType: 'selfservice'}); break;
         case 'nav:designkit': window.AppEventBus.publish('NAV::CHANGE', {viewType: 'designkit'}); break;
         case 'nav:governance': window.AppEventBus.publish('NAV::CHANGE', {viewType: 'governance'}); break;
         case 'nav:sistema': window.AppEventBus.publish('NAV::CHANGE', {viewType: 'sistema'}); break;

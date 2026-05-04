@@ -55,6 +55,9 @@
                 var homeBtn = document.getElementById('nav-item-dashboard');
                 if (homeBtn) homeBtn.classList.add('active');
                 
+                // Restaurar menú lateral en caso de volver del portal Self-Service
+                if (typeof window.applySidebarState === 'function') window.applySidebarState();
+                
                 if (container) {
                     var tmpl = document.getElementById('tmpl-dashboard');
                     if (tmpl) {
@@ -65,6 +68,27 @@
                     }
                 }
             } 
+            else if (viewType === 'selfservice') {
+                if (headerTitle) headerTitle.textContent = 'Portal de Autoservicio';
+                if (backBtn) {
+                    backBtn.classList.remove('ion-hide');
+                    backBtn.onclick = function() { window.AppEventBus.publish('NAV::CHANGE', {viewType: 'dashboard'}); };
+                }
+                
+                // Ocultar Sidebar en modo SelfService para aislamiento Premium
+                var splitPane = document.querySelector('ion-split-pane');
+                if (splitPane) {
+                    splitPane.setAttribute('when', 'false');
+                }
+
+                if (container) {
+                    if (typeof window.SelfService_Home_UI !== 'undefined') {
+                        window.SelfService_Home_UI.render(container);
+                    } else {
+                        console.error("SelfService_Home_UI no está disponible.");
+                    }
+                }
+            }
             else if (viewType === 'dataview' && entityKey) {
                 if (headerTitle && window.ENTITY_META && window.ENTITY_META[entityKey]) {
                     headerTitle.textContent = window.ENTITY_META[entityKey].label;
