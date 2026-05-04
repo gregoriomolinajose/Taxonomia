@@ -139,6 +139,44 @@ var FIELD_TEMPLATES = Object.freeze({
 });
 
 var APP_SCHEMAS = {
+  Wizard_Taxonomia: {
+    label: "Diseño Organizacional",
+    plural: "Diseños Organizacionales",
+    icon: "business-outline",
+    formMode: "stepper",
+    form_stepper_stateful: true,
+    metadata: { showInMenu: false, iconName: 'business-outline', label: 'Diseño Organizacional', titleField: 'nombre' },
+    primaryKey: "id_registro",
+    sections: [
+        {
+            title: "Concepto Base",
+            fields: [
+                { name: "nombre", type: "text", label: "Nombre de la Estructura", required: true, width: 12 },
+                { name: "descripcion", type: "textarea", label: "Justificación Estratégica", width: 12 }
+            ]
+        },
+        {
+            title: "Estructura de Negocio",
+            fields: [
+                { name: "rel_unidades", type: "relation", label: "Unidades de Negocio", relationTarget: "Unidad_Negocio", relationType: "M:N", width: 12 },
+                { name: "rel_portafolios", type: "relation", label: "Portafolios Asociados", relationTarget: "Portafolio", relationType: "M:N", width: 12 },
+                { name: "rel_familias", type: "relation", label: "Familias de Productos", relationTarget: "Familia", relationType: "M:N", width: 12 }
+            ]
+        },
+        {
+            title: "Arquitectura Empresarial",
+            fields: [
+                { name: "rel_dominios", type: "relation", label: "Dominios Impactados", relationTarget: "Dominio", relationType: "M:N", width: 12 },
+                { name: "rel_capacidades", type: "relation", label: "Capacidades Asociadas", relationTarget: "Capacidad", relationType: "M:N", width: 12 }
+            ]
+        }
+    ],
+    fields: [
+        ...FIELD_TEMPLATES.SYSTEM_FIELDS(),
+        { name: "id_registro", type: "hidden", primaryKey: true }
+    ]
+  },
+
   Taxonomia: {
     metadata: { prefix: 'TAXO', showInMenu: false, iconName: 'library-outline', color: 'tertiary', label: 'Taxonomías', titleField: 'nombre', idField: 'id_taxonomia', fkField: null },
     primaryKey: "id_taxonomia",
