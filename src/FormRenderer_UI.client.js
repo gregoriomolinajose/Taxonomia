@@ -220,6 +220,17 @@
 
             let rows = {};
 
+            // Mover inicialización del botón Submit antes de inyectarlo en UI_FormStepper (BugFix ReferenceError)
+            const submitBtn = document.createElement('ion-button');
+            submitBtn.setAttribute('shape', 'round');
+            submitBtn.setAttribute('color', 'primary');
+            submitBtn.style.cssText += ' font-family: var(--sys-font-family, inherit) !important;';
+            const iconSave = document.createElement('ion-icon');
+            iconSave.setAttribute('slot', 'start');
+            iconSave.setAttribute('name', 'save-outline');
+            submitBtn.appendChild(iconSave);
+            submitBtn.appendChild(document.createTextNode(' Guardar ' + (window.formatEntityName ? window.formatEntityName(entityName) : entityName)));
+
             if (useStepper) {
                 // S14.1 Arquitectura de FormStepper (Wizard)
                 if (!window.UI_FormStepper) {
@@ -362,15 +373,7 @@
             const btnRow = document.createElement('ion-row');
             
             // Recrear solo el botón Submit Principal
-            const submitBtn = document.createElement('ion-button');
-            submitBtn.setAttribute('shape', 'round');
-            submitBtn.setAttribute('color', 'primary');
-            submitBtn.style.cssText += ' font-family: var(--sys-font-family, inherit) !important;';
-            const iconSave = document.createElement('ion-icon');
-            iconSave.setAttribute('slot', 'start');
-            iconSave.setAttribute('name', 'save-outline');
-            submitBtn.appendChild(iconSave);
-            submitBtn.appendChild(document.createTextNode(' Guardar ' + window.formatEntityName(entityName)));
+            // (El submitBtn ya fue creado arriba para evitar ReferenceError)
 
             if (useStepper && container._btnPrev && container._btnNext && container._stepperRef) {
                 // Layout Híbrido: Acomodar botones de Stepper
