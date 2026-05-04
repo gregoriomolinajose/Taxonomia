@@ -89,6 +89,58 @@
                     }
                 }
             }
+            else if (viewType === 'wizard') {
+                if (headerTitle) headerTitle.textContent = 'Asistente de Diseño Organizacional';
+                if (backBtn) {
+                    backBtn.classList.remove('ion-hide');
+                    backBtn.onclick = function() { window.AppEventBus.publish('NAV::CHANGE', {viewType: 'selfservice'}); };
+                }
+                
+                // Ocultar Sidebar en modo Fullscreen
+                var splitPane = document.querySelector('ion-split-pane');
+                if (splitPane) {
+                    splitPane.setAttribute('when', 'false');
+                }
+
+                if (container) {
+                    window.DOM.clear(container);
+                    
+                    const wrapper = document.createElement('div');
+                    wrapper.id = 'wizard-fullscreen-zone';
+                    wrapper.style.maxWidth = '1000px';
+                    wrapper.style.margin = '2rem auto';
+                    wrapper.style.background = 'var(--ion-card-background)';
+                    wrapper.style.borderRadius = 'var(--rounded-md)';
+                    wrapper.style.boxShadow = 'var(--shadow-floating)';
+                    wrapper.style.padding = 'var(--spacing-6)';
+                    container.appendChild(wrapper);
+
+                    // Escucha de éxito global
+                    let unsubscribe = null;
+                    if (window.AppEventBus) {
+                        unsubscribe = window.AppEventBus.subscribe('FORM::SUBMIT_SUCCESS', (payload) => {
+                            if (payload.entityName === 'Wizard_Taxonomia') {
+                                if (unsubscribe) unsubscribe();
+                                window.AppEventBus.publish('NAV::CHANGE', {viewType: 'selfservice'});
+                                // Alerta Premium
+                                const toast = document.createElement('ion-toast');
+                                toast.message = '¡Taxonomía orquestada con éxito!';
+                                toast.duration = 4000;
+                                toast.color = 'success';
+                                document.body.appendChild(toast);
+                                window.PresentSafe(toast);
+                            }
+                        });
+                    }
+
+                    if (window.FormRenderer_UI) {
+                        // Pasar customContainer -> wrapper
+                        window.FormRenderer_UI.renderForm('Wizard_Taxonomia', null, wrapper);
+                    } else {
+                        console.error("FormRenderer_UI no está disponible.");
+                    }
+                }
+            }
             else if (viewType === 'dataview' && entityKey) {
                 if (headerTitle && window.ENTITY_META && window.ENTITY_META[entityKey]) {
                     headerTitle.textContent = window.ENTITY_META[entityKey].label;
