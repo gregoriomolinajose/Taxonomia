@@ -156,6 +156,13 @@ function API_Universal_Router(action, entityName, payload) {
               payload.forEach(record => {
                   const childId = String(record[pkField]).trim();
                   graphFields.forEach(f => {
+                      // [Bugfix S48.8] Prevenir falsos-positivos de SCD-2 en actualizaciones parciales (celdas vacías)
+                      const hasDirectField = record.hasOwnProperty(f.name);
+                      const hasAliasField = record.hasOwnProperty(f.name.replace('id_', ''));
+                      if (!hasDirectField && !hasAliasField) {
+                          return; // El campo fue omitido en la carga masiva, no tocar la topología existente
+                      }
+
                       const incomingParentId = record[f.name] ? String(record[f.name]).trim() : null;
                       
                       const existingEdges = currentEdges.filter(e => 

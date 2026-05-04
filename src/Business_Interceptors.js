@@ -103,6 +103,11 @@ var Business_Interceptors = (function() {
             }
         }
 
+        let sysEdges = [];
+        if (typeof Engine_DB !== 'undefined') {
+            sysEdges = Engine_DB.list('Sys_Graph_Edges', 'objects').rows || [];
+        }
+
         let edgesBatch = [];
         const sysDate = new Date().toISOString();
 
@@ -138,8 +143,13 @@ var Business_Interceptors = (function() {
                         dbTargets[normName] = targetId;
                     }
                     
-                    // Generar Arista
-                    edgesBatch.push({
+                    // Prevenir duplicidad de aristas
+                    const childId = String(p.id_persona || p._tempId).trim();
+                    const edgeExists = sysEdges.some(e => e.es_version_actual !== false && e.tipo_relacion === config.edgeType && String(e.id_nodo_padre).trim() === targetId && String(e.id_nodo_hijo).trim() === childId);
+                    
+                    if (!edgeExists) {
+                        sysEdges.push({ es_version_actual: true, tipo_relacion: config.edgeType, id_nodo_padre: targetId, id_nodo_hijo: childId }); // Prevenir duplicados intra-batch
+                        edgesBatch.push({
                         id_relacion: "RELA-" + [...Array(8)].map(() => Math.floor(Math.random() * 16).toString(16).toUpperCase()).join(''),
                         id_nodo_padre: targetId,
                         id_nodo_hijo: p.id_persona || p._tempId,
@@ -149,6 +159,7 @@ var Business_Interceptors = (function() {
                         es_version_actual: true,
                         estado: "Activo"
                     });
+                    }
                 });
                 
                 // Borramos el campo plano para que el DB engine no intente insertarlo como columna plana

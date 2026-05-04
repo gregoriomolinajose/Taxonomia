@@ -320,11 +320,19 @@ var Engine_ETL = (function() {
             }
         }
 
-       if (typeof Business_Interceptors !== 'undefined') {
-           Business_Interceptors.apply(entityName, items);
-       }
+
+       // Normalización de Strings (Title Case) para coincidir con catálogos
+       const toTitleCase = (str) => {
+           if (!str || typeof str !== 'string') return str;
+           // Aplica Capitalize (Ej: "DATA ENGINEER, FRONT-END" -> "Data Engineer, Front-End")
+           return str.toLowerCase().replace(/(?:^|[\s,\-\/])\w/g, match => match.toUpperCase());
+       };
 
        items.forEach(payload => {
+           if (payload.roles_asignados) payload.roles_asignados = toTitleCase(payload.roles_asignados);
+           if (payload.equipo) payload.equipo = toTitleCase(payload.equipo);
+           if (payload.cargo) payload.cargo = toTitleCase(payload.cargo);
+           
            // B. Deduplicación Pasiva (Identity Resolution) O(1) Search Mode
                if (uniqueFields.length > 0) {
                    let matchedRow = null;
@@ -354,6 +362,11 @@ var Engine_ETL = (function() {
                    }
                }
        });
+
+       // A. Aplicación de Business Interceptors (S45.1) AFTER deduplication so they use Real IDs
+       if (typeof Business_Interceptors !== 'undefined') {
+           Business_Interceptors.apply(entityName, items);
+       }
 
        // [S44.11] Commit batch creations before closing pipeline - REMOVIDO (Movido a Interceptor)
 
