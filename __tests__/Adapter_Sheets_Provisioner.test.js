@@ -1,4 +1,4 @@
-﻿/**
+/**
  * [E31-S31.7] Adapter_Sheets_Provisioner Unit Tests
  *
  * Tests for pure functions that don't require GAS runtime (Spreadsheet API).
@@ -11,12 +11,12 @@ import { createRequire } from 'module';
 
 const require = createRequire(import.meta.url);
 
-// ─── Mock GAS globals required by Schema_Engine ──────────────────────────────
+// --- Mock GAS globals required by Schema_Engine ------------------------------
 globalThis.SpreadsheetApp = { getActiveSpreadsheet: vi.fn() };
 globalThis.Logger = { log: vi.fn() };
 
 // Load Schema_Engine first (Provisioner depends on APP_SCHEMAS + getAppSchema)
-const schemaEngine = require(path.resolve(process.cwd(), 'src/Schema_Engine.gs'));
+const schemaEngine = require(path.resolve(process.cwd(), 'src/Schema_Engine.js'));
 globalThis.APP_SCHEMAS = schemaEngine.APP_SCHEMAS;
 globalThis.getAppSchema = schemaEngine.getAppSchema;
 
@@ -25,9 +25,9 @@ const {
   _getCanonicalHeaders,
   _getCurrentHeaders,
   PROVISIONER_CONFIG
-} = require(path.resolve(process.cwd(), 'src/Adapter_Sheets_Provisioner.gs'));
+} = require(path.resolve(process.cwd(), 'src/Adapter_Sheets_Provisioner.js'));
 
-// ─── Helpers ─────────────────────────────────────────────────────────────────
+// --- Helpers -----------------------------------------------------------------
 
 function makeSheet(headers = []) {
   // [R1-QR] getValues now respects the row argument:
@@ -50,7 +50,7 @@ function makeSheet(headers = []) {
   };
 }
 
-// ─── Tests ───────────────────────────────────────────────────────────────────
+// --- Tests -------------------------------------------------------------------
 
 describe('Provisioner: _getCanonicalHeaders', () => {
 

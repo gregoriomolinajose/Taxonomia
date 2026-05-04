@@ -38,7 +38,7 @@ describe('Persona CRUD - Blueprint V2 Verification', () => {
         vi.clearAllMocks();
     });
 
-    test('Step 1: Document Schema - Should verify schema existence in Schema_Engine.gs', () => {
+    test('Step 1: Document Schema - Should verify schema existence in Schema_Engine.js', () => {
         const schemaPath = path.resolve(__dirname, '../src/Schema_Engine.js');
         const content = fs.readFileSync(schemaPath, 'utf8');
         

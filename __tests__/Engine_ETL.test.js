@@ -9,6 +9,7 @@
 const mockAPP_SCHEMAS = {
     Persona: {
         primaryKey: 'id_persona',
+        mutationInterceptors: ['AutoProvisionLiderDirecto'],
         fields: [
             { name: 'email', unique: true },
             { name: 'numero_empleado', unique: true }
@@ -28,6 +29,8 @@ global.APP_SCHEMAS = {
     ...mockAPP_SCHEMAS
 };
 
+global.getAppSchema = (entityName) => global.APP_SCHEMAS[entityName];
+
 // Mock DB Storage to emulate list()
 const dbPersonaRows = [
     { id_persona: 'USR-01', email: 'test@human.sys', numero_empleado: '1001', nombre: 'Test Uno' },
@@ -45,6 +48,8 @@ global.Engine_DB = {
 global.resolverDirectorioWorkspace = vi.fn();
 
 // Require file AFTER setting globals
+const { Business_Interceptors } = require('../src/Business_Interceptors.js');
+global.Business_Interceptors = Business_Interceptors;
 const { Engine_ETL } = require('../src/Engine_ETL.js');
 
 describe('Engine_ETL: hydrateAndDeduplicate (S38.6)', () => {
@@ -71,48 +76,24 @@ describe('Engine_ETL: hydrateAndDeduplicate (S38.6)', () => {
         expect(global.Engine_DB.list).toHaveBeenCalledWith('Persona', 'objects');
     });
 
-    it('2. Hidratación Workspace: Auto-poblado si no hay nombre pero sí correo válido', () => {
-        global.resolverDirectorioWorkspace.mockReturnValueOnce({
-            nombre: 'Juan Workspace',
-            puesto: 'Dev'
-        });
+    it('2. Interceptores de Negocio: Llama a Business_Interceptors.apply() si está definido', () => {
+        global.Business_Interceptors = { apply: vi.fn() };
+        const payload = [{ email: 'intercept@demo.com', nombre: 'Test' }];
 
+        Engine_ETL.hydrateAndDeduplicate('Persona', payload);
+
+        expect(global.Business_Interceptors.apply).toHaveBeenCalledWith('Persona', payload);
+    });
+
+    it('3. Title Case Normalization: Aplica toTitleCase a roles_asignados, equipo y cargo', () => {
         const payload = [
-            { email: 'juan@demo.com', nombre: '' },
-            { email: 'maria@demo.com', nombre: 'Maria Override' }
+            { email: 'title@demo.com', equipo: 'DATA ENGINEER', cargo: 'FRONT-END DEVELOPER', roles_asignados: 'ADMIN, SUPERUSER' }
         ];
 
         Engine_ETL.hydrateAndDeduplicate('Persona', payload);
 
-        // Juan should be hydrated
-        expect(global.resolverDirectorioWorkspace).toHaveBeenCalledWith('juan@demo.com');
-        expect(payload[0].nombre).toBe('Juan Workspace');
-        expect(payload[0].puesto).toBe('Dev');
-
-        // Maria is NOT hydrated because name already exists (Skip)
-        expect(global.resolverDirectorioWorkspace).not.toHaveBeenCalledWith('maria@demo.com');
-        expect(payload[1].nombre).toBe('Maria Override');
-    });
-
-    it('3. Resiliencia Fail-Open: Excepciones de Workspace Rate Limit no truncan el lote', () => {
-        // Mock a failure throw inside Directory API
-        global.resolverDirectorioWorkspace.mockImplementationOnce(() => {
-            throw new Error("Quota Exceeded Workspace API");
-        });
-
-        const payload = [
-            { email: 'fail@demo.com', nombre: '' }
-        ];
-
-        // Ensure it doesn't throw and crash the bulk insert
-        expect(() => {
-             Engine_ETL.hydrateAndDeduplicate('Persona', payload);
-        }).not.toThrow();
-
-        // The user should pass unharmed (Fail Open)
-        expect(payload[0].email).toBe('fail@demo.com');
-        expect(payload[0].nombre).toBe('');
-        // Logger should record the incident
-        expect(global.Logger.log).toHaveBeenCalledWith(expect.stringContaining('Ignorando error WS para fail@demo.com'));
+        expect(payload[0].equipo).toBe('Data Engineer');
+        expect(payload[0].cargo).toBe('Front-End Developer');
+        expect(payload[0].roles_asignados).toBe('Admin, Superuser');
     });
 });

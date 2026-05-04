@@ -51,6 +51,8 @@ describe('Performance Stress Regression Test (1K Records)', () => {
   test('Engine_DB.list should cache the result to achieve < 1.5s SLA (Rule 11/12)', () => {
     // First call (Miss)
     Engine_DB.list('Producto');
-    expect(global.CacheService.getScriptCache().put).toHaveBeenCalled();
+    const cacheMock = global.CacheService.getScriptCache();
+    const isCached = cacheMock.put.mock.calls.length > 0 || cacheMock.putAll.mock.calls.length > 0;
+    expect(isCached).toBe(true);
   });
 });

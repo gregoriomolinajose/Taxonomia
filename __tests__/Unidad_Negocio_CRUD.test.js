@@ -56,10 +56,10 @@ describe('Unidad_Negocio CRUD - Verification', () => {
         expect(data.codigo_interno).toBe('CC-999');
     });
 
-    test.skip('Should verify schema existence in Schema_Engine.gs', () => {
+    test.skip('Should verify schema existence in Schema_Engine.js', () => {
         const fs = require('fs');
         const path = require('path');
-        const schemaPath = path.resolve(__dirname, '../src/Schema_Engine.gs');
+        const schemaPath = path.resolve(__dirname, '../src/Schema_Engine.js');
         const content = fs.readFileSync(schemaPath, 'utf8');
         
         expect(content).toContain('Unidad_Negocio:');

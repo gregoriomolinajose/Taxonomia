@@ -106,20 +106,15 @@ describe('Test 1 — Motor de Reconciliación (Orphan Cleanup)', () => {
 
         Engine_DB.orchestrateNestedSave('Portafolio', payload, global.CONFIG);
 
-        // El upsertBatch fue llamado al menos 2 veces:
-        // 1× con los huérfanos a desvincular, 1× con los hijos vigentes.
+        // El upsertBatch fue llamado 1 vez con el batch consolidado (huérfanos + vigentes) gracias a la optimización S42.3
         const allBatchCalls = Adapter_Sheets.upsertBatch.mock.calls;
-        expect(allBatchCalls.length).toBeGreaterThanOrEqual(2);
+        expect(allBatchCalls.length).toBe(1);
 
-        // Identificar la llamada de desvinculación (batch de huérfanos)
-        const orphanBatchCall = allBatchCalls.find(call => {
-            const items = call[1];
-            return items.some(item => item.id_portafolio === '');
-        });
-
-        expect(orphanBatchCall).toBeDefined();
-        const orphanItems = orphanBatchCall[1];
-        const orphan = orphanItems.find(o => o.id_grupo_producto === 'GRUP-3');
+        // Identificar los items enviados en el batch
+        const batchItems = allBatchCalls[0][1];
+        expect(batchItems.length).toBe(3); // 2 vigentes + 1 huérfano
+        
+        const orphan = batchItems.find(o => o.id_grupo_producto === 'GRUP-3');
         expect(orphan).toBeDefined();
         expect(orphan.id_portafolio).toBe(''); // FK limpiada correctamente
     });

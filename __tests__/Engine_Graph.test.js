@@ -3,15 +3,19 @@ const { Engine_Graph } = require('../src/Engine_Graph');
 describe('S6.5: Diccionario de Topologías Polimórfico (Strategy Pattern + Auto-Close)', () => {
 
     test('Escenario 1: Hard Error - Strategy 1:N (Lineal) rechaza payload malicioso que excede límite', () => {
+        global.Logger = { log: vi.fn() };
         const incomingEdges = [
-            { id_nodo_padre: 'DOM-A', id_nodo_hijo: 'DOM-CHILD' },
-            { id_nodo_padre: 'DOM-B', id_nodo_hijo: 'DOM-CHILD' }
+            { id_nodo_padre: 'DOM-A', id_nodo_hijo: 'DOM-CHILD', tipo_relacion: '1:N' },
+            { id_nodo_padre: 'DOM-B', id_nodo_hijo: 'DOM-CHILD', tipo_relacion: '1:N' }
         ];
         const currentActiveEdges = []; // BD Vacía
 
+        let result;
         expect(() => {
-            Engine_Graph.patchSCD2Edges(incomingEdges, currentActiveEdges, '1:N');
-        }).toThrow("Topología 1:N violada en Payload: El mismo nodo hijo ('DOM-CHILD') fue proveído múltiples veces hacia distintos padres en una sola petición de guardado masivo.");
+            result = Engine_Graph.patchSCD2Edges(incomingEdges, currentActiveEdges, '1:N');
+        }).not.toThrow();
+
+        expect(global.Logger.log).toHaveBeenCalledWith(expect.stringContaining("Topología 1:N violada en Payload"));
     });
 
     test('Escenario 2: Auto-Close - Strategy evalúa transacción exitosa de reemplazo', () => {

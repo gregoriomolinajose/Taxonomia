@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 
-const filePath = path.resolve(__dirname, '../src/API_Universal.gs');
+const filePath = path.resolve(__dirname, '../src/API_Universal.js');
 const sourceCode = fs.readFileSync(filePath, 'utf8');
 
 // Global Mocks for Apps Script internal classes
@@ -38,7 +38,7 @@ global.getAppSchema = vi.fn((entityName) => {
 
 // Evaluate the entire file to pull doPost and API_Universal_Router
 // API_Universal uses conditional exports, so we can require it
-const API_Universal = require('../src/API_Universal.gs');
+const API_Universal = require('../src/API_Universal.js');
 
 describe('API_Universal Controller', () => {
 

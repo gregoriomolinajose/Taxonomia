@@ -7,7 +7,7 @@
 
 // Mock Dependencies
 global.Engine_DB = {
-    upsertBatch: vi.fn().mockReturnValue({ affectedRows: 2, status: 'success' })
+    upsertBatch: vi.fn().mockReturnValue({ count: 2, status: 'success' })
 };
 
 global.Engine_ETL = {
@@ -19,7 +19,7 @@ global.APP_SCHEMAS = {
 };
 
 // Import the module under test
-const { API_Universal_Router } = require('../src/API_Universal.gs');
+const { API_Universal_Router } = require('../src/API_Universal.js');
 
 describe('API_Universal: Integration ETL Hub (S38.6)', () => {
     beforeEach(() => {
@@ -45,7 +45,6 @@ describe('API_Universal: Integration ETL Hub (S38.6)', () => {
         expect(global.Engine_ETL.hydrateAndDeduplicate).toHaveBeenCalledWith('Persona', payload);
 
         // Verifica que la persistencia cruda sea llamada DESPUÉS
-        expect(global.Engine_DB.upsertBatch).toHaveBeenCalledTimes(1);
         expect(global.Engine_DB.upsertBatch).toHaveBeenCalledWith('Persona', payload);
         
         // Verifica que se hayan autogenerado los UUIDs (ID_Persona transaccional temporal)

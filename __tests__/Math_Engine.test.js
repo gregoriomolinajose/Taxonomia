@@ -54,7 +54,7 @@ describe('Math_Engine Hierarchical Calculations', () => {
             };
             
             const result = buildPathName(formStateObj, params, []);
-            expect(result).toBe('PATH: Operaciones');
+            expect(result).toBe('Operaciones');
         });
 
         it('should append to parent path recursively', () => {
@@ -67,11 +67,11 @@ describe('Math_Engine Hierarchical Calculations', () => {
                 pkField: 'id_dominio'
             };
             const cache = [
-                { id_dominio: 'D1', path_completo: 'PATH: Operaciones' }
+                { id_dominio: 'D1', path_completo: 'Operaciones' }
             ];
             
             const result = buildPathName(formStateObj, params, cache);
-            expect(result).toBe('PATH: Operaciones > Logística');
+            expect(result).toBe('Operaciones > Logística');
         });
     });
 
