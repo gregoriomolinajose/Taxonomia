@@ -72,10 +72,18 @@
                 const targetPkField = window.Schema_Utils.getPrimaryKey(entityName);
                 localEditId = data[targetPkField] || data['id_registro'] || null;
             }
-            // Construcción del Drawer de la Vista de Formularios (S25.2 Architecture)
-            const modal = document.createElement('div');
-            if (!global.DrawerStackController.push(modal)) {
-                return false; // Abort topological creation (Max Depth Guard triggered)
+            // S49.2: Inversión de Control (IoC) para contenedores custom (ej. Self-Service Fullscreen Wizard)
+            let modal;
+            const isCustomContainer = !!config.customContainer;
+            
+            if (isCustomContainer) {
+                modal = config.customContainer;
+            } else {
+                // Construcción del Drawer de la Vista de Formularios (S25.2 Architecture)
+                modal = document.createElement('div');
+                if (!global.DrawerStackController.push(modal)) {
+                    return false; // Abort topological creation (Max Depth Guard triggered)
+                }
             }
             
             // Inyectar callback opcional (In-line Creation via Bubble Events)
@@ -85,21 +93,22 @@
                 }, { once: true });
             }
 
-            // Header Custom del DrawerS25.2 con soporte para Badge ID congelado
-            // HEADER DESACOPLADO (S37.6)
-            // Se delega al Componente Puro Reutilizable UI_Factory
-            const header = window.UI_Factory.buildDrawerHeader({
-                entityName: entityName,
-                data: data,
-                localEditId: localEditId,
-                onClose: () => {
-                    if (window.AppEventBus) { window.AppEventBus.publish('MODAL::CLOSE_REQUEST'); } 
-                    else if (window._closeTopModal) { window._closeTopModal(); }
-                }
-            });
-            
-            modal.appendChild(header);
-
+            if (!isCustomContainer) {
+                // Header Custom del DrawerS25.2 con soporte para Badge ID congelado
+                // HEADER DESACOPLADO (S37.6)
+                // Se delega al Componente Puro Reutilizable UI_Factory
+                const header = window.UI_Factory.buildDrawerHeader({
+                    entityName: entityName,
+                    data: data,
+                    localEditId: localEditId,
+                    onClose: () => {
+                        if (window.AppEventBus) { window.AppEventBus.publish('MODAL::CLOSE_REQUEST'); } 
+                        else if (window._closeTopModal) { window._closeTopModal(); }
+                    }
+                });
+                
+                modal.appendChild(header);
+            }
 
             // Contenedor interno scrollable del Drawer con soporte nativo para móvil
             const container = document.createElement('ion-content');
@@ -436,6 +445,11 @@
                 window.UI_FormDependencies.attachListeners(modal, fields);
             }
             // ------------------------------------------------------------
+            
+            // S49.2: Forzar recálculo inicial de estados (elimina race condition del setTimeout mágico)
+            if (useStepper && container._stepperRef && container._stepperRef.isStateful) {
+                container._stepperRef.recalculateAllStatuses();
+            }
 
             modal.appendChild(footerContainer);
             // El insertion del Drawer ya fue manejado por DrawerStackController.push
