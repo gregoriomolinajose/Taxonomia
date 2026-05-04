@@ -7,11 +7,10 @@ Desarrollar un portal de autoservicio y un asistente (wizard) dinámico a pantal
 
 **In Scope:**
 - Entidad `Taxonomia` en `Schema_Engine.js` (relaciones N:M).
-- Propiedad de esquema para forzar acción `Create` a "Pantalla Completa" (anular Drawer).
-- Motor dinámico `Wizard_UI` basado en Blueprint CRUD.
-- Tracking de estado por paso (Pendiente, En Proceso, Finalizado) con medidor de progreso.
-- Portal "Home" aislado para clientes de negocio.
-- 9 Pasos configurados en el Wizard:
+- Portal "Home" aislado para clientes de negocio (`SelfService_Home_UI`).
+- Invocación directa del flujo de Alta de Taxonomía desde el portal de clientes (Pantalla Completa) aislándolo del `FormRenderer_UI` administrativo.
+- Extensión del componente existente `UI_FormStepper.client.js` para soportar estados de sección (Pendiente, En Proceso, Finalizado) sin duplicar código.
+- 9 Pasos configurados en la entidad Taxonomía:
   1. Directorio de TI
   2. Directorio de Negocio
   3. Directorio de Producto
@@ -23,17 +22,18 @@ Desarrollar un portal de autoservicio y un asistente (wizard) dinámico a pantal
   9. Alta de Capacidades
 
 **Out of Scope:**
-- Alterar la lógica existente del Blueprint CRUD general para otras entidades (deben seguir usando Drawers).
+- Alterar la lógica existente del Blueprint CRUD general para otras entidades (`FormRenderer_UI.client.js` no se toca).
+- Creación de un nuevo motor de UI secuencial (reutilizaremos `UI_FormStepper.client.js`).
 - Rediseño de componentes atómicos internos (los subgrids y selectores deben usar `UI_Factory` actual).
 
 ## Planned Stories (Draft)
-- **S49.1:** Configuración de Entidad Taxonomía en Schema_Engine y soporte Fullscreen Create.
-- **S49.2:** Creación del Home Self-Service aislado para Clientes.
-- **S49.3:** Motor Base del Wizard Dinámico y medidor de progreso (UI State).
-- **S49.4:** Integración de los pasos de Directorios y Asociaciones (TI, Negocio, Producto, Portafolios, Productos, Equipos, Colaboradores).
-- **S49.5:** Integración de los pasos de Altas estructuradas (Dominios y Capacidades) y testing end-to-end.
+- **S49.1:** Configuración de Entidad Taxonomía en `Schema_Engine.js` con todas sus relaciones N:M.
+- **S49.2:** Extensión del `UI_FormStepper` (Modo Stateful) para permitir tracking de estados de campos sin bloquear saltos aleatorios.
+- **S49.3:** Creación del Home Self-Service aislado para Clientes (`SelfService_Home_UI`) y enrutador.
+- **S49.4:** Ensamblaje del `<ion-modal>` Fullscreen en el Self-Service instanciando el Stepper con los pasos de Directorios y Asociaciones.
+- **S49.5:** Integración final de Altas estructuradas (Dominios/Capacidades) y End-to-End Testing de N:M.
 
 ## Done Criteria
-- [ ] La vista de Creación de Taxonomía se abre en pantalla completa.
-- [ ] El usuario puede navegar libremente por los 9 pasos y su progreso se refleja visualmente (Pendiente, En Proceso, Finalizado).
-- [ ] Al finalizar, se crean correctamente las relaciones N:M entre Taxonomía y todas las entidades seleccionadas.
+- [ ] La vista de Creación de Taxonomía se abre en pantalla completa desde el Portal Self-Service.
+- [ ] El usuario puede navegar libremente por los 9 pasos y su progreso se refleja visualmente (Pendiente, En Proceso, Finalizado) en los íconos del Stepper.
+- [ ] Al finalizar, se crean correctamente las relaciones N:M entre Taxonomía y todas las entidades seleccionadas de forma idempotente.
