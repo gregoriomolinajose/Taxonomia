@@ -599,11 +599,19 @@
                  // [E31-S31.5] Reveal Sistema (SUPER_ADMIN only)
                  var btnSistema = document.getElementById('popover-btn-sistema');
                  if (btnSistema) btnSistema.classList.remove('ion-hide');
-              } else {
-                 // Securing Governance Node Visibility 
-                 var btnGov = document.getElementById('popover-btn-governance');
-                 if (btnGov) btnGov.style.display = 'none';
                  
+                 // Revelar opciones administrativas
+                 var btnGov = document.getElementById('popover-btn-governance');
+                 if (btnGov) {
+                     btnGov.classList.remove('ion-hide');
+                     btnGov.style.display = '';
+                 }
+                 var btnConfig = document.getElementById('popover-btn-configuracion');
+                 if (btnConfig) {
+                     btnConfig.classList.remove('ion-hide');
+                     btnConfig.style.display = '';
+                 }
+              } else {
                  if (ctx.ownerOf && ctx.ownerOf.length > 0) {
                    rolePop.innerText = 'Rol: Propietario';
                    var cOwner = bMap.OWNER || '#2dd36f';

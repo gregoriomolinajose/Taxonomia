@@ -136,7 +136,7 @@ function getEquiposOptions() { return getGenericOptions('Equipo', 'id_equipo', '
  * Devuelve [{value: id_rol, label: nombre_rol}] desde DB_Sys_Roles.
  * Requerido para Bindings de Seguridad ABAC.
  */
-function getSysRolesOptions() { return getGenericOptions('Sys_Roles', 'id_rol', 'nombre_rol'); }
+function getSysRolesOptions() { return getGenericOptions('Sys_Roles', 'id_rol', 'nombre'); }
 
 /**
  * getGenericOptions

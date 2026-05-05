@@ -151,9 +151,16 @@
         can: function(action, entityName, targetId) {
             if (action === 'read') return true;
             
+            // S49.14: Bloqueo estricto Zero-Trust visual si no tiene rol. 
+            // Previene el leak de Graceful Degradation para usuarios sin rol asignado.
+            if (this.context.hasRole === false) return false;
+            
             const permissions = this.context.permissions || {};
             // Graceful Degradation si no hay regla en matriz (igual que el backend)
-            if (!permissions.hasOwnProperty(entityName)) return true;
+            if (!permissions.hasOwnProperty(entityName)) {
+                if (entityName.startsWith('Sys_')) return false;
+                return true;
+            }
             
             const nivel = permissions[entityName] || "NONE";
             
@@ -256,12 +263,12 @@
                   <ion-label>Mi Perfil</ion-label>
                 </ion-item>
                 
-                <ion-item button data-dismiss="#profile-popover" data-action="nav:designkit">
+                <ion-item button id="popover-btn-configuracion" class="ion-hide" data-dismiss="#profile-popover" data-action="nav:designkit">
                   <ion-icon name="settings-outline" slot="start"></ion-icon>
                   <ion-label>Configuración</ion-label>
                 </ion-item>
                 
-                <ion-item button id="popover-btn-governance" data-dismiss="#profile-popover" data-action="nav:governance">
+                <ion-item button id="popover-btn-governance" class="ion-hide" data-dismiss="#profile-popover" data-action="nav:governance">
                   <ion-icon name="shield-checkmark-outline" slot="start"></ion-icon>
                   <ion-label>Seguridad</ion-label>
                 </ion-item>

@@ -333,26 +333,32 @@ window.UI_SubgridBuilder = {
             const mContent = document.createElement('ion-content');
             const mList = document.createElement('ion-list');
             
-            const itemCreate = document.createElement('ion-item');
-            itemCreate.setAttribute('button', 'true');
-            itemCreate.id = 'btn-create-new';
-            itemCreate.setAttribute('lines', 'full');
-            itemCreate.setAttribute('color', 'light');
+            const targetEntityForCreate = field.targetEntity;
+            const canCreateTarget = !window.ABAC || window.ABAC.can('create', targetEntityForCreate);
             
-            const iconCreate = document.createElement('ion-icon');
-            iconCreate.setAttribute('name', 'add-circle-outline');
-            iconCreate.setAttribute('slot', 'start');
-            iconCreate.setAttribute('color', 'primary');
-            itemCreate.appendChild(iconCreate);
-            
-            const labelCreate = document.createElement('ion-label');
-            labelCreate.setAttribute('color', 'primary');
-            const strongCreate = document.createElement('strong');
-            strongCreate.textContent = `+ Crear Nuevo ${field.label.replace(/s de /i, ' de ').replace(/s$/i, '').replace(/Grupos/i, 'Grupo')}`;
-            labelCreate.appendChild(strongCreate);
-            itemCreate.appendChild(labelCreate);
-            
-            mList.appendChild(itemCreate);
+            let itemCreate;
+            if (canCreateTarget) {
+                itemCreate = document.createElement('ion-item');
+                itemCreate.setAttribute('button', 'true');
+                itemCreate.id = 'btn-create-new';
+                itemCreate.setAttribute('lines', 'full');
+                itemCreate.setAttribute('color', 'light');
+                
+                const iconCreate = document.createElement('ion-icon');
+                iconCreate.setAttribute('name', 'add-circle-outline');
+                iconCreate.setAttribute('slot', 'start');
+                iconCreate.setAttribute('color', 'primary');
+                itemCreate.appendChild(iconCreate);
+                
+                const labelCreate = document.createElement('ion-label');
+                labelCreate.setAttribute('color', 'primary');
+                const strongCreate = document.createElement('strong');
+                strongCreate.textContent = `+ Crear Nuevo ${field.label.replace(/s de /i, ' de ').replace(/s$/i, '').replace(/Grupos/i, 'Grupo')}`;
+                labelCreate.appendChild(strongCreate);
+                itemCreate.appendChild(labelCreate);
+                
+                mList.appendChild(itemCreate);
+            }
             
             const divider = document.createElement('ion-item-divider');
             const divLabel = document.createElement('ion-label');
@@ -454,65 +460,67 @@ window.UI_SubgridBuilder = {
                 modal.dismiss().then(() => modal.remove());
             });
 
-            itemCreate.addEventListener('click', async () => {
-                // In-Line Creation via Modal Stack
-                // Desmontamos el Subgrid Picker
-                modal.dismiss().then(() => modal.remove());
-                
-                const onSubFormSuccess = (newRecordResp, submittedPayload) => {
-                    if (newRecordResp && newRecordResp.status === 'success') {
-                        setOptimisticLock();
-                        // Soporte para distintas firmas de payload (según controlador de GAS)
-                        const itemPayload = (newRecordResp.data && newRecordResp.data.data) ? newRecordResp.data.data : (newRecordResp.data || newRecordResp);
-                        
-                        // Extraemos el PK de la respuesta del servidor u originamos del payload devuelto
-                        const newId = newRecordResp.pkValue || itemPayload[childPK] || itemPayload['id_registro'];
-                        
-                        // RQ1: Fallback Defensivo con Invocación Ontológica
-                        // La representación visual se mapea prioritariamente según el schema del framework
-                        const sourceName = submittedPayload || itemPayload;
-                        const schemaMeta = window.APP_SCHEMAS && window.APP_SCHEMAS[field.targetEntity];
-                        const titleKey = schemaMeta ? (schemaMeta.titleField || (schemaMeta.metadata && schemaMeta.metadata.titleField) || 'nombre') : 'nombre';
-                        
-                        const newName = sourceName[titleKey] || sourceName.nombre || sourceName.nombre_producto || newId;
+            if (itemCreate) {
+                itemCreate.addEventListener('click', async () => {
+                    // In-Line Creation via Modal Stack
+                    // Desmontamos el Subgrid Picker
+                    modal.dismiss().then(() => modal.remove());
+                    
+                    const onSubFormSuccess = (newRecordResp, submittedPayload) => {
+                        if (newRecordResp && newRecordResp.status === 'success') {
+                            setOptimisticLock();
+                            // Soporte para distintas firmas de payload (según controlador de GAS)
+                            const itemPayload = (newRecordResp.data && newRecordResp.data.data) ? newRecordResp.data.data : (newRecordResp.data || newRecordResp);
+                            
+                            // Extraemos el PK de la respuesta del servidor u originamos del payload devuelto
+                            const newId = newRecordResp.pkValue || itemPayload[childPK] || itemPayload['id_registro'];
+                            
+                            // RQ1: Fallback Defensivo con Invocación Ontológica
+                            // La representación visual se mapea prioritariamente según el schema del framework
+                            const sourceName = submittedPayload || itemPayload;
+                            const schemaMeta = window.APP_SCHEMAS && window.APP_SCHEMAS[field.targetEntity];
+                            const titleKey = schemaMeta ? (schemaMeta.titleField || (schemaMeta.metadata && schemaMeta.metadata.titleField) || 'nombre') : 'nombre';
+                            
+                            const newName = sourceName[titleKey] || sourceName.nombre || sourceName.nombre_producto || newId;
 
-                        if (newId) {
-                            childRecords.push({
-                                [childPK]: newId,
-                                nombre: newName,
-                                estado: 'Activo'
-                            });
-                            _refreshList();
+                            if (newId) {
+                                childRecords.push({
+                                    [childPK]: newId,
+                                    nombre: newName,
+                                    estado: 'Activo'
+                                });
+                                _refreshList();
+                            }
+                        }
+                    };
+                    
+                    // [S29.8] Determinar Foreign Key recíproca hacia el Padre
+                    let initialData = {};
+                    const schemaMeta = window.APP_SCHEMAS && window.APP_SCHEMAS[field.targetEntity];
+                    if (schemaMeta && schemaMeta.fields) {
+                        const reciprocalField = schemaMeta.fields.find(f => 
+                            f.type === 'relation' && 
+                            f.targetEntity === entityName && // Apunta de vuelta al Padre
+                            f.relationType !== field.relationType // Tiene el tipo de arista opuesto
+                        );
+                        if (reciprocalField) {
+                            const mockToken = (window.UI_CONSTANTS && window.UI_CONSTANTS.MOCK_FK_TOKEN) ? window.UI_CONSTANTS.MOCK_FK_TOKEN : '_NEW_PARENT_';
+                            initialData[reciprocalField.name] = config.parentEditId || mockToken;
                         }
                     }
-                };
-                
-                // [S29.8] Determinar Foreign Key recíproca hacia el Padre
-                let initialData = {};
-                const schemaMeta = window.APP_SCHEMAS && window.APP_SCHEMAS[field.targetEntity];
-                if (schemaMeta && schemaMeta.fields) {
-                    const reciprocalField = schemaMeta.fields.find(f => 
-                        f.type === 'relation' && 
-                        f.targetEntity === entityName && // Apunta de vuelta al Padre
-                        f.relationType !== field.relationType // Tiene el tipo de arista opuesto
-                    );
-                    if (reciprocalField) {
-                        const mockToken = (window.UI_CONSTANTS && window.UI_CONSTANTS.MOCK_FK_TOKEN) ? window.UI_CONSTANTS.MOCK_FK_TOKEN : '_NEW_PARENT_';
-                        initialData[reciprocalField.name] = config.parentEditId || mockToken;
+                    
+                    // Emisión Invertida (Pub/Sub Topológico) hacia el EventBus para no llamar a globals
+                    if (localEventBus && typeof localEventBus.publish === 'function') {
+                        localEventBus.publish('UI::REQUEST_SUBFORM_OPEN', {
+                            targetEntity: field.targetEntity,
+                            initialData: initialData,
+                            onSuccess: onSubFormSuccess
+                        });
+                    } else {
+                        console.warn(`[UI_SubgridBuilder] No EventBus provided. Cannot open subform for ${field.targetEntity}`);
                     }
-                }
-                
-                // Emisión Invertida (Pub/Sub Topológico) hacia el EventBus para no llamar a globals
-                if (localEventBus && typeof localEventBus.publish === 'function') {
-                    localEventBus.publish('UI::REQUEST_SUBFORM_OPEN', {
-                        targetEntity: field.targetEntity,
-                        initialData: initialData,
-                        onSuccess: onSubFormSuccess
-                    });
-                } else {
-                    console.warn(`[UI_SubgridBuilder] No EventBus provided. Cannot open subform for ${field.targetEntity}`);
-                }
-            });
+                });
+            }
         });
 
         // Aseguramos que antes de retornar el modal esté instanciado en el layout (esto sigue sin cambiar la refactorización purista)

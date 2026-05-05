@@ -138,7 +138,7 @@ window.UI_FormUtils = (function () {
             btns.forEach(btn => {
                 if (btn.textContent.includes('Guardar') || btn.querySelector('ion-icon[name="save-outline"]')) {
                     btn.setAttribute('disabled', 'true');
-                    btn.style.opacity = '0.4';
+                    btn.style.display = 'none'; // S49.13: Ocultamiento estricto Zero-Trust visual
                     btn.title = "No tienes permisos de edición en este nodo";
                 }
             });

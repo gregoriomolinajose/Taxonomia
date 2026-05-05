@@ -21,7 +21,7 @@ window.SelfService_Home_UI = {
                     flex-direction: column;
                     align-items: center;
                     justify-content: center;
-                    min-height: 100%;
+                    min-height: calc(100vh - 56px);
                     width: 100%;
                     background-color: #fafbfc;
                     position: relative;

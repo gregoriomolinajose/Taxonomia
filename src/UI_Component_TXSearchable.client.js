@@ -506,15 +506,20 @@ class TXSearchable extends HTMLElement {
     }
 
     _getSharedOverlayHtml(isMob) {
+        const targetEntity = this.getAttribute('target-entity') || this._entityName || '';
+        const canCreate = !window.ABAC || window.ABAC.can('create', targetEntity);
+        
         return `
             <ion-header class="ion-no-border" style="border-top-left-radius: var(--border-radius, 16px); border-top-right-radius: var(--border-radius, 16px); overflow: hidden;">
                 ${isMob ? `
                 <ion-toolbar color="primary">
                     <ion-title style="color: var(--ion-color-primary-contrast, #ffffff); font-weight: 600;">Buscar ${this._entityName}</ion-title>
                     <ion-buttons slot="end">
+                        ${canCreate ? `
                         <ion-button id="${this._componentId}-btn-create-mob" style="font-weight: 600;">
                             <ion-icon slot="start" name="add-outline"></ion-icon> CREAR
                         </ion-button>
+                        ` : ''}
                         <ion-button id="${this._componentId}-btn-close">
                             <ion-icon slot="icon-only" name="close" style="color: var(--ion-color-primary-contrast, #ffffff); font-size: 24px;"></ion-icon>
                         </ion-button>
@@ -536,7 +541,7 @@ class TXSearchable extends HTMLElement {
                 </div>
                 <ion-list id="${this._componentId}-list"></ion-list>
                 
-                ${!isMob ? `
+                ${(!isMob && canCreate) ? `
                 <div style="border-top: 1px solid var(--color-border, #e0e0e0);">
                     <ion-item id="${this._componentId}-btn-create-desk" button lines="none" detail="false" style="--background: transparent; margin: 0;">
                         <ion-icon slot="start" name="add-outline" style="color: var(--ion-color-primary, #3880ff);"></ion-icon>
@@ -550,6 +555,9 @@ class TXSearchable extends HTMLElement {
 
     // S44.6: Refactor UX Búsqueda Inline
     _getInlineOverlayTemplate() {
+        const targetEntity = this.getAttribute('target-entity') || this._entityName || '';
+        const canCreate = !window.ABAC || window.ABAC.can('create', targetEntity);
+
         return `
             <div id="${this._componentId}-inline-list-container" data-tx-state="hidden" style="flex-direction: column; margin-bottom: 12px; border: 1px solid var(--color-border, #cccccc); border-radius: 8px; overflow: hidden; background: var(--ion-background-color, #ffffff);">
                 <!-- HEADER / CLOSER -->
@@ -573,12 +581,14 @@ class TXSearchable extends HTMLElement {
                 <!-- LIST -->
                 <ion-list id="${this._componentId}-inline-list" style="padding-top: 0; margin-bottom: 0; max-height: 280px; overflow-y: auto;"></ion-list>
                 <!-- ACTION CREAR -->
+                ${canCreate ? `
                 <div style="border-top: 1px solid var(--color-border, #e0e0e0);">
                     <ion-item id="${this._componentId}-btn-create-inline" button lines="none" detail="false" style="--background: transparent; margin: 0;">
                         <ion-icon slot="start" name="add-outline" style="color: var(--ion-color-primary, #3880ff);"></ion-icon>
                         <ion-label style="color: var(--ion-color-primary, #3880ff); font-weight: 600;">Crear ${this._entityName}</ion-label>
                     </ion-item>
                 </div>
+                ` : ''}
             </div>
         `;
     }
@@ -616,7 +626,7 @@ class TXSearchable extends HTMLElement {
                     <h3 ${textId ? `id="${textId}"` : ''} style="font-size: 13px; font-weight: bold; margin: 0; padding: 0; line-height: 1.2;">${title}</h3>
                     <p ${subId ? `id="${subId}"` : ''} style="font-size: 11px; color: var(--ion-color-medium, #92949c); margin: 0; padding: 0; line-height: 1.2;">${subtitle}</p>
                 </ion-label>
-                <ion-button ${btnId ? `id="${btnId}"` : ''} slot="end" fill="clear" color="medium" size="small" style="margin: 0;">
+                <ion-button ${btnId ? `id="${btnId}"` : ''} slot="end" fill="clear" color="medium" size="small" style="margin: 0; display: ${this._isDisabled ? 'none' : 'block'};">
                     <ion-icon slot="icon-only" name="close-outline"></ion-icon>
                 </ion-button>
             </ion-item>
@@ -871,7 +881,7 @@ class TXSearchable extends HTMLElement {
                     if (phNode) phNode.setAttribute('data-tx-state', 'hidden');
                     if (filledHeader) filledHeader.setAttribute('data-tx-state', 'flex');
                     if (filledNode) filledNode.setAttribute('data-tx-state', 'block');
-                    if (btnClear) btnClear.setAttribute('data-tx-state', 'block');
+                    if (btnClear) btnClear.setAttribute('data-tx-state', this._isDisabled ? 'hidden' : 'block');
                     
                     if (textNode) {
                         const rawId = this._selectedState;
