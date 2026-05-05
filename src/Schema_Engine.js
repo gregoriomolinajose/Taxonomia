@@ -155,13 +155,13 @@ var APP_SCHEMAS = {
         { name: "descripcion", type: "textarea", label: "Justificación Estratégica", section: "Concepto Base", width: 12 },
         
         // Paso 2: Estructura de Negocio
-        { name: "rel_unidades", type: "relation", label: "Unidades de Negocio", relationTarget: "Unidad_Negocio", uiBehavior: "subgrid", section: "Estructura de Negocio", topologyCardinality: "N:M", width: 12 },
-        { name: "rel_portafolios", type: "relation", label: "Portafolios Asociados", relationTarget: "Portafolio", uiBehavior: "subgrid", section: "Estructura de Negocio", topologyCardinality: "N:M", width: 12 },
-        { name: "rel_familias", type: "relation", label: "Familias de Productos", relationTarget: "Familia", uiBehavior: "subgrid", section: "Estructura de Negocio", topologyCardinality: "N:M", width: 12 },
+        { name: "rel_unidades", type: "relation", label: "Unidades de Negocio", targetEntity: "Unidad_Negocio", valueField: "id_unidad_negocio", labelField: "nombre", uiComponent: "searchable_multi", section: "Estructura de Negocio", topologyCardinality: "N:M", width: 12 },
+        { name: "rel_portafolios", type: "relation", label: "Portafolios Asociados", targetEntity: "Portafolio", valueField: "id_portafolio", labelField: "nombre", uiComponent: "searchable_multi", section: "Estructura de Negocio", topologyCardinality: "N:M", width: 12 },
+        { name: "rel_familias", type: "relation", label: "Familias de Productos", targetEntity: "Grupo_Productos", valueField: "id_grupo_producto", labelField: "nombre", uiComponent: "searchable_multi", section: "Estructura de Negocio", topologyCardinality: "N:M", width: 12 },
         
         // Paso 3: Arquitectura Empresarial
-        { name: "rel_dominios", type: "relation", label: "Dominios Impactados", relationTarget: "Dominio", uiBehavior: "subgrid", section: "Arquitectura Empresarial", topologyCardinality: "N:M", width: 12 },
-        { name: "rel_capacidades", type: "relation", label: "Capacidades Asociadas", relationTarget: "Capacidad", uiBehavior: "subgrid", section: "Arquitectura Empresarial", topologyCardinality: "N:M", width: 12 }
+        { name: "rel_dominios", type: "relation", label: "Dominios Impactados", targetEntity: "Dominio", valueField: "id_dominio", labelField: "nombre", uiComponent: "searchable_multi", section: "Arquitectura Empresarial", topologyCardinality: "N:M", width: 12 },
+        { name: "rel_capacidades", type: "relation", label: "Capacidades Asociadas", targetEntity: "Capacidad", valueField: "id_capacidad", labelField: "nombre", uiComponent: "searchable_multi", section: "Arquitectura Empresarial", topologyCardinality: "N:M", width: 12 }
     ]
   },
 
