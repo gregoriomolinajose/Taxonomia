@@ -139,39 +139,9 @@ var FIELD_TEMPLATES = Object.freeze({
 });
 
 var APP_SCHEMAS = {
-  Wizard_Taxonomia: {
-    label: "Diseño Organizacional",
-    plural: "Diseños Organizacionales",
-    icon: "business-outline",
+  Taxonomia: {
     formMode: "stepper",
     form_stepper_stateful: true,
-    metadata: { showInMenu: false, iconName: 'business-outline', label: 'Diseño Organizacional', titleField: 'nombre' },
-    primaryKey: "id_registro",
-    fields: [
-        { name: "id_registro", type: "hidden", primaryKey: true },
-        
-        // Paso 1: Taxonomía
-        { name: "nombre", type: "text", label: "Nombre de la Taxonomía", required: true, section: "Taxonomía", width: 12 },
-        { name: "descripcion", type: "textarea", label: "Descripción", section: "Taxonomía", width: 12 },
-        
-        // Paso 2: Unidad de Negocio
-        { name: "rel_unidades", type: "relation", label: "Unidades de Negocio", targetEntity: "Unidad_Negocio", valueField: "id_unidad_negocio", labelField: "nombre", uiComponent: "searchable_multi", section: "Unidad de Negocio", topologyCardinality: "N:M", width: 12 },
-        
-        // Paso 3: Portafolios Asociados
-        { name: "rel_portafolios", type: "relation", label: "Portafolios Asociados", targetEntity: "Portafolio", valueField: "id_portafolio", labelField: "nombre", uiComponent: "searchable_multi", section: "Portafolios Asociados", topologyCardinality: "N:M", width: 12 },
-        
-        // Paso 4: Grupo de Productos
-        { name: "rel_familias", type: "relation", label: "Grupos de Productos", targetEntity: "Grupo_Productos", valueField: "id_grupo_producto", labelField: "nombre", uiComponent: "searchable_multi", section: "Grupo de Productos", topologyCardinality: "N:M", width: 12 },
-        
-        // Paso 5: Equipos
-        { name: "rel_equipos", type: "relation", label: "Equipos", targetEntity: "Equipo", valueField: "id_equipo", labelField: "nombre", uiComponent: "searchable_multi", section: "Equipos", topologyCardinality: "N:M", width: 12 },
-        
-        // Paso 6: Personas
-        { name: "rel_personas", type: "relation", label: "Personas", targetEntity: "Persona", valueField: "id_registro", labelField: "nombre", uiComponent: "searchable_multi", section: "Personas", topologyCardinality: "N:M", width: 12 }
-    ]
-  },
-
-  Taxonomia: {
     metadata: { prefix: 'TAXO', showInMenu: false, iconName: 'library-outline', color: 'tertiary', label: 'Taxonomías', titleField: 'nombre', idField: 'id_taxonomia', fkField: null },
     primaryKey: "id_taxonomia",
     titleField: "nombre",

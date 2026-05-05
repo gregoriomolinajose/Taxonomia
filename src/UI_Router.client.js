@@ -293,7 +293,7 @@
                     // Escucha de éxito global
                     if (window.AppEventBus) {
                         wizardUnsubscribe = window.AppEventBus.subscribe('FORM::SUBMIT_SUCCESS', (payload) => {
-                            if (payload.entityName === 'Wizard_Taxonomia') {
+                            if (payload.entityName === 'Taxonomia') {
                                 if (wizardUnsubscribe) wizardUnsubscribe();
                                 window.AppEventBus.publish('NAV::CHANGE', {viewType: 'selfservice'});
                                 // Alerta Premium
@@ -308,7 +308,7 @@
                     }
 
                     if (typeof window.renderForm === 'function') {
-                        window.renderForm('Wizard_Taxonomia', null, null, { 
+                        window.renderForm('Taxonomia', null, null, { 
                             customContainer: colRight,
                             customSidebarSteps: localSidebarList 
                         })

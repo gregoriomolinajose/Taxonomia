@@ -231,7 +231,7 @@
             submitBtn.appendChild(iconSave);
             
             let btnText = ' Guardar ' + (window.formatEntityName ? window.formatEntityName(entityName) : entityName);
-            if (entityName === 'Wizard_Taxonomia') btnText = 'Guardar Taxonomía';
+            if (entityName === 'Taxonomia') btnText = 'Guardar Taxonomía';
             submitBtn.appendChild(document.createTextNode(btnText));
 
             if (useStepper) {
