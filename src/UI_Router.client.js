@@ -199,6 +199,33 @@
                         #wizard-back-btn { top: var(--spacing-2) !important; left: var(--spacing-1) !important; }
                         #wizard-col-left { border-right: none; border-bottom: 1px solid var(--ion-color-step-150); }
 
+                        /* Footer Visibility Fix */
+                        #wizard-col-right ion-content {
+                            position: absolute !important;
+                            top: 0;
+                            left: 0;
+                            right: 0;
+                            bottom: 80px !important; /* Leave space for footer */
+                        }
+                        #wizard-col-right .drawer-footer {
+                            position: absolute;
+                            bottom: 0;
+                            left: 0;
+                            width: 100%;
+                            height: 80px;
+                            z-index: 100;
+                            background: var(--ion-card-background);
+                            border-top: 1px solid var(--ion-color-step-100);
+                            padding: 0 var(--spacing-4);
+                            display: flex;
+                            align-items: center;
+                            justify-content: center; /* Center grid inside */
+                        }
+                        #wizard-col-right .drawer-footer ion-grid {
+                            width: 100%;
+                            padding: 0;
+                        }
+
                         /* Tablet & Desktop */
                         @media (min-width: 768px) {
                             #wizard-fullscreen-zone { overflow-y: hidden; }
@@ -242,6 +269,7 @@
                     colLeft.appendChild(localSidebarList);
                     
                     const colRight = document.createElement('ion-col');
+                    colRight.id = 'wizard-col-right';
                     colRight.setAttribute('size', '12');
                     colRight.setAttribute('size-md', '8');
                     colRight.setAttribute('size-lg', '9');
