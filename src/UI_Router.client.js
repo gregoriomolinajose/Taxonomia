@@ -152,7 +152,7 @@
                     backBtn.fill = 'clear';
                     backBtn.color = 'medium';
                     backBtn.style.position = 'absolute';
-                    backBtn.innerHTML = '<ion-icon slot="start" name="arrow-back-outline"></ion-icon> Cancelar';
+                    backBtn.innerHTML = '<ion-icon slot="icon-only" name="close-outline"></ion-icon>';
                     backBtn.onclick = () => {
                         window.AppEventBus.publish('NAV::CHANGE', {viewType: 'selfservice'});
                     };
@@ -160,11 +160,12 @@
                     
                     const title = document.createElement('h1');
                     title.textContent = 'Orquestador de Taxonomía E2E';
-                    title.style.fontSize = 'var(--sys-font-h1)';
-                    title.style.color = 'var(--ion-text-color)';
+                    title.style.fontSize = 'var(--sys-font-h2, 1.5rem)';
+                    title.style.color = 'var(--ion-color-dark)';
+                    title.style.fontFamily = 'var(--sys-font-heading, system-ui, -apple-system, sans-serif)';
                     title.style.fontWeight = '700';
                     title.style.letterSpacing = '-0.02em';
-                    title.style.margin = '0 0 var(--spacing-2) 0';
+                    title.style.margin = '0 0 var(--spacing-1) 0';
                     
                     const subtitle = document.createElement('p');
                     subtitle.textContent = 'Diseñe la arquitectura de su organización en tres pasos estratégicos.';
@@ -195,9 +196,14 @@
                             --padding-end: var(--spacing-3);
                         }
                         #local-sidebar-list ion-label { white-space: nowrap !important; }
-                        #wizard-header-zone { padding-top: var(--spacing-10) !important; }
-                        #wizard-back-btn { top: var(--spacing-2) !important; left: var(--spacing-1) !important; }
-                        #wizard-col-left { border-right: none; border-bottom: 1px solid var(--ion-color-step-150); }
+                        #wizard-header-zone { 
+                            padding: var(--spacing-4) var(--spacing-5) !important; 
+                            font-family: var(--sys-font-family, system-ui, -apple-system, sans-serif); 
+                            border-bottom: 1px solid var(--color-border, #e0e0e0);
+                            background: var(--color-bg-body, #ffffff);
+                        }
+                        #wizard-back-btn { top: var(--spacing-4) !important; right: var(--spacing-4) !important; left: auto !important; }
+                        #wizard-col-left { border-right: none; border-bottom: 1px solid var(--ion-color-step-150); background: var(--color-bg-body, #ffffff); }
 
                         /* Footer Visibility Fix */
                         #wizard-col-right ion-content {
@@ -206,6 +212,7 @@
                             left: 0;
                             right: 0;
                             bottom: 80px !important; /* Leave space for footer */
+                            background: var(--color-bg-body, #ffffff) !important;
                         }
                         #wizard-col-right .drawer-footer {
                             position: absolute;
@@ -214,8 +221,9 @@
                             width: 100%;
                             height: 80px;
                             z-index: 100;
-                            background: var(--ion-card-background);
-                            border-top: 1px solid var(--ion-color-step-100);
+                            background: var(--color-bg-body, #ffffff);
+                            border-top: 1px solid var(--color-border, #e0e0e0);
+                            box-shadow: var(--shadow-top, 0 -4px 16px rgba(0,0,0,0.05));
                             padding: 0 var(--spacing-4);
                             display: flex;
                             align-items: center;
@@ -228,13 +236,11 @@
 
                         /* Tablet & Desktop */
                         @media (min-width: 768px) {
-                            #wizard-fullscreen-zone { overflow-y: hidden; }
-                            #local-sidebar-list { flex-direction: column; overflow-x: visible; padding-bottom: 0; }
+                            #wizard-fullscreen-zone { overflow-y: hidden; background: var(--color-bg-body, #ffffff); }
+                            #local-sidebar-list { flex-direction: column; overflow-x: visible; padding-bottom: 0; margin-top: var(--spacing-4); }
                             #local-sidebar-list ion-item { width: 100%; margin: var(--spacing-1) 0; }
                             #local-sidebar-list ion-label { white-space: normal !important; }
-                            #wizard-header-zone { padding-top: var(--spacing-5) !important; }
-                            #wizard-back-btn { top: var(--spacing-5) !important; left: var(--spacing-4) !important; }
-                            #wizard-col-left { border-right: 1px solid var(--ion-color-step-150) !important; border-bottom: none !important; }
+                            #wizard-col-left { border-right: 1px solid var(--color-border, #e0e0e0) !important; border-bottom: none !important; }
                         }
                         
                         /* Responsive Typography fixes for mobile title */

@@ -2,12 +2,10 @@
 
 > This file is for local preferences and overrides. It is not tracked by Git.
 
-## Session
-
-- **Active Session**: E49 Taxonomía Wizard
-- **Last Summary**: Inicializada épica E49. Creados artefactos de alcance (Brief y Scope) para el portal de autoservicio de clientes.
-- **Last Closed**: E48 (Epic)
-- **Next Focus**: Diseño técnico de la épica E49 (/rai-epic-design) e inicio de la Historia 1 para definir la entidad Taxonomía en el esquema.
+## Current Focus
+- **Active session:** S49.3: Creación de cascarón y rutas para el Portal Home de Negocio (`SelfService_Home_UI`).
+- **Summary:** Concluimos exitosamente S49.2, aplicando IoC a `FormRenderer` y `stateful` a `UI_FormStepper`. Ahora debemos crear la vista base que alojará este FormStepper.
+- **Next focus:** `/rai-story-start` para inicializar S49.3.
 
 ## Patterns
 

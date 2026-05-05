@@ -59,38 +59,87 @@ window.UI_FormStepper = class UI_FormStepper {
                     this.goToSection(stepName);
                 };
 
-                const icon = document.createElement('ion-icon');
-                const iconName = this.semanticIcons[stepName] || this.defaultIcons[index % this.defaultIcons.length];
-                icon.setAttribute('name', iconName);
-                icon.setAttribute('slot', 'start');
-                if (index === 0) icon.setAttribute('color', 'primary');
+                // S49.6: Reemplazar icono por número circular dinámico
+                const iconContainer = document.createElement('div');
+                iconContainer.setAttribute('slot', 'start');
+                iconContainer.style.width = '24px';
+                iconContainer.style.height = '24px';
+                iconContainer.style.borderRadius = '50%';
+                iconContainer.style.display = 'flex';
+                iconContainer.style.alignItems = 'center';
+                iconContainer.style.justifyContent = 'center';
+                iconContainer.style.fontSize = '0.75rem';
+                iconContainer.style.fontWeight = '700';
+                iconContainer.style.marginRight = 'var(--spacing-3)';
+                
+                if (index === 0) {
+                    iconContainer.style.backgroundColor = 'var(--ion-color-primary)';
+                    iconContainer.style.color = 'var(--ion-color-primary-contrast)';
+                } else {
+                    iconContainer.style.backgroundColor = 'var(--ion-color-step-150, #e0e0e0)';
+                    iconContainer.style.color = 'var(--ion-color-medium)';
+                }
+                iconContainer.textContent = (index + 1).toString();
 
                 const label = document.createElement('ion-label');
                 label.textContent = stepName;
-                label.style.fontWeight = '500';
+                label.style.fontWeight = '600';
+                label.style.fontFamily = 'var(--sys-font-family, system-ui, -apple-system, sans-serif)';
                 if (index === 0) label.setAttribute('color', 'primary');
 
-                item.appendChild(icon);
+                item.appendChild(iconContainer);
                 item.appendChild(label);
                 this.sidebarSteps.appendChild(item);
 
-                this.menuItems[stepName] = { item, icon, label };
+                this.menuItems[stepName] = { item, icon: iconContainer, label, stepNumber: index + 1 };
             }
+
+            stepDiv.style.display = index === 0 ? 'flex' : 'none';
+            stepDiv.style.flexDirection = 'column';
+            stepDiv.style.justifyContent = 'center';
+            stepDiv.style.minHeight = '60vh';
+            stepDiv.style.maxWidth = '600px';
+            stepDiv.style.margin = '0 auto';
 
             this.cardContent.appendChild(stepDiv);
 
             // Iniciar Grillas Responsivas (Rule 5.2) por contenedor lógico
+            const headerWrap = document.createElement('div');
+            headerWrap.style.marginBottom = 'var(--spacing-5)';
+            headerWrap.style.textAlign = 'left';
+
             const sectionTitle = document.createElement('h2');
             sectionTitle.textContent = (stepName === 'default' ? 'Configuración General' : stepName);
             sectionTitle.style.color = 'var(--ion-text-color)';
-            sectionTitle.style.fontSize = 'var(--sys-font-h3)';
-            sectionTitle.style.fontWeight = '600';
-            sectionTitle.style.marginTop = '0';
-            sectionTitle.style.marginBottom = 'var(--spacing-5)';
-            stepDiv.appendChild(sectionTitle);
+            sectionTitle.style.fontSize = 'var(--sys-font-h2, 1.5rem)';
+            sectionTitle.style.fontFamily = 'var(--sys-font-heading, system-ui, -apple-system, sans-serif)';
+            sectionTitle.style.fontWeight = '700';
+            sectionTitle.style.margin = '0 0 var(--spacing-2) 0';
+            headerWrap.appendChild(sectionTitle);
+
+            // S49.6: Subtítulos descriptivos
+            const desc = document.createElement('p');
+            desc.style.margin = '0';
+            desc.style.fontSize = '0.9rem';
+            desc.style.maxWidth = '100%';
+            desc.style.color = 'var(--ion-color-step-600, #666)';
+            
+            const descriptions = {
+                'Taxonomía': 'Defina el nombre y propósito principal de esta estructura organizativa.',
+                'Unidad de Negocio': 'Seleccione la unidad de negocio principal a la que pertenece esta taxonomía.',
+                'Portafolios Asociados': 'Asocie los portafolios que serán gobernados bajo esta estructura.',
+                'Grupo de Productos': 'Vincule los grupos de productos específicos relacionados.',
+                'Equipos': 'Seleccione los equipos operativos responsables.',
+                'Personas': 'Seleccione los miembros y líderes asociados a esta taxonomía.'
+            };
+            desc.textContent = descriptions[stepName] || 'Complete la información solicitada en esta sección.';
+            headerWrap.appendChild(desc);
+
+            stepDiv.appendChild(headerWrap);
 
             const grid = document.createElement('ion-grid');
             grid.style.padding = 'var(--spacing-0)';
+            grid.style.width = '100%';
             const row = document.createElement('ion-row');
             grid.appendChild(row);
 
@@ -131,7 +180,8 @@ window.UI_FormStepper = class UI_FormStepper {
             if (!mi) return;
 
             const container = this.stepContainers[stepName];
-            const inputs = container.querySelectorAll('ion-input, ion-textarea, ion-select, input, .subgrid-container');
+            // S49.6: Ampliado para incluir tx-searchable
+            const inputs = container.querySelectorAll('ion-input, ion-textarea, ion-select, input, .subgrid-container, tx-searchable');
             
             let hasData = false;
             inputs.forEach(el => {
@@ -146,14 +196,24 @@ window.UI_FormStepper = class UI_FormStepper {
             });
 
             const isCurrent = (idx === this.currentStepIndex);
-            const defaultIcon = this.semanticIcons[stepName] || this.defaultIcons[idx % this.defaultIcons.length];
 
+            // S49.6: Lógica de actualización para Avatar Chips / Iconos Numéricos
             if (hasData) {
-                mi.icon.setAttribute('name', 'checkmark-circle');
-                mi.icon.setAttribute('color', 'success');
+                // Completado -> Mostrar icono Check
+                mi.icon.innerHTML = '<ion-icon name="checkmark"></ion-icon>';
+                mi.icon.style.backgroundColor = 'var(--ion-color-success)';
+                mi.icon.style.color = 'var(--ion-color-success-contrast, #fff)';
             } else {
-                mi.icon.setAttribute('name', defaultIcon);
-                mi.icon.setAttribute('color', isCurrent ? 'primary' : 'medium');
+                // Incompleto -> Mostrar número
+                mi.icon.innerHTML = '';
+                mi.icon.textContent = mi.stepNumber.toString();
+                if (isCurrent) {
+                    mi.icon.style.backgroundColor = 'var(--ion-color-primary)';
+                    mi.icon.style.color = 'var(--ion-color-primary-contrast)';
+                } else {
+                    mi.icon.style.backgroundColor = 'var(--ion-color-step-150, #e0e0e0)';
+                    mi.icon.style.color = 'var(--ion-color-medium)';
+                }
             }
             
             mi.label.setAttribute('color', isCurrent ? 'primary' : (hasData ? 'success' : 'medium'));
@@ -166,7 +226,17 @@ window.UI_FormStepper = class UI_FormStepper {
         this.currentStepIndex = newIdx;
 
         Object.keys(this.stepContainers).forEach(key => {
-            this.stepContainers[key].classList.toggle('ion-hide', key !== targetSectionName);
+            const isTarget = key === targetSectionName;
+            const container = this.stepContainers[key];
+            
+            // Si usamos Flex, no podemos usar ion-hide que fuerza display:none vs flex
+            if (isTarget) {
+                container.classList.remove('ion-hide');
+                container.style.display = 'flex';
+            } else {
+                container.classList.add('ion-hide');
+                container.style.display = 'none';
+            }
         });
 
         if (this.sidebarSteps) {
@@ -176,18 +246,24 @@ window.UI_FormStepper = class UI_FormStepper {
                 
                 mi.item.style.setProperty('--background', 'transparent');
 
+                mi.item.style.setProperty('--background', 'transparent');
+
                 if (!this.isStateful) {
-                    mi.icon.setAttribute('color', 'medium');
+                    mi.icon.style.backgroundColor = 'var(--ion-color-step-150, #e0e0e0)';
+                    mi.icon.style.color = 'var(--ion-color-medium)';
                     mi.label.setAttribute('color', 'medium');
 
                     if (idx === this.currentStepIndex) {
-                        mi.item.style.setProperty('--background', 'var(--ion-color-step-100)');
-                        mi.icon.setAttribute('color', 'primary');
+                        mi.item.style.setProperty('--background', 'var(--dv-primary-light)');
+                        mi.item.style.borderRadius = 'var(--rounded-md, 8px)';
+                        mi.icon.style.backgroundColor = 'var(--ion-color-primary)';
+                        mi.icon.style.color = 'var(--ion-color-primary-contrast)';
                         mi.label.setAttribute('color', 'primary');
                     }
                 } else {
                     if (idx === this.currentStepIndex) {
-                        mi.item.style.setProperty('--background', 'var(--ion-color-step-100)');
+                        mi.item.style.setProperty('--background', 'var(--dv-primary-light)');
+                        mi.item.style.borderRadius = 'var(--rounded-md, 8px)';
                     }
                 }
             });
@@ -195,7 +271,13 @@ window.UI_FormStepper = class UI_FormStepper {
         }
 
         if (this.progressLabel) {
-            this.progressLabel.textContent = `PASO ${this.currentStepIndex + 1} DE ${this.totalSteps}: ${targetSectionName.toUpperCase()}`;
+            this.progressLabel.textContent = `Paso ${this.currentStepIndex + 1} de ${this.totalSteps}`;
+        }
+
+        if (this.progressBar) {
+            // S49.6: Progreso incremental en la barra 
+            const progressRatio = (this.currentStepIndex + 1) / this.totalSteps;
+            this.progressBar.value = progressRatio;
         }
         
         if (this.btnPrev) {

@@ -229,7 +229,10 @@
             iconSave.setAttribute('slot', 'start');
             iconSave.setAttribute('name', 'save-outline');
             submitBtn.appendChild(iconSave);
-            submitBtn.appendChild(document.createTextNode(' Guardar ' + (window.formatEntityName ? window.formatEntityName(entityName) : entityName)));
+            
+            let btnText = ' Guardar ' + (window.formatEntityName ? window.formatEntityName(entityName) : entityName);
+            if (entityName === 'Wizard_Taxonomia') btnText = 'Guardar Taxonomía';
+            submitBtn.appendChild(document.createTextNode(btnText));
 
             if (useStepper) {
                 // S14.1 Arquitectura de FormStepper (Wizard)
@@ -239,13 +242,24 @@
                 }
 
                 container._btnPrev = document.createElement('ion-button');
-                container._btnPrev.fill = 'clear';
+                container._btnPrev.fill = 'outline';
                 container._btnPrev.color = 'medium';
+                container._btnPrev.style.fontFamily = 'var(--sys-font-family, system-ui, sans-serif)';
+                container._btnPrev.style.fontWeight = '600';
                 container._btnPrev.appendChild(document.createTextNode('Atrás'));
 
                 container._btnNext = document.createElement('ion-button');
+                container._btnNext.style.fontFamily = 'var(--sys-font-family, system-ui, sans-serif)';
+                container._btnNext.style.fontWeight = '600';
                 container._btnNext.appendChild(document.createTextNode('Siguiente'));
                 
+                // S49.6: Añadir Progress Label dinámico
+                const pLabel = document.createElement('span');
+                pLabel.style.fontSize = '0.85rem';
+                pLabel.style.fontWeight = '500';
+                pLabel.style.color = 'var(--ion-color-medium)';
+                container._progressLabel = pLabel;
+
                 // Inicializamos el stepper, reasignaremos submitBtn después
                 container._stepperRef = new window.UI_FormStepper({
                     steps: steps,
@@ -254,7 +268,7 @@
                     btnPrev: container._btnPrev,
                     btnNext: container._btnNext,
                     btnSubmit: submitBtn, // Referencia temporal, lo ajustamos en el Sticky Footer
-                    progressLabel: null 
+                    progressLabel: container._progressLabel 
                 });
                 
                 rows = container._stepperRef.getRows();
@@ -376,11 +390,29 @@
             // (El submitBtn ya fue creado arriba para evitar ReferenceError)
 
             if (useStepper && container._btnPrev && container._btnNext && container._stepperRef) {
-                // Layout Híbrido: Acomodar botones de Stepper
+                // Layout Híbrido: Acomodar botones de Stepper y Progreso (SaaS Style)
+                
+                // Barra de Progreso Lineal Anclada Arriba del Footer
+                const progressBar = document.createElement('ion-progress-bar');
+                progressBar.style.position = 'absolute';
+                progressBar.style.top = '0';
+                progressBar.style.left = '0';
+                progressBar.style.width = '100%';
+                progressBar.style.height = '3px';
+                progressBar.style.setProperty('--background', 'transparent');
+                progressBar.style.setProperty('--progress-background', 'var(--ion-color-primary)');
+                footerContainer.appendChild(progressBar);
+                container._stepperRef.progressBar = progressBar; // Vinculamos al Stepper
+
                 const colLeft = document.createElement('ion-col');
                 colLeft.setAttribute('size', '4');
                 colLeft.style.textAlign = 'left';
-                colLeft.appendChild(container._btnPrev);
+                colLeft.style.display = 'flex';
+                colLeft.style.alignItems = 'center';
+                
+                if (container._progressLabel) {
+                    colLeft.appendChild(container._progressLabel);
+                }
 
                 const colRight = document.createElement('ion-col');
                 colRight.setAttribute('size', '8');
@@ -388,12 +420,15 @@
                 
                 // Ambos botones en el ladro derecho
                 const btnGroup = document.createElement('span');
+                btnGroup.style.display = 'inline-flex';
+                btnGroup.style.gap = 'var(--spacing-2)';
                 
+                btnGroup.appendChild(container._btnPrev); // Atrás a la derecha
+
                 const iconNext = document.createElement('ion-icon');
                 iconNext.setAttribute('slot', 'end');
                 iconNext.setAttribute('name', 'arrow-forward-outline');
                 container._btnNext.appendChild(iconNext);
-                container._btnNext.setAttribute('shape', 'round');
 
                 btnGroup.appendChild(container._btnNext);
                 btnGroup.appendChild(submitBtn);

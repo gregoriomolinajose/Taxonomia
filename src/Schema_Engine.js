@@ -164,7 +164,10 @@ var APP_SCHEMAS = {
         { name: "rel_familias", type: "relation", label: "Grupos de Productos", targetEntity: "Grupo_Productos", valueField: "id_grupo_producto", labelField: "nombre", uiComponent: "searchable_multi", section: "Grupo de Productos", topologyCardinality: "N:M", width: 12 },
         
         // Paso 5: Equipos
-        { name: "rel_equipos", type: "relation", label: "Equipos", targetEntity: "Equipo", valueField: "id_equipo", labelField: "nombre", uiComponent: "searchable_multi", section: "Equipos", topologyCardinality: "N:M", width: 12 }
+        { name: "rel_equipos", type: "relation", label: "Equipos", targetEntity: "Equipo", valueField: "id_equipo", labelField: "nombre", uiComponent: "searchable_multi", section: "Equipos", topologyCardinality: "N:M", width: 12 },
+        
+        // Paso 6: Personas
+        { name: "rel_personas", type: "relation", label: "Personas", targetEntity: "Persona", valueField: "id_registro", labelField: "nombre", uiComponent: "searchable_multi", section: "Personas", topologyCardinality: "N:M", width: 12 }
     ]
   },
 
