@@ -344,6 +344,11 @@ class TXSearchable extends HTMLElement {
         }
         this._selectedState = null;
         
+        if (this._outsideClickListener) {
+            document.removeEventListener('click', this._outsideClickListener);
+            this._outsideClickListener = null;
+        }
+        
         // Destitución de modales anclados en root
         this._cleanupOverlay();
     }
@@ -406,6 +411,18 @@ class TXSearchable extends HTMLElement {
                 this._scheduleRender();
                 this._bindInlineInternalEvents();
                 this.buildListItems(this._searchTerm || '');
+                
+                // Add outside click listener
+                if (!this._outsideClickListener) {
+                    this._outsideClickListener = (e) => {
+                        if (this._inlineMode && !this.contains(e.target)) {
+                            this._closeInlineMode();
+                        }
+                    };
+                    setTimeout(() => {
+                        document.addEventListener('click', this._outsideClickListener);
+                    }, 0);
+                }
             }
             return;
         }
@@ -422,15 +439,7 @@ class TXSearchable extends HTMLElement {
             closeBtn.addEventListener('click', (e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                this._inlineMode = false;
-                this._searchTerm = ''; 
-                this._temporaryBlurFlag = false; // Prevents UI lock if closed manually while stuck
-                
-                const searchbar = this.querySelector(`#${this._componentId}-inline-searchbar`);
-                if (searchbar) searchbar.value = '';
-                
-                this._scheduleRender();
-                this.dispatchSelection(); 
+                this._closeInlineMode();
             });
         }
 
@@ -468,8 +477,7 @@ class TXSearchable extends HTMLElement {
         }
         
         if (this._inlineMode) {
-            this._inlineMode = false;
-            this._scheduleRender();
+            this._closeInlineMode();
         }
 
         this.dispatchEvent(new CustomEvent('txSearchableCreate', {
@@ -479,6 +487,24 @@ class TXSearchable extends HTMLElement {
         }));
     }
     
+    _closeInlineMode() {
+        if (!this._inlineMode) return;
+        this._inlineMode = false;
+        this._searchTerm = ''; 
+        this._temporaryBlurFlag = false; 
+        
+        const searchbar = this.querySelector(`#${this._componentId}-inline-searchbar`);
+        if (searchbar) searchbar.value = '';
+        
+        if (this._outsideClickListener) {
+            document.removeEventListener('click', this._outsideClickListener);
+            this._outsideClickListener = null;
+        }
+        
+        this._scheduleRender();
+        this.dispatchSelection(); 
+    }
+
     _getSharedOverlayHtml(isMob) {
         return `
             <ion-header class="ion-no-border" style="border-top-left-radius: var(--border-radius, 16px); border-top-right-radius: var(--border-radius, 16px); overflow: hidden;">
@@ -790,9 +816,7 @@ class TXSearchable extends HTMLElement {
                     this.dispatchSelection(); // Disparo automático inmediato si es Single
                     
                     if (this._inlineMode) {
-                        this._inlineMode = false;
-                        this._searchTerm = '';
-                        this._scheduleRender();
+                        this._closeInlineMode();
                     } else if (this._overlayNode && typeof this._overlayNode.dismiss === 'function') {
                         this._overlayNode.dismiss();
                     } else {
