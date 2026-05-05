@@ -241,6 +241,16 @@ class TXSearchable extends HTMLElement {
                 [data-tx-state="hidden"] { display: none !important; }
                 [data-tx-state="flex"] { display: flex !important; }
                 [data-tx-state="block"] { display: block !important; }
+                
+                /* Estilos Premium SaaS para el Empty State */
+                .tx-placeholder-hover:hover {
+                    border-color: var(--ion-color-primary, #3880ff) !important;
+                    background: rgba(56, 128, 255, 0.02) !important;
+                }
+                .tx-placeholder-hover:hover .tx-icon-scale {
+                    transform: scale(1.1);
+                    background: rgba(56, 128, 255, 0.12) !important;
+                }
             `;
             document.head.appendChild(style);
         }
@@ -550,17 +560,21 @@ class TXSearchable extends HTMLElement {
     // S41.13: Refactorización Estructural (DRY UI Factories)
     _getPlaceholderTemplate(domId, hidden, iconName) {
         return `
-            <div id="${domId}" class="trigger-container" ${hidden ? 'data-tx-state="hidden"' : ''} style="background: var(--ion-color-secondary, #f4f5f8); border-radius: 8px; border: 1px solid var(--color-border, #e0e0e0); margin-bottom: 24px; cursor: pointer; transition: all 0.2s ease;">
-                <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 16px;">
-                    <strong style="color: var(--ion-color-dark); font-size: 14px;">${this._entityName}</strong>
-                    <ion-button size="small" fill="clear" style="margin: 0; --color: var(--ion-color-primary, #3880ff); font-weight: bold; font-family: var(--sys-font-family, inherit);">
-                        + AGREGAR
-                    </ion-button>
+            <div id="${domId}" class="trigger-container tx-placeholder-hover" ${hidden ? 'data-tx-state="hidden"' : ''} style="background: #ffffff; border-radius: 12px; border: 2px dashed var(--color-border, #d1d5db); margin-bottom: 24px; cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.02);">
+                
+                <div class="tx-icon-scale" style="width: 56px; height: 56px; background: rgba(56, 128, 255, 0.08); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-bottom: 16px; transition: all 0.3s ease;">
+                    <ion-icon name="${iconName}" style="color: var(--ion-color-primary, #3880ff); font-size: 28px;"></ion-icon>
                 </div>
-                <div style="text-align: center; padding: 20px 10px 30px;">
-                    <ion-icon name="${iconName}" color="medium" style="font-size: 32px; opacity: 0.5;"></ion-icon>
-                    <p style="color: var(--ion-color-medium); font-size: 13px; margin-top: 8px; margin-bottom: 0;">Sin registros vinculados</p>
-                </div>
+                
+                <h4 style="color: var(--ion-color-dark, #111827); font-size: 16px; font-weight: 700; margin: 0 0 8px 0; font-family: var(--sys-font-family, inherit);">Vincular ${this._entityName}</h4>
+                <p style="color: var(--ion-color-medium, #6b7280); font-size: 14px; margin: 0 0 24px 0; text-align: center; max-width: 320px; line-height: 1.5;">
+                    Busca y selecciona registros existentes o crea uno nuevo al instante.
+                </p>
+                
+                <ion-button size="default" fill="solid" color="primary" style="--border-radius: 8px; --box-shadow: 0 4px 6px rgba(56, 128, 255, 0.2); font-weight: 600; margin: 0; --padding-start: 24px; --padding-end: 24px;">
+                    <ion-icon slot="start" name="search-outline" style="font-size: 18px;"></ion-icon>
+                    EXAMINAR
+                </ion-button>
             </div>
         `;
     }
