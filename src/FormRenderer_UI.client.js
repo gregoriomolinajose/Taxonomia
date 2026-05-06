@@ -267,8 +267,10 @@
                     sidebarSteps: sidebarSteps,
                     btnPrev: container._btnPrev,
                     btnNext: container._btnNext,
-                    btnSubmit: submitBtn, // Referencia temporal, lo ajustamos en el Sticky Footer
-                    progressLabel: container._progressLabel 
+                    btnSubmit: submitBtn,
+                    progressLabel: container._progressLabel,
+                    entityName: entityName,
+                    stateful: entitySchema && entitySchema.form_stepper_stateful
                 });
                 
                 rows = container._stepperRef.getRows();
@@ -390,56 +392,101 @@
             // (El submitBtn ya fue creado arriba para evitar ReferenceError)
 
             if (useStepper && container._btnPrev && container._btnNext && container._stepperRef) {
-                // Layout Híbrido: Acomodar botones de Stepper y Progreso (SaaS Style)
+                // S49.11: Footer limpio con dot indicators + botones de navegación
                 
-                // Barra de Progreso Lineal Anclada Arriba del Footer
-                const progressBar = document.createElement('ion-progress-bar');
-                progressBar.style.position = 'absolute';
-                progressBar.style.top = '0';
-                progressBar.style.left = '0';
-                progressBar.style.width = '100%';
-                progressBar.style.height = '3px';
-                progressBar.style.setProperty('--background', 'transparent');
-                progressBar.style.setProperty('--progress-background', 'var(--ion-color-primary)');
-                footerContainer.appendChild(progressBar);
-                container._stepperRef.progressBar = progressBar; // Vinculamos al Stepper
-
                 const colLeft = document.createElement('ion-col');
-                colLeft.setAttribute('size', '4');
-                colLeft.style.textAlign = 'left';
+                colLeft.setAttribute('size', '5');
                 colLeft.style.display = 'flex';
                 colLeft.style.alignItems = 'center';
+                colLeft.style.gap = 'var(--spacing-2)';
                 
-                if (container._progressLabel) {
-                    colLeft.appendChild(container._progressLabel);
+                // S49.11: Dot/Bar indicators — barras para completados, dots para pendientes
+                const dotsWrap = document.createElement('span');
+                dotsWrap.className = 'wizard-dots';
+                dotsWrap.style.cssText = 'display:inline-flex;gap:4px;align-items:center;';
+                const totalSteps = container._stepperRef.totalSteps;
+                for (let i = 0; i < totalSteps; i++) {
+                    const indicator = document.createElement('span');
+                    indicator.style.cssText = 'height:6px;border-radius:var(--rounded-full);transition:all 0.3s ease;';
+                    if (i === 0) {
+                        // Current step — elongated primary bar
+                        indicator.style.width = '24px';
+                        indicator.style.backgroundColor = 'var(--ion-color-primary)';
+                    } else {
+                        // Pending — small dot
+                        indicator.style.width = '6px';
+                        indicator.style.backgroundColor = 'var(--ion-color-step-200, #d0d0d0)';
+                    }
+                    dotsWrap.appendChild(indicator);
                 }
+                colLeft.appendChild(dotsWrap);
+                
+                const stepLabel = document.createElement('span');
+                stepLabel.style.cssText = 'font-size:var(--sys-font-caption, 0.75rem);color:var(--ion-color-step-500, #888);font-weight:500;white-space:nowrap;';
+                stepLabel.textContent = `1 / ${totalSteps}`;
+                colLeft.appendChild(stepLabel);
 
                 const colRight = document.createElement('ion-col');
-                colRight.setAttribute('size', '8');
-                colRight.style.textAlign = 'right';
+                colRight.setAttribute('size', '7');
+                colRight.style.display = 'flex';
+                colRight.style.alignItems = 'center';
+                colRight.style.justifyContent = 'flex-end';
+                colRight.style.gap = 'var(--spacing-2)';
                 
-                // Ambos botones en el ladro derecho
-                const btnGroup = document.createElement('span');
-                btnGroup.style.display = 'inline-flex';
-                btnGroup.style.gap = 'var(--spacing-2)';
-                
-                btnGroup.appendChild(container._btnPrev); // Atrás a la derecha
+                // S49.11: Botón Atrás — estilo sutil (clear, text + chevron)
+                container._btnPrev.innerHTML = '';
+                container._btnPrev.fill = 'clear';
+                container._btnPrev.color = 'medium';
+                container._btnPrev.style.setProperty('--border-radius', 'var(--rounded-full)');
+                const iconPrev = document.createElement('ion-icon');
+                iconPrev.setAttribute('slot', 'start');
+                iconPrev.setAttribute('name', 'chevron-back-outline');
+                container._btnPrev.appendChild(iconPrev);
+                container._btnPrev.appendChild(document.createTextNode('Atrás'));
 
+                // S49.11: Botón Siguiente — estilo prominente (solid pill, primary)
+                container._btnNext.fill = 'solid';
+                container._btnNext.color = 'primary';
+                container._btnNext.style.setProperty('--border-radius', 'var(--rounded-full)');
                 const iconNext = document.createElement('ion-icon');
                 iconNext.setAttribute('slot', 'end');
-                iconNext.setAttribute('name', 'arrow-forward-outline');
+                iconNext.setAttribute('name', 'chevron-forward-outline');
                 container._btnNext.appendChild(iconNext);
 
-                btnGroup.appendChild(container._btnNext);
-                btnGroup.appendChild(submitBtn);
-
-                colRight.appendChild(btnGroup);
+                colRight.appendChild(container._btnPrev);
+                colRight.appendChild(container._btnNext);
+                colRight.appendChild(submitBtn);
 
                 btnRow.appendChild(colLeft);
                 btnRow.appendChild(colRight);
 
+                // S49.11: Hook para actualizar barras/dots dinámicamente
+                const originalGoTo = container._stepperRef.goToSection.bind(container._stepperRef);
+                container._stepperRef.goToSection = function(name) {
+                    originalGoTo(name);
+                    const indicators = dotsWrap.querySelectorAll('span');
+                    indicators.forEach((ind, i) => {
+                        const isCompleted = i < this.currentStepIndex;
+                        const isCurrent = i === this.currentStepIndex;
+                        if (isCompleted) {
+                            // Completed — elongated success bar
+                            ind.style.width = '24px';
+                            ind.style.backgroundColor = 'var(--ion-color-success)';
+                        } else if (isCurrent) {
+                            // Active — elongated primary bar
+                            ind.style.width = '24px';
+                            ind.style.backgroundColor = 'var(--ion-color-primary)';
+                        } else {
+                            // Pending — small dot
+                            ind.style.width = '6px';
+                            ind.style.backgroundColor = 'var(--ion-color-step-200, #d0d0d0)';
+                        }
+                    });
+                    stepLabel.textContent = `${this.currentStepIndex + 1} / ${this.totalSteps}`;
+                };
+
                 // Arrancar flujo topológico
-                container._stepperRef.btnSubmit = submitBtn; // Aseguramos bind
+                container._stepperRef.btnSubmit = submitBtn;
                 container._stepperRef.start();
             } else {
                 // Layout Linear 1 Step: Solo Guardar a la derecha
@@ -489,7 +536,11 @@
                 container._stepperRef.recalculateAllStatuses();
             }
 
-            modal.appendChild(footerContainer);
+            if (config.customFooterContainer) {
+                config.customFooterContainer.appendChild(footerContainer);
+            } else {
+                modal.appendChild(footerContainer);
+            }
             // El insertion del Drawer ya fue manejado por DrawerStackController.push
             // de forma síncrona arriba, no requiere document.body.appendChild.
         };

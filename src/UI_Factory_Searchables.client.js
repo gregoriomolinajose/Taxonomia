@@ -23,6 +23,8 @@
         // Atributos de Extracción de Payload Dinámico (Esquema estricto)
         if (fieldDef.valueField) node.setAttribute('value-field', fieldDef.valueField);
         if (fieldDef.labelField) node.setAttribute('label-field', fieldDef.labelField);
+        if (fieldDef.subtitleField) node.setAttribute('subtitle-field', fieldDef.subtitleField);
+        if (fieldDef.subtitleLookup) node.setAttribute('subtitle-lookup', fieldDef.subtitleLookup);
 
         // Límites S41.9 (De metadata o local)
         const maxSelection = fieldDef.maxSelection || (fieldDef.metadata && fieldDef.metadata.maxItems);

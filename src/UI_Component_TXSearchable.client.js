@@ -33,13 +33,13 @@ class TXSearchable extends HTMLElement {
         if (!item) return '';
         const idCampo = this.getAttribute('value-field') || 'id';
         const labelCampo = this.getAttribute('label-field') || 'nombre';
-        return item[labelCampo] ?? item[idCampo] ?? item.id ?? '';
+        return item[labelCampo] ?? item[idCampo] ?? item.id_registro ?? item.id ?? '';
     }
 
     _extractPayloadId(item) {
         if (!item) return null;
         const idCampo = this.getAttribute('value-field') || 'id';
-        return item[idCampo] ?? item.id;
+        return item[idCampo] ?? item.id_registro ?? item.id;
     }
 
     _formatDisplayString(item, rawId) {
@@ -602,14 +602,14 @@ class TXSearchable extends HTMLElement {
                     <ion-icon name="${iconName}" style="color: var(--ion-color-primary, #3880ff); font-size: 28px;"></ion-icon>
                 </div>
                 
-                <h4 style="color: var(--ion-color-dark, #111827); font-size: 16px; font-weight: 700; margin: 0 0 8px 0; font-family: var(--sys-font-family, inherit);">Vincular ${this._entityName}</h4>
-                <p style="color: var(--ion-color-medium, #6b7280); font-size: 14px; margin: 0 0 24px 0; text-align: center; max-width: 320px; line-height: 1.5;">
+                <h4 style="color: var(--ion-color-dark, #111827); font-size: 16px; font-weight: 700; margin: 0 0 8px 0; font-family: var(--font-display, var(--ion-font-family, inherit));">Vincular ${this._entityName}</h4>
+                <p style="color: var(--ion-color-medium, #6b7280); font-size: 14px; margin: 0 0 24px 0; text-align: center; max-width: 320px; line-height: 1.5; font-family: var(--ion-font-family, inherit);">
                     Busca y selecciona registros existentes o crea uno nuevo al instante.
                 </p>
                 
-                <ion-button size="default" fill="solid" color="primary" style="--border-radius: 8px; --box-shadow: 0 4px 6px rgba(56, 128, 255, 0.2); font-weight: 600; margin: 0; --padding-start: 24px; --padding-end: 24px;">
+                <ion-button size="default" fill="solid" color="primary" style="font-family: var(--ion-font-family, inherit); --border-radius: 8px; --box-shadow: 0 4px 6px rgba(56, 128, 255, 0.2); font-weight: 600; margin: 0; --padding-start: 24px; --padding-end: 24px;">
                     <ion-icon slot="start" name="search-outline" style="font-size: 18px;"></ion-icon>
-                    EXAMINAR
+                    Buscar
                 </ion-button>
             </div>
         `;
@@ -730,6 +730,7 @@ class TXSearchable extends HTMLElement {
         const iconColorTheme = this.getAttribute('icon-color') || 'step-300';
         const iconStyleBackground = `var(--ion-color-${iconColorTheme}, #3880ff)`;
         const entityName = this.getAttribute('entity-name') || 'Registro';
+        const subtitleField = this.getAttribute('subtitle-field');
 
         filtered.forEach(item => {
             const idVal = String(this._extractPayloadId(item));
@@ -750,10 +751,24 @@ class TXSearchable extends HTMLElement {
             `;
             
             const lexicalId = item.lexical_id || item.id_numero || idVal;
+            let finalSubtitle = subtitleField ? 'Sin Identificar' : entityName;
+            const subtitleLookup = this.getAttribute('subtitle-lookup');
+            if (subtitleField && item[subtitleField]) {
+                 finalSubtitle = item[subtitleField];
+                 if (subtitleLookup && window.DataStore) {
+                     const table = window.DataStore.get(subtitleLookup);
+                     if (table && table.length) {
+                         const foundObj = table.find(c => String(c.id_cargo) === String(finalSubtitle) || String(c.id) === String(finalSubtitle) || String(c.id_numero) === String(finalSubtitle));
+                         finalSubtitle = (foundObj && foundObj.nombre) ? foundObj.nombre : 'Sin Identificar';
+                     }
+                 }
+            }
+            finalSubtitle = `${finalSubtitle} • ${lexicalId}`;
+            
             const labelHtml = `
                 <ion-label>
                     <h3 style="font-weight: bold; color: var(--ion-color-dark); margin: 0; padding: 0; line-height: 1.2;">${title}</h3>
-                    <p style="font-size: 11px; color: var(--ion-color-medium); margin: 0; padding: 0; line-height: 1.2;">${entityName} • ${lexicalId}</p>
+                    <p style="font-size: 11px; color: var(--ion-color-medium); margin: 0; padding: 0; line-height: 1.2;">${finalSubtitle}</p>
                 </ion-label>
             `;
 
@@ -954,9 +969,24 @@ class TXSearchable extends HTMLElement {
                         const titleText = found ? this._extractPayloadTitle(found) : singleId;
                         const lexicalId = found ? (found.lexical_id || found.id_numero || singleId) : singleId;
                         
+                        let finalCardSub = subtitleField ? `Sin Identificar • ${lexicalId}` : lexicalId;
+                        const subtitleFieldAttr = this.getAttribute('subtitle-field');
+                        const subtitleLookup = this.getAttribute('subtitle-lookup');
+                        if (subtitleFieldAttr && found && found[subtitleFieldAttr]) {
+                            let resolvedVal = found[subtitleFieldAttr];
+                            if (subtitleLookup && window.DataStore) {
+                                const table = window.DataStore.get(subtitleLookup);
+                                if (table && table.length) {
+                                    const foundObj = table.find(c => String(c.id_cargo) === String(resolvedVal) || String(c.id) === String(resolvedVal) || String(c.id_numero) === String(resolvedVal));
+                                    resolvedVal = (foundObj && foundObj.nombre) ? foundObj.nombre : 'Sin Identificar';
+                                }
+                            }
+                            finalCardSub = `${resolvedVal} • ${lexicalId}`;
+                        }
+                        
                         const fakeItem = document.createElement('div');
                         fakeItem.innerHTML = this._getSharedCardTemplate({
-                            iconName, iconColor, title: titleText, subtitle: lexicalId
+                            iconName, iconColor, title: titleText, subtitle: finalCardSub
                         });
                         
                         const finalNode = fakeItem.firstElementChild;

@@ -146,6 +146,18 @@ var APP_SCHEMAS = {
     primaryKey: "id_taxonomia",
     titleField: "nombre",
     topologyRules: TOPOLOGY_PRESETS.JERARQUICA_ESTRICTA_GRAPH_STD,
+    stepDescriptions: {
+      'Datos Generales': 'Nombre y propósito de la taxonomía',
+      'Directorio de TI': 'Líderes tecnológicos responsables',
+      'Directorio de Negocio': 'Ejecutivos y sponsors de negocio',
+      'Directorio de Producto': 'Product Owners y Managers',
+      'Portafolios Asociados': 'Portafolios bajo esta gobernanza',
+      'Productos Asociados': 'Productos digitales vinculados',
+      'Equipos Participantes': 'Células y equipos operativos',
+      'Colaboradores': 'Miembros del equipo extendido',
+      'Alta de Dominios': 'Dominios de negocio asociados',
+      'Alta de Capacidades': 'Capacidades core de la organización'
+    },
     fields: [
       { name: "id_taxonomia", type: "hidden", primaryKey: true },
       ...FIELD_TEMPLATES.SYSTEM_FIELDS(),
@@ -155,18 +167,18 @@ var APP_SCHEMAS = {
       { name: "nombre", type: "text", label: "Nombre de la Taxonomía", required: true, section: "Datos Generales", width: 12 },
       { name: "descripcion", type: "textarea", label: "Descripción / Objetivo", required: false, section: "Datos Generales", width: 12 },
       
-      { name: "directivos_ti", type: "relation", relationType: "hijo", targetEntity: "Persona", graphEntity: "Sys_Graph_Edges", valueField: "id_registro", labelField: "nombre", uiBehavior: "subgrid", section: "Directorio de TI", label: "Líderes de TI", isTemporalGraph: true, graphEdgeType: "TAXONOMIA_LIDER_TI", topologyCardinality: "N:M", width: 12 },
-      { name: "directivos_negocio", type: "relation", relationType: "hijo", targetEntity: "Persona", graphEntity: "Sys_Graph_Edges", valueField: "id_registro", labelField: "nombre", uiBehavior: "subgrid", section: "Directorio de Negocio", label: "Líderes de Negocio", isTemporalGraph: true, graphEdgeType: "TAXONOMIA_LIDER_NEGOCIO", topologyCardinality: "N:M", width: 12 },
-      { name: "lideres_producto", type: "relation", relationType: "hijo", targetEntity: "Persona", graphEntity: "Sys_Graph_Edges", valueField: "id_registro", labelField: "nombre", uiBehavior: "subgrid", section: "Directorio de Producto", label: "Product Owners / Managers", isTemporalGraph: true, graphEdgeType: "TAXONOMIA_LIDER_PRODUCTO", topologyCardinality: "N:M", width: 12 },
+      { name: "directivos_ti", type: "relation", relationType: "hijo", targetEntity: "Persona", graphEntity: "Sys_Graph_Edges", valueField: "id_persona", labelField: "_nombre_completo", subtitleField: "id_cargo", subtitleLookup: "Cargo", uiComponent: "searchable_multi", section: "Directorio de TI", label: "Líderes de TI", isTemporalGraph: true, graphEdgeType: "TAXONOMIA_LIDER_TI", topologyCardinality: "N:M", width: 12 },
+      { name: "directivos_negocio", type: "relation", relationType: "hijo", targetEntity: "Persona", graphEntity: "Sys_Graph_Edges", valueField: "id_persona", labelField: "_nombre_completo", subtitleField: "id_cargo", subtitleLookup: "Cargo", uiComponent: "searchable_multi", section: "Directorio de Negocio", label: "Líderes de Negocio", isTemporalGraph: true, graphEdgeType: "TAXONOMIA_LIDER_NEGOCIO", topologyCardinality: "N:M", width: 12 },
+      { name: "lideres_producto", type: "relation", relationType: "hijo", targetEntity: "Persona", graphEntity: "Sys_Graph_Edges", valueField: "id_persona", labelField: "_nombre_completo", subtitleField: "id_cargo", subtitleLookup: "Cargo", uiComponent: "searchable_multi", section: "Directorio de Producto", label: "Product Owners / Managers", isTemporalGraph: true, graphEdgeType: "TAXONOMIA_LIDER_PRODUCTO", topologyCardinality: "N:M", width: 12 },
       
-      { name: "portafolios_asociados", type: "relation", relationType: "hijo", targetEntity: "Portafolio", graphEntity: "Sys_Graph_Edges", valueField: "id_portafolio", labelField: "nombre", uiBehavior: "subgrid", section: "Portafolios Asociados", label: "Portafolios", isTemporalGraph: true, graphEdgeType: "TAXONOMIA_PORTAFOLIO", topologyCardinality: "N:M", width: 12 },
-      { name: "productos_asociados", type: "relation", relationType: "hijo", targetEntity: "Producto", graphEntity: "Sys_Graph_Edges", valueField: "id_producto", labelField: "nombre", uiBehavior: "subgrid", section: "Productos Asociados", label: "Productos Digitales", isTemporalGraph: true, graphEdgeType: "TAXONOMIA_PRODUCTO", topologyCardinality: "N:M", width: 12 },
+      { name: "portafolios_asociados", type: "relation", relationType: "hijo", targetEntity: "Portafolio", graphEntity: "Sys_Graph_Edges", valueField: "id_portafolio", labelField: "nombre", uiComponent: "searchable_multi", section: "Portafolios Asociados", label: "Portafolios", isTemporalGraph: true, graphEdgeType: "TAXONOMIA_PORTAFOLIO", topologyCardinality: "N:M", width: 12 },
+      { name: "productos_asociados", type: "relation", relationType: "hijo", targetEntity: "Producto", graphEntity: "Sys_Graph_Edges", valueField: "id_producto", labelField: "nombre", uiComponent: "searchable_multi", section: "Productos Asociados", label: "Productos Digitales", isTemporalGraph: true, graphEdgeType: "TAXONOMIA_PRODUCTO", topologyCardinality: "N:M", width: 12 },
       
-      { name: "equipos_participantes", type: "relation", relationType: "hijo", targetEntity: "Equipo", graphEntity: "Sys_Graph_Edges", valueField: "id_equipo", labelField: "nombre", uiBehavior: "subgrid", section: "Equipos Participantes", label: "Células / Equipos", isTemporalGraph: true, graphEdgeType: "TAXONOMIA_EQUIPO", topologyCardinality: "N:M", width: 12 },
-      { name: "colaboradores", type: "relation", relationType: "hijo", targetEntity: "Persona", graphEntity: "Sys_Graph_Edges", valueField: "id_registro", labelField: "nombre", uiBehavior: "subgrid", section: "Colaboradores", label: "Miembros del Equipo", isTemporalGraph: true, graphEdgeType: "TAXONOMIA_COLABORADOR", topologyCardinality: "N:M", width: 12 },
+      { name: "equipos_participantes", type: "relation", relationType: "hijo", targetEntity: "Equipo", graphEntity: "Sys_Graph_Edges", valueField: "id_equipo", labelField: "nombre", uiComponent: "searchable_multi", section: "Equipos Participantes", label: "Células / Equipos", isTemporalGraph: true, graphEdgeType: "TAXONOMIA_EQUIPO", topologyCardinality: "N:M", width: 12 },
+      { name: "colaboradores", type: "relation", relationType: "hijo", targetEntity: "Persona", graphEntity: "Sys_Graph_Edges", valueField: "id_persona", labelField: "_nombre_completo", subtitleField: "id_cargo", subtitleLookup: "Cargo", uiComponent: "searchable_multi", section: "Colaboradores", label: "Miembros del Equipo", isTemporalGraph: true, graphEdgeType: "TAXONOMIA_COLABORADOR", topologyCardinality: "N:M", width: 12 },
       
-      { name: "dominios_asociados", type: "relation", relationType: "hijo", targetEntity: "Dominio", graphEntity: "Sys_Graph_Edges", valueField: "id_dominio", labelField: "nombre", uiBehavior: "subgrid", section: "Alta de Dominios", label: "Dominios de Negocio", isTemporalGraph: true, graphEdgeType: "TAXONOMIA_DOMINIO", topologyCardinality: "N:M", width: 12 },
-      { name: "capacidades_asociadas", type: "relation", relationType: "hijo", targetEntity: "Capacidad", graphEntity: "Sys_Graph_Edges", valueField: "id_capacidad", labelField: "nombre", uiBehavior: "subgrid", section: "Alta de Capacidades", label: "Capacidades Core", isTemporalGraph: true, graphEdgeType: "TAXONOMIA_CAPACIDAD", topologyCardinality: "N:M", width: 12 }
+      { name: "dominios_asociados", type: "relation", relationType: "hijo", targetEntity: "Dominio", graphEntity: "Sys_Graph_Edges", valueField: "id_dominio", labelField: "nombre", uiComponent: "searchable_multi", section: "Alta de Dominios", label: "Dominios de Negocio", isTemporalGraph: true, graphEdgeType: "TAXONOMIA_DOMINIO", topologyCardinality: "N:M", width: 12 },
+      { name: "capacidades_asociadas", type: "relation", relationType: "hijo", targetEntity: "Capacidad", graphEntity: "Sys_Graph_Edges", valueField: "id_capacidad", labelField: "nombre", uiComponent: "searchable_multi", section: "Alta de Capacidades", label: "Capacidades Core", isTemporalGraph: true, graphEdgeType: "TAXONOMIA_CAPACIDAD", topologyCardinality: "N:M", width: 12 }
     ]
   },
   Unidad_Negocio: {
