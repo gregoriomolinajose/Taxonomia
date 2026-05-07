@@ -20,6 +20,7 @@ window.UI_FormStepper = class UI_FormStepper {
         this.progressLabel = config.progressLabel;
         this.isStateful = config.stateful || false;
         this.entityName = config.entityName || null;
+        this.onStepChange = config.onStepChange || null; // S49.12
         
         // Estado Interno (Scoped a la Instancia del Modal)
         this.currentStepIndex = 0;
@@ -356,6 +357,11 @@ window.UI_FormStepper = class UI_FormStepper {
         const isLastStep = (this.currentStepIndex === this.totalSteps - 1);
         if (this.btnNext) this.btnNext.classList.toggle('ion-hide', isLastStep);
         if (this.btnSubmit) this.btnSubmit.classList.toggle('ion-hide', !isLastStep);
+        
+        // S49.12: Despachar evento nativo al container/renderizador
+        if (this.onStepChange) {
+            this.onStepChange(this.currentStepIndex, this.totalSteps);
+        }
     }
 
     // Exponer Rows para que FormRenderer sepa donde inyectar inputs
