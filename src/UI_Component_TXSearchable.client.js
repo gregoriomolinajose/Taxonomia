@@ -47,6 +47,51 @@ class TXSearchable extends HTMLElement {
         return this._extractPayloadTitle(item);
     }
 
+    _resolveSubtitle(item, idVal) {
+        const subtitleField = this.getAttribute('subtitle-field');
+        const subtitleLookup = this.getAttribute('subtitle-lookup');
+        const targetEntity = this.getAttribute('target-entity') || this.getAttribute('entity-name') || '';
+        
+        let localSubtitleId = subtitleField && item ? item[subtitleField] : null;
+
+        // [S49.13] Edge Traversal para Topologías de Grafo Temporal (Ej. CARGO_PERSONA)
+        if (subtitleField && !localSubtitleId && window.DataStore && window.APP_SCHEMAS) {
+            const targetSchema = window.APP_SCHEMAS[targetEntity];
+            if (targetSchema) {
+                const fieldsArr = targetSchema.fields || Object.keys(targetSchema).filter(k => typeof targetSchema[k] === 'object').map(k => targetSchema[k]);
+                const sFieldMeta = fieldsArr.find(f => f.name === subtitleField);
+                
+                if (sFieldMeta && sFieldMeta.isTemporalGraph && sFieldMeta.graphEdgeType) {
+                    const activeEdges = window.DataStore.get('Sys_Graph_Edges') || [];
+                    const edgeInfo = activeEdges.find(edge => 
+                        edge.tipo_relacion === sFieldMeta.graphEdgeType &&
+                        edge.estatus !== false && edge.estatus !== 'false' && edge.es_version_actual !== false &&
+                        (String(edge.destino) === String(idVal) || String(edge.origen) === String(idVal))
+                    );
+                    if (edgeInfo) {
+                        localSubtitleId = (String(edgeInfo.destino) === String(idVal)) ? edgeInfo.origen : edgeInfo.destino;
+                    }
+                }
+            }
+        }
+
+        let finalSubtitle = subtitleField ? 'Sin Identificar' : (targetEntity || 'Registro');
+        if (localSubtitleId) {
+            finalSubtitle = localSubtitleId;
+            if (subtitleLookup && window.DataStore) {
+                const table = window.DataStore.get(subtitleLookup);
+                if (table && table.length) {
+                    const foundObj = table.find(c => String(c.id_cargo) === String(localSubtitleId) || String(c.id) === String(localSubtitleId) || String(c.id_numero) === String(localSubtitleId));
+                    if (foundObj && foundObj.nombre) {
+                        finalSubtitle = foundObj.nombre;
+                    }
+                }
+            }
+        }
+        
+        return finalSubtitle;
+    }
+
     // ===============================================
     // 1. API Contract / Declarative Attributes
     // ===============================================
@@ -774,18 +819,7 @@ class TXSearchable extends HTMLElement {
             `;
             
             const lexicalId = item.lexical_id || item.id_numero || idVal;
-            let finalSubtitle = subtitleField ? 'Sin Identificar' : entityName;
-            const subtitleLookup = this.getAttribute('subtitle-lookup');
-            if (subtitleField && item[subtitleField]) {
-                 finalSubtitle = item[subtitleField];
-                 if (subtitleLookup && window.DataStore) {
-                     const table = window.DataStore.get(subtitleLookup);
-                     if (table && table.length) {
-                         const foundObj = table.find(c => String(c.id_cargo) === String(finalSubtitle) || String(c.id) === String(finalSubtitle) || String(c.id_numero) === String(finalSubtitle));
-                         finalSubtitle = (foundObj && foundObj.nombre) ? foundObj.nombre : 'Sin Identificar';
-                     }
-                 }
-            }
+            let finalSubtitle = this._resolveSubtitle(item, idVal);
             finalSubtitle = `${finalSubtitle} • ${lexicalId}`;
             
             const labelHtml = `
@@ -992,20 +1026,8 @@ class TXSearchable extends HTMLElement {
                         const titleText = found ? this._extractPayloadTitle(found) : singleId;
                         const lexicalId = found ? (found.lexical_id || found.id_numero || singleId) : singleId;
                         
-                        let finalCardSub = subtitleField ? `Sin Identificar • ${lexicalId}` : lexicalId;
-                        const subtitleFieldAttr = this.getAttribute('subtitle-field');
-                        const subtitleLookup = this.getAttribute('subtitle-lookup');
-                        if (subtitleFieldAttr && found && found[subtitleFieldAttr]) {
-                            let resolvedVal = found[subtitleFieldAttr];
-                            if (subtitleLookup && window.DataStore) {
-                                const table = window.DataStore.get(subtitleLookup);
-                                if (table && table.length) {
-                                    const foundObj = table.find(c => String(c.id_cargo) === String(resolvedVal) || String(c.id) === String(resolvedVal) || String(c.id_numero) === String(resolvedVal));
-                                    resolvedVal = (foundObj && foundObj.nombre) ? foundObj.nombre : 'Sin Identificar';
-                                }
-                            }
-                            finalCardSub = `${resolvedVal} • ${lexicalId}`;
-                        }
+                        let finalCardSub = this._resolveSubtitle(found, singleId);
+                        finalCardSub = `${finalCardSub} • ${lexicalId}`;
                         
                         const fakeItem = document.createElement('div');
                         fakeItem.innerHTML = this._getSharedCardTemplate({
