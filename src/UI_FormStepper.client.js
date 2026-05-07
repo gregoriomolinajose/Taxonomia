@@ -1,9 +1,12 @@
 /**
- * UI_FormStepper.html (S14.1)
+ * UI_FormStepper.html (S14.1 / S49.11)
  *
  * Micro-Frontend / Clase dedicada exclusivamente a gestionar la lógica 
  * topológica de navegación (wizards/tabs) dentro de un Modal.
  * Respeta el SRP y previene conflictos en Modales apilados.
+ *
+ * S49.11: Refinamiento visual — subtítulos en sidebar, badge pill,
+ *         dot indicators, progress bar interna, schema-driven descriptions.
  */
 
 window.UI_FormStepper = class UI_FormStepper {
@@ -16,6 +19,7 @@ window.UI_FormStepper = class UI_FormStepper {
         this.btnSubmit = config.btnSubmit;
         this.progressLabel = config.progressLabel;
         this.isStateful = config.stateful || false;
+        this.entityName = config.entityName || null;
         
         // Estado Interno (Scoped a la Instancia del Modal)
         this.currentStepIndex = 0;
@@ -24,17 +28,28 @@ window.UI_FormStepper = class UI_FormStepper {
         this.menuItems = {};
         this.rows = {};
         
-        // Iconografía
-        this.semanticIcons = {
-            'Datos Personales': 'person-outline',
-            'Ubicación': 'location-outline',
-            'Corporativo': 'business-outline',
-            'Operativa': 'briefcase-outline'
-        };
-        this.defaultIcons = ['folder-open-outline', 'list-outline', 'options-outline', 'analytics-outline'];
+        // S49.11: Schema-driven descriptions (R1 fix — single source of truth)
+        this._descriptions = this._loadDescriptions();
 
         this._initializeDOM();
         this._attachListeners();
+    }
+
+    /**
+     * S49.11: Carga descripciones desde Schema_Engine si están disponibles,
+     * con fallback genérico para entidades sin stepDescriptions.
+     */
+    _loadDescriptions() {
+        if (this.entityName && window.APP_SCHEMAS && window.APP_SCHEMAS[this.entityName]) {
+            const schema = window.APP_SCHEMAS[this.entityName];
+            if (schema.stepDescriptions) return schema.stepDescriptions;
+        }
+        // Fallback genérico
+        return {};
+    }
+
+    _getStepDescription(stepName) {
+        return this._descriptions[stepName] || 'Complete la información solicitada en esta sección.';
     }
 
     _initializeDOM() {
@@ -51,26 +66,20 @@ window.UI_FormStepper = class UI_FormStepper {
                 item.button = true; // Efecto Ripple interactivo
                 item.setAttribute('lines', 'none');
                 item.style.borderRadius = 'var(--rounded-sm)';
-                item.style.margin = 'var(--spacing-1) var(--spacing-3)';
-                item.style.setProperty('--min-height', '44px');
-                if (index === 0) item.style.setProperty('--background', 'var(--ion-color-step-100)');
+                item.style.margin = 'var(--spacing-1) 0';
+                item.style.setProperty('--min-height', '52px');
+                item.style.setProperty('--padding-start', 'var(--spacing-3)');
+                item.style.setProperty('--padding-end', 'var(--spacing-3)');
+                if (index === 0) item.style.setProperty('--background', 'var(--dv-primary-light, rgba(28, 66, 232, 0.06))');
                 
                 item.onclick = () => {
                     this.goToSection(stepName);
                 };
 
-                // S49.6: Reemplazar icono por número circular dinámico
+                // S49.6: Número circular dinámico
                 const iconContainer = document.createElement('div');
                 iconContainer.setAttribute('slot', 'start');
-                iconContainer.style.width = '24px';
-                iconContainer.style.height = '24px';
-                iconContainer.style.borderRadius = '50%';
-                iconContainer.style.display = 'flex';
-                iconContainer.style.alignItems = 'center';
-                iconContainer.style.justifyContent = 'center';
-                iconContainer.style.fontSize = '0.75rem';
-                iconContainer.style.fontWeight = '700';
-                iconContainer.style.marginRight = 'var(--spacing-3)';
+                iconContainer.style.cssText = 'width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.75rem;font-weight:700;margin-right:var(--spacing-3);flex-shrink:0;transition:all 0.2s ease;';
                 
                 if (index === 0) {
                     iconContainer.style.backgroundColor = 'var(--ion-color-primary)';
@@ -81,62 +90,75 @@ window.UI_FormStepper = class UI_FormStepper {
                 }
                 iconContainer.textContent = (index + 1).toString();
 
-                const label = document.createElement('ion-label');
-                label.textContent = stepName;
-                label.style.fontWeight = '600';
-                label.style.fontFamily = 'var(--sys-font-family, system-ui, -apple-system, sans-serif)';
-                if (index === 0) label.setAttribute('color', 'primary');
+                // S49.11: Label con subtítulo descriptivo
+                const labelWrap = document.createElement('ion-label');
+                labelWrap.style.fontFamily = 'var(--sys-font-family-body, system-ui, -apple-system, sans-serif)';
+                
+                const titleSpan = document.createElement('span');
+                titleSpan.textContent = stepName;
+                titleSpan.style.cssText = 'display:block;font-weight:600;font-size:var(--sys-font-body);line-height:1.3;';
+                if (index === 0) titleSpan.style.color = 'var(--ion-color-primary)';
+                
+                const subtitleSpan = document.createElement('span');
+                subtitleSpan.textContent = this._getStepDescription(stepName);
+                subtitleSpan.style.cssText = 'display:block;font-size:var(--sys-font-caption, 0.75rem);color:var(--ion-color-step-500, #888);font-weight:400;line-height:1.3;margin-top:2px;';
+                subtitleSpan.className = 'stepper-sidebar-subtitle';
+                
+                labelWrap.appendChild(titleSpan);
+                labelWrap.appendChild(subtitleSpan);
 
                 item.appendChild(iconContainer);
-                item.appendChild(label);
+                item.appendChild(labelWrap);
                 this.sidebarSteps.appendChild(item);
 
-                this.menuItems[stepName] = { item, icon: iconContainer, label, stepNumber: index + 1 };
+                this.menuItems[stepName] = { item, icon: iconContainer, label: labelWrap, titleSpan, subtitleSpan, stepNumber: index + 1 };
             }
 
             stepDiv.style.display = index === 0 ? 'flex' : 'none';
             stepDiv.style.flexDirection = 'column';
-            stepDiv.style.justifyContent = 'center';
+            stepDiv.style.justifyContent = 'flex-start';
             stepDiv.style.minHeight = '60vh';
             stepDiv.style.maxWidth = '600px';
             stepDiv.style.margin = '0 auto';
+            stepDiv.style.paddingTop = 'var(--spacing-6)';
 
             this.cardContent.appendChild(stepDiv);
 
-            // Iniciar Grillas Responsivas (Rule 5.2) por contenedor lógico
+            // S49.11: Badge pill con punto pulsante + fondo semitransparente
+            const badgePill = document.createElement('span');
+            badgePill.className = 'wizard-step-badge';
+            badgePill.style.cssText = 'display:inline-flex;align-items:center;gap:var(--spacing-2);padding:var(--spacing-1) var(--spacing-3);border-radius:var(--rounded-full);background:rgba(var(--ion-color-primary-rgb, 28, 66, 232), 0.08);color:var(--ion-color-primary);font-size:var(--sys-font-caption, 0.75rem);font-weight:600;font-family:var(--ion-font-family, system-ui, sans-serif);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:var(--spacing-3);width:fit-content;';
+            
+            const pulseDot = document.createElement('span');
+            pulseDot.className = 'pulse-dot';
+            
+            const badgeText = document.createElement('span');
+            badgeText.textContent = `PASO ${index + 1} DE ${this.totalSteps}`;
+            
+            badgePill.appendChild(pulseDot);
+            badgePill.appendChild(badgeText);
+            
+            // Header del Content Area
             const headerWrap = document.createElement('div');
             headerWrap.style.marginBottom = 'var(--spacing-5)';
             headerWrap.style.textAlign = 'left';
 
+            headerWrap.appendChild(badgePill);
+
             const sectionTitle = document.createElement('h2');
             sectionTitle.textContent = (stepName === 'default' ? 'Configuración General' : stepName);
-            sectionTitle.style.color = 'var(--ion-text-color)';
-            sectionTitle.style.fontSize = 'var(--sys-font-h2, 1.5rem)';
-            sectionTitle.style.fontFamily = 'var(--sys-font-heading, system-ui, -apple-system, sans-serif)';
-            sectionTitle.style.fontWeight = '700';
-            sectionTitle.style.margin = '0 0 var(--spacing-2) 0';
+            sectionTitle.style.cssText = 'color:var(--ion-text-color);font-size:var(--sys-font-h2, 1.5rem);font-family:var(--font-display, var(--ion-font-family, system-ui, sans-serif));font-weight:700;margin:0 0 var(--spacing-2) 0;';
             headerWrap.appendChild(sectionTitle);
 
-            // S49.6: Subtítulos descriptivos
+            // Descripción del paso en el content area
             const desc = document.createElement('p');
-            desc.style.margin = '0';
-            desc.style.fontSize = '0.9rem';
-            desc.style.maxWidth = '100%';
-            desc.style.color = 'var(--ion-color-step-600, #666)';
-            
-            const descriptions = {
-                'Taxonomía': 'Defina el nombre y propósito principal de esta estructura organizativa.',
-                'Unidad de Negocio': 'Seleccione la unidad de negocio principal a la que pertenece esta taxonomía.',
-                'Portafolios Asociados': 'Asocie los portafolios que serán gobernados bajo esta estructura.',
-                'Grupo de Productos': 'Vincule los grupos de productos específicos relacionados.',
-                'Equipos': 'Seleccione los equipos operativos responsables.',
-                'Personas': 'Seleccione los miembros y líderes asociados a esta taxonomía.'
-            };
-            desc.textContent = descriptions[stepName] || 'Complete la información solicitada en esta sección.';
+            desc.style.cssText = 'margin:0;font-size:var(--sys-font-body);max-width:100%;color:var(--ion-color-step-600, #666);line-height:1.5;';
+            desc.textContent = this._getStepDescription(stepName);
             headerWrap.appendChild(desc);
 
             stepDiv.appendChild(headerWrap);
 
+            // Grid para inyección de campos
             const grid = document.createElement('ion-grid');
             grid.style.padding = 'var(--spacing-0)';
             grid.style.width = '100%';
@@ -144,9 +166,47 @@ window.UI_FormStepper = class UI_FormStepper {
             grid.appendChild(row);
 
             stepDiv.appendChild(grid);
-            this.rows[stepName] = row; // Referencia rápida para inyectar campos
+            this.rows[stepName] = row;
+
+            // Guardamos referencia al badge para actualizar dinámicamente
+            this.stepContainers[stepName]._badge = badgePill;
         });
 
+        // S49.11: Barra de progreso al pie del sidebar
+        if (this.sidebarSteps) {
+            const progressWrap = document.createElement('div');
+            progressWrap.style.cssText = 'margin-top:auto;padding:var(--spacing-4) 0 0 0;';
+
+            const progressText = document.createElement('div');
+            progressText.style.cssText = 'display:flex;justify-content:space-between;align-items:center;margin-bottom:var(--spacing-2);';
+            
+            const progLabel = document.createElement('span');
+            progLabel.style.cssText = 'font-size:var(--sys-font-caption, 0.75rem);font-weight:600;color:var(--ion-text-color);';
+            progLabel.textContent = 'Progreso';
+            
+            const progCount = document.createElement('span');
+            progCount.style.cssText = 'font-size:var(--sys-font-caption, 0.75rem);color:var(--ion-color-step-500, #888);';
+            progCount.textContent = `1 de ${this.totalSteps}`;
+            
+            progressText.appendChild(progLabel);
+            progressText.appendChild(progCount);
+
+            const progressBarContainer = document.createElement('div');
+            progressBarContainer.style.cssText = 'width:100%;height:4px;border-radius:var(--rounded-full);background:var(--ion-color-step-150, #e0e0e0);overflow:hidden;';
+            
+            const progressFill = document.createElement('div');
+            progressFill.style.cssText = 'height:100%;border-radius:var(--rounded-full);background:var(--ion-color-primary);transition:width 0.3s ease;';
+            progressFill.style.width = `${(1 / this.totalSteps) * 100}%`;
+            
+            progressBarContainer.appendChild(progressFill);
+            progressWrap.appendChild(progressText);
+            progressWrap.appendChild(progressBarContainer);
+            this.sidebarSteps.appendChild(progressWrap);
+
+            // Guardar referencias para actualización dinámica
+            this._sidebarProgressCount = progCount;
+            this._sidebarProgressFill = progressFill;
+        }
     }
 
     _attachListeners() {
@@ -216,7 +276,8 @@ window.UI_FormStepper = class UI_FormStepper {
                 }
             }
             
-            mi.label.setAttribute('color', isCurrent ? 'primary' : (hasData ? 'success' : 'medium'));
+            // S49.11: Actualizar color del título del sidebar
+            mi.titleSpan.style.color = isCurrent ? 'var(--ion-color-primary)' : (hasData ? 'var(--ion-color-success)' : '');
         });
     }
 
@@ -246,28 +307,36 @@ window.UI_FormStepper = class UI_FormStepper {
                 
                 mi.item.style.setProperty('--background', 'transparent');
 
-                mi.item.style.setProperty('--background', 'transparent');
-
                 if (!this.isStateful) {
                     mi.icon.style.backgroundColor = 'var(--ion-color-step-150, #e0e0e0)';
                     mi.icon.style.color = 'var(--ion-color-medium)';
-                    mi.label.setAttribute('color', 'medium');
+                    mi.titleSpan.style.color = '';
 
                     if (idx === this.currentStepIndex) {
-                        mi.item.style.setProperty('--background', 'var(--dv-primary-light)');
-                        mi.item.style.borderRadius = 'var(--rounded-md, 8px)';
+                        mi.item.style.setProperty('--background', 'var(--dv-primary-light, rgba(28, 66, 232, 0.06))');
+                        mi.item.style.borderRadius = 'var(--rounded-sm, 8px)';
                         mi.icon.style.backgroundColor = 'var(--ion-color-primary)';
                         mi.icon.style.color = 'var(--ion-color-primary-contrast)';
-                        mi.label.setAttribute('color', 'primary');
+                        mi.titleSpan.style.color = 'var(--ion-color-primary)';
                     }
                 } else {
                     if (idx === this.currentStepIndex) {
-                        mi.item.style.setProperty('--background', 'var(--dv-primary-light)');
-                        mi.item.style.borderRadius = 'var(--rounded-md, 8px)';
+                        mi.item.style.setProperty('--background', 'var(--dv-primary-light, rgba(28, 66, 232, 0.06))');
+                        mi.item.style.borderRadius = 'var(--rounded-sm, 8px)';
                     }
                 }
             });
             if (this.isStateful) this.recalculateAllStatuses();
+        }
+
+        // S49.11: Badge text ya no necesita actualización dinámica (es estático por paso)
+
+        // S49.11: Actualizar progress bar del sidebar
+        if (this._sidebarProgressCount) {
+            this._sidebarProgressCount.textContent = `${this.currentStepIndex + 1} de ${this.totalSteps}`;
+        }
+        if (this._sidebarProgressFill) {
+            this._sidebarProgressFill.style.width = `${((this.currentStepIndex + 1) / this.totalSteps) * 100}%`;
         }
 
         if (this.progressLabel) {

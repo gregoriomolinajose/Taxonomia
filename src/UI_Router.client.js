@@ -133,20 +133,21 @@
                     
                     const wrapper = document.createElement('div');
                     wrapper.id = 'wizard-fullscreen-zone';
-                    wrapper.style.width = '100%';
-                    wrapper.style.height = '100vh'; // Fullscreen real
+                    wrapper.style.position = 'absolute';
+                    wrapper.style.top = '0';
+                    wrapper.style.bottom = '0';
+                    wrapper.style.left = '0';
+                    wrapper.style.right = '0';
                     wrapper.style.display = 'flex';
                     wrapper.style.flexDirection = 'column';
                     wrapper.style.background = 'var(--ion-background-color)';
                     
-                    // Header de estilo Landing
+                    // S49.11: Header de estilo Landing (Left-aligned, mini caps + H2)
                     const headerZone = document.createElement('div');
                     headerZone.id = 'wizard-header-zone';
-                    headerZone.style.textAlign = 'center';
-                    headerZone.style.padding = 'var(--spacing-5) var(--spacing-4)';
                     headerZone.style.position = 'relative';
                     
-                    // Botón para salir/volver al Dashboard
+                    // Botón para salir/volver
                     const backBtn = document.createElement('ion-button');
                     backBtn.id = 'wizard-back-btn';
                     backBtn.fill = 'clear';
@@ -158,23 +159,27 @@
                     };
                     headerZone.appendChild(backBtn);
                     
-                    const title = document.createElement('h1');
-                    title.textContent = 'Orquestador de Taxonomía E2E';
-                    title.style.fontSize = 'var(--sys-font-h2, 1.5rem)';
-                    title.style.color = 'var(--ion-color-dark)';
-                    title.style.fontFamily = 'var(--sys-font-heading, system-ui, -apple-system, sans-serif)';
-                    title.style.fontWeight = '700';
-                    title.style.letterSpacing = '-0.02em';
-                    title.style.margin = '0 0 var(--spacing-1) 0';
-                    
+                    // S49.11: Subtítulo mini caps con indicador de punto azul
                     const subtitle = document.createElement('p');
-                    subtitle.textContent = 'Diseñe la arquitectura de su organización en tres pasos estratégicos.';
-                    subtitle.style.fontSize = 'var(--sys-font-body)';
-                    subtitle.style.color = 'var(--ion-color-step-600)';
-                    subtitle.style.margin = '0';
+                    subtitle.style.cssText = 'margin:0 0 var(--spacing-1) 0;display:flex;align-items:center;gap:var(--spacing-2);';
+                    
+                    const dot = document.createElement('span');
+                    dot.style.cssText = 'width:8px;height:8px;border-radius:50%;background:var(--ion-color-primary);display:inline-block;flex-shrink:0;';
+                    
+                    const subtitleText = document.createElement('span');
+                    subtitleText.textContent = 'ORQUESTADOR DE TAXONOMÍA E2E';
+                    subtitleText.style.cssText = 'font-size:var(--sys-font-caption, 0.75rem);font-family:var(--ion-font-family, system-ui, sans-serif);font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--ion-color-step-600, #666);';
+                    
+                    subtitle.appendChild(dot);
+                    subtitle.appendChild(subtitleText);
+                    headerZone.appendChild(subtitle);
+                    
+                    // S49.11: Título principal H2 bold
+                    const title = document.createElement('h1');
+                    title.textContent = 'Diseñando la arquitectura organizacional';
+                    title.style.cssText = 'font-size:var(--sys-font-h2, 1.5rem);color:var(--ion-text-color);font-family:var(--font-display, var(--ion-font-family, system-ui, sans-serif));font-weight:700;letter-spacing:-0.02em;margin:0;';
                     
                     headerZone.appendChild(title);
-                    headerZone.appendChild(subtitle);
                     wrapper.appendChild(headerZone);
 
                     // Estilos Responsivos Integrados
@@ -188,6 +193,11 @@
                             padding-bottom: var(--spacing-2);
                             gap: var(--spacing-2);
                             -webkit-overflow-scrolling: touch;
+                            -ms-overflow-style: none;  /* IE and Edge */
+                            scrollbar-width: none;  /* Firefox */
+                        }
+                        #local-sidebar-list::-webkit-scrollbar {
+                            display: none;
                         }
                         #local-sidebar-list ion-item {
                             flex: 0 0 auto;
@@ -197,56 +207,81 @@
                         }
                         #local-sidebar-list ion-label { white-space: nowrap !important; }
                         #wizard-header-zone { 
-                            padding: var(--spacing-4) var(--spacing-5) !important; 
-                            font-family: var(--sys-font-family, system-ui, -apple-system, sans-serif); 
+                            padding: var(--spacing-5) var(--spacing-6) !important; 
+                            font-family: var(--sys-font-family-body, system-ui, -apple-system, sans-serif); 
                             border-bottom: 1px solid var(--color-border, #e0e0e0);
                             background: var(--color-bg-body, #ffffff);
+                            text-align: left;
                         }
                         #wizard-back-btn { top: var(--spacing-4) !important; right: var(--spacing-4) !important; left: auto !important; }
-                        #wizard-col-left { border-right: none; border-bottom: 1px solid var(--ion-color-step-150); background: var(--color-bg-body, #ffffff); }
+                        #wizard-col-left { border-right: none; border-bottom: 1px solid var(--ion-color-step-150); background: var(--color-bg-body, #ffffff); display: flex; flex-direction: column; height: 100%; min-height: 0; }
 
-                        /* Footer Visibility Fix */
+                        /* Footer Visibility Fix - Flexbox Refactor */
+                        #wizard-col-right {
+                            display: flex !important;
+                            flex-direction: column !important;
+                            padding: 0 !important; /* Move padding to inner content */
+                            height: 100% !important;
+                            min-height: 0 !important;
+                            overflow: hidden !important;
+                        }
                         #wizard-col-right ion-content {
-                            position: absolute !important;
-                            top: 0;
-                            left: 0;
-                            right: 0;
-                            bottom: 80px !important; /* Leave space for footer */
+                            position: relative !important;
+                            flex: 1 !important;
+                            --padding-top: var(--spacing-6);
+                            --padding-bottom: var(--spacing-6);
+                            --padding-start: var(--spacing-8);
+                            --padding-end: var(--spacing-8);
                             background: var(--color-bg-body, #ffffff) !important;
                         }
-                        #wizard-col-right .drawer-footer {
-                            position: absolute;
-                            bottom: 0;
-                            left: 0;
+                        #wizard-footer-zone .drawer-footer {
+                            position: relative !important;
+                            flex-shrink: 0 !important;
                             width: 100%;
                             height: 80px;
                             z-index: 100;
                             background: var(--color-bg-body, #ffffff);
                             border-top: 1px solid var(--color-border, #e0e0e0);
                             box-shadow: var(--shadow-top, 0 -4px 16px rgba(0,0,0,0.05));
-                            padding: 0 var(--spacing-4);
+                            padding: 0 var(--spacing-8);
                             display: flex;
                             align-items: center;
                             justify-content: center; /* Center grid inside */
                         }
-                        #wizard-col-right .drawer-footer ion-grid {
+                        #wizard-footer-zone .drawer-footer ion-grid {
                             width: 100%;
                             padding: 0;
+                            max-width: 1200px; /* Limit width for ultra-wide screens */
                         }
 
                         /* Tablet & Desktop */
                         @media (min-width: 768px) {
                             #wizard-fullscreen-zone { overflow-y: hidden; background: var(--color-bg-body, #ffffff); }
-                            #local-sidebar-list { flex-direction: column; overflow-x: visible; padding-bottom: 0; margin-top: var(--spacing-4); }
+                            #local-sidebar-list { flex-direction: column; overflow-x: visible; overflow-y: auto; flex: 1; padding-bottom: 0; margin-top: var(--spacing-4); }
                             #local-sidebar-list ion-item { width: 100%; margin: var(--spacing-1) 0; }
                             #local-sidebar-list ion-label { white-space: normal !important; }
-                            #wizard-col-left { border-right: 1px solid var(--color-border, #e0e0e0) !important; border-bottom: none !important; }
+                            #wizard-col-left { border-right: 1px solid var(--color-border, #e0e0e0) !important; border-bottom: none !important; display: flex; flex-direction: column; }
                         }
                         
                         /* Responsive Typography fixes for mobile title */
                         @media (max-width: 576px) {
                             #wizard-header-zone h1 { font-size: 1.5rem !important; }
                             #wizard-header-zone p { font-size: 0.85rem !important; }
+                        }
+
+                        /* S49.11: Pulsating dot animation for badge pill */
+                        @keyframes wizard-pulse {
+                            0%, 100% { transform: scale(1); opacity: 1; }
+                            50% { transform: scale(1.6); opacity: 0.5; }
+                        }
+                        .wizard-step-badge .pulse-dot {
+                            width: 8px;
+                            height: 8px;
+                            border-radius: 50%;
+                            background: var(--ion-color-primary);
+                            display: inline-block;
+                            animation: wizard-pulse 2s ease-in-out infinite;
+                            flex-shrink: 0;
                         }
                     `;
                     wrapper.appendChild(style);
@@ -255,11 +290,17 @@
                     const grid = document.createElement('ion-grid');
                     grid.style.flex = '1';
                     grid.style.width = '100%';
+                    grid.style.maxWidth = '100%';
                     grid.style.margin = '0';
                     grid.style.padding = '0';
+                    grid.style.overflow = 'hidden';
+                    grid.style.minHeight = '0';
+                    grid.style.display = 'flex';
+                    grid.style.flexDirection = 'column';
                     
                     const row = document.createElement('ion-row');
-                    row.style.height = '100%';
+                    row.style.flex = '1';
+                    row.style.minHeight = '0';
                     
                     const colLeft = document.createElement('ion-col');
                     colLeft.id = 'wizard-col-left';
@@ -288,12 +329,18 @@
                     grid.appendChild(row);
                     wrapper.appendChild(grid);
                     
+                    const footerZone = document.createElement('div');
+                    footerZone.id = 'wizard-footer-zone';
+                    footerZone.style.flexShrink = '0';
+                    footerZone.style.width = '100%';
+                    wrapper.appendChild(footerZone);
+
                     container.appendChild(wrapper);
 
                     // Escucha de éxito global
                     if (window.AppEventBus) {
                         wizardUnsubscribe = window.AppEventBus.subscribe('FORM::SUBMIT_SUCCESS', (payload) => {
-                            if (payload.entityName === 'Wizard_Taxonomia') {
+                            if (payload.entityName === 'Taxonomia') {
                                 if (wizardUnsubscribe) wizardUnsubscribe();
                                 window.AppEventBus.publish('NAV::CHANGE', {viewType: 'selfservice'});
                                 // Alerta Premium
@@ -308,9 +355,10 @@
                     }
 
                     if (typeof window.renderForm === 'function') {
-                        window.renderForm('Wizard_Taxonomia', null, null, { 
+                        window.renderForm('Taxonomia', null, null, { 
                             customContainer: colRight,
-                            customSidebarSteps: localSidebarList 
+                            customSidebarSteps: localSidebarList,
+                            customFooterContainer: footerZone
                         })
                             .catch(e => console.error("[UI_Router] Error asíncrono inicializando Wizard:", e));
                     } else {
