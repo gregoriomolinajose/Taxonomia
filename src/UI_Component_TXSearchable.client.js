@@ -318,6 +318,23 @@ class TXSearchable extends HTMLElement {
         }
         this._scheduleRender();
         setTimeout(() => this._bindTriggerEvents(), 100);
+
+        // S49.12: Reactive subscription to DataStore changes for relational subtitles (like "Cargo")
+        if (typeof window !== 'undefined' && window.AppEventBus && !this._dsSubscriptionBound) {
+            this._dsSubscriptionBound = true;
+            this._handleDataStoreChange = (e) => {
+                if (!e || !e.detail) return;
+                const subtitleLookup = this.getAttribute('subtitle-lookup');
+                if (subtitleLookup && e.detail.entityName === subtitleLookup) {
+                    this._scheduleRender();
+                    if (this._overlayNode || this._inlineMode) {
+                        this.buildListItems(this._searchTerm || '');
+                    }
+                }
+            };
+            window.AppEventBus.subscribe('DATASTORE::CHANGED', this._handleDataStoreChange);
+        }
+
     }
 
     _cleanupOverlay() {
@@ -347,6 +364,12 @@ class TXSearchable extends HTMLElement {
         if (this._outsideClickListener) {
             document.removeEventListener('click', this._outsideClickListener);
             this._outsideClickListener = null;
+        }
+        
+        if (typeof window !== 'undefined' && window.AppEventBus && this._handleDataStoreChange) {
+            window.AppEventBus.unsubscribe('DATASTORE::CHANGED', this._handleDataStoreChange);
+            this._handleDataStoreChange = null;
+            this._dsSubscriptionBound = false;
         }
         
         // Destitución de modales anclados en root
