@@ -460,14 +460,12 @@
                 btnRow.appendChild(colLeft);
                 btnRow.appendChild(colRight);
 
-                // S49.11: Hook para actualizar barras/dots dinámicamente
-                const originalGoTo = container._stepperRef.goToSection.bind(container._stepperRef);
-                container._stepperRef.goToSection = function(name) {
-                    originalGoTo(name);
+                // S49.12: Hook limpio vía callback nativo para actualizar barras/dots dinámicamente
+                container._stepperRef.onStepChange = (currentIndex, total) => {
                     const indicators = dotsWrap.querySelectorAll('span');
                     indicators.forEach((ind, i) => {
-                        const isCompleted = i < this.currentStepIndex;
-                        const isCurrent = i === this.currentStepIndex;
+                        const isCompleted = i < currentIndex;
+                        const isCurrent = i === currentIndex;
                         if (isCompleted) {
                             // Completed — elongated success bar
                             ind.style.width = '24px';
@@ -482,7 +480,7 @@
                             ind.style.backgroundColor = 'var(--ion-color-step-200, #d0d0d0)';
                         }
                     });
-                    stepLabel.textContent = `${this.currentStepIndex + 1} / ${this.totalSteps}`;
+                    stepLabel.textContent = `${currentIndex + 1} / ${total}`;
                 };
 
                 // Arrancar flujo topológico

@@ -38,12 +38,27 @@
                     if (f.lookupSource || (f.type === 'relation' && f.targetEntity)) {
                         fieldsWithLookup.push(f);
                     }
+                    // S49.12: Fetch subtitleLookup indirectly so DataStore has it for TXSearchable
+                    if (f.subtitleLookup) {
+                        fieldsWithLookup.push({
+                            name: `_virtual_subtitle_${f.name}_`,
+                            type: 'relation',
+                            targetEntity: f.subtitleLookup
+                        });
+                    }
                     if (f.graphEntity === 'Sys_Graph_Edges' || f.isTemporalGraph) {
                         needsGraphEdges = true;
                     }
                     if (f.type === 'dynamic_list' && f.subFields) {
                         f.subFields.forEach(sub => {
                             if (sub.lookupSource) fieldsWithLookup.push(sub);
+                            if (sub.subtitleLookup) {
+                                fieldsWithLookup.push({
+                                    name: `_virtual_subtitle_${sub.name}_`,
+                                    type: 'relation',
+                                    targetEntity: sub.subtitleLookup
+                                });
+                            }
                             if (sub.graphEntity === 'Sys_Graph_Edges' || sub.isTemporalGraph) {
                                 needsGraphEdges = true;
                             }
