@@ -32,6 +32,8 @@ Desarrollar un portal de autoservicio y un asistente (wizard) dinámico a pantal
 - **S49.3:** Creación del Home Self-Service aislado para Clientes (`SelfService_Home_UI`) y enrutador.
 - **S49.4:** Ensamblaje del `<ion-modal>` Fullscreen en el Self-Service instanciando el Stepper con los pasos de Directorios y Asociaciones.
 - **S49.5:** Integración final de Altas estructuradas (Dominios/Capacidades) y End-to-End Testing de N:M.
+- **S49.11:** Refinamiento visual UI/UX (Layout Stepper, Tipografías, y Badges).
+- **S49.12:** Estabilización Arquitectónica del FormEngine y Stepper (Fix de Fugas de Abstracción y Carga Asíncrona).
 
 ## Done Criteria
 - [ ] La vista de Creación de Taxonomía se abre en pantalla completa desde el Portal Self-Service.
@@ -84,6 +86,8 @@ Stream 3 (Routing/Home): S49.3 ────────────────�
 | S49.3 | S | Done | 20m | 4 | Completada encapsulación de estilos Premium y ocultamiento de barra administrativa en el ruteador. |
 | S49.4 | L | Done | 35m | 6 | Integración de Wizard_Taxonomia en vista Fullscreen y rediseño estilo iOS del portal. |
 | S49.5 | M | Done | 25m | 5 | Inyectado Wizard_Taxonomia en APP_SCHEMAS y probado E2E con relaciones N:M. |
+| S49.11| M | Done | 30m | 5 | Implementación visual del stepper terminada. |
+| S49.12| S | Done | 20m | 5 | Estabilización del FormEngine prefetching y el evento onStepChange. |
 
 ### Sequencing Risks
 
