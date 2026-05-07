@@ -359,7 +359,7 @@ window.UI_FormStepper = class UI_FormStepper {
         if (this.btnSubmit) this.btnSubmit.classList.toggle('ion-hide', !isLastStep);
         
         // S49.12: Despachar evento nativo al container/renderizador
-        if (this.onStepChange) {
+        if (typeof this.onStepChange === 'function') {
             this.onStepChange(this.currentStepIndex, this.totalSteps);
         }
     }
