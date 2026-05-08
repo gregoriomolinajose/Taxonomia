@@ -55,23 +55,13 @@ class TXSearchable extends HTMLElement {
         let localSubtitleId = subtitleField && item ? item[subtitleField] : null;
 
         // [S49.13] Edge Traversal para Topologías de Grafo Temporal (Ej. CARGO_PERSONA)
-        if (subtitleField && !localSubtitleId && window.DataStore && window.APP_SCHEMAS) {
-            const targetSchema = window.APP_SCHEMAS[targetEntity];
-            if (targetSchema) {
-                const fieldsArr = targetSchema.fields || Object.keys(targetSchema).filter(k => typeof targetSchema[k] === 'object').map(k => targetSchema[k]);
-                const sFieldMeta = fieldsArr.find(f => f.name === subtitleField);
-                
-                if (sFieldMeta && sFieldMeta.isTemporalGraph && sFieldMeta.graphEdgeType) {
-                    const activeEdges = window.DataStore.get('Sys_Graph_Edges') || [];
-                    const edgeInfo = activeEdges.find(edge => 
-                        edge.tipo_relacion === sFieldMeta.graphEdgeType &&
-                        edge.estatus !== false && edge.estatus !== 'false' && edge.es_version_actual !== false &&
-                        (String(edge.destino) === String(idVal) || String(edge.origen) === String(idVal))
-                    );
-                    if (edgeInfo) {
-                        localSubtitleId = (String(edgeInfo.destino) === String(idVal)) ? edgeInfo.origen : edgeInfo.destino;
-                    }
-                }
+        // [S49.14] Refactored to use centralized Graph_Utils for O(1) indexed lookups
+        if (subtitleField && !localSubtitleId && window.Graph_Utils) {
+            const targetEntity = this.getAttribute('target-entity') || this.getAttribute('entity-name') || '';
+            const sFieldMeta = window.Graph_Utils.getTemporalEdgeMeta(targetEntity, subtitleField);
+            
+            if (sFieldMeta) {
+                localSubtitleId = window.Graph_Utils.resolveLinkedId(idVal, sFieldMeta.graphEdgeType);
             }
         }
 

@@ -213,11 +213,11 @@
                 const sRegex = new RegExp('(^|\\W)' + escapeRegExp(sVal) + '(\\W|$)');
 
                 // NEW: Resolve Graph edges JIT for filter (H8/S34 QA)
+                // [S49.14] Refactored to use centralized Graph_Utils for O(1) lookups
                 let fMeta = null;
                 if (window.APP_SCHEMAS && window.APP_SCHEMAS[_state.entityName]) {
                     fMeta = (window.APP_SCHEMAS[_state.entityName].fields || []).find(f => f.name === sKey);
                 }
-                const activeEdges = (fMeta && fMeta.isTemporalGraph && window.DataStore && window.DataStore.get('Sys_Graph_Edges')) ? window.DataStore.get('Sys_Graph_Edges') : null;
                 const edgeName = fMeta ? (fMeta.graphEdgeType || fMeta.name).toUpperCase() : null;
                 const pkCol = window.Schema_Utils ? window.Schema_Utils.getPrimaryKey(_state.entityName) : 'id_registro';
 
@@ -226,15 +226,10 @@
 
                     // Graph Fallback: Si no hay FK física, buscala en la topología (Orphan Prevention)
                     const isEmptyValue = val === undefined || val === null || val === '' || (Array.isArray(val) && val.length === 0);
-                    if (fMeta && fMeta.isTemporalGraph && activeEdges && isEmptyValue) {
+                    if (fMeta && fMeta.isTemporalGraph && window.Graph_Utils && isEmptyValue) {
                         const currentPK = r[pkCol];
-                        if (fMeta.relationType === 'padre') {
-                            const match = activeEdges.find(e => String(e.id_nodo_hijo) === String(currentPK) && e.tipo_relacion === edgeName && e.es_version_actual !== false && e.estado !== 'Eliminado');
-                            if (match) val = match.id_nodo_padre;
-                        } else {
-                            const match = activeEdges.find(e => String(e.id_nodo_padre) === String(currentPK) && e.tipo_relacion === edgeName && e.es_version_actual !== false && e.estado !== 'Eliminado');
-                            if (match) val = match.id_nodo_hijo; 
-                        }
+                        const resolvedLink = window.Graph_Utils.resolveLinkedId(currentPK, edgeName);
+                        if (resolvedLink) val = resolvedLink;
                     }
                     // Unwraps Graph/Relation Array [{id: "EQ-1"}] checking ANY object property or flat value
                     if (Array.isArray(val)) {

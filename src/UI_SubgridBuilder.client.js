@@ -82,34 +82,23 @@ window.UI_SubgridBuilder = {
         const pkKey = schema && schema.primaryKey ? schema.primaryKey : (data ? Object.keys(data).find(k => k.startsWith('id_') && k !== 'id_registro') : null);
         const currentPK = data ? (data[pkKey] || data.id_registro) : null;
         
-        // [S29.9] Zero-Latency Cache Cross-Reference (Agile Join)
-        if (childRecords.length === 0 && field.isTemporalGraph && field.graphEntity && window.DataStore) {
+        // [S49.14] Zero-Latency Cache Cross-Reference (Agile Join) refactored via centralized JS_GraphUtils O(1) lookups
+        if (childRecords.length === 0 && field.isTemporalGraph && window.Graph_Utils && currentPK) {
+            const normPK = window.UI_FormUtils ? window.UI_FormUtils.normalizeId(currentPK) : String(currentPK);
+            const edgeName = (field.graphEdgeType || field.name).toUpperCase();
+            const childIds = window.Graph_Utils.resolveAllLinkedIds(normPK, edgeName);
             
-            if (currentPK && window.UI_FormUtils) {
-                const graphEdges = window.DataStore.get(field.graphEntity) || [];
+            if (childIds.length > 0 && window.DataStore) {
                 const targetTable = window.DataStore.get(field.targetEntity) || [];
+                const schemaChild = window.APP_SCHEMAS ? window.APP_SCHEMAS[field.targetEntity] : null;
+                const childPkKey = schemaChild && schemaChild.primaryKey ? schemaChild.primaryKey : (targetTable[0] ? Object.keys(targetTable[0]).find(k => k.startsWith('id_') && k !== 'id_registro') : 'id_registro');
                 
-                if (graphEdges.length > 0 && targetTable.length > 0) {
-                    const edgeName = (field.graphEdgeType || field.name).toUpperCase();
-                    let childIds = [];
-                    if (field.relationType === 'hijo') {
-                        childIds = graphEdges.filter(e => e.es_version_actual !== false && window.UI_FormUtils.normalizeId(e.id_nodo_padre) === window.UI_FormUtils.normalizeId(currentPK) && String(e.tipo_relacion).toUpperCase() === edgeName).map(e => window.UI_FormUtils.normalizeId(e.id_nodo_hijo));
-                    } else if (field.relationType === 'padre') {
-                        childIds = graphEdges.filter(e => e.es_version_actual !== false && window.UI_FormUtils.normalizeId(e.id_nodo_hijo) === window.UI_FormUtils.normalizeId(currentPK) && String(e.tipo_relacion).toUpperCase() === edgeName).map(e => window.UI_FormUtils.normalizeId(e.id_nodo_padre));
+                targetTable.forEach(row => {
+                    const rawId = window.UI_FormUtils ? window.UI_FormUtils.normalizeId(row[childPkKey] || row.id_registro) : String(row[childPkKey] || row.id_registro);
+                    if (childIds.includes(rawId) && row.estado !== 'Eliminado') {
+                        childRecords.push(row);
                     }
-                    
-                    if (childIds.length > 0) {
-                        const schemaChild = window.APP_SCHEMAS ? window.APP_SCHEMAS[field.targetEntity] : null;
-                        const childPkKey = schemaChild && schemaChild.primaryKey ? schemaChild.primaryKey : Object.keys(targetTable[0] || {}).find(k => k.startsWith('id_') && k !== 'id_registro');
-                        
-                        targetTable.forEach(row => {
-                             const rawId = window.UI_FormUtils.normalizeId(row[childPkKey] || row.id_registro);
-                             if (childIds.includes(rawId) && row.estado !== 'Eliminado') {
-                                 childRecords.push(row);
-                             }
-                        });
-                    }
-                }
+                });
             }
         }
         
