@@ -1,0 +1,32 @@
+artifact_type: story-design
+version: 1
+skill: rai-story-design
+created: '2026-05-09T05:25:30Z'
+story: 'S50.2'
+epic: 'E50'
+content:
+  summary: 'Filtrar globalmente las aristas en estado Borrador e inyectar dicho estado desde el Wizard'
+  complexity: moderate
+  acceptance_criteria:
+    - id: AC1
+      description: 'JS_GraphUtils ignora por defecto estado=Borrador'
+      verifiable: true
+    - id: AC2
+      description: 'TXSearchable/FormSubmitter inyecta estado=Borrador al guardar en Taxonomia'
+      verifiable: true
+  integration_points:
+    - module: 'JS_GraphUtils'
+      change_type: modification
+      files: ['src/JS_GraphUtils.client.js']
+    - module: 'UI_FormSubmitter'
+      change_type: modification
+      files: ['src/UI_FormSubmitter.client.js']
+  decisions:
+    - id: D1
+      choice: 'Filtrado en lectura en JS_GraphUtils'
+      rationale: 'Para aislar el borrador del resto de la empresa de forma O(1)'
+      alternatives_considered: ['Filtrado SQL en servidor']
+refs:
+  backlog_item: 'S50.2'
+  epic_scope: 'work/epics/e50-taxonomia-draft/scope.md'
+metadata: {}
