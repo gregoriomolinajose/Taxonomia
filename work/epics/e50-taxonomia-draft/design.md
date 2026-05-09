@@ -40,12 +40,13 @@ En los interceptores del Wizard o en `SubgridState.js`, al invocar la creación 
 Y para la hidratación visual, `TXSearchable` pasará el flag de contexto a `GraphUtils`.
 
 ### 4. Geometría de Roles
-Para evitar el problema de "Persona -> Rol" descontextualizado, las aristas en el Wizard se crearán así:
-- Padre: `Persona`
-- Hijo: `Taxonomía` (o Directorio)
-- Tipo de Relación: `ID_ROL` (Ej: `ROLE-4`)
-- Estado: `Borrador`
-- Contexto: `TAX-123`
+Para evitar el problema de "Persona -> Rol" descontextualizado, las aristas en el Wizard se crearán con apuntado específico al objeto gobernado:
+- **Caso Directorios Generales:** Padre: `Persona`, Hijo: `Taxonomía`
+- **Caso Nodos Específicos (Ej. Product Manager):** Padre: `Persona`, Hijo: `Grupo_Producto` o `Dominio`.
+- En todos los casos se inyecta:
+  - Tipo de Relación: `ID_ROL` (Ej: `ROLE-4`)
+  - Estado: `Borrador`
+  - Contexto: `TAX-123`
 
 ## Ventajas
 - No hay límites de tamaño (soporta taxonomías de 10,000 nodos).

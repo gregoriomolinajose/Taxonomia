@@ -440,6 +440,7 @@ var APP_SCHEMAS = {
       ...FIELD_TEMPLATES.VERSION_FIELD(),
       ...FIELD_TEMPLATES.ESTADO_FIELD(),
       ...FIELD_TEMPLATES.NAME_FIELD("Nombre de Rol"),
+      { name: "especialidad", type: "select", options: ["TI", "Negocio", "Producto", "Agilidad"], label: "Área de Gestión / Especialidad", width: 6 },
       { name: "descripcion", type: "textarea", label: "Descripción", required: false, width: 12, showInList: false },
       { name: "personas_asignadas", type: "relation", relationType: "hijo", targetEntity: "Persona", graphEntity: "Sys_Graph_Edges", label: "Personas Asignadas", isTemporalGraph: true, graphEdgeType: "PERSONA_ROL", valueField: "id_persona", labelField: "_nombre_completo", uiComponent: "searchable_multi", topologyCardinality: "M:N", width: 12 }
     ]
@@ -458,6 +459,7 @@ var APP_SCHEMAS = {
       { name: "valido_hasta", type: "hidden" },
       { name: "es_version_actual", type: "hidden", defaultValue: true },
       { name: "peso_capacidad", type: "number", label: "Dedicación (%)", defaultValue: 100, width: 6, validators: ["min:0", "max:100"] },
+      { name: "contexto_id", type: "text", required: false, label: "ID Contexto/Borrador", showInList: false },
       { name: "metadata_config", type: "textarea", label: "Configuración Adicional (JSON)", required: false, width: 12, showInList: false, validators: ["json"] }
     ]
   },
