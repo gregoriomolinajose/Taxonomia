@@ -118,6 +118,16 @@ function API_Universal_Router(action, entityName, payload) {
       // Para delete, el payload puede ser solo el ID como string o un obj {id: ...}
       const id = (typeof payload === 'object') ? payload[pkField] || payload.id : payload;
       responseData = _handleDelete(entityName, id);
+    } else if (action === 'publish_draft_context') {
+      // [S50.4] Mass Approval ETL Endpoint
+      if (!payload || !payload.contextId) throw new Error("Falta contextId para publicar el borrador.");
+      const email = Session.getActiveUser().getEmail();
+      if (typeof Engine_ABAC !== 'undefined') {
+          const canPublish = Engine_ABAC.validatePermission(email, 'update', 'Taxonomia', payload.contextId);
+          if (!canPublish) throw new Error("ABAC_REJECTED: Permisos insuficientes para aprobar taxonomías.");
+      }
+      responseData = Engine_DB.publishDraftContext(payload.contextId);
+      return JSON.stringify({ status: "success", data: responseData, action });
     } else if (action === 'etl_writeback_feedback') {
       if (typeof _guardAbac === 'function') {
          _guardAbac('create', entityName, null);

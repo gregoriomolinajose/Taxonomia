@@ -234,6 +234,50 @@
             if (entityName === 'Taxonomia') btnText = 'Guardar Taxonomía';
             submitBtn.appendChild(document.createTextNode(btnText));
 
+            // [S50.4] Mass Approval Button
+            let approveBtn = null;
+            if (entityName === 'Taxonomia' && data && data.estado === 'Borrador') {
+                const canApprove = !window.ABAC || window.ABAC.can('update', 'Taxonomia', id);
+                if (canApprove) {
+                    approveBtn = document.createElement('ion-button');
+                    approveBtn.setAttribute('shape', 'round');
+                    approveBtn.setAttribute('color', 'success');
+                    approveBtn.style.cssText += ' font-family: var(--sys-font-family, inherit) !important; margin-left: 10px;';
+                    const iconApprove = document.createElement('ion-icon');
+                    iconApprove.setAttribute('slot', 'start');
+                    iconApprove.setAttribute('name', 'checkmark-done-outline');
+                    approveBtn.appendChild(iconApprove);
+                    approveBtn.appendChild(document.createTextNode(' Aprobar Taxonomía'));
+                    
+                    approveBtn.addEventListener('click', () => {
+                        if (global.showToast) global.showToast('Aprobando taxonomía...', 'medium');
+                        google.script.run
+                            .withSuccessHandler((res) => {
+                                try {
+                                    const parsed = typeof res === 'string' ? JSON.parse(res) : res;
+                                    if (parsed && parsed.status === 'success') {
+                                        if (global.showToast) global.showToast('Taxonomía aprobada exitosamente', 'success');
+                                        if (global.DrawerStackController) global.DrawerStackController.clearAllSync();
+                                        if (global.AppEventBus) global.AppEventBus.publish('TAXONOMIA_APPROVED');
+                                        if (global.DataStore && global.DataStore.fetchEntity) {
+                                            global.DataStore.fetchEntity('Taxonomia', true);
+                                            global.DataStore.fetchEntity('Sys_Graph_Edges', true);
+                                        }
+                                    } else {
+                                        if (global.showToast) global.showToast('Error: ' + (parsed.message || 'Desconocido'), 'danger');
+                                    }
+                                } catch(e) {
+                                    if (global.showToast) global.showToast('Error en la respuesta del servidor', 'danger');
+                                }
+                            })
+                            .withFailureHandler((err) => {
+                                if (global.showToast) global.showToast('Falla de red: ' + err, 'danger');
+                            })
+                            .api_router('publish_draft_context', { contextId: id });
+                    });
+                }
+            }
+
             if (useStepper) {
                 // S14.1 Arquitectura de FormStepper (Wizard)
                 if (!window.UI_FormStepper) {
@@ -456,6 +500,7 @@
                 colRight.appendChild(container._btnPrev);
                 colRight.appendChild(container._btnNext);
                 colRight.appendChild(submitBtn);
+                if (approveBtn) colRight.appendChild(approveBtn);
 
                 btnRow.appendChild(colLeft);
                 btnRow.appendChild(colRight);
@@ -492,6 +537,7 @@
                 colRight.setAttribute('size', '12');
                 colRight.style.textAlign = 'right';
                 colRight.appendChild(submitBtn);
+                if (approveBtn) colRight.appendChild(approveBtn);
                 btnRow.appendChild(colRight);
             }
 

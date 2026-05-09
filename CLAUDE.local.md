@@ -3,9 +3,11 @@
 > This file is for local preferences and overrides. It is not tracked by Git.
 
 ## Current Focus
-- **Active session:** Epic E50 (Atomic Draft Taxonomies). Story S50.2 completada con aislamiento zero-trust.
-- **Summary:** Soporte atómico en `JS_GraphUtils` y `Engine_DB` listos, payload de borradores implementado en el Frontend.
-- **Next focus:** S50.3 (DataGrid y Subgrids Contextuales) para hidratar borradores activos en UI.
+- **S50.1**: Done.
+- **S50.2**: Done. Zero-Trust Graph filter & Payload Interceptor.
+- **S50.3**: Done. UI Hydration Context Flag + H9/H6 Refactor.
+- **S50.4**: Todo. Backend ETL Aprobación Masiva.
+- **Next focus:** S50.4 (Botón de Aprobación Masiva) para activar borradores.
 
 ## Patterns
 

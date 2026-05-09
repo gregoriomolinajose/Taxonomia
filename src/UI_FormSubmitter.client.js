@@ -125,6 +125,10 @@ window.UI_FormSubmitter = class UI_FormSubmitter {
             // Cuando estamos en el Wizard de Taxonomía, forzamos estado y contexto a los hijos
             const isDraftMode = this.entityName === 'Taxonomia' || (this.modal && this.modal.dataset && this.modal.dataset.isDraft === 'true');
             if (isDraftMode) {
+                // [S50.4] Fix AR Finding: Forzar entidad maestra a nacer como borrador
+                if (this.entityName === 'Taxonomia' && action === 'create') {
+                    payload.estado = 'Borrador';
+                }
                 const pkFieldT = window.Schema_Utils ? window.Schema_Utils.getPrimaryKey(this.entityName) : 'id';
                 const contextId = payload[pkFieldT] || this._internalRetryId || 'DRAFT_CTX';
                 
