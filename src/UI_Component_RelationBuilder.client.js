@@ -103,11 +103,14 @@
                 initialValues = [mockToken];
             }
 
+            // [S50.3] Extraer contexto de borrador para inyectar en UI Components
+            const contextId = window.UI_FormUtils ? window.UI_FormUtils.extractDraftContext(entityName, currentPK) : null;
+
             if (field.uiComponent === 'searchable_multi') {
                 if (global.UI_Factory.buildSearchableMulti) {
                     const metadataToken = (window.APP_SCHEMAS && window.APP_SCHEMAS[field.targetEntity] && window.APP_SCHEMAS[field.targetEntity].metadata) || {};
-                    const visualTokens = { iconName: metadataToken.iconName, color: metadataToken.color };
-                    const multiNodes = global.UI_Factory.buildSearchableMulti(field, activeData, initialValues, localEventBus, visualTokens);
+                    const componentConfig = { iconName: metadataToken.iconName, color: metadataToken.color, contextId: contextId };
+                    const multiNodes = global.UI_Factory.buildSearchableMulti(field, activeData, initialValues, localEventBus, componentConfig);
 
                     // S41.14 Bind Create Action
                     multiNodes.addEventListener('txSearchableCreate', (e) => {
@@ -179,11 +182,11 @@
                 }
 
                 // S37.1 UI_Component_SearchableSingle reemplaza al framework nativo de ionic
-                // Inversion de Control: Inyectamos visualTokens de Metadatos desde afuera en vez de que el Componente de búsqueda lo escanee por sí mismo
+                // Inversion de Control: Inyectamos componentConfig de Metadatos desde afuera en vez de que el Componente de búsqueda lo escanee por sí mismo
                 const metadataToken = (window.APP_SCHEMAS && window.APP_SCHEMAS[field.targetEntity] && window.APP_SCHEMAS[field.targetEntity].metadata) || {};
-                const visualTokens = { iconName: metadataToken.iconName, color: metadataToken.color };
+                const componentConfig = { iconName: metadataToken.iconName, color: metadataToken.color, contextId: contextId };
                 
-                const basicSel = global.UI_Factory.buildSearchableSingle(field, filteredActiveData, initialValues, localEventBus, visualTokens);
+                const basicSel = global.UI_Factory.buildSearchableSingle(field, filteredActiveData, initialValues, localEventBus, componentConfig);
                 
                 // S41.14 Bind Create Action
                 basicSel.addEventListener('txSearchableCreate', (e) => {

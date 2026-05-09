@@ -33,7 +33,7 @@ Evolucionar la entidad Taxonomía para que actúe como un "Borrador de Escenario
 | Story | Size | Status | Actual | Velocity | Notes |
 |-------|:----:|:------:|:------:|:--------:|-------|
 | S50.1 | XS | Done | 1h | - | Agregado select de especialidad y contexto_id |
-| S50.2 | S | Todo | - | - | GraphUtils filter + Wizard payload intercept |
+| S50.2 | S | Done | 2.5h | - | GraphUtils filter + Wizard payload intercept (bug semántico resuelto) |
 | S50.3 | S | Todo | - | - | UI hydration context flag |
 | S50.4 | S | Todo | - | - | Botón de Aprobación Masiva |
 

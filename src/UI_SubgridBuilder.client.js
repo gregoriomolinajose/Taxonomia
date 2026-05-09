@@ -86,7 +86,11 @@ window.UI_SubgridBuilder = {
         if (childRecords.length === 0 && field.isTemporalGraph && window.Graph_Utils && currentPK) {
             const normPK = window.UI_FormUtils ? window.UI_FormUtils.normalizeId(currentPK) : String(currentPK);
             const edgeName = (field.graphEdgeType || field.name).toUpperCase();
-            const childIds = window.Graph_Utils.resolveAllLinkedIds(normPK, edgeName);
+            
+            // [S50.3] Extraer contexto para hidratar borradores activos en UI
+            const contextId = window.UI_FormUtils ? window.UI_FormUtils.extractDraftContext(entityName, currentPK) : null;
+            
+            const childIds = window.Graph_Utils.resolveAllLinkedIds(normPK, edgeName, contextId);
             
             if (childIds.length > 0 && window.DataStore) {
                 const targetTable = window.DataStore.get(field.targetEntity) || [];
