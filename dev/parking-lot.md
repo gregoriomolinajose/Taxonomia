@@ -66,3 +66,7 @@ Este documento condensa la Deuda Técnica material devuelta por los heurísticos
 ### 20. Extracción de Layout Master-Detail (H10)
 * **Origen:** Arch Review Epic 24 (S24.8).
 * **Acción Causal:** El panel Sliding-Drawer Jira-Style salta iterativamente el renderizado dinámico modal del DataViewEngine. Cuando surja la demanda de usar Master-Detail en dominios de negocio, integrar dinámicamente un parámetro de template layout: 'split-pane' nativamente al Data Engine.
+
+### 21. Visualización Gráfica Interactiva de Borradores de Taxonomía
+* **Origen:** Sesión de Diseño S50 (Taxonomía Draft Payload).
+* **Acción Causal:** La representación del borrador actualmente reside en subgrids planos y listados M:N. Aprovechar ECharts o ApexTree para inyectar el JSON local del borrador y renderizar visualmente el "Scenario Planning" antes de su aprobación.
