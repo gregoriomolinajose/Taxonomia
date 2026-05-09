@@ -41,3 +41,30 @@ Evolucionar la entidad Taxonomía para que actúe como un "Borrador de Escenario
 | Risk | L/I | Mitigation |
 |------|:---:|------------|
 | Aristas Huérfanas si la Taxonomía se rechaza | M/L | Crear un Hook on-delete en Taxonomía que elimine en cascada `DELETE FROM Sys_Graph_Edges WHERE contexto_id = X`. |
+
+## Implementation Plan
+
+### 1. Story Sequence & Rationale
+1. **S50.1: Schema Updates (Foundation)**
+   * *Rationale (Dependency-driven):* Es el cimiento de la BD. Sin `contexto_id`, nada funciona.
+   * *Dependencies:* Ninguna.
+2. **S50.2: GraphUtils Filter & Wizard Payload (Walking Skeleton)**
+   * *Rationale (Risk-first):* Debemos asegurar que el motor de grafos filtre los borradores ANTES de inyectar datos reales para no contaminar producción.
+   * *Dependencies:* S50.1.
+3. **S50.3: UI Hydration Context (Core MVP)**
+   * *Rationale:* Termina la experiencia de edición permitiendo que `TXSearchable` lea los borradores en progreso.
+   * *Dependencies:* S50.2.
+4. **S50.4: Approval ETL (E2E Integration)**
+   * *Rationale:* Cierra el flujo (PAT-E-539). Convierte los borradores en la "verdad oficial" de la empresa.
+   * *Dependencies:* S50.1. (Puede desarrollarse en paralelo con S50.3).
+
+### 2. Milestones
+* **M1: Foundation & Walking Skeleton (S50.1, S50.2)**
+  * *Target:* El sistema soporta aristas "Borrador" con contexto. El Wizard puede escribirlas sin romper/mostrar en otras partes del sistema.
+* **M2: Full Edit Experience (S50.3)**
+  * *Target:* El usuario puede cerrar y reabrir el Wizard y ver sus selecciones pre-cargadas (hidratación local).
+* **M3: E2E Integration & Feature Complete (S50.4)**
+  * *Target:* El Admin hace clic en "Aprobar", las aristas se vuelven globales y el catálogo de grafos se actualiza. Integración cruzada confirmada.
+
+### 3. Parallel Opportunities
+- S50.4 (Aprobación Backend) no depende de que el Wizard de UI (S50.3) esté terminado, solo requiere los esquemas de S50.1. Podría hacerse en paralelo si existiera más de un agente trabajando.
