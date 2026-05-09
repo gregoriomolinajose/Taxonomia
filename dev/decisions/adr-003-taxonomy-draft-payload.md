@@ -1,25 +1,28 @@
-# ADR 003: Draft Payload via JSON Event Sourcing for Taxonomy
+# ADR 003: Atomic Draft Versioning via Graph Edge State
 
 ## Status
 Accepted
 
 ## Context
-El Wizard de Taxonomía permite agrupar relaciones organizacionales (Portafolios, Equipos, Liderazgos). Originalmente, cada paso del wizard inyectaba estas aristas directamente en la tabla central de grafos temporales (`Sys_Graph_Edges`). Esto creaba problemas de integridad: si un borrador de taxonomía quedaba a la mitad, el grafo global se contaminaba con aristas no certificadas, afectando las consultas en producción y confundiendo a los componentes que dependían de `JS_GraphUtils`.
+El Wizard de Taxonomía permite agrupar relaciones organizacionales (Portafolios, Equipos, Liderazgos) en forma de un "Escenario" o borrador antes de su publicación oficial. 
 
-Además, si múltiples usuarios creaban borradores paralelos de la organización, el grafo global perdía trazabilidad sobre a qué "escenario" pertenecía cada arista.
+Originalmente consideramos usar Event Sourcing (guardar todo el grafo como JSON dentro de la Taxonomía). Sin embargo, el análisis de arquitectura (H10 Pattern Duplication, H7 Abstraction Ratio) demostró que ese enfoque introducía alta fricción en UI, complejidad en sincronización de estado, límites físicos de tamaño (LONGTEXT), y riesgos de colisión por actualizaciones simultáneas.
 
 ## Decision
-Almacenaremos temporalmente todo el grafo construido por el Wizard de Taxonomía como un documento JSON dentro de una columna (`aristas_borrador`) en la propia entidad `Taxonomía`. 
+Utilizaremos **Atomic Draft Versioning**. Las relaciones en modo borrador se insertarán directamente en la tabla universal `Sys_Graph_Edges`. Para garantizar el aislamiento de este borrador del resto de la empresa, implementaremos dos mecanismos:
 
-Durante el flujo del wizard, todas las lecturas y escrituras de las relaciones M:N o jerárquicas se realizarán contra este estado virtual (Event Sourcing). Únicamente cuando un administrador haga clic en "Aprobar", se disparará un ETL sincrónico que decodificará el JSON, validará la existencia física de los nodos origen/destino, e insertará las aristas atómicas oficiales en `Sys_Graph_Edges`.
+1. **Atributo `estado`:** Toda arista creada en el Wizard tendrá `estado = 'Borrador'`.
+2. **Atributo `contexto_id`:** Se agrega un nuevo campo en `Sys_Graph_Edges` que guardará el ID de la Taxonomía a la que pertenece esta arista.
+
+El singleton de memoria (`JS_GraphUtils`) excluirá por defecto cualquier arista en modo Borrador, protegiendo las consultas en producción.
 
 ## Consequences
 
 **Positive:**
-- Aislamiento total: El grafo global (`Sys_Graph_Edges`) solo contendrá la "verdad oficial" de la organización, nunca borradores huérfanos.
-- Rendimiento: No necesitamos ensuciar `JS_GraphUtils` con bucles O(N) para filtrar aristas "Borrador" en toda la plataforma.
-- Soporte para Escenarios: Podemos tener múltiples simulaciones organizacionales activas simultáneamente.
+- Simplicidad Máxima (KISS): No hay necesidad de reescribir la hidratación en UI ni transformar JSON.
+- Escalabilidad: Soporta grafos masivos y edición concurrente por múltiples usuarios sin bloqueos de fila.
+- Aprobación O(1): Pasar de borrador a activo requiere un simple `UPDATE` en SQL en lugar de deserializar y procesar JSON.
 
 **Negative:**
-- Los componentes de UI en el Wizard (`TXSearchable`, subgrids) ahora deberán programarse para leer contextualmente desde un origen dual (la BD para datos globales, y el Payload local para las selecciones del draft).
-- Riesgo de Stale Data: Si un nodo (ej. Portafolio) es eliminado de la BD principal mientras el borrador de Taxonomía sigue abierto (sin aprobar), el JSON tendrá un ID huérfano. El motor de aprobación debe ser tolerante a fallos y validar cada inserción.
+- Se requiere limpiar la base de datos si se rechaza un borrador (On-Delete Cascade).
+- Aumenta el volumen total de filas en `Sys_Graph_Edges` por mantener versiones en borrador (completamente mitigado por la arquitectura O(1) in-memory de E49).
