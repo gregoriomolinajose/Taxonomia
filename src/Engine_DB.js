@@ -728,6 +728,44 @@ const Engine_DB = {
         };
     },
 
+    /**
+     * [S50.4] Mass Approval ETL
+     * Promotes a full Taxonomy draft context to Live/Active state atomically.
+     * @param {string} contextId
+     * @returns {Object} { approvedEdges: number }
+     */
+    publishDraftContext: function(contextId) {
+        if (!contextId) throw new Error("publishDraftContext: contextId requerido.");
+        if (typeof Logger !== 'undefined') Logger.log(`[Mass Approval] Publicando Draft Context: ${contextId}`);
+        const sysDate = new Date().toISOString();
+
+        // 1. Update master entity (Taxonomia)
+        const taxRecords = _Adapter_Sheets.read('Taxonomia');
+        const taxRecord = taxRecords.find(r => r.id_registro === contextId || r.id_taxonomia === contextId);
+        if (taxRecord) {
+            taxRecord.estado = 'Validado';
+            taxRecord.updated_at = sysDate;
+            _Adapter_Sheets.upsertBatch('Taxonomia', [taxRecord], { isVolatile: false });
+            _invalidateCache('Taxonomia');
+        }
+
+        // 2. Mass update edges
+        const edges = _Adapter_Sheets.read('Sys_Graph_Edges');
+        const edgesToUpdate = edges.filter(e => e.contexto_id === contextId && e.estado === 'Borrador');
+        
+        if (edgesToUpdate.length > 0) {
+            edgesToUpdate.forEach(e => {
+                e.estado = 'Validado';
+                e.updated_at = sysDate;
+            });
+            _Adapter_Sheets.upsertBatch('Sys_Graph_Edges', edgesToUpdate, { isVolatile: false });
+            _invalidateCache('Sys_Graph_Edges');
+            if (typeof Logger !== 'undefined') Logger.log(`[Mass Approval] ${edgesToUpdate.length} aristas validadas.`);
+        }
+
+        return { approvedEdges: edgesToUpdate.length };
+    },
+
     delete: function (entityName, id) {
         const config = (typeof CONFIG !== 'undefined') ? CONFIG : { useSheets: true, useCloudDB: false };
         if (typeof Logger !== 'undefined') Logger.log("Engine_DB_delete_router: Routing " + entityName + " (ID: " + id + ") to Architect Unit of Work Deletion.");
