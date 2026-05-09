@@ -45,21 +45,29 @@ window.Graph_Utils = (function () {
      * @param {string} edgeType - The relationship identifier (e.g. 'CARGO_PERSONA')
      * @returns {string|null} The linked record ID, or null if not found
      */
-    function resolveLinkedId(localRecordId, edgeType) {
+    function resolveLinkedId(localRecordId, edgeType, contextId = null) {
         if (!_graphIndex) _buildIndex();
         if (!_graphIndex) return null; // Fallback safely if DataStore is missing
 
         const lId = String(localRecordId);
         
+        const isValidEdge = (e) => {
+            if (e.tipo_relacion !== edgeType) return false;
+            if (e.estado === 'Borrador') {
+                return contextId && String(e.contexto_id) === String(contextId);
+            }
+            return true;
+        };
+
         // 1. Buscamos asumiendo que el ID local es el Destino
         if (_graphIndex.byDestino[lId]) {
-            const match = _graphIndex.byDestino[lId].find(e => e.tipo_relacion === edgeType);
+            const match = _graphIndex.byDestino[lId].find(isValidEdge);
             if (match) return match.id_nodo_padre;
         }
 
         // 2. Buscamos asumiendo que el ID local es el Origen
         if (_graphIndex.byOrigen[lId]) {
-            const match = _graphIndex.byOrigen[lId].find(e => e.tipo_relacion === edgeType);
+            const match = _graphIndex.byOrigen[lId].find(isValidEdge);
             if (match) return match.id_nodo_hijo;
         }
 
@@ -71,21 +79,30 @@ window.Graph_Utils = (function () {
      * 
      * @param {string} localRecordId - The ID of the record traversing the graph
      * @param {string} edgeType - The relationship identifier
+     * @param {string} contextId - Optional context ID to include draft edges
      * @returns {Array<string>} An array of linked record IDs
      */
-    function resolveAllLinkedIds(localRecordId, edgeType) {
+    function resolveAllLinkedIds(localRecordId, edgeType, contextId = null) {
         if (!_graphIndex) _buildIndex();
         if (!_graphIndex) return [];
 
         const lId = String(localRecordId);
         const results = [];
 
+        const isValidEdge = (e) => {
+            if (e.tipo_relacion !== edgeType) return false;
+            if (e.estado === 'Borrador') {
+                return contextId && String(e.contexto_id) === String(contextId);
+            }
+            return true;
+        };
+
         if (_graphIndex.byDestino[lId]) {
-            _graphIndex.byDestino[lId].filter(e => e.tipo_relacion === edgeType).forEach(e => results.push(e.id_nodo_padre));
+            _graphIndex.byDestino[lId].filter(isValidEdge).forEach(e => results.push(e.id_nodo_padre));
         }
 
         if (_graphIndex.byOrigen[lId]) {
-            _graphIndex.byOrigen[lId].filter(e => e.tipo_relacion === edgeType).forEach(e => results.push(e.id_nodo_hijo));
+            _graphIndex.byOrigen[lId].filter(isValidEdge).forEach(e => results.push(e.id_nodo_hijo));
         }
 
         return [...new Set(results)]; // Deduplicate
