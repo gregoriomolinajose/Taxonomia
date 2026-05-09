@@ -123,7 +123,6 @@ function API_Universal_Router(action, entityName, payload) {
       if (!payload || !payload.contextId) throw new Error("Falta contextId para publicar el borrador.");
       const email = Session.getActiveUser().getEmail();
       if (typeof Engine_ABAC !== 'undefined') {
-          const abacCtx = Engine_ABAC.resolveTopologyFor(email);
           const canPublish = Engine_ABAC.validatePermission(email, 'update', 'Taxonomia', payload.contextId);
           if (!canPublish) throw new Error("ABAC_REJECTED: Permisos insuficientes para aprobar taxonomías.");
       }
