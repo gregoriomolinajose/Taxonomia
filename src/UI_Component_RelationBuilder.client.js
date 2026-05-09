@@ -77,11 +77,11 @@
             
             let initialValues = [];
             
+            const schema = window.APP_SCHEMAS ? window.APP_SCHEMAS[entityName] : null;
+            const pkKey = schema && schema.primaryKey ? schema.primaryKey : (data ? Object.keys(data).find(k => k.startsWith('id_') && k !== 'id_registro') : null);
+            const currentPK = data ? (data[pkKey] || data.id_registro) : null;
+            
             if (field.isTemporalGraph && field.graphEntity && window.DataStore && window.DataStore.get(field.graphEntity)) {
-                const schema = window.APP_SCHEMAS ? window.APP_SCHEMAS[entityName] : null;
-                // Leemos con precisión milimétrica la Llave Primaria desde la Arquitectura
-                const pkKey = schema && schema.primaryKey ? schema.primaryKey : (data ? Object.keys(data).find(k => k.startsWith('id_') && k !== 'id_registro') : null);
-                const currentPK = data ? (data[pkKey] || data.id_registro) : null;
                 if (currentPK) {
                     const aristas = window.DataStore.get(field.graphEntity).filter(e => e.es_version_actual !== false);
                     const edgeName = (field.graphEdgeType || field.name).toUpperCase();
