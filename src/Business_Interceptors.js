@@ -152,12 +152,13 @@ var Business_Interceptors = (function() {
                         edgesBatch.push({
                         id_relacion: "RELA-" + [...Array(8)].map(() => Math.floor(Math.random() * 16).toString(16).toUpperCase()).join(''),
                         id_nodo_padre: targetId,
-                        id_nodo_hijo: p.id_persona || p._tempId,
+                        id_nodo_hijo: childId,
                         tipo_relacion: config.edgeType,
                         valido_desde: sysDate,
                         valido_hasta: "",
                         es_version_actual: true,
-                        estado: "Activo"
+                        estado: p._estado_arista || "Activo",
+                        contexto_id: p._contexto_arista || ""
                     });
                     }
                 });

@@ -121,6 +121,33 @@ window.UI_FormSubmitter = class UI_FormSubmitter {
 
             const action = this._internalRetryId ? 'update' : 'create';
             
+            // [S50.2] Inyección Atómica de Borradores (Atomic Drafts)
+            // Cuando estamos en el Wizard de Taxonomía, forzamos estado y contexto a los hijos
+            const isDraftMode = this.entityName === 'Taxonomia' || (this.modal && this.modal.dataset && this.modal.dataset.isDraft === 'true');
+            if (isDraftMode) {
+                const pkFieldT = window.Schema_Utils ? window.Schema_Utils.getPrimaryKey(this.entityName) : 'id';
+                const contextId = payload[pkFieldT] || this._internalRetryId || 'DRAFT_CTX';
+                
+                Object.keys(payload).forEach(key => {
+                    if (Array.isArray(payload[key])) {
+                        payload[key] = payload[key].map(child => {
+                            if (typeof child === 'object') {
+                                return {
+                                    ...child,
+                                    _estado_arista: 'Borrador',
+                                    _contexto_arista: contextId
+                                };
+                            }
+                            return {
+                                id_registro: String(child),
+                                _estado_arista: 'Borrador',
+                                _contexto_arista: contextId
+                            };
+                        });
+                    }
+                });
+            }
+            
             // S30.3 QA Review: Circular Reference & DOM-Leakage Guard
             const getCircularReplacer = () => {
                 const seen = new WeakSet();
