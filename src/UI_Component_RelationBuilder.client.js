@@ -103,10 +103,21 @@
                 initialValues = [mockToken];
             }
 
+            // [S50.3] Extraer contexto de borrador para inyectar en UI Components
+            let contextId = null;
+            if (entityName === 'Taxonomia') {
+                contextId = currentPK;
+            } else {
+                const activeModal = document.querySelector('ion-modal');
+                if (activeModal && activeModal.dataset && activeModal.dataset.isDraft === 'true') {
+                    contextId = activeModal.dataset.contextId || currentPK;
+                }
+            }
+
             if (field.uiComponent === 'searchable_multi') {
                 if (global.UI_Factory.buildSearchableMulti) {
                     const metadataToken = (window.APP_SCHEMAS && window.APP_SCHEMAS[field.targetEntity] && window.APP_SCHEMAS[field.targetEntity].metadata) || {};
-                    const visualTokens = { iconName: metadataToken.iconName, color: metadataToken.color };
+                    const visualTokens = { iconName: metadataToken.iconName, color: metadataToken.color, contextId: contextId };
                     const multiNodes = global.UI_Factory.buildSearchableMulti(field, activeData, initialValues, localEventBus, visualTokens);
 
                     // S41.14 Bind Create Action
@@ -181,7 +192,7 @@
                 // S37.1 UI_Component_SearchableSingle reemplaza al framework nativo de ionic
                 // Inversion de Control: Inyectamos visualTokens de Metadatos desde afuera en vez de que el Componente de búsqueda lo escanee por sí mismo
                 const metadataToken = (window.APP_SCHEMAS && window.APP_SCHEMAS[field.targetEntity] && window.APP_SCHEMAS[field.targetEntity].metadata) || {};
-                const visualTokens = { iconName: metadataToken.iconName, color: metadataToken.color };
+                const visualTokens = { iconName: metadataToken.iconName, color: metadataToken.color, contextId: contextId };
                 
                 const basicSel = global.UI_Factory.buildSearchableSingle(field, filteredActiveData, initialValues, localEventBus, visualTokens);
                 

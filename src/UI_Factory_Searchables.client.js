@@ -19,6 +19,7 @@
         
         if (visualTokens.iconName) node.setAttribute('icon-name', visualTokens.iconName);
         if (visualTokens.color) node.setAttribute('icon-color', visualTokens.color);
+        if (visualTokens.contextId) node.setAttribute('context-id', visualTokens.contextId);
         
         // Atributos de Extracción de Payload Dinámico (Esquema estricto)
         if (fieldDef.valueField) node.setAttribute('value-field', fieldDef.valueField);
