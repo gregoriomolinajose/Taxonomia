@@ -8,7 +8,7 @@
 (function (global) {
     global.UI_Factory = global.UI_Factory || {};
 
-    const _buildBaseSearchable = function(fieldDef, isMulti, dataset = [], initialSelection, localEventBus, visualTokens = {}) {
+    const _buildBaseSearchable = function(fieldDef, isMulti, dataset = [], initialSelection, localEventBus, componentConfig = {}) {
         const node = document.createElement('tx-searchable');
         
         node.setAttribute('entity-name', fieldDef.label || fieldDef.targetEntity || 'Registro');
@@ -17,9 +17,9 @@
         }
         node.setAttribute('multiple', isMulti ? 'true' : 'false');
         
-        if (visualTokens.iconName) node.setAttribute('icon-name', visualTokens.iconName);
-        if (visualTokens.color) node.setAttribute('icon-color', visualTokens.color);
-        if (visualTokens.contextId) node.setAttribute('context-id', visualTokens.contextId);
+        if (componentConfig.iconName) node.setAttribute('icon-name', componentConfig.iconName);
+        if (componentConfig.color) node.setAttribute('icon-color', componentConfig.color);
+        if (componentConfig.contextId) node.setAttribute('context-id', componentConfig.contextId);
         
         // Atributos de Extracción de Payload Dinámico (Esquema estricto)
         if (fieldDef.valueField) node.setAttribute('value-field', fieldDef.valueField);
@@ -72,15 +72,15 @@
     /**
      * Reemplazo Oculto a Single Searchable
      */
-    global.UI_Factory.buildSearchableSingle = function(fieldDef, dataset = [], initialSelection, localEventBus, visualTokens = {}) {
-        return _buildBaseSearchable(fieldDef, false, dataset, initialSelection, localEventBus, visualTokens);
+    global.UI_Factory.buildSearchableSingle = function(fieldDef, dataset = [], initialSelection, localEventBus, componentConfig = {}) {
+        return _buildBaseSearchable(fieldDef, false, dataset, initialSelection, localEventBus, componentConfig);
     };
 
     /**
      * Reemplazo Oculto a Multi Searchable (Subgrid Falso)
      */
-    global.UI_Factory.buildSearchableMulti = function(fieldDef, dataset = [], initialSelection, localEventBus, visualTokens = {}) {
-        return _buildBaseSearchable(fieldDef, true, dataset, initialSelection, localEventBus, visualTokens);
+    global.UI_Factory.buildSearchableMulti = function(fieldDef, dataset = [], initialSelection, localEventBus, componentConfig = {}) {
+        return _buildBaseSearchable(fieldDef, true, dataset, initialSelection, localEventBus, componentConfig);
     };
 
 })(typeof window !== 'undefined' ? window : this);

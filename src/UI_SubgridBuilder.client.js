@@ -88,10 +88,7 @@ window.UI_SubgridBuilder = {
             const edgeName = (field.graphEdgeType || field.name).toUpperCase();
             
             // [S50.3] Extraer contexto para hidratar borradores activos en UI
-            let contextId = null;
-            if (entityName === 'Taxonomia' || (modalContext && modalContext.dataset && modalContext.dataset.isDraft === 'true')) {
-                contextId = currentPK;
-            }
+            const contextId = window.UI_FormUtils ? window.UI_FormUtils.extractDraftContext(entityName, currentPK) : null;
             
             const childIds = window.Graph_Utils.resolveAllLinkedIds(normPK, edgeName, contextId);
             

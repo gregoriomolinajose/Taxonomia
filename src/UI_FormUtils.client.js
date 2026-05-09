@@ -288,6 +288,22 @@ window.UI_FormUtils = (function () {
         return true;
     }
 
+    /**
+     * [S50.3] extractDraftContext
+     * Extrae el ID de contexto de borrador basándose en el estado de la UI (modal activo).
+     * Resuelve la duplicación semántica (H9) entre constructores de UI.
+     */
+    function extractDraftContext(entityName, currentPK) {
+        if (entityName === 'Taxonomia') {
+            return currentPK;
+        }
+        const activeModal = document.querySelector('ion-modal');
+        if (activeModal && activeModal.dataset && activeModal.dataset.isDraft === 'true') {
+            return activeModal.dataset.contextId || currentPK;
+        }
+        return null;
+    }
+
     return {
         getDominioOptions,
         getDominiosPadreOptions,
@@ -297,6 +313,7 @@ window.UI_FormUtils = (function () {
         filterByTopology,
         validateRequiredFields,
         attachBusinessRulesListeners,
-        executeAsyncValidations
+        executeAsyncValidations,
+        extractDraftContext
     };
 })();
