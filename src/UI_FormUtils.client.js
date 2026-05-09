@@ -290,16 +290,16 @@ window.UI_FormUtils = (function () {
 
     /**
      * [S50.3] extractDraftContext
-     * Extrae el ID de contexto de borrador basándose en el estado de la UI (modal activo).
+     * Extrae el ID de contexto de borrador basándose en el estado de la UI (modal/drawer activo).
      * Resuelve la duplicación semántica (H9) entre constructores de UI.
      */
     function extractDraftContext(entityName, currentPK) {
         if (entityName === 'Taxonomia') {
             return currentPK;
         }
-        const activeModal = document.querySelector('ion-modal');
-        if (activeModal && activeModal.dataset && activeModal.dataset.isDraft === 'true') {
-            return activeModal.dataset.contextId || currentPK;
+        const activeContainer = document.querySelector('ion-modal, .drawer-panel');
+        if (activeContainer && activeContainer.dataset && activeContainer.dataset.isDraft === 'true') {
+            return activeContainer.dataset.contextId || currentPK;
         }
         return null;
     }
