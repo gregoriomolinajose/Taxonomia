@@ -142,7 +142,7 @@ var APP_SCHEMAS = {
   Taxonomia: {
     formMode: "stepper",
     form_stepper_stateful: true,
-    metadata: { prefix: 'TAXO', showInMenu: false, iconName: 'library-outline', color: 'tertiary', label: 'Taxonomías', titleField: 'nombre', idField: 'id_taxonomia', fkField: null },
+    metadata: { prefix: 'TAXO', showInMenu: true, iconName: 'library-outline', color: 'tertiary', label: 'Taxonomías', titleField: 'nombre', idField: 'id_taxonomia', fkField: null },
     primaryKey: "id_taxonomia",
     titleField: "nombre",
     topologyRules: TOPOLOGY_PRESETS.JERARQUICA_ESTRICTA_GRAPH_STD,

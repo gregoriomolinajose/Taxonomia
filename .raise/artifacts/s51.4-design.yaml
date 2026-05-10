@@ -1,0 +1,30 @@
+artifact_type: story-design
+version: 1
+skill: rai-story-design
+created: '2026-05-09T23:35:00Z'
+story: 'S51.4'
+epic: 'E51'
+content:
+  summary: 'Habilitar el CRUD Blueprint completo para Taxonomías en el Sidebar.'
+  complexity: trivial
+  acceptance_criteria:
+    - id: AC1
+      description: 'El botón de Taxonomía con el icono library-outline aparece en el menú lateral.'
+      verifiable: true
+    - id: AC2
+      description: 'La navegación al DataGrid lista todas las taxonomías guardadas.'
+      verifiable: true
+    - id: AC3
+      description: 'Es posible eliminar una taxonomía desde la tabla (DataGrid).'
+      verifiable: true
+  integration_points:
+    - module: 'Schema_Engine'
+      change_type: modification
+      files: ['src/Schema_Engine.js']
+  decisions:
+    - id: D1
+      choice: 'Usar Schema-Driven Rendering'
+      rationale: 'En lugar de crear un DataGrid manual, simplemente cambiar showInMenu a true habilita toda la funcionalidad base del DataViewEngine.'
+refs:
+  epic_scope: 'work/epics/e51-taxonomia-workspace/scope.md'
+metadata: {}
