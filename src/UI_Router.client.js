@@ -356,7 +356,18 @@
 
                     if (typeof window.renderForm === 'function') {
                         let recordId = (payload && payload.recordId) ? payload.recordId : null;
-                        window.renderForm('Taxonomia', recordId, null, { 
+                        let recordData = null;
+                        
+                        // [Fix] Hydrate data from cache if a recordId is passed, since renderForm expects an object, not a string.
+                        if (recordId && window.DataStore && window.Schema_Utils) {
+                            const dataBase = window.DataStore.get('Taxonomia') || [];
+                            const pkField = window.Schema_Utils.getPrimaryKey('Taxonomia');
+                            if (pkField) {
+                                recordData = dataBase.find(item => String(item[pkField]) === String(recordId));
+                            }
+                        }
+
+                        window.renderForm('Taxonomia', recordData, null, { 
                             customContainer: colRight,
                             customSidebarSteps: localSidebarList,
                             customFooterContainer: footerZone
