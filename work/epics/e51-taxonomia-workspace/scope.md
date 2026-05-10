@@ -45,10 +45,10 @@ Desbloquea la adopción de la plataforma por parte del liderazgo al proporcionar
 
 ### Milestones
 
-- [ ] **M1: Schema & Write (S51.1, S51.2)**
+- [x] **M1: Schema & Write (S51.1, S51.2)**
   - *Purpose:* Habilitar la definición semántica en el front y lograr grabar en BD de forma tripartita.
   - *Success Criteria:* Un envío de formulario de taxonomía con el rol de 'Head of Technology' graba correctamente `id_nodo_padre="ROLE-16"`, `id_nodo_hijo="PERS-1"`, `contexto_id="TAX-X"` en la tabla `Sys_Graph_Edges`.
-- [ ] **M2: Read & Complete (S51.3)**
+- [x] **M2: Read & Complete (S51.3)**
   - *Purpose:* Habilitar la lectura e hidratación, logrando el E2E del Wizard.
   - *Success Criteria:* Al recargar un borrador previamente guardado, el UI reconoce correctamente las relaciones del contexto tripartito y pinta a la Persona como seleccionada.
 
@@ -56,6 +56,8 @@ Desbloquea la adopción de la plataforma por parte del liderazgo al proporcionar
 
 | Story | Status | Assigned | Target |
 |-------|--------|----------|--------|
-| S51.1 | Todo | - | - |
-| S51.2 | Todo | - | - |
-| S51.3 | Todo | - | - |
+| S51.1 | Done | Rai | - |
+| S51.2 | Done | Rai | - |
+| S51.3 | Done | Rai | - |
+| S51.4 | Done | Rai | Debug: ETL Validation |
+| S51.5 | Done | Rai | Debug: Stepper Hydration |
