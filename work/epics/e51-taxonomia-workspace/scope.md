@@ -32,3 +32,30 @@ Desbloquea la adopción de la plataforma por parte del liderazgo al proporcionar
 ## Risks & Mitigations
 *   **Riesgo:** Romper la retrocompatibilidad con aristas bipartitas estándar (ej. `Portafolio -> Dominio`). 
     *   **Mitigación:** Encapsular toda la lógica nueva detrás del flag estricto `workspaceMode: true` en el esquema.
+
+## Implementation Plan
+
+### Story Sequence
+
+| Seq | Story | Rationale | Dependencies |
+|-----|-------|-----------|--------------|
+| 1 | **S51.1: Schema Engine & Workspace Mode Definition** | Es el cimiento (Dependency-driven). Sin la metadata, los otros componentes no pueden operar de manera condicional. | Ninguna |
+| 2 | **S51.2: Form Submitter Refactor for Tripartite Edges** | Necesitamos asegurar que podemos aislar y construir la arista tripartita (escritura) correctamente. (Walking skeleton). | S51.1 |
+| 3 | **S51.3: UI Components Hydration Refactor** | Cerrar el ciclo habilitando la lectura de la base de datos para rellenar los controles pre-guardados en el UI. | S51.1, S51.2 |
+
+### Milestones
+
+- [ ] **M1: Schema & Write (S51.1, S51.2)**
+  - *Purpose:* Habilitar la definición semántica en el front y lograr grabar en BD de forma tripartita.
+  - *Success Criteria:* Un envío de formulario de taxonomía con el rol de 'Head of Technology' graba correctamente `id_nodo_padre="ROLE-16"`, `id_nodo_hijo="PERS-1"`, `contexto_id="TAX-X"` en la tabla `Sys_Graph_Edges`.
+- [ ] **M2: Read & Complete (S51.3)**
+  - *Purpose:* Habilitar la lectura e hidratación, logrando el E2E del Wizard.
+  - *Success Criteria:* Al recargar un borrador previamente guardado, el UI reconoce correctamente las relaciones del contexto tripartito y pinta a la Persona como seleccionada.
+
+### Tracking
+
+| Story | Status | Assigned | Target |
+|-------|--------|----------|--------|
+| S51.1 | Todo | - | - |
+| S51.2 | Todo | - | - |
+| S51.3 | Todo | - | - |
