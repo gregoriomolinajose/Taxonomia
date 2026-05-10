@@ -372,6 +372,13 @@
                             customSidebarSteps: localSidebarList,
                             customFooterContainer: footerZone
                         })
+                            .then(() => {
+                                // S49.2 Fix: Delegate DOM population to the Form Engine Hydrator.
+                                // renderForm ONLY builds DOM structure. Values must be hydrated AFTER building.
+                                if (recordData && window.FormEngine_Hydrator) {
+                                    return window.FormEngine_Hydrator(colRight, recordData, 'Taxonomia');
+                                }
+                            })
                             .catch(e => console.error("[UI_Router] Error asíncrono inicializando Wizard:", e));
                     } else {
                         console.error("renderForm no está disponible globalmente.");

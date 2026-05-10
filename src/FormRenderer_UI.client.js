@@ -596,76 +596,10 @@
          */
         global._isRenderingForm = false;
 
-        global.openEditForm = async function (id, customEntityName = null) {
-            if (global._isRenderingForm) {
-                console.warn("[FormEngine] Race condition prevenida: ignorando click duplicado");
-                return;
-            }
-            global._isRenderingForm = true;
-            try {
-                console.log("[FormEngine] Solicitud de edición recibida para ID:", id);
-
-            const state = window.DataViewEngine ? window.DataViewEngine._getState() : null;
-            const entityName = customEntityName || (state ? state.entityName : null);
-            
-            if (!entityName) {
-                console.error("[FormEngine] Error: Entidad objetivo no identificada.");
-                return;
-            }
-
-            const meta = window.APP_SCHEMAS[entityName];
-            const dataBase = window.DataStore.get(entityName);
-
-            const pkField = window.Schema_Utils.getPrimaryKey(entityName);
-
-            // --- REGLA 3 (rules_qa.md): PROTECTOR DE NULLS ---
-            if (!meta || !pkField) {
-                console.error("[FormEngine] Error Crítico: No se encontró metadata o 'primaryKey' para la entidad:", entityName);
-                alert("Error de Configuración: La entidad '" + window.formatEntityName(entityName) + "' no tiene un mapeo de metadatos válido.");
-                return;
-            }
-
-            if (!dataBase || !Array.isArray(dataBase)) {
-                console.error("[FormEngine] Error: Cache de datos no disponible para la entidad:", entityName);
-                return;
-            }
-
-            console.log("[FormEngine] Editando entidad:", entityName, "Usando metadata:", meta);
-
-            // 2. Buscar el registro completo
-            const record = dataBase.find(item => String(item[pkField]) === String(id));
-            if (!record) {
-                console.error("[FormEngine] Error: Registro no encontrado en cache local para ID:", id, "en datos:", dataBase);
-                alert("Error: El registro con ID '" + id + "' no pudo ser localizado para edición.");
-                return;
-            }
-
-            console.log("[FormEngine] Registro encontrado:", record);
-
-            // [UX] Navegación: Evitamos destruir el stack si es Drill-Down
-            if (!customEntityName && global.DrawerStackController && global.DrawerStackController.getDepth() > 0) {
-                global.DrawerStackController.clearAllSync();
-            }
-
-            // 3. (Obsoleto) currentEditId ya no se usa globalmente
-
-            // S18.4 - Evaluación temprana ABAC para propagar el modo Lectura estructuralmente (Prop-Drilling)
-            const canEdit = !window.ABAC || window.ABAC.can('update', entityName, id);
-
-            // 4. Renderizar el formulario base de la entidad AL INSTANTE (0ms) usando caché local
-            await global.renderForm(entityName, record, null, { readonly: !canEdit });
-
-            // 5. [S29.9 Fix] Eliminada la pantalla Skeleton. La hidratación ahora es verdaderamente transparente.
-            // Actualizar Título del Drawer
-            if (global.currentFormDrawer) {
-                const modalTitle = global.currentFormDrawer.querySelector('.drawer-title') || global.currentFormDrawer.querySelector('ion-title');
-                if (modalTitle) modalTitle.textContent = window.formatEntityName(entityName); // Removido prefijo Editar:
-            }
-
-            // 5. Pre-llenado de campos (Acelerado a 0ms Local Cache)
-            const container = global.currentFormDrawer || document.getElementById('app-container');
+        global.FormEngine_Hydrator = async function(container, record, entityName) {
+            if (!container || !record) return;
             const inputs = container.querySelectorAll('ion-input, ion-textarea, ion-select, input[type="hidden"]');
-
+            
             // =========================================================================================
             // MDM Guardrail S4.3 Auditoría: Pre-Hidratación de 0ms (Solución a Fallo de Tree Lock Visual)
             // =========================================================================================
@@ -703,7 +637,7 @@
                 }
             }
 
-            console.log("[FormEngine] Pre-llenando", inputs.length, "campos...");
+            console.log("[FormEngine] Pre-llenando", inputs.length, "campos para", entityName);
             const formSchemaMap = APP_SCHEMAS[entityName] ? (APP_SCHEMAS[entityName].fields || APP_SCHEMAS[entityName]) : [];
             const pkFieldLocal = APP_SCHEMAS[entityName]?.primaryKey || 'id';
 
@@ -782,6 +716,77 @@
                     input.dispatchEvent(new CustomEvent('FormHydrated', { detail: valToSet, bubbles: false }));
                 }
             });
+        };
+
+        global.openEditForm = async function (id, customEntityName = null) {
+            if (global._isRenderingForm) {
+                console.warn("[FormEngine] Race condition prevenida: ignorando click duplicado");
+                return;
+            }
+            global._isRenderingForm = true;
+            try {
+                console.log("[FormEngine] Solicitud de edición recibida para ID:", id);
+
+            const state = window.DataViewEngine ? window.DataViewEngine._getState() : null;
+            const entityName = customEntityName || (state ? state.entityName : null);
+            
+            if (!entityName) {
+                console.error("[FormEngine] Error: Entidad objetivo no identificada.");
+                return;
+            }
+
+            const meta = window.APP_SCHEMAS[entityName];
+            const dataBase = window.DataStore.get(entityName);
+
+            const pkField = window.Schema_Utils.getPrimaryKey(entityName);
+
+            // --- REGLA 3 (rules_qa.md): PROTECTOR DE NULLS ---
+            if (!meta || !pkField) {
+                console.error("[FormEngine] Error Crítico: No se encontró metadata o 'primaryKey' para la entidad:", entityName);
+                alert("Error de Configuración: La entidad '" + window.formatEntityName(entityName) + "' no tiene un mapeo de metadatos válido.");
+                return;
+            }
+
+            if (!dataBase || !Array.isArray(dataBase)) {
+                console.error("[FormEngine] Error: Cache de datos no disponible para la entidad:", entityName);
+                return;
+            }
+
+            console.log("[FormEngine] Editando entidad:", entityName, "Usando metadata:", meta);
+
+            // 2. Buscar el registro completo
+            const record = dataBase.find(item => String(item[pkField]) === String(id));
+            if (!record) {
+                console.error("[FormEngine] Error: Registro no encontrado en cache local para ID:", id, "en datos:", dataBase);
+                alert("Error: El registro con ID '" + id + "' no pudo ser localizado para edición.");
+                return;
+            }
+
+            console.log("[FormEngine] Registro encontrado:", record);
+
+            // [UX] Navegación: Evitamos destruir el stack si es Drill-Down
+            if (!customEntityName && global.DrawerStackController && global.DrawerStackController.getDepth() > 0) {
+                global.DrawerStackController.clearAllSync();
+            }
+
+            // 3. (Obsoleto) currentEditId ya no se usa globalmente
+
+            // S18.4 - Evaluación temprana ABAC para propagar el modo Lectura estructuralmente (Prop-Drilling)
+            const canEdit = !window.ABAC || window.ABAC.can('update', entityName, id);
+
+            // 4. Renderizar el formulario base de la entidad AL INSTANTE (0ms) usando caché local
+            await global.renderForm(entityName, record, null, { readonly: !canEdit });
+
+            // 5. [S29.9 Fix] Eliminada la pantalla Skeleton. La hidratación ahora es verdaderamente transparente.
+            // Actualizar Título del Drawer
+            if (global.currentFormDrawer) {
+                const modalTitle = global.currentFormDrawer.querySelector('.drawer-title') || global.currentFormDrawer.querySelector('ion-title');
+                if (modalTitle) modalTitle.textContent = window.formatEntityName(entityName); // Removido prefijo Editar:
+            }
+
+            // 5. Pre-llenado de campos (Acelerado a 0ms Local Cache delegando al Hydrator Arquitectónico)
+            const container = global.currentFormDrawer || document.getElementById('app-container');
+            await global.FormEngine_Hydrator(container, record, entityName);
 
             // S7.3 - El "Pre-llenado de Chip Components" nativo fue removido. 
             // Reason (Principio DRY): UI_Components gestiona esta hidratación activamente
