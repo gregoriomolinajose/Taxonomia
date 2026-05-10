@@ -74,8 +74,14 @@
             }
 
             // S47.4 Proactive Detection: Ensure the file actually matches the entity
-            const firstRow = rawPayload[0];
-            const fileHeaders = Object.keys(firstRow).map(k => {
+            const fileHeadersSet = new Set();
+            rawPayload.forEach(row => {
+                Object.keys(row).forEach(k => {
+                    if (!k.startsWith('_')) fileHeadersSet.add(k);
+                });
+            });
+            
+            const fileHeaders = Array.from(fileHeadersSet).map(k => {
                 let lowKey = k.trim().toLowerCase().replace(/\s+/g, ' ');
                 if (entityName === 'Dominio') {
                     if (lowKey === 'nivel subdominio') lowKey = 'nivel_tipo';
