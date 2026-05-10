@@ -35,7 +35,7 @@ Evolucionar la entidad Taxonomía para que actúe como un "Borrador de Escenario
 | S50.1 | XS | Done | 1h | - | Agregado select de especialidad y contexto_id |
 | S50.2 | S | Done | 2.5h | - | GraphUtils filter + Wizard payload intercept (bug semántico resuelto) |
 | S50.3 | S | Done | 1h | - | UI hydration context flag (H9/H6 QR fixes) |
-| S50.4 | S | Todo | - | - | Botón de Aprobación Masiva |
+| S50.4 | S | Done | 1h | - | Botón de Aprobación Masiva + O(1) Bulk Updates |
 
 ## Risks
 | Risk | L/I | Mitigation |

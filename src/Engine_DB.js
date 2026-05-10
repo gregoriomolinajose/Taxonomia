@@ -764,7 +764,8 @@ const Engine_DB = {
         const sysDate = new Date().toISOString();
 
         // 1. Update master entity (Taxonomia)
-        const taxRecords = _Adapter_Sheets.read('Taxonomia');
+        const taxRes = _Adapter_Sheets.list('Taxonomia', { useSheets: true }, 'objects');
+        const taxRecords = taxRes && taxRes.rows ? taxRes.rows : [];
         const taxRecord = taxRecords.find(r => r.id_registro === contextId || r.id_taxonomia === contextId);
         if (taxRecord) {
             taxRecord.estado = 'Validado';
@@ -774,7 +775,8 @@ const Engine_DB = {
         }
 
         // 2. Mass update edges
-        const edges = _Adapter_Sheets.read('Sys_Graph_Edges');
+        const edgesRes = _Adapter_Sheets.list('Sys_Graph_Edges', { useSheets: true }, 'objects');
+        const edges = edgesRes && edgesRes.rows ? edgesRes.rows : [];
         const edgesToUpdate = edges.filter(e => e.contexto_id === contextId && e.estado === 'Borrador');
         
         if (edgesToUpdate.length > 0) {
@@ -820,8 +822,9 @@ const Engine_DB = {
             // ==============================================
             
             // 1. Load active graph
-            // Asume que _Adapter_Sheets expone list(Entity, Config, Format).
-            const listResponse = _Adapter_Sheets.list("Relacion_Dominios", config, "objects");
+            // Use Sys_Graph_Edges for standard topology or fallback to specific graph table if needed
+            const graphTableName = "Sys_Graph_Edges";
+            const listResponse = _Adapter_Sheets.list(graphTableName, config, "objects");
             const activeGraph = (listResponse && listResponse.rows) ? listResponse.rows.filter(r => r.es_version_actual !== false) : [];
             
             // 2. Build Patch Mathematically (No DB touch)
@@ -832,6 +835,15 @@ const Engine_DB = {
                 if (typeof Logger !== 'undefined') Logger.log("[WARN] Engine_Graph not found, falling back to basic self soft-delete.");
             }
 
+            // [S51.4 Quality Fix] Orphaned Tripartite Edges Cleanup
+            // Any edge where the deleted node acts as the context (e.g. Taxonomia workspaces) must be closed
+            const contextualEdges = activeGraph.filter(e => String(e.contexto_id).trim() === String(id).trim());
+            contextualEdges.forEach(ce => {
+                if (!patch.edgesToClose.some(existing => existing.id_relacion === ce.id_relacion)) {
+                    patch.edgesToClose.push(ce);
+                }
+            });
+
             const sysDate = new Date().toISOString();
             const currentUser = (typeof Session !== 'undefined') ? Session.getActiveUser().getEmail() : 'system@localhost';
 
@@ -839,8 +851,10 @@ const Engine_DB = {
             const edgesClosed = patch.edgesToClose.map(e => ({
                 id_relacion: e.id_relacion,
                 es_version_actual: false,
+                estado: 'Eliminado',
                 valido_hasta: sysDate,
-                updated_at: sysDate
+                updated_at: sysDate,
+                updated_by: currentUser
             }));
 
             const uuidFn = (typeof Utilities !== 'undefined') ? Utilities.getUuid : () => Math.random().toString(36).substring(2,10);
@@ -881,7 +895,7 @@ const Engine_DB = {
             // 5. Commit Unit of Work (The O(1) Bulk Pushes)
             if (edgesToUpsert.length > 0) {
                 if (typeof Logger !== 'undefined') Logger.log(`[Unit of Work] Upserting ${edgesToUpsert.length} graph edges (SCD-2) to array.`);
-                this.upsertBatch("Relacion_Dominios", edgesToUpsert, config);
+                this.upsertBatch(graphTableName, edgesToUpsert, config);
             }
 
             if (nodesToSoftDelete.length > 0) {
@@ -889,7 +903,7 @@ const Engine_DB = {
                 results.sheets = this.upsertBatch(entityName, nodesToSoftDelete, config);
             }
 
-            _invalidateCache("Relacion_Dominios");
+            _invalidateCache(graphTableName);
 
         } else {
             // ==============================================

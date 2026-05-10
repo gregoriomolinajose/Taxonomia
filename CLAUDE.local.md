@@ -6,8 +6,8 @@
 - **S50.1**: Done.
 - **S50.2**: Done. Zero-Trust Graph filter & Payload Interceptor.
 - **S50.3**: Done. UI Hydration Context Flag + H9/H6 Refactor.
-- **S50.4**: Todo. Backend ETL Aprobación Masiva.
-- **Next focus:** S50.4 (Botón de Aprobación Masiva) para activar borradores.
+- **S50.4**: Done. Backend ETL Aprobación Masiva + UI Stepper integration.
+- **Next focus:** Epic E50 Complete. Pending Epic E51 initialization.
 
 ## Patterns
 
