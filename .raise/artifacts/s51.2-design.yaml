@@ -1,0 +1,31 @@
+artifact_type: story-design
+version: 1
+skill: rai-story-design
+created: '2026-05-09T23:12:00Z'
+story: 'S51.2'
+epic: 'E51'
+content:
+  summary: 'Refactorizar Engine_DB para soportar la topología y persistencia de relaciones en Workspace Mode.'
+  complexity: moderate
+  acceptance_criteria:
+    - id: AC1
+      description: 'El mock incomingEdgesMock en Engine_DB usa fixedParentId como padre cuando workspaceMode es true.'
+      verifiable: true
+    - id: AC2
+      description: 'El filtro currentActiveEdgesForNode aísla las aristas comparando el contexto_id contra el ID del registro actual (la Taxonomía).'
+      verifiable: true
+    - id: AC3
+      description: 'El payload persistido final de la arista usa fixedParentId como padre.'
+      verifiable: true
+  integration_points:
+    - module: 'Engine_DB'
+      change_type: modification
+      files: ['src/Engine_DB.js']
+  decisions:
+    - id: D1
+      choice: 'Aislar el diffing por contexto_id'
+      rationale: 'Dado que fixedParentId (ej. ROLE-16) puede estar asignado a personas en múltiples taxonomías, el diff topológico solo debe mirar las aristas que pertenecen a la taxonomía actual.'
+      alternatives_considered: ['Crear un componente separado para guardar borradores']
+refs:
+  epic_scope: 'work/epics/e51-taxonomia-workspace/scope.md'
+metadata: {}
