@@ -7,7 +7,10 @@
 
 /* ── Formatters Universales ────────────────────────────── */
 window.formatLabelString = function(str) {
-  return (str || '').replace(/_/g, ' ').replace(/\b\w/g, function(c) { return c.toUpperCase(); });
+  return (str || '').replace(/_/g, ' ').split(' ').map(function(word) {
+      if (!word) return '';
+      return word.charAt(0).toUpperCase() + word.slice(1);
+  }).join(' ');
 };
 window.formatEntityName = window.formatLabelString;
 window.formatUserName = function(emailStr) {

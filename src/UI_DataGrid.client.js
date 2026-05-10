@@ -881,6 +881,7 @@
                 const field = fields.find(f => f.name === key);
                 if (field && field.label) return field.label;
             }
-            return window.formatLabelString ? window.formatLabelString(key) : key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+            if (window.formatLabelString) return window.formatLabelString(key);
+            return key.replace(/_/g, ' ').split(' ').map(function(w) { return w ? w.charAt(0).toUpperCase() + w.slice(1) : ''; }).join(' ');
         }
     };
