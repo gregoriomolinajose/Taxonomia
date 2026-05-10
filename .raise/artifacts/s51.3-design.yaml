@@ -1,0 +1,24 @@
+artifact_type: story-design
+version: 1
+skill: rai-story-design
+created: '2026-05-09T23:22:00Z'
+story: 'S51.3'
+epic: 'E51'
+content:
+  summary: 'Actualizar UI_Component_RelationBuilder para leer aristas tripartitas en Workspace Mode.'
+  complexity: simple
+  acceptance_criteria:
+    - id: AC1
+      description: 'RelationBuilder lee correctamente los registros asignados usando contexto_id cuando workspaceMode es true.'
+      verifiable: true
+  integration_points:
+    - module: 'UI_Component_RelationBuilder'
+      change_type: modification
+      files: ['src/UI_Component_RelationBuilder.client.js']
+  decisions:
+    - id: D1
+      choice: 'Filtro por contexto_id y fixedParentId'
+      rationale: 'Espectralmente simétrico con el backend.'
+refs:
+  epic_scope: 'work/epics/e51-taxonomia-workspace/scope.md'
+metadata: {}
