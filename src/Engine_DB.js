@@ -334,18 +334,34 @@ const Engine_DB = {
                         throw new Error(`[AR-Governance] Violación de Schema-Driven Design: La entidad relacionada '${targetEntity}' no tiene definida su 'primaryKey' en APP_SCHEMAS. El fallback determinista por sufijo está deprecado.`);
                     }
 
-                    const incomingEdgesMock = children.map(child => ({
-                        ...child,
-                        id_nodo_padre: f.relationType === 'hijo' ? tempParentPK : (child[childPkField] || child['id_registro']),
-                        id_nodo_hijo: f.relationType === 'hijo' ? (child[childPkField] || child['id_registro']) : tempParentPK,
-                        tipo_relacion: edgeName
-                    }));
+                    const incomingEdgesMock = children.map(child => {
+                        let mockPadre, mockHijo;
+                        if (f.workspaceMode) {
+                            mockPadre = f.fixedParentId;
+                            mockHijo = child[childPkField] || child['id_registro'];
+                        } else {
+                            mockPadre = f.relationType === 'hijo' ? tempParentPK : (child[childPkField] || child['id_registro']);
+                            mockHijo = f.relationType === 'hijo' ? (child[childPkField] || child['id_registro']) : tempParentPK;
+                        }
+                        return {
+                            ...child,
+                            id_nodo_padre: mockPadre,
+                            id_nodo_hijo: mockHijo,
+                            tipo_relacion: edgeName
+                        };
+                    });
 
                     const topologyResult = Engine_Graph.analyzeTopology(incomingEdgesMock, activeGraph, topologyRules);
                     const stolenEdges = topologyResult.stolenEdges || [];
                     
                     let currentActiveEdgesForNode = [];
-                    if (f.relationType === 'padre') {
+                    if (f.workspaceMode) {
+                        currentActiveEdgesForNode = activeGraph.filter(e => 
+                            String(e.id_nodo_padre).trim() === String(f.fixedParentId).trim() && 
+                            e.tipo_relacion === edgeName &&
+                            String(e.contexto_id).trim() === String(tempParentPK).trim()
+                        );
+                    } else if (f.relationType === 'padre') {
                         currentActiveEdgesForNode = activeGraph.filter(e => String(e.id_nodo_hijo).trim() === String(tempParentPK).trim() && e.tipo_relacion === edgeName);
                     } else {
                         currentActiveEdgesForNode = activeGraph.filter(e => String(e.id_nodo_padre).trim() === String(tempParentPK).trim() && e.tipo_relacion === edgeName);
@@ -453,10 +469,18 @@ const Engine_DB = {
 
                         const edgeRecords = newChildrenToInsert.map(child => {
                             const newId = "RELA-" + uuidFn().substring(0, 8).toUpperCase();
+                            let edgePadre, edgeHijo;
+                            if (f.workspaceMode) {
+                                edgePadre = f.fixedParentId;
+                                edgeHijo = child[pkField] || child['id_registro'];
+                            } else {
+                                edgePadre = f.relationType === 'hijo' ? parentPK : (child[pkField] || child['id_registro']);
+                                edgeHijo = f.relationType === 'hijo' ? (child[pkField] || child['id_registro']) : parentPK;
+                            }
                             const edgePayload = {
                                 id_relacion: newId,
-                                id_nodo_padre: f.relationType === 'hijo' ? parentPK : (child[pkField] || child['id_registro']),
-                                id_nodo_hijo: f.relationType === 'hijo' ? (child[pkField] || child['id_registro']) : parentPK,
+                                id_nodo_padre: edgePadre,
+                                id_nodo_hijo: edgeHijo,
                                 tipo_relacion: (f.graphEdgeType || f.name).toUpperCase(),
                                 valido_desde: child.valido_desde || new Date().toISOString(),
                                 valido_hasta: child.valido_hasta || "",
