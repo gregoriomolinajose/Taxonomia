@@ -395,7 +395,15 @@
                     onRowOrderChange: _onRowOrderChange,
                     onPageSize: _onPageSize,
                     onPage: _onPage,
-                    onEdit: (id) => { if (typeof window !== 'undefined' && window.openEditForm) window.openEditForm(id); },
+                    onEdit: (id) => { 
+                        if (typeof window !== 'undefined') {
+                            if (_state.entityName === 'Taxonomia' && window.AppEventBus) {
+                                window.AppEventBus.publish('NAV::CHANGE', { viewType: 'wizard', payload: { recordId: id } });
+                            } else if (window.openEditForm) {
+                                window.openEditForm(id); 
+                            }
+                        }
+                    },
                     lastGridScroll: _state.lastGridScroll,
                     onGridScroll: (top) => { _state.lastGridScroll = top; }
                 }));

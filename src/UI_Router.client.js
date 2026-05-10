@@ -355,7 +355,8 @@
                     }
 
                     if (typeof window.renderForm === 'function') {
-                        window.renderForm('Taxonomia', null, null, { 
+                        let recordId = (payload && payload.recordId) ? payload.recordId : null;
+                        window.renderForm('Taxonomia', recordId, null, { 
                             customContainer: colRight,
                             customSidebarSteps: localSidebarList,
                             customFooterContainer: footerZone
