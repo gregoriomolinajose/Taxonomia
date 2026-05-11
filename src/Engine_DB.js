@@ -297,9 +297,14 @@ const Engine_DB = {
                 if (f.type === 'relation' && nestedData[f.name] && f.isTemporalGraph && typeof Engine_Graph !== 'undefined') {
                     const children = nestedData[f.name];
                     // [S27.4/Rx] Clone rules to prevent memory leaks across subgrids (State Mutation Bug)
-                    const baseRules = (typeof getEntityTopologyRules !== 'undefined') 
-                                            ? getEntityTopologyRules(entityName)
-                                            : { preventCycles: false, maxDepth: 0, siblingCollisionCheck: false };
+                    let baseRules = (typeof getEntityTopologyRules !== 'undefined') ? getEntityTopologyRules(entityName) : null;
+                    if (!baseRules || baseRules.topologyType === "FLAT") {
+                        // Fallback to target entity if the current entity (e.g. Taxonomia workspace) lacks specific DAG rules
+                        const targetRules = (typeof getEntityTopologyRules !== 'undefined') ? getEntityTopologyRules(f.targetEntity) : null;
+                        if (targetRules) baseRules = targetRules;
+                    }
+                    if (!baseRules) baseRules = { preventCycles: false, maxDepth: 0, siblingCollisionCheck: false, allowOrphanStealing: false };
+                    
                     const topologyRules = { ...baseRules }; // Shallow clone
                                             
                     // [S27.4/Rx] Normalize passive field metadata into active topological enforcement
@@ -325,6 +330,12 @@ const Engine_DB = {
                         fullGraph = this.list(f.graphEntity, 'objects').rows || [];
                     }
                     const activeGraph = fullGraph.filter(e => e.es_version_actual !== false);
+                    
+                    let graphToAnalyze = activeGraph;
+                    if (f.workspaceMode) {
+                        const ctxId = String(tempParentPK).trim();
+                        graphToAnalyze = activeGraph.filter(e => String(e.contexto_id).trim() === ctxId);
+                    }
 
                     const targetEntity = f.targetEntity;
                     const nestedSchema = (typeof APP_SCHEMAS !== 'undefined') ? APP_SCHEMAS[targetEntity] : null;
@@ -355,7 +366,7 @@ const Engine_DB = {
                         };
                     });
 
-                    const topologyResult = Engine_Graph.analyzeTopology(incomingEdgesMock, activeGraph, topologyRules);
+                    const topologyResult = Engine_Graph.analyzeTopology(incomingEdgesMock, graphToAnalyze, topologyRules);
                     const stolenEdges = topologyResult.stolenEdges || [];
                     
                     let currentActiveEdgesForNode = [];
