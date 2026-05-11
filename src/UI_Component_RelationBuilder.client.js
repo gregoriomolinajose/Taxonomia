@@ -88,9 +88,9 @@
                     if (field.workspaceMode) {
                         initialValues = aristas.filter(e => 
                             window.UI_FormUtils.normalizeId(e.contexto_id) === window.UI_FormUtils.normalizeId(currentPK) && 
-                            window.UI_FormUtils.normalizeId(e.id_nodo_padre) === window.UI_FormUtils.normalizeId(field.fixedParentId) &&
+                            (!field.fixedParentId || window.UI_FormUtils.normalizeId(e.id_nodo_padre) === window.UI_FormUtils.normalizeId(field.fixedParentId)) &&
                             String(e.tipo_relacion).toUpperCase() === edgeName
-                        ).map(e => window.UI_FormUtils.normalizeId(e.id_nodo_hijo));
+                        ).map(e => window.UI_FormUtils.normalizeId(field.relationType === 'padre' ? e.id_nodo_padre : e.id_nodo_hijo));
                     } else if (field.relationType === 'padre') {
                         initialValues = aristas.filter(e => window.UI_FormUtils.normalizeId(e.id_nodo_hijo) === window.UI_FormUtils.normalizeId(currentPK) && String(e.tipo_relacion).toUpperCase() === edgeName).map(e => window.UI_FormUtils.normalizeId(e.id_nodo_padre));
                     } else if (field.relationType === 'hijo') {

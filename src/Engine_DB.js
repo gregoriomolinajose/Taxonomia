@@ -337,7 +337,11 @@ const Engine_DB = {
                     const incomingEdgesMock = children.map(child => {
                         let mockPadre, mockHijo;
                         if (f.workspaceMode) {
-                            mockPadre = f.fixedParentId;
+                            let dynPadre = flatPayload[f.dynamicParentField];
+                            if (dynPadre === undefined && f.dynamicParentField && nestedData[f.dynamicParentField] && nestedData[f.dynamicParentField].length > 0) {
+                                dynPadre = nestedData[f.dynamicParentField][0].id_registro;
+                            }
+                            mockPadre = f.dynamicParentField ? dynPadre : f.fixedParentId;
                             mockHijo = child[childPkField] || child['id_registro'];
                         } else {
                             mockPadre = f.relationType === 'hijo' ? tempParentPK : (child[childPkField] || child['id_registro']);
@@ -356,8 +360,13 @@ const Engine_DB = {
                     
                     let currentActiveEdgesForNode = [];
                     if (f.workspaceMode) {
+                        let dynPadre = flatPayload[f.dynamicParentField];
+                        if (dynPadre === undefined && f.dynamicParentField && nestedData[f.dynamicParentField] && nestedData[f.dynamicParentField].length > 0) {
+                            dynPadre = nestedData[f.dynamicParentField][0].id_registro;
+                        }
+                        const effectiveParentId = f.dynamicParentField ? dynPadre : f.fixedParentId;
                         currentActiveEdgesForNode = activeGraph.filter(e => 
-                            String(e.id_nodo_padre).trim() === String(f.fixedParentId).trim() && 
+                            String(e.id_nodo_padre).trim() === String(effectiveParentId).trim() && 
                             e.tipo_relacion === edgeName &&
                             String(e.contexto_id).trim() === String(tempParentPK).trim()
                         );
@@ -471,7 +480,11 @@ const Engine_DB = {
                             const newId = "RELA-" + uuidFn().substring(0, 8).toUpperCase();
                             let edgePadre, edgeHijo;
                             if (f.workspaceMode) {
-                                edgePadre = f.fixedParentId;
+                                let dynPadre = flatPayload[f.dynamicParentField];
+                                if (dynPadre === undefined && f.dynamicParentField && nestedData[f.dynamicParentField] && nestedData[f.dynamicParentField].length > 0) {
+                                    dynPadre = nestedData[f.dynamicParentField][0].id_registro;
+                                }
+                                edgePadre = f.dynamicParentField ? dynPadre : f.fixedParentId;
                                 edgeHijo = child[pkField] || child['id_registro'];
                             } else {
                                 edgePadre = f.relationType === 'hijo' ? parentPK : (child[pkField] || child['id_registro']);

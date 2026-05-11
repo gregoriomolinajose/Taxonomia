@@ -150,7 +150,11 @@ var APP_SCHEMAS = {
       ...FIELD_TEMPLATES.AUDIT_FIELDS(),
       ...FIELD_TEMPLATES.VERSION_FIELD(),
       { name: "nombre", type: "text", label: "Nombre de la Taxonomía", required: true, width: 12 },
-      { name: "descripcion", type: "textarea", label: "Descripción", required: false, width: 12 }
+      { name: "descripcion", type: "textarea", label: "Descripción", required: false, width: 12 },
+      ...FIELD_TEMPLATES.GRAPH_SEPARATOR("Jerarquía Estratégica"),
+      { name: "id_unidad_negocio", type: "relation", relationType: "padre", targetEntity: "Unidad_Negocio", graphEntity: "Sys_Graph_Edges", valueField: "id_unidad_negocio", labelField: "nombre", uiComponent: "select_single", label: "Unidad de Negocio Raíz", isTemporalGraph: true, graphEdgeType: "TAXONOMIA_UNIDAD", topologyCardinality: "1:N", width: 12, workspaceMode: true, required: false },
+      { name: "id_portafolio", type: "relation", relationType: "padre", targetEntity: "Portafolio", graphEntity: "Sys_Graph_Edges", valueField: "id_portafolio", labelField: "nombre", uiComponent: "select_single", label: "Portafolio Principal", isTemporalGraph: true, graphEdgeType: "UNIDAD_NEGOCIO_PORTAFOLIO", topologyCardinality: "1:N", width: 12, workspaceMode: true, dynamicParentField: "id_unidad_negocio" },
+      { name: "grupos_productos", type: "relation", relationType: "hijo", targetEntity: "Grupo_Productos", graphEntity: "Sys_Graph_Edges", valueField: "id_grupo_producto", labelField: "nombre", uiComponent: "searchable_multi", label: "Grupos de Productos Asociados", isTemporalGraph: true, graphEdgeType: "PORTAFOLIO_GRUPO_PRODUCTO", topologyCardinality: "1:N", width: 12, workspaceMode: true, dynamicParentField: "id_portafolio" }
     ]
   },
   Unidad_Negocio: {
