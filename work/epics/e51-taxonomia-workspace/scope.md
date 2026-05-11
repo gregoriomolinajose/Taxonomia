@@ -58,7 +58,7 @@ Desbloquea la adopción de la plataforma por parte del liderazgo al proporcionar
 - [x] **M3: UX Enhancements (S51.6)**
   - *Purpose:* Mejorar la comodidad y enfoque del usuario al interactuar con formularios extensos (como Taxonomía).
   - *Success Criteria:* El panel lateral (*drawer*) puede expandirse a pantalla completa mediante un botón, manteniendo el estado de los datos.
-- [ ] **M4: Business Hierarchy Workflow (S51.7)**
+- [x] **M4: Business Hierarchy Workflow (S51.7)**
   - *Purpose:* Empoderar a los líderes para diagramar rápidamente relaciones de Unidad de Negocio, Portafolio y Grupos de Producto.
   - *Success Criteria:* El Wizard de Taxonomía cuenta con un paso que salva correctamente las relaciones dinámicas entre estas tres entidades usando la Taxonomía como `contexto_id`.
 
@@ -72,4 +72,4 @@ Desbloquea la adopción de la plataforma por parte del liderazgo al proporcionar
 | S51.4 | Done | Rai | Debug: ETL Validation |
 | S51.5 | Done | Rai | Debug: Stepper Hydration |
 | S51.6 | Done | Rai | UX: Expandir Drawer a Fullscreen |
-| S51.7 | Todo | Rai | Core: Contextual Hierarchy Builder |
+| S51.7 | Done | Rai | Core: Contextual Hierarchy Builder |
