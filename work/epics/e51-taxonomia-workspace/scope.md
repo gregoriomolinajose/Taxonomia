@@ -23,6 +23,7 @@ Desbloquea la adopción de la plataforma por parte del liderazgo al proporcionar
 *   **S51.1:** [M] Schema Engine & Workspace Mode Definition (Añadir metadatos de configuración en el esquema de Taxonomía).
 *   **S51.2:** [L] Form Submitter Refactor for Tripartite Edges (Modificar cómo se guardan los datos relacionales).
 *   **S51.3:** [M] UI Components Hydration Refactor (Hacer que los buscadores puedan leer relaciones tripartitas).
+*   **S51.6:** [S] Drawer Fullscreen Toggle (Agregar botón/función para expandir el panel lateral a pantalla completa).
 
 ## Done Criteria
 1. El negocio puede asignar una Persona al Rol "Head of Technology" dentro de la pantalla de una Taxonomía.
@@ -42,6 +43,7 @@ Desbloquea la adopción de la plataforma por parte del liderazgo al proporcionar
 | 1 | **S51.1: Schema Engine & Workspace Mode Definition** | Es el cimiento (Dependency-driven). Sin la metadata, los otros componentes no pueden operar de manera condicional. | Ninguna |
 | 2 | **S51.2: Form Submitter Refactor for Tripartite Edges** | Necesitamos asegurar que podemos aislar y construir la arista tripartita (escritura) correctamente. (Walking skeleton). | S51.1 |
 | 3 | **S51.3: UI Components Hydration Refactor** | Cerrar el ciclo habilitando la lectura de la base de datos para rellenar los controles pre-guardados en el UI. | S51.1, S51.2 |
+| 4 | **S51.6: Drawer Fullscreen Toggle** | Mejorar la experiencia de usuario (UX) permitiendo trabajar de manera enfocada en un formulario extendido. | Ninguna |
 
 ### Milestones
 
@@ -51,6 +53,9 @@ Desbloquea la adopción de la plataforma por parte del liderazgo al proporcionar
 - [x] **M2: Read & Complete (S51.3)**
   - *Purpose:* Habilitar la lectura e hidratación, logrando el E2E del Wizard.
   - *Success Criteria:* Al recargar un borrador previamente guardado, el UI reconoce correctamente las relaciones del contexto tripartito y pinta a la Persona como seleccionada.
+- [ ] **M3: UX Enhancements (S51.6)**
+  - *Purpose:* Mejorar la comodidad y enfoque del usuario al interactuar con formularios extensos (como Taxonomía).
+  - *Success Criteria:* El panel lateral (*drawer*) puede expandirse a pantalla completa mediante un botón, manteniendo el estado de los datos.
 
 ### Tracking
 
@@ -61,3 +66,4 @@ Desbloquea la adopción de la plataforma por parte del liderazgo al proporcionar
 | S51.3 | Done | Rai | - |
 | S51.4 | Done | Rai | Debug: ETL Validation |
 | S51.5 | Done | Rai | Debug: Stepper Hydration |
+| S51.6 | Todo | Rai | UX: Expandir Drawer a Fullscreen |

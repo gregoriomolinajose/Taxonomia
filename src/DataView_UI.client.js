@@ -397,9 +397,7 @@
                     onPage: _onPage,
                     onEdit: (id) => { 
                         if (typeof window !== 'undefined') {
-                            if (_state.entityName === 'Taxonomia' && window.AppEventBus) {
-                                window.AppEventBus.publish('NAV::CHANGE', { viewType: 'wizard', payload: { recordId: id } });
-                            } else if (window.openEditForm) {
+                            if (window.openEditForm) {
                                 window.openEditForm(id); 
                             }
                         }

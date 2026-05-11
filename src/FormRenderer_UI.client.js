@@ -237,7 +237,7 @@
             // [S50.4] Mass Approval Button
             let approveBtn = null;
             if (entityName === 'Taxonomia' && data && data.estado === 'Borrador') {
-                const canApprove = !window.ABAC || window.ABAC.can('update', 'Taxonomia', id);
+                const canApprove = !window.ABAC || window.ABAC.can('update', 'Taxonomia', localEditId);
                 if (canApprove) {
                     approveBtn = document.createElement('ion-button');
                     approveBtn.setAttribute('shape', 'round');
@@ -273,7 +273,7 @@
                             .withFailureHandler((err) => {
                                 if (global.showToast) global.showToast('Falla de red: ' + err, 'danger');
                             })
-                            .api_router('publish_draft_context', { contextId: id });
+                            .api_router('publish_draft_context', { contextId: localEditId });
                     });
                 }
             }
@@ -709,8 +709,29 @@
                             parsedData = typeof valToSet === 'string' ? JSON.parse(valToSet) : valToSet;
                         } catch(e) { parsedData = typeof valToSet === 'string' && valToSet ? [valToSet] : []; }
                         input.value = JSON.stringify(Array.isArray(parsedData) ? parsedData : []);
+                        
+                        requestAnimationFrame(() => {
+                            if (input.tagName.toLowerCase().startsWith('ion-')) {
+                                input.value = JSON.stringify(Array.isArray(parsedData) ? parsedData : []);
+                            }
+                        });
                     } else {
-                        input.value = valToSet;
+                        // Respaldo por atributo HTML
+                        input.setAttribute('value', valToSet);
+                        
+                        // Sincronización StencilJS correcta para Web Components
+                        if (input.tagName.toLowerCase().startsWith('ion-')) {
+                            if (typeof input.componentOnReady === 'function') {
+                                input.componentOnReady().then(() => {
+                                    input.value = valToSet;
+                                });
+                            } else {
+                                // Fallback for older Ionic/Stencil versions or custom components
+                                setTimeout(() => { input.value = valToSet; }, 50);
+                            }
+                        } else {
+                            input.value = valToSet;
+                        }
                     }
                     // S4.X Notificar silenciosamente al nodo DOM por si pertenece a un Custom Component complejo (Ej. Avatar) que requiere reaccionar
                     input.dispatchEvent(new CustomEvent('FormHydrated', { detail: valToSet, bubbles: false }));

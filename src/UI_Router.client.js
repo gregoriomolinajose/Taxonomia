@@ -359,11 +359,21 @@
                         let recordData = null;
                         
                         // [Fix] Hydrate data from cache if a recordId is passed, since renderForm expects an object, not a string.
-                        if (recordId && window.DataStore && window.Schema_Utils) {
-                            const dataBase = window.DataStore.get('Taxonomia') || [];
+                        if (recordId && window.Schema_Utils) {
                             const pkField = window.Schema_Utils.getPrimaryKey('Taxonomia');
                             if (pkField) {
+                                // 1. Try global DataStore
+                                let dataBase = (window.DataStore && window.DataStore.get('Taxonomia')) ? window.DataStore.get('Taxonomia') : [];
                                 recordData = dataBase.find(item => String(item[pkField]) === String(recordId));
+                                
+                                // 2. Fallback to DataViewEngine state if DataStore was wiped
+                                if (!recordData && window.DataViewEngine && window.DataViewEngine._state && window.DataViewEngine._state.data) {
+                                    recordData = window.DataViewEngine._state.data.find(item => String(item[pkField]) === String(recordId));
+                                }
+
+                                if (!recordData) {
+                                    console.warn(`[UI_Router] ALERTA: No se encontró el registro ${recordId} en DataStore ni DataViewEngine.`);
+                                }
                             }
                         }
 
