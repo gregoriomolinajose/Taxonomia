@@ -56,13 +56,16 @@ body.drawer-max-depth ion-button[onclick*="openForm"] {
   display: flex;
   flex-direction: column;
   transform: translateX(100%);
-  transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
+  transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1), max-width 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
   width: 100%;
   max-width: 650px;
   height: 100%;
   z-index: 15001;
   pointer-events: auto;
   border-left: 1px solid var(--color-border);
+}
+.drawer-panel.fullscreen {
+  max-width: 100%;
 }
 .drawer-panel.active {
   transform: translateX(0);

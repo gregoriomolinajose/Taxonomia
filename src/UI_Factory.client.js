@@ -79,6 +79,23 @@ window.UI_Factory = {
             });
         }
 
+        // S51.6 Fullscreen Toggle Button
+        const fullscreenBtn = document.createElement('ion-button');
+        fullscreenBtn.setAttribute('fill', 'clear');
+        fullscreenBtn.setAttribute('color', 'medium');
+        fullscreenBtn.className = 'btn-fullscreen-drawer';
+        fullscreenBtn.innerHTML = '<ion-icon slot="icon-only" name="expand-outline"></ion-icon>';
+        fullscreenBtn.addEventListener('click', (e) => {
+            const drawerPanel = e.target.closest('.drawer-panel');
+            if (drawerPanel) {
+                const isFullscreen = drawerPanel.classList.toggle('fullscreen');
+                const icon = fullscreenBtn.querySelector('ion-icon');
+                if (icon) {
+                    icon.name = isFullscreen ? 'contract-outline' : 'expand-outline';
+                }
+            }
+        });
+
         const closeBtn = document.createElement('ion-button');
         closeBtn.setAttribute('fill', 'clear');
         closeBtn.setAttribute('color', 'medium');
@@ -89,6 +106,7 @@ window.UI_Factory = {
             closeBtn.addEventListener('click', onClose);
         }
         
+        actionsContainer.appendChild(fullscreenBtn);
         actionsContainer.appendChild(closeBtn);
 
         topRow.appendChild(breadcrumb);
