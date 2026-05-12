@@ -311,11 +311,7 @@ window.UI_View_SwimlaneGrid = {
                         btnConfirm.disabled = false;
                         btnConfirm.innerHTML = '<ion-icon slot="start" name="link-outline"></ion-icon> Vincular';
                     })
-                    .API_Universal({
-                        action: 'commitEdges',
-                        entityName: 'Sys_Graph_Edges',
-                        payload: payload
-                    });
+                    .API_Universal_Router('commitEdges', 'Sys_Graph_Edges', payload);
             } else {
                 console.warn("Entorno local detectado, simulando guardado optimista.");
                 const currentEdges = window.DataStore.get('Sys_Graph_Edges') || [];
