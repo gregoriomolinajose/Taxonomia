@@ -49,7 +49,22 @@ window.UI_View_SwimlaneGrid = {
         );
 
         if (!rootEdge) {
-            rootContainer.innerHTML = '<div class="tax-canvas-empty"><ion-icon name="analytics-outline"></ion-icon><h3>Lienzo Vacío</h3><p>La Taxonomía no tiene una Unidad de Negocio asignada. Edítala primero.</p></div>';
+            rootContainer.innerHTML = `
+                <div class="tax-canvas-empty">
+                    <ion-icon name="analytics-outline"></ion-icon>
+                    <h3>Lienzo Vacío</h3>
+                    <p>Comienza vinculando la Unidad de Negocio principal de esta taxonomía.</p>
+                    <ion-button id="tax-add-root-btn" color="primary" style="margin-top: 16px;">
+                        <ion-icon slot="start" name="add-outline"></ion-icon> Vincular Unidad de Negocio
+                    </ion-button>
+                </div>
+            `;
+            const addRootBtn = rootContainer.querySelector('#tax-add-root-btn');
+            if (addRootBtn) {
+                addRootBtn.addEventListener('click', (e) => {
+                    this._handleNodeAdd(this.taxonomiaId, 'Root_Taxonomia', e);
+                });
+            }
             return;
         }
 
@@ -166,7 +181,10 @@ window.UI_View_SwimlaneGrid = {
         let childEntity = '';
         let edgeType = '';
         
-        if (parentEntity === 'Unidad_Negocio') {
+        if (parentEntity === 'Root_Taxonomia') {
+            childEntity = 'Unidad_Negocio';
+            edgeType = 'TAXONOMIA_UNIDAD';
+        } else if (parentEntity === 'Unidad_Negocio') {
             childEntity = 'Portafolio';
             edgeType = 'UNIDAD_NEGOCIO_PORTAFOLIO';
         } else if (parentEntity === 'Portafolio') {
