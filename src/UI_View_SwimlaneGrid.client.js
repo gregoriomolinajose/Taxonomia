@@ -209,78 +209,72 @@ window.UI_View_SwimlaneGrid = {
             
         const availableRecords = allRecords.filter(r => !linkedIds.includes(String(r[pkField])));
 
-        // 2. Crear Popover
-        const popover = document.createElement('ion-popover');
-        popover.event = ev;
-        popover.cssClass = 'tax-custom-popover';
+        // 2. Crear Drawer Panel
+        const drawerNode = document.createElement('div');
+        drawerNode.className = 'drawer-panel-form';
+        drawerNode.style.cssText = 'display: flex; flex-direction: column; height: 100%; background: var(--color-bg-body, #ffffff);';
         
-        // Plantilla
-        const tmpl = document.getElementById('tmpl-tax-popover');
-        if (!tmpl) {
-            console.error("No se encontró tmpl-tax-popover");
-            return;
-        }
-        const contentNode = tmpl.content.cloneNode(true);
-        const titleEl = contentNode.querySelector('#tax-pop-title');
-        const searchEl = contentNode.querySelector('#tax-pop-search');
-        const listEl = contentNode.querySelector('#tax-pop-list');
-        const btnCancel = contentNode.querySelector('#tax-pop-cancel');
-        const btnConfirm = contentNode.querySelector('#tax-pop-confirm');
-        
-        titleEl.textContent = `Vincular ${schema ? schema.metadata.label : childEntity}`;
-        
-        const selectedIds = new Set();
-        
-        const renderList = (filterText = '') => {
-            listEl.innerHTML = '';
-            const filtered = availableRecords.filter(r => {
-                const text = String(r[titleField] || r[pkField]).toLowerCase();
-                return text.includes(filterText.toLowerCase());
-            });
-            
-            if (filtered.length === 0) {
-                listEl.innerHTML = `<div class="tax-popover-empty">No hay elementos disponibles.</div>`;
-                return;
-            }
-            
-            filtered.forEach(r => {
-                const idVal = String(r[pkField]);
-                const item = document.createElement('ion-item');
-                item.button = true;
-                item.detail = false;
-                
-                const checkbox = document.createElement('ion-checkbox');
-                checkbox.slot = 'start';
-                checkbox.checked = selectedIds.has(idVal);
-                checkbox.addEventListener('ionChange', (e) => {
-                    if (e.detail.checked) selectedIds.add(idVal);
-                    else selectedIds.delete(idVal);
-                    btnConfirm.disabled = selectedIds.size === 0;
-                });
-                
-                const label = document.createElement('ion-label');
-                label.textContent = r[titleField] || idVal;
-                
-                item.appendChild(checkbox);
-                item.appendChild(label);
-                
-                // Allow clicking anywhere on the item to toggle
-                item.addEventListener('click', (e) => {
-                    if(e.target !== checkbox) checkbox.checked = !checkbox.checked;
-                });
-                
-                listEl.appendChild(item);
-            });
+        drawerNode.innerHTML = `
+            <ion-header class="ion-no-border" style="border-bottom: 1px solid var(--color-border, #e0e0e0);">
+                <ion-toolbar color="light">
+                    <ion-title>Vincular ${schema ? schema.metadata.label : childEntity}</ion-title>
+                    <ion-buttons slot="end">
+                        <ion-button id="tax-drawer-close" color="dark">
+                            <ion-icon slot="icon-only" name="close-outline"></ion-icon>
+                        </ion-button>
+                    </ion-buttons>
+                </ion-toolbar>
+            </ion-header>
+            <ion-content class="ion-padding" style="--background: var(--color-bg-body, #ffffff);">
+                <div style="margin-bottom: 24px;">
+                    <h3 style="font-size: 1.1rem; font-weight: 600; margin-bottom: 8px;">Selecciona los registros</h3>
+                    <p style="color: var(--ion-color-medium); font-size: 0.9rem; margin-top: 0;">Puedes seleccionar múltiples ${schema ? schema.metadata.label : childEntity} para vincularlos simultáneamente al lienzo.</p>
+                </div>
+                <div id="tax-searchable-mount"></div>
+            </ion-content>
+            <div class="drawer-footer" style="padding: 16px; border-top: 1px solid var(--color-border, #e0e0e0); background: var(--color-bg-body, #ffffff);">
+                <ion-button id="tax-drawer-confirm" expand="block" color="primary" disabled>
+                    <ion-icon slot="start" name="link-outline"></ion-icon> Vincular
+                </ion-button>
+            </div>
+        `;
+
+        // 3. Montar TXSearchable
+        const mountPoint = drawerNode.querySelector('#tax-searchable-mount');
+        const fieldDef = {
+            name: 'temp_link_field',
+            label: childEntity,
+            targetEntity: childEntity,
+            valueField: pkField,
+            labelField: titleField
         };
+        const metadataToken = (window.APP_SCHEMAS && window.APP_SCHEMAS[childEntity] && window.APP_SCHEMAS[childEntity].metadata) || {};
+        const configParams = { iconName: metadataToken.iconName, color: metadataToken.color, contextId: this.taxonomiaId };
         
-        renderList('');
-        
-        searchEl.addEventListener('ionInput', (e) => {
-            renderList(e.target.value);
+        const txSearchableNode = window.UI_Factory.buildSearchableMulti(fieldDef, availableRecords, [], null, configParams);
+        mountPoint.appendChild(txSearchableNode);
+
+        // 4. Lógica de Interacción
+        const btnClose = drawerNode.querySelector('#tax-drawer-close');
+        const btnConfirm = drawerNode.querySelector('#tax-drawer-confirm');
+        let selectedIds = new Set();
+
+        txSearchableNode.addEventListener('txChange', (e) => {
+            const vals = e.detail.value || [];
+            selectedIds = new Set(Array.isArray(vals) ? vals : [vals]);
+            btnConfirm.disabled = selectedIds.size === 0;
         });
-        
-        btnCancel.addEventListener('click', () => popover.dismiss());
-        
+
+        const dismissDrawer = () => {
+            if (window.DrawerStackController) {
+                window.DrawerStackController.closeTop();
+            } else {
+                drawerNode.remove();
+            }
+        };
+
+        btnClose.addEventListener('click', dismissDrawer);
+
         btnConfirm.addEventListener('click', () => {
             if (selectedIds.size === 0) return;
             
@@ -299,12 +293,11 @@ window.UI_View_SwimlaneGrid = {
             if (typeof google !== 'undefined' && google.script && google.script.run) {
                 google.script.run
                     .withSuccessHandler((response) => {
-                        popover.dismiss();
+                        dismissDrawer();
                         if (response.success) {
                             // Optimistic update
                             const currentEdges = window.DataStore.get('Sys_Graph_Edges') || [];
                             payload.forEach(p => {
-                                // Provide a dummy stub ID
                                 p.id = 'arista-' + Math.random().toString(36).substring(2, 10);
                                 currentEdges.push(p);
                             });
@@ -316,7 +309,7 @@ window.UI_View_SwimlaneGrid = {
                     .withFailureHandler((err) => {
                         console.error("API Error:", err);
                         btnConfirm.disabled = false;
-                        btnConfirm.textContent = 'Vincular';
+                        btnConfirm.innerHTML = '<ion-icon slot="start" name="link-outline"></ion-icon> Vincular';
                     })
                     .API_Universal({
                         action: 'commitEdges',
@@ -331,14 +324,16 @@ window.UI_View_SwimlaneGrid = {
                     currentEdges.push(p);
                 });
                 setTimeout(() => {
-                    popover.dismiss();
+                    dismissDrawer();
                     this.refresh();
                 }, 500);
             }
         });
-        
-        popover.appendChild(contentNode);
-        document.body.appendChild(popover);
-        window.PresentSafe(popover);
+
+        if (window.DrawerStackController) {
+            window.DrawerStackController.push(drawerNode);
+        } else {
+            document.body.appendChild(drawerNode); // Fallback safe
+        }
     }
 };
