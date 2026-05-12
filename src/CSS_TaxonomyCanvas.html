@@ -1,0 +1,168 @@
+<!-- CSS_TaxonomyCanvas.html -->
+<style>
+/* ==========================================================================
+   E53: TAXONOMIA VISUAL CANVAS (SWIMLANES)
+   ========================================================================== */
+
+.tax-canvas-container {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    padding: var(--spacing-6);
+    background: var(--color-bg-body, #ffffff);
+    border-radius: var(--radius-lg, 12px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.02);
+    min-width: 800px;
+    overflow-x: auto;
+    width: 100%;
+}
+
+.tax-canvas-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px;
+    color: var(--ion-color-medium);
+    text-align: center;
+    background: var(--ion-color-step-50, #f9f9f9);
+    border-radius: var(--radius-md, 8px);
+    border: 2px dashed var(--ion-color-step-200, #e0e0e0);
+}
+
+.tax-canvas-empty ion-icon {
+    font-size: 48px;
+    margin-bottom: 16px;
+    color: var(--ion-color-step-400, #999);
+}
+
+/* Nodos Base */
+.tax-node {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 20px;
+    border-radius: var(--radius-md, 8px);
+    color: white;
+    font-weight: 600;
+    font-size: 14px;
+    position: relative;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    transition: transform 0.2s, box-shadow 0.2s;
+    user-select: none;
+}
+
+.tax-node:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+.tax-node-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.tax-node-icon {
+    font-size: 18px;
+    opacity: 0.9;
+}
+
+.tax-add-btn {
+    background: rgba(255,255,255,0.2);
+    border: none;
+    color: white;
+    border-radius: 50%;
+    width: 28px;
+    height: 28px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 18px;
+    transition: background 0.2s;
+    outline: none;
+}
+
+.tax-add-btn:hover {
+    background: rgba(255,255,255,0.4);
+}
+
+.tax-add-btn:active {
+    background: rgba(255,255,255,0.5);
+    transform: scale(0.95);
+}
+
+/* Layout Anidado (Swimlanes) */
+.tax-swimlane-row {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 12px;
+    border: 1px dashed var(--ion-color-step-200, #ccc);
+    border-radius: var(--radius-md, 8px);
+    background: var(--ion-color-step-50, #fafafa);
+}
+
+.tax-swimlane-children-horizontal {
+    display: flex;
+    flex-direction: row;
+    gap: 16px;
+    flex-wrap: nowrap; /* Prevent wrapping to maintain matrix layout */
+    overflow-x: auto;
+    padding-bottom: 8px; /* For scrollbar */
+}
+
+.tax-swimlane-children-vertical {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    flex: 1; /* Distribuye el espacio entre columnas */
+    min-width: 280px; /* Ancho mínimo para mantener legibilidad */
+}
+
+/* Scrollbars para los swimlanes */
+.tax-swimlane-children-horizontal::-webkit-scrollbar {
+    height: 6px;
+}
+.tax-swimlane-children-horizontal::-webkit-scrollbar-track {
+    background: var(--ion-color-step-100, #f1f1f1); 
+    border-radius: 3px;
+}
+.tax-swimlane-children-horizontal::-webkit-scrollbar-thumb {
+    background: var(--ion-color-step-300, #c1c1c1); 
+    border-radius: 3px;
+}
+.tax-swimlane-children-horizontal::-webkit-scrollbar-thumb:hover {
+    background: var(--ion-color-step-400, #a8a8a8); 
+}
+</style>
+
+<template id="tmpl-taxonomia-canvas">
+    <div class="tax-canvas-wrapper" style="width: 100%; height: 100%; display: flex; flex-direction: column;">
+        <ion-header class="ion-no-border">
+            <ion-toolbar color="light">
+                <ion-buttons slot="start">
+                    <ion-button id="tax-canvas-back">
+                        <ion-icon slot="icon-only" name="arrow-back"></ion-icon>
+                    </ion-button>
+                </ion-buttons>
+                <ion-title id="tax-canvas-header-title">Mapeo de Taxonomía</ion-title>
+                <ion-buttons slot="end">
+                    <ion-button id="tax-canvas-refresh" title="Recargar Grafo">
+                        <ion-icon slot="icon-only" name="refresh"></ion-icon>
+                    </ion-button>
+                </ion-buttons>
+            </ion-toolbar>
+        </ion-header>
+        <ion-content class="ion-padding" color="light">
+            <div id="tax-canvas-root" style="height: 100%;">
+                <!-- El Canvas se renderiza aquí -->
+            </div>
+        </ion-content>
+    </div>
+</template>
