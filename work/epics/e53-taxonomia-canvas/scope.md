@@ -20,10 +20,35 @@ Transform the linear, 1D taxonomy creation form into a highly interactive, 2D ne
   - *Purpose:* Allow inline linking of Portfolios and Groups.
   - *Success Criteria:* Clicking `[+]` on a swimlane opens a native searchable multiselect popover, successfully saving contextual edges.
 
-## Tracking
+## Implementation Plan
 
-| Story | Status | Assigned | Target |
-|-------|--------|----------|--------|
-| S53.1 | To Do | Rai | Schema Simplification |
-| S53.2 | To Do | Rai | Visual Swimlane Layout |
-| S53.3 | To Do | Rai | Popover Edge Mutations |
+### Sequence & Rationale
+
+| Seq | Story | Name | Rationale | Dependencies |
+|-----|-------|------|-----------|--------------|
+| 1 | S53.1 | Schema Simplification | **Dependency-driven:** Clears the linear constraints from the Form Engine so we can build a visual canvas without validation conflicts. | None |
+| 2 | S53.2 | Visual Swimlane Layout | **Walking skeleton:** Build the UI skeleton (CSS Grid/Flexbox) reading data, before adding interactivity. Proves the architectural approach. | S53.1 |
+| 3 | S53.3 | Popover Edge Mutations | **Core MVP:** Add the interactive `[+]` logic and write operations to complete the cycle. | S53.2 |
+| 4 | S53.4 | E2E Integration | **Integration Checkpoint:** Verify cross-story contracts (Read -> Write -> Re-render) using actual DB edge endpoints. | S53.3 |
+
+*Parallel Opportunities:* S53.2 (UI reading data) and S53.1 (Schema cleanup) cannot be run deeply in parallel since the visual canvas requires a clean context, but the CSS layout (`CSS_TaxonomyCanvas.html`) can be stubbed independently.
+
+### Milestones
+
+- [ ] **M1: Schema Cleared (S53.1)** - Taxonomía saves cleanly with only Unidad de Negocio.
+- [ ] **M2: Read-Only Canvas (S53.2)** - The canvas renders correctly existing edges using native entity colors.
+- [ ] **M3: Interactive Canvas (S53.3)** - The canvas allows adding new edges via Popover.
+- [ ] **M4: E2E Integration (S53.4)** - Complete verification of the graph constraints and optimistic rendering.
+
+### Tracking
+
+| Story | Status | T-Size | Actual | Assigned |
+|-------|--------|--------|--------|----------|
+| S53.1 | To Do  | S      | -      | Rai      |
+| S53.2 | To Do  | M      | -      | Rai      |
+| S53.3 | To Do  | M      | -      | Rai      |
+| S53.4 | To Do  | S      | -      | Rai      |
+
+### Sequencing Risks
+1. **Layout complexity (High):** Replicating the exact swimlane grid purely with CSS might require complex nesting. Mitigation: Isolate the layout in a standalone `.html` file first.
+2. **State Hydration (Medium):** Triggering an immediate re-render of the canvas after a popover mutation without reloading the page. Mitigation: Re-fetch graph edges silently and swap the memory state.
