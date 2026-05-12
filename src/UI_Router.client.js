@@ -435,6 +435,27 @@
                     }
                 }
             }
+            else if (viewType === 'taxonomia-canvas') {
+                if (headerTitle) headerTitle.textContent = 'Orquestador Visual: Taxonomía';
+                if (backBtn) {
+                    backBtn.classList.remove('ion-hide');
+                    backBtn.onclick = function() { window.AppEventBus.publish('NAV::CHANGE', {viewType: 'dataview', payload: 'Taxonomia'}); };
+                }
+                
+                if (container) {
+                    var tmpl = document.getElementById('tmpl-taxonomia-canvas');
+                    if (tmpl) {
+                        window.DOM.clear(container);
+                        container.appendChild(tmpl.content.cloneNode(true));
+                        let recordId = (payload && payload.recordId) ? payload.recordId : null;
+                        if (typeof window.UI_View_SwimlaneGrid !== 'undefined' && typeof window.UI_View_SwimlaneGrid.render === 'function') {
+                            window.UI_View_SwimlaneGrid.render(container, recordId);
+                        }
+                    } else {
+                        console.error("[UI_Router] Plantilla tmpl-taxonomia-canvas no encontrada en el DOM.");
+                    }
+                }
+            }
             else if (viewType === 'designkit') {
                 if (headerTitle) headerTitle.textContent = 'Design System Kit';
                 if (backBtn) {

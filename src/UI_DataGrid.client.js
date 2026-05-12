@@ -244,6 +244,21 @@
                     const tdAction = document.createElement('td');
                     tdAction.className = 'dv-td-action';
                     
+                    if (this.cfg.entityName === 'Taxonomia') {
+                        const btnDesign = document.createElement('button');
+                        btnDesign.className = 'dv-btn-icon dv-btn-primary';
+                        btnDesign.style.marginRight = 'var(--spacing-1)';
+                        btnDesign.title = 'Diseñar Jerarquía';
+                        btnDesign.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            window.AppEventBus.publish('NAV::CHANGE', {viewType: 'taxonomia-canvas', recordId: id});
+                        });
+                        const iconDesign = document.createElement('ion-icon');
+                        iconDesign.setAttribute('name', 'color-wand');
+                        btnDesign.appendChild(iconDesign);
+                        tdAction.appendChild(btnDesign);
+                    }
+                    
                     // S18.4 - Hiding Agresivo por Fila (Evaluación Record-Aware)
                     if (!window.ABAC || window.ABAC.can('delete', this.cfg.entityName, id)) {
                         const btnDel = document.createElement('button');
@@ -343,6 +358,24 @@
                 
                 const topRight = document.createElement('div');
                 topRight.className = 'dv-card-top-right';
+                
+                if (this.cfg.entityName === 'Taxonomia') {
+                    const btnDesign = document.createElement('button');
+                    btnDesign.className = 'dv-btn-primary-lite';
+                    btnDesign.title = 'Diseñar Jerarquía';
+                    btnDesign.style.padding = '4px 6px';
+                    btnDesign.style.borderRadius = '4px';
+                    btnDesign.style.marginRight = '4px';
+                    btnDesign.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        window.AppEventBus.publish('NAV::CHANGE', {viewType: 'taxonomia-canvas', recordId: idStr});
+                    });
+                    const iconDesign = document.createElement('ion-icon');
+                    iconDesign.setAttribute('name', 'color-wand');
+                    btnDesign.appendChild(iconDesign);
+                    topRight.appendChild(btnDesign);
+                }
+                
                 if (!window.ABAC || window.ABAC.can('delete', this.cfg.entityName, idStr)) {
                     const btnDel = document.createElement('button');
                     btnDel.className = 'dv-btn-danger-lite';
