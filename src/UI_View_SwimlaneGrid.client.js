@@ -162,21 +162,172 @@ window.UI_View_SwimlaneGrid = {
         btnAdd.innerHTML = '+';
         btnAdd.onclick = (e) => {
             e.stopPropagation();
-            this._handleNodeAdd(recordId, entityName);
+            this._handleNodeAdd(recordId, entityName, e);
         };
         node.appendChild(btnAdd);
 
         return node;
     },
 
-    _handleNodeAdd: function(parentId, entityName) {
-        // En la historia S53.3 conectaremos el Popover.
-        // Por ahora, mostrar un toast.
-        const toast = document.createElement('ion-toast');
-        toast.message = `Simulación: Añadir hijo a ${entityName} (${parentId})`;
-        toast.duration = 2000;
-        toast.color = 'dark';
-        document.body.appendChild(toast);
-        window.PresentSafe(toast);
+    _handleNodeAdd: function(parentId, parentEntity, ev) {
+        let childEntity = '';
+        let edgeType = '';
+        
+        if (parentEntity === 'Unidad_Negocio') {
+            childEntity = 'Portafolio';
+            edgeType = 'UNIDAD_NEGOCIO_PORTAFOLIO';
+        } else if (parentEntity === 'Portafolio') {
+            childEntity = 'Grupo_Productos';
+            edgeType = 'PORTAFOLIO_GRUPO_PRODUCTO';
+        } else {
+            // No action needed for leaf nodes
+            return;
+        }
+
+        const schema = window.APP_SCHEMAS && window.APP_SCHEMAS[childEntity];
+        const titleField = schema && schema.metadata ? schema.metadata.titleField : 'nombre';
+        const pkField = window.Schema_Utils ? window.Schema_Utils.getPrimaryKey(childEntity) : 'id';
+        
+        // 1. Obtener registros válidos (excluyendo los ya vinculados a la Taxonomía bajo el mismo padre)
+        const allRecords = window.DataStore ? window.DataStore.get(childEntity) || [] : [];
+        const edges = window.DataStore ? window.DataStore.get('Sys_Graph_Edges') || [] : [];
+        
+        const linkedIds = edges
+            .filter(e => e.contexto_id === this.taxonomiaId && e.tipo_arista === edgeType && e.id_nodo_padre === parentId && String(e.es_version_actual) === 'true')
+            .map(e => e.id_nodo_hijo);
+            
+        const availableRecords = allRecords.filter(r => !linkedIds.includes(String(r[pkField])));
+
+        // 2. Crear Popover
+        const popover = document.createElement('ion-popover');
+        popover.event = ev;
+        popover.cssClass = 'tax-custom-popover';
+        
+        // Plantilla
+        const tmpl = document.getElementById('tmpl-tax-popover');
+        if (!tmpl) {
+            console.error("No se encontró tmpl-tax-popover");
+            return;
+        }
+        const contentNode = tmpl.content.cloneNode(true);
+        const titleEl = contentNode.querySelector('#tax-pop-title');
+        const searchEl = contentNode.querySelector('#tax-pop-search');
+        const listEl = contentNode.querySelector('#tax-pop-list');
+        const btnCancel = contentNode.querySelector('#tax-pop-cancel');
+        const btnConfirm = contentNode.querySelector('#tax-pop-confirm');
+        
+        titleEl.textContent = `Vincular ${schema ? schema.metadata.label : childEntity}`;
+        
+        const selectedIds = new Set();
+        
+        const renderList = (filterText = '') => {
+            listEl.innerHTML = '';
+            const filtered = availableRecords.filter(r => {
+                const text = String(r[titleField] || r[pkField]).toLowerCase();
+                return text.includes(filterText.toLowerCase());
+            });
+            
+            if (filtered.length === 0) {
+                listEl.innerHTML = `<div class="tax-popover-empty">No hay elementos disponibles.</div>`;
+                return;
+            }
+            
+            filtered.forEach(r => {
+                const idVal = String(r[pkField]);
+                const item = document.createElement('ion-item');
+                item.button = true;
+                item.detail = false;
+                
+                const checkbox = document.createElement('ion-checkbox');
+                checkbox.slot = 'start';
+                checkbox.checked = selectedIds.has(idVal);
+                checkbox.addEventListener('ionChange', (e) => {
+                    if (e.detail.checked) selectedIds.add(idVal);
+                    else selectedIds.delete(idVal);
+                    btnConfirm.disabled = selectedIds.size === 0;
+                });
+                
+                const label = document.createElement('ion-label');
+                label.textContent = r[titleField] || idVal;
+                
+                item.appendChild(checkbox);
+                item.appendChild(label);
+                
+                // Allow clicking anywhere on the item to toggle
+                item.addEventListener('click', (e) => {
+                    if(e.target !== checkbox) checkbox.checked = !checkbox.checked;
+                });
+                
+                listEl.appendChild(item);
+            });
+        };
+        
+        renderList('');
+        
+        searchEl.addEventListener('ionInput', (e) => {
+            renderList(e.target.value);
+        });
+        
+        btnCancel.addEventListener('click', () => popover.dismiss());
+        
+        btnConfirm.addEventListener('click', () => {
+            if (selectedIds.size === 0) return;
+            
+            btnConfirm.disabled = true;
+            btnConfirm.innerHTML = '<ion-spinner name="crescent"></ion-spinner>';
+            
+            const payload = Array.from(selectedIds).map(childId => ({
+                id_nodo_padre: parentId,
+                id_nodo_hijo: childId,
+                tipo_arista: edgeType,
+                contexto_id: this.taxonomiaId,
+                es_version_actual: true,
+                metadata: { created_via: "taxonomia_canvas" }
+            }));
+            
+            if (typeof google !== 'undefined' && google.script && google.script.run) {
+                google.script.run
+                    .withSuccessHandler((response) => {
+                        popover.dismiss();
+                        if (response.success) {
+                            // Optimistic update
+                            const currentEdges = window.DataStore.get('Sys_Graph_Edges') || [];
+                            payload.forEach(p => {
+                                // Provide a dummy stub ID
+                                p.id = 'arista-' + Math.random().toString(36).substring(2, 10);
+                                currentEdges.push(p);
+                            });
+                            this.refresh();
+                        } else {
+                            console.error("Error saving edges:", response);
+                        }
+                    })
+                    .withFailureHandler((err) => {
+                        console.error("API Error:", err);
+                        btnConfirm.disabled = false;
+                        btnConfirm.textContent = 'Vincular';
+                    })
+                    .API_Universal({
+                        action: 'commitEdges',
+                        entityName: 'Sys_Graph_Edges',
+                        payload: payload
+                    });
+            } else {
+                console.warn("Entorno local detectado, simulando guardado optimista.");
+                const currentEdges = window.DataStore.get('Sys_Graph_Edges') || [];
+                payload.forEach(p => {
+                    p.id = 'arista-stub-' + Date.now() + Math.random();
+                    currentEdges.push(p);
+                });
+                setTimeout(() => {
+                    popover.dismiss();
+                    this.refresh();
+                }, 500);
+            }
+        });
+        
+        popover.appendChild(contentNode);
+        document.body.appendChild(popover);
+        window.PresentSafe(popover);
     }
 };
