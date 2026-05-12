@@ -5,7 +5,7 @@ Estamos cambiando el paradigma de interfaz de usuario para el mapeo de Jerarquí
 
 ## 2. Componentes Objetivo
 - `UI_View_TaxonomyCanvas.client.js`: La vista orquestadora. Carga el arreglo plano de `Sys_Graph_Edges` donde `contexto_id` = ID de la Taxonomía, y construye un árbol en memoria para su renderizado.
-- `CSS_TaxonomyCanvas.html`: El módulo de estilos que proporcionará las variables CSS para los fondos de los swimlanes (Amarillo, Naranja, Morado, Azul) y la lógica de disposición (`display: flex; flex-direction: column`).
+- `CSS_TaxonomyCanvas.html`: El módulo de estilos que proporcionará las variables CSS para los fondos de los swimlanes extrayendo el color nativo de cada entidad desde `APP_SCHEMAS[entidad].metadata.color` (ej. `primary` para Unidad, `danger` para Portafolio, `dark` para Grupos) y la lógica de disposición (`display: flex; flex-direction: column`).
 - `UI_Component_TXSearchable.client.js`: Reutilizaremos nuestro robusto componente de búsqueda múltiple dentro de una ventana emergente (`ion-popover`) para manejar la selección y adición de nodos sin necesidad de abandonar el lienzo visual.
 
 ## 3. Modelo de Datos y Contratos
