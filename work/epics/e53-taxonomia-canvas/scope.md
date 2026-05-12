@@ -35,7 +35,7 @@ Transform the linear, 1D taxonomy creation form into a highly interactive, 2D ne
 
 ### Milestones
 
-- [ ] **M1: Schema Cleared (S53.1)** - Taxonomía saves cleanly with only Unidad de Negocio.
+- [x] **M1: Schema Cleared (S53.1)** - Taxonomía saves cleanly with only Unidad de Negocio.
 - [ ] **M2: Read-Only Canvas (S53.2)** - The canvas renders correctly existing edges using native entity colors.
 - [ ] **M3: Interactive Canvas (S53.3)** - The canvas allows adding new edges via Popover.
 - [ ] **M4: E2E Integration (S53.4)** - Complete verification of the graph constraints and optimistic rendering.
@@ -44,7 +44,7 @@ Transform the linear, 1D taxonomy creation form into a highly interactive, 2D ne
 
 | Story | Status | T-Size | Actual | Assigned |
 |-------|--------|--------|--------|----------|
-| S53.1 | To Do  | S      | -      | Rai      |
+| S53.1 | Done   | S      | S      | Rai      |
 | S53.2 | To Do  | M      | -      | Rai      |
 | S53.3 | To Do  | M      | -      | Rai      |
 | S53.4 | To Do  | S      | -      | Rai      |
