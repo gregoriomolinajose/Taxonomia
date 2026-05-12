@@ -143,6 +143,7 @@ var APP_SCHEMAS = {
     metadata: { prefix: 'TAXO', showInMenu: true, iconName: 'library-outline', color: 'tertiary', label: 'Taxonomías', titleField: 'nombre', idField: 'id_taxonomia', fkField: null },
     primaryKey: "id_taxonomia",
     titleField: "nombre",
+    wizardConfig: true,
     fields: [
       { name: "id_taxonomia", type: "hidden", primaryKey: true },
       ...FIELD_TEMPLATES.SYSTEM_FIELDS(),
