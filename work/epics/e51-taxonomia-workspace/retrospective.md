@@ -1,20 +1,18 @@
-# Epic E51 Retrospective: Taxonomía como Contexto de Trabajo (Workspace Mode)
+# Epic Retrospective: E51 - Taxonomia Workspace
 
-## 1. Metrics & Overview
-- **Status:** ✅ Complete
-- **Stories Completed:** 5
-- **Unexpected Debugs:** 2 (ETL Validation, Stepper Hydration)
-- **Key Artifacts Updated:** `Schema_Engine.js`, `FormRenderer_UI.client.js`, `UI_Router.client.js`, `UI_DataGrid.client.js`, `DataEngine_ETL.client.js`
+## Objective Review
+**Goal:** Establish a robust architectural foundation for the "Taxonomia" context, supporting hierarchical edge mapping (Unidad de Negocio -> Portafolio -> Grupo de Producto) and decoupling the Form Engine for isolated hydration testing.
 
-## 2. Achievements
-- Implementamos con éxito el soporte de "Workspace Mode" en la Taxonomía para el modelado de relaciones M:N y 1:N utilizando Aristas Tripartitas.
-- El modelo ahora permite asignar una *Persona* a un *Rol* dentro del contexto (`contexto_id`) de una *Taxonomía*, aislando la gobernanza en un espacio de trabajo sin mutar los datos globales directamente.
-- Modificamos el `FormSubmitter` para inyectar este meta-estado en las operaciones DML.
+**Result:** The objective was successfully achieved. The `Schema_Engine` was refined to handle `workspaceMode` context rules correctly. The `Engine_DB` graph engine was isolated using `contexto_id`, ensuring topology constraints behave correctly inside drafts. The `FormEngine` UI layer was decoupled from state hydration logic.
 
-## 3. Technical Discoveries & Learnings
-- **Arquitectura de Hidratación (UI):** Descubrimos una fuga de responsabilidad donde la función `renderForm` solo armaba DOM pero la hidratación ocurría en `openEditForm`. Lo solucionamos aplicando IoC (Inversión de Control) y extrayendo `FormEngine_Hydrator` como función autónoma.
-- **Validación de Cabeceras ETL:** La técnica ingenua de medir la primera fila para extraer cabeceras falla en CSVs *sparse* (vacíos). Se actualizó a un modelo de recolección en Set.
+## Technical Learnings
+1. **Topological Rules in Workspaces:** Applying topology rules dynamically (like orphan stealing) requires the root entity of the workspace (Taxonomia) to gracefully inherit rules from the nested entities (Grupo de Productos) when performing validation inside `Engine_DB.analyzeTopology`.
+2. **Data Hydration vs Rendering:** Hydration must happen linearly and synchronously in the state object `FormState` before rendering any UI component `select_single`. Skipping scalar relational fields led to lost draft context.
+3. **Stepper Abstraction:** Linear Steppers work well for basic wizards but start to fail conceptually when modeling N-ary hierarchies visually.
 
-## 4. Next Steps
-- Con la épica finalizada, el usuario ahora puede interactuar con el Stepper (Wizard) y ver los datos perfectamente sincronizados.
-- La épica está lista para cerrarse formalmente.
+## Process Learnings
+1. **Immediate Production Deployments:** Close communication loop allowed immediate deployment of architectural schema changes directly to production, validating fixes instantly.
+2. **Visual Prototyping:** Discussing limitations of traditional forms led to a pivot towards visual Swimlanes, emphasizing the value of stopping and re-evaluating UX before writing complex Subgrid logic.
+
+## Next Steps
+The new requirement for a Visual Tree/Swimlane builder for Taxonomia hierarchy mapping necessitates a fresh Epic (E53) focused entirely on Advanced Data Visualization and Contextual Matrices. S51.8 has been removed from E51 scope and will be the genesis of E53.
