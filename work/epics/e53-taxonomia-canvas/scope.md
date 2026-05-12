@@ -10,15 +10,10 @@ Transform the linear, 1D taxonomy creation form into a highly interactive, 2D ne
 - Provide a responsive, top-down hierarchy mapping UX.
 
 ## Milestones
-- [ ] **M1: Schema Simplification (S53.1)**
-  - *Purpose:* Remove linear relational constraints from the base Taxonomia schema.
-  - *Success Criteria:* Taxonomía can be saved requesting only the Root Business Unit.
-- [ ] **M2: UI Canvas Component (S53.2)**
-  - *Purpose:* Render the nested swimlane layout.
-  - *Success Criteria:* A `#taxonomia/canvas/:id` route that loads the custom UI grid matching the executive mockup.
-- [ ] **M3: Interactive Node Mapping (S53.3)**
-  - *Purpose:* Allow inline linking of Portfolios and Groups.
-  - *Success Criteria:* Clicking `[+]` on a swimlane opens a native searchable multiselect popover, successfully saving contextual edges.
+- [x] S53.1 Schema Simplification ✓
+- [x] S53.2 Visual Swimlane Layout ✓
+- [ ] S53.3 Interactive Contextual Mutations
+- [ ] S53.4 E2E Integration and Scaling
 
 ## Implementation Plan
 
@@ -36,7 +31,7 @@ Transform the linear, 1D taxonomy creation form into a highly interactive, 2D ne
 ### Milestones
 
 - [x] **M1: Schema Cleared (S53.1)** - Taxonomía saves cleanly with only Unidad de Negocio.
-- [ ] **M2: Read-Only Canvas (S53.2)** - The canvas renders correctly existing edges using native entity colors.
+- [x] **M2: Read-Only Canvas (S53.2)** - The canvas renders correctly existing edges using native entity colors.
 - [ ] **M3: Interactive Canvas (S53.3)** - The canvas allows adding new edges via Popover.
 - [ ] **M4: E2E Integration (S53.4)** - Complete verification of the graph constraints and optimistic rendering.
 
@@ -44,9 +39,9 @@ Transform the linear, 1D taxonomy creation form into a highly interactive, 2D ne
 
 | Story | Status | T-Size | Actual | Assigned |
 |-------|--------|--------|--------|----------|
-| S53.1 | Done   | S      | S      | Rai      |
-| S53.2 | To Do  | M      | -      | Rai      |
-| S53.3 | To Do  | M      | -      | Rai      |
+| M1 (S53.1) | Clean Relational DB | COMPLETE | 1.0 hr | 1.2 hr |
+| M2 (S53.2) | Visual Graph Component | COMPLETE | 2.0 hr | 2.0 hr |
+| M3 (S53.3) | Popover Mutators | PENDING | 2.5 hr | - |
 | S53.4 | To Do  | S      | -      | Rai      |
 
 ### Sequencing Risks
