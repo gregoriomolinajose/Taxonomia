@@ -132,6 +132,10 @@ window.UI_FormSubmitter = class UI_FormSubmitter {
                 const pkFieldT = window.Schema_Utils ? window.Schema_Utils.getPrimaryKey(this.entityName) : 'id';
                 const contextId = payload[pkFieldT] || this._internalRetryId || 'DRAFT_CTX';
                 
+                const formSchema = window.APP_SCHEMAS && window.APP_SCHEMAS[this.entityName] ? window.APP_SCHEMAS[this.entityName] : null;
+                const fieldsConfig = formSchema ? (formSchema.fields || Object.keys(formSchema).map(k => ({name: k, ...formSchema[k]}))) : [];
+                const relationKeys = new Set(fieldsConfig.filter(f => f.type === 'relation').map(f => f.name));
+
                 Object.keys(payload).forEach(key => {
                     if (Array.isArray(payload[key])) {
                         payload[key] = payload[key].map(child => {
@@ -148,6 +152,13 @@ window.UI_FormSubmitter = class UI_FormSubmitter {
                                 _contexto_arista: contextId
                             };
                         });
+                    } else if (relationKeys.has(key) && payload[key] && typeof payload[key] === 'string') {
+                        // S51.7 Fix: Ensure select_single relational strings get draft properties injected
+                        payload[key] = [{
+                            id_registro: String(payload[key]),
+                            _estado_arista: 'Borrador',
+                            _contexto_arista: contextId
+                        }];
                     }
                 });
             }
