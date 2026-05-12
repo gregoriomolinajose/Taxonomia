@@ -16,13 +16,6 @@ window.UI_View_SwimlaneGrid = {
     },
     
     _bindEvents: function() {
-        const btnBack = this.container.querySelector('#tax-canvas-back');
-        if (btnBack) {
-            btnBack.addEventListener('click', () => {
-                window.AppEventBus.publish('NAV::CHANGE', {viewType: 'dataview', payload: 'Taxonomia'});
-            });
-        }
-        
         const btnRefresh = this.container.querySelector('#tax-canvas-refresh');
         if (btnRefresh) {
             btnRefresh.addEventListener('click', () => this.refresh());
