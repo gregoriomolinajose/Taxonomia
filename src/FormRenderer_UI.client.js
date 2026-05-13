@@ -743,7 +743,7 @@
             });
         };
 
-        global.openEditForm = async function (id, customEntityName = null) {
+        global.openEditForm = async function (id, customEntityName = null, overrideOptions = {}) {
             if (global._isRenderingForm) {
                 console.warn("[FormEngine] Race condition prevenida: ignorando click duplicado");
                 return;
@@ -800,7 +800,7 @@
             const canEdit = !window.ABAC || window.ABAC.can('update', entityName, id);
 
             // 4. Renderizar el formulario base de la entidad AL INSTANTE (0ms) usando caché local
-            await global.renderForm(entityName, record, null, { readonly: !canEdit });
+            await global.renderForm(entityName, record, null, { readonly: !canEdit, ...overrideOptions });
 
             // 5. [S29.9 Fix] Eliminada la pantalla Skeleton. La hidratación ahora es verdaderamente transparente.
             // Actualizar Título del Drawer

@@ -53,12 +53,19 @@ window.Graph_Utils = (function () {
         
         const isValidEdge = (e) => {
             if (e.tipo_relacion !== edgeType) return false;
-            if (strictContext && contextId) {
-                return String(e.contexto_id) === String(contextId);
+            if (e.es_version_actual === false) return false;
+            
+            const estadoLower = String(e.estado || '').toLowerCase().trim();
+            if (estadoLower === 'eliminado') return false;
+            
+            if (estadoLower === 'borrador') {
+                return !!contextId && String(e.contexto_id) === String(contextId);
             }
-            if (e.estado === 'Borrador') {
-                return contextId && String(e.contexto_id) === String(contextId);
+            
+            if (strictContext) {
+                return !!contextId && String(e.contexto_id) === String(contextId);
             }
+            
             return true;
         };
 
@@ -94,12 +101,19 @@ window.Graph_Utils = (function () {
 
         const isValidEdge = (e) => {
             if (e.tipo_relacion !== edgeType) return false;
-            if (strictContext && contextId) {
-                return String(e.contexto_id) === String(contextId);
+            if (e.es_version_actual === false) return false;
+            
+            const estadoLower = String(e.estado || '').toLowerCase().trim();
+            if (estadoLower === 'eliminado') return false;
+            
+            if (estadoLower === 'borrador') {
+                return !!contextId && String(e.contexto_id) === String(contextId);
             }
-            if (e.estado === 'Borrador') {
-                return contextId && String(e.contexto_id) === String(contextId);
+            
+            if (strictContext) {
+                return !!contextId && String(e.contexto_id) === String(contextId);
             }
+            
             return true;
         };
 

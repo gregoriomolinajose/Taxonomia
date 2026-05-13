@@ -76,27 +76,31 @@ window.UI_SubgridBuilder = {
         emptyState.appendChild(emptyText);
 
         // [S29.7] Estado local del subgrid purificado de Singletons. Usamos un nodo escondido JSON
-        const childRecords = (data && Array.isArray(data[field.name])) ? [...data[field.name]] : [];
+        let childRecords = (data && Array.isArray(data[field.name])) ? [...data[field.name]] : [];
         
         const schema = window.APP_SCHEMAS ? window.APP_SCHEMAS[entityName] : null;
         const pkKey = schema && schema.primaryKey ? schema.primaryKey : (data ? Object.keys(data).find(k => k.startsWith('id_') && k !== 'id_registro') : null);
         const currentPK = data ? (data[pkKey] || data.id_registro) : null;
         
+        // [S53.6] Contextual Subgrid Filtering (Workspace Isolation)
+        // Prioridad 1: taxonomiaContext inyectado explícitamente por el Canvas
+        // Prioridad 2: Draft Context convencional (S50.3)
+        const explicitContext = (modalContext && modalContext.dataset && modalContext.dataset.taxonomiaContext) ? modalContext.dataset.taxonomiaContext : null;
+        const fallbackContext = window.UI_FormUtils ? window.UI_FormUtils.extractDraftContext(entityName, currentPK) : null;
+        
+        const contextId = explicitContext || fallbackContext;
+        const strictContext = !!explicitContext || entityName === 'Taxonomia'; // Taxonomias son containers estrictos por naturaleza
+        
         // [S49.14] Zero-Latency Cache Cross-Reference (Agile Join) refactored via centralized JS_GraphUtils O(1) lookups
-        if (childRecords.length === 0 && field.isTemporalGraph && window.Graph_Utils && currentPK) {
-            const normPK = window.UI_FormUtils ? window.UI_FormUtils.normalizeId(currentPK) : String(currentPK);
-            const edgeName = (field.graphEdgeType || field.name).toUpperCase();
-            
-            // [S53.6] Contextual Subgrid Filtering (Workspace Isolation)
-            // Prioridad 1: taxonomiaContext inyectado explícitamente por el Canvas
-            // Prioridad 2: Draft Context convencional (S50.3)
-            const explicitContext = (modalContext && modalContext.dataset && modalContext.dataset.taxonomiaContext) ? modalContext.dataset.taxonomiaContext : null;
-            const fallbackContext = window.UI_FormUtils ? window.UI_FormUtils.extractDraftContext(entityName, currentPK) : null;
-            
-            const contextId = explicitContext || fallbackContext;
-            const strictContext = !!explicitContext; // Si hay contexto explícito, aislar completamente (no mostrar baseline)
-            
-            const childIds = window.Graph_Utils.resolveAllLinkedIds(normPK, edgeName, contextId, strictContext);
+        if (field.isTemporalGraph && window.Graph_Utils && currentPK) {
+            // [S53.6] If we are in a contextual mode, force dynamic recalculation to ignore baseline hydration
+            if (contextId) {
+                childRecords = []; // Force recalculation to respect context isolation
+            }
+            if (childRecords.length === 0) {
+                const normPK = window.UI_FormUtils ? window.UI_FormUtils.normalizeId(currentPK) : String(currentPK);
+                const edgeName = (field.graphEdgeType || field.name).toUpperCase();
+                const childIds = window.Graph_Utils.resolveAllLinkedIds(normPK, edgeName, contextId, strictContext);
             
             if (childIds.length > 0 && window.DataStore) {
                 const targetTable = window.DataStore.get(field.targetEntity) || [];
@@ -109,6 +113,7 @@ window.UI_SubgridBuilder = {
                         childRecords.push(row);
                     }
                 });
+            }
             }
         }
         
@@ -161,7 +166,8 @@ window.UI_SubgridBuilder = {
                         const entityKey = field.targetEntity;
                         const pkField = window.Schema_Utils.getPrimaryKey(entityKey);
                         const recordId = record[pkField] || record.id_registro;
-                        window.openEditForm(recordId, entityKey);
+                        const opts = contextId ? { taxonomiaContext: contextId } : {};
+                        window.openEditForm(recordId, entityKey, opts);
                     }
                 });
                 
