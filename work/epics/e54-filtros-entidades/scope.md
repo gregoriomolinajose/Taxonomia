@@ -24,3 +24,32 @@ Implementar una funcionalidad de filtro universal para todas las entidades del s
 - [ ] El componente de filtros está visible y funcional en al menos todas las vistas de listado de las entidades principales.
 - [ ] Es posible filtrar por campos de texto y selección única/múltiple.
 - [ ] La UI concuerda estructuralmente con la funcionalidad de referencia solicitada (Jira-like).
+
+## Implementation Plan
+
+### Sequence & Rationale
+
+| Seq | Story | Name | Rationale | Dependencies |
+|-----|-------|------|-----------|--------------|
+| 1 | S54.1 | UI/UX Componente de Filtros | **Walking skeleton:** Crear la base visual del Drawer/Sidebar, aislando los estilos y la maqueta HTML/CSS (Jira-like) antes de inyectar lógica. | Ninguna |
+| 2 | S54.2 | Lógica Base del Motor | **Core MVP:** Implementar el state management y la extracción dinámica de `APP_SCHEMAS`. Alimenta a S54.1 con opciones reales. | S54.1 |
+| 3 | S54.3 | Integración en Vistas | **Risk-first:** Conectar el filtro con DataViews y listas para validar que repintado in-memory rinde adecuadamente sin bloquear el UI thread. | S54.2 |
+| 4 | S54.4 | E2E & Campos Relacionales | **Integration Checkpoint (PAT-E-539):** Soporte a relaciones anidadas y prueba E2E (flujos cruzados confirmando aislamiento de datos). | S54.3 |
+
+### Milestones
+
+- [ ] **M1: Walking Skeleton (S54.1 - S54.2)** - Drawer estructurado, capturando estados dinámicos sin tocar vistas principales.
+- [ ] **M2: Core MVP (S54.3)** - Filtrado end-to-end funcionando sobre vistas en producción (ej. Personas, Portafolio).
+- [ ] **M3: Feature Complete (S54.4)** - Soporte completo de relaciones múltiples y validaciones de E2E listas.
+
+### Tracking
+
+| Story | Status | T-Size | Actual | Assigned |
+|-------|--------|--------|--------|----------|
+| S54.1 | To Do  | S      |        | Rai      |
+| S54.2 | To Do  | M      |        | Rai      |
+| S54.3 | To Do  | L      |        | Rai      |
+| S54.4 | To Do  | M      |        | Rai      |
+
+### Sequencing Risks
+1. **Sobrecarga de Renderizado (Media):** Re-renderizar una grilla con cientos de dominios cada vez que se marca un checkbox puede bloquear el navegador. *Mitigación:* Se implementará Debounce al callback de `onFilterChange`.
