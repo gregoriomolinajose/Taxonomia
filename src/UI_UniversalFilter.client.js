@@ -41,7 +41,7 @@ class UI_UniversalFilter {
         
         this.records.forEach(r => {
             const val = r[fieldKey];
-            if (val === null || val === undefined || val === '') {
+            if (val === null || val === undefined || val === '' || (Array.isArray(val) && val.length === 0)) {
                 hasEmpty = true;
             } else if (Array.isArray(val)) {
                 val.forEach(v => values.add(v));

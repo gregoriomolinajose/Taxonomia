@@ -256,7 +256,7 @@
                         if (!validValues || validValues.length === 0) return true;
                         
                         let rowVal = row[field];
-                        if (rowVal === null || rowVal === undefined || rowVal === '') {
+                        if (rowVal === null || rowVal === undefined || rowVal === '' || (Array.isArray(rowVal) && rowVal.length === 0)) {
                             rowVal = '[Sin Valor]';
                         }
                         
