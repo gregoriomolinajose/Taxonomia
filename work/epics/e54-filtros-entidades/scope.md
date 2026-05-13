@@ -33,8 +33,8 @@ Implementar una funcionalidad de filtro universal para todas las entidades del s
 |-----|-------|------|-----------|--------------|
 | 1 | S54.1 | UI/UX Componente de Filtros | **Walking skeleton:** Crear la base visual del Drawer/Sidebar, aislando los estilos y la maqueta HTML/CSS (Jira-like) antes de inyectar lógica. | Ninguna |
 | 2 | S54.2 | Lógica Base del Motor | **Core MVP:** Implementar el state management y la extracción dinámica de `APP_SCHEMAS`. Alimenta a S54.1 con opciones reales. | S54.1 |
-| 3 | S54.3 | Integración en Vistas | **Risk-first:** Conectar el filtro con DataViews y listas para validar que repintado in-memory rinde adecuadamente sin bloquear el UI thread. | S54.2 |
-| 4 | S54.4 | E2E & Campos Relacionales | **Integration Checkpoint (PAT-E-539):** Soporte a relaciones anidadas y prueba E2E (flujos cruzados confirmando aislamiento de datos). | S54.3 |
+| 3 | S54.3 | Integración (Wrapper Genérico) | **Risk-first:** Integrar vía un Wrapper/HOC genérico sobre el List Engine en lugar de mutar archivo por archivo, previniendo shotgun surgery. | S54.2 |
+| 4 | S54.4 | E2E & Campos Relacionales | **Integration Checkpoint (PAT-E-539):** Resolución de IDs relacionales a etiquetas legibles, soporte a arreglos M:N y prueba E2E transversal. | S54.3 |
 
 ### Milestones
 

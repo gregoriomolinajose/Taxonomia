@@ -12,9 +12,9 @@ El nuevo componente actuará como un mediador entre la metadata del esquema (par
 - **Manejo de Estado:** Mantendrá el estado interno de la selección.
   *Ejemplo de estado emitido:* `{ "departamento": ["Identidad", "Colaboración"], "modalidad": ["Presencial"] }`
 
-### Vista Principal (DataView / List Engine)
-- **Responsabilidad:** Inyectar un botón "Filtrar" que abre el Drawer y reaccionar a los cambios de estado.
-- **Interacción:** Escuchará el evento o callback `onFilterChange(activeFilters)`. Al ejecutarse, aplicará una función iterativa pura (Array.filter) sobre los datos ya cargados en memoria y disparará el re-renderizado del grid.
+### Contenedor Genérico (List Engine Wrapper)
+- **Responsabilidad:** Inyectar el botón "Filtrar" y el Drawer a nivel global para no tocar archivos de vista individuales (mitigar H16 - Shotgun Surgery).
+- **Interacción:** El Wrapper interceptará los datos crudos, escuchará el evento `onFilterChange(activeFilters)` y pasará solo los datos filtrados (vía `Array.filter` in-memory) a la vista hija (DataView o Grilla) provocando un re-renderizado limpio.
 
 ## 3. Contratos de Datos (Key Contracts)
 
@@ -30,6 +30,6 @@ Para que la experiencia sea idéntica a Jira:
 ## 4. Riesgos y Decisiones
 - **Riesgo 1:** Rendimiento en datasets masivos.
   - *Mitigación:* Se ejecutará en cliente (in-memory filtering) que es extremadamente rápido para los límites actuales del sistema (< 5,000 nodos). No generará tráfico a Google Apps Script (Backend).
-- **Riesgo 2:** Campos Relacionales (Relaciones 1:N / M:N).
-  - *Mitigación:* El motor de filtrado debe soportar evaluar arreglos de IDs relacionales o buscar sobre el atributo textual pre-hidratado por el motor ETL.
+- **Riesgo 2:** Resolución de Campos Relacionales (Relaciones 1:N / M:N) (H11 / YAGNI).
+  - *Mitigación:* Se utilizará la data textual pre-hidratada por el motor ETL (donde el ID relacional ya fue convertido a string durante la ingesta) o se implementará un lookup centralizado al abrir el dropdown. Se evitarán explícitamente los *fetch* N+1.
 - **Decisión Arquitectónica:** No requiere ADR. Es una extensión pura y agnóstica de la capa de Presentación (UI) sin mutación de estado persistente ni cambios en la topología de la base de datos.
