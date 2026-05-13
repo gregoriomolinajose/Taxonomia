@@ -1,101 +1,207 @@
 /**
  * @file UI_UniversalFilter.client.js
- * @description Componente visual para el Drawer lateral de filtros universales.
+ * @description Componente clase para el Drawer lateral de filtros universales.
  */
 
-const UI_UniversalFilter = {
-    
+class UI_UniversalFilter {
     /**
-     * Retorna el HTML estático (skeleton) del drawer de filtros.
-     * En esta fase (S54.1), utiliza mocks para visualizar la estructura.
+     * @param {Object} config
+     * @param {string} config.entityName - Nombre de la entidad (ej. "Personas")
+     * @param {Object} config.schemaConfig - Referencia a APP_SCHEMAS
+     * @param {Array} config.records - Dataset actual en memoria
+     * @param {HTMLElement} config.containerEl - Elemento DOM contenedor
+     * @param {Function} config.onFilterChange - Callback emitido al cambiar filtros
      */
-    renderDrawerSkeleton: function() {
+    constructor(config) {
+        this.entityName = config.entityName;
+        this.schemaConfig = config.schemaConfig;
+        this.records = config.records || [];
+        this.containerEl = config.containerEl;
+        this.onFilterChange = config.onFilterChange || (() => {});
+        
+        // State
+        this.activeFilters = {}; // ej. { "departamento": ["Identidad"] }
+        this.selectedFields = []; // campos agregados al drawer
+        
+        // Setup cache
+        this.availableFields = this._getFilterableFields();
+        this.fieldOptions = {}; 
+    }
+    
+    _getFilterableFields() {
+        const entitySchema = this.schemaConfig[this.entityName] || { fields: [] };
+        return entitySchema.fields.filter(f => !f.hidden && f.type !== 'divider');
+    }
+    
+    _getUniqueValuesForField(fieldKey) {
+        if (this.fieldOptions[fieldKey]) return this.fieldOptions[fieldKey];
+        
+        const values = new Set();
+        let hasEmpty = false;
+        
+        this.records.forEach(r => {
+            const val = r[fieldKey];
+            if (val === null || val === undefined || val === '') {
+                hasEmpty = true;
+            } else if (Array.isArray(val)) {
+                val.forEach(v => values.add(v));
+            } else {
+                values.add(val);
+            }
+        });
+        
+        const sorted = Array.from(values).sort();
+        if (hasEmpty) {
+            sorted.push('[Sin Valor]');
+        }
+        
+        this.fieldOptions[fieldKey] = sorted;
+        return sorted;
+    }
+    
+    _renderHtml() {
+        const fieldOptionsHtml = this.availableFields
+            .filter(f => !this.selectedFields.includes(f.name))
+            .map(f => `<option value="${f.name}">${f.label || f.name}</option>`)
+            .join('');
+            
+        const cardsHtml = this.selectedFields.map(fieldKey => {
+            const fieldDef = this.availableFields.find(f => f.name === fieldKey);
+            const options = this._getUniqueValuesForField(fieldKey);
+            
+            const checkboxesHtml = options.map((opt, idx) => {
+                const id = `tx-chk-${fieldKey}-${idx}`;
+                const isChecked = this.activeFilters[fieldKey] && this.activeFilters[fieldKey].includes(opt);
+                return `
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="${id}" data-field="${fieldKey}" data-value="${opt}" ${isChecked ? 'checked' : ''} />
+                        <label for="${id}">${opt}</label>
+                    </div>
+                `;
+            }).join('');
+            
+            return `
+                <div class="filter-card expanded" data-card-field="${fieldKey}">
+                    <div class="filter-card-header">
+                        <h3>${fieldDef.label || fieldDef.name}</h3>
+                        <a class="clear-link" data-clear-field="${fieldKey}">Borrar</a>
+                    </div>
+                    <div class="filter-card-body">
+                        <input type="search" class="internal-search" placeholder="Buscar opciones..." />
+                        <div class="checkbox-list">
+                            ${checkboxesHtml}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+        
         return `
             <!-- Overlay -->
             <div class="tx-filter-overlay active" id="txFilterOverlay"></div>
             
             <!-- Drawer -->
             <div class="tx-filter-drawer active" id="txFilterDrawer">
-                
-                <!-- Header -->
                 <div class="drawer-header">
                     <h2>Filtros</h2>
                     <button class="close-btn" id="txFilterCloseBtn" aria-label="Cerrar">&times;</button>
                 </div>
-                
-                <!-- Body -->
                 <div class="drawer-body">
-                    
-                    <!-- Dropdown Seleccionador -->
                     <div class="field-selector">
                         <label>Selecciona un campo para filtrar</label>
-                        <select>
+                        <select id="txFilterFieldSelect">
                             <option value="">Buscar campos...</option>
-                            <option value="estado">Estado</option>
-                            <option value="responsable">Responsable</option>
-                            <option value="fecha">Fecha de creación</option>
+                            ${fieldOptionsHtml}
                         </select>
                     </div>
-
-                    <!-- MOCK CARD 1: Área de producto (Expandido) -->
-                    <div class="filter-card expanded">
-                        <div class="filter-card-header">
-                            <h3>Área de producto</h3>
-                            <a class="clear-link">Borrar</a>
-                        </div>
-                        <div class="filter-card-body">
-                            <input type="search" class="internal-search" placeholder="Buscar opciones..." />
-                            <div class="checkbox-list">
-                                <div class="checkbox-item">
-                                    <input type="checkbox" id="chk-ap-1" />
-                                    <label for="chk-ap-1">Seleccionar todo</label>
-                                </div>
-                                <div class="checkbox-item">
-                                    <input type="checkbox" id="chk-ap-2" checked />
-                                    <label for="chk-ap-2">Identidad</label>
-                                </div>
-                                <div class="checkbox-item">
-                                    <input type="checkbox" id="chk-ap-3" />
-                                    <label for="chk-ap-3">Colaboración</label>
-                                </div>
-                                <div class="checkbox-item">
-                                    <input type="checkbox" id="chk-ap-4" />
-                                    <label for="chk-ap-4">Sin valor</label>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- MOCK CARD 2: Estado (Contraído) -->
-                    <div class="filter-card">
-                        <div class="filter-card-header">
-                            <h3>Estado</h3>
-                        </div>
-                        <div class="filter-card-body">
-                            <div class="checkbox-list">
-                                <div class="checkbox-item">
-                                    <input type="checkbox" id="chk-es-1" />
-                                    <label for="chk-es-1">Activo</label>
-                                </div>
-                                <div class="checkbox-item">
-                                    <input type="checkbox" id="chk-es-2" />
-                                    <label for="chk-es-2">Inactivo</label>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
+                    ${cardsHtml}
                 </div>
-
-                <!-- Footer -->
                 <div class="drawer-footer">
-                    <button class="btn-clear-all">Borrar todo</button>
+                    <button class="btn-clear-all" id="txFilterClearAll">Borrar todo</button>
                 </div>
-
             </div>
         `;
     }
-};
+    
+    _bindEvents() {
+        const doc = this.containerEl;
+        
+        const closeBtn = doc.querySelector('#txFilterCloseBtn');
+        const overlay = doc.querySelector('#txFilterOverlay');
+        if (closeBtn) closeBtn.addEventListener('click', () => this.hide());
+        if (overlay) overlay.addEventListener('click', () => this.hide());
+        
+        const select = doc.querySelector('#txFilterFieldSelect');
+        if (select) {
+            select.addEventListener('change', (e) => {
+                if (e.target.value) {
+                    this.selectedFields.push(e.target.value);
+                    this.render(); 
+                }
+            });
+        }
+        
+        const checkboxes = doc.querySelectorAll('.checkbox-item input[type="checkbox"]');
+        checkboxes.forEach(chk => {
+            chk.addEventListener('change', (e) => {
+                const field = e.target.getAttribute('data-field');
+                const val = e.target.getAttribute('data-value');
+                
+                if (!this.activeFilters[field]) {
+                    this.activeFilters[field] = [];
+                }
+                
+                if (e.target.checked) {
+                    this.activeFilters[field].push(val);
+                } else {
+                    this.activeFilters[field] = this.activeFilters[field].filter(v => v !== val);
+                    if (this.activeFilters[field].length === 0) {
+                        delete this.activeFilters[field];
+                    }
+                }
+                this.onFilterChange(this.activeFilters);
+            });
+        });
+        
+        const clearLinks = doc.querySelectorAll('.clear-link');
+        clearLinks.forEach(link => {
+            link.addEventListener('click', (e) => {
+                const field = e.target.getAttribute('data-clear-field');
+                delete this.activeFilters[field];
+                this.selectedFields = this.selectedFields.filter(f => f !== field);
+                this.onFilterChange(this.activeFilters);
+                this.render();
+            });
+        });
+        
+        const clearAll = doc.querySelector('#txFilterClearAll');
+        if (clearAll) {
+            clearAll.addEventListener('click', () => {
+                this.activeFilters = {};
+                this.selectedFields = [];
+                this.onFilterChange(this.activeFilters);
+                this.render();
+            });
+        }
+    }
+    
+    render() {
+        if (!this.containerEl) return;
+        this.containerEl.innerHTML = this._renderHtml();
+        this._bindEvents();
+    }
+    
+    hide() {
+        const drawer = this.containerEl.querySelector('.tx-filter-drawer');
+        const overlay = this.containerEl.querySelector('.tx-filter-overlay');
+        if (drawer) drawer.classList.remove('active');
+        if (overlay) overlay.classList.remove('active');
+        // Opcionalmente vaciar el contenedor despues de la animacion
+        setTimeout(() => {
+            this.containerEl.innerHTML = '';
+        }, 300);
+    }
+}
 
 // Export para el entorno (Local / Testing)
 if (typeof module !== 'undefined' && module.exports) {
