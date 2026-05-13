@@ -498,7 +498,7 @@
     // Regla S11.1: EventBus Subscription para Router
     window.AppEventBus.subscribe('NAV::CHANGE', function(payload) {
       if (payload.viewType && window.UI_Router) {
-        window.UI_Router.navigateTo(payload.viewType, payload.entityKey);
+        window.UI_Router.navigateTo(payload.viewType, payload.entityKey, payload);
       }
     });
 

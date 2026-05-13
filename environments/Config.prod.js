@@ -1,6 +1,6 @@
 // src/Config.prod.js
 const CONFIG = {
-    APP_VERSION: 'v1.2.8 - 2605121833',
+    APP_VERSION: 'v1.2.8 - 2605121845',
     SPREADSHEET_ID_DB: '',
     ALLOWED_DOMAINS: ['@coppel.com', '@bancoppel.com', '@bellfy.app', '@gmail.com'],
     ENV: 'production',
