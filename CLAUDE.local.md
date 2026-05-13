@@ -3,13 +3,12 @@
 > This file is for local preferences and overrides. It is not tracked by Git.
 
 ## Current Focus
-- **Epic E53 (Taxonomia Canvas)**: Completed.
-- **S53.1 (Schema Simplification)**: Completed.
-- **S53.2 (Visual Swimlane Layout)**: Completed.
-- **S53.3 (Interactive Contextual Mutations)**: Completed.
-- **S53.5 (Canvas Homologous Drawers)**: Completed.
-- **S53.6 (Contextual Subgrid Filtering)**: Completed.
-- **Next focus:** Proceeding to `/rai-epic-close` for E53.
+- **Epic E54 (Filtros Entidades)**: Completed.
+- **S54.1 (UI/UX Componente de Filtros)**: Completed.
+- **S54.2 (Lógica Base del Motor)**: Completed.
+- **S54.3 (Integración Wrapper)**: Completed.
+- **S54.4 (E2E & Campos Relacionales)**: Completed.
+- **Next focus:** Awaiting user instructions for the next Epic.
 
 ## Patterns
 

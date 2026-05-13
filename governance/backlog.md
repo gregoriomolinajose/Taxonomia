@@ -44,7 +44,9 @@
 | E48| Admin Settings & Schema-Driven ETL                  | ✅ Complete   | Configuración de interceptores declarativos y utilidades de Admin   | Alta     |
 | E49| Taxonomía Wizard & Self-Service Portal              | ✅ Complete   | Asistente a pantalla completa para agrupar arquitectura N:M         | Max      |
 | E51| Taxonomía como Contexto de Trabajo (Workspace Mode) | ✅ Complete   | Habilitar esquemas M:N y 1:N en modo contexto                       | Alta     |
-
+| E52| QA: Persona End-to-End E2E Lifecycle                | ✅ Complete   | Refactor y estabilización de la entidad Persona                     | Alta     |
+| E53| Taxonomía Workspace Canvas                          | ✅ Complete   | Implementar lienzo de visualización del árbol contextual de Taxonomía| Max      |
+| E54| Filtros Universales de Entidades                    | ✅ Complete   | Implementar Drawer de filtros avanzados con lógica de intersección y JIT | Alta     |
 ## Parking Lot / Deuda Técnica (Post-Epic 11)
 
 ### 🏗️ Historial Resuelto
