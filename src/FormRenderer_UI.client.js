@@ -86,6 +86,10 @@
                 }
             }
             
+            if (config.taxonomiaContext) {
+                modal.dataset.taxonomiaContext = config.taxonomiaContext;
+            }
+            
             // Inyectar callback opcional (In-line Creation via Bubble Events)
             if (injectedCallback) {
                 modal.addEventListener('FormEngine::InlinePersisted', (e) => {
@@ -144,9 +148,9 @@
             let steps = schemaDef.steps || null;
 
             if (Array.isArray(schemaDef)) {
-                fields = schemaDef;
+                fields = JSON.parse(JSON.stringify(schemaDef));
             } else if (schemaDef.fields) {
-                fields = schemaDef.fields;
+                fields = JSON.parse(JSON.stringify(schemaDef.fields));
             } else {
                 // Default to Portfolio Canvas layout
                 fields = Object.keys(schemaDef).map(k => ({ name: k, ...schemaDef[k] }));

@@ -233,6 +233,31 @@ function API_Universal_Router(action, entityName, payload) {
         data: responseData,
         insertedCount: responseData.count || 0
       });
+    } else if (action === 'commitEdges') {
+      if (!Array.isArray(payload)) throw new Error("commitEdges expects an array payload");
+      
+      const email = typeof Session !== 'undefined' ? Session.getActiveUser().getEmail() : "system";
+      const sysDate = new Date().toISOString();
+      
+      payload.forEach(edge => {
+          if (!edge.id_relacion) edge.id_relacion = 'RELA-' + Math.random().toString(36).substring(2, 10).toUpperCase();
+          if (!edge.estado) edge.estado = 'Borrador';
+          if (!edge.valido_desde) edge.valido_desde = sysDate;
+          if (!edge.created_at) edge.created_at = sysDate;
+          if (!edge.created_by) edge.created_by = email;
+          // Clean optimistic properties injected by client if present
+          delete edge.id; 
+      });
+
+      responseData = Engine_DB.upsertBatch('Sys_Graph_Edges', payload);
+      
+      if (typeof Logger !== 'undefined') Logger.log(`commitEdges completado: ${payload.length} aristas.`);
+      
+      return JSON.stringify({
+        status: "success",
+        data: responseData,
+        insertedCount: payload.length
+      });
     } else {
       throw new Error(`Action '${action}' not supported yet.`);
     }

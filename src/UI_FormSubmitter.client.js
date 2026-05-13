@@ -123,18 +123,21 @@ window.UI_FormSubmitter = class UI_FormSubmitter {
             
             // [S50.2] Inyección Atómica de Borradores (Atomic Drafts)
             // Cuando estamos en el Wizard de Taxonomía, forzamos estado y contexto a los hijos
-            const isDraftMode = this.entityName === 'Taxonomia' || (this.modal && this.modal.dataset && this.modal.dataset.isDraft === 'true');
+            const isDraftMode = this.entityName === 'Taxonomia' || (this.modal && this.modal.dataset && this.modal.dataset.isDraft === 'true') || (this.modal && this.modal.dataset && this.modal.dataset.taxonomiaContext);
             if (isDraftMode) {
                 // [S50.4] Fix AR Finding: Forzar entidad maestra a nacer como borrador
                 if (this.entityName === 'Taxonomia' && action === 'create') {
                     payload.estado = 'Borrador';
                 }
                 const pkFieldT = window.Schema_Utils ? window.Schema_Utils.getPrimaryKey(this.entityName) : 'id';
-                const contextId = payload[pkFieldT] || this._internalRetryId || 'DRAFT_CTX';
+                const contextId = (this.modal && this.modal.dataset && this.modal.dataset.taxonomiaContext) ? this.modal.dataset.taxonomiaContext : (payload[pkFieldT] || this._internalRetryId || 'DRAFT_CTX');
                 
                 const formSchema = window.APP_SCHEMAS && window.APP_SCHEMAS[this.entityName] ? window.APP_SCHEMAS[this.entityName] : null;
                 const fieldsConfig = formSchema ? (formSchema.fields || Object.keys(formSchema).map(k => ({name: k, ...formSchema[k]}))) : [];
                 const relationKeys = new Set(fieldsConfig.filter(f => f.type === 'relation').map(f => f.name));
+
+                // [S53.6] Provide explicit work context to the root payload so Engine_DB can diff correctly when children are empty
+                payload._work_context = contextId;
 
                 Object.keys(payload).forEach(key => {
                     if (Array.isArray(payload[key])) {

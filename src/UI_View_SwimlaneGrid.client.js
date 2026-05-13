@@ -58,15 +58,11 @@ window.UI_View_SwimlaneGrid = {
         const edges = window.DataStore.get('Sys_Graph_Edges') || [];
         
         // 1. Encontrar la Unidad de Negocio Raíz (Arista TAXONOMIA_UNIDAD)
-        const allTaxoEdges = edges.filter(e => e.tipo_relacion === 'TAXONOMIA_UNIDAD');
-        console.log(`[CanvasDebug] Buscando raíz para taxonomiaId: ${this.taxonomiaId}. Aristas TAXONOMIA_UNIDAD totales:`, allTaxoEdges);
-        
         const rootEdge = edges.find(e => 
             String(e.id_nodo_hijo) === String(this.taxonomiaId) && 
             e.tipo_relacion === 'TAXONOMIA_UNIDAD' &&
             String(e.es_version_actual) === 'true'
         );
-        console.log(`[CanvasDebug] rootEdge encontrado:`, rootEdge);
 
         if (!rootEdge) {
             rootContainer.innerHTML = `
@@ -215,146 +211,31 @@ window.UI_View_SwimlaneGrid = {
             return;
         }
 
-        const schema = window.APP_SCHEMAS && window.APP_SCHEMAS[childEntity];
-        const titleField = schema && schema.metadata ? schema.metadata.titleField : 'nombre';
-        const pkField = window.Schema_Utils ? window.Schema_Utils.getPrimaryKey(childEntity) : 'id';
-        
-        // 1. Obtener registros válidos (excluyendo los ya vinculados a la Taxonomía bajo el mismo padre)
-        const allRecords = window.DataStore ? window.DataStore.get(childEntity) || [] : [];
-        const edges = window.DataStore ? window.DataStore.get('Sys_Graph_Edges') || [] : [];
-        
-        // Para TAXONOMIA_UNIDAD, el parentEntity es la Taxonomía, pero en la DB Unidad_Negocio es el padre.
-        const isRoot = (edgeType === 'TAXONOMIA_UNIDAD');
-        const linkedIds = edges
-            .filter(e => e.contexto_id === this.taxonomiaId && e.tipo_relacion === edgeType && 
-                         (isRoot ? e.id_nodo_hijo === parentId : e.id_nodo_padre === parentId) && 
-                         String(e.es_version_actual) === 'true')
-            .map(e => isRoot ? e.id_nodo_padre : e.id_nodo_hijo);
-            
-        const availableRecords = allRecords.filter(r => !linkedIds.includes(String(r[pkField])));
+        let targetEntityToOpen = parentEntity;
+        if (parentEntity === 'Root_Taxonomia') {
+            targetEntityToOpen = 'Taxonomia';
+        }
 
-        // 2. Crear Drawer Panel
-        const drawerNode = document.createElement('div');
-        drawerNode.className = 'drawer-panel-form';
-        drawerNode.style.cssText = 'display: flex; flex-direction: column; height: 100%; background: var(--color-bg-body, #ffffff);';
-        
-        drawerNode.innerHTML = `
-            <ion-header class="ion-no-border" style="border-bottom: 1px solid var(--color-border, #e0e0e0);">
-                <ion-toolbar color="light">
-                    <ion-title>Vincular ${schema ? schema.metadata.label : childEntity}</ion-title>
-                    <ion-buttons slot="end">
-                        <ion-button id="tax-drawer-close" color="dark">
-                            <ion-icon slot="icon-only" name="close-outline"></ion-icon>
-                        </ion-button>
-                    </ion-buttons>
-                </ion-toolbar>
-            </ion-header>
-            <ion-content class="ion-padding" style="--background: var(--color-bg-body, #ffffff);">
-                <div style="margin-bottom: 24px;">
-                    <h3 style="font-size: 1.1rem; font-weight: 600; margin-bottom: 8px;">Selecciona los registros</h3>
-                    <p style="color: var(--ion-color-medium); font-size: 0.9rem; margin-top: 0;">Puedes seleccionar múltiples ${schema ? schema.metadata.label : childEntity} para vincularlos simultáneamente al lienzo.</p>
-                </div>
-                <div id="tax-searchable-mount"></div>
-            </ion-content>
-            <div class="drawer-footer" style="padding: 16px; border-top: 1px solid var(--color-border, #e0e0e0); background: var(--color-bg-body, #ffffff);">
-                <ion-button id="tax-drawer-confirm" expand="block" color="primary" disabled>
-                    <ion-icon slot="start" name="link-outline"></ion-icon> Vincular
-                </ion-button>
-            </div>
-        `;
+        const pkField = window.Schema_Utils ? window.Schema_Utils.getPrimaryKey(targetEntityToOpen) : 'id';
+        const allRecords = window.DataStore ? window.DataStore.get(targetEntityToOpen) || [] : [];
+        const recordData = allRecords.find(r => String(r[pkField]) === String(parentId));
 
-        // 3. Montar TXSearchable
-        const mountPoint = drawerNode.querySelector('#tax-searchable-mount');
-        const fieldDef = {
-            name: 'temp_link_field',
-            label: childEntity,
-            targetEntity: childEntity,
-            valueField: pkField,
-            labelField: titleField
-        };
-        const metadataToken = (window.APP_SCHEMAS && window.APP_SCHEMAS[childEntity] && window.APP_SCHEMAS[childEntity].metadata) || {};
-        const configParams = { iconName: metadataToken.iconName, color: metadataToken.color, contextId: this.taxonomiaId };
-        
-        const txSearchableNode = window.UI_Factory.buildSearchableMulti(fieldDef, availableRecords, [], null, configParams);
-        mountPoint.appendChild(txSearchableNode);
-
-        // 4. Lógica de Interacción
-        const btnClose = drawerNode.querySelector('#tax-drawer-close');
-        const btnConfirm = drawerNode.querySelector('#tax-drawer-confirm');
-        let selectedIds = new Set();
-
-        txSearchableNode.addEventListener('txChange', (e) => {
-            const vals = e.detail.value || [];
-            selectedIds = new Set(Array.isArray(vals) ? vals : [vals]);
-            btnConfirm.disabled = selectedIds.size === 0;
-        });
-
-        const dismissDrawer = () => {
-            if (window.DrawerStackController) {
-                window.DrawerStackController.closeTop();
-            } else {
-                drawerNode.remove();
-            }
-        };
-
-        btnClose.addEventListener('click', dismissDrawer);
-
-        btnConfirm.addEventListener('click', () => {
-            if (selectedIds.size === 0) return;
-            
-            btnConfirm.disabled = true;
-            btnConfirm.innerHTML = '<ion-spinner name="crescent"></ion-spinner>';
-            
-            const isRoot = (edgeType === 'TAXONOMIA_UNIDAD');
-            const payload = Array.from(selectedIds).map(childId => ({
-                id_nodo_padre: isRoot ? childId : parentId,
-                id_nodo_hijo: isRoot ? parentId : childId,
-                tipo_relacion: edgeType,
-                contexto_id: this.taxonomiaId,
-                es_version_actual: true,
-                metadata: { created_via: "taxonomia_canvas" }
-            }));
-            
-            if (typeof google !== 'undefined' && google.script && google.script.run) {
-                google.script.run
-                    .withSuccessHandler((response) => {
-                        dismissDrawer();
-                        if (response.success) {
-                            // Optimistic update
-                            const currentEdges = window.DataStore.get('Sys_Graph_Edges') || [];
-                            payload.forEach(p => {
-                                p.id = 'arista-' + Math.random().toString(36).substring(2, 10);
-                                currentEdges.push(p);
-                            });
-                            this.refresh();
-                        } else {
-                            console.error("Error saving edges:", response);
-                        }
-                    })
-                    .withFailureHandler((err) => {
-                        console.error("API Error:", err);
-                        btnConfirm.disabled = false;
-                        btnConfirm.innerHTML = '<ion-icon slot="start" name="link-outline"></ion-icon> Vincular';
-                    })
-                    .API_Universal_Router('commitEdges', 'Sys_Graph_Edges', payload);
-            } else {
-                console.warn("Entorno local detectado, simulando guardado optimista.");
-                const currentEdges = window.DataStore.get('Sys_Graph_Edges') || [];
-                payload.forEach(p => {
-                    p.id = 'arista-stub-' + Date.now() + Math.random();
-                    currentEdges.push(p);
-                });
-                setTimeout(() => {
-                    dismissDrawer();
-                    this.refresh();
-                }, 500);
-            }
-        });
-
-        if (window.DrawerStackController) {
-            window.DrawerStackController.push(drawerNode);
+        if (recordData && typeof window.renderForm === 'function') {
+            // S53.5 Homologous Contextual Drawers
+            // Se invoca el Drawer Nativo de la entidad padre y se inyecta el ID de Taxonomía
+            // para que UI_FormSubmitter asigne el contexto a las nuevas aristas.
+            window.renderForm(targetEntityToOpen, recordData, (res) => {
+                // Al presionar Guardar en el Drawer, el evento InlinePersisted dispara el repintado
+                this.refresh();
+            }, { taxonomiaContext: this.taxonomiaId }).then(() => {
+                // S53.5 BugFix: renderForm only builds the DOM. We must call Hydrator to populate input values.
+                if (window.FormEngine_Hydrator) {
+                    const container = window.currentFormDrawer || document.getElementById('app-container');
+                    window.FormEngine_Hydrator(container, recordData, targetEntityToOpen);
+                }
+            });
         } else {
-            document.body.appendChild(drawerNode); // Fallback safe
+            console.error(`Error S53.5: No se pudo abrir el Drawer para ${targetEntityToOpen} (ID: ${parentId})`);
         }
     }
 };

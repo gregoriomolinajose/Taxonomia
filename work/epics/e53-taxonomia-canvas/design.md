@@ -6,7 +6,7 @@ Estamos cambiando el paradigma de interfaz de usuario para el mapeo de Jerarquí
 ## 2. Componentes Objetivo
 - `UI_View_SwimlaneGrid.client.js`: La vista orquestadora universal. Carga el arreglo plano de `Sys_Graph_Edges` donde `contexto_id` = ID del contenedor (ej. Taxonomía), y construye un árbol en memoria para su renderizado. Diseñado para ser agnóstico y reutilizable para otras entidades (ej. Capacidades).
 - `CSS_TaxonomyCanvas.html`: El módulo de estilos que proporcionará las variables CSS para los fondos de los swimlanes extrayendo el color nativo de cada entidad desde `APP_SCHEMAS[entidad].metadata.color` (ej. `primary` para Unidad, `danger` para Portafolio, `dark` para Grupos) y la lógica de disposición (`display: flex; flex-direction: column`).
-- `UI_Component_TXSearchable.client.js`: Reutilizaremos nuestro robusto componente de búsqueda múltiple dentro de una ventana emergente (`ion-popover`) para manejar la selección y adición de nodos sin necesidad de abandonar el lienzo visual.
+- `UI_DrawerManager.client.js`: En lugar de construir modales de búsqueda genéricos flotantes (`TXSearchable`), el Canvas invocará directamente los cajones nativos de las entidades (Homologous Contextual Drawers) pasando la Taxonomía como `contexto_id`. Esto asegura la reutilización total del `FormEngine` y mantiene el modelo mental del usuario intacto.
 
 ## 3. Modelo de Datos y Contratos
 - **Lectura:** El Canvas obtiene los datos a través de `API_Universal.getRecords('Sys_Graph_Edges', { contexto_id: taxonomiaId })`. Los datos vienen planos. El frontend, mediante `JS_GraphUtils` o lógica en línea, reconstruirá el árbol basándose en las llaves `id_nodo_padre` e `id_nodo_hijo`.
