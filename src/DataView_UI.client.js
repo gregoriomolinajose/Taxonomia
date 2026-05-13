@@ -245,7 +245,32 @@
                     return String(val) === sVal || sRegex.test(String(val));
                 });
             }
-            _state.filtered = window.DataEngine.applyFilter(baseData, query);
+            let textFiltered = window.DataEngine.applyFilter(baseData, query);
+            
+            // S54.3: Motor AND/OR de filtros universales
+            if (_state.advancedFilters && Object.keys(_state.advancedFilters).length > 0) {
+                const filterKeys = Object.keys(_state.advancedFilters);
+                textFiltered = textFiltered.filter(row => {
+                    return filterKeys.every(field => { // AND entre distintos campos
+                        const validValues = _state.advancedFilters[field];
+                        if (!validValues || validValues.length === 0) return true;
+                        
+                        let rowVal = row[field];
+                        if (rowVal === null || rowVal === undefined || rowVal === '' || (Array.isArray(rowVal) && rowVal.length === 0)) {
+                            rowVal = '[Sin Valor]';
+                        }
+                        
+                        if (Array.isArray(rowVal)) {
+                            // Relacional (array)
+                            return validValues.some(val => rowVal.includes(val));
+                        } else {
+                            return validValues.includes(String(rowVal)); // OR entre valores del mismo campo
+                        }
+                    });
+                });
+            }
+            
+            _state.filtered = textFiltered;
             _state.page = 1;
             _state.lastGridScroll = 0; // Reset scroll momentum on search
             _rerenderData(); // Solo datos — el toolbar/search box NO se toca
@@ -277,9 +302,15 @@
 
         function _buildToolbarHTML() {
             if (window.UI_DataView_Toolbar) {
-                return window.UI_DataView_Toolbar.buildToolbarHTML(_state.view, _state.entityName, _onViewToggle);
+                return window.UI_DataView_Toolbar.buildToolbarHTML(_state.view, _state.entityName, _onViewToggle, _onFilterToggle);
             }
             return document.createElement('div');
+        }
+
+        function _onFilterToggle() {
+            if (_state.filterInstance && typeof _state.filterInstance.render === 'function') {
+                _state.filterInstance.render();
+            }
         }
 
         /* Adjunta el listener ionInput al ion-searchbar tras cada re-render del toolbar.
@@ -448,7 +479,9 @@
                 page: 1, pageSize: 25,
                 sortCol: '', sortDir: 'asc',
                 view: defaultView, columns: [], payload: payload || null,
-                lastGridScroll: 0 // H10: Scroll momentum orchestration
+                lastGridScroll: 0, // H10: Scroll momentum orchestration
+                advancedFilters: {}, // S54.3: Filtros universales
+                filterInstance: null // S54.3: Instancia del drawer
             };
 
             // Limpiar ion-popover de la entidad anterior (si existe)
@@ -479,6 +512,11 @@
             const tZone = document.createElement('div'); tZone.id = 'dv-toolbar-zone';
             const dZone = document.createElement('div'); dZone.id = 'dv-data-zone';
             root.appendChild(hZone); root.appendChild(tZone); root.appendChild(dZone);
+            
+            // S54.3: Contenedor para filtros
+            const fZone = document.createElement('div'); fZone.id = 'dv-filter-container';
+            root.appendChild(fZone);
+            
             container.appendChild(root);
 
             // Inyectar Safely el skeleton estático convertido a fragmento
@@ -531,6 +569,21 @@
                 // El Filtro visual del Searchbar ya no se inyecta con IDs para evitar colisiones.
                 // Se procesa de forma transpartente en _applyFilter utilizando payload.strictFilter
                 _applyFilter('');
+                
+                // S54.3: Instanciar Motor de Filtros
+                if (window.UI_UniversalFilter) {
+                    _state.filterInstance = new window.UI_UniversalFilter({
+                        entityName: _state.entityName,
+                        schemaConfig: window.APP_SCHEMAS || {},
+                        records: _state.data,
+                        containerEl: document.getElementById('dv-filter-container'),
+                        onFilterChange: function(newFilters) {
+                            _state.advancedFilters = newFilters || {};
+                            const searchInput = document.getElementById('dv-search-input');
+                            _applyFilter(searchInput ? searchInput.value : '');
+                        }
+                    });
+                }
             });
         }
 
