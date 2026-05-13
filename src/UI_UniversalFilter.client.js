@@ -18,6 +18,7 @@ class UI_UniversalFilter {
         this.records = config.records || [];
         this.containerEl = config.containerEl;
         this.onFilterChange = config.onFilterChange || (() => {});
+        this.lookupData = config.lookupData || {}; // S54.4
         
         // State
         this.activeFilters = {}; // ej. { "departamento": ["Identidad"] }
@@ -68,14 +69,22 @@ class UI_UniversalFilter {
         const cardsHtml = this.selectedFields.map(fieldKey => {
             const fieldDef = this.availableFields.find(f => f.name === fieldKey);
             const options = this._getUniqueValuesForField(fieldKey);
+            const lookupArr = this.lookupData[fieldKey]; // S54.4
             
             const checkboxesHtml = options.map((opt, idx) => {
                 const id = `tx-chk-${fieldKey}-${idx}`;
                 const isChecked = this.activeFilters[fieldKey] && this.activeFilters[fieldKey].includes(opt);
+                
+                let displayOpt = opt;
+                if (lookupArr && opt !== '[Sin Valor]') {
+                    const found = lookupArr.find(l => String(l.value) === String(opt));
+                    if (found) displayOpt = found.label;
+                }
+                
                 return `
                     <div class="checkbox-item">
                         <input type="checkbox" id="${id}" data-field="${fieldKey}" data-value="${opt}" ${isChecked ? 'checked' : ''} />
-                        <label for="${id}">${opt}</label>
+                        <label for="${id}">${displayOpt}</label>
                     </div>
                 `;
             }).join('');
