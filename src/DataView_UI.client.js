@@ -576,6 +576,7 @@
                         entityName: _state.entityName,
                         schemaConfig: window.APP_SCHEMAS || {},
                         records: _state.data,
+                        lookupData: window._LOOKUP_DATA || {},
                         containerEl: document.getElementById('dv-filter-container'),
                         onFilterChange: function(newFilters) {
                             _state.advancedFilters = newFilters || {};

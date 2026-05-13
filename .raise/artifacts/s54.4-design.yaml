@@ -1,0 +1,15 @@
+story_id: S54.4
+title: "Estrategia ETL y Pre-hidratación"
+architecture:
+  pattern: "JIT Dictionary Mapping (Data Store)"
+  components:
+    - name: "UI_UniversalFilter"
+      role: "View Layer"
+      action: "Receives lookupData. Replaces UUIDs with human-readable labels in DOM, keeps UUIDs in value state."
+    - name: "DataView_UI"
+      role: "Injector"
+      action: "Passes window._LOOKUP_DATA to the Drawer instance."
+decisions:
+  - id: D1
+    title: "Traducción JIT en el Render, no en el Set()"
+    rationale: "Mantener el estado `activeFilters` y los `values` crudos como UUIDs permite que el motor de filtrado de DataView_UI siga funcionando con intersección nativa sin modificaciones pesadas. Solo se cambia la estética (label)."
