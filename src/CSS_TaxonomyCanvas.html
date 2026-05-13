@@ -138,31 +138,22 @@
     border-radius: 3px;
 }
 .tax-swimlane-children-horizontal::-webkit-scrollbar-thumb:hover {
+.tax-swimlane-children-horizontal::-webkit-scrollbar-thumb:hover {
     background: var(--ion-color-step-400, #a8a8a8); 
 }
+
 </style>
 
 <template id="tmpl-taxonomia-canvas">
-    <div class="tax-canvas-wrapper" style="width: 100%; height: 100%; display: flex; flex-direction: column;">
-        <ion-header class="ion-no-border">
-            <ion-toolbar color="light">
-                <ion-buttons slot="start">
-                    <ion-button id="tax-canvas-back">
-                        <ion-icon slot="icon-only" name="arrow-back"></ion-icon>
-                    </ion-button>
-                </ion-buttons>
-                <ion-title id="tax-canvas-header-title">Mapeo de Taxonomía</ion-title>
-                <ion-buttons slot="end">
-                    <ion-button id="tax-canvas-refresh" title="Recargar Grafo">
-                        <ion-icon slot="icon-only" name="refresh"></ion-icon>
-                    </ion-button>
-                </ion-buttons>
-            </ion-toolbar>
-        </ion-header>
-        <ion-content class="ion-padding" color="light">
-            <div id="tax-canvas-root" style="height: 100%;">
-                <!-- El Canvas se renderiza aquí -->
-            </div>
-        </ion-content>
+    <div class="tax-canvas-wrapper" style="width: 100%; display: flex; flex-direction: column; min-height: 80vh;">
+        <div style="display: flex; justify-content: flex-end; margin-bottom: 16px;">
+            <ion-button id="tax-canvas-refresh" fill="outline" color="medium" size="small">
+                <ion-icon slot="start" name="refresh-outline"></ion-icon>
+                Sincronizar Grafo
+            </ion-button>
+        </div>
+        <div id="tax-canvas-root" style="flex: 1; display: flex; flex-direction: column;">
+            <!-- El Canvas se renderiza aquí -->
+        </div>
     </div>
 </template>

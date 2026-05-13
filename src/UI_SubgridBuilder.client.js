@@ -87,10 +87,16 @@ window.UI_SubgridBuilder = {
             const normPK = window.UI_FormUtils ? window.UI_FormUtils.normalizeId(currentPK) : String(currentPK);
             const edgeName = (field.graphEdgeType || field.name).toUpperCase();
             
-            // [S50.3] Extraer contexto para hidratar borradores activos en UI
-            const contextId = window.UI_FormUtils ? window.UI_FormUtils.extractDraftContext(entityName, currentPK) : null;
+            // [S53.6] Contextual Subgrid Filtering (Workspace Isolation)
+            // Prioridad 1: taxonomiaContext inyectado explícitamente por el Canvas
+            // Prioridad 2: Draft Context convencional (S50.3)
+            const explicitContext = (modalContext && modalContext.dataset && modalContext.dataset.taxonomiaContext) ? modalContext.dataset.taxonomiaContext : null;
+            const fallbackContext = window.UI_FormUtils ? window.UI_FormUtils.extractDraftContext(entityName, currentPK) : null;
             
-            const childIds = window.Graph_Utils.resolveAllLinkedIds(normPK, edgeName, contextId);
+            const contextId = explicitContext || fallbackContext;
+            const strictContext = !!explicitContext; // Si hay contexto explícito, aislar completamente (no mostrar baseline)
+            
+            const childIds = window.Graph_Utils.resolveAllLinkedIds(normPK, edgeName, contextId, strictContext);
             
             if (childIds.length > 0 && window.DataStore) {
                 const targetTable = window.DataStore.get(field.targetEntity) || [];

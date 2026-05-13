@@ -387,6 +387,12 @@ const Engine_DB = {
                         currentActiveEdgesForNode = activeGraph.filter(e => String(e.id_nodo_padre).trim() === String(tempParentPK).trim() && e.tipo_relacion === edgeName);
                     }
                     
+                    // [S53.6] Workspace Isolation: Restrict diffing pool to edges inside the explicit work context.
+                    // This prevents Draft changes from accidentally deleting Baseline relationships.
+                    if (flatPayload._work_context) {
+                        currentActiveEdgesForNode = currentActiveEdgesForNode.filter(e => String(e.contexto_id).trim() === String(flatPayload._work_context).trim());
+                    }
+                    
                     const normalResult = Engine_Graph.patchSCD2Edges(incomingEdgesMock, currentActiveEdgesForNode, f.topologyCardinality) || {};
                     const normalClose = normalResult.edgesToClose || [];
                     const stealResult = Engine_Graph.patchSCD2Edges([], stolenEdges, f.topologyCardinality) || {};

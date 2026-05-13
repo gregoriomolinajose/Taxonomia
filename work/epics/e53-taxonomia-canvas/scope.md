@@ -4,6 +4,12 @@
 Transform the linear, 1D taxonomy creation form into a highly interactive, 2D nested swimlane matrix. This enables strategic leaders to visualize and map complex N-ary hierarchies (Business Units → Portfolios → Product Groups → Products → Capabilities) in a single pane of glass, aligning with modern SaaS architectural mapping standards.
 
 ## Scope
+# Epic E53: Taxonomia Visual Builder Canvas
+
+## Business Objective
+Transform the linear, 1D taxonomy creation form into a highly interactive, 2D nested swimlane matrix. This enables strategic leaders to visualize and map complex N-ary hierarchies (Business Units → Portfolios → Product Groups → Products → Capabilities) in a single pane of glass, aligning with modern SaaS architectural mapping standards.
+
+## Scope
 - Implement a Native CSS Grid/Flexbox Nested Swimlane Canvas.
 - Extract portfolio and group mappings from the linear wizard.
 - Create contextual edge injections upon node interactions.
@@ -12,8 +18,10 @@ Transform the linear, 1D taxonomy creation form into a highly interactive, 2D ne
 ## Milestones
 - [x] S53.1 Schema Simplification ✓
 - [x] S53.2 Visual Swimlane Layout ✓
-- [ ] S53.3 Interactive Contextual Mutations
+- [x] S53.3 Interactive Contextual Mutations ✓
 - [ ] S53.4 E2E Integration and Scaling
+- [x] S53.5 Canvas Homologous Contextual Drawers
+- [ ] S53.6 Contextual Subgrid Filtering
 
 ## Implementation Plan
 
@@ -25,6 +33,8 @@ Transform the linear, 1D taxonomy creation form into a highly interactive, 2D ne
 | 2 | S53.2 | Visual Swimlane Layout | **Walking skeleton:** Build the UI skeleton (CSS Grid/Flexbox) reading data, before adding interactivity. Proves the architectural approach. | S53.1 |
 | 3 | S53.3 | Popover Edge Mutations | **Core MVP:** Add the interactive `[+]` logic and write operations to complete the cycle. | S53.2 |
 | 4 | S53.4 | E2E Integration | **Integration Checkpoint:** Verify cross-story contracts (Read -> Write -> Re-render) using actual DB edge endpoints. | S53.3 |
+| 5 | S53.5 | Homologous Drawers | **UX Homogenization:** Replace generic TXSearchable wrappers with the native Drawer components for context-aware relational linking. | S53.4 |
+| 6 | S53.6 | Contextual Filtering| **Workspace Isolation:** Filter Subgrids within the Contextual Drawers to only show relationships belonging to the active Taxonomia Canvas. | S53.5 |
 
 *Parallel Opportunities:* S53.2 (UI reading data) and S53.1 (Schema cleanup) cannot be run deeply in parallel since the visual canvas requires a clean context, but the CSS layout (`CSS_TaxonomyCanvas.html`) can be stubbed independently.
 
@@ -41,8 +51,10 @@ Transform the linear, 1D taxonomy creation form into a highly interactive, 2D ne
 |-------|--------|--------|--------|----------|
 | M1 (S53.1) | Clean Relational DB | COMPLETE | 1.0 hr | 1.2 hr |
 | M2 (S53.2) | Visual Graph Component | COMPLETE | 2.0 hr | 2.0 hr |
-| M3 (S53.3) | Popover Mutators | PENDING | 2.5 hr | - |
-| S53.4 | To Do  | S      | -      | Rai      |
+| M3 (S53.3) | Popover Mutators | COMPLETE | 2.5 hr | 2.5 hr |
+| S53.4 | E2E Integration  | To Do | S      | Rai      |
+| S53.5 | Homologous Drawers | COMPLETE | M      | Rai      |
+| S53.6 | Contextual Filtering| To Do | XS     | Rai      |
 
 ### Sequencing Risks
 1. **Layout complexity (High):** Replicating the exact swimlane grid purely with CSS might require complex nesting. Mitigation: Isolate the layout in a standalone `.html` file first.

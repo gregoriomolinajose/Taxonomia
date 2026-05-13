@@ -45,7 +45,7 @@ window.Graph_Utils = (function () {
      * @param {string} edgeType - The relationship identifier (e.g. 'CARGO_PERSONA')
      * @returns {string|null} The linked record ID, or null if not found
      */
-    function resolveLinkedId(localRecordId, edgeType, contextId = null) {
+    function resolveLinkedId(localRecordId, edgeType, contextId = null, strictContext = false) {
         if (!_graphIndex) _buildIndex();
         if (!_graphIndex) return null; // Fallback safely if DataStore is missing
 
@@ -53,6 +53,9 @@ window.Graph_Utils = (function () {
         
         const isValidEdge = (e) => {
             if (e.tipo_relacion !== edgeType) return false;
+            if (strictContext && contextId) {
+                return String(e.contexto_id) === String(contextId);
+            }
             if (e.estado === 'Borrador') {
                 return contextId && String(e.contexto_id) === String(contextId);
             }
@@ -82,7 +85,7 @@ window.Graph_Utils = (function () {
      * @param {string} contextId - Optional context ID to include draft edges
      * @returns {Array<string>} An array of linked record IDs
      */
-    function resolveAllLinkedIds(localRecordId, edgeType, contextId = null) {
+    function resolveAllLinkedIds(localRecordId, edgeType, contextId = null, strictContext = false) {
         if (!_graphIndex) _buildIndex();
         if (!_graphIndex) return [];
 
@@ -91,6 +94,9 @@ window.Graph_Utils = (function () {
 
         const isValidEdge = (e) => {
             if (e.tipo_relacion !== edgeType) return false;
+            if (strictContext && contextId) {
+                return String(e.contexto_id) === String(contextId);
+            }
             if (e.estado === 'Borrador') {
                 return contextId && String(e.contexto_id) === String(contextId);
             }
