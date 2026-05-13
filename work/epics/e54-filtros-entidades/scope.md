@@ -49,7 +49,7 @@ Implementar una funcionalidad de filtro universal para todas las entidades del s
 | S54.1 | Done   | S      | 1h     | Rai      |
 | S54.2 | Done   | M      | 1.5h   | Rai      |
 | S54.3 | Done   | L      | 2h     | Rai      |
-| S54.4 | To Do  | M      |        | Rai      |
+| S54.4 | Done   | M      | 1h     | Rai      |
 
 ### Sequencing Risks
 1. **Sobrecarga de Renderizado (Media):** Re-renderizar una grilla con cientos de dominios cada vez que se marca un checkbox puede bloquear el navegador. *Mitigación:* Se implementará Debounce al callback de `onFilterChange`.
