@@ -81,7 +81,7 @@ window.UI_DataView_Toolbar = (function () {
     /* ────────────────────────────────────────────
        2. DataView Toolbar (Buscador y Toggles)
     ───────────────────────────────────────────── */
-    function buildToolbarHTML(viewType, entityName, onViewToggle) {
+    function buildToolbarHTML(viewType, entityName, onViewToggle, onFilterToggle) {
         const toolbar = document.createElement('div');
         toolbar.className = 'dv-toolbar';
         
@@ -110,9 +110,8 @@ window.UI_DataView_Toolbar = (function () {
         filterIcon.setAttribute('slot', 'start');
         btnFilter.appendChild(filterIcon);
         btnFilter.appendChild(document.createTextNode(' Filtros'));
-        // TODO (Future phase): Listeners para abrir panel de filtros
         btnFilter.addEventListener('click', () => {
-             console.log('Panel de Filtros Avanzados (Próximamente)');
+             if (typeof onFilterToggle === 'function') onFilterToggle();
         });
         left.appendChild(btnFilter);
         
