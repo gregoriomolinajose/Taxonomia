@@ -1,0 +1,31 @@
+artifact_type: story-design
+version: 1
+skill: rai-story-design
+created: '2026-05-13T05:09:00Z'
+story: 'S54.2'
+epic: 'E54'
+content:
+  summary: 'Implementar la clase UniversalFilter para instanciar el estado y el DOM dinámicamente según la entidad.'
+  complexity: moderate
+  acceptance_criteria:
+    - id: AC1
+      description: 'Filtrado correcto de metadata APP_SCHEMAS (excluyendo hidden/dividers).'
+      verifiable: true
+    - id: AC2
+      description: 'Generación de inputs usando deduplicación iterativa Set().'
+      verifiable: true
+    - id: AC3
+      description: 'Estado interno emitido vía callback con estructura correcta.'
+      verifiable: true
+  integration_points:
+    - module: 'UI_UniversalFilter'
+      change_type: modification
+      files: ['src/UI_UniversalFilter.client.js']
+  decisions:
+    - id: D1
+      choice: 'Instanciación OOP Vanilla'
+      rationale: 'Permite encapsular el estado dinámico (activeFilters) y pasar por inyección de dependencias los records crudos.'
+      alternatives_considered: ['Objeto global Singleton']
+refs:
+  epic_scope: 'work/epics/e54-filtros-entidades/scope.md'
+metadata: {}
