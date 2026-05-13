@@ -409,12 +409,10 @@
                             if (_state.entityName === 'Taxonomia') {
                                 window.AppEventBus.publish('NAV::CHANGE', {viewType: 'taxonomia-canvas', recordId: id});
                                 setTimeout(() => {
-                                    if (window.renderForm) window.renderForm(_state.entityName, id);
-                                    else if (window.openEditForm) window.openEditForm(id);
+                                    if (window.openEditForm) window.openEditForm(id, _state.entityName);
                                 }, 50);
                             } else {
-                                if (window.renderForm) window.renderForm(_state.entityName, id);
-                                else if (window.openEditForm) window.openEditForm(id); 
+                                if (window.openEditForm) window.openEditForm(id, _state.entityName); 
                             }
                         }
                     },
