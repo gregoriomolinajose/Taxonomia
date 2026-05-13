@@ -218,3 +218,4 @@ class UI_UniversalFilter {
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = UI_UniversalFilter;
 }
+window.UI_UniversalFilter = UI_UniversalFilter;
