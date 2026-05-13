@@ -47,7 +47,7 @@ Implementar una funcionalidad de filtro universal para todas las entidades del s
 | Story | Status | T-Size | Actual | Assigned |
 |-------|--------|--------|--------|----------|
 | S54.1 | Done   | S      | 1h     | Rai      |
-| S54.2 | To Do  | M      |        | Rai      |
+| S54.2 | Done   | M      | 1.5h   | Rai      |
 | S54.3 | To Do  | L      |        | Rai      |
 | S54.4 | To Do  | M      |        | Rai      |
 
