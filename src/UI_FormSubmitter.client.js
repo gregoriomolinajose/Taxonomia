@@ -196,24 +196,81 @@ window.UI_FormSubmitter = class UI_FormSubmitter {
                  isTempPK = true;
             }
             
+            const formSchema = window.APP_SCHEMAS && window.APP_SCHEMAS[this.entityName] ? window.APP_SCHEMAS[this.entityName] : null;
+            const fieldsConfig = formSchema ? (formSchema.fields || Object.keys(formSchema).map(k => ({name: k, ...formSchema[k]}))) : [];
+            const temporalFields = fieldsConfig.filter(f => f.isTemporalGraph).reduce((acc, f) => { acc[f.name] = f; return acc; }, {});
+
             // Extrapolar submisiones de subgrids para el repintado predictivo.
             const optimisticChildren = {};
             const _sessionId = optimisticPK; // Session tagging para aislar asincronía concurrente
             
             for (const key of Object.keys(payload)) {
-                 if (Array.isArray(payload[key]) && window.DataStore && window.DataStore.get(key)) {
-                      optimisticChildren[key] = payload[key].map(child => {
-                          const childClone = { ...child, _optimistic_session: _sessionId };
-                          if (isTempPK) { // Ligar Edges nuevos con el Padre Falso de ser requerido
-                              const childParentRef = 'id_' + this.entityName.toLowerCase();
-                              childClone[childParentRef] = optimisticPK;
+                 if (Array.isArray(payload[key])) {
+                      const tField = temporalFields[key];
+                      if (tField) {
+                          if (!optimisticChildren['Sys_Graph_Edges']) optimisticChildren['Sys_Graph_Edges'] = [];
+                          
+                          const edgeName = (tField.graphEdgeType || tField.name).toUpperCase();
+                          const edges = (window.DataStore ? window.DataStore.get('Sys_Graph_Edges') : []) || [];
+                          
+                          // 1. Identify previous edges for this node/context to close them optimistically
+                          let oldEdges = [];
+                          if (tField.workspaceMode) {
+                              const effParent = tField.dynamicParentField ? (payload[tField.dynamicParentField] || tField.fixedParentId) : tField.fixedParentId;
+                              oldEdges = edges.filter(e => e.es_version_actual === true && String(e.id_nodo_padre) === String(effParent) && e.tipo_relacion === edgeName && String(e.contexto_id) === String(optimisticPK));
+                          } else if (tField.relationType === 'padre') {
+                              oldEdges = edges.filter(e => e.es_version_actual === true && String(e.id_nodo_hijo) === String(optimisticPK) && e.tipo_relacion === edgeName);
+                          } else {
+                              oldEdges = edges.filter(e => e.es_version_actual === true && String(e.id_nodo_padre) === String(optimisticPK) && e.tipo_relacion === edgeName);
                           }
-                          // Asegurar un PK falso temporal para que DataGrid no explote
-                          const childPk = window.Schema_Utils.getPrimaryKey(key);
-                          if (!childClone[childPk]) childClone[childPk] = 'TMP_EDGE_' + Math.random().toString(36).substring(2, 10).toUpperCase();
-                          return childClone;
-                      });
-                      childBackups[key] = JSON.parse(JSON.stringify(window.DataStore.get(key)));
+                          
+                          if (payload._work_context) {
+                              oldEdges = oldEdges.filter(e => String(e.contexto_id) === String(payload._work_context));
+                          } else if (contextId && contextId !== 'DRAFT_CTX' && contextId !== optimisticPK) {
+                              oldEdges = oldEdges.filter(e => String(e.contexto_id) === String(contextId));
+                          }
+                          
+                          const closedEdges = oldEdges.map(e => ({ ...e, es_version_actual: false, _optimistic_session: _sessionId }));
+                          optimisticChildren['Sys_Graph_Edges'].push(...closedEdges);
+
+                          // 2. Create the new edges
+                          const edgeRecords = payload[key].map(child => {
+                              const newId = 'TMP_EDGE_' + Math.random().toString(36).substring(2, 10).toUpperCase();
+                              const childPk = child.id_registro || child[window.Schema_Utils.getPrimaryKey(tField.targetEntity)];
+                              let edgePadre = tField.relationType === 'hijo' ? optimisticPK : childPk;
+                              let edgeHijo = tField.relationType === 'hijo' ? childPk : optimisticPK;
+                              
+                              if (tField.workspaceMode) {
+                                  edgePadre = tField.dynamicParentField ? (payload[tField.dynamicParentField] || tField.fixedParentId) : tField.fixedParentId;
+                                  edgeHijo = childPk;
+                              }
+                              
+                              return {
+                                  id_relacion: newId,
+                                  id_nodo_padre: edgePadre,
+                                  id_nodo_hijo: edgeHijo,
+                                  tipo_relacion: edgeName,
+                                  es_version_actual: true,
+                                  estado: child._estado_arista || 'Activo',
+                                  contexto_id: child._contexto_arista || '',
+                                  _optimistic_session: _sessionId
+                              };
+                          });
+                          optimisticChildren['Sys_Graph_Edges'].push(...edgeRecords);
+                      } else if (window.DataStore && window.DataStore.get(key)) {
+                          optimisticChildren[key] = payload[key].map(child => {
+                              const childClone = { ...child, _optimistic_session: _sessionId };
+                              if (isTempPK) { // Ligar Edges nuevos con el Padre Falso de ser requerido
+                                  const childParentRef = 'id_' + this.entityName.toLowerCase();
+                                  childClone[childParentRef] = optimisticPK;
+                              }
+                              // Asegurar un PK falso temporal para que DataGrid no explote
+                              const childPkF = window.Schema_Utils.getPrimaryKey(key);
+                              if (!childClone[childPkF]) childClone[childPkF] = 'TMP_EDGE_' + Math.random().toString(36).substring(2, 10).toUpperCase();
+                              return childClone;
+                          });
+                          childBackups[key] = JSON.parse(JSON.stringify(window.DataStore.get(key)));
+                      }
                  }
             }
             

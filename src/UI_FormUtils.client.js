@@ -301,8 +301,13 @@ window.UI_FormUtils = (function () {
             return currentPK;
         }
         const activeContainer = document.querySelector('ion-modal, .drawer-panel');
-        if (activeContainer && activeContainer.dataset && activeContainer.dataset.isDraft === 'true') {
-            return activeContainer.dataset.contextId || currentPK;
+        if (activeContainer && activeContainer.dataset) {
+            if (activeContainer.dataset.taxonomiaContext) {
+                return activeContainer.dataset.taxonomiaContext;
+            }
+            if (activeContainer.dataset.isDraft === 'true') {
+                return activeContainer.dataset.contextId || currentPK;
+            }
         }
         return null;
     }

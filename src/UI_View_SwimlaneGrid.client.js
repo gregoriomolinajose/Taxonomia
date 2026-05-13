@@ -22,6 +22,8 @@ window.UI_View_SwimlaneGrid = {
         }
         
         if (this._unsubSubmit) { this._unsubSubmit(); this._unsubSubmit = null; }
+        if (this._unsubGraph) { this._unsubGraph(); this._unsubGraph = null; }
+        
         if (window.AppEventBus) {
             this._unsubSubmit = window.AppEventBus.subscribe('FORM::SUBMIT_SUCCESS', (payload) => {
                 if (payload && payload.entityName === 'Taxonomia' && payload.response && payload.response.data) {
@@ -34,6 +36,10 @@ window.UI_View_SwimlaneGrid = {
                         this.refresh();
                     }
                 }
+            });
+            
+            this._unsubGraph = window.AppEventBus.subscribe('CACHE::GRAPH_HYDRATED', () => {
+                this.refresh();
             });
         }
     },

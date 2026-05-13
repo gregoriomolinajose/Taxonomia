@@ -153,14 +153,22 @@ window.Graph_Utils = (function () {
     }
 
     // Auto-subscribe to DataStore changes to maintain memory efficiency
-    if (typeof window !== 'undefined' && window.addEventListener) {
-        // Since we are likely initialized before AppEventBus binds standard listeners,
-        // we expose a global bound method for manual triggering or dispatch listeners.
-        window.addEventListener('DATASTORE::CHANGED', (e) => {
-            if (e.detail && e.detail.entityName === 'Sys_Graph_Edges') {
-                invalidateIndex();
+    if (typeof window !== 'undefined') {
+        const bindAppEventBus = () => {
+            if (window.AppEventBus) {
+                window.AppEventBus.subscribe('DATASTORE::CHANGED', (payload) => {
+                    if (payload && payload.entityName === 'Sys_Graph_Edges') {
+                        invalidateIndex();
+                    }
+                });
+                window.AppEventBus.subscribe('CACHE::GRAPH_HYDRATED', () => {
+                    invalidateIndex();
+                });
+            } else {
+                setTimeout(bindAppEventBus, 50); // Retry if not yet loaded
             }
-        });
+        };
+        bindAppEventBus();
     }
 
     return {

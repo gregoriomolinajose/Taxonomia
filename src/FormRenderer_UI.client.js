@@ -658,16 +658,26 @@
                     const fieldMeta = checkSchemaMap.find(f => f.name === name);
                     
                     if (fieldMeta && fieldMeta.isTemporalGraph && window.DataStore && window.DataStore.get('Sys_Graph_Edges')) {
-                        const activeEdges = window.DataStore.get('Sys_Graph_Edges').filter(e => e.es_version_actual !== false);
                         const edgeName = (fieldMeta.graphEdgeType || fieldMeta.name).toUpperCase();
                         const currentPK = record[pkFieldLocal];
                         if (currentPK) {
-                            if (fieldMeta.relationType === 'padre') {
-                                const match = activeEdges.find(e => String(e.id_nodo_hijo) === String(currentPK) && e.tipo_relacion === edgeName);
-                                if (match) valToSet = match.id_nodo_padre;
+                            if (window.Graph_Utils && window.Graph_Utils.resolveAllLinkedIds) {
+                                // S54.5 Fix Contextual Graph Leak: Enforce state-aware graph index to respect 'Borrador' boundaries
+                                const contextId = window.UI_FormUtils ? window.UI_FormUtils.extractDraftContext(entityName, currentPK) : null;
+                                const linkedIds = window.Graph_Utils.resolveAllLinkedIds(currentPK, edgeName, contextId, false);
+                                if (linkedIds && linkedIds.length > 0) {
+                                    valToSet = linkedIds[0];
+                                }
                             } else {
-                                const match = activeEdges.find(e => String(e.id_nodo_padre) === String(currentPK) && e.tipo_relacion === edgeName);
-                                if (match) valToSet = match.id_nodo_hijo;
+                                // Legacy fallback si no está cargado Graph_Utils
+                                const activeEdges = window.DataStore.get('Sys_Graph_Edges').filter(e => e.es_version_actual !== false);
+                                if (fieldMeta.relationType === 'padre') {
+                                    const match = activeEdges.find(e => String(e.id_nodo_hijo) === String(currentPK) && e.tipo_relacion === edgeName);
+                                    if (match) valToSet = match.id_nodo_padre;
+                                } else {
+                                    const match = activeEdges.find(e => String(e.id_nodo_padre) === String(currentPK) && e.tipo_relacion === edgeName);
+                                    if (match) valToSet = match.id_nodo_hijo;
+                                }
                             }
                         }
                         

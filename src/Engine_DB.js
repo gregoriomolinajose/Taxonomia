@@ -396,7 +396,12 @@ const Engine_DB = {
                     const normalResult = Engine_Graph.patchSCD2Edges(incomingEdgesMock, currentActiveEdgesForNode, f.topologyCardinality) || {};
                     const normalClose = normalResult.edgesToClose || [];
                     const stealResult = Engine_Graph.patchSCD2Edges([], stolenEdges, f.topologyCardinality) || {};
-                    const stealClose = stealResult.edgesToClose || [];
+                    let stealClose = stealResult.edgesToClose || [];
+                    
+                    // [S54.5 Fix Contextual Graph Leak] Prevent drafts from stealing global baseline relationships.
+                    if (flatPayload._work_context) {
+                        stealClose = stealClose.filter(e => String(e.contexto_id).trim() === String(flatPayload._work_context).trim());
+                    }
                     
                     precalculatedGraphContext[f.name] = { 
                         orphansToProcess: normalClose.concat(stealClose),
@@ -689,7 +694,7 @@ const Engine_DB = {
                     if (f.isTemporalGraph && f.graphEntity) {
                         // Graph Edge Hydration
                         const edgesContext = _Adapter_Sheets.list(f.graphEntity, config, 'objects');
-                        const activeEdges = (edgesContext && edgesContext.rows ? edgesContext.rows : []).filter(e => e.es_version_actual !== false && e.estado !== 'Eliminado');
+                        const activeEdges = (edgesContext && edgesContext.rows ? edgesContext.rows : []).filter(e => e.es_version_actual !== false && e.estado !== 'Eliminado' && e.estado !== 'Borrador');
                         
                         let matchedIds = [];
                         const edgeName = (f.graphEdgeType || f.name).toUpperCase();
