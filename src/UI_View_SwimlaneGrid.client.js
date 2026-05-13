@@ -59,7 +59,7 @@ window.UI_View_SwimlaneGrid = {
         
         // 1. Encontrar la Unidad de Negocio Raíz (Arista TAXONOMIA_UNIDAD)
         const rootEdge = edges.find(e => 
-            e.id_nodo_padre === this.taxonomiaId && 
+            e.id_nodo_hijo === this.taxonomiaId && 
             e.tipo_arista === 'TAXONOMIA_UNIDAD' &&
             String(e.es_version_actual) === 'true'
         );
@@ -84,7 +84,7 @@ window.UI_View_SwimlaneGrid = {
             return;
         }
 
-        const unidadNegocioId = rootEdge.id_nodo_hijo;
+        const unidadNegocioId = rootEdge.id_nodo_padre;
         
         // 2. Extraer aristas contextuales de esta taxonomía
         const contextEdges = edges.filter(e => 
@@ -219,9 +219,13 @@ window.UI_View_SwimlaneGrid = {
         const allRecords = window.DataStore ? window.DataStore.get(childEntity) || [] : [];
         const edges = window.DataStore ? window.DataStore.get('Sys_Graph_Edges') || [] : [];
         
+        // Para TAXONOMIA_UNIDAD, el parentEntity es la Taxonomía, pero en la DB Unidad_Negocio es el padre.
+        const isRoot = (edgeType === 'TAXONOMIA_UNIDAD');
         const linkedIds = edges
-            .filter(e => e.contexto_id === this.taxonomiaId && e.tipo_arista === edgeType && e.id_nodo_padre === parentId && String(e.es_version_actual) === 'true')
-            .map(e => e.id_nodo_hijo);
+            .filter(e => e.contexto_id === this.taxonomiaId && e.tipo_arista === edgeType && 
+                         (isRoot ? e.id_nodo_hijo === parentId : e.id_nodo_padre === parentId) && 
+                         String(e.es_version_actual) === 'true')
+            .map(e => isRoot ? e.id_nodo_padre : e.id_nodo_hijo);
             
         const availableRecords = allRecords.filter(r => !linkedIds.includes(String(r[pkField])));
 
@@ -297,9 +301,10 @@ window.UI_View_SwimlaneGrid = {
             btnConfirm.disabled = true;
             btnConfirm.innerHTML = '<ion-spinner name="crescent"></ion-spinner>';
             
+            const isRoot = (edgeType === 'TAXONOMIA_UNIDAD');
             const payload = Array.from(selectedIds).map(childId => ({
-                id_nodo_padre: parentId,
-                id_nodo_hijo: childId,
+                id_nodo_padre: isRoot ? childId : parentId,
+                id_nodo_hijo: isRoot ? parentId : childId,
                 tipo_arista: edgeType,
                 contexto_id: this.taxonomiaId,
                 es_version_actual: true,
