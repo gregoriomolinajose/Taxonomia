@@ -58,11 +58,15 @@ window.UI_View_SwimlaneGrid = {
         const edges = window.DataStore.get('Sys_Graph_Edges') || [];
         
         // 1. Encontrar la Unidad de Negocio Raíz (Arista TAXONOMIA_UNIDAD)
+        const allTaxoEdges = edges.filter(e => e.tipo_relacion === 'TAXONOMIA_UNIDAD');
+        console.log(`[CanvasDebug] Buscando raíz para taxonomiaId: ${this.taxonomiaId}. Aristas TAXONOMIA_UNIDAD totales:`, allTaxoEdges);
+        
         const rootEdge = edges.find(e => 
-            e.id_nodo_hijo === this.taxonomiaId && 
-            e.tipo_arista === 'TAXONOMIA_UNIDAD' &&
+            String(e.id_nodo_hijo) === String(this.taxonomiaId) && 
+            e.tipo_relacion === 'TAXONOMIA_UNIDAD' &&
             String(e.es_version_actual) === 'true'
         );
+        console.log(`[CanvasDebug] rootEdge encontrado:`, rootEdge);
 
         if (!rootEdge) {
             rootContainer.innerHTML = `
@@ -94,7 +98,7 @@ window.UI_View_SwimlaneGrid = {
 
         // 3. Obtener portafolios hijos de la Unidad de Negocio
         const portafolioEdges = contextEdges.filter(e => 
-            e.tipo_arista === 'UNIDAD_NEGOCIO_PORTAFOLIO' && 
+            e.tipo_relacion === 'UNIDAD_NEGOCIO_PORTAFOLIO' && 
             e.id_nodo_padre === unidadNegocioId
         );
         
@@ -124,7 +128,7 @@ window.UI_View_SwimlaneGrid = {
 
                 // Nivel 3: Grupos de Productos
                 const grupoEdges = contextEdges.filter(e => 
-                    e.tipo_arista === 'PORTAFOLIO_GRUPO_PRODUCTO' && 
+                    e.tipo_relacion === 'PORTAFOLIO_GRUPO_PRODUCTO' && 
                     e.id_nodo_padre === portafolioId
                 );
 
@@ -222,7 +226,7 @@ window.UI_View_SwimlaneGrid = {
         // Para TAXONOMIA_UNIDAD, el parentEntity es la Taxonomía, pero en la DB Unidad_Negocio es el padre.
         const isRoot = (edgeType === 'TAXONOMIA_UNIDAD');
         const linkedIds = edges
-            .filter(e => e.contexto_id === this.taxonomiaId && e.tipo_arista === edgeType && 
+            .filter(e => e.contexto_id === this.taxonomiaId && e.tipo_relacion === edgeType && 
                          (isRoot ? e.id_nodo_hijo === parentId : e.id_nodo_padre === parentId) && 
                          String(e.es_version_actual) === 'true')
             .map(e => isRoot ? e.id_nodo_padre : e.id_nodo_hijo);
@@ -305,7 +309,7 @@ window.UI_View_SwimlaneGrid = {
             const payload = Array.from(selectedIds).map(childId => ({
                 id_nodo_padre: isRoot ? childId : parentId,
                 id_nodo_hijo: isRoot ? parentId : childId,
-                tipo_arista: edgeType,
+                tipo_relacion: edgeType,
                 contexto_id: this.taxonomiaId,
                 es_version_actual: true,
                 metadata: { created_via: "taxonomia_canvas" }
