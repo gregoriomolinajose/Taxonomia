@@ -1,0 +1,21 @@
+story_id: S54.3
+title: "List Engine Wrapper"
+architecture:
+  pattern: "Decorator / Facade (DataViewEngine)"
+  components:
+    - name: "UI_DataView_Toolbar"
+      role: "Trigger (Filter Button)"
+      action: "Bind click listener to open the Drawer."
+    - name: "DataView_UI"
+      role: "List Engine Orchestrator"
+      action: "Instanciate UI_UniversalFilter. Apply AND/OR logic to _state.data."
+    - name: "UI_UniversalFilter"
+      role: "Drawer View & State"
+      action: "Renders overlay, mutates filter state, invokes callback."
+decisions:
+  - id: D1
+    title: "Inyección Directa en DataViewEngine"
+    rationale: "DataViewEngine ya envuelve todas las vistas (grid, mapa, árbol). Inyectar aquí garantiza impacto cero (no-shotgun-surgery) en los módulos individuales."
+  - id: D2
+    title: "Intersección con SearchBox"
+    rationale: "El motor de filtros avanzados operará *después* o en conjunto con el SearchBox general, usando Array.filter() para lograr intersección lógica (AND/OR)."
