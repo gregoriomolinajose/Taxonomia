@@ -20,6 +20,22 @@ window.UI_View_SwimlaneGrid = {
         if (btnRefresh) {
             btnRefresh.addEventListener('click', () => this.refresh());
         }
+        
+        if (this._unsubSubmit) { this._unsubSubmit(); this._unsubSubmit = null; }
+        if (window.AppEventBus) {
+            this._unsubSubmit = window.AppEventBus.subscribe('FORM::SUBMIT_SUCCESS', (payload) => {
+                if (payload && payload.entityName === 'Taxonomia' && payload.response && payload.response.data) {
+                    const pk = window.Schema_Utils ? window.Schema_Utils.getPrimaryKey('Taxonomia') : 'id_taxonomia';
+                    const newId = payload.response.data[pk];
+                    if (newId) {
+                        this.taxonomiaId = newId;
+                        // S53.3 Actualizar título en URL/State si existe router
+                        window.history.replaceState({viewType: 'taxonomia-canvas', recordId: newId}, '', '');
+                        this.refresh();
+                    }
+                }
+            });
+        }
     },
     
     refresh: function() {
