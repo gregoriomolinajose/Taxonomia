@@ -98,18 +98,18 @@ class UI_UniversalFilter {
         
         return `
             <!-- Overlay -->
-            <div class="tx-filter-overlay active" id="txFilterOverlay"></div>
+            <div class="tx-filter-overlay active js-filter-overlay"></div>
             
             <!-- Drawer -->
-            <div class="tx-filter-drawer active" id="txFilterDrawer">
+            <div class="tx-filter-drawer active js-filter-drawer">
                 <div class="drawer-header">
                     <h2>Filtros</h2>
-                    <button class="close-btn" id="txFilterCloseBtn" aria-label="Cerrar">&times;</button>
+                    <button class="close-btn js-filter-close" aria-label="Cerrar">&times;</button>
                 </div>
                 <div class="drawer-body">
                     <div class="field-selector">
                         <label>Selecciona un campo para filtrar</label>
-                        <select id="txFilterFieldSelect">
+                        <select class="js-filter-field-select">
                             <option value="">Buscar campos...</option>
                             ${fieldOptionsHtml}
                         </select>
@@ -117,7 +117,7 @@ class UI_UniversalFilter {
                     ${cardsHtml}
                 </div>
                 <div class="drawer-footer">
-                    <button class="btn-clear-all" id="txFilterClearAll">Borrar todo</button>
+                    <button class="btn-clear-all js-filter-clear-all">Borrar todo</button>
                 </div>
             </div>
         `;
@@ -126,12 +126,12 @@ class UI_UniversalFilter {
     _bindEvents() {
         const doc = this.containerEl;
         
-        const closeBtn = doc.querySelector('#txFilterCloseBtn');
-        const overlay = doc.querySelector('#txFilterOverlay');
+        const closeBtn = doc.querySelector('.js-filter-close');
+        const overlay = doc.querySelector('.js-filter-overlay');
         if (closeBtn) closeBtn.addEventListener('click', () => this.hide());
         if (overlay) overlay.addEventListener('click', () => this.hide());
         
-        const select = doc.querySelector('#txFilterFieldSelect');
+        const select = doc.querySelector('.js-filter-field-select');
         if (select) {
             select.addEventListener('change', (e) => {
                 if (e.target.value) {
@@ -174,7 +174,7 @@ class UI_UniversalFilter {
             });
         });
         
-        const clearAll = doc.querySelector('#txFilterClearAll');
+        const clearAll = doc.querySelector('.js-filter-clear-all');
         if (clearAll) {
             clearAll.addEventListener('click', () => {
                 this.activeFilters = {};
@@ -187,6 +187,7 @@ class UI_UniversalFilter {
     
     render() {
         if (!this.containerEl) return;
+        if (this._hideTimeout) clearTimeout(this._hideTimeout);
         this.containerEl.innerHTML = this._renderHtml();
         this._bindEvents();
     }
@@ -196,8 +197,9 @@ class UI_UniversalFilter {
         const overlay = this.containerEl.querySelector('.tx-filter-overlay');
         if (drawer) drawer.classList.remove('active');
         if (overlay) overlay.classList.remove('active');
-        // Opcionalmente vaciar el contenedor despues de la animacion
-        setTimeout(() => {
+        
+        if (this._hideTimeout) clearTimeout(this._hideTimeout);
+        this._hideTimeout = setTimeout(() => {
             this.containerEl.innerHTML = '';
         }, 300);
     }
