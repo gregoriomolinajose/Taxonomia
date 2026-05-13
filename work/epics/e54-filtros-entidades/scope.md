@@ -38,9 +38,9 @@ Implementar una funcionalidad de filtro universal para todas las entidades del s
 
 ### Milestones
 
-- [ ] **M1: Walking Skeleton (S54.1 - S54.2)** - Drawer estructurado, capturando estados dinámicos sin tocar vistas principales.
-- [ ] **M2: Core MVP (S54.3)** - Filtrado end-to-end funcionando sobre vistas en producción (ej. Personas, Portafolio).
-- [ ] **M3: Feature Complete (S54.4)** - Soporte completo de relaciones múltiples y validaciones de E2E listas.
+- [x] **M1: Walking Skeleton (S54.1 - S54.2)** - Drawer estructurado, capturando estados dinámicos sin tocar vistas principales.
+- [x] **M2: Core MVP (S54.3)** - Filtrado end-to-end funcionando sobre vistas en producción (ej. Personas, Portafolio).
+- [x] **M3: Feature Complete (S54.4)** - Soporte completo de relaciones múltiples y validaciones de E2E listas.
 
 ### Tracking
 
