@@ -510,8 +510,8 @@ var APP_SCHEMAS = {
     ]
   },
   Value_Stream: {
-    uiConfig: { dashboardCard: { iconName: 'git-network-outline', color: 'var(--ion-color-tertiary)' } },
-    metadata: { prefix: 'VSTR', showInMenu: true, order: 8, iconName:'git-network-outline', color:'tertiary', label:'Value Streams', titleField:'nombre', idField:'id_value_stream', fkField:null, maxListAttrs: 8 },
+    uiConfig: { dashboardCard: { iconName: 'swap-horizontal-outline', color: 'var(--ion-color-tertiary)' } },
+    metadata: { prefix: 'VSTR', showInMenu: true, order: 8, iconName:'swap-horizontal-outline', color:'tertiary', label:'Value Streams', titleField:'nombre', idField:'id_value_stream', fkField:null, maxListAttrs: 8 },
     topological_metadata: {
         parentEntity: "Portafolio",
         parentField: "portafolios_padre"
