@@ -383,20 +383,43 @@ window.UI_View_SwimlaneGrid = {
                 const vCol = document.createElement('div');
                 vCol.className = 'tax-swimlane-children-vertical';
                 
-                vCol.appendChild(this._createNodeEl(portafolioId, 'Portafolio', 'Añadir Grupo de Producto'));
+                vCol.appendChild(this._createNodeEl(portafolioId, 'Portafolio', 'Añadir Value Stream'));
 
-                // Nivel 3: Grupos de Productos
-                const grupoEdges = contextEdges.filter(e => 
-                    e.tipo_relacion === 'PORTAFOLIO_GRUPO_PRODUCTO' && 
+                // Nivel 3: Value Streams
+                const valueStreamEdges = contextEdges.filter(e => 
+                    e.tipo_relacion === 'PORTAFOLIO_VALUE_STREAM' && 
                     String(e.id_nodo_padre).trim() === String(portafolioId).trim()
                 );
 
-                if (grupoEdges.length > 0) {
-                    grupoEdges.forEach(gEdge => {
-                        const grupoRow = document.createElement('div');
-                        grupoRow.className = 'tax-swimlane-row';
-                        grupoRow.appendChild(this._createNodeEl(gEdge.id_nodo_hijo, 'Grupo_Productos', 'Añadir Producto'));
-                        vCol.appendChild(grupoRow);
+                if (valueStreamEdges.length > 0) {
+                    valueStreamEdges.forEach(vsEdge => {
+                        const vsId = vsEdge.id_nodo_hijo;
+                        const vsRow = document.createElement('div');
+                        vsRow.className = 'tax-swimlane-row';
+                        
+                        vsRow.appendChild(this._createNodeEl(vsId, 'Value_Stream', 'Añadir Grupo de Producto'));
+
+                        // Nivel 4: Grupos de Productos
+                        const grupoEdges = contextEdges.filter(e => 
+                            e.tipo_relacion === 'VALUE_STREAM_GRUPO_PRODUCTO' && 
+                            String(e.id_nodo_padre).trim() === String(vsId).trim()
+                        );
+
+                        if (grupoEdges.length > 0) {
+                            const gpContainer = document.createElement('div');
+                            gpContainer.style.display = 'flex';
+                            gpContainer.style.flexDirection = 'column';
+                            gpContainer.style.gap = '8px';
+                            gpContainer.style.marginTop = '12px';
+                            gpContainer.style.marginLeft = '20px';
+
+                            grupoEdges.forEach(gEdge => {
+                                gpContainer.appendChild(this._createNodeEl(gEdge.id_nodo_hijo, 'Grupo_Productos', 'Añadir Producto'));
+                            });
+                            vsRow.appendChild(gpContainer);
+                        }
+
+                        vCol.appendChild(vsRow);
                     });
                 }
 
