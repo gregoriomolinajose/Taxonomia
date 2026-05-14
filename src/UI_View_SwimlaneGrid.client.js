@@ -517,8 +517,11 @@ window.UI_View_SwimlaneGrid = {
             childEntity = 'Portafolio';
             edgeType = 'UNIDAD_NEGOCIO_PORTAFOLIO';
         } else if (parentEntity === 'Portafolio') {
+            childEntity = 'Value_Stream';
+            edgeType = 'PORTAFOLIO_VALUE_STREAM';
+        } else if (parentEntity === 'Value_Stream') {
             childEntity = 'Grupo_Productos';
-            edgeType = 'PORTAFOLIO_GRUPO_PRODUCTO';
+            edgeType = 'VALUE_STREAM_GRUPO_PRODUCTO';
         } else {
             // No action needed for leaf nodes
             return;
