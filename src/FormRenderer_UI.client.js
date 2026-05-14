@@ -71,6 +71,9 @@
             if (data) {
                 const targetPkField = window.Schema_Utils.getPrimaryKey(entityName);
                 localEditId = data[targetPkField] || data['id_registro'] || null;
+            } else if (entityName === 'Taxonomia') {
+                // S54.5: Optimistic ID Generation for Canvas
+                localEditId = (window.Schema_Utils && typeof window.Schema_Utils.generateUUID === 'function') ? window.Schema_Utils.generateUUID('TAX') : 'TAX-' + Math.random().toString(36).substr(2, 8).toUpperCase();
             }
             // S49.2: Inversión de Control (IoC) para contenedores custom (ej. Self-Service Fullscreen Wizard)
             let modal;
@@ -135,6 +138,12 @@
             };
             container.addEventListener('input', updateDynamicHeader);
             container.addEventListener('ionInput', updateDynamicHeader);
+            
+            // S54.5: Pass the optimistic localEditId to the container
+            if (localEditId) {
+                container.setAttribute('data-edit-id', localEditId);
+            }
+            
             modal.appendChild(container);
 
             const schemas = global.APP_SCHEMAS;
@@ -663,8 +672,13 @@
                         if (currentPK) {
                             if (window.Graph_Utils && window.Graph_Utils.resolveAllLinkedIds) {
                                 // S54.5 Fix Contextual Graph Leak: Enforce state-aware graph index to respect 'Borrador' boundaries
-                                const contextId = window.UI_FormUtils ? window.UI_FormUtils.extractDraftContext(entityName, currentPK) : null;
-                                const linkedIds = window.Graph_Utils.resolveAllLinkedIds(currentPK, edgeName, contextId, false);
+                                const explicitContext = (container && container.closest && container.closest('.drawer-container') && container.closest('.drawer-container').dataset.taxonomiaContext) || 
+                                                       (global.currentFormDrawer && global.currentFormDrawer.dataset && global.currentFormDrawer.dataset.taxonomiaContext) ? 
+                                                       ((container && container.closest && container.closest('.drawer-container')?.dataset.taxonomiaContext) || global.currentFormDrawer.dataset.taxonomiaContext) : null;
+                                const fallbackContext = window.UI_FormUtils ? window.UI_FormUtils.extractDraftContext(entityName, currentPK) : null;
+                                const contextId = explicitContext || fallbackContext;
+                                const strictContext = !!explicitContext || entityName === 'Taxonomia';
+                                const linkedIds = window.Graph_Utils.resolveAllLinkedIds(currentPK, edgeName, contextId, strictContext);
                                 if (linkedIds && linkedIds.length > 0) {
                                     valToSet = linkedIds[0];
                                 }

@@ -261,7 +261,16 @@ window.UI_SubgridBuilder = {
             
             if (lookupSource && lookupSource.data && lookupSource.lookups) {
                  // If it came from getInitialPayload (Tuples)
-                 const rows = window.Schema_Utils.inflateTuples(lookupSource.data);
+                 let rows = window.Schema_Utils.inflateTuples(lookupSource.data);
+                 
+                 // [S55.1] Contextual Subgrid Option Isolation
+                 rows = rows.filter(d => {
+                     if (d.estado === 'Eliminado' || typeof d !== 'object') return false;
+                     if (String(d.estado).toLowerCase() === 'borrador') {
+                         return contextId && String(d.contexto_id) === String(contextId);
+                     }
+                     return true;
+                 });
                  // Map to {value, label}
                  const pkField = Object.keys(rows[0] || {}).find(k => k.startsWith('id_'));
                  if (pkField) {

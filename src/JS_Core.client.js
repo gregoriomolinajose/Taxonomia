@@ -368,16 +368,37 @@
                     
                     let currentCache = [...self.get(childEntity)];
                     freshChildren.forEach(newChild => {
-                        const cid = newChild[childPkField] || newChild['id_' + childEntity.toLowerCase()];
-                        if (!cid) {
-                            console.warn(`[UI_FormSubmitter] Ignorando hijo sin PK para ${childEntity}:`, newChild);
-                            return; // Failsafe against Index 0 corruption
-                        }
-                        const idx = currentCache.findIndex(c => (c[childPkField] === cid) || (c['id_' + childEntity.toLowerCase()] === cid));
-                        if (idx !== -1) {
-                            currentCache = [...currentCache.slice(0, idx), newChild, ...currentCache.slice(idx + 1)];
+                        const isGraphEdge = childEntity === 'Sys_Graph_Edges';
+                        
+                        if (isGraphEdge) {
+                            const pId = newChild.id_nodo_padre;
+                            const hId = newChild.id_nodo_hijo;
+                            const relType = newChild.tipo_relacion;
+                            
+                            const idx = currentCache.findIndex(c => 
+                                c.tipo_relacion === relType && 
+                                String(c.id_nodo_padre).trim() === String(pId).trim() && 
+                                String(c.id_nodo_hijo).trim() === String(hId).trim() && 
+                                String(c.es_version_actual).toLowerCase() === 'true'
+                            );
+                            
+                            if (idx !== -1) {
+                                currentCache = [...currentCache.slice(0, idx), newChild, ...currentCache.slice(idx + 1)];
+                            } else {
+                                currentCache = [newChild, ...currentCache];
+                            }
                         } else {
-                            currentCache = [newChild, ...currentCache];
+                            const cid = newChild[childPkField] || newChild['id_' + childEntity.toLowerCase()];
+                            if (!cid) {
+                                console.warn(`[UI_FormSubmitter] Ignorando hijo sin PK para ${childEntity}:`, newChild);
+                                return; // Failsafe against Index 0 corruption
+                            }
+                            const idx = currentCache.findIndex(c => (c[childPkField] === cid) || (c['id_' + childEntity.toLowerCase()] === cid));
+                            if (idx !== -1) {
+                                currentCache = [...currentCache.slice(0, idx), newChild, ...currentCache.slice(idx + 1)];
+                            } else {
+                                currentCache = [newChild, ...currentCache];
+                            }
                         }
                     });
                     

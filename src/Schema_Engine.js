@@ -144,17 +144,18 @@ var APP_SCHEMAS = {
     primaryKey: "id_taxonomia",
     titleField: "nombre",
     wizardConfig: true,
+    stepDescriptions: {
+        "Taxonomía de Producto": "Asigna un nombre descriptivo para comenzar. Te recomendamos utilizar el nombre del portafolio principal que vas a estructurar."
+    },
     fields: [
       { name: "id_taxonomia", type: "hidden", primaryKey: true },
       ...FIELD_TEMPLATES.SYSTEM_FIELDS(),
       ...FIELD_TEMPLATES.ESTADO_FIELD(),
       ...FIELD_TEMPLATES.AUDIT_FIELDS(),
       ...FIELD_TEMPLATES.VERSION_FIELD(),
-      { name: "nombre", type: "text", label: "Nombre de la Taxonomía", required: true, width: 12, section: "Configuración General" },
-      { name: "descripcion", type: "textarea", label: "Descripción", required: false, width: 12, section: "Configuración General" },
-      { name: "id_unidad_negocio", type: "relation", relationType: "padre", targetEntity: "Unidad_Negocio", graphEntity: "Sys_Graph_Edges", valueField: "id_unidad_negocio", labelField: "nombre", uiComponent: "select_single", label: "Unidad de Negocio", isTemporalGraph: true, graphEdgeType: "TAXONOMIA_UNIDAD", topologyCardinality: "1:N", width: 12, workspaceMode: false, required: false, section: "Jerarquía Estratégica" },
-      { name: "id_portafolios", type: "relation", relationType: "hijo", targetEntity: "Portafolio", graphEntity: "Sys_Graph_Edges", valueField: "id_portafolio", labelField: "nombre", uiComponent: "searchable_multi", label: "Agregar Portafolios", isTemporalGraph: true, graphEdgeType: "TAXONOMIA_PORTAFOLIO", topologyCardinality: "1:N", width: 12, workspaceMode: false, required: false, section: "Agregar Portafolio" },
-      { name: "id_grupos", type: "relation", relationType: "hijo", targetEntity: "Grupo_Productos", graphEntity: "Sys_Graph_Edges", valueField: "id_grupo_producto", labelField: "nombre", uiComponent: "searchable_multi", label: "Agregar Grupos de Productos", isTemporalGraph: true, graphEdgeType: "TAXONOMIA_GRUPO_PRODUCTO", topologyCardinality: "1:N", width: 12, workspaceMode: false, required: false, section: "Grupo de Productos" }
+      { name: "nombre", type: "text", label: "Nombre de la Taxonomía", required: true, width: 12, section: "Taxonomía de Producto" },
+      { name: "descripcion", type: "textarea", label: "Descripción", required: false, width: 12, section: "Taxonomía de Producto" },
+      { name: "id_unidad_negocio", type: "relation", relationType: "padre", targetEntity: "Unidad_Negocio", graphEntity: "Sys_Graph_Edges", valueField: "id_unidad_negocio", labelField: "nombre", uiComponent: "select_single", label: "Unidad de Negocio", isTemporalGraph: true, graphEdgeType: "TAXONOMIA_UNIDAD", topologyCardinality: "1:N", width: 12, workspaceMode: false, required: false, section: "Jerarquía Estratégica" }
     ]
   },
   Unidad_Negocio: {

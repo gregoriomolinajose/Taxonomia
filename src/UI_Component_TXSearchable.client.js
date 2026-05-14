@@ -181,6 +181,20 @@ class TXSearchable extends HTMLElement {
         this.dispatchSelection();
     }
 
+    dispatchSelection() {
+        const payload = this.getValidatedValue();
+        const ev = new CustomEvent('txChange', {
+            detail: {
+                value: payload,
+                entity: this._entityName,
+                isMultiple: this._isMultiple
+            },
+            bubbles: true,
+            composed: true // Permite que el evento cruce boundaries
+        });
+        this.dispatchEvent(ev);
+    }
+
     get value() {
         return this.getValidatedValue();
     }

@@ -328,14 +328,7 @@
             if (window.UI_DataView_Toolbar) {
                 const canCreate = !window.ABAC || window.ABAC.can('create', _state.entityName);
                 const onAddClick = () => {
-                    if (_state.entityName === 'Taxonomia') {
-                        window.AppEventBus.publish('NAV::CHANGE', {viewType: 'taxonomia-canvas'});
-                        setTimeout(() => {
-                            if (typeof window.renderForm === 'function') window.renderForm(_state.entityName);
-                        }, 50);
-                    } else {
-                        if (typeof window.renderForm === 'function') window.renderForm(_state.entityName);
-                    }
+                    if (typeof window.renderForm === 'function') window.renderForm(_state.entityName);
                 };
                 const headerDiv = window.UI_DataView_Toolbar.buildHeader(
                     _state.entityName, 
@@ -437,14 +430,7 @@
                     onPage: _onPage,
                     onEdit: (id) => { 
                         if (typeof window !== 'undefined') {
-                            if (_state.entityName === 'Taxonomia') {
-                                window.AppEventBus.publish('NAV::CHANGE', {viewType: 'taxonomia-canvas', recordId: id});
-                                setTimeout(() => {
-                                    if (window.openEditForm) window.openEditForm(id, _state.entityName);
-                                }, 50);
-                            } else {
-                                if (window.openEditForm) window.openEditForm(id, _state.entityName); 
-                            }
+                            if (window.openEditForm) window.openEditForm(id, _state.entityName); 
                         }
                     },
                     lastGridScroll: _state.lastGridScroll,

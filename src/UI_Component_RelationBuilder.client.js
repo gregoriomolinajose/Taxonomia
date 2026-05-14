@@ -72,17 +72,22 @@
             inputEl.style.width = '100%';
             inputEl.style.marginBottom = 'var(--spacing-2)';
             
-            const liveData = window.DataStore ? (window.DataStore.get(field.targetEntity) || []) : [];
-            const activeData = liveData.filter(d => d.estado !== 'Eliminado' && typeof d === 'object');
-            
-            let initialValues = [];
-            
             const schema = window.APP_SCHEMAS ? window.APP_SCHEMAS[entityName] : null;
             const pkKey = schema && schema.primaryKey ? schema.primaryKey : (data ? Object.keys(data).find(k => k.startsWith('id_') && k !== 'id_registro') : null);
             const currentPK = data ? (data[pkKey] || data.id_registro) : null;
             
             // [S50.3] Extraer contexto de borrador para inyectar en UI Components
-            const contextId = window.UI_FormUtils ? window.UI_FormUtils.extractDraftContext(entityName, currentPK) : null;
+            const explicitContext = (window.currentFormDrawer && window.currentFormDrawer.dataset && window.currentFormDrawer.dataset.taxonomiaContext) ? window.currentFormDrawer.dataset.taxonomiaContext : null;
+            const fallbackContext = window.UI_FormUtils ? window.UI_FormUtils.extractDraftContext(entityName, currentPK) : null;
+            const contextId = explicitContext || fallbackContext;
+            const strictContext = !!explicitContext || entityName === 'Taxonomia';
+            
+            // [S55.1] Contextual List Wrapper
+            const activeData = window.UI_FormUtils && window.UI_FormUtils.fetchContextualData 
+                ? window.UI_FormUtils.fetchContextualData(field.targetEntity, contextId)
+                : (window.DataStore ? window.DataStore.get(field.targetEntity) || [] : []).filter(d => d.estado !== 'Eliminado' && typeof d === 'object');
+            
+            let initialValues = [];
 
             if (field.isTemporalGraph && field.graphEntity && window.DataStore && window.DataStore.get(field.graphEntity)) {
                 if (currentPK) {
@@ -96,7 +101,7 @@
                         ).map(e => window.UI_FormUtils.normalizeId(field.relationType === 'padre' ? e.id_nodo_padre : e.id_nodo_hijo));
                     } else if (window.Graph_Utils && window.Graph_Utils.resolveAllLinkedIds) {
                         // S54.5 Fix Contextual Graph Leak: Enforce state-aware graph index to respect 'Borrador' boundaries
-                        initialValues = window.Graph_Utils.resolveAllLinkedIds(currentPK, edgeName, contextId, false);
+                        initialValues = window.Graph_Utils.resolveAllLinkedIds(currentPK, edgeName, contextId, strictContext);
                     } else if (field.relationType === 'padre') {
                         initialValues = aristas.filter(e => window.UI_FormUtils.normalizeId(e.id_nodo_hijo) === window.UI_FormUtils.normalizeId(currentPK) && String(e.tipo_relacion).toUpperCase() === edgeName).map(e => window.UI_FormUtils.normalizeId(e.id_nodo_padre));
                     } else if (field.relationType === 'hijo') {
@@ -154,7 +159,9 @@
                             else multiNodes.removeAttribute('is-loading');
 
                             const freshLiveData = freshRaw || [];
-                            const freshActiveData = freshLiveData.filter(d => d.estado !== 'Eliminado' && typeof d === 'object');
+                            const freshActiveData = window.UI_FormUtils && window.UI_FormUtils.fetchContextualData 
+                                ? window.UI_FormUtils.fetchContextualData(field.targetEntity, contextId)
+                                : freshLiveData.filter(d => d.estado !== 'Eliminado' && typeof d === 'object');
                             
                             if (typeof multiNodes.updateConfig === 'function') {
                                 multiNodes.updateConfig(freshActiveData, false);
@@ -267,7 +274,9 @@
                         if (basicSel.dataset.optimisticLock === 'true') return;
 
                         const freshLiveData = window.DataStore ? (window.DataStore.get(field.targetEntity) || []) : [];
-                        const freshActiveData = freshLiveData.filter(d => d.estado !== 'Eliminado' && typeof d === 'object');
+                        const freshActiveData = window.UI_FormUtils && window.UI_FormUtils.fetchContextualData 
+                            ? window.UI_FormUtils.fetchContextualData(field.targetEntity, contextId)
+                            : freshLiveData.filter(d => d.estado !== 'Eliminado' && typeof d === 'object');
                         
                         let freshFiltered = freshActiveData;
                         const cLvl = Number(data ? (data.nivel_tipo || 1) : 1);

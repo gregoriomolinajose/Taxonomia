@@ -56,6 +56,32 @@ window.UI_FormStepper = class UI_FormStepper {
     _initializeDOM() {
         if (this.sidebarSteps) this.sidebarSteps.innerHTML = '';
 
+        // S54.5: Configure split view structure
+        this.splitContainer = document.createElement('div');
+        this.splitContainer.className = 'wizard-split-container';
+        
+        this.splitLeft = document.createElement('div');
+        this.splitLeft.className = 'wizard-split-left';
+        
+        this.splitRight = document.createElement('div');
+        this.splitRight.className = 'wizard-split-right';
+        this.splitRight.id = 'wizard-canvas-wrapper';
+        
+        this.splitContainer.appendChild(this.splitLeft);
+        this.splitContainer.appendChild(this.splitRight);
+        
+        this.cardContent.appendChild(this.splitContainer);
+
+        // S54.5: Reactividad para el lienzo
+        const triggerRefresh = () => {
+            if (this._canvasInstanceMounted && typeof window.UI_View_SwimlaneGrid !== 'undefined') {
+                window.UI_View_SwimlaneGrid.refresh();
+            }
+        };
+        this.splitLeft.addEventListener('ionChange', triggerRefresh);
+        this.splitLeft.addEventListener('UI_GraphEdge::Changed', triggerRefresh);
+        this.splitLeft.addEventListener('input', triggerRefresh);
+
         this.steps.forEach((stepName, index) => {
             const stepDiv = document.createElement('div');
             stepDiv.id = 'form-section-' + stepName.replace(/\s+/g, '-');
@@ -123,7 +149,7 @@ window.UI_FormStepper = class UI_FormStepper {
             stepDiv.style.margin = '0 auto';
             stepDiv.style.paddingTop = 'var(--spacing-6)';
 
-            this.cardContent.appendChild(stepDiv);
+            this.splitLeft.appendChild(stepDiv);
 
             // S49.11: Badge pill con punto pulsante + fondo semitransparente
             const badgePill = document.createElement('span');
@@ -301,6 +327,22 @@ window.UI_FormStepper = class UI_FormStepper {
             }
         });
 
+        // S54.5: Fullscreen Drawer & Canvas Orchestration
+        const drawerNode = this.cardContent ? this.cardContent.closest('.drawer-panel') : null;
+        if (drawerNode && this.entityName === 'Taxonomia') {
+            if (this.currentStepIndex >= 1) { // Paso 2+
+                drawerNode.classList.add('fullscreen');
+                drawerNode.classList.add('drawer-fullscreen'); // Para reglas específicas del split
+                this.splitRight.style.display = 'flex';
+                this._mountCanvasViewer();
+            } else {
+                drawerNode.classList.remove('fullscreen');
+                drawerNode.classList.remove('drawer-fullscreen');
+                this.splitRight.style.display = 'none';
+                this._unmountCanvasViewer();
+            }
+        }
+
         if (this.sidebarSteps) {
             this.steps.forEach((stepName, idx) => {
                 const mi = this.menuItems[stepName];
@@ -369,6 +411,40 @@ window.UI_FormStepper = class UI_FormStepper {
         return this.rows;
     }
     
+    // S54.5: Canvas Mount/Unmount Orchestration
+    _mountCanvasViewer() {
+        if (!this.splitRight) return;
+        if (this._canvasInstanceMounted) return;
+
+        // The optimistic ID is the primary key assigned by UI_FormSubmitter in step 1
+        const taxonomyId = this.cardContent.getAttribute('data-edit-id') || null;
+        
+        if (taxonomyId && typeof window.UI_View_SwimlaneGrid !== 'undefined' && typeof window.UI_View_SwimlaneGrid.render === 'function') {
+            this.splitRight.innerHTML = '';
+            
+            // Use the standard template for the canvas
+            const tmpl = document.getElementById('tmpl-taxonomia-canvas');
+            if (tmpl && tmpl.content) {
+                this.splitRight.appendChild(tmpl.content.cloneNode(true));
+            } else {
+                console.error("[Wizard] tmpl-taxonomia-canvas no encontrado o sin content.");
+                this.splitRight.innerHTML = '<div style="padding: 20px; color: red;">Error: Plantilla de Canvas no encontrada.</div>';
+                return;
+            }
+            
+            // Initialize the canvas
+            window.UI_View_SwimlaneGrid.render(this.splitRight, taxonomyId);
+            this._canvasInstanceMounted = true;
+        }
+    }
+
+    _unmountCanvasViewer() {
+        if (this.splitRight && this._canvasInstanceMounted) {
+            this.splitRight.innerHTML = '';
+            this._canvasInstanceMounted = false;
+        }
+    }
+
     start() {
         this.goToSection(this.steps[0]);
     }

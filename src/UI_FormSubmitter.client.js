@@ -217,17 +217,17 @@ window.UI_FormSubmitter = class UI_FormSubmitter {
                           let oldEdges = [];
                           if (tField.workspaceMode) {
                               const effParent = tField.dynamicParentField ? (payload[tField.dynamicParentField] || tField.fixedParentId) : tField.fixedParentId;
-                              oldEdges = edges.filter(e => e.es_version_actual === true && String(e.id_nodo_padre) === String(effParent) && e.tipo_relacion === edgeName && String(e.contexto_id) === String(optimisticPK));
+                              oldEdges = edges.filter(e => String(e.es_version_actual).toLowerCase() === 'true' && String(e.id_nodo_padre).trim() === String(effParent).trim() && e.tipo_relacion === edgeName && String(e.contexto_id).trim() === String(optimisticPK).trim());
                           } else if (tField.relationType === 'padre') {
-                              oldEdges = edges.filter(e => e.es_version_actual === true && String(e.id_nodo_hijo) === String(optimisticPK) && e.tipo_relacion === edgeName);
+                              oldEdges = edges.filter(e => String(e.es_version_actual).toLowerCase() === 'true' && String(e.id_nodo_hijo).trim() === String(optimisticPK).trim() && e.tipo_relacion === edgeName);
                           } else {
-                              oldEdges = edges.filter(e => e.es_version_actual === true && String(e.id_nodo_padre) === String(optimisticPK) && e.tipo_relacion === edgeName);
+                              oldEdges = edges.filter(e => String(e.es_version_actual).toLowerCase() === 'true' && String(e.id_nodo_padre).trim() === String(optimisticPK).trim() && e.tipo_relacion === edgeName);
                           }
                           
                           if (payload._work_context) {
-                              oldEdges = oldEdges.filter(e => String(e.contexto_id) === String(payload._work_context));
+                              oldEdges = oldEdges.filter(e => String(e.contexto_id).trim() === String(payload._work_context).trim());
                           } else if (contextId && contextId !== 'DRAFT_CTX' && contextId !== optimisticPK) {
-                              oldEdges = oldEdges.filter(e => String(e.contexto_id) === String(contextId));
+                              oldEdges = oldEdges.filter(e => String(e.contexto_id).trim() === String(contextId).trim());
                           }
                           
                           const closedEdges = oldEdges.map(e => ({ ...e, es_version_actual: false, _optimistic_session: _sessionId }));
@@ -305,11 +305,19 @@ window.UI_FormSubmitter = class UI_FormSubmitter {
                 const response = typeof rawResponse === 'string' ? JSON.parse(rawResponse) : rawResponse;
                 
                 if (response && response.status === 'success') {
-                    // 1. Purga Quirúrgica del Caché Optimista (Previene Ghost Records)
+                    // 1. Consolidación Quirúrgica del Caché Optimista
                     if (window.DataStore) {
                         for (const key of Object.keys(optimisticChildren)) {
                              let liveCache = window.DataStore.get(key) || [];
-                             liveCache = liveCache.filter(row => row._optimistic_session !== _sessionId);
+                             liveCache.forEach(row => {
+                                 if (row._optimistic_session === _sessionId) {
+                                     delete row._optimistic_session;
+                                     if (isTempPK && response.pkValue && String(response.pkValue) !== String(optimisticPK)) {
+                                         if (row.id_nodo_padre === optimisticPK) row.id_nodo_padre = response.pkValue;
+                                         if (row.id_nodo_hijo === optimisticPK) row.id_nodo_hijo = response.pkValue;
+                                     }
+                                 }
+                             });
                              window.DataStore.set(key, liveCache);
                         }
                     }

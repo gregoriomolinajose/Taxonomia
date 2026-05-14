@@ -312,6 +312,22 @@ window.UI_FormUtils = (function () {
         return null;
     }
 
+    /**
+     * [S55.1] fetchContextualData (List Engine Wrapper)
+     * Centralizes the retrieval of active data scoped securely to a context boundary.
+     * Prevents global/baseline data leakage into restricted draft workspaces.
+     */
+    function fetchContextualData(entityName, contextId) {
+        const liveData = window.DataStore ? (window.DataStore.get(entityName) || []) : [];
+        return liveData.filter(d => {
+            if (d.estado === 'Eliminado' || typeof d !== 'object') return false;
+            if (String(d.estado).toLowerCase() === 'borrador') {
+                return contextId && String(d.contexto_id) === String(contextId);
+            }
+            return true;
+        });
+    }
+
     return {
         getDominioOptions,
         getDominiosPadreOptions,
@@ -322,6 +338,7 @@ window.UI_FormUtils = (function () {
         validateRequiredFields,
         attachBusinessRulesListeners,
         executeAsyncValidations,
-        extractDraftContext
+        extractDraftContext,
+        fetchContextualData
     };
 })();

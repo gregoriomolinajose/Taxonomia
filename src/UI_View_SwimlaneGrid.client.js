@@ -32,7 +32,7 @@ window.UI_View_SwimlaneGrid = {
                     if (newId) {
                         this.taxonomiaId = newId;
                         // S53.3 Actualizar título en URL/State si existe router
-                        window.history.replaceState({viewType: 'taxonomia-canvas', recordId: newId}, '', '');
+                        window.history.replaceState({viewType: 'dataview', payload: 'Taxonomia', recordId: newId}, '', '');
                         this.refresh();
                     }
                 }
@@ -42,27 +42,145 @@ window.UI_View_SwimlaneGrid = {
                 this.refresh();
             });
         }
+
+        // Monitor local form changes if we are in the wizard to provide real-time updates
+        const draftForm = document.querySelector('form#dynamicForm_Taxonomia');
+        if (draftForm && !this._formEventsBound) {
+            this._formEventsBound = true;
+            // Listen to standard input changes and Ionic custom events
+            draftForm.addEventListener('change', () => this.refresh(), true);
+            draftForm.addEventListener('ionChange', () => this.refresh(), true);
+        }
+        
+        // S54.4 TXSearchable custom events - Global listener to catch from any drawer
+        if (!this._txChangeBound) {
+            this._txChangeBound = true;
+            document.body.addEventListener('txChange', () => this.refresh(), true);
+        }
     },
     
     refresh: function() {
+        console.log("[Canvas Debug] refresh() CALLED");
         const rootContainer = this.container.querySelector('#tax-canvas-root');
-        if (!rootContainer) return;
+        if (!rootContainer) {
+            console.warn("[Canvas Debug] rootContainer NO ENCONTRADO en this.container");
+            return;
+        }
         
-        rootContainer.innerHTML = '<div style="padding:40px;text-align:center;"><ion-spinner></ion-spinner><p>Construyendo lienzo...</p></div>';
+        // S54.4 UI Stabilization: Throttle multiple refresh triggers (Phase 1 vs Phase 2)
+        if (this._refreshTimeout) {
+            clearTimeout(this._refreshTimeout);
+        }
         
-        setTimeout(() => {
+        this._refreshTimeout = setTimeout(() => {
+            // "Silent" update: don't clear the canvas to prevent the blinking/disappearance effect
             this._buildCanvas(rootContainer);
-        }, 100); // Pequeño delay para permitir el render del spinner
+        }, 150);
     },
     
     _buildCanvas: function(rootContainer) {
+        console.log("[Canvas Debug] _buildCanvas TRIGGERED! rootContainer exists.");
         if (!window.DataStore) {
             rootContainer.innerHTML = '<div class="tax-canvas-empty"><ion-icon name="warning"></ion-icon><h3>Error de Estado</h3><p>DataStore no inicializado.</p></div>';
             return;
         }
 
-        const edges = window.DataStore.get('Sys_Graph_Edges') || [];
+        // ESPECTADOR REACTIVO (S54.5): Leer valores borradores del DOM si estamos en el Wizard
+        let edges = window.DataStore.get('Sys_Graph_Edges') || [];
+        edges = [...edges]; // Clonar para no mutar el DataStore original
         
+        let currentUnidadId = null;
+        let input = document.querySelector('form#dynamicForm_Taxonomia [data-form-component="id_unidad_negocio"], form#dynamicForm_Taxonomia [name="id_unidad_negocio"]');
+        if (!input) input = document.querySelector('[data-form-component="id_unidad_negocio"], [name="id_unidad_negocio"]');
+        
+        if (input) {
+            currentUnidadId = typeof input.getValidatedValue === 'function' ? input.getValidatedValue() : input.value;
+            if (currentUnidadId && String(currentUnidadId).trim() !== '') {
+                edges.push({
+                    id_nodo_padre: currentUnidadId,
+                    id_nodo_hijo: this.taxonomiaId,
+                    tipo_relacion: 'TAXONOMIA_UNIDAD',
+                    es_version_actual: 'true',
+                    contexto_id: this.taxonomiaId
+                });
+            }
+        }
+
+        // 2. Extraer aristas de los formularios hijos en los Drawers
+        const unForms = document.querySelectorAll('[data-form-component="portafolios_vinculados"]');
+        let unProcessed = false;
+        
+        unForms.forEach(node => {
+            const formContainer = node.closest('ion-content, .drawer-content, #wizard-col-right');
+            if (!formContainer) return;
+            if (unProcessed) return; unProcessed = true; // Solo procesar una vez
+            
+            const pkInput = formContainer.querySelector('[name="id_unidad_negocio"]');
+            const unId = (pkInput && pkInput.value) ? pkInput.value : currentUnidadId;
+            
+            const portInput = formContainer.querySelector('[data-form-component="portafolios_vinculados"]');
+            console.log("[Canvas Debug] unForm extracted unId:", unId, "| portInput exists:", !!portInput);
+            if (portInput && typeof portInput.getValidatedValue === 'function') {
+                const val = portInput.getValidatedValue();
+                console.log("[Canvas Debug] portInput getValidatedValue:", val);
+                
+                // La UI es la fuente de verdad (optimistic state). Limpiamos aristas cacheadas para este padre.
+                edges = edges.filter(e => !(e.tipo_relacion === 'UNIDAD_NEGOCIO_PORTAFOLIO' && String(e.id_nodo_padre).trim() === String(unId).trim()));
+                
+                if (val) {
+                    const arr = Array.isArray(val) ? val : [val];
+                    arr.forEach(portId => {
+                        if (portId) {
+                            console.log("[Canvas Debug] Pushing portafolio edge:", { unId: String(unId), portId: String(portId) });
+                            edges.push({
+                                id_nodo_padre: String(unId),
+                                id_nodo_hijo: String(portId),
+                                tipo_relacion: 'UNIDAD_NEGOCIO_PORTAFOLIO',
+                                es_version_actual: 'true',
+                                contexto_id: String(this.taxonomiaId)
+                            });
+                        }
+                    });
+                }
+            }
+        });
+
+        const portForms = document.querySelectorAll('[data-form-component="grupos_productos_vinculados"]');
+        let portProcessed = new Set();
+        
+        portForms.forEach(node => {
+            const formContainer = node.closest('ion-content, .drawer-content, #wizard-col-right');
+            if (!formContainer) return;
+            
+            const pkInput = formContainer.querySelector('[name="id_portafolio"]');
+            const portId = (pkInput && pkInput.value) ? pkInput.value : null;
+            if (!portId || portProcessed.has(portId)) return;
+            portProcessed.add(portId);
+            
+            const gpInput = formContainer.querySelector('[data-form-component="grupos_productos_vinculados"]');
+            if (gpInput && typeof gpInput.getValidatedValue === 'function' && portId) {
+                const val = gpInput.getValidatedValue();
+                
+                // La UI es la fuente de verdad (optimistic state). Limpiamos aristas cacheadas para este padre.
+                edges = edges.filter(e => !(e.tipo_relacion === 'PORTAFOLIO_GRUPO_PRODUCTO' && String(e.id_nodo_padre).trim() === String(portId).trim()));
+                
+                if (val) {
+                    const arr = Array.isArray(val) ? val : [val];
+                    arr.forEach(gpId => {
+                        if (gpId) {
+                            edges.push({
+                                id_nodo_padre: String(portId),
+                                id_nodo_hijo: String(gpId),
+                                tipo_relacion: 'PORTAFOLIO_GRUPO_PRODUCTO',
+                                es_version_actual: 'true',
+                                contexto_id: String(this.taxonomiaId)
+                            });
+                        }
+                    });
+                }
+            }
+        });
+
         // 1. Encontrar la Unidad de Negocio Raíz (Arista TAXONOMIA_UNIDAD)
         const rootEdge = edges.find(e => 
             String(e.id_nodo_hijo) === String(this.taxonomiaId) && 
@@ -72,21 +190,152 @@ window.UI_View_SwimlaneGrid = {
 
         if (!rootEdge) {
             rootContainer.innerHTML = `
-                <div class="tax-canvas-empty">
-                    <ion-icon name="analytics-outline"></ion-icon>
-                    <h3>Lienzo Vacío</h3>
-                    <p>Comienza vinculando la Unidad de Negocio principal de esta taxonomía.</p>
-                    <ion-button id="tax-add-root-btn" color="primary" style="margin-top: 16px;">
-                        <ion-icon slot="start" name="add-outline"></ion-icon> Vincular Unidad de Negocio
-                    </ion-button>
+                <div class="tax-canvas-empty" style="height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 2rem;">
+                    <div style="width: 250px; height: 120px; border: 2px dashed var(--ion-color-step-300, #ccc); border-radius: 12px; margin-bottom: 24px; display: flex; flex-direction: column; align-items: center; justify-content: center; background: rgba(0,0,0,0.02);">
+                        <ion-icon name="business-outline" style="font-size: 32px; color: var(--ion-color-step-400, #aaa); margin-bottom: 8px;"></ion-icon>
+                        <div style="width: 60%; height: 8px; background: var(--ion-color-step-200, #ddd); border-radius: 4px; margin-bottom: 6px;"></div>
+                        <div style="width: 40%; height: 8px; background: var(--ion-color-step-200, #ddd); border-radius: 4px;"></div>
+                    </div>
+                    <h3 style="color: var(--ion-color-dark); margin: 0 0 8px 0; font-weight: 600;">Lienzo Vacío</h3>
+                    <p style="color: var(--ion-color-medium); text-align: center; max-width: 300px; margin: 0 0 24px 0; font-size: 0.95rem;">Agrega una Unidad de Negocio para comenzar a diseñar tu jerarquía.</p>
+                    <button id="btn-add-root-unit" style="width: 56px; height: 56px; border-radius: 50%; background: var(--ion-color-primary, #3880ff); border: none; display: flex; justify-content: center; align-items: center; cursor: pointer; box-shadow: 0 4px 10px rgba(56, 128, 255, 0.4); transition: transform 0.2s ease;">
+                        <ion-icon name="add-outline" style="font-size: 32px; color: #ffffff; display: block;"></ion-icon>
+                    </button>
                 </div>
             `;
-            const addRootBtn = rootContainer.querySelector('#tax-add-root-btn');
-            if (addRootBtn) {
-                addRootBtn.addEventListener('click', (e) => {
-                    this._handleNodeAdd(this.taxonomiaId, 'Root_Taxonomia', e);
-                });
-            }
+            
+            setTimeout(() => {
+                const btn = rootContainer.querySelector('#btn-add-root-unit');
+                if (btn) {
+                    btn.addEventListener('mouseenter', () => btn.style.transform = 'scale(1.1)');
+                    btn.addEventListener('mouseleave', () => btn.style.transform = 'scale(1)');
+                    btn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        // Crear un Drawer nativo usando los componentes de la plataforma (UI_Factory)
+                        if (window.DrawerStackController && window.UI_Factory) {
+                            if (document.getElementById('manual-drawer-unidad-negocio')) return;
+                            const drawerNode = document.createElement('div');
+                            drawerNode.id = 'manual-drawer-unidad-negocio';
+                            drawerNode.style.backgroundColor = 'var(--ion-background-color, #fff)';
+                            drawerNode.style.display = 'flex';
+                            drawerNode.style.flexDirection = 'column';
+                            drawerNode.style.height = '100%';
+                            drawerNode.style.position = 'absolute'; // User requested explicit absolute overlay
+                            drawerNode.style.right = '0';
+                            drawerNode.style.top = '0';
+                            drawerNode.style.bottom = '0';
+                            drawerNode.style.zIndex = '20000'; // Ensure it is above the canvas
+                            drawerNode.style.pointerEvents = 'auto'; // Block clicks from falling through
+
+                            // 1. HEADER NATIVO DE LA PLATAFORMA
+                            const header = window.UI_Factory.buildDrawerHeader({
+                                entityName: 'Unidad_Negocio',
+                                data: null,
+                                localEditId: null,
+                                onClose: () => window.DrawerStackController.closeTop()
+                            });
+                            drawerNode.appendChild(header);
+
+                            // 2. CONTENIDO SCROLLABLE
+                            const container = document.createElement('ion-content');
+                            container.className = 'drawer-content ion-padding';
+                            
+                            container.innerHTML = `
+                                <div style="margin-bottom: 24px;">
+                                    <h2 style="font-size: 1.25rem; font-weight: 700; color: var(--ion-text-color); margin-top:0;">Seleccionar Unidad Existente</h2>
+                                    <p style="color: var(--ion-color-medium); font-size: 0.875rem;">Utilice el buscador para vincular una unidad de negocio a esta taxonomía.</p>
+                                </div>
+                                <tx-searchable 
+                                    data-form-component="temp_searchable_unidad" 
+                                    entity-name="Unidad_Negocio" 
+                                    target-entity="Unidad_Negocio"
+                                    value-field="id_unidad_negocio" 
+                                    label-field="nombre" 
+                                    icon-name="business-outline"
+                                    style="display:block; margin-bottom: 24px;">
+                                </tx-searchable>
+                            `;
+                            drawerNode.appendChild(container);
+
+                            // 3. FOOTER NATIVO DE LA PLATAFORMA
+                            const footerContainer = document.createElement('div');
+                            footerContainer.className = 'drawer-footer';
+                            const btnGrid = document.createElement('ion-grid');
+                            btnGrid.style.padding = 'var(--spacing-1) var(--spacing-2)';
+                            const btnRow = document.createElement('ion-row');
+                            
+                            const colLeft = document.createElement('ion-col');
+                            colLeft.setAttribute('size', '6');
+                            
+                            const colRight = document.createElement('ion-col');
+                            colRight.setAttribute('size', '6');
+                            colRight.style.textAlign = 'right';
+                            
+                            const closeBtn = document.createElement('ion-button');
+                            closeBtn.setAttribute('fill', 'clear');
+                            closeBtn.setAttribute('color', 'medium');
+                            closeBtn.textContent = 'Cancelar';
+                            closeBtn.onclick = () => window.DrawerStackController.closeTop();
+                            
+                            colRight.appendChild(closeBtn);
+                            btnRow.appendChild(colLeft);
+                            btnRow.appendChild(colRight);
+                            btnGrid.appendChild(btnRow);
+                            footerContainer.appendChild(btnGrid);
+                            
+                            drawerNode.appendChild(footerContainer);
+
+                            window.DrawerStackController.push(drawerNode);
+
+                            setTimeout(() => {
+                                const tempTx = drawerNode.querySelector('tx-searchable');
+                                if(tempTx) {
+                                    // Cargar la fuente de datos (lista de unidades de negocio)
+                                    if (window.DataStore) {
+                                        const ds = window.DataStore.get('Unidad_Negocio') || [];
+                                        tempTx.dataSource = ds.filter(d => d.estado !== 'Eliminado');
+                                    }
+
+                                    tempTx.addEventListener('txChange', (ev) => {
+                                        ev.stopPropagation(); // Prevenir propagación al stepper principal
+                                        const selectedId = ev.detail ? ev.detail.value : null;
+                                        if(selectedId) {
+                                            // Sincronizar silenciosamente el campo de la taxonomía con la selección
+                                            // Fallback robusto a nivel documento por si el id del form cambia
+                                            let mainInput = document.querySelector('form#dynamicForm_Taxonomia [data-form-component="id_unidad_negocio"], form#dynamicForm_Taxonomia [name="id_unidad_negocio"]');
+                                            if (!mainInput) mainInput = document.querySelector('[data-form-component="id_unidad_negocio"], [name="id_unidad_negocio"]');
+                                            if (mainInput) {
+                                                if (mainInput.tagName.toLowerCase() === 'tx-searchable') {
+                                                    if (typeof mainInput.setValidatedValue === 'function') {
+                                                        mainInput.setValidatedValue(selectedId);
+                                                    } else {
+                                                        mainInput._selectedState = selectedId;
+                                                    }
+                                                    if (typeof mainInput.dispatchSelection === 'function') {
+                                                        mainInput.dispatchSelection();
+                                                    }
+                                                } else {
+                                                    mainInput.value = selectedId;
+                                                    mainInput.dispatchEvent(new Event('ionChange', { bubbles: true }));
+                                                    mainInput.dispatchEvent(new Event('change', { bubbles: true }));
+                                                }
+                                                // Forzar el repintado del canvas
+                                                if (typeof window.UI_View_SwimlaneGrid !== 'undefined' && typeof window.UI_View_SwimlaneGrid.refresh === 'function') {
+                                                    window.UI_View_SwimlaneGrid.refresh();
+                                                }
+                                            } else {
+                                                console.warn('[Canvas] No se encontró el input principal para sincronizar.');
+                                            }
+                                        }
+                                    });
+                                }
+                            }, 300);
+                        } else {
+                            console.warn('[Canvas] DrawerStackController no está disponible.');
+                        }
+                    });
+                }
+            }, 50);
             return;
         }
 
@@ -94,15 +343,23 @@ window.UI_View_SwimlaneGrid = {
         
         // 2. Extraer aristas contextuales de esta taxonomía
         const contextEdges = edges.filter(e => 
-            e.contexto_id === this.taxonomiaId && 
-            String(e.es_version_actual) === 'true'
+            String(e.contexto_id).trim() === String(this.taxonomiaId).trim() && 
+            String(e.es_version_actual).toLowerCase() === 'true'
         );
 
         // 3. Obtener portafolios hijos de la Unidad de Negocio
         const portafolioEdges = contextEdges.filter(e => 
             e.tipo_relacion === 'UNIDAD_NEGOCIO_PORTAFOLIO' && 
-            e.id_nodo_padre === unidadNegocioId
+            String(e.id_nodo_padre).trim() === String(unidadNegocioId).trim()
         );
+        
+        console.log("[Canvas Debug] Rendering Info:", {
+            unidadNegocioId, 
+            taxonomiaId: this.taxonomiaId, 
+            contextEdgesCount: contextEdges.length, 
+            portafolioEdgesCount: portafolioEdges.length,
+            portafolioEdges_dump: portafolioEdges
+        });
         
         // Iniciar render
         window.DOM.clear(rootContainer);
@@ -131,7 +388,7 @@ window.UI_View_SwimlaneGrid = {
                 // Nivel 3: Grupos de Productos
                 const grupoEdges = contextEdges.filter(e => 
                     e.tipo_relacion === 'PORTAFOLIO_GRUPO_PRODUCTO' && 
-                    e.id_nodo_padre === portafolioId
+                    String(e.id_nodo_padre).trim() === String(portafolioId).trim()
                 );
 
                 if (grupoEdges.length > 0) {
@@ -170,7 +427,9 @@ window.UI_View_SwimlaneGrid = {
         
         // Obtener Nombre
         let titleText = recordId;
-        const records = window.DataStore ? window.DataStore.get(entityName) || [] : [];
+        const records = window.UI_FormUtils && window.UI_FormUtils.fetchContextualData 
+            ? window.UI_FormUtils.fetchContextualData(entityName, this.taxonomiaId)
+            : (window.DataStore ? window.DataStore.get(entityName) || [] : []);
         const pkField = window.Schema_Utils ? window.Schema_Utils.getPrimaryKey(entityName) : 'id';
         const titleField = schema && schema.metadata ? schema.metadata.titleField : 'nombre';
         
@@ -223,7 +482,9 @@ window.UI_View_SwimlaneGrid = {
         }
 
         const pkField = window.Schema_Utils ? window.Schema_Utils.getPrimaryKey(targetEntityToOpen) : 'id';
-        const allRecords = window.DataStore ? window.DataStore.get(targetEntityToOpen) || [] : [];
+        const allRecords = window.UI_FormUtils && window.UI_FormUtils.fetchContextualData
+            ? window.UI_FormUtils.fetchContextualData(targetEntityToOpen, this.taxonomiaId)
+            : (window.DataStore ? window.DataStore.get(targetEntityToOpen) || [] : []);
         const recordData = allRecords.find(r => String(r[pkField]) === String(parentId));
 
         if (recordData && typeof window.renderForm === 'function') {
