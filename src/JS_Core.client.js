@@ -375,11 +375,14 @@
                             const hId = newChild.id_nodo_hijo;
                             const relType = newChild.tipo_relacion;
                             
+                            const ctxId = newChild.contexto_id || '';
+                            
                             const idx = currentCache.findIndex(c => 
                                 c.tipo_relacion === relType && 
                                 String(c.id_nodo_padre).trim() === String(pId).trim() && 
                                 String(c.id_nodo_hijo).trim() === String(hId).trim() && 
-                                String(c.es_version_actual).toLowerCase() === 'true'
+                                String(c.es_version_actual).toLowerCase() === 'true' &&
+                                String(c.contexto_id || '').trim() === String(ctxId).trim()
                             );
                             
                             if (idx !== -1) {
