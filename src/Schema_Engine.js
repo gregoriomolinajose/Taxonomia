@@ -18,7 +18,7 @@ var TOPOLOGY_PRESETS = Object.freeze({
     _preset:               'JERARQUICA_ESTRICTA_GRAPH_STD',  // [E31] Studio Viewer identifier
     topologyType:          "JERARQUICA_ESTRICTA",
     preventCycles:         true,
-    maxDepth:              6,
+    maxDepth:              9,
     allowOrphanStealing:   true,
     deletionStrategy:      "ORPHAN",
     siblingCollisionCheck: true,
