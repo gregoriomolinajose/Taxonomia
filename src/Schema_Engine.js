@@ -509,6 +509,20 @@ var APP_SCHEMAS = {
       { name: "es_version_actual", type: "text" }
     ]
   },
+  Value_Stream: {
+    uiConfig: { dashboardCard: { iconName: 'git-network-outline', color: 'var(--ion-color-tertiary)' } },
+    metadata: { prefix: 'VSTR', showInMenu: true, order: 8, iconName:'git-network-outline', color:'tertiary', label:'Value Streams', titleField:'nombre', idField:'id_value_stream', fkField:null, maxListAttrs: 8 },
+    primaryKey: "id_value_stream",
+    fields: [
+      { name: "id_value_stream", type: "hidden", primaryKey: true },
+      ...FIELD_TEMPLATES.SYSTEM_FIELDS(),
+      ...FIELD_TEMPLATES.ESTADO_FIELD(),
+      ...FIELD_TEMPLATES.AUDIT_FIELDS(),
+      ...FIELD_TEMPLATES.VERSION_FIELD(),
+      ...FIELD_TEMPLATES.NAME_FIELD("Nombre de Value Stream"),
+      { name: "descripcion", type: "text", label: "Descripción / Propósito", required: false, width: 12 }
+    ]
+  },
   Config_Workspace: {
     metadata: { showInMenu: false, order:93, iconName:'business-outline', color:'primary', label:'Seguridad: Workspaces', titleField:'dominio_principal', idField:'id_workspace', fkField:null, requireStrictMatrixAccess: true },
     primaryKey: "id_workspace",
