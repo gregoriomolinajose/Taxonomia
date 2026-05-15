@@ -413,6 +413,29 @@ window.UI_View_SwimlaneGrid = {
                                 gpContainer.appendChild(this._createNodeEl(gEdge.id_nodo_hijo, 'Grupo_Productos', 'Añadir Producto'));
                             });
                             vsCol.appendChild(gpContainer);
+                        } else {
+                            // Empty State Onboarding para Grupo de Productos
+                            const emptyState = document.createElement('div');
+                            emptyState.style.cssText = 'position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 2rem 1rem; margin-top: 12px; margin-left: 20px; width: calc(100% - 20px); border: 2px dashed var(--ion-color-step-300, #ccc); border-radius: 8px; background: rgba(0,0,0,0.02); overflow: hidden;';
+                            
+                            emptyState.innerHTML = `
+                                <svg width="100" height="80" viewBox="0 0 100 80" style="position: absolute; right: 10px; top: -10px; opacity: 0.6; pointer-events: none;">
+                                    <path d="M 10 70 Q 50 70, 85 25" fill="none" stroke="var(--ion-color-dark, #222428)" stroke-width="2.5" stroke-dasharray="6,5" stroke-linecap="round"/>
+                                    <polygon points="78,33 87,20 93,33" fill="var(--ion-color-dark, #222428)" transform="rotate(20 87 20)" />
+                                </svg>
+
+                                <div style="width: 110px; height: 60px; border: 2px dashed var(--ion-color-step-300, #ccc); border-radius: 12px; margin-bottom: 16px; display: flex; flex-direction: column; align-items: center; justify-content: center; background: rgba(0,0,0,0.02);">
+                                    <ion-icon name="layers-outline" style="font-size: 28px; color: var(--ion-color-step-400, #aaa); margin-bottom: 6px;"></ion-icon>
+                                    <div style="width: 50%; height: 5px; background: var(--ion-color-step-200, #ddd); border-radius: 3px;"></div>
+                                </div>
+                                
+                                <h3 style="color: var(--ion-color-dark); margin: 0 0 6px 0; font-weight: 600; font-size: 1rem; letter-spacing: -0.01em; text-align: center;">Sin Grupos de Producto</h3>
+                                <p style="color: var(--ion-color-medium, #666); text-align: center; max-width: 220px; margin: 0; font-size: 0.85rem; line-height: 1.4;">
+                                    Haz clic en <strong style="color: var(--ion-color-dark); font-size: 1.1em;">+</strong> arriba para agregar un grupo.
+                                </p>
+                            `;
+                            
+                            vsCol.appendChild(emptyState);
                         }
 
                         vsHorizontalContainer.appendChild(vsCol);
