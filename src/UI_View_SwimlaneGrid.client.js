@@ -140,7 +140,8 @@ window.UI_View_SwimlaneGrid = {
             }
         });
 
-        const portForms = document.querySelectorAll('[data-form-component="grupos_productos_vinculados"]');
+        // 2.2 Portafolios -> Value Streams
+        const portForms = document.querySelectorAll('[data-form-component="value_streams_vinculados"]');
         let portProcessed = new Set();
         
         portForms.forEach(node => {
@@ -152,25 +153,66 @@ window.UI_View_SwimlaneGrid = {
             if (!portId || portProcessed.has(portId)) return;
             portProcessed.add(portId);
             
+            const vsInput = formContainer.querySelector('[data-form-component="value_streams_vinculados"]');
+            if (vsInput && typeof vsInput.getValidatedValue === 'function' && portId) {
+                const val = vsInput.getValidatedValue();
+                edges = edges.filter(e => !(e.tipo_relacion === 'PORTAFOLIO_VALUE_STREAM' && String(e.id_nodo_padre).trim() === String(portId).trim()));
+                if (val) {
+                    const arr = Array.isArray(val) ? val : [val];
+                    arr.forEach(vsId => {
+                        if (vsId) edges.push({ id_nodo_padre: String(portId), id_nodo_hijo: String(vsId), tipo_relacion: 'PORTAFOLIO_VALUE_STREAM', es_version_actual: 'true', contexto_id: String(this.taxonomiaId) });
+                    });
+                }
+            }
+        });
+
+        // 2.3 Value Streams -> Grupos de Productos
+        const vsForms = document.querySelectorAll('[data-form-component="grupos_productos_vinculados"]');
+        let vsProcessed = new Set();
+        
+        vsForms.forEach(node => {
+            const formContainer = node.closest('ion-content, .drawer-content, #wizard-col-right');
+            if (!formContainer) return;
+            
+            const pkInput = formContainer.querySelector('[name="id_value_stream"]');
+            const vsId = (pkInput && pkInput.value) ? pkInput.value : null;
+            if (!vsId || vsProcessed.has(vsId)) return;
+            vsProcessed.add(vsId);
+            
             const gpInput = formContainer.querySelector('[data-form-component="grupos_productos_vinculados"]');
-            if (gpInput && typeof gpInput.getValidatedValue === 'function' && portId) {
+            if (gpInput && typeof gpInput.getValidatedValue === 'function' && vsId) {
                 const val = gpInput.getValidatedValue();
-                
-                // La UI es la fuente de verdad (optimistic state). Limpiamos aristas cacheadas para este padre.
-                edges = edges.filter(e => !(e.tipo_relacion === 'PORTAFOLIO_GRUPO_PRODUCTO' && String(e.id_nodo_padre).trim() === String(portId).trim()));
-                
+                edges = edges.filter(e => !(e.tipo_relacion === 'VALUE_STREAM_GRUPO_PRODUCTO' && String(e.id_nodo_padre).trim() === String(vsId).trim()));
                 if (val) {
                     const arr = Array.isArray(val) ? val : [val];
                     arr.forEach(gpId => {
-                        if (gpId) {
-                            edges.push({
-                                id_nodo_padre: String(portId),
-                                id_nodo_hijo: String(gpId),
-                                tipo_relacion: 'PORTAFOLIO_GRUPO_PRODUCTO',
-                                es_version_actual: 'true',
-                                contexto_id: String(this.taxonomiaId)
-                            });
-                        }
+                        if (gpId) edges.push({ id_nodo_padre: String(vsId), id_nodo_hijo: String(gpId), tipo_relacion: 'VALUE_STREAM_GRUPO_PRODUCTO', es_version_actual: 'true', contexto_id: String(this.taxonomiaId) });
+                    });
+                }
+            }
+        });
+
+        // 2.4 Grupos de Productos -> Equipos
+        const gpForms = document.querySelectorAll('[data-form-component="equipos_asignados"]');
+        let gpProcessed = new Set();
+        
+        gpForms.forEach(node => {
+            const formContainer = node.closest('ion-content, .drawer-content, #wizard-col-right');
+            if (!formContainer) return;
+            
+            const pkInput = formContainer.querySelector('[name="id_grupo_producto"]');
+            const gpId = (pkInput && pkInput.value) ? pkInput.value : null;
+            if (!gpId || gpProcessed.has(gpId)) return;
+            gpProcessed.add(gpId);
+            
+            const eqInput = formContainer.querySelector('[data-form-component="equipos_asignados"]');
+            if (eqInput && typeof eqInput.getValidatedValue === 'function' && gpId) {
+                const val = eqInput.getValidatedValue();
+                edges = edges.filter(e => !(e.tipo_relacion === 'GRUPO_PRODUCTO_EQUIPO' && String(e.id_nodo_padre).trim() === String(gpId).trim()));
+                if (val) {
+                    const arr = Array.isArray(val) ? val : [val];
+                    arr.forEach(eqId => {
+                        if (eqId) edges.push({ id_nodo_padre: String(gpId), id_nodo_hijo: String(eqId), tipo_relacion: 'GRUPO_PRODUCTO_EQUIPO', es_version_actual: 'true', contexto_id: String(this.taxonomiaId) });
                     });
                 }
             }
