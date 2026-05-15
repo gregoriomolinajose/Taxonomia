@@ -394,7 +394,8 @@ window.UI_View_SwimlaneGrid = {
                         const vsId = vsEdge.id_nodo_hijo;
                         const vsCol = document.createElement('div');
                         vsCol.className = 'tax-swimlane-row';
-                        vsCol.style.minWidth = '250px';
+                        vsCol.style.flex = '1';
+                        vsCol.style.minWidth = '280px';
                         
                         vsCol.appendChild(this._createNodeEl(vsId, 'Value_Stream', 'Añadir Grupo de Producto'));
 
