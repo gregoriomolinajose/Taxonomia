@@ -1,0 +1,32 @@
+artifact_type: story-design
+version: 1
+skill: rai-story-design
+created: '2026-05-15T17:18:00Z'
+story: 'S55.1'
+epic: 'E55'
+content:
+  summary: 'Enforce taxonomy governance by locking topological relation fields outside of the Taxonomia Canvas.'
+  complexity: moderate
+  acceptance_criteria:
+    - id: AC1
+      description: 'Relational topological fields are readonly if window.taxonomiaContext is falsy.'
+      verifiable: true
+    - id: AC2
+      description: 'A visual indication (helpText) explains the field is locked.'
+      verifiable: true
+    - id: AC3
+      description: 'getAppSchema returns a deep cloned fields array to avoid mutating global APP_SCHEMAS.'
+      verifiable: true
+  integration_points:
+    - module: 'Schema_Engine'
+      change_type: modification
+      files: ['src/Schema_Engine.js']
+  decisions:
+    - id: D1
+      choice: 'Dynamic schema evaluation in getAppSchema'
+      rationale: 'Avoids duplicating schemas or changing backend logic, providing a seamless UI-level lock.'
+      alternatives_considered: ['Backend interceptor validation', 'Hardcoding UI components']
+refs:
+  backlog_item: 'S55.1'
+  epic_scope: 'work/epics/e55-taxonomy-governance/scope.md'
+metadata: {}
