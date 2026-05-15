@@ -16,11 +16,6 @@ window.UI_View_SwimlaneGrid = {
     },
     
     _bindEvents: function() {
-        const btnRefresh = this.container.querySelector('#tax-canvas-refresh');
-        if (btnRefresh) {
-            btnRefresh.addEventListener('click', () => this.refresh());
-        }
-        
         if (this._unsubSubmit) { this._unsubSubmit(); this._unsubSubmit = null; }
         if (this._unsubGraph) { this._unsubGraph(); this._unsubGraph = null; }
         
@@ -392,12 +387,16 @@ window.UI_View_SwimlaneGrid = {
                 );
 
                 if (valueStreamEdges.length > 0) {
+                    const vsHorizontalContainer = document.createElement('div');
+                    vsHorizontalContainer.className = 'tax-swimlane-value-streams';
+
                     valueStreamEdges.forEach(vsEdge => {
                         const vsId = vsEdge.id_nodo_hijo;
-                        const vsRow = document.createElement('div');
-                        vsRow.className = 'tax-swimlane-row';
+                        const vsCol = document.createElement('div');
+                        vsCol.className = 'tax-swimlane-row';
+                        vsCol.style.minWidth = '250px';
                         
-                        vsRow.appendChild(this._createNodeEl(vsId, 'Value_Stream', 'Añadir Grupo de Producto'));
+                        vsCol.appendChild(this._createNodeEl(vsId, 'Value_Stream', 'Añadir Grupo de Producto'));
 
                         // Nivel 4: Grupos de Productos
                         const grupoEdges = contextEdges.filter(e => 
@@ -407,20 +406,17 @@ window.UI_View_SwimlaneGrid = {
 
                         if (grupoEdges.length > 0) {
                             const gpContainer = document.createElement('div');
-                            gpContainer.style.display = 'flex';
-                            gpContainer.style.flexDirection = 'column';
-                            gpContainer.style.gap = '8px';
-                            gpContainer.style.marginTop = '12px';
-                            gpContainer.style.marginLeft = '20px';
+                            gpContainer.className = 'tax-swimlane-grupo-productos';
 
                             grupoEdges.forEach(gEdge => {
                                 gpContainer.appendChild(this._createNodeEl(gEdge.id_nodo_hijo, 'Grupo_Productos', 'Añadir Producto'));
                             });
-                            vsRow.appendChild(gpContainer);
+                            vsCol.appendChild(gpContainer);
                         }
 
-                        vCol.appendChild(vsRow);
+                        vsHorizontalContainer.appendChild(vsCol);
                     });
+                    vCol.appendChild(vsHorizontalContainer);
                 }
 
                 hContainer.appendChild(vCol);
@@ -456,6 +452,81 @@ window.UI_View_SwimlaneGrid = {
 
         canvasDiv.appendChild(rowUnidad);
         rootContainer.appendChild(canvasDiv);
+
+        // Inicializar Miro-like Pan & Zoom
+        this._initPanZoom(rootContainer, canvasDiv);
+    },
+
+    _initPanZoom: function(viewport, canvas) {
+        let isDragging = false;
+        let startX, startY, initialX, initialY;
+        
+        // Mantener estado en la instancia para persistir entre refrescos si es necesario
+        if (!this._transformState) {
+            this._transformState = { scale: 1, translateX: 0, translateY: 0 };
+        }
+        
+        const state = this._transformState;
+
+        const updateTransform = () => {
+            canvas.style.transform = `translate(${state.translateX}px, ${state.translateY}px) scale(${state.scale})`;
+        };
+        
+        // Aplicar estado inicial
+        updateTransform();
+
+        // Evitar múltiples listeners si ya fue inicializado antes
+        if (viewport._panZoomBound) return;
+        viewport._panZoomBound = true;
+
+        viewport.addEventListener('mousedown', (e) => {
+            // Ignorar si hace clic en un botón o nodo interactivo
+            if (e.target.closest('button') || e.target.closest('.tax-node')) return;
+            isDragging = true;
+            startX = e.clientX;
+            startY = e.clientY;
+            initialX = state.translateX;
+            initialY = state.translateY;
+            viewport.style.cursor = 'grabbing';
+        });
+
+        window.addEventListener('mousemove', (e) => {
+            if (!isDragging) return;
+            const dx = e.clientX - startX;
+            const dy = e.clientY - startY;
+            state.translateX = initialX + dx;
+            state.translateY = initialY + dy;
+            updateTransform();
+        });
+
+        window.addEventListener('mouseup', () => {
+            isDragging = false;
+            viewport.style.cursor = 'grab';
+        });
+
+        viewport.addEventListener('wheel', (e) => {
+            // Prevenir scroll nativo
+            e.preventDefault();
+            
+            const zoomSensitivity = 0.001;
+            const delta = e.deltaY * zoomSensitivity;
+            
+            // Límite de escala (20% a 200%)
+            const newScale = Math.min(Math.max(0.2, state.scale - delta), 2.0);
+            
+            // Zoom hacia el mouse (Miro-like)
+            const rect = viewport.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
+
+            const scaleRatio = newScale / state.scale;
+            
+            state.translateX = mouseX - (mouseX - state.translateX) * scaleRatio;
+            state.translateY = mouseY - (mouseY - state.translateY) * scaleRatio;
+            state.scale = newScale;
+            
+            updateTransform();
+        }, { passive: false });
     },
 
     _createNodeEl: function(recordId, entityName, addTitle) {
