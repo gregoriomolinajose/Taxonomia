@@ -48,7 +48,7 @@ describe('Schema_Engine Governance', () => {
             ['Unidad_Negocio', 'Portafolio', 'Grupo_Productos', 'Producto'].forEach(entity => {
                 const rules = getEntityTopologyRules(entity);
                 expect(rules.topologyType).toBe('JERARQUICA_ESTRICTA');
-                expect(rules.maxDepth).toBe(6);
+                expect(rules.maxDepth).toBe(9);
                 expect(rules.preventCycles).toBe(true);
                 expect(rules.scd2Enabled).toBe(true);
             });

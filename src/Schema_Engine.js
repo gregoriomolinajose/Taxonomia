@@ -572,7 +572,41 @@ var APP_SCHEMAS = {
 };
 
 function getAppSchema(entityName) {
-  return entityName ? APP_SCHEMAS[entityName] : APP_SCHEMAS;
+  const isTaxonomiaContext = typeof window !== 'undefined' && window.taxonomiaContext;
+
+  const applyGovernance = (schema) => {
+    if (!schema || !schema.fields) return schema;
+    
+    // Deep clone the fields array to avoid mutating global definition
+    const clonedSchema = Object.assign({}, schema);
+    clonedSchema.fields = schema.fields.map(field => {
+      // E55 Governance: Topological fields are readonly outside Taxonomia Canvas
+      if (field.type === 'relation' && field.graphEntity === 'Sys_Graph_Edges') {
+        if (!isTaxonomiaContext) {
+          const clonedField = Object.assign({}, field);
+          clonedField.readonly = true;
+          clonedField.helpText = (clonedField.helpText ? clonedField.helpText + ' ' : '') + '(Solo lectura: Gestionado vía Canvas de Taxonomía)';
+          return clonedField;
+        }
+      }
+      return field;
+    });
+    return clonedSchema;
+  };
+
+  if (entityName) {
+    return applyGovernance(APP_SCHEMAS[entityName]);
+  } else {
+    const clonedSchemas = {};
+    for (const key in APP_SCHEMAS) {
+      if (key !== '_UI_CONFIG' && APP_SCHEMAS[key] && APP_SCHEMAS[key].fields) {
+        clonedSchemas[key] = applyGovernance(APP_SCHEMAS[key]);
+      } else {
+        clonedSchemas[key] = APP_SCHEMAS[key];
+      }
+    }
+    return clonedSchemas;
+  }
 }
 
 /**
