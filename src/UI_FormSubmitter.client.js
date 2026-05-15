@@ -124,14 +124,18 @@ window.UI_FormSubmitter = class UI_FormSubmitter {
             // [S50.2] Inyección Atómica de Borradores (Atomic Drafts)
             // Cuando estamos en el Wizard de Taxonomía, forzamos estado y contexto a los hijos
             const isDraftMode = this.entityName === 'Taxonomia' || (this.modal && this.modal.dataset && this.modal.dataset.isDraft === 'true') || (this.modal && this.modal.dataset && this.modal.dataset.taxonomiaContext);
+            const pkFieldT = window.Schema_Utils ? window.Schema_Utils.getPrimaryKey(this.entityName) : 'id';
+            const contextId = (this.modal && this.modal.dataset && this.modal.dataset.taxonomiaContext) ? this.modal.dataset.taxonomiaContext : (payload[pkFieldT] || this._internalRetryId || 'DRAFT_CTX');
+
+            // [S53.8] Execute Schema Hooks
+            const formSchema = window.APP_SCHEMAS && window.APP_SCHEMAS[this.entityName] ? window.APP_SCHEMAS[this.entityName] : null;
+            if (formSchema && formSchema.hooks && typeof formSchema.hooks.preSubmit === 'function') {
+                const isTempPk = this._internalRetryId && String(this._internalRetryId).startsWith('TMP_');
+                payload = formSchema.hooks.preSubmit(payload, contextId, action, isTempPk, this._internalRetryId);
+            }
+
             if (isDraftMode) {
-                // [S50.4] Fix AR Finding: Forzar entidad maestra a nacer como borrador
-                if (this.entityName === 'Taxonomia' && action === 'create') {
-                    payload.estado = 'Borrador';
-                }
-                const pkFieldT = window.Schema_Utils ? window.Schema_Utils.getPrimaryKey(this.entityName) : 'id';
-                const contextId = (this.modal && this.modal.dataset && this.modal.dataset.taxonomiaContext) ? this.modal.dataset.taxonomiaContext : (payload[pkFieldT] || this._internalRetryId || 'DRAFT_CTX');
-                
+
                 const formSchema = window.APP_SCHEMAS && window.APP_SCHEMAS[this.entityName] ? window.APP_SCHEMAS[this.entityName] : null;
                 const fieldsConfig = formSchema ? (formSchema.fields || Object.keys(formSchema).map(k => ({name: k, ...formSchema[k]}))) : [];
                 const relationKeys = new Set(fieldsConfig.filter(f => f.type === 'relation').map(f => f.name));
@@ -190,10 +194,14 @@ window.UI_FormSubmitter = class UI_FormSubmitter {
             let optimisticPK = payload[pkField] || this._internalRetryId;
             let isTempPK = false;
             
-            if (action === 'create' && !optimisticPK) {
-                 optimisticPK = 'TMP_LOCAL_' + Math.random().toString(36).substring(2, 10).toUpperCase();
-                 payload[pkField] = optimisticPK;
-                 isTempPK = true;
+            if (!optimisticPK) {
+                 if (payload[pkField]) {
+                     optimisticPK = payload[pkField];
+                 } else {
+                     optimisticPK = 'TMP_LOCAL_' + Math.random().toString(36).substring(2, 10).toUpperCase();
+                     payload[pkField] = optimisticPK;
+                     isTempPK = true;
+                 }
             }
             
             const formSchema = window.APP_SCHEMAS && window.APP_SCHEMAS[this.entityName] ? window.APP_SCHEMAS[this.entityName] : null;
@@ -217,7 +225,7 @@ window.UI_FormSubmitter = class UI_FormSubmitter {
                           let oldEdges = [];
                           if (tField.workspaceMode) {
                               const effParent = tField.dynamicParentField ? (payload[tField.dynamicParentField] || tField.fixedParentId) : tField.fixedParentId;
-                              oldEdges = edges.filter(e => String(e.es_version_actual).toLowerCase() === 'true' && String(e.id_nodo_padre).trim() === String(effParent).trim() && e.tipo_relacion === edgeName && String(e.contexto_id).trim() === String(optimisticPK).trim());
+                              oldEdges = edges.filter(e => String(e.es_version_actual).toLowerCase() === 'true' && String(e.id_nodo_padre).trim() === String(effParent).trim() && e.tipo_relacion === edgeName && String(e.contexto_id).trim() === String(contextId || '').trim());
                           } else if (tField.relationType === 'padre') {
                               oldEdges = edges.filter(e => String(e.es_version_actual).toLowerCase() === 'true' && String(e.id_nodo_hijo).trim() === String(optimisticPK).trim() && e.tipo_relacion === edgeName);
                           } else {

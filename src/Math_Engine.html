@@ -478,10 +478,25 @@ function buildEChartsCapacidadesOption(capacidadesData, isPrebuilt, gapColor, te
     };
 }
 
+/* ── Canvas Engine (S53 Pan/Zoom) ────────────── */
+const CanvasMath = {
+    clampScale: function(currentScale, deltaY, sensitivity = 0.001, minScale = 0.2, maxScale = 2.0) {
+        const delta = deltaY * sensitivity;
+        return Math.min(Math.max(minScale, currentScale - delta), maxScale);
+    },
+    calculateMiroZoom: function(mouseX, mouseY, oldScale, newScale, oldTranslateX, oldTranslateY) {
+        const scaleRatio = newScale / oldScale;
+        return {
+            translateX: mouseX - (mouseX - oldTranslateX) * scaleRatio,
+            translateY: mouseY - (mouseY - oldTranslateY) * scaleRatio
+        };
+    }
+};
+
 // Universal Wrapper
 if (typeof module !== 'undefined' && module.exports) {
-    module.exports = { buildOrdenPath, buildPathName, inferParentIdFromOrdenPath, buildEChartsTreemapData, buildEChartsCapacidadesTreemapData, buildEChartsCapacidadesOption, TopologyGuard };
+    module.exports = { buildOrdenPath, buildPathName, inferParentIdFromOrdenPath, buildEChartsTreemapData, buildEChartsCapacidadesTreemapData, buildEChartsCapacidadesOption, TopologyGuard, CanvasMath };
 } else if (typeof window !== 'undefined') {
-    window.Math_Engine = { buildOrdenPath, buildPathName, inferParentIdFromOrdenPath, buildEChartsTreemapData, buildEChartsCapacidadesTreemapData, buildEChartsCapacidadesOption, TopologyGuard };
+    window.Math_Engine = { buildOrdenPath, buildPathName, inferParentIdFromOrdenPath, buildEChartsTreemapData, buildEChartsCapacidadesTreemapData, buildEChartsCapacidadesOption, TopologyGuard, CanvasMath };
 }
 </script>

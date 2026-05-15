@@ -5,16 +5,36 @@
    ========================================================================== */
 
 .tax-canvas-container {
-    display: flex;
+    display: inline-flex;
     flex-direction: column;
     gap: 20px;
     padding: var(--spacing-6);
     background: var(--color-bg-body, #ffffff);
     border-radius: var(--radius-lg, 12px);
     box-shadow: 0 4px 12px rgba(0,0,0,0.02);
-    min-width: 800px;
-    overflow-x: auto;
+    min-width: 100%;
+    min-height: 100%;
+    width: max-content;
+    height: max-content;
+    transform-origin: 0 0;
+}
+
+/* S53.8: Miro-like Interaction & Scroll Hide */
+.tax-canvas-viewport {
     width: 100%;
+    flex: 1;
+    overflow: hidden;
+    position: relative;
+    cursor: grab;
+    background: var(--ion-color-step-50, #f9f9f9);
+    border-radius: 12px;
+}
+.tax-canvas-viewport:active {
+    cursor: grabbing;
+}
+.tax-canvas-viewport::-webkit-scrollbar,
+.tax-canvas-container::-webkit-scrollbar {
+    display: none;
 }
 
 .tax-canvas-empty {
@@ -141,17 +161,29 @@
     background: var(--ion-color-step-400, #a8a8a8); 
 }
 
+/* Layout Nivel 3 (Value Streams) */
+.tax-swimlane-value-streams {
+    display: flex;
+    flex-direction: row;
+    gap: 16px;
+    flex-wrap: nowrap;
+    overflow: visible;
+}
+
+/* Grupos de productos apilados verticalmente dentro de Value Stream */
+.tax-swimlane-grupo-productos {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 12px;
+    margin-left: 20px;
+}
+
 </style>
 
 <template id="tmpl-taxonomia-canvas">
     <div class="tax-canvas-wrapper" style="width: 100%; display: flex; flex-direction: column; min-height: 80vh;">
-        <div style="display: flex; justify-content: flex-end; margin-bottom: 16px;">
-            <ion-button id="tax-canvas-refresh" fill="outline" color="medium" size="small">
-                <ion-icon slot="start" name="refresh-outline"></ion-icon>
-                Sincronizar Grafo
-            </ion-button>
-        </div>
-        <div id="tax-canvas-root" style="flex: 1; display: flex; flex-direction: column;">
+        <div id="tax-canvas-root" class="tax-canvas-viewport">
             <!-- El Canvas se renderiza aquí -->
         </div>
     </div>

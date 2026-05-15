@@ -16,11 +16,6 @@ window.UI_View_SwimlaneGrid = {
     },
     
     _bindEvents: function() {
-        const btnRefresh = this.container.querySelector('#tax-canvas-refresh');
-        if (btnRefresh) {
-            btnRefresh.addEventListener('click', () => this.refresh());
-        }
-        
         if (this._unsubSubmit) { this._unsubSubmit(); this._unsubSubmit = null; }
         if (this._unsubGraph) { this._unsubGraph(); this._unsubGraph = null; }
         
@@ -106,79 +101,50 @@ window.UI_View_SwimlaneGrid = {
             }
         }
 
-        // 2. Extraer aristas de los formularios hijos en los Drawers
-        const unForms = document.querySelectorAll('[data-form-component="portafolios_vinculados"]');
-        let unProcessed = false;
-        
-        unForms.forEach(node => {
-            const formContainer = node.closest('ion-content, .drawer-content, #wizard-col-right');
-            if (!formContainer) return;
-            if (unProcessed) return; unProcessed = true; // Solo procesar una vez
-            
-            const pkInput = formContainer.querySelector('[name="id_unidad_negocio"]');
-            const unId = (pkInput && pkInput.value) ? pkInput.value : currentUnidadId;
-            
-            const portInput = formContainer.querySelector('[data-form-component="portafolios_vinculados"]');
-            console.log("[Canvas Debug] unForm extracted unId:", unId, "| portInput exists:", !!portInput);
-            if (portInput && typeof portInput.getValidatedValue === 'function') {
-                const val = portInput.getValidatedValue();
-                console.log("[Canvas Debug] portInput getValidatedValue:", val);
-                
-                // La UI es la fuente de verdad (optimistic state). Limpiamos aristas cacheadas para este padre.
-                edges = edges.filter(e => !(e.tipo_relacion === 'UNIDAD_NEGOCIO_PORTAFOLIO' && String(e.id_nodo_padre).trim() === String(unId).trim()));
-                
-                if (val) {
-                    const arr = Array.isArray(val) ? val : [val];
-                    arr.forEach(portId => {
-                        if (portId) {
-                            console.log("[Canvas Debug] Pushing portafolio edge:", { unId: String(unId), portId: String(portId) });
-                            edges.push({
-                                id_nodo_padre: String(unId),
-                                id_nodo_hijo: String(portId),
-                                tipo_relacion: 'UNIDAD_NEGOCIO_PORTAFOLIO',
-                                es_version_actual: 'true',
-                                contexto_id: String(this.taxonomiaId)
-                            });
-                        }
-                    });
-                }
-            }
-        });
+        // 2. Extraer aristas de los formularios hijos en los Drawers de forma optimista (Config-Driven)
+        const edgeExtractors = [
+            { component: 'portafolios_vinculados', parentField: 'id_unidad_negocio', edgeType: 'UNIDAD_NEGOCIO_PORTAFOLIO', fallbackParent: currentUnidadId },
+            { component: 'value_streams_vinculados', parentField: 'id_portafolio', edgeType: 'PORTAFOLIO_VALUE_STREAM' },
+            { component: 'grupos_productos_vinculados', parentField: 'id_value_stream', edgeType: 'VALUE_STREAM_GRUPO_PRODUCTO' },
+            { component: 'equipos_asignados', parentField: 'id_grupo_producto', edgeType: 'GRUPO_PRODUCTO_EQUIPO' }
+        ];
 
-        const portForms = document.querySelectorAll('[data-form-component="grupos_productos_vinculados"]');
-        let portProcessed = new Set();
-        
-        portForms.forEach(node => {
-            const formContainer = node.closest('ion-content, .drawer-content, #wizard-col-right');
-            if (!formContainer) return;
+        edgeExtractors.forEach(cfg => {
+            const forms = document.querySelectorAll(`[data-form-component="${cfg.component}"]`);
+            let processed = new Set();
             
-            const pkInput = formContainer.querySelector('[name="id_portafolio"]');
-            const portId = (pkInput && pkInput.value) ? pkInput.value : null;
-            if (!portId || portProcessed.has(portId)) return;
-            portProcessed.add(portId);
-            
-            const gpInput = formContainer.querySelector('[data-form-component="grupos_productos_vinculados"]');
-            if (gpInput && typeof gpInput.getValidatedValue === 'function' && portId) {
-                const val = gpInput.getValidatedValue();
+            forms.forEach(node => {
+                const formContainer = node.closest('ion-content, .drawer-content, #wizard-col-right');
+                if (!formContainer) return;
                 
-                // La UI es la fuente de verdad (optimistic state). Limpiamos aristas cacheadas para este padre.
-                edges = edges.filter(e => !(e.tipo_relacion === 'PORTAFOLIO_GRUPO_PRODUCTO' && String(e.id_nodo_padre).trim() === String(portId).trim()));
+                const pkInput = formContainer.querySelector(`[name="${cfg.parentField}"]`);
+                const parentId = (pkInput && pkInput.value) ? pkInput.value : cfg.fallbackParent;
+                if (!parentId || processed.has(parentId)) return;
+                processed.add(parentId);
                 
-                if (val) {
-                    const arr = Array.isArray(val) ? val : [val];
-                    arr.forEach(gpId => {
-                        if (gpId) {
-                            edges.push({
-                                id_nodo_padre: String(portId),
-                                id_nodo_hijo: String(gpId),
-                                tipo_relacion: 'PORTAFOLIO_GRUPO_PRODUCTO',
-                                es_version_actual: 'true',
-                                contexto_id: String(this.taxonomiaId)
-                            });
-                        }
-                    });
+                const edgeInput = formContainer.querySelector(`[data-form-component="${cfg.component}"]`);
+                if (edgeInput && typeof edgeInput.getValidatedValue === 'function') {
+                    const val = edgeInput.getValidatedValue();
+                    
+                    // La UI es la fuente de verdad. Limpiamos aristas cacheadas para este padre.
+                    edges = edges.filter(e => !(e.tipo_relacion === cfg.edgeType && String(e.id_nodo_padre).trim() === String(parentId).trim()));
+                    
+                    if (val) {
+                        const arr = Array.isArray(val) ? val : [val];
+                        arr.forEach(childId => {
+                            if (childId) {
+                                edges.push({
+                                    id_nodo_padre: String(parentId),
+                                    id_nodo_hijo: String(childId),
+                                    tipo_relacion: cfg.edgeType,
+                                    es_version_actual: 'true',
+                                    contexto_id: String(this.taxonomiaId)
+                                });
+                            }
+                        });
+                    }
                 }
-            }
+            });
         });
 
         // 1. Encontrar la Unidad de Negocio Raíz (Arista TAXONOMIA_UNIDAD)
@@ -383,31 +349,268 @@ window.UI_View_SwimlaneGrid = {
                 const vCol = document.createElement('div');
                 vCol.className = 'tax-swimlane-children-vertical';
                 
-                vCol.appendChild(this._createNodeEl(portafolioId, 'Portafolio', 'Añadir Grupo de Producto'));
+                vCol.appendChild(this._createNodeEl(portafolioId, 'Portafolio', 'Añadir Value Stream'));
 
-                // Nivel 3: Grupos de Productos
-                const grupoEdges = contextEdges.filter(e => 
-                    e.tipo_relacion === 'PORTAFOLIO_GRUPO_PRODUCTO' && 
+                // Nivel 3: Value Streams
+                const valueStreamEdges = contextEdges.filter(e => 
+                    e.tipo_relacion === 'PORTAFOLIO_VALUE_STREAM' && 
                     String(e.id_nodo_padre).trim() === String(portafolioId).trim()
                 );
 
-                if (grupoEdges.length > 0) {
-                    grupoEdges.forEach(gEdge => {
-                        const grupoRow = document.createElement('div');
-                        grupoRow.className = 'tax-swimlane-row';
-                        grupoRow.appendChild(this._createNodeEl(gEdge.id_nodo_hijo, 'Grupo_Productos', 'Añadir Producto'));
-                        vCol.appendChild(grupoRow);
+                if (valueStreamEdges.length > 0) {
+                    const vsHorizontalContainer = document.createElement('div');
+                    vsHorizontalContainer.className = 'tax-swimlane-value-streams';
+
+                    valueStreamEdges.forEach(vsEdge => {
+                        const vsId = vsEdge.id_nodo_hijo;
+                        const vsCol = document.createElement('div');
+                        vsCol.className = 'tax-swimlane-row';
+                        vsCol.style.flex = '1';
+                        vsCol.style.minWidth = '280px';
+                        
+                        vsCol.appendChild(this._createNodeEl(vsId, 'Value_Stream', 'Añadir Grupo de Producto'));
+
+                        // Nivel 4: Grupos de Productos
+                        const grupoEdges = contextEdges.filter(e => 
+                            e.tipo_relacion === 'VALUE_STREAM_GRUPO_PRODUCTO' && 
+                            String(e.id_nodo_padre).trim() === String(vsId).trim()
+                        );
+
+                        if (grupoEdges.length > 0) {
+                            const gpContainer = document.createElement('div');
+                            gpContainer.className = 'tax-swimlane-grupo-productos';
+
+                            grupoEdges.forEach(gEdge => {
+                                const gpNodeId = gEdge.id_nodo_hijo;
+                                const gpWrapper = document.createElement('div');
+                                gpWrapper.style.display = 'flex';
+                                gpWrapper.style.flexDirection = 'column';
+                                gpWrapper.style.gap = '8px';
+                                gpWrapper.style.width = '100%';
+
+                                gpWrapper.appendChild(this._createNodeEl(gpNodeId, 'Grupo_Productos', 'Añadir Equipo'));
+
+                                // Nivel 5: Equipos
+                                const equipoEdges = contextEdges.filter(e => 
+                                    e.tipo_relacion === 'GRUPO_PRODUCTO_EQUIPO' && 
+                                    String(e.id_nodo_padre).trim() === String(gpNodeId).trim()
+                                );
+
+                                if (equipoEdges.length > 0) {
+                                    const eqContainer = document.createElement('div');
+                                    eqContainer.className = 'tax-swimlane-equipos';
+                                    eqContainer.style.display = 'flex';
+                                    eqContainer.style.flexDirection = 'column';
+                                    eqContainer.style.gap = '8px';
+                                    eqContainer.style.marginLeft = '20px';
+
+                                    equipoEdges.forEach(eqEdge => {
+                                        eqContainer.appendChild(this._createNodeEl(eqEdge.id_nodo_hijo, 'Equipo', 'Ver Equipo'));
+                                    });
+                                    gpWrapper.appendChild(eqContainer);
+                                } else {
+                                    // Empty State Onboarding para Equipos
+                                    const emptyState = document.createElement('div');
+                                    emptyState.style.cssText = 'position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 1.5rem 1rem; margin-top: 8px; margin-left: 20px; width: calc(100% - 20px); border: 2px dashed var(--ion-color-step-300, #ccc); border-radius: 8px; background: rgba(0,0,0,0.02); overflow: hidden;';
+                                    
+                                    emptyState.innerHTML = `
+                                        <svg width="80" height="60" viewBox="0 0 80 60" style="position: absolute; right: 5px; top: -5px; opacity: 0.6; pointer-events: none;">
+                                            <path d="M 5 50 Q 30 50, 65 15" fill="none" stroke="var(--ion-color-success, #2dd36f)" stroke-width="2.5" stroke-dasharray="4,4" stroke-linecap="round"/>
+                                            <polygon points="60,21 67,11 72,21" fill="var(--ion-color-success, #2dd36f)" transform="rotate(25 67 11)" />
+                                        </svg>
+
+                                        <div style="width: 80px; height: 45px; border: 2px dashed var(--ion-color-step-300, #ccc); border-radius: 8px; margin-bottom: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; background: rgba(0,0,0,0.02);">
+                                            <ion-icon name="people-outline" style="font-size: 24px; color: var(--ion-color-step-400, #aaa); margin-bottom: 4px;"></ion-icon>
+                                            <div style="width: 40%; height: 4px; background: var(--ion-color-step-200, #ddd); border-radius: 2px;"></div>
+                                        </div>
+                                        
+                                        <h3 style="color: var(--ion-color-dark); margin: 0 0 4px 0; font-weight: 600; font-size: 0.9rem; letter-spacing: -0.01em; text-align: center;">Sin Equipos</h3>
+                                        <p style="color: var(--ion-color-medium, #666); text-align: center; max-width: 180px; margin: 0; font-size: 0.8rem; line-height: 1.3;">
+                                            Haz clic en <strong style="color: var(--ion-color-success); font-size: 1.1em;">+</strong> arriba para agregar un equipo.
+                                        </p>
+                                    `;
+                                    
+                                    gpWrapper.appendChild(emptyState);
+                                }
+
+                                gpContainer.appendChild(gpWrapper);
+                            });
+                            vsCol.appendChild(gpContainer);
+                        } else {
+                            // Empty State Onboarding para Grupo de Productos
+                            const emptyState = document.createElement('div');
+                            emptyState.style.cssText = 'position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 2rem 1rem; margin-top: 12px; margin-left: 20px; width: calc(100% - 20px); border: 2px dashed var(--ion-color-step-300, #ccc); border-radius: 8px; background: rgba(0,0,0,0.02); overflow: hidden;';
+                            
+                            emptyState.innerHTML = `
+                                <svg width="100" height="80" viewBox="0 0 100 80" style="position: absolute; right: 10px; top: -10px; opacity: 0.6; pointer-events: none;">
+                                    <path d="M 10 70 Q 50 70, 85 25" fill="none" stroke="var(--ion-color-dark, #222428)" stroke-width="2.5" stroke-dasharray="6,5" stroke-linecap="round"/>
+                                    <polygon points="78,33 87,20 93,33" fill="var(--ion-color-dark, #222428)" transform="rotate(20 87 20)" />
+                                </svg>
+
+                                <div style="width: 110px; height: 60px; border: 2px dashed var(--ion-color-step-300, #ccc); border-radius: 12px; margin-bottom: 16px; display: flex; flex-direction: column; align-items: center; justify-content: center; background: rgba(0,0,0,0.02);">
+                                    <ion-icon name="layers-outline" style="font-size: 28px; color: var(--ion-color-step-400, #aaa); margin-bottom: 6px;"></ion-icon>
+                                    <div style="width: 50%; height: 5px; background: var(--ion-color-step-200, #ddd); border-radius: 3px;"></div>
+                                </div>
+                                
+                                <h3 style="color: var(--ion-color-dark); margin: 0 0 6px 0; font-weight: 600; font-size: 1rem; letter-spacing: -0.01em; text-align: center;">Sin Grupos de Producto</h3>
+                                <p style="color: var(--ion-color-medium, #666); text-align: center; max-width: 220px; margin: 0; font-size: 0.85rem; line-height: 1.4;">
+                                    Haz clic en <strong style="color: var(--ion-color-dark); font-size: 1.1em;">+</strong> arriba para agregar un grupo.
+                                </p>
+                            `;
+                            
+                            vsCol.appendChild(emptyState);
+                        }
+
+                        vsHorizontalContainer.appendChild(vsCol);
                     });
+                    vCol.appendChild(vsHorizontalContainer);
+                } else {
+                    // Empty State Onboarding para Value Streams
+                    const emptyState = document.createElement('div');
+                    emptyState.style.cssText = 'position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 2rem 1rem; margin-top: 0.5rem; width: 100%; border: 2px dashed var(--ion-color-step-300, #ccc); border-radius: 8px; background: rgba(0,0,0,0.02); overflow: hidden;';
+                    
+                    emptyState.innerHTML = `
+                        <svg width="120" height="100" viewBox="0 0 120 100" style="position: absolute; right: 10px; top: -10px; opacity: 0.7; pointer-events: none;">
+                            <path d="M 10 90 Q 70 90, 105 30" fill="none" stroke="var(--ion-color-tertiary, #5260ff)" stroke-width="2.5" stroke-dasharray="6,5" stroke-linecap="round"/>
+                            <polygon points="98,38 107,24 113,38" fill="var(--ion-color-tertiary, #5260ff)" transform="rotate(15 107 24)" />
+                        </svg>
+
+                        <div style="width: 140px; height: 80px; border: 2px dashed var(--ion-color-step-300, #ccc); border-radius: 12px; margin-bottom: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; background: rgba(0,0,0,0.02);">
+                            <ion-icon name="swap-horizontal-outline" style="font-size: 32px; color: var(--ion-color-step-400, #aaa); margin-bottom: 8px;"></ion-icon>
+                            <div style="width: 50%; height: 6px; background: var(--ion-color-step-200, #ddd); border-radius: 3px;"></div>
+                        </div>
+                        
+                        <h3 style="color: var(--ion-color-dark); margin: 0 0 8px 0; font-weight: 600; font-size: 1.15rem; letter-spacing: -0.01em;">Siguiente paso: Agrega un Value Stream</h3>
+                        <p style="color: var(--ion-color-medium, #666); text-align: center; max-width: 300px; margin: 0; font-size: 0.95rem; line-height: 1.45;">
+                            Haz clic en el botón <strong style="color: var(--ion-color-tertiary); font-size: 1.1em;">+</strong> del Portafolio para desglosarlo en flujos de valor.
+                        </p>
+                    `;
+                    
+                    vCol.appendChild(emptyState);
                 }
 
                 hContainer.appendChild(vCol);
             });
 
             rowUnidad.appendChild(hContainer);
+        } else {
+            // S53.x: Empty State Onboarding para Portafolios
+            const emptyState = document.createElement('div');
+            emptyState.style.cssText = 'position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 3rem 2rem; margin-top: 0.5rem; width: 100%; border: 2px dashed var(--ion-color-step-300, #ccc); border-radius: 8px; background: rgba(0,0,0,0.02); overflow: hidden;';
+            
+            emptyState.innerHTML = `
+                <svg width="120" height="100" viewBox="0 0 120 100" style="position: absolute; right: 20px; top: -10px; opacity: 0.7; pointer-events: none;">
+                    <!-- Línea curva en onda -->
+                    <path d="M 10 90 Q 70 90, 105 30" fill="none" stroke="var(--ion-color-primary, #3880ff)" stroke-width="2.5" stroke-dasharray="6,5" stroke-linecap="round"/>
+                    <!-- Punta de flecha apuntando hacia arriba-derecha -->
+                    <polygon points="98,38 107,24 113,38" fill="var(--ion-color-primary, #3880ff)" transform="rotate(15 107 24)" />
+                </svg>
+
+                <div style="width: 140px; height: 80px; border: 2px dashed var(--ion-color-step-300, #ccc); border-radius: 12px; margin-bottom: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; background: rgba(0,0,0,0.02);">
+                    <ion-icon name="briefcase-outline" style="font-size: 32px; color: var(--ion-color-step-400, #aaa); margin-bottom: 8px;"></ion-icon>
+                    <div style="width: 50%; height: 6px; background: var(--ion-color-step-200, #ddd); border-radius: 3px;"></div>
+                </div>
+                
+                <h3 style="color: var(--ion-color-dark); margin: 0 0 8px 0; font-weight: 600; font-size: 1.15rem; letter-spacing: -0.01em;">Siguiente paso: Agrega un Portafolio</h3>
+                <p style="color: var(--ion-color-medium, #666); text-align: center; max-width: 340px; margin: 0; font-size: 0.95rem; line-height: 1.45;">
+                    Haz clic en el botón <strong style="color: var(--ion-color-primary); font-size: 1.1em;">+</strong> de la barra superior derecha para desglosar esta Unidad de Negocio.
+                </p>
+            `;
+            
+            rowUnidad.appendChild(emptyState);
         }
 
         canvasDiv.appendChild(rowUnidad);
         rootContainer.appendChild(canvasDiv);
+
+        // Inicializar Miro-like Pan & Zoom
+        this._initPanZoom(rootContainer, canvasDiv);
+    },
+
+    _initPanZoom: function(viewport, canvas) {
+        // Guardar referencia al canvas actual (necesario cuando se recrea en silent refresh)
+        this._currentCanvas = canvas;
+
+        // Mantener estado en la instancia para persistir entre refrescos
+        if (!this._transformState) {
+            this._transformState = { scale: 1, translateX: 0, translateY: 0 };
+        }
+        
+        const state = this._transformState;
+
+        // Definir función en el contexto del objeto para que los listeners usen siempre la versión más reciente
+        this._applyTransform = () => {
+            if (this._currentCanvas) {
+                this._currentCanvas.style.transform = `translate(${state.translateX}px, ${state.translateY}px) scale(${state.scale})`;
+            }
+        };
+        
+        // Aplicar estado inicial al nuevo canvas
+        this._applyTransform();
+
+        // Evitar múltiples listeners si el viewport ya los tiene
+        if (viewport._panZoomBound) return;
+        viewport._panZoomBound = true;
+
+        let isDragging = false;
+        let startX, startY, initialX, initialY;
+
+        viewport.addEventListener('mousedown', (e) => {
+            // Ignorar si hace clic en un botón o nodo interactivo
+            if (e.target.closest('button') || e.target.closest('.tax-node')) return;
+            isDragging = true;
+            startX = e.clientX;
+            startY = e.clientY;
+            initialX = state.translateX;
+            initialY = state.translateY;
+            viewport.style.cursor = 'grabbing';
+        });
+
+        window.addEventListener('mousemove', (e) => {
+            if (!isDragging) return;
+            const dx = e.clientX - startX;
+            const dy = e.clientY - startY;
+            state.translateX = initialX + dx;
+            state.translateY = initialY + dy;
+            if (this._applyTransform) this._applyTransform();
+        });
+
+        window.addEventListener('mouseup', () => {
+            isDragging = false;
+            viewport.style.cursor = 'grab';
+        });
+
+        viewport.addEventListener('wheel', (e) => {
+            // Prevenir scroll nativo
+            e.preventDefault();
+            
+            const zoomSensitivity = 0.001;
+            
+            // Usar Motor Matemático para los cálculos
+            const CanvasMath = window.Math_Engine && window.Math_Engine.CanvasMath ? window.Math_Engine.CanvasMath : {
+                clampScale: (s, dy, sens) => Math.min(Math.max(0.2, s - dy * sens), 2.0),
+                calculateMiroZoom: (mx, my, os, ns, ox, oy) => {
+                    const sr = ns / os;
+                    return { translateX: mx - (mx - ox) * sr, translateY: my - (my - oy) * sr };
+                }
+            };
+
+            // Límite de escala (20% a 200%)
+            const newScale = CanvasMath.clampScale(state.scale, e.deltaY, zoomSensitivity);
+            
+            // Zoom hacia el mouse (Miro-like)
+            const rect = viewport.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
+
+            const newTransforms = CanvasMath.calculateMiroZoom(mouseX, mouseY, state.scale, newScale, state.translateX, state.translateY);
+            
+            state.translateX = newTransforms.translateX;
+            state.translateY = newTransforms.translateY;
+            state.scale = newScale;
+            
+            if (this._applyTransform) this._applyTransform();
+        }, { passive: false });
     },
 
     _createNodeEl: function(recordId, entityName, addTitle) {
@@ -469,8 +672,14 @@ window.UI_View_SwimlaneGrid = {
             childEntity = 'Portafolio';
             edgeType = 'UNIDAD_NEGOCIO_PORTAFOLIO';
         } else if (parentEntity === 'Portafolio') {
+            childEntity = 'Value_Stream';
+            edgeType = 'PORTAFOLIO_VALUE_STREAM';
+        } else if (parentEntity === 'Value_Stream') {
             childEntity = 'Grupo_Productos';
-            edgeType = 'PORTAFOLIO_GRUPO_PRODUCTO';
+            edgeType = 'VALUE_STREAM_GRUPO_PRODUCTO';
+        } else if (parentEntity === 'Grupo_Productos') {
+            childEntity = 'Equipo';
+            edgeType = 'GRUPO_PRODUCTO_EQUIPO';
         } else {
             // No action needed for leaf nodes
             return;
