@@ -20,8 +20,10 @@ Transform the linear, 1D taxonomy creation form into a highly interactive, 2D ne
 - [x] S53.2 Visual Swimlane Layout ✓
 - [x] S53.3 Interactive Contextual Mutations ✓
 - [ ] S53.4 E2E Integration and Scaling
-- [x] S53.5 Canvas Homologous Contextual Drawers
+- [x] S53.5 Canvas Homologous Contextual Drawers ✓
 - [x] S53.6 Contextual Subgrid Filtering ✓
+- [x] S53.7 Value Stream Entity Canvas Expansion ✓
+- [x] S53.8 Canvas UX Refinements ✓
 
 ## Implementation Plan
 
@@ -55,6 +57,8 @@ Transform the linear, 1D taxonomy creation form into a highly interactive, 2D ne
 | S53.4 | E2E Integration  | To Do | S      | Rai      |
 | S53.5 | Homologous Drawers | COMPLETE | 1.0 hr      | Rai      |
 | S53.6 | Contextual Filtering| COMPLETE | 1.0 hr     | Rai      |
+| S53.7 | Value Stream Node | COMPLETE | 1.0 hr     | Rai      |
+| S53.8 | Canvas UX Refinements | COMPLETE | 1.0 hr     | Rai      |
 
 ### Sequencing Risks
 1. **Layout complexity (High):** Replicating the exact swimlane grid purely with CSS might require complex nesting. Mitigation: Isolate the layout in a standalone `.html` file first.
