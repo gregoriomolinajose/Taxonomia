@@ -47,6 +47,7 @@
 | E52| QA: Persona End-to-End E2E Lifecycle                | ✅ Complete   | Refactor y estabilización de la entidad Persona                     | Alta     |
 | E53| Taxonomía Workspace Canvas                          | ✅ Complete   | Implementar lienzo de visualización del árbol contextual de Taxonomía| Max      |
 | E54| Filtros Universales de Entidades                    | ✅ Complete   | Implementar Drawer de filtros avanzados con lógica de intersección y JIT | Alta     |
+| E55| Taxonomy Governance & Deployment Engine             | 🔄 In Progress| Transición de modelo relacional distribuido a centralizado y motor diffing | Max      |
 ## Parking Lot / Deuda Técnica (Post-Epic 11)
 
 ### 🏗️ Historial Resuelto
