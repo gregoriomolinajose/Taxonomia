@@ -418,6 +418,29 @@ window.UI_View_SwimlaneGrid = {
                         vsHorizontalContainer.appendChild(vsCol);
                     });
                     vCol.appendChild(vsHorizontalContainer);
+                } else {
+                    // Empty State Onboarding para Value Streams
+                    const emptyState = document.createElement('div');
+                    emptyState.style.cssText = 'position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 2rem 1rem; margin-top: 0.5rem; width: 100%; border: 2px dashed var(--ion-color-step-300, #ccc); border-radius: 8px; background: rgba(0,0,0,0.02); overflow: hidden;';
+                    
+                    emptyState.innerHTML = `
+                        <svg width="120" height="100" viewBox="0 0 120 100" style="position: absolute; right: 10px; top: -10px; opacity: 0.7; pointer-events: none;">
+                            <path d="M 10 90 Q 70 90, 105 30" fill="none" stroke="var(--ion-color-tertiary, #5260ff)" stroke-width="2.5" stroke-dasharray="6,5" stroke-linecap="round"/>
+                            <polygon points="98,38 107,24 113,38" fill="var(--ion-color-tertiary, #5260ff)" transform="rotate(15 107 24)" />
+                        </svg>
+
+                        <div style="width: 140px; height: 80px; border: 2px dashed var(--ion-color-step-300, #ccc); border-radius: 12px; margin-bottom: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; background: rgba(0,0,0,0.02);">
+                            <ion-icon name="swap-horizontal-outline" style="font-size: 32px; color: var(--ion-color-step-400, #aaa); margin-bottom: 8px;"></ion-icon>
+                            <div style="width: 50%; height: 6px; background: var(--ion-color-step-200, #ddd); border-radius: 3px;"></div>
+                        </div>
+                        
+                        <h3 style="color: var(--ion-color-dark); margin: 0 0 8px 0; font-weight: 600; font-size: 1.15rem; letter-spacing: -0.01em;">Siguiente paso: Agrega un Value Stream</h3>
+                        <p style="color: var(--ion-color-medium, #666); text-align: center; max-width: 300px; margin: 0; font-size: 0.95rem; line-height: 1.45;">
+                            Haz clic en el botón <strong style="color: var(--ion-color-tertiary); font-size: 1.1em;">+</strong> del Portafolio para desglosarlo en flujos de valor.
+                        </p>
+                    `;
+                    
+                    vCol.appendChild(emptyState);
                 }
 
                 hContainer.appendChild(vCol);
