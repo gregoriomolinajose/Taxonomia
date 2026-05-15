@@ -132,7 +132,7 @@ describe('Engine_DB Orchestration & DAG SCD-2', () => {
             
             expect(global.Engine_Graph.buildDeletionPatch).toHaveBeenCalledWith('TARGET', 'ORPHAN', activeGraphMock);
 
-            expect(Engine_DB.upsertBatch).toHaveBeenCalledWith('Relacion_Dominios', expect.any(Array), expect.objectContaining({ useSheets: true }));
+            expect(Engine_DB.upsertBatch).toHaveBeenCalledWith('Sys_Graph_Edges', expect.any(Array), expect.objectContaining({ useSheets: true }));
             const edgeBatch = Engine_DB.upsertBatch.mock.calls[0][1];
             expect(edgeBatch.length).toBe(2);
             expect(edgeBatch[0].id_relacion).toBe('R1');
