@@ -127,21 +127,15 @@ window.UI_FormSubmitter = class UI_FormSubmitter {
             const pkFieldT = window.Schema_Utils ? window.Schema_Utils.getPrimaryKey(this.entityName) : 'id';
             const contextId = (this.modal && this.modal.dataset && this.modal.dataset.taxonomiaContext) ? this.modal.dataset.taxonomiaContext : (payload[pkFieldT] || this._internalRetryId || 'DRAFT_CTX');
 
-            if (isDraftMode) {
-                // [S50.4] Fix AR Finding: Forzar entidad maestra a nacer como borrador
-                let isActuallyCreate = action === 'create';
-                if (!isActuallyCreate && this.entityName === 'Taxonomia' && this._internalRetryId && window.DataStore) {
-                    const existing = window.DataStore.get('Taxonomia') || [];
-                    const pkField = window.Schema_Utils ? window.Schema_Utils.getPrimaryKey('Taxonomia') : 'id_taxonomia';
-                    const match = existing.find(t => String(t[pkField]) === String(this._internalRetryId));
-                    if (!match) isActuallyCreate = true;
-                }
+            // [S53.8] Execute Schema Hooks
+            const formSchema = window.APP_SCHEMAS && window.APP_SCHEMAS[this.entityName] ? window.APP_SCHEMAS[this.entityName] : null;
+            if (formSchema && formSchema.hooks && typeof formSchema.hooks.preSubmit === 'function') {
                 const isTempPk = this._internalRetryId && String(this._internalRetryId).startsWith('TMP_');
-                
-                if (this.entityName === 'Taxonomia' && (isActuallyCreate || isTempPk)) {
-                    payload.estado = 'Borrador';
-                }
-                
+                payload = formSchema.hooks.preSubmit(payload, contextId, action, isTempPk, this._internalRetryId);
+            }
+
+            if (isDraftMode) {
+
                 const formSchema = window.APP_SCHEMAS && window.APP_SCHEMAS[this.entityName] ? window.APP_SCHEMAS[this.entityName] : null;
                 const fieldsConfig = formSchema ? (formSchema.fields || Object.keys(formSchema).map(k => ({name: k, ...formSchema[k]}))) : [];
                 const relationKeys = new Set(fieldsConfig.filter(f => f.type === 'relation').map(f => f.name));
@@ -201,8 +195,8 @@ window.UI_FormSubmitter = class UI_FormSubmitter {
             let isTempPK = false;
             
             if (!optimisticPK) {
-                 if (this.entityName === 'Taxonomia' && contextId && contextId !== 'DRAFT_CTX') {
-                     optimisticPK = contextId;
+                 if (payload[pkField]) {
+                     optimisticPK = payload[pkField];
                  } else {
                      optimisticPK = 'TMP_LOCAL_' + Math.random().toString(36).substring(2, 10).toUpperCase();
                      payload[pkField] = optimisticPK;

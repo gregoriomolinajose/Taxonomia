@@ -101,121 +101,50 @@ window.UI_View_SwimlaneGrid = {
             }
         }
 
-        // 2. Extraer aristas de los formularios hijos en los Drawers
-        const unForms = document.querySelectorAll('[data-form-component="portafolios_vinculados"]');
-        let unProcessed = false;
-        
-        unForms.forEach(node => {
-            const formContainer = node.closest('ion-content, .drawer-content, #wizard-col-right');
-            if (!formContainer) return;
-            if (unProcessed) return; unProcessed = true; // Solo procesar una vez
+        // 2. Extraer aristas de los formularios hijos en los Drawers de forma optimista (Config-Driven)
+        const edgeExtractors = [
+            { component: 'portafolios_vinculados', parentField: 'id_unidad_negocio', edgeType: 'UNIDAD_NEGOCIO_PORTAFOLIO', fallbackParent: currentUnidadId },
+            { component: 'value_streams_vinculados', parentField: 'id_portafolio', edgeType: 'PORTAFOLIO_VALUE_STREAM' },
+            { component: 'grupos_productos_vinculados', parentField: 'id_value_stream', edgeType: 'VALUE_STREAM_GRUPO_PRODUCTO' },
+            { component: 'equipos_asignados', parentField: 'id_grupo_producto', edgeType: 'GRUPO_PRODUCTO_EQUIPO' }
+        ];
+
+        edgeExtractors.forEach(cfg => {
+            const forms = document.querySelectorAll(`[data-form-component="${cfg.component}"]`);
+            let processed = new Set();
             
-            const pkInput = formContainer.querySelector('[name="id_unidad_negocio"]');
-            const unId = (pkInput && pkInput.value) ? pkInput.value : currentUnidadId;
-            
-            const portInput = formContainer.querySelector('[data-form-component="portafolios_vinculados"]');
-            console.log("[Canvas Debug] unForm extracted unId:", unId, "| portInput exists:", !!portInput);
-            if (portInput && typeof portInput.getValidatedValue === 'function') {
-                const val = portInput.getValidatedValue();
-                console.log("[Canvas Debug] portInput getValidatedValue:", val);
+            forms.forEach(node => {
+                const formContainer = node.closest('ion-content, .drawer-content, #wizard-col-right');
+                if (!formContainer) return;
                 
-                // La UI es la fuente de verdad (optimistic state). Limpiamos aristas cacheadas para este padre.
-                edges = edges.filter(e => !(e.tipo_relacion === 'UNIDAD_NEGOCIO_PORTAFOLIO' && String(e.id_nodo_padre).trim() === String(unId).trim()));
+                const pkInput = formContainer.querySelector(`[name="${cfg.parentField}"]`);
+                const parentId = (pkInput && pkInput.value) ? pkInput.value : cfg.fallbackParent;
+                if (!parentId || processed.has(parentId)) return;
+                processed.add(parentId);
                 
-                if (val) {
-                    const arr = Array.isArray(val) ? val : [val];
-                    arr.forEach(portId => {
-                        if (portId) {
-                            console.log("[Canvas Debug] Pushing portafolio edge:", { unId: String(unId), portId: String(portId) });
-                            edges.push({
-                                id_nodo_padre: String(unId),
-                                id_nodo_hijo: String(portId),
-                                tipo_relacion: 'UNIDAD_NEGOCIO_PORTAFOLIO',
-                                es_version_actual: 'true',
-                                contexto_id: String(this.taxonomiaId)
-                            });
-                        }
-                    });
+                const edgeInput = formContainer.querySelector(`[data-form-component="${cfg.component}"]`);
+                if (edgeInput && typeof edgeInput.getValidatedValue === 'function') {
+                    const val = edgeInput.getValidatedValue();
+                    
+                    // La UI es la fuente de verdad. Limpiamos aristas cacheadas para este padre.
+                    edges = edges.filter(e => !(e.tipo_relacion === cfg.edgeType && String(e.id_nodo_padre).trim() === String(parentId).trim()));
+                    
+                    if (val) {
+                        const arr = Array.isArray(val) ? val : [val];
+                        arr.forEach(childId => {
+                            if (childId) {
+                                edges.push({
+                                    id_nodo_padre: String(parentId),
+                                    id_nodo_hijo: String(childId),
+                                    tipo_relacion: cfg.edgeType,
+                                    es_version_actual: 'true',
+                                    contexto_id: String(this.taxonomiaId)
+                                });
+                            }
+                        });
+                    }
                 }
-            }
-        });
-
-        // 2.2 Portafolios -> Value Streams
-        const portForms = document.querySelectorAll('[data-form-component="value_streams_vinculados"]');
-        let portProcessed = new Set();
-        
-        portForms.forEach(node => {
-            const formContainer = node.closest('ion-content, .drawer-content, #wizard-col-right');
-            if (!formContainer) return;
-            
-            const pkInput = formContainer.querySelector('[name="id_portafolio"]');
-            const portId = (pkInput && pkInput.value) ? pkInput.value : null;
-            if (!portId || portProcessed.has(portId)) return;
-            portProcessed.add(portId);
-            
-            const vsInput = formContainer.querySelector('[data-form-component="value_streams_vinculados"]');
-            if (vsInput && typeof vsInput.getValidatedValue === 'function' && portId) {
-                const val = vsInput.getValidatedValue();
-                edges = edges.filter(e => !(e.tipo_relacion === 'PORTAFOLIO_VALUE_STREAM' && String(e.id_nodo_padre).trim() === String(portId).trim()));
-                if (val) {
-                    const arr = Array.isArray(val) ? val : [val];
-                    arr.forEach(vsId => {
-                        if (vsId) edges.push({ id_nodo_padre: String(portId), id_nodo_hijo: String(vsId), tipo_relacion: 'PORTAFOLIO_VALUE_STREAM', es_version_actual: 'true', contexto_id: String(this.taxonomiaId) });
-                    });
-                }
-            }
-        });
-
-        // 2.3 Value Streams -> Grupos de Productos
-        const vsForms = document.querySelectorAll('[data-form-component="grupos_productos_vinculados"]');
-        let vsProcessed = new Set();
-        
-        vsForms.forEach(node => {
-            const formContainer = node.closest('ion-content, .drawer-content, #wizard-col-right');
-            if (!formContainer) return;
-            
-            const pkInput = formContainer.querySelector('[name="id_value_stream"]');
-            const vsId = (pkInput && pkInput.value) ? pkInput.value : null;
-            if (!vsId || vsProcessed.has(vsId)) return;
-            vsProcessed.add(vsId);
-            
-            const gpInput = formContainer.querySelector('[data-form-component="grupos_productos_vinculados"]');
-            if (gpInput && typeof gpInput.getValidatedValue === 'function' && vsId) {
-                const val = gpInput.getValidatedValue();
-                edges = edges.filter(e => !(e.tipo_relacion === 'VALUE_STREAM_GRUPO_PRODUCTO' && String(e.id_nodo_padre).trim() === String(vsId).trim()));
-                if (val) {
-                    const arr = Array.isArray(val) ? val : [val];
-                    arr.forEach(gpId => {
-                        if (gpId) edges.push({ id_nodo_padre: String(vsId), id_nodo_hijo: String(gpId), tipo_relacion: 'VALUE_STREAM_GRUPO_PRODUCTO', es_version_actual: 'true', contexto_id: String(this.taxonomiaId) });
-                    });
-                }
-            }
-        });
-
-        // 2.4 Grupos de Productos -> Equipos
-        const gpForms = document.querySelectorAll('[data-form-component="equipos_asignados"]');
-        let gpProcessed = new Set();
-        
-        gpForms.forEach(node => {
-            const formContainer = node.closest('ion-content, .drawer-content, #wizard-col-right');
-            if (!formContainer) return;
-            
-            const pkInput = formContainer.querySelector('[name="id_grupo_producto"]');
-            const gpId = (pkInput && pkInput.value) ? pkInput.value : null;
-            if (!gpId || gpProcessed.has(gpId)) return;
-            gpProcessed.add(gpId);
-            
-            const eqInput = formContainer.querySelector('[data-form-component="equipos_asignados"]');
-            if (eqInput && typeof eqInput.getValidatedValue === 'function' && gpId) {
-                const val = eqInput.getValidatedValue();
-                edges = edges.filter(e => !(e.tipo_relacion === 'GRUPO_PRODUCTO_EQUIPO' && String(e.id_nodo_padre).trim() === String(gpId).trim()));
-                if (val) {
-                    const arr = Array.isArray(val) ? val : [val];
-                    arr.forEach(eqId => {
-                        if (eqId) edges.push({ id_nodo_padre: String(gpId), id_nodo_hijo: String(eqId), tipo_relacion: 'GRUPO_PRODUCTO_EQUIPO', es_version_actual: 'true', contexto_id: String(this.taxonomiaId) });
-                    });
-                }
-            }
+            });
         });
 
         // 1. Encontrar la Unidad de Negocio Raíz (Arista TAXONOMIA_UNIDAD)
@@ -656,20 +585,28 @@ window.UI_View_SwimlaneGrid = {
             e.preventDefault();
             
             const zoomSensitivity = 0.001;
-            const delta = e.deltaY * zoomSensitivity;
             
+            // Usar Motor Matemático para los cálculos
+            const CanvasMath = window.Math_Engine && window.Math_Engine.CanvasMath ? window.Math_Engine.CanvasMath : {
+                clampScale: (s, dy, sens) => Math.min(Math.max(0.2, s - dy * sens), 2.0),
+                calculateMiroZoom: (mx, my, os, ns, ox, oy) => {
+                    const sr = ns / os;
+                    return { translateX: mx - (mx - ox) * sr, translateY: my - (my - oy) * sr };
+                }
+            };
+
             // Límite de escala (20% a 200%)
-            const newScale = Math.min(Math.max(0.2, state.scale - delta), 2.0);
+            const newScale = CanvasMath.clampScale(state.scale, e.deltaY, zoomSensitivity);
             
             // Zoom hacia el mouse (Miro-like)
             const rect = viewport.getBoundingClientRect();
             const mouseX = e.clientX - rect.left;
             const mouseY = e.clientY - rect.top;
 
-            const scaleRatio = newScale / state.scale;
+            const newTransforms = CanvasMath.calculateMiroZoom(mouseX, mouseY, state.scale, newScale, state.translateX, state.translateY);
             
-            state.translateX = mouseX - (mouseX - state.translateX) * scaleRatio;
-            state.translateY = mouseY - (mouseY - state.translateY) * scaleRatio;
+            state.translateX = newTransforms.translateX;
+            state.translateY = newTransforms.translateY;
             state.scale = newScale;
             
             if (this._applyTransform) this._applyTransform();

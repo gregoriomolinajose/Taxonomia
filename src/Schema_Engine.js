@@ -147,6 +147,23 @@ var APP_SCHEMAS = {
     stepDescriptions: {
         "Taxonomía de Producto": "Asigna un nombre descriptivo para comenzar. Te recomendamos utilizar el nombre del portafolio principal que vas a estructurar."
     },
+    hooks: {
+        preSubmit: function(payload, contextId, action, isTempPk, internalRetryId) {
+            let isActuallyCreate = action === 'create';
+            if (!isActuallyCreate && internalRetryId && typeof window !== 'undefined' && window.DataStore) {
+                const existing = window.DataStore.get('Taxonomia') || [];
+                const match = existing.find(t => String(t.id_taxonomia) === String(internalRetryId));
+                if (!match) isActuallyCreate = true;
+            }
+            if (isActuallyCreate || isTempPk) {
+                payload.estado = 'Borrador';
+            }
+            if (!payload.id_taxonomia && contextId && contextId !== 'DRAFT_CTX') {
+                payload.id_taxonomia = contextId;
+            }
+            return payload;
+        }
+    },
     fields: [
       { name: "id_taxonomia", type: "hidden", primaryKey: true },
       ...FIELD_TEMPLATES.SYSTEM_FIELDS(),
