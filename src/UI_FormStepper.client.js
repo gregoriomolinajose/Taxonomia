@@ -59,6 +59,7 @@ window.UI_FormStepper = class UI_FormStepper {
         // S54.5: Configure split view structure
         this.splitContainer = document.createElement('div');
         this.splitContainer.className = 'wizard-split-container';
+        this.splitContainer.style.position = 'relative';
         
         this.splitLeft = document.createElement('div');
         this.splitLeft.className = 'wizard-split-left';
@@ -66,6 +67,24 @@ window.UI_FormStepper = class UI_FormStepper {
         this.splitRight = document.createElement('div');
         this.splitRight.className = 'wizard-split-right';
         this.splitRight.id = 'wizard-canvas-wrapper';
+        this.splitRight.style.position = 'relative';
+
+        this.btnFullscreen = document.createElement('ion-fab-button');
+        this.btnFullscreen.size = "small";
+        this.btnFullscreen.color = "light";
+        this.btnFullscreen.style.cssText = "position: absolute; top: 10px; right: 10px; z-index: 1000;";
+        this.btnFullscreen.innerHTML = '<ion-icon name="expand-outline"></ion-icon>';
+        
+        this.btnFullscreen.onclick = () => {
+            const drawerNode = this.cardContent ? this.cardContent.closest('.drawer-panel') : null;
+            if (drawerNode) {
+                const isFullscreen = drawerNode.classList.toggle('fullscreen-wizard');
+                this.btnFullscreen.innerHTML = isFullscreen ? '<ion-icon name="contract-outline"></ion-icon>' : '<ion-icon name="expand-outline"></ion-icon>';
+                setTimeout(() => { window.dispatchEvent(new Event('resize')); }, 100);
+            }
+        };
+
+        this.splitContainer.appendChild(this.btnFullscreen);
         
         this.splitContainer.appendChild(this.splitLeft);
         this.splitContainer.appendChild(this.splitRight);
@@ -334,11 +353,13 @@ window.UI_FormStepper = class UI_FormStepper {
                 drawerNode.classList.add('fullscreen');
                 drawerNode.classList.add('drawer-fullscreen'); // Para reglas específicas del split
                 this.splitRight.style.display = 'flex';
+                if (this.btnFullscreen) this.btnFullscreen.style.display = 'block';
                 this._mountCanvasViewer();
             } else {
                 drawerNode.classList.remove('fullscreen');
                 drawerNode.classList.remove('drawer-fullscreen');
                 this.splitRight.style.display = 'none';
+                if (this.btnFullscreen) this.btnFullscreen.style.display = 'none';
                 this._unmountCanvasViewer();
             }
         }

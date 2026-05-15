@@ -141,6 +141,7 @@ var FIELD_TEMPLATES = Object.freeze({
 var APP_SCHEMAS = {
   Taxonomia: {
     metadata: { prefix: 'TAXO', showInMenu: true, iconName: 'library-outline', color: 'tertiary', label: 'Taxonomías', titleField: 'nombre', idField: 'id_taxonomia', fkField: null },
+    uiConfig: { dashboardCard: { iconName: 'library-outline', color: 'var(--ion-color-tertiary)' } },
     primaryKey: "id_taxonomia",
     titleField: "nombre",
     wizardConfig: true,

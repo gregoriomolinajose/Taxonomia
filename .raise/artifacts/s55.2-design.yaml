@@ -1,0 +1,32 @@
+artifact_type: story-design
+version: 1
+skill: rai-story-design
+created: '2026-05-15T22:25:30Z'
+story: 'S55.2'
+epic: 'E55'
+content:
+  summary: 'Añadir acceso directo de Taxonomía al Dashboard y botón de pantalla completa en el Canvas para una experiencia inmersiva.'
+  complexity: simple
+  acceptance_criteria:
+    - id: AC1
+      description: 'El dashboard debe mostrar una tarjeta para acceder a la Taxonomía.'
+      verifiable: true
+    - id: AC2
+      description: 'El header del Canvas debe tener un botón para alternar el modo pantalla completa.'
+      verifiable: true
+  integration_points:
+    - module: 'SelfService_Home_UI'
+      change_type: modification
+      files: ['src/SelfService_Home_UI.client.js']
+    - module: 'UI_FormStepper'
+      change_type: modification
+      files: ['src/UI_FormStepper.client.js']
+  decisions:
+    - id: D1
+      choice: 'Añadir clase CSS fullscreen-mode al contenedor del stepper.'
+      rationale: 'Solución nativa CSS que no requiere re-renderizado costoso de componentes.'
+      alternatives_considered: ['Full Screen API del navegador']
+refs:
+  backlog_item: 'S55.2'
+  epic_scope: 'work/epics/e55-taxonomy-governance/scope.md'
+metadata: {}
