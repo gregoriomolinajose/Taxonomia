@@ -599,26 +599,32 @@ window.UI_View_SwimlaneGrid = {
     },
 
     _initPanZoom: function(viewport, canvas) {
-        let isDragging = false;
-        let startX, startY, initialX, initialY;
-        
-        // Mantener estado en la instancia para persistir entre refrescos si es necesario
+        // Guardar referencia al canvas actual (necesario cuando se recrea en silent refresh)
+        this._currentCanvas = canvas;
+
+        // Mantener estado en la instancia para persistir entre refrescos
         if (!this._transformState) {
             this._transformState = { scale: 1, translateX: 0, translateY: 0 };
         }
         
         const state = this._transformState;
 
-        const updateTransform = () => {
-            canvas.style.transform = `translate(${state.translateX}px, ${state.translateY}px) scale(${state.scale})`;
+        // Definir función en el contexto del objeto para que los listeners usen siempre la versión más reciente
+        this._applyTransform = () => {
+            if (this._currentCanvas) {
+                this._currentCanvas.style.transform = `translate(${state.translateX}px, ${state.translateY}px) scale(${state.scale})`;
+            }
         };
         
-        // Aplicar estado inicial
-        updateTransform();
+        // Aplicar estado inicial al nuevo canvas
+        this._applyTransform();
 
-        // Evitar múltiples listeners si ya fue inicializado antes
+        // Evitar múltiples listeners si el viewport ya los tiene
         if (viewport._panZoomBound) return;
         viewport._panZoomBound = true;
+
+        let isDragging = false;
+        let startX, startY, initialX, initialY;
 
         viewport.addEventListener('mousedown', (e) => {
             // Ignorar si hace clic en un botón o nodo interactivo
@@ -637,7 +643,7 @@ window.UI_View_SwimlaneGrid = {
             const dy = e.clientY - startY;
             state.translateX = initialX + dx;
             state.translateY = initialY + dy;
-            updateTransform();
+            if (this._applyTransform) this._applyTransform();
         });
 
         window.addEventListener('mouseup', () => {
@@ -666,7 +672,7 @@ window.UI_View_SwimlaneGrid = {
             state.translateY = mouseY - (mouseY - state.translateY) * scaleRatio;
             state.scale = newScale;
             
-            updateTransform();
+            if (this._applyTransform) this._applyTransform();
         }, { passive: false });
     },
 
