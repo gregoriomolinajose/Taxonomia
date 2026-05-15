@@ -18,7 +18,7 @@ Transition from a distributed entity-relationship model to a centralized, visual
 
 ## Planned Stories
 - **[x] S55.1 - Centralización y Bloqueo Relacional ✓:** Modificar `Schema_Engine.js` para que los Drawers transaccionales sean de solo lectura para sus relaciones fuera de contexto.
-- **S55.2 - Inmersión UX (Full-Screen & Accesos):** Crear acceso rápido en Dashboard y botón "Expandir" en el Header del Canvas/Wizard.
+- **[x] S55.2 - Inmersión UX (Full-Screen & Accesos) ✓:** Crear acceso rápido en Dashboard y botón "Expandir" en el Header del Canvas/Wizard.
 - **S55.3 - Motor de Diffing de Grafos (Lógica):** Lógica que compara el Borrador vs Producción retornando el Delta (Add/Remove/Keep).
 - **S55.4 - UI de Resumen de Impacto (Deployment Preview):** Diseño del modal de aprobación visualizando los cambios topológicos.
 - **S55.5 - Transacción de Despliegue (Activation):** Backend ETL que aprueba y publica atómicamente la nueva estructura.
@@ -60,4 +60,4 @@ Transition from a distributed entity-relationship model to a centralized, visual
 | S55.3 | M | Pending | - | - | Core logic risk |
 | S55.4 | M | Pending | - | - | Depends on S55.3 |
 | S55.5 | M | Pending | - | - | E2E Integration |
-| S55.2 | S | Pending | - | - | UX enhancement |
+| S55.2 | S | Done | 15m | 2.5x | UX enhancement |
