@@ -410,7 +410,59 @@ window.UI_View_SwimlaneGrid = {
                             gpContainer.className = 'tax-swimlane-grupo-productos';
 
                             grupoEdges.forEach(gEdge => {
-                                gpContainer.appendChild(this._createNodeEl(gEdge.id_nodo_hijo, 'Grupo_Productos', 'Añadir Producto'));
+                                const gpNodeId = gEdge.id_nodo_hijo;
+                                const gpWrapper = document.createElement('div');
+                                gpWrapper.style.display = 'flex';
+                                gpWrapper.style.flexDirection = 'column';
+                                gpWrapper.style.gap = '8px';
+                                gpWrapper.style.width = '100%';
+
+                                gpWrapper.appendChild(this._createNodeEl(gpNodeId, 'Grupo_Productos', 'Añadir Equipo'));
+
+                                // Nivel 5: Equipos
+                                const equipoEdges = contextEdges.filter(e => 
+                                    e.tipo_relacion === 'GRUPO_PRODUCTO_EQUIPO' && 
+                                    String(e.id_nodo_padre).trim() === String(gpNodeId).trim()
+                                );
+
+                                if (equipoEdges.length > 0) {
+                                    const eqContainer = document.createElement('div');
+                                    eqContainer.className = 'tax-swimlane-equipos';
+                                    eqContainer.style.display = 'flex';
+                                    eqContainer.style.flexDirection = 'column';
+                                    eqContainer.style.gap = '8px';
+                                    eqContainer.style.marginLeft = '20px';
+
+                                    equipoEdges.forEach(eqEdge => {
+                                        eqContainer.appendChild(this._createNodeEl(eqEdge.id_nodo_hijo, 'Equipo', 'Ver Equipo'));
+                                    });
+                                    gpWrapper.appendChild(eqContainer);
+                                } else {
+                                    // Empty State Onboarding para Equipos
+                                    const emptyState = document.createElement('div');
+                                    emptyState.style.cssText = 'position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 1.5rem 1rem; margin-top: 8px; margin-left: 20px; width: calc(100% - 20px); border: 2px dashed var(--ion-color-step-300, #ccc); border-radius: 8px; background: rgba(0,0,0,0.02); overflow: hidden;';
+                                    
+                                    emptyState.innerHTML = `
+                                        <svg width="80" height="60" viewBox="0 0 80 60" style="position: absolute; right: 5px; top: -5px; opacity: 0.6; pointer-events: none;">
+                                            <path d="M 5 50 Q 30 50, 65 15" fill="none" stroke="var(--ion-color-success, #2dd36f)" stroke-width="2.5" stroke-dasharray="4,4" stroke-linecap="round"/>
+                                            <polygon points="60,21 67,11 72,21" fill="var(--ion-color-success, #2dd36f)" transform="rotate(25 67 11)" />
+                                        </svg>
+
+                                        <div style="width: 80px; height: 45px; border: 2px dashed var(--ion-color-step-300, #ccc); border-radius: 8px; margin-bottom: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; background: rgba(0,0,0,0.02);">
+                                            <ion-icon name="people-outline" style="font-size: 24px; color: var(--ion-color-step-400, #aaa); margin-bottom: 4px;"></ion-icon>
+                                            <div style="width: 40%; height: 4px; background: var(--ion-color-step-200, #ddd); border-radius: 2px;"></div>
+                                        </div>
+                                        
+                                        <h3 style="color: var(--ion-color-dark); margin: 0 0 4px 0; font-weight: 600; font-size: 0.9rem; letter-spacing: -0.01em; text-align: center;">Sin Equipos</h3>
+                                        <p style="color: var(--ion-color-medium, #666); text-align: center; max-width: 180px; margin: 0; font-size: 0.8rem; line-height: 1.3;">
+                                            Haz clic en <strong style="color: var(--ion-color-success); font-size: 1.1em;">+</strong> arriba para agregar un equipo.
+                                        </p>
+                                    `;
+                                    
+                                    gpWrapper.appendChild(emptyState);
+                                }
+
+                                gpContainer.appendChild(gpWrapper);
                             });
                             vsCol.appendChild(gpContainer);
                         } else {
@@ -640,6 +692,9 @@ window.UI_View_SwimlaneGrid = {
         } else if (parentEntity === 'Value_Stream') {
             childEntity = 'Grupo_Productos';
             edgeType = 'VALUE_STREAM_GRUPO_PRODUCTO';
+        } else if (parentEntity === 'Grupo_Productos') {
+            childEntity = 'Equipo';
+            edgeType = 'GRUPO_PRODUCTO_EQUIPO';
         } else {
             // No action needed for leaf nodes
             return;
