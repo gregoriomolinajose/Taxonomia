@@ -71,7 +71,7 @@ try {
         if (fs.existsSync(buildDir)) {
             fs.rmSync(buildDir, { recursive: true, force: true });
         }
-        fs.cpSync('src', buildDir, { recursive: true });
+        fs.cpSync('src', buildDir, { recursive: true, preserveTimestamps: true });
 
         // Strip QA Module in Production
         if (env === 'prod') {
@@ -124,6 +124,7 @@ try {
             
             if (!fs.existsSync(sourcePath)) return;
             
+            const stat = fs.statSync(sourcePath);
             let cssContent = fs.readFileSync(sourcePath, 'utf8');
             let minified = cssContent;
             
@@ -140,6 +141,7 @@ try {
             
             const htmlWrapped = `<style>\n${minified}\n</style>`;
             fs.writeFileSync(targetPath, htmlWrapped, 'utf8');
+            fs.utimesSync(targetPath, stat.atime, stat.mtime);
         });
 
         console.log(`[Deploy] Bundled native CSS files into virtual HTML styles`);
@@ -150,9 +152,11 @@ try {
             const sourcePath = `${buildDir}/${file}`;
             const targetPath = `${buildDir}/${file.replace('.client.js', '.html')}`;
             
+            const stat = fs.statSync(sourcePath);
             let jsContent = fs.readFileSync(sourcePath, 'utf8');
             const htmlWrapped = `<script>\n${jsContent}\n</script>`;
             fs.writeFileSync(targetPath, htmlWrapped, 'utf8');
+            fs.utimesSync(targetPath, stat.atime, stat.mtime);
             
             // Delete the original to prevent Clasp from pushing it as a backend script
             fs.unlinkSync(sourcePath);
@@ -186,7 +190,7 @@ try {
             attempts++;
             console.log(`[Deploy] Attempt ${attempts} of ${maxAttempts}...`);
             try {
-                const output = execSync(`npx clasp push -f`, { encoding: 'utf8', stdio: 'pipe' });
+                const output = execSync(`npx clasp push`, { encoding: 'utf8', stdio: 'pipe' });
                 console.log(output);
                 
                 if (output.includes('Pushed') && output.includes('files.')) {
