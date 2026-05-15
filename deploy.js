@@ -71,7 +71,7 @@ try {
         if (fs.existsSync(buildDir)) {
             fs.rmSync(buildDir, { recursive: true, force: true });
         }
-        fs.cpSync('src', buildDir, { recursive: true, preserveTimestamps: true });
+        fs.cpSync('src', buildDir, { recursive: true });
 
         // Strip QA Module in Production
         if (env === 'prod') {
@@ -141,7 +141,6 @@ try {
             
             const htmlWrapped = `<style>\n${minified}\n</style>`;
             fs.writeFileSync(targetPath, htmlWrapped, 'utf8');
-            fs.utimesSync(targetPath, stat.atime, stat.mtime);
         });
 
         console.log(`[Deploy] Bundled native CSS files into virtual HTML styles`);
@@ -152,11 +151,9 @@ try {
             const sourcePath = `${buildDir}/${file}`;
             const targetPath = `${buildDir}/${file.replace('.client.js', '.html')}`;
             
-            const stat = fs.statSync(sourcePath);
             let jsContent = fs.readFileSync(sourcePath, 'utf8');
             const htmlWrapped = `<script>\n${jsContent}\n</script>`;
             fs.writeFileSync(targetPath, htmlWrapped, 'utf8');
-            fs.utimesSync(targetPath, stat.atime, stat.mtime);
             
             // Delete the original to prevent Clasp from pushing it as a backend script
             fs.unlinkSync(sourcePath);
@@ -190,7 +187,7 @@ try {
             attempts++;
             console.log(`[Deploy] Attempt ${attempts} of ${maxAttempts}...`);
             try {
-                const output = execSync(`npx clasp push`, { encoding: 'utf8', stdio: 'pipe' });
+                const output = execSync(`npx clasp push -f`, { encoding: 'utf8', stdio: 'pipe' });
                 console.log(output);
                 
                 if (output.includes('Pushed') && output.includes('files.')) {
@@ -198,6 +195,7 @@ try {
                     console.log(`[Deploy] Verified: Clasp confirmed files were physically pushed.`);
                 } else if (output.includes('No files to push')) {
                     console.log(`[Deploy] Warning: Clasp reports 'No files to push'. Either files are identical remotely, or manifest is out of sync.`);
+                    // Lo tomamos como éxito estructural si realmente no había cambios.
                     pushSuccess = true; 
                 } else {
                     console.log(`[Deploy] Warning: Expected confirmation string not found. Retrying in 2s...`);

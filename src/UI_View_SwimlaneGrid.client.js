@@ -194,10 +194,20 @@ window.UI_View_SwimlaneGrid = {
                             drawerNode.style.pointerEvents = 'auto'; // Block clicks from falling through
 
                             // 1. HEADER NATIVO DE LA PLATAFORMA
+                            let taxoTitle = 'Nueva Taxonomía';
+                            const titleInput = document.querySelector('form#dynamicForm_Taxonomia [name="nombre"]');
+                            if (titleInput && titleInput.value) {
+                                taxoTitle = titleInput.value;
+                            } else if (window.DataStore) {
+                                const ds = window.DataStore.get('Taxonomia') || [];
+                                const taxoRec = ds.find(d => String(d.id_taxonomia) === String(this.taxonomiaId));
+                                if (taxoRec && taxoRec.nombre) taxoTitle = taxoRec.nombre;
+                            }
+
                             const header = window.UI_Factory.buildDrawerHeader({
-                                entityName: 'Unidad_Negocio',
-                                data: null,
-                                localEditId: null,
+                                entityName: 'Taxonomia',
+                                data: { nombre: taxoTitle },
+                                localEditId: this.taxonomiaId || null,
                                 onClose: () => window.DrawerStackController.closeTop()
                             });
                             drawerNode.appendChild(header);
@@ -223,33 +233,7 @@ window.UI_View_SwimlaneGrid = {
                             `;
                             drawerNode.appendChild(container);
 
-                            // 3. FOOTER NATIVO DE LA PLATAFORMA
-                            const footerContainer = document.createElement('div');
-                            footerContainer.className = 'drawer-footer';
-                            const btnGrid = document.createElement('ion-grid');
-                            btnGrid.style.padding = 'var(--spacing-1) var(--spacing-2)';
-                            const btnRow = document.createElement('ion-row');
-                            
-                            const colLeft = document.createElement('ion-col');
-                            colLeft.setAttribute('size', '6');
-                            
-                            const colRight = document.createElement('ion-col');
-                            colRight.setAttribute('size', '6');
-                            colRight.style.textAlign = 'right';
-                            
-                            const closeBtn = document.createElement('ion-button');
-                            closeBtn.setAttribute('fill', 'clear');
-                            closeBtn.setAttribute('color', 'medium');
-                            closeBtn.textContent = 'Cancelar';
-                            closeBtn.onclick = () => window.DrawerStackController.closeTop();
-                            
-                            colRight.appendChild(closeBtn);
-                            btnRow.appendChild(colLeft);
-                            btnRow.appendChild(colRight);
-                            btnGrid.appendChild(btnRow);
-                            footerContainer.appendChild(btnGrid);
-                            
-                            drawerNode.appendChild(footerContainer);
+                            // FOOTER REMOVED AS REQUESTED
 
                             window.DrawerStackController.push(drawerNode);
 

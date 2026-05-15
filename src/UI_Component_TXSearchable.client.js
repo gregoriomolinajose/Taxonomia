@@ -324,7 +324,7 @@ class TXSearchable extends HTMLElement {
                         <!-- ESTADO LLENO HEADER (MULTISELECT) -->
                         <div id="${this._componentId}-filled-header" data-tx-state="hidden" style="justify-content: space-between; align-items: center; margin-bottom: 8px;">
                             <strong style="color: var(--ion-color-dark); font-size: 14px; margin-left: 4px;">${this._entityName}</strong>
-                            <ion-button class="trigger-container" size="small" fill="clear" style="margin: 0; --color: var(--ion-color-primary, #3880ff); font-weight: bold; font-family: var(--sys-font-family, inherit);">
+                            <ion-button class="trigger-container" size="small" fill="clear" style="margin: 0; --color: var(--ion-color-primary, #3880ff); font-weight: bold; font-family: var(--sys-font-family, inherit); display: ${this._isDisabled ? 'none' : 'block'};">
                                 + AGREGAR
                             </ion-button>
                         </div>
@@ -344,7 +344,7 @@ class TXSearchable extends HTMLElement {
                         <!-- ESTADO LLENO HEADER (SINGLE SELECT) -->
                         <div id="${this._componentId}-single-filled-header" data-tx-state="hidden" style="justify-content: space-between; align-items: center; margin-bottom: 8px;">
                             <strong style="color: var(--ion-color-dark); font-size: 14px; margin-left: 4px;">${this._entityName}</strong>
-                            <ion-button class="trigger-container" size="small" fill="clear" style="margin: 0; --color: var(--ion-color-primary, #3880ff); font-weight: bold; font-family: var(--sys-font-family, inherit);">
+                            <ion-button class="trigger-container" size="small" fill="clear" style="margin: 0; --color: var(--ion-color-primary, #3880ff); font-weight: bold; font-family: var(--sys-font-family, inherit); display: ${this._isDisabled ? 'none' : 'block'};">
                                 CAMBIAR
                             </ion-button>
                         </div>
@@ -668,7 +668,8 @@ class TXSearchable extends HTMLElement {
     // S41.13: Refactorización Estructural (DRY UI Factories)
     _getPlaceholderTemplate(domId, hidden, iconName) {
         return `
-            <div id="${domId}" class="trigger-container tx-placeholder-hover" ${hidden ? 'data-tx-state="hidden"' : ''} style="background: #ffffff; border-radius: 12px; border: 2px dashed var(--color-border, #d1d5db); margin-bottom: 24px; cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.02);">
+            <!-- ACTIVE PLACEHOLDER -->
+            <div id="${domId}-active" class="trigger-container tx-placeholder-hover" ${hidden || this._isDisabled ? 'data-tx-state="hidden"' : ''} style="background: #ffffff; border-radius: 12px; border: 2px dashed var(--color-border, #d1d5db); margin-bottom: 24px; cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.02);">
                 
                 <div class="tx-icon-scale" style="width: 56px; height: 56px; background: rgba(56, 128, 255, 0.08); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-bottom: 16px; transition: all 0.3s ease;">
                     <ion-icon name="${iconName}" style="color: var(--ion-color-primary, #3880ff); font-size: 28px;"></ion-icon>
@@ -683,6 +684,22 @@ class TXSearchable extends HTMLElement {
                     <ion-icon slot="start" name="search-outline" style="font-size: 18px;"></ion-icon>
                     Buscar
                 </ion-button>
+            </div>
+
+            <!-- READONLY PLACEHOLDER (CARD SIZE) -->
+            <div id="${domId}-readonly" ${hidden || !this._isDisabled ? 'data-tx-state="hidden"' : ''} style="margin-bottom: 24px;">
+                <div style="margin-bottom: 8px;">
+                    <strong style="color: var(--ion-color-dark); font-size: 14px; margin-left: 4px;">${this._entityName}</strong>
+                </div>
+                <ion-item lines="none" style="--min-height: 56px; --padding-top: 4px; --padding-bottom: 4px; --border-radius: var(--border-radius, 8px); border-radius: var(--border-radius, 8px); width: 100%; border: 1px dashed var(--color-border, #cccccc); --background: #f8f9fa;">
+                    <div slot="start" style="width: 32px; height: 32px; background: var(--ion-color-light, #f4f5f8); border: 1px solid var(--color-border, #e0e0e0); border-radius: 4px; display: inline-flex; justify-content: center; align-items: center; margin-right: 12px;">
+                        <ion-icon name="${iconName}" style="color: var(--ion-color-medium, #92949c); font-size: 18px;"></ion-icon>
+                    </div>
+                    <ion-label class="ion-text-wrap" style="flex: 1; margin: 0; padding-right: 8px;">
+                        <h3 style="font-size: 13px; font-weight: bold; margin: 0; padding: 0; line-height: 1.2; color: var(--ion-color-medium, #92949c);">Sin ${this._entityName}</h3>
+                        <p style="font-size: 11px; color: var(--ion-color-danger, #eb445a); margin: 0; padding: 0; line-height: 1.2; margin-top: 4px;"><ion-icon name="lock-closed" style="vertical-align: text-bottom; margin-right: 2px;"></ion-icon>Para relacionarlo vaya a la sección Taxonomía</p>
+                    </ion-label>
+                </ion-item>
             </div>
         `;
     }
@@ -928,7 +945,8 @@ class TXSearchable extends HTMLElement {
         // S41.11 Renderizado Estado Único
         if (!this._isMultiple) {
             const hasSelection = this._selectedState !== null && this._selectedState !== undefined && this._selectedState !== "";
-            const phNode = this.querySelector(`#${this._componentId}-single-ph`);
+            const phNodeActive = this.querySelector(`#${this._componentId}-single-ph-active`);
+            const phNodeReadonly = this.querySelector(`#${this._componentId}-single-ph-readonly`);
             const filledHeader = this.querySelector(`#${this._componentId}-single-filled-header`);
             const filledNode = this.querySelector(`#${this._componentId}-single-filled`);
             const textNode = this.querySelector(`#${this._componentId}-single-text`);
@@ -937,7 +955,8 @@ class TXSearchable extends HTMLElement {
             const inlineContainerNode = this.querySelector(`#${this._componentId}-inline-list-container`);
             
             if (this._inlineMode) {
-                if (phNode) phNode.setAttribute('data-tx-state', 'hidden');
+                if (phNodeActive) phNodeActive.setAttribute('data-tx-state', 'hidden');
+                if (phNodeReadonly) phNodeReadonly.setAttribute('data-tx-state', 'hidden');
                 if (filledHeader) filledHeader.setAttribute('data-tx-state', 'hidden');
                 if (filledNode) filledNode.setAttribute('data-tx-state', 'hidden');
                 if (inlineContainerNode) {
@@ -954,10 +973,15 @@ class TXSearchable extends HTMLElement {
                 }
                 
                 if (hasSelection) {
-                    if (phNode) phNode.setAttribute('data-tx-state', 'hidden');
+                    if (phNodeActive) phNodeActive.setAttribute('data-tx-state', 'hidden');
+                    if (phNodeReadonly) phNodeReadonly.setAttribute('data-tx-state', 'hidden');
                     if (filledHeader) filledHeader.setAttribute('data-tx-state', 'flex');
                     if (filledNode) filledNode.setAttribute('data-tx-state', 'block');
                     if (btnClear) btnClear.setAttribute('data-tx-state', this._isDisabled ? 'hidden' : 'block');
+                    
+                    // Also hide "CAMBIAR" if disabled
+                    const cambiarBtn = filledHeader ? filledHeader.querySelector('ion-button') : null;
+                    if (cambiarBtn) cambiarBtn.style.display = this._isDisabled ? 'none' : 'block';
                     
                     if (textNode) {
                         const rawId = this._selectedState;
@@ -968,7 +992,8 @@ class TXSearchable extends HTMLElement {
                         }
                     }
                 } else {
-                    if (phNode) phNode.setAttribute('data-tx-state', 'block');
+                    if (phNodeActive) phNodeActive.setAttribute('data-tx-state', this._isDisabled ? 'hidden' : 'block');
+                    if (phNodeReadonly) phNodeReadonly.setAttribute('data-tx-state', this._isDisabled ? 'block' : 'hidden');
                     if (filledHeader) filledHeader.setAttribute('data-tx-state', 'hidden');
                     if (filledNode) filledNode.setAttribute('data-tx-state', 'hidden');
                     if (btnClear) btnClear.setAttribute('data-tx-state', 'hidden');
@@ -978,7 +1003,8 @@ class TXSearchable extends HTMLElement {
 
         // Render Multi-Cards Container si aplica
         if (this._isMultiple) {
-            const placeholderNode = this.querySelector(`#${this._componentId}-placeholder`);
+            const phNodeActive = this.querySelector(`#${this._componentId}-placeholder-active`);
+            const phNodeReadonly = this.querySelector(`#${this._componentId}-placeholder-readonly`);
             const filledHeaderNode = this.querySelector(`#${this._componentId}-filled-header`);
             const inlineContainerNode = this.querySelector(`#${this._componentId}-inline-list-container`);
             const inlineCounterNode = this.querySelector(`#${this._componentId}-inline-counter`);
@@ -988,7 +1014,8 @@ class TXSearchable extends HTMLElement {
             
             // Toggle de modos de la vista principal
             if (this._inlineMode) {
-                if (placeholderNode) placeholderNode.setAttribute('data-tx-state', 'hidden');
+                if (phNodeActive) phNodeActive.setAttribute('data-tx-state', 'hidden');
+                if (phNodeReadonly) phNodeReadonly.setAttribute('data-tx-state', 'hidden');
                 if (filledHeaderNode) filledHeaderNode.setAttribute('data-tx-state', 'hidden');
                 if (inlineContainerNode) {
                     inlineContainerNode.setAttribute('data-tx-state', 'flex');
@@ -1008,12 +1035,21 @@ class TXSearchable extends HTMLElement {
                     if (inlineContainerNode.dataset.focused) delete inlineContainerNode.dataset.focused;
                 }
                 if (hasItems) {
-                    if (placeholderNode) placeholderNode.setAttribute('data-tx-state', 'hidden');
-                    if (filledHeaderNode) filledHeaderNode.setAttribute('data-tx-state', 'flex');
+                    if (phNodeActive) phNodeActive.setAttribute('data-tx-state', 'hidden');
+                    if (phNodeReadonly) phNodeReadonly.setAttribute('data-tx-state', 'hidden');
+                    if (filledHeaderNode) {
+                        filledHeaderNode.setAttribute('data-tx-state', 'flex');
+                        const addBtn = filledHeaderNode.querySelector('ion-button');
+                        if (addBtn) addBtn.style.display = this._isDisabled ? 'none' : 'block';
+                    }
                 } else {
-                    if (placeholderNode) {
-                        placeholderNode.setAttribute('data-tx-state', 'block');
-                        placeholderNode.style.marginBottom = '24px';
+                    if (phNodeActive) {
+                        phNodeActive.setAttribute('data-tx-state', this._isDisabled ? 'hidden' : 'block');
+                        phNodeActive.style.marginBottom = '24px';
+                    }
+                    if (phNodeReadonly) {
+                        phNodeReadonly.setAttribute('data-tx-state', this._isDisabled ? 'block' : 'hidden');
+                        phNodeReadonly.style.marginBottom = '24px';
                     }
                     if (filledHeaderNode) filledHeaderNode.setAttribute('data-tx-state', 'hidden');
                 }

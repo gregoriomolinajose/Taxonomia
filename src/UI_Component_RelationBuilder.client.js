@@ -33,7 +33,8 @@
                         window.SubgridState.evaluateFieldState(rulesContext, newLevel, field.relationType) : 
                         { isDisabled: false, opacity: '1', placeholder: '— Sin asignar —' };
                     
-                    selectEl.disabled = uiState.isDisabled;
+                    const finalDisabledState = uiState.isDisabled || isActuallyReadonly;
+                    selectEl.disabled = finalDisabledState;
                     selectEl.style.opacity = uiState.opacity;
                     emptyOptNode.textContent = uiState.placeholder;
                     
@@ -46,7 +47,8 @@
                     
                     if (typeof selectEl.updateConfig === 'function') {
                         // S37.1 - Modern SearchableSingle Integration
-                        selectEl.updateConfig(freshFiltered, uiState.isDisabled, uiState.placeholder);
+                        const finalDisabledState = uiState.isDisabled || isActuallyReadonly;
+                        selectEl.updateConfig(freshFiltered, finalDisabledState, uiState.placeholder);
                     } else {
                         // Legacy HTML Select
                         const oldVal = selectEl.value;
@@ -81,6 +83,7 @@
             const fallbackContext = window.UI_FormUtils ? window.UI_FormUtils.extractDraftContext(entityName, currentPK) : null;
             const contextId = explicitContext || fallbackContext;
             const strictContext = !!explicitContext || entityName === 'Taxonomia';
+            const isActuallyReadonly = field.readonly && !strictContext;
             
             // [S55.1] Contextual List Wrapper
             const activeData = window.UI_FormUtils && window.UI_FormUtils.fetchContextualData 
@@ -138,6 +141,9 @@
                     if (rawLiveData === null || rawLiveData === undefined) {
                         multiNodes.setAttribute('is-loading', 'true');
                     }
+                    if (isActuallyReadonly) {
+                        multiNodes.setAttribute('disabled', 'true');
+                    }
 
                     if (window.AppEventBus) {
                         const reloadDatasetMulti = (ev) => {
@@ -164,7 +170,7 @@
                                 : freshLiveData.filter(d => d.estado !== 'Eliminado' && typeof d === 'object');
                             
                             if (typeof multiNodes.updateConfig === 'function') {
-                                multiNodes.updateConfig(freshActiveData, false);
+                                multiNodes.updateConfig(freshActiveData, isActuallyReadonly || false);
                             }
                         };
                         window.AppEventBus.subscribe('FormEngine::RecordHydrated', reloadDatasetMulti);
@@ -221,7 +227,7 @@
                     basicSel.setAttribute('data-skip-hydration', 'true');
                 }
                 
-                if (uiStateInit.isDisabled) {
+                if (uiStateInit.isDisabled || isActuallyReadonly) {
                     basicSel.setAttribute('disabled', 'true');
                 }
                 basicSel.style.opacity = uiStateInit.opacity;
@@ -294,7 +300,8 @@
                             const uiStateInit = window.SubgridState ? 
                                 window.SubgridState.evaluateFieldState(rules, cLvl, field.relationType) : 
                                 { isDisabled: false, opacity: '1', placeholder: '— Sin asignar —' };
-                            basicSel.updateConfig(freshFiltered, uiStateInit.isDisabled, uiStateInit.placeholder);
+                            const finalDisabledState = uiStateInit.isDisabled || isActuallyReadonly;
+                            basicSel.updateConfig(freshFiltered, finalDisabledState, uiStateInit.placeholder);
                         } else {
                             // Legacy ion-select rollback
                             const oldVal = basicSel.value || (initialValues.length > 0 ? initialValues[0] : null);
