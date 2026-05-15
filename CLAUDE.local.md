@@ -3,12 +3,10 @@
 > This file is for local preferences and overrides. It is not tracked by Git.
 
 ## Current Focus
-- **Epic E54 (Filtros Entidades)**: Completed.
-- **S54.1 (UI/UX Componente de Filtros)**: Completed.
-- **S54.2 (Lógica Base del Motor)**: Completed.
-- **S54.3 (Integración Wrapper)**: Completed.
-- **S54.4 (E2E & Campos Relacionales)**: Completed.
-- **Next focus:** Awaiting user instructions for the next Epic.
+- **Epic E53 (Taxonomia Visual Builder Canvas)**: Active.
+- **S53.7 (Value Stream Node)**: Completed.
+- **S53.8 (Canvas UX Refinements)**: Completed.
+- **Next focus:** Awaiting user instructions or proceeding to Epic Closure / E2E Integration (S53.4).
 
 ## Patterns
 
