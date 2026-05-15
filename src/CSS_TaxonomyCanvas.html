@@ -5,16 +5,17 @@
    ========================================================================== */
 
 .tax-canvas-container {
-    display: flex;
+    display: inline-flex;
     flex-direction: column;
     gap: 20px;
     padding: var(--spacing-6);
     background: var(--color-bg-body, #ffffff);
     border-radius: var(--radius-lg, 12px);
     box-shadow: 0 4px 12px rgba(0,0,0,0.02);
-    min-width: 800px;
-    overflow: hidden; /* Hide standard scroll */
-    width: 100%;
+    min-width: 100%;
+    min-height: 100%;
+    width: max-content;
+    height: max-content;
     transform-origin: 0 0;
 }
 
