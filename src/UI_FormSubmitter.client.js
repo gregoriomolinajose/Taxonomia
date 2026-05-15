@@ -136,7 +136,6 @@ window.UI_FormSubmitter = class UI_FormSubmitter {
 
             if (isDraftMode) {
 
-                const formSchema = window.APP_SCHEMAS && window.APP_SCHEMAS[this.entityName] ? window.APP_SCHEMAS[this.entityName] : null;
                 const fieldsConfig = formSchema ? (formSchema.fields || Object.keys(formSchema).map(k => ({name: k, ...formSchema[k]}))) : [];
                 const relationKeys = new Set(fieldsConfig.filter(f => f.type === 'relation').map(f => f.name));
 
@@ -204,7 +203,7 @@ window.UI_FormSubmitter = class UI_FormSubmitter {
                  }
             }
             
-            const formSchema = window.APP_SCHEMAS && window.APP_SCHEMAS[this.entityName] ? window.APP_SCHEMAS[this.entityName] : null;
+            // formSchema was already declared at line 131
             const fieldsConfig = formSchema ? (formSchema.fields || Object.keys(formSchema).map(k => ({name: k, ...formSchema[k]}))) : [];
             const temporalFields = fieldsConfig.filter(f => f.isTemporalGraph).reduce((acc, f) => { acc[f.name] = f; return acc; }, {});
 
