@@ -33,7 +33,6 @@ window.UI_BulkImporter = class UI_BulkImporter {
         const options = this.options;
         const container = document.createElement('div');
         container.className = 'etl-body';
-        container.style.height = '100%';
         container.style.width = '100%';
 
         // --- SECTION 0: Fuente de Datos (Radio Cards) ---
