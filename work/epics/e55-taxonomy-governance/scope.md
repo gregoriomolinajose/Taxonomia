@@ -59,7 +59,7 @@ Transition from a distributed entity-relationship model to a centralized, visual
 |-------|------|--------|--------|----------|-------|
 | S55.1 | S | Done | 20m | 2.0x | Foundation for governance |
 | S55.3 | M | Done | 15m | 2.0x | Core logic risk resolved |
-| S55.4 | M | Pending | - | - | Depends on S55.3 |
-| S55.5 | M | Pending | - | - | E2E Integration |
+| S55.4 | M | Descoped | - | - | Postponed by user |
+| S55.5 | M | Descoped | - | - | Postponed by user |
 | S55.2 | S | Done | 15m | 2.5x | UX enhancement |
 | S55.6 | S | Done | 20m | 2.0x | Autoguardado universal |
