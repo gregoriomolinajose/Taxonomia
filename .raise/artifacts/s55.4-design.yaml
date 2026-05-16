@@ -1,0 +1,37 @@
+artifact_type: story-design
+version: 1
+skill: rai-story-design
+created: '2026-05-16T03:51:00Z'
+story: 'S55.4'
+epic: 'E55'
+content:
+  summary: 'Modal UI para visualizar adiciones y remociones topológicas antes de publicar la Taxonomía.'
+  complexity: moderate
+  acceptance_criteria:
+    - id: AC1
+      description: 'Modal renderiza sección verde para adiciones'
+      verifiable: true
+    - id: AC2
+      description: 'Modal renderiza sección roja para eliminaciones'
+      verifiable: true
+    - id: AC3
+      description: 'Nombres resueltos desde DataStore en lugar de UUIDs'
+      verifiable: true
+    - id: AC4
+      description: 'Botón Confirmar despacha el evento de publicación'
+      verifiable: true
+  integration_points:
+    - module: 'JS_GraphUtils.client'
+      change_type: modification
+      files: ['src/JS_GraphUtils.client.js']
+    - module: 'UI_FormStepper.client'
+      change_type: modification
+      files: ['src/UI_FormStepper.client.js']
+  decisions:
+    - id: D1
+      choice: 'Cálculo de Diff en el cliente (Navegador)'
+      rationale: 'Evita latencia de red, ya que el estado borrador y activo ya están precargados en el DataStore durante el arranque de la SPA.'
+      alternatives_considered: ['Solicitar diff al servidor mediante google.script.run']
+refs:
+  epic_scope: 'work/epics/e55-taxonomy-governance/scope.md'
+metadata: {}
