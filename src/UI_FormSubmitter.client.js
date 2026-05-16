@@ -135,6 +135,11 @@ window.UI_FormSubmitter = class UI_FormSubmitter {
             }
 
             if (isDraftMode) {
+                
+                // [S50.2] Force root entity to Draft state if it's a Taxonomia
+                if (this.entityName === 'Taxonomia') {
+                    payload.estado = 'Borrador';
+                }
 
                 const fieldsConfig = formSchema ? (formSchema.fields || Object.keys(formSchema).map(k => ({name: k, ...formSchema[k]}))) : [];
                 const relationKeys = new Set(fieldsConfig.filter(f => f.type === 'relation').map(f => f.name));
