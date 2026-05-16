@@ -344,10 +344,10 @@
                             
                             // S55.5: Backend Activation Trigger
                             if (global.showToast) global.showToast('Aprobando taxonomía...', 'medium');
-                            google.script.run
-                                .withSuccessHandler((res) => {
-                                    try {
-                                        const parsed = typeof res === 'string' ? JSON.parse(res) : res;
+                            
+                            if (window.DataAPI && window.DataAPI.call) {
+                                window.DataAPI.call('API_Universal_Router', 'publish_draft_context', 'Taxonomia', { contextId: localEditId })
+                                    .then((parsed) => {
                                         if (parsed && parsed.status === 'success') {
                                             if (global.showToast) global.showToast('Taxonomía aprobada exitosamente', 'success');
                                             if (global.DrawerStackController) global.DrawerStackController.clearAllSync();
@@ -359,14 +359,13 @@
                                         } else {
                                             if (global.showToast) global.showToast('Error: ' + (parsed.message || 'Desconocido'), 'danger');
                                         }
-                                    } catch(e) {
-                                        if (global.showToast) global.showToast('Error en la respuesta del servidor', 'danger');
-                                    }
-                                })
-                                .withFailureHandler((err) => {
-                                    if (global.showToast) global.showToast('Falla de red: ' + err, 'danger');
-                                })
-                                .api_router('publish_draft_context', { contextId: localEditId });
+                                    })
+                                    .catch((err) => {
+                                        if (global.showToast) global.showToast('Falla de red: ' + err, 'danger');
+                                    });
+                            } else {
+                                if (global.showToast) global.showToast('Error: DataAPI no está disponible', 'danger');
+                            }
                         });
                     });
                 }
