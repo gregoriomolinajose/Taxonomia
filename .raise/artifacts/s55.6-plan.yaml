@@ -1,0 +1,17 @@
+artifact_type: story-plan
+version: 1
+skill: rai-story-plan
+created: '2026-05-16T06:15:30Z'
+story: 'S55.6'
+epic: 'E55'
+content:
+  summary: 'Implementar el autoguardado global en UI_FormStepper para transiciones de wizard.'
+  tasks:
+    - id: T1
+      description: 'Refactorizar goToSection en UI_FormStepper.client.js para remover restricción específica de Taxonomía y aplicar autoguardado a toda transición de paso.'
+      assigned_to: 'antigravity'
+      status: 'pending'
+      dependencies: []
+refs:
+  design_artifact: '.raise/artifacts/s55.6-design.yaml'
+metadata: {}

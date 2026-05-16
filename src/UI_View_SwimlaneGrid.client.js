@@ -106,15 +106,26 @@ window.UI_View_SwimlaneGrid = {
         
         if (input) {
             currentUnidadId = typeof input.getValidatedValue === 'function' ? input.getValidatedValue() : input.value;
-            if (currentUnidadId && String(currentUnidadId).trim() !== '') {
-                edges.push({
-                    id_nodo_padre: currentUnidadId,
-                    id_nodo_hijo: this.taxonomiaId,
-                    tipo_relacion: 'TAXONOMIA_UNIDAD',
-                    es_version_actual: 'true',
-                    contexto_id: this.taxonomiaId
-                });
+        }
+
+        if (!currentUnidadId || String(currentUnidadId).trim() === '') {
+            if (window.DataStore && this.taxonomiaId) {
+                const taxDS = window.DataStore.get('Taxonomia') || [];
+                const taxRec = taxDS.find(t => String(t.id_taxonomia) === String(this.taxonomiaId) || String(t.id_registro) === String(this.taxonomiaId));
+                if (taxRec && taxRec.id_unidad_negocio) {
+                    currentUnidadId = taxRec.id_unidad_negocio;
+                }
             }
+        }
+
+        if (currentUnidadId && String(currentUnidadId).trim() !== '') {
+            edges.push({
+                id_nodo_padre: currentUnidadId,
+                id_nodo_hijo: this.taxonomiaId,
+                tipo_relacion: 'TAXONOMIA_UNIDAD',
+                es_version_actual: 'true',
+                contexto_id: this.taxonomiaId
+            });
         }
 
         // 2. Extraer aristas de los formularios hijos en los Drawers de forma optimista (Config-Driven)
@@ -167,7 +178,7 @@ window.UI_View_SwimlaneGrid = {
         const rootEdge = edges.find(e => 
             String(e.id_nodo_hijo) === String(this.taxonomiaId) && 
             e.tipo_relacion === 'TAXONOMIA_UNIDAD' &&
-            String(e.es_version_actual) === 'true'
+            String(e.es_version_actual).toLowerCase() === 'true'
         );
 
         if (!rootEdge) {

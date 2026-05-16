@@ -263,7 +263,7 @@ const Engine_DB = {
         if (schema) {
             const fields = schema.fields || (typeof schema === 'object' ? Object.keys(schema).map(k => ({ name: k, ...schema[k] })) : []);
             fields.forEach(f => {
-                if (f.type === 'relation' && payload[f.name] !== undefined) {
+                if ((f.type === 'relation' || f.isTemporalGraph) && payload[f.name] !== undefined) {
                     let relData = payload[f.name];
                     
                     // Normalización de escalares provenientes de uiComponent: 'select_single'
@@ -294,7 +294,7 @@ const Engine_DB = {
             if (!tempParentPK && payload.id) tempParentPK = payload.id;
             
             fields.forEach(f => {
-                if (f.type === 'relation' && nestedData[f.name] && f.isTemporalGraph && typeof Engine_Graph !== 'undefined') {
+                if ((f.type === 'relation' || f.isTemporalGraph) && nestedData[f.name] && f.isTemporalGraph && typeof Engine_Graph !== 'undefined') {
                     const children = nestedData[f.name];
                     // [S27.4/Rx] Clone rules to prevent memory leaks across subgrids (State Mutation Bug)
                     let baseRules = (typeof getEntityTopologyRules !== 'undefined') ? getEntityTopologyRules(entityName) : null;
@@ -433,7 +433,7 @@ const Engine_DB = {
         if (schema) {
             const fields = schema.fields || (typeof schema === 'object' ? Object.keys(schema).map(k => ({ name: k, ...schema[k] })) : []);
             fields.forEach(f => {
-                if (f.type === 'relation' && nestedData[f.name]) {
+                if ((f.type === 'relation' || f.isTemporalGraph) && nestedData[f.name]) {
                     const children = nestedData[f.name];
                     const targetEntity = f.targetEntity;
                     const fkField = f.foreignKey;
@@ -520,8 +520,8 @@ const Engine_DB = {
                                 valido_desde: child.valido_desde || new Date().toISOString(),
                                 valido_hasta: child.valido_hasta || "",
                                 es_version_actual: child.es_version_actual !== undefined ? child.es_version_actual : true,
-                                estado: child._estado_arista || child.estado || "Activo",
-                                contexto_id: child._contexto_arista || child.contexto_id || ""
+                                estado: child._estado_arista || child.estado || flatPayload.estado || "Activo",
+                                contexto_id: child._contexto_arista || child.contexto_id || flatPayload._work_context || ""
                             };
                             return edgePayload;
                         });
@@ -803,7 +803,7 @@ const Engine_DB = {
         const taxRecords = taxRes && taxRes.rows ? taxRes.rows : [];
         const taxRecord = taxRecords.find(r => r.id_registro === contextId || r.id_taxonomia === contextId);
         if (taxRecord) {
-            taxRecord.estado = 'Validado';
+            taxRecord.estado = 'Activo';
             taxRecord.updated_at = sysDate;
             _Adapter_Sheets.upsertBatch('Taxonomia', [taxRecord], { isVolatile: false });
             _invalidateCache('Taxonomia');
@@ -816,7 +816,7 @@ const Engine_DB = {
         
         if (edgesToUpdate.length > 0) {
             edgesToUpdate.forEach(e => {
-                e.estado = 'Validado';
+                e.estado = 'Activo';
                 e.updated_at = sysDate;
             });
             _Adapter_Sheets.upsertBatch('Sys_Graph_Edges', edgesToUpdate, { isVolatile: false });

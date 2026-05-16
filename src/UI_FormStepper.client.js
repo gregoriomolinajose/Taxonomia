@@ -330,6 +330,43 @@ window.UI_FormStepper = class UI_FormStepper {
     goToSection(targetSectionName) {
         let newIdx = this.steps.indexOf(targetSectionName);
         if (newIdx === -1) newIdx = 0;
+
+        // S55.6: Autoguardado Universal para transiciones de Wizard
+        if (this.btnSubmit && this.btnSubmit._formSubmitterInstance && newIdx !== this.currentStepIndex) {
+            if (this.btnNext) this.btnNext.disabled = true;
+            this.btnSubmit.disabled = true;
+            
+            const submitter = this.btnSubmit._formSubmitterInstance;
+            submitter._isSilent = true; // Auto-guardar silenciosamente (isFormModal = false virtual)
+            
+            // Suscribirse a los eventos de éxito o error
+            const unsubSuccess = window.AppEventBus.subscribe('FORM::SUBMIT_SUCCESS', () => {
+                cleanup();
+                this._executeSectionTransition(newIdx, targetSectionName);
+            });
+            
+            const unsubError = window.AppEventBus.subscribe('FORM::SUBMIT_ERROR', () => {
+                cleanup();
+                console.warn("[Stepper] Autoguardado Universal: Fallo el autoguardado en la transición de paso.");
+            });
+            
+            const cleanup = () => {
+                if (typeof unsubSuccess === 'function') unsubSuccess();
+                if (typeof unsubError === 'function') unsubError();
+                submitter._isSilent = false;
+                if (this.btnNext) this.btnNext.disabled = false;
+                if (this.btnSubmit) this.btnSubmit.disabled = false;
+            };
+
+            // Disparar envío optimista asincrono
+            this.btnSubmit.click();
+            return;
+        }
+
+        this._executeSectionTransition(newIdx, targetSectionName);
+    }
+
+    _executeSectionTransition(newIdx, targetSectionName) {
         this.currentStepIndex = newIdx;
 
         Object.keys(this.stepContainers).forEach(key => {

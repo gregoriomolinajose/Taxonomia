@@ -18,8 +18,10 @@ window.UI_FormSubmitter = class UI_FormSubmitter {
         this._internalRetryId = localEditId;
         
         this.isSaving = false;
+        this._isSilent = false; // Flag para auto-guardado sin cerrar modal
 
         this._attachSubmitListener();
+        if (this.submitBtn) this.submitBtn._formSubmitterInstance = this;
     }
 
     _attachSubmitListener() {
@@ -135,6 +137,11 @@ window.UI_FormSubmitter = class UI_FormSubmitter {
             }
 
             if (isDraftMode) {
+                
+                // [S50.2] Force root entity to Draft state if it's a Taxonomia
+                if (this.entityName === 'Taxonomia') {
+                    payload.estado = 'Borrador';
+                }
 
                 const fieldsConfig = formSchema ? (formSchema.fields || Object.keys(formSchema).map(k => ({name: k, ...formSchema[k]}))) : [];
                 const relationKeys = new Set(fieldsConfig.filter(f => f.type === 'relation').map(f => f.name));
@@ -419,6 +426,7 @@ window.UI_FormSubmitter = class UI_FormSubmitter {
         }
         console.error("OPTIMISTIC_ROLLBACK", issueDesc);
         this._showToast(`⚠️ Rollback Automático: ${issueDesc}. Tus cambios temporales visuales fueron desechados.`, 'danger');
+        if (window.AppEventBus) window.AppEventBus.publish('FORM::SUBMIT_ERROR', { entityName: this.entityName, error: issueDesc });
     }
 
 
@@ -435,11 +443,8 @@ window.UI_FormSubmitter = class UI_FormSubmitter {
     _performSuccessCleanup(response, isInlineRendered) {
         this._revertButtonState();
         this._internalRetryId = null; // Liberar caché de reintentos
-
-        // S49.4 Broadcast success event for global listeners (e.g. SelfService_Home_UI modal close)
-        if (window.AppEventBus) {
-            window.AppEventBus.publish('FORM::SUBMIT_SUCCESS', { entityName: this.entityName, response: response });
-        }
+        
+        const wasSilent = this._isSilent; // Cachear para evitar que los suscriptores muten el estado prematuramente
 
         if (window.DataStore) {
             // [S29.7] window.DataStore.clearNested() extirpado. Los Subgrids ahora son stateless.
@@ -451,18 +456,24 @@ window.UI_FormSubmitter = class UI_FormSubmitter {
                 window.FormEngine_Resolvers.invalidateCache();
             }
         }
-        // Cerramos el Modal
-        if (window._closeTopModal) {
+        // Cerramos el Modal si no estamos en auto-guardado silencioso
+        if (window._closeTopModal && !wasSilent) {
             window._closeTopModal();
         }
 
         // Enrutamiento post-Guardado Inmediato
-        if (!isInlineRendered && (!window.ModalStackController || window.ModalStackController.getDepth() === 0)) {
+        if (!isInlineRendered && !wasSilent && (!window.ModalStackController || window.ModalStackController.getDepth() === 0)) {
             if (window.AppEventBus) {
                 window.AppEventBus.publish('NAV::CHANGE', {viewType: 'dataview', entityKey: this.entityName});
             } else if (window.onSaveSuccessCallback) {
                 window.onSaveSuccessCallback();
             }
+        }
+
+        // S49.4 Broadcast success event for global listeners (e.g. SelfService_Home_UI modal close)
+        // Publicado al final para que los subscriptores (ej. Stepper) puedan mutar _isSilent sin afectar la lógica anterior.
+        if (window.AppEventBus) {
+            window.AppEventBus.publish('FORM::SUBMIT_SUCCESS', { entityName: this.entityName, response: response, isSilent: wasSilent });
         }
     }
 
