@@ -83,6 +83,15 @@ function API_Universal_Router(action, entityName, payload) {
       return JSON.stringify({ status: "success", data: responseData, action });
     }
 
+    if (action === 'etl_inspect_sheet') {
+      if (typeof _guardAbac === 'function') {
+         _guardAbac('create', entityName, null);
+      }
+      if (!payload || !payload.url) throw new Error("Parámetro URL faltante en request ETL.");
+      responseData = Engine_ETL.inspectDriveSheet(entityName, payload.url);
+      return JSON.stringify({ status: "success", data: responseData, action });
+    }
+
     if (action === 'create') {
       if (!payload[pkField] || String(payload[pkField]).trim() === '') {
         payload[pkField] = _generateShortUUID(entityName);
