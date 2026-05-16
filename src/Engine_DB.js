@@ -520,8 +520,8 @@ const Engine_DB = {
                                 valido_desde: child.valido_desde || new Date().toISOString(),
                                 valido_hasta: child.valido_hasta || "",
                                 es_version_actual: child.es_version_actual !== undefined ? child.es_version_actual : true,
-                                estado: child._estado_arista || child.estado || "Activo",
-                                contexto_id: child._contexto_arista || child.contexto_id || ""
+                                estado: child._estado_arista || child.estado || flatPayload.estado || "Activo",
+                                contexto_id: child._contexto_arista || child.contexto_id || flatPayload._work_context || ""
                             };
                             return edgePayload;
                         });
