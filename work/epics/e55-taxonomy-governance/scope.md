@@ -22,6 +22,7 @@ Transition from a distributed entity-relationship model to a centralized, visual
 - **[x] S55.3 - Motor de Diffing de Grafos (Lógica) ✓:** Lógica que compara el Borrador vs Producción retornando el Delta (Add/Remove/Keep).
 - **S55.4 - UI de Resumen de Impacto (Deployment Preview):** Diseño del modal de aprobación visualizando los cambios topológicos.
 - **S55.5 - Transacción de Despliegue (Activation):** Backend ETL que aprueba y publica atómicamente la nueva estructura.
+- **S55.6 - Autoguardado Universal en el Wizard:** Generalizar el interceptor de transición creado para la Taxonomía, de forma que cualquier entidad con layout tipo Stepper guarde su progreso automáticamente al cambiar de paso.
 
 ## Done Criteria
 - 100% of topological relations can only be edited via the Taxonomia Canvas.
@@ -61,3 +62,4 @@ Transition from a distributed entity-relationship model to a centralized, visual
 | S55.4 | M | Pending | - | - | Depends on S55.3 |
 | S55.5 | M | Pending | - | - | E2E Integration |
 | S55.2 | S | Done | 15m | 2.5x | UX enhancement |
+| S55.6 | S | Done | 20m | 2.0x | Autoguardado universal |

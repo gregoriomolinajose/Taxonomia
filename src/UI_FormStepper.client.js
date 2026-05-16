@@ -330,6 +330,30 @@ window.UI_FormStepper = class UI_FormStepper {
     goToSection(targetSectionName) {
         let newIdx = this.steps.indexOf(targetSectionName);
         if (newIdx === -1) newIdx = 0;
+
+        // S55.6: Autoguardado Universal para transiciones de Wizard
+        if (window.FormEngine && newIdx !== this.currentStepIndex) {
+            if (this.btnNext) this.btnNext.disabled = true;
+            if (this.btnSubmit) this.btnSubmit.disabled = true;
+            
+            // Auto-guardar silenciosamente (isFormModal = false)
+            window.FormEngine.saveForm(null, this.cardContent, this.entityName, (success, resp) => {
+                if (this.btnNext) this.btnNext.disabled = false;
+                if (this.btnSubmit) this.btnSubmit.disabled = false;
+                
+                if (success) {
+                    this._executeSectionTransition(newIdx, targetSectionName);
+                } else {
+                    console.warn("[Stepper] Autoguardado Universal: Fallo el autoguardado en la transición de paso.");
+                }
+            }, this.btnSubmit, false);
+            return;
+        }
+
+        this._executeSectionTransition(newIdx, targetSectionName);
+    }
+
+    _executeSectionTransition(newIdx, targetSectionName) {
         this.currentStepIndex = newIdx;
 
         Object.keys(this.stepContainers).forEach(key => {
