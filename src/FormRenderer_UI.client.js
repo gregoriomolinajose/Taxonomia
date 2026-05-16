@@ -277,11 +277,13 @@
                         
                         // Node ID to Readable Name Resolver
                         const resolveName = (id) => {
-                            const undns = window.DataStore.get('Unidad_Negocio') || [];
-                            const ports = window.DataStore.get('Portafolio') || [];
-                            let match = undns.find(u => String(u.id_unidad_negocio) === String(id) || String(u.id_registro) === String(id));
-                            if (!match) match = ports.find(p => String(p.id_portafolio) === String(id) || String(p.id_registro) === String(id));
-                            return match ? (match.nombre || match.id_registro || id) : id;
+                            const entities = ['Unidad_Negocio', 'Portafolio', 'Value_Stream', 'Grupo_Producto', 'Producto'];
+                            for (const entity of entities) {
+                                const store = window.DataStore.get(entity) || [];
+                                const match = store.find(r => String(r.id_registro) === String(id) || String(r['id_' + entity.toLowerCase()]) === String(id));
+                                if (match) return match.nombre || match.nombre_producto || match.id_registro || id;
+                            }
+                            return id;
                         };
 
                         const modalEl = document.createElement('ion-modal');
