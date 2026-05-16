@@ -249,8 +249,10 @@
 
             // [S50.4] Mass Approval Button
             let approveBtn = null;
-            if (entityName === 'Taxonomia' && data && data.estado === 'Borrador') {
-                const canApprove = !window.ABAC || window.ABAC.can('update', 'Taxonomia', localEditId);
+            const isDraftTaxonomy = entityName === 'Taxonomia' && (!data || data.estado === 'Borrador');
+            
+            if (isDraftTaxonomy) {
+                const canApprove = !window.ABAC || window.ABAC.can('update', 'Taxonomia', localEditId) || window.ABAC.can('create', 'Taxonomia', localEditId);
                 if (canApprove) {
                     approveBtn = document.createElement('ion-button');
                     approveBtn.setAttribute('shape', 'round');
