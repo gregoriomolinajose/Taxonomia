@@ -392,7 +392,7 @@ window.UI_FormStepper = class UI_FormStepper {
         const layoutColRight = document.getElementById('wizard-col-right');
         
         if ((drawerNode || isFullscreenZone) && this.entityName === 'Taxonomia') {
-            if (this.currentStepIndex >= 1) { // Paso 2+
+            if (this.currentStepIndex === this.steps.length - 1) { // Último Paso (Canvas)
                 if (drawerNode) {
                     drawerNode.classList.add('fullscreen');
                     drawerNode.classList.add('drawer-fullscreen'); // Para reglas específicas del split
