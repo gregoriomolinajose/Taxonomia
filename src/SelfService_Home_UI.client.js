@@ -30,44 +30,15 @@ window.SelfService_Home_UI = {
                     z-index: 0;
                 }
 
-                /* Orbs for iOS style background blur */
-                .self-service-container::before,
-                .self-service-container::after {
-                    content: '';
+                #taxonomy-network-canvas {
                     position: absolute;
-                    border-radius: 50%;
-                    filter: blur(80px);
-                    -webkit-filter: blur(80px);
-                    z-index: -1;
-                    opacity: 0.6;
-                }
-
-                .self-service-container::before {
-                    width: 60vw;
-                    height: 60vw;
-                    background: radial-gradient(circle, rgba(235,225,255,1) 0%, rgba(250,251,252,0) 70%);
-                    top: -20vh;
-                    left: -10vw;
-                }
-
-                .self-service-container::after {
-                    width: 50vw;
-                    height: 50vw;
-                    background: radial-gradient(circle, rgba(250,230,250,1) 0%, rgba(250,251,252,0) 70%);
-                    bottom: -10vh;
-                    right: -10vw;
+                    top: 0; left: 0; width: 100%; height: 100%;
+                    z-index: 0;
+                    pointer-events: none;
                 }
 
                 body.dark .self-service-container {
                     background-color: #0b0c10;
-                }
-
-                body.dark .self-service-container::before {
-                    background: radial-gradient(circle, rgba(60,40,90,0.5) 0%, rgba(11,12,16,0) 70%);
-                }
-
-                body.dark .self-service-container::after {
-                    background: radial-gradient(circle, rgba(80,30,80,0.5) 0%, rgba(11,12,16,0) 70%);
                 }
 
                 .hero-content {
@@ -147,9 +118,10 @@ window.SelfService_Home_UI = {
         const wrapper = document.createElement('div');
         wrapper.className = 'self-service-container';
         wrapper.innerHTML = `
+            <canvas id="taxonomy-network-canvas"></canvas>
             <div class="hero-content">
-                <h1 class="premium-title">Taxonomía Organizacional para Negocios</h1>
-                <p class="premium-subtitle">Descubre el poder del diseño organizacional guiado. Orquesta portafolios, productos y capacidades en un entorno fluido y enfocado.</p>
+                <h1 class="premium-title">Taxonomía de Portafolio para Negocios</h1>
+                <p class="premium-subtitle">Descubre el poder del diseñar la taxonomía en tu portafolio. Orquesta portafolios, productos y capacidades en un entornos fluido y enfocado.</p>
                 <ion-button id="btn-start-wizard" class="ios-btn">
                     Diseñar Nueva Taxonomía
                     <ion-icon name="arrow-forward-outline" slot="end"></ion-icon>
@@ -167,6 +139,132 @@ window.SelfService_Home_UI = {
                     window.AppEventBus.publish('NAV::CHANGE', {viewType: 'wizard'});
                 }
             });
+        }
+
+        // --- Network Canvas Logic ---
+        const canvas = wrapper.querySelector('#taxonomy-network-canvas');
+        if (canvas) {
+            const ctx = canvas.getContext('2d');
+            let particles = [];
+            let w = 0;
+            let h = 0;
+            let reqId;
+            let isRunning = false;
+            
+            const isDark = document.body.classList.contains('dark');
+            const nodeColor = isDark ? 'rgba(255, 255, 255, 0.4)' : 'rgba(43, 33, 97, 0.3)';
+            const lineBase = isDark ? '255, 255, 255' : '43, 33, 97';
+            
+            const numParticles = Math.min(Math.floor(window.innerWidth / 15), 150);
+            const connectionDistance = 150;
+            let mouse = { x: null, y: null };
+            
+            wrapper.addEventListener('mousemove', (e) => {
+                const rect = wrapper.getBoundingClientRect();
+                mouse.x = e.clientX - rect.left;
+                mouse.y = e.clientY - rect.top;
+            });
+            wrapper.addEventListener('mouseleave', () => {
+                mouse.x = null;
+                mouse.y = null;
+            });
+            
+            class Particle {
+                constructor() {
+                    this.x = Math.random() * (w || window.innerWidth);
+                    this.y = Math.random() * (h || window.innerHeight);
+                    this.vx = (Math.random() - 0.5) * 0.6;
+                    this.vy = (Math.random() - 0.5) * 0.6;
+                    this.radius = Math.random() * 2 + 1;
+                }
+                update() {
+                    this.x += this.vx;
+                    this.y += this.vy;
+                    if (this.x < 0 || this.x > w) this.vx *= -1;
+                    if (this.y < 0 || this.y > h) this.vy *= -1;
+                }
+                draw() {
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                    ctx.fillStyle = nodeColor;
+                    ctx.fill();
+                }
+            }
+            
+            function animate() {
+                if (!canvas.isConnected) {
+                    isRunning = false;
+                    return;
+                }
+                
+                ctx.clearRect(0, 0, w, h);
+                
+                for (let i = 0; i < particles.length; i++) {
+                    particles[i].update();
+                    particles[i].draw();
+                    
+                    for (let j = i + 1; j < particles.length; j++) {
+                        const dx = particles[i].x - particles[j].x;
+                        const dy = particles[i].y - particles[j].y;
+                        const dist = Math.sqrt(dx*dx + dy*dy);
+                        
+                        if (dist < connectionDistance) {
+                            ctx.beginPath();
+                            ctx.strokeStyle = 'rgba(' + lineBase + ', ' + ((1 - dist/connectionDistance) * 0.25) + ')';
+                            ctx.lineWidth = 0.8;
+                            ctx.moveTo(particles[i].x, particles[i].y);
+                            ctx.lineTo(particles[j].x, particles[j].y);
+                            ctx.stroke();
+                        }
+                    }
+                    
+                    if (mouse.x !== null) {
+                        const dx = particles[i].x - mouse.x;
+                        const dy = particles[i].y - mouse.y;
+                        const dist = Math.sqrt(dx*dx + dy*dy);
+                        if (dist < connectionDistance + 50) {
+                            ctx.beginPath();
+                            ctx.strokeStyle = 'rgba(' + lineBase + ', ' + ((1 - dist/(connectionDistance + 50)) * 0.4) + ')';
+                            ctx.lineWidth = 1.2;
+                            ctx.moveTo(particles[i].x, particles[i].y);
+                            ctx.lineTo(mouse.x, mouse.y);
+                            ctx.stroke();
+                            
+                            // Slight attraction
+                            particles[i].x -= dx * 0.005;
+                            particles[i].y -= dy * 0.005;
+                        }
+                    }
+                }
+                
+                if (isRunning) {
+                    reqId = requestAnimationFrame(animate);
+                }
+            }
+            
+            // ResizeObserver garantiza que el canvas se dibuje solo cuando el contenedor
+            // sea visible en el DOM y tenga dimensiones > 0
+            const observer = new ResizeObserver(entries => {
+                for (let entry of entries) {
+                    if (entry.contentRect.width > 0 && entry.contentRect.height > 0) {
+                        w = entry.contentRect.width;
+                        h = entry.contentRect.height;
+                        canvas.width = w;
+                        canvas.height = h;
+                        
+                        if (particles.length === 0) {
+                            for (let i = 0; i < numParticles; i++) particles.push(new Particle());
+                        }
+                        
+                        if (!isRunning && canvas.isConnected) {
+                            isRunning = true;
+                            animate();
+                        }
+                    }
+                }
+            });
+            
+            observer.observe(wrapper);
         }
     }
 };

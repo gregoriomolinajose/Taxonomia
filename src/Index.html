@@ -92,8 +92,6 @@
   <!-- ApexCharts -->
   <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
 
-  <!-- ECharts (S6.1 Domain Sunburst Map) -->
-  <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
 
   <!-- SheetJS (S47.1 Excel/XLSX Parser) -->
   <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
@@ -228,16 +226,19 @@
                 <ion-icon slot="icon-only" name="arrow-back-outline"></ion-icon>
               </ion-button>
             </ion-buttons>
-            <!-- S22.2 Omnibar Búsqueda Global -->
-            <div style="flex: 1; display: flex; justify-content: center; align-items: center; padding: 0 16px; min-height: var(--toolbar-standard-height, 56px);">
-              <ion-searchbar id="global-omnibar" class="hide-on-mobile" placeholder="Buscar en Plataforma..." mode="ios" show-clear-button="focus" style="max-width: 600px; padding-top: 0; padding-bottom: 0; --border-radius: 6px; --box-shadow: none; --background: var(--ion-color-secondary); --color: var(--ion-text-color); border: none; border-radius: 6px;"></ion-searchbar>
+            <!-- Top Segments for Layout Navigation -->
+            <div style="display: flex; justify-content: flex-start; align-items: center; min-height: var(--toolbar-standard-height, 56px);">
+              <ion-segment mode="ios" value="selfservice" id="main-layout-segment" class="main-layout-segment" style="width: auto;">
+                <ion-segment-button value="selfservice">
+                  <ion-label>Inicio</ion-label>
+                </ion-segment-button>
+                <ion-segment-button value="dashboard">
+                  <ion-label>App</ion-label>
+                </ion-segment-button>
+              </ion-segment>
             </div>
             
             <ion-buttons slot="end">
-              <!-- S49.3: Punto de acceso al portal de negocio (Self-Service) -->
-              <ion-button fill="clear" data-action="nav:self-service" title="Modo Negocio">
-                <ion-icon slot="icon-only" name="business-outline" color="tertiary"></ion-icon>
-              </ion-button>
               <ion-button fill="clear" data-action="theme:cycle" title="Cambiar Tema">
                 <ion-icon id="theme-toggle-icon" slot="icon-only" name="moon-outline"></ion-icon>
               </ion-button>
@@ -296,28 +297,7 @@
           <div id="app-container">
             <ion-grid>
               <!-- Welcome Removed by S22.3 -->
-              <!-- Filtro Portafolio -->
-              <ion-row id="dashboard-filter-container" class="ion-justify-content-end ion-padding-horizontal ion-hide">
-                <ion-col size="12" size-md="4" class="ion-padding-bottom">
-                  <ion-item lines="none" class="ion-no-padding" style="--background:transparent;">
-                    <ion-select id="dashboard-portfolio-filter" interface="popover" placeholder="Todos los Portafolios"
-                      style="width:100%;max-width:100%;font-weight:600;font-size:1.1em;color:var(--ion-color-primary);">
-                      <ion-select-option value="all">TODOS LOS PORTAFOLIOS</ion-select-option>
-                    </ion-select>
-                  </ion-item>
-                </ion-col>
-              </ion-row>
-              <!-- Charts -->
-              <ion-row id="dashboard-charts-container" class="ion-hide">
-                <ion-col size="12" size-md="6" class="ion-padding-bottom">
-                  <ion-card style="height:100%;"><ion-card-header><ion-card-title>Distribución Metodológica</ion-card-title></ion-card-header>
-                    <ion-card-content><div id="chart-topology"></div></ion-card-content></ion-card>
-                </ion-col>
-                <ion-col size="12" size-md="6" class="ion-padding-bottom">
-                  <ion-card style="height:100%;"><ion-card-header><ion-card-title>Capacidad por Equipo</ion-card-title></ion-card-header>
-                    <ion-card-content><div id="chart-capacity"></div></ion-card-content></ion-card>
-                </ion-col>
-              </ion-row>
+              <!-- Charts removed by S55.2 redesign -->
               <!-- Entity Cards -->
               <ion-row class="ion-justify-content-center" id="dashboard-cards-container"></ion-row>
             </ion-grid>
@@ -372,26 +352,7 @@
   <template id="tmpl-dashboard">
     <ion-grid>
       <ion-row class="ion-justify-content-center" id="dashboard-cards-container"></ion-row>
-      <ion-row id="dashboard-filter-container" class="ion-justify-content-end ion-padding-horizontal ion-hide">
-        <ion-col size="12" size-md="4" class="ion-padding-bottom">
-          <ion-item lines="none" class="ion-no-padding" style="--background:transparent;">
-            <ion-select id="dashboard-portfolio-filter" interface="popover" placeholder="Todos los Portafolios"
-              style="width:100%;max-width:100%;font-weight:600;font-size:1.1em;color:var(--ion-color-primary);">
-              <ion-select-option value="all">TODOS LOS PORTAFOLIOS</ion-select-option>
-            </ion-select>
-          </ion-item>
-        </ion-col>
-      </ion-row>
-      <ion-row id="dashboard-charts-container" class="ion-hide">
-        <ion-col size="12" size-md="6" class="ion-padding-bottom">
-          <ion-card style="height:100%;"><ion-card-header><ion-card-title>Distribución Metodológica</ion-card-title></ion-card-header>
-            <ion-card-content><div id="chart-topology"></div></ion-card-content></ion-card>
-        </ion-col>
-        <ion-col size="12" size-md="6" class="ion-padding-bottom">
-          <ion-card style="height:100%;"><ion-card-header><ion-card-title>Capacidad por Equipo</ion-card-title></ion-card-header>
-            <ion-card-content><div id="chart-capacity"></div></ion-card-content></ion-card>
-        </ion-col>
-      </ion-row>
+      <!-- Charts removed by S55.2 redesign -->
 
     </ion-grid>
   </template>
@@ -406,19 +367,7 @@
     </div>
   </template>
 
-  <template id="tmpl-capacity-map">
-    <div id="capacity-map-canvas" class="ion-page">
-      <ion-header class="ion-no-border">
-        <ion-toolbar>
-          <ion-title>Mapa de Capacidad E2E</ion-title>
-        </ion-toolbar>
-      </ion-header>
-      <ion-content class="ion-padding" id="capacity-map-content">
-        <!-- Mapa Renderizado Dinámicamente -->
-      </ion-content>
-    </div>
-  </template>
-
+  <!-- Map Templates removed by S55.2 redesign -->
   <!-- MOTORES LOGICOS (Regla UI §14) -->
   <?!= include('JS_SchemaUtils'); ?>
   <?!= include('JS_GraphUtils'); ?>
@@ -454,11 +403,10 @@
   <?!= include('UI_DataView_Toolbar'); ?>
   <?!= include('DataView_DragDrop'); ?>
   <?!= include('UI_View_Tree'); ?>
-  <?!= include('UI_View_ECharts'); ?>
+
   <?!= include('DataView_UI'); ?>
   <?!= include('Dashboard_UI'); ?>
-  <?!= include('DomainMap_UI'); ?>
-  <?!= include('UI_View_CapacityMap'); ?>
+  <!-- Maps removed by S55.2 redesign -->
   <?!= include('UI_View_SwimlaneGrid'); ?>
   <?!= include('DesignKit_UI'); ?>
   <?!= include('Schema_Studio_UI'); ?>

@@ -141,12 +141,12 @@ var FIELD_TEMPLATES = Object.freeze({
 var APP_SCHEMAS = {
   Taxonomia: {
     metadata: { prefix: 'TAXO', showInMenu: true, iconName: 'library-outline', color: 'tertiary', label: 'Taxonomías', titleField: 'nombre', idField: 'id_taxonomia', fkField: null },
-    uiConfig: { dashboardCard: { iconName: 'library-outline', color: 'var(--ion-color-tertiary)' } },
     primaryKey: "id_taxonomia",
     titleField: "nombre",
     wizardConfig: true,
     stepDescriptions: {
-        "Taxonomía de Producto": "Asigna un nombre descriptivo para comenzar. Te recomendamos utilizar el nombre del portafolio principal que vas a estructurar."
+        "Taxonomía de Producto": "Asigna un nombre descriptivo para comenzar. Te recomendamos utilizar el nombre del portafolio principal que vas a estructurar.",
+        "Arquitectura de Portafolio": "Diseña la estructura utilizando el lienzo interactivo ubicado a la derecha."
     },
     hooks: {
         preSubmit: function(payload, contextId, action, isTempPk, internalRetryId) {
@@ -173,7 +173,8 @@ var APP_SCHEMAS = {
       ...FIELD_TEMPLATES.VERSION_FIELD(),
       { name: "nombre", type: "text", label: "Nombre de la Taxonomía", required: true, width: 12, section: "Taxonomía de Producto" },
       { name: "descripcion", type: "textarea", label: "Descripción", required: false, width: 12, section: "Taxonomía de Producto" },
-      { name: "id_unidad_negocio", type: "relation", relationType: "padre", targetEntity: "Unidad_Negocio", graphEntity: "Sys_Graph_Edges", valueField: "id_unidad_negocio", labelField: "nombre", uiComponent: "select_single", label: "Unidad de Negocio", isTemporalGraph: true, graphEdgeType: "TAXONOMIA_UNIDAD", topologyCardinality: "1:N", width: 12, workspaceMode: false, required: false, section: "Jerarquía Estratégica" }
+      { name: "id_unidad_negocio", type: "hidden", relationType: "padre", targetEntity: "Unidad_Negocio", graphEntity: "Sys_Graph_Edges", valueField: "id_unidad_negocio", labelField: "nombre", isTemporalGraph: true, graphEdgeType: "TAXONOMIA_UNIDAD", topologyCardinality: "1:N", workspaceMode: false, required: false },
+      { name: "info_canvas", type: "divider", label: "Interactúa con el lienzo a tu derecha para modelar las capacidades y productos.", width: 12, section: "Arquitectura de Portafolio" }
     ]
   },
   Unidad_Negocio: {

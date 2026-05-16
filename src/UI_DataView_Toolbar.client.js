@@ -144,17 +144,6 @@ window.UI_DataView_Toolbar = (function () {
             left.appendChild(btnTree);
         }
 
-        if (entityName === 'Capacidad' || entityName === 'Dominio') {
-            const btnChart = document.createElement('button');
-            btnChart.className = `dv-btn-icon ${viewType === 'echarts' ? 'active' : ''}`;
-            btnChart.id = 'dv-view-echarts-btn';
-            btnChart.title = entityName === 'Capacidad' ? 'Mapa de Capacidades (Avanzado)' : 'Mapa de Dominios (Treemap)';
-            const iconChart = document.createElement('ion-icon');
-            iconChart.setAttribute('name', 'apps-outline');
-            btnChart.appendChild(iconChart);
-            btnChart.addEventListener('click', () => onViewToggle('echarts'));
-            left.appendChild(btnChart);
-        }
 
 
         const right = document.createElement('div');

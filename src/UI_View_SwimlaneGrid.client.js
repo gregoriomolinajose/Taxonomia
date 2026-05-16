@@ -31,6 +31,22 @@ window.UI_View_SwimlaneGrid = {
                         this.refresh();
                     }
                 }
+                
+                // S55.2: Detectar creación de Unidad_Negocio desde el Canvas y enlazarla a Taxonomia
+                if (payload && payload.entityName === 'Unidad_Negocio' && payload.response && payload.response.data) {
+                    const pk = window.Schema_Utils ? window.Schema_Utils.getPrimaryKey('Unidad_Negocio') : 'id_unidad_negocio';
+                    const newId = payload.response.data[pk];
+                    
+                    if (newId) {
+                        // Inyectar el ID en el formulario borrador de Taxonomía
+                        const hiddenInput = document.querySelector('form#dynamicForm_Taxonomia [name="id_unidad_negocio"]');
+                        if (hiddenInput) {
+                            hiddenInput.value = newId;
+                            hiddenInput.dispatchEvent(new Event('change', { bubbles: true }));
+                        }
+                        this.refresh();
+                    }
+                }
             });
             
             this._unsubGraph = window.AppEventBus.subscribe('CACHE::GRAPH_HYDRATED', () => {

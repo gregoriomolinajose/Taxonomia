@@ -60,6 +60,15 @@
             
             var mainHeader = document.querySelector('#main-content ion-header');
             if (mainHeader) mainHeader.style.display = '';
+
+            var layoutSegment = document.getElementById('main-layout-segment');
+            if (layoutSegment) {
+                if (viewType === 'selfservice' || viewType === 'wizard') {
+                    layoutSegment.value = 'selfservice';
+                } else {
+                    layoutSegment.value = 'dashboard';
+                }
+            }
             
             if (viewType === 'dashboard') {
                 if (headerTitle) headerTitle.textContent = 'Plataforma de Gobernanza';
@@ -176,7 +185,7 @@
                     
                     // S49.11: Título principal H2 bold
                     const title = document.createElement('h1');
-                    title.textContent = 'Diseñando la arquitectura organizacional';
+                    title.textContent = 'Diseñando la arquitectura de Portafolio';
                     title.style.cssText = 'font-size:var(--sys-font-h2, 1.5rem);color:var(--ion-text-color);font-family:var(--font-display, var(--ion-font-family, system-ui, sans-serif));font-weight:700;letter-spacing:-0.02em;margin:0;';
                     
                     headerZone.appendChild(title);
@@ -414,27 +423,6 @@
                     window.DataViewEngine.render(entityKey, 'app-container', payload);
                 }
             } 
-            else if (viewType === 'capacitymap') {
-                if (headerTitle) headerTitle.textContent = 'Mapa de Capacidad As-Is';
-                if (backBtn) {
-                    backBtn.classList.remove('ion-hide');
-                    backBtn.onclick = function() { window.AppEventBus.publish('NAV::CHANGE', {viewType: 'dashboard'}); };
-                }
-                
-                var capBtn = document.getElementById('nav-item-capacitymap');
-                if (capBtn) capBtn.classList.add('active');
-                
-                if (container) {
-                    var tmpl = document.getElementById('tmpl-capacity-map');
-                    if (tmpl) {
-                        window.DOM.clear(container);
-                        container.appendChild(tmpl.content.cloneNode(true));
-                        if (typeof window.CapacityMapEngine !== 'undefined' && typeof window.CapacityMapEngine.render === 'function') {
-                            window.CapacityMapEngine.render(container);
-                        }
-                    }
-                }
-            }
 
             else if (viewType === 'designkit') {
                 if (headerTitle) headerTitle.textContent = 'Design System Kit';
@@ -474,20 +462,7 @@
                     }
                 }
             } 
-            else if (viewType === 'domainmap') {
-                if (headerTitle) headerTitle.textContent = 'Mapa M/N: Dominios';
-                if (backBtn) {
-                    backBtn.classList.remove('ion-hide');
-                    backBtn.onclick = function() { window.AppEventBus.publish('NAV::CHANGE', {viewType: 'dashboard'}); };
-                }
-                
-                var mapBtn = document.getElementById('nav-item-domainmap');
-                if (mapBtn) mapBtn.classList.add('active');
-                
-                if (container && typeof window.renderDomainMap === 'function') {
-                    window.renderDomainMap(container);
-                }
-            }
+
             // [E31-S31.5] Schema Config Studio — SUPER_ADMIN only
             else if (viewType === 'sistema') {
                 if (headerTitle) headerTitle.textContent = 'Sistema · Schema Governance Studio';
@@ -536,18 +511,22 @@
             homeItem.appendChild(homeLabel);
             navList.appendChild(homeItem);
 
-            var mapCapItem = document.createElement('div');
-            mapCapItem.className = 'nav-item';
-            mapCapItem.id = 'nav-item-capacitymap';
-            mapCapItem.title = 'Visualizador de Capacidad';
-            mapCapItem.addEventListener('click', function() { window.AppEventBus.publish('NAV::CHANGE', {viewType: 'capacitymap'}); });
-            var mapCapIcon = document.createElement('ion-icon');
-            mapCapIcon.setAttribute('name', 'map-outline');
-            var mapCapLabel = document.createElement('ion-label');
-            mapCapLabel.textContent = 'Mapa E2E';
-            mapCapItem.appendChild(mapCapIcon);
-            mapCapItem.appendChild(mapCapLabel);
-            navList.appendChild(mapCapItem);
+            // Dynamically inject Taxonomia in the 2nd position
+            if (window.APP_SCHEMAS && window.APP_SCHEMAS.Taxonomia && window.APP_SCHEMAS.Taxonomia.metadata) {
+                var taxMeta = window.APP_SCHEMAS.Taxonomia.metadata;
+                var taxItem = document.createElement('div');
+                taxItem.className = 'nav-item';
+                taxItem.id = 'nav-item-Taxonomia';
+                taxItem.title = taxMeta.label;
+                taxItem.addEventListener('click', function() { window.AppEventBus.publish('NAV::CHANGE', {viewType: 'dataview', entityKey: 'Taxonomia'}); });
+                var taxIcon = document.createElement('ion-icon');
+                taxIcon.setAttribute('name', taxMeta.iconName);
+                var taxLabel = document.createElement('ion-label');
+                taxLabel.textContent = taxMeta.label;
+                taxItem.appendChild(taxIcon);
+                taxItem.appendChild(taxLabel);
+                navList.appendChild(taxItem);
+            }
                 
             var headerEntidades = document.createElement('div');
             headerEntidades.className = 'sidebar-heading';
@@ -559,7 +538,7 @@
             var sorted = window.getEntitiesByFlag('showInMenu');
             sorted.forEach(function(entry) {
                 var key = entry[0]; var meta = entry[1];
-                if(meta.hideFromMenu === true) return;
+                if(meta.hideFromMenu === true || key === 'Taxonomia') return;
                 
                 var item = document.createElement('div');
                 item.className = 'nav-item';

@@ -535,9 +535,16 @@
       }
       
       if (window.UI_Router && typeof window.UI_Router.navigateTo === 'function') {
-        window.UI_Router.navigateTo('dashboard');
+        window.UI_Router.navigateTo('selfservice');
       }
       window.AuthManager.init();
+      
+      // Bind segment changes
+      document.addEventListener('ionChange', function(e) {
+          if (e.target.id === 'main-layout-segment') {
+              window.AppEventBus.publish('NAV::CHANGE', {viewType: e.detail.value});
+          }
+      });
       
       if (window.AppEventBus) {
         window.AppEventBus.subscribe('APP::READY', function() {

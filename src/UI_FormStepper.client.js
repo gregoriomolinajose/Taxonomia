@@ -348,16 +348,60 @@ window.UI_FormStepper = class UI_FormStepper {
 
         // S54.5: Fullscreen Drawer & Canvas Orchestration
         const drawerNode = this.cardContent ? this.cardContent.closest('.drawer-panel') : null;
-        if (drawerNode && this.entityName === 'Taxonomia') {
+        const isFullscreenZone = this.cardContent ? this.cardContent.closest('#wizard-fullscreen-zone') !== null : false;
+        
+        // Find the main layout columns to toggle sidebar visibility
+        const layoutColLeft = document.getElementById('wizard-col-left');
+        const layoutColRight = document.getElementById('wizard-col-right');
+        
+        if ((drawerNode || isFullscreenZone) && this.entityName === 'Taxonomia') {
             if (this.currentStepIndex >= 1) { // Paso 2+
-                drawerNode.classList.add('fullscreen');
-                drawerNode.classList.add('drawer-fullscreen'); // Para reglas específicas del split
+                if (drawerNode) {
+                    drawerNode.classList.add('fullscreen');
+                    drawerNode.classList.add('drawer-fullscreen'); // Para reglas específicas del split
+                }
+                
+                // S55.2: Ocultar panel izquierdo completamente en el Canvas para maximizar espacio
+                this.splitLeft.style.display = 'none';
+                
+                // S55.2: Ocultar el sidebar de pasos si estamos en Landing Page (Fullscreen Zone)
+                if (isFullscreenZone) {
+                    if (layoutColLeft) layoutColLeft.style.display = 'none';
+                    if (layoutColRight) {
+                        layoutColRight.setAttribute('size-md', '12');
+                        layoutColRight.setAttribute('size-lg', '12');
+                        layoutColRight.setAttribute('size-xl', '12');
+                    }
+                }
+                
                 this.splitRight.style.display = 'flex';
-                if (this.btnFullscreen) this.btnFullscreen.style.display = 'block';
+                this.splitRight.style.flex = '1';
+                this.splitRight.style.width = '100%';
+                
+                if (this.btnFullscreen) {
+                    // En Landing Page ya es fullscreen absoluto, ocultamos el botón de expandir
+                    this.btnFullscreen.style.display = isFullscreenZone ? 'none' : 'block';
+                }
                 this._mountCanvasViewer();
             } else {
-                drawerNode.classList.remove('fullscreen');
-                drawerNode.classList.remove('drawer-fullscreen');
+                if (drawerNode) {
+                    drawerNode.classList.remove('fullscreen');
+                    drawerNode.classList.remove('drawer-fullscreen');
+                }
+                
+                // Restaurar panel izquierdo
+                this.splitLeft.style.display = '';
+                
+                // Restaurar layout original del sidebar
+                if (isFullscreenZone) {
+                    if (layoutColLeft) layoutColLeft.style.display = '';
+                    if (layoutColRight) {
+                        layoutColRight.setAttribute('size-md', '8');
+                        layoutColRight.setAttribute('size-lg', '9');
+                        layoutColRight.setAttribute('size-xl', '10');
+                    }
+                }
+                
                 this.splitRight.style.display = 'none';
                 if (this.btnFullscreen) this.btnFullscreen.style.display = 'none';
                 this._unmountCanvasViewer();

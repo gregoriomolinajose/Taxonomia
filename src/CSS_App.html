@@ -334,4 +334,29 @@ div[data-apexcharts-watermark],
     from { opacity: 0; transform: translateX(20px); }
     to { opacity: 1; transform: translateX(0); }
 }
+
+/* --- S55.2 Segment Navigation Styling --- */
+.main-layout-segment {
+    background: transparent !important;
+    --background: transparent !important;
+    margin-left: 8px;
+}
+
+.main-layout-segment ion-segment-button {
+    --color: rgba(255, 255, 255, 0.8);
+    --color-checked: #ffffff;
+    --color-hover: #ffffff;
+    --indicator-color: rgba(255, 255, 255, 0.2);
+    --indicator-box-shadow: none;
+    --border-radius: 6px;
+    font-weight: 600;
+    min-width: 80px;
+    margin: 0 2px;
+}
+
+.main-layout-segment ion-segment-button::part(native):hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 6px;
+}
+
 </style>
