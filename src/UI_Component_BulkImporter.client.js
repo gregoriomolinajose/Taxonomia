@@ -587,6 +587,16 @@ window.UI_BulkImporter = class UI_BulkImporter {
             const res = await window.DataAPI.call('API_Universal_Router', 'etl_extract_sheet_data', entity, { url: url, options: reqOptions });
             loading.dismiss();
             if (res && res.data) {
+                // S56.4: Inyección de Contexto Borrador si es llamado desde el Wizard
+                if (this.contextId && Array.isArray(res.data)) {
+                    res.data.forEach(row => {
+                        row._contexto_arista = this.contextId;
+                        if (!row.estado || String(row.estado).trim() === '') {
+                            row.estado = 'Borrador'; // Si está en el Wizard, todo entra como borrador por defecto.
+                        }
+                    });
+                }
+
                 const progressCb = (chunkIndex, totalChunks, isDone, metrics, customText) => {
                     this.updateProgress(chunkIndex, totalChunks, isDone, metrics, customText);
                 };
