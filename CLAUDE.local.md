@@ -3,9 +3,8 @@
 > This file is for local preferences and overrides. It is not tracked by Git.
 
 ## Current Focus
-- **Epic E55 (Taxonomy Governance & Deployment Engine)**: Active.
-- **S55.1 (Centralización y Bloqueo Relacional)**: To Do.
-- **Next focus:** Implement S55.1 by updating Schema_Engine and Dashboard.
+- **Epic E55 (Taxonomy Governance & Deployment Engine)**: Completed.
+- **Next focus:** Waiting for new epic allocation or backlog grooming.
 
 ## Patterns
 
