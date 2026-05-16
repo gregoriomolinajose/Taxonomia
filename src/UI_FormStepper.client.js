@@ -332,21 +332,34 @@ window.UI_FormStepper = class UI_FormStepper {
         if (newIdx === -1) newIdx = 0;
 
         // S55.6: Autoguardado Universal para transiciones de Wizard
-        if (window.FormEngine && newIdx !== this.currentStepIndex) {
+        if (this.btnSubmit && this.btnSubmit._formSubmitterInstance && newIdx !== this.currentStepIndex) {
             if (this.btnNext) this.btnNext.disabled = true;
-            if (this.btnSubmit) this.btnSubmit.disabled = true;
+            this.btnSubmit.disabled = true;
             
-            // Auto-guardar silenciosamente (isFormModal = false)
-            window.FormEngine.saveForm(null, this.cardContent, this.entityName, (success, resp) => {
+            const submitter = this.btnSubmit._formSubmitterInstance;
+            submitter._isSilent = true; // Auto-guardar silenciosamente (isFormModal = false virtual)
+            
+            // Suscribirse a los eventos de éxito o error
+            const unsubSuccess = window.AppEventBus.subscribe('FORM::SUBMIT_SUCCESS', () => {
+                cleanup();
+                this._executeSectionTransition(newIdx, targetSectionName);
+            });
+            
+            const unsubError = window.AppEventBus.subscribe('FORM::SUBMIT_ERROR', () => {
+                cleanup();
+                console.warn("[Stepper] Autoguardado Universal: Fallo el autoguardado en la transición de paso.");
+            });
+            
+            const cleanup = () => {
+                if (typeof unsubSuccess === 'function') unsubSuccess();
+                if (typeof unsubError === 'function') unsubError();
+                submitter._isSilent = false;
                 if (this.btnNext) this.btnNext.disabled = false;
                 if (this.btnSubmit) this.btnSubmit.disabled = false;
-                
-                if (success) {
-                    this._executeSectionTransition(newIdx, targetSectionName);
-                } else {
-                    console.warn("[Stepper] Autoguardado Universal: Fallo el autoguardado en la transición de paso.");
-                }
-            }, this.btnSubmit, false);
+            };
+
+            // Disparar envío optimista asincrono
+            this.btnSubmit.click();
             return;
         }
 
