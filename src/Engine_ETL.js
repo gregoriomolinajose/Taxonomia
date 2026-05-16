@@ -145,7 +145,15 @@ var Engine_ETL = (function() {
       if (typeof Logger !== 'undefined') Logger.log("No se pudo inyectar el catálogo: " + e.toString());
     }
 
-    // 5. Retornar link
+    // 5. Hacer el archivo editable para el tester/usuario final
+    try {
+      const file = DriveApp.getFileById(ss.getId());
+      file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.EDIT);
+    } catch(e) {
+      if (typeof Logger !== 'undefined') Logger.log("Error al aplicar permisos a la plantilla: " + e.toString());
+    }
+
+    // 6. Retornar link
     return ss.getUrl();
   }
 

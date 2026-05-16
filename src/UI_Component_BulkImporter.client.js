@@ -256,6 +256,9 @@ window.UI_BulkImporter = class UI_BulkImporter {
                         urlInput.setAttribute('helper-text', `Archivo válido: ${data.title} (${Math.round(data.maxOverlap * 100)}% match)`);
                         urlInput.classList.add('ion-valid');
                         urlInput.classList.remove('ion-invalid');
+                        
+                        const btnSyncDrive = container.querySelector('#btn-sync-drive');
+                        if (btnSyncDrive) btnSyncDrive.disabled = false;
                     } else {
                         this._showToast(`Advertencia: El archivo "${data.title}" no parece coincidir con el esquema esperado.`, 'warning');
                         urlInput.setAttribute('helper-text', `Advertencia: Estructura no coincide (${Math.round(data.maxOverlap * 100)}%)`);
@@ -282,17 +285,21 @@ window.UI_BulkImporter = class UI_BulkImporter {
 
         urlInput.addEventListener('ionInput', (e) => {
             const val = (e.currentTarget.value || '').trim();
-            const isValid = val.length > 0 && /^https?:\/\/docs\.google\.com\/spreadsheets\/d\/[a-zA-Z0-9-_]+/.test(val);
-            btnSyncDrive.disabled = !isValid;
+            const isFormatValid = val.length > 0 && /^https?:\/\/docs\.google\.com\/spreadsheets\/d\/[a-zA-Z0-9-_]+/.test(val);
             
-            if (val.length > 0 && !isValid) {
+            // S56.4: Disable sync button until explicitly inspected
+            btnSyncDrive.disabled = true;
+            
+            if (val.length > 0 && !isFormatValid) {
                 urlInput.classList.add('ion-invalid', 'ion-touched');
+                urlInput.setAttribute('error-text', 'El formato de la URL no es válido.');
             } else {
                 urlInput.classList.remove('ion-invalid', 'ion-touched');
             }
             
             if (val.length === 0) {
                 urlInput.removeAttribute('helper-text');
+                urlInput.removeAttribute('error-text');
             }
             
             const btnOpenLink = container.querySelector('#btn-open-drive-link');
