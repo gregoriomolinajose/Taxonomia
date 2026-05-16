@@ -3,7 +3,7 @@
 > This file is for local preferences and overrides. It is not tracked by Git.
 
 ## Current Focus
-- **Epic E56 (Wizard Bulk Import)**: Designing and planning bulk import inline inside the Taxonomía Wizard.
+- **Epic E56 (Wizard Bulk Import)**: Completed S56.1. Next is S56.2 (UI de Importación Embebida) to build the reusable UI component for bulk importing.
 
 ## Patterns
 
