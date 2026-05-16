@@ -263,7 +263,7 @@ const Engine_DB = {
         if (schema) {
             const fields = schema.fields || (typeof schema === 'object' ? Object.keys(schema).map(k => ({ name: k, ...schema[k] })) : []);
             fields.forEach(f => {
-                if (f.type === 'relation' && payload[f.name] !== undefined) {
+                if ((f.type === 'relation' || f.isTemporalGraph) && payload[f.name] !== undefined) {
                     let relData = payload[f.name];
                     
                     // Normalización de escalares provenientes de uiComponent: 'select_single'
@@ -294,7 +294,7 @@ const Engine_DB = {
             if (!tempParentPK && payload.id) tempParentPK = payload.id;
             
             fields.forEach(f => {
-                if (f.type === 'relation' && nestedData[f.name] && f.isTemporalGraph && typeof Engine_Graph !== 'undefined') {
+                if ((f.type === 'relation' || f.isTemporalGraph) && nestedData[f.name] && f.isTemporalGraph && typeof Engine_Graph !== 'undefined') {
                     const children = nestedData[f.name];
                     // [S27.4/Rx] Clone rules to prevent memory leaks across subgrids (State Mutation Bug)
                     let baseRules = (typeof getEntityTopologyRules !== 'undefined') ? getEntityTopologyRules(entityName) : null;
@@ -433,7 +433,7 @@ const Engine_DB = {
         if (schema) {
             const fields = schema.fields || (typeof schema === 'object' ? Object.keys(schema).map(k => ({ name: k, ...schema[k] })) : []);
             fields.forEach(f => {
-                if (f.type === 'relation' && nestedData[f.name]) {
+                if ((f.type === 'relation' || f.isTemporalGraph) && nestedData[f.name]) {
                     const children = nestedData[f.name];
                     const targetEntity = f.targetEntity;
                     const fkField = f.foreignKey;
