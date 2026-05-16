@@ -20,9 +20,9 @@ Transition from a distributed entity-relationship model to a centralized, visual
 - **[x] S55.1 - Centralización y Bloqueo Relacional ✓:** Modificar `Schema_Engine.js` para que los Drawers transaccionales sean de solo lectura para sus relaciones fuera de contexto.
 - **[x] S55.2 - Inmersión UX (Full-Screen & Accesos) ✓:** Crear acceso rápido en Dashboard y botón "Expandir" en el Header del Canvas/Wizard.
 - **[x] S55.3 - Motor de Diffing de Grafos (Lógica) ✓:** Lógica que compara el Borrador vs Producción retornando el Delta (Add/Remove/Keep).
-- **S55.4 - UI de Resumen de Impacto (Deployment Preview):** Diseño del modal de aprobación visualizando los cambios topológicos.
-- **S55.5 - Transacción de Despliegue (Activation):** Backend ETL que aprueba y publica atómicamente la nueva estructura.
-- **S55.6 - Autoguardado Universal en el Wizard:** Generalizar el interceptor de transición creado para la Taxonomía, de forma que cualquier entidad con layout tipo Stepper guarde su progreso automáticamente al cambiar de paso.
+- **[x] S55.4 - UI de Resumen de Impacto (Deployment Preview) (Descoped):** Diseño del modal de aprobación visualizando los cambios topológicos.
+- **[x] S55.5 - Transacción de Despliegue (Activation) (Descoped):** Backend ETL que aprueba y publica atómicamente la nueva estructura.
+- **[x] S55.6 - Autoguardado Universal en el Wizard ✓:** Generalizar el interceptor de transición creado para la Taxonomía, de forma que cualquier entidad con layout tipo Stepper guarde su progreso automáticamente al cambiar de paso.
 
 ## Done Criteria
 - 100% of topological relations can only be edited via the Taxonomia Canvas.

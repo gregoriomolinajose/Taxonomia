@@ -1,26 +1,26 @@
-# Epic E55: Taxonomy Governance - Retrospective
+# Epic E55 Retrospective: Taxonomy Governance & Deployment Engine
 
-## Executive Summary
-Epic E55 successfully transitioned the Taxonomía entity into a governed, strict topological engine, separating draft workflows from active topologies. We successfully solved the critical integration and race conditions across the `FormEngine`, `DataStore`, and Event Bus. Several stories (S55.4, S55.5) were descoped per the user's request, focusing our delivery strictly on stability and immediate UX value.
+## 1. Metrics & Scope
+- **Stories Planned:** 6
+- **Stories Completed:** 4 (S55.1, S55.2, S55.3, S55.6)
+- **Stories Descoped:** 2 (S55.4, S55.5 - postponed for a later epic)
+- **Status:** Complete
+- **Tests:** 192 passed / 2 skipped, 100% green
 
-## Metrics & Delivery
-- **Planned Stories:** 6 (S55.1, S55.2, S55.3, S55.4, S55.5, S55.6)
-- **Completed Stories:** 4
-- **Descoped Stories:** 2 (S55.4, S55.5)
-- **Epic Velocity:** Fast (resolved critical architectural flaws in real-time)
+## 2. Deliverables
+- **Relational Governance (S55.1):** Topological relations can now only be edited via the Taxonomia Canvas. Regular drawers enforce read-only status for these edges.
+- **UX Immersion (S55.2):** Full-screen expansion enabled for the Canvas/Wizard and quick-access added to the dashboard.
+- **Diffing Engine MVP (S55.3):** The math engine correctly computes additions, removals, and unchanged edges (SCD-2 differential).
+- **Universal Autosave (S55.6):** Unified `isSilent` autosaving across all stepper-based UI wizards, decoupling state transitions from drawer closures.
 
-## Key Technical Discoveries
-1. **Synchronous Event Bus Hazard:** We discovered a critical race condition where `AppEventBus` was executing subscribers synchronously mid-function (in `_performSuccessCleanup`). This caused subscribers to mutate state unexpectedly before the publisher finished executing its logic.
-2. **Global Event Interception:** The global router (`UI_Router`) was blindly intercepting `FORM::SUBMIT_SUCCESS` for Taxonomía, forcibly unmounting the Stepper during background saves. We learned the necessity of appending contextual flags (like `isSilent`) to global payloads.
-3. **Optimistic Rollbacks:** We effectively wired the `FORM::SUBMIT_ERROR` to cleanly restore button states and prevent UI deadlocks during transient failures.
+## 3. What Went Well
+- **Optimistic UI Synchronization:** The decoupling of the `FormEngine` from `UI_FormSubmitter` via `AppEventBus` significantly improved responsiveness without sacrificing reliability.
+- **Modular Refactoring:** By isolating the autosave logic into a single transition interceptor, we ensured future multi-step forms will automatically inherit background persistence.
 
-## Process Insights
-- Using `rai-debug` effectively uncovered the root causes (Event Bus synchronicity and Router interception) in minutes instead of hours.
-- Descoting non-essential stories allows us to close the epic early, capturing the essential value immediately.
+## 4. What Could Be Improved
+- **Scope Creep & Prioritization:** S55.4 and S55.5 proved more complex to integrate right away or were postponed. Decoupling the visual preview from the deployment transaction might require its own targeted Epic.
+- **Race Condition Handling:** Careful management of event subscriptions during rapid UI clicks was needed to prevent multi-save issues.
 
-## Action Items
-1. Add systemic governance rule: *Global Events MUST contain context identifiers (e.g. `isSilent`) to allow global listeners to discriminate origins.*
-2. Add systemic rule: *Event Bus Publishers MUST defer emitting events to the absolute end of their functions to prevent mid-execution state mutation.*
-
-## Conclusion
-The epic established a highly robust auto-save mechanism for the Taxonomía wizard and fixed architectural bugs related to event propagation and lifecycle management. The foundation is now rock-solid for future governance modules.
+## 5. Architectural Learnings
+- **Decoupled Persistence:** Offloading network resolution (Phase 2) from UI state resolution (Phase 1) is now the verified pattern for complex forms. The UI must react to the optimistic Phase 1 immediately.
+- **Event Bus Orchestration:** `AppEventBus` is sufficient for inter-component coordination (Stepper <-> Submitter) when used with structured payload events like `FORM::SUBMIT_SUCCESS`.
