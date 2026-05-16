@@ -146,6 +146,8 @@ var APP_SCHEMAS = {
     wizardConfig: true,
     stepDescriptions: {
         "Taxonomía de Producto": "Asigna un nombre descriptivo para comenzar. Te recomendamos utilizar el nombre del portafolio principal que vas a estructurar.",
+        "Importar Equipos": "Carga la plantilla de equipos mediante URL o archivo de Google Sheets.",
+        "Importar Personas": "Carga la plantilla de personas mediante URL o archivo de Google Sheets.",
         "Arquitectura de Portafolio": "Diseña la estructura utilizando el lienzo interactivo ubicado a la derecha."
     },
     hooks: {
@@ -174,6 +176,8 @@ var APP_SCHEMAS = {
       { name: "nombre", type: "text", label: "Nombre de la Taxonomía", required: true, width: 12, section: "Taxonomía de Producto" },
       { name: "descripcion", type: "textarea", label: "Descripción", required: false, width: 12, section: "Taxonomía de Producto" },
       { name: "id_unidad_negocio", type: "hidden", relationType: "padre", targetEntity: "Unidad_Negocio", graphEntity: "Sys_Graph_Edges", valueField: "id_unidad_negocio", labelField: "nombre", isTemporalGraph: true, graphEdgeType: "TAXONOMIA_UNIDAD", topologyCardinality: "1:N", workspaceMode: false, required: false },
+      { name: "info_equipos", type: "divider", label: "Carga la plantilla masiva de equipos en el contenedor.", width: 12, section: "Importar Equipos" },
+      { name: "info_personas", type: "divider", label: "Carga la plantilla masiva de personas en el contenedor.", width: 12, section: "Importar Personas" },
       { name: "info_canvas", type: "divider", label: "Interactúa con el lienzo a tu derecha para modelar las capacidades y productos.", width: 12, section: "Arquitectura de Portafolio" }
     ]
   },
