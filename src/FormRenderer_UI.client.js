@@ -262,31 +262,110 @@
                     approveBtn.appendChild(iconApprove);
                     approveBtn.appendChild(document.createTextNode(' Aprobar Taxonomía'));
                     
-                    approveBtn.addEventListener('click', () => {
-                        if (global.showToast) global.showToast('Aprobando taxonomía...', 'medium');
-                        google.script.run
-                            .withSuccessHandler((res) => {
-                                try {
-                                    const parsed = typeof res === 'string' ? JSON.parse(res) : res;
-                                    if (parsed && parsed.status === 'success') {
-                                        if (global.showToast) global.showToast('Taxonomía aprobada exitosamente', 'success');
-                                        if (global.DrawerStackController) global.DrawerStackController.clearAllSync();
-                                        if (global.AppEventBus) global.AppEventBus.publish('TAXONOMIA_APPROVED');
-                                        if (global.DataStore && global.DataStore.fetchEntity) {
-                                            global.DataStore.fetchEntity('Taxonomia', true);
-                                            global.DataStore.fetchEntity('Sys_Graph_Edges', true);
+                    approveBtn.addEventListener('click', async () => {
+                        // S55.4: Deployment Preview Calculation
+                        const allEdges = (window.DataStore.get('Sys_Graph_Edges') || []);
+                        const activeEdges = allEdges.filter(e => e.es_version_actual === true && e.estado !== 'Borrador');
+                        const draftEdges = allEdges.filter(e => String(e.contexto_id) === String(localEditId));
+                        
+                        let delta = { additions: [], removals: [], kept: [] };
+                        if (window.Graph_Utils && typeof window.Graph_Utils.computeDelta === 'function') {
+                            delta = window.Graph_Utils.computeDelta(activeEdges, draftEdges);
+                        }
+                        
+                        // Node ID to Readable Name Resolver
+                        const resolveName = (id) => {
+                            const undns = window.DataStore.get('Unidad_Negocio') || [];
+                            const ports = window.DataStore.get('Portafolio') || [];
+                            let match = undns.find(u => String(u.id_unidad_negocio) === String(id) || String(u.id_registro) === String(id));
+                            if (!match) match = ports.find(p => String(p.id_portafolio) === String(id) || String(p.id_registro) === String(id));
+                            return match ? (match.nombre || match.id_registro || id) : id;
+                        };
+
+                        const modalEl = document.createElement('ion-modal');
+                        const modalContent = document.createElement('div');
+                        modalContent.style.height = '100%';
+                        modalContent.style.display = 'flex';
+                        modalContent.style.flexDirection = 'column';
+                        
+                        let addsHtml = delta.additions.map(e => `<ion-item><ion-icon name="add-circle" color="success" slot="start"></ion-icon><ion-label color="success" class="ion-text-wrap"><b>Conectar:</b> ${resolveName(e.id_nodo_hijo)} a ${resolveName(e.id_nodo_padre)}</ion-label></ion-item>`).join('');
+                        let remsHtml = delta.removals.map(e => `<ion-item><ion-icon name="remove-circle" color="danger" slot="start"></ion-icon><ion-label color="danger" class="ion-text-wrap"><b>Desconectar:</b> ${resolveName(e.id_nodo_hijo)} de ${resolveName(e.id_nodo_padre)}</ion-label></ion-item>`).join('');
+                        
+                        if (!addsHtml) addsHtml = '<ion-item><ion-label color="medium">No hay nuevas conexiones</ion-label></ion-item>';
+                        if (!remsHtml) remsHtml = '<ion-item><ion-label color="medium">No hay desconexiones</ion-label></ion-item>';
+
+                        modalContent.innerHTML = `
+                            <ion-header>
+                                <ion-toolbar color="primary">
+                                    <ion-title>Resumen de Impacto</ion-title>
+                                    <ion-buttons slot="end">
+                                        <ion-button id="btn-cancel-deploy">Cancelar</ion-button>
+                                    </ion-buttons>
+                                </ion-toolbar>
+                            </ion-header>
+                            <ion-content class="ion-padding">
+                                <div style="padding: 10px 0; color: var(--ion-color-step-600); font-size: 0.95rem; line-height: 1.4;">
+                                    Verifique las modificaciones topológicas antes de publicar la taxonomía en Producción.
+                                </div>
+                                <ion-list>
+                                    <ion-list-header><ion-label color="success" style="font-weight: 700;">Adiciones (${delta.additions.length})</ion-label></ion-list-header>
+                                    ${addsHtml}
+                                </ion-list>
+                                <ion-list>
+                                    <ion-list-header><ion-label color="danger" style="font-weight: 700;">Eliminaciones (${delta.removals.length})</ion-label></ion-list-header>
+                                    ${remsHtml}
+                                </ion-list>
+                            </ion-content>
+                            <ion-footer>
+                                <ion-toolbar style="padding: 8px;">
+                                    <ion-button expand="block" color="success" id="btn-confirm-deploy">
+                                        <ion-icon name="cloud-upload-outline" slot="start"></ion-icon>
+                                        Confirmar y Desplegar
+                                    </ion-button>
+                                </ion-toolbar>
+                            </ion-footer>
+                        `;
+
+                        modalEl.appendChild(modalContent);
+                        document.body.appendChild(modalEl);
+                        
+                        await modalEl.present();
+
+                        modalContent.querySelector('#btn-cancel-deploy').addEventListener('click', () => {
+                            modalEl.dismiss();
+                            setTimeout(() => modalEl.remove(), 500);
+                        });
+
+                        modalContent.querySelector('#btn-confirm-deploy').addEventListener('click', () => {
+                            modalEl.dismiss();
+                            setTimeout(() => modalEl.remove(), 500);
+                            
+                            // S55.5: Backend Activation Trigger
+                            if (global.showToast) global.showToast('Aprobando taxonomía...', 'medium');
+                            google.script.run
+                                .withSuccessHandler((res) => {
+                                    try {
+                                        const parsed = typeof res === 'string' ? JSON.parse(res) : res;
+                                        if (parsed && parsed.status === 'success') {
+                                            if (global.showToast) global.showToast('Taxonomía aprobada exitosamente', 'success');
+                                            if (global.DrawerStackController) global.DrawerStackController.clearAllSync();
+                                            if (global.AppEventBus) global.AppEventBus.publish('TAXONOMIA_APPROVED');
+                                            if (global.DataStore && global.DataStore.fetchEntity) {
+                                                global.DataStore.fetchEntity('Taxonomia', true);
+                                                global.DataStore.fetchEntity('Sys_Graph_Edges', true);
+                                            }
+                                        } else {
+                                            if (global.showToast) global.showToast('Error: ' + (parsed.message || 'Desconocido'), 'danger');
                                         }
-                                    } else {
-                                        if (global.showToast) global.showToast('Error: ' + (parsed.message || 'Desconocido'), 'danger');
+                                    } catch(e) {
+                                        if (global.showToast) global.showToast('Error en la respuesta del servidor', 'danger');
                                     }
-                                } catch(e) {
-                                    if (global.showToast) global.showToast('Error en la respuesta del servidor', 'danger');
-                                }
-                            })
-                            .withFailureHandler((err) => {
-                                if (global.showToast) global.showToast('Falla de red: ' + err, 'danger');
-                            })
-                            .api_router('publish_draft_context', { contextId: localEditId });
+                                })
+                                .withFailureHandler((err) => {
+                                    if (global.showToast) global.showToast('Falla de red: ' + err, 'danger');
+                                })
+                                .api_router('publish_draft_context', { contextId: localEditId });
+                        });
                     });
                 }
             }
