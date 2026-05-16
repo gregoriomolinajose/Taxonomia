@@ -803,7 +803,7 @@ const Engine_DB = {
         const taxRecords = taxRes && taxRes.rows ? taxRes.rows : [];
         const taxRecord = taxRecords.find(r => r.id_registro === contextId || r.id_taxonomia === contextId);
         if (taxRecord) {
-            taxRecord.estado = 'Validado';
+            taxRecord.estado = 'Activo';
             taxRecord.updated_at = sysDate;
             _Adapter_Sheets.upsertBatch('Taxonomia', [taxRecord], { isVolatile: false });
             _invalidateCache('Taxonomia');
@@ -816,7 +816,7 @@ const Engine_DB = {
         
         if (edgesToUpdate.length > 0) {
             edgesToUpdate.forEach(e => {
-                e.estado = 'Validado';
+                e.estado = 'Activo';
                 e.updated_at = sysDate;
             });
             _Adapter_Sheets.upsertBatch('Sys_Graph_Edges', edgesToUpdate, { isVolatile: false });
