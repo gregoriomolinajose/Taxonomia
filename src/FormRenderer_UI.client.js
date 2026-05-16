@@ -272,7 +272,7 @@
                         
                         let delta = { additions: [], removals: [], kept: [] };
                         if (window.Graph_Utils && typeof window.Graph_Utils.computeDelta === 'function') {
-                            delta = window.Graph_Utils.computeDelta(activeEdges, draftEdges);
+                            delta = window.Graph_Utils.computeDelta(activeEdges, draftEdges, localEditId);
                         }
                         
                         // Node ID to Readable Name Resolver

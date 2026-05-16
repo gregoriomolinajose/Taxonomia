@@ -179,20 +179,42 @@ window.Graph_Utils = (function () {
      * @param {Array} draftEdges - Edges in the current draft workspace.
      * @returns {Object} { additions: [], removals: [], kept: [] }
      */
-    function computeDelta(activeEdges, draftEdges) {
+    function computeDelta(activeEdges, draftEdges, contextId) {
         const delta = { additions: [], removals: [], kept: [] };
         
         // Pure edge topology signature
         const getHash = (e) => `${e.id_nodo_padre}::${e.id_nodo_hijo}::${e.tipo_relacion}`;
         
-        const activeMap = new Map();
-        (activeEdges || []).forEach(e => {
-            activeMap.set(getHash(e), e);
+        // Compound child-relation signature (for 1:N rules)
+        const getChildRelHash = (e) => `${e.id_nodo_hijo}::${e.tipo_relacion}`;
+
+        const draftMap = new Map();
+        const draftChildRelSet = new Set();
+        
+        (draftEdges || []).forEach(e => {
+            const hash = getHash(e);
+            draftMap.set(hash, e);
+            draftChildRelSet.add(getChildRelHash(e));
         });
         
-        const draftMap = new Map();
-        (draftEdges || []).forEach(e => {
-            draftMap.set(getHash(e), e);
+        const activeMap = new Map();
+        (activeEdges || []).forEach(e => {
+            const hash = getHash(e);
+            activeMap.set(hash, e);
+            
+            // Is this edge being overridden by 1:N rule?
+            // If the draft contains this child+relType, but the full hash is NOT in draftMap,
+            // it means the draft is pointing this child to a DIFFERENT parent.
+            // This is a Topology Override Removal.
+            const childRelHash = getChildRelHash(e);
+            const isTopologyOverride = draftChildRelSet.has(childRelHash) && !draftMap.has(hash);
+            
+            // Is this edge explicitly deleted from the current context?
+            const isContextRemoval = String(e.contexto_id) === String(contextId) && !draftMap.has(hash);
+            
+            if (isTopologyOverride || isContextRemoval) {
+                delta.removals.push(e);
+            }
         });
         
         // Find Additions and Kept
@@ -202,14 +224,6 @@ window.Graph_Utils = (function () {
                 delta.kept.push(e);
             } else {
                 delta.additions.push(e);
-            }
-        });
-        
-        // Find Removals
-        (activeEdges || []).forEach(e => {
-            const hash = getHash(e);
-            if (!draftMap.has(hash)) {
-                delta.removals.push(e);
             }
         });
         
