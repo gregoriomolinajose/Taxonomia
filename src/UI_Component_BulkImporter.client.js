@@ -233,8 +233,48 @@ window.UI_BulkImporter = class UI_BulkImporter {
             }
         });
         
-        container.querySelector('#btn-inspect-drive').addEventListener('click', () => {
-            this._showToast('Inpección nativa de Drive programada para E39. Por favor pega la URL manualmente.', 'tertiary');
+        container.querySelector('#btn-inspect-drive').addEventListener('click', async () => {
+            const urlInput = container.querySelector('#etl-drive-url');
+            const val = (urlInput.value || '').trim();
+            const isValid = val.length > 0 && /^https?:\/\/docs\.google\.com\/spreadsheets\/d\/[a-zA-Z0-9-_]+/.test(val);
+            if (!isValid) {
+                this._showToast('Por favor introduce una URL válida de Google Sheets primero.', 'warning');
+                return;
+            }
+            
+            try {
+                this._showToast('Inspeccionando archivo...', 'primary');
+                const btnInspect = container.querySelector('#btn-inspect-drive');
+                btnInspect.disabled = true;
+                urlInput.disabled = true;
+                
+                const response = await window.DataAPI.call('API_Universal_Router', 'etl_inspect_sheet', entityName, { url: val });
+                
+                if (response && response.status === 'success') {
+                    const data = response.data;
+                    if (data.isValid) {
+                        this._showToast(`Archivo válido: "${data.title}"`, 'success');
+                        urlInput.setAttribute('helper-text', `Archivo válido: ${data.title} (${Math.round(data.maxOverlap * 100)}% match)`);
+                        urlInput.classList.add('ion-valid');
+                        urlInput.classList.remove('ion-invalid');
+                    } else {
+                        this._showToast(`Advertencia: El archivo "${data.title}" no parece coincidir con el esquema esperado.`, 'warning');
+                        urlInput.setAttribute('helper-text', `Advertencia: Estructura no coincide (${Math.round(data.maxOverlap * 100)}%)`);
+                        urlInput.classList.add('ion-invalid');
+                    }
+                } else {
+                    throw new Error(response.message || 'Error desconocido');
+                }
+            } catch (err) {
+                console.error("Error inspeccionando hoja:", err);
+                this._showToast(`Error de inspección: ${err.message}`, 'danger');
+                urlInput.setAttribute('helper-text', 'Error: ' + err.message);
+                urlInput.classList.add('ion-invalid');
+            } finally {
+                const btnInspect = container.querySelector('#btn-inspect-drive');
+                btnInspect.disabled = false;
+                urlInput.disabled = false;
+            }
         });
 
         const btnSyncDrive = container.querySelector('#btn-sync-drive');

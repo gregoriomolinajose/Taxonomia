@@ -427,12 +427,96 @@ var Engine_ETL = (function() {
       return true;
   }
 
+  /**
+   * inspectDriveSheet
+   * Realiza una pre-validación de un archivo de Google Sheets.
+   * Útil para UI feedback antes de extraer la data pesada.
+   */
+  function inspectDriveSheet(entityName, urlOrId) {
+      if (!urlOrId || urlOrId.trim() === '') {
+          throw new Error("URL o ID ausente.");
+      }
+      
+      let sheetId = urlOrId.trim();
+      const match = urlOrId.match(/\/d\/([a-zA-Z0-9-_]+)/);
+      if (match && match[1]) {
+          sheetId = match[1];
+      }
+      
+      let ss;
+      try {
+          const file = DriveApp.getFileById(sheetId);
+          const mime = file.getMimeType();
+          if (mime !== MimeType.GOOGLE_SHEETS) {
+              throw new Error("El archivo no es un Google Sheet nativo. (Detectado: " + mime + ")");
+          }
+          ss = SpreadsheetApp.openById(sheetId);
+      } catch (e) {
+          if (e.message.includes("nativo")) throw e;
+          throw new Error("El archivo introducido es inaccesible o no es válido. Verifica los permisos.");
+      }
+      
+      const sheets = ss.getSheets();
+      let bestSheet = sheets[0];
+      let maxOverlap = -1;
+      let schema = null;
+      
+      try {
+          if (typeof getAppSchema === 'function') schema = getAppSchema(entityName);
+      } catch(e) {}
+      
+      const sheetInfos = [];
+      
+      for (let i = 0; i < sheets.length; i++) {
+          const tempSheet = sheets[i];
+          const lastCol = tempSheet.getLastColumn();
+          const lastRow = tempSheet.getLastRow();
+          
+          let overlapRatio = 0;
+          if (schema && schema.fields && lastCol > 0 && lastRow >= 1) {
+              const schemaFields = schema.fields.map(f => String(f.name).toLowerCase());
+              const firstRow = tempSheet.getRange(1, 1, 1, lastCol).getValues()[0];
+              const fileHeaders = firstRow.map(k => String(k).trim().toLowerCase().replace(/\s+/g, ' '));
+              
+              let matchCount = 0;
+              fileHeaders.forEach(h => {
+                  if (schemaFields.includes(h) || h === 'id' || h.startsWith('sys_') || h.startsWith('file_')) {
+                      matchCount++;
+                  }
+              });
+              overlapRatio = fileHeaders.length > 0 ? matchCount / fileHeaders.length : 0;
+          }
+          
+          if (overlapRatio > maxOverlap) {
+              maxOverlap = overlapRatio;
+              bestSheet = tempSheet;
+          }
+          
+          sheetInfos.push({
+              name: tempSheet.getName(),
+              rows: lastRow,
+              cols: lastCol,
+              overlap: overlapRatio
+          });
+      }
+      
+      return {
+          sheetId: sheetId,
+          title: ss.getName(),
+          bestSheetName: bestSheet.getName(),
+          maxOverlap: maxOverlap,
+          isValid: maxOverlap >= 0.30,
+          sheets: sheetInfos
+      };
+  }
+
   // --- Public API ---
   return {
     generateDriveTemplate: generateDriveTemplate,
     extractDataFromDrive: extractDataFromDrive,
     hydrateAndDeduplicate: hydrateAndDeduplicate,
-    writebackFeedback: writebackFeedback
+    writebackFeedback: writebackFeedback,
+    inspectDriveSheet: inspectDriveSheet
   };
 
 })();
