@@ -1,0 +1,29 @@
+artifact_type: story-design
+version: 1
+skill: rai-story-design
+created: '2026-05-13T05:00:00Z'
+story: 'S54.1'
+epic: 'E54'
+content:
+  summary: 'Maquetación visual del Drawer lateral de filtros utilizando HTML/CSS aislados, emulando la UI de Jira.'
+  complexity: simple
+  acceptance_criteria:
+    - id: AC1
+      description: 'El Drawer se renderiza visualmente con datos de prueba (mocks).'
+      verifiable: true
+    - id: AC2
+      description: 'El CSS está encapsulado bajo una clase base para prevenir sangrado de estilos.'
+      verifiable: true
+  integration_points:
+    - module: 'UI_UniversalFilter'
+      change_type: new
+      files: ['src/UI_UniversalFilter.client.js', 'src/CSS_UniversalFilter.html']
+  decisions:
+    - id: D1
+      choice: 'Separación estricta de UI y Estado'
+      rationale: 'Construir el walking skeleton visual primero mitiga el riesgo de enredo de responsabilidades en la UI de Taxonomía.'
+      alternatives_considered: ['Desarrollar UI y lógica en un solo paso']
+refs:
+  backlog_item: 'E54'
+  epic_scope: 'work/epics/e54-filtros-entidades/scope.md'
+metadata: {}

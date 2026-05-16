@@ -41,7 +41,14 @@
 | E45| Architecture Refactoring                            | ✅ Complete  | DOM-based hydration state & centralize logic             | Alta     |
 | E46| Org Chart Visualization                             | ✅ Complete  | Implementar diagrama piramidal ApexTree para relaciones de empleados | Alta     |
 | E47| ETL Carga Masiva Capacidades                        | 🔄 In Progress| Desarrollo de ETL para poblar archivo de capacidades jerárquicas    | Alta     |
-
+| E48| Admin Settings & Schema-Driven ETL                  | ✅ Complete   | Configuración de interceptores declarativos y utilidades de Admin   | Alta     |
+| E49| Taxonomía Wizard & Self-Service Portal              | ✅ Complete   | Asistente a pantalla completa para agrupar arquitectura N:M         | Max      |
+| E51| Taxonomía como Contexto de Trabajo (Workspace Mode) | ✅ Complete   | Habilitar esquemas M:N y 1:N en modo contexto                       | Alta     |
+| E52| QA: Persona End-to-End E2E Lifecycle                | ✅ Complete   | Refactor y estabilización de la entidad Persona                     | Alta     |
+| E53| Taxonomía Workspace Canvas                          | ✅ Complete   | Implementar lienzo de visualización del árbol contextual de Taxonomía| Max      |
+| E54| Filtros Universales de Entidades                    | ✅ Complete   | Implementar Drawer de filtros avanzados con lógica de intersección y JIT | Alta     |
+| E55| Taxonomy Governance & Deployment Engine             | ✅ Complete   | Transición de modelo relacional distribuido a centralizado y motor diffing | Max      |
+| E56| Wizard Bulk Import (Equipos & Personas)             | 🔄 In Progress| Integrar carga masiva de equipos y personas directamente en el wizard      | Alta     |
 ## Parking Lot / Deuda Técnica (Post-Epic 11)
 
 ### 🏗️ Historial Resuelto

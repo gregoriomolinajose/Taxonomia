@@ -7,7 +7,10 @@
 
 /* ── Formatters Universales ────────────────────────────── */
 window.formatLabelString = function(str) {
-  return (str || '').replace(/_/g, ' ').replace(/\b\w/g, function(c) { return c.toUpperCase(); });
+  return (str || '').replace(/_/g, ' ').split(' ').map(function(word) {
+      if (!word) return '';
+      return word.charAt(0).toUpperCase() + word.slice(1);
+  }).join(' ');
 };
 window.formatEntityName = window.formatLabelString;
 window.formatUserName = function(emailStr) {
@@ -138,7 +141,7 @@ window.UI_FormUtils = (function () {
             btns.forEach(btn => {
                 if (btn.textContent.includes('Guardar') || btn.querySelector('ion-icon[name="save-outline"]')) {
                     btn.setAttribute('disabled', 'true');
-                    btn.style.opacity = '0.4';
+                    btn.style.display = 'none'; // S49.13: Ocultamiento estricto Zero-Trust visual
                     btn.title = "No tienes permisos de edición en este nodo";
                 }
             });
@@ -288,6 +291,43 @@ window.UI_FormUtils = (function () {
         return true;
     }
 
+    /**
+     * [S50.3] extractDraftContext
+     * Extrae el ID de contexto de borrador basándose en el estado de la UI (modal/drawer activo).
+     * Resuelve la duplicación semántica (H9) entre constructores de UI.
+     */
+    function extractDraftContext(entityName, currentPK) {
+        if (entityName === 'Taxonomia') {
+            return currentPK;
+        }
+        const activeContainer = document.querySelector('ion-modal, .drawer-panel');
+        if (activeContainer && activeContainer.dataset) {
+            if (activeContainer.dataset.taxonomiaContext) {
+                return activeContainer.dataset.taxonomiaContext;
+            }
+            if (activeContainer.dataset.isDraft === 'true') {
+                return activeContainer.dataset.contextId || currentPK;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * [S55.1] fetchContextualData (List Engine Wrapper)
+     * Centralizes the retrieval of active data scoped securely to a context boundary.
+     * Prevents global/baseline data leakage into restricted draft workspaces.
+     */
+    function fetchContextualData(entityName, contextId) {
+        const liveData = window.DataStore ? (window.DataStore.get(entityName) || []) : [];
+        return liveData.filter(d => {
+            if (d.estado === 'Eliminado' || typeof d !== 'object') return false;
+            if (String(d.estado).toLowerCase() === 'borrador') {
+                return contextId && String(d.contexto_id) === String(contextId);
+            }
+            return true;
+        });
+    }
+
     return {
         getDominioOptions,
         getDominiosPadreOptions,
@@ -297,6 +337,8 @@ window.UI_FormUtils = (function () {
         filterByTopology,
         validateRequiredFields,
         attachBusinessRulesListeners,
-        executeAsyncValidations
+        executeAsyncValidations,
+        extractDraftContext,
+        fetchContextualData
     };
 })();

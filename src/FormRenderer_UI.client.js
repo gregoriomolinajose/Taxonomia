@@ -71,11 +71,26 @@
             if (data) {
                 const targetPkField = window.Schema_Utils.getPrimaryKey(entityName);
                 localEditId = data[targetPkField] || data['id_registro'] || null;
+            } else if (entityName === 'Taxonomia') {
+                // S54.5: Optimistic ID Generation for Canvas
+                localEditId = (window.Schema_Utils && typeof window.Schema_Utils.generateUUID === 'function') ? window.Schema_Utils.generateUUID('TAX') : 'TAX-' + Math.random().toString(36).substr(2, 8).toUpperCase();
             }
-            // Construcción del Drawer de la Vista de Formularios (S25.2 Architecture)
-            const modal = document.createElement('div');
-            if (!global.DrawerStackController.push(modal)) {
-                return false; // Abort topological creation (Max Depth Guard triggered)
+            // S49.2: Inversión de Control (IoC) para contenedores custom (ej. Self-Service Fullscreen Wizard)
+            let modal;
+            const isCustomContainer = !!config.customContainer;
+            
+            if (isCustomContainer) {
+                modal = config.customContainer;
+            } else {
+                // Construcción del Drawer de la Vista de Formularios (S25.2 Architecture)
+                modal = document.createElement('div');
+                if (!global.DrawerStackController.push(modal)) {
+                    return false; // Abort topological creation (Max Depth Guard triggered)
+                }
+            }
+            
+            if (config.taxonomiaContext) {
+                modal.dataset.taxonomiaContext = config.taxonomiaContext;
             }
             
             // Inyectar callback opcional (In-line Creation via Bubble Events)
@@ -85,21 +100,22 @@
                 }, { once: true });
             }
 
-            // Header Custom del DrawerS25.2 con soporte para Badge ID congelado
-            // HEADER DESACOPLADO (S37.6)
-            // Se delega al Componente Puro Reutilizable UI_Factory
-            const header = window.UI_Factory.buildDrawerHeader({
-                entityName: entityName,
-                data: data,
-                localEditId: localEditId,
-                onClose: () => {
-                    if (window.AppEventBus) { window.AppEventBus.publish('MODAL::CLOSE_REQUEST'); } 
-                    else if (window._closeTopModal) { window._closeTopModal(); }
-                }
-            });
-            
-            modal.appendChild(header);
-
+            if (!isCustomContainer) {
+                // Header Custom del DrawerS25.2 con soporte para Badge ID congelado
+                // HEADER DESACOPLADO (S37.6)
+                // Se delega al Componente Puro Reutilizable UI_Factory
+                const header = window.UI_Factory.buildDrawerHeader({
+                    entityName: entityName,
+                    data: data,
+                    localEditId: localEditId,
+                    onClose: () => {
+                        if (window.AppEventBus) { window.AppEventBus.publish('MODAL::CLOSE_REQUEST'); } 
+                        else if (window._closeTopModal) { window._closeTopModal(); }
+                    }
+                });
+                
+                modal.appendChild(header);
+            }
 
             // Contenedor interno scrollable del Drawer con soporte nativo para móvil
             const container = document.createElement('ion-content');
@@ -122,6 +138,12 @@
             };
             container.addEventListener('input', updateDynamicHeader);
             container.addEventListener('ionInput', updateDynamicHeader);
+            
+            // S54.5: Pass the optimistic localEditId to the container
+            if (localEditId) {
+                container.setAttribute('data-edit-id', localEditId);
+            }
+            
             modal.appendChild(container);
 
             const schemas = global.APP_SCHEMAS;
@@ -135,9 +157,9 @@
             let steps = schemaDef.steps || null;
 
             if (Array.isArray(schemaDef)) {
-                fields = schemaDef;
+                fields = JSON.parse(JSON.stringify(schemaDef));
             } else if (schemaDef.fields) {
-                fields = schemaDef.fields;
+                fields = JSON.parse(JSON.stringify(schemaDef.fields));
             } else {
                 // Default to Portfolio Canvas layout
                 fields = Object.keys(schemaDef).map(k => ({ name: k, ...schemaDef[k] }));
@@ -180,12 +202,12 @@
             // ni el sidebar principal ni el header central para no romper la navegación.
 
             // Reparación Crítica: Instanciar variable solicitada por el Stepper
-            const sidebarList = document.getElementById('sidebarList');
-            const sidebarSteps = document.getElementById('form-steps-container');
+            const sidebarSteps = config.customSidebarSteps || document.getElementById('form-steps-container');
+            const sidebarList = config.customSidebarSteps ? config.customSidebarSteps : document.getElementById('sidebarList');
 
             // Validación de seguridad (Rule 5.3: Fault Tolerance)
             if (!sidebarList) {
-                console.error("[FormEngine] No se encontró el contenedor #sidebarList en el DOM.");
+                console.error("[FormEngine] No se encontró el contenedor del sidebar en el DOM.");
                 return;
             }
             
@@ -211,6 +233,146 @@
 
             let rows = {};
 
+            // Mover inicialización del botón Submit antes de inyectarlo en UI_FormStepper (BugFix ReferenceError)
+            const submitBtn = document.createElement('ion-button');
+            submitBtn.setAttribute('shape', 'round');
+            submitBtn.setAttribute('color', 'primary');
+            submitBtn.style.cssText += ' font-family: var(--sys-font-family, inherit) !important;';
+            const iconSave = document.createElement('ion-icon');
+            iconSave.setAttribute('slot', 'start');
+            iconSave.setAttribute('name', 'save-outline');
+            submitBtn.appendChild(iconSave);
+            
+            let btnText = ' Guardar ' + (window.formatEntityName ? window.formatEntityName(entityName) : entityName);
+            if (entityName === 'Taxonomia') btnText = 'Guardar Taxonomía';
+            submitBtn.appendChild(document.createTextNode(btnText));
+
+            // [S50.4] Mass Approval Button
+            let approveBtn = null;
+            const isDraftTaxonomy = entityName === 'Taxonomia' && (!data || data.estado === 'Borrador');
+            
+            if (isDraftTaxonomy) {
+                const canApprove = !window.ABAC || window.ABAC.can('update', 'Taxonomia', localEditId) || window.ABAC.can('create', 'Taxonomia', localEditId);
+                if (canApprove) {
+                    approveBtn = document.createElement('ion-button');
+                    approveBtn.setAttribute('shape', 'round');
+                    approveBtn.setAttribute('color', 'success');
+                    approveBtn.style.cssText += ' font-family: var(--sys-font-family, inherit) !important; margin-left: 10px;';
+                    const iconApprove = document.createElement('ion-icon');
+                    iconApprove.setAttribute('slot', 'start');
+                    iconApprove.setAttribute('name', 'checkmark-done-outline');
+                    approveBtn.appendChild(iconApprove);
+                    approveBtn.appendChild(document.createTextNode(' Aprobar Taxonomía'));
+                    
+                    approveBtn.addEventListener('click', async () => {
+                        // S55.4: Deployment Preview Calculation
+                        const allEdges = (window.DataStore.get('Sys_Graph_Edges') || []);
+                        const activeEdges = allEdges.filter(e => e.es_version_actual === true && e.estado !== 'Borrador');
+                        const draftEdges = allEdges.filter(e => String(e.contexto_id) === String(localEditId));
+                        
+                        let delta = { additions: [], removals: [], kept: [] };
+                        if (window.Graph_Utils && typeof window.Graph_Utils.computeDelta === 'function') {
+                            delta = window.Graph_Utils.computeDelta(activeEdges, draftEdges, localEditId);
+                        }
+                        
+                        // Node ID to Readable Name Resolver
+                        const resolveName = (id) => {
+                            const entities = ['Unidad_Negocio', 'Portafolio', 'Value_Stream', 'Grupo_Producto', 'Producto'];
+                            for (const entity of entities) {
+                                const store = window.DataStore.get(entity) || [];
+                                const match = store.find(r => String(r.id_registro) === String(id) || String(r['id_' + entity.toLowerCase()]) === String(id));
+                                if (match) return match.nombre || match.nombre_producto || match.id_registro || id;
+                            }
+                            return id;
+                        };
+
+                        const modalEl = document.createElement('ion-modal');
+                        const modalContent = document.createElement('div');
+                        modalContent.style.height = '100%';
+                        modalContent.style.display = 'flex';
+                        modalContent.style.flexDirection = 'column';
+                        
+                        let addsHtml = delta.additions.map(e => `<ion-item><ion-icon name="add-circle" color="success" slot="start"></ion-icon><ion-label color="success" class="ion-text-wrap"><b>Conectar:</b> ${resolveName(e.id_nodo_hijo)} a ${resolveName(e.id_nodo_padre)}</ion-label></ion-item>`).join('');
+                        let remsHtml = delta.removals.map(e => `<ion-item><ion-icon name="remove-circle" color="danger" slot="start"></ion-icon><ion-label color="danger" class="ion-text-wrap"><b>Desconectar:</b> ${resolveName(e.id_nodo_hijo)} de ${resolveName(e.id_nodo_padre)}</ion-label></ion-item>`).join('');
+                        
+                        if (!addsHtml) addsHtml = '<ion-item><ion-label color="medium">No hay nuevas conexiones</ion-label></ion-item>';
+                        if (!remsHtml) remsHtml = '<ion-item><ion-label color="medium">No hay desconexiones</ion-label></ion-item>';
+
+                        modalContent.innerHTML = `
+                            <ion-header>
+                                <ion-toolbar color="primary">
+                                    <ion-title>Resumen de Impacto</ion-title>
+                                    <ion-buttons slot="end">
+                                        <ion-button id="btn-cancel-deploy">Cancelar</ion-button>
+                                    </ion-buttons>
+                                </ion-toolbar>
+                            </ion-header>
+                            <ion-content class="ion-padding">
+                                <div style="padding: 10px 0; color: var(--ion-color-step-600); font-size: 0.95rem; line-height: 1.4;">
+                                    Verifique las modificaciones topológicas antes de publicar la taxonomía en Producción.
+                                </div>
+                                <ion-list>
+                                    <ion-list-header><ion-label color="success" style="font-weight: 700;">Adiciones (${delta.additions.length})</ion-label></ion-list-header>
+                                    ${addsHtml}
+                                </ion-list>
+                                <ion-list>
+                                    <ion-list-header><ion-label color="danger" style="font-weight: 700;">Eliminaciones (${delta.removals.length})</ion-label></ion-list-header>
+                                    ${remsHtml}
+                                </ion-list>
+                            </ion-content>
+                            <ion-footer>
+                                <ion-toolbar style="padding: 8px;">
+                                    <ion-button expand="block" color="success" id="btn-confirm-deploy">
+                                        <ion-icon name="cloud-upload-outline" slot="start"></ion-icon>
+                                        Confirmar y Desplegar
+                                    </ion-button>
+                                </ion-toolbar>
+                            </ion-footer>
+                        `;
+
+                        modalEl.appendChild(modalContent);
+                        document.body.appendChild(modalEl);
+                        
+                        await modalEl.present();
+
+                        modalContent.querySelector('#btn-cancel-deploy').addEventListener('click', () => {
+                            modalEl.dismiss();
+                            setTimeout(() => modalEl.remove(), 500);
+                        });
+
+                        modalContent.querySelector('#btn-confirm-deploy').addEventListener('click', () => {
+                            modalEl.dismiss();
+                            setTimeout(() => modalEl.remove(), 500);
+                            
+                            // S55.5: Backend Activation Trigger
+                            if (global.showToast) global.showToast('Aprobando taxonomía...', 'medium');
+                            
+                            if (window.DataAPI && window.DataAPI.call) {
+                                window.DataAPI.call('API_Universal_Router', 'publish_draft_context', 'Taxonomia', { contextId: localEditId })
+                                    .then((parsed) => {
+                                        if (parsed && parsed.status === 'success') {
+                                            if (global.showToast) global.showToast('Taxonomía aprobada exitosamente', 'success');
+                                            if (global.DrawerStackController) global.DrawerStackController.clearAllSync();
+                                            if (global.AppEventBus) global.AppEventBus.publish('TAXONOMIA_APPROVED');
+                                            if (global.DataStore && global.DataStore.fetchEntity) {
+                                                global.DataStore.fetchEntity('Taxonomia', true);
+                                                global.DataStore.fetchEntity('Sys_Graph_Edges', true);
+                                            }
+                                        } else {
+                                            if (global.showToast) global.showToast('Error: ' + (parsed.message || 'Desconocido'), 'danger');
+                                        }
+                                    })
+                                    .catch((err) => {
+                                        if (global.showToast) global.showToast('Falla de red: ' + err, 'danger');
+                                    });
+                            } else {
+                                if (global.showToast) global.showToast('Error: DataAPI no está disponible', 'danger');
+                            }
+                        });
+                    });
+                }
+            }
+
             if (useStepper) {
                 // S14.1 Arquitectura de FormStepper (Wizard)
                 if (!window.UI_FormStepper) {
@@ -219,13 +381,24 @@
                 }
 
                 container._btnPrev = document.createElement('ion-button');
-                container._btnPrev.fill = 'clear';
+                container._btnPrev.fill = 'outline';
                 container._btnPrev.color = 'medium';
+                container._btnPrev.style.fontFamily = 'var(--sys-font-family, system-ui, sans-serif)';
+                container._btnPrev.style.fontWeight = '600';
                 container._btnPrev.appendChild(document.createTextNode('Atrás'));
 
                 container._btnNext = document.createElement('ion-button');
+                container._btnNext.style.fontFamily = 'var(--sys-font-family, system-ui, sans-serif)';
+                container._btnNext.style.fontWeight = '600';
                 container._btnNext.appendChild(document.createTextNode('Siguiente'));
                 
+                // S49.6: Añadir Progress Label dinámico
+                const pLabel = document.createElement('span');
+                pLabel.style.fontSize = '0.85rem';
+                pLabel.style.fontWeight = '500';
+                pLabel.style.color = 'var(--ion-color-medium)';
+                container._progressLabel = pLabel;
+
                 // Inicializamos el stepper, reasignaremos submitBtn después
                 container._stepperRef = new window.UI_FormStepper({
                     steps: steps,
@@ -233,8 +406,10 @@
                     sidebarSteps: sidebarSteps,
                     btnPrev: container._btnPrev,
                     btnNext: container._btnNext,
-                    btnSubmit: submitBtn, // Referencia temporal, lo ajustamos en el Sticky Footer
-                    progressLabel: null 
+                    btnSubmit: submitBtn,
+                    progressLabel: container._progressLabel,
+                    entityName: entityName,
+                    stateful: entitySchema && entitySchema.form_stepper_stateful
                 });
                 
                 rows = container._stepperRef.getRows();
@@ -353,46 +528,103 @@
             const btnRow = document.createElement('ion-row');
             
             // Recrear solo el botón Submit Principal
-            const submitBtn = document.createElement('ion-button');
-            submitBtn.setAttribute('shape', 'round');
-            submitBtn.setAttribute('color', 'primary');
-            submitBtn.style.cssText += ' font-family: var(--sys-font-family, inherit) !important;';
-            const iconSave = document.createElement('ion-icon');
-            iconSave.setAttribute('slot', 'start');
-            iconSave.setAttribute('name', 'save-outline');
-            submitBtn.appendChild(iconSave);
-            submitBtn.appendChild(document.createTextNode(' Guardar ' + window.formatEntityName(entityName)));
+            // (El submitBtn ya fue creado arriba para evitar ReferenceError)
 
             if (useStepper && container._btnPrev && container._btnNext && container._stepperRef) {
-                // Layout Híbrido: Acomodar botones de Stepper
+                // S49.11: Footer limpio con dot indicators + botones de navegación
+                
                 const colLeft = document.createElement('ion-col');
-                colLeft.setAttribute('size', '4');
-                colLeft.style.textAlign = 'left';
-                colLeft.appendChild(container._btnPrev);
+                colLeft.setAttribute('size', '5');
+                colLeft.style.display = 'flex';
+                colLeft.style.alignItems = 'center';
+                colLeft.style.gap = 'var(--spacing-2)';
+                
+                // S49.11: Dot/Bar indicators — barras para completados, dots para pendientes
+                const dotsWrap = document.createElement('span');
+                dotsWrap.className = 'wizard-dots';
+                dotsWrap.style.cssText = 'display:inline-flex;gap:4px;align-items:center;';
+                const totalSteps = container._stepperRef.totalSteps;
+                for (let i = 0; i < totalSteps; i++) {
+                    const indicator = document.createElement('span');
+                    indicator.style.cssText = 'height:6px;border-radius:var(--rounded-full);transition:all 0.3s ease;';
+                    if (i === 0) {
+                        // Current step — elongated primary bar
+                        indicator.style.width = '24px';
+                        indicator.style.backgroundColor = 'var(--ion-color-primary)';
+                    } else {
+                        // Pending — small dot
+                        indicator.style.width = '6px';
+                        indicator.style.backgroundColor = 'var(--ion-color-step-200, #d0d0d0)';
+                    }
+                    dotsWrap.appendChild(indicator);
+                }
+                colLeft.appendChild(dotsWrap);
+                
+                const stepLabel = document.createElement('span');
+                stepLabel.style.cssText = 'font-size:var(--sys-font-caption, 0.75rem);color:var(--ion-color-step-500, #888);font-weight:500;white-space:nowrap;';
+                stepLabel.textContent = `1 / ${totalSteps}`;
+                colLeft.appendChild(stepLabel);
 
                 const colRight = document.createElement('ion-col');
-                colRight.setAttribute('size', '8');
-                colRight.style.textAlign = 'right';
+                colRight.setAttribute('size', '7');
+                colRight.style.display = 'flex';
+                colRight.style.alignItems = 'center';
+                colRight.style.justifyContent = 'flex-end';
+                colRight.style.gap = 'var(--spacing-2)';
                 
-                // Ambos botones en el ladro derecho
-                const btnGroup = document.createElement('span');
-                
+                // S49.11: Botón Atrás — estilo sutil (clear, text + chevron)
+                container._btnPrev.innerHTML = '';
+                container._btnPrev.fill = 'clear';
+                container._btnPrev.color = 'medium';
+                container._btnPrev.style.setProperty('--border-radius', 'var(--rounded-full)');
+                const iconPrev = document.createElement('ion-icon');
+                iconPrev.setAttribute('slot', 'start');
+                iconPrev.setAttribute('name', 'chevron-back-outline');
+                container._btnPrev.appendChild(iconPrev);
+                container._btnPrev.appendChild(document.createTextNode('Atrás'));
+
+                // S49.11: Botón Siguiente — estilo prominente (solid pill, primary)
+                container._btnNext.fill = 'solid';
+                container._btnNext.color = 'primary';
+                container._btnNext.style.setProperty('--border-radius', 'var(--rounded-full)');
                 const iconNext = document.createElement('ion-icon');
                 iconNext.setAttribute('slot', 'end');
-                iconNext.setAttribute('name', 'arrow-forward-outline');
+                iconNext.setAttribute('name', 'chevron-forward-outline');
                 container._btnNext.appendChild(iconNext);
-                container._btnNext.setAttribute('shape', 'round');
 
-                btnGroup.appendChild(container._btnNext);
-                btnGroup.appendChild(submitBtn);
-
-                colRight.appendChild(btnGroup);
+                colRight.appendChild(container._btnPrev);
+                colRight.appendChild(container._btnNext);
+                colRight.appendChild(submitBtn);
+                if (approveBtn) colRight.appendChild(approveBtn);
 
                 btnRow.appendChild(colLeft);
                 btnRow.appendChild(colRight);
 
+                // S49.12: Hook limpio vía callback nativo para actualizar barras/dots dinámicamente
+                container._stepperRef.onStepChange = (currentIndex, total) => {
+                    const indicators = dotsWrap.querySelectorAll('span');
+                    indicators.forEach((ind, i) => {
+                        const isCompleted = i < currentIndex;
+                        const isCurrent = i === currentIndex;
+                        if (isCompleted) {
+                            // Completed — elongated success bar
+                            ind.style.width = '24px';
+                            ind.style.backgroundColor = 'var(--ion-color-success)';
+                        } else if (isCurrent) {
+                            // Active — elongated primary bar
+                            ind.style.width = '24px';
+                            ind.style.backgroundColor = 'var(--ion-color-primary)';
+                        } else {
+                            // Pending — small dot
+                            ind.style.width = '6px';
+                            ind.style.backgroundColor = 'var(--ion-color-step-200, #d0d0d0)';
+                        }
+                    });
+                    stepLabel.textContent = `${currentIndex + 1} / ${total}`;
+                };
+
                 // Arrancar flujo topológico
-                container._stepperRef.btnSubmit = submitBtn; // Aseguramos bind
+                container._stepperRef.btnSubmit = submitBtn;
                 container._stepperRef.start();
             } else {
                 // Layout Linear 1 Step: Solo Guardar a la derecha
@@ -400,6 +632,7 @@
                 colRight.setAttribute('size', '12');
                 colRight.style.textAlign = 'right';
                 colRight.appendChild(submitBtn);
+                if (approveBtn) colRight.appendChild(approveBtn);
                 btnRow.appendChild(colRight);
             }
 
@@ -436,8 +669,17 @@
                 window.UI_FormDependencies.attachListeners(modal, fields);
             }
             // ------------------------------------------------------------
+            
+            // S49.2: Forzar recálculo inicial de estados (elimina race condition del setTimeout mágico)
+            if (useStepper && container._stepperRef && container._stepperRef.isStateful) {
+                container._stepperRef.recalculateAllStatuses();
+            }
 
-            modal.appendChild(footerContainer);
+            if (config.customFooterContainer) {
+                config.customFooterContainer.appendChild(footerContainer);
+            } else {
+                modal.appendChild(footerContainer);
+            }
             // El insertion del Drawer ya fue manejado por DrawerStackController.push
             // de forma síncrona arriba, no requiere document.body.appendChild.
         };
@@ -449,7 +691,165 @@
          */
         global._isRenderingForm = false;
 
-        global.openEditForm = async function (id, customEntityName = null) {
+        global.FormEngine_Hydrator = async function(container, record, entityName) {
+            if (!container || !record) return;
+            const inputs = container.querySelectorAll('ion-input, ion-textarea, ion-select, input[type="hidden"]');
+            
+            // =========================================================================================
+            // MDM Guardrail S4.3 Auditoría: Pre-Hidratación de 0ms (Solución a Fallo de Tree Lock Visual)
+            // =========================================================================================
+            // ARQUITECTURA: En Modo Edición (UPDATE), los campos anidados padre como `id_dominio_padre`
+            // son sometidos a inmutabilidad de estructura, impidiendo iterar combos cerrados.
+            // Para que el WebComponent de Ionic renderice el valor seleccionado en pantalla y NO un
+            // string nulo fantasma, inyectamos primero las `<ion-select-option>` buscando funciones
+            // locales 0ms. Todo ocurre ANTES del populate original de record[name].
+            // =========================================================================================
+            const formSchema = APP_SCHEMAS[entityName]?.fields || [];
+            const formStateObj = { ...record };
+            const formCurrentStateArr = Object.keys(formStateObj).map(k => ({name: k, value: formStateObj[k]}));
+
+            for (const input of Array.from(inputs)) {
+                if (input.tagName.toLowerCase() === 'ion-select') {
+                    const fieldName = input.getAttribute('name');
+                    const schemaDef = formSchema.find(f => f.name === fieldName);
+                    
+                    if (schemaDef && schemaDef.lookupSource) {
+                        const localResolver = window[schemaDef.lookupSource] || global[schemaDef.lookupSource];
+                        if (typeof localResolver === 'function') {
+                            // R-03: await Promise.resolve() handles both sync and async resolvers
+                            // without crashing when a resolver is a google.script.run wrapper (returns Promise)
+                            const newOptions = await Promise.resolve(localResolver(formCurrentStateArr));
+                            input.innerHTML = '';
+                            
+                            (Array.isArray(newOptions) ? newOptions : []).forEach(opt => {
+                                const ionOption = document.createElement('ion-select-option');
+                                ionOption.value = opt.value;
+                                ionOption.textContent = opt.label;
+                                input.appendChild(ionOption);
+                            });
+                        }
+                    }
+                }
+            }
+
+            console.log("[FormEngine] Pre-llenando", inputs.length, "campos para", entityName);
+            const formSchemaMap = APP_SCHEMAS[entityName] ? (APP_SCHEMAS[entityName].fields || APP_SCHEMAS[entityName]) : [];
+            const pkFieldLocal = APP_SCHEMAS[entityName]?.primaryKey || 'id';
+
+            inputs.forEach(input => {
+                const name = input.getAttribute('name');
+                if (!name || input.hasAttribute('data-skip-hydration')) return;
+
+                let valToSet = undefined;
+                if (record.hasOwnProperty(name)) {
+                    valToSet = record[name];
+                } else {
+                    // S30.13 JIT Graph Relational Pre-fill para Single-Select Padres (Evita Stealing Fantasma)
+                    let checkSchemaMap = Array.isArray(formSchemaMap) ? formSchemaMap : Object.keys(formSchemaMap).map(k => ({ name: k, ...formSchemaMap[k]}));
+                    const fieldMeta = checkSchemaMap.find(f => f.name === name);
+                    
+                    if (fieldMeta && fieldMeta.isTemporalGraph && window.DataStore && window.DataStore.get('Sys_Graph_Edges')) {
+                        const edgeName = (fieldMeta.graphEdgeType || fieldMeta.name).toUpperCase();
+                        const currentPK = record[pkFieldLocal];
+                        if (currentPK) {
+                            if (window.Graph_Utils && window.Graph_Utils.resolveAllLinkedIds) {
+                                // S54.5 Fix Contextual Graph Leak: Enforce state-aware graph index to respect 'Borrador' boundaries
+                                const explicitContext = (container && container.closest && container.closest('.drawer-container') && container.closest('.drawer-container').dataset.taxonomiaContext) || 
+                                                       (global.currentFormDrawer && global.currentFormDrawer.dataset && global.currentFormDrawer.dataset.taxonomiaContext) ? 
+                                                       ((container && container.closest && container.closest('.drawer-container')?.dataset.taxonomiaContext) || global.currentFormDrawer.dataset.taxonomiaContext) : null;
+                                const fallbackContext = window.UI_FormUtils ? window.UI_FormUtils.extractDraftContext(entityName, currentPK) : null;
+                                const contextId = explicitContext || fallbackContext;
+                                const strictContext = !!explicitContext || entityName === 'Taxonomia';
+                                const linkedIds = window.Graph_Utils.resolveAllLinkedIds(currentPK, edgeName, contextId, strictContext);
+                                if (linkedIds && linkedIds.length > 0) {
+                                    valToSet = linkedIds[0];
+                                }
+                            } else {
+                                // Legacy fallback si no está cargado Graph_Utils
+                                const activeEdges = window.DataStore.get('Sys_Graph_Edges').filter(e => e.es_version_actual !== false);
+                                if (fieldMeta.relationType === 'padre') {
+                                    const match = activeEdges.find(e => String(e.id_nodo_hijo) === String(currentPK) && e.tipo_relacion === edgeName);
+                                    if (match) valToSet = match.id_nodo_padre;
+                                } else {
+                                    const match = activeEdges.find(e => String(e.id_nodo_padre) === String(currentPK) && e.tipo_relacion === edgeName);
+                                    if (match) valToSet = match.id_nodo_hijo;
+                                }
+                            }
+                        }
+                        
+                        // [S44.13] JIT Workspace Fallback: Si no hay arista en el grafo, buscar si existe la referencia plana (ej. cargo=4826)
+                        if (valToSet === undefined) {
+                            const flatName = name.replace('id_', ''); // ej. 'id_cargo' -> 'cargo'
+                            const flatVal = record[flatName];
+                            if (flatVal && fieldMeta.targetEntity && window.DataStore.get(fieldMeta.targetEntity)) {
+                                const targetTable = window.DataStore.get(fieldMeta.targetEntity);
+                                // Buscar coincidencia por id_externo_workspace o ID directo o nombre
+                                const matchTarget = targetTable.find(t => 
+                                    String(t.id_externo_workspace).trim().toLowerCase() === String(flatVal).trim().toLowerCase() || 
+                                    String(t[fieldMeta.valueField]).trim().toLowerCase() === String(flatVal).trim().toLowerCase() || 
+                                    String(t.id_registro).trim().toLowerCase() === String(flatVal).trim().toLowerCase() ||
+                                    String(t.nombre || '').trim().toLowerCase() === String(flatVal).trim().toLowerCase()
+                                );
+                                if (matchTarget) {
+                                    valToSet = matchTarget[fieldMeta.valueField] || matchTarget.id_registro;
+                                    console.log(`[FormEngine] JIT Workspace Fallback Resuelto para ${name}: ${flatVal} -> ${valToSet}`);
+                                } else {
+                                    // NO EXISTE EN DB: Agregar la opción virtual si es un select
+                                    if (input.tagName === 'ION-SELECT') {
+                                        let existOpt = Array.from(input.querySelectorAll('ion-select-option')).find(o => o.value === flatVal);
+                                        if (!existOpt) {
+                                            const newOpt = document.createElement('ion-select-option');
+                                            newOpt.value = flatVal;
+                                            newOpt.textContent = flatVal + ' (Workspace)';
+                                            input.appendChild(newOpt);
+                                        }
+                                    }
+                                    valToSet = flatVal;
+                                    console.log(`[FormEngine] JIT Workspace Fallback CREANDO OPCIÓN VIRTUAL para ${name}: ${flatVal}`);
+                                }
+                            }
+                        }
+                    }
+                }
+
+                if (valToSet !== undefined) {
+                    if (input.dataset.parser === 'json_array') {
+                        let parsedData = [];
+                        try {
+                            parsedData = typeof valToSet === 'string' ? JSON.parse(valToSet) : valToSet;
+                        } catch(e) { parsedData = typeof valToSet === 'string' && valToSet ? [valToSet] : []; }
+                        input.value = JSON.stringify(Array.isArray(parsedData) ? parsedData : []);
+                        
+                        requestAnimationFrame(() => {
+                            if (input.tagName.toLowerCase().startsWith('ion-')) {
+                                input.value = JSON.stringify(Array.isArray(parsedData) ? parsedData : []);
+                            }
+                        });
+                    } else {
+                        // Respaldo por atributo HTML
+                        input.setAttribute('value', valToSet);
+                        
+                        // Sincronización StencilJS correcta para Web Components
+                        if (input.tagName.toLowerCase().startsWith('ion-')) {
+                            if (typeof input.componentOnReady === 'function') {
+                                input.componentOnReady().then(() => {
+                                    input.value = valToSet;
+                                });
+                            } else {
+                                // Fallback for older Ionic/Stencil versions or custom components
+                                setTimeout(() => { input.value = valToSet; }, 50);
+                            }
+                        } else {
+                            input.value = valToSet;
+                        }
+                    }
+                    // S4.X Notificar silenciosamente al nodo DOM por si pertenece a un Custom Component complejo (Ej. Avatar) que requiere reaccionar
+                    input.dispatchEvent(new CustomEvent('FormHydrated', { detail: valToSet, bubbles: false }));
+                }
+            });
+        };
+
+        global.openEditForm = async function (id, customEntityName = null, overrideOptions = {}) {
             if (global._isRenderingForm) {
                 console.warn("[FormEngine] Race condition prevenida: ignorando click duplicado");
                 return;
@@ -506,7 +906,7 @@
             const canEdit = !window.ABAC || window.ABAC.can('update', entityName, id);
 
             // 4. Renderizar el formulario base de la entidad AL INSTANTE (0ms) usando caché local
-            await global.renderForm(entityName, record, null, { readonly: !canEdit });
+            await global.renderForm(entityName, record, null, { readonly: !canEdit, ...overrideOptions });
 
             // 5. [S29.9 Fix] Eliminada la pantalla Skeleton. La hidratación ahora es verdaderamente transparente.
             // Actualizar Título del Drawer
@@ -515,126 +915,9 @@
                 if (modalTitle) modalTitle.textContent = window.formatEntityName(entityName); // Removido prefijo Editar:
             }
 
-            // 5. Pre-llenado de campos (Acelerado a 0ms Local Cache)
+            // 5. Pre-llenado de campos (Acelerado a 0ms Local Cache delegando al Hydrator Arquitectónico)
             const container = global.currentFormDrawer || document.getElementById('app-container');
-            const inputs = container.querySelectorAll('ion-input, ion-textarea, ion-select, input[type="hidden"]');
-
-            // =========================================================================================
-            // MDM Guardrail S4.3 Auditoría: Pre-Hidratación de 0ms (Solución a Fallo de Tree Lock Visual)
-            // =========================================================================================
-            // ARQUITECTURA: En Modo Edición (UPDATE), los campos anidados padre como `id_dominio_padre`
-            // son sometidos a inmutabilidad de estructura, impidiendo iterar combos cerrados.
-            // Para que el WebComponent de Ionic renderice el valor seleccionado en pantalla y NO un
-            // string nulo fantasma, inyectamos primero las `<ion-select-option>` buscando funciones
-            // locales 0ms. Todo ocurre ANTES del populate original de record[name].
-            // =========================================================================================
-            const formSchema = APP_SCHEMAS[entityName]?.fields || [];
-            const formStateObj = { ...record };
-            const formCurrentStateArr = Object.keys(formStateObj).map(k => ({name: k, value: formStateObj[k]}));
-
-            for (const input of Array.from(inputs)) {
-                if (input.tagName.toLowerCase() === 'ion-select') {
-                    const fieldName = input.getAttribute('name');
-                    const schemaDef = formSchema.find(f => f.name === fieldName);
-                    
-                    if (schemaDef && schemaDef.lookupSource) {
-                        const localResolver = window[schemaDef.lookupSource] || global[schemaDef.lookupSource];
-                        if (typeof localResolver === 'function') {
-                            // R-03: await Promise.resolve() handles both sync and async resolvers
-                            // without crashing when a resolver is a google.script.run wrapper (returns Promise)
-                            const newOptions = await Promise.resolve(localResolver(formCurrentStateArr));
-                            input.innerHTML = '';
-                            
-                            (Array.isArray(newOptions) ? newOptions : []).forEach(opt => {
-                                const ionOption = document.createElement('ion-select-option');
-                                ionOption.value = opt.value;
-                                ionOption.textContent = opt.label;
-                                input.appendChild(ionOption);
-                            });
-                        }
-                    }
-                }
-            }
-
-            console.log("[FormEngine] Pre-llenando", inputs.length, "campos...");
-            const formSchemaMap = APP_SCHEMAS[entityName] ? (APP_SCHEMAS[entityName].fields || APP_SCHEMAS[entityName]) : [];
-            const pkFieldLocal = APP_SCHEMAS[entityName]?.primaryKey || 'id';
-
-            inputs.forEach(input => {
-                const name = input.getAttribute('name');
-                if (!name || input.hasAttribute('data-skip-hydration')) return;
-
-                let valToSet = undefined;
-                if (record.hasOwnProperty(name)) {
-                    valToSet = record[name];
-                } else {
-                    // S30.13 JIT Graph Relational Pre-fill para Single-Select Padres (Evita Stealing Fantasma)
-                    let checkSchemaMap = Array.isArray(formSchemaMap) ? formSchemaMap : Object.keys(formSchemaMap).map(k => ({ name: k, ...formSchemaMap[k]}));
-                    const fieldMeta = checkSchemaMap.find(f => f.name === name);
-                    
-                    if (fieldMeta && fieldMeta.isTemporalGraph && window.DataStore && window.DataStore.get('Sys_Graph_Edges')) {
-                        const activeEdges = window.DataStore.get('Sys_Graph_Edges').filter(e => e.es_version_actual !== false);
-                        const edgeName = (fieldMeta.graphEdgeType || fieldMeta.name).toUpperCase();
-                        const currentPK = record[pkFieldLocal];
-                        if (currentPK) {
-                            if (fieldMeta.relationType === 'padre') {
-                                const match = activeEdges.find(e => String(e.id_nodo_hijo) === String(currentPK) && e.tipo_relacion === edgeName);
-                                if (match) valToSet = match.id_nodo_padre;
-                            } else {
-                                const match = activeEdges.find(e => String(e.id_nodo_padre) === String(currentPK) && e.tipo_relacion === edgeName);
-                                if (match) valToSet = match.id_nodo_hijo;
-                            }
-                        }
-                        
-                        // [S44.13] JIT Workspace Fallback: Si no hay arista en el grafo, buscar si existe la referencia plana (ej. cargo=4826)
-                        if (valToSet === undefined) {
-                            const flatName = name.replace('id_', ''); // ej. 'id_cargo' -> 'cargo'
-                            const flatVal = record[flatName];
-                            if (flatVal && fieldMeta.targetEntity && window.DataStore.get(fieldMeta.targetEntity)) {
-                                const targetTable = window.DataStore.get(fieldMeta.targetEntity);
-                                // Buscar coincidencia por id_externo_workspace o ID directo o nombre
-                                const matchTarget = targetTable.find(t => 
-                                    String(t.id_externo_workspace).trim().toLowerCase() === String(flatVal).trim().toLowerCase() || 
-                                    String(t[fieldMeta.valueField]).trim().toLowerCase() === String(flatVal).trim().toLowerCase() || 
-                                    String(t.id_registro).trim().toLowerCase() === String(flatVal).trim().toLowerCase() ||
-                                    String(t.nombre || '').trim().toLowerCase() === String(flatVal).trim().toLowerCase()
-                                );
-                                if (matchTarget) {
-                                    valToSet = matchTarget[fieldMeta.valueField] || matchTarget.id_registro;
-                                    console.log(`[FormEngine] JIT Workspace Fallback Resuelto para ${name}: ${flatVal} -> ${valToSet}`);
-                                } else {
-                                    // NO EXISTE EN DB: Agregar la opción virtual si es un select
-                                    if (input.tagName === 'ION-SELECT') {
-                                        let existOpt = Array.from(input.querySelectorAll('ion-select-option')).find(o => o.value === flatVal);
-                                        if (!existOpt) {
-                                            const newOpt = document.createElement('ion-select-option');
-                                            newOpt.value = flatVal;
-                                            newOpt.textContent = flatVal + ' (Workspace)';
-                                            input.appendChild(newOpt);
-                                        }
-                                    }
-                                    valToSet = flatVal;
-                                    console.log(`[FormEngine] JIT Workspace Fallback CREANDO OPCIÓN VIRTUAL para ${name}: ${flatVal}`);
-                                }
-                            }
-                        }
-                    }
-                }
-
-                if (valToSet !== undefined) {
-                    if (input.dataset.parser === 'json_array') {
-                        let parsedData = [];
-                        try {
-                            parsedData = typeof valToSet === 'string' ? JSON.parse(valToSet) : valToSet;
-                        } catch(e) { parsedData = typeof valToSet === 'string' && valToSet ? [valToSet] : []; }
-                        input.value = JSON.stringify(Array.isArray(parsedData) ? parsedData : []);
-                    } else {
-                        input.value = valToSet;
-                    }
-                    // S4.X Notificar silenciosamente al nodo DOM por si pertenece a un Custom Component complejo (Ej. Avatar) que requiere reaccionar
-                    input.dispatchEvent(new CustomEvent('FormHydrated', { detail: valToSet, bubbles: false }));
-                }
-            });
+            await global.FormEngine_Hydrator(container, record, entityName);
 
             // S7.3 - El "Pre-llenado de Chip Components" nativo fue removido. 
             // Reason (Principio DRY): UI_Components gestiona esta hidratación activamente

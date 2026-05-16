@@ -4,99 +4,8 @@
   ═══════════════════════════════════════════════════════ */
 
   window.renderDashboard = function(forceRefresh) {
-    if (window.chartTopology) { window.chartTopology.destroy(); window.chartTopology = null; }
-    if (window.chartCapacity) { window.chartCapacity.destroy(); window.chartCapacity = null; }
-    var container       = document.getElementById('dashboard-charts-container');
-    var filterContainer = document.getElementById('dashboard-filter-container');
-    if (!container) return;
-    
-    var equipos = window.DataStore.get('Equipo') || [];
-    if (equipos.length === 0) return;
-    
-    var portfolioSel = document.getElementById('dashboard-portfolio-filter');
-    var selectedPortfolio = 'all';
-    
-    if (portfolioSel) {
-      if (!portfolioSel.dataset.populated) {
-        var portafolios = window.DataStore.get('Portafolio') || [];
-        window.DOM.clear(portfolioSel);
-        var optAll = document.createElement('ion-select-option');
-        optAll.value = 'all';
-        optAll.textContent = 'TODOS LOS PORTAFOLIOS';
-        portfolioSel.appendChild(optAll);
-        portafolios.forEach(function(p) { 
-           var opt = document.createElement('ion-select-option');
-           opt.value = p.id_portafolio;
-           opt.textContent = p.nombre;
-           portfolioSel.appendChild(opt);
-        });
-        portfolioSel.value = 'all';
-        portfolioSel.dataset.populated = 'true';
-        portfolioSel.addEventListener('ionChange', function() { window.renderDashboard(true); });
-      }
-      selectedPortfolio = portfolioSel.value || 'all';
-    }
-    
-    if (selectedPortfolio !== 'all') {
-      var productos = window.DataStore.get('Producto') || [];
-      var grupos    = window.DataStore.get('Grupo_Productos') || [];
-      equipos = equipos.filter(function(eq) {
-        var prod = productos.find(function(p) { return String(p.id_producto) === String(eq.id_producto); });
-        if (!prod) return false;
-        var grupo = grupos.find(function(g) { return String(g.id_grupo_producto) === String(prod.id_grupo_producto); });
-        return grupo && String(grupo.id_portafolio) === String(selectedPortfolio);
-      });
-    }
-    
-    if (filterContainer) filterContainer.classList.remove('ion-hide');
-    container.classList.remove('ion-hide');
-    
-    // Extracción de Distribución Topológica (Metodología de Equipos) para Donut Chart
-    var mapMetodologias = { 'Scrum': 0, 'Kanban': 0, 'Híbrido': 0, 'Otro': 0 };
-
-    var capacityData = [];
-    equipos.forEach(function(eq) {
-      // 1. Bar Chart Data (Integrantes por equipo)
-      const capY = parseInt(eq.total_integrantes, 10);
-      capacityData.push({ x: eq.nombre_equipo || 'Desconocido', y: isNaN(capY) ? 0 : capY });
-
-      // 2. Donut Chart Data (Distribución)
-      var met = eq.metodologia || 'Otro';
-      if(mapMetodologias[met] === undefined) mapMetodologias['Otro']++;
-      else mapMetodologias[met]++;
-    });
-
-    var labelsEsp = Object.keys(mapMetodologias).filter(function(k) { return mapMetodologias[k] > 0; });
-    var seriesEsp = labelsEsp.map(function(k) { return mapMetodologias[k]; });
-
-    // Colores genericos
-    var defaultColors = ['var(--ion-color-light)','var(--ion-color-light)','var(--ion-color-light)','var(--ion-color-light)','var(--ion-color-light)','var(--ion-color-light)','var(--ion-color-light)','var(--ion-color-dark)', 'var(--ion-color-light)', 'var(--ion-color-light)'];
-
-    var isDark = (window.ThemeManager && window.ThemeManager.currentTheme === 'dark');
-    var currentThemeMode = isDark ? 'dark' : 'light';
-    var currentForeColor = isDark ? 'var(--ion-color-light)' : 'var(--ion-color-light)';
-
-    window.chartTopology = new ApexCharts(document.querySelector('#chart-topology'), {
-      series: seriesEsp, 
-      labels: labelsEsp,
-      chart: { type:'donut', height:350, foreColor: currentForeColor, background: 'transparent' }, 
-      legend: { position:'bottom' },
-      theme: { mode: currentThemeMode },
-      colors: defaultColors.slice(0, seriesEsp.length)
-    });
-    window.chartTopology.render();
-    
-    capacityData.sort(function(a,b) { return b.y - a.y; });
-    window.chartCapacity = new ApexCharts(document.querySelector('#chart-capacity'), {
-      series: [{ name:'Integrantes', data: capacityData }],
-      chart: { type:'bar', height:350, foreColor: currentForeColor, background: 'transparent' }, 
-      plotOptions: { bar: { horizontal:true } },
-      theme: { mode: currentThemeMode },
-      colors: ['var(--ion-color-light)']
-    });
-    window.chartCapacity.render();
-
-
+    // ECharts removed by S55.2 redesign.
+    // Preserved empty function to avoid breaking legacy code that calls this.
   };
 
   window.renderDashboardCards = function() {
@@ -171,20 +80,5 @@
     }
   };
 
-  // [H14] Inversión de Acoplamiento: ThemeManager notifica, Dashboard escucha y se auto-actualiza
-  window.addEventListener('theme:changed', function(e) {
-    if (typeof window.ApexCharts === 'undefined') return;
-    
-    var isDark = e.detail === 'dark';
-    var chartOptionsUpdate = { 
-      theme: { mode: isDark ? 'dark' : 'light' },
-      chart: { 
-        foreColor: isDark ? 'var(--ion-color-light)' : 'var(--ion-color-light)',
-        background: 'transparent'
-      }
-    };
-
-    if (window.chartTopology) window.chartTopology.updateOptions(chartOptionsUpdate);
-    if (window.chartCapacity) window.chartCapacity.updateOptions(chartOptionsUpdate);
-  });
+    // Charts removed, no need to update theme.
 </script>

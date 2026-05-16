@@ -76,40 +76,44 @@ window.UI_SubgridBuilder = {
         emptyState.appendChild(emptyText);
 
         // [S29.7] Estado local del subgrid purificado de Singletons. Usamos un nodo escondido JSON
-        const childRecords = (data && Array.isArray(data[field.name])) ? [...data[field.name]] : [];
+        let childRecords = (data && Array.isArray(data[field.name])) ? [...data[field.name]] : [];
         
         const schema = window.APP_SCHEMAS ? window.APP_SCHEMAS[entityName] : null;
         const pkKey = schema && schema.primaryKey ? schema.primaryKey : (data ? Object.keys(data).find(k => k.startsWith('id_') && k !== 'id_registro') : null);
         const currentPK = data ? (data[pkKey] || data.id_registro) : null;
         
-        // [S29.9] Zero-Latency Cache Cross-Reference (Agile Join)
-        if (childRecords.length === 0 && field.isTemporalGraph && field.graphEntity && window.DataStore) {
+        // [S53.6] Contextual Subgrid Filtering (Workspace Isolation)
+        // Prioridad 1: taxonomiaContext inyectado explícitamente por el Canvas
+        // Prioridad 2: Draft Context convencional (S50.3)
+        const explicitContext = (modalContext && modalContext.dataset && modalContext.dataset.taxonomiaContext) ? modalContext.dataset.taxonomiaContext : null;
+        const fallbackContext = window.UI_FormUtils ? window.UI_FormUtils.extractDraftContext(entityName, currentPK) : null;
+        
+        const contextId = explicitContext || fallbackContext;
+        const strictContext = !!explicitContext || entityName === 'Taxonomia'; // Taxonomias son containers estrictos por naturaleza
+        
+        // [S49.14] Zero-Latency Cache Cross-Reference (Agile Join) refactored via centralized JS_GraphUtils O(1) lookups
+        if (field.isTemporalGraph && window.Graph_Utils && currentPK) {
+            // [S53.6] If we are in a contextual mode, force dynamic recalculation to ignore baseline hydration
+            if (contextId) {
+                childRecords = []; // Force recalculation to respect context isolation
+            }
+            if (childRecords.length === 0) {
+                const normPK = window.UI_FormUtils ? window.UI_FormUtils.normalizeId(currentPK) : String(currentPK);
+                const edgeName = (field.graphEdgeType || field.name).toUpperCase();
+                const childIds = window.Graph_Utils.resolveAllLinkedIds(normPK, edgeName, contextId, strictContext);
             
-            if (currentPK && window.UI_FormUtils) {
-                const graphEdges = window.DataStore.get(field.graphEntity) || [];
+            if (childIds.length > 0 && window.DataStore) {
                 const targetTable = window.DataStore.get(field.targetEntity) || [];
+                const schemaChild = window.APP_SCHEMAS ? window.APP_SCHEMAS[field.targetEntity] : null;
+                const childPkKey = schemaChild && schemaChild.primaryKey ? schemaChild.primaryKey : (targetTable[0] ? Object.keys(targetTable[0]).find(k => k.startsWith('id_') && k !== 'id_registro') : 'id_registro');
                 
-                if (graphEdges.length > 0 && targetTable.length > 0) {
-                    const edgeName = (field.graphEdgeType || field.name).toUpperCase();
-                    let childIds = [];
-                    if (field.relationType === 'hijo') {
-                        childIds = graphEdges.filter(e => e.es_version_actual !== false && window.UI_FormUtils.normalizeId(e.id_nodo_padre) === window.UI_FormUtils.normalizeId(currentPK) && String(e.tipo_relacion).toUpperCase() === edgeName).map(e => window.UI_FormUtils.normalizeId(e.id_nodo_hijo));
-                    } else if (field.relationType === 'padre') {
-                        childIds = graphEdges.filter(e => e.es_version_actual !== false && window.UI_FormUtils.normalizeId(e.id_nodo_hijo) === window.UI_FormUtils.normalizeId(currentPK) && String(e.tipo_relacion).toUpperCase() === edgeName).map(e => window.UI_FormUtils.normalizeId(e.id_nodo_padre));
+                targetTable.forEach(row => {
+                    const rawId = window.UI_FormUtils ? window.UI_FormUtils.normalizeId(row[childPkKey] || row.id_registro) : String(row[childPkKey] || row.id_registro);
+                    if (childIds.includes(rawId) && row.estado !== 'Eliminado') {
+                        childRecords.push(row);
                     }
-                    
-                    if (childIds.length > 0) {
-                        const schemaChild = window.APP_SCHEMAS ? window.APP_SCHEMAS[field.targetEntity] : null;
-                        const childPkKey = schemaChild && schemaChild.primaryKey ? schemaChild.primaryKey : Object.keys(targetTable[0] || {}).find(k => k.startsWith('id_') && k !== 'id_registro');
-                        
-                        targetTable.forEach(row => {
-                             const rawId = window.UI_FormUtils.normalizeId(row[childPkKey] || row.id_registro);
-                             if (childIds.includes(rawId) && row.estado !== 'Eliminado') {
-                                 childRecords.push(row);
-                             }
-                        });
-                    }
-                }
+                });
+            }
             }
         }
         
@@ -162,7 +166,8 @@ window.UI_SubgridBuilder = {
                         const entityKey = field.targetEntity;
                         const pkField = window.Schema_Utils.getPrimaryKey(entityKey);
                         const recordId = record[pkField] || record.id_registro;
-                        window.openEditForm(recordId, entityKey);
+                        const opts = contextId ? { taxonomiaContext: contextId } : {};
+                        window.openEditForm(recordId, entityKey, opts);
                     }
                 });
                 
@@ -256,7 +261,16 @@ window.UI_SubgridBuilder = {
             
             if (lookupSource && lookupSource.data && lookupSource.lookups) {
                  // If it came from getInitialPayload (Tuples)
-                 const rows = window.Schema_Utils.inflateTuples(lookupSource.data);
+                 let rows = window.Schema_Utils.inflateTuples(lookupSource.data);
+                 
+                 // [S55.1] Contextual Subgrid Option Isolation
+                 rows = rows.filter(d => {
+                     if (d.estado === 'Eliminado' || typeof d !== 'object') return false;
+                     if (String(d.estado).toLowerCase() === 'borrador') {
+                         return contextId && String(d.contexto_id) === String(contextId);
+                     }
+                     return true;
+                 });
                  // Map to {value, label}
                  const pkField = Object.keys(rows[0] || {}).find(k => k.startsWith('id_'));
                  if (pkField) {
@@ -333,26 +347,32 @@ window.UI_SubgridBuilder = {
             const mContent = document.createElement('ion-content');
             const mList = document.createElement('ion-list');
             
-            const itemCreate = document.createElement('ion-item');
-            itemCreate.setAttribute('button', 'true');
-            itemCreate.id = 'btn-create-new';
-            itemCreate.setAttribute('lines', 'full');
-            itemCreate.setAttribute('color', 'light');
+            const targetEntityForCreate = field.targetEntity;
+            const canCreateTarget = !window.ABAC || window.ABAC.can('create', targetEntityForCreate);
             
-            const iconCreate = document.createElement('ion-icon');
-            iconCreate.setAttribute('name', 'add-circle-outline');
-            iconCreate.setAttribute('slot', 'start');
-            iconCreate.setAttribute('color', 'primary');
-            itemCreate.appendChild(iconCreate);
-            
-            const labelCreate = document.createElement('ion-label');
-            labelCreate.setAttribute('color', 'primary');
-            const strongCreate = document.createElement('strong');
-            strongCreate.textContent = `+ Crear Nuevo ${field.label.replace(/s de /i, ' de ').replace(/s$/i, '').replace(/Grupos/i, 'Grupo')}`;
-            labelCreate.appendChild(strongCreate);
-            itemCreate.appendChild(labelCreate);
-            
-            mList.appendChild(itemCreate);
+            let itemCreate;
+            if (canCreateTarget) {
+                itemCreate = document.createElement('ion-item');
+                itemCreate.setAttribute('button', 'true');
+                itemCreate.id = 'btn-create-new';
+                itemCreate.setAttribute('lines', 'full');
+                itemCreate.setAttribute('color', 'light');
+                
+                const iconCreate = document.createElement('ion-icon');
+                iconCreate.setAttribute('name', 'add-circle-outline');
+                iconCreate.setAttribute('slot', 'start');
+                iconCreate.setAttribute('color', 'primary');
+                itemCreate.appendChild(iconCreate);
+                
+                const labelCreate = document.createElement('ion-label');
+                labelCreate.setAttribute('color', 'primary');
+                const strongCreate = document.createElement('strong');
+                strongCreate.textContent = `+ Crear Nuevo ${field.label.replace(/s de /i, ' de ').replace(/s$/i, '').replace(/Grupos/i, 'Grupo')}`;
+                labelCreate.appendChild(strongCreate);
+                itemCreate.appendChild(labelCreate);
+                
+                mList.appendChild(itemCreate);
+            }
             
             const divider = document.createElement('ion-item-divider');
             const divLabel = document.createElement('ion-label');
@@ -454,65 +474,67 @@ window.UI_SubgridBuilder = {
                 modal.dismiss().then(() => modal.remove());
             });
 
-            itemCreate.addEventListener('click', async () => {
-                // In-Line Creation via Modal Stack
-                // Desmontamos el Subgrid Picker
-                modal.dismiss().then(() => modal.remove());
-                
-                const onSubFormSuccess = (newRecordResp, submittedPayload) => {
-                    if (newRecordResp && newRecordResp.status === 'success') {
-                        setOptimisticLock();
-                        // Soporte para distintas firmas de payload (según controlador de GAS)
-                        const itemPayload = (newRecordResp.data && newRecordResp.data.data) ? newRecordResp.data.data : (newRecordResp.data || newRecordResp);
-                        
-                        // Extraemos el PK de la respuesta del servidor u originamos del payload devuelto
-                        const newId = newRecordResp.pkValue || itemPayload[childPK] || itemPayload['id_registro'];
-                        
-                        // RQ1: Fallback Defensivo con Invocación Ontológica
-                        // La representación visual se mapea prioritariamente según el schema del framework
-                        const sourceName = submittedPayload || itemPayload;
-                        const schemaMeta = window.APP_SCHEMAS && window.APP_SCHEMAS[field.targetEntity];
-                        const titleKey = schemaMeta ? (schemaMeta.titleField || (schemaMeta.metadata && schemaMeta.metadata.titleField) || 'nombre') : 'nombre';
-                        
-                        const newName = sourceName[titleKey] || sourceName.nombre || sourceName.nombre_producto || newId;
+            if (itemCreate) {
+                itemCreate.addEventListener('click', async () => {
+                    // In-Line Creation via Modal Stack
+                    // Desmontamos el Subgrid Picker
+                    modal.dismiss().then(() => modal.remove());
+                    
+                    const onSubFormSuccess = (newRecordResp, submittedPayload) => {
+                        if (newRecordResp && newRecordResp.status === 'success') {
+                            setOptimisticLock();
+                            // Soporte para distintas firmas de payload (según controlador de GAS)
+                            const itemPayload = (newRecordResp.data && newRecordResp.data.data) ? newRecordResp.data.data : (newRecordResp.data || newRecordResp);
+                            
+                            // Extraemos el PK de la respuesta del servidor u originamos del payload devuelto
+                            const newId = newRecordResp.pkValue || itemPayload[childPK] || itemPayload['id_registro'];
+                            
+                            // RQ1: Fallback Defensivo con Invocación Ontológica
+                            // La representación visual se mapea prioritariamente según el schema del framework
+                            const sourceName = submittedPayload || itemPayload;
+                            const schemaMeta = window.APP_SCHEMAS && window.APP_SCHEMAS[field.targetEntity];
+                            const titleKey = schemaMeta ? (schemaMeta.titleField || (schemaMeta.metadata && schemaMeta.metadata.titleField) || 'nombre') : 'nombre';
+                            
+                            const newName = sourceName[titleKey] || sourceName.nombre || sourceName.nombre_producto || newId;
 
-                        if (newId) {
-                            childRecords.push({
-                                [childPK]: newId,
-                                nombre: newName,
-                                estado: 'Activo'
-                            });
-                            _refreshList();
+                            if (newId) {
+                                childRecords.push({
+                                    [childPK]: newId,
+                                    nombre: newName,
+                                    estado: 'Activo'
+                                });
+                                _refreshList();
+                            }
+                        }
+                    };
+                    
+                    // [S29.8] Determinar Foreign Key recíproca hacia el Padre
+                    let initialData = {};
+                    const schemaMeta = window.APP_SCHEMAS && window.APP_SCHEMAS[field.targetEntity];
+                    if (schemaMeta && schemaMeta.fields) {
+                        const reciprocalField = schemaMeta.fields.find(f => 
+                            f.type === 'relation' && 
+                            f.targetEntity === entityName && // Apunta de vuelta al Padre
+                            f.relationType !== field.relationType // Tiene el tipo de arista opuesto
+                        );
+                        if (reciprocalField) {
+                            const mockToken = (window.UI_CONSTANTS && window.UI_CONSTANTS.MOCK_FK_TOKEN) ? window.UI_CONSTANTS.MOCK_FK_TOKEN : '_NEW_PARENT_';
+                            initialData[reciprocalField.name] = config.parentEditId || mockToken;
                         }
                     }
-                };
-                
-                // [S29.8] Determinar Foreign Key recíproca hacia el Padre
-                let initialData = {};
-                const schemaMeta = window.APP_SCHEMAS && window.APP_SCHEMAS[field.targetEntity];
-                if (schemaMeta && schemaMeta.fields) {
-                    const reciprocalField = schemaMeta.fields.find(f => 
-                        f.type === 'relation' && 
-                        f.targetEntity === entityName && // Apunta de vuelta al Padre
-                        f.relationType !== field.relationType // Tiene el tipo de arista opuesto
-                    );
-                    if (reciprocalField) {
-                        const mockToken = (window.UI_CONSTANTS && window.UI_CONSTANTS.MOCK_FK_TOKEN) ? window.UI_CONSTANTS.MOCK_FK_TOKEN : '_NEW_PARENT_';
-                        initialData[reciprocalField.name] = config.parentEditId || mockToken;
+                    
+                    // Emisión Invertida (Pub/Sub Topológico) hacia el EventBus para no llamar a globals
+                    if (localEventBus && typeof localEventBus.publish === 'function') {
+                        localEventBus.publish('UI::REQUEST_SUBFORM_OPEN', {
+                            targetEntity: field.targetEntity,
+                            initialData: initialData,
+                            onSuccess: onSubFormSuccess
+                        });
+                    } else {
+                        console.warn(`[UI_SubgridBuilder] No EventBus provided. Cannot open subform for ${field.targetEntity}`);
                     }
-                }
-                
-                // Emisión Invertida (Pub/Sub Topológico) hacia el EventBus para no llamar a globals
-                if (localEventBus && typeof localEventBus.publish === 'function') {
-                    localEventBus.publish('UI::REQUEST_SUBFORM_OPEN', {
-                        targetEntity: field.targetEntity,
-                        initialData: initialData,
-                        onSuccess: onSubFormSuccess
-                    });
-                } else {
-                    console.warn(`[UI_SubgridBuilder] No EventBus provided. Cannot open subform for ${field.targetEntity}`);
-                }
-            });
+                });
+            }
         });
 
         // Aseguramos que antes de retornar el modal esté instanciado en el layout (esto sigue sin cambiar la refactorización purista)

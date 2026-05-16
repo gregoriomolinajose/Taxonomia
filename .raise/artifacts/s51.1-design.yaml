@@ -1,0 +1,28 @@
+artifact_type: story-design
+version: 1
+skill: rai-story-design
+created: '2026-05-09T23:02:00Z'
+story: 'S51.1'
+epic: 'E51'
+content:
+  summary: 'Definir propiedades de metadata en Schema_Engine para habilitar Workspace Mode en campos relacionales tripartitos.'
+  complexity: simple
+  acceptance_criteria:
+    - id: AC1
+      description: 'Los campos head_of_technology, technology_manager y technical_lead tienen flag workspaceMode: true'
+      verifiable: true
+    - id: AC2
+      description: 'Los campos incluyen su respectivo fixedParentId apuntando al Rol'
+      verifiable: true
+  integration_points:
+    - module: 'Schema_Engine'
+      change_type: modification
+      files: ['src/Schema_Engine.js']
+  decisions:
+    - id: D1
+      choice: 'Agregar flags directos en el array fields del schema'
+      rationale: 'KISS. El FormBuilder y FormSubmitter ya leen del schema actual, por lo que expandir las propiedades es la forma más limpia de inyectar nueva configuración.'
+      alternatives_considered: ['Crear un nuevo tipo de campo, ej. "workspace_relation"']
+refs:
+  epic_scope: 'work/epics/e51-taxonomia-workspace/scope.md'
+metadata: {}

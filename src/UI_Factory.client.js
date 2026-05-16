@@ -79,6 +79,23 @@ window.UI_Factory = {
             });
         }
 
+        // S51.6 Fullscreen Toggle Button
+        const fullscreenBtn = document.createElement('ion-button');
+        fullscreenBtn.setAttribute('fill', 'clear');
+        fullscreenBtn.setAttribute('color', 'medium');
+        fullscreenBtn.className = 'btn-fullscreen-drawer';
+        fullscreenBtn.innerHTML = '<ion-icon slot="icon-only" name="expand-outline"></ion-icon>';
+        fullscreenBtn.addEventListener('click', (e) => {
+            const drawerPanel = e.target.closest('.drawer-panel');
+            if (drawerPanel) {
+                const isFullscreen = drawerPanel.classList.toggle('fullscreen');
+                const icon = fullscreenBtn.querySelector('ion-icon');
+                if (icon) {
+                    icon.name = isFullscreen ? 'contract-outline' : 'expand-outline';
+                }
+            }
+        });
+
         const closeBtn = document.createElement('ion-button');
         closeBtn.setAttribute('fill', 'clear');
         closeBtn.setAttribute('color', 'medium');
@@ -89,6 +106,7 @@ window.UI_Factory = {
             closeBtn.addEventListener('click', onClose);
         }
         
+        actionsContainer.appendChild(fullscreenBtn);
         actionsContainer.appendChild(closeBtn);
 
         topRow.appendChild(breadcrumb);
@@ -129,13 +147,21 @@ window.UI_Factory = {
             avatarBox.style.backgroundImage = `url('${data.avatar}')`;
             avatarBox.style.backgroundSize = 'cover';
             avatarBox.style.backgroundPosition = 'center';
+            avatarBox.style.border = 'none';
         } else {
-            // Generate Initials
-            if (window.Schema_Utils && window.Schema_Utils.getAvatarInitials) {
-                avatarBox.textContent = window.Schema_Utils.getAvatarInitials(semanticName);
-            } else {
-                avatarBox.textContent = semanticName ? semanticName.substring(0, 2).toUpperCase() : '??';
-            }
+            // S53: Apply Entity Icon instead of initials
+            const schemaDef = schemaSchemas[entityName] || {};
+            const entityColor = (schemaDef.metadata && schemaDef.metadata.color) ? schemaDef.metadata.color : 'primary';
+            const entityIcon = (schemaDef.metadata && schemaDef.metadata.iconName) ? schemaDef.metadata.iconName : 'folder-outline';
+
+            avatarBox.style.background = `var(--ion-color-${entityColor}, var(--ion-color-primary))`;
+            avatarBox.style.color = '#ffffff';
+            avatarBox.style.border = 'none';
+
+            const iconEl = document.createElement('ion-icon');
+            iconEl.setAttribute('name', entityIcon);
+            iconEl.style.fontSize = '24px';
+            avatarBox.appendChild(iconEl);
         }
 
         identityRow.appendChild(avatarBox);

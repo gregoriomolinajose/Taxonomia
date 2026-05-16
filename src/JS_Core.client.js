@@ -368,16 +368,40 @@
                     
                     let currentCache = [...self.get(childEntity)];
                     freshChildren.forEach(newChild => {
-                        const cid = newChild[childPkField] || newChild['id_' + childEntity.toLowerCase()];
-                        if (!cid) {
-                            console.warn(`[UI_FormSubmitter] Ignorando hijo sin PK para ${childEntity}:`, newChild);
-                            return; // Failsafe against Index 0 corruption
-                        }
-                        const idx = currentCache.findIndex(c => (c[childPkField] === cid) || (c['id_' + childEntity.toLowerCase()] === cid));
-                        if (idx !== -1) {
-                            currentCache = [...currentCache.slice(0, idx), newChild, ...currentCache.slice(idx + 1)];
+                        const isGraphEdge = childEntity === 'Sys_Graph_Edges';
+                        
+                        if (isGraphEdge) {
+                            const pId = newChild.id_nodo_padre;
+                            const hId = newChild.id_nodo_hijo;
+                            const relType = newChild.tipo_relacion;
+                            
+                            const ctxId = newChild.contexto_id || '';
+                            
+                            const idx = currentCache.findIndex(c => 
+                                c.tipo_relacion === relType && 
+                                String(c.id_nodo_padre).trim() === String(pId).trim() && 
+                                String(c.id_nodo_hijo).trim() === String(hId).trim() && 
+                                String(c.es_version_actual).toLowerCase() === 'true' &&
+                                String(c.contexto_id || '').trim() === String(ctxId).trim()
+                            );
+                            
+                            if (idx !== -1) {
+                                currentCache = [...currentCache.slice(0, idx), newChild, ...currentCache.slice(idx + 1)];
+                            } else {
+                                currentCache = [newChild, ...currentCache];
+                            }
                         } else {
-                            currentCache = [newChild, ...currentCache];
+                            const cid = newChild[childPkField] || newChild['id_' + childEntity.toLowerCase()];
+                            if (!cid) {
+                                console.warn(`[UI_FormSubmitter] Ignorando hijo sin PK para ${childEntity}:`, newChild);
+                                return; // Failsafe against Index 0 corruption
+                            }
+                            const idx = currentCache.findIndex(c => (c[childPkField] === cid) || (c['id_' + childEntity.toLowerCase()] === cid));
+                            if (idx !== -1) {
+                                currentCache = [...currentCache.slice(0, idx), newChild, ...currentCache.slice(idx + 1)];
+                            } else {
+                                currentCache = [newChild, ...currentCache];
+                            }
                         }
                     });
                     
@@ -469,6 +493,7 @@
         case 'nav:reload': location.reload(); break;
         case 'nav:toggle-menu': if (typeof window.toggleDesktopMenu === 'function') window.toggleDesktopMenu(); break;
         case 'nav:dashboard': window.AppEventBus.publish('NAV::CHANGE', {viewType: 'dashboard'}); break;
+        case 'nav:self-service': window.AppEventBus.publish('NAV::CHANGE', {viewType: 'selfservice'}); break;
         case 'nav:designkit': window.AppEventBus.publish('NAV::CHANGE', {viewType: 'designkit'}); break;
         case 'nav:governance': window.AppEventBus.publish('NAV::CHANGE', {viewType: 'governance'}); break;
         case 'nav:sistema': window.AppEventBus.publish('NAV::CHANGE', {viewType: 'sistema'}); break;
@@ -497,7 +522,7 @@
     // Regla S11.1: EventBus Subscription para Router
     window.AppEventBus.subscribe('NAV::CHANGE', function(payload) {
       if (payload.viewType && window.UI_Router) {
-        window.UI_Router.navigateTo(payload.viewType, payload.entityKey);
+        window.UI_Router.navigateTo(payload.viewType, payload.entityKey, payload);
       }
     });
 
@@ -510,9 +535,16 @@
       }
       
       if (window.UI_Router && typeof window.UI_Router.navigateTo === 'function') {
-        window.UI_Router.navigateTo('dashboard');
+        window.UI_Router.navigateTo('selfservice');
       }
       window.AuthManager.init();
+      
+      // Bind segment changes
+      document.addEventListener('ionChange', function(e) {
+          if (e.target.id === 'main-layout-segment') {
+              window.AppEventBus.publish('NAV::CHANGE', {viewType: e.detail.value});
+          }
+      });
       
       if (window.AppEventBus) {
         window.AppEventBus.subscribe('APP::READY', function() {
@@ -598,11 +630,19 @@
                  // [E31-S31.5] Reveal Sistema (SUPER_ADMIN only)
                  var btnSistema = document.getElementById('popover-btn-sistema');
                  if (btnSistema) btnSistema.classList.remove('ion-hide');
-              } else {
-                 // Securing Governance Node Visibility 
-                 var btnGov = document.getElementById('popover-btn-governance');
-                 if (btnGov) btnGov.style.display = 'none';
                  
+                 // Revelar opciones administrativas
+                 var btnGov = document.getElementById('popover-btn-governance');
+                 if (btnGov) {
+                     btnGov.classList.remove('ion-hide');
+                     btnGov.style.display = '';
+                 }
+                 var btnConfig = document.getElementById('popover-btn-configuracion');
+                 if (btnConfig) {
+                     btnConfig.classList.remove('ion-hide');
+                     btnConfig.style.display = '';
+                 }
+              } else {
                  if (ctx.ownerOf && ctx.ownerOf.length > 0) {
                    rolePop.innerText = 'Rol: Propietario';
                    var cOwner = bMap.OWNER || '#2dd36f';

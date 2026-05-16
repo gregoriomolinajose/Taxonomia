@@ -1,0 +1,32 @@
+artifact_type: story-design
+version: 1
+skill: rai-story-design
+created: '2026-05-16T07:35:00Z'
+story: 'S56.1'
+epic: 'E56'
+content:
+  summary: 'Ajustar la configuración del Stepper para introducir los pasos de carga masiva de Equipos y Personas, actualizando las lógicas full-screen para el canvas.'
+  complexity: simple
+  acceptance_criteria:
+    - id: AC1
+      description: 'El Wizard de Taxonomía expone 4 pasos (Configuración General, Importar Equipos, Importar Personas, Arquitectura de Portafolio).'
+      verifiable: true
+    - id: AC2
+      description: 'El layout se comporta como fullscreen sólamente al estar en el último paso (índice 3).'
+      verifiable: true
+  integration_points:
+    - module: 'Schema_Engine'
+      change_type: modification
+      files: ['src/Schema_Engine.js']
+    - module: 'UI_FormStepper'
+      change_type: modification
+      files: ['src/UI_FormStepper.client.js']
+  decisions:
+    - id: D1
+      choice: 'Utilizar chequeo de "último paso"'
+      rationale: 'El canvas es el entorno final. Mover su lógica al `currentStepIndex === this.steps.length - 1` asegura mantenibilidad.'
+      alternatives_considered: ['Chequeo explícito por string "Arquitectura de Portafolio".']
+refs:
+  backlog_item: 'E56'
+  epic_scope: 'work/epics/e56-wizard-bulk-import/scope.md'
+metadata: {}

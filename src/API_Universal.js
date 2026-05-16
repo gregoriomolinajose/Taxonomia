@@ -118,6 +118,16 @@ function API_Universal_Router(action, entityName, payload) {
       // Para delete, el payload puede ser solo el ID como string o un obj {id: ...}
       const id = (typeof payload === 'object') ? payload[pkField] || payload.id : payload;
       responseData = _handleDelete(entityName, id);
+    } else if (action === 'publish_draft_context') {
+      // [S50.4] Mass Approval ETL Endpoint
+      if (!payload || !payload.contextId) throw new Error("Falta contextId para publicar el borrador.");
+      const email = Session.getActiveUser().getEmail();
+      if (typeof Engine_ABAC !== 'undefined') {
+          const canPublish = Engine_ABAC.validatePermission(email, 'update', 'Taxonomia', payload.contextId);
+          if (!canPublish) throw new Error("ABAC_REJECTED: Permisos insuficientes para aprobar taxonomías.");
+      }
+      responseData = Engine_DB.publishDraftContext(payload.contextId);
+      return JSON.stringify({ status: "success", data: responseData, action });
     } else if (action === 'etl_writeback_feedback') {
       if (typeof _guardAbac === 'function') {
          _guardAbac('create', entityName, null);
@@ -222,6 +232,31 @@ function API_Universal_Router(action, entityName, payload) {
         status: "success",
         data: responseData,
         insertedCount: responseData.count || 0
+      });
+    } else if (action === 'commitEdges') {
+      if (!Array.isArray(payload)) throw new Error("commitEdges expects an array payload");
+      
+      const email = typeof Session !== 'undefined' ? Session.getActiveUser().getEmail() : "system";
+      const sysDate = new Date().toISOString();
+      
+      payload.forEach(edge => {
+          if (!edge.id_relacion) edge.id_relacion = 'RELA-' + Math.random().toString(36).substring(2, 10).toUpperCase();
+          if (!edge.estado) edge.estado = 'Borrador';
+          if (!edge.valido_desde) edge.valido_desde = sysDate;
+          if (!edge.created_at) edge.created_at = sysDate;
+          if (!edge.created_by) edge.created_by = email;
+          // Clean optimistic properties injected by client if present
+          delete edge.id; 
+      });
+
+      responseData = Engine_DB.upsertBatch('Sys_Graph_Edges', payload);
+      
+      if (typeof Logger !== 'undefined') Logger.log(`commitEdges completado: ${payload.length} aristas.`);
+      
+      return JSON.stringify({
+        status: "success",
+        data: responseData,
+        insertedCount: payload.length
       });
     } else {
       throw new Error(`Action '${action}' not supported yet.`);

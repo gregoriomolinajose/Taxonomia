@@ -280,8 +280,13 @@ function etl_writeback_feedback(entityName, payload) {
  * Ejemplo: UNID-X8R2P
  */
 function _generateShortUUID(entityName) {
-    const safeName = entityName || 'uuid';
-    const prefix = safeName.substring(0, 4).toUpperCase();
+    let prefix = 'UUID';
+    if (typeof APP_SCHEMAS !== 'undefined' && APP_SCHEMAS[entityName] && APP_SCHEMAS[entityName].metadata && APP_SCHEMAS[entityName].metadata.prefix) {
+        prefix = APP_SCHEMAS[entityName].metadata.prefix;
+    } else {
+        const safeName = entityName || 'uuid';
+        prefix = safeName.replace(/[^a-zA-Z0-9]/g, '').substring(0, 4).toUpperCase();
+    }
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
     let suffix = '';
     for (let i = 0; i < 8; i++) {

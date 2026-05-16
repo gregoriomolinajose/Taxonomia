@@ -213,11 +213,11 @@
                 const sRegex = new RegExp('(^|\\W)' + escapeRegExp(sVal) + '(\\W|$)');
 
                 // NEW: Resolve Graph edges JIT for filter (H8/S34 QA)
+                // [S49.14] Refactored to use centralized Graph_Utils for O(1) lookups
                 let fMeta = null;
                 if (window.APP_SCHEMAS && window.APP_SCHEMAS[_state.entityName]) {
                     fMeta = (window.APP_SCHEMAS[_state.entityName].fields || []).find(f => f.name === sKey);
                 }
-                const activeEdges = (fMeta && fMeta.isTemporalGraph && window.DataStore && window.DataStore.get('Sys_Graph_Edges')) ? window.DataStore.get('Sys_Graph_Edges') : null;
                 const edgeName = fMeta ? (fMeta.graphEdgeType || fMeta.name).toUpperCase() : null;
                 const pkCol = window.Schema_Utils ? window.Schema_Utils.getPrimaryKey(_state.entityName) : 'id_registro';
 
@@ -226,15 +226,10 @@
 
                     // Graph Fallback: Si no hay FK física, buscala en la topología (Orphan Prevention)
                     const isEmptyValue = val === undefined || val === null || val === '' || (Array.isArray(val) && val.length === 0);
-                    if (fMeta && fMeta.isTemporalGraph && activeEdges && isEmptyValue) {
+                    if (fMeta && fMeta.isTemporalGraph && window.Graph_Utils && isEmptyValue) {
                         const currentPK = r[pkCol];
-                        if (fMeta.relationType === 'padre') {
-                            const match = activeEdges.find(e => String(e.id_nodo_hijo) === String(currentPK) && e.tipo_relacion === edgeName && e.es_version_actual !== false && e.estado !== 'Eliminado');
-                            if (match) val = match.id_nodo_padre;
-                        } else {
-                            const match = activeEdges.find(e => String(e.id_nodo_padre) === String(currentPK) && e.tipo_relacion === edgeName && e.es_version_actual !== false && e.estado !== 'Eliminado');
-                            if (match) val = match.id_nodo_hijo; 
-                        }
+                        const resolvedLink = window.Graph_Utils.resolveLinkedId(currentPK, edgeName);
+                        if (resolvedLink) val = resolvedLink;
                     }
                     // Unwraps Graph/Relation Array [{id: "EQ-1"}] checking ANY object property or flat value
                     if (Array.isArray(val)) {
@@ -250,7 +245,32 @@
                     return String(val) === sVal || sRegex.test(String(val));
                 });
             }
-            _state.filtered = window.DataEngine.applyFilter(baseData, query);
+            let textFiltered = window.DataEngine.applyFilter(baseData, query);
+            
+            // S54.3: Motor AND/OR de filtros universales
+            if (_state.advancedFilters && Object.keys(_state.advancedFilters).length > 0) {
+                const filterKeys = Object.keys(_state.advancedFilters);
+                textFiltered = textFiltered.filter(row => {
+                    return filterKeys.every(field => { // AND entre distintos campos
+                        const validValues = _state.advancedFilters[field];
+                        if (!validValues || validValues.length === 0) return true;
+                        
+                        let rowVal = row[field];
+                        if (rowVal === null || rowVal === undefined || rowVal === '' || (Array.isArray(rowVal) && rowVal.length === 0)) {
+                            rowVal = '[Sin Valor]';
+                        }
+                        
+                        if (Array.isArray(rowVal)) {
+                            // Relacional (array)
+                            return validValues.some(val => rowVal.includes(val));
+                        } else {
+                            return validValues.includes(String(rowVal)); // OR entre valores del mismo campo
+                        }
+                    });
+                });
+            }
+            
+            _state.filtered = textFiltered;
             _state.page = 1;
             _state.lastGridScroll = 0; // Reset scroll momentum on search
             _rerenderData(); // Solo datos — el toolbar/search box NO se toca
@@ -282,9 +302,15 @@
 
         function _buildToolbarHTML() {
             if (window.UI_DataView_Toolbar) {
-                return window.UI_DataView_Toolbar.buildToolbarHTML(_state.view, _state.entityName, _onViewToggle);
+                return window.UI_DataView_Toolbar.buildToolbarHTML(_state.view, _state.entityName, _onViewToggle, _onFilterToggle);
             }
             return document.createElement('div');
+        }
+
+        function _onFilterToggle() {
+            if (_state.filterInstance && typeof _state.filterInstance.render === 'function') {
+                _state.filterInstance.render();
+            }
         }
 
         /* Adjunta el listener ionInput al ion-searchbar tras cada re-render del toolbar.
@@ -301,7 +327,9 @@
         function _buildHeader() {
             if (window.UI_DataView_Toolbar) {
                 const canCreate = !window.ABAC || window.ABAC.can('create', _state.entityName);
-                const onAddClick = () => renderForm(_state.entityName);
+                const onAddClick = () => {
+                    if (typeof window.renderForm === 'function') window.renderForm(_state.entityName);
+                };
                 const headerDiv = window.UI_DataView_Toolbar.buildHeader(
                     _state.entityName, 
                     _state.filtered.length, 
@@ -347,32 +375,13 @@
             if (!dataZone) return;
             window.DOM.clear(dataZone);
 
-            if (_state.view === 'map') {
-                if (window.renderDomainMap) {
-                    window.renderDomainMap(dataZone);
-                } else {
-                    const errNode = document.createElement('div');
-                    errNode.className = 'dv-empty';
-                    errNode.textContent = 'Motor de Mapa no disponible.';
-                    dataZone.appendChild(errNode);
-                }
-
-            } else if (_state.view === 'tree') {
+            if (_state.view === 'tree') {
                 if (window.UI_View_Tree) {
                     window.UI_View_Tree.render(dataZone, _state);
                 } else {
                     const errNode = document.createElement('div');
                     errNode.className = 'dv-empty';
                     errNode.textContent = 'Módulo UI_View_Tree no disponible.';
-                    dataZone.appendChild(errNode);
-                }
-            } else if (_state.view === 'echarts') {
-                if (window.UI_View_ECharts) {
-                    window.UI_View_ECharts.render(dataZone, _state);
-                } else {
-                    const errNode = document.createElement('div');
-                    errNode.className = 'dv-empty';
-                    errNode.textContent = 'Módulo UI_View_ECharts no disponible.';
                     dataZone.appendChild(errNode);
                 }
             } else if (window.UI_DataGrid) {
@@ -400,7 +409,11 @@
                     onRowOrderChange: _onRowOrderChange,
                     onPageSize: _onPageSize,
                     onPage: _onPage,
-                    onEdit: (id) => { if (typeof window !== 'undefined' && window.openEditForm) window.openEditForm(id); },
+                    onEdit: (id) => { 
+                        if (typeof window !== 'undefined') {
+                            if (window.openEditForm) window.openEditForm(id, _state.entityName); 
+                        }
+                    },
                     lastGridScroll: _state.lastGridScroll,
                     onGridScroll: (top) => { _state.lastGridScroll = top; }
                 }));
@@ -433,7 +446,9 @@
                 page: 1, pageSize: 25,
                 sortCol: '', sortDir: 'asc',
                 view: defaultView, columns: [], payload: payload || null,
-                lastGridScroll: 0 // H10: Scroll momentum orchestration
+                lastGridScroll: 0, // H10: Scroll momentum orchestration
+                advancedFilters: {}, // S54.3: Filtros universales
+                filterInstance: null // S54.3: Instancia del drawer
             };
 
             // Limpiar ion-popover de la entidad anterior (si existe)
@@ -464,6 +479,11 @@
             const tZone = document.createElement('div'); tZone.id = 'dv-toolbar-zone';
             const dZone = document.createElement('div'); dZone.id = 'dv-data-zone';
             root.appendChild(hZone); root.appendChild(tZone); root.appendChild(dZone);
+            
+            // S54.3: Contenedor para filtros
+            const fZone = document.createElement('div'); fZone.id = 'dv-filter-container';
+            root.appendChild(fZone);
+            
             container.appendChild(root);
 
             // Inyectar Safely el skeleton estático convertido a fragmento
@@ -516,6 +536,22 @@
                 // El Filtro visual del Searchbar ya no se inyecta con IDs para evitar colisiones.
                 // Se procesa de forma transpartente en _applyFilter utilizando payload.strictFilter
                 _applyFilter('');
+                
+                // S54.3: Instanciar Motor de Filtros
+                if (window.UI_UniversalFilter) {
+                    _state.filterInstance = new window.UI_UniversalFilter({
+                        entityName: _state.entityName,
+                        schemaConfig: window.APP_SCHEMAS || {},
+                        records: _state.data,
+                        lookupData: window._LOOKUP_DATA || {},
+                        containerEl: document.getElementById('dv-filter-container'),
+                        onFilterChange: function(newFilters) {
+                            _state.advancedFilters = newFilters || {};
+                            const searchInput = document.getElementById('dv-search-input');
+                            _applyFilter(searchInput ? searchInput.value : '');
+                        }
+                    });
+                }
             });
         }
 

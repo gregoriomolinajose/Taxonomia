@@ -33,7 +33,8 @@
                         window.SubgridState.evaluateFieldState(rulesContext, newLevel, field.relationType) : 
                         { isDisabled: false, opacity: '1', placeholder: '— Sin asignar —' };
                     
-                    selectEl.disabled = uiState.isDisabled;
+                    const finalDisabledState = uiState.isDisabled || isActuallyReadonly;
+                    selectEl.disabled = finalDisabledState;
                     selectEl.style.opacity = uiState.opacity;
                     emptyOptNode.textContent = uiState.placeholder;
                     
@@ -46,7 +47,8 @@
                     
                     if (typeof selectEl.updateConfig === 'function') {
                         // S37.1 - Modern SearchableSingle Integration
-                        selectEl.updateConfig(freshFiltered, uiState.isDisabled, uiState.placeholder);
+                        const finalDisabledState = uiState.isDisabled || isActuallyReadonly;
+                        selectEl.updateConfig(freshFiltered, finalDisabledState, uiState.placeholder);
                     } else {
                         // Legacy HTML Select
                         const oldVal = selectEl.value;
@@ -72,20 +74,38 @@
             inputEl.style.width = '100%';
             inputEl.style.marginBottom = 'var(--spacing-2)';
             
-            const liveData = window.DataStore ? (window.DataStore.get(field.targetEntity) || []) : [];
-            const activeData = liveData.filter(d => d.estado !== 'Eliminado' && typeof d === 'object');
+            const schema = window.APP_SCHEMAS ? window.APP_SCHEMAS[entityName] : null;
+            const pkKey = schema && schema.primaryKey ? schema.primaryKey : (data ? Object.keys(data).find(k => k.startsWith('id_') && k !== 'id_registro') : null);
+            const currentPK = data ? (data[pkKey] || data.id_registro) : null;
+            
+            // [S50.3] Extraer contexto de borrador para inyectar en UI Components
+            const explicitContext = (window.currentFormDrawer && window.currentFormDrawer.dataset && window.currentFormDrawer.dataset.taxonomiaContext) ? window.currentFormDrawer.dataset.taxonomiaContext : null;
+            const fallbackContext = window.UI_FormUtils ? window.UI_FormUtils.extractDraftContext(entityName, currentPK) : null;
+            const contextId = explicitContext || fallbackContext;
+            const strictContext = !!explicitContext || entityName === 'Taxonomia';
+            const isActuallyReadonly = field.readonly && !strictContext;
+            
+            // [S55.1] Contextual List Wrapper
+            const activeData = window.UI_FormUtils && window.UI_FormUtils.fetchContextualData 
+                ? window.UI_FormUtils.fetchContextualData(field.targetEntity, contextId)
+                : (window.DataStore ? window.DataStore.get(field.targetEntity) || [] : []).filter(d => d.estado !== 'Eliminado' && typeof d === 'object');
             
             let initialValues = [];
-            
+
             if (field.isTemporalGraph && field.graphEntity && window.DataStore && window.DataStore.get(field.graphEntity)) {
-                const schema = window.APP_SCHEMAS ? window.APP_SCHEMAS[entityName] : null;
-                // Leemos con precisión milimétrica la Llave Primaria desde la Arquitectura
-                const pkKey = schema && schema.primaryKey ? schema.primaryKey : (data ? Object.keys(data).find(k => k.startsWith('id_') && k !== 'id_registro') : null);
-                const currentPK = data ? (data[pkKey] || data.id_registro) : null;
                 if (currentPK) {
                     const aristas = window.DataStore.get(field.graphEntity).filter(e => e.es_version_actual !== false);
                     const edgeName = (field.graphEdgeType || field.name).toUpperCase();
-                    if (field.relationType === 'padre') {
+                    if (field.workspaceMode) {
+                        initialValues = aristas.filter(e => 
+                            window.UI_FormUtils.normalizeId(e.contexto_id) === window.UI_FormUtils.normalizeId(currentPK) && 
+                            (!field.fixedParentId || window.UI_FormUtils.normalizeId(e.id_nodo_padre) === window.UI_FormUtils.normalizeId(field.fixedParentId)) &&
+                            String(e.tipo_relacion).toUpperCase() === edgeName
+                        ).map(e => window.UI_FormUtils.normalizeId(field.relationType === 'padre' ? e.id_nodo_padre : e.id_nodo_hijo));
+                    } else if (window.Graph_Utils && window.Graph_Utils.resolveAllLinkedIds) {
+                        // S54.5 Fix Contextual Graph Leak: Enforce state-aware graph index to respect 'Borrador' boundaries
+                        initialValues = window.Graph_Utils.resolveAllLinkedIds(currentPK, edgeName, contextId, strictContext);
+                    } else if (field.relationType === 'padre') {
                         initialValues = aristas.filter(e => window.UI_FormUtils.normalizeId(e.id_nodo_hijo) === window.UI_FormUtils.normalizeId(currentPK) && String(e.tipo_relacion).toUpperCase() === edgeName).map(e => window.UI_FormUtils.normalizeId(e.id_nodo_padre));
                     } else if (field.relationType === 'hijo') {
                         initialValues = aristas.filter(e => window.UI_FormUtils.normalizeId(e.id_nodo_padre) === window.UI_FormUtils.normalizeId(currentPK) && String(e.tipo_relacion).toUpperCase() === edgeName).map(e => window.UI_FormUtils.normalizeId(e.id_nodo_hijo));
@@ -106,8 +126,8 @@
             if (field.uiComponent === 'searchable_multi') {
                 if (global.UI_Factory.buildSearchableMulti) {
                     const metadataToken = (window.APP_SCHEMAS && window.APP_SCHEMAS[field.targetEntity] && window.APP_SCHEMAS[field.targetEntity].metadata) || {};
-                    const visualTokens = { iconName: metadataToken.iconName, color: metadataToken.color };
-                    const multiNodes = global.UI_Factory.buildSearchableMulti(field, activeData, initialValues, localEventBus, visualTokens);
+                    const componentConfig = { iconName: metadataToken.iconName, color: metadataToken.color, contextId: contextId };
+                    const multiNodes = global.UI_Factory.buildSearchableMulti(field, activeData, initialValues, localEventBus, componentConfig);
 
                     // S41.14 Bind Create Action
                     multiNodes.addEventListener('txSearchableCreate', (e) => {
@@ -120,6 +140,9 @@
                     const rawLiveData = window.DataStore ? window.DataStore.get(field.targetEntity) : null;
                     if (rawLiveData === null || rawLiveData === undefined) {
                         multiNodes.setAttribute('is-loading', 'true');
+                    }
+                    if (isActuallyReadonly) {
+                        multiNodes.setAttribute('disabled', 'true');
                     }
 
                     if (window.AppEventBus) {
@@ -142,10 +165,12 @@
                             else multiNodes.removeAttribute('is-loading');
 
                             const freshLiveData = freshRaw || [];
-                            const freshActiveData = freshLiveData.filter(d => d.estado !== 'Eliminado' && typeof d === 'object');
+                            const freshActiveData = window.UI_FormUtils && window.UI_FormUtils.fetchContextualData 
+                                ? window.UI_FormUtils.fetchContextualData(field.targetEntity, contextId)
+                                : freshLiveData.filter(d => d.estado !== 'Eliminado' && typeof d === 'object');
                             
                             if (typeof multiNodes.updateConfig === 'function') {
-                                multiNodes.updateConfig(freshActiveData, false);
+                                multiNodes.updateConfig(freshActiveData, isActuallyReadonly || false);
                             }
                         };
                         window.AppEventBus.subscribe('FormEngine::RecordHydrated', reloadDatasetMulti);
@@ -179,11 +204,11 @@
                 }
 
                 // S37.1 UI_Component_SearchableSingle reemplaza al framework nativo de ionic
-                // Inversion de Control: Inyectamos visualTokens de Metadatos desde afuera en vez de que el Componente de búsqueda lo escanee por sí mismo
+                // Inversion de Control: Inyectamos componentConfig de Metadatos desde afuera en vez de que el Componente de búsqueda lo escanee por sí mismo
                 const metadataToken = (window.APP_SCHEMAS && window.APP_SCHEMAS[field.targetEntity] && window.APP_SCHEMAS[field.targetEntity].metadata) || {};
-                const visualTokens = { iconName: metadataToken.iconName, color: metadataToken.color };
+                const componentConfig = { iconName: metadataToken.iconName, color: metadataToken.color, contextId: contextId };
                 
-                const basicSel = global.UI_Factory.buildSearchableSingle(field, filteredActiveData, initialValues, localEventBus, visualTokens);
+                const basicSel = global.UI_Factory.buildSearchableSingle(field, filteredActiveData, initialValues, localEventBus, componentConfig);
                 
                 // S41.14 Bind Create Action
                 basicSel.addEventListener('txSearchableCreate', (e) => {
@@ -202,7 +227,7 @@
                     basicSel.setAttribute('data-skip-hydration', 'true');
                 }
                 
-                if (uiStateInit.isDisabled) {
+                if (uiStateInit.isDisabled || isActuallyReadonly) {
                     basicSel.setAttribute('disabled', 'true');
                 }
                 basicSel.style.opacity = uiStateInit.opacity;
@@ -255,7 +280,9 @@
                         if (basicSel.dataset.optimisticLock === 'true') return;
 
                         const freshLiveData = window.DataStore ? (window.DataStore.get(field.targetEntity) || []) : [];
-                        const freshActiveData = freshLiveData.filter(d => d.estado !== 'Eliminado' && typeof d === 'object');
+                        const freshActiveData = window.UI_FormUtils && window.UI_FormUtils.fetchContextualData 
+                            ? window.UI_FormUtils.fetchContextualData(field.targetEntity, contextId)
+                            : freshLiveData.filter(d => d.estado !== 'Eliminado' && typeof d === 'object');
                         
                         let freshFiltered = freshActiveData;
                         const cLvl = Number(data ? (data.nivel_tipo || 1) : 1);
@@ -273,7 +300,8 @@
                             const uiStateInit = window.SubgridState ? 
                                 window.SubgridState.evaluateFieldState(rules, cLvl, field.relationType) : 
                                 { isDisabled: false, opacity: '1', placeholder: '— Sin asignar —' };
-                            basicSel.updateConfig(freshFiltered, uiStateInit.isDisabled, uiStateInit.placeholder);
+                            const finalDisabledState = uiStateInit.isDisabled || isActuallyReadonly;
+                            basicSel.updateConfig(freshFiltered, finalDisabledState, uiStateInit.placeholder);
                         } else {
                             // Legacy ion-select rollback
                             const oldVal = basicSel.value || (initialValues.length > 0 ? initialValues[0] : null);

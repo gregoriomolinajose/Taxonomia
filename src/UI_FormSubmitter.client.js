@@ -18,8 +18,10 @@ window.UI_FormSubmitter = class UI_FormSubmitter {
         this._internalRetryId = localEditId;
         
         this.isSaving = false;
+        this._isSilent = false; // Flag para auto-guardado sin cerrar modal
 
         this._attachSubmitListener();
+        if (this.submitBtn) this.submitBtn._formSubmitterInstance = this;
     }
 
     _attachSubmitListener() {
@@ -121,6 +123,59 @@ window.UI_FormSubmitter = class UI_FormSubmitter {
 
             const action = this._internalRetryId ? 'update' : 'create';
             
+            // [S50.2] Inyección Atómica de Borradores (Atomic Drafts)
+            // Cuando estamos en el Wizard de Taxonomía, forzamos estado y contexto a los hijos
+            const isDraftMode = this.entityName === 'Taxonomia' || (this.modal && this.modal.dataset && this.modal.dataset.isDraft === 'true') || (this.modal && this.modal.dataset && this.modal.dataset.taxonomiaContext);
+            const pkFieldT = window.Schema_Utils ? window.Schema_Utils.getPrimaryKey(this.entityName) : 'id';
+            const contextId = (this.modal && this.modal.dataset && this.modal.dataset.taxonomiaContext) ? this.modal.dataset.taxonomiaContext : (payload[pkFieldT] || this._internalRetryId || 'DRAFT_CTX');
+
+            // [S53.8] Execute Schema Hooks
+            const formSchema = window.APP_SCHEMAS && window.APP_SCHEMAS[this.entityName] ? window.APP_SCHEMAS[this.entityName] : null;
+            if (formSchema && formSchema.hooks && typeof formSchema.hooks.preSubmit === 'function') {
+                const isTempPk = this._internalRetryId && String(this._internalRetryId).startsWith('TMP_');
+                payload = formSchema.hooks.preSubmit(payload, contextId, action, isTempPk, this._internalRetryId);
+            }
+
+            if (isDraftMode) {
+                
+                // [S50.2] Force root entity to Draft state if it's a Taxonomia
+                if (this.entityName === 'Taxonomia') {
+                    payload.estado = 'Borrador';
+                }
+
+                const fieldsConfig = formSchema ? (formSchema.fields || Object.keys(formSchema).map(k => ({name: k, ...formSchema[k]}))) : [];
+                const relationKeys = new Set(fieldsConfig.filter(f => f.type === 'relation').map(f => f.name));
+
+                // [S53.6] Provide explicit work context to the root payload so Engine_DB can diff correctly when children are empty
+                payload._work_context = contextId;
+
+                Object.keys(payload).forEach(key => {
+                    if (Array.isArray(payload[key])) {
+                        payload[key] = payload[key].map(child => {
+                            if (typeof child === 'object') {
+                                return {
+                                    ...child,
+                                    _estado_arista: 'Borrador',
+                                    _contexto_arista: contextId
+                                };
+                            }
+                            return {
+                                id_registro: String(child),
+                                _estado_arista: 'Borrador',
+                                _contexto_arista: contextId
+                            };
+                        });
+                    } else if (relationKeys.has(key) && payload[key] && typeof payload[key] === 'string') {
+                        // S51.7 Fix: Ensure select_single relational strings get draft properties injected
+                        payload[key] = [{
+                            id_registro: String(payload[key]),
+                            _estado_arista: 'Borrador',
+                            _contexto_arista: contextId
+                        }];
+                    }
+                });
+            }
+            
             // S30.3 QA Review: Circular Reference & DOM-Leakage Guard
             const getCircularReplacer = () => {
                 const seen = new WeakSet();
@@ -145,30 +200,91 @@ window.UI_FormSubmitter = class UI_FormSubmitter {
             let optimisticPK = payload[pkField] || this._internalRetryId;
             let isTempPK = false;
             
-            if (action === 'create' && !optimisticPK) {
-                 optimisticPK = 'TMP_LOCAL_' + Math.random().toString(36).substring(2, 10).toUpperCase();
-                 payload[pkField] = optimisticPK;
-                 isTempPK = true;
+            if (!optimisticPK) {
+                 if (payload[pkField]) {
+                     optimisticPK = payload[pkField];
+                 } else {
+                     optimisticPK = 'TMP_LOCAL_' + Math.random().toString(36).substring(2, 10).toUpperCase();
+                     payload[pkField] = optimisticPK;
+                     isTempPK = true;
+                 }
             }
             
+            // formSchema was already declared at line 131
+            const fieldsConfig = formSchema ? (formSchema.fields || Object.keys(formSchema).map(k => ({name: k, ...formSchema[k]}))) : [];
+            const temporalFields = fieldsConfig.filter(f => f.isTemporalGraph).reduce((acc, f) => { acc[f.name] = f; return acc; }, {});
+
             // Extrapolar submisiones de subgrids para el repintado predictivo.
             const optimisticChildren = {};
             const _sessionId = optimisticPK; // Session tagging para aislar asincronía concurrente
             
             for (const key of Object.keys(payload)) {
-                 if (Array.isArray(payload[key]) && window.DataStore && window.DataStore.get(key)) {
-                      optimisticChildren[key] = payload[key].map(child => {
-                          const childClone = { ...child, _optimistic_session: _sessionId };
-                          if (isTempPK) { // Ligar Edges nuevos con el Padre Falso de ser requerido
-                              const childParentRef = 'id_' + this.entityName.toLowerCase();
-                              childClone[childParentRef] = optimisticPK;
+                 if (Array.isArray(payload[key])) {
+                      const tField = temporalFields[key];
+                      if (tField) {
+                          if (!optimisticChildren['Sys_Graph_Edges']) optimisticChildren['Sys_Graph_Edges'] = [];
+                          
+                          const edgeName = (tField.graphEdgeType || tField.name).toUpperCase();
+                          const edges = (window.DataStore ? window.DataStore.get('Sys_Graph_Edges') : []) || [];
+                          
+                          // 1. Identify previous edges for this node/context to close them optimistically
+                          let oldEdges = [];
+                          if (tField.workspaceMode) {
+                              const effParent = tField.dynamicParentField ? (payload[tField.dynamicParentField] || tField.fixedParentId) : tField.fixedParentId;
+                              oldEdges = edges.filter(e => String(e.es_version_actual).toLowerCase() === 'true' && String(e.id_nodo_padre).trim() === String(effParent).trim() && e.tipo_relacion === edgeName && String(e.contexto_id).trim() === String(contextId || '').trim());
+                          } else if (tField.relationType === 'padre') {
+                              oldEdges = edges.filter(e => String(e.es_version_actual).toLowerCase() === 'true' && String(e.id_nodo_hijo).trim() === String(optimisticPK).trim() && e.tipo_relacion === edgeName);
+                          } else {
+                              oldEdges = edges.filter(e => String(e.es_version_actual).toLowerCase() === 'true' && String(e.id_nodo_padre).trim() === String(optimisticPK).trim() && e.tipo_relacion === edgeName);
                           }
-                          // Asegurar un PK falso temporal para que DataGrid no explote
-                          const childPk = window.Schema_Utils.getPrimaryKey(key);
-                          if (!childClone[childPk]) childClone[childPk] = 'TMP_EDGE_' + Math.random().toString(36).substring(2, 10).toUpperCase();
-                          return childClone;
-                      });
-                      childBackups[key] = JSON.parse(JSON.stringify(window.DataStore.get(key)));
+                          
+                          if (payload._work_context) {
+                              oldEdges = oldEdges.filter(e => String(e.contexto_id).trim() === String(payload._work_context).trim());
+                          } else if (contextId && contextId !== 'DRAFT_CTX' && contextId !== optimisticPK) {
+                              oldEdges = oldEdges.filter(e => String(e.contexto_id).trim() === String(contextId).trim());
+                          }
+                          
+                          const closedEdges = oldEdges.map(e => ({ ...e, es_version_actual: false, _optimistic_session: _sessionId }));
+                          optimisticChildren['Sys_Graph_Edges'].push(...closedEdges);
+
+                          // 2. Create the new edges
+                          const edgeRecords = payload[key].map(child => {
+                              const newId = 'TMP_EDGE_' + Math.random().toString(36).substring(2, 10).toUpperCase();
+                              const childPk = child.id_registro || child[window.Schema_Utils.getPrimaryKey(tField.targetEntity)];
+                              let edgePadre = tField.relationType === 'hijo' ? optimisticPK : childPk;
+                              let edgeHijo = tField.relationType === 'hijo' ? childPk : optimisticPK;
+                              
+                              if (tField.workspaceMode) {
+                                  edgePadre = tField.dynamicParentField ? (payload[tField.dynamicParentField] || tField.fixedParentId) : tField.fixedParentId;
+                                  edgeHijo = childPk;
+                              }
+                              
+                              return {
+                                  id_relacion: newId,
+                                  id_nodo_padre: edgePadre,
+                                  id_nodo_hijo: edgeHijo,
+                                  tipo_relacion: edgeName,
+                                  es_version_actual: true,
+                                  estado: child._estado_arista || 'Activo',
+                                  contexto_id: child._contexto_arista || '',
+                                  _optimistic_session: _sessionId
+                              };
+                          });
+                          optimisticChildren['Sys_Graph_Edges'].push(...edgeRecords);
+                      } else if (window.DataStore && window.DataStore.get(key)) {
+                          optimisticChildren[key] = payload[key].map(child => {
+                              const childClone = { ...child, _optimistic_session: _sessionId };
+                              if (isTempPK) { // Ligar Edges nuevos con el Padre Falso de ser requerido
+                                  const childParentRef = 'id_' + this.entityName.toLowerCase();
+                                  childClone[childParentRef] = optimisticPK;
+                              }
+                              // Asegurar un PK falso temporal para que DataGrid no explote
+                              const childPkF = window.Schema_Utils.getPrimaryKey(key);
+                              if (!childClone[childPkF]) childClone[childPkF] = 'TMP_EDGE_' + Math.random().toString(36).substring(2, 10).toUpperCase();
+                              return childClone;
+                          });
+                          childBackups[key] = JSON.parse(JSON.stringify(window.DataStore.get(key)));
+                      }
                  }
             }
             
@@ -203,11 +319,19 @@ window.UI_FormSubmitter = class UI_FormSubmitter {
                 const response = typeof rawResponse === 'string' ? JSON.parse(rawResponse) : rawResponse;
                 
                 if (response && response.status === 'success') {
-                    // 1. Purga Quirúrgica del Caché Optimista (Previene Ghost Records)
+                    // 1. Consolidación Quirúrgica del Caché Optimista
                     if (window.DataStore) {
                         for (const key of Object.keys(optimisticChildren)) {
                              let liveCache = window.DataStore.get(key) || [];
-                             liveCache = liveCache.filter(row => row._optimistic_session !== _sessionId);
+                             liveCache.forEach(row => {
+                                 if (row._optimistic_session === _sessionId) {
+                                     delete row._optimistic_session;
+                                     if (isTempPK && response.pkValue && String(response.pkValue) !== String(optimisticPK)) {
+                                         if (row.id_nodo_padre === optimisticPK) row.id_nodo_padre = response.pkValue;
+                                         if (row.id_nodo_hijo === optimisticPK) row.id_nodo_hijo = response.pkValue;
+                                     }
+                                 }
+                             });
                              window.DataStore.set(key, liveCache);
                         }
                     }
@@ -302,6 +426,7 @@ window.UI_FormSubmitter = class UI_FormSubmitter {
         }
         console.error("OPTIMISTIC_ROLLBACK", issueDesc);
         this._showToast(`⚠️ Rollback Automático: ${issueDesc}. Tus cambios temporales visuales fueron desechados.`, 'danger');
+        if (window.AppEventBus) window.AppEventBus.publish('FORM::SUBMIT_ERROR', { entityName: this.entityName, error: issueDesc });
     }
 
 
@@ -318,6 +443,8 @@ window.UI_FormSubmitter = class UI_FormSubmitter {
     _performSuccessCleanup(response, isInlineRendered) {
         this._revertButtonState();
         this._internalRetryId = null; // Liberar caché de reintentos
+        
+        const wasSilent = this._isSilent; // Cachear para evitar que los suscriptores muten el estado prematuramente
 
         if (window.DataStore) {
             // [S29.7] window.DataStore.clearNested() extirpado. Los Subgrids ahora son stateless.
@@ -329,18 +456,24 @@ window.UI_FormSubmitter = class UI_FormSubmitter {
                 window.FormEngine_Resolvers.invalidateCache();
             }
         }
-        // Cerramos el Modal
-        if (window._closeTopModal) {
+        // Cerramos el Modal si no estamos en auto-guardado silencioso
+        if (window._closeTopModal && !wasSilent) {
             window._closeTopModal();
         }
 
         // Enrutamiento post-Guardado Inmediato
-        if (!isInlineRendered && (!window.ModalStackController || window.ModalStackController.getDepth() === 0)) {
+        if (!isInlineRendered && !wasSilent && (!window.ModalStackController || window.ModalStackController.getDepth() === 0)) {
             if (window.AppEventBus) {
                 window.AppEventBus.publish('NAV::CHANGE', {viewType: 'dataview', entityKey: this.entityName});
             } else if (window.onSaveSuccessCallback) {
                 window.onSaveSuccessCallback();
             }
+        }
+
+        // S49.4 Broadcast success event for global listeners (e.g. SelfService_Home_UI modal close)
+        // Publicado al final para que los subscriptores (ej. Stepper) puedan mutar _isSilent sin afectar la lógica anterior.
+        if (window.AppEventBus) {
+            window.AppEventBus.publish('FORM::SUBMIT_SUCCESS', { entityName: this.entityName, response: response, isSilent: wasSilent });
         }
     }
 

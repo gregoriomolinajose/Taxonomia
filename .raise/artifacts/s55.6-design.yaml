@@ -1,0 +1,31 @@
+artifact_type: story-design
+version: 1
+skill: rai-story-design
+created: '2026-05-16T06:14:00Z'
+story: 'S55.6'
+epic: 'E55'
+content:
+  summary: 'Generalizar la lógica de autoguardado en UI_FormStepper para guardar progreso de forma silenciosa en la transición de pasos de cualquier entidad.'
+  complexity: simple
+  acceptance_criteria:
+    - id: AC1
+      description: 'El botón Siguiente dispara el guardado silencioso antes de avanzar'
+      verifiable: true
+    - id: AC2
+      description: 'La barra lateral dispara el guardado silencioso antes de avanzar'
+      verifiable: true
+    - id: AC3
+      description: 'El formulario no se cierra tras el autoguardado'
+      verifiable: true
+  integration_points:
+    - module: 'UI_FormStepper'
+      change_type: modification
+      files: ['src/UI_FormStepper.client.js']
+  decisions:
+    - id: D1
+      choice: 'Reutilizar window.FormEngine.saveForm con isFormModal=false'
+      rationale: 'Permite el guardado a la BD sin desmontar el Drawer actual, facilitando la continuidad de la experiencia'
+      alternatives_considered: ['Crear un endpoint especial de autoguardado']
+refs:
+  epic_scope: 'work/epics/e55-taxonomy-governance/scope.md'
+metadata: {}

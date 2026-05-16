@@ -15,7 +15,7 @@ function runTaxonomiaInstall() {
     const seedRoles = [
         {
             id_rol: "RO-SYSADMIN",
-            nombre_rol: "Administrador del Sistema",
+            nombre: "Administrador del Sistema",
             descripcion: "Acceso total a estructuras de gobierno y topología."
         }
     ];

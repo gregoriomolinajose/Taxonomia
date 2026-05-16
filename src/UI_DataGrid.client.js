@@ -244,6 +244,7 @@
                     const tdAction = document.createElement('td');
                     tdAction.className = 'dv-td-action';
                     
+                    
                     // S18.4 - Hiding Agresivo por Fila (Evaluación Record-Aware)
                     if (!window.ABAC || window.ABAC.can('delete', this.cfg.entityName, id)) {
                         const btnDel = document.createElement('button');
@@ -343,6 +344,9 @@
                 
                 const topRight = document.createElement('div');
                 topRight.className = 'dv-card-top-right';
+                
+
+                
                 if (!window.ABAC || window.ABAC.can('delete', this.cfg.entityName, idStr)) {
                     const btnDel = document.createElement('button');
                     btnDel.className = 'dv-btn-danger-lite';
@@ -667,27 +671,9 @@
         },
 
         _buildEdgeMemo: function() {
-            if (this._edgeMemo) return this._edgeMemo;
-            
-            const allEdges = (window.DataStore && window.DataStore.get('Sys_Graph_Edges')) || [];
-            const memo = { padreToHijo: {}, hijoToPadre: {}, padreToMultiHijos: {} };
-            
-            for (let i = 0; i < allEdges.length; i++) {
-                const e = allEdges[i];
-                if (e.es_version_actual !== false && e.estado !== 'Eliminado' && e.estado !== 'eliminado') {
-                    const edgeName = (e.tipo_relacion || '').toUpperCase();
-                    const pKey = String(e.id_nodo_padre) + '_' + edgeName;
-                    const hKey = String(e.id_nodo_hijo) + '_' + edgeName;
-                    
-                    if (!memo.padreToHijo[pKey]) memo.padreToHijo[pKey] = e.id_nodo_hijo;
-                    if (!memo.hijoToPadre[hKey]) memo.hijoToPadre[hKey] = e.id_nodo_padre;
-                    
-                    if (!memo.padreToMultiHijos[pKey]) memo.padreToMultiHijos[pKey] = [];
-                    memo.padreToMultiHijos[pKey].push(e.id_nodo_hijo);
-                }
-            }
-            this._edgeMemo = memo;
-            return memo;
+            // [S49.14] Deprecated in favor of centralized window.Graph_Utils index.
+            // Keeping stub to avoid crashes if external plugins call this.
+            return null;
         },
 
         _extractGraphMetadata: function(row, entityName) {
@@ -695,12 +681,11 @@
             if (!schema || !schema.fields) return { singleNodes: [], multiNodes: [] };
 
             const metaNodes = { singleNodes: [], multiNodes: [] };
-            const edgeMemo = this._buildEdgeMemo();
             const pkField = window.Schema_Utils ? window.Schema_Utils.getPrimaryKey(entityName) : 'id_registro';
             const rowId = row[pkField];
             
             schema.fields.forEach(field => {
-                if (!field.isTemporalGraph) return;
+                if (!field.isTemporalGraph || !window.Graph_Utils) return;
                 
                 const edgeName = (field.graphEdgeType || field.name).toUpperCase();
                 const targetSchema = window.APP_SCHEMAS[field.targetEntity];
@@ -721,8 +706,7 @@
                 }
 
                 if (field.relationType === 'padre') {
-                    const hKey = String(rowId) + '_' + edgeName;
-                    let parentId = edgeMemo.hijoToPadre[hKey];
+                    let parentId = window.Graph_Utils.resolveLinkedId(rowId, edgeName);
                     if (parentId || joinedLabel) {
                         const trgLabelKey = field.labelField || (window.ENTITY_META && window.ENTITY_META[field.targetEntity] && window.ENTITY_META[field.targetEntity].titleField) || 'nombre';
                         const targetMemo = this._buildTargetMemo(field.targetEntity, trgLabelKey);
@@ -737,8 +721,7 @@
                         metaNodes.singleNodes.push({ label: entityLabel, value: parentName, icon: icon });
                     }
                 } else if (field.relationType === 'hijo' && field.topologyCardinality === '1:N') {
-                    const pKey = String(rowId) + '_' + edgeName;
-                    const childrenArray = edgeMemo.padreToMultiHijos[pKey] || [];
+                    const childrenArray = window.Graph_Utils.resolveAllLinkedIds(rowId, edgeName);
                     metaNodes.multiNodes.push({ label: entityLabel, count: childrenArray.length, icon: icon });
                 }
             });
@@ -779,18 +762,9 @@
             const isEmptyValue = (rawVal === undefined || rawVal === null || rawVal === '');
 
             // 1. Resolve Graph Edge pointer if it's a Temporal Graph edge AND physically empty
-            if (isEmptyValue && fieldMeta.isTemporalGraph && window.DataStore && window.DataStore.get('Sys_Graph_Edges')) {
-                const edgeMemo = this._buildEdgeMemo();
+            if (isEmptyValue && fieldMeta.isTemporalGraph && window.Graph_Utils) {
                 const edgeName = (fieldMeta.graphEdgeType || fieldMeta.name).toUpperCase();
-                const lookupKey = String(currentPK) + '_' + edgeName;
-                
-                if (fieldMeta.relationType === 'padre') {
-                    // Yo soy el hijo, busco al padre (Match de hijoToPadre)
-                    if (edgeMemo.hijoToPadre[lookupKey]) resolvedVal = edgeMemo.hijoToPadre[lookupKey];
-                } else {
-                    // Yo soy el padre, busco al hijo
-                    if (edgeMemo.padreToHijo[lookupKey]) resolvedVal = edgeMemo.padreToHijo[lookupKey];
-                }
+                resolvedVal = window.Graph_Utils.resolveLinkedId(currentPK, edgeName);
             }
             
             // 2. Transmute the physical ID explicitly to the schema's labelField
@@ -911,6 +885,7 @@
                 const field = fields.find(f => f.name === key);
                 if (field && field.label) return field.label;
             }
-            return window.formatLabelString ? window.formatLabelString(key) : key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+            if (window.formatLabelString) return window.formatLabelString(key);
+            return key.replace(/_/g, ' ').split(' ').map(function(w) { return w ? w.charAt(0).toUpperCase() + w.slice(1) : ''; }).join(' ');
         }
     };

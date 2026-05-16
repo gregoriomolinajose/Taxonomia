@@ -325,8 +325,52 @@ const Engine_Graph = {
             });
             return patch;
         }
-
         return patch; // Fallback for unknown strategies
+    },
+
+    /**
+     * S55.3 - Graph Diffing Engine
+     * Compares active topology against draft topology to calculate additions, removals, and kept edges.
+     * Pure function, no side effects.
+     * @param {Array} activeEdges - Edges currently in production (es_version_actual: true).
+     * @param {Array} draftEdges - Edges in the current draft workspace.
+     * @returns {Object} { additions: [], removals: [], kept: [] }
+     */
+    computeDelta: function(activeEdges, draftEdges) {
+        const delta = { additions: [], removals: [], kept: [] };
+        
+        // Pure edge topology signature (ignoring internal PKs, workspace modes, timestamps)
+        const getHash = (e) => `${e.id_nodo_padre}::${e.id_nodo_hijo}::${e.tipo_relacion}`;
+        
+        const activeMap = new Map();
+        (activeEdges || []).forEach(e => {
+            activeMap.set(getHash(e), e);
+        });
+        
+        const draftMap = new Map();
+        (draftEdges || []).forEach(e => {
+            draftMap.set(getHash(e), e);
+        });
+        
+        // Find Additions and Kept
+        (draftEdges || []).forEach(e => {
+            const hash = getHash(e);
+            if (activeMap.has(hash)) {
+                delta.kept.push(e);
+            } else {
+                delta.additions.push(e);
+            }
+        });
+        
+        // Find Removals
+        (activeEdges || []).forEach(e => {
+            const hash = getHash(e);
+            if (!draftMap.has(hash)) {
+                delta.removals.push(e);
+            }
+        });
+        
+        return delta;
     }
 };
 

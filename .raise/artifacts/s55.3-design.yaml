@@ -1,0 +1,31 @@
+artifact_type: story-design
+version: 1
+skill: rai-story-design
+created: '2026-05-16T03:40:00Z'
+story: 'S55.3'
+epic: 'E55'
+content:
+  summary: 'Implementar lógica pura de comparación de grafos (Active vs Draft) para calcular operaciones de despliegue (ADD, REMOVE, KEEP).'
+  complexity: moderate
+  acceptance_criteria:
+    - id: AC1
+      description: 'Identifica correctamente aristas a agregar (ADD)'
+      verifiable: true
+    - id: AC2
+      description: 'Identifica correctamente aristas a eliminar (REMOVE)'
+      verifiable: true
+    - id: AC3
+      description: 'Identifica correctamente aristas a mantener (KEEP)'
+      verifiable: true
+  integration_points:
+    - module: 'Engine_Graph'
+      change_type: modification
+      files: ['src/Engine_Graph.js']
+  decisions:
+    - id: D1
+      choice: 'GraphTopologyDiffer como clase de utilidad con métodos estáticos puros'
+      rationale: 'Facilita el testeo unitario y garantiza la no-mutación del estado de la base de datos durante el cálculo'
+      alternatives_considered: ['Acoplarlo en Business_Interceptors', 'Procesarlo en SQL/DB (ineficiente)']
+refs:
+  epic_scope: 'work/epics/e55-taxonomy-governance/scope.md'
+metadata: {}

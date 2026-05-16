@@ -18,7 +18,7 @@ var TOPOLOGY_PRESETS = Object.freeze({
     _preset:               'JERARQUICA_ESTRICTA_GRAPH_STD',  // [E31] Studio Viewer identifier
     topologyType:          "JERARQUICA_ESTRICTA",
     preventCycles:         true,
-    maxDepth:              6,
+    maxDepth:              9,
     allowOrphanStealing:   true,
     deletionStrategy:      "ORPHAN",
     siblingCollisionCheck: true,
@@ -139,6 +139,48 @@ var FIELD_TEMPLATES = Object.freeze({
 });
 
 var APP_SCHEMAS = {
+  Taxonomia: {
+    metadata: { prefix: 'TAXO', showInMenu: true, iconName: 'library-outline', color: 'tertiary', label: 'Taxonomías', titleField: 'nombre', idField: 'id_taxonomia', fkField: null },
+    primaryKey: "id_taxonomia",
+    titleField: "nombre",
+    wizardConfig: true,
+    stepDescriptions: {
+        "Taxonomía de Producto": "Asigna un nombre descriptivo para comenzar. Te recomendamos utilizar el nombre del portafolio principal que vas a estructurar.",
+        "Importar Equipos": "Carga la plantilla de equipos mediante URL o archivo de Google Sheets.",
+        "Importar Personas": "Carga la plantilla de personas mediante URL o archivo de Google Sheets.",
+        "Arquitectura de Portafolio": "Diseña la estructura utilizando el lienzo interactivo ubicado a la derecha."
+    },
+    hooks: {
+        preSubmit: function(payload, contextId, action, isTempPk, internalRetryId) {
+            let isActuallyCreate = action === 'create';
+            if (!isActuallyCreate && internalRetryId && typeof window !== 'undefined' && window.DataStore) {
+                const existing = window.DataStore.get('Taxonomia') || [];
+                const match = existing.find(t => String(t.id_taxonomia) === String(internalRetryId));
+                if (!match) isActuallyCreate = true;
+            }
+            if (isActuallyCreate || isTempPk) {
+                payload.estado = 'Borrador';
+            }
+            if (!payload.id_taxonomia && contextId && contextId !== 'DRAFT_CTX') {
+                payload.id_taxonomia = contextId;
+            }
+            return payload;
+        }
+    },
+    fields: [
+      { name: "id_taxonomia", type: "hidden", primaryKey: true },
+      ...FIELD_TEMPLATES.SYSTEM_FIELDS(),
+      ...FIELD_TEMPLATES.ESTADO_FIELD(),
+      ...FIELD_TEMPLATES.AUDIT_FIELDS(),
+      ...FIELD_TEMPLATES.VERSION_FIELD(),
+      { name: "nombre", type: "text", label: "Nombre de la Taxonomía", required: true, width: 12, section: "Taxonomía de Producto" },
+      { name: "descripcion", type: "textarea", label: "Descripción", required: false, width: 12, section: "Taxonomía de Producto" },
+      { name: "id_unidad_negocio", type: "hidden", relationType: "padre", targetEntity: "Unidad_Negocio", graphEntity: "Sys_Graph_Edges", valueField: "id_unidad_negocio", labelField: "nombre", isTemporalGraph: true, graphEdgeType: "TAXONOMIA_UNIDAD", topologyCardinality: "1:N", workspaceMode: false, required: false },
+      { name: "info_equipos", type: "uiComponent", uiComponent: "bulk_importer", targetEntity: "Equipo", width: 12, section: "Importar Equipos" },
+      { name: "info_personas", type: "uiComponent", uiComponent: "bulk_importer", targetEntity: "Persona", width: 12, section: "Importar Personas" },
+      { name: "info_canvas", type: "divider", label: "Interactúa con el lienzo a tu derecha para modelar las capacidades y productos.", width: 12, section: "Arquitectura de Portafolio" }
+    ]
+  },
   Unidad_Negocio: {
     metadata: { prefix: 'UNDN', showInMenu: true, order:1, iconName:'business-outline', color:'primary', label:'Unidades de Negocio', titleField:'nombre', idField:'id_unidad_negocio', fkField:null },
     primaryKey: "id_unidad_negocio",
@@ -171,7 +213,7 @@ var APP_SCHEMAS = {
       ...FIELD_TEMPLATES.VERSION_FIELD(),
       ...FIELD_TEMPLATES.NAME_FIELD("Nombre de Portafolio"),
       { name: "unidad_negocio_padre", type: "relation", relationType: "padre", targetEntity: "Unidad_Negocio", graphEntity: "Sys_Graph_Edges", valueField: "id_unidad_negocio", labelField: "nombre", uiComponent: "select_single", label: "Unidad de Negocio", isTemporalGraph: true, graphEdgeType: "UNIDAD_NEGOCIO_PORTAFOLIO", topologyCardinality: "1:N", width: 12, showInList: true },
-      { name: "grupos_productos_vinculados", type: "relation", relationType: "hijo", targetEntity: "Grupo_Productos", graphEntity: "Sys_Graph_Edges", valueField: "id_grupo_producto", labelField: "nombre", uiComponent: "searchable_multi", label: "Grupos de Productos", isTemporalGraph: true, graphEdgeType: "PORTAFOLIO_GRUPO_PRODUCTO", topologyCardinality: "1:N", width: 12 }
+      { name: "value_streams_vinculados", type: "relation", relationType: "hijo", targetEntity: "Value_Stream", graphEntity: "Sys_Graph_Edges", valueField: "id_value_stream", labelField: "nombre", uiComponent: "searchable_multi", label: "Value Streams", isTemporalGraph: true, graphEdgeType: "PORTAFOLIO_VALUE_STREAM", topologyCardinality: "N:M", width: 12 }
     ]
   },
   Dominio: {
@@ -198,11 +240,11 @@ var APP_SCHEMAS = {
     ]
   },
   Grupo_Productos: {
-    metadata: { showInMenu: true, order:4, iconName:'layers-outline', color:'dark', label:'Grupos de Producto', titleField:'nombre', idField:'id_grupo_producto', fkField:{ key:'id_portafolio', label:'Portafolio' } },
+    metadata: { showInMenu: true, order:4, iconName:'layers-outline', color:'dark', label:'Grupos de Producto', titleField:'nombre', idField:'id_grupo_producto', fkField:{ key:'id_value_stream', label:'Value Stream' } },
     topological_metadata: {
         ownerFields: ["group_manager_id"],
-        parentEntity: "Portafolio",
-        parentField: "id_portafolio"
+        parentEntity: "Value_Stream",
+        parentField: "id_value_stream"
     },
     primaryKey: "id_grupo_producto",
     titleField: "nombre",
@@ -214,7 +256,7 @@ var APP_SCHEMAS = {
       ...FIELD_TEMPLATES.AUDIT_FIELDS(),
       ...FIELD_TEMPLATES.VERSION_FIELD(),
       ...FIELD_TEMPLATES.NAME_FIELD("Nombre"),
-      { width: 12, name: "id_portafolio", type: "relation", relationType: "padre", targetEntity: "Portafolio", graphEntity: "Sys_Graph_Edges", valueField: "id_portafolio", labelField: "nombre", uiComponent: "select_single", label: "Portafolio", isTemporalGraph: true, graphEdgeType: "PORTAFOLIO_GRUPO_PRODUCTO", topologyCardinality: "1:N", required: true },
+      { width: 12, name: "id_value_stream", type: "relation", relationType: "padre", targetEntity: "Value_Stream", graphEntity: "Sys_Graph_Edges", valueField: "id_value_stream", labelField: "nombre", uiComponent: "select_single", label: "Value Stream", isTemporalGraph: true, graphEdgeType: "VALUE_STREAM_GRUPO_PRODUCTO", topologyCardinality: "1:N", required: true },
       { width: 12, name: "productos_vinculados", type: "relation", relationType: "hijo", targetEntity: "Producto", graphEntity: "Sys_Graph_Edges", valueField: "id_producto", labelField: "nombre", uiComponent: "searchable_multi", label: "Productos", isTemporalGraph: true, graphEdgeType: "GRUPO_PRODUCTO_PRODUCTO", topologyCardinality: "1:N" },
       { width: 12, name: "equipos_asignados", type: "relation", relationType: "hijo", targetEntity: "Equipo", graphEntity: "Sys_Graph_Edges", valueField: "id_equipo", labelField: "nombre", uiComponent: "searchable_multi", label: "Equipos", isTemporalGraph: true, graphEdgeType: "GRUPO_PRODUCTO_EQUIPO", topologyCardinality: "1:N" }
     ]
@@ -398,6 +440,7 @@ var APP_SCHEMAS = {
       ...FIELD_TEMPLATES.VERSION_FIELD(),
       ...FIELD_TEMPLATES.ESTADO_FIELD(),
       ...FIELD_TEMPLATES.NAME_FIELD("Nombre de Rol"),
+      { name: "especialidad", type: "select", options: ["TI", "Negocio", "Producto", "Agilidad"], label: "Área de Gestión / Especialidad", width: 6 },
       { name: "descripcion", type: "textarea", label: "Descripción", required: false, width: 12, showInList: false },
       { name: "personas_asignadas", type: "relation", relationType: "hijo", targetEntity: "Persona", graphEntity: "Sys_Graph_Edges", label: "Personas Asignadas", isTemporalGraph: true, graphEdgeType: "PERSONA_ROL", valueField: "id_persona", labelField: "_nombre_completo", uiComponent: "searchable_multi", topologyCardinality: "M:N", width: 12 }
     ]
@@ -416,11 +459,12 @@ var APP_SCHEMAS = {
       { name: "valido_hasta", type: "hidden" },
       { name: "es_version_actual", type: "hidden", defaultValue: true },
       { name: "peso_capacidad", type: "number", label: "Dedicación (%)", defaultValue: 100, width: 6, validators: ["min:0", "max:100"] },
+      { name: "contexto_id", type: "text", required: false, label: "ID Contexto/Borrador", showInList: false },
       { name: "metadata_config", type: "textarea", label: "Configuración Adicional (JSON)", required: false, width: 12, showInList: false, validators: ["json"] }
     ]
   },
   Sys_Roles: {
-    metadata: { showInMenu: false, order:90, iconName:'shield-half-outline', color:'danger', label:'Seguridad: Roles', titleField:'nombre', idField:'id_rol', fkField:null },
+    metadata: { prefix: 'SROL', showInMenu: false, order:90, iconName:'shield-half-outline', color:'danger', label:'Seguridad: Roles', titleField:'nombre', idField:'id_rol', fkField:null },
     primaryKey: "id_rol",
     fields: [
       { name: "id_rol", type: "text", primaryKey: true, readonly: true, label: "ID Rol", width: 12 },
@@ -464,7 +508,7 @@ var APP_SCHEMAS = {
     ]
   },
   Sys_Permissions: {
-    metadata: { showInMenu: false, order:91, iconName:'key-outline', color:'danger', label:'Seguridad: Permisos ABAC', titleField:'schema_destino', idField:'id_permiso', fkField:{ key:'id_rol', label:'Rol Base' } },
+    metadata: { prefix: 'SPRM', showInMenu: false, order:91, iconName:'key-outline', color:'danger', label:'Seguridad: Permisos ABAC', titleField:'schema_destino', idField:'id_permiso', fkField:{ key:'id_rol', label:'Rol Base' } },
     primaryKey: "id_permiso",
     fields: [
       { name: "id_permiso", type: "text", primaryKey: true, readonly: true, label: "ID Permiso", width: 12 },
@@ -486,6 +530,27 @@ var APP_SCHEMAS = {
       { name: "valido_desde", type: "text" },
       { name: "valido_hasta", type: "text" },
       { name: "es_version_actual", type: "text" }
+    ]
+  },
+  Value_Stream: {
+    uiConfig: { dashboardCard: { iconName: 'swap-horizontal-outline', color: 'var(--ion-color-tertiary)' } },
+    metadata: { prefix: 'VSTR', showInMenu: true, order: 8, iconName:'swap-horizontal-outline', color:'tertiary', label:'Value Streams', titleField:'nombre', idField:'id_value_stream', fkField:null, maxListAttrs: 8 },
+    topological_metadata: {
+        parentEntity: "Portafolio",
+        parentField: "portafolios_padre"
+    },
+    primaryKey: "id_value_stream",
+    topologyRules: TOPOLOGY_PRESETS.JERARQUICA_ESTRICTA_GRAPH_STD,
+    fields: [
+      { name: "id_value_stream", type: "hidden", primaryKey: true },
+      ...FIELD_TEMPLATES.SYSTEM_FIELDS(),
+      ...FIELD_TEMPLATES.ESTADO_FIELD(),
+      ...FIELD_TEMPLATES.AUDIT_FIELDS(),
+      ...FIELD_TEMPLATES.VERSION_FIELD(),
+      ...FIELD_TEMPLATES.NAME_FIELD("Nombre de Value Stream"),
+      { name: "descripcion", type: "text", label: "Descripción / Propósito", required: false, width: 12 },
+      { width: 12, name: "portafolios_padre", type: "relation", relationType: "padre", targetEntity: "Portafolio", graphEntity: "Sys_Graph_Edges", valueField: "id_portafolio", labelField: "nombre", uiComponent: "searchable_multi", label: "Portafolios", isTemporalGraph: true, graphEdgeType: "PORTAFOLIO_VALUE_STREAM", topologyCardinality: "N:M", required: true },
+      { width: 12, name: "grupos_productos_vinculados", type: "relation", relationType: "hijo", targetEntity: "Grupo_Productos", graphEntity: "Sys_Graph_Edges", valueField: "id_grupo_producto", labelField: "nombre", uiComponent: "searchable_multi", label: "Grupos de Productos", isTemporalGraph: true, graphEdgeType: "VALUE_STREAM_GRUPO_PRODUCTO", topologyCardinality: "1:N" }
     ]
   },
   Config_Workspace: {
@@ -513,7 +578,41 @@ var APP_SCHEMAS = {
 };
 
 function getAppSchema(entityName) {
-  return entityName ? APP_SCHEMAS[entityName] : APP_SCHEMAS;
+  const isTaxonomiaContext = typeof window !== 'undefined' && window.taxonomiaContext;
+
+  const applyGovernance = (schema) => {
+    if (!schema || !schema.fields) return schema;
+    
+    // Deep clone the fields array to avoid mutating global definition
+    const clonedSchema = Object.assign({}, schema);
+    clonedSchema.fields = schema.fields.map(field => {
+      // E55 Governance: Topological fields are readonly outside Taxonomia Canvas
+      if (field.type === 'relation' && field.graphEntity === 'Sys_Graph_Edges') {
+        if (!isTaxonomiaContext) {
+          const clonedField = Object.assign({}, field);
+          clonedField.readonly = true;
+          clonedField.helpText = (clonedField.helpText ? clonedField.helpText + ' ' : '') + '(Solo lectura: Gestionado vía Canvas de Taxonomía)';
+          return clonedField;
+        }
+      }
+      return field;
+    });
+    return clonedSchema;
+  };
+
+  if (entityName) {
+    return applyGovernance(APP_SCHEMAS[entityName]);
+  } else {
+    const clonedSchemas = {};
+    for (const key in APP_SCHEMAS) {
+      if (key !== '_UI_CONFIG' && APP_SCHEMAS[key] && APP_SCHEMAS[key].fields) {
+        clonedSchemas[key] = applyGovernance(APP_SCHEMAS[key]);
+      } else {
+        clonedSchemas[key] = APP_SCHEMAS[key];
+      }
+    }
+    return clonedSchemas;
+  }
 }
 
 /**

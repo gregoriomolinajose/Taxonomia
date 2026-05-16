@@ -2,12 +2,8 @@
 
 > This file is for local preferences and overrides. It is not tracked by Git.
 
-## Session
-
-- **Active Session**: E48 Admin Settings
-- **Last Summary**: Finalizada Historia S48.7 (Schema-Driven Relational Provisioning) y desplegada a DEV. Se solucionaron problemas de estado en pruebas con Vitest.
-- **Last Closed**: S48.7
-- **Next Focus**: Continuar con validaciones finales o cierre de la Épica E48.
+## Current Focus
+- **Epic E56 (Wizard Bulk Import)**: Completed S56.1. Next is S56.2 (UI de Importación Embebida) to build the reusable UI component for bulk importing.
 
 ## Patterns
 

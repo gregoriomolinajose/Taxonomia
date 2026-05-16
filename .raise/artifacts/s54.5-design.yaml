@@ -1,0 +1,34 @@
+artifact_type: story-design
+version: 1
+skill: rai-story-design
+created: '2026-05-13T19:49:00Z'
+story: 'S54.5'
+epic: 'E54'
+content:
+  summary: 'Integrar el lienzo de taxonomía interactivo al asistente de creación de 4 pasos, habilitando un modo pantalla completa a partir del paso 2 para visualizar la estructura en vivo.'
+  complexity: moderate
+  acceptance_criteria:
+    - id: AC1
+      description: 'El Drawer cambia dinámicamente a width: 100vw cuando el usuario avanza al Paso 2.'
+      verifiable: true
+    - id: AC2
+      description: 'El SwimlaneGrid se renderiza de solo-lectura en la mitad derecha del Drawer.'
+      verifiable: true
+    - id: AC3
+      description: 'El SwimlaneGrid recibe el contexto optimista (ID temporal) para pintar la estructura correcta.'
+      verifiable: true
+  integration_points:
+    - module: 'UI_FormStepper'
+      change_type: modification
+      files: ['src/UI_FormStepper.client.js']
+    - module: 'UI_DrawerManager'
+      change_type: modification
+      files: ['src/Index.html']
+  decisions:
+    - id: D1
+      choice: 'El Wizard controla el estado, el Lienzo es espectador reactivo (Read-Only).'
+      rationale: 'Evitar conflictos de interacción. Los botones del asistente manejan los flujos; el lienzo provee contexto visual inmediato del DataStore optimista.'
+      alternatives_considered: ['Canvas activo que reemplaza el formulario del Wizard (Rechazado por complejidad en validación de pasos).']
+refs:
+  epic_scope: 'work/epics/e54-filtros-entidades/scope.md'
+metadata: {}

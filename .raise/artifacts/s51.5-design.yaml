@@ -1,0 +1,30 @@
+artifact_type: story-design
+version: 1
+skill: rai-story-design
+created: '2026-05-10T05:56:00Z'
+story: 'S51.5'
+epic: 'E51'
+content:
+  summary: 'Redirigir edición de Taxonomía desde DataGrid hacia el Wizard Fullscreen.'
+  complexity: trivial
+  acceptance_criteria:
+    - id: AC1
+      description: 'Al dar clic en editar un registro de Taxonomía en el DataGrid, el sistema abre la vista del Wizard.'
+      verifiable: true
+    - id: AC2
+      description: 'El Wizard se hidrata correctamente con el ID de la taxonomía seleccionada en modo edición.'
+      verifiable: true
+  integration_points:
+    - module: 'DataView_UI'
+      change_type: modification
+      files: ['src/DataView_UI.client.js']
+    - module: 'UI_Router'
+      change_type: modification
+      files: ['src/UI_Router.client.js']
+  decisions:
+    - id: D1
+      choice: 'Enrutamiento por Excepción en DataView_UI'
+      rationale: 'Se inyecta una condición en onEdit para que si la entidad es Taxonomía, se propague el evento NAV::CHANGE hacia el wizard pasando el ID, en lugar de llamar a openEditForm (Drawer).'
+refs:
+  epic_scope: 'work/epics/e51-taxonomia-workspace/scope.md'
+metadata: {}

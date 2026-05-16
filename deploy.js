@@ -124,6 +124,7 @@ try {
             
             if (!fs.existsSync(sourcePath)) return;
             
+            const stat = fs.statSync(sourcePath);
             let cssContent = fs.readFileSync(sourcePath, 'utf8');
             let minified = cssContent;
             
@@ -194,6 +195,7 @@ try {
                     console.log(`[Deploy] Verified: Clasp confirmed files were physically pushed.`);
                 } else if (output.includes('No files to push')) {
                     console.log(`[Deploy] Warning: Clasp reports 'No files to push'. Either files are identical remotely, or manifest is out of sync.`);
+                    // Lo tomamos como éxito estructural si realmente no había cambios.
                     pushSuccess = true; 
                 } else {
                     console.log(`[Deploy] Warning: Expected confirmation string not found. Retrying in 2s...`);

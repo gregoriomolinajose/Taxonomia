@@ -33,18 +33,53 @@ class TXSearchable extends HTMLElement {
         if (!item) return '';
         const idCampo = this.getAttribute('value-field') || 'id';
         const labelCampo = this.getAttribute('label-field') || 'nombre';
-        return item[labelCampo] ?? item[idCampo] ?? item.id ?? '';
+        return item[labelCampo] ?? item[idCampo] ?? item.id_registro ?? item.id ?? '';
     }
 
     _extractPayloadId(item) {
         if (!item) return null;
         const idCampo = this.getAttribute('value-field') || 'id';
-        return item[idCampo] ?? item.id;
+        return item[idCampo] ?? item.id_registro ?? item.id;
     }
 
     _formatDisplayString(item, rawId) {
         if (!item) return String(rawId);
         return this._extractPayloadTitle(item);
+    }
+
+    _resolveSubtitle(item, idVal) {
+        const subtitleField = this.getAttribute('subtitle-field');
+        const subtitleLookup = this.getAttribute('subtitle-lookup');
+        const targetEntity = this.getAttribute('target-entity') || this.getAttribute('entity-name') || '';
+        
+        let localSubtitleId = subtitleField && item ? item[subtitleField] : null;
+
+        // [S49.13] Edge Traversal para Topologías de Grafo Temporal (Ej. CARGO_PERSONA)
+        // [S49.14] Refactored to use centralized Graph_Utils for O(1) indexed lookups
+        if (subtitleField && !localSubtitleId && window.Graph_Utils) {
+            const targetEntity = this.getAttribute('target-entity') || this.getAttribute('entity-name') || '';
+            const sFieldMeta = window.Graph_Utils.getTemporalEdgeMeta(targetEntity, subtitleField);
+            
+            if (sFieldMeta) {
+                localSubtitleId = window.Graph_Utils.resolveLinkedId(idVal, sFieldMeta.graphEdgeType, this.getAttribute('context-id'));
+            }
+        }
+
+        let finalSubtitle = subtitleField ? 'Sin Identificar' : (targetEntity || 'Registro');
+        if (localSubtitleId) {
+            finalSubtitle = localSubtitleId;
+            if (subtitleLookup && window.DataStore) {
+                const table = window.DataStore.get(subtitleLookup);
+                if (table && table.length) {
+                    const foundObj = table.find(c => String(c.id_cargo) === String(localSubtitleId) || String(c.id) === String(localSubtitleId) || String(c.id_numero) === String(localSubtitleId));
+                    if (foundObj && foundObj.nombre) {
+                        finalSubtitle = foundObj.nombre;
+                    }
+                }
+            }
+        }
+        
+        return finalSubtitle;
     }
 
     // ===============================================
@@ -146,6 +181,20 @@ class TXSearchable extends HTMLElement {
         this.dispatchSelection();
     }
 
+    dispatchSelection() {
+        const payload = this.getValidatedValue();
+        const ev = new CustomEvent('txChange', {
+            detail: {
+                value: payload,
+                entity: this._entityName,
+                isMultiple: this._isMultiple
+            },
+            bubbles: true,
+            composed: true // Permite que el evento cruce boundaries
+        });
+        this.dispatchEvent(ev);
+    }
+
     get value() {
         return this.getValidatedValue();
     }
@@ -241,6 +290,16 @@ class TXSearchable extends HTMLElement {
                 [data-tx-state="hidden"] { display: none !important; }
                 [data-tx-state="flex"] { display: flex !important; }
                 [data-tx-state="block"] { display: block !important; }
+                
+                /* Estilos Premium SaaS para el Empty State */
+                .tx-placeholder-hover:hover {
+                    border-color: var(--ion-color-primary, #3880ff) !important;
+                    background: rgba(56, 128, 255, 0.02) !important;
+                }
+                .tx-placeholder-hover:hover .tx-icon-scale {
+                    transform: scale(1.1);
+                    background: rgba(56, 128, 255, 0.12) !important;
+                }
             `;
             document.head.appendChild(style);
         }
@@ -265,7 +324,7 @@ class TXSearchable extends HTMLElement {
                         <!-- ESTADO LLENO HEADER (MULTISELECT) -->
                         <div id="${this._componentId}-filled-header" data-tx-state="hidden" style="justify-content: space-between; align-items: center; margin-bottom: 8px;">
                             <strong style="color: var(--ion-color-dark); font-size: 14px; margin-left: 4px;">${this._entityName}</strong>
-                            <ion-button class="trigger-container" size="small" fill="clear" style="margin: 0; --color: var(--ion-color-primary, #3880ff); font-weight: bold; font-family: var(--sys-font-family, inherit);">
+                            <ion-button class="trigger-container" size="small" fill="clear" style="margin: 0; --color: var(--ion-color-primary, #3880ff); font-weight: bold; font-family: var(--sys-font-family, inherit); display: ${this._isDisabled ? 'none' : 'block'};">
                                 + AGREGAR
                             </ion-button>
                         </div>
@@ -285,7 +344,7 @@ class TXSearchable extends HTMLElement {
                         <!-- ESTADO LLENO HEADER (SINGLE SELECT) -->
                         <div id="${this._componentId}-single-filled-header" data-tx-state="hidden" style="justify-content: space-between; align-items: center; margin-bottom: 8px;">
                             <strong style="color: var(--ion-color-dark); font-size: 14px; margin-left: 4px;">${this._entityName}</strong>
-                            <ion-button class="trigger-container" size="small" fill="clear" style="margin: 0; --color: var(--ion-color-primary, #3880ff); font-weight: bold; font-family: var(--sys-font-family, inherit);">
+                            <ion-button class="trigger-container" size="small" fill="clear" style="margin: 0; --color: var(--ion-color-primary, #3880ff); font-weight: bold; font-family: var(--sys-font-family, inherit); display: ${this._isDisabled ? 'none' : 'block'};">
                                 CAMBIAR
                             </ion-button>
                         </div>
@@ -308,6 +367,23 @@ class TXSearchable extends HTMLElement {
         }
         this._scheduleRender();
         setTimeout(() => this._bindTriggerEvents(), 100);
+
+        // S49.12: Reactive subscription to DataStore changes for relational subtitles (like "Cargo")
+        if (typeof window !== 'undefined' && window.AppEventBus && !this._dsSubscriptionBound) {
+            this._dsSubscriptionBound = true;
+            this._handleDataStoreChange = (e) => {
+                if (!e || !e.detail) return;
+                const subtitleLookup = this.getAttribute('subtitle-lookup');
+                if (subtitleLookup && e.detail.entityName === subtitleLookup) {
+                    this._scheduleRender();
+                    if (this._overlayNode || this._inlineMode) {
+                        this.buildListItems(this._searchTerm || '');
+                    }
+                }
+            };
+            window.AppEventBus.subscribe('DATASTORE::CHANGED', this._handleDataStoreChange);
+        }
+
     }
 
     _cleanupOverlay() {
@@ -333,6 +409,17 @@ class TXSearchable extends HTMLElement {
             this._selectedState.clear();
         }
         this._selectedState = null;
+        
+        if (this._outsideClickListener) {
+            document.removeEventListener('click', this._outsideClickListener);
+            this._outsideClickListener = null;
+        }
+        
+        if (typeof window !== 'undefined' && window.AppEventBus && this._handleDataStoreChange) {
+            window.AppEventBus.unsubscribe('DATASTORE::CHANGED', this._handleDataStoreChange);
+            this._handleDataStoreChange = null;
+            this._dsSubscriptionBound = false;
+        }
         
         // Destitución de modales anclados en root
         this._cleanupOverlay();
@@ -396,6 +483,18 @@ class TXSearchable extends HTMLElement {
                 this._scheduleRender();
                 this._bindInlineInternalEvents();
                 this.buildListItems(this._searchTerm || '');
+                
+                // Add outside click listener
+                if (!this._outsideClickListener) {
+                    this._outsideClickListener = (e) => {
+                        if (this._inlineMode && !this.contains(e.target)) {
+                            this._closeInlineMode();
+                        }
+                    };
+                    setTimeout(() => {
+                        document.addEventListener('click', this._outsideClickListener);
+                    }, 0);
+                }
             }
             return;
         }
@@ -412,15 +511,7 @@ class TXSearchable extends HTMLElement {
             closeBtn.addEventListener('click', (e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                this._inlineMode = false;
-                this._searchTerm = ''; 
-                this._temporaryBlurFlag = false; // Prevents UI lock if closed manually while stuck
-                
-                const searchbar = this.querySelector(`#${this._componentId}-inline-searchbar`);
-                if (searchbar) searchbar.value = '';
-                
-                this._scheduleRender();
-                this.dispatchSelection(); 
+                this._closeInlineMode();
             });
         }
 
@@ -458,8 +549,7 @@ class TXSearchable extends HTMLElement {
         }
         
         if (this._inlineMode) {
-            this._inlineMode = false;
-            this._scheduleRender();
+            this._closeInlineMode();
         }
 
         this.dispatchEvent(new CustomEvent('txSearchableCreate', {
@@ -469,16 +559,39 @@ class TXSearchable extends HTMLElement {
         }));
     }
     
+    _closeInlineMode() {
+        if (!this._inlineMode) return;
+        this._inlineMode = false;
+        this._searchTerm = ''; 
+        this._temporaryBlurFlag = false; 
+        
+        const searchbar = this.querySelector(`#${this._componentId}-inline-searchbar`);
+        if (searchbar) searchbar.value = '';
+        
+        if (this._outsideClickListener) {
+            document.removeEventListener('click', this._outsideClickListener);
+            this._outsideClickListener = null;
+        }
+        
+        this._scheduleRender();
+        this.dispatchSelection(); 
+    }
+
     _getSharedOverlayHtml(isMob) {
+        const targetEntity = this.getAttribute('target-entity') || this._entityName || '';
+        const canCreate = !window.ABAC || window.ABAC.can('create', targetEntity);
+        
         return `
             <ion-header class="ion-no-border" style="border-top-left-radius: var(--border-radius, 16px); border-top-right-radius: var(--border-radius, 16px); overflow: hidden;">
                 ${isMob ? `
                 <ion-toolbar color="primary">
                     <ion-title style="color: var(--ion-color-primary-contrast, #ffffff); font-weight: 600;">Buscar ${this._entityName}</ion-title>
                     <ion-buttons slot="end">
+                        ${canCreate ? `
                         <ion-button id="${this._componentId}-btn-create-mob" style="font-weight: 600;">
                             <ion-icon slot="start" name="add-outline"></ion-icon> CREAR
                         </ion-button>
+                        ` : ''}
                         <ion-button id="${this._componentId}-btn-close">
                             <ion-icon slot="icon-only" name="close" style="color: var(--ion-color-primary-contrast, #ffffff); font-size: 24px;"></ion-icon>
                         </ion-button>
@@ -500,7 +613,7 @@ class TXSearchable extends HTMLElement {
                 </div>
                 <ion-list id="${this._componentId}-list"></ion-list>
                 
-                ${!isMob ? `
+                ${(!isMob && canCreate) ? `
                 <div style="border-top: 1px solid var(--color-border, #e0e0e0);">
                     <ion-item id="${this._componentId}-btn-create-desk" button lines="none" detail="false" style="--background: transparent; margin: 0;">
                         <ion-icon slot="start" name="add-outline" style="color: var(--ion-color-primary, #3880ff);"></ion-icon>
@@ -514,6 +627,9 @@ class TXSearchable extends HTMLElement {
 
     // S44.6: Refactor UX Búsqueda Inline
     _getInlineOverlayTemplate() {
+        const targetEntity = this.getAttribute('target-entity') || this._entityName || '';
+        const canCreate = !window.ABAC || window.ABAC.can('create', targetEntity);
+
         return `
             <div id="${this._componentId}-inline-list-container" data-tx-state="hidden" style="flex-direction: column; margin-bottom: 12px; border: 1px solid var(--color-border, #cccccc); border-radius: 8px; overflow: hidden; background: var(--ion-background-color, #ffffff);">
                 <!-- HEADER / CLOSER -->
@@ -537,12 +653,14 @@ class TXSearchable extends HTMLElement {
                 <!-- LIST -->
                 <ion-list id="${this._componentId}-inline-list" style="padding-top: 0; margin-bottom: 0; max-height: 280px; overflow-y: auto;"></ion-list>
                 <!-- ACTION CREAR -->
+                ${canCreate ? `
                 <div style="border-top: 1px solid var(--color-border, #e0e0e0);">
                     <ion-item id="${this._componentId}-btn-create-inline" button lines="none" detail="false" style="--background: transparent; margin: 0;">
                         <ion-icon slot="start" name="add-outline" style="color: var(--ion-color-primary, #3880ff);"></ion-icon>
                         <ion-label style="color: var(--ion-color-primary, #3880ff); font-weight: 600;">Crear ${this._entityName}</ion-label>
                     </ion-item>
                 </div>
+                ` : ''}
             </div>
         `;
     }
@@ -550,17 +668,38 @@ class TXSearchable extends HTMLElement {
     // S41.13: Refactorización Estructural (DRY UI Factories)
     _getPlaceholderTemplate(domId, hidden, iconName) {
         return `
-            <div id="${domId}" class="trigger-container" ${hidden ? 'data-tx-state="hidden"' : ''} style="background: var(--ion-color-secondary, #f4f5f8); border-radius: 8px; border: 1px solid var(--color-border, #e0e0e0); margin-bottom: 24px; cursor: pointer; transition: all 0.2s ease;">
-                <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 16px;">
-                    <strong style="color: var(--ion-color-dark); font-size: 14px;">${this._entityName}</strong>
-                    <ion-button size="small" fill="clear" style="margin: 0; --color: var(--ion-color-primary, #3880ff); font-weight: bold; font-family: var(--sys-font-family, inherit);">
-                        + AGREGAR
-                    </ion-button>
+            <!-- ACTIVE PLACEHOLDER -->
+            <div id="${domId}-active" class="trigger-container tx-placeholder-hover" ${hidden || this._isDisabled ? 'data-tx-state="hidden"' : ''} style="background: #ffffff; border-radius: 12px; border: 2px dashed var(--color-border, #d1d5db); margin-bottom: 24px; cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.02);">
+                
+                <div class="tx-icon-scale" style="width: 56px; height: 56px; background: rgba(56, 128, 255, 0.08); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-bottom: 16px; transition: all 0.3s ease;">
+                    <ion-icon name="${iconName}" style="color: var(--ion-color-primary, #3880ff); font-size: 28px;"></ion-icon>
                 </div>
-                <div style="text-align: center; padding: 20px 10px 30px;">
-                    <ion-icon name="${iconName}" color="medium" style="font-size: 32px; opacity: 0.5;"></ion-icon>
-                    <p style="color: var(--ion-color-medium); font-size: 13px; margin-top: 8px; margin-bottom: 0;">Sin registros vinculados</p>
+                
+                <h4 style="color: var(--ion-color-dark, #111827); font-size: 16px; font-weight: 700; margin: 0 0 8px 0; font-family: var(--font-display, var(--ion-font-family, inherit));">Vincular ${this._entityName}</h4>
+                <p style="color: var(--ion-color-medium, #6b7280); font-size: 14px; margin: 0 0 24px 0; text-align: center; max-width: 320px; line-height: 1.5; font-family: var(--ion-font-family, inherit);">
+                    Busca y selecciona registros existentes o crea uno nuevo al instante.
+                </p>
+                
+                <ion-button size="default" fill="solid" color="primary" style="font-family: var(--ion-font-family, inherit); --border-radius: 8px; --box-shadow: 0 4px 6px rgba(56, 128, 255, 0.2); font-weight: 600; margin: 0; --padding-start: 24px; --padding-end: 24px;">
+                    <ion-icon slot="start" name="search-outline" style="font-size: 18px;"></ion-icon>
+                    Buscar
+                </ion-button>
+            </div>
+
+            <!-- READONLY PLACEHOLDER (CARD SIZE) -->
+            <div id="${domId}-readonly" ${hidden || !this._isDisabled ? 'data-tx-state="hidden"' : ''} style="margin-bottom: 24px;">
+                <div style="margin-bottom: 8px;">
+                    <strong style="color: var(--ion-color-dark); font-size: 14px; margin-left: 4px;">${this._entityName}</strong>
                 </div>
+                <ion-item lines="none" style="--min-height: 56px; --padding-top: 4px; --padding-bottom: 4px; --border-radius: var(--border-radius, 8px); border-radius: var(--border-radius, 8px); width: 100%; border: 1px dashed var(--color-border, #cccccc); --background: #f8f9fa;">
+                    <div slot="start" style="width: 32px; height: 32px; background: var(--ion-color-light, #f4f5f8); border: 1px solid var(--color-border, #e0e0e0); border-radius: 4px; display: inline-flex; justify-content: center; align-items: center; margin-right: 12px;">
+                        <ion-icon name="${iconName}" style="color: var(--ion-color-medium, #92949c); font-size: 18px;"></ion-icon>
+                    </div>
+                    <ion-label class="ion-text-wrap" style="flex: 1; margin: 0; padding-right: 8px;">
+                        <h3 style="font-size: 13px; font-weight: bold; margin: 0; padding: 0; line-height: 1.2; color: var(--ion-color-medium, #92949c);">Sin ${this._entityName}</h3>
+                        <p style="font-size: 11px; color: var(--ion-color-danger, #eb445a); margin: 0; padding: 0; line-height: 1.2; margin-top: 4px;"><ion-icon name="lock-closed" style="vertical-align: text-bottom; margin-right: 2px;"></ion-icon>Para relacionarlo vaya a la sección Taxonomía</p>
+                    </ion-label>
+                </ion-item>
             </div>
         `;
     }
@@ -576,7 +715,7 @@ class TXSearchable extends HTMLElement {
                     <h3 ${textId ? `id="${textId}"` : ''} style="font-size: 13px; font-weight: bold; margin: 0; padding: 0; line-height: 1.2;">${title}</h3>
                     <p ${subId ? `id="${subId}"` : ''} style="font-size: 11px; color: var(--ion-color-medium, #92949c); margin: 0; padding: 0; line-height: 1.2;">${subtitle}</p>
                 </ion-label>
-                <ion-button ${btnId ? `id="${btnId}"` : ''} slot="end" fill="clear" color="medium" size="small" style="margin: 0;">
+                <ion-button ${btnId ? `id="${btnId}"` : ''} slot="end" fill="clear" color="medium" size="small" style="margin: 0; display: ${this._isDisabled ? 'none' : 'block'};">
                     <ion-icon slot="icon-only" name="close-outline"></ion-icon>
                 </ion-button>
             </ion-item>
@@ -680,6 +819,7 @@ class TXSearchable extends HTMLElement {
         const iconColorTheme = this.getAttribute('icon-color') || 'step-300';
         const iconStyleBackground = `var(--ion-color-${iconColorTheme}, #3880ff)`;
         const entityName = this.getAttribute('entity-name') || 'Registro';
+        const subtitleField = this.getAttribute('subtitle-field');
 
         filtered.forEach(item => {
             const idVal = String(this._extractPayloadId(item));
@@ -700,10 +840,13 @@ class TXSearchable extends HTMLElement {
             `;
             
             const lexicalId = item.lexical_id || item.id_numero || idVal;
+            let finalSubtitle = this._resolveSubtitle(item, idVal);
+            finalSubtitle = `${finalSubtitle} • ${lexicalId}`;
+            
             const labelHtml = `
                 <ion-label>
                     <h3 style="font-weight: bold; color: var(--ion-color-dark); margin: 0; padding: 0; line-height: 1.2;">${title}</h3>
-                    <p style="font-size: 11px; color: var(--ion-color-medium); margin: 0; padding: 0; line-height: 1.2;">${entityName} • ${lexicalId}</p>
+                    <p style="font-size: 11px; color: var(--ion-color-medium); margin: 0; padding: 0; line-height: 1.2;">${finalSubtitle}</p>
                 </ion-label>
             `;
 
@@ -776,9 +919,7 @@ class TXSearchable extends HTMLElement {
                     this.dispatchSelection(); // Disparo automático inmediato si es Single
                     
                     if (this._inlineMode) {
-                        this._inlineMode = false;
-                        this._searchTerm = '';
-                        this._scheduleRender();
+                        this._closeInlineMode();
                     } else if (this._overlayNode && typeof this._overlayNode.dismiss === 'function') {
                         this._overlayNode.dismiss();
                     } else {
@@ -804,7 +945,8 @@ class TXSearchable extends HTMLElement {
         // S41.11 Renderizado Estado Único
         if (!this._isMultiple) {
             const hasSelection = this._selectedState !== null && this._selectedState !== undefined && this._selectedState !== "";
-            const phNode = this.querySelector(`#${this._componentId}-single-ph`);
+            const phNodeActive = this.querySelector(`#${this._componentId}-single-ph-active`);
+            const phNodeReadonly = this.querySelector(`#${this._componentId}-single-ph-readonly`);
             const filledHeader = this.querySelector(`#${this._componentId}-single-filled-header`);
             const filledNode = this.querySelector(`#${this._componentId}-single-filled`);
             const textNode = this.querySelector(`#${this._componentId}-single-text`);
@@ -813,7 +955,8 @@ class TXSearchable extends HTMLElement {
             const inlineContainerNode = this.querySelector(`#${this._componentId}-inline-list-container`);
             
             if (this._inlineMode) {
-                if (phNode) phNode.setAttribute('data-tx-state', 'hidden');
+                if (phNodeActive) phNodeActive.setAttribute('data-tx-state', 'hidden');
+                if (phNodeReadonly) phNodeReadonly.setAttribute('data-tx-state', 'hidden');
                 if (filledHeader) filledHeader.setAttribute('data-tx-state', 'hidden');
                 if (filledNode) filledNode.setAttribute('data-tx-state', 'hidden');
                 if (inlineContainerNode) {
@@ -830,10 +973,15 @@ class TXSearchable extends HTMLElement {
                 }
                 
                 if (hasSelection) {
-                    if (phNode) phNode.setAttribute('data-tx-state', 'hidden');
+                    if (phNodeActive) phNodeActive.setAttribute('data-tx-state', 'hidden');
+                    if (phNodeReadonly) phNodeReadonly.setAttribute('data-tx-state', 'hidden');
                     if (filledHeader) filledHeader.setAttribute('data-tx-state', 'flex');
                     if (filledNode) filledNode.setAttribute('data-tx-state', 'block');
-                    if (btnClear) btnClear.setAttribute('data-tx-state', 'block');
+                    if (btnClear) btnClear.setAttribute('data-tx-state', this._isDisabled ? 'hidden' : 'block');
+                    
+                    // Also hide "CAMBIAR" if disabled
+                    const cambiarBtn = filledHeader ? filledHeader.querySelector('ion-button') : null;
+                    if (cambiarBtn) cambiarBtn.style.display = this._isDisabled ? 'none' : 'block';
                     
                     if (textNode) {
                         const rawId = this._selectedState;
@@ -844,7 +992,8 @@ class TXSearchable extends HTMLElement {
                         }
                     }
                 } else {
-                    if (phNode) phNode.setAttribute('data-tx-state', 'block');
+                    if (phNodeActive) phNodeActive.setAttribute('data-tx-state', this._isDisabled ? 'hidden' : 'block');
+                    if (phNodeReadonly) phNodeReadonly.setAttribute('data-tx-state', this._isDisabled ? 'block' : 'hidden');
                     if (filledHeader) filledHeader.setAttribute('data-tx-state', 'hidden');
                     if (filledNode) filledNode.setAttribute('data-tx-state', 'hidden');
                     if (btnClear) btnClear.setAttribute('data-tx-state', 'hidden');
@@ -854,7 +1003,8 @@ class TXSearchable extends HTMLElement {
 
         // Render Multi-Cards Container si aplica
         if (this._isMultiple) {
-            const placeholderNode = this.querySelector(`#${this._componentId}-placeholder`);
+            const phNodeActive = this.querySelector(`#${this._componentId}-placeholder-active`);
+            const phNodeReadonly = this.querySelector(`#${this._componentId}-placeholder-readonly`);
             const filledHeaderNode = this.querySelector(`#${this._componentId}-filled-header`);
             const inlineContainerNode = this.querySelector(`#${this._componentId}-inline-list-container`);
             const inlineCounterNode = this.querySelector(`#${this._componentId}-inline-counter`);
@@ -864,7 +1014,8 @@ class TXSearchable extends HTMLElement {
             
             // Toggle de modos de la vista principal
             if (this._inlineMode) {
-                if (placeholderNode) placeholderNode.setAttribute('data-tx-state', 'hidden');
+                if (phNodeActive) phNodeActive.setAttribute('data-tx-state', 'hidden');
+                if (phNodeReadonly) phNodeReadonly.setAttribute('data-tx-state', 'hidden');
                 if (filledHeaderNode) filledHeaderNode.setAttribute('data-tx-state', 'hidden');
                 if (inlineContainerNode) {
                     inlineContainerNode.setAttribute('data-tx-state', 'flex');
@@ -884,12 +1035,21 @@ class TXSearchable extends HTMLElement {
                     if (inlineContainerNode.dataset.focused) delete inlineContainerNode.dataset.focused;
                 }
                 if (hasItems) {
-                    if (placeholderNode) placeholderNode.setAttribute('data-tx-state', 'hidden');
-                    if (filledHeaderNode) filledHeaderNode.setAttribute('data-tx-state', 'flex');
+                    if (phNodeActive) phNodeActive.setAttribute('data-tx-state', 'hidden');
+                    if (phNodeReadonly) phNodeReadonly.setAttribute('data-tx-state', 'hidden');
+                    if (filledHeaderNode) {
+                        filledHeaderNode.setAttribute('data-tx-state', 'flex');
+                        const addBtn = filledHeaderNode.querySelector('ion-button');
+                        if (addBtn) addBtn.style.display = this._isDisabled ? 'none' : 'block';
+                    }
                 } else {
-                    if (placeholderNode) {
-                        placeholderNode.setAttribute('data-tx-state', 'block');
-                        placeholderNode.style.marginBottom = '24px';
+                    if (phNodeActive) {
+                        phNodeActive.setAttribute('data-tx-state', this._isDisabled ? 'hidden' : 'block');
+                        phNodeActive.style.marginBottom = '24px';
+                    }
+                    if (phNodeReadonly) {
+                        phNodeReadonly.setAttribute('data-tx-state', this._isDisabled ? 'block' : 'hidden');
+                        phNodeReadonly.style.marginBottom = '24px';
                     }
                     if (filledHeaderNode) filledHeaderNode.setAttribute('data-tx-state', 'hidden');
                 }
@@ -906,9 +1066,12 @@ class TXSearchable extends HTMLElement {
                         const titleText = found ? this._extractPayloadTitle(found) : singleId;
                         const lexicalId = found ? (found.lexical_id || found.id_numero || singleId) : singleId;
                         
+                        let finalCardSub = this._resolveSubtitle(found, singleId);
+                        finalCardSub = `${finalCardSub} • ${lexicalId}`;
+                        
                         const fakeItem = document.createElement('div');
                         fakeItem.innerHTML = this._getSharedCardTemplate({
-                            iconName, iconColor, title: titleText, subtitle: lexicalId
+                            iconName, iconColor, title: titleText, subtitle: finalCardSub
                         });
                         
                         const finalNode = fakeItem.firstElementChild;

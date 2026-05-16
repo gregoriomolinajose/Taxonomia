@@ -263,7 +263,7 @@ const Engine_DB = {
         if (schema) {
             const fields = schema.fields || (typeof schema === 'object' ? Object.keys(schema).map(k => ({ name: k, ...schema[k] })) : []);
             fields.forEach(f => {
-                if (f.type === 'relation' && payload[f.name] !== undefined) {
+                if ((f.type === 'relation' || f.isTemporalGraph) && payload[f.name] !== undefined) {
                     let relData = payload[f.name];
                     
                     // Normalización de escalares provenientes de uiComponent: 'select_single'
@@ -294,12 +294,17 @@ const Engine_DB = {
             if (!tempParentPK && payload.id) tempParentPK = payload.id;
             
             fields.forEach(f => {
-                if (f.type === 'relation' && nestedData[f.name] && f.isTemporalGraph && typeof Engine_Graph !== 'undefined') {
+                if ((f.type === 'relation' || f.isTemporalGraph) && nestedData[f.name] && f.isTemporalGraph && typeof Engine_Graph !== 'undefined') {
                     const children = nestedData[f.name];
                     // [S27.4/Rx] Clone rules to prevent memory leaks across subgrids (State Mutation Bug)
-                    const baseRules = (typeof getEntityTopologyRules !== 'undefined') 
-                                            ? getEntityTopologyRules(entityName)
-                                            : { preventCycles: false, maxDepth: 0, siblingCollisionCheck: false };
+                    let baseRules = (typeof getEntityTopologyRules !== 'undefined') ? getEntityTopologyRules(entityName) : null;
+                    if (!baseRules || baseRules.topologyType === "FLAT") {
+                        // Fallback to target entity if the current entity (e.g. Taxonomia workspace) lacks specific DAG rules
+                        const targetRules = (typeof getEntityTopologyRules !== 'undefined') ? getEntityTopologyRules(f.targetEntity) : null;
+                        if (targetRules) baseRules = targetRules;
+                    }
+                    if (!baseRules) baseRules = { preventCycles: false, maxDepth: 0, siblingCollisionCheck: false, allowOrphanStealing: false };
+                    
                     const topologyRules = { ...baseRules }; // Shallow clone
                                             
                     // [S27.4/Rx] Normalize passive field metadata into active topological enforcement
@@ -325,6 +330,12 @@ const Engine_DB = {
                         fullGraph = this.list(f.graphEntity, 'objects').rows || [];
                     }
                     const activeGraph = fullGraph.filter(e => e.es_version_actual !== false);
+                    
+                    let graphToAnalyze = activeGraph;
+                    if (f.workspaceMode) {
+                        const ctxId = String(tempParentPK).trim();
+                        graphToAnalyze = activeGraph.filter(e => String(e.contexto_id).trim() === ctxId);
+                    }
 
                     const targetEntity = f.targetEntity;
                     const nestedSchema = (typeof APP_SCHEMAS !== 'undefined') ? APP_SCHEMAS[targetEntity] : null;
@@ -334,27 +345,63 @@ const Engine_DB = {
                         throw new Error(`[AR-Governance] Violación de Schema-Driven Design: La entidad relacionada '${targetEntity}' no tiene definida su 'primaryKey' en APP_SCHEMAS. El fallback determinista por sufijo está deprecado.`);
                     }
 
-                    const incomingEdgesMock = children.map(child => ({
-                        ...child,
-                        id_nodo_padre: f.relationType === 'hijo' ? tempParentPK : (child[childPkField] || child['id_registro']),
-                        id_nodo_hijo: f.relationType === 'hijo' ? (child[childPkField] || child['id_registro']) : tempParentPK,
-                        tipo_relacion: edgeName
-                    }));
+                    const incomingEdgesMock = children.map(child => {
+                        let mockPadre, mockHijo;
+                        if (f.workspaceMode) {
+                            let dynPadre = flatPayload[f.dynamicParentField];
+                            if (dynPadre === undefined && f.dynamicParentField && nestedData[f.dynamicParentField] && nestedData[f.dynamicParentField].length > 0) {
+                                dynPadre = nestedData[f.dynamicParentField][0].id_registro;
+                            }
+                            mockPadre = f.dynamicParentField ? dynPadre : f.fixedParentId;
+                            mockHijo = child[childPkField] || child['id_registro'];
+                        } else {
+                            mockPadre = f.relationType === 'hijo' ? tempParentPK : (child[childPkField] || child['id_registro']);
+                            mockHijo = f.relationType === 'hijo' ? (child[childPkField] || child['id_registro']) : tempParentPK;
+                        }
+                        return {
+                            ...child,
+                            id_nodo_padre: mockPadre,
+                            id_nodo_hijo: mockHijo,
+                            tipo_relacion: edgeName
+                        };
+                    });
 
-                    const topologyResult = Engine_Graph.analyzeTopology(incomingEdgesMock, activeGraph, topologyRules);
+                    const topologyResult = Engine_Graph.analyzeTopology(incomingEdgesMock, graphToAnalyze, topologyRules);
                     const stolenEdges = topologyResult.stolenEdges || [];
                     
                     let currentActiveEdgesForNode = [];
-                    if (f.relationType === 'padre') {
+                    if (f.workspaceMode) {
+                        let dynPadre = flatPayload[f.dynamicParentField];
+                        if (dynPadre === undefined && f.dynamicParentField && nestedData[f.dynamicParentField] && nestedData[f.dynamicParentField].length > 0) {
+                            dynPadre = nestedData[f.dynamicParentField][0].id_registro;
+                        }
+                        const effectiveParentId = f.dynamicParentField ? dynPadre : f.fixedParentId;
+                        currentActiveEdgesForNode = activeGraph.filter(e => 
+                            String(e.id_nodo_padre).trim() === String(effectiveParentId).trim() && 
+                            e.tipo_relacion === edgeName &&
+                            String(e.contexto_id).trim() === String(tempParentPK).trim()
+                        );
+                    } else if (f.relationType === 'padre') {
                         currentActiveEdgesForNode = activeGraph.filter(e => String(e.id_nodo_hijo).trim() === String(tempParentPK).trim() && e.tipo_relacion === edgeName);
                     } else {
                         currentActiveEdgesForNode = activeGraph.filter(e => String(e.id_nodo_padre).trim() === String(tempParentPK).trim() && e.tipo_relacion === edgeName);
                     }
                     
+                    // [S53.6] Workspace Isolation: Restrict diffing pool to edges inside the explicit work context.
+                    // This prevents Draft changes from accidentally deleting Baseline relationships.
+                    if (flatPayload._work_context) {
+                        currentActiveEdgesForNode = currentActiveEdgesForNode.filter(e => String(e.contexto_id).trim() === String(flatPayload._work_context).trim());
+                    }
+                    
                     const normalResult = Engine_Graph.patchSCD2Edges(incomingEdgesMock, currentActiveEdgesForNode, f.topologyCardinality) || {};
                     const normalClose = normalResult.edgesToClose || [];
                     const stealResult = Engine_Graph.patchSCD2Edges([], stolenEdges, f.topologyCardinality) || {};
-                    const stealClose = stealResult.edgesToClose || [];
+                    let stealClose = stealResult.edgesToClose || [];
+                    
+                    // [S54.5 Fix Contextual Graph Leak] Prevent drafts from stealing global baseline relationships.
+                    if (flatPayload._work_context) {
+                        stealClose = stealClose.filter(e => String(e.contexto_id).trim() === String(flatPayload._work_context).trim());
+                    }
                     
                     precalculatedGraphContext[f.name] = { 
                         orphansToProcess: normalClose.concat(stealClose),
@@ -386,7 +433,7 @@ const Engine_DB = {
         if (schema) {
             const fields = schema.fields || (typeof schema === 'object' ? Object.keys(schema).map(k => ({ name: k, ...schema[k] })) : []);
             fields.forEach(f => {
-                if (f.type === 'relation' && nestedData[f.name]) {
+                if ((f.type === 'relation' || f.isTemporalGraph) && nestedData[f.name]) {
                     const children = nestedData[f.name];
                     const targetEntity = f.targetEntity;
                     const fkField = f.foreignKey;
@@ -453,15 +500,28 @@ const Engine_DB = {
 
                         const edgeRecords = newChildrenToInsert.map(child => {
                             const newId = "RELA-" + uuidFn().substring(0, 8).toUpperCase();
+                            let edgePadre, edgeHijo;
+                            if (f.workspaceMode) {
+                                let dynPadre = flatPayload[f.dynamicParentField];
+                                if (dynPadre === undefined && f.dynamicParentField && nestedData[f.dynamicParentField] && nestedData[f.dynamicParentField].length > 0) {
+                                    dynPadre = nestedData[f.dynamicParentField][0].id_registro;
+                                }
+                                edgePadre = f.dynamicParentField ? dynPadre : f.fixedParentId;
+                                edgeHijo = child[pkField] || child['id_registro'];
+                            } else {
+                                edgePadre = f.relationType === 'hijo' ? parentPK : (child[pkField] || child['id_registro']);
+                                edgeHijo = f.relationType === 'hijo' ? (child[pkField] || child['id_registro']) : parentPK;
+                            }
                             const edgePayload = {
                                 id_relacion: newId,
-                                id_nodo_padre: f.relationType === 'hijo' ? parentPK : (child[pkField] || child['id_registro']),
-                                id_nodo_hijo: f.relationType === 'hijo' ? (child[pkField] || child['id_registro']) : parentPK,
+                                id_nodo_padre: edgePadre,
+                                id_nodo_hijo: edgeHijo,
                                 tipo_relacion: (f.graphEdgeType || f.name).toUpperCase(),
                                 valido_desde: child.valido_desde || new Date().toISOString(),
                                 valido_hasta: child.valido_hasta || "",
                                 es_version_actual: child.es_version_actual !== undefined ? child.es_version_actual : true,
-                                estado: "Activo"
+                                estado: child._estado_arista || child.estado || flatPayload.estado || "Activo",
+                                contexto_id: child._contexto_arista || child.contexto_id || flatPayload._work_context || ""
                             };
                             return edgePayload;
                         });
@@ -634,7 +694,7 @@ const Engine_DB = {
                     if (f.isTemporalGraph && f.graphEntity) {
                         // Graph Edge Hydration
                         const edgesContext = _Adapter_Sheets.list(f.graphEntity, config, 'objects');
-                        const activeEdges = (edgesContext && edgesContext.rows ? edgesContext.rows : []).filter(e => e.es_version_actual !== false && e.estado !== 'Eliminado');
+                        const activeEdges = (edgesContext && edgesContext.rows ? edgesContext.rows : []).filter(e => e.es_version_actual !== false && e.estado !== 'Eliminado' && e.estado !== 'Borrador');
                         
                         let matchedIds = [];
                         const edgeName = (f.graphEdgeType || f.name).toUpperCase();
@@ -727,6 +787,46 @@ const Engine_DB = {
         };
     },
 
+    /**
+     * [S50.4] Mass Approval ETL
+     * Promotes a full Taxonomy draft context to Live/Active state atomically.
+     * @param {string} contextId
+     * @returns {Object} { approvedEdges: number }
+     */
+    publishDraftContext: function(contextId) {
+        if (!contextId) throw new Error("publishDraftContext: contextId requerido.");
+        if (typeof Logger !== 'undefined') Logger.log(`[Mass Approval] Publicando Draft Context: ${contextId}`);
+        const sysDate = new Date().toISOString();
+
+        // 1. Update master entity (Taxonomia)
+        const taxRes = _Adapter_Sheets.list('Taxonomia', { useSheets: true }, 'objects');
+        const taxRecords = taxRes && taxRes.rows ? taxRes.rows : [];
+        const taxRecord = taxRecords.find(r => r.id_registro === contextId || r.id_taxonomia === contextId);
+        if (taxRecord) {
+            taxRecord.estado = 'Activo';
+            taxRecord.updated_at = sysDate;
+            _Adapter_Sheets.upsertBatch('Taxonomia', [taxRecord], { isVolatile: false });
+            _invalidateCache('Taxonomia');
+        }
+
+        // 2. Mass update edges
+        const edgesRes = _Adapter_Sheets.list('Sys_Graph_Edges', { useSheets: true }, 'objects');
+        const edges = edgesRes && edgesRes.rows ? edgesRes.rows : [];
+        const edgesToUpdate = edges.filter(e => e.contexto_id === contextId && e.estado === 'Borrador');
+        
+        if (edgesToUpdate.length > 0) {
+            edgesToUpdate.forEach(e => {
+                e.estado = 'Activo';
+                e.updated_at = sysDate;
+            });
+            _Adapter_Sheets.upsertBatch('Sys_Graph_Edges', edgesToUpdate, { isVolatile: false });
+            _invalidateCache('Sys_Graph_Edges');
+            if (typeof Logger !== 'undefined') Logger.log(`[Mass Approval] ${edgesToUpdate.length} aristas validadas.`);
+        }
+
+        return { approvedEdges: edgesToUpdate.length };
+    },
+
     delete: function (entityName, id) {
         const config = (typeof CONFIG !== 'undefined') ? CONFIG : { useSheets: true, useCloudDB: false };
         if (typeof Logger !== 'undefined') Logger.log("Engine_DB_delete_router: Routing " + entityName + " (ID: " + id + ") to Architect Unit of Work Deletion.");
@@ -757,8 +857,9 @@ const Engine_DB = {
             // ==============================================
             
             // 1. Load active graph
-            // Asume que _Adapter_Sheets expone list(Entity, Config, Format).
-            const listResponse = _Adapter_Sheets.list("Relacion_Dominios", config, "objects");
+            // Use Sys_Graph_Edges for standard topology or fallback to specific graph table if needed
+            const graphTableName = "Sys_Graph_Edges";
+            const listResponse = _Adapter_Sheets.list(graphTableName, config, "objects");
             const activeGraph = (listResponse && listResponse.rows) ? listResponse.rows.filter(r => r.es_version_actual !== false) : [];
             
             // 2. Build Patch Mathematically (No DB touch)
@@ -769,6 +870,15 @@ const Engine_DB = {
                 if (typeof Logger !== 'undefined') Logger.log("[WARN] Engine_Graph not found, falling back to basic self soft-delete.");
             }
 
+            // [S51.4 Quality Fix] Orphaned Tripartite Edges Cleanup
+            // Any edge where the deleted node acts as the context (e.g. Taxonomia workspaces) must be closed
+            const contextualEdges = activeGraph.filter(e => String(e.contexto_id).trim() === String(id).trim());
+            contextualEdges.forEach(ce => {
+                if (!patch.edgesToClose.some(existing => existing.id_relacion === ce.id_relacion)) {
+                    patch.edgesToClose.push(ce);
+                }
+            });
+
             const sysDate = new Date().toISOString();
             const currentUser = (typeof Session !== 'undefined') ? Session.getActiveUser().getEmail() : 'system@localhost';
 
@@ -776,8 +886,10 @@ const Engine_DB = {
             const edgesClosed = patch.edgesToClose.map(e => ({
                 id_relacion: e.id_relacion,
                 es_version_actual: false,
+                estado: 'Eliminado',
                 valido_hasta: sysDate,
-                updated_at: sysDate
+                updated_at: sysDate,
+                updated_by: currentUser
             }));
 
             const uuidFn = (typeof Utilities !== 'undefined') ? Utilities.getUuid : () => Math.random().toString(36).substring(2,10);
@@ -818,7 +930,7 @@ const Engine_DB = {
             // 5. Commit Unit of Work (The O(1) Bulk Pushes)
             if (edgesToUpsert.length > 0) {
                 if (typeof Logger !== 'undefined') Logger.log(`[Unit of Work] Upserting ${edgesToUpsert.length} graph edges (SCD-2) to array.`);
-                this.upsertBatch("Relacion_Dominios", edgesToUpsert, config);
+                this.upsertBatch(graphTableName, edgesToUpsert, config);
             }
 
             if (nodesToSoftDelete.length > 0) {
@@ -826,7 +938,7 @@ const Engine_DB = {
                 results.sheets = this.upsertBatch(entityName, nodesToSoftDelete, config);
             }
 
-            _invalidateCache("Relacion_Dominios");
+            _invalidateCache(graphTableName);
 
         } else {
             // ==============================================

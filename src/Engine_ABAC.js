@@ -40,17 +40,19 @@ const Engine_ABAC = {
     
     if (!persona) {
       // Usuario no registrado en el grafo. Devuelve permisos nulos.
-      return { ownerOf: [], memberOf: [] };
+      return { ownerOf: [], memberOf: [], permissions: {}, hasRole: false };
     }
     
     let abacContext = {
       ownerOf: [],
       memberOf: [],
-      permissions: {}
+      permissions: {},
+      hasRole: false
     };
     
     // Inyección del diccionario CUD de la matriz para el Frontend (S18.4)
     if (persona.id_rol) {
+      abacContext.hasRole = true;
       const permisos = this._getCachedData('Sys_Permissions');
       const misReglas = permisos.filter(p => p.id_rol === persona.id_rol);
       misReglas.forEach(r => {

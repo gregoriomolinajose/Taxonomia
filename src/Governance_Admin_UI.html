@@ -140,7 +140,7 @@ window.GovernanceEngine = {
             const tdName = document.createElement('td');
             tdName.style.fontWeight = 'bold';
             tdName.style.color = 'var(--ion-color-dark)';
-            tdName.textContent = rol.nombre_rol || rol.id_rol;
+            tdName.textContent = rol.nombre || rol.nombre_rol || rol.id_rol;
             tr.appendChild(tdName);
 
             entityList.forEach(ent => {
