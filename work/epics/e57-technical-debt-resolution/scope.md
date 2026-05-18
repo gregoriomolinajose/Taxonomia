@@ -15,7 +15,7 @@ Resolver la deuda técnica principal encontrada durante el desarrollo de epicas 
 - Cualquier cambio funcional o estructural no relacionado directamente con limpiezas de código obsoleto.
 
 ## Planned Stories
-- **S57.1**: Refactorización de dependencias `Relacion_Dominios` a `Sys_Graph_Edges` (Lookups, Data Builders, Engine_DB).
+- [x] **S57.1**: Refactorización de dependencias `Relacion_Dominios` a `Sys_Graph_Edges` (Lookups, Data Builders, Engine_DB) ✓
 - **S57.2**: Auditoría de Despliegue, limpiezas secundarias y eliminación final de la hoja `DB_Relacion_Dominios`.
 
 ## Implementation Plan
@@ -28,7 +28,7 @@ Resolver la deuda técnica principal encontrada durante el desarrollo de epicas 
 
 | # | Story | Size | Status | Actual | Velocity | Notes |
 |:-:|-------|:----:|--------|--------|----------|-------|
-| 1 | S57.1 — Refactorización de Lookups y ECharts | M | Pending | | | |
+| 1 | S57.1 — Refactorización de Lookups y ECharts | M | Done | 45m | | |
 | 2 | S57.2 — Limpieza final y Auditoría | S | Pending | | | Requiere intervención manual en Sheets |
 
 ## Done Criteria
