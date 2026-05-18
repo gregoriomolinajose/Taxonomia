@@ -112,98 +112,6 @@ function _removeCacheChunked(cache, key) {
     cache.remove(key);
 }
 
-/**
- * [S5.4 Quality] Dependency Injection: Matrix Provider
- * Desacopla la lógica topológica de la API nativa de Google Sheets para posibilitar Tests locales (Jest).
- */
-const SheetMatrixIO = {
-    readRelacionDominios: function(config) {
-        if (typeof SpreadsheetApp === 'undefined') return { sheet: null, data: [] };
-        const ssStr = (config && config.SPREADSHEET_ID_DB) ? config.SPREADSHEET_ID_DB : (typeof CONFIG !== 'undefined' ? CONFIG.SPREADSHEET_ID_DB : null);
-        if (!ssStr) return { sheet: null, data: [] };
-        const ss = SpreadsheetApp.openById(ssStr);
-        const relSheet = ss.getSheetByName("Relacion_Dominios");
-        if (!relSheet) return { sheet: null, data: [] };
-        return { sheet: relSheet, data: relSheet.getDataRange().getValues() };
-    },
-    writeBulk: function(sheet, data, headersLength) {
-        if (sheet && typeof SpreadsheetApp !== 'undefined') sheet.getRange(1, 1, data.length, headersLength).setValues(data);
-    },
-    writeRow: function(sheet, rowNum, rowData, headersLength) {
-        if (sheet && typeof SpreadsheetApp !== 'undefined') sheet.getRange(rowNum, 1, 1, headersLength).setValues([rowData]);
-    },
-    appendRow: function(sheet, rowData) {
-        if (sheet && typeof SpreadsheetApp !== 'undefined') sheet.appendRow(rowData);
-    }
-};
-
-/**
- * _updateGraphEdges (S5.3)
- * Orquesta transacciones SCD-2 interrumpiendo el flujo plano para poblar el Grafo Temporal.
- */
-function _updateGraphEdges(childId, newParentId, config) {
-    newParentId = (newParentId === "NULL" || !newParentId) ? "" : String(newParentId).trim();
-
-    const io = SheetMatrixIO.readRelacionDominios(config);
-    let data = io.data;
-    if (data.length === 0) return;
-    
-    const headers = data[0];
-    const idxHid = headers.indexOf("id_nodo_hijo");
-    const idxPid = headers.indexOf("id_nodo_padre");
-    const idxHasta = headers.indexOf("valido_hasta");
-    const idxActual = headers.indexOf("es_version_actual");
-    const idxUpdated = headers.indexOf("updated_at");
-    
-    let currentActiveIdx = -1;
-    let oldParentId = "";
-    
-    for (let i = 1; i < data.length; i++) {
-        if (data[i][idxHid] === childId && data[i][idxActual] === true) {
-            currentActiveIdx = i;
-            oldParentId = data[i][idxPid];
-            break;
-        }
-    }
-    
-    if (currentActiveIdx !== -1 && oldParentId === newParentId) return; 
-    
-    const sysDate = new Date().toISOString();
-    
-    // Soft-Expire Old Edge (SCD-2)
-    if (currentActiveIdx !== -1) {
-        data[currentActiveIdx][idxHasta] = sysDate;
-        data[currentActiveIdx][idxActual] = false;
-        data[currentActiveIdx][idxUpdated] = sysDate;
-        
-        SheetMatrixIO.writeRow(io.sheet, currentActiveIdx + 1, data[currentActiveIdx], headers.length);
-        if (typeof Logger !== 'undefined') Logger.log(`[DAG] Caducada arista vieja para hijo ${childId} (padre previo: ${oldParentId})`);
-    }
-    
-    // Spawn Active Edge
-    if (newParentId !== "") {
-        let rID = "RELA-" + Utilities.getUuid().substring(0, 8).toUpperCase(); // [S5.4 Quality] Collision hardening
-        let newEdge = [];
-        for (let i = 0; i < headers.length; i++) {
-            let h = headers[i];
-            if (h === "id_relacion") newEdge.push(rID);
-            else if (h === "id_nodo_padre") newEdge.push(newParentId);
-            else if (h === "id_nodo_hijo") newEdge.push(childId);
-            else if (h === "tipo_relacion") newEdge.push("SCD2_EDGE");
-            else if (h === "peso_influencia") newEdge.push(1);
-            else if (h === "valido_desde") newEdge.push(sysDate);
-            else if (h === "valido_hasta") newEdge.push("");
-            else if (h === "es_version_actual") newEdge.push(true);
-            else if (h === "created_at") newEdge.push(sysDate);
-            else if (h === "created_by") newEdge.push("DAG_SETTER");
-            else newEdge.push("");
-        }
-        SheetMatrixIO.appendRow(io.sheet, newEdge);
-        if (typeof Logger !== 'undefined') Logger.log(`[DAG] Arista nueva instanciada: ${newParentId} -> ${childId}`);
-    }
-    
-    _invalidateCache("Relacion_Dominios");
-}
 
 
 const Engine_DB = {
@@ -255,8 +163,7 @@ const Engine_DB = {
         let cachedGraphFull = null;
 
         // [S5.6] Dynamic DAG Subgrid takes over Transient Edge
-        // transientParentId y _updateGraphEdges ya no se usan porque la topología
-        // se administra directamente mediante subgrids hacia Relacion_Dominios.
+        // La topología se administra directamente mediante subgrids hacia Sys_Graph_Edges.
 
         // Paso A: Desempaquetado basado en esquema
         const schema = (typeof APP_SCHEMAS !== 'undefined') ? APP_SCHEMAS[entityName] : null;

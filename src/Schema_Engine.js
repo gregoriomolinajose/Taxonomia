@@ -37,7 +37,7 @@ var TOPOLOGY_PRESETS = Object.freeze({
     strictLevelJumps:      true,
     rootRequiresNoParent:  true,
     allowOrphanStealing:   true,
-    maxDepth:              5,
+    maxDepth:              8,
     deletionStrategy:      "ORPHAN",
     siblingCollisionCheck: true,
     scd2Enabled:           true,
@@ -519,19 +519,7 @@ var APP_SCHEMAS = {
     ]
   },
   // [E31-S31.4] Duplicate Sys_Graph_Edges key removed. Canonical definition ~line 282.
-  Relacion_Dominios: {
-    metadata: { showInMenu: false, order: 91, iconName: 'git-network', color: 'dark', label: 'Sys: Dominios', titleField: 'id_relacion', idField: 'id_relacion', fkField: null },
-    primaryKey: "id_relacion",
-    fields: [
-      { name: "id_relacion", type: "text", primaryKey: true, readonly: true },
-      { name: "id_nodo_padre", type: "text" },
-      { name: "id_nodo_hijo", type: "text" },
-      { name: "tipo_relacion", type: "text" },
-      { name: "valido_desde", type: "text" },
-      { name: "valido_hasta", type: "text" },
-      { name: "es_version_actual", type: "text" }
-    ]
-  },
+
   Value_Stream: {
     uiConfig: { dashboardCard: { iconName: 'swap-horizontal-outline', color: 'var(--ion-color-tertiary)' } },
     metadata: { prefix: 'VSTR', showInMenu: true, order: 8, iconName:'swap-horizontal-outline', color:'tertiary', label:'Value Streams', titleField:'nombre', idField:'id_value_stream', fkField:null, maxListAttrs: 8 },

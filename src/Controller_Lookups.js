@@ -43,12 +43,12 @@ function getDominioOptions() {
     if (!rawDominios || !rawDominios.rows) return [];
 
     // Cargar mapa referencial de Relaciones Activas para detectar 'Hijos ya adoptados'
-    const rawRelaciones = Engine_DB.list('Relacion_Dominios');
+    const rawRelaciones = Engine_DB.list('Sys_Graph_Edges');
     const hasActiveParentMap = {}; // { childId: true }
     
     if (rawRelaciones && rawRelaciones.rows) {
         rawRelaciones.rows.forEach(r => {
-            if (r.es_version_actual !== false) {
+            if (r.es_version_actual !== false && (r.tipo_relacion === 'DOMINIO_HIJO' || r.tipo_relacion === 'Militar_Directa')) {
                 hasActiveParentMap[r.id_nodo_hijo] = true;
             }
         });
