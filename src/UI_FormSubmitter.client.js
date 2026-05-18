@@ -344,10 +344,32 @@ window.UI_FormSubmitter = class UI_FormSubmitter {
                     // 3. Reconciliación: Intercambio de Llaves y Versiones
                     if (isTempPK && response.pkValue && String(response.pkValue) !== String(optimisticPK)) {
                         this._reconcileTemporaryId(this.entityName, optimisticPK, response.pkValue, response.lexical_id);
+                        this._internalRetryId = response.pkValue;
                     }
                     if (response.data && response.data.adapter_results && response.data.adapter_results.sheets) {
                         const newVer = response.data.adapter_results.sheets.version;
                         if (newVer) this._reconcileVersion(this.entityName, response.pkValue || optimisticPK, newVer);
+                    }
+                    
+                    // S55.6: Actualización JIT del DOM para autoguardados secuenciales (evita OCC)
+                    if (this._isSilent) {
+                        const activeForm = this.modal || document.getElementById('app-container');
+                        if (activeForm) {
+                            if (response.data && response.data.adapter_results && response.data.adapter_results.sheets) {
+                                const newVer = response.data.adapter_results.sheets.version;
+                                if (newVer) {
+                                    const verInput = activeForm.querySelector('input[name="_version"]');
+                                    if (verInput) verInput.value = newVer;
+                                }
+                            }
+                            if (response.pkValue) {
+                                const pkF = window.Schema_Utils ? window.Schema_Utils.getPrimaryKey(this.entityName) : 'id';
+                                const idInput = activeForm.querySelector(`input[name="${pkF}"]`);
+                                if (idInput) idInput.value = response.pkValue;
+                                // Asegurar que el siguiente paso se envíe como 'update'
+                                this._internalRetryId = response.pkValue; 
+                            }
+                        }
                     }
                     if (response.action === 'updated') {
                         this._showToast(`Registro actualizado silenciosamente.`, 'success');
@@ -442,9 +464,12 @@ window.UI_FormSubmitter = class UI_FormSubmitter {
 
     _performSuccessCleanup(response, isInlineRendered) {
         this._revertButtonState();
-        this._internalRetryId = null; // Liberar caché de reintentos
         
         const wasSilent = this._isSilent; // Cachear para evitar que los suscriptores muten el estado prematuramente
+
+        if (!wasSilent) {
+            this._internalRetryId = null; // Liberar caché de reintentos solo si no es silencioso
+        }
 
         if (window.DataStore) {
             // [S29.7] window.DataStore.clearNested() extirpado. Los Subgrids ahora son stateless.

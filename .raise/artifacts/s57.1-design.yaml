@@ -1,0 +1,40 @@
+artifact_type: story-design
+version: 1
+skill: rai-story-design
+created: '2026-05-18T18:50:00Z'
+story: 'S57.1'
+epic: 'E57'
+content:
+  summary: 'Refactorizar Lookups y ECharts para eliminar la dependencia de Relacion_Dominios y unificarla bajo Sys_Graph_Edges.'
+  complexity: moderate
+  acceptance_criteria:
+    - id: AC1
+      description: 'getDominioOptions identifica hasActiveParent usando Sys_Graph_Edges'
+      verifiable: true
+    - id: AC2
+      description: 'buildEChartsTreemapData consume Sys_Graph_Edges para generar nodos ECharts'
+      verifiable: true
+    - id: AC3
+      description: 'Engine_DB y Schema_Engine no contienen menciones a Relacion_Dominios'
+      verifiable: true
+  integration_points:
+    - module: 'Controller_Lookups'
+      change_type: modification
+      files: ['src/Controller_Lookups.js']
+    - module: 'Math_Engine'
+      change_type: modification
+      files: ['src/Math_Engine.html']
+    - module: 'Engine_DB'
+      change_type: modification
+      files: ['src/Engine_DB.js']
+    - module: 'Schema_Engine'
+      change_type: modification
+      files: ['src/Schema_Engine.js']
+  decisions:
+    - id: D1
+      choice: 'Filtro por tipo de relacion en el Frontend y Backend'
+      rationale: 'Dado que Sys_Graph_Edges es universal, se debe asegurar que Math_Engine y Lookups solo consideren edges relevantes para Dominios.'
+      alternatives_considered: ['Mantener caches separadas en DataStore']
+refs:
+  epic_scope: 'work/epics/e57-technical-debt-resolution/scope.md'
+metadata: {}

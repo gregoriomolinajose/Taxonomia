@@ -155,7 +155,8 @@ function buildEChartsTreemapData(cacheObject) {
     var hasParentMap = {};
     
     // Configuration over Convention
-    var PRIMARY_RELATION_TYPE = "Militar_Directa";
+    var PRIMARY_RELATION_TYPE = "DOMINIO_HIJO";
+    var LEGACY_RELATION_TYPE = "Militar_Directa";
     
     // 1. Create O(1) Lookup Map and deep copy nodes
     rawData.forEach(function(row) {
@@ -169,12 +170,12 @@ function buildEChartsTreemapData(cacheObject) {
     });
     
     // 2. Temporal Interceptor (Bridge Table Edges)
-    var relationData = (cacheObject && Array.isArray(cacheObject['Relacion_Dominios'])) ? cacheObject['Relacion_Dominios'] : [];
+    var relationData = (cacheObject && Array.isArray(cacheObject['Sys_Graph_Edges'])) ? cacheObject['Sys_Graph_Edges'] : [];
 
     if (relationData.length > 0) {
         var activeEdges = relationData.filter(function(edge) {
             var isCurrent = (edge.es_version_actual === true || edge.es_version_actual === "TRUE" || edge.es_version_actual === "true");
-            var isDirect = (edge.tipo_relacion === PRIMARY_RELATION_TYPE);
+            var isDirect = (edge.tipo_relacion === PRIMARY_RELATION_TYPE || edge.tipo_relacion === LEGACY_RELATION_TYPE);
             return isCurrent && isDirect;
         });
 

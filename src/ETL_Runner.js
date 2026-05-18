@@ -3,7 +3,7 @@
  * 
  * DESCRIPTION:
  * This script extracts the legacy flat tree hierarchy from the 'Dominios' sheet,
- * instantiates the dynamic 'Relacion_Dominios' sheet acting as a bridge Temporal DAG
+ * instantiates the dynamic 'Sys_Graph_Edges' sheet acting as a bridge Temporal DAG
  * applying SCD-2 records, and purges the legacy 'id_dominio_padre' metadata to string "".
  * 
  * Invoked once procedurally by the Administrator. 
@@ -35,7 +35,7 @@ function ETL_Pivot_E5() {
     throw new Error("CRITICAL: Headers corruptos en Dominios. Falta ID o Padre.");
   }
   
-  // Bridge Sheet Headers (APP_SCHEMAS.Relacion_Dominios matching)
+  // Bridge Sheet Headers (APP_SCHEMAS.Sys_Graph_Edges matching)
   let relaciones = [[
     "id_relacion", 
     "id_nodo_padre", 
@@ -72,7 +72,7 @@ function ETL_Pivot_E5() {
         rID,
         parentId,
         childId,
-        "Militar_Directa",
+        "DOMINIO_HIJO",
         1,
         originalDate, // valido_desde
         "",           // valido_hasta
@@ -97,20 +97,19 @@ function ETL_Pivot_E5() {
   // 3. LOAD (Batch I/O O(1))
   Logger.log("[ETL] Ejecutando Dual Bulk 'setValues'...");
   
-  // A) Crear/Preparar hoja Relacion_Dominios
-  let sheetRel = ss.getSheetByName("Relacion_Dominios");
+  // A) Preparar hoja Sys_Graph_Edges
+  let sheetRel = ss.getSheetByName("Sys_Graph_Edges");
   if (!sheetRel) {
-    Logger.log("[ETL] Notice: Relacion_Dominios NO existente. Instanciando...");
-    sheetRel = ss.insertSheet("Relacion_Dominios");
-  } else {
-    // Si ya existe limpiamos su rastro para no duplicar en caso de fallo parcial anterior
-    sheetRel.clear();
+    Logger.log("[ETL] Notice: Sys_Graph_Edges NO existente. Instanciando...");
+    sheetRel = ss.insertSheet("Sys_Graph_Edges");
+    sheetRel.appendRow(relaciones[0]); // Headers
   }
   
   // B) Batch Inject Relations
-  if (relaciones.length > 0) {
-    sheetRel.getRange(1, 1, relaciones.length, relaciones[0].length).setValues(relaciones);
-    Logger.log("[ETL] SUCCESS: Relacion_Dominios bulk overwriten con " + relaciones.length + " filas.");
+  if (relaciones.length > 1) {
+    const dataOnly = relaciones.slice(1);
+    sheetRel.getRange(sheetRel.getLastRow() + 1, 1, dataOnly.length, dataOnly[0].length).setValues(dataOnly);
+    Logger.log("[ETL] SUCCESS: Sys_Graph_Edges bulk appended con " + dataOnly.length + " filas.");
   }
   
   // C) Batch Overwrite Flat Legacy Domains
