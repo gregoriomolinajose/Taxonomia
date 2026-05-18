@@ -1,0 +1,29 @@
+artifact_type: story-design
+version: 1
+skill: rai-story-design
+created: '2026-05-18T13:04:00-06:00'
+story: 'S57.2'
+epic: 'E57'
+content:
+  summary: 'Eradicate all remaining string references to Relacion_Dominios to complete technical debt resolution.'
+  complexity: simple
+  acceptance_criteria:
+    - id: AC1
+      description: 'Zero grep results for Relacion_Dominios in src/'
+      verifiable: true
+    - id: AC2
+      description: 'Clean dev deployment'
+      verifiable: true
+  integration_points:
+    - module: 'src'
+      change_type: modification
+      files: []
+  decisions:
+    - id: D1
+      choice: 'Use full codebase grep over manual inspection'
+      rationale: 'Ensures 100% confidence in complete eradication of the legacy entity.'
+      alternatives_considered: ['Manual inspection of known files']
+refs:
+  backlog_item: ''
+  epic_scope: 'work/epics/e57-technical-debt-resolution/scope.md'
+metadata: {}
