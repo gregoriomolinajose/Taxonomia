@@ -18,6 +18,19 @@ Resolver la deuda técnica principal encontrada durante el desarrollo de epicas 
 - **S57.1**: Refactorización de dependencias `Relacion_Dominios` a `Sys_Graph_Edges` (Lookups, Data Builders, Engine_DB).
 - **S57.2**: Auditoría de Despliegue, limpiezas secundarias y eliminación final de la hoja `DB_Relacion_Dominios`.
 
+## Implementation Plan
+
+### Milestones
+- **M1: Core Migration** (S57.1): Refactorización de lógica de backend en JS (Lookups, Data Builders) para depender solo de `Sys_Graph_Edges`.
+- **M2: Epic Complete** (S57.2): Limpieza de esquemas, ETL, auditoría y borrado físico de la hoja.
+
+### Progress Tracking
+
+| # | Story | Size | Status | Actual | Velocity | Notes |
+|:-:|-------|:----:|--------|--------|----------|-------|
+| 1 | S57.1 — Refactorización de Lookups y ECharts | M | Pending | | | |
+| 2 | S57.2 — Limpieza final y Auditoría | S | Pending | | | Requiere intervención manual en Sheets |
+
 ## Done Criteria
 - [ ] No existen referencias a la palabra `Relacion_Dominios` en el código fuente de `/src`.
 - [ ] La UI y reportes/dashboard renderizan la jerarquía de dominios correctamente consultando a `Sys_Graph_Edges`.
