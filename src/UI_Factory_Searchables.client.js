@@ -21,6 +21,11 @@
         if (componentConfig.color) node.setAttribute('icon-color', componentConfig.color);
         if (componentConfig.contextId) node.setAttribute('context-id', componentConfig.contextId);
         
+        // Atributos de Solo Lectura (Readonly / Disabled)
+        if (fieldDef.readonly === true || componentConfig.readonly === true || fieldDef.disabled === true) {
+            node.setAttribute('disabled', 'true');
+        }
+        
         // Atributos de Extracción de Payload Dinámico (Esquema estricto)
         if (fieldDef.valueField) node.setAttribute('value-field', fieldDef.valueField);
         if (fieldDef.labelField) node.setAttribute('label-field', fieldDef.labelField);

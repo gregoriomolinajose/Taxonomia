@@ -15,14 +15,14 @@ var TOPOLOGY_PRESETS = Object.freeze({
    * Used by: Unidad_Negocio, Portafolio, Grupo_Productos, Producto
    */
   JERARQUICA_ESTRICTA_GRAPH_STD: Object.freeze({
-    _preset:               'JERARQUICA_ESTRICTA_GRAPH_STD',  // [E31] Studio Viewer identifier
-    topologyType:          "JERARQUICA_ESTRICTA",
-    preventCycles:         true,
-    maxDepth:              9,
-    allowOrphanStealing:   true,
-    deletionStrategy:      "ORPHAN",
+    _preset: 'JERARQUICA_ESTRICTA_GRAPH_STD',  // [E31] Studio Viewer identifier
+    topologyType: "JERARQUICA_ESTRICTA",
+    preventCycles: true,
+    maxDepth: 9,
+    allowOrphanStealing: true,
+    deletionStrategy: "ORPHAN",
     siblingCollisionCheck: true,
-    scd2Enabled:           true
+    scd2Enabled: true
   }),
 
   /**
@@ -31,17 +31,17 @@ var TOPOLOGY_PRESETS = Object.freeze({
    * Used by: Dominio
    */
   JERARQUICA_ESTRICTA_DOMAIN: Object.freeze({
-    _preset:               'JERARQUICA_ESTRICTA_DOMAIN',  // [E31] Studio Viewer identifier
-    topologyType:          "JERARQUICA_ESTRICTA",
-    levelFiltering:        true,
-    strictLevelJumps:      true,
-    rootRequiresNoParent:  true,
-    allowOrphanStealing:   true,
-    maxDepth:              8,
-    deletionStrategy:      "ORPHAN",
+    _preset: 'JERARQUICA_ESTRICTA_DOMAIN',  // [E31] Studio Viewer identifier
+    topologyType: "JERARQUICA_ESTRICTA",
+    levelFiltering: true,
+    strictLevelJumps: true,
+    rootRequiresNoParent: true,
+    allowOrphanStealing: true,
+    maxDepth: 8,
+    deletionStrategy: "ORPHAN",
     siblingCollisionCheck: true,
-    scd2Enabled:           true,
-    preventCycles:         true
+    scd2Enabled: true,
+    preventCycles: true
   }),
 
   /**
@@ -50,10 +50,10 @@ var TOPOLOGY_PRESETS = Object.freeze({
    * Used by: Persona
    */
   JERARQUICA_PERSONA: Object.freeze({
-    _preset:               'JERARQUICA_PERSONA',  // [E31] Studio Viewer identifier
-    topologyType:          "JERARQUICA_ESTRICTA",
-    preventCycles:         true,
-    scd2Enabled:           true,
+    _preset: 'JERARQUICA_PERSONA',  // [E31] Studio Viewer identifier
+    topologyType: "JERARQUICA_ESTRICTA",
+    preventCycles: true,
+    scd2Enabled: true,
     siblingCollisionCheck: false
   })
 
@@ -90,8 +90,10 @@ var FIELD_TEMPLATES = Object.freeze({
    * - estado: lifecycle status flag ("Activo" | "Eliminado" | "Borrador").
    */
   SYSTEM_FIELDS: () => Object.freeze([
-    { name: "lexical_id", type: "text", label: "ID", uiBehavior: "badge", readonly: true,
-      helpText: "Generado automáticamente: ACRONIMO-CONSECUTIVO (ej. PORT-0042)", gridOrder: 3 },
+    {
+      name: "lexical_id", type: "text", label: "ID", uiBehavior: "badge", readonly: true,
+      helpText: "Generado automáticamente: ACRONIMO-CONSECUTIVO (ej. PORT-0042)", gridOrder: 3
+    },
     { name: "estado", type: "hidden", defaultValue: "Activo" }
   ]),
 
@@ -145,27 +147,27 @@ var APP_SCHEMAS = {
     titleField: "nombre",
     wizardConfig: true,
     stepDescriptions: {
-        "Taxonomía de Producto": "Asigna un nombre descriptivo para comenzar. Te recomendamos utilizar el nombre del portafolio principal que vas a estructurar.",
-        "Importar Equipos": "Carga la plantilla de equipos mediante URL o archivo de Google Sheets.",
-        "Importar Personas": "Carga la plantilla de personas mediante URL o archivo de Google Sheets.",
-        "Arquitectura de Portafolio": "Diseña la estructura utilizando el lienzo interactivo ubicado a la derecha."
+      "Taxonomía de Producto": "Asigna un nombre descriptivo para comenzar. Te recomendamos utilizar el nombre del portafolio principal que vas a estructurar.",
+      "Importar Equipos": "Carga la plantilla de equipos mediante URL o archivo de Google Sheets.",
+      "Importar Personas": "Carga la plantilla de personas mediante URL o archivo de Google Sheets.",
+      "Arquitectura de Portafolio": "Diseña la estructura utilizando el lienzo interactivo ubicado a la derecha."
     },
     hooks: {
-        preSubmit: function(payload, contextId, action, isTempPk, internalRetryId) {
-            let isActuallyCreate = action === 'create';
-            if (!isActuallyCreate && internalRetryId && typeof window !== 'undefined' && window.DataStore) {
-                const existing = window.DataStore.get('Taxonomia') || [];
-                const match = existing.find(t => String(t.id_taxonomia) === String(internalRetryId));
-                if (!match) isActuallyCreate = true;
-            }
-            if (isActuallyCreate || isTempPk) {
-                payload.estado = 'Borrador';
-            }
-            if (!payload.id_taxonomia && contextId && contextId !== 'DRAFT_CTX') {
-                payload.id_taxonomia = contextId;
-            }
-            return payload;
+      preSubmit: function (payload, contextId, action, isTempPk, internalRetryId) {
+        let isActuallyCreate = action === 'create';
+        if (!isActuallyCreate && internalRetryId && typeof window !== 'undefined' && window.DataStore) {
+          const existing = window.DataStore.get('Taxonomia') || [];
+          const match = existing.find(t => String(t.id_taxonomia) === String(internalRetryId));
+          if (!match) isActuallyCreate = true;
         }
+        if (isActuallyCreate || isTempPk) {
+          payload.estado = 'Borrador';
+        }
+        if (!payload.id_taxonomia && contextId && contextId !== 'DRAFT_CTX') {
+          payload.id_taxonomia = contextId;
+        }
+        return payload;
+      }
     },
     fields: [
       { name: "id_taxonomia", type: "hidden", primaryKey: true },
@@ -182,7 +184,7 @@ var APP_SCHEMAS = {
     ]
   },
   Unidad_Negocio: {
-    metadata: { prefix: 'UNDN', showInMenu: true, order:1, iconName:'business-outline', color:'primary', label:'Unidades de Negocio', titleField:'nombre', idField:'id_unidad_negocio', fkField:null },
+    metadata: { prefix: 'UNDN', showInMenu: true, order: 1, iconName: 'business-outline', color: 'primary', label: 'Unidades de Negocio', titleField: 'nombre', idField: 'id_unidad_negocio', fkField: null },
     primaryKey: "id_unidad_negocio",
     topologyRules: TOPOLOGY_PRESETS.JERARQUICA_ESTRICTA_GRAPH_STD,
     fields: [
@@ -197,11 +199,11 @@ var APP_SCHEMAS = {
   },
   Portafolio: {
     uiConfig: { dashboardCard: { iconName: 'briefcase-outline', color: 'var(--ion-color-danger)' } },
-    metadata: { prefix: 'PORT', showInMenu: true, order:2, iconName:'briefcase-outline', color:'danger', label:'Portafolios', titleField:'nombre', idField:'id_portafolio', fkField:null, maxListAttrs: 8 },
+    metadata: { prefix: 'PORT', showInMenu: true, order: 2, iconName: 'briefcase-outline', color: 'danger', label: 'Portafolios', titleField: 'nombre', idField: 'id_portafolio', fkField: null, maxListAttrs: 8 },
     topological_metadata: {
-        ownerFields: ["director_id", "vp_id"],
-        parentEntity: "Unidad_Negocio",
-        parentField: "unidad_negocio_padre"
+      ownerFields: ["director_id", "vp_id"],
+      parentEntity: "Unidad_Negocio",
+      parentField: "unidad_negocio_padre"
     },
     primaryKey: "id_portafolio",
     topologyRules: TOPOLOGY_PRESETS.JERARQUICA_ESTRICTA_GRAPH_STD,
@@ -217,7 +219,7 @@ var APP_SCHEMAS = {
     ]
   },
   Dominio: {
-    metadata: { prefix: 'DOMI', showInMenu: true, order:3, iconName:'globe-outline', color:'primary', label:'Dominios', titleField:'nombre', idField:'id_dominio', fkField:null },
+    metadata: { prefix: 'DOMI', showInMenu: true, order: 3, iconName: 'globe-outline', color: 'primary', label: 'Dominios', titleField: 'nombre', idField: 'id_dominio', fkField: null },
     primaryKey: "id_dominio",
     titleField: "nombre",
     topologyRules: TOPOLOGY_PRESETS.JERARQUICA_ESTRICTA_DOMAIN,
@@ -235,16 +237,16 @@ var APP_SCHEMAS = {
       { name: "descripcion", type: "textarea", label: "Definición / Descripción", required: true, width: 12, showInList: false },
       { name: "contexto_completo_analisis", type: "textarea", label: "Contexto Análisis", required: false, width: 12, showInList: false },
       { name: "path_completo_es", type: "text", label: "Path Completo", required: false, width: 12 },
-      { width: 12, name: "relaciones_padre", type: "relation", relationType: "padre", targetEntity: "Dominio", graphEntity: "Sys_Graph_Edges", valueField: "id_dominio", labelField: "nombre", uiComponent: "searchable_single", label: "Dominio Padre (1:1)", isTemporalGraph: true, graphEdgeType: "DOMINIO_HIJO", topologyCardinality: "1:N" },
-      { width: 12, name: "relaciones_hijo", type: "relation", relationType: "hijo", targetEntity: "Dominio", graphEntity: "Sys_Graph_Edges", valueField: "id_dominio", labelField: "nombre", uiComponent: "searchable_multi", label: "Dominios Subordinados (1:N)", isTemporalGraph: true, graphEdgeType: "DOMINIO_HIJO", topologyCardinality: "1:N" }
+      { width: 12, name: "relaciones_padre", type: "relation", relationType: "padre", targetEntity: "Dominio", graphEntity: "Sys_Graph_Edges", valueField: "id_dominio", labelField: "nombre", uiComponent: "searchable_single", label: "Dominio Padre", isTemporalGraph: true, graphEdgeType: "DOMINIO_HIJO", topologyCardinality: "1:N" },
+      { width: 12, name: "relaciones_hijo", type: "relation", relationType: "hijo", targetEntity: "Dominio", graphEntity: "Sys_Graph_Edges", valueField: "id_dominio", labelField: "nombre", uiComponent: "searchable_multi", label: "Dominios Subordinados", isTemporalGraph: true, graphEdgeType: "DOMINIO_HIJO", topologyCardinality: "1:N" }
     ]
   },
   Grupo_Productos: {
-    metadata: { showInMenu: true, order:4, iconName:'layers-outline', color:'dark', label:'Grupos de Producto', titleField:'nombre', idField:'id_grupo_producto', fkField:{ key:'id_value_stream', label:'Value Stream' } },
+    metadata: { showInMenu: true, order: 4, iconName: 'layers-outline', color: 'dark', label: 'Grupos de Producto', titleField: 'nombre', idField: 'id_grupo_producto', fkField: { key: 'id_value_stream', label: 'Value Stream' } },
     topological_metadata: {
-        ownerFields: ["group_manager_id"],
-        parentEntity: "Value_Stream",
-        parentField: "id_value_stream"
+      ownerFields: ["group_manager_id"],
+      parentEntity: "Value_Stream",
+      parentField: "id_value_stream"
     },
     primaryKey: "id_grupo_producto",
     titleField: "nombre",
@@ -263,11 +265,11 @@ var APP_SCHEMAS = {
   },
   Producto: {
     uiConfig: { dashboardCard: { iconName: 'cube-outline', color: 'var(--ion-color-tertiary)' } },
-    metadata: { showInMenu: true, order:5, iconName:'cube-outline', color:'tertiary', label:'Productos', titleField:'nombre', idField:'id_producto', fkField:{ key:'id_grupo_producto', label:'Grupo' } },
+    metadata: { showInMenu: true, order: 5, iconName: 'cube-outline', color: 'tertiary', label: 'Productos', titleField: 'nombre', idField: 'id_producto', fkField: { key: 'id_grupo_producto', label: 'Grupo' } },
     topological_metadata: {
-        ownerFields: ["rte_id", "pm_id", "agile_coach_id"],
-        parentEntity: "Grupo_Productos",
-        parentField: "id_grupo_producto"
+      ownerFields: ["rte_id", "pm_id", "agile_coach_id"],
+      parentEntity: "Grupo_Productos",
+      parentField: "id_grupo_producto"
     },
     primaryKey: "id_producto",
     titleField: "nombre",
@@ -283,10 +285,10 @@ var APP_SCHEMAS = {
     ]
   },
   Capacidad: {
-    metadata: { showInMenu: true, order:6, iconName:'layers-outline', color:'warning', label:'Capacidades', titleField:'nombre', idField:'id_capacidad', fkField:null },
+    metadata: { showInMenu: true, order: 6, iconName: 'layers-outline', color: 'warning', label: 'Capacidades', titleField: 'nombre', idField: 'id_capacidad', fkField: null },
     topological_metadata: {
-        parentEntity: "Capacidad",
-        parentField: "id_dominio_padre"
+      parentEntity: "Capacidad",
+      parentField: "id_dominio_padre"
     },
     primaryKey: "id_capacidad",
     titleField: "nombre",
@@ -311,11 +313,11 @@ var APP_SCHEMAS = {
   },
   Equipo: {
     uiConfig: { dashboardCard: { iconName: 'people-outline', color: 'var(--ion-color-success)' } },
-    metadata: { showInMenu: true, order:7, iconName:'people-outline', color:'success', label:'Equipos', titleField:'nombre', idField:'id_equipo', fkField:{ key:'id_grupo_producto', label:'Grupo de Producto' } },
+    metadata: { showInMenu: true, order: 7, iconName: 'people-outline', color: 'success', label: 'Equipos', titleField: 'nombre', idField: 'id_equipo', fkField: { key: 'id_grupo_producto', label: 'Grupo de Producto' } },
     topological_metadata: {
-        ownerFields: ["scrum_master_id", "product_owner_id"],
-        parentEntity: "Grupo_Productos",
-        parentField: "id_grupo_producto"
+      ownerFields: ["scrum_master_id", "product_owner_id"],
+      parentEntity: "Grupo_Productos",
+      parentField: "id_grupo_producto"
     },
     primaryKey: "id_equipo",
     fields: [
@@ -338,39 +340,39 @@ var APP_SCHEMAS = {
     ]
   },
   Persona: {
-    uiConfig: { 
-      dashboardCard: { 
-        iconName: 'person-outline', 
+    uiConfig: {
+      dashboardCard: {
+        iconName: 'person-outline',
         color: 'var(--ion-color-warning)',
         avatarField: 'avatar',
         subtitleFields: [
           { field: 'email', icon: 'mail-outline' },
           { field: 'departamento', icon: 'business-outline' }
         ]
-      } 
+      }
     },
     computedFields: [
       { name: '_nombre_completo', concat: ['nombre', 'apellidos'], separator: ' ', fallback: ['email', 'id_persona'] }
     ],
-    metadata: { showInMenu: true, order:8, iconName:'person-outline', color:'warning', label:'Personas', titleField:'_nombre_completo', idField:'id_persona', fkField:null },
+    metadata: { showInMenu: true, order: 8, iconName: 'person-outline', color: 'warning', label: 'Personas', titleField: '_nombre_completo', idField: 'id_persona', fkField: null },
     primaryKey: "id_persona",
     mutationInterceptors: ['AutoProvisionCargo', 'AutoProvisionLiderDirecto'],
     relationalProvisioners: [
-        {
-            field: 'roles_asignados',
-            targetEntity: 'Rol',
-            idField: 'id_rol',
-            edgeType: 'PERSONA_ROL',
-            stubPrefix: 'ROL-',
-            extraStubFields: { nivel: "Nivel Base" }
-        },
-        {
-            field: 'equipo',
-            targetEntity: 'Equipo',
-            idField: 'id_equipo',
-            edgeType: 'PERSONA_EQUIPO',
-            stubPrefix: 'EQUI-'
-        }
+      {
+        field: 'roles_asignados',
+        targetEntity: 'Rol',
+        idField: 'id_rol',
+        edgeType: 'PERSONA_ROL',
+        stubPrefix: 'ROL-',
+        extraStubFields: { nivel: "Nivel Base" }
+      },
+      {
+        field: 'equipo',
+        targetEntity: 'Equipo',
+        idField: 'id_equipo',
+        edgeType: 'PERSONA_EQUIPO',
+        stubPrefix: 'EQUI-'
+      }
     ],
     topologyRules: TOPOLOGY_PRESETS.JERARQUICA_PERSONA,
     fields: [
@@ -379,11 +381,11 @@ var APP_SCHEMAS = {
       ...FIELD_TEMPLATES.AUDIT_FIELDS(),
       ...FIELD_TEMPLATES.VERSION_FIELD(),
       ...FIELD_TEMPLATES.ESTADO_FIELD(),
-      
+
       { name: "separator_1", type: "divider", label: "Datos Personales", icon: "person-outline", width: 12 },
       { name: "nombre", type: "text", label: "Nombre(s)", required: true, width: 6, validators: ["minLength:2"], triggers_workspace_resolve: true },
       { name: "apellidos", type: "text", label: "Apellidos", required: true, width: 6, validators: ["minLength:2"] },
-      
+
       { name: "separator_2", type: "divider", label: "Datos de Contacto", icon: "mail-outline", width: 12 },
       { name: "email", type: "email", primaryKey: false, label: "Correo Corporativo", required: true, width: 12, validators: ["regex:^[a-zA-Z0-9._%+-]+@(coppel\\.com|bancoppel\\.com|kairosds\\.com|nttdata\\.com)$"], triggers_workspace_resolve: true, unique: true },
       { name: "telefono", type: "tel", label: "Teléfono", required: false, width: 12 },
@@ -407,7 +409,7 @@ var APP_SCHEMAS = {
       { name: "ubicacion", type: "text", label: "Ubicación Geográfica", required: false, width: 12 },
       { name: "estado_geo", type: "text", label: "Estado", required: false, width: 6 },
       { name: "ciudad", type: "text", label: "Ciudad", required: false, width: 6 },
-      
+
       { name: "separator_5", type: "divider", label: "Control de Accesos (Admin)", width: 12, abacRule: { action: 'update', target: 'Sys_Permissions' } },
       { name: "id_rol", type: "select", label: "Rol de Autorización", required: false, width: 12, lookupSource: "getSysRolesOptions", abacRule: { action: 'update', target: 'Sys_Permissions' }, excludeFromETL: true },
       { name: "workspace_sync_status", type: "hidden", label: "Estado Sincronización WS" },
@@ -446,7 +448,7 @@ var APP_SCHEMAS = {
     ]
   },
   Sys_Graph_Edges: {
-    metadata: { showInMenu: false, order: 10, iconName:'git-network-outline', color:'primary', label:'Grafo Universal Temporal', titleField:'tipo_relacion', idField:'id_relacion', fkField:{ key:'id_nodo_padre', label:'Nodo Padre' } },
+    metadata: { showInMenu: false, order: 10, iconName: 'git-network-outline', color: 'primary', label: 'Grafo Universal Temporal', titleField: 'tipo_relacion', idField: 'id_relacion', fkField: { key: 'id_nodo_padre', label: 'Nodo Padre' } },
     primaryKey: "id_relacion",
     fields: [
       { name: "id_relacion", type: "hidden", primaryKey: true },
@@ -464,7 +466,7 @@ var APP_SCHEMAS = {
     ]
   },
   Sys_Roles: {
-    metadata: { prefix: 'SROL', showInMenu: false, order:90, iconName:'shield-half-outline', color:'danger', label:'Seguridad: Roles', titleField:'nombre', idField:'id_rol', fkField:null },
+    metadata: { prefix: 'SROL', showInMenu: false, order: 90, iconName: 'shield-half-outline', color: 'danger', label: 'Seguridad: Roles', titleField: 'nombre', idField: 'id_rol', fkField: null },
     primaryKey: "id_rol",
     fields: [
       { name: "id_rol", type: "text", primaryKey: true, readonly: true, label: "ID Rol", width: 12 },
@@ -474,7 +476,7 @@ var APP_SCHEMAS = {
     ]
   },
   Config_Typography: {
-    metadata: { showInMenu: false, order:92, iconName:'text-outline', color:'medium', label:'Temas Tipográficos', titleField:'nombre', idField:'id_tipografia', fkField:null },
+    metadata: { showInMenu: false, order: 92, iconName: 'text-outline', color: 'medium', label: 'Temas Tipográficos', titleField: 'nombre', idField: 'id_tipografia', fkField: null },
     primaryKey: "id_tipografia",
     fields: [
       { name: "id_tipografia", type: "text", primaryKey: true, readonly: true, label: "ID Pack", width: 12 },
@@ -482,25 +484,25 @@ var APP_SCHEMAS = {
       ...FIELD_TEMPLATES.AUDIT_FIELDS(),
       ...FIELD_TEMPLATES.NAME_FIELD("Nombre de Pack"),
       { name: "font_display", type: "select", label: "Ultra Título (.text-display)", required: true, width: 6, options: ["Poppins, sans-serif", "Playfair Display, serif", "Inter, sans-serif", "Roboto, sans-serif", "Montserrat, sans-serif"], helpText: "El texto con el que representamos frases, conceptos o ideas urgentes o de gran importancia." },
-      
+
       { name: "div_headers", type: "divider", label: "Headers 1, 2, 3", width: 12 },
       { name: "font_h1", type: "select", label: "Título Principal (h1)", required: true, width: 6, options: ["Poppins, sans-serif", "Playfair Display, serif", "Inter, sans-serif", "Roboto, sans-serif", "Montserrat, sans-serif"], helpText: "El título más importante de una página o sección." },
       { name: "font_h2", type: "select", label: "Título Secundario (h2)", required: true, width: 6, options: ["Poppins, sans-serif", "Playfair Display, serif", "Inter, sans-serif", "Roboto, sans-serif", "Montserrat, sans-serif"], helpText: "Un título de menor importancia que el título principal." },
       { name: "font_h3", type: "select", label: "Título Terciario (h3)", required: true, width: 6, options: ["Poppins, sans-serif", "Playfair Display, serif", "Inter, sans-serif", "Roboto, sans-serif", "Montserrat, sans-serif"], helpText: "Un título de menor importancia que el título secundario." },
-      
+
       { name: "div_subs", type: "divider", label: "SubHeaders", width: 12 },
       { name: "font_sub", type: "select", label: "Subtítulos (.text-sub)", required: true, width: 6, options: ["Poppins, sans-serif", "Playfair Display, serif", "Inter, sans-serif", "Roboto, sans-serif", "Montserrat, sans-serif"], helpText: "Un texto breve que complementa y expande un título." },
-      
+
       { name: "div_body", type: "divider", label: "Body & Small", width: 12 },
       { name: "font_body", type: "select", label: "Texto Cuerpo (body)", required: true, width: 6, options: ["Poppins, sans-serif", "Playfair Display, serif", "Inter, sans-serif", "Roboto, sans-serif", "Montserrat, sans-serif"], helpText: "Párrafos largos, artículos, descripciones." },
       { name: "font_mini", type: "select", label: "Miniaturas (.text-mini)", required: true, width: 6, options: ["Poppins, sans-serif", "Playfair Display, serif", "Inter, sans-serif", "Roboto, sans-serif", "Montserrat, sans-serif"], helpText: "Un texto de menor importancia que el texto principal." },
-      
+
       { name: "div_caption", type: "divider", label: "Caption & Action", width: 12 },
       { name: "font_caption", type: "select", label: "Leyendas (.text-caption)", required: true, width: 6, options: ["Poppins, sans-serif", "Playfair Display, serif", "Inter, sans-serif", "Roboto, sans-serif", "Montserrat, sans-serif"], helpText: "Un texto breve que describe una imagen, gráfico o tabla." },
       { name: "font_action", type: "select", label: "Acciones (.text-action)", required: true, width: 6, options: ["Poppins, sans-serif", "Playfair Display, serif", "Inter, sans-serif", "Roboto, sans-serif", "Montserrat, sans-serif"], helpText: "Botones, enlaces y llamados a la acción." },
-      
+
       { name: "div_math", type: "divider", label: "Escala y Proporciones", width: 12 },
-      
+
       { name: "base_size", type: "select", label: "Tamaño Base (Body Px)", required: true, width: 6, options: ["12px", "14px", "16px", "18px"], defaultValue: "16px", helpText: "Impacta directamente el tamaño de los párrafos y textos base." },
       { name: "scale_ratio", type: "select", label: "Multiplicador de Escala", required: true, width: 6, options: ["1.125 (Major Second)", "1.200 (Minor Third)", "1.250 (Major Third)", "1.333 (Perfect Fourth)", "1.618 (Golden Ratio)"], defaultValue: "1.250 (Major Third)", helpText: "Define qué tan rápido crecen los títulos en proporción al texto base." },
       { name: "heading_weight", type: "select", label: "Peso de Títulos (Weight)", required: true, width: 6, options: ["400", "500", "600", "700", "800"], defaultValue: "600", helpText: "Controla el grosor global de todos los Títulos y Subtítulos." },
@@ -508,7 +510,7 @@ var APP_SCHEMAS = {
     ]
   },
   Sys_Permissions: {
-    metadata: { prefix: 'SPRM', showInMenu: false, order:91, iconName:'key-outline', color:'danger', label:'Seguridad: Permisos ABAC', titleField:'schema_destino', idField:'id_permiso', fkField:{ key:'id_rol', label:'Rol Base' } },
+    metadata: { prefix: 'SPRM', showInMenu: false, order: 91, iconName: 'key-outline', color: 'danger', label: 'Seguridad: Permisos ABAC', titleField: 'schema_destino', idField: 'id_permiso', fkField: { key: 'id_rol', label: 'Rol Base' } },
     primaryKey: "id_permiso",
     fields: [
       { name: "id_permiso", type: "text", primaryKey: true, readonly: true, label: "ID Permiso", width: 12 },
@@ -522,10 +524,10 @@ var APP_SCHEMAS = {
 
   Value_Stream: {
     uiConfig: { dashboardCard: { iconName: 'swap-horizontal-outline', color: 'var(--ion-color-tertiary)' } },
-    metadata: { prefix: 'VSTR', showInMenu: true, order: 8, iconName:'swap-horizontal-outline', color:'tertiary', label:'Value Streams', titleField:'nombre', idField:'id_value_stream', fkField:null, maxListAttrs: 8 },
+    metadata: { prefix: 'VSTR', showInMenu: true, order: 8, iconName: 'swap-horizontal-outline', color: 'tertiary', label: 'Value Streams', titleField: 'nombre', idField: 'id_value_stream', fkField: null, maxListAttrs: 8 },
     topological_metadata: {
-        parentEntity: "Portafolio",
-        parentField: "portafolios_padre"
+      parentEntity: "Portafolio",
+      parentField: "portafolios_padre"
     },
     primaryKey: "id_value_stream",
     topologyRules: TOPOLOGY_PRESETS.JERARQUICA_ESTRICTA_GRAPH_STD,
@@ -542,7 +544,7 @@ var APP_SCHEMAS = {
     ]
   },
   Config_Workspace: {
-    metadata: { showInMenu: false, order:93, iconName:'business-outline', color:'primary', label:'Seguridad: Workspaces', titleField:'dominio_principal', idField:'id_workspace', fkField:null, requireStrictMatrixAccess: true },
+    metadata: { showInMenu: false, order: 93, iconName: 'business-outline', color: 'primary', label: 'Seguridad: Workspaces', titleField: 'dominio_principal', idField: 'id_workspace', fkField: null, requireStrictMatrixAccess: true },
     primaryKey: "id_workspace",
     fields: [
       { name: "id_workspace", type: "text", primaryKey: true, readonly: true, label: "ID Workspace", width: 12 },
@@ -570,7 +572,7 @@ function getAppSchema(entityName) {
 
   const applyGovernance = (schema) => {
     if (!schema || !schema.fields) return schema;
-    
+
     // Deep clone the fields array to avoid mutating global definition
     const clonedSchema = Object.assign({}, schema);
     clonedSchema.fields = schema.fields.map(field => {
