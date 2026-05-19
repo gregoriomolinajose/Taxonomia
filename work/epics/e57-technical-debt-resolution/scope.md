@@ -18,6 +18,8 @@ Resolver la deuda técnica principal encontrada durante el desarrollo de epicas 
 - [x] **S57.1**: Refactorización de dependencias `Relacion_Dominios` a `Sys_Graph_Edges` (Lookups, Data Builders, Engine_DB) ✓
 - [x] **S57.2**: Auditoría de Despliegue, limpiezas secundarias y eliminación final de la hoja `DB_Relacion_Dominios` ✓
 - [x] **S57.3**: Habilitar TXSearchable para relaciones jerárquicas y correcciones de contraste en Dominio ✓
+- [x] **S57.4**: Refactorización Desacoplada de Componentes Relacionales (State-Driven Web Components) ✓
+- [ ] **S57.5**: Cálculo Automático de Niveles Jerárquicos y Habilitación Permanente de Nodo Padre
 
 ## Implementation Plan
 
@@ -25,6 +27,8 @@ Resolver la deuda técnica principal encontrada durante el desarrollo de epicas 
 - **M1: Core Migration** (S57.1): Refactorización de lógica de backend en JS (Lookups, Data Builders) para depender solo de `Sys_Graph_Edges`.
 - **M2: Epic Complete** (S57.2): Limpieza de esquemas, ETL, auditoría y borrado físico de la hoja.
 - **M3: UI Refinements** (S57.3): Habilitar selectores avanzados (TXSearchable) para entidades core afectadas por S57.1.
+- **M4: Architectural Cleanup** (S57.4): Desacoplar la lógica relacional y estandarizar componentes web guiados por estado (State-Driven).
+- **M5: UX Optimization** (S57.5): Automatización del cálculo de herencia (`nivel_tipo`) y simplificación de captura de relaciones jerárquicas.
 
 ### Progress Tracking
 
@@ -33,6 +37,8 @@ Resolver la deuda técnica principal encontrada durante el desarrollo de epicas 
 | 1 | S57.1 — Refactorización de Lookups y ECharts | M | Done | 45m | | |
 | 2 | S57.2 — Limpieza final y Auditoría | S | Done | 15m | | Hoja eliminada, código auditado |
 | 3 | S57.3 — Habilitar TXSearchable en UI jerárquica | XS | Done | 10m | | Desplegado en DEV y PROD |
+| 4 | S57.4 — Refactorización Desacoplada Web Components | L | Done | | | Desplegado en DEV y PROD |
+| 5 | S57.5 — Cálculo Automático de Niveles Jerárquicos | M | Todo | | | |
 
 ## Done Criteria
 - [ ] No existen referencias a la palabra `Relacion_Dominios` en el código fuente de `/src`.

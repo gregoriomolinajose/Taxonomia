@@ -68,30 +68,17 @@ function filterAvailableOptions(allOptions, linkedRecords, pkField, rulesContext
         }
 
         // 2. Depth Mathematical Guard (Restricting visual options preventing loop-jumps)
+        // S57.5: La restricción visual de Padre se elimina para permitir la selección libre y que el backend calcule el nuevo nivel.
         if (rules.levelFiltering === true && cLevel > 0) {
             if (rules.strictLevelJumps === true) {
-                // Strict Mode: Exactly +1 or -1
+                // Strict Mode: Exactly +1
                 if (isHijo) {
                     filtered = filtered.filter(opt => Number(opt.nivel_tipo) === cLevel + 1);
-                } else if (isPadre) {
-                    const targetPadreLevel = cLevel - 1;
-                    if (targetPadreLevel > 0) {
-                         filtered = filtered.filter(opt => Number(opt.nivel_tipo) === targetPadreLevel);
-                    } else if (targetPadreLevel === 0 && rules.rootRequiresNoParent) {
-                         // Node is Root (Level 1), no parents allowed
-                         filtered = [];
-                    }
                 }
             } else {
-                // Lax Mode: Asymmetric Proximity (Any level below for child, any level above for parent)
+                // Lax Mode: Asymmetric Proximity
                 if (isHijo) {
                     filtered = filtered.filter(opt => Number(opt.nivel_tipo) > cLevel);
-                } else if (isPadre) {
-                    if (cLevel === 1 && rules.rootRequiresNoParent) {
-                         filtered = [];
-                    } else {
-                         filtered = filtered.filter(opt => Number(opt.nivel_tipo) < cLevel);
-                    }
                 }
             }
         }
@@ -176,14 +163,9 @@ function isNewRecord(context) {
  * @returns {Object} { isDisabled: boolean, opacity: string, placeholder: string }
  */
 function evaluateFieldState(rulesContext, newLevel, relationType) {
-    const state = { isDisabled: false, opacity: '1', placeholder: '— Sin asignar —' };
-    
-    if (rulesContext && rulesContext.rootRequiresNoParent === true && newLevel === 1 && relationType === 'padre') {
-        state.isDisabled = true;
-        state.opacity = '0.5';
-        state.placeholder = '— Nodo Raíz (No requiere padre) —';
-    }
-    return state;
+    // S57.5: El selector de padre siempre está habilitado en modo edición.
+    // El nivel se calcula matemáticamente en backend/submit.
+    return { isDisabled: false, opacity: '1', placeholder: '— Sin asignar —' };
 }
 
 // Universal Wrapper: soporta Node.js (Tests/Jest) y Browser (GAS HTML Service)

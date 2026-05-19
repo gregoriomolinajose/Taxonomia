@@ -646,19 +646,29 @@
             }
             // --------------------------------------------------------------------
 
-            // --- HOTFIX v1.2.2: Repaint Bidireccional de Opciones por Cambio de Nivel ---
-            container.addEventListener('ionChange', (e) => {
-                const target = e.target;
-                if (target && target.name === 'nivel_tipo') {
-                    const rules = global.APP_SCHEMAS[entityName]?.topologyRules;
-                    if (rules) {
-                        const nuevoNivel = parseInt(target.value, 10);
-                        const parentWrappers = container.querySelectorAll('div[data-relation-type="padre"]');
-                        // Pub/Sub: Notificamos a los contenedores padre usando LocalEventBus
-                        LocalEventBus.publish('TAXONOMY_LEVEL_CHANGED', { newLevel: nuevoNivel, rules: rules });
-                    }
-                }
-            });
+            // --- Schema-Driven Triggers (S57.4) ---
+            const schemaTriggers = global.APP_SCHEMAS[entityName]?.triggers || [];
+            if (schemaTriggers.length > 0) {
+                container.addEventListener('ionChange', (e) => {
+                    const target = e.target;
+                    if (!target) return;
+                    const targetName = target.getAttribute('name');
+                    
+                    schemaTriggers.forEach(trigger => {
+                        if (targetName === trigger.field && trigger.event === 'change') {
+                            const val = e.detail && e.detail.value !== undefined ? e.detail.value : target.value;
+                            const rules = global.APP_SCHEMAS[entityName]?.topologyRules;
+                            
+                            // Publish agnostic payload using LocalEventBus
+                            LocalEventBus.publish(trigger.publishToBus, { 
+                                newLevel: parseInt(val, 10), // Backward compatibility for topological hierarchy
+                                value: val,
+                                rules: rules 
+                            });
+                        }
+                    });
+                });
+            }
             // --------------------------------------------------------------------
 
             // S14.1 Delegación Submitter Object

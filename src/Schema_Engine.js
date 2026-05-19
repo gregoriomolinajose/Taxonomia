@@ -219,7 +219,7 @@ var APP_SCHEMAS = {
     ]
   },
   Dominio: {
-    metadata: { prefix: 'DOMI', showInMenu: true, order: 3, iconName: 'globe-outline', color: 'primary', label: 'Dominios', titleField: 'nombre', idField: 'id_dominio', fkField: null },
+    metadata: { prefix: 'DOMI', showInMenu: true, order: 3, iconName: 'globe-outline', color: 'primary', label: 'Dominios', titleField: 'nombre', idField: 'id_dominio', fkField: null, governancePolicy: 'exempt_from_strict_readonly' },
     primaryKey: "id_dominio",
     titleField: "nombre",
     topologyRules: TOPOLOGY_PRESETS.JERARQUICA_ESTRICTA_DOMAIN,
@@ -229,7 +229,7 @@ var APP_SCHEMAS = {
       ...FIELD_TEMPLATES.AUDIT_FIELDS(),
       ...FIELD_TEMPLATES.VERSION_FIELD(),
       { name: "id_externo", type: "text", label: "ID Externo", required: true, width: 6 },
-      { name: "nivel_tipo", type: "number", label: "Nivel Tipo", required: true, width: 6 },
+      { name: "nivel_tipo", type: "number", label: "Nivel Tipo", required: false, readonly: true, width: 6 },
       { name: "orden_path", type: "text", label: "Orden Path", required: false, width: 12 },
       ...FIELD_TEMPLATES.NAME_FIELD("Nombre (ES)", 6),
       { name: "nombre_ingles", type: "text", label: "Nombre (EN)", required: false, width: 6 },
@@ -237,8 +237,8 @@ var APP_SCHEMAS = {
       { name: "descripcion", type: "textarea", label: "Definición / Descripción", required: true, width: 12, showInList: false },
       { name: "contexto_completo_analisis", type: "textarea", label: "Contexto Análisis", required: false, width: 12, showInList: false },
       { name: "path_completo_es", type: "text", label: "Path Completo", required: false, width: 12 },
-      { width: 12, name: "relaciones_padre", type: "relation", relationType: "padre", targetEntity: "Dominio", graphEntity: "Sys_Graph_Edges", valueField: "id_dominio", labelField: "nombre", uiComponent: "searchable_single", label: "Dominio Padre", isTemporalGraph: true, graphEdgeType: "DOMINIO_HIJO", topologyCardinality: "1:N" },
-      { width: 12, name: "relaciones_hijo", type: "relation", relationType: "hijo", targetEntity: "Dominio", graphEntity: "Sys_Graph_Edges", valueField: "id_dominio", labelField: "nombre", uiComponent: "searchable_multi", label: "Dominios Subordinados", isTemporalGraph: true, graphEdgeType: "DOMINIO_HIJO", topologyCardinality: "1:N" }
+      { width: 12, name: "relaciones_padre", type: "relation", relationType: "padre", targetEntity: "Dominio", graphEntity: "Sys_Graph_Edges", valueField: "id_dominio", labelField: "nombre", uiComponent: "searchable_single", label: "Dominio Padre", isTemporalGraph: true, graphEdgeType: "DOMINIO_HIJO", topologyCardinality: "1:N", readonly: false },
+      { width: 12, name: "relaciones_hijo", type: "relation", relationType: "hijo", targetEntity: "Dominio", graphEntity: "Sys_Graph_Edges", valueField: "id_dominio", labelField: "nombre", uiComponent: "searchable_multi", label: "Dominios Subordinados", isTemporalGraph: true, graphEdgeType: "DOMINIO_HIJO", topologyCardinality: "1:N", readonly: false }
     ]
   },
   Grupo_Productos: {
@@ -285,7 +285,7 @@ var APP_SCHEMAS = {
     ]
   },
   Capacidad: {
-    metadata: { showInMenu: true, order: 6, iconName: 'layers-outline', color: 'warning', label: 'Capacidades', titleField: 'nombre', idField: 'id_capacidad', fkField: null },
+    metadata: { showInMenu: true, order: 6, iconName: 'layers-outline', color: 'warning', label: 'Capacidades', titleField: 'nombre', idField: 'id_capacidad', fkField: null, governancePolicy: 'exempt_from_strict_readonly' },
     topological_metadata: {
       parentEntity: "Capacidad",
       parentField: "id_dominio_padre"
@@ -299,7 +299,7 @@ var APP_SCHEMAS = {
       ...FIELD_TEMPLATES.AUDIT_FIELDS(),
       ...FIELD_TEMPLATES.VERSION_FIELD(),
       { name: "id_externo", type: "text", label: "ID Externo", required: false, width: 6 },
-      { name: "nivel_tipo", type: "number", label: "Nivel Tipo", required: true, width: 6 },
+      { name: "nivel_tipo", type: "number", label: "Nivel Tipo", required: false, readonly: true, width: 6 },
       { name: "orden_path", type: "text", label: "Orden Path", required: false, width: 12 },
       ...FIELD_TEMPLATES.NAME_FIELD("Macrocapacidad"),
       { name: "nombre_ingles", type: "text", label: "Nombre Inglés", required: false, width: 12 },
@@ -576,9 +576,12 @@ function getAppSchema(entityName) {
     // Deep clone the fields array to avoid mutating global definition
     const clonedSchema = Object.assign({}, schema);
     clonedSchema.fields = schema.fields.map(field => {
-      // E55 Governance: Topological fields are readonly outside Taxonomia Canvas
+      // E55 Governance: Topological fields are readonly
       if (field.type === 'relation' && field.graphEntity === 'Sys_Graph_Edges') {
-        if (!isTaxonomiaContext) {
+        // Schema-Driven Governance Exemption (S57.4)
+        const isExemptEntity = schema.metadata && schema.metadata.governancePolicy === 'exempt_from_strict_readonly';
+        
+        if (!isTaxonomiaContext && !isExemptEntity) {
           const clonedField = Object.assign({}, field);
           clonedField.readonly = true;
           clonedField.helpText = (clonedField.helpText ? clonedField.helpText + ' ' : '') + '(Solo lectura: Gestionado vía Canvas de Taxonomía)';

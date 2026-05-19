@@ -171,14 +171,10 @@ window.UI_FormUtils = (function () {
         //        nivel 1, deben ir ANTES de este bloque o se quedarán sombradas.
         const level = parseInt(currentLevel, 10);
 
-        // Regla: Nodo raíz (nivel 1) no puede tener padre.
-        if (rules.rootRequiresNoParent === true && level === 1 && relationType === 'padre') {
-            return [];
-        }
-
-        // Regla: Filtrado estricto por nivel (solo padres del nivel inmediatamente superior).
-        if (rules.levelFiltering === true && rules.strictLevelJumps === true && relationType === 'padre') {
-            filtered = dataset.filter(d => parseInt(d.nivel_tipo, 10) === level - 1);
+        // S57.5: Ya no filtramos a los padres por nivel porque el nivel del nodo actual 
+        // se calculará dinámicamente en base al padre que el usuario decida seleccionar.
+        if (rules.levelFiltering === true && rules.strictLevelJumps === true && relationType === 'hijo') {
+            filtered = dataset.filter(d => parseInt(d.nivel_tipo, 10) === level + 1);
         }
 
         return filtered;

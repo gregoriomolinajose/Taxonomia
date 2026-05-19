@@ -115,6 +115,36 @@ window.UI_FormSubmitter = class UI_FormSubmitter {
                 }
             }
 
+            // S57.5: Auto-cálculo de Nivel Jerárquico
+            if (this.fields) {
+                const levelFieldDef = this.fields.find(f => f.name === 'nivel_tipo');
+                if (levelFieldDef && window.Math_Engine && typeof window.Math_Engine.calculateHierarchyLevel === 'function') {
+                    const parentDef = this.fields.find(f => f.relationType === 'padre');
+                    const mathParams = {
+                        entity: this.entityName,
+                        levelField: 'nivel_tipo',
+                        parentField: parentDef ? parentDef.name : 'id_dominio_padre',
+                        pkField: window.Schema_Utils ? window.Schema_Utils.getPrimaryKey(this.entityName) : 'id_registro'
+                    };
+                    const cacheData = window.DataStore ? window.DataStore.get(this.entityName) : [];
+                    
+                    const mockState = { ...payload };
+                    const rawParent = mockState[mathParams.parentField];
+                    if (Array.isArray(rawParent) && rawParent.length > 0) {
+                        mockState[mathParams.parentField] = rawParent[0].id_registro || rawParent[0].id || rawParent[0];
+                    } else if (typeof rawParent === 'string' && rawParent.startsWith('[') && rawParent.endsWith(']')) {
+                        try {
+                            const parsed = JSON.parse(rawParent);
+                            if (Array.isArray(parsed) && parsed.length > 0) {
+                                mockState[mathParams.parentField] = parsed[0].id_registro || parsed[0].id || parsed[0];
+                            }
+                        } catch (e) {}
+                    }
+                    
+                    payload['nivel_tipo'] = window.Math_Engine.calculateHierarchyLevel(mockState, mathParams, cacheData);
+                }
+            }
+
             // Sanitización de Auditoría
             delete payload.created_at;
             delete payload.created_by;

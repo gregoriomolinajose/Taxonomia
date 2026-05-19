@@ -139,7 +139,33 @@ function inferParentIdFromOrdenPath(ordenPath, entityName, records, pkCol) {
         const parentNorm = parts.map(n => parseInt(n, 10)).join('.');
         return inferParentIdFromOrdenPath._cache.map[parentNorm] || null;
     }
-    return null;
+}
+
+function calculateHierarchyLevel(formStateObj, params, cache) {
+    if (!params || !params.entity) return 1;
+
+    const levelField = params.levelField || 'nivel_tipo';
+    const parentField = params.parentField || 'id_dominio_padre';
+    const pkField = params.pkField || 'id_' + params.entity.toLowerCase();
+    
+    const idPadre = formStateObj[parentField];
+    if (!idPadre || idPadre === '') return 1;
+
+    // Fast Cache (S47.2)
+    if (cache && cache.isFastCache && cache.nodesById) {
+        const padre = cache.nodesById.get(idPadre);
+        if (padre && padre[levelField] !== undefined) {
+            return parseInt(padre[levelField], 10) + 1;
+        }
+    }
+
+    const safeCache = Array.isArray(cache) ? cache : [];
+    const padre = safeCache.find(d => String(d[pkField]) === String(idPadre));
+    if (padre && padre[levelField] !== undefined) {
+        return parseInt(padre[levelField], 10) + 1;
+    }
+
+    return 1;
 }
 
 function buildEChartsTreemapData(cacheObject) {
@@ -558,8 +584,8 @@ const CanvasMath = {
 
 // Universal Wrapper
 if (typeof module !== 'undefined' && module.exports) {
-    module.exports = { buildOrdenPath, buildPathName, inferParentIdFromOrdenPath, buildEChartsTreemapData, buildEChartsCapacidadesTreemapData, buildEChartsCapacidadesOption, TopologyGuard, CanvasMath };
+    module.exports = { buildOrdenPath, buildPathName, inferParentIdFromOrdenPath, calculateHierarchyLevel, buildEChartsTreemapData, buildEChartsCapacidadesTreemapData, buildEChartsCapacidadesOption, TopologyGuard, CanvasMath };
 } else if (typeof window !== 'undefined') {
-    window.Math_Engine = { buildOrdenPath, buildPathName, inferParentIdFromOrdenPath, buildEChartsTreemapData, buildEChartsCapacidadesTreemapData, buildEChartsCapacidadesOption, TopologyGuard, CanvasMath };
+    window.Math_Engine = { buildOrdenPath, buildPathName, inferParentIdFromOrdenPath, calculateHierarchyLevel, buildEChartsTreemapData, buildEChartsCapacidadesTreemapData, buildEChartsCapacidadesOption, TopologyGuard, CanvasMath };
 }
 </script>

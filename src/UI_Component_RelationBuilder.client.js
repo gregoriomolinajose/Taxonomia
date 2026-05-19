@@ -21,49 +21,59 @@
             });
         }
 
-        function bindLevelChangeRepaint(selectEl, activeData, field, emptyOptNode, localBus) {
-            if (!Array.isArray(activeData)) return;
+        // State-Driven Controller (S57.4)
+        class RelationStateController {
+            constructor(selectEl, activeData, field, emptyOptNode, localBus, isActuallyReadonly = false) {
+                this.selectEl = selectEl;
+                this.activeData = activeData;
+                this.field = field;
+                this.emptyOptNode = emptyOptNode;
+                this.isActuallyReadonly = isActuallyReadonly;
+                this.localBus = localBus;
+                
+                if (this.localBus) {
+                    // Soporta el evento genérico definido por metadata
+                    this.localBus.subscribe('TAXONOMY_LEVEL_CHANGED', this.handleLevelChange.bind(this));
+                }
+            }
 
-            if (localBus) {
-                localBus.subscribe('TAXONOMY_LEVEL_CHANGED', (ev) => {
-                    const newLevel = ev.detail.newLevel;
-                    const rulesContext = ev.detail.rules;
-                    
-                    const uiState = window.SubgridState ? 
-                        window.SubgridState.evaluateFieldState(rulesContext, newLevel, field.relationType) : 
-                        { isDisabled: false, opacity: '1', placeholder: '— Sin asignar —' };
-                    
-                    const finalDisabledState = uiState.isDisabled || isActuallyReadonly;
-                    selectEl.disabled = finalDisabledState;
-                    selectEl.style.opacity = uiState.opacity;
-                    emptyOptNode.textContent = uiState.placeholder;
-                    
-                    let freshFiltered = activeData;
-                    
-                    if (rulesContext) {
-                        // [S35.4] Filtrado centralizado — elimina duplicación H9 con buildRelation/reloadDataset
-                        freshFiltered = window.UI_FormUtils.filterByTopology(activeData, rulesContext, newLevel, field.relationType);
+            handleLevelChange(ev) {
+                const newLevel = ev.detail.newLevel;
+                const rulesContext = ev.detail.rules;
+                
+                const uiState = window.SubgridState ? 
+                    window.SubgridState.evaluateFieldState(rulesContext, newLevel, this.field.relationType) : 
+                    { isDisabled: false, opacity: '1', placeholder: '— Sin asignar —' };
+                
+                let freshFiltered = this.activeData;
+                if (rulesContext) {
+                    freshFiltered = window.UI_FormUtils.filterByTopology(this.activeData, rulesContext, newLevel, this.field.relationType);
+                }
+                
+                this.setState(uiState, freshFiltered);
+            }
+            
+            setState(uiState, freshFiltered) {
+                const finalDisabledState = uiState.isDisabled || this.isActuallyReadonly;
+                this.selectEl.disabled = finalDisabledState;
+                this.selectEl.style.opacity = uiState.opacity;
+                this.emptyOptNode.textContent = uiState.placeholder;
+                
+                if (this.selectEl.tagName.toLowerCase() === 'tx-searchable') {
+                    this.selectEl.dataSource = freshFiltered || [];
+                    if (uiState.placeholder) this.selectEl.setAttribute('placeholder', uiState.placeholder);
+                    if (finalDisabledState) this.selectEl.setAttribute('disabled', 'true');
+                    else this.selectEl.removeAttribute('disabled');
+                } else {
+                    const oldVal = this.selectEl.value;
+                    this.selectEl.innerHTML = '';
+                    this.selectEl.appendChild(this.emptyOptNode);
+                    populateSelectOptions(this.selectEl, freshFiltered, this.field);
+                    if (oldVal) {
+                        const stillExists = freshFiltered.some(d => String(typeof d[this.field.valueField] !== 'undefined' ? d[this.field.valueField] : d.id_registro) === String(oldVal));
+                        if (stillExists) this.selectEl.value = oldVal;
                     }
-                    
-                    if (typeof selectEl.updateConfig === 'function') {
-                        // S37.1 - Modern SearchableSingle Integration
-                        const finalDisabledState = uiState.isDisabled || isActuallyReadonly;
-                        selectEl.updateConfig(freshFiltered, finalDisabledState, uiState.placeholder);
-                    } else {
-                        // Legacy HTML Select
-                        const oldVal = selectEl.value;
-                        selectEl.innerHTML = '';
-                        selectEl.appendChild(emptyOptNode);
-                        
-                        populateSelectOptions(selectEl, freshFiltered, field);
-                        
-                        // Restaurar el valor si sigue existiendo en el nuevo dataset
-                        if (oldVal) {
-                            const stillExists = freshFiltered.some(d => String(typeof d[field.valueField] !== 'undefined' ? d[field.valueField] : d.id_registro) === String(oldVal));
-                            if (stillExists) selectEl.value = oldVal;
-                        }
-                    }
-                });
+                }
             }
         }
 
@@ -169,8 +179,10 @@
                                 ? window.UI_FormUtils.fetchContextualData(field.targetEntity, contextId)
                                 : freshLiveData.filter(d => d.estado !== 'Eliminado' && typeof d === 'object');
                             
-                            if (typeof multiNodes.updateConfig === 'function') {
-                                multiNodes.updateConfig(freshActiveData, isActuallyReadonly || false);
+                            if (multiNodes && multiNodes.tagName.toLowerCase() === 'tx-searchable') {
+                                multiNodes.dataSource = freshActiveData || [];
+                                if (isActuallyReadonly) multiNodes.setAttribute('disabled', 'true');
+                                else multiNodes.removeAttribute('disabled');
                             }
                         };
                         window.AppEventBus.subscribe('FormEngine::RecordHydrated', reloadDatasetMulti);
@@ -182,7 +194,7 @@
                 } else {
                     console.warn('[UI_Component_RelationBuilder] Falta UI_Component_SearchableMulti.html en el Index.');
                 }
-            } else if (field.uiComponent === 'select_single') {
+            } else if (field.uiComponent === 'select_single' || field.uiComponent === 'searchable_single') {
                 let filteredActiveData = activeData;
                 const rules = window.APP_SCHEMAS && window.APP_SCHEMAS[entityName] ? window.APP_SCHEMAS[entityName].topologyRules : null;
                 const cLevel = Number(data ? (data.nivel_tipo || 1) : 1);
@@ -230,11 +242,14 @@
                 if (uiStateInit.isDisabled || isActuallyReadonly) {
                     basicSel.setAttribute('disabled', 'true');
                 }
+                if (uiStateInit.placeholder) {
+                    basicSel.setAttribute('placeholder', uiStateInit.placeholder);
+                }
                 basicSel.style.opacity = uiStateInit.opacity;
 
-                // Soporte Legacy para `bindLevelChangeRepaint`
+                // Controller Setup
                 const emptyOpt = { textContent: uiStateInit.placeholder };
-                bindLevelChangeRepaint(basicSel, activeData, field, emptyOpt, localEventBus);
+                new RelationStateController(basicSel, activeData, field, emptyOpt, localEventBus, isActuallyReadonly);
 
                 if (field.isTemporalGraph && field.relationType === 'padre') {
                     let originalVal = initialValues.length > 0 ? initialValues[0] : "";
@@ -295,13 +310,16 @@
                         if (isSyncingSingle) basicSel.setAttribute('is-loading', 'true');
                         else basicSel.removeAttribute('is-loading');
 
-                        if (typeof basicSel.updateConfig === 'function') {
-                            // S37.1 - Modern SearchableSingle Integration
+                        if (basicSel && basicSel.tagName.toLowerCase() === 'tx-searchable') {
+                            // State-Driven Web Component Interaction (S57.4)
                             const uiStateInit = window.SubgridState ? 
                                 window.SubgridState.evaluateFieldState(rules, cLvl, field.relationType) : 
                                 { isDisabled: false, opacity: '1', placeholder: '— Sin asignar —' };
                             const finalDisabledState = uiStateInit.isDisabled || isActuallyReadonly;
-                            basicSel.updateConfig(freshFiltered, finalDisabledState, uiStateInit.placeholder);
+                            basicSel.dataSource = freshFiltered || [];
+                            if (uiStateInit.placeholder) basicSel.setAttribute('placeholder', uiStateInit.placeholder);
+                            if (finalDisabledState) basicSel.setAttribute('disabled', 'true');
+                            else basicSel.removeAttribute('disabled');
                         } else {
                             // Legacy ion-select rollback
                             const oldVal = basicSel.value || (initialValues.length > 0 ? initialValues[0] : null);
@@ -319,6 +337,12 @@
                     window.AppEventBus.subscribe('DATASTORE::CHANGED', reloadDataset);
                     window.AppEventBus.subscribe('CACHE::GRAPH_HYDRATED', reloadDataset);
                 }
+                
+                // S57.5: Ocultar el componente del padre si el formulario está en modo lectura y el dominio no tiene un padre asignado (Nodo Raíz)
+                if (isActuallyReadonly && initialValues.length === 0 && field.relationType === 'padre') {
+                    inputEl.style.display = 'none';
+                }
+                
                 inputEl.appendChild(basicSel);
             }
             return inputEl;

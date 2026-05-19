@@ -86,7 +86,7 @@ class TXSearchable extends HTMLElement {
     // 1. API Contract / Declarative Attributes
     // ===============================================
     static get observedAttributes() {
-        return ['entity-name', 'multiple', 'pre-selected', 'disabled', 'max-selection'];
+        return ['entity-name', 'multiple', 'pre-selected', 'disabled', 'max-selection', 'placeholder'];
     }
 
     attributeChangedCallback(name, oldValue, newValue) {
@@ -666,40 +666,36 @@ class TXSearchable extends HTMLElement {
     }
 
     // S41.13: Refactorización Estructural (DRY UI Factories)
-    _getPlaceholderTemplate(domId, hidden, iconName) {
+    _getPlaceholderTemplate(domId, isMultiple, iconName) {
+        const hidden = this._isMultiple ? (this._selectedItems && this._selectedItems.length > 0) : !!this._selectedValue;
+        const customPlaceholder = this.getAttribute('placeholder');
+        const lockText = customPlaceholder || 'Para relacionarlo vaya a la sección Taxonomía';
+        
         return `
             <!-- ACTIVE PLACEHOLDER -->
             <div id="${domId}-active" class="trigger-container tx-placeholder-hover" ${hidden || this._isDisabled ? 'data-tx-state="hidden"' : ''} style="background: #ffffff; border-radius: 12px; border: 2px dashed var(--color-border, #d1d5db); margin-bottom: 24px; cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.02);">
-                
-                <div class="tx-icon-scale" style="width: 56px; height: 56px; background: rgba(56, 128, 255, 0.08); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-bottom: 16px; transition: all 0.3s ease;">
-                    <ion-icon name="${iconName}" style="color: var(--ion-color-primary, #3880ff); font-size: 28px;"></ion-icon>
+                <div class="tx-icon-scale" style="width: 48px; height: 48px; border-radius: 50%; background: var(--ion-color-light, #f4f5f8); display: flex; align-items: center; justify-content: center; margin-bottom: 12px; transition: all 0.3s ease;">
+                    <ion-icon name="${iconName}" style="font-size: 24px; color: var(--ion-color-primary, #3880ff);"></ion-icon>
                 </div>
-                
-                <h4 style="color: var(--ion-color-dark, #111827); font-size: 16px; font-weight: 700; margin: 0 0 8px 0; font-family: var(--font-display, var(--ion-font-family, inherit));">Vincular ${this._entityName}</h4>
-                <p style="color: var(--ion-color-medium, #6b7280); font-size: 14px; margin: 0 0 24px 0; text-align: center; max-width: 320px; line-height: 1.5; font-family: var(--ion-font-family, inherit);">
-                    Busca y selecciona registros existentes o crea uno nuevo al instante.
-                </p>
-                
+                <h3 style="font-size: 15px; font-weight: 600; margin: 0; padding: 0; color: var(--ion-color-dark, #222428); margin-bottom: 6px; font-family: var(--sys-font-family, inherit);">Vincular ${this._entityName}</h3>
+                <p style="font-size: 13px; color: var(--ion-color-medium, #92949c); margin: 0; padding: 0; text-align: center; max-width: 250px; line-height: 1.4; margin-bottom: 16px;">Busca y selecciona registros existentes o crea uno nuevo al instante.</p>
                 <ion-button size="default" fill="solid" color="primary" style="font-family: var(--ion-font-family, inherit); --border-radius: 8px; --box-shadow: 0 4px 6px rgba(56, 128, 255, 0.2); font-weight: 600; margin: 0; --padding-start: 24px; --padding-end: 24px;">
                     <ion-icon slot="start" name="search-outline" style="font-size: 18px;"></ion-icon>
-                    Buscar
+                    BUSCAR
                 </ion-button>
             </div>
 
             <!-- READONLY PLACEHOLDER (CARD SIZE) -->
             <div id="${domId}-readonly" ${hidden || !this._isDisabled ? 'data-tx-state="hidden"' : ''} style="margin-bottom: 24px;">
-                <div style="margin-bottom: 8px;">
-                    <strong style="color: var(--ion-color-dark); font-size: 14px; margin-left: 4px;">${this._entityName}</strong>
-                </div>
-                <ion-item lines="none" style="--min-height: 56px; --padding-top: 4px; --padding-bottom: 4px; --border-radius: var(--border-radius, 8px); border-radius: var(--border-radius, 8px); width: 100%; border: 1px dashed var(--color-border, #cccccc); --background: #f8f9fa;">
-                    <div slot="start" style="width: 32px; height: 32px; background: var(--ion-color-light, #f4f5f8); border: 1px solid var(--color-border, #e0e0e0); border-radius: 4px; display: inline-flex; justify-content: center; align-items: center; margin-right: 12px;">
-                        <ion-icon name="${iconName}" style="color: var(--ion-color-medium, #92949c); font-size: 18px;"></ion-icon>
+                <div style="background: var(--ion-color-light-tint, #fbfbfb); border-radius: 8px; border: 1px dashed var(--color-border, #e5e7eb); padding: 16px; display: flex; align-items: center; gap: 16px; opacity: 0.8;">
+                    <div style="width: 40px; height: 40px; border-radius: 8px; background: #ffffff; border: 1px solid var(--color-border, #e5e7eb); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                        <ion-icon name="${iconName}" style="font-size: 20px; color: var(--ion-color-medium, #92949c);"></ion-icon>
                     </div>
-                    <ion-label class="ion-text-wrap" style="flex: 1; margin: 0; padding-right: 8px;">
+                    <div style="flex: 1;">
                         <h3 style="font-size: 13px; font-weight: bold; margin: 0; padding: 0; line-height: 1.2; color: var(--ion-color-medium, #92949c);">Sin ${this._entityName}</h3>
-                        <p style="font-size: 11px; color: var(--ion-color-danger, #eb445a); margin: 0; padding: 0; line-height: 1.2; margin-top: 4px;"><ion-icon name="lock-closed" style="vertical-align: text-bottom; margin-right: 2px;"></ion-icon>Para relacionarlo vaya a la sección Taxonomía</p>
-                    </ion-label>
-                </ion-item>
+                        <p style="font-size: 11px; color: var(--ion-color-danger, #eb445a); margin: 0; padding: 0; line-height: 1.2; margin-top: 4px;"><ion-icon name="lock-closed" style="vertical-align: text-bottom; margin-right: 2px;"></ion-icon>${lockText}</p>
+                    </div>
+                </div>
             </div>
         `;
     }
