@@ -384,6 +384,15 @@
                     errNode.textContent = 'Módulo UI_View_Tree no disponible.';
                     dataZone.appendChild(errNode);
                 }
+            } else if (_state.view === 'echarts') {
+                if (window.UI_View_ECharts) {
+                    window.UI_View_ECharts.render(dataZone, _state);
+                } else {
+                    const errNode = document.createElement('div');
+                    errNode.className = 'dv-empty';
+                    errNode.textContent = 'Módulo UI_View_ECharts no disponible.';
+                    dataZone.appendChild(errNode);
+                }
             } else if (window.UI_DataGrid) {
                 dataZone.appendChild(window.UI_DataGrid.buildLayout({
                     entityName: _state.entityName,

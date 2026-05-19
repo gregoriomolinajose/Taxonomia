@@ -217,7 +217,7 @@ var APP_SCHEMAS = {
     ]
   },
   Dominio: {
-    metadata: { prefix: 'DOMI', showInMenu: true, order:3, iconName:'globe-outline', color:'secondary', label:'Dominios', titleField:'nombre', idField:'id_dominio', fkField:null },
+    metadata: { prefix: 'DOMI', showInMenu: true, order:3, iconName:'globe-outline', color:'primary', label:'Dominios', titleField:'nombre', idField:'id_dominio', fkField:null },
     primaryKey: "id_dominio",
     titleField: "nombre",
     topologyRules: TOPOLOGY_PRESETS.JERARQUICA_ESTRICTA_DOMAIN,
@@ -235,7 +235,7 @@ var APP_SCHEMAS = {
       { name: "descripcion", type: "textarea", label: "Definición / Descripción", required: true, width: 12, showInList: false },
       { name: "contexto_completo_analisis", type: "textarea", label: "Contexto Análisis", required: false, width: 12, showInList: false },
       { name: "path_completo_es", type: "text", label: "Path Completo", required: false, width: 12 },
-      { width: 12, name: "relaciones_padre", type: "relation", relationType: "padre", targetEntity: "Dominio", graphEntity: "Sys_Graph_Edges", valueField: "id_dominio", labelField: "nombre", uiComponent: "select_single", label: "Dominio Padre (1:1)", isTemporalGraph: true, graphEdgeType: "DOMINIO_HIJO", topologyCardinality: "1:N" },
+      { width: 12, name: "relaciones_padre", type: "relation", relationType: "padre", targetEntity: "Dominio", graphEntity: "Sys_Graph_Edges", valueField: "id_dominio", labelField: "nombre", uiComponent: "searchable_single", label: "Dominio Padre (1:1)", isTemporalGraph: true, graphEdgeType: "DOMINIO_HIJO", topologyCardinality: "1:N" },
       { width: 12, name: "relaciones_hijo", type: "relation", relationType: "hijo", targetEntity: "Dominio", graphEntity: "Sys_Graph_Edges", valueField: "id_dominio", labelField: "nombre", uiComponent: "searchable_multi", label: "Dominios Subordinados (1:N)", isTemporalGraph: true, graphEdgeType: "DOMINIO_HIJO", topologyCardinality: "1:N" }
     ]
   },
@@ -305,7 +305,7 @@ var APP_SCHEMAS = {
       { name: "descripcion", type: "textarea", label: "Descripción", required: false, width: 12, showInList: false },
       { name: "contexto_completo_analisis", type: "textarea", label: "Contexto Análisis", required: false, width: 12, showInList: false },
       { name: "path_completo_es", type: "text", label: "Path Completo", required: false, width: 12 },
-      { name: "id_dominio_padre", type: "relation", relationType: "padre", targetEntity: "Capacidad", graphEntity: "Sys_Graph_Edges", label: "Capacidad Padre", isTemporalGraph: true, topologyCardinality: "1:N", graphEdgeType: "CAPACIDAD_HIJO", required: false, width: 12, uiComponent: "select_single", valueField: "id_capacidad", labelField: "nombre" },
+      { name: "id_dominio_padre", type: "relation", relationType: "padre", targetEntity: "Capacidad", graphEntity: "Sys_Graph_Edges", label: "Capacidad Padre", isTemporalGraph: true, topologyCardinality: "1:N", graphEdgeType: "CAPACIDAD_HIJO", required: false, width: 12, uiComponent: "searchable_single", valueField: "id_capacidad", labelField: "nombre" },
       { name: "capacidades_hijas", type: "relation", relationType: "hijo", targetEntity: "Capacidad", graphEntity: "Sys_Graph_Edges", label: "Capacidades Subordinadas", isTemporalGraph: true, topologyCardinality: "1:N", graphEdgeType: "CAPACIDAD_HIJO", required: false, width: 12, uiComponent: "searchable_multi", valueField: "id_capacidad", labelField: "nombre" }
     ]
   },

@@ -143,13 +143,7 @@ function inferParentIdFromOrdenPath(ordenPath, entityName, records, pkCol) {
 }
 
 function buildEChartsTreemapData(cacheObject) {
-    var rawData = [];
-    if (cacheObject && Array.isArray(cacheObject['Dominio'])) {
-        rawData = cacheObject['Dominio'];
-    }
-    
-    if (!rawData || rawData.length === 0) return [];
-    
+    var rawData = cacheObject['Dominio'] || [];
     var mapData = {};
     var rootNodes = [];
     var hasParentMap = {};
@@ -160,11 +154,11 @@ function buildEChartsTreemapData(cacheObject) {
     
     // 1. Create O(1) Lookup Map and deep copy nodes
     rawData.forEach(function(row) {
-        mapData[row.id_dominio] = {
-            id: row.id_dominio,
-            name: (row.n0_es || '').replace(/[▶►▸>]/g, '').trim(),
-            path: (row.path_completo_es || '').replace(/[▶►▸>]/g, '').trim(), 
-            value: 1, 
+        var id = String(row.id_dominio || row.id_registro || row.lexical_id).trim();
+        mapData[id] = {
+            id: id,
+            name: (row.nombre || row.lexical_id || 'Sin Nombre').trim(),
+            value: 1,
             _record: row
         };
     });
@@ -172,38 +166,63 @@ function buildEChartsTreemapData(cacheObject) {
     // 2. Temporal Interceptor (Bridge Table Edges)
     var relationData = (cacheObject && Array.isArray(cacheObject['Sys_Graph_Edges'])) ? cacheObject['Sys_Graph_Edges'] : [];
 
+    var hasEdges = false;
     if (relationData.length > 0) {
         var activeEdges = relationData.filter(function(edge) {
-            var isCurrent = (edge.es_version_actual === true || edge.es_version_actual === "TRUE" || edge.es_version_actual === "true");
+            var isCurrent = (edge.es_version_actual !== false && String(edge.es_version_actual).toUpperCase() !== 'FALSE');
+            var isNotDeleted = (edge.estado !== 'Eliminado' && edge.estado !== 'eliminado');
             var isDirect = (edge.tipo_relacion === PRIMARY_RELATION_TYPE || edge.tipo_relacion === LEGACY_RELATION_TYPE);
-            return isCurrent && isDirect;
+            return isCurrent && isNotDeleted && isDirect;
         });
 
+        if (activeEdges.length > 0) hasEdges = true;
+
         activeEdges.forEach(function(edge) {
-            var parentNode = mapData[edge.id_nodo_padre];
-            var childNode = mapData[edge.id_nodo_hijo];
-            if (parentNode && childNode && edge.id_nodo_padre !== edge.id_nodo_hijo) {
+            var idPadre = String(edge.id_nodo_padre).trim();
+            var idHijo = String(edge.id_nodo_hijo).trim();
+            var parentNode = mapData[idPadre];
+            var childNode = mapData[idHijo];
+            if (parentNode && childNode && idPadre !== idHijo) {
                 if (!parentNode.children) parentNode.children = [];
                 parentNode.children.push(childNode);
-                hasParentMap[edge.id_nodo_hijo] = true;
+                hasParentMap[idHijo] = true;
             }
         });
-    } else {
+    } 
+
+    if (!hasEdges) {
         rawData.forEach(function(row) {
-            if (row.id_dominio_padre && String(row.id_dominio_padre).trim() !== '' && mapData[row.id_dominio_padre]) {
-                var parentNode = mapData[row.id_dominio_padre];
-                var node = mapData[row.id_dominio];
-                if (!parentNode.children) parentNode.children = [];
-                parentNode.children.push(node);
-                hasParentMap[row.id_dominio] = true;
+            var id = String(row.id_dominio || row.id_registro || row.lexical_id).trim();
+            var rawPadre = row.id_dominio_padre || row.relaciones_padre;
+            var idPadre = rawPadre;
+
+            if (typeof rawPadre === 'string' && rawPadre.startsWith('[') && rawPadre.endsWith(']')) {
+                try { 
+                    var parsed = JSON.parse(rawPadre);
+                    if (Array.isArray(parsed) && parsed.length > 0) idPadre = parsed[0].id || parsed[0].id_dominio || parsed[0];
+                } catch (e) {}
+            } else if (Array.isArray(rawPadre) && rawPadre.length > 0) {
+                idPadre = rawPadre[0].id || rawPadre[0].id_dominio || rawPadre[0];
+            }
+
+            if (idPadre && String(idPadre).trim() !== '') {
+                idPadre = String(idPadre).trim();
+                if (mapData[idPadre] && idPadre !== id) {
+                    var parentNode = mapData[idPadre];
+                    var node = mapData[id];
+                    if (!parentNode.children) parentNode.children = [];
+                    parentNode.children.push(node);
+                    hasParentMap[id] = true;
+                }
             }
         });
     }
-
-    // 3. Root Node Resolution
+    
+    // 3. Assemble the Tree based on identified Roots
     rawData.forEach(function(row) {
-        if (!hasParentMap[row.id_dominio]) {
-            rootNodes.push(mapData[row.id_dominio]);
+        var id = String(row.id_dominio || row.id_registro || row.lexical_id).trim();
+        if (!hasParentMap[id]) {
+            rootNodes.push(mapData[id]);
         }
     });
     
@@ -230,7 +249,7 @@ function buildEChartsCapacidadesTreemapData(data, entityName) {
     var pkField = window.Schema_Utils ? window.Schema_Utils.getPrimaryKey(entityName) : (entityName === 'Dominio' ? 'id_dominio' : 'id_capacidad');
     
     data.forEach(function(row) {
-        var id = row[pkField] || row.id_registro || row.lexical_id;
+        var id = String(row[pkField] || row.id_registro || row.lexical_id).trim();
         mapData[id] = {
             id: id,
             name: (row.nombre || row.n0_es || row.lexical_id || 'Sin Nombre').trim(),
@@ -239,21 +258,64 @@ function buildEChartsCapacidadesTreemapData(data, entityName) {
         };
     });
     
-    data.forEach(function(row) {
-        var id = row[pkField] || row.id_registro || row.lexical_id;
-        var idPadre = row.id_capacidad_padre || row.id_dominio_padre || row.lider_directo || row.padre_id || row.relaciones_padre;  
-        
-        if (idPadre && String(idPadre).trim() !== '' && mapData[idPadre] && idPadre !== id) {
-            var parentNode = mapData[idPadre];
-            var node = mapData[id];
-            if (!parentNode.children) parentNode.children = [];
-            parentNode.children.push(node);
-            hasParentMap[id] = true;
-        }
+    var edges = [];
+    if (typeof window !== 'undefined' && window.DataStore && window.DataStore.get) {
+        edges = window.DataStore.get('Sys_Graph_Edges') || [];
+    } else if (typeof window !== 'undefined' && window.__APP_CACHE__) {
+        edges = window.__APP_CACHE__['Sys_Graph_Edges'] || [];
+    }
+    
+    var edgeType = entityName === 'Dominio' ? 'DOMINIO_HIJO' : (entityName === 'Capacidad' ? 'CAPACIDAD_HIJO' : entityName.toUpperCase() + '_HIJO');
+    
+    var activeEdges = edges.filter(function(e) {
+        var isCurrent = (e.es_version_actual !== false && String(e.es_version_actual).toUpperCase() !== 'FALSE');
+        var isNotDeleted = (e.estado !== 'Eliminado' && e.estado !== 'eliminado');
+        var isDirect = (e.tipo_relacion === edgeType || e.tipo_relacion === 'Militar_Directa');
+        return isCurrent && isNotDeleted && isDirect;
     });
 
-    capacidadesData.forEach(function(row) {
-        var id = row[pkField] || row.id_registro || row.lexical_id;
+    if (activeEdges.length > 0) {
+        activeEdges.forEach(function(edge) {
+            var idPadre = String(edge.id_nodo_padre).trim();
+            var idHijo = String(edge.id_nodo_hijo).trim();
+            var parentNode = mapData[idPadre];
+            var childNode = mapData[idHijo];
+            if (parentNode && childNode && idPadre !== idHijo) {
+                if (!parentNode.children) parentNode.children = [];
+                parentNode.children.push(childNode);
+                hasParentMap[idHijo] = true;
+            }
+        });
+    } else {
+        data.forEach(function(row) {
+            var id = String(row[pkField] || row.id_registro || row.lexical_id).trim();
+            var rawPadre = row.id_capacidad_padre || row.id_dominio_padre || row.lider_directo || row.padre_id || row.relaciones_padre;  
+            var idPadre = rawPadre;
+
+            if (typeof rawPadre === 'string' && rawPadre.startsWith('[') && rawPadre.endsWith(']')) {
+                try { 
+                    var parsed = JSON.parse(rawPadre);
+                    if (Array.isArray(parsed) && parsed.length > 0) idPadre = parsed[0].id || parsed[0][pkField] || parsed[0];
+                } catch (e) {}
+            } else if (Array.isArray(rawPadre) && rawPadre.length > 0) {
+                idPadre = rawPadre[0].id || rawPadre[0][pkField] || rawPadre[0];
+            }
+            
+            if (idPadre && String(idPadre).trim() !== '') {
+                idPadre = String(idPadre).trim();
+                if (mapData[idPadre] && idPadre !== id) {
+                    var parentNode = mapData[idPadre];
+                    var node = mapData[id];
+                    if (!parentNode.children) parentNode.children = [];
+                    parentNode.children.push(node);
+                    hasParentMap[id] = true;
+                }
+            }
+        });
+    }
+
+    data.forEach(function(row) {
+        var id = String(row[pkField] || row.id_registro || row.lexical_id).trim();
         if (!hasParentMap[id]) {
             rootNodes.push(mapData[id]);
         }

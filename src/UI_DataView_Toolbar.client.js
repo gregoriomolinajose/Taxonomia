@@ -138,10 +138,21 @@ window.UI_DataView_Toolbar = (function () {
             btnTree.title = (entityName === 'Capacidad' || entityName === 'Dominio') ? `Jerarquía de ${entityName}s` : 'Diagrama de Organigrama';
             const iconTree = document.createElement('ion-icon');
             iconTree.setAttribute('name', 'git-network-outline');
-            iconTree.setAttribute('name', 'git-network-outline');
             btnTree.appendChild(iconTree);
             btnTree.addEventListener('click', () => onViewToggle('tree'));
             left.appendChild(btnTree);
+        }
+
+        if (entityName === 'Capacidad' || entityName === 'Dominio') {
+            const btnChart = document.createElement('button');
+            btnChart.className = `dv-btn-icon ${viewType === 'echarts' ? 'active' : ''}`;
+            btnChart.id = 'dv-view-echarts-btn';
+            btnChart.title = entityName === 'Capacidad' ? 'Mapa de Capacidades (Avanzado)' : 'Mapa de Dominios (Treemap)';
+            const iconChart = document.createElement('ion-icon');
+            iconChart.setAttribute('name', 'apps-outline');
+            btnChart.appendChild(iconChart);
+            btnChart.addEventListener('click', () => onViewToggle('echarts'));
+            left.appendChild(btnChart);
         }
 
 
