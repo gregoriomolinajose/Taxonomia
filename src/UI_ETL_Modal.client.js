@@ -8,44 +8,7 @@ window.UI_ETL_Modal = (function() {
         generatedUrls: {} // H10: Aislar caché de URLs a UI_ETL_Modal en lugar de DataView_UI
     };
 
-    function present(entityName, options) {
-        // [QA Fix] Evitar DOM Node Leakage eliminando rastros previos
-        const prevModal = document.getElementById('dv-etl-modal');
-        if (prevModal) prevModal.remove();
-
-        const modal = document.createElement('ion-modal');
-        modal.id = 'dv-etl-modal';
-        modal.cssClass = 'etl-central-modal'; 
-
-        const content = document.createElement('ion-content');
-        
-        // --- Header Custom ---
-        const headerContainer = document.createElement('div');
-        headerContainer.className = 'etl-header ion-padding';
-        
-        const closeBtn = document.createElement('ion-icon');
-        closeBtn.name = 'close-outline';
-        closeBtn.style.cssText = 'position: absolute; right: 16px; top: 16px; font-size: 24px; cursor: pointer; color: white; z-index: 10;';
-        closeBtn.addEventListener('click', () => modal.dismiss());
-        headerContainer.appendChild(closeBtn);
-
-        const headerBox = document.createElement('div');
-        headerBox.className = 'etl-header-box';
-        
-        const iconDiv = document.createElement('div');
-        iconDiv.className = 'etl-header-icon';
-        iconDiv.innerHTML = '<ion-icon name="cloud-upload-outline"></ion-icon>';
-        
-        const textDiv = document.createElement('div');
-        textDiv.innerHTML = `
-            <div style="font-weight: 600; font-size: 18px;">Carga masiva</div>
-            <div style="font-size: 12px; opacity: 0.9;">Importar ${window.formatEntityName ? window.formatEntityName(entityName) : entityName}</div>
-        `;
-        
-        headerBox.appendChild(iconDiv);
-        headerBox.appendChild(textDiv);
-        headerContainer.appendChild(headerBox);
-        
+    function buildInlineView(entityName, options, modal) {
         // --- Body Container ---
         const container = document.createElement('div');
         container.className = 'etl-body';
@@ -234,9 +197,9 @@ window.UI_ETL_Modal = (function() {
         container.appendChild(viewSheets);
         container.appendChild(viewCSV);
 
-        content.appendChild(headerContainer);
-        content.appendChild(container);
-        modal.appendChild(content);
+
+
+
 
         // --- Event Listeners and Logic ---
         
@@ -257,8 +220,8 @@ window.UI_ETL_Modal = (function() {
 
         // ------------------ SHEETS LOGIC ------------------ //
         // Gen Template
-        modal.querySelector('#btn-gen-tpl').addEventListener('click', () => {
-            const currentUrl = modal.querySelector('#etl-drive-url').value;
+        container.querySelector('#btn-gen-tpl').addEventListener('click', () => {
+            const currentUrl = container.querySelector('#etl-drive-url').value;
             if (currentUrl && currentUrl.trim().startsWith('http')) {
                 window.open(currentUrl.trim(), '_blank');
                 return;
@@ -270,13 +233,13 @@ window.UI_ETL_Modal = (function() {
         });
         
         // Inspect Dummy
-        modal.querySelector('#btn-inspect-drive').addEventListener('click', () => {
+        container.querySelector('#btn-inspect-drive').addEventListener('click', () => {
             _showToast('Inpección nativa de Drive programada para E39. Por favor pega la URL manualmente.', 'tertiary');
         });
 
         // Execute Sheets
-        const btnSyncDrive = modal.querySelector('#btn-sync-drive');
-        const urlInput = modal.querySelector('#etl-drive-url');
+        const btnSyncDrive = container.querySelector('#btn-sync-drive');
+        const urlInput = container.querySelector('#etl-drive-url');
         btnSyncDrive.disabled = true;
 
         urlInput.addEventListener('ionInput', (e) => {
@@ -284,7 +247,7 @@ window.UI_ETL_Modal = (function() {
             const isValid = val.length > 0 && /^https?:\/\/docs\.google\.com\/spreadsheets\/d\/[a-zA-Z0-9-_]+/.test(val);
             btnSyncDrive.disabled = !isValid;
             
-            const errorNote = modal.querySelector('#etl-url-error');
+            const errorNote = container.querySelector('#etl-url-error');
             const item = urlInput.closest('ion-item');
             
             if (val.length > 0 && !isValid) {
@@ -297,13 +260,13 @@ window.UI_ETL_Modal = (function() {
                 urlInput.removeAttribute('helper-text');
             }
             
-            const btnOpenLink = modal.querySelector('#btn-open-drive-link');
+            const btnOpenLink = container.querySelector('#btn-open-drive-link');
             if (btnOpenLink) {
                 btnOpenLink.style.display = val.startsWith('http') ? 'block' : 'none';
             }
         });
 
-        const btnOpenLink = modal.querySelector('#btn-open-drive-link');
+        const btnOpenLink = container.querySelector('#btn-open-drive-link');
         if (btnOpenLink) {
             btnOpenLink.addEventListener('click', () => {
                 const val = urlInput.value.trim();
@@ -323,7 +286,7 @@ window.UI_ETL_Modal = (function() {
 
         // ------------------ CSV LOGIC ------------------ //
         // DL Template
-        modal.querySelector('#btn-dl-csv').addEventListener('click', (e) => {
+        container.querySelector('#btn-dl-csv').addEventListener('click', (e) => {
             e.stopPropagation();
             if (options && typeof options.onDownloadCSVTpl === 'function') {
                 options.onDownloadCSVTpl(entityName);
@@ -332,10 +295,10 @@ window.UI_ETL_Modal = (function() {
 
         // File Handler
         let cachedFile = null;
-        const fileInput = modal.querySelector('#etl-csv-input');
-        const btnUploadMobile = modal.querySelector('#btn-upload-mobile');
-        const dropzone = modal.querySelector('#etl-dropzone');
-        const btnSyncCsv = modal.querySelector('#btn-sync-csv');
+        const fileInput = container.querySelector('#etl-csv-input');
+        const btnUploadMobile = container.querySelector('#btn-upload-mobile');
+        const dropzone = container.querySelector('#etl-dropzone');
+        const btnSyncCsv = container.querySelector('#btn-sync-csv');
 
         const processFileSelect = (file) => {
             if (!file) return;
@@ -412,7 +375,54 @@ window.UI_ETL_Modal = (function() {
             }
         });
 
-        // [QA Fix] Self-destruct listener RAM clear
+        
+        return container;
+    }
+
+    function present(entityName, options) {
+        // [QA Fix] Evitar DOM Node Leakage eliminando rastros previos
+        const prevModal = document.getElementById('dv-etl-modal');
+        if (prevModal) prevModal.remove();
+
+        const modal = document.createElement('ion-modal');
+        modal.id = 'dv-etl-modal';
+        modal.cssClass = 'etl-central-modal'; 
+
+        const content = document.createElement('ion-content');
+        
+        // --- Header Custom ---
+        const headerContainer = document.createElement('div');
+        headerContainer.className = 'etl-header ion-padding';
+        
+        const closeBtn = document.createElement('ion-icon');
+        closeBtn.name = 'close-outline';
+        closeBtn.style.cssText = 'position: absolute; right: 16px; top: 16px; font-size: 24px; cursor: pointer; color: white; z-index: 10;';
+        closeBtn.addEventListener('click', () => modal.dismiss());
+        headerContainer.appendChild(closeBtn);
+
+        const headerBox = document.createElement('div');
+        headerBox.className = 'etl-header-box';
+        
+        const iconDiv = document.createElement('div');
+        iconDiv.className = 'etl-header-icon';
+        iconDiv.innerHTML = '<ion-icon name="cloud-upload-outline"></ion-icon>';
+        
+        const textDiv = document.createElement('div');
+        textDiv.innerHTML = `
+            <div style="font-weight: 600; font-size: 18px;">Carga masiva</div>
+            <div style="font-size: 12px; opacity: 0.9;">Importar ${window.formatEntityName ? window.formatEntityName(entityName) : entityName}</div>
+        `;
+        
+        headerBox.appendChild(iconDiv);
+        headerBox.appendChild(textDiv);
+        headerContainer.appendChild(headerBox);
+        
+        const container = buildInlineView(entityName, options, modal);
+
+
+        content.appendChild(headerContainer);
+        content.appendChild(container);
+        modal.appendChild(content);
         modal.addEventListener('ionModalDidDismiss', () => { modal.remove(); });
 
         document.body.appendChild(modal);
@@ -431,6 +441,7 @@ window.UI_ETL_Modal = (function() {
     return {
         urlCache: localCache.generatedUrls, // H10: Exposed cached urls map
         present: present,
+        buildInlineView: buildInlineView,
         updateUrlField: function(urlStr) {
             const input = document.getElementById('etl-drive-url');
             if (input) {

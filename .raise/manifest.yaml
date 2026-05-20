@@ -18,4 +18,5 @@ agents:
   - antigravity
   - claude
 tier: null
-backlog: null
+backlog:
+  adapter_default: filesystem

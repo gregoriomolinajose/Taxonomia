@@ -244,6 +244,28 @@
             return dividerEl;
         };
 
+        global.UI_Factory.buildBulkImporter = function(field) {
+            if (!window.UI_ETL_Modal || !window.UI_ETL_Modal.buildInlineView) {
+                const div = document.createElement('div');
+                div.textContent = 'Módulo UI_ETL_Modal no cargado';
+                return div;
+            }
+            const targetEntity = field.targetEntity || 'Persona';
+            const wrapper = document.createElement('div');
+            wrapper.style.position = 'relative';
+            wrapper.className = 'etl-inline-wrapper';
+            
+            let options = {};
+            if (window.DataViewEngine && window.DataViewEngine._getUniversalETLOptions) {
+                options = window.DataViewEngine._getUniversalETLOptions(targetEntity, wrapper);
+            }
+            
+            const inlineView = window.UI_ETL_Modal.buildInlineView(targetEntity, options, wrapper);
+            wrapper.appendChild(inlineView);
+            
+            return wrapper;
+        };
+
         // buildDynamicList extracted to UI_Component_DynamicList.html (Auto-registered Plugin)
 
         global.UI_Factory.drawChip = function(id, labelText, onRemoveCallback) {
@@ -326,6 +348,7 @@
         global.UI_Factory.registerBuilder('select', (f) => global.UI_Factory.buildSelect(f));
         global.UI_Factory.registerBuilder('divider', (f) => global.UI_Factory.buildDivider(f));
         global.UI_Factory.registerBuilder('avatar', (f) => global.UI_Factory.buildAvatar(f));
+        global.UI_Factory.registerBuilder('bulk_importer', (f) => global.UI_Factory.buildBulkImporter(f));
         // Specialized builders registrations are now handled by isolated plugins
         // (UI_Component_RelationBuilder, UI_Component_DynamicList, etc.)
 

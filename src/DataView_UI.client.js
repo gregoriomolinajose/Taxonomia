@@ -803,7 +803,162 @@
             );
         }
 
-        function _openETLModal() {
+                function _getUniversalETLOptions(entity, modalWrapper) {
+            return {
+                onDriveSync: async function(entity, url, modal) {
+                    let loading;
+                    try {
+                        document.querySelectorAll('ion-loading.loader-etl-sync').forEach(el => el.remove());
+                        
+                        loading = document.createElement('ion-loading');
+                        loading.className = 'loader-etl-sync';
+                        loading.message = 'Extrayendo Matriz desde Hoja de Cálculo...';
+                        document.body.appendChild(loading);
+                        await loading.present();
+
+                        let etlEngine = null;
+                        let reqOptions = { rawMatrix: true };
+                        let isCustom = false;
+
+                        if (window['DataEngine_ETL_' + entity]) {
+                            etlEngine = window['DataEngine_ETL_' + entity];
+                            isCustom = true;
+                        } else if (window.DataEngine_ETL) {
+                            etlEngine = window.DataEngine_ETL;
+                            reqOptions = {};
+                        }
+
+                        if (!etlEngine) {
+                            loading.dismiss();
+                            if (modal && modal.dismiss) modal.dismiss();
+                            return _showToast('No hay motor ETL cargado para procesar los registros.', 'warning');
+                        }
+
+                        window.DataAPI.call('API_Universal_Router', 'etl_extract_sheet_data', entity, { url: url, options: reqOptions })
+                            .then(res => {
+                                loading.dismiss();
+                                if (res && res.data) {
+                                    const progressCb = function onProgress(chunkIndex, totalChunks, isDone, metrics, customText) {
+                                        if (window.UI_ETL_Modal && window.UI_ETL_Modal.updateProgress) {
+                                            window.UI_ETL_Modal.updateProgress(chunkIndex, totalChunks, isDone, metrics, customText);
+                                        }
+                                    };
+
+                                    let etlPromise;
+                                    if (isCustom && etlEngine.processMatrix) {
+                                        etlPromise = new Promise((resolve, reject) => {
+                                            etlEngine.processMatrix(entity, res.data, {
+                                                progressCallback: progressCb,
+                                                completionCallback: resolve
+                                            }).catch(reject);
+                                        });
+                                    } else if (etlEngine.processPayload) {
+                                        etlPromise = etlEngine.processPayload(res.data, entity, progressCb);
+                                    } else {
+                                        if (modal && modal.dismiss) modal.dismiss();
+                                        return _showToast('El motor ETL no tiene un método de procesamiento compatible.', 'warning');
+                                    }
+
+                                    etlPromise.then((metrics) => {
+                                        if (window.DataStore) window.DataStore.set(entity, null); 
+                                        const m = metrics || { success: res.data.length, duplicate: 0, error: 0 };
+                                        const feedbackArray = m._feedback || [];
+                                        if (window.UI_ETL_Modal && window.UI_ETL_Modal.showResults) {
+                                            window.UI_ETL_Modal.showResults(m, feedbackArray);
+                                        } else {
+                                            if (modal && modal.dismiss) modal.dismiss();
+                                            alert('Resumen:\n✅ ' + (m.success || 0) + ' satisfactorios\n⚠️ ' + (m.duplicate || 0) + ' ya existentes\n❌ ' + (m.error || 0) + ' no realizados');
+                                        }
+                                        if (modal && modal.addEventListener) {
+                                            modal.addEventListener('ionModalDidDismiss', () => {
+                                                if (window.DataViewEngine && window.DataViewEngine._getState && window.DataViewEngine._getState().entityName === entity) {
+                                                    window.DataViewEngine.render(entity, window.DataViewEngine._getState().containerId);
+                                                }
+                                            }, { once: true });
+                                        }
+                                    }).catch(err => {
+                                        console.error('[Chunker Error]', err);
+                                        const rootEl = modalWrapper || document.body;
+                                        const urlInput = rootEl.querySelector('#etl-drive-url');
+                                        if (urlInput && err.message && (err.message.includes('vací') || err.message.includes('data útil') || err.message.includes('vacio') || err.message.includes('columna correo') || err.message.includes('filas'))) {
+                                            const displayMsg = err.message;
+                                            urlInput.setAttribute('error-text', displayMsg);
+                                            urlInput.classList.add('ion-invalid', 'ion-touched');
+                                        } else {
+                                            alert('Error general de procesamiento:\n' + err.message);
+                                        }
+                                    });
+                                } else if (res && res.status === 'error') {
+                                    throw new Error(res.message || "Error desconocido devuelto por el servidor.");
+                                }
+                            })
+                            .catch(err => {
+                                loading.dismiss();
+                                console.error('[ETL Fatal Error]', err);
+                                const rootEl = modalWrapper || document.body;
+                                const urlInput = rootEl.querySelector('#etl-drive-url');
+                                if (urlInput && err.message && (err.message.includes('vací') || err.message.includes('data útil') || err.message.includes('vacio') || err.message.includes('columna correo') || err.message.includes('acceder al documento') || err.message.includes('inaccesible') || err.message.includes('MimeType'))) {
+                                    let displayMsg = 'El archivo proporcionado se encuentra vacío o sin data útil.';
+                                    if (err.message.includes('columna correo')) displayMsg = err.message;
+                                    if (err.message.includes('acceder al documento') || err.message.includes('inaccesible') || err.message.includes('MimeType')) {
+                                        displayMsg = 'El enlace es incorrecto, no tienes permisos, o el archivo es un Excel (.xlsx) antiguo. Asegúrate de usar el enlace del nuevo Google Sheet convertido.';
+                                    }
+                                    
+                                    urlInput.setAttribute('error-text', displayMsg);
+                                    urlInput.classList.add('ion-invalid', 'ion-touched');
+                                } else {
+                                    _showToast('Fallo al extraer registros: ' + err.message, 'danger');
+                                }
+                            });
+                    } catch (fatalErr) {
+                        if (loading) loading.dismiss();
+                        console.error('[UI Fatal Error]', fatalErr);
+                        _showToast('Error inesperado procesando la sincronización: ' + fatalErr.message, 'danger');
+                    }
+                },
+                onGenerateTemplate: async function(entity, modal) {
+                    document.querySelectorAll('ion-loading.loader-etl').forEach(el => el.remove());
+                    
+                    const loading = document.createElement('ion-loading');
+                    loading.className = 'loader-etl';
+                    loading.message = 'Creando plantilla en Google Sheet...';
+                    document.body.appendChild(loading);
+                    await loading.present();
+
+                    window.DataAPI.call('API_Universal_Router', 'etl_generate_template', entity, {})
+                        .then(res => {
+                            loading.dismiss();
+                            if (res && res.data) {
+                                window.UI_ETL_Modal.urlCache[entity] = res.data;
+                                window.UI_ETL_Modal.updateUrlField(res.data);
+                                
+                                const newWin = window.open(res.data, '_blank');
+                                if (newWin) {
+                                    _showToast('¡Plantilla Creada en tu Drive! Pega tus datos en ella.', 'success');
+                                } else {
+                                    _showToast('Plantilla creada, pero tu navegador bloqueó la pestaña. Usa la opción "Abrir archivo" para acceder a ella.', 'warning');
+                                }
+                            }
+                        })
+                        .catch(err => {
+                            loading.dismiss();
+                            _showToast('Fallo crítico al forjar plantilla: ' + err.message, 'danger');
+                        });
+                },
+                onDownloadCSVTpl: function(entity) {
+                    window.DataEngine.exportCSV(entity, [], []);
+                },
+                onLocalUpload: function(entity, event, modal) {
+                    if (modal && modal.dismiss) modal.dismiss();
+                    // Falback for local upload
+                    if (window.DataViewEngine && window.DataViewEngine._importCSV) {
+                        window.DataViewEngine._importCSV(event);
+                    }
+                }
+            };
+        }
+
+function _openETLModal() {
             if (!window.UI_ETL_Modal) {
                 return _showToast('Módulo ETL no cargado.', 'danger');
             }
@@ -1025,7 +1180,7 @@
                     entityMeta: ENTITY_META[_state.entityName]
                 };
             },
-            _exportCSV, _importCSV, _openETLModal,
+            _exportCSV, _importCSV, _openETLModal, _getUniversalETLOptions,
             _onSearch, _onSort, _onPage, _onPageSize,
             _onRowCheck, _onSelectAll, _onRowOrderChange,
             _onColToggle, _toggleColPopover, _onViewToggle,
