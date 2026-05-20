@@ -19,7 +19,9 @@ Resolver la deuda técnica principal encontrada durante el desarrollo de epicas 
 - [x] **S57.2**: Auditoría de Despliegue, limpiezas secundarias y eliminación final de la hoja `DB_Relacion_Dominios` ✓
 - [x] **S57.3**: Habilitar TXSearchable para relaciones jerárquicas y correcciones de contraste en Dominio ✓
 - [x] **S57.4**: Refactorización Desacoplada de Componentes Relacionales (State-Driven Web Components) ✓
-- [ ] **S57.5**: Cálculo Automático de Niveles Jerárquicos y Habilitación Permanente de Nodo Padre
+- [x] **S57.5**: Cálculo Automático de Niveles Jerárquicos y Habilitación Permanente de Nodo Padre ✓
+- [x] **S57.6**: Optimización de Reactividad y Latencia de Relaciones en el Lienzo ✓
+- [ ] **S57.7**: Desbloqueo de Relaciones en el Lienzo
 
 ## Implementation Plan
 
@@ -29,6 +31,7 @@ Resolver la deuda técnica principal encontrada durante el desarrollo de epicas 
 - **M3: UI Refinements** (S57.3): Habilitar selectores avanzados (TXSearchable) para entidades core afectadas por S57.1.
 - **M4: Architectural Cleanup** (S57.4): Desacoplar la lógica relacional y estandarizar componentes web guiados por estado (State-Driven).
 - **M5: UX Optimization** (S57.5): Automatización del cálculo de herencia (`nivel_tipo`) y simplificación de captura de relaciones jerárquicas.
+- **M6: Performance Tuning** (S57.6): Optimización de latencia en consultas a DataStore y supresión de bloqueos en hidratación programática.
 
 ### Progress Tracking
 
@@ -38,9 +41,11 @@ Resolver la deuda técnica principal encontrada durante el desarrollo de epicas 
 | 2 | S57.2 — Limpieza final y Auditoría | S | Done | 15m | | Hoja eliminada, código auditado |
 | 3 | S57.3 — Habilitar TXSearchable en UI jerárquica | XS | Done | 10m | | Desplegado en DEV y PROD |
 | 4 | S57.4 — Refactorización Desacoplada Web Components | L | Done | | | Desplegado en DEV y PROD |
-| 5 | S57.5 — Cálculo Automático de Niveles Jerárquicos | M | Todo | | | |
+| 5 | S57.5 — Cálculo Automático de Niveles Jerárquicos | M | Done | | | Desplegado en DEV y PROD |
+| 6 | S57.6 — Optimización de Reactividad en Relaciones | S | Done | | | Desplegado en DEV y PROD |
 
 ## Done Criteria
 - [ ] No existen referencias a la palabra `Relacion_Dominios` en el código fuente de `/src`.
 - [ ] La UI y reportes/dashboard renderizan la jerarquía de dominios correctamente consultando a `Sys_Graph_Edges`.
 - [ ] La hoja es eliminada manualmente en la BD.
+- [ ] Los selectores relacionales en el lienzo cargan a 0ms sin bloqueos ni retrasos.
