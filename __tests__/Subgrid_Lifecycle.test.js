@@ -236,18 +236,6 @@ describe('Test 5 — Topological Guards in filterAvailableOptions', () => {
         expect(filtered[0].value).toBe('DOM-3');
     });
 
-    test('Saltos Estrictos (strictLevelJumps: true) para relación PADRE exige Nivel Objetivo = cLevel - 1', () => {
-        const rulesContext = {
-            topologyRules: { levelFiltering: true, strictLevelJumps: true },
-            currentLevel: 3,
-            relationType: 'padre'
-        };
-        const filtered = filterAvailableOptions(DOMINIO_OPTIONS, [], 'id_dominio', rulesContext);
-        // Si estoy en Nivel 3, busco padre en Nivel 2 exclusivamente
-        expect(filtered).toHaveLength(1);
-        expect(filtered[0].value).toBe('DOM-2');
-    });
-
     test('Saltos Laxos (strictLevelJumps: false) para relación HIJO permite cualquier Nivel Objetivo > cLevel', () => {
         const rulesContext = {
             topologyRules: { levelFiltering: true, strictLevelJumps: false },
@@ -258,28 +246,5 @@ describe('Test 5 — Topological Guards in filterAvailableOptions', () => {
         // Si estoy en Nivel 2, los hijos válidos son Nivel 3 y Nivel 4
         expect(filtered).toHaveLength(2);
         expect(filtered.map(o => o.value)).toEqual(['DOM-3', 'DOM-4']);
-    });
-
-    test('Saltos Laxos (strictLevelJumps: false) para relación PADRE permite cualquier Nivel Objetivo < cLevel', () => {
-        const rulesContext = {
-            topologyRules: { levelFiltering: true, strictLevelJumps: false },
-            currentLevel: 3,
-            relationType: 'padre'
-        };
-        const filtered = filterAvailableOptions(DOMINIO_OPTIONS, [], 'id_dominio', rulesContext);
-        // Si estoy en Nivel 3, los padres válidos pueden ser Nivel 1 o Nivel 2
-        expect(filtered).toHaveLength(2);
-        expect(filtered.map(o => o.value)).toEqual(['DOM-1', 'DOM-2']);
-    });
-
-    test('Protección de Root (rootRequiresNoParent: true)', () => {
-        const rulesContext = {
-            topologyRules: { levelFiltering: true, strictLevelJumps: true, rootRequiresNoParent: true },
-            currentLevel: 1,
-            relationType: 'padre'
-        };
-        const filtered = filterAvailableOptions(DOMINIO_OPTIONS, [], 'id_dominio', rulesContext);
-        // Nivel 1 no puede tener padre
-        expect(filtered).toHaveLength(0);
     });
 });

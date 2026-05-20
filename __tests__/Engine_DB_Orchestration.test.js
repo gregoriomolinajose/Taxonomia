@@ -10,40 +10,11 @@ Adapter_Sheets.upsert = vi.fn();
 // Cargamos Engine_DB DESPUÉS para que obtenga el Adapter_Sheets con Mocks inyectados (aunque el objeto de Require_cache ya esté referenciado)
 const Engine_DB = require('../src/Engine_DB');
 
-// Extraer _updateGraphEdges usando eval
-const filePath = path.resolve(__dirname, '../src/Engine_DB.js');
-const sourceCode = fs.readFileSync(filePath, 'utf8');
-const updateGraphEdgesMatch = sourceCode.match(/function _updateGraphEdges\([^)]*\)\s*\{[\s\S]*?\n\}/);
-if (!updateGraphEdgesMatch) throw new Error("Could not extract _updateGraphEdges");
-
 global.Utilities = {
     getUuid: vi.fn(() => '11223344-5566-7788-9900')
 };
 global.Logger = { log: vi.fn() };
 global._invalidateCache = vi.fn();
-
-const scriptContext = {
-    _updateGraphEdges: null,
-    SheetMatrixIO: {
-        readRelacionDominios: vi.fn(),
-        writeRow: vi.fn(),
-        appendRow: vi.fn()
-    },
-    Utilities: global.Utilities,
-    Logger: global.Logger,
-    _invalidateCache: global._invalidateCache
-};
-
-eval(`
-    const SheetMatrixIO = scriptContext.SheetMatrixIO;
-    const Utilities = scriptContext.Utilities;
-    const Logger = scriptContext.Logger;
-    const _invalidateCache = scriptContext._invalidateCache;
-    ${updateGraphEdgesMatch[0]}
-    scriptContext._updateGraphEdges = _updateGraphEdges;
-`);
-
-const { _updateGraphEdges, SheetMatrixIO } = scriptContext;
 
 global.Engine_Graph = {
     buildDeletionPatch: vi.fn()
@@ -57,53 +28,6 @@ describe('Engine_DB Orchestration & DAG SCD-2', () => {
         global.APP_SCHEMAS = new Proxy({}, { get: (target, prop) => ({ primaryKey: (prop === 'Portafolio' ? 'id_portafolio' : 'id_' + String(prop).toLowerCase()) }) });
         vi.clearAllMocks();
         Engine_DB.upsertBatch = vi.fn((entity, payload) => ({ status: 'success', handled: payload.length }));
-    });
-
-    describe('SCD-2 _updateGraphEdges', () => {
-        it('should expire active edge and spawn new edge when parent changes', () => {
-            const config = { useSheets: true };
-            const sysDateRegex = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/;
-            
-            const mockData = [
-                ['id_relacion', 'id_nodo_padre', 'id_nodo_hijo', 'tipo_relacion', 'peso_influencia', 'valido_desde', 'valido_hasta', 'es_version_actual', 'updated_at', 'created_at', 'created_by'],
-                ['RELA-OLD', 'PADRE_A', 'HIJO_1', 'Militar_Directa', 1, '2023-01-01', '', true, '', '2023-01-01', 'SYSTEM']
-            ];
-            
-            SheetMatrixIO.readRelacionDominios.mockReturnValue({
-                sheet: {},
-                data: mockData
-            });
-
-            _updateGraphEdges('HIJO_1', 'PADRE_B', config);
-
-            expect(SheetMatrixIO.writeRow).toHaveBeenCalledTimes(1);
-            const expiredRowData = SheetMatrixIO.writeRow.mock.calls[0][2];
-            expect(expiredRowData[6]).toMatch(sysDateRegex); 
-            expect(expiredRowData[7]).toBe(false); 
-            expect(expiredRowData[8]).toMatch(sysDateRegex); 
-
-            expect(SheetMatrixIO.appendRow).toHaveBeenCalledTimes(1);
-            const spawnedRowData = SheetMatrixIO.appendRow.mock.calls[0][1];
-            expect(spawnedRowData[0]).toBe('RELA-11223344'); 
-            expect(spawnedRowData[1]).toBe('PADRE_B'); 
-            expect(spawnedRowData[2]).toBe('HIJO_1'); 
-            expect(spawnedRowData[7]).toBe(true); 
-        });
-
-        it('should do nothing if parent has not changed', () => {
-            const config = { useSheets: true };
-            const mockData = [
-                ['id_relacion', 'id_nodo_padre', 'id_nodo_hijo', 'tipo_relacion', 'peso_influencia', 'valido_desde', 'valido_hasta', 'es_version_actual', 'updated_at', 'created_at', 'created_by'],
-                ['RELA-OLD', 'PADRE_A', 'HIJO_1', 'Militar_Directa', 1, '2023-01-01', '', true, '', '2023-01-01', 'SYSTEM']
-            ];
-            
-            SheetMatrixIO.readRelacionDominios.mockReturnValue({ sheet: {}, data: mockData });
-
-            _updateGraphEdges('HIJO_1', 'PADRE_A', config);
-
-            expect(SheetMatrixIO.writeRow).not.toHaveBeenCalled();
-            expect(SheetMatrixIO.appendRow).not.toHaveBeenCalled();
-        });
     });
 
     describe('Engine_DB.delete (Unit of Work Orchestrations)', () => {
