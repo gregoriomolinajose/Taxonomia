@@ -132,6 +132,18 @@
                                 return;
                             }
 
+                            // [Optimization S57.6] Global DataStore Hit: Avoid fetching if already populated in DataStore
+                            if (window.DataStore && apiMethod === 'getInitialPayload' && apiArgs.length > 0) {
+                                const entityName = apiArgs[0];
+                                const storeData = window.DataStore.get(entityName);
+                                if (storeData && Array.isArray(storeData) && storeData.length > 0) {
+                                    console.log(`[FormEngine_Resolvers] Cache Hit en DataStore para ${entityName}. Usando ${storeData.length} registros locales.`);
+                                    EngineResolvers._cache[cacheKey] = storeData;
+                                    dispatchHydration(field, storeData);
+                                    return resolve();
+                                }
+                            }
+
                             // 3. Cache Miss: Execute and store the Promise
                             const fetchPromise = window.DataAPI.call(apiMethod, ...apiArgs)
                                 .then(opts => {

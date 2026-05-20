@@ -178,16 +178,17 @@ class TXSearchable extends HTMLElement {
             this._selectedState = String(val);
         }
         this._scheduleRender();
-        this.dispatchSelection();
+        this.dispatchSelection(false);
     }
 
-    dispatchSelection() {
+    dispatchSelection(isUserEvent = false) {
         const payload = this.getValidatedValue();
         const ev = new CustomEvent('txChange', {
             detail: {
                 value: payload,
                 entity: this._entityName,
-                isMultiple: this._isMultiple
+                isMultiple: this._isMultiple,
+                isUserEvent: isUserEvent
             },
             bubbles: true,
             composed: true // Permite que el evento cruce boundaries
@@ -219,7 +220,7 @@ class TXSearchable extends HTMLElement {
                 
                 if (this._selectedState !== null) {
                     this._selectedState = null;
-                    this.dispatchSelection();
+                    this.dispatchSelection(true);
                     this._scheduleRender();
                 }
             });
@@ -246,7 +247,7 @@ class TXSearchable extends HTMLElement {
                     if (rawVal.trim() === '' && !this._isMultiple) {
                         if (this._selectedState !== null) {
                             this._selectedState = null;
-                            this.dispatchSelection(); // Avisar a formulario (FormRenderer)
+                            this.dispatchSelection(true); // Avisar a formulario (FormRenderer)
                             this._scheduleRender();
                         }
                         return;
@@ -428,13 +429,14 @@ class TXSearchable extends HTMLElement {
     // ===============================================
     // 4. Communication Interface
     // ===============================================
-    dispatchSelection() {
+    dispatchSelection(isUserEvent = false) {
         const payload = this.getValidatedValue();
         const ev = new CustomEvent('txChange', {
             detail: {
                 value: payload,
                 entity: this._entityName,
-                isMultiple: this._isMultiple
+                isMultiple: this._isMultiple,
+                isUserEvent: isUserEvent
             },
             bubbles: true,
             composed: true // Atraviesa arquitecturas de Shadow DOM superiores si fuésemos encapsulados
@@ -574,7 +576,7 @@ class TXSearchable extends HTMLElement {
         }
         
         this._scheduleRender();
-        this.dispatchSelection(); 
+        this.dispatchSelection(true); 
     }
 
     _getSharedOverlayHtml(isMob) {
@@ -897,7 +899,7 @@ class TXSearchable extends HTMLElement {
                     this._temporaryBlurFlag = false;
                     
                     this._scheduleRender(); // Reflejar cuenta externamente
-                    this.dispatchSelection(); // S41.9: Zero-Latency Live Syncing
+                    this.dispatchSelection(true); // S41.9: Zero-Latency Live Syncing
                 });
             } else {
                 const isSelected = String(this._selectedState) === idVal;
@@ -912,7 +914,7 @@ class TXSearchable extends HTMLElement {
                     this._temporaryBlurFlag = false; 
                     
                     this._scheduleRender();
-                    this.dispatchSelection(); // Disparo automático inmediato si es Single
+                    this.dispatchSelection(true); // Disparo automático inmediato si es Single
                     
                     if (this._inlineMode) {
                         this._closeInlineMode();
@@ -1085,7 +1087,7 @@ class TXSearchable extends HTMLElement {
                                     this.buildListItems(this._searchTerm || '');
                                 }
                                 
-                                this.dispatchSelection();
+                                this.dispatchSelection(true);
                             });
                         } else {
                             removeBtn.disabled = true;

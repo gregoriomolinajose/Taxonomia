@@ -22,7 +22,8 @@
         if (componentConfig.contextId) node.setAttribute('context-id', componentConfig.contextId);
         
         // Atributos de Solo Lectura (Readonly / Disabled)
-        if (fieldDef.readonly === true || componentConfig.readonly === true || fieldDef.disabled === true) {
+        const isReadonly = componentConfig.readonly !== undefined ? componentConfig.readonly : (fieldDef.readonly === true || fieldDef.disabled === true);
+        if (isReadonly) {
             node.setAttribute('disabled', 'true');
         }
         
@@ -53,7 +54,12 @@
 
         // Retransmisión al motor del ABAC Form
         node.addEventListener('txChange', (e) => {
-            node.dispatchEvent(new CustomEvent('ionChange', { detail: { value: e.detail.value } }));
+            node.dispatchEvent(new CustomEvent('ionChange', { 
+                detail: { 
+                    value: e.detail.value, 
+                    isUserEvent: !!e.detail.isUserEvent 
+                } 
+            }));
             
             if (localEventBus && typeof localEventBus.publish === 'function') {
                 const evtName = isMulti ? 'MULTISELECT_CHANGED' : 'SINGLESELECT_CHANGED';
