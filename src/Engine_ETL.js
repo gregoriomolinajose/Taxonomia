@@ -132,13 +132,21 @@ var Engine_ETL = (function() {
             .setAllowInvalid(true)
             .build();
           sheet.getRange(2, i, 1000).setDataValidation(rule);
-        }
-        if (colName === 'equipo' && equiposCatalogRange) {
+        } else if (colName === 'equipo' && equiposCatalogRange) {
           const rule = SpreadsheetApp.newDataValidation()
             .requireValueInRange(equiposCatalogRange, true)
             .setAllowInvalid(true)
             .build();
           sheet.getRange(2, i, 1000).setDataValidation(rule);
+        } else {
+          const field = schema.fields.find(f => f.name === colName);
+          if (field && field.type === 'select' && field.options && field.options.length > 0) {
+            const rule = SpreadsheetApp.newDataValidation()
+              .requireValueInList(field.options, true)
+              .setAllowInvalid(true)
+              .build();
+            sheet.getRange(2, i, 1000).setDataValidation(rule);
+          }
         }
       }
     } catch(e) {

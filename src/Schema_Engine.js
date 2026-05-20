@@ -330,7 +330,7 @@ var APP_SCHEMAS = {
       { name: "personas_asignadas", type: "relation", relationType: "hijo", targetEntity: "Persona", graphEntity: "Sys_Graph_Edges", isTemporalGraph: true, graphEdgeType: "PERSONA_EQUIPO", label: "Personas Asignadas (Célula Base)", virtual: true, uiBehavior: "subgrid", allowedRoles: ["Developer", "Tester", "Tech Lead"], width: 12 },
       ...FIELD_TEMPLATES.NAME_FIELD("Nombre de Equipo", 6),
       { name: "seudonimo", type: "text", label: "Seudónimo", required: false, width: 6 },
-      { name: "metodologia", type: "select", label: "Metodología", required: true, width: 6, options: ["Scrum", "Kanban", "Híbrido"] },
+      { name: "formas_de_trabajo", type: "select", label: "Formas de Trabajo", required: true, width: 6, options: ["Scrum", "Kanban", "Híbrido"] },
       { name: "proposito", type: "textarea", label: "Propósito", required: false, width: 12 },
       { name: "scrum_master_id", type: "relation", relationType: "padre", targetEntity: "Persona", graphEntity: "Sys_Graph_Edges", label: "Scrum Master / Team Coach", isTemporalGraph: true, graphEdgeType: "EQUIPO_SM", uiComponent: "select_single", valueField: "email", labelField: "_nombre_completo", required: false, width: 6 },
       { name: "product_owner_id", type: "relation", relationType: "padre", targetEntity: "Persona", graphEntity: "Sys_Graph_Edges", label: "Product Owner", isTemporalGraph: true, graphEdgeType: "EQUIPO_PO", uiComponent: "select_single", valueField: "email", labelField: "_nombre_completo", required: false, width: 6 },
