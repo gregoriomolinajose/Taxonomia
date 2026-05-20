@@ -228,7 +228,7 @@
                     const isEmptyValue = val === undefined || val === null || val === '' || (Array.isArray(val) && val.length === 0);
                     if (fMeta && fMeta.isTemporalGraph && window.Graph_Utils && isEmptyValue) {
                         const currentPK = r[pkCol];
-                        const resolvedLink = window.Graph_Utils.resolveLinkedId(currentPK, edgeName);
+                        const resolvedLink = window.Graph_Utils.resolveLinkedId(currentPK, edgeName, null, false, fMeta.relationType);
                         if (resolvedLink) val = resolvedLink;
                     }
                     // Unwraps Graph/Relation Array [{id: "EQ-1"}] checking ANY object property or flat value

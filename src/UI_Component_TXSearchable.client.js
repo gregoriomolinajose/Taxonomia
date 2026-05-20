@@ -61,7 +61,7 @@ class TXSearchable extends HTMLElement {
             const sFieldMeta = window.Graph_Utils.getTemporalEdgeMeta(targetEntity, subtitleField);
             
             if (sFieldMeta) {
-                localSubtitleId = window.Graph_Utils.resolveLinkedId(idVal, sFieldMeta.graphEdgeType, this.getAttribute('context-id'));
+                localSubtitleId = window.Graph_Utils.resolveLinkedId(idVal, sFieldMeta.graphEdgeType, this.getAttribute('context-id'), false, sFieldMeta.relationType);
             }
         }
 

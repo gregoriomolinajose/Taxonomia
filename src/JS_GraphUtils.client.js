@@ -39,13 +39,16 @@ window.Graph_Utils = (function () {
 
     /**
      * Resolves the linked Entity ID across a temporal graph edge.
-     * Checks both directions (Origen <-> Destino).
+     * Checks both directions (Origen <-> Destino) or only the requested direction if relationType is provided.
      * 
      * @param {string} localRecordId - The ID of the record traversing the graph
      * @param {string} edgeType - The relationship identifier (e.g. 'CARGO_PERSONA')
+     * @param {string} contextId - Optional context ID to include draft edges
+     * @param {boolean} strictContext - If true, restricts to contextId
+     * @param {string} relationType - Optional 'padre' or 'hijo' to restrict traversal direction
      * @returns {string|null} The linked record ID, or null if not found
      */
-    function resolveLinkedId(localRecordId, edgeType, contextId = null, strictContext = false) {
+    function resolveLinkedId(localRecordId, edgeType, contextId = null, strictContext = false, relationType = null) {
         if (!_graphIndex) _buildIndex();
         if (!_graphIndex) return null; // Fallback safely if DataStore is missing
 
@@ -69,6 +72,24 @@ window.Graph_Utils = (function () {
             return true;
         };
 
+        // If relationType is provided, enforce lookup direction
+        if (relationType === 'padre') {
+            if (_graphIndex.byDestino[lId]) {
+                const match = _graphIndex.byDestino[lId].find(isValidEdge);
+                if (match) return match.id_nodo_padre;
+            }
+            return null;
+        }
+
+        if (relationType === 'hijo') {
+            if (_graphIndex.byOrigen[lId]) {
+                const match = _graphIndex.byOrigen[lId].find(isValidEdge);
+                if (match) return match.id_nodo_hijo;
+            }
+            return null;
+        }
+
+        // Fallback: search both directions for backward compatibility
         // 1. Buscamos asumiendo que el ID local es el Destino
         if (_graphIndex.byDestino[lId]) {
             const match = _graphIndex.byDestino[lId].find(isValidEdge);
@@ -90,9 +111,11 @@ window.Graph_Utils = (function () {
      * @param {string} localRecordId - The ID of the record traversing the graph
      * @param {string} edgeType - The relationship identifier
      * @param {string} contextId - Optional context ID to include draft edges
+     * @param {boolean} strictContext - If true, restricts to contextId
+     * @param {string} relationType - Optional 'padre' or 'hijo' to restrict traversal direction
      * @returns {Array<string>} An array of linked record IDs
      */
-    function resolveAllLinkedIds(localRecordId, edgeType, contextId = null, strictContext = false) {
+    function resolveAllLinkedIds(localRecordId, edgeType, contextId = null, strictContext = false, relationType = null) {
         if (!_graphIndex) _buildIndex();
         if (!_graphIndex) return [];
 
@@ -117,12 +140,23 @@ window.Graph_Utils = (function () {
             return true;
         };
 
-        if (_graphIndex.byDestino[lId]) {
-            _graphIndex.byDestino[lId].filter(isValidEdge).forEach(e => results.push(e.id_nodo_padre));
-        }
+        if (relationType === 'padre') {
+            if (_graphIndex.byDestino[lId]) {
+                _graphIndex.byDestino[lId].filter(isValidEdge).forEach(e => results.push(e.id_nodo_padre));
+            }
+        } else if (relationType === 'hijo') {
+            if (_graphIndex.byOrigen[lId]) {
+                _graphIndex.byOrigen[lId].filter(isValidEdge).forEach(e => results.push(e.id_nodo_hijo));
+            }
+        } else {
+            // Fallback: search both directions for backward compatibility
+            if (_graphIndex.byDestino[lId]) {
+                _graphIndex.byDestino[lId].filter(isValidEdge).forEach(e => results.push(e.id_nodo_padre));
+            }
 
-        if (_graphIndex.byOrigen[lId]) {
-            _graphIndex.byOrigen[lId].filter(isValidEdge).forEach(e => results.push(e.id_nodo_hijo));
+            if (_graphIndex.byOrigen[lId]) {
+                _graphIndex.byOrigen[lId].filter(isValidEdge).forEach(e => results.push(e.id_nodo_hijo));
+            }
         }
 
         return [...new Set(results)]; // Deduplicate

@@ -114,7 +114,7 @@
                         ).map(e => window.UI_FormUtils.normalizeId(field.relationType === 'padre' ? e.id_nodo_padre : e.id_nodo_hijo));
                     } else if (window.Graph_Utils && window.Graph_Utils.resolveAllLinkedIds) {
                         // S54.5 Fix Contextual Graph Leak: Enforce state-aware graph index to respect 'Borrador' boundaries
-                        initialValues = window.Graph_Utils.resolveAllLinkedIds(currentPK, edgeName, contextId, strictContext);
+                        initialValues = window.Graph_Utils.resolveAllLinkedIds(currentPK, edgeName, contextId, strictContext, field.relationType);
                     } else if (field.relationType === 'padre') {
                         initialValues = aristas.filter(e => window.UI_FormUtils.normalizeId(e.id_nodo_hijo) === window.UI_FormUtils.normalizeId(currentPK) && String(e.tipo_relacion).toUpperCase() === edgeName).map(e => window.UI_FormUtils.normalizeId(e.id_nodo_padre));
                     } else if (field.relationType === 'hijo') {

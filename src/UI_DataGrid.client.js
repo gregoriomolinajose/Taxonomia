@@ -706,7 +706,7 @@
                 }
 
                 if (field.relationType === 'padre') {
-                    let parentId = window.Graph_Utils.resolveLinkedId(rowId, edgeName);
+                    let parentId = window.Graph_Utils.resolveLinkedId(rowId, edgeName, null, false, field.relationType);
                     if (parentId || joinedLabel) {
                         const trgLabelKey = field.labelField || (window.ENTITY_META && window.ENTITY_META[field.targetEntity] && window.ENTITY_META[field.targetEntity].titleField) || 'nombre';
                         const targetMemo = this._buildTargetMemo(field.targetEntity, trgLabelKey);
@@ -721,7 +721,7 @@
                         metaNodes.singleNodes.push({ label: entityLabel, value: parentName, icon: icon });
                     }
                 } else if (field.relationType === 'hijo' && field.topologyCardinality === '1:N') {
-                    const childrenArray = window.Graph_Utils.resolveAllLinkedIds(rowId, edgeName);
+                    const childrenArray = window.Graph_Utils.resolveAllLinkedIds(rowId, edgeName, null, false, field.relationType);
                     metaNodes.multiNodes.push({ label: entityLabel, count: childrenArray.length, icon: icon });
                 }
             });
@@ -764,7 +764,7 @@
             // 1. Resolve Graph Edge pointer if it's a Temporal Graph edge AND physically empty
             if (isEmptyValue && fieldMeta.isTemporalGraph && window.Graph_Utils) {
                 const edgeName = (fieldMeta.graphEdgeType || fieldMeta.name).toUpperCase();
-                resolvedVal = window.Graph_Utils.resolveLinkedId(currentPK, edgeName);
+                resolvedVal = window.Graph_Utils.resolveLinkedId(currentPK, edgeName, null, false, fieldMeta.relationType);
             }
             
             // 2. Transmute the physical ID explicitly to the schema's labelField
