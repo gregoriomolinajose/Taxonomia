@@ -17,15 +17,15 @@ Integrate bulk import capabilities directly into the Taxonomía Wizard to stream
 
 ## Planned Stories
 - [x] S56.1 - Reestructuración del Wizard ✓: Modificar la configuración del stepper para insertar el Paso 2 (Equipos) y Paso 3 (Personas), desplazando el Canvas al Paso 4.
-- **S56.2 - UI de Importación Embebida (Inline):** Adaptar el diseño actual del modal de carga masiva para que se renderice directamente en el contenido del paso del wizard, sin usar un modal.
-- **S56.3 - Inspección de Archivos Google Sheets:** Implementar la lógica para leer, validar o extraer metadatos de un Google Sheet a partir de su URL o ID antes de la importación.
-- **S56.4 - Integración de Ejecución ETL:** Conectar el botón "Cargar Registros" del paso del wizard con el motor ETL existente para procesar la importación de Equipos y Personas en sus respectivos pasos.
+- [x] S56.2 - UI de Importación Embebida (Inline) ✓: Adaptar el diseño actual del modal de carga masiva para que se renderice directamente en el contenido del paso del wizard, sin usar un modal.
+- [x] S56.3 - Inspección de Archivos Google Sheets ✓: Implementar la lógica para leer, validar o extraer metadatos de un Google Sheet a partir de su URL o ID antes de la importación.
+- [x] S56.4 - Integración de Ejecución ETL ✓: Conectar el botón "Cargar Registros" del paso del wizard con el motor ETL existente para procesar la importación de Equipos y Personas en sus respectivos pasos.
 
 ## Done Criteria
-- The Taxonomía Wizard has 4 steps: Configuración General, Importar Equipos, Importar Personas, Taxonomía Canvas.
-- Users can paste a Google Sheets URL in Step 2 and Step 3 and the system can inspect it.
-- Users can execute a bulk import directly from the wizard steps without opening a modal.
-- Imported entities are correctly associated with the current Taxonomía context.
+- [x] The Taxonomía Wizard has 4 steps: Configuración General, Importar Equipos, Importar Personas, Taxonomía Canvas.
+- [x] Users can paste a Google Sheets URL in Step 2 and Step 3 and the system can inspect it.
+- [x] Users can execute a bulk import directly from the wizard steps without opening a modal.
+- [x] Imported entities are correctly associated with the current Taxonomía context.
 
 ## Implementation Plan
 
@@ -51,6 +51,6 @@ Integrate bulk import capabilities directly into the Taxonomía Wizard to stream
 | Story | Size | Status | Actual | Velocity | Notes |
 |-------|------|--------|--------|----------|-------|
 | S56.1 | S | Done | ~1h | Fast | Foundation |
-| S56.2 | M | To Do | - | - | UI shell |
-| S56.3 | M | To Do | - | - | Google API integration |
-| S56.4 | L | To Do | - | - | Backend ETL orchestration |
+| S56.2 | M | Done | ~2h | Fast | UI shell & refactoring |
+| S56.3 | M | Done | ~1h | Fast | Google API integration & Backend UI hooks |
+| S56.4 | L | Done | ~1h | Fast | Backend ETL orchestration |

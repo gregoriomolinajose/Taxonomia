@@ -348,7 +348,20 @@
         global.UI_Factory.registerBuilder('select', (f) => global.UI_Factory.buildSelect(f));
         global.UI_Factory.registerBuilder('divider', (f) => global.UI_Factory.buildDivider(f));
         global.UI_Factory.registerBuilder('avatar', (f) => global.UI_Factory.buildAvatar(f));
-        global.UI_Factory.registerBuilder('bulk_importer', (f) => global.UI_Factory.buildBulkImporter(f));
+        global.UI_Factory.registerBuilder('uiComponent', (f, e, d, bus, currentEditId) => {
+            if (f.uiComponent === 'bulk_importer' && typeof window.UI_BulkImporter !== 'undefined') {
+                const importer = new window.UI_BulkImporter({
+                    entityName: f.targetEntity || e,
+                    contextId: currentEditId
+                });
+                return importer.render();
+            }
+            const fallback = document.createElement('div');
+            fallback.style.padding = '20px';
+            fallback.style.color = 'var(--ion-color-medium)';
+            fallback.textContent = 'Componente UI no encontrado: ' + f.uiComponent;
+            return fallback;
+        });
         // Specialized builders registrations are now handled by isolated plugins
         // (UI_Component_RelationBuilder, UI_Component_DynamicList, etc.)
 

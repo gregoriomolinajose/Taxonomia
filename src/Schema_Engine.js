@@ -178,8 +178,8 @@ var APP_SCHEMAS = {
       { name: "nombre", type: "text", label: "Nombre de la Taxonomía", required: true, width: 12, section: "Taxonomía de Producto" },
       { name: "descripcion", type: "textarea", label: "Descripción", required: false, width: 12, section: "Taxonomía de Producto" },
       { name: "id_unidad_negocio", type: "hidden", relationType: "padre", targetEntity: "Unidad_Negocio", graphEntity: "Sys_Graph_Edges", valueField: "id_unidad_negocio", labelField: "nombre", isTemporalGraph: true, graphEdgeType: "TAXONOMIA_UNIDAD", topologyCardinality: "1:N", workspaceMode: false, required: false },
-      { name: "info_equipos", type: "bulk_importer", label: "Carga la plantilla masiva de equipos en el contenedor.", width: 12, section: "Importar Equipos", targetEntity: "Equipo" },
-      { name: "info_personas", type: "bulk_importer", label: "Carga la plantilla masiva de personas en el contenedor.", width: 12, section: "Importar Personas", targetEntity: "Persona" },
+      { name: "info_equipos", type: "uiComponent", uiComponent: "bulk_importer", targetEntity: "Equipo", width: 12, section: "Importar Equipos" },
+      { name: "info_personas", type: "uiComponent", uiComponent: "bulk_importer", targetEntity: "Persona", width: 12, section: "Importar Personas" },
       { name: "info_canvas", type: "divider", label: "Interactúa con el lienzo a tu derecha para modelar las capacidades y productos.", width: 12, section: "Arquitectura de Portafolio" }
     ]
   },
