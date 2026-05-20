@@ -30,6 +30,22 @@ window.UI_FormSubmitter = class UI_FormSubmitter {
             this.isSaving = true;
             this.submitBtn.disabled = true;
 
+            // S57.X: Guardrail: Skip save if no changes in UPDATE mode
+            const action = this._internalRetryId ? 'update' : 'create';
+            if (action === 'update' && !this.hasChanges()) {
+                console.log("[FormSubmitter] Sin cambios detectados. Omitiendo guardado en BD.");
+                this.isSaving = false;
+                this.submitBtn.disabled = false;
+                if (window.AppEventBus) {
+                    window.AppEventBus.publish('FORM::SUBMIT_SUCCESS', { 
+                        entityName: this.entityName, 
+                        response: { status: 'success', action: 'none', message: 'No changes detected.' }, 
+                        isSilent: this._isSilent 
+                    });
+                }
+                return;
+            }
+
             this.originalBtnChildren = Array.from(this.submitBtn.childNodes);
             window.DOM.clear(this.submitBtn);
             
@@ -40,48 +56,7 @@ window.UI_FormSubmitter = class UI_FormSubmitter {
             // Sincronía background habilitada.
 
             // LECTURA JIT (Evita Detached Nodes)
-            const activeForm = this.modal || document.getElementById('app-container');
-            const freshInputs = activeForm.querySelectorAll('ion-input, ion-textarea, ion-select, input[type="hidden"]');
-            const payload = {};
-            
-            freshInputs.forEach(input => {
-                const name = input.getAttribute('name');
-                if (name && !input.closest('[data-dynamic-list]') && !name.toLowerCase().startsWith('ion-')) {
-                    let val = input.value;
-                    const schemaField = this.fields ? this.fields.find(f => f.name === name) : null;
-                    
-                    if (schemaField) {
-                        if (schemaField.type === 'relation' || schemaField.uiComponent === 'select_single') {
-                            let strVal = (val === null || val === undefined) ? "" : String(val).trim();
-                            if (strVal.toLowerCase() === "null" || strVal.toLowerCase() === "undefined") strVal = "";
-                            payload[name] = strVal;
-                        } else {
-                            let cleanVal = (typeof val === 'string') ? val.trim() : val;
-                            if (cleanVal !== undefined && cleanVal !== null && cleanVal !== '') {
-                                payload[name] = cleanVal;
-                            }
-                        }
-                    } else {
-                        let cleanVal = (typeof val === 'string') ? val.trim() : val;
-                        if (cleanVal !== undefined && cleanVal !== null && cleanVal !== '') {
-                            payload[name] = cleanVal;
-                        }
-                    }
-                }
-            });
-
-            // S30.11 - Protocolo de Extracción Nodal Frontend (Duck-Typing API)
-            // Extrae datos de WebComponents delegando a su función getValidatedValue local.
-            const nodalComponents = activeForm.querySelectorAll('[data-form-component]');
-            nodalComponents.forEach(cmp => {
-                const name = cmp.getAttribute('data-form-component');
-                if (name && typeof cmp.getValidatedValue === 'function') {
-                    const val = cmp.getValidatedValue();
-                    if (val !== undefined) {
-                        payload[name] = val;
-                    }
-                }
-            });
+            let payload = this.extractPayload();
 
             // S37.3: Identity Collision Prevention (Uniqueness Checker)
             if (window.DataStore && this.fields) {
@@ -151,7 +126,7 @@ window.UI_FormSubmitter = class UI_FormSubmitter {
             delete payload.updated_at;
             delete payload.updated_by;
 
-            const action = this._internalRetryId ? 'update' : 'create';
+            // action is already declared at the top of the listener
             
             // [S50.2] Inyección Atómica de Borradores (Atomic Drafts)
             // Cuando estamos en el Wizard de Taxonomía, forzamos estado y contexto a los hijos
@@ -495,6 +470,9 @@ window.UI_FormSubmitter = class UI_FormSubmitter {
     _performSuccessCleanup(response, isInlineRendered) {
         this._revertButtonState();
         
+        // Capture the new saved state as the initial state for subsequent transitions
+        this.captureInitialState();
+        
         const wasSilent = this._isSilent; // Cachear para evitar que los suscriptores muten el estado prematuramente
 
         if (!wasSilent) {
@@ -542,5 +520,86 @@ window.UI_FormSubmitter = class UI_FormSubmitter {
         await window.PresentSafe(toast);
     }
 
+    extractPayload() {
+        const activeForm = this.modal || document.getElementById('app-container');
+        if (!activeForm) return {};
+        const freshInputs = activeForm.querySelectorAll('ion-input, ion-textarea, ion-select, input[type="hidden"]');
+        const payload = {};
+        
+        freshInputs.forEach(input => {
+            const name = input.getAttribute('name');
+            if (name && !input.closest('[data-dynamic-list]') && !name.toLowerCase().startsWith('ion-')) {
+                let val = input.value;
+                const schemaField = this.fields ? this.fields.find(f => f.name === name) : null;
+                
+                if (schemaField) {
+                    if (schemaField.type === 'relation' || schemaField.uiComponent === 'select_single') {
+                        let strVal = (val === null || val === undefined) ? "" : String(val).trim();
+                        if (strVal.toLowerCase() === "null" || strVal.toLowerCase() === "undefined") strVal = "";
+                        payload[name] = strVal;
+                    } else {
+                        let cleanVal = (typeof val === 'string') ? val.trim() : val;
+                        if (cleanVal !== undefined && cleanVal !== null && cleanVal !== '') {
+                            payload[name] = cleanVal;
+                        }
+                    }
+                } else {
+                    let cleanVal = (typeof val === 'string') ? val.trim() : val;
+                    if (cleanVal !== undefined && cleanVal !== null && cleanVal !== '') {
+                        payload[name] = cleanVal;
+                    }
+                }
+            }
+        });
+
+        const nodalComponents = activeForm.querySelectorAll('[data-form-component]');
+        nodalComponents.forEach(cmp => {
+            const name = cmp.getAttribute('data-form-component');
+            if (name && typeof cmp.getValidatedValue === 'function') {
+                const val = cmp.getValidatedValue();
+                if (val !== undefined) {
+                    payload[name] = val;
+                }
+            }
+        });
+
+        return payload;
+    }
+
+    captureInitialState() {
+        this._initialPayload = this.extractPayload();
+    }
+
+    hasChanges() {
+        if (!this._initialPayload) return true;
+        
+        const currentPayload = this.extractPayload();
+        const keys1 = Object.keys(this._initialPayload);
+        const keys2 = Object.keys(currentPayload);
+        const allKeys = new Set([...keys1, ...keys2]);
+        
+        for (const key of allKeys) {
+            const val1 = this._initialPayload[key];
+            const val2 = currentPayload[key];
+            
+            if (!this._areEqual(val1, val2)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    _areEqual(val1, val2) {
+        if (val1 === val2) return true;
+        const isEmpty1 = (val1 === null || val1 === undefined || val1 === '');
+        const isEmpty2 = (val2 === null || val2 === undefined || val2 === '');
+        if (isEmpty1 && isEmpty2) return true;
+        if (isEmpty1 !== isEmpty2) return false;
+        
+        if (typeof val1 === 'object' && typeof val2 === 'object') {
+            return JSON.stringify(val1) === JSON.stringify(val2);
+        }
+        return String(val1).trim() === String(val2).trim();
+    }
 
 };

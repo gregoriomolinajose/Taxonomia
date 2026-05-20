@@ -857,6 +857,19 @@
                     input.dispatchEvent(new CustomEvent('FormHydrated', { detail: valToSet, bubbles: false }));
                 }
             });
+
+            // S57.X: Capture initial state for dirty-checking
+            setTimeout(() => {
+                const allButtons = Array.from(container.querySelectorAll('ion-button'));
+                const parentModal = container.closest('.drawer-panel') || container.parentElement;
+                if (parentModal) {
+                    allButtons.push(...Array.from(parentModal.querySelectorAll('ion-button')));
+                }
+                const submitterBtn = allButtons.find(btn => btn._formSubmitterInstance);
+                if (submitterBtn && submitterBtn._formSubmitterInstance) {
+                    submitterBtn._formSubmitterInstance.captureInitialState();
+                }
+            }, 150);
         };
 
         global.openEditForm = async function (id, customEntityName = null, overrideOptions = {}) {
