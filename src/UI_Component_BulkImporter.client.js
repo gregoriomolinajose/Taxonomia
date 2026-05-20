@@ -109,15 +109,12 @@ window.UI_BulkImporter = class UI_BulkImporter {
             <div class="etl-step-badge current">2</div>
             <div class="etl-step-content">
                 <div class="etl-step-title">Pegar URL, ID de la hoja</div>
-                <div class="etl-step-desc">Copia el enlace desde la barra de tu navegador o inspecciona directamente desde google drive.</div>
+                <div class="etl-step-desc">Copia el enlace desde la barra de tu navegador.</div>
                 <div style="position: relative; margin-bottom: 8px;">
                     <ion-input id="etl-drive-url" fill="outline" label="Enlace del archivo Google Sheets" label-placement="floating" error-text="La URL proporcionada no es válida" placeholder="https://docs.google.com/spreadsheets/..."></ion-input>
                     <div style="position: absolute; right: 0; top: 0; height: 56px; display: flex; align-items: center; padding-right: 4px; z-index: 10;">
                         <ion-button fill="clear" color="primary" id="btn-open-drive-link" style="display:none; margin:0;" title="Abrir archivo">
                             <ion-icon name="open-outline"></ion-icon>
-                        </ion-button>
-                        <ion-button fill="clear" color="medium" id="btn-inspect-drive" style="margin:0;">
-                            <ion-icon name="search-outline"></ion-icon>
                         </ion-button>
                     </div>
                 </div>
@@ -232,53 +229,6 @@ window.UI_BulkImporter = class UI_BulkImporter {
             }
         });
         
-        container.querySelector('#btn-inspect-drive').addEventListener('click', async () => {
-            const urlInput = container.querySelector('#etl-drive-url');
-            const val = (urlInput.value || '').trim();
-            const isValid = val.length > 0 && /^https?:\/\/docs\.google\.com\/spreadsheets\/d\/[a-zA-Z0-9-_]+/.test(val);
-            if (!isValid) {
-                this._showToast('Por favor introduce una URL válida de Google Sheets primero.', 'warning');
-                return;
-            }
-            
-            try {
-                this._showToast('Inspeccionando archivo...', 'primary');
-                const btnInspect = container.querySelector('#btn-inspect-drive');
-                btnInspect.disabled = true;
-                urlInput.disabled = true;
-                
-                const response = await window.DataAPI.call('API_Universal_Router', 'etl_inspect_sheet', entityName, { url: val });
-                
-                if (response && response.status === 'success') {
-                    const data = response.data;
-                    if (data.isValid) {
-                        this._showToast(`Archivo válido: "${data.title}"`, 'success');
-                        urlInput.setAttribute('helper-text', `Archivo válido: ${data.title} (${Math.round(data.maxOverlap * 100)}% match)`);
-                        urlInput.classList.add('ion-valid');
-                        urlInput.classList.remove('ion-invalid');
-                        
-                        const btnSyncDrive = container.querySelector('#btn-sync-drive');
-                        if (btnSyncDrive) btnSyncDrive.disabled = false;
-                    } else {
-                        this._showToast(`Advertencia: El archivo "${data.title}" no parece coincidir con el esquema esperado.`, 'warning');
-                        urlInput.setAttribute('helper-text', `Advertencia: Estructura no coincide (${Math.round(data.maxOverlap * 100)}%)`);
-                        urlInput.classList.add('ion-invalid');
-                    }
-                } else {
-                    throw new Error(response.message || 'Error desconocido');
-                }
-            } catch (err) {
-                console.error("Error inspeccionando hoja:", err);
-                this._showToast(`Error de inspección: ${err.message}`, 'danger');
-                urlInput.setAttribute('helper-text', 'Error: ' + err.message);
-                urlInput.classList.add('ion-invalid');
-            } finally {
-                const btnInspect = container.querySelector('#btn-inspect-drive');
-                btnInspect.disabled = false;
-                urlInput.disabled = false;
-            }
-        });
-
         const btnSyncDrive = container.querySelector('#btn-sync-drive');
         const urlInput = container.querySelector('#etl-drive-url');
         btnSyncDrive.disabled = true;
@@ -287,8 +237,7 @@ window.UI_BulkImporter = class UI_BulkImporter {
             const val = (e.currentTarget.value || '').trim();
             const isFormatValid = val.length > 0 && /^https?:\/\/docs\.google\.com\/spreadsheets\/d\/[a-zA-Z0-9-_]+/.test(val);
             
-            // S56.4: Disable sync button until explicitly inspected
-            btnSyncDrive.disabled = true;
+            btnSyncDrive.disabled = !isFormatValid;
             
             if (val.length > 0 && !isFormatValid) {
                 urlInput.classList.add('ion-invalid', 'ion-touched');
