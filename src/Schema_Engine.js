@@ -335,8 +335,7 @@ var APP_SCHEMAS = {
       { name: "scrum_master_id", type: "relation", relationType: "padre", targetEntity: "Persona", graphEntity: "Sys_Graph_Edges", label: "Scrum Master / Team Coach", isTemporalGraph: true, graphEdgeType: "EQUIPO_SM", uiComponent: "select_single", valueField: "email", labelField: "_nombre_completo", required: false, width: 6 },
       { name: "product_owner_id", type: "relation", relationType: "padre", targetEntity: "Persona", graphEntity: "Sys_Graph_Edges", label: "Product Owner", isTemporalGraph: true, graphEdgeType: "EQUIPO_PO", uiComponent: "select_single", valueField: "email", labelField: "_nombre_completo", required: false, width: 6 },
       { name: "rte_id", type: "relation", relationType: "padre", targetEntity: "Persona", graphEntity: "Sys_Graph_Edges", label: "Release Train Engineer (RTE)", isTemporalGraph: true, graphEdgeType: "EQUIPO_RTE", uiComponent: "select_single", valueField: "email", labelField: "_nombre_completo", required: false, width: 12 },
-      { name: "cant_team_coach", type: "number", label: "Cant. Team Coach", required: false, width: 6 },
-      { name: "total_integrantes", type: "number", label: "Total Integrantes", required: false, width: 6 }
+      { name: "url_tablero_trabajo", type: "url", label: "URL Tablero de Trabajo", required: false, width: 12 }
     ]
   },
   Persona: {

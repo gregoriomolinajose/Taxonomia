@@ -65,7 +65,7 @@
 
         global.UI_Factory.buildInput = function(field) {
             const inputEl = document.createElement('ion-input');
-            inputEl.setAttribute('type', field.type === 'number' ? 'number' : (field.type === 'date' ? 'date' : 'text'));
+            inputEl.setAttribute('type', field.type === 'number' ? 'number' : (field.type === 'date' ? 'date' : (field.type === 'url' ? 'url' : 'text')));
             
             _applyBaseAttributes(inputEl, field);
             return inputEl;
