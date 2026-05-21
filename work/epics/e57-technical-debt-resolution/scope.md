@@ -21,7 +21,7 @@ Resolver la deuda técnica principal encontrada durante el desarrollo de epicas 
 - [x] **S57.4**: Refactorización Desacoplada de Componentes Relacionales (State-Driven Web Components) ✓
 - [x] **S57.5**: Cálculo Automático de Niveles Jerárquicos y Habilitación Permanente de Nodo Padre ✓
 - [x] **S57.6**: Optimización de Reactividad y Latencia de Relaciones en el Lienzo ✓
-- [ ] **S57.7**: Desbloqueo de Relaciones en el Lienzo
+- [x] **S57.7**: Desbloqueo de Relaciones en el Lienzo ✓
 
 ## Implementation Plan
 
@@ -42,7 +42,8 @@ Resolver la deuda técnica principal encontrada durante el desarrollo de epicas 
 | 3 | S57.3 — Habilitar TXSearchable en UI jerárquica | XS | Done | 10m | | Desplegado en DEV y PROD |
 | 4 | S57.4 — Refactorización Desacoplada Web Components | L | Done | | | Desplegado en DEV y PROD |
 | 5 | S57.5 — Cálculo Automático de Niveles Jerárquicos | M | Done | | | Desplegado en DEV y PROD |
-| 6 | S57.6 — Optimización de Reactividad en Relaciones | S | Done | | | Desplegado en DEV y PROD |
+| 6 | S57.6 — Optimización de Reactividad en Relaciones | S | Done | 45m | | Desplegado en DEV y PROD |
+| 7 | S57.7 — Desbloqueo de Relaciones en el Lienzo | S | Done | 20m | | Desplegado en DEV y PROD |
 
 ## Done Criteria
 - [ ] No existen referencias a la palabra `Relacion_Dominios` en el código fuente de `/src`.
