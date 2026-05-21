@@ -136,7 +136,7 @@
             if (field.uiComponent === 'searchable_multi') {
                 if (global.UI_Factory.buildSearchableMulti) {
                     const metadataToken = (window.APP_SCHEMAS && window.APP_SCHEMAS[field.targetEntity] && window.APP_SCHEMAS[field.targetEntity].metadata) || {};
-                    const componentConfig = { iconName: metadataToken.iconName, color: metadataToken.color, contextId: contextId };
+                    const componentConfig = { iconName: metadataToken.iconName, color: metadataToken.color, contextId: contextId, readonly: isActuallyReadonly };
                     const multiNodes = global.UI_Factory.buildSearchableMulti(field, activeData, initialValues, localEventBus, componentConfig);
 
                     // S41.14 Bind Create Action
@@ -218,7 +218,7 @@
                 // S37.1 UI_Component_SearchableSingle reemplaza al framework nativo de ionic
                 // Inversion de Control: Inyectamos componentConfig de Metadatos desde afuera en vez de que el Componente de búsqueda lo escanee por sí mismo
                 const metadataToken = (window.APP_SCHEMAS && window.APP_SCHEMAS[field.targetEntity] && window.APP_SCHEMAS[field.targetEntity].metadata) || {};
-                const componentConfig = { iconName: metadataToken.iconName, color: metadataToken.color, contextId: contextId };
+                const componentConfig = { iconName: metadataToken.iconName, color: metadataToken.color, contextId: contextId, readonly: isActuallyReadonly };
                 
                 const basicSel = global.UI_Factory.buildSearchableSingle(field, filteredActiveData, initialValues, localEventBus, componentConfig);
                 
@@ -255,6 +255,13 @@
                     let originalVal = initialValues.length > 0 ? initialValues[0] : "";
                     basicSel.addEventListener('ionChange', async (ev) => {
                         const newVal = ev.detail.value;
+                        
+                        // S57.6: Ignorar eventos programáticos (evitando bloqueo en carga/hidratación)
+                        if (!ev.detail || !ev.detail.isUserEvent) {
+                            originalVal = newVal;
+                            return;
+                        }
+
                         const isNewContext = { currentEditId: currentEditId, data: data };
                         const isNewRecord = window.SubgridState ? window.SubgridState.isNewRecord(isNewContext) : (!currentEditId && (!data || !data.id_registro));
                         if (!isNewRecord && originalVal && originalVal !== "" && newVal !== originalVal) {
