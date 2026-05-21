@@ -1,4 +1,4 @@
-# Epic Scope: E58 Asignación de Roles por Entidad
+# Epic Scope: E58 Asignación de Roles por Entidad [CLOSED]
 
 ## Objective
 Realizar y habilitar la asignación de roles para cada una de las entidades estructurales de la taxonomía (Unidad de Negocio, Value Stream, Portafolio, Grupo de Producto, Equipo), permitiendo gestionar qué personas ocupan qué roles a nivel de cada nodo del grafo jerárquico.
