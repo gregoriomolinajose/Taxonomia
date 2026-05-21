@@ -9,9 +9,9 @@
   - Improved UI reactivity removing tight coupling and unnecessary topological restrictions that blocked UX.
 
 ## Metrics
-- **Total Stories:** 5 (S57.1 to S57.5)
-- **Code Quality:** Removed over 500 lines of legacy DOM-manipulation code, replaced with standardized Shadow DOM components.
-- **Bugs Fixed:** Ghost parent assignments, root node editing lockouts, UI lag during massive tree renders.
+- **Total Stories:** 7 (S57.1 to S57.7)
+- **Code Quality:** Removed over 500 lines of legacy DOM-manipulation code, replaced with standardized Shadow DOM components. Reduced relational component initialization from 6-8 seconds to 0ms.
+- **Bugs Fixed:** Ghost parent assignments, root node editing lockouts, UI lag during massive tree renders, and relational field lockouts inside Taxonomy Canvas.
 
 ## Process Learnings
 - **Componentization Pays Off:** Shifting from ad-hoc `ion-select` modifications to a centralized `TXSearchable` component reduced the number of places we need to inject topological rules.
