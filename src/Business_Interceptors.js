@@ -352,6 +352,96 @@ var Business_Interceptors = (function() {
             });
         },
 
+        /**
+         * AutoProvisionEntityRoles
+         * Auto-provisiona Roles y genera aristas PERSONA_ROL basados en campos de asignación de entidades (Portafolio, Equipo, etc.)
+         */
+        AutoProvisionEntityRoles: function(entityName, items) {
+            const ROLE_MAPPINGS = {
+                Value_Stream: { field: 'dueno_vs_id', nombre: 'Dueño del Value Stream', nombre_ingles: 'Value Stream Owner', color_icono: 'tertiary', especialidad: 'Negocio' },
+                Portafolio: { field: 'gerente_portafolio_id', nombre: 'Gerente de Portafolio', nombre_ingles: 'Portfolio Manager', color_icono: 'danger', especialidad: 'Negocio' },
+                Grupo_Productos: { field: 'gerente_producto_id', nombre: 'Gerente de Producto', nombre_ingles: 'Product Manager', color_icono: 'dark', especialidad: 'Producto' },
+                Equipo: { field: 'product_owner_id', nombre: 'Dueño de Producto', nombre_ingles: 'Product Owner', color_icono: 'success', especialidad: 'Producto' }
+            };
+
+            const mapping = ROLE_MAPPINGS[entityName];
+            if (!mapping) return;
+
+            let dbRoles = {};
+            if (typeof Engine_DB !== 'undefined') {
+                const res = Engine_DB.list('Rol', 'objects', { skipCache: true });
+                if (res && res.rows) {
+                    res.rows.forEach(r => {
+                        dbRoles[String(r.nombre).trim().toLowerCase()] = r.id_rol;
+                    });
+                }
+            }
+
+            let sysEdges = [];
+            if (typeof Engine_DB !== 'undefined') {
+                sysEdges = Engine_DB.list('Sys_Graph_Edges', 'objects').rows || [];
+            }
+
+            let edgesBatch = [];
+            const sysDate = new Date().toISOString();
+
+            items.forEach(p => {
+                const personId = p[mapping.field];
+                if (personId && String(personId).trim() !== '') {
+                    const normName = mapping.nombre.toLowerCase();
+                    let targetRoleId = dbRoles[normName];
+                    
+                    if (!targetRoleId) {
+                        targetRoleId = "ROLE-" + [...Array(8)].map(() => Math.floor(Math.random() * 16).toString(16).toUpperCase()).join('');
+                        let stubRole = {
+                            id_rol: targetRoleId,
+                            nombre: mapping.nombre,
+                            nombre_ingles: mapping.nombre_ingles,
+                            color_icono: mapping.color_icono,
+                            especialidad: mapping.especialidad,
+                            estado: "Activo"
+                        };
+                        if (typeof Engine_DB !== 'undefined') {
+                            try { 
+                                Engine_DB.upsertBatch('Rol', [stubRole], { muteTriggers: true }); 
+                            } catch(e) {
+                                if (typeof console !== 'undefined') console.error(`Error persistiendo rol ${mapping.nombre}: ${e.message}`);
+                                return;
+                            }
+                        }
+                        dbRoles[normName] = targetRoleId;
+                    }
+                    
+                    const childId = String(personId).trim();
+                    // Para PERSONA_ROL, el nodo padre es el Rol y el nodo hijo es la Persona.
+                    const edgeExists = sysEdges.some(e => e.es_version_actual !== false && e.tipo_relacion === 'PERSONA_ROL' && String(e.id_nodo_padre).trim() === targetRoleId && String(e.id_nodo_hijo).trim() === childId);
+                    
+                    if (!edgeExists) {
+                        sysEdges.push({ es_version_actual: true, tipo_relacion: 'PERSONA_ROL', id_nodo_padre: targetRoleId, id_nodo_hijo: childId });
+                        edgesBatch.push({
+                            id_relacion: "RELA-" + [...Array(8)].map(() => Math.floor(Math.random() * 16).toString(16).toUpperCase()).join(''),
+                            id_nodo_padre: targetRoleId,
+                            id_nodo_hijo: childId,
+                            tipo_relacion: 'PERSONA_ROL',
+                            valido_desde: sysDate,
+                            valido_hasta: "",
+                            es_version_actual: true,
+                            estado: "Activo"
+                        });
+                    }
+                }
+            });
+
+            if (edgesBatch.length > 0 && typeof Engine_DB !== 'undefined') {
+                try { 
+                    Engine_DB.upsertBatch('Sys_Graph_Edges', edgesBatch, { muteTriggers: true }); 
+                    if (typeof Logger !== 'undefined') Logger.log(`Se generaron ${edgesBatch.length} relaciones PERSONA_ROL para ${mapping.nombre}.`);
+                } catch(e) {
+                    if (typeof console !== 'undefined') console.error(`[CRITICAL] Error persistiendo aristas PERSONA_ROL: ${e.message}`);
+                }
+            }
+        },
+
     };
 
     function apply(entityName, items) {
