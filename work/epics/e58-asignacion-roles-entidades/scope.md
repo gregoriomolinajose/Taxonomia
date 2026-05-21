@@ -31,7 +31,7 @@ Realizar y habilitar la asignación de roles para cada una de las entidades estr
 
 | # | Story | Size | Status | Actual | Velocity | Notes |
 |:-:|-------|:----:|--------|--------|----------|-------|
-| 1 | S58.1 — Actualización de Esquemas | S | Pending | | | |
+| 1 | S58.1 — Actualización de Esquemas | S | Done | S | 2 | Completado |
 | 2 | S58.2 — Interceptor de Auto-Aprovisionamiento | M | Pending | | | |
 
 ## Done Criteria
