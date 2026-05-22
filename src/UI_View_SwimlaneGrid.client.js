@@ -652,10 +652,53 @@ window.UI_View_SwimlaneGrid = {
             titleText = record[titleField];
         }
 
+        // 1. Entity Label (Singularized if possible)
+        const rawLabel = schema && schema.metadata ? schema.metadata.label : entityName;
+        const displayEntityName = (rawLabel || '').replace(/s$/, '').replace(/es$/, '').replace(/_/g, ' ');
+
+        // 2. Roles
+        let rolesHtml = '';
+        if (schema && schema.fields && record) {
+            schema.fields.forEach(f => {
+                if (f.type === 'relation' && f.targetEntity === 'Persona' && record[f.name]) {
+                    let personIds = Array.isArray(record[f.name]) ? record[f.name] : [record[f.name]];
+                    let personNames = personIds.map(pid => {
+                        let personName = record['_' + f.name + '_label'];
+                        if (!personName && window.DataStore) {
+                            const personas = window.DataStore.get('Persona') || [];
+                            const personaRec = personas.find(p => String(p.id_persona) === String(pid));
+                            if (personaRec) return personaRec.nombre + (personaRec.apellidos && personaRec.apellidos !== '---' ? ' ' + personaRec.apellidos : '');
+                        }
+                        return personName || pid;
+                    }).filter(Boolean).join(', ');
+                    
+                    if (personNames) {
+                        rolesHtml += `<div style="font-size: 0.75rem; color: rgba(255,255,255,0.9); margin-top: 4px; display: flex; align-items: center; justify-content: flex-start; gap: 4px; font-weight: 500; width: 100%;">
+                            <ion-icon name="person-circle-outline" style="font-size: 1rem; flex-shrink: 0;"></ion-icon> 
+                            <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${f.label}: <b>${personNames}</b></span>
+                        </div>`;
+                    }
+                }
+            });
+        }
+
         // DOM Interno
         const titleWrap = document.createElement('div');
         titleWrap.className = 'tax-node-title';
-        titleWrap.innerHTML = `<ion-icon class="tax-node-icon" name="${iconName}"></ion-icon> <span>${titleText}</span>`;
+        titleWrap.style.display = 'flex';
+        titleWrap.style.flexDirection = 'column';
+        titleWrap.style.alignItems = 'flex-start';
+        titleWrap.style.justifyContent = 'center';
+        titleWrap.style.width = 'calc(100% - 30px)'; // leave space for add button
+        
+        titleWrap.innerHTML = `
+            <div style="font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.5px; opacity: 0.85; margin-bottom: 2px; font-weight: 700;">${displayEntityName}</div>
+            <div style="font-size: 1rem; font-weight: 700; display: flex; align-items: center; gap: 6px; width: 100%;">
+                <ion-icon class="tax-node-icon" style="flex-shrink: 0;" name="${iconName}"></ion-icon> 
+                <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${titleText}</span>
+            </div>
+            ${rolesHtml}
+        `;
         node.appendChild(titleWrap);
 
         // Botón Add
