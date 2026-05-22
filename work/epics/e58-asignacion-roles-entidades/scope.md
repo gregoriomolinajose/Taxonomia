@@ -28,7 +28,7 @@ Las entidades necesitan propietarios designados para habilitar flujos de aprobac
 |:-:|-------|:----:|--------|--------|----------|-------|
 | 1 | S58.1 — Actualización de Esquemas | S | Done | S | 2 | Completado |
 | 2 | S58.2 — Interceptor de Auto-Aprovisionamiento | M | Done | M | 3 | Desplegado y verificado |
-| 3 | S58.3 — Aislamiento Topológico y Limite de Profundidad Persona | S | Pending | | | Bugfix |
+| 3 | S58.3 — Aislamiento Topológico y Limite de Profundidad Persona | S | Done | S | 2 | Desplegado a PROD |
 
 ## Done Criteria
 - Las 5 entidades estructurales tienen soporte completo en UI (visualización y edición) para la asignación de roles.
