@@ -1,31 +1,26 @@
-# Epic Scope: E58 Asignación de Roles por Entidad [CLOSED]
+# Epic Scope: E58 Asignación de Roles por Entidad [REOPENED]
 
 ## Objective
 Realizar y habilitar la asignación de roles para cada una de las entidades estructurales de la taxonomía (Unidad de Negocio, Value Stream, Portafolio, Grupo de Producto, Equipo), permitiendo gestionar qué personas ocupan qué roles a nivel de cada nodo del grafo jerárquico.
 
-## In Scope
-- Creación o actualización de los esquemas (`Schema_Engine.js`) para incluir campos de asignación de roles en:
-  - Unidad de Negocio
-  - Value Stream
-  - Portafolio
-  - Grupo de Producto
-  - Equipo
-- Definición de relaciones en el grafo (`Sys_Graph_Edges`) para vincular a la entidad `Persona` con las entidades antes mencionadas utilizando un subtipo de arista que identifique el rol (o un atributo adicional de rol).
-- Adaptación de la Interfaz de Usuario (Lienzo o Formularios) para permitir seleccionar las personas que fungen en los distintos roles para la entidad.
+## Problem Statement
+Las entidades necesitan propietarios designados para habilitar flujos de aprobación y escalamiento jerárquico. Se requiere que estos roles existan formalmente en la tabla `Rol` y se vinculen vía la arista `PERSONA_ROL`, pero que el usuario final pueda asignarlos de la manera más fluida posible desde la entidad jerárquica (ej. seleccionando a la persona desde el Portafolio). Adicionalmente, el cálculo de topología debe ser preciso y no mezclar profundidades de distintos tipos de relaciones.
 
-## Out of Scope
-- Migración de datos históricos de roles antiguos si no forman parte estructural del nuevo modelo de grafo, a menos que sea estrictamente necesario.
-- Implementación de un motor de reglas de notificaciones basado en estos roles (se manejaría en otra épica de alertas o notificaciones).
+## Scope Definitions
 
-## Planned Stories
-- **S58.1**: Actualización Visual y Esquemas Estructurales (Rol + 4 Entidades)
-- **S58.2**: Interceptor de Auto-Aprovisionamiento de Roles en Backend (`Business_Interceptors`)
+### In Scope
+- Creación visual de los campos de selección de personas (Roles) en UI.
+- Auto-creación transparente del registro `Rol` (si no existe) y la relación `PERSONA_ROL` vía Interceptores de Mutación.
+- Asignación de los siguientes roles a sus entidades:
+  - Value Stream -> Dueño del Value Stream
+  - Portafolio -> Gerente de Portafolio
+  - Grupo de Producto -> Gerente de Producto
+  - Equipo -> Dueño de Producto
+- Ampliación del límite recursivo de Persona a 15 niveles y aislamiento de la validación topológica por tipo de relación.
 
-## Implementation Plan
-
-### Milestones
-- **M1: Esquemas y UI (S58.1)**: Refactorizar `Schema_Engine.js` agregando `nombre_ingles`, `color_icono` y UX al `Rol`, y los campos relacionales de roles para Value Stream, Portafolio, Grupo Producto y Equipo.
-- **M2: Integridad Relacional (S58.2)**: Construir el `AutoProvisionEntityRoles` en `Business_Interceptors.js` para asegurar que las selecciones de UI se reflejen físicamente en la tabla `Rol` y en `Sys_Graph_Edges`.
+### Out of Scope
+- Gestión manual exhaustiva del diccionario de roles (se optó por auto-creación y selección por convención).
+- Asignación múltiple para los roles específicos mencionados (todos deben ser Single Select).
 
 ### Progress Tracking
 
@@ -33,6 +28,7 @@ Realizar y habilitar la asignación de roles para cada una de las entidades estr
 |:-:|-------|:----:|--------|--------|----------|-------|
 | 1 | S58.1 — Actualización de Esquemas | S | Done | S | 2 | Completado |
 | 2 | S58.2 — Interceptor de Auto-Aprovisionamiento | M | Done | M | 3 | Desplegado y verificado |
+| 3 | S58.3 — Aislamiento Topológico y Limite de Profundidad Persona | S | Pending | | | Bugfix |
 
 ## Done Criteria
 - Las 5 entidades estructurales tienen soporte completo en UI (visualización y edición) para la asignación de roles.

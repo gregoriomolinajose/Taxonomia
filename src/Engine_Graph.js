@@ -22,13 +22,13 @@ const Engine_Graph = {
             const childId = String(e.id_nodo_hijo);
             const pId = String(e.id_nodo_padre);
             if (!parentsOf[childId]) parentsOf[childId] = [];
-            parentsOf[childId].push(pId);
+            parentsOf[childId].push({ id: pId, type: e.tipo_relacion });
             
             if (!edgesOf[childId]) edgesOf[childId] = [];
             edgesOf[childId].push(e);
             
             if (!childrenOf[pId]) childrenOf[pId] = [];
-            childrenOf[pId].push(childId);
+            childrenOf[pId].push({ id: childId, type: e.tipo_relacion });
         });
         
         const seenIncomingEdges = new Set();
@@ -72,7 +72,8 @@ const Engine_Graph = {
                     let maxResult = { depth: 0, path: [] };
                     
                     for (const p of nextParents) {
-                        const res = dfsTraversal(p, pathStack, memo);
+                        if (p.type !== newEdge.tipo_relacion) continue;
+                        const res = dfsTraversal(p.id, pathStack, memo);
                         if (res.depth > maxResult.depth) maxResult = res;
                     }
                     
@@ -104,14 +105,15 @@ const Engine_Graph = {
                         let maxResult = { depth: 0, path: [] };
                         
                         childrenOf[nodeId].forEach(c => {
-                            if (!visitedDown.has(c)) {
-                                visitedDown.add(c);
-                                const res = getSubtreeMaxDepth(c, visitedDown, memoDown);
+                            if (c.type !== newEdge.tipo_relacion) return;
+                            if (!visitedDown.has(c.id)) {
+                                visitedDown.add(c.id);
+                                const res = getSubtreeMaxDepth(c.id, visitedDown, memoDown);
                                 const combinedDepth = 1 + res.depth;
                                 if (combinedDepth > maxResult.depth) {
-                                    maxResult = { depth: combinedDepth, path: [c, ...res.path] };
+                                    maxResult = { depth: combinedDepth, path: [c.id, ...res.path] };
                                 }
-                                visitedDown.delete(c);
+                                visitedDown.delete(c.id);
                             }
                         });
                         
@@ -150,13 +152,13 @@ const Engine_Graph = {
             }
             // Assign temporary mapping to validate subsequent edges in the same payload
             if (!parentsOf[childId]) parentsOf[childId] = [];
-            parentsOf[childId].push(parentId);
+            parentsOf[childId].push({ id: parentId, type: newEdge.tipo_relacion });
             
             if (!edgesOf[childId]) edgesOf[childId] = [];
             edgesOf[childId].push(newEdge);
             
             if (!childrenOf[parentId]) childrenOf[parentId] = [];
-            childrenOf[parentId].push(childId);
+            childrenOf[parentId].push({ id: childId, type: newEdge.tipo_relacion });
         });
         
         return result;

@@ -53,6 +53,7 @@ var TOPOLOGY_PRESETS = Object.freeze({
     _preset: 'JERARQUICA_PERSONA',  // [E31] Studio Viewer identifier
     topologyType: "JERARQUICA_ESTRICTA",
     preventCycles: true,
+    maxDepth: 15,
     scd2Enabled: true,
     siblingCollisionCheck: false
   })
