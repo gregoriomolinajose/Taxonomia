@@ -132,11 +132,10 @@ const Engine_Graph = {
             }
             
             // 4. Orphan Stealing Check & O(1) Extraction
-            // [S27.4/Rx] Enforce orphan stealing globally for EXCLUSIVE parents (replaces passive 1:N literal check)
             if (rules.enforceSingleParent || rules.topologyType === "JERARQUICA_ESTRICTA" || rules.topologyType === "JERARQUICA_ORGANICA") {
                 const childEdges = edgesOf[childId] || [];
                 childEdges.forEach(oldEdge => {
-                    if (rules.edgeType && oldEdge.tipo_relacion !== rules.edgeType) return;
+                    if (oldEdge.tipo_relacion !== newEdge.tipo_relacion) return;
                     
                     const oldParent = String(oldEdge.id_nodo_padre);
                     if (oldParent !== parentId) {
@@ -146,9 +145,9 @@ const Engine_Graph = {
                         result.stolenEdges.push(oldEdge);
                     }
                 });
-                // Wipe arrays so we don't double loop inside the same array iteration
-                parentsOf[childId] = [];
-                edgesOf[childId] = [];
+                // Wipe mapping locally so we don't double loop inside the same array iteration
+                parentsOf[childId] = (parentsOf[childId] || []).filter(p => p.type !== newEdge.tipo_relacion);
+                edgesOf[childId] = (edgesOf[childId] || []).filter(e => e.tipo_relacion !== newEdge.tipo_relacion);
             }
             // Assign temporary mapping to validate subsequent edges in the same payload
             if (!parentsOf[childId]) parentsOf[childId] = [];
