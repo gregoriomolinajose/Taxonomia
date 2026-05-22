@@ -76,15 +76,32 @@ window.UI_FormStepper = class UI_FormStepper {
         this.btnFullscreen.innerHTML = '<ion-icon name="expand-outline"></ion-icon>';
         
         this.btnFullscreen.onclick = () => {
-            const drawerNode = this.cardContent ? this.cardContent.closest('.drawer-panel') : null;
-            if (drawerNode) {
-                const isFullscreen = drawerNode.classList.toggle('fullscreen-wizard');
-                this.btnFullscreen.innerHTML = isFullscreen ? '<ion-icon name="contract-outline"></ion-icon>' : '<ion-icon name="expand-outline"></ion-icon>';
-                setTimeout(() => { window.dispatchEvent(new Event('resize')); }, 100);
+            // S58.5 BugFix: True Fullscreen para evitar bloqueos por transformaciones CSS (ej. Drawer, ion-content)
+            if (this.splitRight.classList.contains('fullscreen-wizard')) {
+                this.splitRight.classList.remove('fullscreen-wizard');
+                this.splitRight.style.removeProperty('z-index');
+                this.btnFullscreen.innerHTML = '<ion-icon name="expand-outline"></ion-icon>';
+                this.splitContainer.appendChild(this.splitRight); // Restaurar orden original
+            } else {
+                const drawerNode = this.cardContent ? this.cardContent.closest('.drawer-panel') : null;
+                const rootContainer = document.getElementById('drawer-root-container') || document.body;
+                
+                rootContainer.appendChild(this.splitRight); // Escapar del stacking context
+                this.splitRight.classList.add('fullscreen-wizard');
+                
+                if (drawerNode) {
+                    const currentZ = window.getComputedStyle(drawerNode).zIndex;
+                    this.splitRight.style.setProperty('z-index', currentZ, 'important');
+                } else {
+                    this.splitRight.style.setProperty('z-index', '99999', 'important');
+                }
+                
+                this.btnFullscreen.innerHTML = '<ion-icon name="contract-outline"></ion-icon>';
             }
+            setTimeout(() => { window.dispatchEvent(new Event('resize')); }, 100);
         };
 
-        this.splitContainer.appendChild(this.btnFullscreen);
+        this.splitRight.appendChild(this.btnFullscreen); // Mover el botón dentro del lienzo para que no se oculte
         
         this.splitContainer.appendChild(this.splitLeft);
         this.splitContainer.appendChild(this.splitRight);
@@ -536,6 +553,12 @@ window.UI_FormStepper = class UI_FormStepper {
             
             // Initialize the canvas
             window.UI_View_SwimlaneGrid.render(this.splitRight, taxonomyId);
+            
+            // S58.5 BugFix: El innerHTML = '' eliminó el btnFullscreen. Lo restauramos al final del mount.
+            if (this.btnFullscreen) {
+                this.splitRight.appendChild(this.btnFullscreen);
+            }
+            
             this._canvasInstanceMounted = true;
         }
     }

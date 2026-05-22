@@ -660,35 +660,48 @@ window.UI_View_SwimlaneGrid = {
         let rolesHtml = '';
         if (schema && schema.fields && record) {
             schema.fields.forEach(f => {
-                if (f.type === 'relation' && f.targetEntity === 'Persona' && record[f.name]) {
-                    let personIds = Array.isArray(record[f.name]) ? record[f.name] : [record[f.name]];
-                    personIds.forEach(pidObj => {
-                        let actualPid = (typeof pidObj === 'object' && pidObj !== null) ? (pidObj.id_registro || pidObj.id || pidObj.value) : pidObj;
-                        let personName = record['_' + f.name + '_label'];
-                        let avatarUrl = '';
-                        if (window.FormEngine_Resolvers && typeof window.FormEngine_Resolvers.resolveEntityRecord === 'function') {
-                            const personaRec = window.FormEngine_Resolvers.resolveEntityRecord('Persona', actualPid);
-                            if (personaRec) {
-                                personName = personaRec.nombre + (personaRec.apellidos && personaRec.apellidos !== '---' ? ' ' + personaRec.apellidos : '');
-                                avatarUrl = personaRec.avatar || personaRec.foto || personaRec.url_foto || '';
+                if (f.type === 'relation' && f.targetEntity === 'Persona') {
+                    let personIds = [];
+                    if (f.isTemporalGraph && f.graphEdgeType && window.Graph_Utils) {
+                        const resolvedIds = window.Graph_Utils.resolveAllLinkedIds(recordId, f.graphEdgeType, this.taxonomiaId, false, f.relationType);
+                        if (resolvedIds && resolvedIds.length > 0) {
+                            personIds = resolvedIds;
+                        } else if (record[f.name]) {
+                            personIds = Array.isArray(record[f.name]) ? record[f.name] : [record[f.name]];
+                        }
+                    } else if (record[f.name]) {
+                        personIds = Array.isArray(record[f.name]) ? record[f.name] : [record[f.name]];
+                    }
+
+                    if (personIds.length > 0) {
+                        personIds.forEach(pidObj => {
+                            let actualPid = (typeof pidObj === 'object' && pidObj !== null) ? (pidObj.id_registro || pidObj.id || pidObj.value) : pidObj;
+                            let personName = record['_' + f.name + '_label'];
+                            let avatarUrl = '';
+                            if (window.FormEngine_Resolvers && typeof window.FormEngine_Resolvers.resolveEntityRecord === 'function') {
+                                const personaRec = window.FormEngine_Resolvers.resolveEntityRecord('Persona', actualPid);
+                                if (personaRec) {
+                                    personName = personaRec.nombre + (personaRec.apellidos && personaRec.apellidos !== '---' ? ' ' + personaRec.apellidos : '');
+                                    avatarUrl = personaRec.avatar || personaRec.foto || personaRec.url_foto || '';
+                                }
                             }
-                        }
-                        personName = personName || actualPid;
-                        
-                        if (personName) {
-                            let avatarHtml = avatarUrl ? 
-                                `<img src="${avatarUrl}" style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover; flex-shrink: 0; background: rgba(255,255,255,0.2);" onerror="this.style.display='none'" />` : 
-                                `<ion-icon name="person-circle-outline" style="font-size: 2rem; flex-shrink: 0; opacity: 0.9;"></ion-icon>`;
-                                
-                            rolesHtml += `<div style="margin-top: 6px; padding: 6px 10px; background: rgba(0,0,0,0.15); border-radius: 6px; display: flex; align-items: center; justify-content: flex-start; gap: 10px; width: 100%; box-sizing: border-box;">
-                                ${avatarHtml}
-                                <div style="display: flex; flex-direction: column; overflow: hidden; width: 100%;">
-                                    <span style="font-size: 0.65rem; text-transform: uppercase; opacity: 0.85; font-weight: 700; white-space: nowrap; text-overflow: ellipsis; overflow: hidden;">${f.label}</span>
-                                    <span style="font-size: 0.9rem; color: rgba(255,255,255,0.95); font-weight: 600; white-space: nowrap; text-overflow: ellipsis; overflow: hidden;">${personName}</span>
-                                </div>
-                            </div>`;
-                        }
-                    });
+                            personName = personName || actualPid;
+                            
+                            if (personName) {
+                                let avatarHtml = avatarUrl ? 
+                                    `<img src="${avatarUrl}" style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover; flex-shrink: 0; background: rgba(255,255,255,0.2);" onerror="this.style.display='none'" />` : 
+                                    `<ion-icon name="person-circle-outline" style="font-size: 2rem; flex-shrink: 0; opacity: 0.9;"></ion-icon>`;
+                                    
+                                rolesHtml += `<div style="margin-top: 6px; padding: 6px 10px; background: rgba(0,0,0,0.15); border-radius: 6px; display: flex; align-items: center; justify-content: flex-start; gap: 10px; width: 100%; box-sizing: border-box;">
+                                    ${avatarHtml}
+                                    <div style="display: flex; flex-direction: column; overflow: hidden; width: 100%;">
+                                        <span style="font-size: 0.65rem; text-transform: uppercase; opacity: 0.85; font-weight: 700; white-space: nowrap; text-overflow: ellipsis; overflow: hidden;">${f.label}</span>
+                                        <span style="font-size: 0.9rem; color: rgba(255,255,255,0.95); font-weight: 600; white-space: nowrap; text-overflow: ellipsis; overflow: hidden;">${personName}</span>
+                                    </div>
+                                </div>`;
+                            }
+                        });
+                    }
                 }
             });
             if(rolesHtml !== '') {

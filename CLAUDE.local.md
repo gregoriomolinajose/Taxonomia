@@ -5,7 +5,7 @@
 ## Current Focus
 - **Epic E56 (Wizard Bulk Import)**: Closed.
 - **Epic E57 (Technical Debt Resolution)**: Closed.
-- **Next Focus**: Epic E58 (Security Matrix Implementation).
+- **Epic E58 (Asignación de Roles por Entidad)**: Closed.
 
 ## Patterns
 

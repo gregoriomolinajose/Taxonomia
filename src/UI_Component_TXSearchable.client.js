@@ -703,11 +703,18 @@ class TXSearchable extends HTMLElement {
     }
 
     _getSharedCardTemplate(config) {
-        const { textId = '', subId = '', btnId = '', iconName, iconColor, title = '', subtitle = '' } = config;
+        const { textId = '', subId = '', btnId = '', iconName, iconColor, title = '', subtitle = '', avatarUrl = '' } = config;
+        
+        const avatarOrIconHtml = avatarUrl 
+            ? `<img id="${textId ? textId.replace('-text', '-avatar-img') : ''}" src="${avatarUrl}" style="width: 100%; height: 100%; object-fit: cover; display: block; position: absolute; top: 0; left: 0;" onerror="this.style.display='none'" />
+               <ion-icon id="${textId ? textId.replace('-text', '-avatar-icon') : ''}" name="${iconName}" style="color: var(--ion-color-light, white); font-size: 18px; display: none;"></ion-icon>`
+            : `<img id="${textId ? textId.replace('-text', '-avatar-img') : ''}" src="" style="width: 100%; height: 100%; object-fit: cover; display: none; position: absolute; top: 0; left: 0;" onerror="this.style.display='none'" />
+               <ion-icon id="${textId ? textId.replace('-text', '-avatar-icon') : ''}" name="${iconName}" style="color: var(--ion-color-light, white); font-size: 18px; display: block;"></ion-icon>`;
+
         return `
             <ion-item lines="none" style="--min-height: 56px; --padding-top: 4px; --padding-bottom: 4px; --border-radius: var(--border-radius, 8px); border-radius: var(--border-radius, 8px); box-shadow: 0 4px 12px rgba(0,0,0,0.08); width: 100%; border: 1px solid var(--color-border, #e0e0e0);">
-                <div slot="start" style="width: 32px; height: 32px; background: var(--ion-color-${iconColor}, var(--ion-color-primary)); border-radius: 4px; display: inline-flex; justify-content: center; align-items: center; margin-right: 12px;">
-                    <ion-icon name="${iconName}" style="color: var(--ion-color-light, white); font-size: 18px;"></ion-icon>
+                <div slot="start" style="width: 32px; height: 32px; background: var(--ion-color-${iconColor}, var(--ion-color-primary)); border-radius: 4px; display: inline-flex; justify-content: center; align-items: center; margin-right: 12px; overflow: hidden; position: relative;">
+                    ${avatarOrIconHtml}
                 </div>
                 <ion-label class="ion-text-wrap" style="flex: 1; margin: 0; padding-right: 8px;">
                     <h3 ${textId ? `id="${textId}"` : ''} style="font-size: 13px; font-weight: bold; margin: 0; padding: 0; line-height: 1.2;">${title}</h3>
@@ -831,9 +838,21 @@ class TXSearchable extends HTMLElement {
             el.addEventListener('mousedown', setBlurGuard);
             el.addEventListener('touchstart', setBlurGuard, {passive: true});
 
+            let avatarUrl = '';
+            if (item.Avatar) {
+                avatarUrl = Array.isArray(item.Avatar) ? (item.Avatar[0]?.url || '') : item.Avatar;
+            } else if (item.avatar) {
+                avatarUrl = item.avatar;
+            }
+
+            const avatarOrIconHtml = avatarUrl 
+                ? `<img src="${avatarUrl}" style="width: 100%; height: 100%; object-fit: cover; display: block; position: absolute; top: 0; left: 0;" onerror="this.style.display='none'" />
+                   <ion-icon name="${iconName}" style="color: var(--ion-color-light, white); font-size: 18px; display: none;"></ion-icon>`
+                : `<ion-icon name="${iconName}" style="color: var(--ion-color-light, white); font-size: 18px; display: block;"></ion-icon>`;
+
             const iBoxHtml = `
-                <div slot="start" style="width: 32px; height: 32px; background: ${iconStyleBackground}; border-radius: 6px; display: inline-flex; justify-content: center; align-items: center; margin-right: 12px;">
-                    <ion-icon name="${iconName}" style="color: var(--ion-color-light, white); font-size: 18px;"></ion-icon>
+                <div slot="start" style="width: 32px; height: 32px; background: ${iconStyleBackground}; border-radius: 6px; display: inline-flex; justify-content: center; align-items: center; margin-right: 12px; overflow: hidden; position: relative;">
+                    ${avatarOrIconHtml}
                 </div>
             `;
             
@@ -988,6 +1007,29 @@ class TXSearchable extends HTMLElement {
                         if (subNode) {
                             subNode.textContent = found ? (found.lexical_id || found.id_numero || rawId) : rawId;
                         }
+                        
+                        // S44.x Update Avatar for single state
+                        const avatarImg = this.querySelector(`#${this._componentId}-single-avatar-img`);
+                        const avatarIcon = this.querySelector(`#${this._componentId}-single-avatar-icon`);
+                        if (avatarImg && avatarIcon) {
+                            let avatarUrl = '';
+                            if (found) {
+                                if (found.Avatar) {
+                                    avatarUrl = Array.isArray(found.Avatar) ? (found.Avatar[0]?.url || '') : found.Avatar;
+                                } else if (found.avatar) {
+                                    avatarUrl = found.avatar;
+                                }
+                            }
+                            
+                            if (avatarUrl) {
+                                avatarImg.src = avatarUrl;
+                                avatarImg.style.display = 'block';
+                                avatarIcon.style.display = 'none';
+                            } else {
+                                avatarImg.style.display = 'none';
+                                avatarIcon.style.display = 'block';
+                            }
+                        }
                     }
                 } else {
                     if (phNodeActive) phNodeActive.setAttribute('data-tx-state', this._isDisabled ? 'hidden' : 'block');
@@ -1067,9 +1109,18 @@ class TXSearchable extends HTMLElement {
                         let finalCardSub = this._resolveSubtitle(found, singleId);
                         finalCardSub = `${finalCardSub} • ${lexicalId}`;
                         
+                        let avatarUrl = '';
+                        if (found) {
+                            if (found.Avatar) {
+                                avatarUrl = Array.isArray(found.Avatar) ? (found.Avatar[0]?.url || '') : found.Avatar;
+                            } else if (found.avatar) {
+                                avatarUrl = found.avatar;
+                            }
+                        }
+                        
                         const fakeItem = document.createElement('div');
                         fakeItem.innerHTML = this._getSharedCardTemplate({
-                            iconName, iconColor, title: titleText, subtitle: finalCardSub
+                            iconName, iconColor, title: titleText, subtitle: finalCardSub, avatarUrl
                         });
                         
                         const finalNode = fakeItem.firstElementChild;

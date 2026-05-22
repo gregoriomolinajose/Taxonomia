@@ -7,13 +7,13 @@
 .tax-canvas-container {
     display: inline-flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 30px;
     padding: var(--spacing-6);
-    background: var(--color-bg-body, #ffffff);
-    border-radius: var(--radius-lg, 12px);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.02);
+    background: transparent;
     width: 100%;
+    min-width: max-content;
     height: 100%;
+    min-height: max-content;
     box-sizing: border-box; /* Prevent padding from adding to 100% height */
     transform-origin: 0 0;
 }
@@ -29,6 +29,8 @@
     z-index: 99999 !important;
     margin: 0 !important;
     border-radius: 0 !important;
+    background: var(--ion-background-color, #ffffff) !important;
+    pointer-events: auto !important;
 }
 
 /* S53.8: Miro-like Interaction & Scroll Hide */
@@ -38,7 +40,12 @@
     overflow: hidden;
     position: relative;
     cursor: grab;
-    background: var(--ion-color-step-50, #f9f9f9);
+    background-color: #f0f2f5;
+    background-image: 
+        linear-gradient(rgba(0, 0, 0, 0.06) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 0, 0, 0.06) 1px, transparent 1px);
+    background-size: 30px 30px;
+    background-position: center center;
     border-radius: 12px;
 }
 .tax-canvas-viewport:active {
@@ -138,9 +145,8 @@
     flex-direction: column;
     gap: 12px;
     padding: 12px;
-    border: 1px dashed var(--ion-color-step-200, #ccc);
-    border-radius: var(--radius-md, 8px);
-    background: var(--ion-color-step-50, #fafafa);
+    /* Remover background y border para que los nodos floten sobre la cuadrícula del canvas, 
+       evitando el desbordamiento de "background blanco" cuando el diagrama crece */
 }
 
 .tax-swimlane-children-horizontal {
