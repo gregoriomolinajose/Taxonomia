@@ -9,15 +9,6 @@ Sanear la arquitectura de validación de dominios y proveer a cada dominio confi
 
 **Value:** Estabilidad en el login y cero exposición de tokens duros; los usuarios interactúan solo con la pantalla de consentimiento de Google.
 
-## Stories (Pendiente de SP)
-| ID | Story | Size | Status | Description |
-|----|-------|:----:|:------:|-------------|
-| S59.0 | Limpieza y Fix Dominios | S | Pending | Purgar duplicados y arreglar .trim() en auth. |
-| S59.1 | Schema: OAUTH_DELEGATION | S | Pending | Preparar modelo Config_Workspace para el switch y token. |
-| S59.2 | UI: Consent OAuth | M | Pending | Botón e inicialización de Google Identity Services. |
-| S59.3 | RPC: Token Exchange | M | Pending | Intercambio del code por Refresh Token en el backend. |
-| S59.4 | Core: Multi-Domain Fetch | M | Pending | IdentityResolver hidrata usando el token delegado si existe. |
-
 ## Scope
 **In scope (MUST):**
 - Fix inmediato para @bancoppel.com
@@ -31,3 +22,19 @@ Sanear la arquitectura de validación de dominios y proveer a cada dominio confi
 - [ ] Tokens generados por pop-up y guardados en DB.
 - [ ] Epic retrospective done.
 - [ ] Merged to `develop`.
+
+## Progress Tracking
+
+### Milestones
+- [ ] **M1: Auth Cleanup & Fix (Walking Skeleton)** - Bugfix for bancoppel login and centralized domains logic.
+- [ ] **M2: OAuth Integration (Core MVP)** - Data model and frontend OAuth connect button.
+- [ ] **M3: Backend Resolution** - Token exchange and Directory Hydration.
+
+### Plan
+| Story | Sequence Rationale | Status | Size | Actual | Velocity |
+|-------|--------------------|--------|:----:|:------:|:--------:|
+| S59.0 — Limpieza y Fix Dominios | Dependency-driven / Quick win: Unblocks Bancoppel login | Pending | S | - | - |
+| S59.1 — Schema: OAUTH_DELEGATION | Foundational: Database schema required for tokens | Pending | S | - | - |
+| S59.2 — UI: Consent OAuth | Walking Skeleton: Need UI to get Google code first | Pending | M | - | - |
+| S59.3 — RPC: Token Exchange | Dependency: Requires code from S59.2 | Pending | M | - | - |
+| S59.4 — Core: Multi-Domain Fetch | Core Value: Uses the token stored in S59.3 | Pending | M | - | - |
