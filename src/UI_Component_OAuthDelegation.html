@@ -1,0 +1,111 @@
+<script>
+/**
+ * UI_Component_OAuthDelegation.client.js
+ * 
+ * Componente renderizador para la delegación OAuth2 en la vista de Workspaces.
+ */
+(function(window) {
+    
+    const UI_OAuthDelegation = {
+        render: function(field, entityName, data, eventBus, contextId) {
+            const container = document.createElement('div');
+            container.style.width = '100%';
+            container.style.marginBottom = 'var(--spacing-4)';
+            container.style.padding = 'var(--spacing-4)';
+            container.style.border = '1px solid var(--ion-color-step-200)';
+            container.style.borderRadius = 'var(--rounded-md)';
+            container.style.background = 'var(--ion-color-step-50)';
+            container.style.display = 'none'; // Se oculta por defecto hasta validar
+            
+            const title = document.createElement('h3');
+            title.textContent = 'Integración de Directorio';
+            title.style.marginTop = '0';
+            title.style.fontSize = 'var(--sys-font-medium)';
+            
+            const desc = document.createElement('p');
+            desc.textContent = 'Para sincronizar usuarios de este dominio, debes autorizar el acceso mediante Google Workspace.';
+            desc.style.fontSize = 'var(--sys-font-small)';
+            desc.style.color = 'var(--ion-color-medium)';
+            
+            const btn = document.createElement('ion-button');
+            btn.setAttribute('color', 'primary');
+            btn.setAttribute('fill', 'solid');
+            btn.innerHTML = '<ion-icon slot="start" name="logo-google"></ion-icon> Conectar con Google';
+            
+            container.appendChild(title);
+            container.appendChild(desc);
+            container.appendChild(btn);
+
+            // Determinar visibilidad según el checkbox
+            const checkVisibility = (isActive) => {
+                if (isActive && String(isActive) !== "false") {
+                    container.style.display = 'block';
+                } else {
+                    container.style.display = 'none';
+                }
+            };
+            
+            // Initial Check
+            if (data && data.activar_consulta_directorio) {
+                checkVisibility(data.activar_consulta_directorio);
+            }
+
+            // Escuchar cambios en el formulario
+            if (eventBus) {
+                eventBus.addEventListener('FIELD_CHANGED_activar_consulta_directorio', (e) => {
+                    checkVisibility(e.detail.value);
+                });
+            }
+            
+            btn.addEventListener('click', () => {
+                if (!window.__OAUTH_CLIENT_ID__) {
+                    if (window.UI_Factory && window.UI_Factory.showToast) {
+                        window.UI_Factory.showToast('El OAUTH_CLIENT_ID no está configurado en el sistema.', 'danger');
+                    }
+                    return;
+                }
+                
+                try {
+                    const client = google.accounts.oauth2.initCodeClient({
+                        client_id: window.__OAUTH_CLIENT_ID__,
+                        scope: 'https://www.googleapis.com/auth/admin.directory.user.readonly',
+                        ux_mode: 'popup',
+                        callback: (response) => {
+                            if (response.code) {
+                                // Capturamos el Authorization Code
+                                // Lo guardamos temporalmente en el campo hidden refresh_token_autorizado 
+                                // (Luego el backend interceptará este code para cambiarlo por un refresh_token, historia S59.3)
+                                const tokenInput = document.querySelector('input[name="refresh_token_autorizado"]');
+                                if (tokenInput) {
+                                    tokenInput.value = "OAUTH_CODE::" + response.code;
+                                }
+                                
+                                btn.innerHTML = '<ion-icon slot="start" name="checkmark-circle"></ion-icon> Código Autorizado';
+                                btn.setAttribute('color', 'success');
+                                btn.disabled = true;
+                                
+                                if (window.UI_Factory && window.UI_Factory.showToast) {
+                                    window.UI_Factory.showToast('Autorización capturada correctamente. Guarda los cambios.', 'success');
+                                }
+                            }
+                        },
+                    });
+                    
+                    client.requestCode();
+                    
+                } catch(e) {
+                    console.error("Error lanzando initCodeClient", e);
+                    if (window.UI_Factory && window.UI_Factory.showToast) {
+                        window.UI_Factory.showToast('No se pudo inicializar Google Identity Services.', 'danger');
+                    }
+                }
+            });
+
+            return container;
+        }
+    };
+    
+    window.UI_OAuthDelegation = UI_OAuthDelegation;
+    
+})(window);
+</script>

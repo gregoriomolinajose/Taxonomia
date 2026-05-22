@@ -52,6 +52,7 @@
 
   <script>
     window.ENV_CONFIG = <?!= typeof ENV_CONFIG !== 'undefined' ? ENV_CONFIG : '{"AuthMode":"SSO","ALLOWED_DOMAINS":["@coppel.com","@bancoppel.com"]}' ?>;
+    window.__OAUTH_CLIENT_ID__ = '<?!= typeof OAUTH_CLIENT_ID !== "undefined" ? OAUTH_CLIENT_ID : "" ?>';
     window.WORKSPACE_SYNC_ENABLED = <?!= typeof WORKSPACE_SYNC_ENABLED !== 'undefined' ? WORKSPACE_SYNC_ENABLED : true ?>;
 
     window.WHITE_LABEL = <?!= typeof WHITE_LABEL_CONFIG !== 'undefined' ? WHITE_LABEL_CONFIG : '{"bodyFont":"Poppins, sans-serif","displayFont":"Playfair Display, serif"}' ?>;
@@ -79,6 +80,9 @@
         if (window.WHITE_LABEL.heading_transform) document.documentElement.style.setProperty('--wl-heading-transform', window.WHITE_LABEL.heading_transform);
     }
   </script>
+
+  <!-- Google Identity Services -->
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
 
   <!-- Ionic Framework CDN -->
   <script type="module" src="https://cdn.jsdelivr.net/npm/@ionic/core/dist/ionic/ionic.esm.js"></script>
@@ -383,6 +387,7 @@
   <?!= include('UI_Factory'); ?>
   <?!= include('UI_DrawerManager'); ?>
   <?!= include('FormBuilder_Inputs'); ?>
+  <?!= include('UI_Component_OAuthDelegation'); ?>
   <?!= include('UI_Component_DynamicList'); ?>
   <?!= include('UI_Component_TXSearchable'); ?>
   <?!= include('UI_Factory_Searchables'); ?>

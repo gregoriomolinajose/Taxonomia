@@ -59,6 +59,7 @@ function doGet(e) {
     envConfigStr = JSON.stringify({ AuthMode: "SSO", ALLOWED_DOMAINS: ["@coppel.com", "@bancoppel.com"] });
   }
   template.ENV_CONFIG = envConfigStr;
+  template.OAUTH_CLIENT_ID = PropertiesService.getScriptProperties().getProperty('OAUTH_CLIENT_ID') || '';
 
   // ABAC Resolver: Cálculo de Topología O(n) al vuelo para proveer Contexto Seguro en Frontend
   var email = "";

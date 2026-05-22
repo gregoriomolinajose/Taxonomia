@@ -564,6 +564,7 @@ var APP_SCHEMAS = {
       { name: "activar_consulta_directorio", type: "boolean", label: "Consultar Workspace", required: false, width: 6, defaultValue: false, helpText: "Activa la sincronización de identidades." },
       { name: "auth_mode", type: "select", label: "Modo de Autenticación", required: true, width: 6, options: ["USER_DEPLOYING (Global Default)", "SERVICE_ACCOUNT (Explicit)", "OAUTH_DELEGATION (Google Consent)"], defaultValue: "USER_DEPLOYING (Global Default)" },
       { name: "refresh_token_autorizado", type: "text", label: "Refresh Token Delegado", required: false, width: 12, readonly: true, helpText: "Generado vía Consentimiento de Google. No editar manualmente." },
+      { name: "oauth_btn", type: "uiComponent", uiComponent: "oauth_delegation_btn", width: 12 },
       { name: "admin_contacto", type: "text", label: "Contacto IT (Email)", required: true, width: 12 }
     ]
   },
