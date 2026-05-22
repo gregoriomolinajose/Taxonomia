@@ -41,6 +41,11 @@
             // Garantizar que ninguna vista herede el bloqueo de layout de DataGrid
             if (container) container.classList.remove('dv-fullscreen-lock');
             
+            // S25.2 BugFix: Vaciar la pila de formularios flotantes para evitar Memory Leaks al cambiar de pantalla
+            if (window.DrawerStackController && typeof window.DrawerStackController.clearAllSync === 'function') {
+                window.DrawerStackController.clearAllSync();
+            }
+            
             // 1. Quitar la clase .active de todos los items
             var navItems = document.querySelectorAll('.nav-item');
             navItems.forEach(function(item) { item.classList.remove('active'); });

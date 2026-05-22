@@ -387,14 +387,10 @@ var Business_Interceptors = (function() {
 
             items.forEach(p => {
                 const personIdRaw = p[mapping.field];
-                let personId = '';
-                if (Array.isArray(personIdRaw)) {
-                    personId = typeof personIdRaw[0] === 'object' ? (personIdRaw[0].id || personIdRaw[0].value) : personIdRaw[0];
-                } else if (typeof personIdRaw === 'object' && personIdRaw !== null) {
-                    personId = personIdRaw.id || personIdRaw.value;
-                } else {
-                    personId = personIdRaw;
-                }
+                const targetObj = Array.isArray(personIdRaw) ? personIdRaw[0] : personIdRaw;
+                const personId = (typeof targetObj === 'object' && targetObj !== null) 
+                    ? (targetObj.id_registro || targetObj.id || targetObj.value) 
+                    : targetObj;
 
                 if (personId && String(personId).trim() !== '' && String(personId).trim() !== '[object Object]') {
                     const normName = mapping.nombre.toLowerCase();

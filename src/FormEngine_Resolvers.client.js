@@ -185,6 +185,24 @@
                 } catch(e) {
                     console.warn('[FormEngine_Resolvers] Non-fatal exception during hydration', e);
                 }
+            },
+
+            /**
+             * Resuelve un registro específico desde el DataStore de manera sincrónica.
+             * Utilizado por componentes UI como SwimlaneGrid para evitar acoplamiento directo a DataStore.
+             * @param {string} entityName - Nombre de la entidad (ej. 'Persona')
+             * @param {string} id - ID del registro a buscar
+             * @returns {Object|null} El registro si se encuentra, o null
+             */
+            resolveEntityRecord: function(entityName, id) {
+                if (!window.DataStore || !id) return null;
+                const store = window.DataStore.get(entityName) || [];
+                // Busca por id principal, fallback a id_registro
+                return store.find(r => 
+                    String(r[`id_${entityName.toLowerCase()}`]) === String(id) || 
+                    String(r.id_registro) === String(id) ||
+                    String(r.id) === String(id)
+                ) || null;
             }
         };
 

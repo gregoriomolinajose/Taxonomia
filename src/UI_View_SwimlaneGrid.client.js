@@ -662,24 +662,38 @@ window.UI_View_SwimlaneGrid = {
             schema.fields.forEach(f => {
                 if (f.type === 'relation' && f.targetEntity === 'Persona' && record[f.name]) {
                     let personIds = Array.isArray(record[f.name]) ? record[f.name] : [record[f.name]];
-                    let personNames = personIds.map(pid => {
+                    personIds.forEach(pidObj => {
+                        let actualPid = (typeof pidObj === 'object' && pidObj !== null) ? (pidObj.id_registro || pidObj.id || pidObj.value) : pidObj;
                         let personName = record['_' + f.name + '_label'];
-                        if (!personName && window.DataStore) {
-                            const personas = window.DataStore.get('Persona') || [];
-                            const personaRec = personas.find(p => String(p.id_persona) === String(pid));
-                            if (personaRec) return personaRec.nombre + (personaRec.apellidos && personaRec.apellidos !== '---' ? ' ' + personaRec.apellidos : '');
+                        let avatarUrl = '';
+                        if (window.FormEngine_Resolvers && typeof window.FormEngine_Resolvers.resolveEntityRecord === 'function') {
+                            const personaRec = window.FormEngine_Resolvers.resolveEntityRecord('Persona', actualPid);
+                            if (personaRec) {
+                                personName = personaRec.nombre + (personaRec.apellidos && personaRec.apellidos !== '---' ? ' ' + personaRec.apellidos : '');
+                                avatarUrl = personaRec.avatar || personaRec.foto || personaRec.url_foto || '';
+                            }
                         }
-                        return personName || pid;
-                    }).filter(Boolean).join(', ');
-                    
-                    if (personNames) {
-                        rolesHtml += `<div style="font-size: 0.75rem; color: rgba(255,255,255,0.9); margin-top: 4px; display: flex; align-items: center; justify-content: flex-start; gap: 4px; font-weight: 500; width: 100%;">
-                            <ion-icon name="person-circle-outline" style="font-size: 1rem; flex-shrink: 0;"></ion-icon> 
-                            <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${f.label}: <b>${personNames}</b></span>
-                        </div>`;
-                    }
+                        personName = personName || actualPid;
+                        
+                        if (personName) {
+                            let avatarHtml = avatarUrl ? 
+                                `<img src="${avatarUrl}" style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover; flex-shrink: 0; background: rgba(255,255,255,0.2);" onerror="this.style.display='none'" />` : 
+                                `<ion-icon name="person-circle-outline" style="font-size: 2rem; flex-shrink: 0; opacity: 0.9;"></ion-icon>`;
+                                
+                            rolesHtml += `<div style="margin-top: 6px; padding: 6px 10px; background: rgba(0,0,0,0.15); border-radius: 6px; display: flex; align-items: center; justify-content: flex-start; gap: 10px; width: 100%; box-sizing: border-box;">
+                                ${avatarHtml}
+                                <div style="display: flex; flex-direction: column; overflow: hidden; width: 100%;">
+                                    <span style="font-size: 0.65rem; text-transform: uppercase; opacity: 0.85; font-weight: 700; white-space: nowrap; text-overflow: ellipsis; overflow: hidden;">${f.label}</span>
+                                    <span style="font-size: 0.9rem; color: rgba(255,255,255,0.95); font-weight: 600; white-space: nowrap; text-overflow: ellipsis; overflow: hidden;">${personName}</span>
+                                </div>
+                            </div>`;
+                        }
+                    });
                 }
             });
+            if(rolesHtml !== '') {
+                rolesHtml = `<div style="display: flex; flex-direction: column; gap: 4px; margin-top: 12px; width: 100%; border-top: 1px solid rgba(255,255,255,0.15); padding-top: 8px;">${rolesHtml}</div>`;
+            }
         }
 
         // DOM Interno
@@ -692,10 +706,12 @@ window.UI_View_SwimlaneGrid = {
         titleWrap.style.width = 'calc(100% - 30px)'; // leave space for add button
         
         titleWrap.innerHTML = `
-            <div style="font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.5px; opacity: 0.85; margin-bottom: 2px; font-weight: 700;">${displayEntityName}</div>
-            <div style="font-size: 1rem; font-weight: 700; display: flex; align-items: center; gap: 6px; width: 100%;">
-                <ion-icon class="tax-node-icon" style="flex-shrink: 0;" name="${iconName}"></ion-icon> 
-                <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${titleText}</span>
+            <div style="display: flex; align-items: center; gap: 12px; width: 100%;">
+                <ion-icon class="tax-node-icon" style="flex-shrink: 0; font-size: 1.8rem;" name="${iconName}"></ion-icon> 
+                <div style="display: flex; flex-direction: column; overflow: hidden; width: 100%;">
+                    <span style="font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.5px; opacity: 0.9; font-weight: 800;">${displayEntityName}</span>
+                    <span style="font-size: 1.05rem; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${titleText}</span>
+                </div>
             </div>
             ${rolesHtml}
         `;
