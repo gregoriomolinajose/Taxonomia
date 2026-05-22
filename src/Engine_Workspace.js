@@ -27,6 +27,51 @@ function isWorkspaceSyncEnabled() {
 }
 
 /**
+ * [S59.4] Evalúa si un dominio específico tiene activada la consulta al directorio,
+ * leyendo la configuración desde Config_Workspace (cacheados en RAM).
+ */
+function isDomainSyncEnabled(domain) {
+  try {
+    if (!domain) return false;
+    var searchDomain = String(domain).trim().toLowerCase();
+    
+    var cache = CacheService.getScriptCache();
+    var cached = cache.get("config_workspaces_map");
+    var map;
+    
+    if (cached) {
+      map = JSON.parse(cached);
+    } else {
+      if (typeof Adapter_Sheets === 'undefined' || typeof CONFIG === 'undefined') return false;
+      
+      var dbConfig = { SPREADSHEET_ID_DB: CONFIG.SPREADSHEET_ID_DB, useSheets: true };
+      var list = Adapter_Sheets.list('Config_Workspace', dbConfig, 'objects', false);
+      var rows = list ? list.rows : [];
+      map = {};
+      
+      rows.forEach(function(r) {
+         var active = (String(r.activar_consulta_directorio).toLowerCase() === 'true');
+         if (r.dominio) {
+             map[String(r.dominio).trim().toLowerCase()] = active;
+         }
+         if (r.alias_alternativos) {
+             String(r.alias_alternativos).split(',').forEach(function(alias) {
+                 var a = alias.trim().toLowerCase();
+                 if (a) map[a] = active;
+             });
+         }
+      });
+      cache.put("config_workspaces_map", JSON.stringify(map), 900); // 15 minutos de TTL
+    }
+    
+    return map[searchDomain] === true;
+  } catch(e) {
+    Logger.log("Error checking isDomainSyncEnabled para " + domain + ": " + e.message);
+    return false;
+  }
+}
+
+/**
  * Busca a un usuario por correo electrónico en el AdminDirectory y extrae su DTO.
  * Se expone al cliente mediante google.script.run
  * 
@@ -43,6 +88,13 @@ function resolverDirectorioWorkspace(queryEmail) {
     
     var user;
     var domain = queryEmail.substring(queryEmail.indexOf('@'));
+    
+    // S59.4: Barrera lógica estricta por dominio (Igualdad de dominios)
+    if (!isDomainSyncEnabled(domain)) {
+      Logger.log("Workspace API Bypassed: Sync is disabled explicitly for domain " + domain);
+      return { __status: "DISABLED" };
+    }
+
     var oauthToken = (typeof Auth_GetTokenForDomain === 'function') ? Auth_GetTokenForDomain(domain) : null;
     
     if (oauthToken) {
@@ -167,8 +219,17 @@ function searchDirectoryByName(queryName) {
     // query compuesta (Nativo + OAuth2 Externos)
     var users = [];
 
-    // 1. Nativo
-    if (typeof AdminDirectory !== 'undefined' && AdminDirectory.Users) {
+    // 1. Nativo (Sujeto a S59.4)
+    var sessionEmail = "";
+    try { sessionEmail = Session.getActiveUser().getEmail(); } catch(e){}
+    var nativeDomain = sessionEmail ? sessionEmail.substring(sessionEmail.indexOf('@')) : null;
+    
+    var runNative = true;
+    if (nativeDomain) {
+       runNative = isDomainSyncEnabled(nativeDomain);
+    }
+
+    if (runNative && typeof AdminDirectory !== 'undefined' && AdminDirectory.Users) {
         try {
             var response = AdminDirectory.Users.list({
               customer: 'my_customer',
@@ -187,6 +248,9 @@ function searchDirectoryByName(queryName) {
     if (typeof API_Admin_GetConnectedDomains === 'function') {
       var domains = API_Admin_GetConnectedDomains();
       domains.forEach(function(d) {
+        // S59.4 Barrera lógica
+        if (!isDomainSyncEnabled(d)) return;
+
         var token = typeof Auth_GetTokenForDomain === 'function' ? Auth_GetTokenForDomain(d) : null;
         if (token) {
           try {
