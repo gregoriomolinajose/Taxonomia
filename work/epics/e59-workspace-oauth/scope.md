@@ -35,6 +35,6 @@ Sanear la arquitectura de validación de dominios y proveer a cada dominio confi
 |-------|--------------------|--------|:----:|:------:|:--------:|
 | S59.0 — Limpieza y Fix Dominios | Dependency-driven / Quick win: Unblocks Bancoppel login | Done | S | - | - |
 | S59.1 — Schema: OAUTH_DELEGATION | Foundational: Database schema required for tokens | Done | S | - | - |
-| S59.2 — UI: Consent OAuth | Walking Skeleton: Need UI to get Google code first | Pending | M | - | - |
+| S59.2 — UI: Consent OAuth | Walking Skeleton: Need UI to get Google code first | Done | M | - | - |
 | S59.3 — RPC: Token Exchange | Dependency: Requires code from S59.2 | Pending | M | - | - |
 | S59.4 — Core: Multi-Domain Fetch | Core Value: Uses the token stored in S59.3 | Pending | M | - | - |
