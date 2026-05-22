@@ -561,7 +561,9 @@ var APP_SCHEMAS = {
       ...FIELD_TEMPLATES.AUDIT_FIELDS(),
       { name: "dominio_principal", type: "text", label: "Dominio Principal", required: true, width: 6, helpText: "Ejemplo: @coppel.com" },
       { name: "alias_alternativos", type: "text", label: "Alias Soportados (CSV)", required: false, width: 6, helpText: "Ejemplo: @coppelmexico.com,@bancoppel.com" },
-      { name: "auth_mode", type: "select", label: "Modo OAuth (M2M)", required: true, width: 12, options: ["USER_DEPLOYING (Global Default)", "SERVICE_ACCOUNT (Explicit)"], defaultValue: "USER_DEPLOYING (Global Default)" },
+      { name: "activar_consulta_directorio", type: "boolean", label: "Consultar Workspace", required: false, width: 6, defaultValue: false, helpText: "Activa la sincronización de identidades." },
+      { name: "auth_mode", type: "select", label: "Modo de Autenticación", required: true, width: 6, options: ["USER_DEPLOYING (Global Default)", "SERVICE_ACCOUNT (Explicit)", "OAUTH_DELEGATION (Google Consent)"], defaultValue: "USER_DEPLOYING (Global Default)" },
+      { name: "refresh_token_autorizado", type: "text", label: "Refresh Token Delegado", required: false, width: 12, readonly: true, helpText: "Generado vía Consentimiento de Google. No editar manualmente." },
       { name: "admin_contacto", type: "text", label: "Contacto IT (Email)", required: true, width: 12 }
     ]
   },
