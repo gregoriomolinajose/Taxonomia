@@ -74,7 +74,7 @@ const API_Auth = {
             domains = CONFIG.ALLOWED_DOMAINS;
         }
 
-        const isAuthorized = domains.some(domain => email.endsWith(domain.toLowerCase()));
+        const isAuthorized = domains.some(domain => email.endsWith(domain.toLowerCase().trim()));
 
         return {
             email: email,
