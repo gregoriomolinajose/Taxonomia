@@ -358,10 +358,10 @@ var Business_Interceptors = (function() {
          */
         AutoProvisionEntityRoles: function(entityName, items) {
             const ROLE_MAPPINGS = {
-                Value_Stream: { field: 'dueno_vs_id', nombre: 'Dueño del Value Stream', nombre_ingles: 'Value Stream Owner', color_icono: 'tertiary', especialidad: 'Negocio' },
-                Portafolio: { field: 'gerente_portafolio_id', nombre: 'Gerente de Portafolio', nombre_ingles: 'Portfolio Manager', color_icono: 'danger', especialidad: 'Negocio' },
-                Grupo_Productos: { field: 'gerente_producto_id', nombre: 'Gerente de Producto', nombre_ingles: 'Product Manager', color_icono: 'dark', especialidad: 'Producto' },
-                Equipo: { field: 'product_owner_id', nombre: 'Dueño de Producto', nombre_ingles: 'Product Owner', color_icono: 'success', especialidad: 'Producto' }
+                Value_Stream: { field: 'dueno_vs_id', nombre: 'Dueño del Value Stream', nombre_ingles: 'Value Stream Owner', color_icono: 'tertiary', especialidad: 'Negocio', pk: 'id_value_stream' },
+                Portafolio: { field: 'gerente_portafolio_id', nombre: 'Gerente de Portafolio', nombre_ingles: 'Portfolio Manager', color_icono: 'danger', especialidad: 'Negocio', pk: 'id_portafolio' },
+                Grupo_Productos: { field: 'gerente_producto_id', nombre: 'Gerente de Producto', nombre_ingles: 'Product Manager', color_icono: 'dark', especialidad: 'Producto', pk: 'id_grupo_producto' },
+                Equipo: { field: 'product_owner_id', nombre: 'Dueño de Producto', nombre_ingles: 'Product Owner', color_icono: 'success', especialidad: 'Producto', pk: 'id_equipo' }
             };
 
             const mapping = ROLE_MAPPINGS[entityName];
@@ -386,8 +386,17 @@ var Business_Interceptors = (function() {
             const sysDate = new Date().toISOString();
 
             items.forEach(p => {
-                const personId = p[mapping.field];
-                if (personId && String(personId).trim() !== '') {
+                const personIdRaw = p[mapping.field];
+                let personId = '';
+                if (Array.isArray(personIdRaw)) {
+                    personId = typeof personIdRaw[0] === 'object' ? (personIdRaw[0].id || personIdRaw[0].value) : personIdRaw[0];
+                } else if (typeof personIdRaw === 'object' && personIdRaw !== null) {
+                    personId = personIdRaw.id || personIdRaw.value;
+                } else {
+                    personId = personIdRaw;
+                }
+
+                if (personId && String(personId).trim() !== '' && String(personId).trim() !== '[object Object]') {
                     const normName = mapping.nombre.toLowerCase();
                     let targetRoleId = dbRoles[normName];
                     
@@ -413,16 +422,19 @@ var Business_Interceptors = (function() {
                     }
                     
                     const childId = String(personId).trim();
+                    const contextoId = String(p[mapping.pk] || p._tempId || '').trim();
+
                     // Para PERSONA_ROL, el nodo padre es el Rol y el nodo hijo es la Persona.
-                    const edgeExists = sysEdges.some(e => e.es_version_actual !== false && e.tipo_relacion === 'PERSONA_ROL' && String(e.id_nodo_padre).trim() === targetRoleId && String(e.id_nodo_hijo).trim() === childId);
+                    const edgeExists = sysEdges.some(e => e.es_version_actual !== false && e.tipo_relacion === 'PERSONA_ROL' && String(e.id_nodo_padre).trim() === targetRoleId && String(e.id_nodo_hijo).trim() === childId && String(e.contexto_id || '').trim() === contextoId);
                     
                     if (!edgeExists) {
-                        sysEdges.push({ es_version_actual: true, tipo_relacion: 'PERSONA_ROL', id_nodo_padre: targetRoleId, id_nodo_hijo: childId });
+                        sysEdges.push({ es_version_actual: true, tipo_relacion: 'PERSONA_ROL', id_nodo_padre: targetRoleId, id_nodo_hijo: childId, contexto_id: contextoId });
                         edgesBatch.push({
                             id_relacion: "RELA-" + [...Array(8)].map(() => Math.floor(Math.random() * 16).toString(16).toUpperCase()).join(''),
                             id_nodo_padre: targetRoleId,
                             id_nodo_hijo: childId,
                             tipo_relacion: 'PERSONA_ROL',
+                            contexto_id: contextoId,
                             valido_desde: sysDate,
                             valido_hasta: "",
                             es_version_actual: true,
