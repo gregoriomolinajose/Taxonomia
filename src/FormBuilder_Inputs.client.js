@@ -356,8 +356,8 @@
                 });
                 return importer.render();
             }
-            if (f.uiComponent === 'oauth_delegation_btn' && typeof window.UI_OAuthDelegation !== 'undefined') {
-                return window.UI_OAuthDelegation.render(f, e, d, bus, currentEditId);
+            if (f.uiComponent === 'microservice_setup' && typeof window.UI_MicroserviceSetup !== 'undefined') {
+                return window.UI_MicroserviceSetup.render(f, e, d, bus, currentEditId);
             }
             const fallback = document.createElement('div');
             fallback.style.padding = '20px';

@@ -562,9 +562,9 @@ var APP_SCHEMAS = {
       { name: "dominio_principal", type: "text", label: "Dominio Principal", required: true, width: 6, helpText: "Ejemplo: @coppel.com" },
       { name: "alias_alternativos", type: "text", label: "Alias Soportados (CSV)", required: false, width: 6, helpText: "Ejemplo: @coppelmexico.com,@bancoppel.com" },
       { name: "activar_consulta_directorio", type: "boolean", label: "Consultar Workspace", required: false, width: 6, defaultValue: false, helpText: "Activa la sincronización de identidades." },
-      { name: "auth_mode", type: "select", label: "Modo de Autenticación", required: true, width: 6, options: ["USER_DEPLOYING (Global Default)", "SERVICE_ACCOUNT (Explicit)", "OAUTH_DELEGATION (Google Consent)"], defaultValue: "USER_DEPLOYING (Global Default)" },
-      { name: "oauth_btn", type: "uiComponent", uiComponent: "oauth_delegation_btn", width: 12 },
-      { name: "admin_contacto", type: "text", label: "Contacto IT (Email)", required: true, width: 12 }
+      { name: "webhook_url", type: "text", label: "Webhook URL (Microservicio)", required: false, width: 12, helpText: "URL del Apps Script desplegado por el administrador del dominio." },
+      { name: "webhook_secret", type: "text", label: "Webhook Token (Secreto)", required: false, width: 6, helpText: "Token de autorización para consumir el microservicio." },
+      { name: "setup_guide", type: "uiComponent", uiComponent: "microservice_setup", width: 12 }
     ]
   },
   _UI_CONFIG: {

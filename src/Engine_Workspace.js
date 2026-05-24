@@ -27,22 +27,18 @@ function isWorkspaceSyncEnabled() {
 }
 
 /**
- * [S59.4] Evalúa si un dominio específico tiene activada la consulta al directorio,
- * leyendo la configuración desde Config_Workspace (cacheados en RAM).
+ * Devuelve el mapa completo de configuraciones de Workspace
  */
-function isDomainSyncEnabled(domain) {
+function getAllDomainConfigs() {
   try {
-    if (!domain) return false;
-    var searchDomain = String(domain).trim().toLowerCase();
-    
     var cache = CacheService.getScriptCache();
-    var cached = cache.get("config_workspaces_map");
+    var cached = cache.get("config_workspaces_map_v2");
     var map;
     
     if (cached) {
       map = JSON.parse(cached);
     } else {
-      if (typeof Adapter_Sheets === 'undefined' || typeof CONFIG === 'undefined') return false;
+      if (typeof Adapter_Sheets === 'undefined' || typeof CONFIG === 'undefined') return {};
       
       var dbConfig = { SPREADSHEET_ID_DB: CONFIG.SPREADSHEET_ID_DB, useSheets: true };
       var list = Adapter_Sheets.list('Config_Workspace', dbConfig, 'objects', false);
@@ -51,23 +47,44 @@ function isDomainSyncEnabled(domain) {
       
       rows.forEach(function(r) {
          var active = (String(r.activar_consulta_directorio).toLowerCase() === 'true');
+         var cfg = {
+            enabled: active,
+            webhookUrl: r.webhook_url || null,
+            webhookSecret: r.webhook_secret || null
+         };
+         
          if (r.dominio) {
-             map[String(r.dominio).trim().toLowerCase()] = active;
+             map[String(r.dominio).trim().toLowerCase()] = cfg;
          }
          if (r.alias_alternativos) {
              String(r.alias_alternativos).split(',').forEach(function(alias) {
                  var a = alias.trim().toLowerCase();
-                 if (a) map[a] = active;
+                 if (a) map[a] = cfg;
              });
          }
       });
-      cache.put("config_workspaces_map", JSON.stringify(map), 900); // 15 minutos de TTL
+      cache.put("config_workspaces_map_v2", JSON.stringify(map), 900); // 15 minutos de TTL
     }
-    
-    return map[searchDomain] === true;
+    return map;
   } catch(e) {
-    Logger.log("Error checking isDomainSyncEnabled para " + domain + ": " + e.message);
-    return false;
+    Logger.log("Error en getAllDomainConfigs: " + e.message);
+    return {};
+  }
+}
+
+/**
+ * [S59.5] Evalúa si un dominio específico tiene activada la consulta al directorio,
+ * leyendo la configuración desde Config_Workspace (cacheados en RAM) e incluyendo Webhooks.
+ */
+function getDomainConfig(domain) {
+  try {
+    if (!domain) return { enabled: false };
+    var searchDomain = String(domain).trim().toLowerCase();
+    var map = getAllDomainConfigs();
+    return map[searchDomain] || { enabled: false };
+  } catch(e) {
+    Logger.log("Error checking getDomainConfig para " + domain + ": " + e.message);
+    return { enabled: false };
   }
 }
 
@@ -88,32 +105,36 @@ function resolverDirectorioWorkspace(queryEmail) {
     
     var user;
     var domain = queryEmail.substring(queryEmail.indexOf('@'));
+    var dCfg = getDomainConfig(domain);
     
-    // S59.4: Barrera lógica estricta por dominio (Igualdad de dominios)
-    if (!isDomainSyncEnabled(domain)) {
+    // S59.5: Barrera lógica estricta por dominio
+    if (!dCfg.enabled) {
       Logger.log("Workspace API Bypassed: Sync is disabled explicitly for domain " + domain);
       return { __status: "DISABLED" };
     }
 
-    var oauthToken = (typeof Auth_GetTokenForDomain === 'function') ? Auth_GetTokenForDomain(domain) : null;
-    
-    if (oauthToken) {
-      // Modo OAuth2 Externo
-      var apiUrl = 'https://admin.googleapis.com/admin/directory/v1/users/' + encodeURIComponent(queryEmail) + '?projection=full&viewType=domain_public';
-      var res = UrlFetchApp.fetch(apiUrl, {
-        headers: { 'Authorization': 'Bearer ' + oauthToken },
-        muteHttpExceptions: true
-      });
-      if (res.getResponseCode() === 200) {
-        user = JSON.parse(res.getContentText());
+    if (dCfg.webhookUrl) {
+      // Modo Microservicio Puente Nativo
+      var apiUrl = dCfg.webhookUrl + "?q=" + encodeURIComponent(queryEmail) + "&secret=" + encodeURIComponent(dCfg.webhookSecret || '');
+      var response = UrlFetchApp.fetch(apiUrl, { muteHttpExceptions: true });
+      if (response.getResponseCode() === 200) {
+        var respBody = JSON.parse(response.getContentText());
+        if (respBody.error) {
+            Logger.log("[Webhook] Error remoto: " + respBody.error);
+            return null;
+        }
+        if (respBody && respBody.length > 0) {
+           // We expect an array of users, or the exact match. Usually the webhook returns the list of users that match q.
+           // Since we queried EXACT email, we look for it in the array or take the first.
+           user = respBody.find(function(u) { return u.primaryEmail === queryEmail; }) || respBody[0];
+        }
       } else {
-        throw new Error("HTTP " + res.getResponseCode() + ": " + res.getContentText());
+        Logger.log("Error en Webhook Puente: " + response.getResponseCode());
+        return null;
       }
     } else {
-      // Modo Nativo (Dominio principal)
-      if (!AdminDirectory || !AdminDirectory.Users) {
-        throw new Error("AdminDirectory SDK no está inyectado o habilitado.");
-      }
+      // Modo Nativo (Solo si el script owner tiene permisos directos, ej: mismo dominio)
+      if (typeof AdminDirectory === 'undefined' || !AdminDirectory.Users) return null;
       user = AdminDirectory.Users.get(queryEmail, { projection: "full", viewType: "domain_public" });
     }
     
@@ -226,7 +247,7 @@ function searchDirectoryByName(queryName) {
     
     var runNative = true;
     if (nativeDomain) {
-       runNative = isDomainSyncEnabled(nativeDomain);
+       runNative = getDomainConfig(nativeDomain).enabled;
     }
 
     if (runNative && typeof AdminDirectory !== 'undefined' && AdminDirectory.Users) {
@@ -244,31 +265,30 @@ function searchDirectoryByName(queryName) {
         }
     }
 
-    // 2. OAuth2
-    if (typeof API_Admin_GetConnectedDomains === 'function') {
-      var domains = API_Admin_GetConnectedDomains();
-      domains.forEach(function(d) {
-        // S59.4 Barrera lógica
-        if (!isDomainSyncEnabled(d)) return;
-
-        var token = typeof Auth_GetTokenForDomain === 'function' ? Auth_GetTokenForDomain(d) : null;
-        if (token) {
-          try {
-            var url = 'https://admin.googleapis.com/admin/directory/v1/users?customer=my_customer&query=name%3A' + encodeURIComponent(q + '*') + '&maxResults=10&projection=full&viewType=domain_public';
-            var res = UrlFetchApp.fetch(url, {
-              headers: { 'Authorization': 'Bearer ' + token },
-              muteHttpExceptions: true
-            });
+    // 2. Webhooks Externos (S59.5)
+    var allConfigs = getAllDomainConfigs();
+    var processedWebhookUrls = {}; // Para evitar llamar al mismo webhook varias veces por alias
+    
+    for (var key in allConfigs) {
+      var dCfg = allConfigs[key];
+      // Si está encendido, no es el dominio nativo y tiene webhook
+      if (dCfg.enabled && dCfg.webhookUrl && !processedWebhookUrls[dCfg.webhookUrl]) {
+         processedWebhookUrls[dCfg.webhookUrl] = true;
+         try {
+            var apiUrl = dCfg.webhookUrl + "?q=" + encodeURIComponent(q) + "&secret=" + encodeURIComponent(dCfg.webhookSecret || '');
+            var res = UrlFetchApp.fetch(apiUrl, { muteHttpExceptions: true });
             if (res.getResponseCode() === 200) {
-              var payload = JSON.parse(res.getContentText());
-              if (payload && payload.users) {
-                users = users.concat(payload.users);
-              }
+               var payload = JSON.parse(res.getContentText());
+               if (!payload.error && Array.isArray(payload)) {
+                  users = users.concat(payload);
+               }
             }
-          } catch(err) {}
-        }
-      });
+         } catch(err) {
+            Logger.log("[Typeahead Webhook Error]: " + err.message);
+         }
+      }
     }
+    
     var dtos = users.map(function(u) {
       return {
          email: u.primaryEmail,
