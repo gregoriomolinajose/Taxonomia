@@ -827,15 +827,10 @@
 
       '<div class="ss-entity-card" style="flex-direction:column;gap:16px;margin-top:16px;">' +
         '<div style="font-weight:600;font-size:0.95rem;color:var(--ion-color-dark);display:flex;align-items:center;gap:8px;">' +
-          '<ion-icon name="globe-outline"></ion-icon> Dominios Conectados (OAuth2)' +
+          '<ion-icon name="globe-outline"></ion-icon> Dominios Conectados (Microservicio Webhook)' +
         '</div>' +
         '<div id="ss-oauth2-domains-container" style="font-size:0.8rem;color:var(--ion-color-medium);padding:12px;border-radius:8px;background:var(--ion-color-step-50);">' +
-          '<div style="text-align:center;"><ion-spinner name="crescent"></ion-spinner></div>' +
-        '</div>' +
-        '<div style="text-align:right;margin-top:8px;">' +
-          '<button id="btn-connect-domain" onclick="window.SchemaStudio.connectWorkspaceDomain()" style="background:var(--ion-color-primary);color:white;border:none;padding:8px 16px;border-radius:6px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:6px;font-size:0.8rem;box-shadow:0 2px 4px rgba(0,0,0,0.1);">' +
-            '<ion-icon name="add-circle-outline"></ion-icon> Conectar Dominio' +
-          '</button>' +
+          '<div style="font-style:italic;">La arquitectura de conexión cruzada ha sido actualizada a Webhooks (S59.5). Para conectar o administrar dominios adicionales, por favor dirígete al Catálogo de <b>Entidades > Config_Workspace</b>. Allí podrás ingresar las URLs y Tokens de los microservicios desplegados en otros dominios.</div>' +
         '</div>' +
       '</div>' +
 
