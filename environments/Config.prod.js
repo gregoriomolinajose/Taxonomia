@@ -1,8 +1,8 @@
 // src/Config.prod.js
 const CONFIG = {
-    APP_VERSION: 'v1.2.8 - 2605212229',
+    APP_VERSION: 'v1.2.8 - 2605240032',
     SPREADSHEET_ID_DB: '',
-    ALLOWED_DOMAINS: ['@coppel.com', '@bancoppel.com', '@bellfy.app', '@gmail.com'],
+    ALLOWED_DOMAINS: ['@bellfy.app', '@gmail.com'],  // Tenant A defaults — dominios finales via Adapter_Config
     ENV: 'production',
     DEBUG: false,
     useSheets: true,

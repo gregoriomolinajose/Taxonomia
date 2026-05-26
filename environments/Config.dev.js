@@ -1,7 +1,7 @@
 const CONFIG = {
-    APP_VERSION: 'v1.2.19 - 2605212229',
+    APP_VERSION: 'v1.2.19 - 2605261614',
     SPREADSHEET_ID_DB: '',
-    ALLOWED_DOMAINS: ['@gmail.com', '@bellfy.app', '@coppel.com', '@bancoppel.com'],
+    ALLOWED_DOMAINS: ['@gmail.com', '@bellfy.app'],  // Dev only — dominios del tenant se configuran via Adapter_Config
     useSheets: true,
     useCloudDB: false,
     WORKSPACE_INTEGRATION: true
