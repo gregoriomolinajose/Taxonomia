@@ -761,43 +761,221 @@
   }
 
   // ── Global Config Tab ──────────────────────────────────────────────────────────
+  // [S62/E6] renderGlobalTab — Config_System como fuente única de verdad.
+  // Lee y escribe via Engine_DB → Adapter_Config → PropertiesService.
+  // Reemplaza el formulario manual con claves APP_BRANDING_CONFIG / APP_SECURITY_CONFIG.
   function renderGlobalTab(container) {
-    var html = '<div style="max-width: 600px; margin: 0 auto; padding: 20px 0;">' +
-      '<div style="font-weight:700;font-size:1.1rem;margin-bottom:16px;">Identidad Visual (Branding)</div>' +
-      '<div class="ss-template-card" style="margin-bottom: 30px;">' +
-        '<div style="margin-bottom: 12px;">' +
-          '<label class="ss-label">Título de la Pestaña del Navegador</label>' +
-          '<input type="text" id="input-branding-title" class="ss-input" placeholder="Ej. Sistema de Taxonomía OMR" />' +
-        '</div>' +
-        '<div style="margin-bottom: 20px;">' +
-          '<label class="ss-label">URL del Favicon (Ícono)</label>' +
-          '<input type="text" id="input-branding-favicon" class="ss-input" placeholder="https://www.coppel.com/favicon.ico" />' +
-        '</div>' +
-        '<div style="text-align: right;">' +
-          '<button class="ss-btn-primary" id="btn-save-branding" onclick="window.SchemaStudio.saveBrandingConfig()">' +
-            '<ion-icon name="save-outline"></ion-icon> Guardar Apariencia' +
-          '</button>' +
-        '</div>' +
-      '</div>' +
-      
-      '<div style="font-weight:700;font-size:1.1rem;margin-bottom:16px;">Control de Acceso SSO (Dominios)</div>' +
-      '<div class="ss-template-card">' +
-        '<div style="margin-bottom: 20px;">' +
-          '<label class="ss-label">Dominios de Correo Permitidos (Separados por coma)</label>' +
-          '<input type="text" id="input-security-domains" class="ss-input" placeholder="Ej. @coppel.com, @bancoppel.com, @agencia.com" />' +
-          '<div style="font-size: 0.75rem; color: var(--ion-color-medium); margin-top: 6px;">' +
-            'Si esto se deja en blanco, el sistema recurrirá a la configuración estática por defecto.' +
-          '</div>' +
-        '</div>' +
-        '<div style="text-align: right;">' +
-          '<button class="ss-btn-primary" id="btn-save-security" onclick="window.SchemaStudio.saveSecurityConfig()">' +
-            '<ion-icon name="lock-closed-outline"></ion-icon> Guardar Accesos' +
-          '</button>' +
-        '</div>' +
-      '</div>' +
-    '</div>';
-    container.innerHTML = html;
+    // Estado interno del formulario
+    var _cfg = {};
+
+    // ── Esqueleto HTML del formulario ─────────────────────────────────────────
+    container.innerHTML = [
+      '<div style="max-width:640px;margin:0 auto;padding:20px 0;" id="cfg-sys-root">',
+
+        // ── Loading state ──────────────────────────────────────────────────
+        '<div id="cfg-sys-loading" style="text-align:center;padding:40px;">',
+          '<ion-spinner name="crescent" color="warning"></ion-spinner>',
+          '<div style="margin-top:12px;font-size:0.85rem;color:var(--ion-color-medium);">',
+            'Cargando configuración del sistema...',
+          '</div>',
+        '</div>',
+
+        // ── Formulario (oculto hasta que cargue) ───────────────────────────
+        '<div id="cfg-sys-form" style="display:none;">',
+
+          // Banner de identidad del tenant
+          '<div style="display:flex;align-items:center;gap:12px;padding:16px 20px;',
+            'background:linear-gradient(135deg,var(--ion-color-primary),var(--ion-color-primary-shade));',
+            'border-radius:12px;margin-bottom:24px;">',
+            '<ion-icon name="business-outline" style="font-size:24px;color:#fff;flex-shrink:0;"></ion-icon>',
+            '<div>',
+              '<div style="font-weight:700;font-size:1rem;color:#fff;">Configuración del Sistema</div>',
+              '<div style="font-size:0.75rem;color:rgba(255,255,255,0.75);margin-top:2px;">',
+                'Configuración del tenant · Persiste en PropertiesService',
+              '</div>',
+            '</div>',
+          '</div>',
+
+          // ── Sección: Identidad del Tenant ──────────────────────────────
+          '<div style="font-weight:700;font-size:0.9rem;letter-spacing:0.04em;',
+            'color:var(--ion-color-medium);text-transform:uppercase;margin-bottom:12px;">',
+            '<ion-icon name="id-card-outline" style="vertical-align:middle;margin-right:6px;"></ion-icon>',
+            'Identidad del Tenant',
+          '</div>',
+          '<div class="ss-template-card" style="margin-bottom:20px;">',
+            '<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">',
+              '<div>',
+                '<label class="ss-label">Nombre del Tenant</label>',
+                '<input type="text" id="cfg-tenant-name" class="ss-input"',
+                  ' placeholder="Ej: Tenant A" />',
+                '<div style="font-size:0.72rem;color:var(--ion-color-medium);margin-top:4px;">',
+                  'Identificador white-label de esta instancia.',
+                '</div>',
+              '</div>',
+              '<div>',
+                '<label class="ss-label">Adaptador de Base de Datos</label>',
+                '<select id="cfg-db-adapter" class="ss-input" style="height:40px;">',
+                  '<option value="sheets">Google Sheets</option>',
+                  '<option value="clouddb">Cloud Database</option>',
+                '</select>',
+              '</div>',
+              '<div style="grid-column:1/-1;">',
+                '<label class="ss-label">ID de Google Sheet (Base de Datos)</label>',
+                '<input type="text" id="cfg-spreadsheet-id" class="ss-input"',
+                  ' placeholder="ID del archivo Google Sheets compartido" />',
+                '<div style="font-size:0.72rem;color:var(--ion-color-medium);margin-top:4px;">',
+                  'ID del archivo Google Sheets que actúa como base de datos compartida entre tenants.',
+                '</div>',
+              '</div>',
+            '</div>',
+          '</div>',
+
+          // ── Sección: Control de Acceso ─────────────────────────────────
+          '<div style="font-weight:700;font-size:0.9rem;letter-spacing:0.04em;',
+            'color:var(--ion-color-medium);text-transform:uppercase;margin-bottom:12px;">',
+            '<ion-icon name="shield-checkmark-outline" style="vertical-align:middle;margin-right:6px;"></ion-icon>',
+            'Control de Acceso SSO',
+          '</div>',
+          '<div class="ss-template-card" style="margin-bottom:20px;">',
+            '<div>',
+              '<label class="ss-label">Dominios de Correo Permitidos (CSV)</label>',
+              '<input type="text" id="cfg-allowed-domains" class="ss-input"',
+                ' placeholder="Ej. @tenantA.com,@tenantB.com" />',
+              '<div style="font-size:0.72rem;color:var(--ion-color-medium);margin-top:4px;">',
+                'Correos permitidos para acceder al sistema. ',
+                'Si se deja vacío, se aplica la configuración estática del archivo de entorno.',
+              '</div>',
+            '</div>',
+          '</div>',
+
+          // ── Sección: Apariencia ────────────────────────────────────────
+          '<div style="font-weight:700;font-size:0.9rem;letter-spacing:0.04em;',
+            'color:var(--ion-color-medium);text-transform:uppercase;margin-bottom:12px;">',
+            '<ion-icon name="color-palette-outline" style="vertical-align:middle;margin-right:6px;"></ion-icon>',
+            'Apariencia (Branding)',
+          '</div>',
+          '<div class="ss-template-card" style="margin-bottom:24px;">',
+            '<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">',
+              '<div>',
+                '<label class="ss-label">Título de la Aplicación</label>',
+                '<input type="text" id="cfg-app-title" class="ss-input"',
+                  ' placeholder="Ej. Sistema de Taxonomía" />',
+                '<div style="font-size:0.72rem;color:var(--ion-color-medium);margin-top:4px;">',
+                  'Texto en la pestaña del navegador.',
+                '</div>',
+              '</div>',
+              '<div>',
+                '<label class="ss-label">URL del Favicon</label>',
+                '<input type="text" id="cfg-favicon-url" class="ss-input"',
+                  ' placeholder="https://empresa.com/favicon.ico" />',
+              '</div>',
+            '</div>',
+          '</div>',
+
+          // ── Acciones ────────────────────────────────────────────────────
+          '<div style="display:flex;justify-content:flex-end;gap:10px;align-items:center;">',
+            '<div id="cfg-sys-status" style="font-size:0.78rem;color:var(--ion-color-medium);flex:1;"></div>',
+            '<button class="ss-btn-secondary" id="btn-cfg-cancel" onclick="window.SchemaStudio._cfgCancel()"',
+              ' style="padding:8px 18px;border-radius:8px;border:1px solid var(--ion-color-step-200);',
+              'background:transparent;cursor:pointer;font-weight:600;font-size:0.82rem;color:var(--ion-color-medium);">',
+              '<ion-icon name="close-outline"></ion-icon> Cancelar',
+            '</button>',
+            '<button class="ss-btn-primary" id="btn-cfg-save" onclick="window.SchemaStudio.saveSystemConfig()">',
+              '<ion-icon name="save-outline"></ion-icon> Guardar Configuración',
+            '</button>',
+          '</div>',
+
+          // ── Info de migracion ───────────────────────────────────────────
+          '<div style="margin-top:20px;padding:12px 16px;border-radius:10px;',
+            'background:rgba(var(--ion-color-primary-rgb),0.07);',
+            'border:1px solid rgba(var(--ion-color-primary-rgb),0.15);',
+            'font-size:0.73rem;color:var(--ion-color-primary);display:flex;gap:8px;align-items:flex-start;">',
+            '<ion-icon name="information-circle-outline" style="flex-shrink:0;font-size:14px;margin-top:1px;"></ion-icon>',
+            '<div>',
+              '<strong>[E6/S62]</strong> Esta configuración persiste en <code>PropertiesService</code> ',
+              'via <code>Adapter_Config</code> — aislada por tenant, sin escritura en Google Sheets.',
+            '</div>',
+          '</div>',
+
+        '</div>', // fin #cfg-sys-form
+
+        // ── Error state ────────────────────────────────────────────────────
+        '<div id="cfg-sys-error" style="display:none;text-align:center;padding:40px;">',
+          '<ion-icon name="warning-outline" style="font-size:3rem;color:var(--ion-color-warning);"></ion-icon>',
+          '<div style="font-weight:600;margin-top:12px;">No se pudo cargar la configuración</div>',
+          '<div id="cfg-sys-error-msg" style="font-size:0.8rem;color:var(--ion-color-medium);margin-top:6px;"></div>',
+          '<button onclick="window.SchemaStudio._cfgLoad()" style="margin-top:16px;" class="ss-btn-primary">',
+            '<ion-icon name="refresh-outline"></ion-icon> Reintentar',
+          '</button>',
+        '</div>',
+
+      '</div>'
+    ].join('');
+
+    // ── Helper: rellenar formulario desde objeto config ────────────────────
+    function _populate(cfg) {
+      _cfg = cfg || {};
+      var set = function(id, val) {
+        var el = document.getElementById(id);
+        if (el) el.value = val || '';
+      };
+      set('cfg-tenant-name',    _cfg.tenant_name);
+      set('cfg-db-adapter',     _cfg.db_adapter_id || 'sheets');
+      set('cfg-spreadsheet-id', _cfg.spreadsheet_id);
+      set('cfg-allowed-domains',_cfg.allowed_domains);
+      set('cfg-app-title',      _cfg.app_title);
+      set('cfg-favicon-url',    _cfg.favicon_url);
+    }
+
+    // ── Cargar datos desde Config_System via DataAPI ──────────────────────
+    window.SchemaStudio._cfgLoad = function() {
+      var loading = document.getElementById('cfg-sys-loading');
+      var form    = document.getElementById('cfg-sys-form');
+      var errBox  = document.getElementById('cfg-sys-error');
+      if (loading) loading.style.display = 'block';
+      if (form)    form.style.display    = 'none';
+      if (errBox)  errBox.style.display  = 'none';
+
+      if (typeof DataAPI === 'undefined') {
+        // Modo desarrollo sin DataAPI — mostrar form vacío
+        if (loading) loading.style.display = 'none';
+        if (form)    form.style.display    = 'block';
+        return;
+      }
+
+      DataAPI.call('getEntityList', 'Config_System').then(function(res) {
+        if (loading) loading.style.display = 'none';
+        var cfg = {};
+        // Adapter_Config.asListResponse() → {headers,rows} → rows[0]
+        if (res && res.headers && res.rows && res.rows.length > 0) {
+          var row = res.rows[0];
+          res.headers.forEach(function(h, i) { cfg[h] = row[i] !== undefined ? row[i] : ''; });
+        } else if (res && res.data) {
+          // Formato alternativo legacy
+          try { cfg = JSON.parse(typeof res.data === 'string' ? res.data : JSON.stringify(res.data)); } catch(e) {}
+        }
+        _populate(cfg);
+        if (form) form.style.display = 'block';
+      }).catch(function(err) {
+        if (loading) loading.style.display = 'none';
+        var errBox2  = document.getElementById('cfg-sys-error');
+        var errMsg   = document.getElementById('cfg-sys-error-msg');
+        if (errBox2) errBox2.style.display  = 'block';
+        if (errMsg)  errMsg.textContent     = err.message || String(err);
+      });
+    };
+
+    // ── Cancelar — restaura valores originales ────────────────────────────
+    window.SchemaStudio._cfgCancel = function() {
+      _populate(_cfg);
+      var status = document.getElementById('cfg-sys-status');
+      if (status) { status.textContent = 'Cambios descartados.'; setTimeout(function(){ status.textContent=''; }, 2500); }
+    };
+
+    // Iniciar carga al montar
+    window.SchemaStudio._cfgLoad();
   }
+
 
   // ── Workspace Sync Tab ─────────────────────────────────────────────────────────
   function renderWorkspaceTab(container) {
@@ -2067,8 +2245,69 @@
     switchTab:              switchTab,
     runReconcile:           runReconcile,
     
+    // [S62/E6] saveSystemConfig — guarda Config_System via Engine_DB → Adapter_Config.
+    // Punto único de guardado que reemplaza saveBrandingConfig + saveSecurityConfig.
+    saveSystemConfig: function() {
+        var btn    = document.getElementById('btn-cfg-save');
+        var status = document.getElementById('cfg-sys-status');
+        if (!btn) return;
+
+        var get = function(id) {
+            var el = document.getElementById(id);
+            return el ? el.value.trim() : '';
+        };
+
+        var payload = {
+            config_id:       'SYS-CONFIG-001',
+            tenant_name:     get('cfg-tenant-name'),
+            db_adapter_id:   get('cfg-db-adapter'),
+            spreadsheet_id:  get('cfg-spreadsheet-id'),
+            allowed_domains: get('cfg-allowed-domains'),
+            app_title:       get('cfg-app-title'),
+            favicon_url:     get('cfg-favicon-url')
+        };
+
+        var origText = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<ion-spinner name="crescent" style="width:16px;height:16px;"></ion-spinner> Guardando...';
+        if (status) status.textContent = '';
+
+        if (typeof DataAPI === 'undefined') {
+            btn.disabled = false;
+            btn.innerHTML = origText;
+            alert('[Dev] DataAPI no disponible. En producción, guardará en PropertiesService via Adapter_Config.');
+            return;
+        }
+
+        DataAPI.call('save', 'Config_System', payload).then(function(res) {
+            btn.disabled = false;
+            btn.innerHTML = origText;
+            if (res && res.success !== false) {
+                if (status) {
+                    status.innerHTML = '<ion-icon name="checkmark-circle-outline" style="color:var(--ion-color-success);vertical-align:middle;"></ion-icon> Configuración guardada exitosamente.';
+                    setTimeout(function(){ status.textContent = ''; }, 3500);
+                }
+                // Aplicar app_title al documento inmediatamente si está presente
+                if (payload.app_title) document.title = payload.app_title;
+            } else {
+                var msg = (res && res.message) ? res.message : 'Error desconocido';
+                if (status) status.innerHTML = '<ion-icon name="alert-circle-outline" style="color:var(--ion-color-danger);vertical-align:middle;"></ion-icon> Error: ' + msg;
+            }
+        }).catch(function(err) {
+            btn.disabled = false;
+            btn.innerHTML = origText;
+            if (status) status.innerHTML = '<ion-icon name="alert-circle-outline" style="color:var(--ion-color-danger);vertical-align:middle;"></ion-icon> Error de red: ' + err.message;
+        });
+    },
+
+    // Compatibilidad retroactiva — delegan a saveSystemConfig si el formulario nuevo existe
     saveBrandingConfig: function() {
-        var titleInput = document.getElementById('input-branding-title');
+        if (document.getElementById('cfg-app-title')) {
+            window.SchemaStudio.saveSystemConfig();
+            return;
+        }
+        // Ruta legacy (si la pestaña vieja estuviera activa de alguna forma)
+        var titleInput   = document.getElementById('input-branding-title');
         var faviconInput = document.getElementById('input-branding-favicon');
         if (!titleInput || !faviconInput) return;
         var payload = { appTitle: titleInput.value.trim(), faviconUrl: faviconInput.value.trim() };
@@ -2076,20 +2315,26 @@
     },
 
     saveSecurityConfig: function() {
+        if (document.getElementById('cfg-allowed-domains')) {
+            window.SchemaStudio.saveSystemConfig();
+            return;
+        }
+        // Ruta legacy
         var domainsInput = document.getElementById('input-security-domains');
         if (!domainsInput) return;
-        var domainsRaw = domainsInput.value || '';
+        var domainsRaw   = domainsInput.value || '';
         var domainsArray = domainsRaw.split(',')
             .map(function(d) { return d.trim().toLowerCase(); })
             .filter(function(d) { return d.length > 0 && d.startsWith('@'); });
-
         if (domainsRaw.trim().length > 0 && domainsArray.length === 0) {
-            alert("Error: Los dominios deben comenzar con '@' (ej. @coppel.com)");
+            alert("Error: Los dominios deben comenzar con '@' (ej. @tenantA.com)");
             return;
         }
         var payload = { allowedDomains: domainsArray };
         _saveGlobalConfig('APP_SECURITY_CONFIG', payload, 'btn-save-security', 'Accesos SSO guardados exitosamente. Aplicarán en los siguientes inicios de sesión.');
     },
+
+
     
     saveWorkspaceConfig: function() {
         var chk = document.getElementById('ss-workspace-sync-enabled');
