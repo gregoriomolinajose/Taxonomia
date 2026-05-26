@@ -573,7 +573,7 @@ var APP_SCHEMAS = {
   Config_System: {
     metadata: {
       adapter: 'config',
-      showInMenu: true,
+      showInMenu: false,
       showInSchemaStudio: false,
       order: 99,
       iconName: 'settings-outline',
