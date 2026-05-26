@@ -473,6 +473,21 @@ var APP_SCHEMAS = {
       { name: "metadata_config", type: "textarea", label: "Configuración Adicional (JSON)", required: false, width: 12, showInList: false, validators: ["json"] }
     ]
   },
+  // [E6-S66] Canal pub-sub nativo para invalidación proactiva de caché cross-tenant.
+  // Append-only. El job Job_CleanCacheSignals() limpia señales > 1 hora cada 24h.
+  Sys_Cache_Signals: {
+    metadata: { showInMenu: false, order: 95, iconName: 'radio-outline', color: 'warning',
+                label: 'Señales de Caché Cross-Tenant', titleField: 'entity_name',
+                idField: 'signal_id', fkField: null },
+    primaryKey: "signal_id",
+    fields: [
+      { name: "signal_id",      type: "text",   primaryKey: true,  label: "ID Señal",        width: 6  },
+      { name: "entity_name",    type: "text",   required: true,    label: "Entidad",          width: 6  },
+      { name: "invalidated_at", type: "text",   required: true,    label: "Invalidado el",    width: 6  },
+      { name: "by_tenant",      type: "text",   required: true,    label: "Tenant Origen",    width: 6  }
+    ]
+  },
+
   Sys_Roles: {
     metadata: { prefix: 'SROL', showInMenu: false, order: 90, iconName: 'shield-half-outline', color: 'danger', label: 'Seguridad: Roles', titleField: 'nombre', idField: 'id_rol', fkField: null },
     primaryKey: "id_rol",

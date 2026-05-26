@@ -29,6 +29,7 @@ function _getAppVersionHash() {
 /**
  * _invalidateCache (Directiva Architect: Cache Busting)
  * Purga la RAM para forzar lectura fresca tras mutaciones.
+ * [S66] Al final llama _publishCacheSignal para notificar a otros tenants.
  */
 function _invalidateCache(entityName) {
     if (typeof CacheService === 'undefined') return;
@@ -51,6 +52,94 @@ function _invalidateCache(entityName) {
     }
     
     if (typeof Logger !== 'undefined') Logger.log(`[Cache] BUSTED para ${entityName}`);
+
+    // [E6-S66] Publicar señal cross-tenant para invalidar caché de otros tenants
+    // No publicar señal para Sys_Cache_Signals (evitar recursión)
+    if (entityName !== 'Sys_Cache_Signals') {
+        _publishCacheSignal(entityName);
+    }
+}
+
+/**
+ * [E6-S66] _publishCacheSignal
+ * Escribe una fila append-only en la pestaña Sys_Cache_Signals del Sheet compartido.
+ * Fallback silencioso: un fallo aquí nunca rompe la operación principal.
+ *
+ * @param {string} entityName — Entidad que fue mutada
+ */
+function _publishCacheSignal(entityName) {
+    try {
+        if (typeof _Adapter_Sheets === 'undefined' || typeof CONFIG === 'undefined') return;
+        if (!CONFIG.SPREADSHEET_ID_DB || CONFIG.SPREADSHEET_ID_DB.trim().length === 0) return;
+        const tenantName = CONFIG.TENANT_NAME || 'default';
+        const signal = {
+            signal_id:      'SIG-' + Math.random().toString(36).substring(2, 10).toUpperCase(),
+            entity_name:    entityName,
+            invalidated_at: new Date().toISOString(),
+            by_tenant:      tenantName
+        };
+        // Usar upsert con la PK signal_id — siempre nuevo (UUID), nunca sobrescribe
+        _Adapter_Sheets.upsert('Sys_Cache_Signals', signal, CONFIG);
+        // Invalidar la mini-caché de señales para que otros tenants la vean en ≤ 60s
+        if (typeof CacheService !== 'undefined') {
+            CacheService.getScriptCache().remove('CACHE_SIGNALS_v1');
+        }
+    } catch(e) {
+        // Silencioso — fallar al publicar señal no debe romper la operación principal
+        if (typeof Logger !== 'undefined') Logger.log('[CacheSignal] Fallo al publicar señal: ' + e.message);
+    }
+}
+
+/**
+ * [E6-S66] _checkCacheSignals
+ * Verifica si hay señales de OTROS tenants más nuevas que nuestra caché local.
+ * Usa una mini-caché propia de 60 segundos para amortizar lecturas de Sheets.
+ *
+ * @param {string} entityName  — Entidad a verificar
+ * @param {string} cachedAt    — ISO timestamp de cuando guardamos nuestra caché local
+ * @returns {boolean}          — true si debemos invalidar la caché local
+ */
+function _checkCacheSignals(entityName, cachedAt) {
+    try {
+        if (typeof CacheService === 'undefined') return false;
+        const cache = CacheService.getScriptCache();
+        const signalsCacheKey = 'CACHE_SIGNALS_v1';
+
+        let signals;
+        const rawCached = cache.get(signalsCacheKey);
+        if (rawCached) {
+            signals = JSON.parse(rawCached);
+        } else {
+            // Cache miss: leer de Sheets (tabla pequeña, máx 500 filas por limpieza del job)
+            const config = (typeof CONFIG !== 'undefined') ? CONFIG : {};
+            if (!config.SPREADSHEET_ID_DB || config.SPREADSHEET_ID_DB.trim().length === 0) return false;
+            const result = _Adapter_Sheets.list('Sys_Cache_Signals', config, 'objects');
+            signals = (result && result.rows) ? result.rows : [];
+            // TTL intencional de 60 segundos — ventana máxima de inconsistencia cross-tenant
+            cache.put(signalsCacheKey, JSON.stringify(signals), 60);
+        }
+
+        const tenantName = (typeof CONFIG !== 'undefined' && CONFIG.TENANT_NAME) || 'default';
+        // Solo evaluar señales de OTROS tenants (las propias ya las procesamos en tiempo real)
+        const externalSignals = signals.filter(function(s) {
+            return s.entity_name === entityName && s.by_tenant !== tenantName;
+        });
+
+        if (externalSignals.length === 0) return false;
+
+        // Encontrar la señal más reciente
+        const latestSignal = externalSignals.reduce(function(latest, s) {
+            return s.invalidated_at > latest.invalidated_at ? s : latest;
+        });
+
+        // Si la señal es posterior a cuando guardamos nuestra caché → invalidar
+        return latestSignal.invalidated_at > cachedAt;
+
+    } catch(e) {
+        // En caso de error, conservar caché existente — mejor dato ligeramente viejo que WSOD
+        if (typeof Logger !== 'undefined') Logger.log('[CacheSignal] Error al verificar señales: ' + e.message);
+        return false;
+    }
 }
 
 /**
@@ -672,24 +761,43 @@ const Engine_DB = {
             if (typeof Logger !== 'undefined') Logger.log('[Engine_DB] WARN: Adapter_Config no disponible aún para ' + entityName + '. Retornando vacío.');
             return { headers: [], rows: [] };
         }
-        // Intentar leer de RAM (CacheService) con Fragmentación Inteligente S42.1
+        // [E6-S66] Intentar leer de RAM (CacheService) con señal cross-tenant
         const cacheKey = `CACHE_LIST_${_getAppVersionHash()}_${entityName}`;
         if (typeof CacheService !== 'undefined' && (!options || !options.skipCache)) {
             const cache = CacheService.getScriptCache();
-            const cached = _getCacheChunked(cache, cacheKey);
-            if (cached && format !== 'tuples') {
-                Logger.log(`[Cache Engine] HIT para ${entityName}`);
-                return JSON.parse(cached);
+            const cachedRaw = _getCacheChunked(cache, cacheKey);
+            if (cachedRaw && format !== 'tuples') {
+                try {
+                    const wrapped = JSON.parse(cachedRaw);
+                    // [S66] Si tiene campo cached_at, verificar señales cross-tenant
+                    if (wrapped && wrapped.cached_at && wrapped.data !== undefined) {
+                        const shouldInvalidate = _checkCacheSignals(entityName, wrapped.cached_at);
+                        if (!shouldInvalidate) {
+                            if (typeof Logger !== 'undefined') Logger.log(`[Cache Engine] HIT para ${entityName} (cross-tenant OK)`);
+                            return wrapped.data;
+                        }
+                        // Señal externa más nueva → invalidar y releer de Sheets
+                        if (typeof Logger !== 'undefined') Logger.log(`[Cache Engine] INVALIDADO por señal cross-tenant para ${entityName}`);
+                        _removeCacheChunked(cache, cacheKey);
+                    } else {
+                        // Retrocompatibilidad: dato sin wrapped — servir directamente
+                        if (typeof Logger !== 'undefined') Logger.log(`[Cache Engine] HIT para ${entityName}`);
+                        return wrapped;
+                    }
+                } catch(parseErr) {
+                    if (typeof Logger !== 'undefined') Logger.log(`[Cache Engine] Error parseando caché de ${entityName}, releyendo de DB.`);
+                }
             }
         }
 
-        Logger.log(`[Cache Engine] MISS para ${entityName}. Leyendo de DB...`);
+        if (typeof Logger !== 'undefined') Logger.log(`[Cache Engine] MISS para ${entityName}. Leyendo de DB...`);
         const result = _Adapter_Sheets.list(entityName, config, format);
         
-        // Guardar en caché si no es formato tuplas (Chunked blindado)
+        // [S66] Guardar en caché envuelto con timestamp para soporte de señales cross-tenant
         if (typeof CacheService !== 'undefined' && format !== 'tuples' && result) {
             const cache = CacheService.getScriptCache();
-            _putCacheChunked(cache, cacheKey, JSON.stringify(result), 3600);
+            const wrappedResult = { data: result, cached_at: new Date().toISOString() };
+            _putCacheChunked(cache, cacheKey, JSON.stringify(wrappedResult), 3600);
         }
         
         return result;
@@ -893,4 +1001,65 @@ const Engine_DB = {
 
 if (typeof module !== 'undefined') {
     module.exports = Engine_DB;
+}
+
+/**
+ * [E6-S66] Job_CleanCacheSignals
+ * Limpia señales con más de 1 hora de antigüedad de la pestaña Sys_Cache_Signals.
+ * Retiene siempre las últimas 500 señales como máximo.
+ * Debe configurarse como trigger de tiempo en Apps Script: cada 24 horas.
+ *
+ * @returns {{ deleted: number, retained: number }}
+ */
+function Job_CleanCacheSignals() {
+    try {
+        if (typeof CONFIG === 'undefined' || !CONFIG.SPREADSHEET_ID_DB) {
+            Logger.log('[Job_CleanCacheSignals] SPREADSHEET_ID_DB no configurado. Abortando.');
+            return { deleted: 0, retained: 0 };
+        }
+        const config = CONFIG;
+        const cutoffISO = new Date(Date.now() - 3600 * 1000).toISOString(); // 1 hora atrás
+        const MAX_RETAIN = 500;
+
+        // Leer todas las señales
+        const result = _Adapter_Sheets.list('Sys_Cache_Signals', config, 'objects');
+        const allSignals = (result && result.rows) ? result.rows : [];
+
+        if (allSignals.length === 0) {
+            Logger.log('[Job_CleanCacheSignals] No hay señales. Nada que limpiar.');
+            return { deleted: 0, retained: 0 };
+        }
+
+        // Filtrar: eliminar las que son más viejas que 1 hora, y respetar MAX_RETAIN
+        const toRetain = allSignals
+            .filter(function(s) { return s.invalidated_at >= cutoffISO; })
+            .slice(-MAX_RETAIN);
+
+        const deleted = allSignals.length - toRetain.length;
+
+        // Borrar las señales viejas por su signal_id
+        const toDelete = allSignals.filter(function(s) {
+            return !toRetain.some(function(r) { return r.signal_id === s.signal_id; });
+        });
+
+        toDelete.forEach(function(s) {
+            try {
+                _Adapter_Sheets.remove('Sys_Cache_Signals', s.signal_id, config);
+            } catch(e) {
+                Logger.log('[Job_CleanCacheSignals] Error borrando señal ' + s.signal_id + ': ' + e.message);
+            }
+        });
+
+        // Invalidar mini-caché de señales para que el siguiente request lea los datos frescos
+        if (typeof CacheService !== 'undefined') {
+            CacheService.getScriptCache().remove('CACHE_SIGNALS_v1');
+        }
+
+        Logger.log(`[Job_CleanCacheSignals] Limpieza completada. Eliminadas: ${deleted}, Retenidas: ${toRetain.length}`);
+        return { deleted: deleted, retained: toRetain.length };
+
+    } catch(e) {
+        Logger.log('[Job_CleanCacheSignals] Error crítico: ' + e.message);
+        return { deleted: 0, retained: 0, error: e.message };
+    }
 }
