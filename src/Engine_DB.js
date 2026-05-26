@@ -755,7 +755,13 @@ const Engine_DB = {
     delete: function (entityName, id) {
         const config = (typeof CONFIG !== 'undefined') ? CONFIG : { useSheets: true, useCloudDB: false };
         if (typeof Logger !== 'undefined') Logger.log("Engine_DB_delete_router: Routing " + entityName + " (ID: " + id + ") to Architect Unit of Work Deletion.");
-        
+
+        // [S60/E6] Guard de routing: entidades con adapter especial no usan Sheets
+        const schemaForDel = (typeof APP_SCHEMAS !== 'undefined') ? APP_SCHEMAS[entityName] : null;
+        if (schemaForDel && schemaForDel.metadata && schemaForDel.metadata.adapter === 'config') {
+            throw new Error('[Engine_DB] La entidad ' + entityName + ' es gestionada por Adapter_Config y no soporta operación delete. Usa setAll() para actualizar la configuración.');
+        }
+
         let results = { sheets: {}, cloud: {} };
 
         // [S8.1] Check graph topology configuration
