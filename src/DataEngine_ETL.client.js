@@ -266,7 +266,10 @@
             // S45.6 Validación Pre-Vuelo Estricta (Solo Persona)
             let validData = [];
             if (entityName === 'Persona') {
-                const allowedDomains = (window.ENV_CONFIG && window.ENV_CONFIG.ALLOWED_DOMAINS) ? window.ENV_CONFIG.ALLOWED_DOMAINS : ['@coppel.com', '@bancoppel.com'];
+                // [E6-S64] Dominios desde ENV_CONFIG inyectado por server, o [] si no configurado (falla explícita).
+                const allowedDomains = (window.ENV_CONFIG && window.ENV_CONFIG.ALLOWED_DOMAINS && window.ENV_CONFIG.ALLOWED_DOMAINS.length > 0)
+                    ? window.ENV_CONFIG.ALLOWED_DOMAINS
+                    : [];
                 
                 parsedData.forEach((row, index) => {
                     // Buscar la llave "correo" o "email" ignorando mayúsculas

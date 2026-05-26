@@ -41,7 +41,11 @@ const API_Auth = {
             };
         }
 
-        let domains = ['@coppel.com', '@bancoppel.com']; 
+        // [E6-S64] Dominios resueltos en runtime desde Adapter_Config / PropertiesService.
+        // Lista vacía como último recurso — los dominios reales se configuran via 'Ajustes Globales'.
+        let domains = CONFIG && CONFIG.ALLOWED_DOMAINS && CONFIG.ALLOWED_DOMAINS.length > 0
+            ? CONFIG.ALLOWED_DOMAINS
+            : [];
         if (typeof PropertiesService !== 'undefined') {
             let customDomains = null;
             try {

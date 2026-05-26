@@ -392,7 +392,8 @@ var APP_SCHEMAS = {
       { name: "apellidos", type: "text", label: "Apellidos", required: true, width: 6, validators: ["minLength:2"] },
 
       { name: "separator_2", type: "divider", label: "Datos de Contacto", icon: "mail-outline", width: 12 },
-      { name: "email", type: "email", primaryKey: false, label: "Correo Corporativo", required: true, width: 12, validators: ["regex:^[a-zA-Z0-9._%+-]+@(coppel\\.com|bancoppel\\.com|kairosds\\.com|nttdata\\.com)$"], triggers_workspace_resolve: true, unique: true },
+      // [E6-S64] Validator genérico de email — la restricción de dominio la aplica API_Auth via Adapter_Config
+      { name: "email", type: "email", primaryKey: false, label: "Correo Corporativo", required: true, width: 12, validators: ["regex:^[a-zA-Z0-9._%+\\-]+@[a-zA-Z0-9.\\-]+\\.[a-zA-Z]{2,}$"], triggers_workspace_resolve: true, unique: true },
       { name: "telefono", type: "tel", label: "Teléfono", required: false, width: 12 },
 
       { name: "separator_4", type: "divider", label: "Datos Agilidad", icon: "git-network-outline", width: 12 },
