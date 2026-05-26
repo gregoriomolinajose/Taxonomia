@@ -17,7 +17,43 @@ function doGet(e) {
     }
   }
 
+  // [E6-S65] First-Run Detection — Backend-First.
+  // Si SPREADSHEET_ID_DB no está configurado en ninguna fuente, retorna el Wizard.
+  // Fuentes verificadas en orden de prioridad:
+  //   1. Adapter_Config (PropertiesService, clave APP_CONFIG__spreadsheet_id)
+  //   2. ENV_CONFIG en PropertiesService (SPREADSHEET_ID_DB)
+  //   3. CONFIG.SPREADSHEET_ID_DB (build-time, entorno actual)
+  var _spreadsheetConfigured = false;
+  try {
+    var _configSheetId = PropertiesService.getScriptProperties().getProperty('APP_CONFIG__spreadsheet_id');
+    if (_configSheetId && _configSheetId.trim().length > 0) {
+      _spreadsheetConfigured = true;
+    } else {
+      var _envStr = PropertiesService.getScriptProperties().getProperty('ENV_CONFIG');
+      if (_envStr) {
+        var _envObj = JSON.parse(_envStr);
+        if (_envObj.SPREADSHEET_ID_DB && _envObj.SPREADSHEET_ID_DB.trim().length > 0) {
+          _spreadsheetConfigured = true;
+        }
+      }
+    }
+    if (!_spreadsheetConfigured && typeof CONFIG !== 'undefined' && CONFIG.SPREADSHEET_ID_DB && CONFIG.SPREADSHEET_ID_DB.trim().length > 0) {
+      _spreadsheetConfigured = true;
+    }
+  } catch(_frErr) {
+    console.warn('[S65] Error en detección first-run:', _frErr);
+  }
+
+  if (!_spreadsheetConfigured) {
+    console.log('[S65] SPREADSHEET_ID_DB no configurado — sirviendo FirstRun.html');
+    return HtmlService.createHtmlOutputFromFile('FirstRun')
+      .setTitle('Configuración Inicial · Taxonomía')
+      .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL)
+      .addMetaTag('viewport', 'width=device-width, initial-scale=1.0, viewport-fit=cover');
+  }
+
   var template = HtmlService.createTemplateFromFile('Index');
+
 
   // Backend variables injected into the template scope
   // (available as <?= APP_VERSION ?> in Index.html)

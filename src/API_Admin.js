@@ -136,3 +136,86 @@ function _getSpreadsheet() {
   }
   return SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID_DB);
 }
+
+/**
+ * [E6-S65] Persiste la configuración inicial del wizard de primer arranque.
+ *
+ * Escribe via Adapter_Config.setAll() (PropertiesService) y mantiene
+ * compatibilidad retroactiva con ENV_CONFIG y APP_BRANDING_CONFIG para
+ * que Code.js y API_Auth.js no necesiten refactorización adicional.
+ *
+ * @param {Object} payload - Datos del wizard:
+ *   { config_id, tenant_name, spreadsheet_id, allowed_domains,
+ *     app_title, favicon_url, db_adapter_id }
+ * @returns {{ success: boolean, message: string }}
+ */
+function API_Admin_SaveFirstRunConfig(payload) {
+  try {
+    if (!payload || !payload.spreadsheet_id || !payload.spreadsheet_id.trim()) {
+      throw new Error('spreadsheet_id es requerido para completar la configuración inicial.');
+    }
+    if (!payload.allowed_domains || payload.allowed_domains.trim().length === 0) {
+      throw new Error('allowed_domains es requerido para completar la configuración inicial.');
+    }
+
+    // Normalizar dominios (puede venir como CSV string desde el wizard)
+    var domainsArr = [];
+    if (typeof payload.allowed_domains === 'string') {
+      domainsArr = payload.allowed_domains.split(',')
+        .map(function(d) { return d.trim().toLowerCase(); })
+        .filter(function(d) { return d.length > 0 && d.startsWith('@'); });
+    } else if (Array.isArray(payload.allowed_domains)) {
+      domainsArr = payload.allowed_domains;
+    }
+
+    if (domainsArr.length === 0) {
+      throw new Error('Ningún dominio válido. Los dominios deben comenzar con "@" (ej. @empresa.com).');
+    }
+
+    // ── 1. Persistir via Adapter_Config (fuente primaria E6) ──────────────
+    if (typeof Adapter_Config !== 'undefined') {
+      Adapter_Config.setAll({
+        config_id:       payload.config_id       || 'SYS-CONFIG-001',
+        tenant_name:     payload.tenant_name      || '',
+        spreadsheet_id:  payload.spreadsheet_id.trim(),
+        allowed_domains: domainsArr.join(','),
+        app_title:       payload.app_title        || payload.tenant_name || '',
+        favicon_url:     payload.favicon_url       || '',
+        db_adapter_id:   payload.db_adapter_id    || 'sheets'
+      });
+    }
+
+    var props = PropertiesService.getScriptProperties();
+
+    // ── 2. Retrocompatibilidad — ENV_CONFIG ───────────────────────────────
+    var currentEnvStr = props.getProperty('ENV_CONFIG');
+    var currentEnv = {};
+    try { if (currentEnvStr) currentEnv = JSON.parse(currentEnvStr); } catch(e) {}
+    currentEnv.SPREADSHEET_ID_DB = payload.spreadsheet_id.trim();
+    currentEnv.ALLOWED_DOMAINS   = domainsArr;
+    currentEnv.AuthMode          = currentEnv.AuthMode || 'SSO';
+    props.setProperty('ENV_CONFIG', JSON.stringify(currentEnv));
+
+    // ── 3. Retrocompatibilidad — APP_BRANDING_CONFIG ───────────────────────
+    if (payload.app_title || payload.favicon_url) {
+      var branding = {};
+      try {
+        var bStr = props.getProperty('APP_BRANDING_CONFIG');
+        if (bStr) branding = JSON.parse(bStr);
+      } catch(e) {}
+      if (payload.app_title)  branding.appTitle  = payload.app_title;
+      if (payload.favicon_url) branding.faviconUrl = payload.favicon_url;
+      props.setProperty('APP_BRANDING_CONFIG', JSON.stringify(branding));
+    }
+
+    console.log('[S65] First-run config guardada. Tenant:', payload.tenant_name,
+                '| Sheet:', payload.spreadsheet_id, '| Dominios:', domainsArr);
+
+    return { success: true, message: 'Configuración inicial guardada correctamente.' };
+
+  } catch(e) {
+    console.error('[S65] Error en API_Admin_SaveFirstRunConfig:', e);
+    return { success: false, message: e.message };
+  }
+}
+
