@@ -56,7 +56,8 @@ function doGet(e) {
   } catch(e) {}
   
   if (!envConfigStr) {
-    envConfigStr = JSON.stringify({ AuthMode: "SSO", ALLOWED_DOMAINS: ["@coppel.com", "@bancoppel.com"] });
+    // [E6-S64] Fallback genérico — dominios reales se configuran via Ajustes Globales (Adapter_Config)
+    envConfigStr = JSON.stringify({ AuthMode: "SSO", ALLOWED_DOMAINS: [] });
   }
   template.ENV_CONFIG = envConfigStr;
 
@@ -74,10 +75,10 @@ function doGet(e) {
       
   template.__ABAC_CONTEXT__ = JSON.stringify(abacContext).replace(/</g, '\\u003c');
 
-  // Branding Config Load (S48.1)
+  // [E6-S64] Branding genérico — configurar via Ajustes Globales en Schema Studio
   let brandingConfig = {
-    appTitle: 'Gobierno de Modelo de Producto — EPT OMR',
-    faviconUrl: 'https://www.coppel.com/favicon.ico'
+    appTitle: 'Gobierno de Modelo de Producto',
+    faviconUrl: ''
   };
   try {
     var brandingStr = PropertiesService.getScriptProperties().getProperty('APP_BRANDING_CONFIG');

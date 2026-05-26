@@ -51,7 +51,8 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Montserrat:wght@400;500;600;700&family=Playfair+Display:wght@500;600;700&family=Poppins:wght@400;500;600&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
 
   <script>
-    window.ENV_CONFIG = <?!= typeof ENV_CONFIG !== 'undefined' ? ENV_CONFIG : '{"AuthMode":"SSO","ALLOWED_DOMAINS":["@coppel.com","@bancoppel.com"]}' ?>;
+    // [E6-S64] Fallback genérico — dominios del tenant se configuran via Adapter_Config (Ajustes Globales)
+    window.ENV_CONFIG = <?!= typeof ENV_CONFIG !== 'undefined' ? ENV_CONFIG : '{"AuthMode":"SSO","ALLOWED_DOMAINS":[]}' ?>;
     window.WORKSPACE_SYNC_ENABLED = <?!= typeof WORKSPACE_SYNC_ENABLED !== 'undefined' ? WORKSPACE_SYNC_ENABLED : true ?>;
 
     window.WHITE_LABEL = <?!= typeof WHITE_LABEL_CONFIG !== 'undefined' ? WHITE_LABEL_CONFIG : '{"bodyFont":"Poppins, sans-serif","displayFont":"Playfair Display, serif"}' ?>;
