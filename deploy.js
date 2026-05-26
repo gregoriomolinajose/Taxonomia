@@ -7,8 +7,8 @@ const { stripQAModule, extractAndValidateScripts } = require('./scripts/pipeline
 
 const env = process.argv[2];
 
-if (!['dev', 'prod'].includes(env)) {
-    console.error('Usage: node deploy.js <dev|prod>');
+if (!['dev', 'prod', 'tenantB'].includes(env)) {
+    console.error('Usage: node deploy.js <dev|prod|tenantB>');
     process.exit(1);
 }
 
@@ -18,12 +18,16 @@ try {
     console.log(`[Deploy] Switching to ${env} environment...`);
 
     const SCRIPT_IDS = {
-        'dev': '1ZjGYDSsBgXy9mxa9guRoj69oabUJAVZz9GOy9DzJ5280tzYmMIjIBd5q',
-        'prod': '14oIjG_akx2DuX1nZe_HWBR8TECPYZgCyYikKwtRnng_pgzxcK0wLekYa'
+        'dev':     '1ZjGYDSsBgXy9mxa9guRoj69oabUJAVZz9GOy9DzJ5280tzYmMIjIBd5q',
+        'prod':    '14oIjG_akx2DuX1nZe_HWBR8TECPYZgCyYikKwtRnng_pgzxcK0wLekYa',
+        // [E6-S63] Tenant B GAS project — reemplazar con el Script ID real del proyecto de Tenant B
+        'tenantB': process.env.TENANT_B_SCRIPT_ID || 'TENANT_B_SCRIPT_ID_PLACEHOLDER'
     };
 
     const DEPLOYMENT_IDS = {
-        'prod': 'AKfycbyM1dZ_VxFzyaljHVEkTC0NXn_FYxnvRfHGZqjtbpnd-T-mRiGyXFWVdI0diJWtH79-eg'
+        'prod':    'AKfycbyM1dZ_VxFzyaljHVEkTC0NXn_FYxnvRfHGZqjtbpnd-T-mRiGyXFWVdI0diJWtH79-eg',
+        // [E6-S63] Opcional: deployment ID del web app de Tenant B para auto-versionado
+        'tenantB': process.env.TENANT_B_DEPLOYMENT_ID || null
     };
 
     if (!SCRIPT_IDS[env]) {
@@ -31,6 +35,13 @@ try {
     }
 
     const configFile = `environments/Config.${env}.js`;
+    // [E6-S63] Guardia: evitar despliegue accidental si el Script ID no fue configurado
+    if (env === 'tenantB' && SCRIPT_IDS['tenantB'] === 'TENANT_B_SCRIPT_ID_PLACEHOLDER') {
+        console.error('[Deploy] ERROR: El Script ID de Tenant B no ha sido configurado.');
+        console.error('[Deploy] Edita deploy.js > SCRIPT_IDS[\'tenantB\'] con el ID real del proyecto GAS,');
+        console.error('[Deploy] o define la variable de entorno TENANT_B_SCRIPT_ID antes de ejecutar.');
+        process.exit(1);
+    }
     let currentConfigContent = fs.existsSync(configFile) ? fs.readFileSync(configFile, 'utf8') : '';
     let currentVersionMatch = currentConfigContent.match(/APP_VERSION:\s*['"](.*?)['"]/);
     let currentVersion = currentVersionMatch ? currentVersionMatch[1] : 'v1.0.0';
