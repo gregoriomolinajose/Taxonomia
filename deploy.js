@@ -1,9 +1,11 @@
-const fs = require('fs');
+const fs   = require('fs');
 const path = require('path');
+const os   = require('os');
 const { execSync } = require('child_process');
 const readline = require('readline');
-const esbuild = require('esbuild');
+const esbuild  = require('esbuild');
 const { stripQAModule, extractAndValidateScripts } = require('./scripts/pipelineUtils.js');
+
 
 const env = process.argv[2];
 
@@ -33,6 +35,33 @@ try {
     if (!SCRIPT_IDS[env]) {
         throw new Error(`No scriptId configured for environment: ${env}`);
     }
+
+    // [S67] Multi-Account Clasp Auth
+    // Cada entorno puede usar credenciales de una cuenta Google diferente.
+    // Los archivos de credenciales NO van al repo (viven en el HOME del developer).
+    // Setup: npx clasp login --no-localhost → copiar ~/.clasprc.json a ~/.clasp-<cuenta>.json
+    const CREDS_FILE = {
+        'dev':     path.join(os.homedir(), '.clasp-gmail.json'),    // Gmail  → proyecto GAS de dev
+        'prod':    path.join(os.homedir(), '.clasp-coppel.json'),   // Coppel → proyecto GAS de prod
+        'tenantB': path.join(os.homedir(), '.clasp-coppel.json'),   // Coppel → proyecto GAS de Bancoppel
+    };
+
+    // Resolver el flag --creds para esta invocación
+    const credsPath = CREDS_FILE[env];
+    let credsFlag = '';
+    if (credsPath) {
+        if (fs.existsSync(credsPath)) {
+            credsFlag = `--creds "${credsPath}"`;
+            console.log(`[Deploy] Using credentials: ${credsPath}`);
+        } else {
+            console.warn(`[Deploy] WARNING: Credentials file not found: ${credsPath}`);
+            console.warn(`[Deploy] To create it:`);
+            console.warn(`[Deploy]   1. npx clasp login --no-localhost   (login con la cuenta correcta)`);
+            console.warn(`[Deploy]   2. Copy-Item "$env:USERPROFILE\.clasprc.json" "${credsPath}"`);
+            console.warn(`[Deploy] Falling back to default ~/.clasprc.json token.`);
+        }
+    }
+
 
     const configFile = `environments/Config.${env}.js`;
     // [E6-S63] Guardia: evitar despliegue accidental si el Script ID no fue configurado
@@ -198,7 +227,7 @@ try {
             attempts++;
             console.log(`[Deploy] Attempt ${attempts} of ${maxAttempts}...`);
             try {
-                const output = execSync(`npx clasp push -f`, { encoding: 'utf8', stdio: 'pipe' });
+                const output = execSync(`npx clasp push -f ${credsFlag}`, { encoding: 'utf8', stdio: 'pipe' });
                 console.log(output);
                 
                 if (output.includes('Pushed') && output.includes('files.')) {
@@ -231,7 +260,7 @@ try {
         if (env === 'prod' && DEPLOYMENT_IDS['prod']) {
             console.log(`[Deploy] Publishing new Version and updating PROD Executable Link...`);
             try {
-                const deployOutput = execSync(`npx clasp deploy -i ${DEPLOYMENT_IDS['prod']} -d "Release ${newVersion}"`, { encoding: 'utf8', stdio: 'pipe' });
+                const deployOutput = execSync(`npx clasp deploy -i ${DEPLOYMENT_IDS['prod']} -d "Release ${newVersion}" ${credsFlag}`, { encoding: 'utf8', stdio: 'pipe' });
                 console.log(deployOutput);
                 console.log(`[Deploy] Executable Link (Web App) updated successfully for PROD.`);
             } catch (e) {
