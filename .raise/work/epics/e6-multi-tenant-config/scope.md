@@ -145,7 +145,7 @@ Stream 3 (Audit): S64 (paralelo con S62, después de S61)
 
 | # | Story | Size | Status | Actual | Velocity | Notes |
 |:-:|-------|:----:|--------|--------|----------|-------|
-| 1 | S60 — Config_System Schema | S | Pending | — | — | |
+| 1 | S60 — Config_System Schema | S | **Done** | 45min | 1.3x | AR: PASS · QR: PASS (1 fix) |
 | 2 | S61 — Adapter_Config | M | Pending | — | — | Paralelo con S63 |
 | 3 | S63 — Pipeline Tenant B | M | Pending | — | — | Paralelo con S61 |
 | 4 | S62 — Migración Ajustes Globales | S | Pending | — | — | |
