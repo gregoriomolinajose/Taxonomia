@@ -559,12 +559,51 @@ var APP_SCHEMAS = {
       { name: "id_workspace", type: "text", primaryKey: true, readonly: true, label: "ID Workspace", width: 12 },
       ...FIELD_TEMPLATES.ESTADO_FIELD(),
       ...FIELD_TEMPLATES.AUDIT_FIELDS(),
-      { name: "dominio_principal", type: "text", label: "Dominio Principal", required: true, width: 6, helpText: "Ejemplo: @coppel.com" },
-      { name: "alias_alternativos", type: "text", label: "Alias Soportados (CSV)", required: false, width: 6, helpText: "Ejemplo: @coppelmexico.com,@bancoppel.com" },
+      { name: "dominio_principal", type: "text", label: "Dominio Principal", required: true, width: 6, helpText: "Ejemplo: @tenantA.com" },
+      { name: "alias_alternativos", type: "text", label: "Alias Soportados (CSV)", required: false, width: 6, helpText: "Ejemplo: @tenantA.com,@tenantB.com" },
       { name: "activar_consulta_directorio", type: "boolean", label: "Consultar Workspace", required: false, width: 6, defaultValue: false, helpText: "Activa la sincronización de identidades." },
       { name: "webhook_url", type: "text", label: "Webhook URL (Microservicio)", required: false, width: 12, helpText: "URL del Apps Script desplegado por el administrador del dominio." },
       { name: "webhook_secret", type: "text", label: "Webhook Token (Secreto)", required: false, width: 6, helpText: "Token de autorización para consumir el microservicio." },
       { name: "setup_guide", type: "uiComponent", uiComponent: "microservice_setup", width: 12 }
+    ]
+  },
+  // [S60/E6] Config_System: Entidad especial de configuración del sistema.
+  // Persiste en PropertiesService (local al tenant) mediante Adapter_Config.
+  // NO usa Google Sheets. Routing gestionado por Engine_DB via metadata.adapter.
+  Config_System: {
+    metadata: {
+      adapter: 'config',
+      showInMenu: true,
+      showInSchemaStudio: false,
+      order: 99,
+      iconName: 'settings-outline',
+      color: 'medium',
+      label: 'Configuración del Sistema',
+      section: 'ADMINISTRACIÓN',
+      titleField: 'tenant_name',
+      idField: 'config_id',
+      fkField: null,
+      requireStrictMatrixAccess: true
+    },
+    primaryKey: 'config_id',
+    fields: [
+      { name: 'config_id', type: 'text', primaryKey: true, readonly: true, label: 'ID Configuración', width: 6 },
+      { name: 'tenant_name', type: 'text', label: 'Nombre del Tenant', required: true, width: 6,
+        helpText: 'Identificador White-Label de esta instancia. Ej: Tenant A' },
+      { name: 'db_adapter_id', type: 'select', label: 'Adaptador de Base de Datos', required: true, width: 6,
+        options: [
+          { value: 'sheets', label: 'Google Sheets' },
+          { value: 'clouddb', label: 'Cloud Database' }
+        ],
+        helpText: 'Motor de almacenamiento de datos activo para este tenant.' },
+      { name: 'spreadsheet_id', type: 'text', label: 'ID de Google Sheet (Base de Datos)', required: false, width: 12,
+        helpText: 'ID del archivo Google Sheets que actúa como base de datos compartida entre tenants.' },
+      { name: 'allowed_domains', type: 'text', label: 'Dominios SSO Permitidos (CSV)', required: false, width: 6,
+        helpText: 'Correos permitidos para acceder al sistema. Ej: @tenantA.com,@tenantB.com' },
+      { name: 'app_title', type: 'text', label: 'Título de la Aplicación', required: false, width: 6,
+        helpText: 'Texto que aparece en la pestaña del navegador.' },
+      { name: 'favicon_url', type: 'text', label: 'URL del Favicon', required: false, width: 12,
+        helpText: 'URL pública del ícono de la aplicación (favicon).' }
     ]
   },
   _UI_CONFIG: {
