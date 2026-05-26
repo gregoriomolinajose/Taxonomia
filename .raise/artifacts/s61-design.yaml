@@ -1,0 +1,64 @@
+artifact_type: story-design
+version: 1
+skill: rai-story-design
+created: '2026-05-26T19:59:00Z'
+story: 'S61'
+epic: 'E6'
+content:
+  summary: >
+    El Engine_DB ya tiene el guard de routing para Config_System (S60),
+    pero Adapter_Config no existe. Esta historia lo crea: un adaptador
+    minimal que persiste la configuración del tenant en PropertiesService
+    como un singleton, con una API idéntica a la que usa Engine_DB para Adapter_Sheets.
+  complexity: moderate
+  acceptance_criteria:
+    - id: AC1
+      description: 'Adapter_Config.asListResponse() retorna { headers[], rows[[...]] } con exactamente 1 fila'
+      verifiable: true
+    - id: AC2
+      description: 'Adapter_Config.setAll(payload) persiste en PropertiesService.getScriptProperties()'
+      verifiable: true
+    - id: AC3
+      description: 'En instancia nueva (PropertiesService vacío) asListResponse() retorna valores default (strings vacíos) con config_id=SYS-CONFIG-001'
+      verifiable: true
+    - id: AC4
+      description: 'Engine_DB.list("Config_System") y Engine_DB.save("Config_System", payload) funcionan end-to-end sin errores'
+      verifiable: true
+    - id: AC5
+      description: 'Los headers se derivan dinámicamente de APP_SCHEMAS.Config_System.fields — no están hardcodeados'
+      verifiable: true
+  integration_points:
+    - module: Adapter_Config
+      change_type: new
+      files: ['src/Adapter_Config.js']
+    - module: Engine_DB
+      change_type: none
+      files: []
+  decisions:
+    - id: D1
+      choice: 'Schema-driven headers: derivar campo-names de APP_SCHEMAS.Config_System.fields'
+      rationale: >
+        Si el schema de Config_System evoluciona (nuevo campo), el adaptador
+        lo recoge automáticamente sin necesidad de actualizar Adapter_Config.
+      alternatives_considered:
+        - 'Lista hardcodeada de fields en Adapter_Config — acoplamiento frágil'
+    - id: D2
+      choice: 'Singleton con config_id fijo SYS-CONFIG-001'
+      rationale: >
+        Config_System es una configuración de instancia, no un catálogo.
+        Un singleton elimina complejidad de selección y garantiza que siempre
+        hay exactamente una configuración activa por tenant.
+      alternatives_considered:
+        - 'Múltiples registros por categoría (Config_DB, Config_Branding) — over-engineering'
+    - id: D3
+      choice: 'Persistir cada campo como PropertiesService key separada (APP_CONFIG__{field})'
+      rationale: >
+        PropertiesService tiene un límite de 9KB por valor individual.
+        Al persistir cada campo por separado nunca se alcanza el límite.
+        Además facilita leer campos individuales sin deserializar todo el JSON.
+      alternatives_considered:
+        - 'Persistir todo como un JSON serializado — límite de 9KB, difícil de migrar'
+refs:
+  backlog_item: 'E6-S61'
+  epic_scope: 'work/epics/e6-multi-tenant-config/scope.md'
+metadata: {}
