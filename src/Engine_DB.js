@@ -157,6 +157,15 @@ const Engine_DB = {
      * 4. Guarda Hijos masivamente.
      */
     orchestrateNestedSave: function (entityName, payload, config) {
+        // [S60/E6] Guard de routing: entidades con adapter especial no usan Sheets
+        const schemaForAdapter = (typeof APP_SCHEMAS !== 'undefined') ? APP_SCHEMAS[entityName] : null;
+        if (schemaForAdapter && schemaForAdapter.metadata && schemaForAdapter.metadata.adapter === 'config') {
+            if (typeof Adapter_Config !== 'undefined') {
+                return Adapter_Config.setAll(payload);
+            }
+            throw new Error('[Engine_DB] Adapter_Config requerido para guardar ' + entityName + '. Ejecuta S61 para crearlo.');
+        }
+
         const nestedData = {};
         const flatPayload = { ...payload };
         let precalculatedGraphContext = {};
@@ -653,7 +662,16 @@ const Engine_DB = {
      */
     list: function (entityName, format, options) {
         const config = (typeof CONFIG !== 'undefined') ? CONFIG : { useSheets: true, SPREADSHEET_ID_DB: '' };
-        
+
+        // [S60/E6] Guard de routing: entidades con adapter especial no usan Sheets
+        const schemaForAdapter = (typeof APP_SCHEMAS !== 'undefined') ? APP_SCHEMAS[entityName] : null;
+        if (schemaForAdapter && schemaForAdapter.metadata && schemaForAdapter.metadata.adapter === 'config') {
+            if (typeof Adapter_Config !== 'undefined') {
+                return Adapter_Config.asListResponse();
+            }
+            if (typeof Logger !== 'undefined') Logger.log('[Engine_DB] WARN: Adapter_Config no disponible aún para ' + entityName + '. Retornando vacío.');
+            return { headers: [], rows: [] };
+        }
         // Intentar leer de RAM (CacheService) con Fragmentación Inteligente S42.1
         const cacheKey = `CACHE_LIST_${_getAppVersionHash()}_${entityName}`;
         if (typeof CacheService !== 'undefined' && (!options || !options.skipCache)) {
@@ -737,7 +755,13 @@ const Engine_DB = {
     delete: function (entityName, id) {
         const config = (typeof CONFIG !== 'undefined') ? CONFIG : { useSheets: true, useCloudDB: false };
         if (typeof Logger !== 'undefined') Logger.log("Engine_DB_delete_router: Routing " + entityName + " (ID: " + id + ") to Architect Unit of Work Deletion.");
-        
+
+        // [S60/E6] Guard de routing: entidades con adapter especial no usan Sheets
+        const schemaForDel = (typeof APP_SCHEMAS !== 'undefined') ? APP_SCHEMAS[entityName] : null;
+        if (schemaForDel && schemaForDel.metadata && schemaForDel.metadata.adapter === 'config') {
+            throw new Error('[Engine_DB] La entidad ' + entityName + ' es gestionada por Adapter_Config y no soporta operación delete. Usa setAll() para actualizar la configuración.');
+        }
+
         let results = { sheets: {}, cloud: {} };
 
         // [S8.1] Check graph topology configuration
