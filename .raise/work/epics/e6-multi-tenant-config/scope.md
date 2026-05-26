@@ -54,6 +54,8 @@ Transformar Taxonomía en una plataforma Multi-Tenant lista para producción que
 | S64 | Hardcode Audit & Cleanup | Eliminar dominios hardcodeados; mover fallbacks a `Config_System` | S | S61 |
 | S65 | First-Run Wizard (Backend-First) | Detección en `Code.js`; retornar `FirstRun.html` si no hay `SPREADSHEET_ID_DB` | M | S62 |
 | S66 | Sys_Cache_Signals (Caché Proactiva) | Nueva tab en BD compartida como canal pub-sub; integración en `_invalidateCache` y `Engine_DB.list` | L | S63 |
+| S67 | Multi-Account Clasp Auth | Soporte de `--creds` por entorno en `deploy.js`; perfiles `~/.clasp-<env>.json` | S | S63 |
+| S68 | Transferencia de Ownership Deploy | Reasignar la cuenta deployadora de Gmail → Coppel; registrar Script IDs correctos y verificar acceso cross-account | M | S67 |
 
 ---
 
@@ -66,6 +68,8 @@ Transformar Taxonomía en una plataforma Multi-Tenant lista para producción que
 - [ ] Un administrador de Bancoppel puede instalar Taxonomía apuntando al mismo `SPREADSHEET_ID_DB` de Coppel y ver los mismos datos.
 - [ ] Cuando Coppel crea o modifica un registro, la caché de Bancoppel se invalida en ≤ 60 segundos.
 - [ ] No existen referencias al dominio `@coppel.com` en lógica de negocio.
+- [ ] El pipeline de deploy funciona desde la cuenta Coppel hacia todos los entornos (Gmail-dev, Coppel-prod, Bancoppel).
+- [ ] `deploy.js` selecciona automáticamente las credenciales correctas según el entorno objetivo.
 
 ---
 
@@ -146,12 +150,14 @@ Stream 3 (Audit): S64 (paralelo con S62, después de S61)
 | # | Story | Size | Status | Actual | Velocity | Notes |
 |:-:|-------|:----:|--------|--------|----------|-------|
 | 1 | S60 — Config_System Schema | S | **Done** | 45min | 1.3x | AR: PASS · QR: PASS (1 fix) |
-| 2 | S61 — Adapter_Config | M | Pending | — | — | Paralelo con S63 |
-| 3 | S63 — Pipeline Tenant B | M | Pending | — | — | Paralelo con S61 |
-| 4 | S62 — Migración Ajustes Globales | S | Pending | — | — | |
-| 5 | S64 — Hardcode Audit | S | Pending | — | — | Paralelo con S62 |
-| 6 | S65 — First-Run Wizard | M | Pending | — | — | |
-| 7 | S66 — Sys_Cache_Signals | L | Pending | — | — | Requiere Tenant B activo |
+| 2 | S61 — Adapter_Config | M | **Done** | — | — | |
+| 3 | S63 — Pipeline Tenant B | M | **Done** | — | — | |
+| 4 | S62 — Migración Ajustes Globales | S | **Done** | — | — | |
+| 5 | S64 — Hardcode Audit | S | **Done** | — | — | |
+| 6 | S65 — First-Run Wizard | M | **Done** | — | — | |
+| 7 | S66 — Sys_Cache_Signals | L | **Done** | — | — | |
+| 8 | S67 — Multi-Account Clasp Auth | S | **Pending** | — | — | Nuevo: soporte --creds por entorno |
+| 9 | S68 — Transferencia Ownership Deploy | M | **Pending** | — | — | Nuevo: Gmail→Coppel como cuenta principal |
 
 **Velocidad asumida (baseline):** XS=0.5d, S=1d, M=2d, L=3-4d  
 **Esfuerzo total estimado:** ~12-14 días de desarrollo  
