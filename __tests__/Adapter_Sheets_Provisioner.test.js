@@ -184,6 +184,8 @@ describe('Provisioner: schema completeness (all entities)', () => {
         // Entidades de sistema con adapter especial no usan Sheets y no requieren AUDIT_FIELDS
         const schema = APP_SCHEMAS[k];
         if (schema && schema.metadata && schema.metadata.adapter) return false;
+        // [E6-S66] Sys_Cache_Signals es append-only (pub-sub), su timestamp es invalidated_at
+        if (k === 'Sys_Cache_Signals') return false;
         return true;
       })
       .forEach(entityName => {
