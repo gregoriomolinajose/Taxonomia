@@ -36,29 +36,42 @@ try {
         throw new Error(`No scriptId configured for environment: ${env}`);
     }
 
-    // [S67] Multi-Account Clasp Auth
-    // Cada entorno puede usar credenciales de una cuenta Google diferente.
+    // [S67] Multi-Account Clasp Auth — Swap temporal de ~/.clasprc.json
+    // clasp 3.x no soporta --creds. La estrategia es intercambiar el archivo
+    // de sesión activa justo antes del push y restaurarlo siempre al finalizar.
     // Los archivos de credenciales NO van al repo (viven en el HOME del developer).
-    // Setup: npx clasp login --no-localhost → copiar ~/.clasprc.json a ~/.clasp-<cuenta>.json
+    // Setup: ver docs/deploy-setup.md
+    const CLASPRC = path.join(os.homedir(), '.clasprc.json');
     const CREDS_FILE = {
         'dev':     path.join(os.homedir(), '.clasp-gmail.json'),    // Gmail  → proyecto GAS de dev
         'prod':    path.join(os.homedir(), '.clasp-coppel.json'),   // Coppel → proyecto GAS de prod
         'tenantB': path.join(os.homedir(), '.clasp-coppel.json'),   // Coppel → proyecto GAS de Bancoppel
     };
 
-    // Resolver el flag --creds para esta invocación
     const credsPath = CREDS_FILE[env];
-    let credsFlag = '';
-    if (credsPath) {
-        if (fs.existsSync(credsPath)) {
-            credsFlag = `--creds "${credsPath}"`;
-            console.log(`[Deploy] Using credentials: ${credsPath}`);
-        } else {
+    let originalClasprc = null; // backup del token activo antes del swap
+
+    function swapClaspCredentials() {
+        if (!credsPath) return;
+        if (!fs.existsSync(credsPath)) {
             console.warn(`[Deploy] WARNING: Credentials file not found: ${credsPath}`);
-            console.warn(`[Deploy] To create it:`);
-            console.warn(`[Deploy]   1. npx clasp login --no-localhost   (login con la cuenta correcta)`);
-            console.warn(`[Deploy]   2. Copy-Item "$env:USERPROFILE\.clasprc.json" "${credsPath}"`);
-            console.warn(`[Deploy] Falling back to default ~/.clasprc.json token.`);
+            console.warn(`[Deploy] Para crearlo: ver docs/deploy-setup.md`);
+            console.warn(`[Deploy] Usando el token activo de ~/.clasprc.json (fallback).`);
+            return;
+        }
+        // Guardar el token actual antes de reemplazarlo
+        if (fs.existsSync(CLASPRC)) {
+            originalClasprc = fs.readFileSync(CLASPRC, 'utf8');
+        }
+        fs.copyFileSync(credsPath, CLASPRC);
+        console.log(`[Deploy] Using credentials: ${credsPath}`);
+    }
+
+    function restoreClaspCredentials() {
+        if (originalClasprc !== null) {
+            fs.writeFileSync(CLASPRC, originalClasprc, 'utf8');
+            console.log(`[Deploy] Credentials restored to original token.`);
+            originalClasprc = null;
         }
     }
 
@@ -219,6 +232,9 @@ try {
 
         console.log(`[Deploy] Environment files updated for ${env}. Running npx clasp push...`);
 
+        // [S67] Intercambiar credenciales antes del push
+        swapClaspCredentials();
+
         let pushSuccess = false;
         let attempts = 0;
         const maxAttempts = 3;
@@ -227,7 +243,8 @@ try {
             attempts++;
             console.log(`[Deploy] Attempt ${attempts} of ${maxAttempts}...`);
             try {
-                const output = execSync(`npx clasp push -f ${credsFlag}`, { encoding: 'utf8', stdio: 'pipe' });
+                const output = execSync(`npx clasp push -f`, { encoding: 'utf8', stdio: 'pipe' });
+
                 console.log(output);
                 
                 if (output.includes('Pushed') && output.includes('files.')) {
@@ -251,7 +268,11 @@ try {
             }
         }
 
+        // [S67] Restaurar credenciales originales después del push (siempre)
+        restoreClaspCredentials();
+
         if (!pushSuccess) {
+
             console.error("[Deploy] Error: Clasp failed to reliably push code after 3 attempts.");
             process.exit(1);
         }
@@ -259,16 +280,21 @@ try {
         // --- S14.5: Auto-Deploy Versioning for PROD Environment ---
         if (env === 'prod' && DEPLOYMENT_IDS['prod']) {
             console.log(`[Deploy] Publishing new Version and updating PROD Executable Link...`);
+            // [S67] El clasp deploy también necesita las creds correctas
+            swapClaspCredentials();
             try {
-                const deployOutput = execSync(`npx clasp deploy -i ${DEPLOYMENT_IDS['prod']} -d "Release ${newVersion}" ${credsFlag}`, { encoding: 'utf8', stdio: 'pipe' });
+                const deployOutput = execSync(`npx clasp deploy -i ${DEPLOYMENT_IDS['prod']} -d "Release ${newVersion}"`, { encoding: 'utf8', stdio: 'pipe' });
                 console.log(deployOutput);
                 console.log(`[Deploy] Executable Link (Web App) updated successfully for PROD.`);
             } catch (e) {
                 console.error(`[Deploy] Warning: Failed to update the Web App deployment link for PROD:`);
                 console.error(e.stdout || e.message);
                 console.log(`[Deploy] Remember: You may need to manually update the deployment version in Apps Script GUI.`);
+            } finally {
+                restoreClaspCredentials();
             }
         }
+
 
         // Cleanup
         if (fs.existsSync(buildDir)) {
