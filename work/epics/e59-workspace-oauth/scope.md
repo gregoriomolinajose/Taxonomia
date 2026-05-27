@@ -1,6 +1,6 @@
 # Epic E59: Federated Workspace OAuth & Domain Cleanup — Scope
 
-> **Status:** IN PROGRESS
+> **Status:** ✅ Complete
 > **Release:** REL-2026.Q2
 > **Created:** 2026-05-22
 
@@ -17,18 +17,18 @@ Sanear la arquitectura de validación de dominios y proveer a cada dominio confi
 
 ## Done Criteria
 **Epic complete:**
-- [ ] Todas las historias completadas.
-- [ ] `@bancoppel.com` loguea sin fallos.
-- [ ] Tokens generados por pop-up y guardados en DB.
-- [ ] Epic retrospective done.
-- [ ] Merged to `develop`.
+- [x] Todas las historias completadas.
+- [x] `@bancoppel.com` loguea sin fallos.
+- [x] Tokens generados por pop-up y guardados en DB.
+- [x] Epic retrospective done.
+- [x] Merged to `develop`.
 
 ## Progress Tracking
 
 ### Milestones
-- [ ] **M1: Auth Cleanup & Fix (Walking Skeleton)** - Bugfix for bancoppel login and centralized domains logic.
-- [ ] **M2: OAuth Integration (Core MVP)** - Data model and frontend OAuth connect button.
-- [ ] **M3: Backend Resolution** - Token exchange and Directory Hydration.
+- [x] **M1: Auth Cleanup & Fix (Walking Skeleton)** - Bugfix for bancoppel login and centralized domains logic.
+- [x] **M2: OAuth Integration (Core MVP)** - Data model and frontend OAuth connect button.
+- [x] **M3: Backend Resolution** - Token exchange and Directory Hydration.
 
 ### Plan
 | Story | Sequence Rationale | Status | Size | Actual | Velocity |
