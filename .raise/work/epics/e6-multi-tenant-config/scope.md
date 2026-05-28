@@ -61,14 +61,14 @@ Transformar Taxonomía en una plataforma Multi-Tenant lista para producción que
 
 ## Definition of Done
 
-- [ ] `Config_System` es accesible desde el menú lateral y permite leer/guardar sin errores.
-- [ ] La pestaña "Ajustes Globales" del Schema Studio ha sido eliminada o redireccionada.
-- [ ] Un tenant sin `SPREADSHEET_ID_DB` ve el Wizard de primer arranque (no una pantalla en blanco).
-- [ ] `npm run deploy:bancoppel:auto` empuja código exitosamente y falla con error descriptivo si el entorno no coincide.
-- [ ] Un administrador de Bancoppel puede instalar Taxonomía apuntando al mismo `SPREADSHEET_ID_DB` de Coppel y ver los mismos datos.
-- [ ] Cuando Coppel crea o modifica un registro, la caché de Bancoppel se invalida en ≤ 60 segundos.
-- [ ] No existen referencias al dominio `@coppel.com` en lógica de negocio.
-- [ ] El pipeline de deploy funciona desde la cuenta Coppel hacia todos los entornos (Gmail-dev, Coppel-prod, Bancoppel).
+- [x] `Config_System` es accesible desde el menú lateral y permite leer/guardar sin errores.
+- [x] La pestaña "Ajustes Globales" del Schema Studio ha sido eliminada o redireccionada.
+- [x] Un tenant sin `SPREADSHEET_ID_DB` ve el Wizard de primer arranque (no una pantalla en blanco).
+- [x] `npm run deploy:bancoppel:auto` empuja código exitosamente y falla con error descriptivo si el entorno no coincide.
+- [x] Un administrador de Bancoppel puede instalar Taxonomía apuntando al mismo `SPREADSHEET_ID_DB` de Coppel y ver los mismos datos.
+- [x] Cuando Coppel crea o modifica un registro, la caché de Bancoppel se invalida en ≤ 60 segundos.
+- [x] No existen referencias al dominio `@coppel.com` en lógica de negocio.
+- [x] El pipeline de deploy funciona desde la cuenta Coppel hacia todos los entornos (Gmail-dev, Coppel-prod, Bancoppel).
 - [x] deploy.js selecciona automáticamente las credenciales correctas según el entorno objetivo.
 
 ---
@@ -157,7 +157,7 @@ Stream 3 (Audit): S64 (paralelo con S62, después de S61)
 | 6 | S65 — First-Run Wizard | M | **Done** | — | — | |
 | 7 | S66 — Sys_Cache_Signals | L | **Done** | — | — | |
 | 8 | S67 — Multi-Account Clasp Auth | S | **Done** | 45m | 1.0x | Nuevo: soporte --creds por entorno |
-| 9 | S68 — Transferencia Ownership Deploy | M | **Pending** | — | — | Nuevo: Gmail→Coppel como cuenta principal |
+| 9 | S68 — Transferencia Ownership Deploy | M | **Done** | 90m | 0.67x | Completado |
 
 **Velocidad asumida (baseline):** XS=0.5d, S=1d, M=2d, L=3-4d  
 **Esfuerzo total estimado:** ~12-14 días de desarrollo  
