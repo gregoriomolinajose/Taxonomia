@@ -9,8 +9,8 @@ const { stripQAModule, extractAndValidateScripts } = require('./scripts/pipeline
 
 const env = process.argv[2];
 
-if (!['dev', 'prod', 'tenantB'].includes(env)) {
-    console.error('Usage: node deploy.js <dev|prod|tenantB>');
+if (!['dev', 'prod', 'staging', 'tenantB'].includes(env)) {
+    console.error('Usage: node deploy.js <dev|prod|staging|tenantB>');
     process.exit(1);
 }
 
@@ -21,15 +21,15 @@ try {
 
     const SCRIPT_IDS = {
         'dev':     '1ZjGYDSsBgXy9mxa9guRoj69oabUJAVZz9GOy9DzJ5280tzYmMIjIBd5q',
-        'prod':    '14oIjG_akx2DuX1nZe_HWBR8TECPYZgCyYikKwtRnng_pgzxcK0wLekYa',
-        // [E6-S63] Tenant B GAS project — reemplazar con el Script ID real del proyecto de Tenant B
-        'tenantB': process.env.TENANT_B_SCRIPT_ID || 'TENANT_B_SCRIPT_ID_PLACEHOLDER'
+        'staging': '14oIjG_akx2DuX1nZe_HWBR8TECPYZgCyYikKwtRnng_pgzxcK0wLekYa',   // ex-prod
+        'prod':    '1kpN1TjMRtU6sE5rXStorv3rHF2gs_SvHWwBJyCkyGC9nWMKAx9GF7Ijw',    // nuevo prod (Tenant A)
+        'tenantB': '1ifdT9dDsDP0Efvrq2eCaBdB4TM5jRnRz9dXnshn0aT8hvbSfUnqMC5hi'     // Tenant B
     };
 
     const DEPLOYMENT_IDS = {
-        'prod':    'AKfycbyM1dZ_VxFzyaljHVEkTC0NXn_FYxnvRfHGZqjtbpnd-T-mRiGyXFWVdI0diJWtH79-eg',
-        // [E6-S63] Opcional: deployment ID del web app de Tenant B para auto-versionado
-        'tenantB': process.env.TENANT_B_DEPLOYMENT_ID || null
+        'staging': 'AKfycbyM1dZ_VxFzyaljHVEkTC0NXn_FYxnvRfHGZqjtbpnd-T-mRiGyXFWVdI0diJWtH79-eg',  // ex-prod
+        'prod':    'AKfycbxzO-_6ud4UpYZoBgL8xbmcKy9Xlx5LgMtIW7jQdD9zP8-8peiPUKAysEae12xW-JOs',     // Tenant A prod
+        'tenantB': 'AKfycbzv5roNRhVzT5f0kOvCHikd-PjNjPzuyJUJyzKs_VjlZVwx7Wiscomprv2Y3iYYeL3jLg'   // Tenant B
     };
 
     if (!SCRIPT_IDS[env]) {
@@ -43,9 +43,10 @@ try {
     // Setup: ver docs/deploy-setup.md
     const CLASPRC = path.join(os.homedir(), '.clasprc.json');
     const CREDS_FILE = {
-        'dev':     path.join(os.homedir(), '.clasp-gmail.json'),    // Gmail  → proyecto GAS de dev
-        'prod':    path.join(os.homedir(), '.clasp-coppel.json'),   // Coppel → proyecto GAS de prod
-        'tenantB': path.join(os.homedir(), '.clasp-coppel.json'),   // Coppel → proyecto GAS de Bancoppel
+        'dev':     path.join(os.homedir(), '.clasp-gmail.json'),       // Gmail   → dev
+        'staging': path.join(os.homedir(), '.clasp-coppel.json'),      // Coppel  → staging
+        'prod':    path.join(os.homedir(), '.clasp-coppel.json'),      // Coppel  → prod (Tenant A)
+        'tenantB': path.join(os.homedir(), '.clasp-coppel.json'),      // Coppel  → Tenant B
     };
 
     const credsPath = CREDS_FILE[env];
@@ -77,13 +78,6 @@ try {
 
 
     const configFile = `environments/Config.${env}.js`;
-    // [E6-S63] Guardia: evitar despliegue accidental si el Script ID no fue configurado
-    if (env === 'tenantB' && SCRIPT_IDS['tenantB'] === 'TENANT_B_SCRIPT_ID_PLACEHOLDER') {
-        console.error('[Deploy] ERROR: El Script ID de Tenant B no ha sido configurado.');
-        console.error('[Deploy] Edita deploy.js > SCRIPT_IDS[\'tenantB\'] con el ID real del proyecto GAS,');
-        console.error('[Deploy] o define la variable de entorno TENANT_B_SCRIPT_ID antes de ejecutar.');
-        process.exit(1);
-    }
     let currentConfigContent = fs.existsSync(configFile) ? fs.readFileSync(configFile, 'utf8') : '';
     let currentVersionMatch = currentConfigContent.match(/APP_VERSION:\s*['"](.*?)['"]/);
     let currentVersion = currentVersionMatch ? currentVersionMatch[1] : 'v1.0.0';
@@ -250,8 +244,8 @@ try {
                 if (output.includes('Pushed') && output.includes('files.')) {
                     pushSuccess = true;
                     console.log(`[Deploy] Verified: Clasp confirmed files were physically pushed.`);
-                } else if (output.includes('No files to push')) {
-                    console.log(`[Deploy] Warning: Clasp reports 'No files to push'. Either files are identical remotely, or manifest is out of sync.`);
+                } else if (output.includes('No files to push') || output.includes('Script is already up to date')) {
+                    console.log(`[Deploy] Warning: Clasp reports no files to push. Either files are identical remotely, or manifest is out of sync.`);
                     // Lo tomamos como éxito estructural si realmente no había cambios.
                     pushSuccess = true; 
                 } else {
