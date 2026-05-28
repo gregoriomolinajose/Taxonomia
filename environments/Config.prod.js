@@ -1,6 +1,6 @@
 // src/Config.prod.js
 const CONFIG = {
-    APP_VERSION: 'v1.2.8 - 2605240032',
+    APP_VERSION: 'v1.2.8 - 2605281136',
     SPREADSHEET_ID_DB: '',
     ALLOWED_DOMAINS: ['@bellfy.app', '@gmail.com'],  // Tenant A defaults — dominios finales via Adapter_Config
     ENV: 'production',

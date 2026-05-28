@@ -56,10 +56,9 @@ try {
     function swapClaspCredentials() {
         if (!credsPath) return;
         if (!fs.existsSync(credsPath)) {
-            console.warn(`[Deploy] WARNING: Credentials file not found: ${credsPath}`);
-            console.warn(`[Deploy] Para crearlo: ver docs/deploy-setup.md`);
-            console.warn(`[Deploy] Usando el token activo de ~/.clasprc.json (fallback).`);
-            return;
+            console.error(`[Deploy] ERROR: Credentials file not found: ${credsPath}`);
+            console.error(`[Deploy] Para crearlo: ver docs/deploy-setup.md`);
+            process.exit(1);
         }
         // Guardar el token actual antes de reemplazarlo
         if (fs.existsSync(CLASPRC)) {
@@ -84,8 +83,12 @@ try {
             originalClasprc = null;
         } else if (!originalClasprcExisted && fs.existsSync(CLASPRC) && credsPath && fs.existsSync(credsPath)) {
             // Only unlink if we actually did a swap (credsPath exists) and it wasn't there before
-            fs.unlinkSync(CLASPRC);
-            console.log(`[Deploy] Credentials file removed (did not exist originally).`);
+            try {
+                fs.unlinkSync(CLASPRC);
+                console.log(`[Deploy] Credentials file removed (did not exist originally).`);
+            } catch (err) {
+                console.warn(`[Deploy] Warning: could not remove temporary credentials file.`, err.message);
+            }
         }
     }
 
