@@ -51,6 +51,7 @@ try {
 
     const credsPath = CREDS_FILE[env];
     let originalClasprc = null; // backup del token activo antes del swap
+    let originalClasprcExisted = false;
 
     function swapClaspCredentials() {
         if (!credsPath) return;
@@ -63,18 +64,49 @@ try {
         // Guardar el token actual antes de reemplazarlo
         if (fs.existsSync(CLASPRC)) {
             originalClasprc = fs.readFileSync(CLASPRC, 'utf8');
+            originalClasprcExisted = true;
+        } else {
+            originalClasprcExisted = false;
         }
-        fs.copyFileSync(credsPath, CLASPRC);
-        console.log(`[Deploy] Using credentials: ${credsPath}`);
+        try {
+            fs.copyFileSync(credsPath, CLASPRC);
+            console.log(`[Deploy] Using credentials: ${credsPath}`);
+        } catch (e) {
+            console.error(`[Deploy] Failed to swap credentials:`, e.message);
+            // Abort gracefully if copy fails
+        }
     }
 
     function restoreClaspCredentials() {
-        if (originalClasprc !== null) {
+        if (originalClasprcExisted && originalClasprc !== null) {
             fs.writeFileSync(CLASPRC, originalClasprc, 'utf8');
             console.log(`[Deploy] Credentials restored to original token.`);
             originalClasprc = null;
+        } else if (!originalClasprcExisted && fs.existsSync(CLASPRC) && credsPath && fs.existsSync(credsPath)) {
+            // Only unlink if we actually did a swap (credsPath exists) and it wasn't there before
+            fs.unlinkSync(CLASPRC);
+            console.log(`[Deploy] Credentials file removed (did not exist originally).`);
         }
     }
+
+    // Handlers for graceful shutdown
+    let cleanupDone = false;
+    function doCleanup() {
+        if (!cleanupDone) {
+            restoreClaspCredentials();
+            cleanupDone = true;
+        }
+    }
+    process.on('SIGINT', () => {
+        console.log('\n[Deploy] Process aborted via SIGINT. Cleaning up...');
+        doCleanup();
+        process.exit(1);
+    });
+    process.on('uncaughtException', (err) => {
+        console.error('\n[Deploy] Uncaught Exception:', err);
+        doCleanup();
+        process.exit(1);
+    });
 
 
     const configFile = `environments/Config.${env}.js`;
