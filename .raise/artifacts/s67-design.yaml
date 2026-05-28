@@ -1,0 +1,35 @@
+artifact_type: story-design
+version: 1
+skill: rai-story-design
+created: '2026-05-28T16:50:00Z'
+story: 'S67'
+epic: 'E6'
+content:
+  summary: 'Allows clasp to use different credentials for different deployment environments by mapping environments to specific credentials files. This enables deploying to dev (Gmail), prod (Coppel), and tenantB (Bancoppel) from the same machine without manually swapping logins.'
+  complexity: simple
+  acceptance_criteria:
+    - id: AC1
+      description: 'Deploy to dev uses --creds ~/.clasp-gmail.json if the file exists.'
+      verifiable: true
+    - id: AC2
+      description: 'Deploy to prod uses --creds ~/.clasp-coppel.json if the file exists.'
+      verifiable: true
+    - id: AC3
+      description: 'If the mapped credentials file does not exist, warn the user and fallback to the default ~/.clasprc.json token gracefully.'
+      verifiable: true
+    - id: AC4
+      description: 'If no mapped credentials file is configured for an environment, preserve the current default behavior without errors.'
+      verifiable: true
+  integration_points:
+    - module: 'deploy.js'
+      change_type: modification
+      files: ['deploy.js']
+  decisions:
+    - id: D1
+      choice: 'Use --creds flag in clasp push and deploy commands with a lookup map in deploy.js'
+      rationale: 'Clasp natively supports the --creds flag to override the default token per invocation, which is the cleanest way to support multi-account deployments without mutating global state.'
+      alternatives_considered: ['Swapping the contents of ~/.clasprc.json before each deploy', 'Using different OS users for deployments']
+refs:
+  backlog_item: 'S67'
+  epic_scope: '.raise/work/epics/e6-multi-tenant-config/scope.md'
+metadata: {}
