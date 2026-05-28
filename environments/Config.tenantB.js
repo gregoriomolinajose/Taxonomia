@@ -13,7 +13,7 @@
 //   3. En el GAS de Tenant B, configura PropertiesService via el panel "Ajustes Globales"
 
 const CONFIG = {
-    APP_VERSION: 'v1.2.19 - 0000000000',     // Auto-actualizado por deploy.js
+    APP_VERSION: 'v1.2.19 - 2605281127',     // Auto-actualizado por deploy.js
     SPREADSHEET_ID_DB: '',                     // Configurar via Ajustes Globales (Adapter_Config)
     ALLOWED_DOMAINS: [],                       // Vacío — se resuelve en runtime desde Adapter_Config
     ENV: 'tenantB',
