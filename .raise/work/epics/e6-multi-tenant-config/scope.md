@@ -69,7 +69,7 @@ Transformar Taxonomía en una plataforma Multi-Tenant lista para producción que
 - [ ] Cuando Coppel crea o modifica un registro, la caché de Bancoppel se invalida en ≤ 60 segundos.
 - [ ] No existen referencias al dominio `@coppel.com` en lógica de negocio.
 - [ ] El pipeline de deploy funciona desde la cuenta Coppel hacia todos los entornos (Gmail-dev, Coppel-prod, Bancoppel).
-- [ ] `deploy.js` selecciona automáticamente las credenciales correctas según el entorno objetivo.
+- [x] deploy.js selecciona automáticamente las credenciales correctas según el entorno objetivo.
 
 ---
 
@@ -156,10 +156,9 @@ Stream 3 (Audit): S64 (paralelo con S62, después de S61)
 | 5 | S64 — Hardcode Audit | S | **Done** | — | — | |
 | 6 | S65 — First-Run Wizard | M | **Done** | — | — | |
 | 7 | S66 — Sys_Cache_Signals | L | **Done** | — | — | |
-| 8 | S67 — Multi-Account Clasp Auth | S | **Pending** | — | — | Nuevo: soporte --creds por entorno |
+| 8 | S67 — Multi-Account Clasp Auth | S | **Done** | 45m | 1.0x | Nuevo: soporte --creds por entorno |
 | 9 | S68 — Transferencia Ownership Deploy | M | **Pending** | — | — | Nuevo: Gmail→Coppel como cuenta principal |
 
 **Velocidad asumida (baseline):** XS=0.5d, S=1d, M=2d, L=3-4d  
 **Esfuerzo total estimado:** ~12-14 días de desarrollo  
 **Reducción con paralelismo:** ~9-10 días efectivos
-
