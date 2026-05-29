@@ -1,6 +1,6 @@
 // src/Config.prod.js
 const CONFIG = {
-    APP_VERSION: 'v1.2.8 - 2605281731',
+    APP_VERSION: 'v1.2.8 - 2605291213',
     SPREADSHEET_ID_DB: '',
     ALLOWED_DOMAINS: ['@bellfy.app', '@gmail.com'],  // Tenant A defaults — dominios finales via Adapter_Config
     ENV: 'production',
@@ -34,7 +34,7 @@ if (typeof PropertiesService !== 'undefined') {
             }
         }
 
-        if (_ssId && _ssId.trim().length > 0) CONFIG.SPREADSHEET_ID_DB = _ssId.trim();
+        if (_ssId && _ssId.trim().length > 0) CONFIG.SPREADSHEET_ID_DB = _ssId.trim().replace(/^['"]|['"]$/g, '');
         if (_domains && _domains.trim().length > 0) {
             CONFIG.ALLOWED_DOMAINS = _domains.split(',').map(function(d) { return d.trim(); }).filter(Boolean);
         }

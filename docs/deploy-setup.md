@@ -6,7 +6,7 @@ El pipeline de deploy soporta múltiples cuentas Google simultáneamente. Cada e
 
 | Entorno | Cuenta | Archivo de credenciales |
 |---------|--------|------------------------|
-| `dev` | Gmail (`@gmail.com`) | `~/.clasp-gmail.json` |
+| `dev` | Coppel (`@coppel.com`) | `~/.clasp-coppel.json` |
 | `prod` | Coppel (`@coppel.com`) | `~/.clasp-coppel.json` |
 | `tenantB` | Coppel (`@coppel.com`) | `~/.clasp-coppel.json` |
 
@@ -71,7 +71,7 @@ Para que la cuenta Coppel pueda hacer push a todos los entornos, los proyectos G
 Test-Path "$env:USERPROFILE\.clasp-gmail.json"   # debe ser True
 Test-Path "$env:USERPROFILE\.clasp-coppel.json"  # debe ser True
 
-# Test de deploy a dev (usando creds Gmail)
+# Test de deploy a dev (usando creds Coppel)
 npm run deploy:dev:auto
 
 # Test de deploy a prod (usando creds Coppel)
@@ -106,8 +106,8 @@ $creds = Get-Content "$env:USERPROFILE\.clasp-coppel.json" | ConvertFrom-Json
 ```
 %USERPROFILE%\
 ├── .clasprc.json          ← Token activo (default fallback)
-├── .clasp-gmail.json      ← Credenciales cuenta Gmail (dev)
-└── .clasp-coppel.json     ← Credenciales cuenta Coppel (prod + tenantB)
+├── .clasp-gmail.json      ← Credenciales cuenta Gmail (legacy, ya no se usa para deploy)
+└── .clasp-coppel.json     ← Credenciales cuenta Coppel (dev, prod + tenantB)
 
 Taxonomia Project/
 ├── deploy.js              ← Lee CREDS_FILE[env] para seleccionar credenciales

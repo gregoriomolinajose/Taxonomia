@@ -43,7 +43,7 @@ try {
     // Setup: ver docs/deploy-setup.md
     const CLASPRC = path.join(os.homedir(), '.clasprc.json');
     const CREDS_FILE = {
-        'dev':     path.join(os.homedir(), '.clasp-gmail.json'),       // Gmail   → dev
+        'dev':     path.join(os.homedir(), '.clasp-coppel.json'),      // Coppel  → dev
         'staging': path.join(os.homedir(), '.clasp-coppel.json'),      // Coppel  → staging
         'prod':    path.join(os.homedir(), '.clasp-coppel.json'),      // Coppel  → prod (Tenant A)
         'tenantB': path.join(os.homedir(), '.clasp-coppel.json'),      // Coppel  → Tenant B
