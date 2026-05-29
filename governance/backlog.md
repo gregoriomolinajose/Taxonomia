@@ -42,7 +42,7 @@
 | E44| Visibilidad y Control de Topología                  | ✅ Complete  | Decoupling auto-provisioning logic & UI latency          | Alta     |
 | E45| Architecture Refactoring                            | ✅ Complete  | DOM-based hydration state & centralize logic             | Alta     |
 | E46| Org Chart Visualization                             | ✅ Complete  | Implementar diagrama piramidal ApexTree para relaciones de empleados | Alta     |
-| E47| ETL Carga Masiva Capacidades                        | 🔄 In Progress| Desarrollo de ETL para poblar archivo de capacidades jerárquicas    | Alta     |
+| E47| ETL Carga Masiva Capacidades                        | ✅ Complete   | Desarrollo de ETL para poblar archivo de capacidades jerárquicas    | Alta     |
 | E48| Admin Settings & Schema-Driven ETL                  | ✅ Complete   | Configuración de interceptores declarativos y utilidades de Admin   | Alta     |
 | E49| Taxonomía Wizard & Self-Service Portal              | ✅ Complete   | Asistente a pantalla completa para agrupar arquitectura N:M         | Max      |
 | E51| Taxonomía como Contexto de Trabajo (Workspace Mode) | ✅ Complete   | Habilitar esquemas M:N y 1:N en modo contexto                       | Alta     |
