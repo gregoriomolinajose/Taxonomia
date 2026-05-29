@@ -86,16 +86,40 @@ function doGet(e) {
   template.WHITE_LABEL_CONFIG = whiteLabel;
 
   // Environment Config Load (S23.4) - SRP Separation
-  var envConfigStr = null;
+  var envObj = { AuthMode: "SSO", ALLOWED_DOMAINS: [], WORKSPACE_ENABLED: false };
   try {
-    envConfigStr = PropertiesService.getScriptProperties().getProperty('ENV_CONFIG');
+    var props = PropertiesService.getScriptProperties();
+    var legacyEnvStr = props.getProperty('ENV_CONFIG');
+    if (legacyEnvStr) {
+      var legacyEnv = JSON.parse(legacyEnvStr);
+      if (legacyEnv.AuthMode) envObj.AuthMode = legacyEnv.AuthMode;
+      if (legacyEnv.ALLOWED_DOMAINS) envObj.ALLOWED_DOMAINS = legacyEnv.ALLOWED_DOMAINS;
+      if (legacyEnv.WORKSPACE_ENABLED !== undefined) envObj.WORKSPACE_ENABLED = legacyEnv.WORKSPACE_ENABLED;
+    }
+    
+    // Sobrescribir con nuevo esquema E6 de APP_WORKSPACE_CONFIG
+    var wsConfigStr = props.getProperty('APP_WORKSPACE_CONFIG');
+    if (wsConfigStr) {
+      var wsConfig = JSON.parse(wsConfigStr);
+      if (wsConfig.domains && Array.isArray(wsConfig.domains)) {
+        envObj.ALLOWED_DOMAINS = wsConfig.domains;
+      }
+      if (wsConfig.workspace !== undefined) {
+        envObj.WORKSPACE_ENABLED = wsConfig.workspace;
+      }
+      if (wsConfig.authMode) {
+        envObj.AuthMode = wsConfig.authMode;
+      }
+    } else {
+      // Fallback a variable antigua
+      var newDomains = props.getProperty('APP_CONFIG__allowed_domains');
+      if (newDomains && newDomains.trim().length > 0) {
+        envObj.ALLOWED_DOMAINS = newDomains.split(',').map(function(d) { return d.trim(); }).filter(Boolean);
+      }
+    }
   } catch(e) {}
   
-  if (!envConfigStr) {
-    // [E6-S64] Fallback genérico — dominios reales se configuran via Ajustes Globales (Adapter_Config)
-    envConfigStr = JSON.stringify({ AuthMode: "SSO", ALLOWED_DOMAINS: [] });
-  }
-  template.ENV_CONFIG = envConfigStr;
+  template.ENV_CONFIG = JSON.stringify(envObj);
 
   // ABAC Resolver: Cálculo de Topología O(n) al vuelo para proveer Contexto Seguro en Frontend
   var email = "";
@@ -117,11 +141,21 @@ function doGet(e) {
     faviconUrl: ''
   };
   try {
-    var brandingStr = PropertiesService.getScriptProperties().getProperty('APP_BRANDING_CONFIG');
-    if (brandingStr) {
-      var parsedBranding = JSON.parse(brandingStr);
-      if (parsedBranding.appTitle) brandingConfig.appTitle = parsedBranding.appTitle;
-      if (parsedBranding.faviconUrl) brandingConfig.faviconUrl = parsedBranding.faviconUrl;
+    var props = PropertiesService.getScriptProperties();
+    var titleVal = props.getProperty('APP_CONFIG__app_title');
+    var favVal = props.getProperty('APP_CONFIG__favicon_url');
+
+    if (titleVal) brandingConfig.appTitle = titleVal;
+    if (favVal) brandingConfig.faviconUrl = favVal;
+
+    // Fallback legacy
+    if (!titleVal && !favVal) {
+      var brandingStr = props.getProperty('APP_BRANDING_CONFIG');
+      if (brandingStr) {
+        var parsedBranding = JSON.parse(brandingStr);
+        if (parsedBranding.appTitle) brandingConfig.appTitle = parsedBranding.appTitle;
+        if (parsedBranding.faviconUrl) brandingConfig.faviconUrl = parsedBranding.faviconUrl;
+      }
     }
   } catch(e) {
     console.error("Error leyendo APP_BRANDING_CONFIG. Usando defaults.", e);
@@ -130,11 +164,16 @@ function doGet(e) {
   // Workspace Sync Config Load (S48.3)
   template.WORKSPACE_SYNC_ENABLED = (typeof isWorkspaceSyncEnabled !== 'undefined') ? isWorkspaceSyncEnabled() : true;
 
-  return template.evaluate()
+  let htmlOutput = template.evaluate()
     .setTitle(brandingConfig.appTitle)
     .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL)
-    .addMetaTag('viewport', 'width=device-width, initial-scale=1.0, viewport-fit=cover')
-    .setFaviconUrl(brandingConfig.faviconUrl);
+    .addMetaTag('viewport', 'width=device-width, initial-scale=1.0, viewport-fit=cover');
+
+  if (brandingConfig.faviconUrl) {
+    htmlOutput.setFaviconUrl(brandingConfig.faviconUrl);
+  }
+
+  return htmlOutput;
 }
 
 /**

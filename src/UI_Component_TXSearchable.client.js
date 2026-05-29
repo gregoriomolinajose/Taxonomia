@@ -33,7 +33,17 @@ class TXSearchable extends HTMLElement {
         if (!item) return '';
         const idCampo = this.getAttribute('value-field') || 'id';
         const labelCampo = this.getAttribute('label-field') || 'nombre';
-        return item[labelCampo] ?? item[idCampo] ?? item.id_registro ?? item.id ?? '';
+        
+        let labelVal = item[labelCampo];
+        
+        // [S67.2] Robust Fallback for denormalized table structures (e.g. nombre_equipo instead of nombre)
+        if (!labelVal) {
+            const nameKey = Object.keys(item).find(k => k.startsWith('nombre_') && k !== 'nombre_ingles');
+            if (nameKey) labelVal = item[nameKey];
+        }
+        
+        // Fallback sequentially to IDs
+        return labelVal ?? item[idCampo] ?? item.id_registro ?? item.id ?? '';
     }
 
     _extractPayloadId(item) {
@@ -43,7 +53,26 @@ class TXSearchable extends HTMLElement {
     }
 
     _formatDisplayString(item, rawId) {
-        if (!item) return String(rawId);
+        if (!item) {
+            // [Bugfix S67.3] Global fallback for lazy-hydrated components (readonly drawers)
+            const fieldName = this.getAttribute('data-form-component') || this.getAttribute('name');
+            if (fieldName && window._LOOKUP_DATA && window._LOOKUP_DATA[fieldName]) {
+                const lookupArr = window._LOOKUP_DATA[fieldName];
+                const opt = lookupArr.find(o => String(o.value) === String(rawId));
+                if (opt && opt.label) return opt.label;
+            }
+            
+            // Global DataStore fallback
+            if (window.FormEngine_Resolvers && typeof window.FormEngine_Resolvers.resolveEntityRecord === 'function') {
+                const targetEntity = this.getAttribute('target-entity') || this.getAttribute('entity-name');
+                if (targetEntity) {
+                    const globalRec = window.FormEngine_Resolvers.resolveEntityRecord(targetEntity, rawId);
+                    if (globalRec) return this._extractPayloadTitle(globalRec);
+                }
+            }
+            
+            return String(rawId);
+        }
         return this._extractPayloadTitle(item);
     }
 

@@ -7,6 +7,7 @@
 | ID | Epic | Status | Scope | Priority |
 |----|------|--------|-------|----------|
 | E1 | Setup de Plataforma SAFe 6.0 e Integración Dual-Write | ✅ Complete  | Implementar backend en GAS y base UI en Ionic. | Alta     |
+| E6 | Multi-Tenant Config                         | o. Complete   | S60-S68: Adapter, Wizard, CI/CD, Cache | Alta     |
 | E3 | Migración a Producción SGMP                           | ✅ Complete   | S3.2 / S1.1 / S1.2: [DONE]                            | Alta     |
 | E8 | Graph Governance & Business Rules Engine              | ✅ Complete  | TDAG server backend & Business Rules interceptors     | Media    |
 | E9 | Refactor UI MDM & ThemeManager                        | ✅ Complete   | Migrar estilos hardcoded, sanear LIFO Max Depth GC    | Alta     |
@@ -82,4 +83,4 @@
 >   - *Arch Review*: Deshardcodear el umbral estático `MAX_ATTRS = 5` en Tarjetas `UI_DataGrid` para delegarlo a `UI_CONFIG` (Vistas Sensibles/Densas); monitorear métricas de Developer Experience (DX) tras pulverizar God Objects en micro-fragmentos de 150 líneas.
 >   - *Quality Review*: Evaluar seriamente incluir un paso constructivo formal de Transpilación vía Babel (ES6 a ES5) garantizando el Polyfill si las corporaciones clientes manejan Chrome obsoleto.
 >   - *Arch Review*: Abstraer el "Bypass Profile Path" (`.auth/chrome-profile`) de Playwright como variable paramétrica vía `.env` global para evitar conflictos locales de sesión de Google entre desarrolladores o servidores de CI/CD externos durante ejecuciones E2E persistentes.
-
+

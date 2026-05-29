@@ -144,12 +144,11 @@
                                 }
                             }
 
-                            // 3. Cache Miss: Execute and store the Promise
+                            // 3. Network Fetch
                             const fetchPromise = window.DataAPI.call(apiMethod, ...apiArgs)
                                 .then(opts => {
-                                    // Mantener la estructura original (Soporte mixto para Arrays puros o Tuplas de Subgrid)
                                     const finalData = opts; 
-                                    EngineResolvers._cache[cacheKey] = finalData; // Upgrade Promise to raw Data in Cache
+                                    EngineResolvers._cache[cacheKey] = finalData; 
                                     
                                     // [Bugfix S45.2] Sync with global DataStore so UI_SubgridBuilder can find it
                                     if (window.DataStore && apiMethod === 'getInitialPayload' && apiArgs.length > 0) {

@@ -114,10 +114,10 @@ function getPortafoliosOptions() { return getGenericOptions('Portafolio', 'id_po
 
 /**
  * getProductosOptions
- * Devuelve [{value: id_producto, label: nombre_producto}] desde DB_Producto.
+ * Devuelve [{value: id_producto, label: nombre}] desde DB_Producto.
  * Usado por el Dependency Resolver de FormEngine para el campo productos_asociados.
  */
-function getProductosOptions() { return getGenericOptions('Producto', 'id_producto', 'nombre_producto'); }
+function getProductosOptions() { return getGenericOptions('Producto', 'id_producto', 'nombre'); }
 
 /**
  * getUnidadesNegocioOptions
@@ -127,9 +127,9 @@ function getUnidadesNegocioOptions() { return getGenericOptions('Unidad_Negocio'
 
 /**
  * getEquiposOptions
- * Devuelve [{value: id_equipo, label: nombre_equipo}] desde DB_Equipo.
+ * Devuelve [{value: id_equipo, label: nombre}] desde DB_Equipo.
  */
-function getEquiposOptions() { return getGenericOptions('Equipo', 'id_equipo', 'nombre_equipo'); }
+function getEquiposOptions() { return getGenericOptions('Equipo', 'id_equipo', 'nombre'); }
 
 /**
  * getSysRolesOptions

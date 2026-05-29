@@ -1005,10 +1005,18 @@
 
       '<div class="ss-entity-card" style="flex-direction:column;gap:16px;margin-top:16px;">' +
         '<div style="font-weight:600;font-size:0.95rem;color:var(--ion-color-dark);display:flex;align-items:center;gap:8px;">' +
-          '<ion-icon name="globe-outline"></ion-icon> Dominios Conectados (Microservicio Webhook)' +
+          '<ion-icon name="globe-outline"></ion-icon> Configuración de Webhook (Opcional)' +
         '</div>' +
-        '<div id="ss-oauth2-domains-container" style="font-size:0.8rem;color:var(--ion-color-medium);padding:12px;border-radius:8px;background:var(--ion-color-step-50);">' +
-          '<div style="font-style:italic;">La arquitectura de conexión cruzada ha sido actualizada a Webhooks (S59.5). Para conectar o administrar dominios adicionales, por favor dirígete al Catálogo de <b>Entidades > Config_Workspace</b>. Allí podrás ingresar las URLs y Tokens de los microservicios desplegados en otros dominios.</div>' +
+        '<div style="font-size:0.8rem;color:var(--ion-color-medium);">' +
+          'Si el backend de este entorno requiere comunicarse mediante un microservicio webhook para sortear bloqueos de dominio, ingresa la URL aquí. Si se deja en blanco, utilizará acceso nativo.' +
+        '</div>' +
+        '<div class="ss-form-row">' +
+          '<div><label class="ss-label">Webhook URL</label>' +
+            '<input type="text" id="ss-workspace-webhook-url" class="ss-input" placeholder="https://script.google.com/macros/s/.../exec"></div>' +
+        '</div>' +
+        '<div class="ss-form-row">' +
+          '<div><label class="ss-label">Webhook Secret (Token)</label>' +
+            '<input type="password" id="ss-workspace-webhook-secret" class="ss-input" placeholder="Token de Autorización"></div>' +
         '</div>' +
       '</div>' +
 
@@ -1036,15 +1044,13 @@
             var cfg = JSON.parse(res.data);
             var chk = document.getElementById('ss-workspace-sync-enabled');
             if (chk) chk.checked = (cfg.syncEnabled !== false);
+            var txtUrl = document.getElementById('ss-workspace-webhook-url');
+            if (txtUrl) txtUrl.value = cfg.webhookUrl || '';
+            var txtSecret = document.getElementById('ss-workspace-webhook-secret');
+            if (txtSecret) txtSecret.value = cfg.webhookSecret || '';
           } catch(e){}
         }
       }).API_Admin_GetGlobalConfig('APP_WORKSPACE_CONFIG');
-      
-      setTimeout(function() {
-        if (window.SchemaStudio && window.SchemaStudio._loadConnectedDomains) {
-            window.SchemaStudio._loadConnectedDomains();
-        }
-      }, 200);
     }
   }
 
@@ -2340,6 +2346,15 @@
         var chk = document.getElementById('ss-workspace-sync-enabled');
         if (!chk) return;
         var payload = { syncEnabled: chk.checked };
+        
+        var txtUrl = document.getElementById('ss-workspace-webhook-url');
+        if (txtUrl && txtUrl.value.trim() !== '') {
+            payload.webhookUrl = txtUrl.value.trim();
+        }
+        var txtSecret = document.getElementById('ss-workspace-webhook-secret');
+        if (txtSecret && txtSecret.value.trim() !== '') {
+            payload.webhookSecret = txtSecret.value.trim();
+        }
         
         // Actualizar el estado global en tiempo real para evitar requerir F5
         window.WORKSPACE_SYNC_ENABLED = chk.checked;

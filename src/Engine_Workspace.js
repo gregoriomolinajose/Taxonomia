@@ -6,86 +6,31 @@
  * Requiere que la API avanzada "Admin Directory" esté habilitada en appsscript.json.
  */
 
-/**
- * Evalúa si la sincronización Workspace está habilitada,
- * revisando tanto el flag estático (CONFIG) como la configuración dinámica del Admin.
- */
-function isWorkspaceSyncEnabled() {
-  if (typeof CONFIG !== 'undefined' && CONFIG.WORKSPACE_INTEGRATION === false) return false;
+function _getWorkspaceConfig() {
+  var cfg = { syncEnabled: true, webhookUrl: null, webhookSecret: null };
+  if (typeof CONFIG !== 'undefined' && CONFIG.WORKSPACE_INTEGRATION === false) cfg.syncEnabled = false;
   try {
     if (typeof PropertiesService !== 'undefined') {
       var cfgStr = PropertiesService.getScriptProperties().getProperty('APP_WORKSPACE_CONFIG');
       if (cfgStr) {
-        var cfg = JSON.parse(cfgStr);
-        if (cfg.syncEnabled === false) return false;
+        var parsed = JSON.parse(cfgStr);
+        if (parsed.syncEnabled === false) cfg.syncEnabled = false;
+        if (parsed.webhookUrl) cfg.webhookUrl = parsed.webhookUrl;
+        if (parsed.webhookSecret) cfg.webhookSecret = parsed.webhookSecret;
       }
     }
   } catch (e) {
     Logger.log("Error parseando APP_WORKSPACE_CONFIG: " + e.message);
   }
-  return true;
+  return cfg;
 }
 
 /**
- * Devuelve el mapa completo de configuraciones de Workspace
+ * Evalúa si la sincronización Workspace está habilitada,
+ * revisando tanto el flag estático (CONFIG) como la configuración dinámica del Admin.
  */
-function getAllDomainConfigs() {
-  try {
-    var cache = CacheService.getScriptCache();
-    var cached = cache.get("config_workspaces_map_v2");
-    var map;
-    
-    if (cached) {
-      map = JSON.parse(cached);
-    } else {
-      if (typeof Adapter_Sheets === 'undefined' || typeof CONFIG === 'undefined') return {};
-      
-      var dbConfig = { SPREADSHEET_ID_DB: CONFIG.SPREADSHEET_ID_DB, useSheets: true };
-      var list = Adapter_Sheets.list('Config_Workspace', dbConfig, 'objects', false);
-      var rows = list ? list.rows : [];
-      map = {};
-      
-      rows.forEach(function(r) {
-         var active = (String(r.activar_consulta_directorio).toLowerCase() === 'true');
-         var cfg = {
-            enabled: active,
-            webhookUrl: r.webhook_url || null,
-            webhookSecret: r.webhook_secret || null
-         };
-         
-         if (r.dominio) {
-             map[String(r.dominio).trim().toLowerCase()] = cfg;
-         }
-         if (r.alias_alternativos) {
-             String(r.alias_alternativos).split(',').forEach(function(alias) {
-                 var a = alias.trim().toLowerCase();
-                 if (a) map[a] = cfg;
-             });
-         }
-      });
-      cache.put("config_workspaces_map_v2", JSON.stringify(map), 900); // 15 minutos de TTL
-    }
-    return map;
-  } catch(e) {
-    Logger.log("Error en getAllDomainConfigs: " + e.message);
-    return {};
-  }
-}
-
-/**
- * [S59.5] Evalúa si un dominio específico tiene activada la consulta al directorio,
- * leyendo la configuración desde Config_Workspace (cacheados en RAM) e incluyendo Webhooks.
- */
-function getDomainConfig(domain) {
-  try {
-    if (!domain) return { enabled: false };
-    var searchDomain = String(domain).trim().toLowerCase();
-    var map = getAllDomainConfigs();
-    return map[searchDomain] || { enabled: false };
-  } catch(e) {
-    Logger.log("Error checking getDomainConfig para " + domain + ": " + e.message);
-    return { enabled: false };
-  }
+function isWorkspaceSyncEnabled() {
+  return _getWorkspaceConfig().syncEnabled;
 }
 
 /**
@@ -97,25 +42,18 @@ function getDomainConfig(domain) {
  */
 function resolverDirectorioWorkspace(queryEmail) {
   try {
+    var wsConfig = _getWorkspaceConfig();
+    
     // Zero-Touch CI/CD Environment & Admin Config flag guard
-    if (!isWorkspaceSyncEnabled()) {
+    if (!wsConfig.syncEnabled) {
       Logger.log("Workspace API Bypassed: Sync is disabled globally or by admin config.");
       return { __status: "DISABLED" };
     }
     
     var user;
-    var domain = queryEmail.substring(queryEmail.indexOf('@'));
-    var dCfg = getDomainConfig(domain);
-    
-    // S59.5: Barrera lógica estricta por dominio
-    if (!dCfg.enabled) {
-      Logger.log("Workspace API Bypassed: Sync is disabled explicitly for domain " + domain);
-      return { __status: "DISABLED" };
-    }
-
-    if (dCfg.webhookUrl) {
+    if (wsConfig.webhookUrl) {
       // Modo Microservicio Puente Nativo
-      var apiUrl = dCfg.webhookUrl + "?q=" + encodeURIComponent(queryEmail) + "&secret=" + encodeURIComponent(dCfg.webhookSecret || '');
+      var apiUrl = wsConfig.webhookUrl + "?q=" + encodeURIComponent(queryEmail) + "&secret=" + encodeURIComponent(wsConfig.webhookSecret || '');
       var response = UrlFetchApp.fetch(apiUrl, { muteHttpExceptions: true });
       if (response.getResponseCode() === 200) {
         var respBody = JSON.parse(response.getContentText());
@@ -183,6 +121,7 @@ function resolverDirectorioWorkspace(queryEmail) {
       }
     }
     
+    var isSuspended = user.suspended === true;
     var dto = {
       nombre: givenName,
       apellidos: familyName,
@@ -193,7 +132,8 @@ function resolverDirectorioWorkspace(queryEmail) {
       cargo: title,
       ubicacion: location,
       numero_empleado: numEmpleado,
-      lider_directo: manager
+      lider_directo: manager,
+      estado: isSuspended ? "Inactivo" : "Activo"
     };
 
       // [S44.9] Mapeo de Cargo. Delegate creation to Engine_ETL (SRP)

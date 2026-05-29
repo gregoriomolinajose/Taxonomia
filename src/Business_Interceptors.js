@@ -37,6 +37,16 @@ var Business_Interceptors = (function() {
             }
         }
 
+        // [BUGFIX] Intra-Batch Deduplication
+        // Añadir los items del payload actual al mapa de memoria. Si el líder (u otra entidad)
+        // ya viene en el mismo archivo CSV, esto asegura que el interceptor reconozca
+        // su id temporal en lugar de generar un registro stub duplicado "Pendiente Sync".
+        config.items.forEach(item => {
+            if (config.extractCacheValuesFn) {
+                config.extractCacheValuesFn(item, memoryMap);
+            }
+        });
+
         // 2. Procesamiento y Generación de Stubs
         config.items.forEach(payload => {
             const rawKey = config.extractKeyFn(payload);

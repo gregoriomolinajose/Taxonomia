@@ -293,6 +293,9 @@ window.UI_FormUtils = (function () {
      * Resuelve la duplicación semántica (H9) entre constructores de UI.
      */
     function extractDraftContext(entityName, currentPK) {
+        if (typeof window !== 'undefined' && window.WorkspaceManager && window.WorkspaceManager.isActive && window.WorkspaceManager.isActive()) {
+            return window.WorkspaceManager.getActiveWorkspaceId();
+        }
         if (entityName === 'Taxonomia') {
             return currentPK;
         }

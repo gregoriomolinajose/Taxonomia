@@ -539,7 +539,7 @@ var APP_SCHEMAS = {
       { name: "id_permiso", type: "text", primaryKey: true, readonly: true, label: "ID Permiso", width: 12 },
       ...FIELD_TEMPLATES.AUDIT_FIELDS(),
       { name: "id_rol", type: "select", label: "Rol Organizacional", required: true, width: 6, lookupSource: "getSysRolesOptions" },
-      { name: "schema_destino", type: "select", label: "Entidad del Sistema", required: true, width: 6, options: ["Portafolio", "Dominio", "Grupo_Productos", "Producto", "Capacidad", "Unidad_Negocio", "Equipo", "Persona", "Sys_Graph_Edges", "Sys_Roles", "Sys_Permissions", "Config_Typography", "Config_Workspace"] },
+      { name: "schema_destino", type: "select", label: "Entidad del Sistema", required: true, width: 6, options: ["Portafolio", "Dominio", "Grupo_Productos", "Producto", "Capacidad", "Unidad_Negocio", "Equipo", "Persona", "Sys_Graph_Edges", "Sys_Roles", "Sys_Permissions", "Config_Typography"] },
       { name: "nivel_acceso", type: "select", label: "Nivel de Acceso", required: true, width: 12, options: ["ALL (Admin Total)", "OWNER_ONLY (Solo propios)", "MEMBER_ONLY (Siendo Miembro)", "READ_ONLY (Solo lectura)", "NONE (Denegado)"] }
     ]
   },
@@ -566,21 +566,6 @@ var APP_SCHEMAS = {
       { name: "dueno_vs_id", type: "relation", relationType: "padre", targetEntity: "Persona", graphEntity: "Sys_Graph_Edges", label: "Dueño del Value Stream", isTemporalGraph: true, graphEdgeType: "VS_DUENO", uiComponent: "searchable_single", valueField: "id_persona", labelField: "_nombre_completo", width: 12 },
       { width: 12, name: "portafolios_padre", type: "relation", relationType: "padre", targetEntity: "Portafolio", graphEntity: "Sys_Graph_Edges", valueField: "id_portafolio", labelField: "nombre", uiComponent: "searchable_multi", label: "Portafolios", isTemporalGraph: true, graphEdgeType: "PORTAFOLIO_VALUE_STREAM", topologyCardinality: "N:M", required: true },
       { width: 12, name: "grupos_productos_vinculados", type: "relation", relationType: "hijo", targetEntity: "Grupo_Productos", graphEntity: "Sys_Graph_Edges", valueField: "id_grupo_producto", labelField: "nombre", uiComponent: "searchable_multi", label: "Grupos de Productos", isTemporalGraph: true, graphEdgeType: "VALUE_STREAM_GRUPO_PRODUCTO", topologyCardinality: "1:N" }
-    ]
-  },
-  Config_Workspace: {
-    metadata: { showInMenu: true, order: 93, iconName: 'business-outline', color: 'primary', label: 'Seguridad: Workspaces', titleField: 'dominio_principal', idField: 'id_workspace', fkField: null, requireStrictMatrixAccess: true },
-    primaryKey: "id_workspace",
-    fields: [
-      { name: "id_workspace", type: "text", primaryKey: true, readonly: true, label: "ID Workspace", width: 12 },
-      ...FIELD_TEMPLATES.ESTADO_FIELD(),
-      ...FIELD_TEMPLATES.AUDIT_FIELDS(),
-      { name: "dominio_principal", type: "text", label: "Dominio Principal", required: true, width: 6, helpText: "Ejemplo: @tenantA.com" },
-      { name: "alias_alternativos", type: "text", label: "Alias Soportados (CSV)", required: false, width: 6, helpText: "Ejemplo: @tenantA.com,@tenantB.com" },
-      { name: "activar_consulta_directorio", type: "boolean", label: "Consultar Workspace", required: false, width: 6, defaultValue: false, helpText: "Activa la sincronización de identidades." },
-      { name: "webhook_url", type: "text", label: "Webhook URL (Microservicio)", required: false, width: 12, helpText: "URL del Apps Script desplegado por el administrador del dominio." },
-      { name: "webhook_secret", type: "text", label: "Webhook Token (Secreto)", required: false, width: 6, helpText: "Token de autorización para consumir el microservicio." },
-      { name: "setup_guide", type: "uiComponent", uiComponent: "microservice_setup", width: 12 }
     ]
   },
   // [S60/E6] Config_System: Entidad especial de configuración del sistema.
