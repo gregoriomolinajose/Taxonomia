@@ -1,5 +1,5 @@
 const CONFIG = {
-    APP_VERSION: 'v1.2.19 - 2605281918',
+    APP_VERSION: 'v1.2.19 - 2605291225',
     SPREADSHEET_ID_DB: '',
     ALLOWED_DOMAINS: ['@gmail.com', '@bellfy.app'],  // Dev only — dominios del tenant se configuran via Adapter_Config
     useSheets: true,
