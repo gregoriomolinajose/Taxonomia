@@ -1,5 +1,5 @@
 const CONFIG = {
-    APP_VERSION: 'v1.2.19 - 2605281918',
+    APP_VERSION: 'v1.2.19 - 2605291225',
     SPREADSHEET_ID_DB: '',
     ALLOWED_DOMAINS: ['@gmail.com', '@bellfy.app'],  // Dev only — dominios del tenant se configuran via Adapter_Config
     useSheets: true,
@@ -31,7 +31,7 @@ if (typeof PropertiesService !== 'undefined') {
             }
         }
 
-        if (_ssId && _ssId.trim().length > 0) CONFIG.SPREADSHEET_ID_DB = _ssId.trim();
+        if (_ssId && _ssId.trim().length > 0) CONFIG.SPREADSHEET_ID_DB = _ssId.trim().replace(/^['"]|['"]$/g, '');
         if (_domains && _domains.trim().length > 0) {
             CONFIG.ALLOWED_DOMAINS = _domains.split(',').map(function(d) { return d.trim(); }).filter(Boolean);
         }
