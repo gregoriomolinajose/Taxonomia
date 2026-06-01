@@ -133,7 +133,7 @@ var Business_Interceptors = (function() {
                     
                     if (!targetId) {
                         // Crear Stub
-                        targetId = config.stubPrefix + [...Array(8)].map(() => Math.floor(Math.random() * 16).toString(16).toUpperCase()).join('');
+                        targetId = config.stubPrefix + Math.random().toString(36).substring(2, 10).toUpperCase();
                         let stub = {
                             [config.idField]: targetId,
                             nombre: nameTrim + " (Por definir)",
@@ -160,7 +160,7 @@ var Business_Interceptors = (function() {
                     if (!edgeExists) {
                         sysEdges.push({ es_version_actual: true, tipo_relacion: config.edgeType, id_nodo_padre: targetId, id_nodo_hijo: childId }); // Prevenir duplicados intra-batch
                         edgesBatch.push({
-                        id_relacion: "RELA-" + [...Array(8)].map(() => Math.floor(Math.random() * 16).toString(16).toUpperCase()).join(''),
+                        id_relacion: "RELA-" + Math.random().toString(36).substring(2, 10).toUpperCase(),
                         id_nodo_padre: targetId,
                         id_nodo_hijo: childId,
                         tipo_relacion: config.edgeType,
@@ -360,6 +360,7 @@ var Business_Interceptors = (function() {
                 updatePayloadFn: (p, resolvedId) => p.lider_directo = resolvedId,
                 logMessage: 'Se auto-generaron e hidrataron {N} líderes recursivamente (Interceptor DRY).'
             });
+
         },
 
         /**
@@ -368,14 +369,18 @@ var Business_Interceptors = (function() {
          */
         AutoProvisionEntityRoles: function(entityName, items) {
             const ROLE_MAPPINGS = {
-                Value_Stream: { field: 'dueno_vs_id', nombre: 'Dueño del Value Stream', nombre_ingles: 'Value Stream Owner', color_icono: 'tertiary', especialidad: 'Negocio', pk: 'id_value_stream' },
-                Portafolio: { field: 'gerente_portafolio_id', nombre: 'Gerente de Portafolio', nombre_ingles: 'Portfolio Manager', color_icono: 'danger', especialidad: 'Negocio', pk: 'id_portafolio' },
-                Grupo_Productos: { field: 'gerente_producto_id', nombre: 'Gerente de Producto', nombre_ingles: 'Product Manager', color_icono: 'dark', especialidad: 'Producto', pk: 'id_grupo_producto' },
-                Equipo: { field: 'product_owner_id', nombre: 'Dueño de Producto', nombre_ingles: 'Product Owner', color_icono: 'success', especialidad: 'Producto', pk: 'id_equipo' }
+                Value_Stream: [{ field: 'dueno_vs_id', nombre: 'Dueño del Value Stream', nombre_ingles: 'Value Stream Owner', color_icono: 'tertiary', especialidad: 'Negocio', pk: 'id_value_stream' }],
+                Portafolio: [{ field: 'gerente_portafolio_id', nombre: 'Gerente de Portafolio', nombre_ingles: 'Portfolio Manager', color_icono: 'danger', especialidad: 'Negocio', pk: 'id_portafolio' }],
+                Grupo_Productos: [{ field: 'gerente_producto_id', nombre: 'Gerente de Producto', nombre_ingles: 'Product Manager', color_icono: 'dark', especialidad: 'Producto', pk: 'id_grupo_producto' }],
+                Dominio: [{ field: 'gerente_dominio_id', nombre: 'Responsable de Dominio', nombre_ingles: 'Domain Owner', color_icono: 'primary', especialidad: 'Producto', pk: 'id_dominio' }],
+                Equipo: [
+                    { field: 'product_owner_id', nombre: 'Dueño de Producto', nombre_ingles: 'Product Owner', color_icono: 'success', especialidad: 'Producto', pk: 'id_equipo' },
+                    { field: 'scrum_master_id', nombre: 'Team Coach', nombre_ingles: 'Scrum Master', color_icono: 'warning', especialidad: 'Proceso', pk: 'id_equipo' }
+                ]
             };
 
-            const mapping = ROLE_MAPPINGS[entityName];
-            if (!mapping) return;
+            const mappings = ROLE_MAPPINGS[entityName];
+            if (!mappings || mappings.length === 0) return;
 
             let dbRoles = {};
             if (typeof Engine_DB !== 'undefined') {
@@ -396,58 +401,60 @@ var Business_Interceptors = (function() {
             const sysDate = new Date().toISOString();
 
             items.forEach(p => {
-                const personIdRaw = p[mapping.field];
-                const targetObj = Array.isArray(personIdRaw) ? personIdRaw[0] : personIdRaw;
-                const personId = (typeof targetObj === 'object' && targetObj !== null) 
-                    ? (targetObj.id_registro || targetObj.id || targetObj.value) 
-                    : targetObj;
+                mappings.forEach(mapping => {
+                    const personIdRaw = p[mapping.field];
+                    const targetObj = Array.isArray(personIdRaw) ? personIdRaw[0] : personIdRaw;
+                    const personId = (typeof targetObj === 'object' && targetObj !== null) 
+                        ? (targetObj.id_registro || targetObj.id || targetObj.value) 
+                        : targetObj;
 
-                if (personId && String(personId).trim() !== '' && String(personId).trim() !== '[object Object]') {
-                    const normName = mapping.nombre.toLowerCase();
-                    let targetRoleId = dbRoles[normName];
-                    
-                    if (!targetRoleId) {
-                        targetRoleId = "ROLE-" + [...Array(8)].map(() => Math.floor(Math.random() * 16).toString(16).toUpperCase()).join('');
-                        let stubRole = {
-                            id_rol: targetRoleId,
-                            nombre: mapping.nombre,
-                            nombre_ingles: mapping.nombre_ingles,
-                            color_icono: mapping.color_icono,
-                            especialidad: mapping.especialidad,
-                            estado: "Activo"
-                        };
-                        if (typeof Engine_DB !== 'undefined') {
-                            try { 
-                                Engine_DB.upsertBatch('Rol', [stubRole], { muteTriggers: true }); 
-                            } catch(e) {
-                                if (typeof console !== 'undefined') console.error(`Error persistiendo rol ${mapping.nombre}: ${e.message}`);
-                                return;
+                    if (personId && String(personId).trim() !== '' && String(personId).trim() !== '[object Object]') {
+                        const normName = mapping.nombre.toLowerCase();
+                        let targetRoleId = dbRoles[normName];
+                        
+                        if (!targetRoleId) {
+                            targetRoleId = "ROLE-" + Math.random().toString(36).substring(2, 10).toUpperCase();
+                            let stubRole = {
+                                id_rol: targetRoleId,
+                                nombre: mapping.nombre,
+                                nombre_ingles: mapping.nombre_ingles,
+                                color_icono: mapping.color_icono,
+                                especialidad: mapping.especialidad,
+                                estado: "Activo"
+                            };
+                            if (typeof Engine_DB !== 'undefined') {
+                                try { 
+                                    Engine_DB.upsertBatch('Rol', [stubRole], { muteTriggers: true }); 
+                                } catch(e) {
+                                    if (typeof console !== 'undefined') console.error(`Error persistiendo rol ${mapping.nombre}: ${e.message}`);
+                                    return;
+                                }
                             }
+                            dbRoles[normName] = targetRoleId;
                         }
-                        dbRoles[normName] = targetRoleId;
-                    }
-                    
-                    const childId = String(personId).trim();
-                    const contextoId = String(p[mapping.pk] || p._tempId || '').trim();
+                        
+                        const childId = String(personId).trim();
+                        const contextoId = String(p[mapping.pk] || p._tempId || '').trim();
 
-                    // Para PERSONA_ROL, el nodo padre es el Rol y el nodo hijo es la Persona.
-                    const edgeExists = sysEdges.some(e => e.es_version_actual !== false && e.tipo_relacion === 'PERSONA_ROL' && String(e.id_nodo_padre).trim() === targetRoleId && String(e.id_nodo_hijo).trim() === childId && String(e.contexto_id || '').trim() === contextoId);
-                    
-                    if (!edgeExists) {
-                        sysEdges.push({ es_version_actual: true, tipo_relacion: 'PERSONA_ROL', id_nodo_padre: targetRoleId, id_nodo_hijo: childId, contexto_id: contextoId });
-                        edgesBatch.push({
-                            id_relacion: "RELA-" + [...Array(8)].map(() => Math.floor(Math.random() * 16).toString(16).toUpperCase()).join(''),
-                            id_nodo_padre: targetRoleId,
-                            id_nodo_hijo: childId,
-                            tipo_relacion: 'PERSONA_ROL',
-                            contexto_id: contextoId,
-                            valido_desde: sysDate,
-                            valido_hasta: "",
-                            es_version_actual: true,
-                            estado: "Activo"
-                        });
+                        // Para PERSONA_ROL, el nodo padre es el Rol y el nodo hijo es la Persona.
+                        const edgeExists = sysEdges.some(e => e.es_version_actual !== false && e.tipo_relacion === 'PERSONA_ROL' && String(e.id_nodo_padre).trim() === targetRoleId && String(e.id_nodo_hijo).trim() === childId && String(e.contexto_id || '').trim() === contextoId);
+                        
+                        if (!edgeExists) {
+                            sysEdges.push({ es_version_actual: true, tipo_relacion: 'PERSONA_ROL', id_nodo_padre: targetRoleId, id_nodo_hijo: childId, contexto_id: contextoId });
+                            edgesBatch.push({
+                                id_relacion: "RELA-" + Math.random().toString(36).substring(2, 10).toUpperCase(),
+                                id_nodo_padre: targetRoleId,
+                                id_nodo_hijo: childId,
+                                tipo_relacion: 'PERSONA_ROL',
+                                contexto_id: contextoId,
+                                valido_desde: sysDate,
+                                valido_hasta: "",
+                                es_version_actual: true,
+                                estado: "Borrador"
+                            });
+                        }
                     }
-                }
+                });
             });
 
             if (edgesBatch.length > 0 && typeof Engine_DB !== 'undefined') {
@@ -456,6 +463,98 @@ var Business_Interceptors = (function() {
                     if (typeof Logger !== 'undefined') Logger.log(`Se generaron ${edgesBatch.length} relaciones PERSONA_ROL para ${mapping.nombre}.`);
                 } catch(e) {
                     if (typeof console !== 'undefined') console.error(`[CRITICAL] Error persistiendo aristas PERSONA_ROL: ${e.message}`);
+                }
+            }
+        },
+
+        /**
+         * AutoLinkAgileRoles
+         * Mapea roles ágiles desde el payload de Persona hacia las relaciones específicas de Equipo.
+         */
+        AutoLinkAgileRoles: function(entityName, items) {
+            if (entityName !== 'Persona') return;
+
+            let dbEquipos = {};
+            let sysEdges = [];
+
+            if (typeof Engine_DB !== 'undefined') {
+                const resEquipos = Engine_DB.list('Equipo', 'objects', { skipCache: true });
+                if (resEquipos && resEquipos.rows) {
+                    resEquipos.rows.forEach(r => dbEquipos[String(r.nombre).trim().toLowerCase()] = r.id_equipo);
+                }
+                sysEdges = Engine_DB.list('Sys_Graph_Edges', 'objects').rows || [];
+            }
+
+            let edgesBatch = [];
+            const sysDate = new Date().toISOString();
+
+            function toTitleCase(str) {
+                return str.toLowerCase().replace(/(?:^|[\s,\-\/])\w/g, match => match.toUpperCase());
+            }
+
+            function addEdge(edgeType, parentId, childId, contextoId, edgeEstado) {
+                const exists = sysEdges.some(e => e.es_version_actual !== false && e.tipo_relacion === edgeType && String(e.id_nodo_padre).trim() === parentId && String(e.id_nodo_hijo).trim() === childId && String(e.contexto_id || '').trim() === contextoId);
+                if (!exists) {
+                    sysEdges.push({ es_version_actual: true, tipo_relacion: edgeType, id_nodo_padre: parentId, id_nodo_hijo: childId, contexto_id: contextoId });
+                    edgesBatch.push({
+                        id_relacion: "RELA-" + Math.random().toString(36).substring(2, 10).toUpperCase(),
+                        id_nodo_padre: parentId,
+                        id_nodo_hijo: childId,
+                        tipo_relacion: edgeType,
+                        contexto_id: contextoId,
+                        valido_desde: sysDate,
+                        valido_hasta: "",
+                        es_version_actual: true,
+                        estado: edgeEstado
+                    });
+                }
+            }
+
+            items.forEach(p => {
+                if (!p.roles_asignados || !p.equipo) return;
+                
+                const rolesRaw = String(p.roles_asignados).split(',').map(r => r.trim().toLowerCase());
+                const equiposRaw = String(p.equipo).split(',').map(e => e.trim().toLowerCase());
+
+                const isPO = rolesRaw.includes('dueño de producto') || rolesRaw.includes('product owner');
+                const isSM = rolesRaw.includes('scrum master') || rolesRaw.includes('team coach');
+                const isRTE = rolesRaw.includes('release train engineer') || rolesRaw.includes('rte') || rolesRaw.includes('release train engineer (rte)');
+
+                if (!isPO && !isSM && !isRTE) return;
+
+                const childId = String(p.id_persona || p._tempId).trim();
+                const contextoId = String(p._contexto_arista || '').trim();
+                const edgeEstado = String(p._estado_arista || 'Activo').trim();
+
+                equiposRaw.forEach(equipoNorm => {
+                    if (equipoNorm === '') return;
+                    let targetEquipoId = dbEquipos[equipoNorm];
+                    
+                    if (!targetEquipoId) {
+                        targetEquipoId = 'EQUI-' + Math.random().toString(36).substring(2, 10).toUpperCase();
+                        const stubEquipo = {
+                            id_equipo: targetEquipoId,
+                            nombre: toTitleCase(equipoNorm) + " (Por definir)",
+                            estado: "Activo"
+                        };
+                        if (typeof Engine_DB !== 'undefined') {
+                            try { Engine_DB.upsertBatch('Equipo', [stubEquipo], { muteTriggers: true }); } catch(e) {}
+                        }
+                        dbEquipos[equipoNorm] = targetEquipoId;
+                    }
+
+                    if (isPO) addEdge('EQUIPO_PO', targetEquipoId, childId, contextoId, edgeEstado);
+                    if (isSM) addEdge('EQUIPO_SM', targetEquipoId, childId, contextoId, edgeEstado);
+                    if (isRTE) addEdge('EQUIPO_RTE', targetEquipoId, childId, contextoId, edgeEstado);
+                });
+            });
+
+            if (edgesBatch.length > 0 && typeof Engine_DB !== 'undefined') {
+                try { 
+                    Engine_DB.upsertBatch('Sys_Graph_Edges', edgesBatch, { muteTriggers: true }); 
+                    if (typeof Logger !== 'undefined') Logger.log(`Se generaron ${edgesBatch.length} relaciones de Roles Agiles para Personas.`);
+                } catch(e) {
+                    if (typeof console !== 'undefined') console.error(`[CRITICAL] Error persistiendo aristas de Roles Agiles: ${e.message}`);
                 }
             }
         },

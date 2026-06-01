@@ -93,7 +93,7 @@
             const fallbackContext = window.UI_FormUtils ? window.UI_FormUtils.extractDraftContext(entityName, currentPK) : null;
             const contextId = explicitContext || fallbackContext;
             const strictContext = !!explicitContext || entityName === 'Taxonomia';
-            const isActuallyReadonly = field.readonly && !strictContext;
+            const isActuallyReadonly = !!((field.readonly && !strictContext) || (field.readonlyInContext && strictContext));
             
             // [S55.1] Contextual List Wrapper
             const activeData = window.UI_FormUtils && window.UI_FormUtils.fetchContextualData 
@@ -251,7 +251,8 @@
                 const emptyOpt = { textContent: uiStateInit.placeholder };
                 new RelationStateController(basicSel, activeData, field, emptyOpt, localEventBus, isActuallyReadonly);
 
-                if (field.isTemporalGraph && field.relationType === 'padre') {
+                // S57.X: Ignorar alerta de jerarquía si el target es una Persona o un Rol (no estructural)
+                if (field.isTemporalGraph && field.relationType === 'padre' && field.targetEntity !== 'Persona' && field.targetEntity !== 'Rol') {
                     let originalVal = initialValues.length > 0 ? initialValues[0] : "";
                     basicSel.addEventListener('ionChange', async (ev) => {
                         const newVal = ev.detail.value;
@@ -264,7 +265,9 @@
 
                         const isNewContext = { currentEditId: currentEditId, data: data };
                         const isNewRecord = window.SubgridState ? window.SubgridState.isNewRecord(isNewContext) : (!currentEditId && (!data || !data.id_registro));
-                        if (!isNewRecord && originalVal && originalVal !== "" && newVal !== originalVal) {
+                        const mockToken = (window.UI_CONSTANTS && window.UI_CONSTANTS.MOCK_FK_TOKEN) ? window.UI_CONSTANTS.MOCK_FK_TOKEN : '_NEW_PARENT_';
+                        
+                        if (!isNewRecord && originalVal && originalVal !== "" && originalVal !== mockToken && newVal !== originalVal) {
                             const alert = document.createElement('ion-alert');
                             alert.header = 'Cambio de Jerarquía Detectado';
                             alert.message = 'Estás reasignando el nodo padre. Si guardas este cambio, toda la rama se trasladará a la nueva ubicación. ¿Estás seguro de continuar?';
@@ -274,7 +277,7 @@
                             ];
                             document.body.appendChild(alert);
                             await window.PresentSafe(alert);
-                        } else if (!originalVal || originalVal === "") {
+                        } else if (!originalVal || originalVal === "" || originalVal === mockToken) {
                             originalVal = newVal;
                             basicSel.dataset.optimisticLock = 'true';
                             setTimeout(()=> basicSel.dataset.optimisticLock = 'false', 6000);
@@ -346,7 +349,7 @@
                 }
                 
                 // S57.5: Ocultar el componente del padre si el formulario está en modo lectura y el dominio no tiene un padre asignado (Nodo Raíz)
-                if (isActuallyReadonly && initialValues.length === 0 && field.relationType === 'padre') {
+                if (isActuallyReadonly && initialValues.length === 0 && field.relationType === 'padre' && field.hideIfEmptyAndReadonly !== false) {
                     inputEl.style.display = 'none';
                 }
                 

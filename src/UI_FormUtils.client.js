@@ -327,6 +327,54 @@ window.UI_FormUtils = (function () {
         });
     }
 
+    /**
+     * [S55.2] getExcludedGraphNodes
+     * Helper puro que unifica las reglas de exclusión de topología (H9).
+     * Lee tanto del estado de la base de datos (Sys_Graph_Edges) como del estado
+     * sucio del formulario en base a los graphEdgeType del esquema de la entidad.
+     */
+    function getExcludedGraphNodes(disallowedEdgesStr, currentEntityName, formContainer, contextId) {
+        let excludeIds = [];
+        if (!disallowedEdgesStr || !formContainer || !currentEntityName) return excludeIds;
+        
+        const disallowedEdges = disallowedEdgesStr.split(',').map(e => e.trim());
+        
+        // 1. Exclusión desde el Formulario Sucio (Unsaved State)
+        if (typeof window !== 'undefined' && window.APP_SCHEMAS && window.APP_SCHEMAS[currentEntityName]) {
+            const schemaFields = window.APP_SCHEMAS[currentEntityName].fields || [];
+            
+            // Buscar campos del esquema que generen las aristas bloqueadas
+            schemaFields.forEach(f => {
+                if (f.graphEdgeType && disallowedEdges.includes(f.graphEdgeType)) {
+                    // Si el campo actual genera una arista bloqueada, excluimos su valor
+                    const fieldInput = formContainer.querySelector(`[name="${f.name}"]`);
+                    if (fieldInput) {
+                        const val = typeof fieldInput.getValidatedValue === 'function' ? fieldInput.getValidatedValue() : fieldInput.value;
+                        if (val) {
+                            if (Array.isArray(val)) {
+                                excludeIds.push(...val.map(v => String(v)));
+                            } else {
+                                excludeIds.push(String(val));
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // 2. Exclusión desde la Base de Datos (Saved State)
+        if (typeof window !== 'undefined' && window.DataStore && contextId) {
+            const edgesTable = window.DataStore.get('Sys_Graph_Edges') || [];
+            const blockedPersonIds = edgesTable
+                .filter(e => disallowedEdges.includes(e.tipo_relacion) && String(e.id_nodo_padre) === String(contextId))
+                .map(e => String(e.id_nodo_hijo));
+                
+            excludeIds.push(...blockedPersonIds);
+        }
+        
+        return excludeIds;
+    }
+
     return {
         getDominioOptions,
         getDominiosPadreOptions,
@@ -338,6 +386,7 @@ window.UI_FormUtils = (function () {
         attachBusinessRulesListeners,
         executeAsyncValidations,
         extractDraftContext,
-        fetchContextualData
+        fetchContextualData,
+        getExcludedGraphNodes
     };
 })();

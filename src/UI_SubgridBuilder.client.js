@@ -119,11 +119,19 @@ window.UI_SubgridBuilder = {
         
         const _refreshList = () => {
             window.DOM.clear(list);
-            if (childRecords.length === 0) {
+            
+            // Excluir al Product Owner del listado de integrantes
+            let displayRecords = childRecords;
+            if (entityName === 'Equipo' && field.name === 'personas_asignadas' && data && data.product_owner_id) {
+                let poId = typeof data.product_owner_id === 'object' ? (data.product_owner_id.value || data.product_owner_id.id_registro || data.product_owner_id.id) : data.product_owner_id;
+                displayRecords = childRecords.filter(r => String(r[pkKey] || r.id_registro) !== String(poId));
+            }
+
+            if (displayRecords.length === 0) {
                 list.appendChild(emptyState);
                 return;
             }
-            childRecords.forEach((record, idx) => {
+            displayRecords.forEach((record, idx) => {
                 const item = document.createElement('ion-item');
                 
                 const labelWrapper = document.createElement('ion-label');
@@ -132,6 +140,21 @@ window.UI_SubgridBuilder = {
                 h2.textContent = (field.labelField && record[field.labelField]) ? record[field.labelField] : (record.nombre || 'Sin nombre');
                 const p = document.createElement('p');
                 let extraInfo = record.estado || 'Nuevo';
+                
+                // Extraer y resolver el Cargo
+                if (field.targetEntity === 'Persona') {
+                    let personCargo = record._id_cargo_label || record.id_cargo || '';
+                    if (personCargo && typeof personCargo === 'string' && !personCargo.includes(' ') && window.FormEngine_Resolvers && window.FormEngine_Resolvers.resolveEntityRecord) {
+                        const cargoRec = window.FormEngine_Resolvers.resolveEntityRecord('Cargo', personCargo);
+                        if (cargoRec && cargoRec.nombre) {
+                            personCargo = cargoRec.nombre;
+                        }
+                    }
+                    if (personCargo) {
+                        extraInfo = `${personCargo} • ${extraInfo}`;
+                    }
+                }
+
                 if (record.rol_agil && record.rol_agil !== 'N/A') {
                     extraInfo = `${record.rol_agil} • ${extraInfo}`;
                 }

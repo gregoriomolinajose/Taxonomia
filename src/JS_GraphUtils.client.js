@@ -53,56 +53,55 @@ window.Graph_Utils = (function () {
         if (!_graphIndex) return null; // Fallback safely if DataStore is missing
 
         const lId = String(localRecordId);
-        
-        const isValidEdge = (e) => {
-            if (e.tipo_relacion !== edgeType) return false;
-            if (e.es_version_actual === false) return false;
-            
-            const estadoLower = String(e.estado || '').toLowerCase().trim();
-            if (estadoLower === 'eliminado') return false;
-            
-            if (estadoLower === 'borrador') {
-                return !!contextId && String(e.contexto_id) === String(contextId);
+        let activeId = null;
+        let isDeletedInDraft = false;
+
+        const processEdges = (edges, isDraftPass) => {
+            if (!edges) return;
+            for (let i = 0; i < edges.length; i++) {
+                const e = edges[i];
+                if (e.tipo_relacion !== edgeType) continue;
+                if (e.es_version_actual === false) continue;
+                
+                const estadoLower = String(e.estado || '').toLowerCase().trim();
+                const isDraft = estadoLower === 'borrador';
+                const isDeleted = estadoLower === 'eliminado';
+                const matchesContext = !!contextId && String(e.contexto_id) === String(contextId);
+                
+                if (strictContext && isDraft && !matchesContext) continue;
+                if (strictContext && isDeleted && !matchesContext) continue;
+                
+                const targetId = relationType === 'padre' ? e.id_nodo_padre : 
+                                 (relationType === 'hijo' ? e.id_nodo_hijo : 
+                                 (String(e.id_nodo_padre) === lId ? e.id_nodo_hijo : e.id_nodo_padre));
+
+                if (isDeleted && matchesContext) {
+                    isDeletedInDraft = true;
+                    continue;
+                }
+                
+                if (isDeleted) continue;
+                if (isDraft && !matchesContext) continue;
+                
+                if (isDraftPass === isDraft) {
+                    activeId = targetId;
+                }
             }
-            
-            if (strictContext) {
-                return !!contextId && String(e.contexto_id) === String(contextId);
-            }
-            
-            return true;
         };
 
-        // If relationType is provided, enforce lookup direction
+        let edgesToProcess = [];
         if (relationType === 'padre') {
-            if (_graphIndex.byDestino[lId]) {
-                const match = _graphIndex.byDestino[lId].find(isValidEdge);
-                if (match) return match.id_nodo_padre;
-            }
-            return null;
+            edgesToProcess = _graphIndex.byDestino[lId] || [];
+        } else if (relationType === 'hijo') {
+            edgesToProcess = _graphIndex.byOrigen[lId] || [];
+        } else {
+            edgesToProcess = [...(_graphIndex.byDestino[lId] || []), ...(_graphIndex.byOrigen[lId] || [])];
         }
 
-        if (relationType === 'hijo') {
-            if (_graphIndex.byOrigen[lId]) {
-                const match = _graphIndex.byOrigen[lId].find(isValidEdge);
-                if (match) return match.id_nodo_hijo;
-            }
-            return null;
-        }
-
-        // Fallback: search both directions for backward compatibility
-        // 1. Buscamos asumiendo que el ID local es el Destino
-        if (_graphIndex.byDestino[lId]) {
-            const match = _graphIndex.byDestino[lId].find(isValidEdge);
-            if (match) return match.id_nodo_padre;
-        }
-
-        // 2. Buscamos asumiendo que el ID local es el Origen
-        if (_graphIndex.byOrigen[lId]) {
-            const match = _graphIndex.byOrigen[lId].find(isValidEdge);
-            if (match) return match.id_nodo_hijo;
-        }
-
-        return null;
+        processEdges(edgesToProcess, false); // Pass 1: Global/Approved
+        processEdges(edgesToProcess, true);  // Pass 2: Draft overrides
+        
+        return isDeletedInDraft ? null : activeId;
     }
 
     /**
@@ -120,46 +119,73 @@ window.Graph_Utils = (function () {
         if (!_graphIndex) return [];
 
         const lId = String(localRecordId);
-        const results = [];
+        const activeIds = new Set();
+        const removedIds = new Set(); // To track edges deleted in the draft
 
-        const isValidEdge = (e) => {
-            if (e.tipo_relacion !== edgeType) return false;
-            if (e.es_version_actual === false) return false;
-            
-            const estadoLower = String(e.estado || '').toLowerCase().trim();
-            if (estadoLower === 'eliminado') return false;
-            
-            if (estadoLower === 'borrador') {
-                return !!contextId && String(e.contexto_id) === String(contextId);
-            }
-            
-            if (strictContext) {
-                return !!contextId && String(e.contexto_id) === String(contextId);
-            }
-            
-            return true;
+        const processEdges = (edges, isDraftPass) => {
+            if (!edges) return;
+            edges.forEach(e => {
+                if (e.tipo_relacion !== edgeType) return;
+                if (e.es_version_actual === false) return;
+                
+                const estadoLower = String(e.estado || '').toLowerCase().trim();
+                const isDraft = estadoLower === 'borrador';
+                const isDeleted = estadoLower === 'eliminado';
+                const matchesContext = !!contextId && String(e.contexto_id) === String(contextId);
+                
+                // If we are in strictContext, we ONLY consider:
+                // 1. Draft/Deleted edges from THIS context
+                // 2. Global edges (if we are allowing them to be merged and not deleted)
+                if (strictContext && isDraft && !matchesContext) return;
+                if (strictContext && isDeleted && !matchesContext) return;
+                
+                // If it's a context deletion override
+                const targetId = relationType === 'padre' ? e.id_nodo_padre : 
+                                 (relationType === 'hijo' ? e.id_nodo_hijo : 
+                                 (String(e.id_nodo_padre) === lId ? e.id_nodo_hijo : e.id_nodo_padre));
+
+                if (isDeleted && matchesContext) {
+                    removedIds.add(String(targetId));
+                    return;
+                }
+                
+                if (isDeleted) return; // Ignore global deleted edges
+                
+                // If it's a draft from another context, ignore it
+                if (isDraft && !matchesContext) return;
+                
+                // If strictContext is true, should we hide global edges entirely?
+                // No, we must show them if they haven't been removed in the current draft.
+                // We add it to activeIds, and later we will filter out removedIds.
+                if (isDraftPass === isDraft) {
+                    activeIds.add(String(targetId));
+                }
+            });
         };
 
+        let edgesToProcess = [];
         if (relationType === 'padre') {
-            if (_graphIndex.byDestino[lId]) {
-                _graphIndex.byDestino[lId].filter(isValidEdge).forEach(e => results.push(e.id_nodo_padre));
-            }
+            edgesToProcess = _graphIndex.byDestino[lId] || [];
         } else if (relationType === 'hijo') {
-            if (_graphIndex.byOrigen[lId]) {
-                _graphIndex.byOrigen[lId].filter(isValidEdge).forEach(e => results.push(e.id_nodo_hijo));
-            }
+            edgesToProcess = _graphIndex.byOrigen[lId] || [];
         } else {
-            // Fallback: search both directions for backward compatibility
-            if (_graphIndex.byDestino[lId]) {
-                _graphIndex.byDestino[lId].filter(isValidEdge).forEach(e => results.push(e.id_nodo_padre));
-            }
-
-            if (_graphIndex.byOrigen[lId]) {
-                _graphIndex.byOrigen[lId].filter(isValidEdge).forEach(e => results.push(e.id_nodo_hijo));
-            }
+            edgesToProcess = [...(_graphIndex.byDestino[lId] || []), ...(_graphIndex.byOrigen[lId] || [])];
         }
 
-        return [...new Set(results)]; // Deduplicate
+        // Pass 1: Global/Approved edges
+        processEdges(edgesToProcess, false);
+        // Pass 2: Draft overrides (Additions and Deletions)
+        processEdges(edgesToProcess, true);
+
+        // Filter out any IDs that were explicitly removed in the draft
+        const results = [];
+        activeIds.forEach(id => {
+            if (!removedIds.has(id)) {
+                results.push(id);
+            }
+        });
+
+        return results;
     }
 
     /**

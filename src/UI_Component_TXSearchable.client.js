@@ -186,15 +186,36 @@ class TXSearchable extends HTMLElement {
             this.buildListItems(this._searchTerm || '');
         }
     }
-
     /**
      * Bridge compatible con API de Recolección (Epic E35/FormSubmitter.js)
      * Utilizado externamente vía nodo.getValidatedValue()
      */
     getValidatedValue() {
-        if (this._isMultiple) {
-            return Array.from(this._selectedState || new Set());
+        let excluded = [];
+        const formContainer = this.closest('form, ion-content, .drawer-content');
+        const disallowedEdgesStr = this.getAttribute('disallowed-context-edges');
+        
+        if (typeof window !== 'undefined' && window.UI_FormUtils && window.UI_FormUtils.getExcludedGraphNodes && formContainer && disallowedEdgesStr) {
+            let currentContextId = this.getAttribute('context-id');
+            if (!currentContextId) {
+                const possiblePkInput = formContainer.querySelector('input[type="hidden"][name^="id_"]');
+                if (possiblePkInput && possiblePkInput.value) {
+                    currentContextId = possiblePkInput.value;
+                }
+            }
+            
+            const currentEntityName = this.getAttribute('entity-name');
+            excluded = window.UI_FormUtils.getExcludedGraphNodes(disallowedEdgesStr, currentEntityName, formContainer, currentContextId) || [];
         }
+
+        if (this._isMultiple) {
+            let current = Array.from(this._selectedState || new Set());
+            if (excluded.length > 0) {
+                current = current.filter(id => !excluded.includes(String(id)));
+            }
+            return current;
+        }
+        if (excluded.includes(String(this._selectedState))) return null;
         return this._selectedState || null;
     }
 
@@ -841,6 +862,27 @@ class TXSearchable extends HTMLElement {
 
         // RAM-Secure Local Filter (YAGNI Endless Scroll)
         let filtered = this._dataSource || [];
+
+        const formContainer = this.closest('form, ion-content, .drawer-content');
+        const disallowedEdgesStr = this.getAttribute('disallowed-context-edges');
+        
+        if (typeof window !== 'undefined' && window.UI_FormUtils && window.UI_FormUtils.getExcludedGraphNodes && formContainer && disallowedEdgesStr) {
+            let currentContextId = this.getAttribute('context-id');
+            if (!currentContextId) {
+                const possiblePkInput = formContainer.querySelector('input[type="hidden"][name^="id_"]');
+                if (possiblePkInput && possiblePkInput.value) {
+                    currentContextId = possiblePkInput.value;
+                }
+            }
+            
+            const currentEntityName = this.getAttribute('entity-name');
+            const excludeIds = window.UI_FormUtils.getExcludedGraphNodes(disallowedEdgesStr, currentEntityName, formContainer, currentContextId);
+            
+            if (excludeIds && excludeIds.length > 0) {
+                filtered = filtered.filter(item => !excludeIds.includes(String(this._extractPayloadId(item))));
+            }
+        }
+
         if (query.trim()) {
             const rawQ = query.trim().toLowerCase();
             filtered = filtered.filter(item => String(this._extractPayloadTitle(item)).toLowerCase().includes(rawQ));
@@ -1097,7 +1139,8 @@ class TXSearchable extends HTMLElement {
                         }, 100);
                     }
                 }
-                if (inlineCounterNode) inlineCounterNode.textContent = hasItems ? `${this._selectedState.size} seleccionados` : 'Ninguno';
+                const totalItems = this._dataSource ? this._dataSource.length : 0;
+                if (inlineCounterNode) inlineCounterNode.textContent = hasItems ? `${this._selectedState.size}/${totalItems}` : `0/${totalItems}`;
             } else {
                 if (inlineContainerNode) {
                     inlineContainerNode.setAttribute('data-tx-state', 'hidden');
@@ -1130,7 +1173,8 @@ class TXSearchable extends HTMLElement {
                 const iconColor = this.getAttribute('icon-color') || 'primary';
                 
                 if (hasItems) {
-                    this._selectedState.forEach(singleId => {
+                    const validValues = this.getValidatedValue();
+                    validValues.forEach(singleId => {
                         const found = this._dataSource.find(item => String(this._extractPayloadId(item)) === String(singleId));
                         const titleText = found ? this._extractPayloadTitle(found) : singleId;
                         const lexicalId = found ? (found.lexical_id || found.id_numero || singleId) : singleId;

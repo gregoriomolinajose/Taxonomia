@@ -25,32 +25,47 @@ window.UI_FormSubmitter = class UI_FormSubmitter {
     }
 
     _attachSubmitListener() {
-        this.submitBtn.addEventListener('click', async () => {
-            if (this.isSaving) return; // Bloqueo anti-doble envío
-            this.isSaving = true;
+        if (this.submitBtn) {
+            this.submitBtn.addEventListener('click', async () => {
+                await this.executeSave({ isSilent: false });
+            });
+        }
+    }
+
+    async executeSave(options = {}) {
+        const isSilentSave = options.isSilent || false;
+        this._isSilent = isSilentSave;
+
+        if (this.isSaving) return; // Bloqueo anti-doble envío
+        this.isSaving = true;
+        
+        if (this.submitBtn && !isSilentSave) {
             this.submitBtn.disabled = true;
+        }
 
-            // S57.X: Guardrail: Skip save if no changes in UPDATE mode
-            const action = this._internalRetryId ? 'update' : 'create';
-            if (action === 'update' && !this.hasChanges()) {
-                console.log("[FormSubmitter] Sin cambios detectados. Omitiendo guardado en BD.");
-                this.isSaving = false;
-                this.submitBtn.disabled = false;
-                if (window.AppEventBus) {
-                    window.AppEventBus.publish('FORM::SUBMIT_SUCCESS', { 
-                        entityName: this.entityName, 
-                        response: { status: 'success', action: 'none', message: 'No changes detected.' }, 
-                        isSilent: this._isSilent 
-                    });
-                }
-                return;
+        // S57.X: Guardrail: Skip save if no changes in UPDATE mode
+        const action = this._internalRetryId ? 'update' : 'create';
+        if (action === 'update' && !this.hasChanges()) {
+            console.log("[FormSubmitter] Sin cambios detectados. Omitiendo guardado en BD.");
+            this.isSaving = false;
+            if (this.submitBtn && !isSilentSave) this.submitBtn.disabled = false;
+            if (window.AppEventBus) {
+                window.AppEventBus.publish('FORM::SUBMIT_SUCCESS', { 
+                    entityName: this.entityName, 
+                    response: { status: 'success', action: 'none', message: 'No changes detected.' }, 
+                    isSilent: this._isSilent 
+                });
             }
+            return;
+        }
 
+        if (this.submitBtn && !isSilentSave) {
             this.originalBtnChildren = Array.from(this.submitBtn.childNodes);
             window.DOM.clear(this.submitBtn);
             
             this.submitBtn.appendChild(window.DOM.create('ion-spinner', { name: 'crescent' }));
             this.submitBtn.appendChild(document.createTextNode(' \u00a0 Guardando...'));
+        }
 
             // --- Removed UI Blocking (S42.7: Optimistic UI) ---
             // Sincronía background habilitada.
@@ -149,7 +164,7 @@ window.UI_FormSubmitter = class UI_FormSubmitter {
                 }
 
                 const fieldsConfig = formSchema ? (formSchema.fields || Object.keys(formSchema).map(k => ({name: k, ...formSchema[k]}))) : [];
-                const relationKeys = new Set(fieldsConfig.filter(f => f.type === 'relation').map(f => f.name));
+                const relationKeys = new Set(fieldsConfig.filter(f => f.type === 'relation' || f.isTemporalGraph).map(f => f.name));
 
                 // [S53.6] Provide explicit work context to the root payload so Engine_DB can diff correctly when children are empty
                 payload._work_context = contextId;
@@ -396,15 +411,14 @@ window.UI_FormSubmitter = class UI_FormSubmitter {
                         this._handleOptimisticRollback(stateBackup, childBackups, response ? response.message : 'Error desconocido de Adaptador');
                     }
                 }
-            }).catch(err => {
-                if (err.message === 'TIMEOUT_EXCEEDED') {
-                    this._handleOptimisticRollback(stateBackup, childBackups, 'Red severamente saturada (>25s) u Off-line.');
-                } else {
-                    this._handleOptimisticRollback(stateBackup, childBackups, 'Falla de conexión: ' + err.message);
-                }
-            });
-            // Fin _attachSubmitListener
+        }).catch(err => {
+            if (err.message === 'TIMEOUT_EXCEEDED') {
+                this._handleOptimisticRollback(stateBackup, childBackups, 'Red severamente saturada (>25s) u Off-line.');
+            } else {
+                this._handleOptimisticRollback(stateBackup, childBackups, 'Falla de conexión: ' + err.message);
+            }
         });
+        // Fin executeSave
     }
 
     // --- SUBRUTINAS DE RECONCILIACIÓN OPTIMISTA (S42.7) ---
@@ -459,10 +473,12 @@ window.UI_FormSubmitter = class UI_FormSubmitter {
 
     _revertButtonState() {
         this.isSaving = false;
-        this.submitBtn.disabled = false;
-        window.DOM.clear(this.submitBtn);
-        if (this.originalBtnChildren) {
-            this.originalBtnChildren.forEach(node => this.submitBtn.appendChild(node));
+        if (this.submitBtn && !this._isSilent) {
+            this.submitBtn.disabled = false;
+            window.DOM.clear(this.submitBtn);
+            if (this.originalBtnChildren) {
+                this.originalBtnChildren.forEach(node => this.submitBtn.appendChild(node));
+            }
         }
     }
 

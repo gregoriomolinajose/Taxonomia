@@ -19,10 +19,8 @@
                 backdrop.className = 'drawer-backdrop';
                 backdrop.id = 'drawer-backdrop';
                 backdrop.onclick = () => {
-                    // Close top on backdrop click
-                    if(global.DrawerStackController.getDepth() > 0) {
-                        global.DrawerStackController.closeTop();
-                    }
+                    // Ignorado: El backdrop está oculto por CSS para UX Master-Detail.
+                    // El cierre al dar click fuera se maneja globalmente más abajo.
                 };
                 container.appendChild(backdrop);
                 
@@ -77,6 +75,14 @@
             closeTop: async function() {
                 if (stack.length > 0) {
                     const topDrawer = stack.pop();
+
+                    // --- S25.2: Save-on-Close Hook ---
+                    if (topDrawer && topDrawer._formSubmitterInstance) {
+                        const submitter = topDrawer._formSubmitterInstance;
+                        if (submitter.hasChanges()) {
+                            submitter.executeSave({ isSilent: true });
+                        }
+                    }
                     
                     // Animate exit
                     topDrawer.classList.remove('active');
@@ -123,6 +129,7 @@
                 document.body.classList.toggle('drawer-open', false);
             },
             getDepth: () => stack.length,
+            getTop: () => stack.length > 0 ? stack[stack.length - 1] : null,
             clearAll: function() {
                 while(stack.length > 0) {
                     this.closeTop();
@@ -151,6 +158,24 @@
                 window._drawerNavListenerAttached = true;
             }
         }, 1000);
+
+        // --- S25.3: Zero-Click Save-on-Close (Global Click Outside Handler) ---
+        document.addEventListener('click', (e) => {
+            if (global.DrawerStackController.getDepth() > 0) {
+                const topDrawer = global.DrawerStackController.getTop();
+                
+                // Verificar si el clic fue dentro del Drawer superior (activo)
+                const isInsideTopDrawer = topDrawer && topDrawer.contains(e.target);
+                
+                // Ignorar clics en overlays de Ionic (popovers de selects, alertas, toasts)
+                const isInsideIonicOverlay = e.target.closest('ion-popover, ion-alert, ion-toast, ion-action-sheet, ion-picker, ion-modal');
+                
+                if (!isInsideTopDrawer && !isInsideIonicOverlay) {
+                    global.DrawerStackController.closeTop();
+                }
+            }
+        }, { capture: true }); // Usamos capture para interceptar antes de que otros frenen el evento
+
     });
 
 })(typeof window !== 'undefined' ? window : this);

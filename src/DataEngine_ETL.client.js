@@ -298,16 +298,18 @@
                         return;
                     }
                     
-                    // Validar dominio
-                    const domainMatch = allowedDomains.some(d => email.endsWith(d.toLowerCase()));
-                    if (!domainMatch) {
-                        metrics.error++;
-                        accumulatedFeedback.push({
-                            status: 'error',
-                            _rowIndex: row._rowIndex || (index + 2),
-                            message: 'El dominio del correo no es valido'
-                        });
-                        return;
+                    // Validar dominio solo si hay dominios configurados
+                    if (allowedDomains.length > 0) {
+                        const domainMatch = allowedDomains.some(d => email.endsWith(d.toLowerCase()));
+                        if (!domainMatch) {
+                            metrics.error++;
+                            accumulatedFeedback.push({
+                                status: 'error',
+                                _rowIndex: row._rowIndex || (index + 2),
+                                message: 'El dominio del correo no es valido'
+                            });
+                            return;
+                        }
                     }
                     
                     validData.push(row);

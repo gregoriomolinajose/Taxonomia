@@ -110,14 +110,22 @@ function doGet(e) {
       if (wsConfig.authMode) {
         envObj.AuthMode = wsConfig.authMode;
       }
-    } else {
-      // Fallback a variable antigua
+    }
+    
+    // Fallback a variable antigua si wsConfig no proveyó dominios
+    if (!envObj.ALLOWED_DOMAINS || envObj.ALLOWED_DOMAINS.length === 0) {
       var newDomains = props.getProperty('APP_CONFIG__allowed_domains');
       if (newDomains && newDomains.trim().length > 0) {
         envObj.ALLOWED_DOMAINS = newDomains.split(',').map(function(d) { return d.trim(); }).filter(Boolean);
       }
     }
   } catch(e) {}
+
+  if (!envObj.ALLOWED_DOMAINS || envObj.ALLOWED_DOMAINS.length === 0) {
+      if (typeof CONFIG !== 'undefined' && CONFIG.ALLOWED_DOMAINS) {
+          envObj.ALLOWED_DOMAINS = CONFIG.ALLOWED_DOMAINS;
+      }
+  }
   
   template.ENV_CONFIG = JSON.stringify(envObj);
 

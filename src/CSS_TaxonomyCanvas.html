@@ -154,7 +154,7 @@
     flex-direction: row;
     gap: 16px;
     flex-wrap: nowrap; /* Prevent wrapping to maintain matrix layout */
-    overflow-x: auto;
+    overflow: visible;
     padding-bottom: 8px; /* For scrollbar */
 }
 
@@ -162,7 +162,7 @@
     display: flex;
     flex-direction: column;
     gap: 12px;
-    flex: 1; /* Distribuye el espacio entre columnas */
+    flex: 1 0 auto; /* Distribuye el espacio entre columnas sin encogerse más allá de sus hijos */
     min-width: 280px; /* Ancho mínimo para mantener legibilidad */
 }
 

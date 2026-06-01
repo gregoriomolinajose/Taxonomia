@@ -69,6 +69,15 @@ window.UI_FormStepper = class UI_FormStepper {
         this.splitRight.id = 'wizard-canvas-wrapper';
         this.splitRight.style.position = 'relative';
 
+        // Bugfix: Cierre automático al seleccionar fuera del área (zona gris del canvas)
+        this.splitRight.addEventListener('click', (e) => {
+            if (e.target === this.splitRight) {
+                if (window.DrawerStackController && window.DrawerStackController.getDepth() > 0) {
+                    window.DrawerStackController.closeTop();
+                }
+            }
+        });
+
         this.btnFullscreen = document.createElement('ion-fab-button');
         this.btnFullscreen.size = "small";
         this.btnFullscreen.color = "light";
@@ -100,6 +109,19 @@ window.UI_FormStepper = class UI_FormStepper {
             }
             setTimeout(() => { window.dispatchEvent(new Event('resize')); }, 100);
         };
+
+        // Bugfix: Limpieza del orphan DOM cuando el Drawer se cierra estando en Fullscreen
+        if (window.AppEventBus) {
+            const cleanupRef = (depth) => {
+                if (depth === 0 && this.splitRight && this.splitRight.classList.contains('fullscreen-wizard')) {
+                    if (this.splitRight.parentNode) {
+                        this.splitRight.parentNode.removeChild(this.splitRight);
+                    }
+                    window.AppEventBus.unsubscribe('DRAWER::DEPTH_CHANGED', cleanupRef);
+                }
+            };
+            window.AppEventBus.subscribe('DRAWER::DEPTH_CHANGED', cleanupRef);
+        }
 
         this.splitRight.appendChild(this.btnFullscreen); // Mover el botón dentro del lienzo para que no se oculte
         

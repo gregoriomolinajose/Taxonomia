@@ -32,6 +32,7 @@
         if (fieldDef.labelField) node.setAttribute('label-field', fieldDef.labelField);
         if (fieldDef.subtitleField) node.setAttribute('subtitle-field', fieldDef.subtitleField);
         if (fieldDef.subtitleLookup) node.setAttribute('subtitle-lookup', fieldDef.subtitleLookup);
+        if (fieldDef.disallowedContextEdges) node.setAttribute('disallowed-context-edges', fieldDef.disallowedContextEdges.join(','));
 
         // Límites S41.9 (De metadata o local)
         const maxSelection = fieldDef.maxSelection || (fieldDef.metadata && fieldDef.metadata.maxItems);

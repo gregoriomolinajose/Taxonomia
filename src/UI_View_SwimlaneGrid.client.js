@@ -43,6 +43,18 @@ window.UI_View_SwimlaneGrid = {
                         if (hiddenInput) {
                             hiddenInput.value = newId;
                             hiddenInput.dispatchEvent(new Event('change', { bubbles: true }));
+                            
+                            // S55.2 Auto-guardar Taxonomia para persistir la arista TAXONOMIA_UNIDAD
+                            const formContainer = hiddenInput.closest('.drawer-content, ion-content');
+                            if (formContainer) {
+                                const submitter = formContainer._formSubmitterInstance || (formContainer.parentElement && formContainer.parentElement._formSubmitterInstance);
+                                if (submitter && typeof submitter.submit === 'function') {
+                                    submitter.submit(null, { skipUI: true, silent: true });
+                                } else {
+                                    const btnSubmit = formContainer.querySelector('ion-button[color="primary"]');
+                                    if (btnSubmit) btnSubmit.click();
+                                }
+                            }
                         }
                         this.refresh();
                     }
@@ -133,7 +145,9 @@ window.UI_View_SwimlaneGrid = {
             { component: 'portafolios_vinculados', parentField: 'id_unidad_negocio', edgeType: 'UNIDAD_NEGOCIO_PORTAFOLIO', fallbackParent: currentUnidadId },
             { component: 'value_streams_vinculados', parentField: 'id_portafolio', edgeType: 'PORTAFOLIO_VALUE_STREAM' },
             { component: 'grupos_productos_vinculados', parentField: 'id_value_stream', edgeType: 'VALUE_STREAM_GRUPO_PRODUCTO' },
-            { component: 'equipos_asignados', parentField: 'id_grupo_producto', edgeType: 'GRUPO_PRODUCTO_EQUIPO' }
+            { component: 'dominios_vinculados', parentField: 'id_value_stream', edgeType: 'VALUE_STREAM_DOMINIO' },
+            { component: 'equipos_asignados', parentField: 'id_grupo_producto', edgeType: 'GRUPO_PRODUCTO_EQUIPO' },
+            { component: 'equipos_asignados', parentField: 'id_dominio', edgeType: 'DOMINIO_EQUIPO' }
         ];
 
         edgeExtractors.forEach(cfg => {
@@ -165,6 +179,7 @@ window.UI_View_SwimlaneGrid = {
                                     id_nodo_hijo: String(childId),
                                     tipo_relacion: cfg.edgeType,
                                     es_version_actual: 'true',
+                                    estado: 'Activo',
                                     contexto_id: String(this.taxonomiaId)
                                 });
                             }
@@ -376,12 +391,116 @@ window.UI_View_SwimlaneGrid = {
                         const vsId = vsEdge.id_nodo_hijo;
                         const vsCol = document.createElement('div');
                         vsCol.className = 'tax-swimlane-row';
-                        vsCol.style.flex = '1';
+                        vsCol.style.flex = '1 0 auto'; // Expand to fit inner containers instead of shrinking
                         vsCol.style.minWidth = '280px';
                         
-                        vsCol.appendChild(this._createNodeEl(vsId, 'Value_Stream', 'Añadir Grupo de Producto'));
+                        vsCol.appendChild(this._createNodeEl(vsId, 'Value_Stream', 'Editar Value Stream'));
 
-                        // Nivel 4: Grupos de Productos
+                        const vsChildrenWrapper = document.createElement('div');
+                        vsChildrenWrapper.style.display = 'flex';
+                        vsChildrenWrapper.style.flexDirection = 'row';
+                        vsChildrenWrapper.style.gap = '24px';
+                        vsChildrenWrapper.style.marginTop = '16px';
+                        vsChildrenWrapper.style.flexWrap = 'nowrap';
+                        vsChildrenWrapper.style.alignItems = 'flex-start';
+
+                        // Nivel 4a: Dominios (Paralelo a Grupo_Productos)
+                        const dominioEdges = contextEdges.filter(e => 
+                            e.tipo_relacion === 'VALUE_STREAM_DOMINIO' && 
+                            String(e.id_nodo_padre).trim() === String(vsId).trim()
+                        );
+
+                        if (dominioEdges.length > 0) {
+                            const domContainer = document.createElement('div');
+                            domContainer.className = 'tax-swimlane-dominios';
+                            domContainer.style.display = 'flex';
+                            domContainer.style.flexDirection = 'column';
+                            domContainer.style.flex = '1 0 auto'; // Grow to fill but don't shrink below content
+                            domContainer.style.padding = '12px';
+                            domContainer.style.background = 'rgba(45, 211, 111, 0.05)';
+                            domContainer.style.border = '1px solid rgba(45, 211, 111, 0.2)';
+                            domContainer.style.borderRadius = '8px';
+                            
+                            const domLabel = document.createElement('div');
+                            domLabel.innerText = 'Dominios:';
+                            domLabel.style.fontSize = '0.75rem';
+                            domLabel.style.textTransform = 'uppercase';
+                            domLabel.style.fontWeight = 'bold';
+                            domLabel.style.marginBottom = '6px';
+                            domLabel.style.color = 'var(--ion-color-success)';
+                            domContainer.appendChild(domLabel);
+
+                            const domItemsFlex = document.createElement('div');
+                            domItemsFlex.className = 'tax-swimlane-dominios-items';
+                            domItemsFlex.style.display = 'flex';
+                            domItemsFlex.style.flexDirection = 'row';
+                            domItemsFlex.style.gap = '16px';
+                            domItemsFlex.style.flexWrap = 'nowrap';
+                            domItemsFlex.style.overflow = 'visible'; // allow canvas to grow instead of inner scroll
+                            domItemsFlex.style.paddingBottom = '8px';
+
+                            dominioEdges.forEach(dEdge => {
+                                const domNodeId = dEdge.id_nodo_hijo;
+                                
+                                const domWrapper = document.createElement('div');
+                                domWrapper.style.display = 'flex';
+                                domWrapper.style.flexDirection = 'column';
+                                domWrapper.style.gap = '8px';
+                                domWrapper.style.minWidth = '300px';
+                                domWrapper.style.flex = '0 0 auto'; // Don't shrink
+                                domWrapper.style.marginBottom = '8px';
+
+                                domWrapper.appendChild(this._createNodeEl(domNodeId, 'Dominio', 'Añadir Equipo'));
+
+                                // Nivel 5: Equipos de Dominio
+                                const equipoEdges = contextEdges.filter(e => 
+                                    e.tipo_relacion === 'DOMINIO_EQUIPO' && 
+                                    String(e.id_nodo_padre).trim() === String(domNodeId).trim()
+                                );
+
+                                if (equipoEdges.length > 0) {
+                                    const eqContainer = document.createElement('div');
+                                    eqContainer.className = 'tax-swimlane-equipos';
+                                    eqContainer.style.display = 'flex';
+                                    eqContainer.style.flexDirection = 'column';
+                                    eqContainer.style.gap = '8px';
+                                    eqContainer.style.marginLeft = '20px';
+
+                                    equipoEdges.forEach(eqEdge => {
+                                        eqContainer.appendChild(this._createNodeEl(eqEdge.id_nodo_hijo, 'Equipo', 'Ver Equipo'));
+                                    });
+                                    domWrapper.appendChild(eqContainer);
+                                } else {
+                                    // Empty State Onboarding para Equipos
+                                    const emptyState = document.createElement('div');
+                                    emptyState.style.cssText = 'position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 1.5rem 1rem; margin-top: 8px; margin-left: 20px; width: calc(100% - 20px); border: 2px dashed var(--ion-color-step-300, #ccc); border-radius: 8px; background: rgba(0,0,0,0.02); overflow: hidden;';
+                                    
+                                    emptyState.innerHTML = `
+                                        <svg width="80" height="60" viewBox="0 0 80 60" style="position: absolute; right: 5px; top: -5px; opacity: 0.6; pointer-events: none;">
+                                            <path d="M 5 50 Q 30 50, 65 15" fill="none" stroke="var(--ion-color-success, #2dd36f)" stroke-width="2.5" stroke-dasharray="4,4" stroke-linecap="round"/>
+                                            <polygon points="60,21 67,11 72,21" fill="var(--ion-color-success, #2dd36f)" transform="rotate(25 67 11)" />
+                                        </svg>
+
+                                        <div style="width: 80px; height: 45px; border: 2px dashed var(--ion-color-step-300, #ccc); border-radius: 8px; margin-bottom: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; background: rgba(0,0,0,0.02);">
+                                            <ion-icon name="people-outline" style="font-size: 24px; color: var(--ion-color-step-400, #aaa); margin-bottom: 4px;"></ion-icon>
+                                            <div style="width: 40%; height: 4px; background: var(--ion-color-step-200, #ddd); border-radius: 2px;"></div>
+                                        </div>
+                                        
+                                        <h3 style="color: var(--ion-color-dark); margin: 0 0 4px 0; font-weight: 600; font-size: 0.9rem; letter-spacing: -0.01em; text-align: center;">Sin Equipos</h3>
+                                        <p style="color: var(--ion-color-medium, #666); text-align: center; max-width: 180px; margin: 0; font-size: 0.8rem; line-height: 1.3;">
+                                            Haz clic en <strong style="color: var(--ion-color-success); font-size: 1.1em;">+</strong> arriba para agregar un equipo.
+                                        </p>
+                                    `;
+                                    
+                                    domWrapper.appendChild(emptyState);
+                                }
+                                domItemsFlex.appendChild(domWrapper);
+                            });
+                            domContainer.appendChild(domItemsFlex);
+                            vsChildrenWrapper.appendChild(domContainer);
+                        }
+
+                        // Nivel 4b: Grupos de Productos
                         const grupoEdges = contextEdges.filter(e => 
                             e.tipo_relacion === 'VALUE_STREAM_GRUPO_PRODUCTO' && 
                             String(e.id_nodo_padre).trim() === String(vsId).trim()
@@ -389,7 +508,32 @@ window.UI_View_SwimlaneGrid = {
 
                         if (grupoEdges.length > 0) {
                             const gpContainer = document.createElement('div');
-                            gpContainer.className = 'tax-swimlane-grupo-productos';
+                            gpContainer.className = 'tax-swimlane-grupo-productos-wrapper';
+                            gpContainer.style.display = 'flex';
+                            gpContainer.style.flexDirection = 'column';
+                            gpContainer.style.flex = '1 0 auto'; // Grow to fill but don't shrink below content
+                            gpContainer.style.padding = '12px';
+                            gpContainer.style.background = 'rgba(11, 20, 58, 0.05)';
+                            gpContainer.style.border = '1px solid rgba(11, 20, 58, 0.2)';
+                            gpContainer.style.borderRadius = '8px';
+
+                            const gpLabel = document.createElement('div');
+                            gpLabel.innerText = 'Grupos de Producto:';
+                            gpLabel.style.fontSize = '0.75rem';
+                            gpLabel.style.textTransform = 'uppercase';
+                            gpLabel.style.fontWeight = 'bold';
+                            gpLabel.style.marginBottom = '12px';
+                            gpLabel.style.color = 'rgba(11, 20, 58, 1)'; // Match the dark blue color
+                            gpContainer.appendChild(gpLabel);
+
+                            const gpItemsFlex = document.createElement('div');
+                            gpItemsFlex.className = 'tax-swimlane-grupo-productos';
+                            gpItemsFlex.style.display = 'flex';
+                            gpItemsFlex.style.flexDirection = 'row';
+                            gpItemsFlex.style.gap = '16px';
+                            gpItemsFlex.style.flexWrap = 'nowrap';
+                            gpItemsFlex.style.overflow = 'visible'; // allow canvas to grow instead of inner scroll
+                            gpItemsFlex.style.paddingBottom = '8px';
 
                             grupoEdges.forEach(gEdge => {
                                 const gpNodeId = gEdge.id_nodo_hijo;
@@ -397,7 +541,8 @@ window.UI_View_SwimlaneGrid = {
                                 gpWrapper.style.display = 'flex';
                                 gpWrapper.style.flexDirection = 'column';
                                 gpWrapper.style.gap = '8px';
-                                gpWrapper.style.width = '100%';
+                                gpWrapper.style.minWidth = '300px';
+                                gpWrapper.style.flex = '0 0 auto'; // Don't shrink
 
                                 gpWrapper.appendChild(this._createNodeEl(gpNodeId, 'Grupo_Productos', 'Añadir Equipo'));
 
@@ -444,13 +589,14 @@ window.UI_View_SwimlaneGrid = {
                                     gpWrapper.appendChild(emptyState);
                                 }
 
-                                gpContainer.appendChild(gpWrapper);
+                                gpItemsFlex.appendChild(gpWrapper);
                             });
-                            vsCol.appendChild(gpContainer);
+                            gpContainer.appendChild(gpItemsFlex);
+                            vsChildrenWrapper.appendChild(gpContainer);
                         } else {
                             // Empty State Onboarding para Grupo de Productos
                             const emptyState = document.createElement('div');
-                            emptyState.style.cssText = 'position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 2rem 1rem; margin-top: 12px; margin-left: 20px; width: calc(100% - 20px); border: 2px dashed var(--ion-color-step-300, #ccc); border-radius: 8px; background: rgba(0,0,0,0.02); overflow: hidden;';
+                            emptyState.style.cssText = 'position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 2rem 1rem; width: 320px; border: 2px dashed var(--ion-color-step-300, #ccc); border-radius: 8px; background: rgba(0,0,0,0.02); overflow: hidden; flex: 0 0 auto;';
                             
                             emptyState.innerHTML = `
                                 <svg width="100" height="80" viewBox="0 0 100 80" style="position: absolute; right: 10px; top: -10px; opacity: 0.6; pointer-events: none;">
@@ -469,8 +615,10 @@ window.UI_View_SwimlaneGrid = {
                                 </p>
                             `;
                             
-                            vsCol.appendChild(emptyState);
+                            vsChildrenWrapper.appendChild(emptyState);
                         }
+
+                        vsCol.appendChild(vsChildrenWrapper);
 
                         vsHorizontalContainer.appendChild(vsCol);
                     });
@@ -656,10 +804,70 @@ window.UI_View_SwimlaneGrid = {
         const rawLabel = schema && schema.metadata ? schema.metadata.label : entityName;
         const displayEntityName = (rawLabel || '').replace(/s$/, '').replace(/es$/, '').replace(/_/g, ' ');
 
+        // [S45.1] Computar el total de entidades hijas vinculadas para mostrar en el header
+        let childCountText = '';
+        if (window.Graph_Utils && typeof window.Graph_Utils.resolveAllLinkedIds === 'function') {
+            let edgeType = null;
+            let childLabelSingle = '';
+            let childLabelPlural = '';
+            
+            if (entityName === 'Unidad_Negocio') {
+                edgeType = 'UNIDAD_NEGOCIO_PORTAFOLIO'; childLabelSingle = 'Portafolio'; childLabelPlural = 'Portafolios';
+            } else if (entityName === 'Portafolio') {
+                edgeType = 'PORTAFOLIO_VALUE_STREAM'; childLabelSingle = 'Value Stream'; childLabelPlural = 'Value Streams';
+            } else if (entityName === 'Value_Stream') {
+                edgeType = 'VALUE_STREAM_GRUPO_PRODUCTO'; childLabelSingle = 'Grupo'; childLabelPlural = 'Grupos';
+            } else if (entityName === 'Grupo_Productos') {
+                edgeType = 'GRUPO_PRODUCTO_EQUIPO'; childLabelSingle = 'Equipo'; childLabelPlural = 'Equipos';
+            } else if (entityName === 'Dominio') {
+                edgeType = 'DOMINIO_EQUIPO'; childLabelSingle = 'Equipo'; childLabelPlural = 'Equipos';
+            } else if (entityName === 'Equipo') {
+                edgeType = 'PERSONA_EQUIPO'; childLabelSingle = 'Persona'; childLabelPlural = 'Personas';
+            }
+            
+            if (edgeType) {
+                // Contar sólo relaciones activas 'hijo'
+                const childrenIds = window.Graph_Utils.resolveAllLinkedIds(recordId, edgeType, this.taxonomiaId, false, 'hijo');
+                const count = childrenIds ? childrenIds.length : 0;
+                const labelText = count === 1 ? childLabelSingle : childLabelPlural;
+                childCountText = `<span style="opacity: 0.5; font-size: 0.65rem; margin: 0 4px;">•</span><span style="text-transform: none; font-weight: 700; font-size: 0.65rem; opacity: 0.85;">${count} ${labelText}</span>`;
+            }
+        }
+
         // 2. Roles
         let rolesHtml = '';
+        let poRoleHtml = '';
+        let collapsibleRolesHtml = '';
+        let collapsibleCount = 0;
+        let poIds = new Set();
+        let blockedIds = new Set();
+
         if (schema && schema.fields && record) {
+            // Primer pase: Identificar IDs bloqueados (Liderazgo)
+            if (entityName === 'Equipo') {
+                schema.fields.forEach(f => {
+                    if (f.type === 'relation' && f.targetEntity === 'Persona' && f.name !== 'personas_asignadas') {
+                        let personIds = [];
+                        if (f.isTemporalGraph && f.graphEdgeType && window.Graph_Utils) {
+                            const resolvedIds = window.Graph_Utils.resolveAllLinkedIds(recordId, f.graphEdgeType, this.taxonomiaId, false, f.relationType);
+                            if (resolvedIds && resolvedIds.length > 0) personIds = resolvedIds;
+                            else if (record[f.name]) personIds = Array.isArray(record[f.name]) ? record[f.name] : [record[f.name]];
+                        } else if (record[f.name]) {
+                            personIds = Array.isArray(record[f.name]) ? record[f.name] : [record[f.name]];
+                        }
+                        personIds.forEach(pidObj => {
+                            let actualPid = (typeof pidObj === 'object' && pidObj !== null) ? (pidObj.id_registro || pidObj.id || pidObj.value) : pidObj;
+                            blockedIds.add(String(actualPid));
+                            const isPOField = f.label.toUpperCase().includes('DUEÑO DE PRODUCTO') || f.label.toUpperCase().includes('PRODUCT OWNER');
+                            if (isPOField) poIds.add(String(actualPid));
+                        });
+                    }
+                });
+            }
+
             schema.fields.forEach(f => {
+                if (f.hideInCanvas) return;
+                
                 if (f.type === 'relation' && f.targetEntity === 'Persona') {
                     let personIds = [];
                     if (f.isTemporalGraph && f.graphEdgeType && window.Graph_Utils) {
@@ -673,16 +881,35 @@ window.UI_View_SwimlaneGrid = {
                         personIds = Array.isArray(record[f.name]) ? record[f.name] : [record[f.name]];
                     }
 
+                    const isPO = entityName === 'Equipo' && (f.label.toUpperCase().includes('DUEÑO DE PRODUCTO') || f.label.toUpperCase().includes('PRODUCT OWNER'));
+
                     if (personIds.length > 0) {
                         personIds.forEach(pidObj => {
                             let actualPid = (typeof pidObj === 'object' && pidObj !== null) ? (pidObj.id_registro || pidObj.id || pidObj.value) : pidObj;
+                            
+                            // Evitar duplicados: Si es Development Team, ocultar a quienes ya están en otros roles de liderazgo.
+                            if (entityName === 'Equipo' && f.name === 'personas_asignadas' && blockedIds.has(String(actualPid))) {
+                                return;
+                            }
+
                             let personName = record['_' + f.name + '_label'];
                             let avatarUrl = '';
+                            let personCargo = '';
+
                             if (window.FormEngine_Resolvers && typeof window.FormEngine_Resolvers.resolveEntityRecord === 'function') {
                                 const personaRec = window.FormEngine_Resolvers.resolveEntityRecord('Persona', actualPid);
                                 if (personaRec) {
                                     personName = personaRec.nombre + (personaRec.apellidos && personaRec.apellidos !== '---' ? ' ' + personaRec.apellidos : '');
                                     avatarUrl = personaRec.avatar || personaRec.foto || personaRec.url_foto || '';
+                                    
+                                    // Resolver el Cargo
+                                    personCargo = personaRec._id_cargo_label || personaRec.id_cargo || '';
+                                    if (personCargo && typeof personCargo === 'string' && !personCargo.includes(' ') && window.FormEngine_Resolvers.resolveEntityRecord) {
+                                        const cargoRec = window.FormEngine_Resolvers.resolveEntityRecord('Cargo', personCargo);
+                                        if (cargoRec && cargoRec.nombre) {
+                                            personCargo = cargoRec.nombre;
+                                        }
+                                    }
                                 }
                             }
                             personName = personName || actualPid;
@@ -692,18 +919,62 @@ window.UI_View_SwimlaneGrid = {
                                     `<img src="${avatarUrl}" style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover; flex-shrink: 0; background: rgba(255,255,255,0.2);" onerror="this.style.display='none'" />` : 
                                     `<ion-icon name="person-circle-outline" style="font-size: 2rem; flex-shrink: 0; opacity: 0.9;"></ion-icon>`;
                                     
-                                rolesHtml += `<div style="margin-top: 6px; padding: 6px 10px; background: rgba(0,0,0,0.15); border-radius: 6px; display: flex; align-items: center; justify-content: flex-start; gap: 10px; width: 100%; box-sizing: border-box;">
+                                let chunk = `<div style="margin-top: 6px; padding: 6px 10px; background: rgba(0,0,0,0.15); border-radius: 6px; display: flex; align-items: center; justify-content: flex-start; gap: 10px; width: 100%; box-sizing: border-box;">
                                     ${avatarHtml}
                                     <div style="display: flex; flex-direction: column; overflow: hidden; width: 100%;">
                                         <span style="font-size: 0.65rem; text-transform: uppercase; opacity: 0.85; font-weight: 700; white-space: nowrap; text-overflow: ellipsis; overflow: hidden;">${f.label}</span>
                                         <span style="font-size: 0.9rem; color: rgba(255,255,255,0.95); font-weight: 600; white-space: nowrap; text-overflow: ellipsis; overflow: hidden;">${personName}</span>
+                                        ${personCargo ? `<span style="font-size: 0.65rem; color: rgba(255,255,255,0.7); font-weight: 500; white-space: nowrap; text-overflow: ellipsis; overflow: hidden; margin-top: 1px;">${personCargo}</span>` : ''}
                                     </div>
                                 </div>`;
+
+                                if (entityName === 'Equipo') {
+                                    if (isPO) poRoleHtml += chunk;
+                                    else { collapsibleRolesHtml += chunk; collapsibleCount++; }
+                                } else {
+                                    rolesHtml += chunk;
+                                }
                             }
                         });
+                    } else if (f.name !== 'personas_asignadas') {
+                        let chunk = `<div class="tax-role-empty" style="margin-top: 6px; padding: 6px 10px; background: rgba(0,0,0,0.08); border: 1px dashed rgba(255,255,255,0.3); border-radius: 6px; display: flex; align-items: center; justify-content: flex-start; gap: 10px; width: 100%; box-sizing: border-box; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='rgba(0,0,0,0.15)'" onmouseout="this.style.background='rgba(0,0,0,0.08)'" title="Asignar ${f.label}">
+                            <div style="width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.1);">
+                                <ion-icon name="add" style="font-size: 1.4rem; color: rgba(255,255,255,0.7);"></ion-icon>
+                            </div>
+                            <div style="display: flex; flex-direction: column; overflow: hidden; width: 100%;">
+                                <span style="font-size: 0.65rem; text-transform: uppercase; opacity: 0.7; font-weight: 700; white-space: nowrap; text-overflow: ellipsis; overflow: hidden;">${f.label}</span>
+                                <span style="font-size: 0.85rem; color: rgba(255,255,255,0.6); font-style: italic;">Sin asignar</span>
+                            </div>
+                        </div>`;
+                        
+                        if (entityName === 'Equipo') {
+                            if (isPO) poRoleHtml += chunk;
+                            else collapsibleRolesHtml += chunk;
+                        } else {
+                            rolesHtml += chunk;
+                        }
                     }
                 }
             });
+
+            if (entityName === 'Equipo') {
+                if (poRoleHtml !== '') rolesHtml += poRoleHtml;
+                if (collapsibleRolesHtml !== '') {
+                    const toggleId = 'col-eq-' + String(recordId).replace(/[^a-zA-Z0-9]/g, '');
+                    rolesHtml += `
+                    <div style="margin-top: 8px; width: 100%;">
+                        <div onclick="const e = document.getElementById('${toggleId}'); const isH = e.style.display === 'none'; e.style.display = isH ? 'flex' : 'none'; this.querySelector('ion-icon').name = isH ? 'chevron-up-outline' : 'chevron-down-outline'; event.stopPropagation();" 
+                             style="cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 4px; padding: 6px; background: rgba(0,0,0,0.1); border-radius: 4px; font-size: 0.75rem; color: rgba(255,255,255,0.8); font-weight: 600; border: 1px solid rgba(255,255,255,0.1);">
+                            <span>Ver Integrantes (${collapsibleCount})</span>
+                            <ion-icon name="chevron-down-outline"></ion-icon>
+                        </div>
+                        <div id="${toggleId}" style="display: none; flex-direction: column; gap: 4px; margin-top: 4px; width: 100%;">
+                            ${collapsibleRolesHtml}
+                        </div>
+                    </div>`;
+                }
+            }
+
             if(rolesHtml !== '') {
                 rolesHtml = `<div style="display: flex; flex-direction: column; gap: 4px; margin-top: 12px; width: 100%; border-top: 1px solid rgba(255,255,255,0.15); padding-top: 8px;">${rolesHtml}</div>`;
             }
@@ -722,7 +993,10 @@ window.UI_View_SwimlaneGrid = {
             <div style="display: flex; align-items: center; gap: 12px; width: 100%;">
                 <ion-icon class="tax-node-icon" style="flex-shrink: 0; font-size: 1.8rem;" name="${iconName}"></ion-icon> 
                 <div style="display: flex; flex-direction: column; overflow: hidden; width: 100%;">
-                    <span style="font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.5px; opacity: 0.9; font-weight: 800;">${displayEntityName}</span>
+                    <div style="display: flex; align-items: center; width: 100%;">
+                        <span style="font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.5px; opacity: 0.9; font-weight: 800;">${displayEntityName}</span>
+                        ${childCountText}
+                    </div>
                     <span style="font-size: 1.05rem; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${titleText}</span>
                 </div>
             </div>
@@ -730,16 +1004,45 @@ window.UI_View_SwimlaneGrid = {
         `;
         node.appendChild(titleWrap);
 
-        // Botón Add
-        const btnAdd = document.createElement('button');
-        btnAdd.className = 'tax-add-btn';
-        btnAdd.title = addTitle;
-        btnAdd.innerHTML = '+';
-        btnAdd.onclick = (e) => {
-            e.stopPropagation();
-            this._handleNodeAdd(recordId, entityName, e);
-        };
-        node.appendChild(btnAdd);
+        // Botón Add (Deshabilitado explícitamente para la entidad Equipo)
+        if (entityName !== 'Equipo') {
+            const btnAdd = document.createElement('button');
+            btnAdd.className = 'tax-add-btn';
+            btnAdd.title = addTitle;
+            btnAdd.innerHTML = '+';
+            btnAdd.onclick = (e) => {
+                e.stopPropagation();
+                this._handleNodeAdd(recordId, entityName, e);
+            };
+            node.appendChild(btnAdd);
+        }
+
+        // Bind empty roles click handlers
+        const emptyRoles = node.querySelectorAll('.tax-role-empty');
+        emptyRoles.forEach(el => {
+            el.onclick = (e) => {
+                e.stopPropagation();
+                const pkField = window.Schema_Utils ? window.Schema_Utils.getPrimaryKey(entityName) : 'id';
+                const allRecords = window.UI_FormUtils && window.UI_FormUtils.fetchContextualData
+                    ? window.UI_FormUtils.fetchContextualData(entityName, this.taxonomiaId)
+                    : (window.DataStore ? window.DataStore.get(entityName) || [] : []);
+                const recordData = allRecords.find(r => String(r[pkField]) === String(recordId));
+
+                if (recordData && typeof window.renderForm === 'function') {
+                    window.renderForm(entityName, recordData, (res) => {
+                        const root = document.querySelector('tax-swimlane-grid');
+                        if (root && root.refresh) root.refresh();
+                        else if (root && root._internalRender) root._internalRender();
+                        else window.location.reload();
+                    }, { taxonomiaContext: this.taxonomiaId }).then(() => {
+                        if (window.FormEngine_Hydrator) {
+                            const container = window.currentFormDrawer || document.getElementById('app-container');
+                            window.FormEngine_Hydrator(container, recordData, entityName);
+                        }
+                    });
+                }
+            };
+        });
 
         return node;
     },
@@ -763,6 +1066,9 @@ window.UI_View_SwimlaneGrid = {
         } else if (parentEntity === 'Grupo_Productos') {
             childEntity = 'Equipo';
             edgeType = 'GRUPO_PRODUCTO_EQUIPO';
+        } else if (parentEntity === 'Dominio') {
+            childEntity = 'Equipo';
+            edgeType = 'DOMINIO_EQUIPO';
         } else {
             // No action needed for leaf nodes
             return;

@@ -594,7 +594,7 @@
 
                 colRight.appendChild(container._btnPrev);
                 colRight.appendChild(container._btnNext);
-                colRight.appendChild(submitBtn);
+                // colRight.appendChild(submitBtn); // Removido para Save-on-Close (Zero-Click)
                 if (approveBtn) colRight.appendChild(approveBtn);
 
                 btnRow.appendChild(colLeft);
@@ -631,7 +631,7 @@
                 const colRight = document.createElement('ion-col');
                 colRight.setAttribute('size', '12');
                 colRight.style.textAlign = 'right';
-                colRight.appendChild(submitBtn);
+                // colRight.appendChild(submitBtn); // Removido para Save-on-Close (Zero-Click)
                 if (approveBtn) colRight.appendChild(approveBtn);
                 btnRow.appendChild(colRight);
             }
@@ -672,7 +672,9 @@
             // --------------------------------------------------------------------
 
             // S14.1 Delegación Submitter Object
-            new window.UI_FormSubmitter(entityName, fields, submitBtn, null, modal, localEditId);
+            const formSubmitter = new window.UI_FormSubmitter(entityName, fields, submitBtn, null, modal, localEditId);
+            modal._formSubmitterInstance = formSubmitter;
+
             
             // --- Metadata-Driven Dependency Injection (Zero-Touch UI) ---
             if (window.UI_FormDependencies) {
@@ -860,14 +862,17 @@
 
             // S57.X: Capture initial state for dirty-checking
             setTimeout(() => {
-                const allButtons = Array.from(container.querySelectorAll('ion-button'));
-                const parentModal = container.closest('.drawer-panel') || container.parentElement;
-                if (parentModal) {
-                    allButtons.push(...Array.from(parentModal.querySelectorAll('ion-button')));
+                let currentEl = container;
+                let submitter = null;
+                while (currentEl) {
+                    if (currentEl._formSubmitterInstance) {
+                        submitter = currentEl._formSubmitterInstance;
+                        break;
+                    }
+                    currentEl = currentEl.parentElement;
                 }
-                const submitterBtn = allButtons.find(btn => btn._formSubmitterInstance);
-                if (submitterBtn && submitterBtn._formSubmitterInstance) {
-                    submitterBtn._formSubmitterInstance.captureInitialState();
+                if (submitter) {
+                    submitter.captureInitialState();
                 }
             }, 150);
         };
