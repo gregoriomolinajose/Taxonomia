@@ -167,8 +167,8 @@
                 // Verificar si el clic fue dentro del Drawer superior (activo)
                 const isInsideTopDrawer = topDrawer && topDrawer.contains(e.target);
                 
-                // Ignorar clics en overlays de Ionic (popovers de selects, alertas, toasts)
-                const isInsideIonicOverlay = e.target.closest('ion-popover, ion-alert, ion-toast, ion-action-sheet, ion-picker, ion-modal');
+                // Ignorar clics en overlays de Ionic y en el wizard fullscreen (que escapa del Drawer)
+                const isInsideIonicOverlay = e.target.closest('ion-popover, ion-alert, ion-toast, ion-action-sheet, ion-picker, ion-modal, .fullscreen-wizard');
                 
                 if (!isInsideTopDrawer && !isInsideIonicOverlay) {
                     global.DrawerStackController.closeTop();

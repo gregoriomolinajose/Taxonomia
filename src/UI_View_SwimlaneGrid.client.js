@@ -476,21 +476,34 @@ window.UI_View_SwimlaneGrid = {
                                     emptyState.style.cssText = 'position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 1.5rem 1rem; margin-top: 8px; margin-left: 20px; width: calc(100% - 20px); border: 2px dashed var(--ion-color-step-300, #ccc); border-radius: 8px; background: rgba(0,0,0,0.02); overflow: hidden;';
                                     
                                     emptyState.innerHTML = `
-                                        <svg width="80" height="60" viewBox="0 0 80 60" style="position: absolute; right: 5px; top: -5px; opacity: 0.6; pointer-events: none;">
-                                            <path d="M 5 50 Q 30 50, 65 15" fill="none" stroke="var(--ion-color-success, #2dd36f)" stroke-width="2.5" stroke-dasharray="4,4" stroke-linecap="round"/>
-                                            <polygon points="60,21 67,11 72,21" fill="var(--ion-color-success, #2dd36f)" transform="rotate(25 67 11)" />
-                                        </svg>
-
                                         <div style="width: 80px; height: 45px; border: 2px dashed var(--ion-color-step-300, #ccc); border-radius: 8px; margin-bottom: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; background: rgba(0,0,0,0.02);">
                                             <ion-icon name="people-outline" style="font-size: 24px; color: var(--ion-color-step-400, #aaa); margin-bottom: 4px;"></ion-icon>
                                             <div style="width: 40%; height: 4px; background: var(--ion-color-step-200, #ddd); border-radius: 2px;"></div>
                                         </div>
                                         
                                         <h3 style="color: var(--ion-color-dark); margin: 0 0 4px 0; font-weight: 600; font-size: 0.9rem; letter-spacing: -0.01em; text-align: center;">Sin Equipos</h3>
-                                        <p style="color: var(--ion-color-medium, #666); text-align: center; max-width: 180px; margin: 0; font-size: 0.8rem; line-height: 1.3;">
-                                            Haz clic en <strong style="color: var(--ion-color-success); font-size: 1.1em;">+</strong> arriba para agregar un equipo.
+                                        <p style="color: var(--ion-color-medium, #666); text-align: center; max-width: 180px; margin: 0 0 12px 0; font-size: 0.8rem; line-height: 1.3;">
+                                            Vincula un nuevo registro.
                                         </p>
                                     `;
+                                    
+                                    const btnAdd = document.createElement('button');
+                                    btnAdd.className = 'tax-add-btn';
+                                    btnAdd.style.position = 'relative';
+                                    btnAdd.style.right = 'auto';
+                                    btnAdd.style.top = 'auto';
+                                    btnAdd.style.transform = 'none';
+                                    btnAdd.style.margin = '0 auto';
+                                    btnAdd.style.backgroundColor = 'var(--ion-color-primary, #3880ff)';
+                                    btnAdd.style.color = '#ffffff';
+                                    btnAdd.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)';
+                                    btnAdd.title = 'Añadir Equipo';
+                                    btnAdd.innerHTML = '+';
+                                    btnAdd.onclick = (e) => {
+                                        e.stopPropagation();
+                                        this._handleNodeAdd(domNodeId, 'Dominio', e);
+                                    };
+                                    emptyState.appendChild(btnAdd);
                                     
                                     domWrapper.appendChild(emptyState);
                                 }
@@ -570,21 +583,33 @@ window.UI_View_SwimlaneGrid = {
                                     emptyState.style.cssText = 'position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 1.5rem 1rem; margin-top: 8px; margin-left: 20px; width: calc(100% - 20px); border: 2px dashed var(--ion-color-step-300, #ccc); border-radius: 8px; background: rgba(0,0,0,0.02); overflow: hidden;';
                                     
                                     emptyState.innerHTML = `
-                                        <svg width="80" height="60" viewBox="0 0 80 60" style="position: absolute; right: 5px; top: -5px; opacity: 0.6; pointer-events: none;">
-                                            <path d="M 5 50 Q 30 50, 65 15" fill="none" stroke="var(--ion-color-success, #2dd36f)" stroke-width="2.5" stroke-dasharray="4,4" stroke-linecap="round"/>
-                                            <polygon points="60,21 67,11 72,21" fill="var(--ion-color-success, #2dd36f)" transform="rotate(25 67 11)" />
-                                        </svg>
-
                                         <div style="width: 80px; height: 45px; border: 2px dashed var(--ion-color-step-300, #ccc); border-radius: 8px; margin-bottom: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; background: rgba(0,0,0,0.02);">
                                             <ion-icon name="people-outline" style="font-size: 24px; color: var(--ion-color-step-400, #aaa); margin-bottom: 4px;"></ion-icon>
                                             <div style="width: 40%; height: 4px; background: var(--ion-color-step-200, #ddd); border-radius: 2px;"></div>
                                         </div>
                                         
                                         <h3 style="color: var(--ion-color-dark); margin: 0 0 4px 0; font-weight: 600; font-size: 0.9rem; letter-spacing: -0.01em; text-align: center;">Sin Equipos</h3>
-                                        <p style="color: var(--ion-color-medium, #666); text-align: center; max-width: 180px; margin: 0; font-size: 0.8rem; line-height: 1.3;">
-                                            Haz clic en <strong style="color: var(--ion-color-success); font-size: 1.1em;">+</strong> arriba para agregar un equipo.
+                                        <p style="color: var(--ion-color-medium, #666); text-align: center; max-width: 180px; margin: 0 0 12px 0; font-size: 0.8rem; line-height: 1.3;">
+                                            Vincula un nuevo registro.
                                         </p>
                                     `;
+                                    const btnAdd = document.createElement('button');
+                                    btnAdd.className = 'tax-add-btn';
+                                    btnAdd.style.position = 'relative';
+                                    btnAdd.style.right = 'auto';
+                                    btnAdd.style.top = 'auto';
+                                    btnAdd.style.transform = 'none';
+                                    btnAdd.style.margin = '0 auto';
+                                    btnAdd.style.backgroundColor = 'var(--ion-color-primary, #3880ff)';
+                                    btnAdd.style.color = '#ffffff';
+                                    btnAdd.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)';
+                                    btnAdd.title = 'Añadir Equipo';
+                                    btnAdd.innerHTML = '+';
+                                    btnAdd.onclick = (e) => {
+                                        e.stopPropagation();
+                                        this._handleNodeAdd(gpNodeId, 'Grupo_Productos', e);
+                                    };
+                                    emptyState.appendChild(btnAdd);
                                     
                                     gpWrapper.appendChild(emptyState);
                                 }
@@ -593,29 +618,78 @@ window.UI_View_SwimlaneGrid = {
                             });
                             gpContainer.appendChild(gpItemsFlex);
                             vsChildrenWrapper.appendChild(gpContainer);
-                        } else {
-                            // Empty State Onboarding para Grupo de Productos
-                            const emptyState = document.createElement('div');
-                            emptyState.style.cssText = 'position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 2rem 1rem; width: 320px; border: 2px dashed var(--ion-color-step-300, #ccc); border-radius: 8px; background: rgba(0,0,0,0.02); overflow: hidden; flex: 0 0 auto;';
-                            
-                            emptyState.innerHTML = `
-                                <svg width="100" height="80" viewBox="0 0 100 80" style="position: absolute; right: 10px; top: -10px; opacity: 0.6; pointer-events: none;">
-                                    <path d="M 10 70 Q 50 70, 85 25" fill="none" stroke="var(--ion-color-dark, #222428)" stroke-width="2.5" stroke-dasharray="6,5" stroke-linecap="round"/>
-                                    <polygon points="78,33 87,20 93,33" fill="var(--ion-color-dark, #222428)" transform="rotate(20 87 20)" />
-                                </svg>
+                        } else if (dominioEdges.length === 0) {
+                            // S53: Empty State Onboarding Dual (Grupo de Productos / Dominios)
+                            // El contenedor superior (vsChildrenWrapper) los pondrá lado a lado gracias a flex-direction: row
+                            vsChildrenWrapper.style.width = '100%';
 
+                            // 1. Empty State: Grupo de Productos
+                            const emptyStateGP = document.createElement('div');
+                            emptyStateGP.style.cssText = 'position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 2rem 1rem; border: 2px dashed var(--ion-color-step-300, #ccc); border-radius: 8px; background: rgba(0,0,0,0.02); overflow: hidden; flex: 1 1 50%; min-width: 250px;';
+                            
+                            emptyStateGP.innerHTML = `
                                 <div style="width: 110px; height: 60px; border: 2px dashed var(--ion-color-step-300, #ccc); border-radius: 12px; margin-bottom: 16px; display: flex; flex-direction: column; align-items: center; justify-content: center; background: rgba(0,0,0,0.02);">
                                     <ion-icon name="layers-outline" style="font-size: 28px; color: var(--ion-color-step-400, #aaa); margin-bottom: 6px;"></ion-icon>
                                     <div style="width: 50%; height: 5px; background: var(--ion-color-step-200, #ddd); border-radius: 3px;"></div>
                                 </div>
                                 
                                 <h3 style="color: var(--ion-color-dark); margin: 0 0 6px 0; font-weight: 600; font-size: 1rem; letter-spacing: -0.01em; text-align: center;">Sin Grupos de Producto</h3>
-                                <p style="color: var(--ion-color-medium, #666); text-align: center; max-width: 220px; margin: 0; font-size: 0.85rem; line-height: 1.4;">
-                                    Haz clic en <strong style="color: var(--ion-color-dark); font-size: 1.1em;">+</strong> arriba para agregar un grupo.
+                                <p style="color: var(--ion-color-medium, #666); text-align: center; max-width: 220px; margin: 0 0 16px 0; font-size: 0.85rem; line-height: 1.4;">
+                                    Vincula un nuevo registro.
                                 </p>
                             `;
+                            const btnAddGP = document.createElement('button');
+                            btnAddGP.className = 'tax-add-btn';
+                            btnAddGP.style.position = 'relative';
+                            btnAddGP.style.right = 'auto';
+                            btnAddGP.style.top = 'auto';
+                            btnAddGP.style.transform = 'none';
+                            btnAddGP.style.margin = '0 auto';
+                            btnAddGP.style.backgroundColor = 'var(--ion-color-primary, #3880ff)';
+                            btnAddGP.style.color = '#ffffff';
+                            btnAddGP.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)';
+                            btnAddGP.title = 'Añadir Grupo de Productos';
+                            btnAddGP.innerHTML = '+';
+                            btnAddGP.onclick = (e) => {
+                                e.stopPropagation();
+                                this._handleNodeAdd(vsId, 'Value_Stream', e);
+                            };
+                            emptyStateGP.appendChild(btnAddGP);
+                            vsChildrenWrapper.appendChild(emptyStateGP);
+
+                            // 2. Empty State: Dominio
+                            const emptyStateDom = document.createElement('div');
+                            emptyStateDom.style.cssText = 'position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 2rem 1rem; border: 2px dashed var(--ion-color-step-300, #ccc); border-radius: 8px; background: rgba(0,0,0,0.02); overflow: hidden; flex: 1 1 50%; min-width: 250px;';
                             
-                            vsChildrenWrapper.appendChild(emptyState);
+                            emptyStateDom.innerHTML = `
+                                <div style="width: 110px; height: 60px; border: 2px dashed var(--ion-color-step-300, #ccc); border-radius: 12px; margin-bottom: 16px; display: flex; flex-direction: column; align-items: center; justify-content: center; background: rgba(0,0,0,0.02);">
+                                    <ion-icon name="globe-outline" style="font-size: 28px; color: var(--ion-color-step-400, #aaa); margin-bottom: 6px;"></ion-icon>
+                                    <div style="width: 50%; height: 5px; background: var(--ion-color-step-200, #ddd); border-radius: 3px;"></div>
+                                </div>
+                                
+                                <h3 style="color: var(--ion-color-dark); margin: 0 0 6px 0; font-weight: 600; font-size: 1rem; letter-spacing: -0.01em; text-align: center;">Sin Dominio</h3>
+                                <p style="color: var(--ion-color-medium, #666); text-align: center; max-width: 220px; margin: 0 0 16px 0; font-size: 0.85rem; line-height: 1.4;">
+                                    Vincula un nuevo registro.
+                                </p>
+                            `;
+                            const btnAddDom = document.createElement('button');
+                            btnAddDom.className = 'tax-add-btn';
+                            btnAddDom.style.position = 'relative';
+                            btnAddDom.style.right = 'auto';
+                            btnAddDom.style.top = 'auto';
+                            btnAddDom.style.transform = 'none';
+                            btnAddDom.style.margin = '0 auto';
+                            btnAddDom.style.backgroundColor = 'var(--ion-color-primary, #3880ff)';
+                            btnAddDom.style.color = '#ffffff';
+                            btnAddDom.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)';
+                            btnAddDom.title = 'Añadir Dominio';
+                            btnAddDom.innerHTML = '+';
+                            btnAddDom.onclick = (e) => {
+                                e.stopPropagation();
+                                this._handleNodeAdd(vsId, 'Value_Stream', e);
+                            };
+                            emptyStateDom.appendChild(btnAddDom);
+                            vsChildrenWrapper.appendChild(emptyStateDom);
                         }
 
                         vsCol.appendChild(vsChildrenWrapper);
@@ -629,21 +703,33 @@ window.UI_View_SwimlaneGrid = {
                     emptyState.style.cssText = 'position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 2rem 1rem; margin-top: 0.5rem; width: 100%; border: 2px dashed var(--ion-color-step-300, #ccc); border-radius: 8px; background: rgba(0,0,0,0.02); overflow: hidden;';
                     
                     emptyState.innerHTML = `
-                        <svg width="120" height="100" viewBox="0 0 120 100" style="position: absolute; right: 10px; top: -10px; opacity: 0.7; pointer-events: none;">
-                            <path d="M 10 90 Q 70 90, 105 30" fill="none" stroke="var(--ion-color-tertiary, #5260ff)" stroke-width="2.5" stroke-dasharray="6,5" stroke-linecap="round"/>
-                            <polygon points="98,38 107,24 113,38" fill="var(--ion-color-tertiary, #5260ff)" transform="rotate(15 107 24)" />
-                        </svg>
-
                         <div style="width: 140px; height: 80px; border: 2px dashed var(--ion-color-step-300, #ccc); border-radius: 12px; margin-bottom: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; background: rgba(0,0,0,0.02);">
                             <ion-icon name="swap-horizontal-outline" style="font-size: 32px; color: var(--ion-color-step-400, #aaa); margin-bottom: 8px;"></ion-icon>
                             <div style="width: 50%; height: 6px; background: var(--ion-color-step-200, #ddd); border-radius: 3px;"></div>
                         </div>
                         
                         <h3 style="color: var(--ion-color-dark); margin: 0 0 8px 0; font-weight: 600; font-size: 1.15rem; letter-spacing: -0.01em;">Siguiente paso: Agrega un Value Stream</h3>
-                        <p style="color: var(--ion-color-medium, #666); text-align: center; max-width: 300px; margin: 0; font-size: 0.95rem; line-height: 1.45;">
-                            Haz clic en el botón <strong style="color: var(--ion-color-tertiary); font-size: 1.1em;">+</strong> del Portafolio para desglosarlo en flujos de valor.
+                        <p style="color: var(--ion-color-medium, #666); text-align: center; max-width: 300px; margin: 0 0 20px 0; font-size: 0.95rem; line-height: 1.45;">
+                            Vincula un nuevo registro.
                         </p>
                     `;
+                    const btnAdd = document.createElement('button');
+                    btnAdd.className = 'tax-add-btn';
+                    btnAdd.style.position = 'relative';
+                    btnAdd.style.right = 'auto';
+                    btnAdd.style.top = 'auto';
+                    btnAdd.style.transform = 'none';
+                    btnAdd.style.margin = '0 auto';
+                    btnAdd.style.backgroundColor = 'var(--ion-color-primary, #3880ff)';
+                    btnAdd.style.color = '#ffffff';
+                    btnAdd.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)';
+                    btnAdd.title = 'Añadir Value Stream';
+                    btnAdd.innerHTML = '+';
+                    btnAdd.onclick = (e) => {
+                        e.stopPropagation();
+                        this._handleNodeAdd(portafolioId, 'Portafolio', e);
+                    };
+                    emptyState.appendChild(btnAdd);
                     
                     vCol.appendChild(emptyState);
                 }
@@ -658,23 +744,33 @@ window.UI_View_SwimlaneGrid = {
             emptyState.style.cssText = 'position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 3rem 2rem; margin-top: 0.5rem; width: 100%; border: 2px dashed var(--ion-color-step-300, #ccc); border-radius: 8px; background: rgba(0,0,0,0.02); overflow: hidden;';
             
             emptyState.innerHTML = `
-                <svg width="120" height="100" viewBox="0 0 120 100" style="position: absolute; right: 20px; top: -10px; opacity: 0.7; pointer-events: none;">
-                    <!-- Línea curva en onda -->
-                    <path d="M 10 90 Q 70 90, 105 30" fill="none" stroke="var(--ion-color-primary, #3880ff)" stroke-width="2.5" stroke-dasharray="6,5" stroke-linecap="round"/>
-                    <!-- Punta de flecha apuntando hacia arriba-derecha -->
-                    <polygon points="98,38 107,24 113,38" fill="var(--ion-color-primary, #3880ff)" transform="rotate(15 107 24)" />
-                </svg>
-
                 <div style="width: 140px; height: 80px; border: 2px dashed var(--ion-color-step-300, #ccc); border-radius: 12px; margin-bottom: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; background: rgba(0,0,0,0.02);">
                     <ion-icon name="briefcase-outline" style="font-size: 32px; color: var(--ion-color-step-400, #aaa); margin-bottom: 8px;"></ion-icon>
                     <div style="width: 50%; height: 6px; background: var(--ion-color-step-200, #ddd); border-radius: 3px;"></div>
                 </div>
                 
                 <h3 style="color: var(--ion-color-dark); margin: 0 0 8px 0; font-weight: 600; font-size: 1.15rem; letter-spacing: -0.01em;">Siguiente paso: Agrega un Portafolio</h3>
-                <p style="color: var(--ion-color-medium, #666); text-align: center; max-width: 340px; margin: 0; font-size: 0.95rem; line-height: 1.45;">
-                    Haz clic en el botón <strong style="color: var(--ion-color-primary); font-size: 1.1em;">+</strong> de la barra superior derecha para desglosar esta Unidad de Negocio.
+                <p style="color: var(--ion-color-medium, #666); text-align: center; max-width: 340px; margin: 0 0 20px 0; font-size: 0.95rem; line-height: 1.45;">
+                    Vincula un nuevo registro.
                 </p>
             `;
+            const btnAdd = document.createElement('button');
+            btnAdd.className = 'tax-add-btn';
+            btnAdd.style.position = 'relative';
+            btnAdd.style.right = 'auto';
+            btnAdd.style.top = 'auto';
+            btnAdd.style.transform = 'none';
+            btnAdd.style.margin = '0 auto';
+            btnAdd.style.backgroundColor = 'var(--ion-color-primary, #3880ff)';
+            btnAdd.style.color = '#ffffff';
+            btnAdd.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)';
+            btnAdd.title = 'Añadir Portafolio';
+            btnAdd.innerHTML = '+';
+            btnAdd.onclick = (e) => {
+                e.stopPropagation();
+                this._handleNodeAdd(unidadNegocioId, 'Unidad_Negocio', e);
+            };
+            emptyState.appendChild(btnAdd);
             
             rowUnidad.appendChild(emptyState);
         }
@@ -816,7 +912,13 @@ window.UI_View_SwimlaneGrid = {
             } else if (entityName === 'Portafolio') {
                 edgeType = 'PORTAFOLIO_VALUE_STREAM'; childLabelSingle = 'Value Stream'; childLabelPlural = 'Value Streams';
             } else if (entityName === 'Value_Stream') {
-                edgeType = 'VALUE_STREAM_GRUPO_PRODUCTO'; childLabelSingle = 'Grupo'; childLabelPlural = 'Grupos';
+                const gpIds = window.Graph_Utils.resolveAllLinkedIds(recordId, 'VALUE_STREAM_GRUPO_PRODUCTO', this.taxonomiaId, false, 'hijo');
+                const domIds = window.Graph_Utils.resolveAllLinkedIds(recordId, 'VALUE_STREAM_DOMINIO', this.taxonomiaId, false, 'hijo');
+                const gpCount = gpIds ? gpIds.length : 0;
+                const domCount = domIds ? domIds.length : 0;
+                const gpLabel = gpCount === 1 ? 'Grupo' : 'Grupos';
+                const domLabel = domCount === 1 ? 'Dominio' : 'Dominios';
+                childCountText = `<span style="opacity: 0.5; font-size: 0.65rem; margin: 0 4px;">•</span><span style="text-transform: none; font-weight: 700; font-size: 0.65rem; opacity: 0.85;">${gpCount} ${gpLabel}</span><span style="opacity: 0.5; font-size: 0.65rem; margin: 0 4px;">•</span><span style="text-transform: none; font-weight: 700; font-size: 0.65rem; opacity: 0.85;">${domCount} ${domLabel}</span>`;
             } else if (entityName === 'Grupo_Productos') {
                 edgeType = 'GRUPO_PRODUCTO_EQUIPO'; childLabelSingle = 'Equipo'; childLabelPlural = 'Equipos';
             } else if (entityName === 'Dominio') {
@@ -902,12 +1004,24 @@ window.UI_View_SwimlaneGrid = {
                                     personName = personaRec.nombre + (personaRec.apellidos && personaRec.apellidos !== '---' ? ' ' + personaRec.apellidos : '');
                                     avatarUrl = personaRec.avatar || personaRec.foto || personaRec.url_foto || '';
                                     
-                                    // Resolver el Cargo
+                                    // Resolver el Cargo (CARGO_PERSONA es un edge temporal en el Grafo)
                                     personCargo = personaRec._id_cargo_label || personaRec.id_cargo || '';
-                                    if (personCargo && typeof personCargo === 'string' && !personCargo.includes(' ') && window.FormEngine_Resolvers.resolveEntityRecord) {
-                                        const cargoRec = window.FormEngine_Resolvers.resolveEntityRecord('Cargo', personCargo);
-                                        if (cargoRec && cargoRec.nombre) {
-                                            personCargo = cargoRec.nombre;
+                                    if ((!personCargo || personCargo === '') && window.Graph_Utils && this.taxonomiaId) {
+                                        const cargoIds = window.Graph_Utils.resolveAllLinkedIds(actualPid, 'CARGO_PERSONA', this.taxonomiaId, false, 'padre');
+                                        if (cargoIds && cargoIds.length > 0) personCargo = cargoIds[0];
+                                    }
+                                    
+                                    if (personCargo) {
+                                        let cId = Array.isArray(personCargo) ? personCargo[0] : personCargo;
+                                        cId = typeof cId === 'object' && cId !== null ? (cId.id || cId.id_registro || cId.value || '') : cId;
+                                        
+                                        if (cId && typeof cId === 'string' && window.FormEngine_Resolvers && window.FormEngine_Resolvers.resolveEntityRecord) {
+                                            const cargoRec = window.FormEngine_Resolvers.resolveEntityRecord('Cargo', cId);
+                                            if (cargoRec && cargoRec.nombre) {
+                                                personCargo = cargoRec.nombre;
+                                            } else if (cId === personCargo && !cId.includes(' ')) {
+                                                personCargo = ''; // ID no resuelto, no mostrar
+                                            }
                                         }
                                     }
                                 }
