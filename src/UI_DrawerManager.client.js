@@ -79,9 +79,7 @@
                     // --- S25.2: Save-on-Close Hook ---
                     if (topDrawer && topDrawer._formSubmitterInstance) {
                         const submitter = topDrawer._formSubmitterInstance;
-                        if (submitter.hasChanges()) {
-                            submitter.executeSave({ isSilent: true });
-                        }
+                        submitter.executeSave({ isSilent: true });
                     }
                     
                     // Animate exit

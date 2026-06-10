@@ -200,6 +200,47 @@
     margin-left: 20px;
 }
 
+/* S55.3 Zoom Controller */
+.tax-zoom-ctrl {
+    position: absolute;
+    bottom: 32px;
+    left: 32px;
+    display: flex;
+    align-items: center;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+    padding: 6px 16px;
+    z-index: 1000;
+    gap: 16px;
+    border: 1px solid rgba(0,0,0,0.05);
+}
+.tax-zoom-btn {
+    background: transparent;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    color: #333;
+    transition: background 0.2s;
+}
+.tax-zoom-btn:hover {
+    background: rgba(0,0,0,0.08);
+}
+.tax-zoom-label {
+    font-size: 1.15rem;
+    font-weight: 600;
+    min-width: 56px;
+    text-align: center;
+    color: #333;
+    user-select: none;
+}
+
 </style>
 
 <template id="tmpl-taxonomia-canvas">

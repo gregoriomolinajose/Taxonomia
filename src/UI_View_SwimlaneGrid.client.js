@@ -288,10 +288,19 @@ window.UI_View_SwimlaneGrid = {
                                         tempTx.dataSource = ds.filter(d => d.estado !== 'Eliminado');
                                     }
 
+                                    if (currentUnidadId) {
+                                        if (typeof tempTx.setValidatedValue === 'function') {
+                                            tempTx.setValidatedValue(currentUnidadId);
+                                        } else {
+                                            tempTx.value = currentUnidadId;
+                                        }
+                                    }
+
                                     tempTx.addEventListener('txChange', (ev) => {
                                         ev.stopPropagation(); // Prevenir propagación al stepper principal
-                                        const selectedId = ev.detail ? ev.detail.value : null;
-                                        if(selectedId) {
+                                        const payloadVal = ev.detail ? ev.detail.value : null;
+                                        const selectedId = typeof payloadVal === 'object' && payloadVal !== null ? (payloadVal.id_registro || payloadVal.id_unidad_negocio || payloadVal.id) : (payloadVal || '');
+                                        if (selectedId !== undefined) {
                                             // Sincronizar silenciosamente el campo de la taxonomía con la selección
                                             // Fallback robusto a nivel documento por si el id del form cambia
                                             let mainInput = document.querySelector('form#dynamicForm_Taxonomia [data-form-component="id_unidad_negocio"], form#dynamicForm_Taxonomia [name="id_unidad_negocio"]');
@@ -307,7 +316,7 @@ window.UI_View_SwimlaneGrid = {
                                                         mainInput.dispatchSelection();
                                                     }
                                                 } else {
-                                                    mainInput.value = selectedId;
+                                                    mainInput.value = selectedId || '';
                                                     mainInput.dispatchEvent(new Event('ionChange', { bubbles: true }));
                                                     mainInput.dispatchEvent(new Event('change', { bubbles: true }));
                                                 }
@@ -446,8 +455,10 @@ window.UI_View_SwimlaneGrid = {
                                 domWrapper.style.display = 'flex';
                                 domWrapper.style.flexDirection = 'column';
                                 domWrapper.style.gap = '8px';
-                                domWrapper.style.minWidth = '300px';
-                                domWrapper.style.flex = '0 0 auto'; // Don't shrink
+                                domWrapper.style.width = '320px';
+                                domWrapper.style.minWidth = '320px';
+                                domWrapper.style.maxWidth = '320px';
+                                domWrapper.style.flex = '0 0 auto'; // Don't shrink or grow based on content
                                 domWrapper.style.marginBottom = '8px';
 
                                 domWrapper.appendChild(this._createNodeEl(domNodeId, 'Dominio', 'Añadir Equipo'));
@@ -554,8 +565,10 @@ window.UI_View_SwimlaneGrid = {
                                 gpWrapper.style.display = 'flex';
                                 gpWrapper.style.flexDirection = 'column';
                                 gpWrapper.style.gap = '8px';
-                                gpWrapper.style.minWidth = '300px';
-                                gpWrapper.style.flex = '0 0 auto'; // Don't shrink
+                                gpWrapper.style.width = '320px';
+                                gpWrapper.style.minWidth = '320px';
+                                gpWrapper.style.maxWidth = '320px';
+                                gpWrapper.style.flex = '0 0 auto'; // Don't shrink or grow based on content
 
                                 gpWrapper.appendChild(this._createNodeEl(gpNodeId, 'Grupo_Productos', 'Añadir Equipo'));
 
@@ -736,7 +749,6 @@ window.UI_View_SwimlaneGrid = {
 
                 hContainer.appendChild(vCol);
             });
-
             rowUnidad.appendChild(hContainer);
         } else {
             // S53.x: Empty State Onboarding para Portafolios
@@ -778,6 +790,18 @@ window.UI_View_SwimlaneGrid = {
         canvasDiv.appendChild(rowUnidad);
         rootContainer.appendChild(canvasDiv);
 
+        // Crear controlador de zoom (Alternativa visual a pinch-to-zoom)
+        if (!rootContainer.querySelector('.tax-zoom-ctrl')) {
+            const zoomCtrl = document.createElement('div');
+            zoomCtrl.className = 'tax-zoom-ctrl';
+            zoomCtrl.innerHTML = `
+                <button class="tax-zoom-btn" id="tax-zoom-out"><ion-icon name="remove-outline"></ion-icon></button>
+                <span class="tax-zoom-label" id="tax-zoom-label">100%</span>
+                <button class="tax-zoom-btn" id="tax-zoom-in"><ion-icon name="add-outline"></ion-icon></button>
+            `;
+            rootContainer.appendChild(zoomCtrl);
+        }
+
         // Inicializar Miro-like Pan & Zoom
         this._initPanZoom(rootContainer, canvasDiv);
     },
@@ -798,7 +822,46 @@ window.UI_View_SwimlaneGrid = {
             if (this._currentCanvas) {
                 this._currentCanvas.style.transform = `translate(${state.translateX}px, ${state.translateY}px) scale(${state.scale})`;
             }
+            const label = document.getElementById('tax-zoom-label');
+            if (label) {
+                label.innerText = Math.round(state.scale * 100) + '%';
+            }
         };
+        
+        this._zoomToCenter = (newScale) => {
+            const rect = viewport.getBoundingClientRect();
+            const mouseX = rect.width / 2;
+            const mouseY = rect.height / 2;
+            const CanvasMath = window.Math_Engine && window.Math_Engine.CanvasMath ? window.Math_Engine.CanvasMath : {
+                calculateMiroZoom: (mx, my, os, ns, ox, oy) => {
+                    const sr = ns / os;
+                    return { translateX: mx - (mx - ox) * sr, translateY: my - (my - oy) * sr };
+                }
+            };
+            const newTransforms = CanvasMath.calculateMiroZoom(mouseX, mouseY, state.scale, newScale, state.translateX, state.translateY);
+            state.translateX = newTransforms.translateX;
+            state.translateY = newTransforms.translateY;
+            state.scale = newScale;
+            this._applyTransform();
+        };
+
+        const btnZoomOut = document.getElementById('tax-zoom-out');
+        const btnZoomIn = document.getElementById('tax-zoom-in');
+        
+        if (btnZoomOut) {
+            btnZoomOut.onclick = (e) => {
+                e.stopPropagation();
+                const newScale = Math.max(0.2, state.scale - 0.15);
+                this._zoomToCenter(newScale);
+            };
+        }
+        if (btnZoomIn) {
+            btnZoomIn.onclick = (e) => {
+                e.stopPropagation();
+                const newScale = Math.min(2.0, state.scale + 0.15);
+                this._zoomToCenter(newScale);
+            };
+        }
         
         // Aplicar estado inicial al nuevo canvas
         this._applyTransform();
@@ -839,30 +902,37 @@ window.UI_View_SwimlaneGrid = {
             // Prevenir scroll nativo
             e.preventDefault();
             
-            const zoomSensitivity = 0.001;
-            
-            // Usar Motor Matemático para los cálculos
-            const CanvasMath = window.Math_Engine && window.Math_Engine.CanvasMath ? window.Math_Engine.CanvasMath : {
-                clampScale: (s, dy, sens) => Math.min(Math.max(0.2, s - dy * sens), 2.0),
-                calculateMiroZoom: (mx, my, os, ns, ox, oy) => {
-                    const sr = ns / os;
-                    return { translateX: mx - (mx - ox) * sr, translateY: my - (my - oy) * sr };
-                }
-            };
+            if (e.ctrlKey) {
+                // Pinch to Zoom o Ctrl+Wheel
+                const zoomSensitivity = 0.006; // Incrementado a 0.006 según la solicitud
+                
+                // Usar Motor Matemático para los cálculos
+                const CanvasMath = window.Math_Engine && window.Math_Engine.CanvasMath ? window.Math_Engine.CanvasMath : {
+                    clampScale: (s, dy, sens) => Math.min(Math.max(0.2, s - dy * sens), 2.0),
+                    calculateMiroZoom: (mx, my, os, ns, ox, oy) => {
+                        const sr = ns / os;
+                        return { translateX: mx - (mx - ox) * sr, translateY: my - (my - oy) * sr };
+                    }
+                };
 
-            // Límite de escala (20% a 200%)
-            const newScale = CanvasMath.clampScale(state.scale, e.deltaY, zoomSensitivity);
-            
-            // Zoom hacia el mouse (Miro-like)
-            const rect = viewport.getBoundingClientRect();
-            const mouseX = e.clientX - rect.left;
-            const mouseY = e.clientY - rect.top;
+                // Límite de escala (20% a 200%)
+                const newScale = CanvasMath.clampScale(state.scale, e.deltaY, zoomSensitivity);
+                
+                // Zoom hacia el mouse (Miro-like)
+                const rect = viewport.getBoundingClientRect();
+                const mouseX = e.clientX - rect.left;
+                const mouseY = e.clientY - rect.top;
 
-            const newTransforms = CanvasMath.calculateMiroZoom(mouseX, mouseY, state.scale, newScale, state.translateX, state.translateY);
-            
-            state.translateX = newTransforms.translateX;
-            state.translateY = newTransforms.translateY;
-            state.scale = newScale;
+                const newTransforms = CanvasMath.calculateMiroZoom(mouseX, mouseY, state.scale, newScale, state.translateX, state.translateY);
+                
+                state.translateX = newTransforms.translateX;
+                state.translateY = newTransforms.translateY;
+                state.scale = newScale;
+            } else {
+                // Pan (Normal scroll)
+                state.translateX -= e.deltaX;
+                state.translateY -= e.deltaY;
+            }
             
             if (this._applyTransform) this._applyTransform();
         }, { passive: false });
@@ -871,6 +941,13 @@ window.UI_View_SwimlaneGrid = {
     _createNodeEl: function(recordId, entityName, addTitle) {
         const node = document.createElement('div');
         node.className = 'tax-node';
+        node.style.cursor = 'pointer';
+        node.onclick = (e) => {
+            e.stopPropagation();
+            if (window.openEditForm) {
+                window.openEditForm(recordId, entityName, { taxonomiaContext: this.taxonomiaId });
+            }
+        };
         
         // Determinar Color por Metadatos
         let bgColor = 'var(--ion-color-medium)';
@@ -885,9 +962,14 @@ window.UI_View_SwimlaneGrid = {
         
         // Obtener Nombre
         let titleText = recordId;
-        const records = window.UI_FormUtils && window.UI_FormUtils.fetchContextualData 
-            ? window.UI_FormUtils.fetchContextualData(entityName, this.taxonomiaId)
-            : (window.DataStore ? window.DataStore.get(entityName) || [] : []);
+        let records = [];
+        if (entityName === 'Taxonomia' || entityName === 'Unidad_Negocio') {
+            records = window.DataStore ? window.DataStore.get(entityName) || [] : [];
+        } else {
+            records = window.UI_FormUtils && window.UI_FormUtils.fetchContextualData 
+                ? window.UI_FormUtils.fetchContextualData(entityName, this.taxonomiaId)
+                : (window.DataStore ? window.DataStore.get(entityName) || [] : []);
+        }
         const pkField = window.Schema_Utils ? window.Schema_Utils.getPrimaryKey(entityName) : 'id';
         const titleField = schema && schema.metadata ? schema.metadata.titleField : 'nombre';
         
@@ -1001,7 +1083,13 @@ window.UI_View_SwimlaneGrid = {
                             if (window.FormEngine_Resolvers && typeof window.FormEngine_Resolvers.resolveEntityRecord === 'function') {
                                 const personaRec = window.FormEngine_Resolvers.resolveEntityRecord('Persona', actualPid);
                                 if (personaRec) {
-                                    personName = personaRec.nombre + (personaRec.apellidos && personaRec.apellidos !== '---' ? ' ' + personaRec.apellidos : '');
+                                    let hasRealName = personaRec.nombre && String(personaRec.nombre).trim() !== '' && personaRec.nombre !== actualPid;
+                                    if (hasRealName) {
+                                        personName = personaRec.nombre + (personaRec.apellidos && personaRec.apellidos !== '---' ? ' ' + personaRec.apellidos : '');
+                                    } else {
+                                        personName = personaRec.correo_corporativo || personaRec.email || personaRec.correo || personName;
+                                    }
+                                    
                                     avatarUrl = personaRec.avatar || personaRec.foto || personaRec.url_foto || '';
                                     
                                     // Resolver el Cargo (CARGO_PERSONA es un edge temporal en el Grafo)
@@ -1028,12 +1116,16 @@ window.UI_View_SwimlaneGrid = {
                             }
                             personName = personName || actualPid;
                             
+                            if (!personCargo || String(personCargo).trim() === '') {
+                                personCargo = 'Por Asignar';
+                            }
+                            
                             if (personName) {
                                 let avatarHtml = avatarUrl ? 
                                     `<img src="${avatarUrl}" style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover; flex-shrink: 0; background: rgba(255,255,255,0.2);" onerror="this.style.display='none'" />` : 
                                     `<ion-icon name="person-circle-outline" style="font-size: 2rem; flex-shrink: 0; opacity: 0.9;"></ion-icon>`;
                                     
-                                let chunk = `<div style="margin-top: 6px; padding: 6px 10px; background: rgba(0,0,0,0.15); border-radius: 6px; display: flex; align-items: center; justify-content: flex-start; gap: 10px; width: 100%; box-sizing: border-box;">
+                                let chunk = `<div style="margin-top: 6px; padding: 6px 10px; background: rgba(0,0,0,0.15); border-radius: 6px; display: flex; align-items: center; justify-content: flex-start; gap: 10px; width: 100%; box-sizing: border-box; cursor: pointer; transition: background 0.2s;" onmouseover="this.style.background='rgba(0,0,0,0.25)'" onmouseout="this.style.background='rgba(0,0,0,0.15)'" onclick="event.stopPropagation(); if(window.openEditForm) window.openEditForm('${actualPid}', 'Persona', { taxonomiaContext: '${this.taxonomiaId}' });">
                                     ${avatarHtml}
                                     <div style="display: flex; flex-direction: column; overflow: hidden; width: 100%;">
                                         <span style="font-size: 0.65rem; text-transform: uppercase; opacity: 0.85; font-weight: 700; white-space: nowrap; text-overflow: ellipsis; overflow: hidden;">${f.label}</span>
@@ -1058,6 +1150,7 @@ window.UI_View_SwimlaneGrid = {
                             <div style="display: flex; flex-direction: column; overflow: hidden; width: 100%;">
                                 <span style="font-size: 0.65rem; text-transform: uppercase; opacity: 0.7; font-weight: 700; white-space: nowrap; text-overflow: ellipsis; overflow: hidden;">${f.label}</span>
                                 <span style="font-size: 0.85rem; color: rgba(255,255,255,0.6); font-style: italic;">Sin asignar</span>
+                                <span style="font-size: 0.65rem; color: transparent; margin-top: 1px; user-select: none;">-</span>
                             </div>
                         </div>`;
                         
@@ -1171,6 +1264,9 @@ window.UI_View_SwimlaneGrid = {
         } else if (parentEntity === 'Unidad_Negocio') {
             childEntity = 'Portafolio';
             edgeType = 'UNIDAD_NEGOCIO_PORTAFOLIO';
+        } else if (parentEntity === 'Taxonomia') {
+            childEntity = 'Portafolio';
+            edgeType = 'UNIDAD_NEGOCIO_PORTAFOLIO';
         } else if (parentEntity === 'Portafolio') {
             childEntity = 'Value_Stream';
             edgeType = 'PORTAFOLIO_VALUE_STREAM';
@@ -1191,6 +1287,16 @@ window.UI_View_SwimlaneGrid = {
         let targetEntityToOpen = parentEntity;
         if (parentEntity === 'Root_Taxonomia') {
             targetEntityToOpen = 'Taxonomia';
+        } else if (parentEntity === 'Taxonomia') {
+            targetEntityToOpen = 'Unidad_Negocio';
+            // parentId must be the unidad_negocio ID!
+            const mainInput = document.querySelector('[name="id_unidad_negocio"]');
+            if (mainInput && mainInput.value) {
+                parentId = mainInput.value;
+            } else {
+                const taxRec = window.DataStore.get('Taxonomia').find(t => String(t.id_taxonomia) === String(this.taxonomiaId));
+                if (taxRec) parentId = taxRec.id_unidad_negocio;
+            }
         }
 
         const pkField = window.Schema_Utils ? window.Schema_Utils.getPrimaryKey(targetEntityToOpen) : 'id';
@@ -1201,12 +1307,20 @@ window.UI_View_SwimlaneGrid = {
 
         if (recordData && typeof window.renderForm === 'function') {
             // S53.5 Homologous Contextual Drawers
+            let targetSection = null;
+            if (edgeType === 'TAXONOMIA_UNIDAD') targetSection = 'Seleccionar Unidad';
+            if (edgeType === 'UNIDAD_NEGOCIO_PORTAFOLIO') targetSection = 'Portafolios Vinculados';
+            if (edgeType === 'PORTAFOLIO_VALUE_STREAM') targetSection = 'Value Streams Vinculados';
+            if (edgeType === 'VALUE_STREAM_GRUPO_PRODUCTO') targetSection = 'Grupos de Productos';
+            if (edgeType === 'VALUE_STREAM_DOMINIO') targetSection = 'Dominios Vinculados';
+            if (edgeType === 'GRUPO_PRODUCTO_EQUIPO' || edgeType === 'DOMINIO_EQUIPO') targetSection = 'Equipos Asignados';
+
             // Se invoca el Drawer Nativo de la entidad padre y se inyecta el ID de Taxonomía
             // para que UI_FormSubmitter asigne el contexto a las nuevas aristas.
             window.renderForm(targetEntityToOpen, recordData, (res) => {
                 // Al presionar Guardar en el Drawer, el evento InlinePersisted dispara el repintado
                 this.refresh();
-            }, { taxonomiaContext: this.taxonomiaId }).then(() => {
+            }, { taxonomiaContext: this.taxonomiaId, initialStepName: targetSection }).then(() => {
                 // S53.5 BugFix: renderForm only builds the DOM. We must call Hydrator to populate input values.
                 if (window.FormEngine_Hydrator) {
                     const container = window.currentFormDrawer || document.getElementById('app-container');

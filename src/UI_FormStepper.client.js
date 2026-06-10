@@ -21,6 +21,8 @@ window.UI_FormStepper = class UI_FormStepper {
         this.isStateful = config.stateful || false;
         this.entityName = config.entityName || null;
         this.onStepChange = config.onStepChange || null; // S49.12
+        this.initialStepIndex = config.initialStepIndex !== undefined ? config.initialStepIndex : 0;
+        this.initialStepName = config.initialStepName || null;
         
         // Estado Interno (Scoped a la Instancia del Modal)
         this.currentStepIndex = 0;
@@ -366,17 +368,16 @@ window.UI_FormStepper = class UI_FormStepper {
         });
     }
 
-    goToSection(targetSectionName) {
+    goToSection(targetSectionName, skipAutoSave = false) {
         let newIdx = this.steps.indexOf(targetSectionName);
         if (newIdx === -1) newIdx = 0;
 
         // S55.6: Autoguardado Universal para transiciones de Wizard
-        if (this.btnSubmit && this.btnSubmit._formSubmitterInstance && newIdx !== this.currentStepIndex) {
+        if (!skipAutoSave && this.btnSubmit && this.btnSubmit._formSubmitterInstance && newIdx !== this.currentStepIndex) {
             if (this.btnNext) this.btnNext.disabled = true;
             this.btnSubmit.disabled = true;
             
             const submitter = this.btnSubmit._formSubmitterInstance;
-            submitter._isSilent = true; // Auto-guardar silenciosamente (isFormModal = false virtual)
             
             // Suscribirse a los eventos de éxito o error
             const unsubSuccess = window.AppEventBus.subscribe('FORM::SUBMIT_SUCCESS', () => {
@@ -392,13 +393,12 @@ window.UI_FormStepper = class UI_FormStepper {
             const cleanup = () => {
                 if (typeof unsubSuccess === 'function') unsubSuccess();
                 if (typeof unsubError === 'function') unsubError();
-                submitter._isSilent = false;
                 if (this.btnNext) this.btnNext.disabled = false;
                 if (this.btnSubmit) this.btnSubmit.disabled = false;
             };
 
             // Disparar envío optimista asincrono
-            this.btnSubmit.click();
+            submitter.executeSave({ isSilent: true });
             return;
         }
 
@@ -593,6 +593,13 @@ window.UI_FormStepper = class UI_FormStepper {
     }
 
     start() {
-        this.goToSection(this.steps[0]);
+        // Timeout para asegurar que el DOM está listo antes de inicializar gráficas y canvas
+        setTimeout(() => {
+            let startStep = this.steps[this.initialStepIndex] || this.steps[0];
+            if (this.initialStepName && this.steps.includes(this.initialStepName)) {
+                startStep = this.initialStepName;
+            }
+            this.goToSection(startStep, true);
+        }, 150);
     }
 };

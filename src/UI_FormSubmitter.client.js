@@ -43,9 +43,9 @@ window.UI_FormSubmitter = class UI_FormSubmitter {
             this.submitBtn.disabled = true;
         }
 
-        // S57.X: Guardrail: Skip save if no changes in UPDATE mode
+        // S57.X: Guardrail: Skip save if no changes in UPDATE mode or empty CREATE
         const action = this._internalRetryId ? 'update' : 'create';
-        if (action === 'update' && !this.hasChanges()) {
+        if (!this.hasChanges()) {
             console.log("[FormSubmitter] Sin cambios detectados. Omitiendo guardado en BD.");
             this.isSaving = false;
             if (this.submitBtn && !isSilentSave) this.submitBtn.disabled = false;
@@ -57,6 +57,47 @@ window.UI_FormSubmitter = class UI_FormSubmitter {
                 });
             }
             return;
+        }
+
+        if (action === 'create') {
+            const payloadCheck = this.extractPayload();
+            let hasMeaningfulData = false;
+            const pkField = window.Schema_Utils ? window.Schema_Utils.getPrimaryKey(this.entityName) : 'id_registro';
+            
+            for (const key of Object.keys(payloadCheck)) {
+                // S57.Y: Ignorar campos de sistema, llaves y campos topológicos pre-rellenados
+                if (key === pkField || key === '_version' || key === '_work_context' || key.startsWith('_')) continue;
+                if (['created_at', 'created_by', 'updated_at', 'updated_by', 'estado'].includes(key)) continue;
+                if (key.endsWith('_padre') || key === 'nivel_tipo') continue; // Campos topológicos inyectados
+                
+                // Ignorar si el schema lo marca como oculto
+                const schemaDef = this.fields ? this.fields.find(f => f.name === key) : null;
+                if (schemaDef && (schemaDef.type === 'hidden' || schemaDef.isSystem)) continue;
+
+                const val = payloadCheck[key];
+                
+                if (Array.isArray(val) && val.length > 0) {
+                    hasMeaningfulData = true; break;
+                }
+                
+                if (val !== null && val !== undefined && String(val).trim() !== '' && val !== '[]' && val !== 'null') {
+                    // Si el schema tiene un default value y el usuario no lo ha cambiado, no lo consideramos "meaningful" por sí solo
+                    if (schemaDef && schemaDef.defaultValue !== undefined && String(val).trim() === String(schemaDef.defaultValue).trim()) {
+                        continue;
+                    }
+                    hasMeaningfulData = true; break;
+                }
+            }
+            
+            if (!hasMeaningfulData) {
+                console.log("[FormSubmitter] Bloqueando creación de registro vacío.");
+                this.isSaving = false;
+                if (this.submitBtn && !isSilentSave) this.submitBtn.disabled = false;
+                if (!isSilentSave) {
+                    this._showToast('⚠️ No se puede guardar un registro completamente vacío.', 'warning');
+                }
+                return;
+            }
         }
 
         if (this.submitBtn && !isSilentSave) {
@@ -599,6 +640,7 @@ window.UI_FormSubmitter = class UI_FormSubmitter {
             const val2 = currentPayload[key];
             
             if (!this._areEqual(val1, val2)) {
+                console.log(`[FormSubmitter] Guardado cancelado temporalmente: Cambio detectado en '${key}': '${val1}' -> '${val2}'`);
                 return true;
             }
         }

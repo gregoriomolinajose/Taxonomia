@@ -96,6 +96,24 @@ window.UI_View_ECharts = (function() {
 
             chart.setOption(option);
 
+            chartContainer.addEventListener('contextmenu', (e) => {
+                e.preventDefault();
+            });
+
+            chart.on('contextmenu', function(params) {
+                if (params.event && params.event.event && typeof params.event.event.preventDefault === 'function') {
+                    params.event.event.preventDefault();
+                }
+                if (params.data && params.data._record) {
+                    const rec = params.data._record;
+                    const pkField = window.Schema_Utils ? window.Schema_Utils.getPrimaryKey(state.entityName) : 'id_registro';
+                    const id = rec[pkField] || rec['id_registro'] || rec['id'] || null;
+                    if (id && window.openEditForm) {
+                        window.openEditForm(id, state.entityName);
+                    }
+                }
+            });
+
             window.addEventListener('resize', () => {
                 if (chart) chart.resize();
             });

@@ -345,6 +345,27 @@
                 const topRight = document.createElement('div');
                 topRight.className = 'dv-card-top-right';
                 
+                if (this.cfg.entityName === 'Taxonomia') {
+                    const btnCanvas = document.createElement('button');
+                    btnCanvas.className = 'dv-btn-primary-lite';
+                    btnCanvas.title = 'Abrir Canvas';
+                    btnCanvas.style.padding = '4px 6px';
+                    btnCanvas.style.marginRight = '4px';
+                    btnCanvas.style.background = 'transparent';
+                    btnCanvas.style.color = 'var(--dv-primary)';
+                    btnCanvas.style.border = 'none';
+                    btnCanvas.style.cursor = 'pointer';
+                    btnCanvas.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        if (typeof window.openEditForm === 'function') {
+                            window.openEditForm(idStr, 'Taxonomia', { initialStepIndex: 3, initialStepName: 'Arquitectura de Portafolio' });
+                        }
+                    });
+                    const iconCanvas = document.createElement('ion-icon');
+                    iconCanvas.setAttribute('name', 'color-palette');
+                    btnCanvas.appendChild(iconCanvas);
+                    topRight.appendChild(btnCanvas);
+                }
 
                 
                 if (!window.ABAC || window.ABAC.can('delete', this.cfg.entityName, idStr)) {

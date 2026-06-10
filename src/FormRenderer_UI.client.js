@@ -409,7 +409,9 @@
                     btnSubmit: submitBtn,
                     progressLabel: container._progressLabel,
                     entityName: entityName,
-                    stateful: entitySchema && entitySchema.form_stepper_stateful
+                    stateful: entitySchema && entitySchema.form_stepper_stateful,
+                    initialStepIndex: config.initialStepIndex,
+                    initialStepName: config.initialStepName
                 });
                 
                 rows = container._stepperRef.getRows();
@@ -574,6 +576,7 @@
                 
                 // S49.11: Botón Atrás — estilo sutil (clear, text + chevron)
                 container._btnPrev.innerHTML = '';
+                container._btnPrev.type = 'button'; // Prevenir trigger de submit nativo
                 container._btnPrev.fill = 'clear';
                 container._btnPrev.color = 'medium';
                 container._btnPrev.style.setProperty('--border-radius', 'var(--rounded-full)');
@@ -584,6 +587,7 @@
                 container._btnPrev.appendChild(document.createTextNode('Atrás'));
 
                 // S49.11: Botón Siguiente — estilo prominente (solid pill, primary)
+                container._btnNext.type = 'button'; // Prevenir trigger de submit nativo
                 container._btnNext.fill = 'solid';
                 container._btnNext.color = 'primary';
                 container._btnNext.style.setProperty('--border-radius', 'var(--rounded-full)');
@@ -860,6 +864,8 @@
                 }
             });
 
+            // S57.X: Navigate to specific step if requested (handled in constructor)
+
             // S57.X: Capture initial state for dirty-checking
             setTimeout(() => {
                 let currentEl = container;
@@ -945,7 +951,7 @@
 
             // 5. Pre-llenado de campos (Acelerado a 0ms Local Cache delegando al Hydrator Arquitectónico)
             const container = global.currentFormDrawer || document.getElementById('app-container');
-            await global.FormEngine_Hydrator(container, record, entityName);
+            await global.FormEngine_Hydrator(container, record, entityName, overrideOptions);
 
             // S7.3 - El "Pre-llenado de Chip Components" nativo fue removido. 
             // Reason (Principio DRY): UI_Components gestiona esta hidratación activamente

@@ -133,6 +133,16 @@
                 initialValues = [mockToken];
             }
 
+            if (field.disallowedContextEdges && window.UI_FormUtils && window.UI_FormUtils.getExcludedGraphNodes) {
+                const excludedStr = field.disallowedContextEdges.join(',');
+                // formContainer is not passed here, but contextId / currentPK provides DB-level exclusions
+                const targetContextId = currentPK || contextId;
+                const excludeIds = window.UI_FormUtils.getExcludedGraphNodes(excludedStr, entityName, null, targetContextId);
+                if (excludeIds && excludeIds.length > 0) {
+                    initialValues = initialValues.filter(v => !excludeIds.includes(String(window.UI_FormUtils.normalizeId(v))));
+                }
+            }
+
             if (field.uiComponent === 'searchable_multi') {
                 if (global.UI_Factory.buildSearchableMulti) {
                     const metadataToken = (window.APP_SCHEMAS && window.APP_SCHEMAS[field.targetEntity] && window.APP_SCHEMAS[field.targetEntity].metadata) || {};

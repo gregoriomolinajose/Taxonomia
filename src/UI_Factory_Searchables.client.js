@@ -11,7 +11,10 @@
     const _buildBaseSearchable = function(fieldDef, isMulti, dataset = [], initialSelection, localEventBus, componentConfig = {}) {
         const node = document.createElement('tx-searchable');
         
-        node.setAttribute('entity-name', fieldDef.label || fieldDef.targetEntity || 'Registro');
+        node.setAttribute('entity-name', fieldDef.targetEntity || fieldDef.label || 'Registro');
+        if (fieldDef.label) {
+            node.setAttribute('field-label', fieldDef.label);
+        }
         if (fieldDef.targetEntity) {
             node.setAttribute('target-entity', fieldDef.targetEntity);
         }

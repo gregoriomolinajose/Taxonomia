@@ -320,6 +320,7 @@ window.UI_FormUtils = (function () {
         const liveData = window.DataStore ? (window.DataStore.get(entityName) || []) : [];
         return liveData.filter(d => {
             if (d.estado === 'Eliminado' || typeof d !== 'object') return false;
+            if (entityName === 'Unidad_Negocio' || entityName === 'Taxonomia') return true;
             if (String(d.estado).toLowerCase() === 'borrador') {
                 return contextId && String(d.contexto_id) === String(contextId);
             }
@@ -335,12 +336,12 @@ window.UI_FormUtils = (function () {
      */
     function getExcludedGraphNodes(disallowedEdgesStr, currentEntityName, formContainer, contextId) {
         let excludeIds = [];
-        if (!disallowedEdgesStr || !formContainer || !currentEntityName) return excludeIds;
+        if (!disallowedEdgesStr || !currentEntityName) return excludeIds;
         
         const disallowedEdges = disallowedEdgesStr.split(',').map(e => e.trim());
         
         // 1. Exclusión desde el Formulario Sucio (Unsaved State)
-        if (typeof window !== 'undefined' && window.APP_SCHEMAS && window.APP_SCHEMAS[currentEntityName]) {
+        if (formContainer && typeof window !== 'undefined' && window.APP_SCHEMAS && window.APP_SCHEMAS[currentEntityName]) {
             const schemaFields = window.APP_SCHEMAS[currentEntityName].fields || [];
             
             // Buscar campos del esquema que generen las aristas bloqueadas

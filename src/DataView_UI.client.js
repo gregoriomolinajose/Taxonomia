@@ -447,7 +447,8 @@
         ───────────────────────────────────────────── */
         function render(entityName, containerId, payload) {
             // S42.2: Rediseño orienta a que cuadrícula (Card) sea el default sin importar resolución
-            const defaultView = 'grid';
+            // Exception: Dominio defaults to Treemap (echarts)
+            const defaultView = entityName === 'Dominio' ? 'echarts' : 'grid';
 
             _state = {
                 entityName, containerId,
