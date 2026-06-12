@@ -71,49 +71,72 @@
                 global.currentFormDrawer = drawerNode;
                 return true;
             },
+            _isClosing: false,
             
             closeTop: async function() {
+                if (this._isClosing) return;
+                
                 if (stack.length > 0) {
-                    const topDrawer = stack.pop();
+                    this._isClosing = true;
+                    try {
+                        const topDrawer = stack.pop();
 
-                    // --- S25.2: Save-on-Close Hook ---
-                    if (topDrawer && topDrawer._formSubmitterInstance) {
-                        const submitter = topDrawer._formSubmitterInstance;
-                        submitter.executeSave({ isSilent: true });
-                    }
-                    
-                    // Animate exit
-                    topDrawer.classList.remove('active');
-                    
-                    // Wait for CSS transition (350ms)
-                    await new Promise(r => setTimeout(r, 350));
-                    
-                    if (topDrawer && topDrawer.isConnected) {
-                        topDrawer.innerHTML = '';
-                        if(topDrawer.__onSaveSuccessFallback) topDrawer.__onSaveSuccessFallback = null;
-                        topDrawer.remove();
-                    }
-                    
-                    global.currentFormDrawer = stack.length > 0 ? stack[stack.length - 1] : null;
-                    
-                    if (stack.length === 0) {
-                        const root = getRootContainer();
-                        root.classList.remove('active');
-                        const backdrop = document.getElementById('drawer-backdrop');
-                        if(backdrop) backdrop.classList.remove('active');
-                    }
+                        // --- S25.2: Save-on-Close Hook ---
+                        if (topDrawer && topDrawer._formSubmitterInstance) {
+                            const submitter = topDrawer._formSubmitterInstance;
+                            submitter.executeSave({ isSilent: true });
+                        }
+                        
+                        // Animate exit
+                        topDrawer.classList.remove('active');
+                        
+                        // Wait for CSS transition (350ms)
+                        await new Promise(r => setTimeout(r, 350));
+                        
+                        if (topDrawer && topDrawer.isConnected) {
+                            if (window.ActiveSteppers) {
+                                // S25.2 BugFix: Destruir steppers anidados para limpiar recursos
+                                window.ActiveSteppers.forEach(stepper => {
+                                    if (stepper.cardContent && topDrawer.contains(stepper.cardContent)) {
+                                        if (typeof stepper.destroy === 'function') stepper.destroy();
+                                    }
+                                });
+                            }
+                            topDrawer.innerHTML = '';
+                            if(topDrawer.__onSaveSuccessFallback) topDrawer.__onSaveSuccessFallback = null;
+                            topDrawer.remove();
+                        }
+                        
+                        global.currentFormDrawer = stack.length > 0 ? stack[stack.length - 1] : null;
+                        
+                        if (stack.length === 0) {
+                            const root = getRootContainer();
+                            root.classList.remove('active');
+                            const backdrop = document.getElementById('drawer-backdrop');
+                            if(backdrop) backdrop.classList.remove('active');
+                        }
 
-                    if (window.AppEventBus) {
-                        window.AppEventBus.publish('DRAWER::DEPTH_CHANGED', stack.length);
+                        if (window.AppEventBus) {
+                            window.AppEventBus.publish('DRAWER::DEPTH_CHANGED', stack.length);
+                        }
+                        document.body.classList.toggle('drawer-max-depth', stack.length >= MAX_DEPTH);
+                        document.body.classList.toggle('drawer-open', stack.length > 0);
+                    } finally {
+                        this._isClosing = false;
                     }
-                    document.body.classList.toggle('drawer-max-depth', stack.length >= MAX_DEPTH);
-                    document.body.classList.toggle('drawer-open', stack.length > 0);
                 }
             },
             clearAllSync: function() {
                 while(stack.length > 0) {
                     const topDrawer = stack.pop();
                     if (topDrawer && topDrawer.isConnected) {
+                        if (window.ActiveSteppers) {
+                            window.ActiveSteppers.forEach(stepper => {
+                                if (stepper.cardContent && topDrawer.contains(stepper.cardContent)) {
+                                    if (typeof stepper.destroy === 'function') stepper.destroy();
+                                }
+                            });
+                        }
                         topDrawer.innerHTML = '';
                         if(topDrawer.__onSaveSuccessFallback) topDrawer.__onSaveSuccessFallback = null;
                         topDrawer.remove();

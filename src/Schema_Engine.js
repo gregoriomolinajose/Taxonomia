@@ -151,7 +151,11 @@ var APP_SCHEMAS = {
       "Taxonomía de Producto": "Asigna un nombre descriptivo para comenzar. Te recomendamos utilizar el nombre del portafolio principal que vas a estructurar.",
       "Importar Equipos": "Carga la plantilla de equipos mediante URL o archivo de Google Sheets.",
       "Importar Personas": "Carga la plantilla de personas mediante URL o archivo de Google Sheets.",
-      "Arquitectura de Portafolio": "Diseña la estructura utilizando el lienzo interactivo ubicado a la derecha."
+      "Arquitectura de Portafolio": "Diseña la estructura utilizando el lienzo interactivo ubicado a la derecha.",
+      "Organigrama de Producto": "Visualiza la jerarquía de reporte orientada a la toma de decisiones de Producto.",
+      "Organigrama de Tecnología": "Visualiza la jerarquía de reporte orientada al desarrollo técnico y arquitectura.",
+      "Organigrama de Agilidad": "Visualiza la jerarquía de reporte de los agentes de cambio y metodologías ágiles.",
+      "Organigrama de Portafolio": "Visualiza la jerarquía estructural y de negocio del portafolio completo."
     },
     hooks: {
       preSubmit: function (payload, contextId, action, isTempPk, internalRetryId) {
@@ -181,7 +185,11 @@ var APP_SCHEMAS = {
       { name: "id_unidad_negocio", type: "hidden", relationType: "padre", targetEntity: "Unidad_Negocio", graphEntity: "Sys_Graph_Edges", valueField: "id_unidad_negocio", labelField: "nombre", isTemporalGraph: true, graphEdgeType: "TAXONOMIA_UNIDAD", topologyCardinality: "1:N", workspaceMode: false, required: false },
       { name: "info_equipos", type: "uiComponent", uiComponent: "bulk_importer", targetEntity: "Equipo", width: 12, section: "Importar Equipos" },
       { name: "info_personas", type: "uiComponent", uiComponent: "bulk_importer", targetEntity: "Persona", width: 12, section: "Importar Personas" },
-      { name: "info_canvas", type: "divider", label: "Interactúa con el lienzo a tu derecha para modelar las capacidades y productos.", width: 12, section: "Arquitectura de Portafolio" }
+      { name: "info_canvas", type: "divider", label: "Interactúa con el lienzo a tu derecha para modelar las capacidades y productos.", width: 12, section: "Arquitectura de Portafolio" },
+      { name: "org_producto", type: "custom_organigrama", viewTarget: "producto", label: "Render", width: 12, section: "Organigrama de Producto" },
+      { name: "org_tecnologia", type: "custom_organigrama", viewTarget: "tecnologia", label: "Render", width: 12, section: "Organigrama de Tecnología" },
+      { name: "org_agilidad", type: "custom_organigrama", viewTarget: "agilidad", label: "Render", width: 12, section: "Organigrama de Agilidad" },
+      { name: "org_portafolio", type: "custom_organigrama", viewTarget: "portafolio", label: "Render", width: 12, section: "Organigrama de Portafolio" }
     ]
   },
   Unidad_Negocio: {
@@ -245,6 +253,8 @@ var APP_SCHEMAS = {
       { width: 12, name: "relaciones_hijo", type: "relation", relationType: "hijo", targetEntity: "Dominio", graphEntity: "Sys_Graph_Edges", valueField: "id_dominio", labelField: "nombre", uiComponent: "searchable_multi", label: "Dominios Subordinados", isTemporalGraph: true, graphEdgeType: "DOMINIO_HIJO", topologyCardinality: "1:N", readonly: false, readonlyInContext: true, placeholder: "Para vincular vaya a la vista principal de Dominios." },
       { width: 12, name: "value_streams_vinculados", type: "relation", relationType: "padre", targetEntity: "Value_Stream", graphEntity: "Sys_Graph_Edges", valueField: "id_value_stream", labelField: "nombre", uiComponent: "searchable_multi", label: "Value Streams", isTemporalGraph: true, graphEdgeType: "VALUE_STREAM_DOMINIO", topologyCardinality: "N:M", required: false, readonly: true, placeholder: "Para vincular vaya al flujo de Taxonomía.", hideIfEmptyAndReadonly: false },
       { name: "gerente_dominio_id", type: "relation", relationType: "padre", targetEntity: "Persona", graphEntity: "Sys_Graph_Edges", label: "Responsable de Dominio", isTemporalGraph: true, graphEdgeType: "DOMINIO_RESPONSABLE", uiComponent: "searchable_single", valueField: "id_persona", labelField: "_nombre_completo", width: 12, readonly: true, placeholder: "Para vincular vaya al flujo de Taxonomía.", hideIfEmptyAndReadonly: false },
+      { name: "rte_id", type: "relation", relationType: "padre", targetEntity: "Persona", graphEntity: "Sys_Graph_Edges", label: "Release Train Engineer (RTE)", isTemporalGraph: true, graphEdgeType: "DOMINIO_RTE", uiComponent: "searchable_single", valueField: "id_persona", labelField: "_nombre_completo", width: 12 },
+      { name: "gerente_ti_id", type: "relation", relationType: "padre", targetEntity: "Persona", graphEntity: "Sys_Graph_Edges", label: "Gerente de TI", isTemporalGraph: true, graphEdgeType: "DOMINIO_GERENTE_TI", uiComponent: "searchable_single", valueField: "id_persona", labelField: "_nombre_completo", width: 12 },
       { width: 12, name: "equipos_asignados", type: "relation", relationType: "hijo", targetEntity: "Equipo", graphEntity: "Sys_Graph_Edges", valueField: "id_equipo", labelField: "nombre", uiComponent: "searchable_multi", label: "Equipos", isTemporalGraph: true, graphEdgeType: "DOMINIO_EQUIPO", topologyCardinality: "1:N", readonly: true, placeholder: "Para vincular vaya al flujo de Taxonomía.", hideIfEmptyAndReadonly: false },
       { name: "path_completo_es", type: "text", label: "Path Completo", required: false, width: 12 },
       { name: "id_externo", type: "text", label: "ID Externo", required: true, width: 4 },
@@ -351,7 +361,8 @@ var APP_SCHEMAS = {
       { name: "product_manager_id", type: "relation", relationType: "hijo", targetEntity: "Persona", graphEntity: "Sys_Graph_Edges", label: "Product Manager", isTemporalGraph: true, graphEdgeType: "EQUIPO_PM", uiComponent: "searchable_single", valueField: "id_persona", labelField: "_nombre_completo", readonly: true, readonlyInContext: false, required: false, width: 6, hideIfEmptyAndReadonly: false, hideInCanvas: true },
       { name: "scrum_master_id", type: "relation", relationType: "hijo", targetEntity: "Persona", graphEntity: "Sys_Graph_Edges", label: "Team Coach", isTemporalGraph: true, graphEdgeType: "EQUIPO_SM", uiComponent: "searchable_single", valueField: "id_persona", labelField: "_nombre_completo", readonly: true, readonlyInContext: false, required: false, width: 6, hideIfEmptyAndReadonly: false },
       { name: "product_owner_id", type: "relation", relationType: "hijo", targetEntity: "Persona", graphEntity: "Sys_Graph_Edges", label: "Dueño de Producto", isTemporalGraph: true, graphEdgeType: "EQUIPO_PO", uiComponent: "searchable_single", valueField: "id_persona", labelField: "_nombre_completo", readonly: true, readonlyInContext: false, required: false, width: 6, hideIfEmptyAndReadonly: false },
-      { name: "personas_asignadas", type: "relation", relationType: "hijo", targetEntity: "Persona", graphEntity: "Sys_Graph_Edges", isTemporalGraph: true, graphEdgeType: "PERSONA_EQUIPO", label: "Development Team", uiComponent: "searchable_multi", valueField: "id_persona", labelField: "_nombre_completo", topologyCardinality: "M:N", disallowedContextEdges: ["EQUIPO_PO", "EQUIPO_SM", "EQUIPO_PM", "EQUIPO_RTE"], width: 12 }
+      { name: "technical_lead_id", type: "relation", relationType: "hijo", targetEntity: "Persona", graphEntity: "Sys_Graph_Edges", label: "Líder Técnico", isTemporalGraph: true, graphEdgeType: "EQUIPO_TL", uiComponent: "searchable_single", valueField: "id_persona", labelField: "_nombre_completo", readonly: true, readonlyInContext: false, required: false, width: 6, hideIfEmptyAndReadonly: false },
+      { name: "personas_asignadas", type: "relation", relationType: "hijo", targetEntity: "Persona", graphEntity: "Sys_Graph_Edges", isTemporalGraph: true, graphEdgeType: "PERSONA_EQUIPO", label: "Development Team", uiComponent: "searchable_multi", valueField: "id_persona", labelField: "_nombre_completo", topologyCardinality: "M:N", disallowedContextEdges: ["EQUIPO_PO", "EQUIPO_SM", "EQUIPO_PM", "EQUIPO_RTE", "EQUIPO_TL"], width: 12 }
     ]
   },
   Persona: {
@@ -466,7 +477,7 @@ var APP_SCHEMAS = {
     ]
   },
   Sys_Graph_Edges: {
-    metadata: { showInMenu: false, order: 10, iconName: 'git-network-outline', color: 'primary', label: 'Grafo Universal Temporal', titleField: 'tipo_relacion', idField: 'id_relacion', fkField: { key: 'id_nodo_padre', label: 'Nodo Padre' } },
+    metadata: { prefix: 'SYS', showInMenu: false, order: 10, iconName: 'git-network-outline', color: 'primary', label: 'Grafo Universal Temporal', titleField: 'tipo_relacion', idField: 'id_relacion', fkField: { key: 'id_nodo_padre', label: 'Nodo Padre' } },
     primaryKey: "id_relacion",
     fields: [
       { name: "id_relacion", type: "hidden", primaryKey: true },
@@ -486,7 +497,7 @@ var APP_SCHEMAS = {
   // [E6-S66] Canal pub-sub nativo para invalidación proactiva de caché cross-tenant.
   // Append-only. El job Job_CleanCacheSignals() limpia señales > 1 hora cada 24h.
   Sys_Cache_Signals: {
-    metadata: { showInMenu: false, order: 95, iconName: 'radio-outline', color: 'warning',
+    metadata: { prefix: 'SCCH', showInMenu: false, order: 95, iconName: 'radio-outline', color: 'warning',
                 label: 'Señales de Caché Cross-Tenant', titleField: 'entity_name',
                 idField: 'signal_id', fkField: null },
     primaryKey: "signal_id",
@@ -559,6 +570,7 @@ var APP_SCHEMAS = {
     uiConfig: { dashboardCard: { iconName: 'swap-horizontal-outline', color: 'var(--ion-color-tertiary)' } },
     metadata: { prefix: 'VSTR', showInMenu: true, order: 8, iconName: 'swap-horizontal-outline', color: 'tertiary', label: 'Value Streams', titleField: 'nombre', idField: 'id_value_stream', fkField: null, maxListAttrs: 8 },
     topological_metadata: {
+      ownerFields: ["dueno_vs_id", "head_of_technology_id"],
       parentEntity: "Portafolio",
       parentField: "portafolios_padre"
     },
@@ -573,7 +585,10 @@ var APP_SCHEMAS = {
       ...FIELD_TEMPLATES.VERSION_FIELD(),
       ...FIELD_TEMPLATES.NAME_FIELD("Nombre de Value Stream"),
       { name: "descripcion", type: "text", label: "Descripción / Propósito", required: false, width: 12 },
-      { name: "dueno_vs_id", type: "relation", relationType: "padre", targetEntity: "Persona", graphEntity: "Sys_Graph_Edges", label: "Dueño del Value Stream", isTemporalGraph: true, graphEdgeType: "VS_DUENO", uiComponent: "searchable_single", valueField: "id_persona", labelField: "_nombre_completo", width: 12 },
+      { name: "dueno_vs_id", type: "relation", relationType: "padre", targetEntity: "Persona", graphEntity: "Sys_Graph_Edges", label: "Dueño del Value Stream", isTemporalGraph: true, graphEdgeType: "VALUE_STREAM_DUENO", uiComponent: "searchable_single", valueField: "id_persona", labelField: "_nombre_completo", width: 12 },
+      { name: "head_of_technology_id", type: "relation", relationType: "padre", targetEntity: "Persona", graphEntity: "Sys_Graph_Edges", label: "Head of Technology", isTemporalGraph: true, graphEdgeType: "VALUE_STREAM_HEAD_OF_TECHNOLOGY", uiComponent: "searchable_single", valueField: "id_persona", labelField: "_nombre_completo", width: 12 },
+      { name: "head_of_product_id", type: "relation", relationType: "padre", targetEntity: "Persona", graphEntity: "Sys_Graph_Edges", label: "Head of Product", isTemporalGraph: true, graphEdgeType: "VALUE_STREAM_HEAD_OF_PRODUCT", uiComponent: "searchable_single", valueField: "id_persona", labelField: "_nombre_completo", width: 12 },
+      { name: "agile_coach_id", type: "relation", relationType: "padre", targetEntity: "Persona", graphEntity: "Sys_Graph_Edges", label: "Agile Coach", isTemporalGraph: true, graphEdgeType: "VALUE_STREAM_AGILE_COACH", uiComponent: "searchable_single", valueField: "id_persona", labelField: "_nombre_completo", width: 12 },
       { width: 12, name: "portafolios_padre", type: "relation", relationType: "padre", targetEntity: "Portafolio", graphEntity: "Sys_Graph_Edges", valueField: "id_portafolio", labelField: "nombre", uiComponent: "searchable_multi", label: "Portafolios", isTemporalGraph: true, graphEdgeType: "PORTAFOLIO_VALUE_STREAM", topologyCardinality: "N:M", required: true },
       { width: 12, name: "dominios_vinculados", type: "relation", relationType: "hijo", targetEntity: "Dominio", graphEntity: "Sys_Graph_Edges", valueField: "id_dominio", labelField: "nombre", uiComponent: "searchable_multi", label: "Dominios", isTemporalGraph: true, graphEdgeType: "VALUE_STREAM_DOMINIO", topologyCardinality: "N:M" },
       { width: 12, name: "grupos_productos_vinculados", type: "relation", relationType: "hijo", targetEntity: "Grupo_Productos", graphEntity: "Sys_Graph_Edges", valueField: "id_grupo_producto", labelField: "nombre", uiComponent: "searchable_multi", label: "Grupos de Productos", isTemporalGraph: true, graphEdgeType: "VALUE_STREAM_GRUPO_PRODUCTO", topologyCardinality: "1:N" }

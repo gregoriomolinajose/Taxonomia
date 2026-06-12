@@ -369,13 +369,23 @@ var Business_Interceptors = (function() {
          */
         AutoProvisionEntityRoles: function(entityName, items) {
             const ROLE_MAPPINGS = {
-                Value_Stream: [{ field: 'dueno_vs_id', nombre: 'Dueño del Value Stream', nombre_ingles: 'Value Stream Owner', color_icono: 'tertiary', especialidad: 'Negocio', pk: 'id_value_stream' }],
+                Value_Stream: [
+                    { field: 'dueno_vs_id', nombre: 'Dueño del Value Stream', nombre_ingles: 'Value Stream Owner', color_icono: 'tertiary', especialidad: 'Negocio', pk: 'id_value_stream' },
+                    { field: 'head_of_technology_id', nombre: 'Head of Technology', nombre_ingles: 'Head of Technology', color_icono: 'dark', especialidad: 'Tecnología', pk: 'id_value_stream' },
+                    { field: 'head_of_product_id', nombre: 'Head of Product', nombre_ingles: 'Head of Product', color_icono: 'primary', especialidad: 'Producto', pk: 'id_value_stream' },
+                    { field: 'agile_coach_id', nombre: 'Agile Coach', nombre_ingles: 'Agile Coach', color_icono: 'warning', especialidad: 'Agilidad', pk: 'id_value_stream' }
+                ],
                 Portafolio: [{ field: 'gerente_portafolio_id', nombre: 'Gerente de Portafolio', nombre_ingles: 'Portfolio Manager', color_icono: 'danger', especialidad: 'Negocio', pk: 'id_portafolio' }],
                 Grupo_Productos: [{ field: 'gerente_producto_id', nombre: 'Gerente de Producto', nombre_ingles: 'Product Manager', color_icono: 'dark', especialidad: 'Producto', pk: 'id_grupo_producto' }],
-                Dominio: [{ field: 'gerente_dominio_id', nombre: 'Responsable de Dominio', nombre_ingles: 'Domain Owner', color_icono: 'primary', especialidad: 'Producto', pk: 'id_dominio' }],
+                Dominio: [
+                    { field: 'gerente_dominio_id', nombre: 'Responsable de Dominio', nombre_ingles: 'Domain Owner', color_icono: 'primary', especialidad: 'Producto', pk: 'id_dominio' },
+                    { field: 'rte_id', nombre: 'Release Train Engineer', nombre_ingles: 'Release Train Engineer', color_icono: 'warning', especialidad: 'Agilidad', pk: 'id_dominio' },
+                    { field: 'gerente_ti_id', nombre: 'Gerente de TI', nombre_ingles: 'IT Manager', color_icono: 'dark', especialidad: 'Tecnología', pk: 'id_dominio' }
+                ],
                 Equipo: [
                     { field: 'product_owner_id', nombre: 'Dueño de Producto', nombre_ingles: 'Product Owner', color_icono: 'success', especialidad: 'Producto', pk: 'id_equipo' },
-                    { field: 'scrum_master_id', nombre: 'Team Coach', nombre_ingles: 'Scrum Master', color_icono: 'warning', especialidad: 'Proceso', pk: 'id_equipo' }
+                    { field: 'scrum_master_id', nombre: 'Team Coach', nombre_ingles: 'Scrum Master', color_icono: 'warning', especialidad: 'Proceso', pk: 'id_equipo' },
+                    { field: 'technical_lead_id', nombre: 'Líder Técnico', nombre_ingles: 'Technical Lead', color_icono: 'dark', especialidad: 'Tecnología', pk: 'id_equipo' }
                 ]
             };
 

@@ -11,6 +11,10 @@
 
 window.UI_FormStepper = class UI_FormStepper {
     constructor(config) {
+        // S25.2 BugFix: Registro global para prevenir memory leaks
+        if (!window.ActiveSteppers) window.ActiveSteppers = [];
+        window.ActiveSteppers.push(this);
+
         this.steps = config.steps || ['Configuración General'];
         this.cardContent = config.cardContent;
         this.sidebarSteps = config.sidebarSteps;
@@ -112,18 +116,25 @@ window.UI_FormStepper = class UI_FormStepper {
             setTimeout(() => { window.dispatchEvent(new Event('resize')); }, 100);
         };
 
-        // Bugfix: Limpieza del orphan DOM cuando el Drawer se cierra estando en Fullscreen
-        if (window.AppEventBus) {
-            const cleanupRef = (depth) => {
-                if (depth === 0 && this.splitRight && this.splitRight.classList.contains('fullscreen-wizard')) {
+        // [S54.1] BugFix: Cuando el usuario está en Fullscreen y abre un Drawer anidado
+        // Y luego cierra el Drawer anidado, DRAWER::DEPTH_CHANGED es disparado.
+        // Salimos de fullscreen si la profundidad vuelve a 0 (cierre del drawer principal o anidados)
+        // para evitar el problema de la "pantalla blanca" provocado por z-index atrapado en drawer-root-container
+        this.cleanupRef = window.AppEventBus.subscribe('DRAWER::DEPTH_CHANGED', (depth) => {
+            if (depth === 0) {
+                if (this.splitRight && this.splitRight.classList.contains('fullscreen-wizard')) {
                     if (this.splitRight.parentNode) {
                         this.splitRight.parentNode.removeChild(this.splitRight);
                     }
-                    window.AppEventBus.unsubscribe('DRAWER::DEPTH_CHANGED', cleanupRef);
+                    this.splitRight.classList.remove('fullscreen-wizard');
+                    this.splitRight.style.removeProperty('z-index');
+                    if (this.btnFullscreen) this.btnFullscreen.innerHTML = '<ion-icon name="expand-outline"></ion-icon>';
+                    this.splitContainer.appendChild(this.splitRight);
                 }
-            };
-            window.AppEventBus.subscribe('DRAWER::DEPTH_CHANGED', cleanupRef);
-        }
+            }
+        });
+
+        // Bugfix: DOM restoration is now handled safely by destroy() when the Stepper is actually unmounted
 
         this.splitRight.appendChild(this.btnFullscreen); // Mover el botón dentro del lienzo para que no se oculte
         
@@ -134,7 +145,7 @@ window.UI_FormStepper = class UI_FormStepper {
 
         // S54.5: Reactividad para el lienzo
         const triggerRefresh = () => {
-            if (this._canvasInstanceMounted && typeof window.UI_View_SwimlaneGrid !== 'undefined') {
+            if (this._mountedCustomViewer === 'Arquitectura de Portafolio' && typeof window.UI_View_SwimlaneGrid !== 'undefined') {
                 window.UI_View_SwimlaneGrid.refresh();
             }
         };
@@ -431,7 +442,10 @@ window.UI_FormStepper = class UI_FormStepper {
         const layoutColRight = document.getElementById('wizard-col-right');
         
         if ((drawerNode || isFullscreenZone) && this.entityName === 'Taxonomia') {
-            if (this.currentStepIndex === this.steps.length - 1) { // Último Paso (Canvas)
+            const fullscreenSteps = ['Arquitectura de Portafolio', 'Organigrama de Producto', 'Organigrama de Tecnología', 'Organigrama de Agilidad', 'Organigrama de Portafolio'];
+            const isFullscreenStep = fullscreenSteps.includes(targetSectionName);
+
+            if (isFullscreenStep) {
                 if (drawerNode) {
                     drawerNode.classList.add('fullscreen');
                     drawerNode.classList.add('drawer-fullscreen'); // Para reglas específicas del split
@@ -458,7 +472,7 @@ window.UI_FormStepper = class UI_FormStepper {
                     // En Landing Page ya es fullscreen absoluto, ocultamos el botón de expandir
                     this.btnFullscreen.style.display = isFullscreenZone ? 'none' : 'block';
                 }
-                this._mountCanvasViewer();
+                this._mountCustomViewer(targetSectionName);
             } else {
                 if (drawerNode) {
                     drawerNode.classList.remove('fullscreen');
@@ -480,7 +494,7 @@ window.UI_FormStepper = class UI_FormStepper {
                 
                 this.splitRight.style.display = 'none';
                 if (this.btnFullscreen) this.btnFullscreen.style.display = 'none';
-                this._unmountCanvasViewer();
+                this._unmountCustomViewer();
             }
         }
 
@@ -553,42 +567,71 @@ window.UI_FormStepper = class UI_FormStepper {
     }
     
     // S54.5: Canvas Mount/Unmount Orchestration
-    _mountCanvasViewer() {
+    _mountCustomViewer(stepName) {
         if (!this.splitRight) return;
-        if (this._canvasInstanceMounted) return;
+        if (this._mountedCustomViewer === stepName) return;
+
+        // If transitioning between different custom viewers, unmount the previous one
+        if (this._mountedCustomViewer) {
+            this.splitRight.innerHTML = '';
+            this._mountedCustomViewer = null;
+        }
 
         // The optimistic ID is the primary key assigned by UI_FormSubmitter in step 1
         const taxonomyId = this.cardContent.getAttribute('data-edit-id') || null;
         
-        if (taxonomyId && typeof window.UI_View_SwimlaneGrid !== 'undefined' && typeof window.UI_View_SwimlaneGrid.render === 'function') {
-            this.splitRight.innerHTML = '';
-            
-            // Use the standard template for the canvas
-            const tmpl = document.getElementById('tmpl-taxonomia-canvas');
-            if (tmpl && tmpl.content) {
-                this.splitRight.appendChild(tmpl.content.cloneNode(true));
+        if (stepName === 'Arquitectura de Portafolio') {
+            if (taxonomyId && typeof window.UI_View_SwimlaneGrid !== 'undefined' && typeof window.UI_View_SwimlaneGrid.render === 'function') {
+                this.splitRight.innerHTML = '';
+                
+                // Use the standard template for the canvas
+                const tmpl = document.getElementById('tmpl-taxonomia-canvas');
+                if (tmpl && tmpl.content) {
+                    this.splitRight.appendChild(tmpl.content.cloneNode(true));
+                } else {
+                    console.error("[Wizard] tmpl-taxonomia-canvas no encontrado o sin content.");
+                    this.splitRight.innerHTML = '<div style="padding: 20px; color: red;">Error: Plantilla de Canvas no encontrada.</div>';
+                    return;
+                }
+                
+                // Initialize the canvas
+                window.UI_View_SwimlaneGrid.render(this.splitRight, taxonomyId);
+                
+                // S58.5 BugFix: El innerHTML = '' eliminó el btnFullscreen. Lo restauramos al final del mount.
+                if (this.btnFullscreen) {
+                    this.splitRight.appendChild(this.btnFullscreen);
+                }
+                
+                this._mountedCustomViewer = stepName;
+            }
+        } else if (stepName.startsWith('Organigrama')) {
+            if (taxonomyId && typeof window.UI_View_Organigrama !== 'undefined' && typeof window.UI_View_Organigrama.render === 'function') {
+                this.splitRight.innerHTML = '';
+                
+                // Pass the specific perspective
+                let perspective = 'producto';
+                if (stepName.includes('Tecnología')) perspective = 'tecnologia';
+                if (stepName.includes('Agilidad')) perspective = 'agilidad';
+                if (stepName.includes('Portafolio')) perspective = 'portafolio';
+
+                // Initialize the organigram
+                window.UI_View_Organigrama.render(this.splitRight, taxonomyId, perspective);
+                
+                if (this.btnFullscreen) {
+                    this.splitRight.appendChild(this.btnFullscreen);
+                }
+                
+                this._mountedCustomViewer = stepName;
             } else {
-                console.error("[Wizard] tmpl-taxonomia-canvas no encontrado o sin content.");
-                this.splitRight.innerHTML = '<div style="padding: 20px; color: red;">Error: Plantilla de Canvas no encontrada.</div>';
-                return;
+                 this.splitRight.innerHTML = '<div style="padding: 20px; color: var(--ion-color-medium);">Cargando módulo de organigrama...</div>';
             }
-            
-            // Initialize the canvas
-            window.UI_View_SwimlaneGrid.render(this.splitRight, taxonomyId);
-            
-            // S58.5 BugFix: El innerHTML = '' eliminó el btnFullscreen. Lo restauramos al final del mount.
-            if (this.btnFullscreen) {
-                this.splitRight.appendChild(this.btnFullscreen);
-            }
-            
-            this._canvasInstanceMounted = true;
         }
     }
 
-    _unmountCanvasViewer() {
-        if (this.splitRight && this._canvasInstanceMounted) {
+    _unmountCustomViewer() {
+        if (this.splitRight && this._mountedCustomViewer) {
             this.splitRight.innerHTML = '';
-            this._canvasInstanceMounted = false;
+            this._mountedCustomViewer = null;
         }
     }
 
@@ -601,5 +644,30 @@ window.UI_FormStepper = class UI_FormStepper {
             }
             this.goToSection(startStep, true);
         }, 150);
+    }
+
+    destroy() {
+        // Desuscribir explícitamente para evitar memory leaks reportados por Quality Review
+        if (this.cleanupRef && typeof this.cleanupRef === 'function') {
+            this.cleanupRef();
+            this.cleanupRef = null;
+        }
+
+        // Bugfix: Restauración del DOM cuando el Stepper es destruido (previene leaks en #drawer-root-container)
+        if (this.splitRight && this.splitRight.classList.contains('fullscreen-wizard')) {
+            if (this.splitRight.parentNode) {
+                this.splitRight.parentNode.removeChild(this.splitRight);
+            }
+            this.splitRight.classList.remove('fullscreen-wizard');
+            this.splitRight.style.removeProperty('z-index');
+            if (this.btnFullscreen) {
+                this.btnFullscreen.innerHTML = '<ion-icon name="expand-outline"></ion-icon>';
+            }
+            this.splitContainer.appendChild(this.splitRight); // Restaurar al padre original
+        }
+
+        if (window.ActiveSteppers) {
+            window.ActiveSteppers = window.ActiveSteppers.filter(s => s !== this);
+        }
     }
 };

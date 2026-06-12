@@ -45,6 +45,14 @@
             if (window.DrawerStackController && typeof window.DrawerStackController.clearAllSync === 'function') {
                 window.DrawerStackController.clearAllSync();
             }
+
+            // S25.2 BugFix: Prevenir memory leaks de los listeners de FormStepper al cambiar de pantalla
+            if (window.ActiveSteppers && window.ActiveSteppers.length > 0) {
+                window.ActiveSteppers.forEach(stepper => {
+                    if (typeof stepper.destroy === 'function') stepper.destroy();
+                });
+                window.ActiveSteppers = [];
+            }
             
             // 1. Quitar la clase .active de todos los items
             var navItems = document.querySelectorAll('.nav-item');

@@ -322,6 +322,8 @@ window.UI_FormUtils = (function () {
             if (d.estado === 'Eliminado' || typeof d !== 'object') return false;
             if (entityName === 'Unidad_Negocio' || entityName === 'Taxonomia') return true;
             if (String(d.estado).toLowerCase() === 'borrador') {
+                const schema = window.APP_SCHEMAS ? window.APP_SCHEMAS[entityName] : null;
+                if (schema && !schema.isContextualWorkspace) return true; // Mostrar borradores de entidades globales
                 return contextId && String(d.contexto_id) === String(contextId);
             }
             return true;
