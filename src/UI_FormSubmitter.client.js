@@ -118,8 +118,8 @@ window.UI_FormSubmitter = class UI_FormSubmitter {
             if (window.DataStore && this.fields) {
                 const liveData = window.DataStore.get(this.entityName) || [];
                 
-                // Extrae cualquier campo marcado oficialmente en Schema_Engine como "único" o trigger workspace
-                const uniquenessFields = this.fields.filter(f => f.triggers_workspace_resolve === true || f.unique === true);
+                // Extrae cualquier campo marcado oficialmente en Schema_Engine como "único"
+                const uniquenessFields = this.fields.filter(f => f.unique === true);
                 
                 let collisionFound = false;
                 
@@ -436,7 +436,8 @@ window.UI_FormSubmitter = class UI_FormSubmitter {
                         this._showToast(`Registro actualizado silenciosamente.`, 'success');
                     } else {
                         const itemName = (response.data && response.data.Entity) ? response.data.Entity : this.entityName;
-                        this._showToast(`¡${itemName} guardado en nube!`, 'success');
+                        const cleanItemName = itemName.replace(/_/g, ' ');
+                        this._showToast(`¡${cleanItemName} guardado en nube!`, 'success');
                     }
 
                     // [S45.2] We no longer blindly invalidate Cargo and Sys_Graph_Edges on UI save
@@ -552,7 +553,7 @@ window.UI_FormSubmitter = class UI_FormSubmitter {
         }
 
         // Enrutamiento post-Guardado Inmediato
-        if (!isInlineRendered && !wasSilent && (!window.ModalStackController || window.ModalStackController.getDepth() === 0)) {
+        if (!isInlineRendered && !wasSilent && (!window.DrawerStackController || window.DrawerStackController.getDepth() === 0)) {
             if (window.AppEventBus) {
                 window.AppEventBus.publish('NAV::CHANGE', {viewType: 'dataview', entityKey: this.entityName});
             } else if (window.onSaveSuccessCallback) {

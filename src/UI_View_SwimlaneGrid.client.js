@@ -101,6 +101,145 @@ window.UI_View_SwimlaneGrid = {
         }, 150);
     },
     
+    _openCustomUnidadDrawer: function() {
+        if (window.DrawerStackController && window.UI_Factory) {
+            if (document.getElementById('manual-drawer-unidad-negocio')) return;
+            const drawerNode = document.createElement('div');
+            drawerNode.id = 'manual-drawer-unidad-negocio';
+            drawerNode.style.backgroundColor = 'var(--ion-background-color, #fff)';
+            drawerNode.style.display = 'flex';
+            drawerNode.style.flexDirection = 'column';
+            drawerNode.style.height = '100%';
+            drawerNode.style.position = 'absolute'; // User requested explicit absolute overlay
+            drawerNode.style.right = '0';
+            drawerNode.style.top = '0';
+            drawerNode.style.bottom = '0';
+            drawerNode.style.zIndex = '20000'; // Ensure it is above the canvas
+            drawerNode.style.pointerEvents = 'auto'; // Block clicks from falling through
+
+            // 1. HEADER NATIVO DE LA PLATAFORMA
+            let taxoTitle = 'Nueva Taxonomía';
+            const titleInput = document.querySelector('form#dynamicForm_Taxonomia [name="nombre"]');
+            if (titleInput && titleInput.value) {
+                taxoTitle = titleInput.value;
+            } else if (window.DataStore) {
+                const ds = window.DataStore.get('Taxonomia') || [];
+                const taxoRec = ds.find(d => String(d.id_taxonomia) === String(this.taxonomiaId));
+                if (taxoRec && taxoRec.nombre) taxoTitle = taxoRec.nombre;
+            }
+
+            const header = window.UI_Factory.buildDrawerHeader({
+                entityName: 'Taxonomia',
+                data: { nombre: taxoTitle },
+                localEditId: this.taxonomiaId || null,
+                onClose: () => window.DrawerStackController.closeTop()
+            });
+            drawerNode.appendChild(header);
+
+            // 2. CONTENIDO SCROLLABLE
+            const container = document.createElement('ion-content');
+            container.className = 'drawer-content ion-padding';
+            
+            container.innerHTML = `
+                <div style="margin-bottom: 24px;">
+                    <h2 style="font-size: 1.25rem; font-weight: 700; color: var(--ion-text-color); margin-top:0;">Seleccionar Unidad Existente</h2>
+                    <p style="color: var(--ion-color-medium); font-size: 0.875rem;">Utilice el buscador para vincular o cambiar la unidad de negocio a esta taxonomía.</p>
+                </div>
+                <tx-searchable 
+                    data-form-component="temp_searchable_unidad" 
+                    entity-name="Unidad_Negocio" 
+                    target-entity="Unidad_Negocio"
+                    value-field="id_unidad_negocio" 
+                    label-field="nombre" 
+                    icon-name="business-outline"
+                    style="display:block; margin-bottom: 24px;">
+                </tx-searchable>
+            `;
+            drawerNode.appendChild(container);
+
+            window.DrawerStackController.push(drawerNode);
+
+            setTimeout(() => {
+                const tempTx = drawerNode.querySelector('tx-searchable');
+                if(tempTx) {
+                    // Cargar la fuente de datos (lista de unidades de negocio)
+                    if (window.DataStore) {
+                        const ds = window.DataStore.get('Unidad_Negocio') || [];
+                        tempTx.dataSource = ds.filter(d => d.estado !== 'Eliminado');
+                    }
+
+                    // currentUnidadId logic
+                    let currentUnidadId = null;
+                    let mainInput = document.querySelector('form#dynamicForm_Taxonomia [data-form-component="id_unidad_negocio"], form#dynamicForm_Taxonomia [name="id_unidad_negocio"]');
+                    if (!mainInput) mainInput = document.querySelector('[data-form-component="id_unidad_negocio"], [name="id_unidad_negocio"]');
+                    if (mainInput) {
+                        currentUnidadId = mainInput.value || mainInput._selectedState || null;
+                    } else {
+                        const taxRec = window.DataStore && window.DataStore.get('Taxonomia') ? window.DataStore.get('Taxonomia').find(t => String(t.id_taxonomia) === String(this.taxonomiaId)) : null;
+                        if (taxRec) currentUnidadId = taxRec.id_unidad_negocio;
+                    }
+
+                    if (currentUnidadId) {
+                        if (typeof tempTx.setValidatedValue === 'function') {
+                            tempTx.setValidatedValue(currentUnidadId);
+                        } else {
+                            tempTx.value = currentUnidadId;
+                        }
+                    }
+
+                    tempTx.addEventListener('txChange', (ev) => {
+                        ev.stopPropagation(); // Prevenir propagación al stepper principal
+                        const payloadVal = ev.detail ? ev.detail.value : null;
+                        const selectedId = typeof payloadVal === 'object' && payloadVal !== null ? (payloadVal.id_registro || payloadVal.id_unidad_negocio || payloadVal.id) : (payloadVal || '');
+                        if (selectedId !== undefined) {
+                            // Sincronizar silenciosamente el campo de la taxonomía con la selección
+                            let mainInput = document.querySelector('form#dynamicForm_Taxonomia [data-form-component="id_unidad_negocio"], form#dynamicForm_Taxonomia [name="id_unidad_negocio"]');
+                            if (!mainInput) mainInput = document.querySelector('[data-form-component="id_unidad_negocio"], [name="id_unidad_negocio"]');
+                            if (mainInput) {
+                                if (mainInput.tagName.toLowerCase() === 'tx-searchable') {
+                                    if (typeof mainInput.setValidatedValue === 'function') {
+                                        mainInput.setValidatedValue(selectedId);
+                                    } else {
+                                        mainInput._selectedState = selectedId;
+                                    }
+                                    if (typeof mainInput.dispatchSelection === 'function') {
+                                        mainInput.dispatchSelection();
+                                    }
+                                } else {
+                                    mainInput.value = selectedId || '';
+                                    mainInput.dispatchEvent(new Event('ionChange', { bubbles: true }));
+                                    mainInput.dispatchEvent(new Event('change', { bubbles: true }));
+                                }
+                                // Forzar el repintado del canvas y guardado silencioso para persistir relación
+                                const btnSubmit = document.querySelector('form#dynamicForm_Taxonomia button[type="submit"]');
+                                if (btnSubmit && btnSubmit._formSubmitterInstance) {
+                                    btnSubmit._formSubmitterInstance.executeSave({ isSilent: true }).then(() => {
+                                        if (typeof window.UI_View_SwimlaneGrid !== 'undefined' && typeof window.UI_View_SwimlaneGrid.refresh === 'function') {
+                                            window.UI_View_SwimlaneGrid.refresh();
+                                        }
+                                    });
+                                } else {
+                                    if (typeof window.UI_View_SwimlaneGrid !== 'undefined' && typeof window.UI_View_SwimlaneGrid.refresh === 'function') {
+                                        window.UI_View_SwimlaneGrid.refresh();
+                                    }
+                                }
+
+                                // Auto-cerrar el custom drawer de selección
+                                if (window.DrawerStackController && window.DrawerStackController.getDepth() > 0) {
+                                    window.DrawerStackController.closeTop();
+                                }
+                            } else {
+                                console.warn('[Canvas] No se encontró el input principal para sincronizar.');
+                            }
+                        }
+                    });
+                }
+            }, 300);
+        } else {
+            console.warn('[Canvas] DrawerStackController no está disponible.');
+        }
+    },
+
     _buildCanvas: function(rootContainer) {
         console.log("[Canvas Debug] _buildCanvas TRIGGERED! rootContainer exists.");
         if (!window.DataStore) {
@@ -219,121 +358,7 @@ window.UI_View_SwimlaneGrid = {
                     btn.addEventListener('mouseleave', () => btn.style.transform = 'scale(1)');
                     btn.addEventListener('click', (e) => {
                         e.stopPropagation();
-                        // Crear un Drawer nativo usando los componentes de la plataforma (UI_Factory)
-                        if (window.DrawerStackController && window.UI_Factory) {
-                            if (document.getElementById('manual-drawer-unidad-negocio')) return;
-                            const drawerNode = document.createElement('div');
-                            drawerNode.id = 'manual-drawer-unidad-negocio';
-                            drawerNode.style.backgroundColor = 'var(--ion-background-color, #fff)';
-                            drawerNode.style.display = 'flex';
-                            drawerNode.style.flexDirection = 'column';
-                            drawerNode.style.height = '100%';
-                            drawerNode.style.position = 'absolute'; // User requested explicit absolute overlay
-                            drawerNode.style.right = '0';
-                            drawerNode.style.top = '0';
-                            drawerNode.style.bottom = '0';
-                            drawerNode.style.zIndex = '20000'; // Ensure it is above the canvas
-                            drawerNode.style.pointerEvents = 'auto'; // Block clicks from falling through
-
-                            // 1. HEADER NATIVO DE LA PLATAFORMA
-                            let taxoTitle = 'Nueva Taxonomía';
-                            const titleInput = document.querySelector('form#dynamicForm_Taxonomia [name="nombre"]');
-                            if (titleInput && titleInput.value) {
-                                taxoTitle = titleInput.value;
-                            } else if (window.DataStore) {
-                                const ds = window.DataStore.get('Taxonomia') || [];
-                                const taxoRec = ds.find(d => String(d.id_taxonomia) === String(this.taxonomiaId));
-                                if (taxoRec && taxoRec.nombre) taxoTitle = taxoRec.nombre;
-                            }
-
-                            const header = window.UI_Factory.buildDrawerHeader({
-                                entityName: 'Taxonomia',
-                                data: { nombre: taxoTitle },
-                                localEditId: this.taxonomiaId || null,
-                                onClose: () => window.DrawerStackController.closeTop()
-                            });
-                            drawerNode.appendChild(header);
-
-                            // 2. CONTENIDO SCROLLABLE
-                            const container = document.createElement('ion-content');
-                            container.className = 'drawer-content ion-padding';
-                            
-                            container.innerHTML = `
-                                <div style="margin-bottom: 24px;">
-                                    <h2 style="font-size: 1.25rem; font-weight: 700; color: var(--ion-text-color); margin-top:0;">Seleccionar Unidad Existente</h2>
-                                    <p style="color: var(--ion-color-medium); font-size: 0.875rem;">Utilice el buscador para vincular una unidad de negocio a esta taxonomía.</p>
-                                </div>
-                                <tx-searchable 
-                                    data-form-component="temp_searchable_unidad" 
-                                    entity-name="Unidad_Negocio" 
-                                    target-entity="Unidad_Negocio"
-                                    value-field="id_unidad_negocio" 
-                                    label-field="nombre" 
-                                    icon-name="business-outline"
-                                    style="display:block; margin-bottom: 24px;">
-                                </tx-searchable>
-                            `;
-                            drawerNode.appendChild(container);
-
-                            // FOOTER REMOVED AS REQUESTED
-
-                            window.DrawerStackController.push(drawerNode);
-
-                            setTimeout(() => {
-                                const tempTx = drawerNode.querySelector('tx-searchable');
-                                if(tempTx) {
-                                    // Cargar la fuente de datos (lista de unidades de negocio)
-                                    if (window.DataStore) {
-                                        const ds = window.DataStore.get('Unidad_Negocio') || [];
-                                        tempTx.dataSource = ds.filter(d => d.estado !== 'Eliminado');
-                                    }
-
-                                    if (currentUnidadId) {
-                                        if (typeof tempTx.setValidatedValue === 'function') {
-                                            tempTx.setValidatedValue(currentUnidadId);
-                                        } else {
-                                            tempTx.value = currentUnidadId;
-                                        }
-                                    }
-
-                                    tempTx.addEventListener('txChange', (ev) => {
-                                        ev.stopPropagation(); // Prevenir propagación al stepper principal
-                                        const payloadVal = ev.detail ? ev.detail.value : null;
-                                        const selectedId = typeof payloadVal === 'object' && payloadVal !== null ? (payloadVal.id_registro || payloadVal.id_unidad_negocio || payloadVal.id) : (payloadVal || '');
-                                        if (selectedId !== undefined) {
-                                            // Sincronizar silenciosamente el campo de la taxonomía con la selección
-                                            // Fallback robusto a nivel documento por si el id del form cambia
-                                            let mainInput = document.querySelector('form#dynamicForm_Taxonomia [data-form-component="id_unidad_negocio"], form#dynamicForm_Taxonomia [name="id_unidad_negocio"]');
-                                            if (!mainInput) mainInput = document.querySelector('[data-form-component="id_unidad_negocio"], [name="id_unidad_negocio"]');
-                                            if (mainInput) {
-                                                if (mainInput.tagName.toLowerCase() === 'tx-searchable') {
-                                                    if (typeof mainInput.setValidatedValue === 'function') {
-                                                        mainInput.setValidatedValue(selectedId);
-                                                    } else {
-                                                        mainInput._selectedState = selectedId;
-                                                    }
-                                                    if (typeof mainInput.dispatchSelection === 'function') {
-                                                        mainInput.dispatchSelection();
-                                                    }
-                                                } else {
-                                                    mainInput.value = selectedId || '';
-                                                    mainInput.dispatchEvent(new Event('ionChange', { bubbles: true }));
-                                                    mainInput.dispatchEvent(new Event('change', { bubbles: true }));
-                                                }
-                                                // Forzar el repintado del canvas
-                                                if (typeof window.UI_View_SwimlaneGrid !== 'undefined' && typeof window.UI_View_SwimlaneGrid.refresh === 'function') {
-                                                    window.UI_View_SwimlaneGrid.refresh();
-                                                }
-                                            } else {
-                                                console.warn('[Canvas] No se encontró el input principal para sincronizar.');
-                                            }
-                                        }
-                                    });
-                                }
-                            }, 300);
-                        } else {
-                            console.warn('[Canvas] DrawerStackController no está disponible.');
-                        }
+                        this._openCustomUnidadDrawer();
                     });
                 }
             }, 50);
@@ -944,7 +969,11 @@ window.UI_View_SwimlaneGrid = {
         node.style.cursor = 'pointer';
         node.onclick = (e) => {
             e.stopPropagation();
-            if (window.openEditForm) {
+            if (entityName === 'Unidad_Negocio') {
+                if (typeof this._openCustomUnidadDrawer === 'function') {
+                    this._openCustomUnidadDrawer();
+                }
+            } else if (window.openEditForm) {
                 window.openEditForm(recordId, entityName, { taxonomiaContext: this.taxonomiaId });
             }
         };

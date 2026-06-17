@@ -496,6 +496,10 @@
                 // para emular el Figma (label arriba transparente, caja contorno)
                 const inputEl = global.UI_Factory.buildFieldNode(field, entityName, data, LocalEventBus, localEditId);
 
+                if (inputEl.style.display === 'none') {
+                    ionCol.style.display = 'none';
+                }
+
                 ionCol.appendChild(inputEl);
                 targetRow.appendChild(ionCol);
             });

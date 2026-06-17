@@ -76,17 +76,19 @@
     }
   }
 
-  /* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+  /* â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• 
      SIDEBAR FLOATING CARD (Token-Driven Shadow DOM)
-  â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
-  ion-menu::part(container) {
-    border-radius: var(--rounded-md);
-    margin: var(--spacing-4);
-    height: calc(100% - calc(var(--spacing-4) * 2));
-    border: 1px solid var(--sidebar-border);
-    box-shadow: var(--shadow-floating);
-    transition: all 0.3s ease;
-    z-index: 100;
+  â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â•  */
+  @media (min-width: 992px) {
+    ion-menu::part(container) {
+      border-radius: var(--rounded-md);
+      margin: var(--spacing-4);
+      height: calc(100% - calc(var(--spacing-4) * 2));
+      border: 1px solid var(--sidebar-border);
+      box-shadow: var(--shadow-floating);
+      transition: all 0.3s ease;
+      z-index: 100;
+    }
   }
 
   /* Nav item base */
@@ -183,4 +185,16 @@
     .shell-mini .build-tracker { padding: 8px 0; border-top: none; align-items: center; }
     .shell-mini .build-tracker .build-version,
     .shell-mini .build-tracker .build-hash { display: none !important; }
+  }
+
+  /* Ocultar barra de scroll nativa del Sidebar */
+  ion-menu ion-content::part(scroll)::-webkit-scrollbar,
+  ion-menu::-webkit-scrollbar,
+  #main-content::-webkit-scrollbar,
+  .sidebar-container::-webkit-scrollbar {
+    display: none;
+  }
+  ion-menu ion-content {
+    --webkit-scrollbar-width: 0;
+    scrollbar-width: none;
   }

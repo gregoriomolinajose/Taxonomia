@@ -2,7 +2,7 @@
 // Entorno: Staging (ex-producción) — proyecto GAS: SGMP - Staging
 // Script ID: 14oIjG_akx2DuX1nZe_HWBR8TECPYZgCyYikKwtRnng_pgzxcK0wLekYa
 const CONFIG = {
-    APP_VERSION: 'v1.2.8 - 2606112357',
+    APP_VERSION: 'v1.2.8 - 2606161935',
     SPREADSHEET_ID_DB: '',
     ALLOWED_DOMAINS: [],  // Se carga en runtime desde APP_CONFIG__allowed_domains (Adapter_Config)
     ENV: 'staging',

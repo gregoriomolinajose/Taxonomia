@@ -199,7 +199,7 @@ var APP_SCHEMAS = {
     fields: [
       { name: "id_unidad_negocio", type: "hidden", primaryKey: true },
       ...FIELD_TEMPLATES.SYSTEM_FIELDS(),
-      ...FIELD_TEMPLATES.ESTADO_FIELD(),
+      { name: "estado", type: "hidden", defaultValue: "Borrador" },
       ...FIELD_TEMPLATES.AUDIT_FIELDS(),
       ...FIELD_TEMPLATES.VERSION_FIELD(),
       ...FIELD_TEMPLATES.NAME_FIELD("Nombre de Unidad"),
@@ -221,7 +221,7 @@ var APP_SCHEMAS = {
     fields: [
       { name: "id_portafolio", type: "hidden", primaryKey: true },
       ...FIELD_TEMPLATES.SYSTEM_FIELDS(),
-      ...FIELD_TEMPLATES.ESTADO_FIELD(),
+      { name: "estado", type: "hidden", defaultValue: "Borrador" },
       ...FIELD_TEMPLATES.AUDIT_FIELDS(),
       ...FIELD_TEMPLATES.VERSION_FIELD(),
       ...FIELD_TEMPLATES.NAME_FIELD("Nombre de Portafolio"),
@@ -276,7 +276,7 @@ var APP_SCHEMAS = {
     fields: [
       { name: "id_grupo_producto", type: "hidden", primaryKey: true },
       ...FIELD_TEMPLATES.SYSTEM_FIELDS(),
-      ...FIELD_TEMPLATES.ESTADO_FIELD(),
+      { name: "estado", type: "hidden", defaultValue: "Borrador" },
       ...FIELD_TEMPLATES.AUDIT_FIELDS(),
       ...FIELD_TEMPLATES.VERSION_FIELD(),
       ...FIELD_TEMPLATES.NAME_FIELD("Nombre"),
@@ -300,7 +300,7 @@ var APP_SCHEMAS = {
     fields: [
       { name: "id_producto", type: "hidden", primaryKey: true },
       ...FIELD_TEMPLATES.SYSTEM_FIELDS(),
-      ...FIELD_TEMPLATES.ESTADO_FIELD(),
+      { name: "estado", type: "hidden", defaultValue: "Borrador" },
       ...FIELD_TEMPLATES.AUDIT_FIELDS(),
       ...FIELD_TEMPLATES.VERSION_FIELD(),
       ...FIELD_TEMPLATES.NAME_FIELD("Nombre de Producto"),
@@ -349,7 +349,7 @@ var APP_SCHEMAS = {
       ...FIELD_TEMPLATES.SYSTEM_FIELDS(),
       ...FIELD_TEMPLATES.AUDIT_FIELDS(),
       ...FIELD_TEMPLATES.VERSION_FIELD(),
-      ...FIELD_TEMPLATES.ESTADO_FIELD(),
+      { name: "estado", type: "hidden", defaultValue: "Borrador" },
       ...FIELD_TEMPLATES.NAME_FIELD("Nombre de Equipo", 12),
       { name: "seudonimo", type: "text", label: "Seudónimo", required: false, width: 6 },
       { name: "formas_de_trabajo", type: "select", label: "Formas de Trabajo", required: true, width: 6, options: ["Scrum", "Kanban", "Híbrido"] },
@@ -580,7 +580,7 @@ var APP_SCHEMAS = {
     fields: [
       { name: "id_value_stream", type: "hidden", primaryKey: true },
       ...FIELD_TEMPLATES.SYSTEM_FIELDS(),
-      ...FIELD_TEMPLATES.ESTADO_FIELD(),
+      { name: "estado", type: "hidden", defaultValue: "Borrador" },
       ...FIELD_TEMPLATES.AUDIT_FIELDS(),
       ...FIELD_TEMPLATES.VERSION_FIELD(),
       ...FIELD_TEMPLATES.NAME_FIELD("Nombre de Value Stream"),

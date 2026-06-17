@@ -939,6 +939,9 @@
 .dv-status--inactive .dv-card-status-dot { background-color: var(--dv-danger, var(--ion-color-danger, #eb445a)); }
 .dv-status--inactive .dv-card-status-text { color: var(--dv-danger, var(--ion-color-danger, #eb445a)); }
 
+.dv-status--draft .dv-card-status-dot { background-color: var(--dv-warning, var(--ion-color-warning, #ffc409)); }
+.dv-status--draft .dv-card-status-text { color: var(--dv-warning, var(--ion-color-warning, #ffc409)); }
+
 .dv-card-meta-subtitle {
     white-space: nowrap;
     overflow: hidden;

@@ -182,8 +182,11 @@ window.UI_View_Organigrama = {
         const validGraphNodeIds = new Set();
         if (taxonomyId) {
             for (const edge of edges) {
-                if (edge.id_nodo_padre) validGraphNodeIds.add(String(edge.id_nodo_padre));
-                if (edge.id_nodo_hijo) validGraphNodeIds.add(String(edge.id_nodo_hijo));
+                // Solo consider las aristas que pertenecen a la taxonomía actual
+                if (String(edge.contexto_id) === String(taxonomyId)) {
+                    if (edge.id_nodo_padre) validGraphNodeIds.add(String(edge.id_nodo_padre));
+                    if (edge.id_nodo_hijo) validGraphNodeIds.add(String(edge.id_nodo_hijo));
+                }
             }
         }
 
@@ -225,7 +228,12 @@ window.UI_View_Organigrama = {
         for (const rule of currentRules) {
             // Caso especial Dev Team
             if (rule.entity === 'Persona_Dev') {
-                const equipos = fetchContextual('Equipo');
+                const equipos = fetchContextual('Equipo').filter(eq => {
+                    if (!taxonomyId) return true;
+                    const pkField = window.Schema_Utils ? window.Schema_Utils.getPrimaryKey('Equipo') : 'id_equipo';
+                    return validGraphNodeIds.has(String(eq[pkField]));
+                });
+                
                 for (const eq of equipos) {
                     const devIds = getChildrenIds(eq.id_equipo, 'PERSONA_EQUIPO');
                     for (const dId of devIds) {

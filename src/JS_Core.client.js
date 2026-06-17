@@ -552,6 +552,7 @@
           try {
             var tabBar = document.getElementById('mobile-tab-bar');
             if (tabBar) {
+              window.DOM.clear(tabBar);
               var thumbZoneConfig = [
                 { icon: 'home-outline', label: 'Inicio', action: function() { window.AppEventBus.publish('NAV::CHANGE', {viewType: 'dashboard'}); } },
                 { icon: 'search-outline', label: 'Buscar', action: function() { var o = document.getElementById('global-omnibar'); if(o) o.setFocus(); } },

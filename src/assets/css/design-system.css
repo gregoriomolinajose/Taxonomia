@@ -7,6 +7,11 @@
 
 
 :root {
+  /* NIVEL 1: Core Base Colors (Fallbacks for missing global tokens) */
+  --color-bg-warning: #ffc409;
+  --color-bg-success: #2dd36f;
+  --color-bg-info: #1ca8f7;
+
   /* NIVEL 2: ALIAS TOKENS IONIC (Mapeos a las variables inyectadas en $O(1)$) */
   --rounded-none: 0px;
   --rounded-sm: 8px;
@@ -55,10 +60,14 @@
   --ion-color-success: var(--color-bg-success);
   --ion-color-success-rgb: 10, 191, 79;
   --ion-color-success-contrast: var(--color-text-invert);
+  --ion-color-success-shade: #28ba62;
+  --ion-color-success-tint: #42d77d;
 
   --ion-color-warning: var(--color-bg-warning);
   --ion-color-warning-rgb: 255, 174, 67;
   --ion-color-warning-contrast: var(--color-text);
+  --ion-color-warning-shade: #e0ac08;
+  --ion-color-warning-tint: #ffce22;
 
   --ion-color-tertiary: var(--color-bg-info);
   --ion-color-tertiary-rgb: 28, 168, 247;

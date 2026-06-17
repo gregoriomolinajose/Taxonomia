@@ -221,7 +221,7 @@
       <div class="ion-page" id="main-content">
         <ion-header class="ion-no-border">
           <ion-toolbar>
-            <ion-buttons slot="start">
+            <ion-buttons slot="start" class="hide-on-mobile">
               <ion-menu-button class="hide-on-desktop"></ion-menu-button>
               <ion-button class="hide-on-mobile" fill="clear" data-action="nav:toggle-menu">
                 <ion-icon slot="icon-only" name="menu-outline"></ion-icon>
@@ -231,7 +231,7 @@
               </ion-button>
             </ion-buttons>
             <!-- Top Segments for Layout Navigation -->
-            <div style="display: flex; justify-content: flex-start; align-items: center; min-height: var(--toolbar-standard-height, 56px);">
+            <div class="hide-on-mobile" style="display: flex; justify-content: flex-start; align-items: center; min-height: var(--toolbar-standard-height, 56px);">
               <ion-segment mode="ios" value="selfservice" id="main-layout-segment" class="main-layout-segment" style="width: auto;">
                 <ion-segment-button value="selfservice">
                   <ion-label>Inicio</ion-label>
@@ -242,7 +242,7 @@
               </ion-segment>
             </div>
             
-            <ion-buttons slot="end">
+            <ion-buttons slot="end" class="hide-on-mobile">
               <ion-button fill="clear" data-action="theme:cycle" title="Cambiar Tema">
                 <ion-icon id="theme-toggle-icon" slot="icon-only" name="moon-outline"></ion-icon>
               </ion-button>

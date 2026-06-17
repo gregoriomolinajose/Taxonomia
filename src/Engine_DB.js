@@ -855,6 +855,52 @@ const Engine_DB = {
             _Adapter_Sheets.upsertBatch('Sys_Graph_Edges', edgesToUpdate, { isVolatile: false });
             _invalidateCache('Sys_Graph_Edges');
             if (typeof Logger !== 'undefined') Logger.log(`[Mass Approval] ${edgesToUpdate.length} aristas validadas.`);
+            
+            // 3. Update Unidad_Negocio to Activo if linked
+            const rootEdge = edgesToUpdate.find(e => e.tipo_relacion === 'TAXONOMIA_UNIDAD' && String(e.id_nodo_hijo) === String(contextId));
+            if (rootEdge && rootEdge.id_nodo_padre) {
+                const undnId = rootEdge.id_nodo_padre;
+                const undnRes = _Adapter_Sheets.list('Unidad_Negocio', { useSheets: true }, 'objects');
+                const undnRecords = undnRes && undnRes.rows ? undnRes.rows : [];
+                const undnRec = undnRecords.find(r => String(r.id_unidad_negocio) === String(undnId));
+                
+                if (undnRec && undnRec.estado !== 'Activo') {
+                    undnRec.estado = 'Activo';
+                    undnRec.updated_at = sysDate;
+                    _Adapter_Sheets.upsertBatch('Unidad_Negocio', [undnRec], { isVolatile: false });
+                    _invalidateCache('Unidad_Negocio');
+                    if (typeof Logger !== 'undefined') Logger.log(`[Mass Approval] Unidad de Negocio ${undnId} activada.`);
+                }
+            }
+            
+            // 4. Activar Entidades Secundarias Vinculadas al Contexto (Portafolios, Value Streams, etc.)
+            const edgeMappings = [
+                { edgeType: 'UNIDAD_NEGOCIO_PORTAFOLIO', entity: 'Portafolio', pk: 'id_portafolio' },
+                { edgeType: 'PORTAFOLIO_VALUE_STREAM', entity: 'Value_Stream', pk: 'id_value_stream' },
+                { edgeType: 'VALUE_STREAM_GRUPO_PRODUCTO', entity: 'Grupo_Productos', pk: 'id_grupo_producto' },
+                { edgeType: 'GRUPO_PRODUCTO_PRODUCTO', entity: 'Producto', pk: 'id_producto' },
+                { edgeType: 'GRUPO_PRODUCTO_EQUIPO', entity: 'Equipo', pk: 'id_equipo' }
+            ];
+
+            edgeMappings.forEach(mapping => {
+                const entityEdges = edgesToUpdate.filter(e => e.tipo_relacion === mapping.edgeType);
+                if (entityEdges.length > 0) {
+                    const nodeIds = entityEdges.map(e => String(e.id_nodo_hijo));
+                    const res = _Adapter_Sheets.list(mapping.entity, { useSheets: true }, 'objects');
+                    const records = res && res.rows ? res.rows : [];
+                    const recordsToUpdate = records.filter(r => nodeIds.includes(String(r[mapping.pk])) && r.estado !== 'Activo');
+                    
+                    if (recordsToUpdate.length > 0) {
+                        recordsToUpdate.forEach(p => {
+                            p.estado = 'Activo';
+                            p.updated_at = sysDate;
+                        });
+                        _Adapter_Sheets.upsertBatch(mapping.entity, recordsToUpdate, { isVolatile: false });
+                        _invalidateCache(mapping.entity);
+                        if (typeof Logger !== 'undefined') Logger.log(`[Mass Approval] ${recordsToUpdate.length} ${mapping.entity} activados.`);
+                    }
+                }
+            });
         }
 
         return { approvedEdges: edgesToUpdate.length };

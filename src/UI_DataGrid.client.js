@@ -327,8 +327,14 @@
                 if (estadoVal) {
                     const statusWrap = document.createElement('div');
                     statusWrap.className = 'dv-card-status-wrap';
-                    const isInactive = String(estadoVal).toLowerCase().includes('inactiv');
-                    statusWrap.classList.add(isInactive ? 'dv-status--inactive' : 'dv-status--active');
+                    const sLower = String(estadoVal).toLowerCase();
+                    if (sLower.includes('inactiv')) {
+                        statusWrap.classList.add('dv-status--inactive');
+                    } else if (sLower.includes('borrador') || sLower.includes('revis')) {
+                        statusWrap.classList.add('dv-status--draft');
+                    } else {
+                        statusWrap.classList.add('dv-status--active');
+                    }
                     
                     const statusDot = document.createElement('div');
                     statusDot.className = 'dv-card-status-dot';
