@@ -35,7 +35,7 @@
         // Tarjeta
         var cardEl = document.createElement('ion-card');
         cardEl.style.borderRadius = 'var(--rounded-md)';
-        cardEl.style.background = 'var(--ion-card-background)';
+        cardEl.style.background = '#ffffff';
         cardEl.style.marginBottom = '20px';
         cardEl.style.overflow = 'hidden';
         cardEl.style.position = 'relative';

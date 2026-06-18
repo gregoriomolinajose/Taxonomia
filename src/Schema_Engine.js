@@ -208,7 +208,7 @@ var APP_SCHEMAS = {
     ]
   },
   Portafolio: {
-    uiConfig: { dashboardCard: { iconName: 'briefcase-outline', color: 'var(--ion-color-danger)' } },
+    uiConfig: { dashboardCard: { order: 1, iconName: 'briefcase-outline', color: 'var(--ion-color-danger)' } },
     metadata: { prefix: 'PORT', showInMenu: true, order: 2, iconName: 'briefcase-outline', color: 'danger', label: 'Portafolios', titleField: 'nombre', idField: 'id_portafolio', fkField: null, maxListAttrs: 8 },
     topological_metadata: {
       ownerFields: ["director_id", "vp_id"],
@@ -287,7 +287,7 @@ var APP_SCHEMAS = {
     ]
   },
   Producto: {
-    uiConfig: { dashboardCard: { iconName: 'cube-outline', color: 'var(--ion-color-tertiary)' } },
+    uiConfig: { dashboardCard: { order: 3, iconName: 'cube-outline', color: 'var(--ion-color-tertiary)' } },
     metadata: { showInMenu: true, order: 5, iconName: 'cube-outline', color: 'tertiary', label: 'Productos', titleField: 'nombre', idField: 'id_producto', fkField: { key: 'id_grupo_producto', label: 'Grupo' } },
     topological_metadata: {
       ownerFields: ["rte_id", "pm_id", "agile_coach_id"],
@@ -335,7 +335,20 @@ var APP_SCHEMAS = {
     ]
   },
   Equipo: {
-    uiConfig: { dashboardCard: { iconName: 'people-outline', color: 'var(--ion-color-success)' } },
+    uiConfig: {
+      dashboardCard: { order: 4, iconName: 'people-outline', color: 'var(--ion-color-success)' },
+      dashboardDirectory: {
+        order: 2,
+        title: "Equipos de",
+        titleHighlight: "Desarrollo",
+        description: "Encuentra la persona que buscas y en que equipo participa utilizando el buscador",
+        emptyMessage: "No hay personas asignadas a equipos en este momento.",
+        targetEntity: "Persona",
+        edgeType: "PERSONA_EQUIPO",
+        subtitleFallbackEntity: "Rol",
+        subtitleFallbackEdge: "PERSONA_ROL"
+      }
+    },
     metadata: { showInMenu: true, order: 7, iconName: 'people-outline', color: 'success', label: 'Equipos', titleField: 'nombre', idField: 'id_equipo', fkField: { key: 'id_grupo_producto', label: 'Grupo de Producto' } },
     topological_metadata: {
       ownerFields: ["scrum_master_id", "product_owner_id"],
@@ -368,6 +381,7 @@ var APP_SCHEMAS = {
   Persona: {
     uiConfig: {
       dashboardCard: {
+        order: 5,
         iconName: 'person-outline',
         color: 'var(--ion-color-warning)',
         avatarField: 'avatar',
@@ -444,6 +458,19 @@ var APP_SCHEMAS = {
     ]
   },
   Cargo: {
+    uiConfig: {
+      dashboardDirectory: {
+        order: 3,
+        title: "Cargos y",
+        titleHighlight: "Posiciones",
+        description: "Encuentra la persona que buscas y que cargo desempeña utilizando el buscador",
+        emptyMessage: "No hay personas asignadas a cargos en este momento.",
+        targetEntity: "Persona",
+        edgeType: "CARGO_PERSONA",
+        subtitleFallbackEntity: "Equipo",
+        subtitleFallbackEdge: "PERSONA_EQUIPO"
+      }
+    },
     metadata: { prefix: 'CARG', showInMenu: true, order: 8, iconName: 'id-card-outline', color: 'tertiary', label: 'Cargos y Posiciones', titleField: 'nombre', idField: 'id_cargo', fkField: null },
     primaryKey: "id_cargo",
     titleField: "nombre",
@@ -459,6 +486,19 @@ var APP_SCHEMAS = {
     ]
   },
   Rol: {
+    uiConfig: {
+      dashboardDirectory: {
+        order: 1,
+        title: "Roles en Arquitectura",
+        titleHighlight: "del Portafolio",
+        description: "Encuentra la persona que buscas y que cargo desempeña utilizando el buscador",
+        emptyMessage: "No hay personas asignadas a roles en este momento.",
+        targetEntity: "Persona",
+        edgeType: "PERSONA_ROL",
+        subtitleFallbackEntity: "Equipo",
+        subtitleFallbackEdge: "PERSONA_EQUIPO"
+      }
+    },
     metadata: { prefix: 'ROLE', showInMenu: true, order: 9, iconName: 'shirt-outline', color: 'primary', label: 'Roles', titleField: 'nombre', idField: 'id_rol', fkField: null },
     primaryKey: "id_rol",
     titleField: "nombre",
@@ -567,7 +607,7 @@ var APP_SCHEMAS = {
   // [E31-S31.4] Duplicate Sys_Graph_Edges key removed. Canonical definition ~line 282.
 
   Value_Stream: {
-    uiConfig: { dashboardCard: { iconName: 'swap-horizontal-outline', color: 'var(--ion-color-tertiary)' } },
+    uiConfig: { dashboardCard: { order: 2, iconName: 'swap-horizontal-outline', color: 'var(--ion-color-tertiary)', title: 'VS' } },
     metadata: { prefix: 'VSTR', showInMenu: true, order: 8, iconName: 'swap-horizontal-outline', color: 'tertiary', label: 'Value Streams', titleField: 'nombre', idField: 'id_value_stream', fkField: null, maxListAttrs: 8 },
     topological_metadata: {
       ownerFields: ["dueno_vs_id", "head_of_technology_id"],

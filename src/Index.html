@@ -55,13 +55,20 @@
     window.ENV_CONFIG = <?!= typeof ENV_CONFIG !== 'undefined' ? ENV_CONFIG : '{"AuthMode":"SSO","ALLOWED_DOMAINS":[]}' ?>;
     window.WORKSPACE_SYNC_ENABLED = <?!= typeof WORKSPACE_SYNC_ENABLED !== 'undefined' ? WORKSPACE_SYNC_ENABLED : true ?>;
 
-    window.WHITE_LABEL = <?!= typeof WHITE_LABEL_CONFIG !== 'undefined' ? WHITE_LABEL_CONFIG : '{"bodyFont":"Poppins, sans-serif","displayFont":"Playfair Display, serif"}' ?>;
+    window.WHITE_LABEL = <?!= typeof WHITE_LABEL_CONFIG !== 'undefined' ? WHITE_LABEL_CONFIG : '{"bodyFont":"Poppins, sans-serif","displayFont":"Roboto, sans-serif"}' ?>;
     // UI Branding Rule (Zero-FOUC Injection)
     if (window.WHITE_LABEL) {
         // Legacy Support
-        const bodyF = window.WHITE_LABEL.font_body || window.WHITE_LABEL.bodyFont || window.WHITE_LABEL.body_font;
-        const dispF = window.WHITE_LABEL.font_display || window.WHITE_LABEL.displayFont || window.WHITE_LABEL.display_font;
+        let bodyF = window.WHITE_LABEL.font_body || window.WHITE_LABEL.bodyFont || window.WHITE_LABEL.body_font;
+        let dispF = window.WHITE_LABEL.font_display || window.WHITE_LABEL.displayFont || window.WHITE_LABEL.display_font;
         
+        // Force replacement of Playfair Display with Roboto as requested
+        if (dispF && dispF.includes('Playfair')) dispF = 'Roboto, sans-serif';
+        if (bodyF && bodyF.includes('Playfair')) bodyF = 'Roboto, sans-serif';
+        if (window.WHITE_LABEL.font_h1 && window.WHITE_LABEL.font_h1.includes('Playfair')) window.WHITE_LABEL.font_h1 = 'Roboto, sans-serif';
+        if (window.WHITE_LABEL.font_h2 && window.WHITE_LABEL.font_h2.includes('Playfair')) window.WHITE_LABEL.font_h2 = 'Roboto, sans-serif';
+        if (window.WHITE_LABEL.font_h3 && window.WHITE_LABEL.font_h3.includes('Playfair')) window.WHITE_LABEL.font_h3 = 'Roboto, sans-serif';
+
         if (bodyF) document.documentElement.style.setProperty('--font-body', bodyF);
         if (dispF) document.documentElement.style.setProperty('--font-display', dispF);
         
@@ -356,8 +363,8 @@
   <template id="tmpl-dashboard">
     <ion-grid>
       <ion-row class="ion-justify-content-center" id="dashboard-cards-container"></ion-row>
-      <!-- Charts removed by S55.2 redesign -->
-
+      <!-- Directorio de Disciplinas / Roles -->
+      <ion-row class="ion-justify-content-center" id="dashboard-directory-container" style="margin-top: 32px; width: 100%;"></ion-row>
     </ion-grid>
   </template>
 
@@ -411,6 +418,7 @@
   <?!= include('UI_View_Tree'); ?>
   <?!= include('UI_View_ECharts'); ?>
   <?!= include('DataView_UI'); ?>
+  <?!= include('UI_Component_EntityDirectory'); ?>
   <?!= include('Dashboard_UI'); ?>
   <!-- Maps removed by S55.2 redesign -->
   <?!= include('UI_View_SwimlaneGrid'); ?>

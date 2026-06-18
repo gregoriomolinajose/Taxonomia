@@ -443,7 +443,8 @@ window.UI_FormSubmitter = class UI_FormSubmitter {
                     // [S45.2] We no longer blindly invalidate Cargo and Sys_Graph_Edges on UI save
                     // because Engine_DB.upsert handles graph edges and UI_FormSubmitter reconciles locally.
                     // This restores the 0ms instant-render performance.
-                    if (this.entityName === 'Persona' && response.action !== 'updated') {
+                    // Bugfix: Evitar navegación destructiva si estamos guardando desde un Modal/Drawer
+                    if (this.entityName === 'Persona' && response.action !== 'updated' && !this.modal) {
                         if (window.UI_Router) window.UI_Router.navigateTo('dataview', 'Persona');
                     }
                 } else {
@@ -553,7 +554,8 @@ window.UI_FormSubmitter = class UI_FormSubmitter {
         }
 
         // Enrutamiento post-Guardado Inmediato
-        if (!isInlineRendered && !wasSilent && (!window.DrawerStackController || window.DrawerStackController.getDepth() === 0)) {
+        // [BugFix] M/L: Si el contexto es Taxonomia (config.taxonomiaContext), NO redirigir a DataView para no destruir el Wizard (Pantalla Blanca)
+        if (!isInlineRendered && !wasSilent && !this.config.taxonomiaContext && (!window.DrawerStackController || window.DrawerStackController.getDepth() === 0)) {
             if (window.AppEventBus) {
                 window.AppEventBus.publish('NAV::CHANGE', {viewType: 'dataview', entityKey: this.entityName});
             } else if (window.onSaveSuccessCallback) {

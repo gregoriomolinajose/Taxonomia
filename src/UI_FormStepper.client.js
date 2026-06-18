@@ -123,6 +123,13 @@ window.UI_FormStepper = class UI_FormStepper {
         this.cleanupRef = window.AppEventBus.subscribe('DRAWER::DEPTH_CHANGED', (depth) => {
             if (depth === 0) {
                 if (this.splitRight && this.splitRight.classList.contains('fullscreen-wizard')) {
+                    // S65: Do NOT auto-exit fullscreen if the current step requires it intrinsically.
+                    const fullscreenSteps = ['Arquitectura de Portafolio', 'Organigrama de Producto', 'Organigrama de Tecnología', 'Organigrama de Agilidad', 'Organigrama de Portafolio'];
+                    let currentStepTitle = this.steps ? this.steps[this.currentStepIndex] : '';
+                    if (fullscreenSteps.includes(currentStepTitle)) {
+                        return; // Mantener fullscreen porque el paso actual lo requiere.
+                    }
+
                     if (this.splitRight.parentNode) {
                         this.splitRight.parentNode.removeChild(this.splitRight);
                     }

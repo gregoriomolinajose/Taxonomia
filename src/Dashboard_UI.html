@@ -13,6 +13,13 @@
     if (!container) return;
     window.DOM.clear(container);
     var sorted = window.getEntitiesByFlag('dashboardCard', 'uiConfig');
+    sorted.sort(function(a, b) {
+      var configA = window.APP_SCHEMAS[a[0]].uiConfig.dashboardCard;
+      var configB = window.APP_SCHEMAS[b[0]].uiConfig.dashboardCard;
+      var orderA = (configA && typeof configA.order === 'number') ? configA.order : 999;
+      var orderB = (configB && typeof configB.order === 'number') ? configB.order : 999;
+      return orderA - orderB;
+    });
     var totalEls = {};
 
     sorted.forEach(function(entry) {
@@ -23,7 +30,7 @@
       var dshConfig = (typeof rawDshConfig === 'object' && rawDshConfig !== null) ? rawDshConfig : {};
       
       var cardConfig = {
-        title: meta.label,
+        title: dshConfig.title || meta.label,
         iconName: dshConfig.iconName || meta.iconName,
         color: dshConfig.color || meta.color,
         totalId: totalId
@@ -48,6 +55,10 @@
       (window.DataStore.get('Persona') && window.DataStore.get('Persona').length > 0)
     )) {
       window.hydrateDashboardCounters();
+    } else {
+      if (typeof window.renderAllDashboardDirectories === 'function') {
+        window.renderAllDashboardDirectories();
+      }
     }
   };
 
@@ -72,12 +83,54 @@
         els[key].textContent = count;
       });
 
+      if (typeof window.renderAllDashboardDirectories === 'function') {
+        window.renderAllDashboardDirectories();
+      }
+
     } catch (err) {
       console.error('[Dashboard] Error al calcular contadores:', err);
       if (window._dashboardTotalEls) {
         Object.keys(window._dashboardTotalEls).forEach(function(k) { window._dashboardTotalEls[k].textContent = '-'; });
       }
     }
+  };
+
+  window.renderAllDashboardDirectories = function() {
+    var container = document.getElementById('dashboard-directory-container');
+    if (!container) return;
+
+    var directories = [];
+    Object.keys(window.APP_SCHEMAS || {}).forEach(function(key) {
+        var schema = window.APP_SCHEMAS[key];
+        if (schema && schema.uiConfig && schema.uiConfig.dashboardDirectory) {
+            directories.push({
+                entityName: key,
+                uiConfig: schema.uiConfig.dashboardDirectory
+            });
+        }
+    });
+
+    directories.sort(function(a, b) {
+        var oa = typeof a.uiConfig.order === 'number' ? a.uiConfig.order : 99;
+        var ob = typeof b.uiConfig.order === 'number' ? b.uiConfig.order : 99;
+        return oa - ob;
+    });
+
+    directories.forEach(function(dir, index) {
+        var dirContainerId = 'dashboard-dir-' + dir.entityName;
+        var dirContainer = document.getElementById(dirContainerId);
+        
+        if (!dirContainer) {
+            dirContainer = document.createElement('div');
+            dirContainer.id = dirContainerId;
+            dirContainer.style.width = '100%';
+            container.appendChild(dirContainer);
+        }
+
+        if (window.UI_Factory && window.UI_Factory.buildEntityDirectory) {
+            window.UI_Factory.buildEntityDirectory(dir, dirContainerId);
+        }
+    });
   };
 
     // Charts removed, no need to update theme.

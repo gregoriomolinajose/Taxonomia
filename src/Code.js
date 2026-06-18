@@ -80,7 +80,7 @@ function doGet(e) {
     // Default system font pairing with safe generic fallbacks
     whiteLabel = JSON.stringify({ 
       bodyFont: "Poppins, sans-serif", 
-      displayFont: "Playfair Display, serif"
+      displayFont: "Roboto, sans-serif"
     });
   }
   template.WHITE_LABEL_CONFIG = whiteLabel;

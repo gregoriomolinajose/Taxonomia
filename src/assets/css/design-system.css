@@ -73,6 +73,10 @@
   --ion-color-tertiary-rgb: 28, 168, 247;
   --ion-color-tertiary-contrast: var(--color-text-invert);
 
+  --ion-color-accent: #FFCE00;
+  --ion-color-accent-rgb: 255, 206, 0;
+  --ion-color-accent-contrast: #000000;
+
   --ion-background-color: var(--color-bg-body);
   --ion-background-color-rgb: 255, 255, 255;
   --ion-card-background: var(--color-bg-0);
