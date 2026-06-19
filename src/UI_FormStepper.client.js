@@ -654,6 +654,13 @@ window.UI_FormStepper = class UI_FormStepper {
     }
 
     destroy() {
+        console.warn("[Stepper Debug] destroy() CALLED! Eliminando UI_FormStepper y su contenedor del DOM...");
+        console.trace("[Stepper Debug] Trace de la llamada a destroy()");
+        if (this.unsubGraph) {
+            this.unsubGraph();
+            this.unsubGraph = null;
+        }
+        
         // Desuscribir explícitamente para evitar memory leaks reportados por Quality Review
         if (this.cleanupRef && typeof this.cleanupRef === 'function') {
             this.cleanupRef();

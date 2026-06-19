@@ -548,14 +548,18 @@ window.UI_FormSubmitter = class UI_FormSubmitter {
                 window.FormEngine_Resolvers.invalidateCache();
             }
         }
+        
+        const isTaxonomiaContext = (this.modal && this.modal.dataset && this.modal.dataset.taxonomiaContext);
+
+        console.warn(`[FormSubmitter] _performSuccessCleanup para ${this.entityName}. wasSilent: ${wasSilent}, isTaxonomiaContext: ${isTaxonomiaContext}, depth: ${window.DrawerStackController ? window.DrawerStackController.getDepth() : 'N/A'}`);
         // Cerramos el Modal si no estamos en auto-guardado silencioso
-        if (window._closeTopModal && !wasSilent) {
+        if (isTaxonomiaContext && !wasSilent && window._closeTopModal) {
             window._closeTopModal();
         }
 
         // Enrutamiento post-Guardado Inmediato
-        // [BugFix] M/L: Si el contexto es Taxonomia (config.taxonomiaContext), NO redirigir a DataView para no destruir el Wizard (Pantalla Blanca)
-        if (!isInlineRendered && !wasSilent && !this.config.taxonomiaContext && (!window.DrawerStackController || window.DrawerStackController.getDepth() === 0)) {
+        // [BugFix] M/L: Si el contexto es Taxonomia, NO redirigir a DataView para no destruir el Wizard (Pantalla Blanca)
+        if (!isInlineRendered && !wasSilent && !isTaxonomiaContext && (!window.DrawerStackController || window.DrawerStackController.getDepth() === 0)) {
             if (window.AppEventBus) {
                 window.AppEventBus.publish('NAV::CHANGE', {viewType: 'dataview', entityKey: this.entityName});
             } else if (window.onSaveSuccessCallback) {

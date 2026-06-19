@@ -371,6 +371,15 @@
            El toolbar (#dv-toolbar-zone) NUNCA se toca aquí — preserva el foco del input.
         ───────────────────────────────────────────── */
         function _rerenderData() {
+            // [BugFix] Bloquear re-renderizado global si DrawerStackController está cerrando un drawer.
+            // Esto previene que se limpie 'dv-data-zone' mientras el DOM transiciona (Pantalla Blanca).
+            if (window.DrawerStackController && window.DrawerStackController._isClosing) {
+                console.warn("[DataView_UI] _rerenderData() BLOQUEADO porque un Drawer se está cerrando (_isClosing). Previniendo colisión de DOM.");
+                // Programar reintento tras finalizar la animación del drawer (350ms)
+                setTimeout(_rerenderData, 400);
+                return;
+            }
+
             const dataZone = document.getElementById('dv-data-zone');
             if (!dataZone) return;
             window.DOM.clear(dataZone);

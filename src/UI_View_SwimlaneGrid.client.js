@@ -84,6 +84,18 @@ window.UI_View_SwimlaneGrid = {
     
     refresh: function() {
         console.log("[Canvas Debug] refresh() CALLED");
+        
+        // [BugFix] Evitar colisión de DOM/CSSOM si un Drawer se está cerrando
+        if (window.DrawerStackController && window.DrawerStackController._isClosing) {
+            console.warn("[Canvas Debug] refresh() pospuesto porque un Drawer se está cerrando (_isClosing).");
+            if (this._refreshTimeout) clearTimeout(this._refreshTimeout);
+            this._refreshTimeout = setTimeout(() => {
+                console.warn("[Canvas Debug] TIMEOUT FIRED! Evaluando refresh() nuevamente...");
+                this.refresh();
+            }, 350);
+            return;
+        }
+
         const rootContainer = this.container.querySelector('#tax-canvas-root');
         if (!rootContainer) {
             console.warn("[Canvas Debug] rootContainer NO ENCONTRADO en this.container");
@@ -1266,10 +1278,7 @@ window.UI_View_SwimlaneGrid = {
 
                 if (recordData && typeof window.renderForm === 'function') {
                     window.renderForm(entityName, recordData, (res) => {
-                        const root = document.querySelector('tax-swimlane-grid');
-                        if (root && root.refresh) root.refresh();
-                        else if (root && root._internalRender) root._internalRender();
-                        else window.location.reload();
+                        this.refresh();
                     }, { taxonomiaContext: this.taxonomiaId }).then(() => {
                         if (window.FormEngine_Hydrator) {
                             const container = window.currentFormDrawer || document.getElementById('app-container');

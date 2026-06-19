@@ -111,7 +111,11 @@
                         
                         if (stack.length === 0) {
                             const root = getRootContainer();
-                            root.classList.remove('active');
+                            // S55.2 BugFix: Do not hide drawer-root-container if a fullscreen wizard is currently using it
+                            const hasFullscreenWizard = root.querySelector('.fullscreen-wizard');
+                            if (!hasFullscreenWizard) {
+                                root.classList.remove('active');
+                            }
                             const backdrop = document.getElementById('drawer-backdrop');
                             if(backdrop) backdrop.classList.remove('active');
                         }
@@ -144,7 +148,10 @@
                 }
                 global.currentFormDrawer = null;
                 const root = getRootContainer();
-                root.classList.remove('active');
+                const hasFullscreenWizard = root.querySelector('.fullscreen-wizard');
+                if (!hasFullscreenWizard) {
+                    root.classList.remove('active');
+                }
                 if (window.AppEventBus) window.AppEventBus.publish('DRAWER::DEPTH_CHANGED', 0);
                 document.body.classList.toggle('drawer-max-depth', false);
                 document.body.classList.toggle('drawer-open', false);
