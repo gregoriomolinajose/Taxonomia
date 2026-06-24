@@ -36,6 +36,20 @@
 
 
         global.renderForm = async function (entityName, data = null, injectedCallback = null, config = {}) {
+            // S49.2: Redireccionar Taxonomía al Wizard Fullscreen si no estamos ya dentro del wizard
+            if (entityName === 'Taxonomia' && (!config || !config.bypassWizard) && (!config.customContainer)) {
+                if (window.AppEventBus) {
+                    let navPayload = { viewType: 'wizard' };
+                    if (data) {
+                        const targetPkField = window.Schema_Utils ? window.Schema_Utils.getPrimaryKey(entityName) : 'id_taxonomia';
+                        const id = data[targetPkField] || data['id_registro'];
+                        if (id) navPayload.recordId = id;
+                    }
+                    window.AppEventBus.publish('NAV::CHANGE', navPayload);
+                    return false;
+                }
+            }
+
             // S11.3: EventBus de Alcance Léxico Local (Lifecycle atado a Instancia UI para GC automático)
             const LocalEventBus = {
                 listeners: {},
@@ -901,7 +915,17 @@
             
             if (!entityName) {
                 console.error("[FormEngine] Error: Entidad objetivo no identificada.");
+                global._isRenderingForm = false;
                 return;
+            }
+
+            // S49.2: Redireccionar edición de Taxonomía al Wizard Fullscreen
+            if (entityName === 'Taxonomia' && (!overrideOptions || !overrideOptions.bypassWizard)) {
+                if (window.AppEventBus) {
+                    window.AppEventBus.publish('NAV::CHANGE', {viewType: 'wizard', recordId: id});
+                    global._isRenderingForm = false;
+                    return;
+                }
             }
 
             const meta = window.APP_SCHEMAS[entityName];

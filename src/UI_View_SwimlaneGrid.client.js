@@ -6,9 +6,10 @@
  */
 
 window.UI_View_SwimlaneGrid = {
-    render: function(containerElement, taxonomiaId) {
+    render: function(containerElement, taxonomiaId, viewMode = 'COMPLETO') {
         this.container = containerElement;
         this.taxonomiaId = taxonomiaId;
+        this.viewMode = viewMode;
         
         // Setup initial UI
         this._bindEvents();
@@ -444,13 +445,155 @@ window.UI_View_SwimlaneGrid = {
 
                         const vsChildrenWrapper = document.createElement('div');
                         vsChildrenWrapper.style.display = 'flex';
-                        vsChildrenWrapper.style.flexDirection = 'row';
+                        vsChildrenWrapper.style.flexDirection = 'column';
                         vsChildrenWrapper.style.gap = '24px';
                         vsChildrenWrapper.style.marginTop = '16px';
                         vsChildrenWrapper.style.flexWrap = 'nowrap';
-                        vsChildrenWrapper.style.alignItems = 'flex-start';
+                        vsChildrenWrapper.style.alignItems = 'stretch';
+                        vsChildrenWrapper.style.minWidth = 'max-content';
 
-                        // Nivel 4a: Dominios (Paralelo a Grupo_Productos)
+                        // Nivel 4a: Grupos de Productos
+
+                        const grupoEdges = contextEdges.filter(e => 
+                            e.tipo_relacion === 'VALUE_STREAM_GRUPO_PRODUCTO' && 
+                            String(e.id_nodo_padre).trim() === String(vsId).trim()
+                        );
+
+                        if (grupoEdges.length > 0) {
+                            const gpContainer = document.createElement('div');
+                            gpContainer.className = 'tax-swimlane-grupo-productos-wrapper';
+                            gpContainer.style.display = 'flex';
+                            gpContainer.style.flexDirection = 'column';
+                            gpContainer.style.flex = '1 0 auto'; // Grow to fill but don't shrink below content
+                            gpContainer.style.padding = '12px';
+                            gpContainer.style.background = 'rgba(11, 20, 58, 0.05)';
+                            gpContainer.style.border = '1px solid rgba(11, 20, 58, 0.2)';
+                            gpContainer.style.borderRadius = '8px';
+                            gpContainer.style.minWidth = 'max-content';
+
+                            const gpLabel = document.createElement('div');
+                            gpLabel.innerText = 'Grupos de Producto:';
+                            gpLabel.style.fontSize = '0.75rem';
+                            gpLabel.style.textTransform = 'uppercase';
+                            gpLabel.style.fontWeight = 'bold';
+                            gpLabel.style.marginBottom = '12px';
+                            gpLabel.style.color = 'rgba(11, 20, 58, 1)'; // Match the dark blue color
+                            gpContainer.appendChild(gpLabel);
+
+                            const gpItemsFlex = document.createElement('div');
+                            gpItemsFlex.className = 'tax-swimlane-grupo-productos';
+                            gpItemsFlex.style.display = 'flex';
+                            gpItemsFlex.style.flexDirection = 'row';
+                            gpItemsFlex.style.gap = '16px';
+                            gpItemsFlex.style.flexWrap = 'nowrap';
+                            gpItemsFlex.style.overflow = 'visible'; // allow canvas to grow instead of inner scroll
+                            gpItemsFlex.style.paddingBottom = '8px';
+
+                            grupoEdges.forEach(gEdge => {
+                                const gpNodeId = gEdge.id_nodo_hijo;
+                                const gpWrapper = document.createElement('div');
+                                gpWrapper.style.display = 'flex';
+                                gpWrapper.style.flexDirection = 'column';
+                                gpWrapper.style.gap = '8px';
+                                gpWrapper.style.minWidth = '320px';
+                                gpWrapper.style.flex = '1 1 0%'; // Grow and shrink equally based on available space
+
+                                gpWrapper.appendChild(this._createNodeEl(gpNodeId, 'Grupo_Productos', 'Añadir Equipo'));
+
+                                // Nivel 5: Equipos (Productos)
+                                const equipoEdges = contextEdges.filter(e => 
+                                    e.tipo_relacion === 'GRUPO_PRODUCTO_PRODUCTO' && 
+                                    String(e.id_nodo_padre).trim() === String(gpNodeId).trim()
+                                );
+
+                                if (equipoEdges.length > 0) {
+                                    const toggleId = 'col-prod-' + String(gpNodeId).replace(/[^a-zA-Z0-9]/g, '');
+                                    
+                                    // Resolver nombres para el resumen
+                                    const records = window.UI_FormUtils && window.UI_FormUtils.fetchContextualData 
+                                        ? window.UI_FormUtils.fetchContextualData('Producto', this.taxonomiaId)
+                                        : (window.DataStore ? window.DataStore.get('Producto') || [] : []);
+                                    const pkField = window.Schema_Utils ? window.Schema_Utils.getPrimaryKey('Producto') : 'id';
+                                    const titleField = window.APP_SCHEMAS && window.APP_SCHEMAS['Producto'] && window.APP_SCHEMAS['Producto'].metadata ? window.APP_SCHEMAS['Producto'].metadata.titleField : 'nombre';
+                                    
+                                    const productNames = equipoEdges.map(eqEdge => {
+                                        const r = records.find(rec => String(rec[pkField]) === String(eqEdge.id_nodo_hijo));
+                                        return r && r[titleField] ? r[titleField] : eqEdge.id_nodo_hijo;
+                                    }).join(', ');
+
+                                    const toggleContainer = document.createElement('div');
+                                    toggleContainer.style.width = '100%';
+                                    toggleContainer.innerHTML = `
+                                        <div onclick="const e = document.getElementById('${toggleId}'); const isH = e.style.display === 'none'; e.style.display = isH ? 'flex' : 'none'; this.querySelector('ion-icon').name = isH ? 'chevron-up-outline' : 'chevron-down-outline'; this.querySelector('.prod-summary').style.display = isH ? 'none' : '-webkit-box'; event.stopPropagation();" 
+                                             style="cursor: pointer; display: flex; flex-direction: column; gap: 6px; padding: 10px; background: rgba(0,0,0,0.03); border-radius: 6px; border: 1px solid rgba(0,0,0,0.08); margin-left: 20px; width: calc(100% - 20px); margin-top: 8px;">
+                                            <div style="display: flex; align-items: center; justify-content: space-between; width: 100%; font-size: 0.75rem; color: var(--ion-color-medium); font-weight: 600;">
+                                                <span>Ver Productos (${equipoEdges.length})</span>
+                                                <ion-icon name="chevron-down-outline" style="font-size: 1.1rem;"></ion-icon>
+                                            </div>
+                                            <div class="prod-summary" style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-size: 0.7rem; color: var(--ion-color-step-600, #666); font-weight: 500; line-height: 1.3;">
+                                                ${productNames}
+                                            </div>
+                                        </div>
+                                    `;
+                                    gpWrapper.appendChild(toggleContainer);
+
+                                    const eqContainer = document.createElement('div');
+                                    eqContainer.id = toggleId;
+                                    eqContainer.className = 'tax-swimlane-productos';
+                                    eqContainer.style.display = 'none'; // Iniciar colapsado
+                                    eqContainer.style.flexDirection = 'column';
+                                    eqContainer.style.gap = '8px';
+                                    eqContainer.style.marginLeft = '20px';
+                                    eqContainer.style.marginTop = '8px';
+
+                                    equipoEdges.forEach(eqEdge => {
+                                        eqContainer.appendChild(this._createNodeEl(eqEdge.id_nodo_hijo, 'Producto', 'Ver Producto'));
+                                    });
+                                    gpWrapper.appendChild(eqContainer);
+                                } else {
+                                    // Empty State Onboarding para Productos
+                                    const emptyState = document.createElement('div');
+                                    emptyState.style.cssText = 'position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 1.5rem 1rem; margin-top: 8px; margin-left: 20px; width: calc(100% - 20px); border: 2px dashed var(--ion-color-step-300, #ccc); border-radius: 8px; background: rgba(0,0,0,0.02); overflow: hidden;';
+                                    
+                                    emptyState.innerHTML = `
+                                        <div style="width: 80px; height: 45px; border: 2px dashed var(--ion-color-step-300, #ccc); border-radius: 8px; margin-bottom: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; background: rgba(0,0,0,0.02);">
+                                            <ion-icon name="cube-outline" style="font-size: 24px; color: var(--ion-color-step-400, #aaa); margin-bottom: 4px;"></ion-icon>
+                                            <div style="width: 40%; height: 4px; background: var(--ion-color-step-200, #ddd); border-radius: 2px;"></div>
+                                        </div>
+                                        
+                                        <h3 style="color: var(--ion-color-dark); margin: 0 0 4px 0; font-weight: 600; font-size: 0.9rem; letter-spacing: -0.01em; text-align: center;">Sin Productos</h3>
+                                        <p style="color: var(--ion-color-medium, #666); text-align: center; max-width: 180px; margin: 0 0 12px 0; font-size: 0.8rem; line-height: 1.3;">
+                                            Vincula un nuevo registro.
+                                        </p>
+                                    `;
+                                    const btnAdd = document.createElement('button');
+                                    btnAdd.className = 'tax-add-btn';
+                                    btnAdd.style.position = 'relative';
+                                    btnAdd.style.right = 'auto';
+                                    btnAdd.style.top = 'auto';
+                                    btnAdd.style.transform = 'none';
+                                    btnAdd.style.margin = '0 auto';
+                                    btnAdd.style.backgroundColor = 'var(--ion-color-primary, #3880ff)';
+                                    btnAdd.style.color = '#ffffff';
+                                    btnAdd.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)';
+                                    btnAdd.title = 'Añadir Producto';
+                                    btnAdd.innerHTML = '+';
+                                    btnAdd.onclick = (e) => {
+                                        e.stopPropagation();
+                                        this._handleNodeAdd(gpNodeId, 'Grupo_Productos', e);
+                                    };
+                                    emptyState.appendChild(btnAdd);
+                                    
+                                    gpWrapper.appendChild(emptyState);
+                                }
+
+                                gpItemsFlex.appendChild(gpWrapper);
+                            });
+                            gpContainer.appendChild(gpItemsFlex);
+                            vsChildrenWrapper.appendChild(gpContainer);
+                        }
+                        // Nivel 4b: Dominios
+
                         const dominioEdges = contextEdges.filter(e => 
                             e.tipo_relacion === 'VALUE_STREAM_DOMINIO' && 
                             String(e.id_nodo_padre).trim() === String(vsId).trim()
@@ -466,6 +609,7 @@ window.UI_View_SwimlaneGrid = {
                             domContainer.style.background = 'rgba(45, 211, 111, 0.05)';
                             domContainer.style.border = '1px solid rgba(45, 211, 111, 0.2)';
                             domContainer.style.borderRadius = '8px';
+                            domContainer.style.minWidth = 'max-content';
                             
                             const domLabel = document.createElement('div');
                             domLabel.innerText = 'Dominios:';
@@ -492,68 +636,68 @@ window.UI_View_SwimlaneGrid = {
                                 domWrapper.style.display = 'flex';
                                 domWrapper.style.flexDirection = 'column';
                                 domWrapper.style.gap = '8px';
-                                domWrapper.style.width = '320px';
                                 domWrapper.style.minWidth = '320px';
-                                domWrapper.style.maxWidth = '320px';
-                                domWrapper.style.flex = '0 0 auto'; // Don't shrink or grow based on content
+                                domWrapper.style.flex = '1 1 0%'; // Grow and shrink equally based on available space
                                 domWrapper.style.marginBottom = '8px';
 
                                 domWrapper.appendChild(this._createNodeEl(domNodeId, 'Dominio', 'Añadir Equipo'));
 
                                 // Nivel 5: Equipos de Dominio
-                                const equipoEdges = contextEdges.filter(e => 
-                                    e.tipo_relacion === 'DOMINIO_EQUIPO' && 
-                                    String(e.id_nodo_padre).trim() === String(domNodeId).trim()
-                                );
+                                if (this.viewMode !== 'ESTRUCTURA') {
+                                    const equipoEdges = contextEdges.filter(e => 
+                                        e.tipo_relacion === 'DOMINIO_EQUIPO' && 
+                                        String(e.id_nodo_padre).trim() === String(domNodeId).trim()
+                                    );
 
-                                if (equipoEdges.length > 0) {
-                                    const eqContainer = document.createElement('div');
-                                    eqContainer.className = 'tax-swimlane-equipos';
-                                    eqContainer.style.display = 'flex';
-                                    eqContainer.style.flexDirection = 'column';
-                                    eqContainer.style.gap = '8px';
-                                    eqContainer.style.marginLeft = '20px';
+                                    if (equipoEdges.length > 0) {
+                                        const eqContainer = document.createElement('div');
+                                        eqContainer.className = 'tax-swimlane-equipos';
+                                        eqContainer.style.display = 'flex';
+                                        eqContainer.style.flexDirection = 'column';
+                                        eqContainer.style.gap = '8px';
+                                        eqContainer.style.marginLeft = '20px';
 
-                                    equipoEdges.forEach(eqEdge => {
-                                        eqContainer.appendChild(this._createNodeEl(eqEdge.id_nodo_hijo, 'Equipo', 'Ver Equipo'));
-                                    });
-                                    domWrapper.appendChild(eqContainer);
-                                } else {
-                                    // Empty State Onboarding para Equipos
-                                    const emptyState = document.createElement('div');
-                                    emptyState.style.cssText = 'position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 1.5rem 1rem; margin-top: 8px; margin-left: 20px; width: calc(100% - 20px); border: 2px dashed var(--ion-color-step-300, #ccc); border-radius: 8px; background: rgba(0,0,0,0.02); overflow: hidden;';
-                                    
-                                    emptyState.innerHTML = `
-                                        <div style="width: 80px; height: 45px; border: 2px dashed var(--ion-color-step-300, #ccc); border-radius: 8px; margin-bottom: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; background: rgba(0,0,0,0.02);">
-                                            <ion-icon name="people-outline" style="font-size: 24px; color: var(--ion-color-step-400, #aaa); margin-bottom: 4px;"></ion-icon>
-                                            <div style="width: 40%; height: 4px; background: var(--ion-color-step-200, #ddd); border-radius: 2px;"></div>
-                                        </div>
+                                        equipoEdges.forEach(eqEdge => {
+                                            eqContainer.appendChild(this._createNodeEl(eqEdge.id_nodo_hijo, 'Equipo', 'Ver Equipo'));
+                                        });
+                                        domWrapper.appendChild(eqContainer);
+                                    } else {
+                                        // Empty State Onboarding para Equipos
+                                        const emptyState = document.createElement('div');
+                                        emptyState.style.cssText = 'position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 1.5rem 1rem; margin-top: 8px; margin-left: 20px; width: calc(100% - 20px); border: 2px dashed var(--ion-color-step-300, #ccc); border-radius: 8px; background: rgba(0,0,0,0.02); overflow: hidden;';
                                         
-                                        <h3 style="color: var(--ion-color-dark); margin: 0 0 4px 0; font-weight: 600; font-size: 0.9rem; letter-spacing: -0.01em; text-align: center;">Sin Equipos</h3>
-                                        <p style="color: var(--ion-color-medium, #666); text-align: center; max-width: 180px; margin: 0 0 12px 0; font-size: 0.8rem; line-height: 1.3;">
-                                            Vincula un nuevo registro.
-                                        </p>
-                                    `;
-                                    
-                                    const btnAdd = document.createElement('button');
-                                    btnAdd.className = 'tax-add-btn';
-                                    btnAdd.style.position = 'relative';
-                                    btnAdd.style.right = 'auto';
-                                    btnAdd.style.top = 'auto';
-                                    btnAdd.style.transform = 'none';
-                                    btnAdd.style.margin = '0 auto';
-                                    btnAdd.style.backgroundColor = 'var(--ion-color-primary, #3880ff)';
-                                    btnAdd.style.color = '#ffffff';
-                                    btnAdd.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)';
-                                    btnAdd.title = 'Añadir Equipo';
-                                    btnAdd.innerHTML = '+';
-                                    btnAdd.onclick = (e) => {
-                                        e.stopPropagation();
-                                        this._handleNodeAdd(domNodeId, 'Dominio', e);
-                                    };
-                                    emptyState.appendChild(btnAdd);
-                                    
-                                    domWrapper.appendChild(emptyState);
+                                        emptyState.innerHTML = `
+                                            <div style="width: 80px; height: 45px; border: 2px dashed var(--ion-color-step-300, #ccc); border-radius: 8px; margin-bottom: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; background: rgba(0,0,0,0.02);">
+                                                <ion-icon name="people-outline" style="font-size: 24px; color: var(--ion-color-step-400, #aaa); margin-bottom: 4px;"></ion-icon>
+                                                <div style="width: 40%; height: 4px; background: var(--ion-color-step-200, #ddd); border-radius: 2px;"></div>
+                                            </div>
+                                            
+                                            <h3 style="color: var(--ion-color-dark); margin: 0 0 4px 0; font-weight: 600; font-size: 0.9rem; letter-spacing: -0.01em; text-align: center;">Sin Equipos</h3>
+                                            <p style="color: var(--ion-color-medium, #666); text-align: center; max-width: 180px; margin: 0 0 12px 0; font-size: 0.8rem; line-height: 1.3;">
+                                                Vincula un nuevo registro.
+                                            </p>
+                                        `;
+                                        
+                                        const btnAdd = document.createElement('button');
+                                        btnAdd.className = 'tax-add-btn';
+                                        btnAdd.style.position = 'relative';
+                                        btnAdd.style.right = 'auto';
+                                        btnAdd.style.top = 'auto';
+                                        btnAdd.style.transform = 'none';
+                                        btnAdd.style.margin = '0 auto';
+                                        btnAdd.style.backgroundColor = 'var(--ion-color-primary, #3880ff)';
+                                        btnAdd.style.color = '#ffffff';
+                                        btnAdd.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)';
+                                        btnAdd.title = 'Añadir Equipo';
+                                        btnAdd.innerHTML = '+';
+                                        btnAdd.onclick = (e) => {
+                                            e.stopPropagation();
+                                            this._handleNodeAdd(domNodeId, 'Dominio', e);
+                                        };
+                                        emptyState.appendChild(btnAdd);
+                                        
+                                        domWrapper.appendChild(emptyState);
+                                    }
                                 }
                                 domItemsFlex.appendChild(domWrapper);
                             });
@@ -561,114 +705,7 @@ window.UI_View_SwimlaneGrid = {
                             vsChildrenWrapper.appendChild(domContainer);
                         }
 
-                        // Nivel 4b: Grupos de Productos
-                        const grupoEdges = contextEdges.filter(e => 
-                            e.tipo_relacion === 'VALUE_STREAM_GRUPO_PRODUCTO' && 
-                            String(e.id_nodo_padre).trim() === String(vsId).trim()
-                        );
-
-                        if (grupoEdges.length > 0) {
-                            const gpContainer = document.createElement('div');
-                            gpContainer.className = 'tax-swimlane-grupo-productos-wrapper';
-                            gpContainer.style.display = 'flex';
-                            gpContainer.style.flexDirection = 'column';
-                            gpContainer.style.flex = '1 0 auto'; // Grow to fill but don't shrink below content
-                            gpContainer.style.padding = '12px';
-                            gpContainer.style.background = 'rgba(11, 20, 58, 0.05)';
-                            gpContainer.style.border = '1px solid rgba(11, 20, 58, 0.2)';
-                            gpContainer.style.borderRadius = '8px';
-
-                            const gpLabel = document.createElement('div');
-                            gpLabel.innerText = 'Grupos de Producto:';
-                            gpLabel.style.fontSize = '0.75rem';
-                            gpLabel.style.textTransform = 'uppercase';
-                            gpLabel.style.fontWeight = 'bold';
-                            gpLabel.style.marginBottom = '12px';
-                            gpLabel.style.color = 'rgba(11, 20, 58, 1)'; // Match the dark blue color
-                            gpContainer.appendChild(gpLabel);
-
-                            const gpItemsFlex = document.createElement('div');
-                            gpItemsFlex.className = 'tax-swimlane-grupo-productos';
-                            gpItemsFlex.style.display = 'flex';
-                            gpItemsFlex.style.flexDirection = 'row';
-                            gpItemsFlex.style.gap = '16px';
-                            gpItemsFlex.style.flexWrap = 'nowrap';
-                            gpItemsFlex.style.overflow = 'visible'; // allow canvas to grow instead of inner scroll
-                            gpItemsFlex.style.paddingBottom = '8px';
-
-                            grupoEdges.forEach(gEdge => {
-                                const gpNodeId = gEdge.id_nodo_hijo;
-                                const gpWrapper = document.createElement('div');
-                                gpWrapper.style.display = 'flex';
-                                gpWrapper.style.flexDirection = 'column';
-                                gpWrapper.style.gap = '8px';
-                                gpWrapper.style.width = '320px';
-                                gpWrapper.style.minWidth = '320px';
-                                gpWrapper.style.maxWidth = '320px';
-                                gpWrapper.style.flex = '0 0 auto'; // Don't shrink or grow based on content
-
-                                gpWrapper.appendChild(this._createNodeEl(gpNodeId, 'Grupo_Productos', 'Añadir Equipo'));
-
-                                // Nivel 5: Equipos
-                                const equipoEdges = contextEdges.filter(e => 
-                                    e.tipo_relacion === 'GRUPO_PRODUCTO_EQUIPO' && 
-                                    String(e.id_nodo_padre).trim() === String(gpNodeId).trim()
-                                );
-
-                                if (equipoEdges.length > 0) {
-                                    const eqContainer = document.createElement('div');
-                                    eqContainer.className = 'tax-swimlane-equipos';
-                                    eqContainer.style.display = 'flex';
-                                    eqContainer.style.flexDirection = 'column';
-                                    eqContainer.style.gap = '8px';
-                                    eqContainer.style.marginLeft = '20px';
-
-                                    equipoEdges.forEach(eqEdge => {
-                                        eqContainer.appendChild(this._createNodeEl(eqEdge.id_nodo_hijo, 'Equipo', 'Ver Equipo'));
-                                    });
-                                    gpWrapper.appendChild(eqContainer);
-                                } else {
-                                    // Empty State Onboarding para Equipos
-                                    const emptyState = document.createElement('div');
-                                    emptyState.style.cssText = 'position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 1.5rem 1rem; margin-top: 8px; margin-left: 20px; width: calc(100% - 20px); border: 2px dashed var(--ion-color-step-300, #ccc); border-radius: 8px; background: rgba(0,0,0,0.02); overflow: hidden;';
-                                    
-                                    emptyState.innerHTML = `
-                                        <div style="width: 80px; height: 45px; border: 2px dashed var(--ion-color-step-300, #ccc); border-radius: 8px; margin-bottom: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; background: rgba(0,0,0,0.02);">
-                                            <ion-icon name="people-outline" style="font-size: 24px; color: var(--ion-color-step-400, #aaa); margin-bottom: 4px;"></ion-icon>
-                                            <div style="width: 40%; height: 4px; background: var(--ion-color-step-200, #ddd); border-radius: 2px;"></div>
-                                        </div>
-                                        
-                                        <h3 style="color: var(--ion-color-dark); margin: 0 0 4px 0; font-weight: 600; font-size: 0.9rem; letter-spacing: -0.01em; text-align: center;">Sin Equipos</h3>
-                                        <p style="color: var(--ion-color-medium, #666); text-align: center; max-width: 180px; margin: 0 0 12px 0; font-size: 0.8rem; line-height: 1.3;">
-                                            Vincula un nuevo registro.
-                                        </p>
-                                    `;
-                                    const btnAdd = document.createElement('button');
-                                    btnAdd.className = 'tax-add-btn';
-                                    btnAdd.style.position = 'relative';
-                                    btnAdd.style.right = 'auto';
-                                    btnAdd.style.top = 'auto';
-                                    btnAdd.style.transform = 'none';
-                                    btnAdd.style.margin = '0 auto';
-                                    btnAdd.style.backgroundColor = 'var(--ion-color-primary, #3880ff)';
-                                    btnAdd.style.color = '#ffffff';
-                                    btnAdd.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)';
-                                    btnAdd.title = 'Añadir Equipo';
-                                    btnAdd.innerHTML = '+';
-                                    btnAdd.onclick = (e) => {
-                                        e.stopPropagation();
-                                        this._handleNodeAdd(gpNodeId, 'Grupo_Productos', e);
-                                    };
-                                    emptyState.appendChild(btnAdd);
-                                    
-                                    gpWrapper.appendChild(emptyState);
-                                }
-
-                                gpItemsFlex.appendChild(gpWrapper);
-                            });
-                            gpContainer.appendChild(gpItemsFlex);
-                            vsChildrenWrapper.appendChild(gpContainer);
-                        } else if (dominioEdges.length === 0) {
+                        if (grupoEdges.length === 0 && dominioEdges.length === 0) {
                             // S53: Empty State Onboarding Dual (Grupo de Productos / Dominios)
                             // El contenedor superior (vsChildrenWrapper) los pondrá lado a lado gracias a flex-direction: row
                             vsChildrenWrapper.style.width = '100%';
@@ -1043,7 +1080,9 @@ window.UI_View_SwimlaneGrid = {
                 const domLabel = domCount === 1 ? 'Dominio' : 'Dominios';
                 childCountText = `<span style="opacity: 0.5; font-size: 0.65rem; margin: 0 4px;">•</span><span style="text-transform: none; font-weight: 700; font-size: 0.65rem; opacity: 0.85;">${gpCount} ${gpLabel}</span><span style="opacity: 0.5; font-size: 0.65rem; margin: 0 4px;">•</span><span style="text-transform: none; font-weight: 700; font-size: 0.65rem; opacity: 0.85;">${domCount} ${domLabel}</span>`;
             } else if (entityName === 'Grupo_Productos') {
-                edgeType = 'GRUPO_PRODUCTO_EQUIPO'; childLabelSingle = 'Equipo'; childLabelPlural = 'Equipos';
+                edgeType = 'GRUPO_PRODUCTO_PRODUCTO'; childLabelSingle = 'Producto'; childLabelPlural = 'Productos';
+            } else if (entityName === 'Producto') {
+                edgeType = null; childLabelSingle = ''; childLabelPlural = '';
             } else if (entityName === 'Dominio') {
                 edgeType = 'DOMINIO_EQUIPO'; childLabelSingle = 'Equipo'; childLabelPlural = 'Equipos';
             } else if (entityName === 'Equipo') {
@@ -1175,17 +1214,17 @@ window.UI_View_SwimlaneGrid = {
                                     </div>
                                 </div>`;
 
-                                if (entityName === 'Equipo') {
-                                    if (isPO) poRoleHtml += chunk;
-                                    else { collapsibleRolesHtml += chunk; collapsibleCount++; }
+                                if (entityName === 'Equipo' && isPO) {
+                                    poRoleHtml += chunk;
                                 } else {
-                                    rolesHtml += chunk;
+                                    collapsibleRolesHtml += chunk;
+                                    collapsibleCount++;
                                 }
                             }
                         });
                     } else if (f.name !== 'personas_asignadas') {
                         let chunk = `<div class="tax-role-empty" style="margin-top: 6px; padding: 6px 10px; background: rgba(0,0,0,0.08); border: 1px dashed rgba(255,255,255,0.3); border-radius: 6px; display: flex; align-items: center; justify-content: flex-start; gap: 10px; width: 100%; box-sizing: border-box; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='rgba(0,0,0,0.15)'" onmouseout="this.style.background='rgba(0,0,0,0.08)'" title="Asignar ${f.label}">
-                            <div style="width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.1);">
+                            <div style="width: 32px; height: 32px; min-width: 32px; min-height: 32px; flex-shrink: 0; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.1);">
                                 <ion-icon name="add" style="font-size: 1.4rem; color: rgba(255,255,255,0.7);"></ion-icon>
                             </div>
                             <div style="display: flex; flex-direction: column; overflow: hidden; width: 100%;">
@@ -1195,37 +1234,38 @@ window.UI_View_SwimlaneGrid = {
                             </div>
                         </div>`;
                         
-                        if (entityName === 'Equipo') {
-                            if (isPO) poRoleHtml += chunk;
-                            else collapsibleRolesHtml += chunk;
+                        if (entityName === 'Equipo' && isPO) {
+                            poRoleHtml += chunk;
                         } else {
-                            rolesHtml += chunk;
+                            collapsibleRolesHtml += chunk;
                         }
                     }
                 }
             });
 
-            if (entityName === 'Equipo') {
-                if (poRoleHtml !== '') rolesHtml += poRoleHtml;
-                if (collapsibleRolesHtml !== '') {
-                    const toggleId = 'col-eq-' + String(recordId).replace(/[^a-zA-Z0-9]/g, '');
-                    rolesHtml += `
-                    <div style="margin-top: 8px; width: 100%;">
-                        <div onclick="const e = document.getElementById('${toggleId}'); const isH = e.style.display === 'none'; e.style.display = isH ? 'flex' : 'none'; this.querySelector('ion-icon').name = isH ? 'chevron-up-outline' : 'chevron-down-outline'; event.stopPropagation();" 
-                             style="cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 4px; padding: 6px; background: rgba(0,0,0,0.1); border-radius: 4px; font-size: 0.75rem; color: rgba(255,255,255,0.8); font-weight: 600; border: 1px solid rgba(255,255,255,0.1);">
-                            <span>Ver Integrantes (${collapsibleCount})</span>
-                            <ion-icon name="chevron-down-outline"></ion-icon>
-                        </div>
-                        <div id="${toggleId}" style="display: none; flex-direction: column; gap: 4px; margin-top: 4px; width: 100%;">
-                            ${collapsibleRolesHtml}
-                        </div>
-                    </div>`;
-                }
+            if (poRoleHtml !== '') rolesHtml += poRoleHtml;
+            if (collapsibleRolesHtml !== '') {
+                const toggleId = 'col-eq-' + String(recordId).replace(/[^a-zA-Z0-9]/g, '');
+                rolesHtml += `
+                <div style="margin-top: 8px; width: 100%;">
+                    <div onclick="const e = document.getElementById('${toggleId}'); const isH = e.style.display === 'none'; e.style.display = isH ? 'flex' : 'none'; this.querySelector('ion-icon').name = isH ? 'chevron-up-outline' : 'chevron-down-outline'; event.stopPropagation();" 
+                         style="cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 4px; padding: 6px; background: rgba(0,0,0,0.1); border-radius: 4px; font-size: 0.75rem; color: rgba(255,255,255,0.8); font-weight: 600; border: 1px solid rgba(255,255,255,0.1);">
+                        <span>Ver Integrantes (${collapsibleCount})</span>
+                        <ion-icon name="chevron-down-outline"></ion-icon>
+                    </div>
+                    <div id="${toggleId}" style="display: none; flex-direction: column; gap: 4px; margin-top: 4px; width: 100%;">
+                        ${collapsibleRolesHtml}
+                    </div>
+                </div>`;
             }
 
             if(rolesHtml !== '') {
                 rolesHtml = `<div style="display: flex; flex-direction: column; gap: 4px; margin-top: 12px; width: 100%; border-top: 1px solid rgba(255,255,255,0.15); padding-top: 8px;">${rolesHtml}</div>`;
             }
+        }
+        
+        if (this.viewMode === 'ESTRUCTURA') {
+            rolesHtml = '';
         }
 
         // DOM Interno
@@ -1312,8 +1352,8 @@ window.UI_View_SwimlaneGrid = {
             childEntity = 'Grupo_Productos';
             edgeType = 'VALUE_STREAM_GRUPO_PRODUCTO';
         } else if (parentEntity === 'Grupo_Productos') {
-            childEntity = 'Equipo';
-            edgeType = 'GRUPO_PRODUCTO_EQUIPO';
+            childEntity = 'Producto';
+            edgeType = 'GRUPO_PRODUCTO_PRODUCTO';
         } else if (parentEntity === 'Dominio') {
             childEntity = 'Equipo';
             edgeType = 'DOMINIO_EQUIPO';
@@ -1351,7 +1391,8 @@ window.UI_View_SwimlaneGrid = {
             if (edgeType === 'PORTAFOLIO_VALUE_STREAM') targetSection = 'Value Streams Vinculados';
             if (edgeType === 'VALUE_STREAM_GRUPO_PRODUCTO') targetSection = 'Grupos de Productos';
             if (edgeType === 'VALUE_STREAM_DOMINIO') targetSection = 'Dominios Vinculados';
-            if (edgeType === 'GRUPO_PRODUCTO_EQUIPO' || edgeType === 'DOMINIO_EQUIPO') targetSection = 'Equipos Asignados';
+            if (edgeType === 'GRUPO_PRODUCTO_PRODUCTO') targetSection = 'Productos';
+            if (edgeType === 'DOMINIO_EQUIPO') targetSection = 'Equipos Asignados';
 
             // Se invoca el Drawer Nativo de la entidad padre y se inyecta el ID de Taxonomía
             // para que UI_FormSubmitter asigne el contexto a las nuevas aristas.

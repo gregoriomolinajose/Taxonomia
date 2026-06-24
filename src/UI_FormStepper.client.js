@@ -124,7 +124,7 @@ window.UI_FormStepper = class UI_FormStepper {
             if (depth === 0) {
                 if (this.splitRight && this.splitRight.classList.contains('fullscreen-wizard')) {
                     // S65: Do NOT auto-exit fullscreen if the current step requires it intrinsically.
-                    const fullscreenSteps = ['Arquitectura de Portafolio', 'Organigrama de Producto', 'Organigrama de Tecnología', 'Organigrama de Agilidad', 'Organigrama de Portafolio'];
+                    const fullscreenSteps = ['Arquitectura de Portafolio', 'Asignación de Responsables', 'Organigrama de Producto', 'Organigrama de Tecnología', 'Organigrama de Agilidad', 'Organigrama de Portafolio'];
                     let currentStepTitle = this.steps ? this.steps[this.currentStepIndex] : '';
                     if (fullscreenSteps.includes(currentStepTitle)) {
                         return; // Mantener fullscreen porque el paso actual lo requiere.
@@ -152,7 +152,7 @@ window.UI_FormStepper = class UI_FormStepper {
 
         // S54.5: Reactividad para el lienzo
         const triggerRefresh = () => {
-            if (this._mountedCustomViewer === 'Arquitectura de Portafolio' && typeof window.UI_View_SwimlaneGrid !== 'undefined') {
+            if ((this._mountedCustomViewer === 'Arquitectura de Portafolio' || this._mountedCustomViewer === 'Asignación de Responsables') && typeof window.UI_View_SwimlaneGrid !== 'undefined') {
                 window.UI_View_SwimlaneGrid.refresh();
             }
         };
@@ -449,7 +449,7 @@ window.UI_FormStepper = class UI_FormStepper {
         const layoutColRight = document.getElementById('wizard-col-right');
         
         if ((drawerNode || isFullscreenZone) && this.entityName === 'Taxonomia') {
-            const fullscreenSteps = ['Arquitectura de Portafolio', 'Organigrama de Producto', 'Organigrama de Tecnología', 'Organigrama de Agilidad', 'Organigrama de Portafolio'];
+            const fullscreenSteps = ['Arquitectura de Portafolio', 'Asignación de Responsables', 'Organigrama de Producto', 'Organigrama de Tecnología', 'Organigrama de Agilidad', 'Organigrama de Portafolio'];
             const isFullscreenStep = fullscreenSteps.includes(targetSectionName);
 
             if (isFullscreenStep) {
@@ -587,7 +587,7 @@ window.UI_FormStepper = class UI_FormStepper {
         // The optimistic ID is the primary key assigned by UI_FormSubmitter in step 1
         const taxonomyId = this.cardContent.getAttribute('data-edit-id') || null;
         
-        if (stepName === 'Arquitectura de Portafolio') {
+        if (stepName === 'Arquitectura de Portafolio' || stepName === 'Asignación de Responsables') {
             if (taxonomyId && typeof window.UI_View_SwimlaneGrid !== 'undefined' && typeof window.UI_View_SwimlaneGrid.render === 'function') {
                 this.splitRight.innerHTML = '';
                 
@@ -602,7 +602,8 @@ window.UI_FormStepper = class UI_FormStepper {
                 }
                 
                 // Initialize the canvas
-                window.UI_View_SwimlaneGrid.render(this.splitRight, taxonomyId);
+                const viewMode = (stepName === 'Arquitectura de Portafolio') ? 'ESTRUCTURA' : 'COMPLETO';
+                window.UI_View_SwimlaneGrid.render(this.splitRight, taxonomyId, viewMode);
                 
                 // S58.5 BugFix: El innerHTML = '' eliminó el btnFullscreen. Lo restauramos al final del mount.
                 if (this.btnFullscreen) {

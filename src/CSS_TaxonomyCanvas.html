@@ -10,8 +10,9 @@
     gap: 30px;
     padding: var(--spacing-6);
     background: transparent;
-    width: 100%;
-    min-width: max-content;
+    width: max-content; /* change from 100% to max-content */
+    min-width: 100%; /* Ensure it spans at least the screen */
+    align-items: flex-start; /* Prevent stretching rows to full width by default */
     height: 100%;
     min-height: max-content;
     box-sizing: border-box; /* Prevent padding from adding to 100% height */
@@ -120,6 +121,9 @@
     border-radius: 50%;
     width: 28px;
     height: 28px;
+    min-width: 28px;
+    min-height: 28px;
+    flex-shrink: 0;
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -145,6 +149,7 @@
     flex-direction: column;
     gap: 12px;
     padding: 12px;
+    min-width: 50vw; /* Inicia en la mitad de la pantalla y crece */
     /* Remover background y border para que los nodos floten sobre la cuadrícula del canvas, 
        evitando el desbordamiento de "background blanco" cuando el diagrama crece */
 }
@@ -156,6 +161,7 @@
     flex-wrap: nowrap; /* Prevent wrapping to maintain matrix layout */
     overflow: visible;
     padding-bottom: 8px; /* For scrollbar */
+    min-width: 50vw; /* Inicia en la mitad de la pantalla y crece */
 }
 
 .tax-swimlane-children-vertical {
@@ -163,7 +169,7 @@
     flex-direction: column;
     gap: 12px;
     flex: 1 0 auto; /* Distribuye el espacio entre columnas sin encogerse más allá de sus hijos */
-    min-width: 280px; /* Ancho mínimo para mantener legibilidad */
+    min-width: 50vw; /* Inicia en la mitad de la pantalla y crece */
 }
 
 /* Scrollbars para los swimlanes */
@@ -189,6 +195,7 @@
     gap: 16px;
     flex-wrap: nowrap;
     overflow: visible;
+    min-width: max-content;
 }
 
 /* Grupos de productos apilados verticalmente dentro de Value Stream */

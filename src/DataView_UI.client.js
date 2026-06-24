@@ -328,7 +328,11 @@
             if (window.UI_DataView_Toolbar) {
                 const canCreate = !window.ABAC || window.ABAC.can('create', _state.entityName);
                 const onAddClick = () => {
-                    if (typeof window.renderForm === 'function') window.renderForm(_state.entityName);
+                    if (_state.entityName === 'Taxonomia') {
+                        if (window.AppEventBus) window.AppEventBus.publish('NAV::CHANGE', {viewType: 'wizard'});
+                    } else {
+                        if (typeof window.renderForm === 'function') window.renderForm(_state.entityName);
+                    }
                 };
                 const headerDiv = window.UI_DataView_Toolbar.buildHeader(
                     _state.entityName, 

@@ -359,6 +359,13 @@
             if (f.uiComponent === 'microservice_setup' && typeof window.UI_MicroserviceSetup !== 'undefined') {
                 return window.UI_MicroserviceSetup.render(f, e, d, bus, currentEditId);
             }
+            if (f.uiComponent === 'embedded_dataview' && typeof window.UI_Component_EmbeddedDataView !== 'undefined') {
+                const containerEl = document.createElement('div');
+                containerEl.style.width = '100%';
+                // Async injection is typically handled similarly, but since EmbeddedDataView is synchronous:
+                containerEl.appendChild(window.UI_Component_EmbeddedDataView.build(f, containerEl, d, e, bus, { dataset: { taxonomiaContext: currentEditId } }, {}));
+                return containerEl;
+            }
             const fallback = document.createElement('div');
             fallback.style.padding = '20px';
             fallback.style.color = 'var(--ion-color-medium)';

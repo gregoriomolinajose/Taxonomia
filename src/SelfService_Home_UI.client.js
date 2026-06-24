@@ -119,13 +119,20 @@ window.SelfService_Home_UI = {
         wrapper.className = 'self-service-container';
         wrapper.innerHTML = `
             <canvas id="taxonomy-network-canvas"></canvas>
-            <div class="hero-content">
+            <div class="hero-content" style="margin-bottom: 40px;">
                 <h1 class="premium-title">Taxonomía de Portafolio para Negocios</h1>
                 <p class="premium-subtitle">Descubre el poder del diseñar la taxonomía en tu portafolio. Orquesta portafolios, productos y capacidades en un entornos fluido y enfocado.</p>
                 <ion-button id="btn-start-wizard" class="ios-btn">
                     Diseñar Nueva Taxonomía
                     <ion-icon name="arrow-forward-outline" slot="end"></ion-icon>
                 </ion-button>
+            </div>
+            
+            <div class="taxonomies-grid-container" style="z-index: 1; width: 100%; max-width: 1200px; padding: 20px;">
+                <h2 style="font-size: 1.5rem; color: var(--ion-color-dark); font-weight: 700; margin-bottom: 24px; text-align: left; border-left: 4px solid #2b2161; padding-left: 16px;">Tus Taxonomías</h2>
+                <div id="taxonomies-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 24px;">
+                    <!-- Cards will be injected here -->
+                </div>
             </div>
         `;
 
@@ -137,6 +144,78 @@ window.SelfService_Home_UI = {
             btnStart.addEventListener('click', () => {
                 if (window.AppEventBus) {
                     window.AppEventBus.publish('NAV::CHANGE', {viewType: 'wizard'});
+                }
+            });
+        }
+
+        // Renderizar Taxonomías Existentes
+        const renderTaxonomiesGrid = () => {
+            const taxonomiesGrid = wrapper.querySelector('#taxonomies-grid');
+            if (!taxonomiesGrid || !window.DataStore) return;
+            
+            const taxonomias = window.DataStore.get('Taxonomia') || [];
+            
+            if (taxonomias.length === 0) {
+                taxonomiesGrid.innerHTML = `
+                    <div style="grid-column: 1 / -1; padding: 40px; text-align: center; background: rgba(255,255,255,0.4); backdrop-filter: blur(10px); border-radius: 16px; border: 2px dashed rgba(43, 33, 97, 0.2);">
+                        <ion-icon name="folder-open-outline" style="font-size: 48px; color: #2b2161; margin-bottom: 16px; opacity: 0.5;"></ion-icon>
+                        <h3 style="margin: 0 0 8px 0; color: var(--ion-color-dark); font-weight: 600; font-size: 1.2rem;">No hay taxonomías creadas</h3>
+                        <p style="margin: 0; color: var(--ion-color-medium); font-size: 0.95rem; line-height: 1.5;">Comienza diseñando tu primera taxonomía usando el botón superior.</p>
+                    </div>
+                `;
+            } else {
+                taxonomiesGrid.innerHTML = taxonomias.map(tax => {
+                    const pkField = (window.Schema_Utils && window.Schema_Utils.getPrimaryKey) ? window.Schema_Utils.getPrimaryKey('Taxonomia') : 'id_taxonomia';
+                    const taxId = tax[pkField] || tax.id_registro || tax.id_taxonomia || tax.id;
+                    const name = tax.nombre || taxId;
+                    const desc = tax.descripcion || 'Sin descripción detallada. Haz clic para explorar la estructura de esta taxonomía y visualizar sus componentes.';
+                    return `
+                        <div class="tax-card" data-id="${taxId}" style="background: rgba(255,255,255,0.85); backdrop-filter: blur(12px); border-radius: 20px; padding: 24px; box-shadow: 0 4px 24px rgba(0,0,0,0.06); border: 1px solid rgba(255,255,255,0.4); cursor: pointer; transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease; display: flex; flex-direction: column; gap: 16px; position: relative; overflow: hidden;"
+                             onmouseover="this.style.transform='translateY(-6px) scale(1.02)'; this.style.boxShadow='0 12px 32px rgba(43, 33, 97, 0.15)';"
+                             onmouseout="this.style.transform='translateY(0) scale(1)'; this.style.boxShadow='0 4px 24px rgba(0,0,0,0.06)';">
+                            <div style="position: absolute; top: 0; left: 0; width: 100%; height: 4px; background: linear-gradient(90deg, var(--ion-color-warning-tint, #ffce22), var(--ion-color-warning-shade, #e0ac08));"></div>
+                            <div style="display: flex; align-items: flex-start; justify-content: space-between;">
+                                <div style="width: 52px; height: 52px; border-radius: 14px; background: linear-gradient(135deg, rgba(var(--ion-color-warning-rgb, 255, 174, 67), 0.1), rgba(var(--ion-color-warning-rgb, 255, 174, 67), 0.25)); display: flex; align-items: center; justify-content: center;">
+                                    <ion-icon name="git-network-outline" style="font-size: 28px; color: var(--ion-color-warning-shade, #e0ac08);"></ion-icon>
+                                </div>
+                                <div style="width: 32px; height: 32px; border-radius: 50%; background: rgba(0,0,0,0.04); display: flex; align-items: center; justify-content: center;">
+                                    <ion-icon name="arrow-forward-outline" style="color: var(--ion-color-medium);"></ion-icon>
+                                </div>
+                            </div>
+                            <div>
+                                <h3 style="margin: 0 0 6px 0; font-size: 1.25rem; font-weight: 800; color: #1a1a1a; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: var(--sys-font-family-display), sans-serif;">${name}</h3>
+                                <p style="margin: 0; font-size: 0.9rem; color: #5f6368; line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">${desc}</p>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+                taxonomiesGrid.querySelectorAll('.tax-card').forEach(card => {
+                    card.addEventListener('click', () => {
+                        const taxId = card.getAttribute('data-id');
+                        if (window.AppEventBus) {
+                            window.AppEventBus.publish('NAV::CHANGE', {viewType: 'wizard', recordId: taxId});
+                        }
+                    });
+                });
+            }
+        };
+
+        // Render inicial (puede estar vacío si aún no cargan datos)
+        renderTaxonomiesGrid();
+
+        // Suscribirse a cambios en DataStore
+        if (window.AppEventBus) {
+            // Desuscribir el anterior si existe
+            if (window.SelfService_Home_UI._dataSub) {
+                window.AppEventBus.unsubscribe(window.SelfService_Home_UI._dataSub);
+            }
+            window.SelfService_Home_UI._dataSub = window.AppEventBus.subscribe('DATASTORE::CHANGED', (e) => {
+                if (!e || !e.entityName || e.entityName === 'Taxonomia') {
+                    // Validar si el grid sigue en el DOM antes de renderizar
+                    if (document.body.contains(wrapper)) {
+                        renderTaxonomiesGrid();
+                    }
                 }
             });
         }
