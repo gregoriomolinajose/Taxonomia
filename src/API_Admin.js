@@ -59,6 +59,28 @@ function ensureEntityProvisioned(entityName) {
 // ─── Global Config Endpoints ───────────────────────────────────────────────────
 
 /**
+ * Recupera el listado de registros de una entidad usando Engine_DB.
+ * Utilizado por Schema Studio para cargar Config_System y otras entidades administrativas.
+ * @param {string} entityName
+ * @returns {Object} { headers: string[], rows: any[][] }
+ */
+function getEntityList(entityName) {
+  return Engine_DB.list(entityName, 'native');
+}
+
+/**
+ * Guarda o actualiza un registro de configuración usando Engine_DB.
+ * Utilizado por Schema Studio para guardar Config_System.
+ * @param {string} entityName
+ * @param {Object} payload
+ * @returns {Object}
+ */
+function save(entityName, payload) {
+  const id = payload.config_id || payload.id || 'sys_config';
+  return Engine_DB.update(entityName, id, payload);
+}
+
+/**
  * Guarda una configuración global de la aplicación.
  * @param {string} configKey La clave de PropertiesService (ej. APP_BRANDING_CONFIG)
  * @param {Object} payload El objeto de configuración

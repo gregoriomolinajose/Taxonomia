@@ -33,12 +33,10 @@ const API_Auth = {
 
         email = email.toLowerCase().trim();
 
+        let isGuest = false;
         if (!email) {
-            return {
-                email: "",
-                authorized: false,
-                message: "No se pudo obtener la identidad del usuario activo."
-            };
+            email = "invitado@publico.com";
+            isGuest = true;
         }
 
         // [E6-S64] Dominios resueltos en runtime desde Adapter_Config / PropertiesService.
@@ -49,16 +47,24 @@ const API_Auth = {
         if (typeof PropertiesService !== 'undefined') {
             let customDomains = null;
             try {
-                // S48.2 Dynamic SSO Domains (Source of Truth)
-                const secStr = PropertiesService.getScriptProperties().getProperty('APP_SECURITY_CONFIG');
-                if (secStr) {
-                    const parsedSec = JSON.parse(secStr);
-                    if (parsedSec.allowedDomains && parsedSec.allowedDomains.length > 0) {
-                        customDomains = parsedSec.allowedDomains;
+                // S48.2 Dynamic SSO Domains (Source of Truth via Adapter_Config)
+                const domainsStr = PropertiesService.getScriptProperties().getProperty('APP_CONFIG__allowed_domains');
+                if (domainsStr && domainsStr.trim() !== '') {
+                    customDomains = domainsStr.split(',').map(d => d.trim()).filter(d => d.length > 0);
+                }
+                
+                // Fallback a configuración anterior si no hay nada en la nueva (Backward compatibility)
+                if (!customDomains || customDomains.length === 0) {
+                    const secStr = PropertiesService.getScriptProperties().getProperty('APP_SECURITY_CONFIG');
+                    if (secStr) {
+                        const parsedSec = JSON.parse(secStr);
+                        if (parsedSec.allowedDomains && parsedSec.allowedDomains.length > 0) {
+                            customDomains = parsedSec.allowedDomains;
+                        }
                     }
                 }
             } catch(e) {
-                console.error("API_Auth: Error parseando APP_SECURITY_CONFIG", e);
+                console.error("API_Auth: Error parseando dominios de seguridad", e);
             }
 
             if (customDomains) {
@@ -78,12 +84,12 @@ const API_Auth = {
             domains = CONFIG.ALLOWED_DOMAINS;
         }
 
-        const isAuthorized = domains.some(domain => email.endsWith(domain.toLowerCase().trim()));
+        const isAuthorized = isGuest ? true : domains.some(domain => email.endsWith(domain.toLowerCase().trim()));
 
         return {
             email: email,
             authorized: isAuthorized,
-            message: isAuthorized ? "Acceso concedido." : "Dominio no autorizado."
+            message: isAuthorized ? (isGuest ? "Acceso concedido como Invitado." : "Acceso concedido.") : `Dominio no autorizado para ${email}. Eval: ` + JSON.stringify(domains)
         };
     },
 

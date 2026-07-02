@@ -71,6 +71,12 @@ function API_Universal_Router(action, entityName, payload) {
       return JSON.stringify({ status: "success", data: responseData, action });
     }
 
+    if (action === 'etl_export_sheet') {
+      // Exportación de datos de la vista a Google Sheets
+      responseData = Engine_ETL.exportDataToSheet(entityName, payload.columns, payload.rows);
+      return JSON.stringify({ status: "success", data: responseData, action });
+    }
+
     if (action === 'etl_extract_sheet_data') {
       if (typeof _guardAbac === 'function') {
          // Extracción masiva presupone Upsert, demandando permisos conjuntos.
@@ -167,11 +173,11 @@ function API_Universal_Router(action, entityName, payload) {
       let edgesToUpsert = [];
       const sysDate = new Date().toISOString();
       const schema = (typeof APP_SCHEMAS !== 'undefined') ? APP_SCHEMAS[entityName] : null;
+      const currentEdges = Engine_DB.list('Sys_Graph_Edges', 'objects').rows || [];
       
       if (schema && schema.fields) {
           const graphFields = schema.fields.filter(f => f.isTemporalGraph && f.graphEntity === 'Sys_Graph_Edges' && f.relationType === 'padre' && f.topologyCardinality !== 'M:N');
           if (graphFields.length > 0) {
-              const currentEdges = Engine_DB.list('Sys_Graph_Edges', 'objects').rows || [];
               payload.forEach(record => {
                   const childId = String(record[pkField]).trim();
                   graphFields.forEach(f => {
@@ -225,6 +231,52 @@ function API_Universal_Router(action, entityName, payload) {
               });
           }
       }
+      
+      // [S50.4] M:N Contextual Graph Injection (Bulk Importer Wizard)
+      payload.forEach(record => {
+          if (record._contexto_arista && record._tipo_arista) {
+              const childId = String(record[pkField]).trim();
+              const parentId = String(record._contexto_arista).trim();
+              
+              // Evitar duplicados en memoria
+              const duplicateEdgeMemory = edgesToUpsert.some(e => 
+                  e.tipo_relacion === record._tipo_arista && 
+                  String(e.id_nodo_padre).trim() === parentId && 
+                  String(e.id_nodo_hijo).trim() === childId
+              );
+              
+              // Buscar duplicados en Base de Datos
+              const existingDBEdge = currentEdges.find(e => 
+                  e.es_version_actual !== false &&
+                  e.tipo_relacion === record._tipo_arista && 
+                  String(e.id_nodo_padre).trim() === parentId && 
+                  String(e.id_nodo_hijo).trim() === childId
+              );
+              
+              if (!duplicateEdgeMemory) {
+                  if (existingDBEdge) {
+                      // Si existe pero le falta el contexto_id (reparación de aristas fantasma de pruebas anteriores)
+                      if (String(existingDBEdge.contexto_id || '').trim() !== parentId) {
+                          existingDBEdge.contexto_id = parentId;
+                          existingDBEdge.estado = record.estado || "Activo";
+                          edgesToUpsert.push(existingDBEdge);
+                      }
+                  } else {
+                      edgesToUpsert.push({
+                          id_relacion: _generateShortUUID('Sys_Graph_Edges'),
+                          id_nodo_padre: parentId,
+                          id_nodo_hijo: childId,
+                          tipo_relacion: record._tipo_arista,
+                          valido_desde: sysDate,
+                          valido_hasta: "",
+                          es_version_actual: true,
+                          estado: record.estado || "Activo",
+                          contexto_id: parentId // Al ser una relación en contexto (Wizard), el contexto es el nodo padre
+                      });
+                  }
+              }
+          }
+      });
       
       // Delegamos la unidad de trabajo cruda (Unit of Work) al backend
       responseData = Engine_DB.upsertBatch(entityName, payload);

@@ -79,6 +79,10 @@
 
         // --- Constructor Builder ---
         function buildRelation(field, entityName, data, localEventBus, currentEditId) {
+            if (field.uiComponent === 'embedded_dataview' && global.UI_Factory.BuilderRegistry && global.UI_Factory.BuilderRegistry['uiComponent']) {
+                return global.UI_Factory.BuilderRegistry['uiComponent'](field, entityName, data, localEventBus, currentEditId);
+            }
+
             const inputEl = document.createElement('div');
             inputEl.setAttribute('data-relation-type', field.relationType || 'relacionado');
             inputEl.style.width = '100%';
@@ -143,7 +147,15 @@
                 }
             }
 
-            if (field.uiComponent === 'searchable_multi') {
+            if (field.uiComponent === 'treemap_selector') {
+                if (global.UI_Factory.buildTreemapSelector) {
+                    actualElement = global.UI_Factory.buildTreemapSelector(field, activeData, initialValues, localEventBus, {});
+                } else {
+                    const fallback = document.createElement('div');
+                    fallback.textContent = 'Treemap Selector no disponible';
+                    actualElement = fallback;
+                }
+            } else if (field.uiComponent === 'searchable_multi') {
                 if (global.UI_Factory.buildSearchableMulti) {
                     const metadataToken = (window.APP_SCHEMAS && window.APP_SCHEMAS[field.targetEntity] && window.APP_SCHEMAS[field.targetEntity].metadata) || {};
                     const componentConfig = { iconName: metadataToken.iconName, color: metadataToken.color, contextId: contextId, readonly: isActuallyReadonly };
@@ -153,7 +165,25 @@
                     multiNodes.addEventListener('txSearchableCreate', (e) => {
                         const targetE = e.detail.targetEntity;
                         if (typeof window.renderForm === 'function') {
-                            window.renderForm(targetE);
+                            window.renderForm(targetE, null, (response) => {
+                                if (response && response.pkValue) {
+                                    let currentSelected = multiNodes.value || [];
+                                    if (!Array.isArray(currentSelected)) {
+                                        currentSelected = currentSelected ? [currentSelected] : [];
+                                    }
+                                    if (!currentSelected.includes(response.pkValue)) {
+                                        currentSelected.push(response.pkValue);
+                                        multiNodes.value = currentSelected;
+                                    }
+                                }
+                            }, {
+                                asModal: true,
+                                modalContext: { 
+                                    edgeType: (field.targetEntity === 'Persona' && String(contextId).startsWith('TAXO-')) ? 'TAXONOMIA_PERSONA' : (field.graphEdgeType || field.name), 
+                                    parentId: contextId, 
+                                    contextId: contextId 
+                                }
+                            });
                         }
                     });
                     
@@ -236,7 +266,25 @@
                 basicSel.addEventListener('txSearchableCreate', (e) => {
                     const targetE = e.detail.targetEntity;
                     if (typeof window.renderForm === 'function') {
-                        window.renderForm(targetE);
+                        window.renderForm(targetE, null, (response) => {
+                            if (response && response.pkValue) {
+                                let currentSelected = basicSel.value || [];
+                                if (!Array.isArray(currentSelected)) {
+                                    currentSelected = currentSelected ? [currentSelected] : [];
+                                }
+                                if (!currentSelected.includes(response.pkValue)) {
+                                    currentSelected.push(response.pkValue);
+                                    basicSel.value = field.isMultiple ? currentSelected : response.pkValue;
+                                }
+                            }
+                        }, {
+                            asModal: true,
+                            modalContext: { 
+                                edgeType: (field.targetEntity === 'Persona' && String(contextId).startsWith('TAXO-')) ? 'TAXONOMIA_PERSONA' : (field.graphEdgeType || field.name), 
+                                parentId: contextId, 
+                                contextId: contextId 
+                            }
+                        });
                     }
                 });
                 

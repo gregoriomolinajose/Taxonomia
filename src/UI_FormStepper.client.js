@@ -66,9 +66,16 @@ window.UI_FormStepper = class UI_FormStepper {
         this.splitContainer = document.createElement('div');
         this.splitContainer.className = 'wizard-split-container';
         this.splitContainer.style.position = 'relative';
+        this.splitContainer.style.display = 'flex';
+        this.splitContainer.style.flexDirection = 'row';
+        this.splitContainer.style.flex = '1';
+        this.splitContainer.style.minHeight = '0';
+        this.splitContainer.style.width = '100%';
+        this.splitContainer.style.height = '100%';
         
         this.splitLeft = document.createElement('div');
         this.splitLeft.className = 'wizard-split-left';
+        this.splitLeft.style.cssText = 'flex: 1; display: flex; flex-direction: column; width: 100%; min-width: 0; min-height: 0; overflow: hidden;';
         
         this.splitRight = document.createElement('div');
         this.splitRight.className = 'wizard-split-right';
@@ -98,18 +105,12 @@ window.UI_FormStepper = class UI_FormStepper {
                 this.btnFullscreen.innerHTML = '<ion-icon name="expand-outline"></ion-icon>';
                 this.splitContainer.appendChild(this.splitRight); // Restaurar orden original
             } else {
-                const drawerNode = this.cardContent ? this.cardContent.closest('.drawer-panel') : null;
-                const rootContainer = document.getElementById('drawer-root-container') || document.body;
-                
-                rootContainer.appendChild(this.splitRight); // Escapar del stacking context
+                // Mover a document.body para escapar de CUALQUIER stacking context (drawer-panel o ion-modal)
+                document.body.appendChild(this.splitRight);
                 this.splitRight.classList.add('fullscreen-wizard');
                 
-                if (drawerNode) {
-                    const currentZ = window.getComputedStyle(drawerNode).zIndex;
-                    this.splitRight.style.setProperty('z-index', currentZ, 'important');
-                } else {
-                    this.splitRight.style.setProperty('z-index', '99999', 'important');
-                }
+                // Forzar z-index más alto que ion-modal (que suele tener 20000-20005)
+                this.splitRight.style.setProperty('z-index', '99999', 'important');
                 
                 this.btnFullscreen.innerHTML = '<ion-icon name="contract-outline"></ion-icon>';
             }
@@ -222,33 +223,34 @@ window.UI_FormStepper = class UI_FormStepper {
             stepDiv.style.display = index === 0 ? 'flex' : 'none';
             stepDiv.style.flexDirection = 'column';
             stepDiv.style.justifyContent = 'flex-start';
-            stepDiv.style.minHeight = '60vh';
-            stepDiv.style.maxWidth = '600px';
+            
+            const isFullScreenGrid = (stepName === 'Listado de Equipos' || stepName === 'Directorio de Personas' || stepName === 'Portafolios');
+            
+            if (isFullScreenGrid) {
+                stepDiv.style.flex = '1';
+                stepDiv.style.minHeight = '0';
+                stepDiv.style.height = '100%';
+                stepDiv.style.width = '100%'; // S56: Fuerza a expandirse
+                stepDiv.style.overflow = 'hidden';
+                stepDiv.style.maxWidth = '100%';
+            } else {
+                stepDiv.style.flex = 'none';
+                stepDiv.style.height = 'auto';
+                stepDiv.style.width = '100%';
+                stepDiv.style.overflow = 'visible';
+                stepDiv.style.maxWidth = '600px';
+                stepDiv.style.paddingTop = 'var(--spacing-6)';
+            }
             stepDiv.style.margin = '0 auto';
-            stepDiv.style.paddingTop = 'var(--spacing-6)';
 
             this.splitLeft.appendChild(stepDiv);
 
-            // S49.11: Badge pill con punto pulsante + fondo semitransparente
-            const badgePill = document.createElement('span');
-            badgePill.className = 'wizard-step-badge';
-            badgePill.style.cssText = 'display:inline-flex;align-items:center;gap:var(--spacing-2);padding:var(--spacing-1) var(--spacing-3);border-radius:var(--rounded-full);background:rgba(var(--ion-color-primary-rgb, 28, 66, 232), 0.08);color:var(--ion-color-primary);font-size:var(--sys-font-caption, 0.75rem);font-weight:600;font-family:var(--ion-font-family, system-ui, sans-serif);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:var(--spacing-3);width:fit-content;';
-            
-            const pulseDot = document.createElement('span');
-            pulseDot.className = 'pulse-dot';
-            
-            const badgeText = document.createElement('span');
-            badgeText.textContent = `PASO ${index + 1} DE ${this.totalSteps}`;
-            
-            badgePill.appendChild(pulseDot);
-            badgePill.appendChild(badgeText);
-            
             // Header del Content Area
             const headerWrap = document.createElement('div');
             headerWrap.style.marginBottom = 'var(--spacing-5)';
             headerWrap.style.textAlign = 'left';
 
-            headerWrap.appendChild(badgePill);
+            // Badge removido a petición del usuario
 
             const sectionTitle = document.createElement('h2');
             sectionTitle.textContent = (stepName === 'default' ? 'Configuración General' : stepName);
@@ -261,20 +263,48 @@ window.UI_FormStepper = class UI_FormStepper {
             desc.textContent = this._getStepDescription(stepName);
             headerWrap.appendChild(desc);
 
+            // S56: Ocultar título y descripción si es "Listado de Equipos" o "Directorio de Personas" porque toma pantalla completa
+            if (stepName === 'Listado de Equipos' || stepName === 'Directorio de Personas') {
+                sectionTitle.style.display = 'none';
+                desc.style.display = 'none';
+                headerWrap.style.display = 'none';
+            }
+
             stepDiv.appendChild(headerWrap);
 
             // Grid para inyección de campos
             const grid = document.createElement('ion-grid');
             grid.style.padding = 'var(--spacing-0)';
             grid.style.width = '100%';
+            
+            if (isFullScreenGrid) {
+                grid.style.flex = '1';
+                grid.style.minHeight = '0';
+                grid.style.overflow = 'hidden';
+                grid.style.display = 'flex';
+                grid.style.flexDirection = 'column';
+            } else {
+                grid.style.flex = 'none';
+                grid.style.overflow = 'visible';
+            }
+
             const row = document.createElement('ion-row');
+            if (isFullScreenGrid) {
+                row.style.flex = '1';
+                row.style.minHeight = '0';
+                row.style.overflow = 'hidden';
+                row.style.flexDirection = 'column';
+                row.style.alignContent = 'flex-start';
+                row.style.width = '100%';
+            } else {
+                row.style.flex = 'none';
+                row.style.overflow = 'visible';
+                row.style.width = '100%';
+            }
             grid.appendChild(row);
 
             stepDiv.appendChild(grid);
             this.rows[stepName] = row;
-
-            // Guardamos referencia al badge para actualizar dinámicamente
-            this.stepContainers[stepName]._badge = badgePill;
         });
 
         // S49.11: Barra de progreso al pie del sidebar
@@ -447,21 +477,13 @@ window.UI_FormStepper = class UI_FormStepper {
         // Find the main layout columns to toggle sidebar visibility
         const layoutColLeft = document.getElementById('wizard-col-left');
         const layoutColRight = document.getElementById('wizard-col-right');
-        
+
         if ((drawerNode || isFullscreenZone) && this.entityName === 'Taxonomia') {
             const fullscreenSteps = ['Arquitectura de Portafolio', 'Asignación de Responsables', 'Organigrama de Producto', 'Organigrama de Tecnología', 'Organigrama de Agilidad', 'Organigrama de Portafolio'];
             const isFullscreenStep = fullscreenSteps.includes(targetSectionName);
 
             if (isFullscreenStep) {
-                if (drawerNode) {
-                    drawerNode.classList.add('fullscreen');
-                    drawerNode.classList.add('drawer-fullscreen'); // Para reglas específicas del split
-                }
-                
-                // S55.2: Ocultar panel izquierdo completamente en el Canvas para maximizar espacio
-                this.splitLeft.style.display = 'none';
-                
-                // S55.2: Ocultar el sidebar de pasos si estamos en Landing Page (Fullscreen Zone)
+                // S55.2: Ocultar el sidebar de pasos SOLO si estamos en Landing Page (Fullscreen Zone)
                 if (isFullscreenZone) {
                     if (layoutColLeft) layoutColLeft.style.display = 'none';
                     if (layoutColRight) {
@@ -469,23 +491,28 @@ window.UI_FormStepper = class UI_FormStepper {
                         layoutColRight.setAttribute('size-lg', '12');
                         layoutColRight.setAttribute('size-xl', '12');
                     }
+                    // Ocultar panel izquierdo completamente en Landing Page para maximizar espacio
+                    this.splitLeft.style.display = 'none';
+                } else {
+                    // Modo Wizard: mostrar sidebar y panel
+                    this.splitLeft.style.display = '';
                 }
                 
                 this.splitRight.style.display = 'flex';
                 this.splitRight.style.flex = '1';
                 this.splitRight.style.width = '100%';
+                this.splitRight.style.position = 'relative';
+                this.splitRight.style.flexDirection = 'column';
+                this.splitRight.style.background = 'var(--ion-background-color, #ffffff)';
+                this.splitRight.style.borderRadius = 'var(--rounded-md, 8px)';
+                this.splitRight.style.border = '1px solid var(--color-border)';
+                this.splitRight.style.overflow = 'hidden';
                 
                 if (this.btnFullscreen) {
-                    // En Landing Page ya es fullscreen absoluto, ocultamos el botón de expandir
-                    this.btnFullscreen.style.display = isFullscreenZone ? 'none' : 'block';
+                    this.btnFullscreen.style.display = 'block';
                 }
                 this._mountCustomViewer(targetSectionName);
             } else {
-                if (drawerNode) {
-                    drawerNode.classList.remove('fullscreen');
-                    drawerNode.classList.remove('drawer-fullscreen');
-                }
-                
                 // Restaurar panel izquierdo
                 this.splitLeft.style.display = '';
                 

@@ -1013,6 +1013,23 @@ window.UI_View_SwimlaneGrid = {
     },
 
     _createNodeEl: function(recordId, entityName, addTitle) {
+        if (!recordId || String(recordId).trim() === '[object Object]' || String(recordId).trim() === 'undefined') {
+            console.warn('[UI_View_SwimlaneGrid] Invalid recordId in _createNodeEl:', recordId);
+            const node = document.createElement('div');
+            node.className = 'tax-node';
+            node.style.backgroundColor = 'var(--ion-color-medium)';
+            node.innerHTML = `
+                <div class="tax-node-header">
+                    <ion-icon name="warning-outline" style="font-size:16px; margin-right:6px; color:white;"></ion-icon>
+                    <span style="font-weight:600; font-size:13px; color:white;">Entidad No Vinculada</span>
+                </div>
+                <div class="tax-node-body" style="font-size:12px; color:white;">
+                    Esta entidad no tiene relaciones válidas.
+                </div>
+            `;
+            return node;
+        }
+
         const node = document.createElement('div');
         node.className = 'tax-node';
         node.style.cursor = 'pointer';

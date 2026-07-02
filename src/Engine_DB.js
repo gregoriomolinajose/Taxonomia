@@ -536,6 +536,44 @@ const Engine_DB = {
                             if (!globalBatches[f.graphEntity]) globalBatches[f.graphEntity] = [];
                             globalBatches[f.graphEntity].push(...edgeRecords);
                             globalCachesToBust.add(f.graphEntity);
+                            
+                            // --- AUTO-LINK PERSONA A LA TAXONOMIA ---
+                            // [Rule: Siempre que una Persona se vincule a un elemento de la taxonomía, vincularla a la Taxonomía también]
+                            if (targetEntity === 'Persona') {
+                                const taxEdgesToAdd = [];
+                                edgeRecords.forEach(er => {
+                                    const ctxId = er.contexto_id;
+                                    if (ctxId && String(ctxId).startsWith('TAXO-')) {
+                                        const personaId = String(f.relationType === 'hijo' ? er.id_nodo_hijo : er.id_nodo_padre);
+                                        
+                                        // ID Determinístico: Evita duplicados en Google Sheets (Upsert sobrescribe si ya existe)
+                                        const deterministicId = `RELA-${String(ctxId).substring(5, 9)}${personaId.substring(5, 9)}`.toUpperCase();
+                                        
+                                        // Prevenir duplicados dentro del mismo payload
+                                        if (!taxEdgesToAdd.some(e => e.id_relacion === deterministicId) && !globalBatches[f.graphEntity].some(e => e.id_relacion === deterministicId && e.tipo_relacion === 'TAXONOMIA_PERSONA')) {
+                                            taxEdgesToAdd.push({
+                                                id_relacion: deterministicId,
+                                                id_nodo_padre: ctxId,
+                                                id_nodo_hijo: personaId,
+                                                tipo_relacion: "TAXONOMIA_PERSONA",
+                                                valido_desde: er.valido_desde,
+                                                valido_hasta: "",
+                                                es_version_actual: true,
+                                                estado: "Borrador",
+                                                contexto_id: ctxId
+                                            });
+                                        }
+                                    }
+                                });
+                                
+                                if (taxEdgesToAdd.length > 0) {
+                                    if (typeof Logger !== 'undefined') Logger.log(`[Auto-Link] Inyectando ${taxEdgesToAdd.length} aristas TAXONOMIA_PERSONA.`);
+                                    globalBatches[f.graphEntity].push(...taxEdgesToAdd);
+                                    if (!parentResults.orchestratedChildren) parentResults.orchestratedChildren = {};
+                                    if (!parentResults.orchestratedChildren[f.graphEntity]) parentResults.orchestratedChildren[f.graphEntity] = [];
+                                    parentResults.orchestratedChildren[f.graphEntity].push(...taxEdgesToAdd);
+                                }
+                            }
                         }
 
                         if (!parentResults.orchestratedChildren) parentResults.orchestratedChildren = {};

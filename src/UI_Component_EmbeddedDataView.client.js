@@ -11,48 +11,89 @@ window.UI_Component_EmbeddedDataView = {
 
         // S50.3 Context Identifier
         const explicitContext = (modalContext && modalContext.dataset && modalContext.dataset.taxonomiaContext) ? modalContext.dataset.taxonomiaContext : null;
-        const currentPK = data ? (data[window.Schema_Utils.getPrimaryKey(entityName)] || data.id_registro) : null;
+        let currentPK = data ? (data[window.Schema_Utils.getPrimaryKey(entityName)] || data.id_registro) : null;
         const fallbackContext = window.UI_FormUtils ? window.UI_FormUtils.extractDraftContext(entityName, currentPK) : null;
         const contextId = explicitContext || fallbackContext;
         const strictContext = !!explicitContext || entityName === 'Taxonomia';
+        
+        currentPK = currentPK || contextId;
 
-        let _state = {
-            data: [],
-            filtered: [],
-            page: 1,
-            pageSize: 10,
-            sortCol: '',
-            sortDir: 'asc',
-            view: 'table',
-            columns: [],
-            searchText: ''
-        };
+        let _ctrl = new window.UI_DataGrid_Controller({
+            entityName: targetEntity,
+            pageSize: 50,
+            onChange: function(newState) {
+                if (typeof renderGrid === 'function') renderGrid();
+            }
+        });
+        
+        let _state = _ctrl.state;
 
         const wrapper = document.createElement('div');
         wrapper.className = 'embedded-dataview-wrapper';
-        wrapper.style.border = '1px solid var(--ion-color-step-150, #ccc)';
-        wrapper.style.borderRadius = 'var(--rounded-md, 8px)';
-        wrapper.style.overflow = 'hidden';
-        wrapper.style.marginBottom = 'var(--spacing-4, 16px)';
+        wrapper.setAttribute('data-form-component', field.name);
+        wrapper.style.border = 'none'; // S56: Removido el borde para sensación nativa en el Wizard
+        wrapper.style.borderRadius = '0';
         wrapper.style.background = 'var(--color-bg-body, #fff)';
+        wrapper.style.width = '100%';
+        wrapper.style.height = '100%';
+        wrapper.style.display = 'flex';
+        wrapper.style.flexDirection = 'column';
+        wrapper.style.flex = '1';
+        wrapper.style.minHeight = '0'; // Crucial to prevent parent flex from growing beyond container
+        wrapper.style.overflow = 'hidden';
         // S29.7 Value Export Node
         wrapper.getValidatedValue = () => Array.from(_state.data);
 
-        // Header Title (optional)
-        if (field.label) {
-            const headerTitle = document.createElement('div');
-            headerTitle.style.padding = '12px 16px';
-            headerTitle.style.background = 'var(--ion-color-light)';
-            headerTitle.style.fontWeight = '600';
-            headerTitle.style.borderBottom = '1px solid var(--ion-color-step-150, #ccc)';
-            headerTitle.textContent = field.label;
-            wrapper.appendChild(headerTitle);
+        // Auto-refresh when entities are saved anywhere in the app
+        let unsubSubmit = null;
+        let unsubETL = null;
+        let unsubGraph = null;
+        if (window.AppEventBus) {
+            unsubSubmit = window.AppEventBus.subscribe('FORM::SUBMIT_SUCCESS', (payload) => {
+                if (!wrapper.isConnected) {
+                    if (unsubSubmit) unsubSubmit();
+                    if (unsubETL) unsubETL();
+                    if (unsubGraph) unsubGraph();
+                    return;
+                }
+                if (payload && payload.entityName === targetEntity) {
+                    refreshAll();
+                }
+            });
+            
+            unsubETL = window.AppEventBus.subscribe('ETL::FINISHED', (payload) => {
+                if (!wrapper.isConnected) {
+                    if (unsubSubmit) unsubSubmit();
+                    if (unsubETL) unsubETL();
+                    if (unsubGraph) unsubGraph();
+                    return;
+                }
+                if (payload && payload.entity === targetEntity) {
+                    refreshAll();
+                }
+            });
+            
+            unsubGraph = window.AppEventBus.subscribe('CACHE::GRAPH_HYDRATED', () => {
+                if (!wrapper.isConnected) {
+                    if (unsubSubmit) unsubSubmit();
+                    if (unsubETL) unsubETL();
+                    if (unsubGraph) unsubGraph();
+                    return;
+                }
+                refreshAll();
+            });
         }
+
+        // S56: El cintillo de título fue removido para evitar la sensación de pantalla encasulada
+        // if (field.label) { ... }
 
         const toolbarContainer = document.createElement('div');
         const gridContainer = document.createElement('div');
-        gridContainer.style.maxHeight = '400px';
-        gridContainer.style.overflowY = 'auto';
+        gridContainer.style.flex = '1';
+        gridContainer.style.display = 'flex';
+        gridContainer.style.flexDirection = 'column';
+        gridContainer.style.overflow = 'hidden';
+        gridContainer.style.minHeight = '0'; // Allow shrinking below content size so internal overflow triggers
 
         wrapper.appendChild(toolbarContainer);
         wrapper.appendChild(gridContainer);
@@ -87,7 +128,8 @@ window.UI_Component_EmbeddedDataView = {
             let cols = [];
             if (window.UI_DataGrid && window.UI_DataGrid._normalizeFields) {
                 const fieldsDef = window.UI_DataGrid._normalizeFields(targetEntity) || [];
-                cols = fieldsDef.filter(f => !f.isVirtual && f.type !== 'hidden').map(f => ({
+                const VIRTUAL_TYPES = ['divider', 'header', 'spacer', 'alert', 'markup', 'title'];
+                cols = fieldsDef.filter(f => !f.isVirtual && f.type !== 'hidden' && !VIRTUAL_TYPES.includes(f.type)).map(f => ({
                     key: f.name,
                     label: f.label || f.name,
                     visible: f.showInList !== false,
@@ -101,212 +143,278 @@ window.UI_Component_EmbeddedDataView = {
                 cols.unshift({ key: '_num', label: '#', visible: true, sortable: false, uiType: 'system-num', order: 2 });
             }
             cols.sort((a, b) => a.order - b.order);
-            _state.columns = cols;
+            _ctrl.setColumns(cols);
         };
 
-        const applyFilterAndSort = () => {
-            let result = [..._state.data];
-            
-            if (_state.searchText) {
-                const term = _state.searchText.toLowerCase();
-                result = result.filter(row => {
-                    return Object.values(row).some(val => val && String(val).toLowerCase().includes(term));
-                });
-            }
-
-            if (_state.sortCol) {
-                result.sort((a, b) => {
-                    let vA = a[_state.sortCol] || '';
-                    let vB = b[_state.sortCol] || '';
-                    if (typeof vA === 'string') vA = vA.toLowerCase();
-                    if (typeof vB === 'string') vB = vB.toLowerCase();
-                    if (vA < vB) return _state.sortDir === 'asc' ? -1 : 1;
-                    if (vA > vB) return _state.sortDir === 'asc' ? 1 : -1;
-                    return 0;
-                });
-            }
-            _state.filtered = result;
-        };
+        // applyFilterAndSort was removed. Controlled by UI_DataGrid_Controller.
 
         const renderToolbar = () => {
             window.DOM.clear(toolbarContainer);
-            
-            // Build custom toolbar based on UI_DataView_Toolbar structure
-            const toolbar = document.createElement('div');
-            toolbar.className = 'dv-toolbar';
-            toolbar.style.padding = '12px 16px';
-            toolbar.style.borderBottom = '1px solid var(--ion-color-step-150, #ccc)';
-            
-            const left = document.createElement('div');
-            left.className = 'dv-toolbar-left';
-            
-            // Search
-            const searchWrap = document.createElement('div');
-            searchWrap.className = 'dv-search-wrap';
-            const searchbar = document.createElement('ion-searchbar');
-            searchbar.placeholder = 'Buscar en ' + targetEntity + '...';
-            searchbar.value = _state.searchText;
-            searchbar.style.padding = '0';
-            searchbar.addEventListener('ionInput', (e) => {
-                _state.searchText = e.target.value;
-                _state.page = 1;
-                applyFilterAndSort();
-                renderGrid();
-            });
-            searchWrap.appendChild(searchbar);
-            left.appendChild(searchWrap);
-            
-            const right = document.createElement('div');
-            right.className = 'dv-toolbar-right';
-            
-            if (!isReadonly) {
-                // Importar Masivamente Button
-                const btnImport = document.createElement('button');
-                btnImport.className = 'dv-btn dv-btn-ghost';
-                btnImport.style.marginRight = '8px';
-                btnImport.innerHTML = '<ion-icon name="cloud-upload-outline" style="margin-right:4px;"></ion-icon> Importar Masivamente';
-                btnImport.onclick = (e) => {
-                    e.preventDefault();
-                    if (window.UI_ETL_Modal) {
-                        window.UI_ETL_Modal.present(targetEntity, contextId);
-                    }
-                };
-                right.appendChild(btnImport);
 
-                // Vincular Button
-                const btnVincular = document.createElement('button');
-                btnVincular.className = 'dv-btn dv-btn-outline';
-                btnVincular.style.marginRight = '8px';
-                btnVincular.innerHTML = '<ion-icon name="link-outline" style="margin-right:4px;"></ion-icon> Vincular Equipo';
-                btnVincular.onclick = (e) => {
-                    e.preventDefault();
-                    if (window.UI_DrawerManager) {
-                        const content = document.createElement('div');
-                        content.style.padding = '24px 16px';
-                        
-                        const title = document.createElement('h3');
-                        title.textContent = 'Vincular ' + targetEntity;
-                        title.style.marginTop = '0';
-                        title.style.marginBottom = '12px';
-                        title.style.fontWeight = '700';
-                        content.appendChild(title);
-                        
-                        const desc = document.createElement('p');
-                        desc.textContent = 'Seleccione los equipos que desea vincular a esta Taxonomía.';
-                        desc.style.color = 'var(--ion-color-medium)';
-                        desc.style.fontSize = '0.9rem';
-                        desc.style.marginBottom = '24px';
-                        content.appendChild(desc);
-                        
-                        // Fake field configuration for TXSearchable
-                        const pkField = window.Schema_Utils.getPrimaryKey(targetEntity);
-                        const virtualField = {
-                            name: 'vincular_multi',
-                            uiComponent: 'searchable_multi',
-                            targetEntity: targetEntity,
-                            valueField: pkField,
-                            labelField: 'nombre'
-                        };
-                        
-                        // Pass existing links
-                        const virtualData = { vincular_multi: _state.data.map(d => String(d[pkField] || d.id_registro)) };
-                        
-                        const searchableNode = window.UI_Factory.buildFieldNode(virtualField, targetEntity, virtualData, localEventBus, contextId);
-                        content.appendChild(searchableNode);
-                        
-                        const actions = document.createElement('div');
-                        actions.style.marginTop = '32px';
-                        actions.style.display = 'flex';
-                        actions.style.justifyContent = 'flex-end';
-                        actions.style.gap = '12px';
-                        
-                        const cancelBtn = document.createElement('ion-button');
-                        cancelBtn.textContent = 'Cancelar';
-                        cancelBtn.fill = 'clear';
-                        cancelBtn.color = 'medium';
-                        cancelBtn.onclick = () => window.UI_DrawerManager.closeDrawer();
-                        
-                        const saveBtn = document.createElement('ion-button');
-                        saveBtn.textContent = 'Confirmar Vínculos';
-                        saveBtn.onclick = () => {
-                            if (searchableNode.getValidatedValue && window.Graph_Utils) {
-                                const selectedIds = searchableNode.getValidatedValue() || [];
-                                const normPK = window.UI_FormUtils ? window.UI_FormUtils.normalizeId(currentPK) : String(currentPK);
-                                
-                                const existingIds = _state.data.map(d => window.UI_FormUtils.normalizeId(d[pkField] || d.id_registro));
-                                
-                                // Remove edges that are no longer selected
-                                existingIds.forEach(eid => {
-                                    if (!selectedIds.includes(eid)) {
-                                        window.Graph_Utils.deleteTemporalEdge(normPK, eid, edgeType, contextId);
-                                    }
-                                });
-                                // Add newly selected edges
-                                selectedIds.forEach(eid => {
-                                    if (!existingIds.includes(eid)) {
-                                        window.Graph_Utils.upsertTemporalEdge(normPK, eid, edgeType, contextId);
-                                    }
-                                });
-                                
-                                refreshAll();
-                                window.UI_DrawerManager.closeDrawer();
-                            }
-                        };
-                        actions.appendChild(cancelBtn);
-                        actions.appendChild(saveBtn);
-                        content.appendChild(actions);
-                        
-                        window.UI_DrawerManager.openDrawer(content, 'right');
-                    }
-                };
-                right.appendChild(btnVincular);
+            const canCreate = !isReadonly;
 
-                // Nuevo Button
-                const btnNew = document.createElement('button');
-                btnNew.className = 'dv-btn dv-btn-primary';
-                btnNew.innerHTML = '<ion-icon name="add-outline" style="margin-right:4px;"></ion-icon> Nuevo';
-                btnNew.onclick = (e) => {
-                    e.preventDefault();
-                    if (window.UI_Router) {
-                        window.UI_Router.navigateTo('form', { 
-                            entityName: targetEntity, 
-                            recordId: null, 
-                            asModal: true,
-                            modalContext: { edgeType: edgeType, parentId: currentPK, contextId: contextId },
-                            onModalClose: () => { refreshAll(); }
+            // 1. Build Header manually (simulating UI_DataView_Toolbar.buildHeader without ID conflicts)
+            const meta = window.ENTITY_META && window.ENTITY_META[targetEntity] ? window.ENTITY_META[targetEntity] : { iconName: 'cube-outline', label: targetEntity };
+            const headerDiv = document.createElement('div');
+            headerDiv.className = 'dv-header';
+
+            const leftDiv = document.createElement('div');
+            leftDiv.className = 'dv-header-left';
+            const h2 = document.createElement('h2');
+            const icon = document.createElement('ion-icon');
+            icon.className = 'dv-title-icon';
+            icon.setAttribute('name', meta.iconName);
+            h2.appendChild(icon);
+            h2.appendChild(document.createTextNode(' ' + (field.label || meta.label || targetEntity)));
+            const p = document.createElement('p');
+            p.textContent = `${_state.filtered.length} registro${_state.filtered.length !== 1 ? 's' : ''} en total`;
+            leftDiv.appendChild(h2);
+            leftDiv.appendChild(p);
+            headerDiv.appendChild(leftDiv);
+
+            const rightDiv = document.createElement('div');
+            rightDiv.className = 'dv-header-actions';
+            
+            // Botón Expandir (simulado para Embedded)
+            const btnExpFull = document.createElement('button');
+            btnExpFull.className = 'dv-btn dv-btn-ghost';
+            btnExpFull.innerHTML = '<ion-icon name="expand-outline" slot="start"></ion-icon> Expandir';
+            let isExpanded = false;
+            let placeholder = null;
+            btnExpFull.onclick = (e) => {
+                e.preventDefault();
+                isExpanded = !isExpanded;
+
+                if (isExpanded) {
+                    btnExpFull.innerHTML = '<ion-icon name="contract-outline" slot="start"></ion-icon> Colapsar';
+                    
+                    placeholder = document.createElement('div');
+                    placeholder.className = 'dv-embedded-placeholder';
+                    placeholder.style.height = wrapper.offsetHeight + 'px';
+                    wrapper.parentNode.insertBefore(placeholder, wrapper);
+                    
+                    const rootContainer = document.getElementById('drawer-root-container') || document.body;
+                    rootContainer.appendChild(wrapper);
+                    
+                    // Calcular z-index dinámico basado en el drawer actual
+                    const currentDrawer = placeholder.closest('.drawer-panel');
+                    let targetZIndex = 15001; // Base si no está en drawer (cubre dashboard, pero debajo del primer drawer)
+                    if (currentDrawer) {
+                        const depth = parseInt(currentDrawer.getAttribute('data-depth') || '1', 10);
+                        targetZIndex = 15001 + depth;
+                    }
+                    
+                    wrapper.style.position = 'fixed';
+                    wrapper.style.top = '0';
+                    wrapper.style.left = '0';
+                    wrapper.style.width = '100vw';
+                    wrapper.style.height = '100vh';
+                    wrapper.style.zIndex = String(targetZIndex);
+                    wrapper.style.borderRadius = '0';
+                    wrapper.style.margin = '0';
+                    wrapper.style.padding = 'var(--spacing-4)';
+                    wrapper.style.pointerEvents = 'auto'; // Fix: allow clicks since drawer-root has pointer-events: none
+                    gridContainer.style.maxHeight = 'calc(100vh - 120px)';
+                } else {
+                    btnExpFull.innerHTML = '<ion-icon name="expand-outline" slot="start"></ion-icon> Expandir';
+                    
+                    if (placeholder && placeholder.parentNode) {
+                        placeholder.parentNode.insertBefore(wrapper, placeholder);
+                        placeholder.remove();
+                    }
+                    
+                    wrapper.style.position = 'static';
+                    wrapper.style.width = '100%';
+                    wrapper.style.height = '100%';
+                    wrapper.style.zIndex = 'auto';
+                    wrapper.style.borderRadius = '0';
+                    wrapper.style.margin = '0';
+                    wrapper.style.padding = '0';
+                    wrapper.style.pointerEvents = 'auto';
+                    gridContainer.style.maxHeight = '';
+                }
+            };
+            rightDiv.appendChild(btnExpFull);
+
+            // Botón Exportar CSV
+            const btnExp = document.createElement('button');
+            btnExp.className = 'dv-btn dv-btn-ghost';
+            btnExp.innerHTML = '<ion-icon name="download-outline" slot="start"></ion-icon> Exportar';
+            btnExp.onclick = (e) => {
+                e.preventDefault();
+                if (window.DataEngine && window.DataEngine.exportToSheet) {
+                    window.DataEngine.exportToSheet(targetEntity, _state.columns, _state.filtered);
+                } else {
+                    console.error("DataEngine.exportToSheet no está disponible");
+                }
+            };
+            rightDiv.appendChild(btnExp);
+
+            // Importar Masivamente Button
+            const btnImport = document.createElement('button');
+            btnImport.className = 'dv-btn dv-btn-ghost';
+            btnImport.innerHTML = '<ion-icon name="cloud-upload-outline" style="margin-right:4px;"></ion-icon> Importar';
+            btnImport.onclick = (e) => {
+                e.preventDefault();
+                if (window.UI_ETL_Modal) {
+                    window.UI_ETL_Modal.present(targetEntity, {
+                        contextId: contextId,
+                        edgeType: edgeType,
+                        parentEntity: entityName
+                    });
+                }
+            };
+            rightDiv.appendChild(btnImport);
+
+            // Vincular Button (ahora Agregar)
+            const btnVincular = document.createElement('button');
+            btnVincular.className = 'dv-btn dv-btn-outline';
+            btnVincular.innerHTML = `<ion-icon name="link-outline" style="margin-right:4px;"></ion-icon> Agregar ${targetEntity}`;
+            btnVincular.onclick = (e) => {
+                e.preventDefault();
+                if (window.UI_Factory && window.UI_Factory.openSearchableDrawer) {
+                    window.UI_Factory.openSearchableDrawer({
+                        targetEntity: targetEntity,
+                        contextId: contextId,
+                        edgeType: edgeType,
+                        title: `Agregar ${targetEntity}`,
+                        description: 'Busca y selecciona los registros que deseas vincular.',
+                        currentData: _state.data, // Para que el multi-select sepa qué ya está vinculado
+                        onConfirm: (selectedIds) => {
+                            const normPK = window.UI_FormUtils ? window.UI_FormUtils.normalizeId(currentPK) : String(currentPK);
+                            const pkField = window.Schema_Utils ? window.Schema_Utils.getPrimaryKey(targetEntity) : 'id_registro';
+                            const existingIds = _state.data.map(d => {
+                                const rawId = d[pkField] || d.id_registro || d;
+                                return window.UI_FormUtils ? window.UI_FormUtils.normalizeId(rawId) : String(rawId);
+                            });
+                            
+                            // Si la lista cambió, procesamos los cambios temporales
+                            existingIds.forEach(eid => {
+                                if (!selectedIds.includes(eid)) {
+                                    if(window.Graph_Utils) window.Graph_Utils.deleteTemporalEdge(normPK, eid, edgeType, contextId);
+                                }
+                            });
+                            
+                            selectedIds.forEach(eid => {
+                                if (!existingIds.includes(eid)) {
+                                    if(window.Graph_Utils) window.Graph_Utils.upsertTemporalEdge(normPK, eid, edgeType, contextId);
+                                }
+                            });
+                            
+                            refreshAll();
+                            
+                            // Parchear estado sincrónicamente para evitar race condition en hasChanges() del formulario padre
+                            _state.data = _state.data.filter(d => {
+                                const rawId = d[pkField] || d.id_registro || d;
+                                const normId = window.UI_FormUtils ? window.UI_FormUtils.normalizeId(rawId) : String(rawId);
+                                return selectedIds.includes(normId);
+                            });
+                            
+                            // Al guardar silenciosamente, refescamos la vista de los vinculados.
+                            refreshAll();
+                            
+                            // Disparar auto-guardado silencioso del formulario padre (ej. Taxonomía) para persistir las aristas inmediatamente
+                            setTimeout(() => {
+                                const formContainer = wrapper.closest('form, .drawer-content, ion-content');
+                                if (formContainer) {
+                                    const submitter = formContainer._formSubmitterInstance || (formContainer.parentElement && formContainer.parentElement._formSubmitterInstance);
+                                    if (submitter && typeof submitter.executeSave === 'function') {
+                                        submitter.executeSave({ isSilent: true });
+                                    }
+                                }
+                            }, 50);
+                        }
+                    });
+                }
+            };
+            rightDiv.appendChild(btnVincular);
+
+            // Nuevo Button
+            const btnNew = document.createElement('button');
+            btnNew.className = 'dv-btn dv-btn-primary';
+            btnNew.innerHTML = `<ion-icon name="add-outline" style="margin-right:4px;"></ion-icon> Crear ${targetEntity}`;
+            btnNew.onclick = (e) => {
+                e.preventDefault();
+                if (window.renderForm) {
+                    window.renderForm(targetEntity, null, null, {
+                        asModal: true,
+                        modalContext: { edgeType: edgeType, parentId: currentPK, contextId: contextId },
+                        onModalClose: () => { refreshAll(); }
+                    });
+                }
+            };
+            rightDiv.appendChild(btnNew);
+
+            headerDiv.appendChild(rightDiv);
+
+            // 2. Build Toolbar manually (simulating UI_DataView_Toolbar.buildToolbarHTML without ID conflicts)
+            const toolbarDiv = window.UI_DataView_Toolbar.buildToolbarHTML(
+                _state.view, 
+                targetEntity, 
+                (newView) => {
+                    // Update view toggle active state
+                    const btns = toolbarDiv.querySelectorAll('.dv-btn-icon');
+                    btns.forEach(b => b.classList.remove('active'));
+                    const activeBtn = toolbarDiv.querySelector(`#dv-view-${newView}-btn`);
+                    if (activeBtn) activeBtn.classList.add('active');
+                    
+                    _ctrl.setView(newView);
+                },
+                () => {
+                    if (window.UI_UniversalFilter && window.UI_UniversalFilter.openModal) {
+                        window.UI_UniversalFilter.openModal(targetEntity, _state.data, (filtered) => {
+                            _ctrl.setAdvancedFilters(filtered);
                         });
+                    } else {
+                        alert("El filtro universal no está disponible en este contexto.");
                     }
-                };
-                right.appendChild(btnNew);
+                }
+            );
+
+            // Re-bind search
+            const searchbar = toolbarDiv.querySelector('ion-searchbar');
+            if (searchbar) {
+                searchbar.placeholder = 'Buscar en ' + targetEntity + '...';
+                searchbar.value = _state.searchText;
+                searchbar.addEventListener('ionInput', (e) => {
+                    _ctrl.setSearchText(e.target.value);
+                });
             }
-            
-            toolbar.appendChild(left);
-            toolbar.appendChild(right);
-            toolbarContainer.appendChild(toolbar);
+
+            // Bind column popover
+            const btnCols = toolbarDiv.querySelector('#dv-col-trigger-btn');
+            if (btnCols) {
+                btnCols.addEventListener('click', (e) => {
+                    // S24.8 Fix: Pass the columns configuration to popover
+                    window.UI_DataView_Toolbar.ensureColPopover(_state.columns, (idx, isVisible) => {
+                            _ctrl.onColToggle(idx, isVisible);
+                            renderGrid();
+                    });
+                });
+            }
+
+            toolbarContainer.appendChild(headerDiv);
+            toolbarContainer.appendChild(toolbarDiv);
         };
 
         const renderGrid = () => {
             window.DOM.clear(gridContainer);
-            
-            const startIdx = (_state.page - 1) * _state.pageSize;
-            const pagedData = _state.filtered.slice(startIdx, startIdx + _state.pageSize);
-            const visibleCols = _state.columns.filter(c => c.visible);
-
+            gridContainer.innerHTML = '';
             const gridConfig = {
                 entityName: targetEntity,
-                columns: visibleCols,
-                filteredData: pagedData,
+                containerId: wrapper.id || 'embedded-dataview-grid',
+                columns: _state.columns,
+                filteredData: _state.filtered,
                 page: _state.page,
                 pageSize: _state.pageSize,
                 totalPages: Math.ceil(_state.filtered.length / _state.pageSize),
                 totalRows: _state.filtered.length,
                 view: _state.view,
                 onEdit: (id) => {
-                    if (window.UI_Router && !isReadonly) {
-                        window.UI_Router.navigateTo('form', { 
-                            entityName: targetEntity, 
-                            recordId: id, 
+                    if (window.openEditForm) {
+                        window.openEditForm(id, targetEntity, {
                             asModal: true,
+                            modalContext: { edgeType: edgeType, parentId: currentPK, contextId: contextId },
                             onModalClose: () => refreshAll()
                         });
                     }
@@ -318,25 +426,11 @@ window.UI_Component_EmbeddedDataView = {
                         refreshAll();
                     }
                 },
-                onPageChange: (newPage) => {
-                    _state.page = newPage;
-                    renderGrid();
-                },
-                onPageSizeChange: (newSize) => {
-                    _state.pageSize = newSize;
-                    _state.page = 1;
-                    renderGrid();
-                },
-                onSort: (colKey) => {
-                    if (_state.sortCol === colKey) {
-                        _state.sortDir = _state.sortDir === 'asc' ? 'desc' : 'asc';
-                    } else {
-                        _state.sortCol = colKey;
-                        _state.sortDir = 'asc';
-                    }
-                    applyFilterAndSort();
-                    renderGrid();
-                }
+                onPage: _ctrl.onPage,
+                onPageSize: _ctrl.onPageSize,
+                onSort: _ctrl.onSort,
+                onGridScroll: (top) => { _state.lastGridScroll = top; },
+                lastGridScroll: _state.lastGridScroll
             };
 
             const gridNodes = window.UI_DataGrid.buildLayout(gridConfig);
@@ -344,8 +438,7 @@ window.UI_Component_EmbeddedDataView = {
         };
 
         const refreshAll = () => {
-            _state.data = loadData();
-            applyFilterAndSort();
+            _ctrl.setData(loadData());
             renderGrid();
         };
 

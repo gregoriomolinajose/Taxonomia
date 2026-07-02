@@ -362,6 +362,10 @@
             if (f.uiComponent === 'embedded_dataview' && typeof window.UI_Component_EmbeddedDataView !== 'undefined') {
                 const containerEl = document.createElement('div');
                 containerEl.style.width = '100%';
+                containerEl.style.height = '100%';
+                containerEl.style.display = 'flex';
+                containerEl.style.flexDirection = 'column';
+                containerEl.style.flex = '1';
                 // Async injection is typically handled similarly, but since EmbeddedDataView is synchronous:
                 containerEl.appendChild(window.UI_Component_EmbeddedDataView.build(f, containerEl, d, e, bus, { dataset: { taxonomiaContext: currentEditId } }, {}));
                 return containerEl;

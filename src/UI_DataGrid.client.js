@@ -10,20 +10,21 @@
         
         /* ── Punto de Entrada Central de la Factoría ── */
         buildLayout: function(config) {
-            this.cfg = config; 
-            this._edgeMemo = null;   // Flush memo cache para Grafos (H9/AR)
-            this._targetMemo = null; // Flush memo cache para Semántica (H9/AR)
+            const builder = Object.create(this);
+            builder.cfg = config; 
+            builder._edgeMemo = null;   // Flush memo cache para Grafos (H9/AR)
+            builder._targetMemo = null; // Flush memo cache para Semántica (H9/AR)
             
-            if (config.loading) return this._renderSkeleton();
-            if (config.error) return this._renderErrorState(config.error);
-            if (!config.filteredData || config.filteredData.length === 0) return this._renderEmpty();
+            if (config.loading) return builder._renderSkeleton();
+            if (config.error) return builder._renderErrorState(config.error);
+            if (!config.filteredData || config.filteredData.length === 0) return builder._renderEmpty();
 
             if (config.view === 'table') {
-                return this._renderTableView();
+                return builder._renderTableView();
             } else if (config.view === 'grid') {
-                return this._renderGridView();
+                return builder._renderGridView();
             } else {
-                return this._renderEmpty();
+                return builder._renderEmpty();
             }
         },
 
@@ -60,9 +61,16 @@
             
             const card = document.createElement('div');
             card.className = 'dv-card';
+            card.style.display = 'flex';
+            card.style.flexDirection = 'column';
+            card.style.flex = '1';
+            card.style.minHeight = '0';
             
             const tableWrap = document.createElement('div');
             tableWrap.className = 'dv-table-wrap';
+            tableWrap.style.flex = '1';
+            tableWrap.style.overflowY = 'auto';
+            tableWrap.style.minHeight = '0';
             
             const table = document.createElement('table');
             table.className = 'dv-table';
@@ -603,6 +611,7 @@
             wrapperZone.style.flex = '1';
             wrapperZone.style.position = 'relative'; 
             wrapperZone.style.minHeight = '0';
+            wrapperZone.style.overflow = 'hidden';
             
             wrapperZone.appendChild(fabTopBtn);
             wrapperZone.appendChild(gridScrollWrap);

@@ -159,12 +159,14 @@
     if (activeParents.length === 0) {
         global.DOM.clear(container);
         container.innerHTML = `
-        <div style="width: 100%; text-align: center; padding: 40px; color: var(--ion-color-medium); background: #ffffff; border-radius: 12px; border: 1px dashed var(--color-border, #ccc);">
-            <h2 style="font-size: var(--sys-font-display, 24px); font-weight: 700; color: var(--ion-color-dark); margin: 0 0 16px 0;">
+        <div style="width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 64px 32px; margin-bottom: 32px; background: var(--ion-color-light, #f8f9fa); border-radius: 24px; border: 1px dashed rgba(var(--ion-color-primary-rgb, 56, 128, 255), 0.3); box-shadow: 0 4px 12px rgba(0,0,0,0.02); transition: all 0.3s ease;">
+            <h2 style="font-size: var(--sys-font-display, 26px); font-weight: 800; color: var(--ion-color-dark); margin: 0 0 24px 0; letter-spacing: -0.5px;">
                 ${dshConfig.title || 'Directorio'} <span style="color: var(--ion-color-primary);">${dshConfig.titleHighlight || ''}</span>
             </h2>
-            <ion-icon name="list-outline" style="font-size: 48px; opacity: 0.5; margin-bottom: 16px;"></ion-icon>
-            <p style="margin:0;">${dshConfig.emptyMessage || 'No hay información en este momento.'}</p>
+            <div style="width: 80px; height: 80px; border-radius: 50%; background: rgba(var(--ion-color-primary-rgb, 56, 128, 255), 0.1); display: flex; align-items: center; justify-content: center; margin-bottom: 24px;">
+                <ion-icon name="people-circle-outline" style="font-size: 42px; color: var(--ion-color-primary);"></ion-icon>
+            </div>
+            <p style="margin:0; font-size: 16px; color: var(--ion-color-medium); font-weight: 500; text-align: center; max-width: 400px; line-height: 1.5;">${dshConfig.emptyMessage || 'No hay información en este momento.'}</p>
         </div>`;
         return; 
     }

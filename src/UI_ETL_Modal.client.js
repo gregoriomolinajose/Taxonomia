@@ -46,10 +46,26 @@ window.UI_ETL_Modal = (function() {
         content.appendChild(headerContainer);
 
         // --- Body Container using UI_BulkImporter ---
+        let contextId = null;
+        let edgeType = null;
+        let parentEntity = null;
+        let finalOptions = {};
+        
+        if (typeof options === 'string') {
+            contextId = options;
+        } else if (options && typeof options === 'object') {
+            contextId = options.contextId || null;
+            edgeType = options.edgeType || null;
+            parentEntity = options.parentEntity || null;
+            finalOptions = options;
+        }
+
         activeImporter = new window.UI_BulkImporter({
             entityName: entityName,
-            options: options,
-            contextId: null // Global scope, not tied to a specific workspace record
+            options: finalOptions,
+            contextId: contextId,
+            edgeType: edgeType,
+            parentEntity: parentEntity
         });
 
         const importerDOM = activeImporter.render();

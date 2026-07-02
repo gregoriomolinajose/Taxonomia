@@ -374,6 +374,12 @@ function buildEChartsCapacidadesOption(capacidadesData, isPrebuilt, gapColor, te
     var primContrast = primaryContrast || '#ffffff';
     
     return {
+        // S25.3 Fix: Custom color palette removing yellow/light colors to ensure white text contrast
+        color: [
+            '#5470c6', '#43a047', '#e53935', '#3949ab', 
+            '#00897b', '#8e24aa', '#d81b60', '#f4511e', 
+            '#6d4c41', '#546e7a'
+        ],
         backgroundColor: bgColor,
         tooltip: {
             formatter: function (info) {

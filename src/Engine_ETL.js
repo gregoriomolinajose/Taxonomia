@@ -166,6 +166,76 @@ var Engine_ETL = (function() {
   }
 
   /**
+   * Genera un Google Sheet con los datos filtrados, excluyendo UUIDs y campos de sistema.
+   * @param {string} entityName
+   * @param {Array} columns
+   * @param {Array} rows
+   */
+  function exportDataToSheet(entityName, columns, rows) {
+    if (!columns || columns.length === 0) throw new Error("No hay configuración de columnas.");
+    
+    // Omitir campos de sistema explícitamente para asegurar que la descarga sirva como "Plantilla Limpia"
+    const SYS_COLS = ['created_at', 'create_by', 'created_by', 'updated_at', 'update_at', 'update_by', 'deleted_at', 'deleted_by', 'version', '_version'];
+    
+    // WYSIWYG mode: Only export visible columns
+    const visibleCols = columns.filter(c => c.visible && !SYS_COLS.includes(c.key || c.name));
+    
+    const headers = visibleCols.map(c => c.label || c.key || c.name);
+    const keys = visibleCols.map(c => c.key || c.name);
+    
+    const ssName = "Exportación " + entityName + " - " + Utilities.formatDate(new Date(), Session.getScriptTimeZone(), "yyyy-MM-dd HH:mm");
+    const ss = SpreadsheetApp.create(ssName);
+    const sheet = ss.getActiveSheet();
+    sheet.setName(entityName);
+    
+    // 1. Formatear la Hoja Principal
+    const headerRange = sheet.getRange(1, 1, 1, headers.length);
+    headerRange.setValues([headers]);
+    headerRange.setFontWeight("bold");
+    headerRange.setBackground("#E8EAF6"); // Color Corporativo Suave
+    sheet.setFrozenRows(1);
+    
+    // Opcional: Forzar ancho uniforme requerido por UX
+    for (let i = 1; i <= headers.length; i++) {
+      sheet.setColumnWidth(i, 200);
+    }
+    
+    // 2. Inyectar Filas de Datos
+    if (rows && rows.length > 0) {
+      const data2D = rows.map((row, rowIndex) => {
+        return keys.map(key => {
+          if (key === '_num') return rowIndex + 1;
+          let val = row[key];
+          if (val === undefined || val === null) return "";
+          if (typeof val === 'object') return JSON.stringify(val);
+          return String(val);
+        });
+      });
+      
+      const dataRange = sheet.getRange(2, 1, rows.length, headers.length);
+      
+      // Pre-formatear columnas sensibles como Texto Plano para evitar que Sheets las auto-convierta a fecha (ej. "orden_path")
+      keys.forEach((key, i) => {
+        if (key === 'orden_path' || key === 'id_externo' || key === 'path_completo_es') {
+          sheet.getRange(2, i + 1, rows.length, 1).setNumberFormat("@");
+        }
+      });
+      
+      dataRange.setValues(data2D);
+    }
+    
+    // 3. Hacer el archivo editable para el tester/usuario final
+    try {
+      const file = DriveApp.getFileById(ss.getId());
+      file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.EDIT);
+    } catch(e) {
+      if (typeof Logger !== 'undefined') Logger.log("Error al aplicar permisos a la exportación: " + e.toString());
+    }
+
+    return ss.getUrl();
+  }
+
+  /**
    * Lee la sábana de datos crudos de una hoja de cálculo en Drive.
    * Filtra las filas estériles e inyecta las cabeceras como keys.
    * 
@@ -532,7 +602,8 @@ var Engine_ETL = (function() {
     extractDataFromDrive: extractDataFromDrive,
     hydrateAndDeduplicate: hydrateAndDeduplicate,
     writebackFeedback: writebackFeedback,
-    inspectDriveSheet: inspectDriveSheet
+    inspectDriveSheet: inspectDriveSheet,
+    exportDataToSheet: exportDataToSheet
   };
 
 })();

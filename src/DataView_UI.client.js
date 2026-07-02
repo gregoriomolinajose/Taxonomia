@@ -7,7 +7,7 @@
         const ENTITY_META = window.ENTITY_META || {};
 
         /* ── Columnas excluidas de la tabla (Movido a UI_DataGrid) ── */
-        const VIRTUAL_TYPES = ['divider', 'header', 'spacer', 'alert', 'markup'];
+        const VIRTUAL_TYPES = ['divider', 'header', 'spacer', 'alert', 'markup', 'title'];
 
         /* ── Campos estatus para badges de color ── */
         const STATUS_FIELDS = ['estado', 'nivel_criticalidad', 'modelo_negocio'];
@@ -17,17 +17,18 @@
         /* ────────────────────────────────────────────
            Estado interno por entidad
         ───────────────────────────────────────────── */
+        let _ctrl = null;
         let _state = {
             entityName: '',
-            data: [],   // todos los registros (sin filtro)
-            filtered: [],   // tras búsqueda
+            data: [],
+            filtered: [],
             page: 1,
             pageSize: 25,
             sortCol: '',
             sortDir: 'asc',
-            view: 'table',  // 'table' | 'grid'
-            columns: [],   // { key, label, visible, sortable }
-            selectedRows: [], // IDs for Bulk Actions
+            view: 'table',
+            columns: [],
+            selectedRows: [],
             containerId: ''
         };
 
@@ -204,76 +205,14 @@
            Búsqueda y Ordenación (Delegadas a DataEngine)
         ───────────────────────────────────────────── */
         function _applyFilter(query) {
-            let baseData = _state.data;
-            if (_state.payload && _state.payload.strictFilter && _state.payload.strictFilter.key) {
-                const sKey = _state.payload.strictFilter.key;
-                const sVal = String(_state.payload.strictFilter.value);
-                
-                const escapeRegExp = function(str) { return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); };
-                const sRegex = new RegExp('(^|\\W)' + escapeRegExp(sVal) + '(\\W|$)');
-
-                // NEW: Resolve Graph edges JIT for filter (H8/S34 QA)
-                // [S49.14] Refactored to use centralized Graph_Utils for O(1) lookups
-                let fMeta = null;
-                if (window.APP_SCHEMAS && window.APP_SCHEMAS[_state.entityName]) {
-                    fMeta = (window.APP_SCHEMAS[_state.entityName].fields || []).find(f => f.name === sKey);
+            if (window.DataEngine) {
+                _state.filtered = window.DataEngine.applyFilter(_state.data, query);
+                if (_state.sortCol) {
+                    _state.filtered = window.DataEngine.applySort(_state.filtered, _state.sortCol, _state.sortDir);
                 }
-                const edgeName = fMeta ? (fMeta.graphEdgeType || fMeta.name).toUpperCase() : null;
-                const pkCol = window.Schema_Utils ? window.Schema_Utils.getPrimaryKey(_state.entityName) : 'id_registro';
-
-                baseData = baseData.filter(function(r) {
-                    let val = r[sKey];
-
-                    // Graph Fallback: Si no hay FK física, buscala en la topología (Orphan Prevention)
-                    const isEmptyValue = val === undefined || val === null || val === '' || (Array.isArray(val) && val.length === 0);
-                    if (fMeta && fMeta.isTemporalGraph && window.Graph_Utils && isEmptyValue) {
-                        const currentPK = r[pkCol];
-                        const resolvedLink = window.Graph_Utils.resolveLinkedId(currentPK, edgeName, null, false, fMeta.relationType);
-                        if (resolvedLink) val = resolvedLink;
-                    }
-                    // Unwraps Graph/Relation Array [{id: "EQ-1"}] checking ANY object property or flat value
-                    if (Array.isArray(val)) {
-                        return val.some(function(item) {
-                            if (typeof item === 'object' && item !== null) {
-                                return Object.values(item).some(function(innerVal) {
-                                    return String(innerVal) === sVal || sRegex.test(String(innerVal));
-                                });
-                            }
-                            return String(item) === sVal || sRegex.test(String(item));
-                        });
-                    }
-                    return String(val) === sVal || sRegex.test(String(val));
-                });
+                _state.page = 1;
+                _queueRedraw();
             }
-            let textFiltered = window.DataEngine.applyFilter(baseData, query);
-            
-            // S54.3: Motor AND/OR de filtros universales
-            if (_state.advancedFilters && Object.keys(_state.advancedFilters).length > 0) {
-                const filterKeys = Object.keys(_state.advancedFilters);
-                textFiltered = textFiltered.filter(row => {
-                    return filterKeys.every(field => { // AND entre distintos campos
-                        const validValues = _state.advancedFilters[field];
-                        if (!validValues || validValues.length === 0) return true;
-                        
-                        let rowVal = row[field];
-                        if (rowVal === null || rowVal === undefined || rowVal === '' || (Array.isArray(rowVal) && rowVal.length === 0)) {
-                            rowVal = '[Sin Valor]';
-                        }
-                        
-                        if (Array.isArray(rowVal)) {
-                            // Relacional (array)
-                            return validValues.some(val => rowVal.includes(val));
-                        } else {
-                            return validValues.includes(String(rowVal)); // OR entre valores del mismo campo
-                        }
-                    });
-                });
-            }
-            
-            _state.filtered = textFiltered;
-            _state.page = 1;
-            _state.lastGridScroll = 0; // Reset scroll momentum on search
-            _rerenderData(); // Solo datos — el toolbar/search box NO se toca
         }
 
         function _applySort(colKey) {
@@ -283,8 +222,13 @@
                 _state.sortCol = colKey;
                 _state.sortDir = 'asc';
             }
-            _state.filtered = window.DataEngine.applySort(_state.filtered, colKey, _state.sortDir);
-            _rerenderData();
+            if (window.DataEngine) {
+                const searchInput = document.getElementById('dv-search-input');
+                const query = searchInput ? searchInput.value || '' : '';
+                _state.filtered = window.DataEngine.applyFilter(_state.data, query);
+                _state.filtered = window.DataEngine.applySort(_state.filtered, _state.sortCol, _state.sortDir);
+                _queueRedraw();
+            }
         }
 
         /* ────────────────────────────────────────────
@@ -338,7 +282,7 @@
                     _state.entityName, 
                     _state.filtered.length, 
                     canCreate, 
-                    _exportCSV, 
+                    _exportToSheet, 
                     function(e) { window.DataViewEngine._openETLModal(e); },
                     onAddClick
                 );
@@ -569,9 +513,9 @@
                         lookupData: window._LOOKUP_DATA || {},
                         containerEl: document.getElementById('dv-filter-container'),
                         onFilterChange: function(newFilters) {
-                            _state.advancedFilters = newFilters || {};
-                            const searchInput = document.getElementById('dv-search-input');
-                            _applyFilter(searchInput ? searchInput.value : '');
+                            // if (_ctrl) _ctrl.setAdvancedFilters(newFilters || {});
+                            // TODO: Implement advanced filters via DataEngine if needed
+                            _queueRedraw();
                         }
                     });
                 }
@@ -581,25 +525,10 @@
         /* ────────────────────────────────────────────
            CSV Export
         ───────────────────────────────────────────── */
-        function _exportCSV() {
-            const visibleCols = _state.columns.filter(c => c.visible);
-            const header = visibleCols.map(c => `"${c.label}"`).join(',');
-            const bodyRows = _state.filtered.map(row =>
-                visibleCols.map(col => {
-                    const v = String(row[col.key] ?? '').replace(/"/g, '""');
-                    return `"${v}"`;
-                }).join(',')
-            ).join('\n');
-
-            const csv = '\uFEFF' + header + '\n' + bodyRows; // BOM para Excel/UTF-8
-            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `${_state.entityName}_${new Date().toISOString().slice(0, 10)}.csv`;
-            a.click();
-            URL.revokeObjectURL(url);
+        function _exportToSheet() {
+            window.DataEngine.exportToSheet(_state.entityName, _state.columns, _state.filtered);
         }
+
 
         /* ────────────────────────────────────────────
            Event handlers (accesibles desde HTML inline)
@@ -788,8 +717,8 @@
         /* ────────────────────────────────────────────
            Universal Bulk Data Engine (Delegado a DataEngine_UI)
         ───────────────────────────────────────────── */
-        function _exportCSV() {
-            window.DataEngine.exportCSV(_state.entityName, _state.columns, _state.filtered);
+        function _exportToSheet() {
+            window.DataEngine.exportToSheet(_state.entityName, _state.columns, _state.filtered);
         }
 
         function _importCSV(event) {
@@ -960,7 +889,7 @@
                         });
                 },
                 onDownloadCSVTpl: function(entity) {
-                    window.DataEngine.exportCSV(entity, [], []);
+                    window.DataEngine.exportToSheet(entity, [], []);
                 },
                 onLocalUpload: function(entity, event, modal) {
                     if (modal && modal.dismiss) modal.dismiss();
@@ -1119,7 +1048,7 @@ function _openETLModal() {
                         });
                 },
                 onDownloadCSVTpl: function(entity) {
-                    window.DataEngine.exportCSV(entity, _state.columns, []);
+                    window.DataEngine.exportToSheet(entity, _state.columns, []);
                 },
                 onLocalUpload: function(entity, event, modal) {
                     modal.dismiss();
@@ -1194,7 +1123,7 @@ function _openETLModal() {
                     entityMeta: ENTITY_META[_state.entityName]
                 };
             },
-            _exportCSV, _importCSV, _openETLModal, _getUniversalETLOptions,
+            _exportToSheet, _importCSV, _openETLModal, _getUniversalETLOptions,
             _onSearch, _onSort, _onPage, _onPageSize,
             _onRowCheck, _onSelectAll, _onRowOrderChange,
             _onColToggle, _toggleColPopover, _onViewToggle,

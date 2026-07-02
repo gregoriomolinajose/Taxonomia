@@ -378,6 +378,23 @@ window.UI_FormUtils = (function () {
         return excludeIds;
     }
 
+    /**
+     * S55.3 - Wrapper Drill-Down Helper (H10 Extracción de Duplicación)
+     * Resuelve el desajuste entre el contenedor visual div (generado por buildRelation)
+     * y el componente real de Shadow DOM que maneja el estado.
+     */
+    function unwrapFieldNode(node) {
+        if (!node) return null;
+        let actualNode = node;
+        if (typeof actualNode.getValidatedValue !== 'function' && typeof actualNode.querySelector === 'function') {
+            const inner = actualNode.querySelector('tx-searchable, [data-searchable-multi], [data-searchable-single]');
+            if (inner && typeof inner.getValidatedValue === 'function') {
+                actualNode = inner;
+            }
+        }
+        return actualNode;
+    }
+
     return {
         getDominioOptions,
         getDominiosPadreOptions,
@@ -390,6 +407,7 @@ window.UI_FormUtils = (function () {
         executeAsyncValidations,
         extractDraftContext,
         fetchContextualData,
-        getExcludedGraphNodes
+        getExcludedGraphNodes,
+        unwrapFieldNode
     };
 })();

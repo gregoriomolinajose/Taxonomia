@@ -576,8 +576,10 @@
             const currentUser = (window.AuthManager && window.AuthManager.currentUser) ? window.AuthManager.currentUser : null;
             const userEmail = currentUser ? currentUser.email : '';
             const userName = (currentUser && currentUser.name) ? currentUser.name : (userEmail ? (typeof window.formatUserName === 'function' ? window.formatUserName(userEmail) : userEmail) : 'Usuario');
-            const initChar = userName !== 'Usuario' ? userName.charAt(0).toUpperCase() : '?';
+            
             const avatarBtn = document.getElementById('topbar-avatar');
+            const topbarName = document.getElementById('topbar-name');
+            const topbarEmail = document.getElementById('topbar-email');
             const avatarPop = document.getElementById('popover-avatar');
             const namePop = document.getElementById('popover-user-name');
             const rolePop = document.getElementById('popover-user-role');
@@ -591,9 +593,14 @@
                 if (avatarPop) { avatarPop.innerHTML = imgHtm; avatarPop.style.background = 'transparent'; }
             }
 
-            // Fallback síncrono inicial
-            if (avatarBtn) { avatarBtn.innerText = initChar; avatarBtn.style.background = ''; }
-            if (avatarPop) { avatarPop.innerText = initChar; avatarPop.style.background = ''; }
+            // Hydrate text
+            if (topbarName) { 
+                const names = userName !== 'Usuario' ? userName.split(' ') : ['Usuario'];
+                topbarName.innerText = names.slice(0, 2).join(' '); 
+            }
+            if (topbarEmail) {
+                topbarEmail.innerText = userEmail || 'invitado@sistema.local';
+            }
             
             if (picture) {
                 bindAvatar(picture);

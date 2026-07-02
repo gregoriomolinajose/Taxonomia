@@ -52,57 +52,86 @@
         },
 
         /**
-         * Universal CSV Exporter (Construcción del Texto UTF-8 BOM)
+         * Universal Sheet Exporter
          * @param {string} entityName
          * @param {Array} columns Arreglo de columnas [{key, label, visible}] 
          * @param {Array} rows Datos a exportar.
          */
-        exportCSV: function(entityName, columns, rows) {
+        exportToSheet: async function(entityName, columns, rows) {
             if (!entityName || !columns || columns.length === 0) {
                 if (window.showGlobalToast) window.showGlobalToast('No hay configuración de columnas.', 'warning');
                 return;
             }
             
-            const SYS_COLS = window.CORE_SYS_FIELDS || ['created_at', 'create_by', 'created_by', 'updated_at', 'update_at', 'update_by', 'deleted_at', 'deleted_by', 'version', '_version'];
-            // Omitir campos de sistema explícitamente para asegurar que la descarga sirva como "Plantilla Limpia"
-            const visibleCols = columns.filter(c => c.visible && !SYS_COLS.includes(c.key || c.name));
+            // Remove existing loaders to prevent duplicates
+            document.querySelectorAll('ion-loading.loader-export').forEach(el => el.remove());
             
-            // Si el objeto col no viene con key (sino con .name como normaliceFields), usar fallback
-            const exportHeaders = visibleCols.map(c => c.key || c.name);
-            const exportLabels = visibleCols.map(c => `"${c.label}"`);
-            
-            let csvContent = exportLabels.join(',') + '\n';
-            
-            rows.forEach(row => {
-                const rowArray = exportHeaders.map(header => {
-                    let val = row[header] === undefined || row[header] === null ? '' : String(row[header]);
-                    // Escapar comillas dobles y envolver en comillas si hay comas, comillas o saltos de línea
-                    if (val.includes(',') || val.includes('"') || val.includes('\n')) {
-                        val = '"' + val.replace(/"/g, '""') + '"';
-                    }
-                    return val;
-                });
-                csvContent += rowArray.join(',') + '\n';
-            });
-            
-            // Descarga
-            const blob = new Blob([new Uint8Array([0xEF, 0xBB, 0xBF]), csvContent], { type: 'text/csv;charset=utf-8;' }); // BOM for UTF-8 Excel
-            const link = document.createElement("a");
-            const url = URL.createObjectURL(blob);
-            link.setAttribute("href", url);
-            link.setAttribute("download", `${entityName}_Export.csv`);
-            link.style.visibility = 'hidden';
-            
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            
-            // Asumimos existencia de showGlobalToast o inyectamos uno
-            if (window.showGlobalToast) {
-                window.showGlobalToast('Exportación iniciada.', 'success');
-            } else {
-                console.log('Exportación iniciada para ' + entityName);
+            const loading = document.createElement('ion-loading');
+            loading.className = 'loader-export';
+            loading.message = 'Creando hoja de cálculo en Drive...';
+            document.body.appendChild(loading);
+            await loading.present();
+
+            // S25.3 Fix: Hydrate logic graph fields into raw rows for export
+            let exportRows = rows;
+            if (window.APP_SCHEMAS && window.APP_SCHEMAS[entityName] && window.Graph_Utils && window.DataStore) {
+                const schema = window.APP_SCHEMAS[entityName];
+                const relFields = (schema.fields || []).filter(f => f.type === 'relation');
+                
+                if (relFields.length > 0) {
+                    const pkField = window.Schema_Utils ? window.Schema_Utils.getPrimaryKey(entityName) : 'id_registro';
+                    exportRows = rows.map(r => {
+                        const newR = { ...r };
+                        relFields.forEach(f => {
+                            if (f.isTemporalGraph) {
+                                const edgeName = (f.graphEdgeType || f.name).toUpperCase();
+                                const linkedIds = window.Graph_Utils.resolveAllLinkedIds(r[pkField], edgeName, null, false, f.relationType);
+                                
+                                if (linkedIds && linkedIds.length > 0) {
+                                    const trgLabelKey = f.labelField || (window.ENTITY_META && window.ENTITY_META[f.targetEntity] && window.ENTITY_META[f.targetEntity].titleField) || 'nombre';
+                                    const targetRows = window.DataStore.get(f.targetEntity) || [];
+                                    const trgPkField = window.Schema_Utils ? window.Schema_Utils.getPrimaryKey(f.targetEntity) : 'id_registro';
+                                    
+                                    const labels = linkedIds.map(id => {
+                                        const tRow = targetRows.find(tr => String(tr[trgPkField]) === String(id) || String(tr.lexical_id) === String(id) || String(tr.id_registro) === String(id));
+                                        return tRow ? tRow[trgLabelKey] : id;
+                                    });
+                                    
+                                    newR[f.name] = labels.join(', ');
+                                } else {
+                                    newR[f.name] = '';
+                                }
+                            } else if (newR[f.name]) {
+                                // Normal FK Relation
+                                const val = newR[f.name];
+                                const trgLabelKey = f.labelField || (window.ENTITY_META && window.ENTITY_META[f.targetEntity] && window.ENTITY_META[f.targetEntity].titleField) || 'nombre';
+                                const targetRows = window.DataStore.get(f.targetEntity) || [];
+                                const trgPkField = window.Schema_Utils ? window.Schema_Utils.getPrimaryKey(f.targetEntity) : 'id_registro';
+                                const tRow = targetRows.find(tr => String(tr[trgPkField]) === String(val) || String(tr.lexical_id) === String(val) || String(tr.id_registro) === String(val));
+                                if (tRow) newR[f.name] = tRow[trgLabelKey];
+                            }
+                        });
+                        return newR;
+                    });
+                }
             }
+
+            window.DataAPI.call('API_Universal_Router', 'etl_export_sheet', entityName, { columns, rows: exportRows })
+                .then(res => {
+                    loading.dismiss();
+                    if (res && res.data) {
+                        const newWin = window.open(res.data, '_blank');
+                        if (newWin) {
+                            if (window.showGlobalToast) window.showGlobalToast('¡Exportación Creada en tu Drive!', 'success');
+                        } else {
+                            if (window.showGlobalToast) window.showGlobalToast('Exportación creada, pero tu navegador bloqueó la pestaña. Desactiva el bloqueador de pop-ups.', 'warning');
+                        }
+                    }
+                })
+                .catch(err => {
+                    loading.dismiss();
+                    if (window.showGlobalToast) window.showGlobalToast('Fallo crítico al exportar: ' + err.message, 'danger');
+                });
         },
 
         /**

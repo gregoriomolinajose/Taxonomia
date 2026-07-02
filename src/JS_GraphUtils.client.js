@@ -290,11 +290,85 @@ window.Graph_Utils = (function () {
         return delta;
     }
 
+    function upsertTemporalEdge(parentId, childId, edgeType, contextId) {
+        if (!window.DataStore) return;
+        const edges = window.DataStore.get('Sys_Graph_Edges') || [];
+        
+        const existing = edges.find(e => 
+            String(e.id_nodo_padre) === String(parentId) && 
+            String(e.id_nodo_hijo) === String(childId) && 
+            e.tipo_relacion === edgeType &&
+            String(e.contexto_id) === String(contextId)
+        );
+        
+        if (existing) {
+            existing.estado = 'Borrador';
+            existing.es_version_actual = true;
+        } else {
+            edges.push({
+                id_registro: `TEMP_EDGE_${Date.now()}_${Math.random().toString(36).substr(2,9)}`,
+                id_nodo_padre: parentId,
+                id_nodo_hijo: childId,
+                tipo_relacion: edgeType,
+                estado: 'Borrador',
+                es_version_actual: true,
+                contexto_id: contextId
+            });
+        }
+        
+        window.DataStore.set('Sys_Graph_Edges', edges);
+        invalidateIndex();
+    }
+
+    function deleteTemporalEdge(parentId, childId, edgeType, contextId) {
+        if (!window.DataStore) return;
+        const edges = window.DataStore.get('Sys_Graph_Edges') || [];
+        
+        const existingIdx = edges.findIndex(e => 
+            String(e.id_nodo_padre) === String(parentId) && 
+            String(e.id_nodo_hijo) === String(childId) && 
+            e.tipo_relacion === edgeType &&
+            String(e.contexto_id) === String(contextId)
+        );
+        
+        if (existingIdx >= 0) {
+            if (edges[existingIdx].estado === 'Borrador') {
+                edges.splice(existingIdx, 1);
+            } else {
+                edges[existingIdx].estado = 'Eliminado';
+            }
+        } else {
+            const activeEdge = edges.find(e => 
+                String(e.id_nodo_padre) === String(parentId) && 
+                String(e.id_nodo_hijo) === String(childId) && 
+                e.tipo_relacion === edgeType &&
+                e.es_version_actual === true
+            );
+            if (activeEdge) {
+                edges.push({
+                    id_registro: `TEMP_EDGE_DEL_${Date.now()}_${Math.random().toString(36).substr(2,9)}`,
+                    id_nodo_padre: parentId,
+                    id_nodo_hijo: childId,
+                    tipo_relacion: edgeType,
+                    estado: 'Eliminado',
+                    es_version_actual: true,
+                    contexto_id: contextId,
+                    metadata: { replaces: activeEdge.id_registro }
+                });
+            }
+        }
+        
+        window.DataStore.set('Sys_Graph_Edges', edges);
+        invalidateIndex();
+    }
+
     return {
         resolveLinkedId,
         resolveAllLinkedIds,
         invalidateIndex,
         getTemporalEdgeMeta,
-        computeDelta
+        computeDelta,
+        upsertTemporalEdge,
+        deleteTemporalEdge
     };
 })();

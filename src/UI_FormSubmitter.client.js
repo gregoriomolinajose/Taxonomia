@@ -7,7 +7,7 @@
  */
 
 window.UI_FormSubmitter = class UI_FormSubmitter {
-    constructor(entityName, fields, submitBtn, apiService = null, modal = null, localEditId = null) {
+    constructor(entityName, fields, submitBtn, apiService = null, modal = null, localEditId = null, options = {}) {
         this.entityName = entityName;
         this.fields = fields;
         this.submitBtn = submitBtn;
@@ -16,6 +16,7 @@ window.UI_FormSubmitter = class UI_FormSubmitter {
         this.apiService = apiService || window.DataAPI;
         this.modal = modal;
         this._internalRetryId = localEditId;
+        this.options = options;
         
         this.isSaving = false;
         this._isSilent = false; // Flag para auto-guardado sin cerrar modal
@@ -33,10 +34,19 @@ window.UI_FormSubmitter = class UI_FormSubmitter {
     }
 
     async executeSave(options = {}) {
+        const container = this.options.containerRef;
+        if (container && !container.isConnected) {
+            console.warn('[FormSubmitter] Form container was unmounted. Canceling queued save to prevent cross-contamination.');
+            return;
+        }
+        
         const isSilentSave = options.isSilent || false;
         this._isSilent = isSilentSave;
 
-        if (this.isSaving) return; // Bloqueo anti-doble envío
+        if (this.isSaving) {
+            this._pendingSaveOptions = options;
+            return; // Bloqueo anti-doble envío pero encola la petición
+        }
         this.isSaving = true;
         
         if (this.submitBtn && !isSilentSave) {
@@ -114,6 +124,43 @@ window.UI_FormSubmitter = class UI_FormSubmitter {
             // LECTURA JIT (Evita Detached Nodes)
             let payload = this.extractPayload();
 
+            // S58.1: Validación Server-Side/Payload-Side de Campos Obligatorios
+            if (this.fields) {
+                const missingReqs = [];
+                this.fields.forEach(f => {
+                    if (f.required) {
+                        const val = payload[f.name];
+                        if (val === undefined || val === null || String(val).trim() === '' || (Array.isArray(val) && val.length === 0)) {
+                            missingReqs.push(f.label || f.name);
+                        }
+                    }
+                });
+                
+                if (missingReqs.length > 0) {
+                    this._showToast('⚠️ Faltan campos obligatorios: ' + missingReqs.join(', '), 'warning');
+                    
+                    // Native HTML5 Validation Trigger
+                    const activeForm = this.modal || document.getElementById('app-container');
+                    const firstMissingFieldDef = this.fields.find(f => missingReqs.includes(f.label || f.name));
+                    if (firstMissingFieldDef && activeForm) {
+                        const targetInput = activeForm.querySelector(`[name="${firstMissingFieldDef.name}"]`);
+                        if (targetInput) {
+                            if (typeof targetInput.reportValidity === 'function') {
+                                targetInput.reportValidity();
+                            } else if (targetInput.querySelector && targetInput.querySelector('input')) {
+                                const innerNative = targetInput.querySelector('input');
+                                if (innerNative && typeof innerNative.reportValidity === 'function') {
+                                    innerNative.reportValidity();
+                                }
+                            }
+                        }
+                    }
+                    
+                    this._revertButtonState(true);
+                    return; // Abort Submit Flow
+                }
+            }
+
             // S37.3: Identity Collision Prevention (Uniqueness Checker)
             if (window.DataStore && this.fields) {
                 const liveData = window.DataStore.get(this.entityName) || [];
@@ -141,7 +188,7 @@ window.UI_FormSubmitter = class UI_FormSubmitter {
                 }
                 
                 if (collisionFound) {
-                    this._revertButtonState();
+                    this._revertButtonState(true);
                     return; // Abort Submit Flow
                 }
             }
@@ -355,6 +402,20 @@ window.UI_FormSubmitter = class UI_FormSubmitter {
                      childBackups[key] = JSON.parse(JSON.stringify(window.DataStore.get(key)));
                  }
             }
+            // S49.3: Creación implícita de Arista Temporal (Edge) via Modal Context
+            if (this.options && this.options.modalContext) {
+                const mc = this.options.modalContext;
+                if (mc.parentId && mc.edgeType && mc.contextId) {
+                    if (window.Graph_Utils && window.Graph_Utils.upsertTemporalEdge) {
+                        try {
+                            window.Graph_Utils.upsertTemporalEdge(mc.parentId, optimisticPK, mc.edgeType, mc.contextId);
+                            console.log(`[FormSubmitter] Arista temporal creada: ${mc.parentId} -> ${optimisticPK} (${mc.edgeType}) Ctx:${mc.contextId}`);
+                        } catch(ex) {
+                            console.error("[FormSubmitter] Error al crear arista temporal:", ex);
+                        }
+                    }
+                }
+            }
             
             const fakeResponse = { status: 'success', action: action, pk: pkField, pkValue: optimisticPK, data: { orchestratedChildren: optimisticChildren } };
             
@@ -373,7 +434,8 @@ window.UI_FormSubmitter = class UI_FormSubmitter {
                  this._performSuccessCleanup(fakeResponse, isInlineRendered); 
             } catch(opErr) {
                  console.error('Optimistic Patch Fracasó, abortando red:', opErr);
-                 return this._revertButtonState();
+                 this.isSaving = false; // ensure lock dropped if exception occurs
+                 return this._revertButtonState(true);
             }
 
             // FASE 2: THE BACKGROUND FIRE & FORGET (Sin Bloqueo Await)
@@ -421,6 +483,36 @@ window.UI_FormSubmitter = class UI_FormSubmitter {
                     if (response.data && response.data.adapter_results && response.data.adapter_results.sheets) {
                         const newVer = response.data.adapter_results.sheets.version;
                         if (newVer) this._reconcileVersion(this.entityName, response.pkValue || optimisticPK, newVer);
+                    }
+                    
+                    // S49.3.B: Persistir Arista Temporal en Base de Datos (Inmediato)
+                    if (this.options && this.options.modalContext) {
+                        const mc = this.options.modalContext;
+                        if (mc.parentId && mc.edgeType && mc.contextId && response.pkValue) {
+                            let relId = `RELA_${Date.now()}_${Math.random().toString(36).substr(2,6)}`.toUpperCase();
+                            if (mc.edgeType === 'TAXONOMIA_PERSONA') {
+                                relId = `RELA-${String(mc.contextId).substring(5, 9)}${String(response.pkValue).substring(5, 9)}`.toUpperCase();
+                            }
+                            const newEdge = {
+                                id_relacion: relId,
+                                id_nodo_padre: mc.parentId,
+                                id_nodo_hijo: response.pkValue,
+                                tipo_relacion: mc.edgeType,
+                                estado: 'Borrador',
+                                es_version_actual: true,
+                                contexto_id: mc.contextId,
+                                _work_context: mc.contextId
+                            };
+                            this.apiService.call('API_Universal_Router', 'commitEdges', 'Sys_Graph_Edges', [newEdge])
+                                .then((resp) => {
+                                    if (resp && resp.status === 'error') {
+                                        console.error('[FormSubmitter] Backend error persistiendo arista:', resp.message);
+                                    } else {
+                                        console.log('[FormSubmitter] Arista temporal persistida en DB');
+                                    }
+                                })
+                                .catch(e => console.error('[FormSubmitter] HTTP/Network Error persistiendo arista en DB', e));
+                        }
                     }
                     
                     // S55.6: Actualización JIT del DOM para autoguardados secuenciales (evita OCC)
@@ -473,8 +565,21 @@ window.UI_FormSubmitter = class UI_FormSubmitter {
             } else {
                 this._handleOptimisticRollback(stateBackup, childBackups, 'Falla de conexión: ' + err.message);
             }
+        }).finally(() => {
+            this._finalizeSaveCycle();
         });
         // Fin executeSave
+    }
+
+    _finalizeSaveCycle() {
+        this.isSaving = false;
+        if (this._pendingSaveOptions) {
+            const opts = this._pendingSaveOptions;
+            this._pendingSaveOptions = null;
+            setTimeout(() => {
+                this.executeSave(opts);
+            }, 100);
+        }
     }
 
     // --- SUBRUTINAS DE RECONCILIACIÓN OPTIMISTA (S42.7) ---
@@ -527,8 +632,11 @@ window.UI_FormSubmitter = class UI_FormSubmitter {
     }
 
 
-    _revertButtonState() {
-        this.isSaving = false;
+    _revertButtonState(abortSubmit = false) {
+        if (abortSubmit) {
+            this.isSaving = false;
+            this._pendingSaveOptions = null;
+        }
         if (this.submitBtn && !this._isSilent) {
             this.submitBtn.disabled = false;
             window.DOM.clear(this.submitBtn);
@@ -632,8 +740,12 @@ window.UI_FormSubmitter = class UI_FormSubmitter {
         const nodalComponents = activeForm.querySelectorAll('[data-form-component]');
         nodalComponents.forEach(cmp => {
             const name = cmp.getAttribute('data-form-component');
-            if (name && typeof cmp.getValidatedValue === 'function') {
-                const val = cmp.getValidatedValue();
+            const actualNode = (window.UI_FormUtils && window.UI_FormUtils.unwrapFieldNode) 
+                ? window.UI_FormUtils.unwrapFieldNode(cmp) 
+                : cmp;
+                
+            if (name && actualNode && typeof actualNode.getValidatedValue === 'function') {
+                const val = actualNode.getValidatedValue();
                 if (val !== undefined) {
                     payload[name] = val;
                 }
@@ -651,6 +763,9 @@ window.UI_FormSubmitter = class UI_FormSubmitter {
         if (!this._initialPayload) return true;
         
         const currentPayload = this.extractPayload();
+        console.log(`[FormSubmitter Debug] _initialPayload:`, this._initialPayload);
+        console.log(`[FormSubmitter Debug] currentPayload:`, currentPayload);
+        
         const keys1 = Object.keys(this._initialPayload);
         const keys2 = Object.keys(currentPayload);
         const allKeys = new Set([...keys1, ...keys2]);
@@ -660,7 +775,7 @@ window.UI_FormSubmitter = class UI_FormSubmitter {
             const val2 = currentPayload[key];
             
             if (!this._areEqual(val1, val2)) {
-                console.log(`[FormSubmitter] Guardado cancelado temporalmente: Cambio detectado en '${key}': '${val1}' -> '${val2}'`);
+                console.log(`[FormSubmitter] Guardado cancelado temporalmente: Cambio detectado en '${key}': '${JSON.stringify(val1)}' -> '${JSON.stringify(val2)}'`);
                 return true;
             }
         }

@@ -118,10 +118,17 @@
                 // Header Custom del DrawerS25.2 con soporte para Badge ID congelado
                 // HEADER DESACOPLADO (S37.6)
                 // Se delega al Componente Puro Reutilizable UI_Factory
+                
+                let titleOverride = null;
+                if (config && config.modalContext && entityName === 'Equipo') {
+                    titleOverride = 'Agregar Equipos';
+                }
+
                 const header = window.UI_Factory.buildDrawerHeader({
                     entityName: entityName,
                     data: data,
                     localEditId: localEditId,
+                    titleOverride: titleOverride,
                     onClose: () => {
                         if (window.AppEventBus) { window.AppEventBus.publish('MODAL::CLOSE_REQUEST'); } 
                         else if (window._closeTopModal) { window._closeTopModal(); }
@@ -145,7 +152,9 @@
                         const val = String(rawVal).trim();
                         const dynamicTitleEl = modal.querySelector('.drawer-dynamic-title');
                         if (dynamicTitleEl) {
-                            dynamicTitleEl.textContent = val || 'Nuevo Registro';
+                            let defaultTitle = 'Nuevo Registro';
+                            if (config && config.modalContext && entityName === 'Equipo') defaultTitle = 'Agregar Equipos';
+                            dynamicTitleEl.textContent = val || defaultTitle;
                         }
                     }
                 }
@@ -512,6 +521,17 @@
 
                 if (inputEl.style.display === 'none') {
                     ionCol.style.display = 'none';
+                } else if (field.uiComponent === 'embedded_dataview') {
+                    ionCol.style.display = 'flex';
+                    ionCol.style.flexDirection = 'column';
+                    ionCol.style.flex = '1';
+                    ionCol.style.minHeight = '0';
+                    ionCol.style.overflow = 'hidden';
+                    ionCol.style.padding = '0'; // Remover padding del col
+                    if (targetRow) {
+                        targetRow.style.flex = '1';
+                        targetRow.style.alignContent = 'stretch';
+                    }
                 }
 
                 ionCol.appendChild(inputEl);
@@ -544,7 +564,7 @@
             footerContainer.className = 'drawer-footer';
             
             const btnGrid = document.createElement('ion-grid');
-            btnGrid.style.padding = 'var(--spacing-1) var(--spacing-2)';
+            btnGrid.style.padding = 'var(--spacing-1) 0';
             const btnRow = document.createElement('ion-row');
             
             // Recrear solo el botón Submit Principal
@@ -557,6 +577,8 @@
                 colLeft.setAttribute('size', '5');
                 colLeft.style.display = 'flex';
                 colLeft.style.alignItems = 'center';
+                colLeft.style.justifyContent = 'flex-start';
+                colLeft.style.paddingLeft = '0';
                 colLeft.style.gap = 'var(--spacing-2)';
                 
                 // S49.11: Dot/Bar indicators — barras para completados, dots para pendientes
@@ -590,6 +612,7 @@
                 colRight.style.display = 'flex';
                 colRight.style.alignItems = 'center';
                 colRight.style.justifyContent = 'flex-end';
+                colRight.style.paddingRight = '0';
                 colRight.style.gap = 'var(--spacing-2)';
                 
                 // S49.11: Botón Atrás — estilo sutil (clear, text + chevron)
@@ -694,7 +717,12 @@
             // --------------------------------------------------------------------
 
             // S14.1 Delegación Submitter Object
-            const formSubmitter = new window.UI_FormSubmitter(entityName, fields, submitBtn, null, modal, localEditId);
+            const submitterOptions = {
+                onSuccess: injectedCallback,
+                modalContext: config.modalContext || null,
+                containerRef: container // S55.6 BugFix: Reliable unmount detection
+            };
+            const formSubmitter = new window.UI_FormSubmitter(entityName, fields, submitBtn, null, modal, localEditId, submitterOptions);
             modal._formSubmitterInstance = formSubmitter;
 
             

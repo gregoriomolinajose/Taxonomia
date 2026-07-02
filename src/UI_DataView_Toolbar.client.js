@@ -59,8 +59,6 @@ window.UI_DataView_Toolbar = (function () {
         } else {
             pop = document.createElement('ion-popover');
             pop.id = 'dv-col-ion-popover';
-            pop.setAttribute('trigger', 'dv-col-trigger-btn');
-            pop.setAttribute('trigger-action', 'click');
             pop.setAttribute('dismiss-on-select', 'false');
             pop.setAttribute('side', 'bottom');
             pop.setAttribute('alignment', 'end');
@@ -68,6 +66,15 @@ window.UI_DataView_Toolbar = (function () {
             document.body.appendChild(pop);
             
             pop.appendChild(buildColPopoverContentHTML(columns));
+        }
+        
+        // S25.3 Fix: Bind to the button dynamically because the toolbar DOM node gets replaced on view toggle
+        const btn = document.getElementById('dv-col-trigger-btn');
+        if (btn) {
+            btn.onclick = async (e) => {
+                pop.event = e;
+                await pop.present();
+            };
         }
 
         pop.querySelectorAll('ion-checkbox').forEach(function (cb) {

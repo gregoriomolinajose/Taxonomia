@@ -69,7 +69,7 @@
         
         this.runAppBootstrap();
       } else {
-        this.renderAccessDenied(container, 'Dominio no autorizado', response.email);
+        this.renderAccessDenied(container, response.message || 'Dominio no autorizado', response.email);
       }
     },
     

@@ -98,7 +98,7 @@ body.drawer-max-depth ion-button[onclick*="openForm"] {
   padding: 24px;
 }
 /* S25.3: Override global ion-grid constraint inside Drawer */
-.drawer-content ion-grid {
+.drawer-content ion-grid, .drawer-footer ion-grid {
   max-width: 100% !important;
   margin: 0 !important;
   padding: 0 !important;
@@ -338,10 +338,10 @@ div[data-apexcharts-watermark],
 }
 
 .main-layout-segment ion-segment-button {
-    --color: rgba(255, 255, 255, 0.8);
-    --color-checked: #ffffff;
-    --color-hover: #ffffff;
-    --indicator-color: rgba(255, 255, 255, 0.2);
+    --color: var(--ion-color-dark, #222428) !important;
+    --color-checked: var(--ion-color-primary, #3880ff) !important;
+    --color-hover: var(--ion-color-primary);
+    --indicator-color: rgba(var(--ion-color-primary-rgb, 56, 128, 255), 0.1);
     --indicator-box-shadow: none;
     --border-radius: 6px;
     font-weight: 600;
@@ -350,7 +350,7 @@ div[data-apexcharts-watermark],
 }
 
 .main-layout-segment ion-segment-button::part(native):hover {
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(var(--ion-color-primary-rgb, 56, 128, 255), 0.05);
     border-radius: 6px;
 }
 

@@ -7,6 +7,8 @@ window.UI_BulkImporter = class UI_BulkImporter {
         this.entityName = config.entityName;
         this.options = config.options || {};
         this.contextId = config.contextId;
+        this.edgeType = config.edgeType;
+        this.parentEntity = config.parentEntity;
         this.containerNode = null;
         this.urlCache = (window.UI_ETL_Modal && window.UI_ETL_Modal.urlCache) ? window.UI_ETL_Modal.urlCache : {};
     }
@@ -546,6 +548,8 @@ window.UI_BulkImporter = class UI_BulkImporter {
                 if (this.contextId && Array.isArray(res.data)) {
                     res.data.forEach(row => {
                         row._contexto_arista = this.contextId;
+                        if (this.edgeType) row._tipo_arista = this.edgeType;
+                        if (this.parentEntity) row._entidad_padre = this.parentEntity;
                         if (!row.estado || String(row.estado).trim() === '') {
                             row.estado = 'Borrador'; // Si está en el Wizard, todo entra como borrador por defecto.
                         }
@@ -571,8 +575,27 @@ window.UI_BulkImporter = class UI_BulkImporter {
                     return this._showToast(`El motor ETL no tiene un método de procesamiento compatible.`, 'warning');
                 }
 
-                etlPromise.then((metrics) => {
-                    if (window.DataStore) window.DataStore.set(entity, null); 
+                etlPromise.then(async (metrics) => {
+                    if (window.DataAPI && window.DataStore) {
+                        try {
+                            const payloads = await Promise.all([
+                                window.DataAPI.call('getInitialPayload', entity),
+                                window.DataAPI.call('getInitialPayload', 'Sys_Graph_Edges')
+                            ]);
+                            [entity, 'Sys_Graph_Edges'].forEach((ent, idx) => {
+                                const raw = payloads[idx];
+                                const res = typeof raw === 'string' ? JSON.parse(raw) : raw;
+                                if (res && res.status === 'success') {
+                                    const rows = window.Schema_Utils.inflateTuples(res.data);
+                                    window.DataStore.set(ent, rows);
+                                }
+                            });
+                            if (window.AppEventBus) window.AppEventBus.publish('CACHE::GRAPH_HYDRATED', { source: 'ETL' });
+                        } catch(e) {
+                            console.error('[BulkImporter] Error re-hidratando cache', e);
+                        }
+                    }
+
                     const m = metrics || { success: res.data.length, duplicate: 0, error: 0 };
                     const feedbackArray = m._feedback || [];
                     this.showResults(m, feedbackArray);
