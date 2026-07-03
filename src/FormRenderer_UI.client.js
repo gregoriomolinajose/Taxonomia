@@ -358,14 +358,14 @@
                         
                         await modalEl.present();
 
-                        modalContent.querySelector('#btn-cancel-deploy').addEventListener('click', () => {
-                            modalEl.dismiss();
-                            setTimeout(() => modalEl.remove(), 500);
+                        modalContent.querySelector('#btn-cancel-deploy').addEventListener('click', async () => {
+                            await modalEl.dismiss();
+                            modalEl.remove();
                         });
 
-                        modalContent.querySelector('#btn-confirm-deploy').addEventListener('click', () => {
-                            modalEl.dismiss();
-                            setTimeout(() => modalEl.remove(), 500);
+                        modalContent.querySelector('#btn-confirm-deploy').addEventListener('click', async () => {
+                            await modalEl.dismiss();
+                            modalEl.remove();
                             
                             // S55.5: Backend Activation Trigger
                             if (global.showToast) global.showToast('Aprobando taxonomía...', 'medium');

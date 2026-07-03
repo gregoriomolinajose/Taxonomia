@@ -370,6 +370,12 @@
                 containerEl.appendChild(window.UI_Component_EmbeddedDataView.build(f, containerEl, d, e, bus, { dataset: { taxonomiaContext: currentEditId } }, {}));
                 return containerEl;
             }
+            if (f.uiComponent === 'canvas_launcher' && typeof window.UI_Component_CanvasLauncher !== 'undefined') {
+                const containerEl = document.createElement('div');
+                containerEl.style.width = '100%';
+                window.UI_Component_CanvasLauncher.build(f, containerEl, d, e, bus, { dataset: { taxonomiaContext: currentEditId } }, {});
+                return containerEl;
+            }
             const fallback = document.createElement('div');
             fallback.style.padding = '20px';
             fallback.style.color = 'var(--ion-color-medium)';

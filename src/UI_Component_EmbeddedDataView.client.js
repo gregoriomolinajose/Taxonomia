@@ -338,6 +338,7 @@ window.UI_Component_EmbeddedDataView = {
                 if (window.renderForm) {
                     window.renderForm(targetEntity, null, null, {
                         asModal: true,
+                        taxonomiaContext: contextId,
                         modalContext: { edgeType: edgeType, parentId: currentPK, contextId: contextId },
                         onModalClose: () => { refreshAll(); }
                     });
@@ -414,6 +415,7 @@ window.UI_Component_EmbeddedDataView = {
                     if (window.openEditForm) {
                         window.openEditForm(id, targetEntity, {
                             asModal: true,
+                            taxonomiaContext: contextId,
                             modalContext: { edgeType: edgeType, parentId: currentPK, contextId: contextId },
                             onModalClose: () => refreshAll()
                         });

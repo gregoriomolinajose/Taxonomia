@@ -574,6 +574,41 @@ const Engine_DB = {
                                     parentResults.orchestratedChildren[f.graphEntity].push(...taxEdgesToAdd);
                                 }
                             }
+                            
+                            // --- EXPLICIT-LINK PORTAFOLIO A UNIDAD DE NEGOCIO ---
+                            if (targetEntity === 'Portafolio') {
+                                const portafolioEdgesToAdd = [];
+                                newChildrenToInsert.forEach(child => {
+                                    if (child.unidad_negocio_padre) {
+                                        const portafolioId = child[pkField] || child['id_registro'];
+                                        const undnId = child.unidad_negocio_padre;
+                                        
+                                        const deterministicId = `RELA-${String(undnId).substring(5, 9)}${portafolioId.substring(5, 9)}`.toUpperCase();
+                                        
+                                        if (!portafolioEdgesToAdd.some(e => e.id_relacion === deterministicId) && !globalBatches[f.graphEntity].some(e => e.id_relacion === deterministicId && e.tipo_relacion === 'UNIDAD_NEGOCIO_PORTAFOLIO')) {
+                                            portafolioEdgesToAdd.push({
+                                                id_relacion: deterministicId,
+                                                id_nodo_padre: undnId,
+                                                id_nodo_hijo: portafolioId,
+                                                tipo_relacion: "UNIDAD_NEGOCIO_PORTAFOLIO",
+                                                valido_desde: child.valido_desde || new Date().toISOString(),
+                                                valido_hasta: "",
+                                                es_version_actual: true,
+                                                estado: child._estado_arista || child.estado || "Borrador",
+                                                contexto_id: child._contexto_arista || child.contexto_id || flatPayload.id_taxonomia || ""
+                                            });
+                                        }
+                                    }
+                                });
+                                
+                                if (portafolioEdgesToAdd.length > 0) {
+                                    if (typeof Logger !== 'undefined') Logger.log(`[Explicit-Link] Inyectando ${portafolioEdgesToAdd.length} aristas explícitas UNIDAD_NEGOCIO_PORTAFOLIO.`);
+                                    globalBatches[f.graphEntity].push(...portafolioEdgesToAdd);
+                                    if (!parentResults.orchestratedChildren) parentResults.orchestratedChildren = {};
+                                    if (!parentResults.orchestratedChildren[f.graphEntity]) parentResults.orchestratedChildren[f.graphEntity] = [];
+                                    parentResults.orchestratedChildren[f.graphEntity].push(...portafolioEdgesToAdd);
+                                }
+                            }
                         }
 
                         if (!parentResults.orchestratedChildren) parentResults.orchestratedChildren = {};

@@ -655,12 +655,13 @@ class TXSearchable extends HTMLElement {
     _getSharedOverlayHtml(isMob) {
         const targetEntity = this.getAttribute('target-entity') || this._entityName || '';
         const canCreate = !window.ABAC || window.ABAC.can('create', targetEntity);
+        const displayName = this._entityName ? this._entityName.replace(/_/g, ' ') : '';
         
         return `
             <ion-header class="ion-no-border" style="border-top-left-radius: var(--border-radius, 16px); border-top-right-radius: var(--border-radius, 16px); overflow: hidden;">
                 ${isMob ? `
                 <ion-toolbar color="primary">
-                    <ion-title style="color: var(--ion-color-primary-contrast, #ffffff); font-weight: 600;">Buscar ${this._entityName}</ion-title>
+                    <ion-title style="color: var(--ion-color-primary-contrast, #ffffff); font-weight: 600;">Buscar ${displayName}</ion-title>
                     <ion-buttons slot="end">
                         ${canCreate ? `
                         <ion-button id="${this._componentId}-btn-create-mob" style="font-weight: 600;">
@@ -692,7 +693,7 @@ class TXSearchable extends HTMLElement {
                 <div style="border-top: 1px solid var(--color-border, #e0e0e0);">
                     <ion-item id="${this._componentId}-btn-create-desk" button lines="none" detail="false" style="--background: transparent; margin: 0;">
                         <ion-icon slot="start" name="add-outline" style="color: var(--ion-color-primary, #3880ff);"></ion-icon>
-                        <ion-label style="color: var(--ion-color-primary, #3880ff); font-weight: 600;">Crear ${this._entityName}</ion-label>
+                        <ion-label style="color: var(--ion-color-primary, #3880ff); font-weight: 600;">Crear ${displayName}</ion-label>
                     </ion-item>
                 </div>
                 ` : ''}
@@ -704,6 +705,7 @@ class TXSearchable extends HTMLElement {
     _getInlineOverlayTemplate() {
         const targetEntity = this.getAttribute('target-entity') || this._entityName || '';
         const canCreate = !window.ABAC || window.ABAC.can('create', targetEntity);
+        const displayName = this._entityName ? this._entityName.replace(/_/g, ' ') : '';
 
         return `
             <div id="${this._componentId}-inline-list-container" data-tx-state="hidden" style="flex-direction: column; margin-bottom: 12px; border: 1px solid var(--color-border, #cccccc); border-radius: 8px; overflow: hidden; background: var(--ion-background-color, #ffffff);">
@@ -732,7 +734,7 @@ class TXSearchable extends HTMLElement {
                 <div style="border-top: 1px solid var(--color-border, #e0e0e0);">
                     <ion-item id="${this._componentId}-btn-create-inline" button lines="none" detail="false" style="--background: transparent; margin: 0;">
                         <ion-icon slot="start" name="add-outline" style="color: var(--ion-color-primary, #3880ff);"></ion-icon>
-                        <ion-label style="color: var(--ion-color-primary, #3880ff); font-weight: 600;">Crear ${this._entityName}</ion-label>
+                        <ion-label style="color: var(--ion-color-primary, #3880ff); font-weight: 600;">Crear ${displayName}</ion-label>
                     </ion-item>
                 </div>
                 ` : ''}
@@ -745,20 +747,24 @@ class TXSearchable extends HTMLElement {
         const hidden = this._isMultiple ? (this._selectedItems && this._selectedItems.length > 0) : !!this._selectedValue;
         const customPlaceholder = this.getAttribute('placeholder');
         const lockText = customPlaceholder || 'Para relacionarlo vaya a la sección Taxonomía';
+        const displayName = this._entityName ? this._entityName.replace(/_/g, ' ') : '';
         
         return `
             <!-- ACTIVE PLACEHOLDER -->
             <div id="${domId}-active" ${hidden || this._isDisabled ? 'data-tx-state="hidden"' : ''} style="margin-bottom: 4px;">
                 <div style="font-size: 12px; margin-bottom: 8px; color: var(--ion-color-medium, #92949c); padding-left: 4px;">${this._fieldLabel}</div>
-                <div class="trigger-container tx-placeholder-hover" style="background: #ffffff; border-radius: 12px; border: 2px dashed var(--color-border, #d1d5db); cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.02);">
-                    <div class="tx-icon-scale" style="width: 48px; height: 48px; border-radius: 50%; background: var(--ion-color-light, #f4f5f8); display: flex; align-items: center; justify-content: center; margin-bottom: 12px; transition: all 0.3s ease;">
-                        <ion-icon name="${iconName}" style="font-size: 24px; color: var(--ion-color-primary, #3880ff);"></ion-icon>
+                <div class="trigger-container tx-placeholder-hover" style="background: #ffffff; border-radius: 12px; border: 2px dashed var(--color-border, #d1d5db); cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); display: flex; flex-direction: row; align-items: center; justify-content: space-between; padding: 16px 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.02); gap: 16px;">
+                    <div style="display: flex; align-items: center; gap: 16px; flex: 1;">
+                        <div class="tx-icon-scale" style="width: 40px; height: 40px; border-radius: 50%; background: var(--ion-color-light, #f4f5f8); display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all 0.3s ease;">
+                            <ion-icon name="${iconName}" style="font-size: 20px; color: var(--ion-color-primary, #3880ff);"></ion-icon>
+                        </div>
+                        <div style="display: flex; flex-direction: column;">
+                            <h3 style="font-size: 15px; font-weight: 600; margin: 0; padding: 0; color: var(--ion-color-dark, #222428); margin-bottom: 2px; font-family: var(--sys-font-family, inherit);">Vincular ${displayName}</h3>
+                            <p style="font-size: 13px; color: var(--ion-color-medium, #92949c); margin: 0; padding: 0; line-height: 1.3;">Busca registros o crea uno nuevo al instante.</p>
+                        </div>
                     </div>
-                    <h3 style="font-size: 15px; font-weight: 600; margin: 0; padding: 0; color: var(--ion-color-dark, #222428); margin-bottom: 6px; font-family: var(--sys-font-family, inherit);">Vincular ${this._entityName}</h3>
-                    <p style="font-size: 13px; color: var(--ion-color-medium, #92949c); margin: 0; padding: 0; text-align: center; max-width: 250px; line-height: 1.4; margin-bottom: 16px;">Busca y selecciona registros existentes o crea uno nuevo al instante.</p>
-                    <ion-button size="default" fill="solid" color="primary" style="font-family: var(--ion-font-family, inherit); --border-radius: 8px; --box-shadow: 0 4px 6px rgba(56, 128, 255, 0.2); font-weight: 600; margin: 0; --padding-start: 24px; --padding-end: 24px;">
-                        <ion-icon slot="start" name="search-outline" style="font-size: 18px;"></ion-icon>
-                        BUSCAR
+                    <ion-button fill="clear" color="primary" style="font-family: var(--ion-font-family, inherit); margin: 0; --padding-start: 8px; --padding-end: 8px; flex-shrink: 0;">
+                        <ion-icon slot="icon-only" name="search-outline" style="font-size: 22px;"></ion-icon>
                     </ion-button>
                 </div>
             </div>
@@ -768,11 +774,14 @@ class TXSearchable extends HTMLElement {
                 <div style="font-size: 12px; margin-bottom: 8px; color: var(--ion-color-medium, #92949c); padding-left: 4px;">${this._fieldLabel}</div>
                 <div style="background: var(--ion-color-light-tint, #fbfbfb); border-radius: 8px; border: 1px dashed var(--color-border, #e5e7eb); padding: 16px; display: flex; align-items: center; gap: 16px; opacity: 0.8;">
                     <div style="width: 40px; height: 40px; border-radius: 8px; background: #ffffff; border: 1px solid var(--color-border, #e5e7eb); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-                        <ion-icon name="${iconName}" style="font-size: 20px; color: var(--ion-color-medium, #92949c);"></ion-icon>
+                        <ion-icon name="lock-closed" style="font-size: 20px; color: var(--ion-color-medium, #92949c);"></ion-icon>
                     </div>
                     <div style="flex: 1;">
-                        <h3 style="font-size: 13px; font-weight: bold; margin: 0; padding: 0; line-height: 1.2; color: var(--ion-color-medium, #92949c);">Sin ${this._entityName}</h3>
-                        <p style="font-size: 11px; color: var(--ion-color-danger, #eb445a); margin: 0; padding: 0; line-height: 1.2; margin-top: 4px;"><ion-icon name="lock-closed" style="vertical-align: text-bottom; margin-right: 2px;"></ion-icon>${lockText}</p>
+                        <div style="font-size: 14px; font-weight: 500; color: var(--ion-color-dark, #222428); margin-bottom: 4px;">Sin ${displayName}</div>
+                        <div style="font-size: 12px; color: var(--ion-color-danger, #eb445a); display: flex; align-items: center; gap: 4px;">
+                            <ion-icon name="lock-closed" style="font-size: 12px;"></ion-icon>
+                            <span>${lockText}</span>
+                        </div>
                     </div>
                 </div>
             </div>

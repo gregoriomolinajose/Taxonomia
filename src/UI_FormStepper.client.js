@@ -224,7 +224,7 @@ window.UI_FormStepper = class UI_FormStepper {
             stepDiv.style.flexDirection = 'column';
             stepDiv.style.justifyContent = 'flex-start';
             
-            const isFullScreenGrid = (stepName === 'Listado de Equipos' || stepName === 'Directorio de Personas' || stepName === 'Portafolios');
+            const isFullScreenGrid = (stepName === 'Listado de Equipos' || stepName === 'Directorio de Personas' || stepName === 'Portafolios' || stepName === 'Value Streams');
             
             if (isFullScreenGrid) {
                 stepDiv.style.flex = '1';
@@ -264,7 +264,7 @@ window.UI_FormStepper = class UI_FormStepper {
             headerWrap.appendChild(desc);
 
             // S56: Ocultar título y descripción si es "Listado de Equipos" o "Directorio de Personas" porque toma pantalla completa
-            if (stepName === 'Listado de Equipos' || stepName === 'Directorio de Personas') {
+            if (isFullScreenGrid) {
                 sectionTitle.style.display = 'none';
                 desc.style.display = 'none';
                 headerWrap.style.display = 'none';

@@ -162,6 +162,49 @@
                 while(stack.length > 0) {
                     this.closeTop();
                 }
+            },
+            
+            /**
+             * H6 Proportionality: Factory for building Fullscreen Canvas drawers to avoid boilerplate.
+             * @param {string} titleHtml - The HTML content for the title (e.g. icon + text).
+             * @param {Function} buildCallback - Called with (contentContainer, drawerNode) to inject canvas specific logic.
+             * @returns {HTMLElement} The created drawer node
+             */
+            buildFullscreenCanvas: function(titleHtml, buildCallback) {
+                const drawerNode = document.createElement('div');
+                drawerNode.className = 'drawer-panel fullscreen canvas-drawer';
+                
+                const header = document.createElement('div');
+                header.className = 'drawer-header';
+                header.style.borderBottom = '1px solid var(--color-border)';
+                
+                const title = document.createElement('h2');
+                title.className = 'drawer-title';
+                title.innerHTML = titleHtml;
+                
+                const btnClose = document.createElement('button');
+                btnClose.className = 'dv-btn-icon';
+                btnClose.innerHTML = '<ion-icon name="close"></ion-icon>';
+                btnClose.onclick = () => this.closeTop();
+                
+                header.appendChild(title);
+                header.appendChild(btnClose);
+                
+                const contentEl = document.createElement('div');
+                contentEl.className = 'drawer-content';
+                contentEl.style.display = 'flex';
+                contentEl.style.flexDirection = 'column';
+                contentEl.style.padding = '0';
+                
+                drawerNode.appendChild(header);
+                drawerNode.appendChild(contentEl);
+                
+                if (typeof buildCallback === 'function') {
+                    buildCallback(contentEl, drawerNode);
+                }
+                
+                this.push(drawerNode);
+                return drawerNode;
             }
         };
     })();

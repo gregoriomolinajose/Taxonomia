@@ -294,7 +294,7 @@ window.UI_View_SwimlaneGrid = {
 
         // 2. Extraer aristas de los formularios hijos en los Drawers de forma optimista (Config-Driven)
         const edgeExtractors = [
-            { component: 'portafolios_vinculados', parentField: 'id_unidad_negocio', edgeType: 'UNIDAD_NEGOCIO_PORTAFOLIO', fallbackParent: currentUnidadId },
+            { component: 'portafolios_vinculados', parentField: 'id_unidad_negocio', edgeType: 'UNIDAD_NEGOCIO_PORTAFOLIO', fallbackParent: currentUnidadId, explicitParentProperty: 'unidad_negocio_padre' },
             { component: 'value_streams_vinculados', parentField: 'id_portafolio', edgeType: 'PORTAFOLIO_VALUE_STREAM' },
             { component: 'grupos_productos_vinculados', parentField: 'id_value_stream', edgeType: 'VALUE_STREAM_GRUPO_PRODUCTO' },
             { component: 'dominios_vinculados', parentField: 'id_value_stream', edgeType: 'VALUE_STREAM_DOMINIO' },
@@ -311,29 +311,41 @@ window.UI_View_SwimlaneGrid = {
                 if (!formContainer) return;
                 
                 const pkInput = formContainer.querySelector(`[name="${cfg.parentField}"]`);
-                const parentId = (pkInput && pkInput.value) ? pkInput.value : cfg.fallbackParent;
-                if (!parentId || processed.has(parentId)) return;
-                processed.add(parentId);
+                const formParentId = (pkInput && pkInput.value) ? pkInput.value : cfg.fallbackParent;
+                if (!formParentId || processed.has(formParentId)) return;
+                processed.add(formParentId);
                 
                 const edgeInput = formContainer.querySelector(`[data-form-component="${cfg.component}"]`);
                 if (edgeInput && typeof edgeInput.getValidatedValue === 'function') {
                     const val = edgeInput.getValidatedValue();
                     
                     // La UI es la fuente de verdad. Limpiamos aristas cacheadas para este padre.
-                    edges = edges.filter(e => !(e.tipo_relacion === cfg.edgeType && String(e.id_nodo_padre).trim() === String(parentId).trim()));
+                    edges = edges.filter(e => !(e.tipo_relacion === cfg.edgeType && String(e.id_nodo_padre).trim() === String(formParentId).trim()));
                     
                     if (val) {
                         const arr = Array.isArray(val) ? val : [val];
-                        arr.forEach(childId => {
-                            if (childId) {
-                                edges.push({
-                                    id_nodo_padre: String(parentId),
-                                    id_nodo_hijo: String(childId),
-                                    tipo_relacion: cfg.edgeType,
-                                    es_version_actual: 'true',
-                                    estado: 'Activo',
-                                    contexto_id: String(this.taxonomiaId)
-                                });
+                        arr.forEach(childItem => {
+                            if (childItem) {
+                                let validChildId = childItem;
+                                let resolvedParentId = formParentId;
+                                
+                                if (typeof childItem === 'object') {
+                                    validChildId = childItem.id_registro || childItem.id_portafolio || childItem.id_value_stream || childItem.id_grupo_producto || childItem.id_dominio || childItem.id_equipo || Object.values(childItem)[0];
+                                    if (cfg.explicitParentProperty && childItem[cfg.explicitParentProperty]) {
+                                        resolvedParentId = childItem[cfg.explicitParentProperty];
+                                    }
+                                }
+                                
+                                if (validChildId && String(validChildId).trim() !== '[object Object]') {
+                                    edges.push({
+                                        id_nodo_padre: String(resolvedParentId),
+                                        id_nodo_hijo: String(validChildId),
+                                        tipo_relacion: cfg.edgeType,
+                                        es_version_actual: 'true',
+                                        estado: 'Activo',
+                                        contexto_id: String(this.taxonomiaId)
+                                    });
+                                }
                             }
                         });
                     }
@@ -552,39 +564,18 @@ window.UI_View_SwimlaneGrid = {
                                     gpWrapper.appendChild(eqContainer);
                                 } else {
                                     // Empty State Onboarding para Productos
-                                    const emptyState = document.createElement('div');
-                                    emptyState.style.cssText = 'position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 1.5rem 1rem; margin-top: 8px; margin-left: 20px; width: calc(100% - 20px); border: 2px dashed var(--ion-color-step-300, #ccc); border-radius: 8px; background: rgba(0,0,0,0.02); overflow: hidden;';
-                                    
-                                    emptyState.innerHTML = `
-                                        <div style="width: 80px; height: 45px; border: 2px dashed var(--ion-color-step-300, #ccc); border-radius: 8px; margin-bottom: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; background: rgba(0,0,0,0.02);">
-                                            <ion-icon name="cube-outline" style="font-size: 24px; color: var(--ion-color-step-400, #aaa); margin-bottom: 4px;"></ion-icon>
-                                            <div style="width: 40%; height: 4px; background: var(--ion-color-step-200, #ddd); border-radius: 2px;"></div>
-                                        </div>
-                                        
-                                        <h3 style="color: var(--ion-color-dark); margin: 0 0 4px 0; font-weight: 600; font-size: 0.9rem; letter-spacing: -0.01em; text-align: center;">Sin Productos</h3>
-                                        <p style="color: var(--ion-color-medium, #666); text-align: center; max-width: 180px; margin: 0 0 12px 0; font-size: 0.8rem; line-height: 1.3;">
-                                            Vincula un nuevo registro.
-                                        </p>
-                                    `;
-                                    const btnAdd = document.createElement('button');
-                                    btnAdd.className = 'tax-add-btn';
-                                    btnAdd.style.position = 'relative';
-                                    btnAdd.style.right = 'auto';
-                                    btnAdd.style.top = 'auto';
-                                    btnAdd.style.transform = 'none';
-                                    btnAdd.style.margin = '0 auto';
-                                    btnAdd.style.backgroundColor = 'var(--ion-color-primary, #3880ff)';
-                                    btnAdd.style.color = '#ffffff';
-                                    btnAdd.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)';
-                                    btnAdd.title = 'Añadir Producto';
-                                    btnAdd.innerHTML = '+';
-                                    btnAdd.onclick = (e) => {
-                                        e.stopPropagation();
-                                        this._handleNodeAdd(gpNodeId, 'Grupo_Productos', e);
-                                    };
-                                    emptyState.appendChild(btnAdd);
-                                    
-                                    gpWrapper.appendChild(emptyState);
+                                    if (window.UI_CanvasNodeFactory && typeof window.UI_CanvasNodeFactory.buildEmptyState === 'function') {
+                                        const emptyState = window.UI_CanvasNodeFactory.buildEmptyState({
+                                            title: 'Sin Productos',
+                                            subtitle: 'Vincula un nuevo registro.',
+                                            icon: 'cube-outline',
+                                            marginLeft: '20px',
+                                            onAdd: (e) => {
+                                                this._handleNodeAdd(gpNodeId, 'Grupo_Productos', e);
+                                            }
+                                        });
+                                        gpWrapper.appendChild(emptyState);
+                                    }
                                 }
 
                                 gpItemsFlex.appendChild(gpWrapper);
@@ -629,7 +620,16 @@ window.UI_View_SwimlaneGrid = {
                             domItemsFlex.style.overflow = 'visible'; // allow canvas to grow instead of inner scroll
                             domItemsFlex.style.paddingBottom = '8px';
 
-                            dominioEdges.forEach(dEdge => {
+                            const getOrder = (metaStr) => {
+                                if (!metaStr) return 0;
+                                if (typeof metaStr !== 'string') return metaStr.order || 0;
+                                try { return JSON.parse(metaStr).order || 0; } 
+                                catch(e) { return 0; }
+                            };
+
+                            dominioEdges.sort((a,b) => getOrder(a.metadata_config) - getOrder(b.metadata_config));
+
+                            dominioEdges.forEach((dEdge, index) => {
                                 const domNodeId = dEdge.id_nodo_hijo;
                                 
                                 const domWrapper = document.createElement('div');
@@ -640,7 +640,8 @@ window.UI_View_SwimlaneGrid = {
                                 domWrapper.style.flex = '1 1 0%'; // Grow and shrink equally based on available space
                                 domWrapper.style.marginBottom = '8px';
 
-                                domWrapper.appendChild(this._createNodeEl(domNodeId, 'Dominio', 'Añadir Equipo'));
+                                const edgeData = { edgeId: dEdge.id_relacion, index: index, entityType: 'Dominio' };
+                                domWrapper.appendChild(this._createNodeEl(domNodeId, 'Dominio', 'Añadir Equipo', edgeData));
 
                                 // Nivel 5: Equipos de Dominio
                                 if (this.viewMode !== 'ESTRUCTURA') {
@@ -657,46 +658,27 @@ window.UI_View_SwimlaneGrid = {
                                         eqContainer.style.gap = '8px';
                                         eqContainer.style.marginLeft = '20px';
 
-                                        equipoEdges.forEach(eqEdge => {
-                                            eqContainer.appendChild(this._createNodeEl(eqEdge.id_nodo_hijo, 'Equipo', 'Ver Equipo'));
+                                        equipoEdges.sort((a,b) => getOrder(a.metadata_config) - getOrder(b.metadata_config));
+
+                                        equipoEdges.forEach((eqEdge, index) => {
+                                            const edgeData = { edgeId: eqEdge.id_relacion, index: index, entityType: 'Equipo' };
+                                            eqContainer.appendChild(this._createNodeEl(eqEdge.id_nodo_hijo, 'Equipo', 'Ver Equipo', edgeData));
                                         });
                                         domWrapper.appendChild(eqContainer);
                                     } else {
                                         // Empty State Onboarding para Equipos
-                                        const emptyState = document.createElement('div');
-                                        emptyState.style.cssText = 'position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 1.5rem 1rem; margin-top: 8px; margin-left: 20px; width: calc(100% - 20px); border: 2px dashed var(--ion-color-step-300, #ccc); border-radius: 8px; background: rgba(0,0,0,0.02); overflow: hidden;';
-                                        
-                                        emptyState.innerHTML = `
-                                            <div style="width: 80px; height: 45px; border: 2px dashed var(--ion-color-step-300, #ccc); border-radius: 8px; margin-bottom: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; background: rgba(0,0,0,0.02);">
-                                                <ion-icon name="people-outline" style="font-size: 24px; color: var(--ion-color-step-400, #aaa); margin-bottom: 4px;"></ion-icon>
-                                                <div style="width: 40%; height: 4px; background: var(--ion-color-step-200, #ddd); border-radius: 2px;"></div>
-                                            </div>
-                                            
-                                            <h3 style="color: var(--ion-color-dark); margin: 0 0 4px 0; font-weight: 600; font-size: 0.9rem; letter-spacing: -0.01em; text-align: center;">Sin Equipos</h3>
-                                            <p style="color: var(--ion-color-medium, #666); text-align: center; max-width: 180px; margin: 0 0 12px 0; font-size: 0.8rem; line-height: 1.3;">
-                                                Vincula un nuevo registro.
-                                            </p>
-                                        `;
-                                        
-                                        const btnAdd = document.createElement('button');
-                                        btnAdd.className = 'tax-add-btn';
-                                        btnAdd.style.position = 'relative';
-                                        btnAdd.style.right = 'auto';
-                                        btnAdd.style.top = 'auto';
-                                        btnAdd.style.transform = 'none';
-                                        btnAdd.style.margin = '0 auto';
-                                        btnAdd.style.backgroundColor = 'var(--ion-color-primary, #3880ff)';
-                                        btnAdd.style.color = '#ffffff';
-                                        btnAdd.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)';
-                                        btnAdd.title = 'Añadir Equipo';
-                                        btnAdd.innerHTML = '+';
-                                        btnAdd.onclick = (e) => {
-                                            e.stopPropagation();
-                                            this._handleNodeAdd(domNodeId, 'Dominio', e);
-                                        };
-                                        emptyState.appendChild(btnAdd);
-                                        
-                                        domWrapper.appendChild(emptyState);
+                                        if (window.UI_CanvasNodeFactory && typeof window.UI_CanvasNodeFactory.buildEmptyState === 'function') {
+                                            const emptyState = window.UI_CanvasNodeFactory.buildEmptyState({
+                                                title: 'Sin Equipos',
+                                                subtitle: 'Vincula un nuevo registro.',
+                                                icon: 'people-outline',
+                                                marginLeft: '20px',
+                                                onAdd: (e) => {
+                                                    this._handleNodeAdd(domNodeId, 'Dominio', e);
+                                                }
+                                            });
+                                            domWrapper.appendChild(emptyState);
+                                        }
                                     }
                                 }
                                 domItemsFlex.appendChild(domWrapper);
@@ -866,153 +848,59 @@ window.UI_View_SwimlaneGrid = {
 
         // Crear controlador de zoom (Alternativa visual a pinch-to-zoom)
         if (!rootContainer.querySelector('.tax-zoom-ctrl')) {
-            const zoomCtrl = document.createElement('div');
-            zoomCtrl.className = 'tax-zoom-ctrl';
-            zoomCtrl.innerHTML = `
-                <button class="tax-zoom-btn" id="tax-zoom-out"><ion-icon name="remove-outline"></ion-icon></button>
-                <span class="tax-zoom-label" id="tax-zoom-label">100%</span>
-                <button class="tax-zoom-btn" id="tax-zoom-in"><ion-icon name="add-outline"></ion-icon></button>
-            `;
-            rootContainer.appendChild(zoomCtrl);
+            const zoomHtml = window.UI_PanZoomManager ? window.UI_PanZoomManager.createZoomControlHTML('tax') : '';
+            rootContainer.insertAdjacentHTML('beforeend', zoomHtml);
         }
 
         // Inicializar Miro-like Pan & Zoom
         this._initPanZoom(rootContainer, canvasDiv);
     },
-
-    _initPanZoom: function(viewport, canvas) {
-        // Guardar referencia al canvas actual (necesario cuando se recrea en silent refresh)
-        this._currentCanvas = canvas;
-
-        // Mantener estado en la instancia para persistir entre refrescos
-        if (!this._transformState) {
-            this._transformState = { scale: 1, translateX: 0, translateY: 0 };
+_initPanZoom: function(viewport, canvas) {
+        if (window.UI_PanZoomManager) {
+            window.UI_PanZoomManager.bind(viewport, canvas, 'tax');
         }
-        
-        const state = this._transformState;
-
-        // Definir función en el contexto del objeto para que los listeners usen siempre la versión más reciente
-        this._applyTransform = () => {
-            if (this._currentCanvas) {
-                this._currentCanvas.style.transform = `translate(${state.translateX}px, ${state.translateY}px) scale(${state.scale})`;
-            }
-            const label = document.getElementById('tax-zoom-label');
-            if (label) {
-                label.innerText = Math.round(state.scale * 100) + '%';
-            }
-        };
-        
-        this._zoomToCenter = (newScale) => {
-            const rect = viewport.getBoundingClientRect();
-            const mouseX = rect.width / 2;
-            const mouseY = rect.height / 2;
-            const CanvasMath = window.Math_Engine && window.Math_Engine.CanvasMath ? window.Math_Engine.CanvasMath : {
-                calculateMiroZoom: (mx, my, os, ns, ox, oy) => {
-                    const sr = ns / os;
-                    return { translateX: mx - (mx - ox) * sr, translateY: my - (my - oy) * sr };
-                }
-            };
-            const newTransforms = CanvasMath.calculateMiroZoom(mouseX, mouseY, state.scale, newScale, state.translateX, state.translateY);
-            state.translateX = newTransforms.translateX;
-            state.translateY = newTransforms.translateY;
-            state.scale = newScale;
-            this._applyTransform();
-        };
-
-        const btnZoomOut = document.getElementById('tax-zoom-out');
-        const btnZoomIn = document.getElementById('tax-zoom-in');
-        
-        if (btnZoomOut) {
-            btnZoomOut.onclick = (e) => {
-                e.stopPropagation();
-                const newScale = Math.max(0.2, state.scale - 0.15);
-                this._zoomToCenter(newScale);
-            };
-        }
-        if (btnZoomIn) {
-            btnZoomIn.onclick = (e) => {
-                e.stopPropagation();
-                const newScale = Math.min(2.0, state.scale + 0.15);
-                this._zoomToCenter(newScale);
-            };
-        }
-        
-        // Aplicar estado inicial al nuevo canvas
-        this._applyTransform();
-
-        // Evitar múltiples listeners si el viewport ya los tiene
-        if (viewport._panZoomBound) return;
-        viewport._panZoomBound = true;
-
-        let isDragging = false;
-        let startX, startY, initialX, initialY;
-
-        viewport.addEventListener('mousedown', (e) => {
-            // Ignorar si hace clic en un botón o nodo interactivo
-            if (e.target.closest('button') || e.target.closest('.tax-node')) return;
-            isDragging = true;
-            startX = e.clientX;
-            startY = e.clientY;
-            initialX = state.translateX;
-            initialY = state.translateY;
-            viewport.style.cursor = 'grabbing';
-        });
-
-        window.addEventListener('mousemove', (e) => {
-            if (!isDragging) return;
-            const dx = e.clientX - startX;
-            const dy = e.clientY - startY;
-            state.translateX = initialX + dx;
-            state.translateY = initialY + dy;
-            if (this._applyTransform) this._applyTransform();
-        });
-
-        window.addEventListener('mouseup', () => {
-            isDragging = false;
-            viewport.style.cursor = 'grab';
-        });
-
-        viewport.addEventListener('wheel', (e) => {
-            // Prevenir scroll nativo
-            e.preventDefault();
-            
-            if (e.ctrlKey) {
-                // Pinch to Zoom o Ctrl+Wheel
-                const zoomSensitivity = 0.006; // Incrementado a 0.006 según la solicitud
-                
-                // Usar Motor Matemático para los cálculos
-                const CanvasMath = window.Math_Engine && window.Math_Engine.CanvasMath ? window.Math_Engine.CanvasMath : {
-                    clampScale: (s, dy, sens) => Math.min(Math.max(0.2, s - dy * sens), 2.0),
-                    calculateMiroZoom: (mx, my, os, ns, ox, oy) => {
-                        const sr = ns / os;
-                        return { translateX: mx - (mx - ox) * sr, translateY: my - (my - oy) * sr };
-                    }
-                };
-
-                // Límite de escala (20% a 200%)
-                const newScale = CanvasMath.clampScale(state.scale, e.deltaY, zoomSensitivity);
-                
-                // Zoom hacia el mouse (Miro-like)
-                const rect = viewport.getBoundingClientRect();
-                const mouseX = e.clientX - rect.left;
-                const mouseY = e.clientY - rect.top;
-
-                const newTransforms = CanvasMath.calculateMiroZoom(mouseX, mouseY, state.scale, newScale, state.translateX, state.translateY);
-                
-                state.translateX = newTransforms.translateX;
-                state.translateY = newTransforms.translateY;
-                state.scale = newScale;
-            } else {
-                // Pan (Normal scroll)
-                state.translateX -= e.deltaX;
-                state.translateY -= e.deltaY;
-            }
-            
-            if (this._applyTransform) this._applyTransform();
-        }, { passive: false });
     },
 
-    _createNodeEl: function(recordId, entityName, addTitle) {
+    _handleEdgeReorder: function(edgeIds) {
+        if (!window.DataStore || !window.DataAPI) return;
+        
+        const currentEdges = window.DataStore.get('Sys_Graph_Edges') || [];
+        const edgesToUpdate = [];
+        
+        edgeIds.forEach((edgeId, index) => {
+            const edge = currentEdges.find(e => e.id_relacion === edgeId);
+            if (edge) {
+                let meta = {};
+                try {
+                    if (edge.metadata_config) meta = JSON.parse(edge.metadata_config);
+                } catch(e){
+                    console.warn('[Swimlane] Edge metadata corrupto, será sobreescrito:', edgeId);
+                }
+                
+                meta.order = index;
+                edge.metadata_config = JSON.stringify(meta);
+                edgesToUpdate.push(edge);
+                
+                // Update local store silently
+                window.DataStore.update('Sys_Graph_Edges', edgeId, { metadata_config: edge.metadata_config }, true);
+            }
+        });
+        
+        if (edgesToUpdate.length > 0) {
+            console.log("[Swimlane] Persisting edge reorder via DataAPI...");
+            edgesToUpdate.forEach(edge => {
+                window.DataAPI.call('API_Universal_Router', 'update', 'Sys_Graph_Edges', edge).catch(err => {
+                    console.error("Failed to reorder edge", edge.id_relacion, err);
+                });
+            });
+            
+            // Wait slightly before refreshing to avoid clipping
+            if (this._refreshTimeout) clearTimeout(this._refreshTimeout);
+            this._refreshTimeout = setTimeout(() => this.refresh(), 200);
+        }
+    },
+
+    _createNodeEl: function(recordId, entityName, addTitle, edgeData) {
         if (!recordId || String(recordId).trim() === '[object Object]' || String(recordId).trim() === 'undefined') {
             console.warn('[UI_View_SwimlaneGrid] Invalid recordId in _createNodeEl:', recordId);
             const node = document.createElement('div');
@@ -1030,21 +918,7 @@ window.UI_View_SwimlaneGrid = {
             return node;
         }
 
-        const node = document.createElement('div');
-        node.className = 'tax-node';
-        node.style.cursor = 'pointer';
-        node.onclick = (e) => {
-            e.stopPropagation();
-            if (entityName === 'Unidad_Negocio') {
-                if (typeof this._openCustomUnidadDrawer === 'function') {
-                    this._openCustomUnidadDrawer();
-                }
-            } else if (window.openEditForm) {
-                window.openEditForm(recordId, entityName, { taxonomiaContext: this.taxonomiaId });
-            }
-        };
-        
-        // Determinar Color por Metadatos
+        // Determinar Color e Icono por Metadatos
         let bgColor = 'var(--ion-color-medium)';
         let iconName = 'cube-outline';
         const schema = window.APP_SCHEMAS && window.APP_SCHEMAS[entityName];
@@ -1052,8 +926,6 @@ window.UI_View_SwimlaneGrid = {
             bgColor = `var(--ion-color-${schema.metadata.color})`;
             iconName = schema.metadata.iconName || iconName;
         }
-        
-        node.style.backgroundColor = bgColor;
         
         // Obtener Nombre
         let titleText = recordId;
@@ -1307,20 +1179,35 @@ window.UI_View_SwimlaneGrid = {
             </div>
             ${rolesHtml}
         `;
-        node.appendChild(titleWrap);
 
-        // Botón Add (Deshabilitado explícitamente para la entidad Equipo)
-        if (entityName !== 'Equipo') {
-            const btnAdd = document.createElement('button');
-            btnAdd.className = 'tax-add-btn';
-            btnAdd.title = addTitle;
-            btnAdd.innerHTML = '+';
-            btnAdd.onclick = (e) => {
-                e.stopPropagation();
-                this._handleNodeAdd(recordId, entityName, e);
-            };
-            node.appendChild(btnAdd);
+        if (!window.UI_CanvasNodeFactory) {
+            console.error('UI_CanvasNodeFactory no encontrado');
+            return document.createElement('div');
         }
+
+        const node = window.UI_CanvasNodeFactory.buildNode({
+            type: 'card',
+            id: recordId,
+            title: titleText,
+            entityName: entityName,
+            customHtml: titleWrap.outerHTML,
+            addTitle: addTitle,
+            onClick: (e) => {
+                if (entityName === 'Unidad_Negocio') {
+                    if (typeof this._openCustomUnidadDrawer === 'function') {
+                        this._openCustomUnidadDrawer();
+                    }
+                } else if (window.openEditForm) {
+                    window.openEditForm(recordId, entityName, { taxonomiaContext: this.taxonomiaId });
+                }
+            },
+            onAdd: entityName !== 'Equipo' ? (e) => {
+                this._handleNodeAdd(recordId, entityName, e);
+            } : null
+        });
+
+        // Aplicar el color de fondo personalizado (UI_CanvasNodeFactory lo setea en base al tema, pero Swimlane usa bgColor)
+        node.style.backgroundColor = bgColor;
 
         // Bind empty roles click handlers
         const emptyRoles = node.querySelectorAll('.tax-role-empty');
@@ -1345,6 +1232,33 @@ window.UI_View_SwimlaneGrid = {
                 }
             };
         });
+
+        // Habilitar Drag & Drop nativo si tenemos metadata de la arista y la vista lo soporta
+        if (window.UI_CanvasInteractions && edgeData && (this.viewMode === 'COMPLETO' || this.viewMode === 'ESTRUCTURA')) {
+            node.dataset.edgeId = edgeData.edgeId;
+            window.UI_CanvasInteractions.makeDraggable(node, edgeData, (draggedCtx, targetCtx, insertBefore) => {
+                const container = node.parentNode;
+                const draggedNode = container.querySelector(`[data-edge-id="${draggedCtx.edgeId}"]`);
+                
+                if (!draggedNode) return;
+                
+                // Mover el nodo visualmente
+                if (insertBefore) {
+                    container.insertBefore(draggedNode, node);
+                } else {
+                    container.insertBefore(draggedNode, node.nextSibling);
+                }
+                
+                // Recalcular orden y guardarlo
+                const allEdgeIds = Array.from(container.children)
+                    .filter(c => c.hasAttribute('data-edge-id'))
+                    .map(c => c.getAttribute('data-edge-id'));
+                    
+                if (typeof this._handleEdgeReorder === 'function') {
+                    this._handleEdgeReorder(allEdgeIds);
+                }
+            });
+        }
 
         return node;
     },

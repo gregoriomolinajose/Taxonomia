@@ -34,6 +34,14 @@
       --border-radius: var(--rounded-md) !important;
       --box-shadow: var(--shadow-floating) !important;
     }
+    
+    ion-modal.full-screen-modal {
+      --width: 100vw !important;
+      --max-width: 100vw !important;
+      --height: 100vh !important;
+      --max-height: 100vh !important;
+      --border-radius: 0 !important;
+    }
   }
 
   /* Limpieza visual del contenedor interno del Formulario */

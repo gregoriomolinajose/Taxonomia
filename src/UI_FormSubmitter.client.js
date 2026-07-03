@@ -366,7 +366,8 @@ window.UI_FormSubmitter = class UI_FormSubmitter {
                      // 2. Create the new edges
                      const edgeRecords = childItems.map(child => {
                          const newId = 'TMP_EDGE_' + Math.random().toString(36).substring(2, 10).toUpperCase();
-                         const childPk = child.id_registro || child[window.Schema_Utils.getPrimaryKey(tField.targetEntity)];
+                         const isPrimitive = typeof child === 'string' || typeof child === 'number';
+                         const childPk = isPrimitive ? String(child) : (child.id_registro || child[window.Schema_Utils.getPrimaryKey(tField.targetEntity)]);
                          let edgePadre = tField.relationType === 'hijo' ? optimisticPK : childPk;
                          let edgeHijo = tField.relationType === 'hijo' ? childPk : optimisticPK;
                          

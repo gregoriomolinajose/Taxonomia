@@ -149,6 +149,8 @@ var APP_SCHEMAS = {
     wizardConfig: true,
     stepDescriptions: {
       "Taxonomía del Portafolio": "Asigna un nombre descriptivo para comenzar. Te recomendamos utilizar un nombre representativo del segmento de estudio que vas a estructurar.",
+      "Portafolios": "Agregue el portafolio o los portafolios que formarán parte del segmento de estudio a evaluar en la taxonomía.",
+      "Value Streams": "Agregue el o los value streams que formarán parte del segmento de estudio a evaluar en la taxonomía.",
       "Arquitectura de Portafolio": "Diseña la estructura utilizando el lienzo interactivo ubicado a la derecha.",
       "Listado de Equipos": "Carga la plantilla de equipos mediante URL o archivo de Google Sheets.",
       "Directorio de Personas": "Carga la plantilla de personas mediante URL o archivo de Google Sheets.",
@@ -184,6 +186,8 @@ var APP_SCHEMAS = {
       { name: "nombre", type: "text", label: "Nombre de la Taxonomía", required: true, width: 12, section: "Taxonomía del Portafolio" },
       { name: "descripcion", type: "textarea", label: "Descripción", required: false, width: 12, section: "Taxonomía del Portafolio" },
       { name: "id_unidad_negocio", type: "relation", relationType: "padre", targetEntity: "Unidad_Negocio", graphEntity: "Sys_Graph_Edges", valueField: "id_unidad_negocio", labelField: "nombre", uiComponent: "searchable_single", label: "Unidad de Negocio", isTemporalGraph: true, graphEdgeType: "TAXONOMIA_UNIDAD", topologyCardinality: "1:N", width: 12, section: "Taxonomía del Portafolio", required: true },
+      { name: "portafolios_vinculados", type: "relation", relationType: "hijo", targetEntity: "Portafolio", graphEntity: "Sys_Graph_Edges", valueField: "id_portafolio", labelField: "nombre", uiComponent: "embedded_dataview", label: "Portafolios de la Taxonomía", isTemporalGraph: true, graphEdgeType: "TAXONOMIA_PORTAFOLIO", topologyCardinality: "M:N", width: 12, section: "Portafolios" },
+      { name: "value_streams_vinculados", type: "relation", relationType: "hijo", targetEntity: "Value_Stream", graphEntity: "Sys_Graph_Edges", valueField: "id_value_stream", labelField: "nombre", uiComponent: "embedded_dataview", label: "Value Streams de la Taxonomía", isTemporalGraph: true, graphEdgeType: "TAXONOMIA_VALUE_STREAM", topologyCardinality: "M:N", width: 12, section: "Value Streams" },
       { name: "equipos_vinculados", type: "relation", relationType: "hijo", targetEntity: "Equipo", graphEntity: "Sys_Graph_Edges", valueField: "id_equipo", labelField: "nombre", uiComponent: "embedded_dataview", label: "Equipos de la Taxonomía", isTemporalGraph: true, graphEdgeType: "TAXONOMIA_EQUIPO", topologyCardinality: "M:N", width: 12, section: "Listado de Equipos" },
       { name: "personas_vinculadas", type: "relation", relationType: "hijo", targetEntity: "Persona", graphEntity: "Sys_Graph_Edges", valueField: "id_persona", labelField: "_nombre_completo", uiComponent: "embedded_dataview", label: "Personas de la Taxonomía", isTemporalGraph: true, graphEdgeType: "TAXONOMIA_PERSONA", topologyCardinality: "M:N", width: 12, section: "Directorio de Personas" },
       { name: "info_canvas", type: "divider", label: "Interactúa con el lienzo a tu derecha para modelar las capacidades y productos.", width: 12, section: "Arquitectura de Portafolio" },
@@ -211,7 +215,7 @@ var APP_SCHEMAS = {
   },
   Portafolio: {
     uiConfig: { dashboardCard: { order: 1, iconName: 'briefcase-outline', color: 'var(--ion-color-danger)' } },
-    metadata: { prefix: 'PORT', showInMenu: true, order: 2, iconName: 'briefcase-outline', color: 'danger', label: 'Portafolios', titleField: 'nombre', idField: 'id_portafolio', fkField: null, maxListAttrs: 8 },
+    metadata: { prefix: 'PORT', showInMenu: true, order: 2, iconName: 'briefcase-outline', color: 'danger', label: 'Portafolios', titleField: 'nombre', idField: 'id_portafolio', fkField: null, maxListAttrs: 8, governancePolicy: 'exempt_from_strict_readonly' },
     topological_metadata: {
       ownerFields: ["director_id", "vp_id"],
       parentEntity: "Unidad_Negocio",
@@ -228,7 +232,7 @@ var APP_SCHEMAS = {
       ...FIELD_TEMPLATES.VERSION_FIELD(),
       ...FIELD_TEMPLATES.NAME_FIELD("Nombre de Portafolio"),
       { name: "gerente_portafolio_id", type: "relation", relationType: "padre", targetEntity: "Persona", graphEntity: "Sys_Graph_Edges", label: "Gerente de Portafolio", isTemporalGraph: true, graphEdgeType: "PORTAFOLIO_GERENTE", uiComponent: "searchable_single", valueField: "id_persona", labelField: "_nombre_completo", width: 12 },
-      { name: "unidad_negocio_padre", type: "relation", relationType: "padre", targetEntity: "Unidad_Negocio", graphEntity: "Sys_Graph_Edges", valueField: "id_unidad_negocio", labelField: "nombre", uiComponent: "select_single", label: "Unidad de Negocio", isTemporalGraph: true, graphEdgeType: "UNIDAD_NEGOCIO_PORTAFOLIO", topologyCardinality: "1:N", width: 12, showInList: true },
+      { name: "unidad_negocio_padre", type: "relation", relationType: "padre", targetEntity: "Unidad_Negocio", graphEntity: "Sys_Graph_Edges", valueField: "id_unidad_negocio", labelField: "nombre", uiComponent: "select_single", label: "Unidad de Negocio", isTemporalGraph: true, graphEdgeType: "UNIDAD_NEGOCIO_PORTAFOLIO", topologyCardinality: "1:N", width: 12, showInList: true, required: false },
       { name: "value_streams_vinculados", type: "relation", relationType: "hijo", targetEntity: "Value_Stream", graphEntity: "Sys_Graph_Edges", valueField: "id_value_stream", labelField: "nombre", uiComponent: "searchable_multi", label: "Value Streams", isTemporalGraph: true, graphEdgeType: "PORTAFOLIO_VALUE_STREAM", topologyCardinality: "N:M", width: 12 }
     ]
   },
@@ -625,15 +629,33 @@ var APP_SCHEMAS = {
       { name: "estado", type: "hidden", defaultValue: "Borrador" },
       ...FIELD_TEMPLATES.AUDIT_FIELDS(),
       ...FIELD_TEMPLATES.VERSION_FIELD(),
-      ...FIELD_TEMPLATES.NAME_FIELD("Nombre de Value Stream"),
-      { name: "descripcion", type: "text", label: "Descripción / Propósito", required: false, width: 12 },
-      { name: "dueno_vs_id", type: "relation", relationType: "padre", targetEntity: "Persona", graphEntity: "Sys_Graph_Edges", label: "Dueño del Value Stream", isTemporalGraph: true, graphEdgeType: "VALUE_STREAM_DUENO", uiComponent: "searchable_single", valueField: "id_persona", labelField: "_nombre_completo", width: 12 },
-      { name: "head_of_technology_id", type: "relation", relationType: "padre", targetEntity: "Persona", graphEntity: "Sys_Graph_Edges", label: "Head of Technology", isTemporalGraph: true, graphEdgeType: "VALUE_STREAM_HEAD_OF_TECHNOLOGY", uiComponent: "searchable_single", valueField: "id_persona", labelField: "_nombre_completo", width: 12 },
-      { name: "head_of_product_id", type: "relation", relationType: "padre", targetEntity: "Persona", graphEntity: "Sys_Graph_Edges", label: "Head of Product", isTemporalGraph: true, graphEdgeType: "VALUE_STREAM_HEAD_OF_PRODUCT", uiComponent: "searchable_single", valueField: "id_persona", labelField: "_nombre_completo", width: 12 },
-      { name: "agile_coach_id", type: "relation", relationType: "padre", targetEntity: "Persona", graphEntity: "Sys_Graph_Edges", label: "Agile Coach", isTemporalGraph: true, graphEdgeType: "VALUE_STREAM_AGILE_COACH", uiComponent: "searchable_single", valueField: "id_persona", labelField: "_nombre_completo", width: 12 },
-      { width: 12, name: "portafolios_padre", type: "relation", relationType: "padre", targetEntity: "Portafolio", graphEntity: "Sys_Graph_Edges", valueField: "id_portafolio", labelField: "nombre", uiComponent: "searchable_multi", label: "Portafolios", isTemporalGraph: true, graphEdgeType: "PORTAFOLIO_VALUE_STREAM", topologyCardinality: "N:M", required: true },
-      { width: 12, name: "dominios_vinculados", type: "relation", relationType: "hijo", targetEntity: "Dominio", graphEntity: "Sys_Graph_Edges", valueField: "id_dominio", labelField: "nombre", uiComponent: "treemap_selector", label: "Dominios", isTemporalGraph: true, graphEdgeType: "VALUE_STREAM_DOMINIO", topologyCardinality: "N:M" },
-      { width: 12, name: "grupos_productos_vinculados", type: "relation", relationType: "hijo", targetEntity: "Grupo_Productos", graphEntity: "Sys_Graph_Edges", valueField: "id_grupo_producto", labelField: "nombre", uiComponent: "searchable_multi", label: "Grupos de Productos", isTemporalGraph: true, graphEdgeType: "VALUE_STREAM_GRUPO_PRODUCTO", topologyCardinality: "1:N" }
+      ...FIELD_TEMPLATES.NAME_FIELD("Nombre de Value Stream", 12),
+      { name: "descripcion", type: "text", label: "Descripción / Propósito", required: false, width: 12, section: "Configuración General" },
+      { name: "dueno_vs_id", type: "relation", relationType: "padre", targetEntity: "Persona", graphEntity: "Sys_Graph_Edges", label: "Dueño del Value Stream", isTemporalGraph: true, graphEdgeType: "VALUE_STREAM_DUENO", uiComponent: "searchable_single", valueField: "id_persona", labelField: "_nombre_completo", width: 12, section: "Liderazgo" },
+      { name: "head_of_technology_id", type: "relation", relationType: "padre", targetEntity: "Persona", graphEntity: "Sys_Graph_Edges", label: "Head of Technology", isTemporalGraph: true, graphEdgeType: "VALUE_STREAM_HEAD_OF_TECHNOLOGY", uiComponent: "searchable_single", valueField: "id_persona", labelField: "_nombre_completo", width: 12, section: "Liderazgo" },
+      { name: "head_of_product_id", type: "relation", relationType: "padre", targetEntity: "Persona", graphEntity: "Sys_Graph_Edges", label: "Head of Product", isTemporalGraph: true, graphEdgeType: "VALUE_STREAM_HEAD_OF_PRODUCT", uiComponent: "searchable_single", valueField: "id_persona", labelField: "_nombre_completo", width: 12, section: "Liderazgo" },
+      { name: "agile_coach_id", type: "relation", relationType: "padre", targetEntity: "Persona", graphEntity: "Sys_Graph_Edges", label: "Agile Coach", isTemporalGraph: true, graphEdgeType: "VALUE_STREAM_AGILE_COACH", uiComponent: "searchable_single", valueField: "id_persona", labelField: "_nombre_completo", width: 12, section: "Liderazgo" },
+      { width: 12, name: "portafolios_padre", type: "relation", relationType: "padre", targetEntity: "Portafolio", graphEntity: "Sys_Graph_Edges", valueField: "id_portafolio", labelField: "nombre", uiComponent: "searchable_multi", label: "Portafolios", isTemporalGraph: true, graphEdgeType: "PORTAFOLIO_VALUE_STREAM", topologyCardinality: "N:M", required: true, section: "Contexto Organizacional" },
+      { width: 12, name: "dominios_vinculados", type: "relation", relationType: "hijo", targetEntity: "Dominio", graphEntity: "Sys_Graph_Edges", valueField: "id_dominio", labelField: "nombre", uiComponent: "treemap_selector", label: "Dominios", isTemporalGraph: true, graphEdgeType: "VALUE_STREAM_DOMINIO", topologyCardinality: "N:M", section: "Contexto Organizacional" },
+      { width: 12, name: "grupos_productos_vinculados", type: "relation", relationType: "hijo", targetEntity: "Grupo_Productos", graphEntity: "Sys_Graph_Edges", valueField: "id_grupo_producto", labelField: "nombre", uiComponent: "searchable_multi", label: "Grupos de Productos", isTemporalGraph: true, graphEdgeType: "VALUE_STREAM_GRUPO_PRODUCTO", topologyCardinality: "1:N", section: "Contexto Organizacional" },
+      { width: 12, name: "value_stream_pasos", type: "relation", relationType: "hijo", targetEntity: "Value_Stream_Step", graphEntity: "Sys_Graph_Edges", valueField: "id_value_stream_step", labelField: "nombre", uiComponent: "searchable_multi", label: "Pasos del Value Stream", isTemporalGraph: true, graphEdgeType: "VALUE_STREAM_PASO", topologyCardinality: "N:M", section: "Pasos del Value Stream" },
+      { name: "div_canvas", type: "divider", label: "CANVAS", width: 12, icon: "analytics-outline", section: "Pasos del Value Stream" },
+      { name: "canvas_vs", type: "uiComponent", label: "Modelador de Value Stream", width: 12, uiComponent: "canvas_launcher", required: false, section: "Pasos del Value Stream" }
+    ]
+  },
+  
+  Value_Stream_Step: {
+    uiConfig: { dashboardCard: null }, // Oculto del Dashboard
+    metadata: { prefix: 'PASO', showInMenu: false, iconName: 'footsteps-outline', color: 'tertiary', label: 'Pasos de Value Stream', titleField: 'nombre', idField: 'id_value_stream_step', fkField: null },
+    primaryKey: "id_value_stream_step",
+    fields: [
+      { name: "id_value_stream_step", type: "hidden", primaryKey: true },
+      ...FIELD_TEMPLATES.SYSTEM_FIELDS(),
+      { name: "estado", type: "hidden", defaultValue: "Activo" },
+      ...FIELD_TEMPLATES.AUDIT_FIELDS(),
+      ...FIELD_TEMPLATES.VERSION_FIELD(),
+      ...FIELD_TEMPLATES.NAME_FIELD("Nombre del Paso", 12),
+      { name: "descripcion", type: "text", label: "Descripción", required: false, width: 12 }
     ]
   },
   // [S60/E6] Config_System: Entidad especial de configuración del sistema.
