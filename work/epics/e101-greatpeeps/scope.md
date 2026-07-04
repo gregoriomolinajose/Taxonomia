@@ -15,9 +15,9 @@ Construir y desplegar el módulo de reclutamiento "GreatPeeps", integrando la ge
 - Onboarding (Queda para v2).
 
 ## Planned Stories
-- **S101.1:** Diseño de esquemas de datos y vistas base (Vacantes).
-- **S101.2:** Integración Calendar y Hub IA (Filtro Gemini).
-- **S101.3:** Portal Frontend de Reclutamiento.
+- **[x] S101.1:** Diseño de esquemas de datos y vistas base (Vacantes) ✓
+- **[ ] S101.2:** Integración Calendar y Hub IA (Filtro Gemini).
+- **[ ] S101.3:** Portal Frontend de Reclutamiento.
 
 ## Done Criteria
 - [ ] Formularios de Vacantes operando en producción (dual-write).
