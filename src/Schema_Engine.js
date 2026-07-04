@@ -697,6 +697,66 @@ var APP_SCHEMAS = {
         helpText: 'URL pública del ícono de la aplicación (favicon).' }
     ]
   },
+  Empresas: {
+    metadata: { prefix: 'EMP', showInMenu: true, iconName: 'business-outline', color: 'primary', label: 'Empresas / Clientes', titleField: 'nombre', idField: 'id_empresa', fkField: null },
+    primaryKey: "id_empresa",
+    fields: [
+      { name: "id_empresa", type: "hidden", primaryKey: true },
+      ...FIELD_TEMPLATES.SYSTEM_FIELDS(),
+      ...FIELD_TEMPLATES.AUDIT_FIELDS(),
+      ...FIELD_TEMPLATES.VERSION_FIELD(),
+      { name: "nombre", type: "text", label: "Nombre de Empresa", required: true, width: 6, unique: true },
+      { name: "industria", type: "text", label: "Industria", required: false, width: 6 },
+      { name: "contacto_principal", type: "text", label: "Contacto Principal", required: false, width: 12 }
+    ]
+  },
+  Vacantes: {
+    metadata: { prefix: 'VAC', showInMenu: true, iconName: 'briefcase-outline', color: 'tertiary', label: 'Vacantes', titleField: 'titulo', idField: 'id_vacante', fkField: null },
+    primaryKey: "id_vacante",
+    fields: [
+      { name: "id_vacante", type: "hidden", primaryKey: true },
+      ...FIELD_TEMPLATES.SYSTEM_FIELDS(),
+      ...FIELD_TEMPLATES.AUDIT_FIELDS(),
+      ...FIELD_TEMPLATES.VERSION_FIELD(),
+      { name: "titulo", type: "text", label: "Título de la Vacante", required: true, width: 12 },
+      { name: "empresa_id", type: "relation", relationType: "padre", targetEntity: "Empresas", graphEntity: "Sys_Graph_Edges", valueField: "id_empresa", labelField: "nombre", uiComponent: "searchable_single", label: "Empresa Cliente", isTemporalGraph: true, graphEdgeType: "EMPRESA_VACANTE", topologyCardinality: "1:N", width: 12, required: true },
+      { name: "estado_vacante", type: "select", label: "Estado", required: true, width: 6, options: [{value: "Draft", label: "Borrador"}, {value: "Publicada", label: "Publicada"}, {value: "Cerrada", label: "Cerrada"}], defaultValue: "Draft" },
+      { name: "presupuesto_salario", type: "number", label: "Presupuesto Salarial", required: false, width: 6 },
+      { name: "descripcion", type: "textarea", label: "Descripción de la Vacante", required: true, width: 12 }
+    ]
+  },
+  Postulantes: {
+    metadata: { prefix: 'PST', showInMenu: true, iconName: 'people-outline', color: 'secondary', label: 'Postulantes', titleField: 'nombre', idField: 'id_postulante', fkField: null },
+    primaryKey: "id_postulante",
+    fields: [
+      { name: "id_postulante", type: "hidden", primaryKey: true },
+      ...FIELD_TEMPLATES.SYSTEM_FIELDS(),
+      ...FIELD_TEMPLATES.AUDIT_FIELDS(),
+      ...FIELD_TEMPLATES.VERSION_FIELD(),
+      { name: "nombre", type: "text", label: "Nombre del Postulante", required: true, width: 6 },
+      { name: "email", type: "email", label: "Correo Electrónico", required: true, width: 6 },
+      { name: "vacante_id", type: "relation", relationType: "padre", targetEntity: "Vacantes", graphEntity: "Sys_Graph_Edges", valueField: "id_vacante", labelField: "titulo", uiComponent: "searchable_single", label: "Aplicando a Vacante", isTemporalGraph: true, graphEdgeType: "VACANTE_POSTULANTE", topologyCardinality: "1:N", width: 12, required: true },
+      { name: "etapa_embudo", type: "select", label: "Etapa en el Embudo", required: true, width: 6, options: [{value:"Nuevo",label:"Nuevo"}, {value:"Screening",label:"Screening"}, {value:"Tecnica",label:"Entrevista Técnica"}, {value:"Cultural",label:"Entrevista Cultural"}, {value:"Oferta",label:"Oferta Enviada"}, {value:"Contratado",label:"Contratado"}, {value:"Descartado",label:"Descartado"}], defaultValue: "Nuevo" },
+      { name: "linkedin_url", type: "text", label: "Perfil LinkedIn", required: false, width: 6 },
+      { name: "cv_drive_id", type: "text", label: "ID CV Drive", required: false, width: 6, readonly: true },
+      { name: "ai_score", type: "number", label: "Gemini Match Score", required: false, width: 6, readonly: true },
+      { name: "ai_summary", type: "textarea", label: "Gemini Resumen CV", required: false, width: 12, readonly: true }
+    ]
+  },
+  Entrevistas: {
+    metadata: { prefix: 'INT', showInMenu: true, iconName: 'calendar-outline', color: 'warning', label: 'Entrevistas', titleField: 'fecha', idField: 'id_entrevista', fkField: null },
+    primaryKey: "id_entrevista",
+    fields: [
+      { name: "id_entrevista", type: "hidden", primaryKey: true },
+      ...FIELD_TEMPLATES.SYSTEM_FIELDS(),
+      ...FIELD_TEMPLATES.AUDIT_FIELDS(),
+      ...FIELD_TEMPLATES.VERSION_FIELD(),
+      { name: "postulante_id", type: "relation", relationType: "padre", targetEntity: "Postulantes", graphEntity: "Sys_Graph_Edges", valueField: "id_postulante", labelField: "nombre", uiComponent: "searchable_single", label: "Postulante", isTemporalGraph: true, graphEdgeType: "POSTULANTE_ENTREVISTA", topologyCardinality: "1:N", width: 12, required: true },
+      { name: "fecha", type: "datetime-local", label: "Fecha y Hora", required: true, width: 6 },
+      { name: "resultado", type: "select", label: "Resultado", required: true, width: 6, options: [{value: "Pendiente", label: "Pendiente"}, {value: "Avanza", label: "Avanza al siguiente paso"}, {value: "Descartado", label: "Descartado"}], defaultValue: "Pendiente" },
+      { name: "calendar_event_id", type: "text", label: "Google Calendar Event ID", required: false, width: 12, readonly: true }
+    ]
+  },
   _UI_CONFIG: {
     badgeMap: {
       'activo': 'activo', 'borrador': 'borrador', 'en-revis-n': 'en-revision', 'en-revision': 'en-revision',

@@ -4,7 +4,7 @@
 Construir y desplegar el módulo de reclutamiento "GreatPeeps", integrando la gestión del ciclo de vida de vacantes, filtrado inteligente de CVs (Gemini) y agendamiento de entrevistas.
 
 ## In Scope
-- Diseño e implementación de esquemas de datos: Vacantes, Postulantes, Entrevistas.
+- Diseño e implementación de esquemas de datos: Empresa/Cliente, Vacantes, Postulantes, Entrevistas.
 - Módulo UI para publicación y listado de vacantes (Integración Web Components).
 - Hub de integración bidireccional (LinkedIn básico, Workspace Drive, Calendar).
 - Pipeline ETL/IA para lectura y scoring de CVs usando Gemini.
