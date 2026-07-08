@@ -1,0 +1,51 @@
+artifact_type: story-design
+version: 1
+skill: rai-story-design
+created: '2026-07-08T19:06:43Z'
+story: 'S61.1'
+epic: 'E61'
+content:
+  summary: 'Abstract the data source behind an IDataProvider interface to decouple the ETL engine from Google Apps Script, enabling in-memory testing.'
+  complexity: moderate
+  acceptance_criteria:
+    - id: AC1
+      description: 'The IDataProvider interface is defined with read(entityName) and write(entityName, records) methods.'
+      verifiable: true
+    - id: AC2
+      description: 'GoogleSheetsProvider encapsulates all SpreadsheetApp calls and maps to/from standard object arrays.'
+      verifiable: true
+    - id: AC3
+      description: 'The core ETL engine receives IDataProvider via dependency injection.'
+      verifiable: true
+    - id: AC4
+      description: 'MockDataProvider implements IDataProvider for fully in-memory testing.'
+      verifiable: true
+    - id: AC5
+      description: 'One scenario runs with real infrastructure (GoogleSheetsProvider against actual spreadsheet).'
+      verifiable: true
+  integration_points:
+    - module: 'core.provider'
+      change_type: new
+      files: ['src/core/IDataProvider.ts']
+    - module: 'adapters.sheets'
+      change_type: new
+      files: ['src/adapters/GoogleSheetsProvider.ts']
+    - module: 'adapters.mock'
+      change_type: new
+      files: ['src/adapters/MockDataProvider.ts']
+    - module: 'core.engine'
+      change_type: modification
+      files: ['src/core/ETLEngine.ts']
+  decisions:
+    - id: D1
+      choice: 'Use Dependency Injection for IDataProvider in the ETLEngine'
+      rationale: 'Avoids hardcoded dependencies on specific infrastructure, enabling seamless switching between Sheets and Mock providers.'
+      alternatives_considered: ['Factory pattern', 'Global singleton config']
+    - id: D2
+      choice: 'Throw explicit errors on missing entities'
+      rationale: 'Silent drops on missing sheets hide configuration bugs. Best to fail fast.'
+      alternatives_considered: ['Return empty arrays']
+refs:
+  backlog_item: 'S61.1'
+  epic_scope: 'work/epics/e61-enterprise-etl-architecture/stories/s61.1-scope.md'
+metadata: {}
