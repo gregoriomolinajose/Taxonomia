@@ -65,7 +65,21 @@
 
         global.UI_Factory.buildInput = function(field) {
             const inputEl = document.createElement('ion-input');
-            inputEl.setAttribute('type', field.type === 'number' ? 'number' : (field.type === 'date' ? 'date' : (field.type === 'url' ? 'url' : 'text')));
+            const allowedTypes = ['number', 'date', 'time', 'datetime-local', 'url', 'email', 'text', 'password'];
+            inputEl.setAttribute('type', allowedTypes.includes(field.type) ? field.type : 'text');
+            
+            _applyBaseAttributes(inputEl, field);
+            return inputEl;
+        };
+
+        global.UI_Factory.buildToggle = function(field) {
+            const inputEl = document.createElement('ion-toggle');
+            inputEl.setAttribute('justify', 'space-between');
+            inputEl.textContent = field.label;
+            
+            if (field.defaultValue) {
+                inputEl.checked = field.defaultValue === 'true' || field.defaultValue === true;
+            }
             
             _applyBaseAttributes(inputEl, field);
             return inputEl;
@@ -337,17 +351,103 @@
             return container;
         };
 
+        global.UI_Factory.buildExternalLinkButton = function(field) {
+            const container = document.createElement('div');
+            container.style.marginBottom = 'var(--spacing-4)';
+            container.style.width = '100%';
+
+            const btn = document.createElement('ion-button');
+            btn.setAttribute('expand', 'block');
+            btn.setAttribute('fill', 'outline');
+            
+            if (field.customColor) {
+                btn.style.setProperty('--color', field.customColor);
+                btn.style.setProperty('--border-color', field.customColor);
+            } else {
+                btn.setAttribute('color', field.color || 'primary');
+            }
+            
+            const icon = document.createElement('ion-icon');
+            icon.setAttribute('slot', 'start');
+            icon.setAttribute('name', field.iconName || 'open-outline');
+            
+            const label = document.createElement('ion-label');
+            label.textContent = field.label;
+            label.classList.add('text-action');
+            
+            btn.appendChild(icon);
+            btn.appendChild(label);
+            
+            // If the field is already populated when rendering
+            const initHref = (window.Schema_Utils && window.Schema_Utils.normalizeExternalUrl) ? window.Schema_Utils.normalizeExternalUrl(field.value) : field.value;
+            if (initHref) {
+                btn.setAttribute('data-href', initHref);
+                btn.disabled = false;
+            }
+
+            const hiddenInput = document.createElement('input');
+            hiddenInput.setAttribute('type', 'hidden');
+            hiddenInput.setAttribute('name', field.name);
+            
+            hiddenInput.addEventListener('FormHydrated', (e) => {
+                const normHref = (window.Schema_Utils && window.Schema_Utils.normalizeExternalUrl) ? window.Schema_Utils.normalizeExternalUrl(e.detail) : e.detail;
+                if (normHref) {
+                    btn.setAttribute('data-href', normHref);
+                    btn.disabled = false;
+                } else {
+                    btn.disabled = true;
+                    btn.removeAttribute('data-href');
+                }
+            });
+
+            btn.addEventListener('click', (e) => {
+                if (btn.disabled) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    return;
+                }
+                const link = btn.getAttribute('data-href');
+                if (link) window.open(link, '_blank');
+            });
+
+            // Initial state if not populated
+            if (!initHref) {
+                btn.disabled = true;
+            }
+
+            container.appendChild(btn);
+            container.appendChild(hiddenInput);
+            return container;
+        };
+
+        global.UI_Factory.buildFileUpload = function(field) {
+            const uploadComponent = document.createElement('tx-file-upload');
+            // Element needs to identify as form-component for payload extraction
+            uploadComponent.setAttribute('data-form-component', field.name);
+            uploadComponent.field = field;
+            return uploadComponent;
+        };
+
         // --- Core Builders Automatic Registration ---
+        global.UI_Factory.registerBuilder('file_upload', (f) => global.UI_Factory.buildFileUpload(f));
         global.UI_Factory.registerBuilder('text', (f, e) => {
             if (f.uiBehavior === 'badge') return global.UI_Factory.buildBadge(f);
             return global.UI_Factory.buildInput(f, e);
         });
         global.UI_Factory.registerBuilder('number', (f, e) => global.UI_Factory.buildInput(f, e));
         global.UI_Factory.registerBuilder('date', (f, e) => global.UI_Factory.buildInput(f, e));
+        global.UI_Factory.registerBuilder('time', (f, e) => global.UI_Factory.buildInput(f, e));
+        global.UI_Factory.registerBuilder('datetime-local', (f, e) => global.UI_Factory.buildInput(f, e));
+        global.UI_Factory.registerBuilder('toggle', (f, e) => global.UI_Factory.buildToggle(f, e));
+        global.UI_Factory.registerBuilder('event_schedule', (f, e) => {
+            if (global.UI_Factory.buildEventSchedule) return global.UI_Factory.buildEventSchedule(f);
+            return global.UI_Factory.buildInput(f, e); // Fallback
+        });
         global.UI_Factory.registerBuilder('textarea', (f) => global.UI_Factory.buildTextarea(f));
         global.UI_Factory.registerBuilder('select', (f) => global.UI_Factory.buildSelect(f));
         global.UI_Factory.registerBuilder('divider', (f) => global.UI_Factory.buildDivider(f));
         global.UI_Factory.registerBuilder('avatar', (f) => global.UI_Factory.buildAvatar(f));
+        global.UI_Factory.registerBuilder('external_link_button', (f) => global.UI_Factory.buildExternalLinkButton(f));
         global.UI_Factory.registerBuilder('uiComponent', (f, e, d, bus, currentEditId) => {
             if (f.uiComponent === 'bulk_importer' && typeof window.UI_BulkImporter !== 'undefined') {
                 const importer = new window.UI_BulkImporter({

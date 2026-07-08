@@ -17,7 +17,9 @@
     "deploy:tenantA": "node deploy.js prod",
     "deploy:tenantA:auto": "node deploy.js prod --zero-touch",
     "deploy:tenantB": "node deploy.js tenantB",
-    "deploy:tenantB:auto": "node deploy.js tenantB --zero-touch"
+    "deploy:tenantB:auto": "node deploy.js tenantB --zero-touch",
+    "deploy:greatpeeps": "node deploy.js greatpeeps",
+    "deploy:greatpeeps:auto": "node deploy.js greatpeeps --zero-touch"
 
   },
   "keywords": [],

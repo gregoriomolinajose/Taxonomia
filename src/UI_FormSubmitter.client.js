@@ -532,6 +532,47 @@ window.UI_FormSubmitter = class UI_FormSubmitter {
                             if (idInput) idInput.value = response.pkValue;
                             // Asegurar que el siguiente paso se envíe como 'update'
                             this._internalRetryId = response.pkValue; 
+                            
+                            // [UX Auto-Refresh] Hidratar el formulario con los campos generados por el backend (ej. Google Meet link)
+                            setTimeout(() => {
+                                if (this.apiService && typeof this.apiService.call === 'function') {
+                                    this.apiService.call('API_Universal_Router', 'read', this.entityName, { bypassCache: true })
+                                        .then(raw => {
+                                            const r = typeof raw === 'string' ? JSON.parse(raw) : raw;
+                                            if (r && r.status === 'success' && r.data && Array.isArray(r.data.rows)) {
+                                                const idx = r.data.headers.indexOf(pkF);
+                                                if (idx > -1) {
+                                                    const row = r.data.rows.find(rw => String(rw[idx]) === String(response.pkValue));
+                                                    if (row) {
+                                                        const updatedRecord = {};
+                                                        r.data.headers.forEach((h, i) => updatedRecord[h] = row[i]);
+                                                        
+                                                        // Update cache so grid also sees it
+                                                        if (window.DataStore && typeof window.DataStore.set === 'function') {
+                                                            let liveData = window.DataStore.get(this.entityName) || [];
+                                                            const existingIdx = liveData.findIndex(r => String(r[pkF]) === String(response.pkValue));
+                                                            if (existingIdx > -1) {
+                                                                liveData[existingIdx] = updatedRecord;
+                                                            } else {
+                                                                liveData.unshift(updatedRecord);
+                                                            }
+                                                            window.DataStore.set(this.entityName, liveData);
+                                                            if (window.AppEventBus) {
+                                                                window.AppEventBus.publish('DATA::UPDATED', { entityKey: this.entityName });
+                                                            }
+                                                        }
+                                                        
+                                                        // Hydrate inputs
+                                                        Object.keys(updatedRecord).forEach(k => {
+                                                            const inpt = activeForm.querySelector(`[name="${k}"]`);
+                                                            if (inpt) inpt.dispatchEvent(new CustomEvent('FormHydrated', { detail: updatedRecord[k], bubbles: false }));
+                                                        });
+                                                    }
+                                                }
+                                            }
+                                        });
+                                }
+                            }, 300);
                         }
                     }
                     
@@ -709,13 +750,18 @@ window.UI_FormSubmitter = class UI_FormSubmitter {
     extractPayload() {
         const activeForm = this.modal || document.getElementById('app-container');
         if (!activeForm) return {};
-        const freshInputs = activeForm.querySelectorAll('ion-input, ion-textarea, ion-select, input[type="hidden"]');
+        const freshInputs = activeForm.querySelectorAll('ion-input, ion-textarea, ion-select, ion-toggle, input[type="hidden"]');
         const payload = {};
         
         freshInputs.forEach(input => {
             const name = input.getAttribute('name');
             if (name && !input.closest('[data-dynamic-list]') && !name.toLowerCase().startsWith('ion-')) {
-                let val = input.value;
+                let val;
+                if (input.tagName.toLowerCase() === 'ion-toggle') {
+                    val = input.checked;
+                } else {
+                    val = input.value;
+                }
                 const schemaField = this.fields ? this.fields.find(f => f.name === name) : null;
                 
                 if (schemaField) {

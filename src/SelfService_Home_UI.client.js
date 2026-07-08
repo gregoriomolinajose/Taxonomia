@@ -211,7 +211,8 @@ window.SelfService_Home_UI = {
                 window.AppEventBus.unsubscribe(window.SelfService_Home_UI._dataSub);
             }
             window.SelfService_Home_UI._dataSub = window.AppEventBus.subscribe('DATASTORE::CHANGED', (e) => {
-                if (!e || !e.entityName || e.entityName === 'Taxonomia') {
+                const isTopologyContainer = e && e.entityName && window.APP_SCHEMAS && window.APP_SCHEMAS[e.entityName] && window.APP_SCHEMAS[e.entityName].metadata && window.APP_SCHEMAS[e.entityName].metadata.isTopologyContainer;
+                if (!e || !e.entityName || isTopologyContainer) {
                     // Validar si el grid sigue en el DOM antes de renderizar
                     if (document.body.contains(wrapper)) {
                         renderTaxonomiesGrid();

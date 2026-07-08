@@ -129,3 +129,34 @@ function seedSuperAdminAccess() {
         return "Fallo CUD: Engine_DB Missing";
     }
 }
+
+/**
+ * Seeder de Acceso para GreatPeeps.
+ * Instala roles base de GreatPeeps en la base de datos si está vacía.
+ */
+function seedGreatPeepsRoles() {
+    Logger.log("Iniciando Seed de Roles para GreatPeeps...");
+    const config = (typeof CONFIG !== 'undefined') ? CONFIG : { useSheets: true, useCloudDB: false };
+
+    const seedRoles = [
+        { id_rol: "RO-SYSADMIN", nombre: "Administrador del Sistema", descripcion: "Acceso total." },
+        { id_rol: "RO-RECRUITER", nombre: "Reclutador", descripcion: "Gestiona vacantes, candidatos y entrevistas." },
+        { id_rol: "RO-MANAGER", nombre: "Hiring Manager", descripcion: "Evalúa candidatos y entrevistas." }
+    ];
+
+    const seedPermissions = [
+        { id_permiso: "PERM-GP-ADMIN", id_rol: "RO-SYSADMIN", schema_destino: "Sys_Permissions", nivel_acceso: "ALL (Admin Total)" },
+        { id_permiso: "PERM-GP-ROLES", id_rol: "RO-SYSADMIN", schema_destino: "Sys_Roles", nivel_acceso: "ALL (Admin Total)" },
+        { id_permiso: "PERM-GP-PERS", id_rol: "RO-SYSADMIN", schema_destino: "Persona", nivel_acceso: "ALL (Admin Total)" }
+    ];
+
+    if (typeof Engine_DB !== 'undefined') {
+        Logger.log("Instalando Roles...");
+        Engine_DB.upsertBatch("Sys_Roles", seedRoles, config);
+        
+        Logger.log("Instalando Permisos Base...");
+        Engine_DB.upsertBatch("Sys_Permissions", seedPermissions, config);
+    }
+    
+    return "GreatPeeps Roles Instanciados Correctamente.";
+}

@@ -1,4 +1,4 @@
-# PRD: Taxonomia Project
+# PRD: CorePlatform (Taxonomia & GreatPeeps)
 
 > Product Requirements Document — fill with /rai-project-create or /rai-project-onboard
 
@@ -6,44 +6,36 @@
 
 ## Problem
 
-La estrategia de negocio a menudo se desincroniza de la ejecución tecnológica, resultando en datos obsoletos y una trazabilidad pobre en portafolios y capacidades. Se necesita una forma eficiente para gestionar recursos, alineación y flujos de aprobación.
+La estrategia de negocio (Portafolios) y el embudo de crecimiento de talento (Reclutamiento) sufren de desconexión sistémica. El uso de plataformas aisladas para publicar vacantes, agendar entrevistas, filtrar candidatos y gestionar capacidades organizacionales genera latencia, datos desincronizados y retrabajo manual.
 
 ## Goals
 
-Establecer una Única Fuente de Verdad interactiva que conecte entidades de valor (Portafolios, Dominios) con entidades operativas (Equipos, Roles) bajo un estricto framework de aprobación jerárquica.
+Establecer una Suite Integrada (CorePlatform) donde un Motor Agnóstico provea UI interactiva, Base de Datos en tiempo real, ABAC y Formularios a soluciones especializadas como Taxonomía (Go-to-Market y Capacidades) y GreatPeeps (Reclutamiento).
 
 ---
 
 ## Requirements
 
-### RF-01: Gestión de Jerarquía de Valor y Operativa
+### RF-01: Gestión de Jerarquía de Valor y Operativa (Taxonomía)
+El sistema debe permitir gestionar Portafolios, Dominios, Productos y Capacidades, y entrelazarlos visualmente con el bloque operativo.
 
-El sistema debe permitir gestionar Unidades de Negocio, Portafolios, Dominios, Productos y Capacidades, y entrelazarlos visualmente con el bloque operativo (Personas, Roles y Equipos).
+### RF-02: Gestión del Ciclo de Vida de Vacantes (GreatPeeps)
+Permitir a los reclutadores y clientes internos crear, aprobar, iterar y cerrar vacantes en la plataforma.
 
-### RF-02: Enrutador Agnóstico Backend con Dual-Write
+### RF-03: Hub de Integraciones de Reclutamiento (GreatPeeps)
+Conectarse de forma bidireccional con LinkedIn y otras plataformas para publicar vacantes e importar automáticamente a los postulados.
 
-El backend debe procesar peticiones mediante el intermediario Engine_DB y escribirlas en paralelo hacia Google Sheets y Cloud Database, implementando lógica UPSERT obligatoria.
+### RF-04: IA para Filtrado y Scoring de CVs (GreatPeeps)
+Integración nativa con Gemini API para leer currículums, categorizar perfiles y otorgar una calificación de idoneidad (score) para el puesto.
 
-### RF-03: Formularios con Progressive Disclosure
+### RF-05: Agendamiento y Resumen de Entrevistas (GreatPeeps)
+Sincronización con Google Calendar para el contacto y agendamiento, además de proveer resúmenes accionables de entrevistas (Descartar/Avanzar) mediante IA y Google Drive.
 
-La interfaz gráfica debe desacoplarse como una aplicación basada en Web Components de Ionic, utilizando Wizards interactivos (ion-stepper) guiados estrictamente por JS_Schemas_Config.
+### RF-06: Motor Agnóstico Backend con Dual-Write (Core)
+El backend debe procesar peticiones hacia Google Sheets y Cloud Database, implementando lógica UPSERT.
 
-### RF-04: Control Resolutivo y Acceso (RBAC)
+### RF-07: Formularios con Progressive Disclosure (Core)
+Interfaces construidas en Ionic Web Components con Wizards (ion-stepper) guiados estrictamente por metadatos (JS_Schemas_Config).
 
-Todo acceso debe autenticarse usando la cuenta de Google Workspace conectada, obligando a los usuarios "Padres" a aprobar flujos de componentes de nivel "Hijo".
-
-### RF-05: Auto-Aprovisionamiento Dinámico de Base de Datos
-
-El sistema tiene la capacidad arquitectónica de leer esquemas JSON (Metadata) y autoconstruir las tablas físicas, encabezados y columnas de auditoría en la base de datos sin intervención manual del administrador (DBA).
-
-### RF-06: Motor Transaccional de Cero-Latencia (Zero-Latency Routing)
-
-Capacidad técnica de inyectar mutaciones de datos directamente en la memoria RAM del navegador (Client-Side Caching) garantizando tiempos de respuesta visual de < 0.1s tras la confirmación del servidor, operando de forma asíncrona pero segura (Idempotencia estricta).
-
-### RF-07: Mapeo Relacional Visual (Entity Graphing)
-
-Capacidad para renderizar redes neuronales y grafos interactivos (vía Vis.js) que permitan a los directivos visualizar en tiempo real las dependencias de N niveles (ej. qué Capacidades sostienen a qué Productos, y a qué Portafolio pertenecen).
-
-### RF-08: Trazabilidad Inmutable (Audit Trail)
-
-Capacidad de gobierno estricto donde toda mutación (Creación/Edición) inyecta de forma obligatoria e invisible para el usuario firmas de tiempo y autoría (created_at, updated_by), garantizando el cumplimiento (Compliance) para auditorías de arquitectura empresarial.
+### RF-08: Control Resolutivo y Acceso RBAC/ABAC (Core)
+Autenticación vía Google Workspace, con flujos de aprobación jerárquica para mutaciones.

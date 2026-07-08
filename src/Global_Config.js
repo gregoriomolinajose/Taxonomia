@@ -15,6 +15,15 @@ if (typeof PropertiesService !== 'undefined') {
             if (envObj.AuthMode) CONFIG.AuthMode = envObj.AuthMode;
             if (envObj.WORKSPACE_INTEGRATION !== undefined) CONFIG.WORKSPACE_INTEGRATION = envObj.WORKSPACE_INTEGRATION;
         }
+        const ssId = PropertiesService.getScriptProperties().getProperty('APP_CONFIG__spreadsheet_id');
+        if (ssId && ssId.trim().length > 0) {
+            let cleanId = ssId.trim().replace(/^['"]|['"]$/g, '');
+            if (cleanId.indexOf('/d/') !== -1) {
+                var match = cleanId.match(/\/d\/([a-zA-Z0-9-_]+)/);
+                if (match && match[1]) cleanId = match[1];
+            }
+            CONFIG.SPREADSHEET_ID_DB = cleanId;
+        }
     } catch(e) {
         console.error("Config: Fallo parseando ENV_CONFIG", e);
     }

@@ -155,7 +155,7 @@ const Engine_ABAC = {
     const personas = this._getCachedData('Persona');
     const _email = email.trim().toLowerCase();
     const persona = personas.find(p => (p.email || p.correo || "").toLowerCase() === _email);
-    
+
     // Usuario desconocido -> Fail Close estricto (Zero Match)
     if (!persona) {
       // Todo usuario debe tener representación en la BD para mutar.

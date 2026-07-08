@@ -362,7 +362,8 @@
                     // Escucha de éxito global
                     if (window.AppEventBus) {
                         wizardUnsubscribe = window.AppEventBus.subscribe('FORM::SUBMIT_SUCCESS', (payload) => {
-                            if (payload.entityName === 'Taxonomia' && !payload.isSilent) {
+                            const hasDraft = window.APP_SCHEMAS && window.APP_SCHEMAS[payload.entityName] && window.APP_SCHEMAS[payload.entityName].metadata && window.APP_SCHEMAS[payload.entityName].metadata.hasDraftLifecycle;
+                            if (hasDraft && !payload.isSilent) {
                                 if (wizardUnsubscribe) wizardUnsubscribe();
                                 window.AppEventBus.publish('NAV::CHANGE', {viewType: 'selfservice'});
                                 // Alerta Premium
@@ -382,10 +383,11 @@
                         
                         // [Fix] Hydrate data from cache if a recordId is passed, since renderForm expects an object, not a string.
                         if (recordId && window.Schema_Utils) {
-                            const pkField = window.Schema_Utils.getPrimaryKey('Taxonomia');
+                            const wEntity = payload.entityKey || 'Taxonomia';
+                            const pkField = window.Schema_Utils.getPrimaryKey(wEntity);
                             if (pkField) {
                                 // 1. Try global DataStore
-                                let dataBase = (window.DataStore && window.DataStore.get('Taxonomia')) ? window.DataStore.get('Taxonomia') : [];
+                                let dataBase = (window.DataStore && window.DataStore.get(wEntity)) ? window.DataStore.get(wEntity) : [];
                                 recordData = dataBase.find(item => String(item[pkField]) === String(recordId));
                                 
                                 // 2. Fallback to DataViewEngine state if DataStore was wiped
@@ -399,7 +401,7 @@
                             }
                         }
 
-                        window.renderForm('Taxonomia', recordData, null, { 
+                        window.renderForm(wEntity, recordData, null, { 
                             customContainer: colRight,
                             customSidebarSteps: localSidebarList,
                             customFooterContainer: footerZone
@@ -408,7 +410,7 @@
                                 // S49.2 Fix: Delegate DOM population to the Form Engine Hydrator.
                                 // renderForm ONLY builds DOM structure. Values must be hydrated AFTER building.
                                 if (recordData && window.FormEngine_Hydrator) {
-                                    return window.FormEngine_Hydrator(colRight, recordData, 'Taxonomia');
+                                    return window.FormEngine_Hydrator(colRight, recordData, wEntity);
                                 }
                             })
                             .catch(e => console.error("[UI_Router] Error asíncrono inicializando Wizard:", e));
@@ -525,13 +527,14 @@
             navList.appendChild(homeItem);
 
             // Dynamically inject Taxonomia in the 2nd position
-            if (window.APP_SCHEMAS && window.APP_SCHEMAS.Taxonomia && window.APP_SCHEMAS.Taxonomia.metadata) {
-                var taxMeta = window.APP_SCHEMAS.Taxonomia.metadata;
+            const topEntity = Object.keys(window.APP_SCHEMAS || {}).find(k => window.APP_SCHEMAS[k].metadata && window.APP_SCHEMAS[k].metadata.isTopologyContainer);
+            if (topEntity && window.APP_SCHEMAS[topEntity].metadata) {
+                var taxMeta = window.APP_SCHEMAS[topEntity].metadata;
                 var taxItem = document.createElement('div');
                 taxItem.className = 'nav-item';
-                taxItem.id = 'nav-item-Taxonomia';
+                taxItem.id = 'nav-item-' + topEntity;
                 taxItem.title = taxMeta.label;
-                taxItem.addEventListener('click', function() { window.AppEventBus.publish('NAV::CHANGE', {viewType: 'dataview', entityKey: 'Taxonomia'}); });
+                taxItem.addEventListener('click', function() { window.AppEventBus.publish('NAV::CHANGE', {viewType: 'dataview', entityKey: topEntity}); });
                 var taxIcon = document.createElement('ion-icon');
                 taxIcon.setAttribute('name', taxMeta.iconName);
                 var taxLabel = document.createElement('ion-label');
@@ -551,7 +554,7 @@
             var sorted = window.getEntitiesByFlag('showInMenu');
             sorted.forEach(function(entry) {
                 var key = entry[0]; var meta = entry[1];
-                if(meta.hideFromMenu === true || key === 'Taxonomia') return;
+                if(meta.hideFromMenu === true || key === topEntity) return;
                 
                 var item = document.createElement('div');
                 item.className = 'nav-item';

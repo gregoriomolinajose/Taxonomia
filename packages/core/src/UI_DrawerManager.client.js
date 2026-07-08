@@ -1,0 +1,252 @@
+/**
+ * UI_DrawerManager.client.js
+ * S25.2: Mobile-First Sliding Drawer Architecture.
+ * Replaces ion-modal for forms to fix DOM hijacking and memory leaks.
+ */
+(function (global) {
+    global.DrawerStackController = (function() {
+        const stack = [];
+        const MAX_DEPTH = 9; // Sincronizado con Schema_Engine.topologyRules.maxDepth
+        
+        function getRootContainer() {
+            let container = document.getElementById('drawer-root-container');
+            if (!container) {
+                container = document.createElement('div');
+                container.id = 'drawer-root-container';
+                container.className = 'ion-page'; // Ensures proper global typography inheritance
+                
+                const backdrop = document.createElement('div');
+                backdrop.className = 'drawer-backdrop';
+                backdrop.id = 'drawer-backdrop';
+                backdrop.onclick = () => {
+                    // Ignorado: El backdrop está oculto por CSS para UX Master-Detail.
+                    // El cierre al dar click fuera se maneja globalmente más abajo.
+                };
+                container.appendChild(backdrop);
+                
+                const appRoot = document.querySelector('ion-app') || document.body;
+                appRoot.appendChild(container);
+            }
+            return container;
+        }
+
+        return {
+            push: function(drawerNode) {
+                if (stack.length >= MAX_DEPTH) {
+                    const alert = document.createElement('ion-alert');
+                    alert.header = 'Límite Alcanzado';
+                    alert.message = 'Por favor finaliza el formulario actual antes de abrir otro nivel.';
+                    alert.buttons = ['Entendido'];
+                    document.body.appendChild(alert);
+                    if(window.PresentSafe) window.PresentSafe(alert);
+                    return false;
+                }
+                
+                const root = getRootContainer();
+                root.classList.add('active');
+                
+                // Notificar que la profundidad de Drawers ha cambiado (Disable forms if max level approached)
+                if (window.AppEventBus) {
+                    window.AppEventBus.publish('DRAWER::DEPTH_CHANGED', stack.length + 1);
+                }
+                document.body.classList.toggle('drawer-max-depth', (stack.length + 1) >= MAX_DEPTH);
+                document.body.classList.toggle('drawer-open', true);
+                
+                const backdrop = document.getElementById('drawer-backdrop');
+                if(backdrop) backdrop.classList.add('active');
+                
+                drawerNode.classList.add('drawer-panel');
+                drawerNode.setAttribute('data-depth', String(stack.length + 1));
+                
+                root.appendChild(drawerNode);
+                
+                // Animate entry
+                requestAnimationFrame(() => {
+                    requestAnimationFrame(() => {
+                        drawerNode.classList.add('active');
+                    });
+                });
+                
+                stack.push(drawerNode);
+                global.currentFormDrawer = drawerNode;
+                return true;
+            },
+            _isClosing: false,
+            
+            closeTop: async function() {
+                if (this._isClosing) return;
+                
+                if (stack.length > 0) {
+                    this._isClosing = true;
+                    try {
+                        const topDrawer = stack.pop();
+
+                        // --- S25.2: Save-on-Close Hook ---
+                        if (topDrawer && topDrawer._formSubmitterInstance) {
+                            const submitter = topDrawer._formSubmitterInstance;
+                            submitter.executeSave({ isSilent: true });
+                        }
+                        
+                        // Animate exit
+                        topDrawer.classList.remove('active');
+                        
+                        // Wait for CSS transition (350ms)
+                        await new Promise(r => setTimeout(r, 350));
+                        
+                        if (topDrawer && topDrawer.isConnected) {
+                            if (window.ActiveSteppers) {
+                                // S25.2 BugFix: Destruir steppers anidados para limpiar recursos
+                                window.ActiveSteppers.forEach(stepper => {
+                                    if (stepper.cardContent && topDrawer.contains(stepper.cardContent)) {
+                                        if (typeof stepper.destroy === 'function') stepper.destroy();
+                                    }
+                                });
+                            }
+                            topDrawer.innerHTML = '';
+                            if(topDrawer.__onSaveSuccessFallback) topDrawer.__onSaveSuccessFallback = null;
+                            topDrawer.remove();
+                        }
+                        
+                        global.currentFormDrawer = stack.length > 0 ? stack[stack.length - 1] : null;
+                        
+                        if (stack.length === 0) {
+                            const root = getRootContainer();
+                            // S55.2 BugFix: Do not hide drawer-root-container if a fullscreen wizard is currently using it
+                            const hasFullscreenWizard = root.querySelector('.fullscreen-wizard');
+                            if (!hasFullscreenWizard) {
+                                root.classList.remove('active');
+                            }
+                            const backdrop = document.getElementById('drawer-backdrop');
+                            if(backdrop) backdrop.classList.remove('active');
+                        }
+
+                        if (window.AppEventBus) {
+                            window.AppEventBus.publish('DRAWER::DEPTH_CHANGED', stack.length);
+                        }
+                        document.body.classList.toggle('drawer-max-depth', stack.length >= MAX_DEPTH);
+                        document.body.classList.toggle('drawer-open', stack.length > 0);
+                    } finally {
+                        this._isClosing = false;
+                    }
+                }
+            },
+            clearAllSync: function() {
+                while(stack.length > 0) {
+                    const topDrawer = stack.pop();
+                    if (topDrawer && topDrawer.isConnected) {
+                        if (window.ActiveSteppers) {
+                            window.ActiveSteppers.forEach(stepper => {
+                                if (stepper.cardContent && topDrawer.contains(stepper.cardContent)) {
+                                    if (typeof stepper.destroy === 'function') stepper.destroy();
+                                }
+                            });
+                        }
+                        topDrawer.innerHTML = '';
+                        if(topDrawer.__onSaveSuccessFallback) topDrawer.__onSaveSuccessFallback = null;
+                        topDrawer.remove();
+                    }
+                }
+                global.currentFormDrawer = null;
+                const root = getRootContainer();
+                const hasFullscreenWizard = root.querySelector('.fullscreen-wizard');
+                if (!hasFullscreenWizard) {
+                    root.classList.remove('active');
+                }
+                if (window.AppEventBus) window.AppEventBus.publish('DRAWER::DEPTH_CHANGED', 0);
+                document.body.classList.toggle('drawer-max-depth', false);
+                document.body.classList.toggle('drawer-open', false);
+            },
+            getDepth: () => stack.length,
+            getTop: () => stack.length > 0 ? stack[stack.length - 1] : null,
+            clearAll: function() {
+                while(stack.length > 0) {
+                    this.closeTop();
+                }
+            },
+            
+            /**
+             * H6 Proportionality: Factory for building Fullscreen Canvas drawers to avoid boilerplate.
+             * @param {string} titleHtml - The HTML content for the title (e.g. icon + text).
+             * @param {Function} buildCallback - Called with (contentContainer, drawerNode) to inject canvas specific logic.
+             * @returns {HTMLElement} The created drawer node
+             */
+            buildFullscreenCanvas: function(titleHtml, buildCallback) {
+                const drawerNode = document.createElement('div');
+                drawerNode.className = 'drawer-panel fullscreen canvas-drawer';
+                
+                const header = document.createElement('div');
+                header.className = 'drawer-header';
+                header.style.borderBottom = '1px solid var(--color-border)';
+                
+                const title = document.createElement('h2');
+                title.className = 'drawer-title';
+                title.innerHTML = titleHtml;
+                
+                const btnClose = document.createElement('button');
+                btnClose.className = 'dv-btn-icon';
+                btnClose.innerHTML = '<ion-icon name="close"></ion-icon>';
+                btnClose.onclick = () => this.closeTop();
+                
+                header.appendChild(title);
+                header.appendChild(btnClose);
+                
+                const contentEl = document.createElement('div');
+                contentEl.className = 'drawer-content';
+                contentEl.style.display = 'flex';
+                contentEl.style.flexDirection = 'column';
+                contentEl.style.padding = '0';
+                
+                drawerNode.appendChild(header);
+                drawerNode.appendChild(contentEl);
+                
+                if (typeof buildCallback === 'function') {
+                    buildCallback(contentEl, drawerNode);
+                }
+                
+                this.push(drawerNode);
+                return drawerNode;
+            }
+        };
+    })();
+
+    // Backward compatibility con componentes antiguos
+    global._closeTopModal = global.DrawerStackController.closeTop;
+    global.ModalStackController = global.DrawerStackController;
+
+    document.addEventListener('DOMContentLoaded', () => {
+        if (global.AppEventBus) {
+            global.AppEventBus.subscribe('MODAL::CLOSE_REQUEST', function() {
+                global.DrawerStackController.closeTop();
+            });
+        }
+        setTimeout(() => {
+            if (window.AppEventBus && !window._drawerNavListenerAttached) {
+                window.AppEventBus.subscribe('NAV::CHANGE', function() {
+                    if (global.DrawerStackController && global.DrawerStackController.getDepth() > 0) {
+                        global.DrawerStackController.clearAllSync();
+                    }
+                });
+                window._drawerNavListenerAttached = true;
+            }
+        }, 1000);
+
+        // --- S25.3: Zero-Click Save-on-Close (Global Click Outside Handler) ---
+        document.addEventListener('click', (e) => {
+            if (global.DrawerStackController.getDepth() > 0) {
+                const topDrawer = global.DrawerStackController.getTop();
+                
+                // Verificar si el clic fue dentro del Drawer superior (activo)
+                const isInsideTopDrawer = topDrawer && topDrawer.contains(e.target);
+                
+                // Ignorar clics en overlays de Ionic y en el wizard fullscreen (que escapa del Drawer)
+                const isInsideIonicOverlay = e.target.closest('ion-popover, ion-alert, ion-toast, ion-action-sheet, ion-picker, ion-modal, .fullscreen-wizard');
+                
+                if (!isInsideTopDrawer && !isInsideIonicOverlay) {
+                    global.DrawerStackController.closeTop();
+                }
+            }
+        }, { capture: true }); // Usamos capture para interceptar antes de que otros frenen el evento
+
+    });
+
+})(typeof window !== 'undefined' ? window : this);

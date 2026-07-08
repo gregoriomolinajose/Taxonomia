@@ -533,6 +533,57 @@
                     cardEl.appendChild(graphWrap);
                 }
                 
+                // --- S45.7 Renderizado dinámico de Enlaces Externos ---
+                const schema = window.APP_SCHEMAS && window.APP_SCHEMAS[this.cfg.entityName];
+                if (schema && schema.dashboardCard && Array.isArray(schema.dashboardCard.actionButtons)) {
+                    const extFieldNames = schema.dashboardCard.actionButtons;
+                    if (extFieldNames.length > 0 && schema.fields) {
+                        const linksWrap = document.createElement('div');
+                        linksWrap.className = 'dv-card-external-links';
+                        linksWrap.style.marginTop = '12px';
+                        linksWrap.style.display = 'flex';
+                        linksWrap.style.gap = '8px';
+                        linksWrap.style.flexWrap = 'wrap';
+
+                        const extFields = schema.fields.filter(f => extFieldNames.includes(f.name));
+
+                        extFields.forEach(f => {
+                            const val = row[f.name];
+                            const linkHref = (window.Schema_Utils && window.Schema_Utils.normalizeExternalUrl) ? window.Schema_Utils.normalizeExternalUrl(val) : val;
+                            if (linkHref) {
+                                
+                                const btnLink = document.createElement('ion-button');
+                                btnLink.setAttribute('fill', 'outline');
+                                btnLink.setAttribute('size', 'small');
+                                
+                                if (f.customColor) {
+                                    btnLink.style.setProperty('--color', f.customColor);
+                                    btnLink.style.setProperty('--border-color', f.customColor);
+                                } else {
+                                    btnLink.setAttribute('color', f.color || 'primary');
+                                }
+                                
+                                btnLink.classList.add('text-action');
+
+                                btnLink.innerHTML = `<ion-icon slot="start" name="${f.iconName || 'link'}"></ion-icon><ion-label class="text-action">${f.label || 'Enlace'}</ion-label>`;
+                                btnLink.style.margin = '0';
+                                btnLink.style.textTransform = 'none';
+                                
+                                btnLink.addEventListener('click', (e) => {
+                                    e.stopPropagation();
+                                    window.open(linkHref, '_blank');
+                                });
+                                linksWrap.appendChild(btnLink);
+                            }
+                        });
+
+                        if (linksWrap.childNodes.length > 0) {
+                            cardEl.appendChild(linksWrap);
+                        }
+                    }
+                }
+                // ----------------------------------------------------
+                
                 cardEl.addEventListener('click', (e) => {
                     if (e.target.closest('button')) return;
                     if (idStr) {

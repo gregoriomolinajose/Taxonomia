@@ -1,0 +1,213 @@
+/* ============================================================
+   UI_DataGrid_Controller.client.js
+   Motor de estado universal para grillas tabulares
+   Agnóstico a la vista (Standalone o Embedded)
+   ============================================================ */
+
+window.UI_DataGrid_Controller = function(config = {}) {
+    this.cfg = {
+        entityName: config.entityName || '',
+        pageSize: config.pageSize || 25,
+        onChange: config.onChange || (function() {})
+    };
+
+    this.state = {
+        data: [],               // todos los registros
+        filtered: [],           // tras búsqueda y filtrado
+        page: 1,
+        pageSize: this.cfg.pageSize,
+        sortCol: '',
+        sortDir: 'asc',
+        columns: [],
+        searchText: '',
+        advancedFilters: {},    // { field: [val1, val2] }
+        payload: config.payload || null, // Contexto (e.g. strictFilter)
+        view: config.view || 'table',
+        selectedRows: [],
+        lastGridScroll: 0
+    };
+
+    /* ── Setters de Datos y Schema ── */
+    this.setData = function(rows) {
+        this.state.data = Array.isArray(rows) ? rows : [];
+        this.applyFilterAndSort();
+    };
+
+    this.setColumns = function(columns) {
+        this.state.columns = Array.isArray(columns) ? columns : [];
+        this.emitChange();
+    };
+
+    this.setPayload = function(payload) {
+        this.state.payload = payload;
+        this.applyFilterAndSort();
+    };
+
+    /* ── Motor de Búsqueda y Filtrado ── */
+    this.setSearchText = function(text) {
+        this.state.searchText = text || '';
+        this.applyFilterAndSort();
+    };
+
+    this.setAdvancedFilters = function(filtersMap) {
+        this.state.advancedFilters = filtersMap || {};
+        this.applyFilterAndSort();
+    };
+
+    this.applyFilterAndSort = function() {
+        let baseData = this.state.data;
+        
+        // 1. Filtro Estricto (Contextual)
+        if (this.state.payload && this.state.payload.strictFilter && this.state.payload.strictFilter.key) {
+            const sKey = this.state.payload.strictFilter.key;
+            const sVal = String(this.state.payload.strictFilter.value);
+            
+            const escapeRegExp = function(str) { return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); };
+            const sRegex = new RegExp('(^|\\W)' + escapeRegExp(sVal) + '(\\W|$)');
+
+            let fMeta = null;
+            if (window.APP_SCHEMAS && window.APP_SCHEMAS[this.cfg.entityName]) {
+                fMeta = (window.APP_SCHEMAS[this.cfg.entityName].fields || []).find(f => f.name === sKey);
+            }
+            const edgeName = fMeta ? (fMeta.graphEdgeType || fMeta.name).toUpperCase() : null;
+            const pkCol = window.Schema_Utils ? window.Schema_Utils.getPrimaryKey(this.cfg.entityName) : 'id_registro';
+
+            baseData = baseData.filter(function(r) {
+                let val = r[sKey];
+
+                const isEmptyValue = val === undefined || val === null || val === '' || (Array.isArray(val) && val.length === 0);
+                if (fMeta && fMeta.isTemporalGraph && window.Graph_Utils && isEmptyValue) {
+                    const currentPK = r[pkCol];
+                    const resolvedLink = window.Graph_Utils.resolveLinkedId(currentPK, edgeName, null, false, fMeta.relationType);
+                    if (resolvedLink) val = resolvedLink;
+                }
+                
+                if (Array.isArray(val)) {
+                    return val.some(function(item) {
+                        if (typeof item === 'object' && item !== null) {
+                            return Object.values(item).some(function(innerVal) {
+                                return String(innerVal) === sVal || sRegex.test(String(innerVal));
+                            });
+                        }
+                        return String(item) === sVal || sRegex.test(String(item));
+                    });
+                }
+                return String(val) === sVal || sRegex.test(String(val));
+            });
+        }
+        
+        // 2. Búsqueda por Texto (Delegada a DataEngine)
+        let textFiltered = window.DataEngine && typeof window.DataEngine.applyFilter === 'function' 
+            ? window.DataEngine.applyFilter(baseData, this.state.searchText)
+            : baseData; // Fallback seguro
+            
+        // 3. Filtros Universales (AND / OR)
+        if (this.state.advancedFilters && Object.keys(this.state.advancedFilters).length > 0) {
+            const filterKeys = Object.keys(this.state.advancedFilters);
+            textFiltered = textFiltered.filter(row => {
+                return filterKeys.every(field => {
+                    const validValues = this.state.advancedFilters[field];
+                    if (!validValues || validValues.length === 0) return true;
+                    
+                    let rowVal = row[field];
+                    if (rowVal === null || rowVal === undefined || rowVal === '' || (Array.isArray(rowVal) && rowVal.length === 0)) {
+                        rowVal = '[Sin Valor]';
+                    }
+                    
+                    if (Array.isArray(rowVal)) {
+                        return validValues.some(val => rowVal.includes(val));
+                    } else {
+                        return validValues.includes(String(rowVal));
+                    }
+                });
+            });
+        }
+        
+        // 4. Ordenación (Delegada a DataEngine)
+        if (this.state.sortCol && window.DataEngine && typeof window.DataEngine.applySort === 'function') {
+            textFiltered = window.DataEngine.applySort(textFiltered, this.state.sortCol, this.state.sortDir);
+        }
+        
+        this.state.filtered = textFiltered;
+        this.state.page = 1; // Reiniciar página al filtrar/ordenar
+        this.state.lastGridScroll = 0;
+        this.emitChange();
+    };
+
+    /* ── Paginación y Ordenación ── */
+    this.onPage = function(newPage) {
+        const tp = Math.max(1, Math.ceil(this.state.filtered.length / this.state.pageSize));
+        this.state.page = Math.max(1, Math.min(newPage, tp));
+        this.emitChange();
+    };
+
+    this.onPageSize = function(newSize) {
+        this.state.pageSize = parseInt(newSize, 10);
+        this.state.page = 1;
+        this.emitChange();
+    };
+
+    this.onGridScroll = function(top) {
+        this.state.lastGridScroll = top;
+    };
+
+    this.onSort = function(colKey) {
+        if (this.state.sortCol === colKey) {
+            this.state.sortDir = this.state.sortDir === 'asc' ? 'desc' : 'asc';
+        } else {
+            this.state.sortCol = colKey;
+            this.state.sortDir = 'asc';
+        }
+        this.applyFilterAndSort();
+    };
+
+    this.onColToggle = function(idx, visible) {
+        if (this.state.columns[idx]) {
+            this.state.columns[idx].visible = visible;
+            // No llamamos a emitChange globalmente si queremos un re-render suave, 
+            // pero para arquitecturas reactivas emitimos:
+            this.emitChange();
+        }
+    };
+
+    this.onRowCheck = function(id, isChecked) {
+        if (isChecked) {
+            if (!this.state.selectedRows.includes(String(id))) this.state.selectedRows.push(String(id));
+        } else {
+            this.state.selectedRows = this.state.selectedRows.filter(rid => rid !== String(id));
+        }
+        this.emitChange();
+    };
+
+    this.onSelectAll = function(isChecked) {
+        if (isChecked) {
+            const pkCol = window.Schema_Utils ? window.Schema_Utils.getPrimaryKey(this.cfg.entityName) : 'id_registro';
+            this.state.selectedRows = this.state.filtered.map(r => String(r[pkCol] || ''));
+        } else {
+            this.state.selectedRows = [];
+        }
+        this.emitChange();
+    };
+
+    this.setView = function(viewType) {
+        this.state.view = viewType;
+        this.emitChange();
+    };
+
+    /* ── Emisión de Estado ── */
+    this.emitChange = function() {
+        if (typeof this.cfg.onChange === 'function') {
+            this.cfg.onChange(this.state);
+        }
+    };
+
+    // Binding the methods so they can be passed safely as callbacks
+    this.onPage = this.onPage.bind(this);
+    this.onPageSize = this.onPageSize.bind(this);
+    this.onGridScroll = this.onGridScroll.bind(this);
+    this.onSort = this.onSort.bind(this);
+    this.onColToggle = this.onColToggle.bind(this);
+    this.onRowCheck = this.onRowCheck.bind(this);
+    this.onSelectAll = this.onSelectAll.bind(this);
+    this.setView = this.setView.bind(this);
+};

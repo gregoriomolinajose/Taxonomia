@@ -80,3 +80,65 @@ function cleanupStressData() {
   Logger.log(`[Cleanup] Éxito: Se eliminaron ${deletedCount} registros de stress.`);
   return `Se eliminaron ${deletedCount} registros correctamente.`;
 }
+
+/**
+ * Prueba End-to-End del Flujo de Entrevistas y Google Calendar
+ * Simula el payload exacto que envía la interfaz de usuario al backend.
+ */
+function _test_creacion_entrevista_calendar() {
+    Logger.log("==================================================");
+    Logger.log("🧪 INICIANDO PRUEBA: Creación de Entrevista con Google Meet");
+    Logger.log("==================================================");
+    
+    // 1. Escenario de Prueba: Payload enviado desde el formulario UI
+    const payload = {
+        estado: "Activo",
+        location_type: "VIRTUAL",
+        generar_meet: "on", // Valor problemático simulado tal cual
+        notas: "Prueba E2E ejecutada desde TEST_Suite nativo.",
+        horario: JSON.stringify({
+            scheduled_start: "2026-07-06T15:00:00",
+            scheduled_end: "2026-07-06T16:00:00"
+        })
+    };
+
+    Logger.log(`📦 Payload Simulado:\n${JSON.stringify(payload, null, 2)}`);
+
+    try {
+        Logger.log("⏳ Llamando a API_Universal_Router...");
+        // 2. Ejecución: Se pasa el payload por el flujo completo (Validación -> Interceptores -> DB)
+        const responseJson = API_Universal_Router("create", "Entrevistas", payload);
+        const result = JSON.parse(responseJson);
+
+        if (result.status === "success" && result.pkValue) {
+            Logger.log("==================================================");
+            Logger.log("✅ API_Universal_Router devolvió ÉXITO. PK: " + result.pkValue);
+            
+            // Verificamos si se guardó el meet_link leyendo de nuevo la base de datos
+            const readResponseJson = API_Universal_Router("read", "Entrevistas", { id: result.pkValue });
+            const readResult = JSON.parse(readResponseJson);
+            
+            if (readResult.status === "success" && readResult.data) {
+                Logger.log("📦 Registro Extraído de DB:");
+                Logger.log(JSON.stringify(readResult.data, null, 2));
+                if (readResult.data.meet_link) {
+                    Logger.log("✅ El meet_link ESTÁ en la base de datos: " + readResult.data.meet_link);
+                } else {
+                    Logger.log("❌ El meet_link NO se guardó en la base de datos.");
+                }
+            }
+            Logger.log("⚠️ ADVERTENCIA: El comportamiento de la API de Calendar es inesperado o asíncrono.");
+        } else {
+            Logger.log("❌ La creación del registro falló en la Base de Datos o Validación.");
+        }
+
+    } catch (e) {
+        Logger.log("❌ ERROR CRÍTICO DURANTE LA EJECUCIÓN:");
+        Logger.log(e.toString());
+        Logger.log(e.stack);
+    }
+    
+    Logger.log("==================================================");
+    Logger.log("🏁 FIN DE LA PRUEBA");
+    Logger.log("==================================================");
+}

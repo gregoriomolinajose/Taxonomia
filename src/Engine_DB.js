@@ -715,8 +715,15 @@ const Engine_DB = {
     },
 
     create: function (entityName, data) {
+        data = data || {}; // Null/Undefined defense
         Logger.log("Engine_DB_create_router: Routing " + entityName + " with Orchestration.");
         const config = (typeof CONFIG !== 'undefined') ? CONFIG : { useSheets: true, useCloudDB: false };
+        // [Draft Lifecycle Security Enforcement]
+        const schema = (typeof APP_SCHEMAS !== 'undefined') ? APP_SCHEMAS[entityName] : null;
+        if (schema && schema.metadata && schema.metadata.hasDraftLifecycle) {
+            // Force status Borrador if this entity governs a draft lifecycle on creation
+            data.estado = 'Borrador';
+        }
         
         // Usar orquestador para manejar posibles relaciones anidadas
         const result = this.orchestrateNestedSave(entityName, data, config);
@@ -899,20 +906,20 @@ const Engine_DB = {
      * @param {string} contextId
      * @returns {Object} { approvedEdges: number }
      */
-    publishDraftContext: function(contextId) {
-        if (!contextId) throw new Error("publishDraftContext: contextId requerido.");
+    publishDraftContext: function(entityName, contextId) {
+        if (!contextId || !entityName) throw new Error("publishDraftContext: contextId y entityName requeridos.");
         if (typeof Logger !== 'undefined') Logger.log(`[Mass Approval] Publicando Draft Context: ${contextId}`);
         const sysDate = new Date().toISOString();
 
-        // 1. Update master entity (Taxonomia)
-        const taxRes = _Adapter_Sheets.list('Taxonomia', { useSheets: true }, 'objects');
+        // 1. Update master entity dynamically
+        const taxRes = _Adapter_Sheets.list(entityName, { useSheets: true }, 'objects');
         const taxRecords = taxRes && taxRes.rows ? taxRes.rows : [];
-        const taxRecord = taxRecords.find(r => r.id_registro === contextId || r.id_taxonomia === contextId);
+        const taxRecord = taxRecords.find(r => String(r.id_registro) === String(contextId) || (r[APP_SCHEMAS[entityName].primaryKey] && String(r[APP_SCHEMAS[entityName].primaryKey]) === String(contextId)));
         if (taxRecord) {
             taxRecord.estado = 'Activo';
             taxRecord.updated_at = sysDate;
-            _Adapter_Sheets.upsertBatch('Taxonomia', [taxRecord], { isVolatile: false });
-            _invalidateCache('Taxonomia');
+            _Adapter_Sheets.upsertBatch(entityName, [taxRecord], { isVolatile: false });
+            _invalidateCache(entityName);
         }
 
         // 2. Mass update edges
@@ -1003,9 +1010,10 @@ const Engine_DB = {
             }
         } else {
             // Legacy hardcode validation
-            if (entityName === "Dominio") {
+            const schemaForDel = (typeof APP_SCHEMAS !== 'undefined') ? APP_SCHEMAS[entityName] : null;
+            if (schemaForDel && schemaForDel.metadata && schemaForDel.metadata.deletionStrategy) {
                 isGraphEntity = true;
-                strategy = "GRANDPARENT"; // fallback behavior if Schema_Engine isn't strictly loaded
+                strategy = schemaForDel.metadata.deletionStrategy;
             }
         }
 

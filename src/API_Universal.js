@@ -22,7 +22,7 @@ function doPost(e) {
     if (action === 'create') {
       responseData = _handleCreate(entity, data);
     } else if (action === 'read') {
-      responseData = _handleRead(entity);
+      responseData = _handleRead(entity, data);
     } else if (action === 'update') {
       responseData = _handleUpdate(entity, data.id, data);
     } else if (action === 'delete') {
@@ -124,7 +124,7 @@ function API_Universal_Router(action, entityName, payload) {
       if (id) {
         responseData = Engine_DB.readFull(entityName, id);
       } else {
-        responseData = _handleRead(entityName);
+        responseData = _handleRead(entityName, payload);
       }
     } else if (action === 'update') {
       const id = payload[pkField];
@@ -138,10 +138,10 @@ function API_Universal_Router(action, entityName, payload) {
       if (!payload || !payload.contextId) throw new Error("Falta contextId para publicar el borrador.");
       const email = Session.getActiveUser().getEmail();
       if (typeof Engine_ABAC !== 'undefined') {
-          const canPublish = Engine_ABAC.validatePermission(email, 'update', 'Taxonomia', payload.contextId);
+          const canPublish = Engine_ABAC.validatePermission(email, 'update', entityName, payload.contextId);
           if (!canPublish) throw new Error("ABAC_REJECTED: Permisos insuficientes para aprobar taxonomías.");
       }
-      responseData = Engine_DB.publishDraftContext(payload.contextId);
+      responseData = Engine_DB.publishDraftContext(entityName, payload.contextId);
       return JSON.stringify({ status: "success", data: responseData, action });
     } else if (action === 'etl_writeback_feedback') {
       if (typeof _guardAbac === 'function') {

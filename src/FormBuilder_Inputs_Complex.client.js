@@ -101,5 +101,98 @@
             return chip;
         };
 
+        global.UI_Factory.buildEventSchedule = function(field) {
+            const container = document.createElement('div');
+            container.className = 'event-schedule-container';
+            container.setAttribute('data-form-component', field.name);
+            container.style.marginBottom = 'var(--spacing-4)';
+
+            const cLabel = document.createElement('div');
+            cLabel.style.fontSize = 'var(--sys-font-small)';
+            cLabel.style.color = 'var(--ion-color-medium)';
+            cLabel.style.marginBottom = 'var(--spacing-2)';
+            cLabel.style.paddingLeft = 'var(--spacing-1)';
+            cLabel.textContent = field.label + (field.required ? ' *' : '');
+            container.appendChild(cLabel);
+
+            const grid = document.createElement('div');
+            grid.style.display = 'grid';
+            grid.style.gridTemplateColumns = 'repeat(auto-fit, minmax(120px, 1fr))';
+            grid.style.gap = 'var(--spacing-2)';
+
+            // Date
+            const dateItem = document.createElement('ion-item');
+            dateItem.setAttribute('fill', 'outline');
+            const dateLabel = document.createElement('ion-label');
+            dateLabel.position = 'stacked';
+            dateLabel.textContent = 'Fecha';
+            const dateInput = document.createElement('ion-input');
+            dateInput.type = 'date';
+            dateItem.appendChild(dateLabel);
+            dateItem.appendChild(dateInput);
+
+            // Start Time
+            const startItem = document.createElement('ion-item');
+            startItem.setAttribute('fill', 'outline');
+            const startLabel = document.createElement('ion-label');
+            startLabel.position = 'stacked';
+            startLabel.textContent = 'Inicio';
+            const startInput = document.createElement('ion-input');
+            startInput.type = 'time';
+            startItem.appendChild(startLabel);
+            startItem.appendChild(startInput);
+
+            // End Time
+            const endItem = document.createElement('ion-item');
+            endItem.setAttribute('fill', 'outline');
+            const endLabel = document.createElement('ion-label');
+            endLabel.position = 'stacked';
+            endLabel.textContent = 'Fin';
+            const endInput = document.createElement('ion-input');
+            endInput.type = 'time';
+            endItem.appendChild(endLabel);
+            endItem.appendChild(endInput);
+
+            grid.appendChild(dateItem);
+            grid.appendChild(startItem);
+            grid.appendChild(endItem);
+            container.appendChild(grid);
+
+            // Nodal Protocol
+            container.getValidatedValue = () => {
+                if (!dateInput.value || !startInput.value || !endInput.value) {
+                    return ""; // Let FormSubmitter's generic required check handle empty state
+                }
+                if (endInput.value <= startInput.value) {
+                    throw new Error(`${field.label}: La hora de fin debe ser posterior a la de inicio.`);
+                }
+                const startIso = `${dateInput.value}T${startInput.value}:00`;
+                const endIso = `${dateInput.value}T${endInput.value}:00`;
+                return JSON.stringify({
+                    scheduled_start: startIso,
+                    scheduled_end: endIso
+                });
+            };
+
+            container.addEventListener('FormHydrated', (e) => {
+                try {
+                    if (e.detail) {
+                        const parsed = typeof e.detail === 'string' ? JSON.parse(e.detail) : e.detail;
+                        if (parsed.scheduled_start && parsed.scheduled_end) {
+                            const [sDate, sTime] = parsed.scheduled_start.split('T');
+                            const [eDate, eTime] = parsed.scheduled_end.split('T');
+                            dateInput.value = sDate;
+                            startInput.value = sTime.substring(0, 5); // HH:mm
+                            endInput.value = eTime.substring(0, 5); // HH:mm
+                        }
+                    }
+                } catch(err) {
+                    console.error("Error hidratando event_schedule", err);
+                }
+            });
+
+            return container;
+        };
+
         // global.UI_Factory.buildSearchableMulti has been extracted to UI_Component_SearchableMulti.html
     })(window);

@@ -6,7 +6,7 @@ story: 'S30.2'
 epic: 'E30'
 content:
   summary: 'Inyectar estado readonly condicional hacia Subgrids para eliminar el ocultamiento pasivo CSS.'
-  complexity: medium
+  complexity: moderate
   acceptance_criteria:
     - id: AC1
       description: 'renderForm soporta config como 4to parametro.'

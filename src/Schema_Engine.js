@@ -143,7 +143,7 @@ var FIELD_TEMPLATES = Object.freeze({
 
 var APP_SCHEMAS = {
   Taxonomia: {
-    metadata: { prefix: 'TAXO', showInMenu: true, iconName: 'library-outline', color: 'tertiary', label: 'Taxonomías', titleField: 'nombre', idField: 'id_taxonomia', fkField: null },
+    metadata: { prefix: 'TAXO', showInMenu: true, iconName: 'library-outline', color: 'tertiary', label: 'Taxonomías', titleField: 'nombre', idField: 'id_taxonomia', fkField: null, isTopologyContainer: true, hasDraftLifecycle: true, useWizardForm: true },
     primaryKey: "id_taxonomia",
     titleField: "nombre",
     wizardConfig: true,
@@ -237,7 +237,7 @@ var APP_SCHEMAS = {
     ]
   },
   Dominio: {
-    metadata: { prefix: 'DOMI', showInMenu: true, order: 3, iconName: 'globe-outline', color: 'primary', label: 'Dominios', titleField: 'nombre', idField: 'id_dominio', fkField: null, governancePolicy: 'exempt_from_strict_readonly' },
+    metadata: { prefix: 'DOMI', showInMenu: true, order: 3, iconName: 'globe-outline', color: 'primary', label: 'Dominios', titleField: 'nombre', idField: 'id_dominio', fkField: null, governancePolicy: 'exempt_from_strict_readonly', deletionStrategy: 'GRANDPARENT' },
     topological_metadata: {
       ownerFields: ["gerente_dominio_id"]
     },
@@ -255,13 +255,13 @@ var APP_SCHEMAS = {
       { name: "abreviacion", type: "text", label: "Abreviación", required: false, width: 12 },
       { name: "descripcion", type: "textarea", label: "Definición / Descripción", required: true, width: 12, showInList: false },
       { name: "contexto_completo_analisis", type: "textarea", label: "Contexto Análisis", required: false, width: 12, showInList: false },
-      { width: 12, name: "relaciones_padre", type: "relation", relationType: "padre", targetEntity: "Dominio", graphEntity: "Sys_Graph_Edges", valueField: "id_dominio", labelField: "nombre", uiComponent: "searchable_single", label: "Dominio Padre", isTemporalGraph: true, graphEdgeType: "DOMINIO_HIJO", topologyCardinality: "1:N", readonly: false, readonlyInContext: true, placeholder: "Para editar vaya a la vista principal de Dominios." },
-      { width: 12, name: "relaciones_hijo", type: "relation", relationType: "hijo", targetEntity: "Dominio", graphEntity: "Sys_Graph_Edges", valueField: "id_dominio", labelField: "nombre", uiComponent: "searchable_multi", label: "Dominios Subordinados", isTemporalGraph: true, graphEdgeType: "DOMINIO_HIJO", topologyCardinality: "1:N", readonly: false, readonlyInContext: true, placeholder: "Para vincular vaya a la vista principal de Dominios." },
-      { width: 12, name: "value_streams_vinculados", type: "relation", relationType: "padre", targetEntity: "Value_Stream", graphEntity: "Sys_Graph_Edges", valueField: "id_value_stream", labelField: "nombre", uiComponent: "searchable_multi", label: "Value Streams", isTemporalGraph: true, graphEdgeType: "VALUE_STREAM_DOMINIO", topologyCardinality: "N:M", required: false, readonly: true, placeholder: "Para vincular vaya al flujo de Taxonomía.", hideIfEmptyAndReadonly: false },
-      { name: "gerente_dominio_id", type: "relation", relationType: "padre", targetEntity: "Persona", graphEntity: "Sys_Graph_Edges", label: "Responsable de Dominio", isTemporalGraph: true, graphEdgeType: "DOMINIO_RESPONSABLE", uiComponent: "searchable_single", valueField: "id_persona", labelField: "_nombre_completo", width: 12, readonly: true, placeholder: "Para vincular vaya al flujo de Taxonomía.", hideIfEmptyAndReadonly: false },
+      { width: 12, name: "relaciones_padre", type: "relation", relationType: "padre", targetEntity: "Dominio", graphEntity: "Sys_Graph_Edges", valueField: "id_dominio", labelField: "nombre", uiComponent: "searchable_single", label: "Dominio Padre", isTemporalGraph: true, graphEdgeType: "DOMINIO_HIJO", topologyCardinality: "1:N", readonlyMode: "inside_context", contextPlaceholder: "Para editar vaya a la vista principal de Dominios." },
+      { width: 12, name: "relaciones_hijo", type: "relation", relationType: "hijo", targetEntity: "Dominio", graphEntity: "Sys_Graph_Edges", valueField: "id_dominio", labelField: "nombre", uiComponent: "searchable_multi", label: "Dominios Subordinados", isTemporalGraph: true, graphEdgeType: "DOMINIO_HIJO", topologyCardinality: "1:N", readonlyMode: "inside_context", contextPlaceholder: "Para vincular vaya a la vista principal de Dominios." },
+      { width: 12, name: "value_streams_vinculados", type: "relation", relationType: "padre", targetEntity: "Value_Stream", graphEntity: "Sys_Graph_Edges", valueField: "id_value_stream", labelField: "nombre", uiComponent: "searchable_multi", label: "Value Streams", isTemporalGraph: true, graphEdgeType: "VALUE_STREAM_DOMINIO", topologyCardinality: "N:M", required: false, readonlyMode: "outside_context", contextPlaceholder: "Para vincular vaya al flujo de Taxonomía." },
+      { name: "gerente_dominio_id", type: "relation", relationType: "padre", targetEntity: "Persona", graphEntity: "Sys_Graph_Edges", label: "Responsable de Dominio", isTemporalGraph: true, graphEdgeType: "DOMINIO_RESPONSABLE", uiComponent: "searchable_single", valueField: "id_persona", labelField: "_nombre_completo", width: 12, readonlyMode: "outside_context", contextPlaceholder: "Para vincular vaya al flujo de Taxonomía." },
       { name: "rte_id", type: "relation", relationType: "padre", targetEntity: "Persona", graphEntity: "Sys_Graph_Edges", label: "Release Train Engineer (RTE)", isTemporalGraph: true, graphEdgeType: "DOMINIO_RTE", uiComponent: "searchable_single", valueField: "id_persona", labelField: "_nombre_completo", width: 12 },
       { name: "gerente_ti_id", type: "relation", relationType: "padre", targetEntity: "Persona", graphEntity: "Sys_Graph_Edges", label: "Gerente de TI", isTemporalGraph: true, graphEdgeType: "DOMINIO_GERENTE_TI", uiComponent: "searchable_single", valueField: "id_persona", labelField: "_nombre_completo", width: 12 },
-      { width: 12, name: "equipos_asignados", type: "relation", relationType: "hijo", targetEntity: "Equipo", graphEntity: "Sys_Graph_Edges", valueField: "id_equipo", labelField: "nombre", uiComponent: "searchable_multi", label: "Equipos", isTemporalGraph: true, graphEdgeType: "DOMINIO_EQUIPO", topologyCardinality: "1:N", readonly: true, placeholder: "Para vincular vaya al flujo de Taxonomía.", hideIfEmptyAndReadonly: false },
+      { width: 12, name: "equipos_asignados", type: "relation", relationType: "hijo", targetEntity: "Equipo", graphEntity: "Sys_Graph_Edges", valueField: "id_equipo", labelField: "nombre", uiComponent: "searchable_multi", label: "Equipos", isTemporalGraph: true, graphEdgeType: "DOMINIO_EQUIPO", topologyCardinality: "1:N", readonlyMode: "outside_context", contextPlaceholder: "Para vincular vaya al flujo de Taxonomía." },
       { name: "path_completo_es", type: "text", label: "Path Completo", required: false, width: 12 },
       { name: "id_externo", type: "text", label: "ID Externo", required: true, width: 4 },
       { name: "orden_path", type: "text", label: "Orden Path", required: false, width: 4 },
@@ -376,11 +376,11 @@ var APP_SCHEMAS = {
       { name: "proposito", type: "textarea", label: "Propósito", required: false, width: 12 },
       { name: "id_grupo_producto", type: "relation", relationType: "padre", targetEntity: "Grupo_Productos", graphEntity: "Sys_Graph_Edges", label: "Grupo de Producto", isTemporalGraph: true, graphEdgeType: "GRUPO_PRODUCTO_EQUIPO", uiComponent: "searchable_single", valueField: "id_grupo_producto", labelField: "nombre", readonly: true, required: false, width: 12, hideIfEmptyAndReadonly: false },
       { name: "id_dominio", type: "relation", relationType: "padre", targetEntity: "Dominio", graphEntity: "Sys_Graph_Edges", label: "Dominio", isTemporalGraph: true, graphEdgeType: "DOMINIO_EQUIPO", uiComponent: "searchable_single", valueField: "id_dominio", labelField: "nombre", readonly: true, required: false, width: 12, hideIfEmptyAndReadonly: false },
-      { name: "rte_id", type: "relation", relationType: "hijo", targetEntity: "Persona", graphEntity: "Sys_Graph_Edges", label: "Release Train Engineer (RTE)", isTemporalGraph: true, graphEdgeType: "EQUIPO_RTE", uiComponent: "searchable_single", valueField: "id_persona", labelField: "_nombre_completo", readonly: true, readonlyInContext: false, required: false, width: 6, hideIfEmptyAndReadonly: false, hideInCanvas: true },
-      { name: "product_manager_id", type: "relation", relationType: "hijo", targetEntity: "Persona", graphEntity: "Sys_Graph_Edges", label: "Product Manager", isTemporalGraph: true, graphEdgeType: "EQUIPO_PM", uiComponent: "searchable_single", valueField: "id_persona", labelField: "_nombre_completo", readonly: true, readonlyInContext: false, required: false, width: 6, hideIfEmptyAndReadonly: false, hideInCanvas: true },
-      { name: "scrum_master_id", type: "relation", relationType: "hijo", targetEntity: "Persona", graphEntity: "Sys_Graph_Edges", label: "Team Coach", isTemporalGraph: true, graphEdgeType: "EQUIPO_SM", uiComponent: "searchable_single", valueField: "id_persona", labelField: "_nombre_completo", readonly: true, readonlyInContext: false, required: false, width: 6, hideIfEmptyAndReadonly: false },
-      { name: "product_owner_id", type: "relation", relationType: "hijo", targetEntity: "Persona", graphEntity: "Sys_Graph_Edges", label: "Dueño de Producto", isTemporalGraph: true, graphEdgeType: "EQUIPO_PO", uiComponent: "searchable_single", valueField: "id_persona", labelField: "_nombre_completo", readonly: true, readonlyInContext: false, required: false, width: 6, hideIfEmptyAndReadonly: false },
-      { name: "technical_lead_id", type: "relation", relationType: "hijo", targetEntity: "Persona", graphEntity: "Sys_Graph_Edges", label: "Líder Técnico", isTemporalGraph: true, graphEdgeType: "EQUIPO_TL", uiComponent: "searchable_single", valueField: "id_persona", labelField: "_nombre_completo", readonly: true, readonlyInContext: false, required: false, width: 6, hideIfEmptyAndReadonly: false },
+      { name: "rte_id", type: "relation", relationType: "hijo", targetEntity: "Persona", graphEntity: "Sys_Graph_Edges", label: "Release Train Engineer (RTE)", isTemporalGraph: true, graphEdgeType: "EQUIPO_RTE", uiComponent: "searchable_single", valueField: "id_persona", labelField: "_nombre_completo", readonlyMode: "always", required: false, width: 6, hideInCanvas: true },
+      { name: "product_manager_id", type: "relation", relationType: "hijo", targetEntity: "Persona", graphEntity: "Sys_Graph_Edges", label: "Product Manager", isTemporalGraph: true, graphEdgeType: "EQUIPO_PM", uiComponent: "searchable_single", valueField: "id_persona", labelField: "_nombre_completo", readonlyMode: "always", required: false, width: 6, hideInCanvas: true },
+      { name: "scrum_master_id", type: "relation", relationType: "hijo", targetEntity: "Persona", graphEntity: "Sys_Graph_Edges", label: "Team Coach", isTemporalGraph: true, graphEdgeType: "EQUIPO_SM", uiComponent: "searchable_single", valueField: "id_persona", labelField: "_nombre_completo", readonlyMode: "always", required: false, width: 6 },
+      { name: "product_owner_id", type: "relation", relationType: "hijo", targetEntity: "Persona", graphEntity: "Sys_Graph_Edges", label: "Dueño de Producto", isTemporalGraph: true, graphEdgeType: "EQUIPO_PO", uiComponent: "searchable_single", valueField: "id_persona", labelField: "_nombre_completo", readonlyMode: "always", required: false, width: 6 },
+      { name: "technical_lead_id", type: "relation", relationType: "hijo", targetEntity: "Persona", graphEntity: "Sys_Graph_Edges", label: "Líder Técnico", isTemporalGraph: true, graphEdgeType: "EQUIPO_TL", uiComponent: "searchable_single", valueField: "id_persona", labelField: "_nombre_completo", readonlyMode: "always", required: false, width: 6 },
       { name: "personas_asignadas", type: "relation", relationType: "hijo", targetEntity: "Persona", graphEntity: "Sys_Graph_Edges", isTemporalGraph: true, graphEdgeType: "PERSONA_EQUIPO", label: "Development Team", uiComponent: "searchable_multi", valueField: "id_persona", labelField: "_nombre_completo", topologyCardinality: "M:N", disallowedContextEdges: ["EQUIPO_PO", "EQUIPO_SM", "EQUIPO_PM", "EQUIPO_RTE", "EQUIPO_TL"], width: 12 }
     ]
   },
@@ -699,19 +699,36 @@ var APP_SCHEMAS = {
   },
   Empresas: {
     metadata: { prefix: 'EMP', showInMenu: true, iconName: 'business-outline', color: 'primary', label: 'Empresas / Clientes', titleField: 'nombre', idField: 'id_empresa', fkField: null },
+    mutationInterceptors: ['ProvisionDriveFolders', 'ProcessDriveUploads'],
     primaryKey: "id_empresa",
     fields: [
       { name: "id_empresa", type: "hidden", primaryKey: true },
       ...FIELD_TEMPLATES.SYSTEM_FIELDS(),
       ...FIELD_TEMPLATES.AUDIT_FIELDS(),
       ...FIELD_TEMPLATES.VERSION_FIELD(),
-      { name: "nombre", type: "text", label: "Nombre de Empresa", required: true, width: 6, unique: true },
-      { name: "industria", type: "text", label: "Industria", required: false, width: 6 },
-      { name: "contacto_principal", type: "text", label: "Contacto Principal", required: false, width: 12 }
+      { name: "nombre", type: "text", label: "Nombre de Empresa", required: true, width: 12, unique: true },
+      { name: "giro_empresa", type: "text", label: "Giro de la Empresa", required: false, width: 6 },
+      { name: "numero_empleados", type: "number", label: "Número de Empleados Actuales", required: false, width: 6 },
+      { name: "etapa_empresa", type: "text", label: "Etapa de la Empresa", required: false, width: 12 },
+      { name: "contacto_principal", type: "text", label: "Contacto Principal", required: false, width: 12 },
+      { name: "drive_folder_id", type: "hidden", readonly: true },
+      { name: "constancia_situacion_fiscal", type: "file_upload", label: "Constancia de Situación Fiscal", required: false, width: 12, allowedTypes: ['application/pdf'], maxSizeMB: 5 },
+      { name: "drive_folder_link", type: "external_link_button", label: "Ver Documentos de la Empresa", iconName: "folder-open-outline", customColor: "#34A853", width: 12, readonly: true },
+      { name: "vacantes_vinculadas", type: "relation", relationType: "hijo", targetEntity: "Vacantes", graphEntity: "Sys_Graph_Edges", valueField: "id_vacante", labelField: "titulo", uiComponent: "searchable_multi", label: "Vacantes Asociadas", isTemporalGraph: true, graphEdgeType: "VACANTE_EMPRESA", topologyCardinality: "M:N", width: 12 }
     ]
   },
   Vacantes: {
     metadata: { prefix: 'VAC', showInMenu: true, iconName: 'briefcase-outline', color: 'tertiary', label: 'Vacantes', titleField: 'titulo', idField: 'id_vacante', fkField: null },
+    mutationInterceptors: ['ProvisionDriveFolders', 'ProcessDriveUploads'],
+    relationalProvisioners: [
+      {
+        field: 'empresas',
+        targetEntity: 'Empresas',
+        idField: 'id_empresa',
+        edgeType: 'VACANTE_EMPRESA',
+        stubPrefix: 'EMP-'
+      }
+    ],
     primaryKey: "id_vacante",
     fields: [
       { name: "id_vacante", type: "hidden", primaryKey: true },
@@ -719,23 +736,26 @@ var APP_SCHEMAS = {
       ...FIELD_TEMPLATES.AUDIT_FIELDS(),
       ...FIELD_TEMPLATES.VERSION_FIELD(),
       { name: "titulo", type: "text", label: "Título de la Vacante", required: true, width: 12 },
-      { name: "empresa_id", type: "relation", relationType: "padre", targetEntity: "Empresas", graphEntity: "Sys_Graph_Edges", valueField: "id_empresa", labelField: "nombre", uiComponent: "searchable_single", label: "Empresa Cliente", isTemporalGraph: true, graphEdgeType: "EMPRESA_VACANTE", topologyCardinality: "1:N", width: 12, required: true },
+      { name: "empresas", type: "relation", relationType: "padre", targetEntity: "Empresas", graphEntity: "Sys_Graph_Edges", valueField: "id_empresa", labelField: "nombre", uiComponent: "searchable_multi", label: "Empresas Cliente", isTemporalGraph: true, graphEdgeType: "VACANTE_EMPRESA", topologyCardinality: "M:N", width: 12, required: true },
       { name: "estado_vacante", type: "select", label: "Estado", required: true, width: 6, options: [{value: "Draft", label: "Borrador"}, {value: "Publicada", label: "Publicada"}, {value: "Cerrada", label: "Cerrada"}], defaultValue: "Draft" },
       { name: "presupuesto_salario", type: "number", label: "Presupuesto Salarial", required: false, width: 6 },
-      { name: "descripcion", type: "textarea", label: "Descripción de la Vacante", required: true, width: 12 }
+      { name: "descripcion", type: "textarea", label: "Descripción de la Vacante", required: true, width: 12 },
+      { name: "drive_folder_id", type: "hidden", readonly: true },
+      { name: "candidatos_vinculados", type: "relation", relationType: "hijo", targetEntity: "Candidatos", graphEntity: "Sys_Graph_Edges", valueField: "id_candidato", labelField: "nombre", uiComponent: "searchable_multi", label: "Candidatos Postulados", isTemporalGraph: true, graphEdgeType: "VACANTE_CANDIDATO", topologyCardinality: "1:N", width: 12 }
     ]
   },
-  Postulantes: {
-    metadata: { prefix: 'PST', showInMenu: true, iconName: 'people-outline', color: 'secondary', label: 'Postulantes', titleField: 'nombre', idField: 'id_postulante', fkField: null },
-    primaryKey: "id_postulante",
+  Candidatos: {
+    metadata: { prefix: 'CND', showInMenu: true, iconName: 'people-outline', color: 'secondary', label: 'Candidatos', titleField: 'nombre', idField: 'id_candidato', fkField: null },
+    mutationInterceptors: ['GeminiCVScreening'],
+    primaryKey: "id_candidato",
     fields: [
-      { name: "id_postulante", type: "hidden", primaryKey: true },
+      { name: "id_candidato", type: "hidden", primaryKey: true },
       ...FIELD_TEMPLATES.SYSTEM_FIELDS(),
       ...FIELD_TEMPLATES.AUDIT_FIELDS(),
       ...FIELD_TEMPLATES.VERSION_FIELD(),
-      { name: "nombre", type: "text", label: "Nombre del Postulante", required: true, width: 6 },
+      { name: "nombre", type: "text", label: "Nombre del Candidato", required: true, width: 6 },
       { name: "email", type: "email", label: "Correo Electrónico", required: true, width: 6 },
-      { name: "vacante_id", type: "relation", relationType: "padre", targetEntity: "Vacantes", graphEntity: "Sys_Graph_Edges", valueField: "id_vacante", labelField: "titulo", uiComponent: "searchable_single", label: "Aplicando a Vacante", isTemporalGraph: true, graphEdgeType: "VACANTE_POSTULANTE", topologyCardinality: "1:N", width: 12, required: true },
+      { name: "vacante_id", type: "relation", relationType: "padre", targetEntity: "Vacantes", graphEntity: "Sys_Graph_Edges", valueField: "id_vacante", labelField: "titulo", uiComponent: "searchable_single", label: "Aplicando a Vacante", isTemporalGraph: true, graphEdgeType: "VACANTE_CANDIDATO", topologyCardinality: "1:N", width: 12, required: true },
       { name: "etapa_embudo", type: "select", label: "Etapa en el Embudo", required: true, width: 6, options: [{value:"Nuevo",label:"Nuevo"}, {value:"Screening",label:"Screening"}, {value:"Tecnica",label:"Entrevista Técnica"}, {value:"Cultural",label:"Entrevista Cultural"}, {value:"Oferta",label:"Oferta Enviada"}, {value:"Contratado",label:"Contratado"}, {value:"Descartado",label:"Descartado"}], defaultValue: "Nuevo" },
       { name: "linkedin_url", type: "text", label: "Perfil LinkedIn", required: false, width: 6 },
       { name: "cv_drive_id", type: "text", label: "ID CV Drive", required: false, width: 6, readonly: true },
@@ -744,17 +764,33 @@ var APP_SCHEMAS = {
     ]
   },
   Entrevistas: {
-    metadata: { prefix: 'INT', showInMenu: true, iconName: 'calendar-outline', color: 'warning', label: 'Entrevistas', titleField: 'fecha', idField: 'id_entrevista', fkField: null },
+    metadata: { prefix: 'INT', showInMenu: true, iconName: 'calendar-outline', color: 'warning', label: 'Entrevistas', titleField: 'titulo', idField: 'id_entrevista', fkField: null },
+    dashboardCard: {
+      avatarField: null,
+      subtitleFields: [
+        { field: "horario", icon: "time-outline" },
+        { field: "notas", icon: "document-text-outline" },
+        { field: "candidato_id", icon: "person-outline" }
+      ],
+      actionButtons: ['calendar_event_id', 'meet_link']
+    },
+    mutationInterceptors: ['CalendarInterview'],
     primaryKey: "id_entrevista",
     fields: [
       { name: "id_entrevista", type: "hidden", primaryKey: true },
       ...FIELD_TEMPLATES.SYSTEM_FIELDS(),
       ...FIELD_TEMPLATES.AUDIT_FIELDS(),
       ...FIELD_TEMPLATES.VERSION_FIELD(),
-      { name: "postulante_id", type: "relation", relationType: "padre", targetEntity: "Postulantes", graphEntity: "Sys_Graph_Edges", valueField: "id_postulante", labelField: "nombre", uiComponent: "searchable_single", label: "Postulante", isTemporalGraph: true, graphEdgeType: "POSTULANTE_ENTREVISTA", topologyCardinality: "1:N", width: 12, required: true },
-      { name: "fecha", type: "datetime-local", label: "Fecha y Hora", required: true, width: 6 },
-      { name: "resultado", type: "select", label: "Resultado", required: true, width: 6, options: [{value: "Pendiente", label: "Pendiente"}, {value: "Avanza", label: "Avanza al siguiente paso"}, {value: "Descartado", label: "Descartado"}], defaultValue: "Pendiente" },
-      { name: "calendar_event_id", type: "text", label: "Google Calendar Event ID", required: false, width: 12, readonly: true }
+      { name: "titulo", type: "text", label: "Título de la Sesión", required: true, width: 12 },
+      { name: "horario", type: "event_schedule", label: "Horario Programado", required: true, width: 12 },
+      { name: "notas", type: "textarea", label: "Notas / Descripción", required: false, width: 12 },
+      { name: "location_type", type: "select", label: "Tipo de Ubicación", required: true, width: 12, options: [{value: "VIRTUAL", label: "Virtual"}, {value: "PRESENCIAL", label: "Presencial"}], defaultValue: "VIRTUAL" },
+      { name: "candidato_id", type: "relation", relationType: "padre", targetEntity: "Candidatos", graphEntity: "Sys_Graph_Edges", valueField: "id_candidato", labelField: "nombre", uiComponent: "searchable_single", label: "Candidato", isTemporalGraph: true, graphEdgeType: "CANDIDATO_ENTREVISTA", topologyCardinality: "1:N", width: 12, required: true },
+      { name: "generar_meet", type: "toggle", label: "Generar enlace Google Meet", required: false, width: 12, defaultValue: "true" },
+      { name: "div_links", type: "divider", label: "Accesos", icon: "logo-google", width: 12 },
+      { name: "calendar_event_id", type: "external_link_button", label: "Ver Calendar", iconName: "calendar-outline", customColor: "#4285F4", width: 6, readonly: true },
+      { name: "meet_link", type: "external_link_button", label: "Ir al Meet", iconName: "videocam-outline", customColor: "#FBBC04", width: 6, readonly: true },
+      { name: "location_details", type: "text", label: "Dirección o Link externo", required: false, width: 12 }
     ]
   },
   _UI_CONFIG: {

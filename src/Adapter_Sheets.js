@@ -552,6 +552,11 @@ const Adapter_Sheets = {
     },
 
     _ensureSheetExists: function(ss, tableName) {
+        // Ejecutar Auto-Healing (S31.7) en cada operación para evitar DB Drift
+        if (typeof ensureProvisioned === 'function') {
+             ensureProvisioned(tableName, ss);
+        }
+        
         let sheet = ss.getSheetByName('DB_' + tableName);
         if (!sheet) {
             sheet = ss.insertSheet('DB_' + tableName);

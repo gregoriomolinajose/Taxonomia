@@ -8,9 +8,10 @@ const { stripQAModule, extractAndValidateScripts } = require('./scripts/pipeline
 
 
 const env = process.argv[2];
+const appName = env === 'greatpeeps' ? 'greatpeeps' : 'taxonomia';
 
-if (!['dev', 'prod', 'staging', 'tenantB'].includes(env)) {
-    console.error('Usage: node deploy.js <dev|prod|staging|tenantB>');
+if (!['dev', 'prod', 'staging', 'tenantB', 'greatpeeps'].includes(env)) {
+    console.error('Usage: node deploy.js <dev|prod|staging|tenantB|greatpeeps>');
     process.exit(1);
 }
 
@@ -23,7 +24,8 @@ try {
         'dev':     '1ZjGYDSsBgXy9mxa9guRoj69oabUJAVZz9GOy9DzJ5280tzYmMIjIBd5q',
         'staging': '14oIjG_akx2DuX1nZe_HWBR8TECPYZgCyYikKwtRnng_pgzxcK0wLekYa',   // ex-prod
         'prod':    '1kpN1TjMRtU6sE5rXStorv3rHF2gs_SvHWwBJyCkyGC9nWMKAx9GF7Ijw',    // nuevo prod (Tenant A)
-        'tenantB': '1ifdT9dDsDP0Efvrq2eCaBdB4TM5jRnRz9dXnshn0aT8hvbSfUnqMC5hi'     // Tenant B
+        'tenantB': '1ifdT9dDsDP0Efvrq2eCaBdB4TM5jRnRz9dXnshn0aT8hvbSfUnqMC5hi',    // Tenant B
+        'greatpeeps': '1jQrbCCSVxLNK0q3gHeKiL4mMHe-_Y-y_USJaih0NJFenleDGo4Vao_oG'   // GreatPeeps dev (Gmail)
     };
 
     const DEPLOYMENT_IDS = {
@@ -47,6 +49,7 @@ try {
         'staging': path.join(os.homedir(), '.clasp-coppel.json'),      // Coppel  → staging
         'prod':    path.join(os.homedir(), '.clasp-coppel.json'),      // Coppel  → prod (Tenant A)
         'tenantB': path.join(os.homedir(), '.clasp-coppel.json'),      // Coppel  → Tenant B
+        'greatpeeps': path.join(os.homedir(), '.clasp-gmail.json')     // Gmail   → GreatPeeps
     };
 
     const credsPath = CREDS_FILE[env];
@@ -142,8 +145,8 @@ try {
         let newVersion = finalBase;
 
         // Si cambió la versión, modificamos el archivo Config original
-        if (newVersion !== currentVersion && currentConfigContent) {
-            currentConfigContent = currentConfigContent.replace(/APP_VERSION:\s*['"].*?['"]/, `APP_VERSION: '${newVersion}'`);
+        if (newVersion !== currentVersion && fs.existsSync(configFile)) {
+            currentConfigContent = currentConfigContent.replace(/APP_VERSION:\s*['"].*?['"]/, `APP_VERSION: '${newVersion}'`).replace(/APP_NAME:\s*['"].*?['"]/, `APP_NAME: '${appName}'`);
             fs.writeFileSync(configFile, currentConfigContent);
             console.log(`[Deploy] Version actualizada a ${newVersion} en ${configFile}`);
         }
@@ -249,6 +252,48 @@ try {
         if (fs.existsSync(configFile)) {
             console.log(`[Deploy] Updating ${targetConfig} with ${configFile}...`);
             fs.copyFileSync(configFile, targetConfig);
+        }
+
+        // [Filter Schemas] Only keep the schemas relevant to the current appName
+        let schemaFile = `${buildDir}/Schema_Engine.js`;
+        if (fs.existsSync(schemaFile)) {
+            let sContent = fs.readFileSync(schemaFile, 'utf8');
+            sContent += `\n
+// [App Filter] Keep only schemas relevant to this app
+(function() {
+    var APP_NAME = '${env}';
+    var appSchemasConfig = {
+        taxonomia: ['Taxonomia', 'Portafolio', 'Value_Stream', 'Equipo', 'Persona', 'Unidad_Negocio', '_UI_CONFIG', 'Sys_Graph_Edges', 'Sys_Cache_Signals', 'Sys_Roles', 'Sys_Permissions', 'Sys_Microservices', 'Sys_IntegrationConfig'],
+        greatpeeps: ['Empresas', 'Vacantes', 'Candidatos', 'Entrevistas', 'Persona', '_UI_CONFIG', 'Sys_Graph_Edges', 'Sys_Cache_Signals', 'Sys_Roles', 'Sys_Permissions', 'Sys_Microservices', 'Sys_IntegrationConfig']
+    };
+    var allowed = appSchemasConfig[APP_NAME] || [];
+    if (typeof APP_SCHEMAS !== 'undefined') {
+        for (var key in APP_SCHEMAS) {
+            if (allowed.indexOf(key) === -1) {
+                delete APP_SCHEMAS[key];
+            }
+        }
+        
+        // [GreatPeeps Specific Overrides]
+        if (APP_NAME === 'greatpeeps' && APP_SCHEMAS['Persona']) {
+            APP_SCHEMAS['Persona'].metadata.label = 'Usuarios del Sistema';
+            APP_SCHEMAS['Persona'].fields = [
+                { name: "id_persona", type: "hidden", primaryKey: true },
+                { name: "estado", type: "hidden", defaultValue: "Activo" },
+                { name: "nombre", type: "text", label: "Nombre", required: true, width: 6, validators: ["minLength:2"] },
+                { name: "apellidos", type: "text", label: "Apellidos", required: true, width: 6, validators: ["minLength:2"] },
+                { name: "email", type: "email", label: "Correo Corporativo", required: true, width: 6, validators: ["regex:^[a-zA-Z0-9._%+\\\\-]+@[a-zA-Z0-9.\\\\-]+\\\\.[a-zA-Z]{2,}$"], unique: true },
+                { name: "correo", type: "hidden" },
+                { name: "id_rol", type: "select", label: "Rol de Permisos", required: true, width: 6, lookupSource: "getSysRolesOptions", abacRule: { action: 'update', target: 'Sys_Permissions' } }
+            ];
+            // Quitar relations y topology rules que no aplican a GP
+            APP_SCHEMAS['Persona'].relationalProvisioners = [];
+            APP_SCHEMAS['Persona'].mutationInterceptors = [];
+        }
+    }
+})();
+`;
+            fs.writeFileSync(schemaFile, sContent, 'utf8');
         }
 
         // Alter .clasp.json to point to .build
