@@ -755,7 +755,7 @@
 
         global.FormEngine_Hydrator = async function(container, record, entityName) {
             if (!container || !record) return;
-            const inputs = container.querySelectorAll('ion-input, ion-textarea, ion-select, input[type="hidden"]');
+            const inputs = container.querySelectorAll('ion-input, ion-textarea, ion-select, ion-toggle, input[type="hidden"], [data-form-component]');
             
             // =========================================================================================
             // MDM Guardrail S4.3 Auditoría: Pre-Hidratación de 0ms (Solución a Fallo de Tree Lock Visual)
@@ -799,7 +799,7 @@
             const pkFieldLocal = APP_SCHEMAS[entityName]?.primaryKey || 'id';
 
             inputs.forEach(input => {
-                const name = input.getAttribute('name');
+                const name = input.getAttribute('name') || input.getAttribute('data-form-component');
                 if (!name || input.hasAttribute('data-skip-hydration')) return;
 
                 let valToSet = undefined;
@@ -883,7 +883,13 @@
                         input.value = JSON.stringify(Array.isArray(parsedData) ? parsedData : []);
                         
                         requestAnimationFrame(() => {
-                            if (input.tagName.toLowerCase().startsWith('ion-')) {
+                            if (input.tagName.toLowerCase() === 'ion-toggle') {
+                            if (typeof input.componentOnReady === 'function') {
+                                input.componentOnReady().then(() => { input.checked = (valToSet === true || valToSet === 'true'); });
+                            } else {
+                                input.checked = (valToSet === true || valToSet === 'true');
+                            }
+                        } else if (input.tagName.toLowerCase().startsWith('ion-')) {
                                 input.value = JSON.stringify(Array.isArray(parsedData) ? parsedData : []);
                             }
                         });
@@ -892,7 +898,14 @@
                         input.setAttribute('value', valToSet);
                         
                         // Sincronización StencilJS correcta para Web Components
-                        if (input.tagName.toLowerCase().startsWith('ion-')) {
+                        if (input.tagName.toLowerCase() === 'ion-toggle') {
+                            const isChecked = (valToSet === true || valToSet === 'true' || valToSet === 'on');
+                            if (typeof input.componentOnReady === 'function') {
+                                input.componentOnReady().then(() => { input.checked = isChecked; });
+                            } else {
+                                input.checked = isChecked;
+                            }
+                        } else if (input.tagName.toLowerCase().startsWith('ion-')) {
                             if (typeof input.componentOnReady === 'function') {
                                 input.componentOnReady().then(() => {
                                     input.value = valToSet;

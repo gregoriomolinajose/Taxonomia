@@ -1,0 +1,245 @@
+/**
+ * UI_CanvasNodeFactory.client.js
+ * 
+ * Fábrica genérica para nodos y componentes visuales compartidos entre lienzos (Swimlanes y Value Streams).
+ * Implementa el patrón DRY para evitar HTML harcodeado repetido.
+ */
+window.UI_CanvasNodeFactory = (function() {
+    
+    /**
+     * Construye un nodo estandarizado para un lienzo.
+     * @param {Object} config 
+     * @param {string} config.type 'card' (Swimlane) | 'chevron' (Value Stream)
+     * @param {string} config.id ID único del registro/nodo
+     * @param {string} config.title Texto principal
+     * @param {string} config.icon Nombre del ícono (opcional)
+     * @param {string} config.entityName Nombre de la entidad para el contexto de ABAC/Coloring (ej. 'Producto')
+     * @param {string} config.tooltip Texto para el tooltip (opcional)
+     * @param {Function} config.onClick Función a ejecutar al hacer clic en el nodo (abre vistas)
+     * @param {Function} config.onDelete Función a ejecutar al hacer clic en borrar (opcional)
+     * @param {boolean} config.isLast Usado en chevrons para definir si es el último (por si queremos estilos especiales)
+     */
+    function buildNode(config) {
+        const node = document.createElement('div');
+        node.setAttribute('data-id', config.id);
+        
+        // Colores y Theme base
+        let themeColor = 'var(--ion-color-primary)';
+        let themeBg = 'var(--ion-color-primary-tint, rgba(56, 128, 255, 0.1))';
+        if (window.APP_SCHEMAS && config.entityName) {
+            const schema = window.APP_SCHEMAS[config.entityName];
+            if (schema && schema.metadata && schema.metadata.color) {
+                themeColor = `var(--ion-color-${schema.metadata.color})`;
+                themeBg = `var(--ion-color-${schema.metadata.color}-tint)`;
+            }
+        }
+
+        if (config.type === 'chevron') {
+            // --- ESTILO VALUE STREAM CHEVRON ---
+            node.className = 'vs-chevron-node';
+            // Uniform clip path para que todos terminen en punta
+            node.style.clipPath = 'polygon(0% 0%, 92% 0%, 100% 50%, 92% 100%, 0% 100%, 8% 50%)';
+            node.style.background = 'linear-gradient(135deg, ' + themeColor + ', var(--ion-color-primary-shade, #3171e0))';
+            
+            // Efectos interactivos y layout
+            node.style.display = 'flex';
+            node.style.alignItems = 'center';
+            node.style.justifyContent = 'center';
+            node.style.height = '64px';
+            node.style.minWidth = '220px';
+            node.style.maxWidth = '300px';
+            node.style.padding = '0 24px 0 32px';
+            node.style.color = '#ffffff';
+            node.style.fontWeight = '600';
+            node.style.fontSize = '0.95rem';
+            node.style.boxShadow = '0 4px 10px rgba(0,0,0,0.15)';
+            node.style.transition = 'transform 0.2s ease, filter 0.2s ease';
+            node.style.position = 'relative';
+            
+            const textSpan = document.createElement('span');
+            textSpan.className = 'node-text';
+            textSpan.style.pointerEvents = 'none'; // Para que click pase al nodo o sea manejado por Interacciones
+            textSpan.style.whiteSpace = 'nowrap';
+            textSpan.style.overflow = 'hidden';
+            textSpan.style.textOverflow = 'ellipsis';
+            textSpan.style.maxWidth = '100%';
+            textSpan.style.display = 'block';
+            textSpan.innerText = config.title;
+            
+            node.appendChild(textSpan);
+
+            // Botón eliminar para Chevron
+            if (config.onDelete) {
+                const btnDelete = document.createElement('button');
+                btnDelete.className = 'vs-chevron-delete-btn'; // Utiliza clase para CSS (hover states)
+                btnDelete.style.position = 'absolute';
+                btnDelete.style.right = '24px';
+                btnDelete.style.top = '50%';
+                btnDelete.style.transform = 'translateY(-50%)';
+                btnDelete.style.background = 'var(--ion-color-danger)';
+                btnDelete.style.color = '#fff';
+                btnDelete.style.border = 'none';
+                btnDelete.style.borderRadius = '50%';
+                btnDelete.style.width = '24px';
+                btnDelete.style.height = '24px';
+                btnDelete.style.display = 'none'; // Oculto por defecto, manejado por hover o Interacciones
+                btnDelete.style.alignItems = 'center';
+                btnDelete.style.justifyContent = 'center';
+                btnDelete.style.cursor = 'pointer';
+                btnDelete.style.zIndex = '10';
+                btnDelete.innerHTML = '<ion-icon name="trash" style="font-size: 14px; pointer-events: none;"></ion-icon>';
+                
+                btnDelete.onclick = (e) => {
+                    e.stopPropagation();
+                    config.onDelete(e);
+                };
+
+                // Mostrar en hover
+                node.addEventListener('mouseenter', () => btnDelete.style.display = 'flex');
+                node.addEventListener('mouseleave', () => {
+                    // Si no estamos editando (isEditing es inyectado por Interactions), ocultarlo
+                    if (!node.classList.contains('is-editing')) {
+                        btnDelete.style.display = 'none';
+                    }
+                });
+
+                node.appendChild(btnDelete);
+            }
+
+        } else if (config.type === 'card') {
+            // --- ESTILO SWIMLANE TARJETA ---
+            node.className = 'tax-node';
+            node.title = config.tooltip || config.title;
+            
+            // Hover styles se manejan en CSS (.tax-node:hover)
+            
+            let iconHtml = '';
+            if (config.icon) {
+                iconHtml = `<ion-icon name="${config.icon}" style="color: ${themeColor}; font-size: 1.4rem; min-width: 24px; margin-right: 12px;"></ion-icon>`;
+            } else if (window.APP_SCHEMAS && config.entityName) {
+                const schema = window.APP_SCHEMAS[config.entityName];
+                if (schema && schema.metadata && schema.metadata.iconName) {
+                    iconHtml = `<ion-icon name="${schema.metadata.iconName}" style="color: ${themeColor}; font-size: 1.4rem; min-width: 24px; margin-right: 12px;"></ion-icon>`;
+                }
+            }
+
+            if (config.customHtml) {
+                node.innerHTML = config.customHtml;
+            } else {
+                node.innerHTML = `
+                    ${iconHtml}
+                    <div style="display: flex; flex-direction: column; overflow: hidden; flex: 1;">
+                        <span class="node-title" style="font-weight: 600; font-size: 0.9rem; color: var(--ion-color-dark); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2;">${config.title}</span>
+                        <span class="node-entity" style="font-size: 0.7rem; color: var(--ion-color-medium); text-transform: uppercase; font-weight: 600; letter-spacing: 0.05em; margin-top: 2px;">${(config.entityName || '').replace('_', ' ')}</span>
+                    </div>
+                `;
+            }
+            
+            if (config.onClick) {
+                node.onclick = (e) => {
+                    e.stopPropagation();
+                    config.onClick(e);
+                };
+            }
+
+            // Integración de Menú Contextual (ABAC check)
+            if (window.ABAC && config.entityName && config.id) {
+                const canUpdate = window.ABAC.can('update', config.entityName, config.id);
+                if (canUpdate) {
+                    const ctxBtn = document.createElement('button');
+                    ctxBtn.className = 'tax-context-btn';
+                    ctxBtn.innerHTML = '<ion-icon name="ellipsis-vertical"></ion-icon>';
+                    ctxBtn.onclick = (e) => {
+                        e.stopPropagation();
+                        if (window.UI_Factory && typeof window.UI_Factory.buildContextMenu === 'function') {
+                            window.UI_Factory.buildContextMenu(e, config.entityName, config.id);
+                        } else if (config.onClick) {
+                            config.onClick(e); // Fallback
+                        }
+                    };
+                    node.appendChild(ctxBtn);
+                }
+            }
+
+            // Add button for cards
+            if (config.onAdd) {
+                const btnAdd = document.createElement('button');
+                btnAdd.className = 'tax-add-btn';
+                btnAdd.title = config.addTitle || 'Añadir';
+                btnAdd.innerHTML = '+';
+                btnAdd.onclick = (e) => {
+                    e.stopPropagation();
+                    config.onAdd(e);
+                };
+                node.appendChild(btnAdd);
+            }
+        }
+
+        return node;
+    }
+
+    /**
+     * Construye un contenedor "Empty State" para lienzos cuando no hay elementos.
+     */
+    function buildEmptyState(config) {
+        const emptyState = document.createElement('div');
+        emptyState.className = 'tax-canvas-empty-state';
+        emptyState.style.cssText = 'position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 1.5rem 1rem; margin-top: 8px; width: 100%; min-width: 150px; border: 2px dashed var(--ion-color-step-300, #ccc); border-radius: 8px; background: rgba(0,0,0,0.02); overflow: hidden;';
+        
+        // Ajuste especial si se incluye el margin-left que usaba swimlane
+        if (config.marginLeft) {
+            emptyState.style.marginLeft = config.marginLeft;
+            emptyState.style.width = `calc(100% - ${config.marginLeft})`;
+        }
+
+        const iconName = config.icon || 'folder-open-outline';
+        
+        emptyState.innerHTML = `
+            <div style="width: 80px; height: 45px; border: 2px dashed var(--ion-color-step-300, #ccc); border-radius: 8px; margin-bottom: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; background: rgba(0,0,0,0.02);">
+                <ion-icon name="${iconName}" style="font-size: 24px; color: var(--ion-color-step-400, #aaa); margin-bottom: 4px;"></ion-icon>
+                <div style="width: 40%; height: 4px; background: var(--ion-color-step-200, #ddd); border-radius: 2px;"></div>
+            </div>
+            
+            <h3 style="color: var(--ion-color-dark); margin: 0 0 4px 0; font-weight: 600; font-size: 0.9rem; letter-spacing: -0.01em; text-align: center;">${config.title || 'Vacio'}</h3>
+            <p style="color: var(--ion-color-medium, #666); text-align: center; max-width: 180px; margin: 0 0 12px 0; font-size: 0.8rem; line-height: 1.3;">
+                ${config.subtitle || 'Agrega un nuevo elemento.'}
+            </p>
+        `;
+        
+        if (config.onAdd) {
+            const btnAdd = document.createElement('button');
+            btnAdd.className = 'tax-add-btn';
+            btnAdd.style.position = 'relative';
+            btnAdd.style.right = 'auto';
+            btnAdd.style.top = 'auto';
+            btnAdd.style.transform = 'none';
+            btnAdd.style.margin = '0 auto';
+            btnAdd.style.backgroundColor = 'var(--ion-color-primary, #3880ff)';
+            btnAdd.style.color = '#ffffff';
+            btnAdd.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)';
+            btnAdd.style.borderRadius = '50%';
+            btnAdd.style.width = '32px';
+            btnAdd.style.height = '32px';
+            btnAdd.style.display = 'flex';
+            btnAdd.style.justifyContent = 'center';
+            btnAdd.style.alignItems = 'center';
+            btnAdd.style.cursor = 'pointer';
+            btnAdd.title = 'Añadir';
+            btnAdd.innerHTML = '<ion-icon name="add-outline" style="font-size: 20px; pointer-events:none;"></ion-icon>';
+            
+            btnAdd.onclick = (e) => {
+                e.stopPropagation();
+                config.onAdd(e);
+            };
+            
+            emptyState.appendChild(btnAdd);
+        }
+        
+        return emptyState;
+    }
+
+    return {
+        buildNode,
+        buildEmptyState
+    };
+})();

@@ -1,57 +1,57 @@
 # Epic 22: Enterprise B2B UX Transformation
 
-> **Status:** 🚧 In Progress
+> **Status:** ð§ In Progress
 > **Origin:** Stakeholder UX requirement definition.
 
-## 🎯 Objetivo de Negocio
-Transformar la experiencia de usuario (UX) de la plataforma, pasando de una interfaz de herramienta interna a un estándar Enterprise SaaS B2B. Esto se logrará separando las utilidades del sistema de la navegación de negocio, implementando una búsqueda global (Omnibar) y rediseñando el Dashboard inicial en un "Centro de Mando" reactivo al contexto (ABAC).
+## ð¯ Objetivo de Negocio
+Transformar la experiencia de usuario (UX) de la plataforma, pasando de una interfaz de herramienta interna a un estÃ¡ndar Enterprise SaaS B2B. Esto se lograrÃ¡ separando las utilidades del sistema de la navegaciÃ³n de negocio, implementando una bÃºsqueda global (Omnibar) y rediseÃ±ando el Dashboard inicial en un "Centro de Mando" reactivo al contexto (ABAC).
 
-## 🏛️ Regla Arquitectónica Estricta (Design System Purity)
-Ningún componente, color, sombra o espaciado de esta Épica será "hardcodeado".
-Todo el renderizado consumirá exclusivamente los tokens del Sistema de Diseño centralizado (`window._UI_CONFIG` y variables CSS globales). Uso de la fábrica `window.DOM.create()` para inyección de nodos nativos e Ionic Components manteniendo la regla (Zero-XSS).
+## ðï¸ Regla ArquitectÃ³nica Estricta (Design System Purity)
+NingÃºn componente, color, sombra o espaciado de esta Ãpica serÃ¡ "hardcodeado".
+Todo el renderizado consumirÃ¡ exclusivamente los tokens del Sistema de DiseÃ±o centralizado (`window._UI_CONFIG` y variables CSS globales). Uso de la fÃ¡brica `window.DOM.create()` para inyecciÃ³n de nodos nativos e Ionic Components manteniendo la regla (Zero-XSS).
 
-## 📂 Desglose de Historias de Usuario (Scope)
+## ð Desglose de Historias de Usuario (Scope)
 
-### 🎟️ S22.1: Top App Bar & Reubicación de Perfil Dinámico
-**Descripción:** Construir un `<header>` global (Top Bar). Mover opciones de configuración, seguridad y cierre de sesión fuera del menú lateral hacia un menú desplegable (Dropdown) en la esquina superior derecha.
+### ðï¸ S22.1: Top App Bar & ReubicaciÃ³n de Perfil DinÃ¡mico
+**DescripciÃ³n:** Construir un `<header>` global (Top Bar). Mover opciones de configuraciÃ³n, seguridad y cierre de sesiÃ³n fuera del menÃº lateral hacia un menÃº desplegable (Dropdown) en la esquina superior derecha.
 **Acceptance Criteria:**
-- Avatar consume dinámicamente la foto de perfil de Google Workspace (con fallback a iniciales).
+- Avatar consume dinÃ¡micamente la foto de perfil de Google Workspace (con fallback a iniciales).
 - El Dropdown muestra el Rol primario (hidratado por `Engine_ABAC`).
-- El menú lateral queda exclusivamente para entidades de negocio.
+- El menÃº lateral queda exclusivamente para entidades de negocio.
 
-### 🎟️ S22.2: Omnibar (Búsqueda Global)
-**Descripción:** Implementar búsqueda global en el nuevo Top Bar.
+### ðï¸ S22.2: Omnibar (BÃºsqueda Global)
+**DescripciÃ³n:** Implementar bÃºsqueda global en el nuevo Top Bar.
 **Acceptance Criteria:**
-- Búsqueda a través de múltiples esquemas simultáneamente.
-- Resultados en panel flotante contextual (estilizado con tarjetas estándar).
-- Navegación al perfil de entidad clicando un resultado instanciando `UI_Router`.
+- BÃºsqueda a travÃ©s de mÃºltiples esquemas simultÃ¡neamente.
+- Resultados en panel flotante contextual (estilizado con tarjetas estÃ¡ndar).
+- NavegaciÃ³n al perfil de entidad clicando un resultado instanciando `UI_Router`.
 
-### 🎟️ S22.3: Limpieza de UI & Ocultamiento de Tablas de Sistema
-**Descripción:** Parametrizar la visibilidad para que entidades administrativas no ensucien la interfaz operativa.
+### ðï¸ S22.3: Limpieza de UI & Ocultamiento de Tablas de Sistema
+**DescripciÃ³n:** Parametrizar la visibilidad para que entidades administrativas no ensucien la interfaz operativa.
 **Acceptance Criteria:**
-- Ocultar `Sys_Roles`, `Sys_Permissions` del menú lateral (flag `showInSidebar: false`).
-- Acceso exclusivo vía "Configuración" en el Dropdown de Perfil S22.1, protegido por la Matriz S18.5.
+- Ocultar `Sys_Roles`, `Sys_Permissions` del menÃº lateral (flag `showInSidebar: false`).
+- Acceso exclusivo vÃ­a "ConfiguraciÃ³n" en el Dropdown de Perfil S22.1, protegido por la Matriz S18.5.
 - Eliminar permanentemente texto de "Bienvenida" del Dashboard.
 
-### 🎟️ S22.4: Contextual Dashboard (Widgets ABAC-Aware)
-**Descripción:** Reconstruir la pantalla de inicio con layout "F invertida" que reaccione al nivel de permisos.
+### ðï¸ S22.4: Contextual Dashboard (Widgets ABAC-Aware)
+**DescripciÃ³n:** Reconstruir la pantalla de inicio con layout "F invertida" que reaccione al nivel de permisos.
 **Acceptance Criteria:**
 - *Skeleton Loaders:* Estado de carga inicial con `ion-skeleton-text`.
-- *Top KPIs (Zona 1):* Tarjetas numéricas que muestran conteos relevantes.
-- *Mi Ecosistema (Zona 2):* Tarjetas dinámicas filtradas por propiedad (`ABAC.can()`).
+- *Top KPIs (Zona 1):* Tarjetas numÃ©ricas que muestran conteos relevantes.
+- *Mi Ecosistema (Zona 2):* Tarjetas dinÃ¡micas filtradas por propiedad (`ABAC.can()`).
 - *Empty States Educativos:* Ilustraciones tenues si el usuario no tiene alcance operativo.
 
-### 🎟️ S22.5: Bottom Tab Bar (Navegación Móvil)
-**Descripción:** Implementar una Barra de Navegación Inferior exclusiva para pantallas móviles (< 768px). Esta barra centraliza la navegación en la "Thumb Zone", emulando la experiencia de apps nativas y ocultando simultáneamente el menú lateral.
+### ðï¸ S22.5: Bottom Tab Bar (NavegaciÃ³n MÃ³vil)
+**DescripciÃ³n:** Implementar una Barra de NavegaciÃ³n Inferior exclusiva para pantallas mÃ³viles (< 768px). Esta barra centraliza la navegaciÃ³n en la "Thumb Zone", emulando la experiencia de apps nativas y ocultando simultÃ¡neamente el menÃº lateral.
 **Acceptance Criteria:**
-- *Renderizado Condicional (Breakpoints):* Inyección/visibilidad de la barra exclusiva en vistas móviles, y ocultamiento automático del Sidebar.
-- *Consumo del Design System:* Empleo estricto de `ion-tab-bar` y `ion-tab-button` vía `window.DOM.create()`. Prohibición de CSS posicional hardcodeado.
-- *Jerarquía Táctil de 4 Ítems:* "Inicio" (Dashboard), "Buscar" (Omnibar en Fullscreen Modal), "Explorar" (entidades SAFe) y "Perfil" (Dropdown Settings/ABAC/Logout).
+- *Renderizado Condicional (Breakpoints):* InyecciÃ³n/visibilidad de la barra exclusiva en vistas mÃ³viles, y ocultamiento automÃ¡tico del Sidebar.
+- *Consumo del Design System:* Empleo estricto de `ion-tab-bar` y `ion-tab-button` vÃ­a `window.DOM.create()`. ProhibiciÃ³n de CSS posicional hardcodeado.
+- *JerarquÃ­a TÃ¡ctil de 4 Ãtems:* "Inicio" (Dashboard), "Buscar" (Omnibar en Fullscreen Modal), "Explorar" (entidades SAFe) y "Perfil" (Dropdown Settings/ABAC/Logout).
 - *Safe Area Padding:* Pleno respeto al Safe Area Inferior para dispositivos iOS modernos.
 
 ## Progress Tracking
-- [x] S22.1: Top App Bar & Reubicaci�n de Perfil Din�mico
-- [ ] S22.2: Omnibar (B�squeda Global)
+- [x] S22.1: Top App Bar & Reubicación de Perfil Dinámico
+- [ ] S22.2: Omnibar (Búsqueda Global)
 - [ ] S22.3: Limpieza de UI & Ocultamiento de Tablas de Sistema
 - [ ] S22.4: Contextual Dashboard (Widgets ABAC-Aware)
-- [ ] S22.5: Bottom Tab Bar (Navegaci�n M�vil)
+- [ ] S22.5: Bottom Tab Bar (Navegación Móvil)

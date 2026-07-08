@@ -56,6 +56,24 @@ window.Schema_Utils = (function () {
     }
 
     /**
+     * Normaliza y sanea URLs externas (Ej. removiendo prefijos de Meet y asegurando HTTP).
+     * @param {string} url - URL cruda
+     * @returns {string} URL segura o null si es inválida
+     */
+    function normalizeExternalUrl(url) {
+        if (!url || typeof url !== 'string' || url.trim().length <= 5) return null;
+        let v = url.replace(/^Meet:\s*/i, '').trim();
+        if (!v.startsWith('http')) v = 'https://' + v;
+        
+        try {
+            new URL(v);
+            return v;
+        } catch (e) {
+            return null; // Invalid URL structure (e.g. random text)
+        }
+    }
+
+    /**
      * Infla un payload de red compacto (tuplas) a una matriz de objetos literales (H10 - Deduplication).
      * @param {Object} responseData - Objeto con {headers: [...], rows: [...]} o un array simple.
      * @returns {Array<Object>} Arreglo de objetos hidratados.
@@ -80,6 +98,7 @@ window.Schema_Utils = (function () {
         getPrimaryKey,
         getSemanticTitle,
         getAvatarInitials,
+        normalizeExternalUrl,
         inflateTuples
     };
 

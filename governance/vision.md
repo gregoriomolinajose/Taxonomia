@@ -1,4 +1,4 @@
-# Solution Vision: Taxonomia Project
+# Solution Vision: CorePlatform (Taxonomia & GreatPeeps)
 
 > Solution vision — fill with /rai-project-create or /rai-project-onboard
 
@@ -6,19 +6,23 @@
 
 ### Description
 
-Taxonomia Project es una plataforma viva y jerárquica diseñada para conectar la estrategia de negocio con la ejecución tecnológica bajo un marco SAFe 6.0. Sirve como la Única Fuente de Verdad para portafolios, productos, y asignaciones de equipos impulsadas a través de Google Workspace.
+CorePlatform es una suite centralizada de gobierno corporativo y recursos humanos operada sobre Google Workspace. Funciona como un motor agnóstico que da vida a múltiples soluciones empresariales, siendo sus pilares fundamentales "Taxonomía" (Gestión de Portafolio y Jerarquía SAFe 6.0) y "GreatPeeps" (Hub integrador para la gestión del ciclo de reclutamiento y selección de personal propulsado por IA).
 
 ### Who uses it
 
-Líderes de Producto (CPOs, VPs of Product), Product Managers, Enterprise Architects y Directores de Unidad de Negocio. Funciona como una herramienta de gobernanza para la capa estratégica y táctica.
+- **Taxonomía:** Líderes de Producto (CPOs, VPs of Product), Product Managers, Enterprise Architects y Directores de Unidad de Negocio.
+- **GreatPeeps:** Reclutadores de Recursos Humanos, Hiring Managers (solicitantes de vacantes) y clientes/postulantes.
 
 ### Why it exists
 
-Para reemplazar el uso de hojas de cálculo dispersas, propensas a errores humanos y sin validación relacional, estableciendo una Única Fuente de Verdad (Single Source of Truth) inmutable y centralizada de grado Enterprise (SPA).
+Para reemplazar el uso de hojas de cálculo dispersas y plataformas aisladas, centralizando la estrategia de negocio y la atracción de talento en una Única Fuente de Verdad interactiva, aprovechando los ecosistemas nativos empresariales y la IA.
+
 ## Outcomes
 
 | **Outcome** | **Description** |
 |-------------|-----------------|
-| **Single Source of Truth** | Evita las "Capacidades Huérfanas" proveyendo visibilidad total de dominio, producto y equipo. |
-| **Data Integrity** | Mantiene integridad referencial con "Time-Travel" (Effective Dating) en lugar de borrar datos en caliente. |
-| **Culture Anti-Data Stale** | Genera engagement enviando notificaciones para evitar data obsoleta y requiere de flujos jerárquicos Draft->Submitted->Approved. |
+| **Single Source of Truth** | Evita silos operativos proveyendo visibilidad total de jerarquías y vacantes corporativas. |
+| **Recruiting Agility** | Acelera el embudo de selección centralizando publicaciones, entrevistas y filtrado de CVs. |
+| **Data Integrity** | Mantiene integridad referencial con "Time-Travel" (Effective Dating) en toda la suite. |
+| **Culture Anti-Data Stale** | Genera engagement enviando notificaciones y flujos jerárquicos (Draft->Submitted->Approved). |
+| **AI-Driven Filtering** | Categoriza y califica perfiles automáticamente para eficientar el embudo. |

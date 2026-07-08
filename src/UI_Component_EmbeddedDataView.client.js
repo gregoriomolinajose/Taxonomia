@@ -14,7 +14,8 @@ window.UI_Component_EmbeddedDataView = {
         let currentPK = data ? (data[window.Schema_Utils.getPrimaryKey(entityName)] || data.id_registro) : null;
         const fallbackContext = window.UI_FormUtils ? window.UI_FormUtils.extractDraftContext(entityName, currentPK) : null;
         const contextId = explicitContext || fallbackContext;
-        const strictContext = !!explicitContext || entityName === 'Taxonomia';
+        const isTopologyContainer = window.APP_SCHEMAS && window.APP_SCHEMAS[entityName] && window.APP_SCHEMAS[entityName].metadata && window.APP_SCHEMAS[entityName].metadata.isTopologyContainer;
+        const strictContext = !!explicitContext || isTopologyContainer;
         
         currentPK = currentPK || contextId;
 

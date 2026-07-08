@@ -95,15 +95,15 @@
   --ion-color-light: var(--color-bg-0);
   --ion-color-dark: var(--color-text);
 
-  --sys-font-family-display: var(--font-display, 'Poppins, sans-serif');
-  --sys-font-family-h1: var(--font-h1, 'Poppins, sans-serif');
-  --sys-font-family-h2: var(--font-h2, 'Poppins, sans-serif');
-  --sys-font-family-h3: var(--font-h3, 'Poppins, sans-serif');
-  --sys-font-family-body: var(--font-body, 'Poppins, sans-serif');
-  --sys-font-family-sub: var(--font-sub, 'Poppins, sans-serif');
-  --sys-font-family-caption: var(--font-caption, 'Poppins, sans-serif');
-  --sys-font-family-mini: var(--font-mini, 'Poppins, sans-serif');
-  --sys-font-family-action: var(--font-action, 'Poppins, sans-serif');
+  --sys-font-family-display: var(--font-display, 'Poppins', sans-serif);
+  --sys-font-family-h1: var(--font-h1, 'Poppins', sans-serif);
+  --sys-font-family-h2: var(--font-h2, 'Poppins', sans-serif);
+  --sys-font-family-h3: var(--font-h3, 'Poppins', sans-serif);
+  --sys-font-family-body: var(--font-body, 'Poppins', sans-serif);
+  --sys-font-family-sub: var(--font-sub, 'Poppins', sans-serif);
+  --sys-font-family-caption: var(--font-caption, 'Poppins', sans-serif);
+  --sys-font-family-mini: var(--font-mini, 'Poppins', sans-serif);
+  --sys-font-family-action: var(--font-action, 'Poppins', sans-serif);
 
   --ion-font-family: var(--sys-font-family-body);
 

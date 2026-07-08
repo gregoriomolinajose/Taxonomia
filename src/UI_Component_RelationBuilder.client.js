@@ -96,8 +96,12 @@
             const explicitContext = (window.currentFormDrawer && window.currentFormDrawer.dataset && window.currentFormDrawer.dataset.taxonomiaContext) ? window.currentFormDrawer.dataset.taxonomiaContext : null;
             const fallbackContext = window.UI_FormUtils ? window.UI_FormUtils.extractDraftContext(entityName, currentPK) : null;
             const contextId = explicitContext || fallbackContext;
-            const strictContext = !!explicitContext || entityName === 'Taxonomia';
-            const isActuallyReadonly = !!((field.readonly && !strictContext) || (field.readonlyInContext && strictContext));
+            const isTopologyContainer = window.APP_SCHEMAS && window.APP_SCHEMAS[entityName] && window.APP_SCHEMAS[entityName].metadata && window.APP_SCHEMAS[entityName].metadata.isTopologyContainer;
+            const strictContext = !!explicitContext || isTopologyContainer;
+            let isActuallyReadonly = false;
+            if (field.readonlyMode === 'always') isActuallyReadonly = true;
+            else if (field.readonlyMode === 'outside_context' && !strictContext) isActuallyReadonly = true;
+            else if (field.readonlyMode === 'inside_context' && strictContext) isActuallyReadonly = true;
             
             // [S55.1] Contextual List Wrapper
             const activeData = window.UI_FormUtils && window.UI_FormUtils.fetchContextualData 

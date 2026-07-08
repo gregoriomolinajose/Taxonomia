@@ -296,7 +296,8 @@ window.UI_FormUtils = (function () {
         if (typeof window !== 'undefined' && window.WorkspaceManager && window.WorkspaceManager.isActive && window.WorkspaceManager.isActive()) {
             return window.WorkspaceManager.getActiveWorkspaceId();
         }
-        if (entityName === 'Taxonomia') {
+        const isTop = window.APP_SCHEMAS && window.APP_SCHEMAS[entityName] && window.APP_SCHEMAS[entityName].metadata && window.APP_SCHEMAS[entityName].metadata.isTopologyContainer;
+        if (isTop) {
             return currentPK;
         }
         const activeContainer = document.querySelector('ion-modal, .drawer-panel');
@@ -320,7 +321,8 @@ window.UI_FormUtils = (function () {
         const liveData = window.DataStore ? (window.DataStore.get(entityName) || []) : [];
         return liveData.filter(d => {
             if (d.estado === 'Eliminado' || typeof d !== 'object') return false;
-            if (entityName === 'Unidad_Negocio' || entityName === 'Taxonomia') return true;
+            const isTop = window.APP_SCHEMAS && window.APP_SCHEMAS[entityName] && window.APP_SCHEMAS[entityName].metadata && window.APP_SCHEMAS[entityName].metadata.isTopologyContainer;
+            if (entityName === 'Unidad_Negocio' || isTop) return true;
             if (String(d.estado).toLowerCase() === 'borrador') {
                 const schema = window.APP_SCHEMAS ? window.APP_SCHEMAS[entityName] : null;
                 if (schema && !schema.isContextualWorkspace) return true; // Mostrar borradores de entidades globales

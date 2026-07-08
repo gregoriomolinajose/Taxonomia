@@ -1,15 +1,15 @@
-# System Design: Taxonomia Project
+# System Design: CorePlatform
 
-> Component breakdown from discovered modules
+> System architecture and component design — fill with /rai-project-create or /rai-project-onboard
 
 ## Components
 
-| Component | Kind | Category | Purpose |
-|-----------|------|----------|---------|
-| **Code.js** | file | entrypoint | Serves as the main GAS HTTP entry point (doGet). |
-| **FormEngine_UI.html** | file | ui | Main Ionic UI application renderer. |
-| **Engine_DB.js** | file | service | Agnostic persistence router for GAS backend. |
-| **API_Auth.js** | file | service | Handles authentication and session management. |
-| **Adapter_Sheets.js** | file | adapter | Data adapter for Google Sheets. |
-| **Adapter_CloudDB.js** | file | adapter | Data adapter for Cloud Database (e.g. Firebase/Firestore). |
-| **JS_Schemas_Config.html** | file | schema | Single source of truth for entity definitions. |
+| Component | Responsibility | Technology |
+|-----------|----------------|------------|
+| Engine_DB | Enrutador agnóstico de I/O de bases de datos. | GAS JavaScript |
+| FormRenderer_UI | Renderizado recursivo dinámico de interfaces de esquemas. | HTML/Web Components |
+| Graph_Engine | Cálculo matemático y relacional de nodos (Taxonomía). | Vis.js / JavaScript |
+| Engine_ABAC | Motor de autorización contextual jerárquica. | GAS JavaScript |
+| Taxonomia_Module | Lógica de negocio para gobierno de Portafolios SAFe. | GAS JavaScript |
+| GreatPeeps_Module | Lógica de negocio para reclutamiento, vacantes y scoring. | GAS JavaScript |
+| Integration_Hub | Adaptadores para APIs externas (LinkedIn, Gemini). | GAS JavaScript |

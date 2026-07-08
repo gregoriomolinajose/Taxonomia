@@ -89,7 +89,8 @@ window.UI_SubgridBuilder = {
         const fallbackContext = window.UI_FormUtils ? window.UI_FormUtils.extractDraftContext(entityName, currentPK) : null;
         
         const contextId = explicitContext || fallbackContext;
-        const strictContext = !!explicitContext || entityName === 'Taxonomia'; // Taxonomias son containers estrictos por naturaleza
+        const isTopologyContainer = window.APP_SCHEMAS && window.APP_SCHEMAS[entityName] && window.APP_SCHEMAS[entityName].metadata && window.APP_SCHEMAS[entityName].metadata.isTopologyContainer;
+        const strictContext = !!explicitContext || isTopologyContainer;
         
         // [S49.14] Zero-Latency Cache Cross-Reference (Agile Join) refactored via centralized JS_GraphUtils O(1) lookups
         if (field.isTemporalGraph && window.Graph_Utils && currentPK) {

@@ -1,0 +1,715 @@
+/**
+ * UI_FormStepper.html (S14.1 / S49.11)
+ *
+ * Micro-Frontend / Clase dedicada exclusivamente a gestionar la lógica 
+ * topológica de navegación (wizards/tabs) dentro de un Modal.
+ * Respeta el SRP y previene conflictos en Modales apilados.
+ *
+ * S49.11: Refinamiento visual — subtítulos en sidebar, badge pill,
+ *         dot indicators, progress bar interna, schema-driven descriptions.
+ */
+
+window.UI_FormStepper = class UI_FormStepper {
+    constructor(config) {
+        // S25.2 BugFix: Registro global para prevenir memory leaks
+        if (!window.ActiveSteppers) window.ActiveSteppers = [];
+        window.ActiveSteppers.push(this);
+
+        this.steps = config.steps || ['Configuración General'];
+        this.cardContent = config.cardContent;
+        this.sidebarSteps = config.sidebarSteps;
+        this.btnPrev = config.btnPrev;
+        this.btnNext = config.btnNext;
+        this.btnSubmit = config.btnSubmit;
+        this.progressLabel = config.progressLabel;
+        this.isStateful = config.stateful || false;
+        this.entityName = config.entityName || null;
+        this.onStepChange = config.onStepChange || null; // S49.12
+        this.initialStepIndex = config.initialStepIndex !== undefined ? config.initialStepIndex : 0;
+        this.initialStepName = config.initialStepName || null;
+        
+        // Estado Interno (Scoped a la Instancia del Modal)
+        this.currentStepIndex = 0;
+        this.totalSteps = this.steps.length;
+        this.stepContainers = {};
+        this.menuItems = {};
+        this.rows = {};
+        
+        // S49.11: Schema-driven descriptions (R1 fix — single source of truth)
+        this._descriptions = this._loadDescriptions();
+
+        this._initializeDOM();
+        this._attachListeners();
+    }
+
+    /**
+     * S49.11: Carga descripciones desde Schema_Engine si están disponibles,
+     * con fallback genérico para entidades sin stepDescriptions.
+     */
+    _loadDescriptions() {
+        if (this.entityName && window.APP_SCHEMAS && window.APP_SCHEMAS[this.entityName]) {
+            const schema = window.APP_SCHEMAS[this.entityName];
+            if (schema.stepDescriptions) return schema.stepDescriptions;
+        }
+        // Fallback genérico
+        return {};
+    }
+
+    _getStepDescription(stepName) {
+        return this._descriptions[stepName] || 'Complete la información solicitada en esta sección.';
+    }
+
+    _initializeDOM() {
+        if (this.sidebarSteps) this.sidebarSteps.innerHTML = '';
+
+        // S54.5: Configure split view structure
+        this.splitContainer = document.createElement('div');
+        this.splitContainer.className = 'wizard-split-container';
+        this.splitContainer.style.position = 'relative';
+        this.splitContainer.style.display = 'flex';
+        this.splitContainer.style.flexDirection = 'row';
+        this.splitContainer.style.flex = '1';
+        this.splitContainer.style.minHeight = '0';
+        this.splitContainer.style.width = '100%';
+        this.splitContainer.style.height = '100%';
+        
+        this.splitLeft = document.createElement('div');
+        this.splitLeft.className = 'wizard-split-left';
+        this.splitLeft.style.cssText = 'flex: 1; display: flex; flex-direction: column; width: 100%; min-width: 0; min-height: 0; overflow: hidden;';
+        
+        this.splitRight = document.createElement('div');
+        this.splitRight.className = 'wizard-split-right';
+        this.splitRight.id = 'wizard-canvas-wrapper';
+        this.splitRight.style.position = 'relative';
+
+        // Bugfix: Cierre automático al seleccionar fuera del área (zona gris del canvas)
+        this.splitRight.addEventListener('click', (e) => {
+            if (e.target === this.splitRight) {
+                if (window.DrawerStackController && window.DrawerStackController.getDepth() > 0) {
+                    window.DrawerStackController.closeTop();
+                }
+            }
+        });
+
+        this.btnFullscreen = document.createElement('ion-fab-button');
+        this.btnFullscreen.size = "small";
+        this.btnFullscreen.color = "light";
+        this.btnFullscreen.style.cssText = "position: absolute; top: 10px; right: 10px; z-index: 1000;";
+        this.btnFullscreen.innerHTML = '<ion-icon name="expand-outline"></ion-icon>';
+        
+        this.btnFullscreen.onclick = () => {
+            // S58.5 BugFix: True Fullscreen para evitar bloqueos por transformaciones CSS (ej. Drawer, ion-content)
+            if (this.splitRight.classList.contains('fullscreen-wizard')) {
+                this.splitRight.classList.remove('fullscreen-wizard');
+                this.splitRight.style.removeProperty('z-index');
+                this.btnFullscreen.innerHTML = '<ion-icon name="expand-outline"></ion-icon>';
+                this.splitContainer.appendChild(this.splitRight); // Restaurar orden original
+            } else {
+                // Mover a document.body para escapar de CUALQUIER stacking context (drawer-panel o ion-modal)
+                document.body.appendChild(this.splitRight);
+                this.splitRight.classList.add('fullscreen-wizard');
+                
+                // Forzar z-index más alto que ion-modal (que suele tener 20000-20005)
+                this.splitRight.style.setProperty('z-index', '99999', 'important');
+                
+                this.btnFullscreen.innerHTML = '<ion-icon name="contract-outline"></ion-icon>';
+            }
+            setTimeout(() => { window.dispatchEvent(new Event('resize')); }, 100);
+        };
+
+        // [S54.1] BugFix: Cuando el usuario está en Fullscreen y abre un Drawer anidado
+        // Y luego cierra el Drawer anidado, DRAWER::DEPTH_CHANGED es disparado.
+        // Salimos de fullscreen si la profundidad vuelve a 0 (cierre del drawer principal o anidados)
+        // para evitar el problema de la "pantalla blanca" provocado por z-index atrapado en drawer-root-container
+        this.cleanupRef = window.AppEventBus.subscribe('DRAWER::DEPTH_CHANGED', (depth) => {
+            if (depth === 0) {
+                if (this.splitRight && this.splitRight.classList.contains('fullscreen-wizard')) {
+                    // S65: Do NOT auto-exit fullscreen if the current step requires it intrinsically.
+                    const fullscreenSteps = ['Arquitectura de Portafolio', 'Asignación de Responsables', 'Organigrama de Producto', 'Organigrama de Tecnología', 'Organigrama de Agilidad', 'Organigrama de Portafolio'];
+                    let currentStepTitle = this.steps ? this.steps[this.currentStepIndex] : '';
+                    if (fullscreenSteps.includes(currentStepTitle)) {
+                        return; // Mantener fullscreen porque el paso actual lo requiere.
+                    }
+
+                    if (this.splitRight.parentNode) {
+                        this.splitRight.parentNode.removeChild(this.splitRight);
+                    }
+                    this.splitRight.classList.remove('fullscreen-wizard');
+                    this.splitRight.style.removeProperty('z-index');
+                    if (this.btnFullscreen) this.btnFullscreen.innerHTML = '<ion-icon name="expand-outline"></ion-icon>';
+                    this.splitContainer.appendChild(this.splitRight);
+                }
+            }
+        });
+
+        // Bugfix: DOM restoration is now handled safely by destroy() when the Stepper is actually unmounted
+
+        this.splitRight.appendChild(this.btnFullscreen); // Mover el botón dentro del lienzo para que no se oculte
+        
+        this.splitContainer.appendChild(this.splitLeft);
+        this.splitContainer.appendChild(this.splitRight);
+        
+        this.cardContent.appendChild(this.splitContainer);
+
+        // S54.5: Reactividad para el lienzo
+        const triggerRefresh = () => {
+            if ((this._mountedCustomViewer === 'Arquitectura de Portafolio' || this._mountedCustomViewer === 'Asignación de Responsables') && typeof window.UI_View_SwimlaneGrid !== 'undefined') {
+                window.UI_View_SwimlaneGrid.refresh();
+            }
+        };
+        this.splitLeft.addEventListener('ionChange', triggerRefresh);
+        this.splitLeft.addEventListener('UI_GraphEdge::Changed', triggerRefresh);
+        this.splitLeft.addEventListener('input', triggerRefresh);
+
+        this.steps.forEach((stepName, index) => {
+            const stepDiv = document.createElement('div');
+            stepDiv.id = 'form-section-' + stepName.replace(/\s+/g, '-');
+            stepDiv.classList.toggle('ion-hide', index !== 0);
+            this.stepContainers[stepName] = stepDiv;
+
+            if (this.sidebarSteps) {
+                const item = document.createElement('ion-item');
+                item.button = true; // Efecto Ripple interactivo
+                item.setAttribute('lines', 'none');
+                item.style.borderRadius = 'var(--rounded-sm)';
+                item.style.margin = 'var(--spacing-1) 0';
+                item.style.setProperty('--min-height', '52px');
+                item.style.setProperty('--padding-start', 'var(--spacing-3)');
+                item.style.setProperty('--padding-end', 'var(--spacing-3)');
+                if (index === 0) item.style.setProperty('--background', 'var(--dv-primary-light, rgba(28, 66, 232, 0.06))');
+                
+                item.onclick = () => {
+                    this.goToSection(stepName);
+                };
+
+                // S49.6: Número circular dinámico
+                const iconContainer = document.createElement('div');
+                iconContainer.setAttribute('slot', 'start');
+                iconContainer.style.cssText = 'width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.75rem;font-weight:700;margin-right:var(--spacing-3);flex-shrink:0;transition:all 0.2s ease;';
+                
+                if (index === 0) {
+                    iconContainer.style.backgroundColor = 'var(--ion-color-primary)';
+                    iconContainer.style.color = 'var(--ion-color-primary-contrast)';
+                } else {
+                    iconContainer.style.backgroundColor = 'var(--ion-color-step-150, #e0e0e0)';
+                    iconContainer.style.color = 'var(--ion-color-medium)';
+                }
+                iconContainer.textContent = (index + 1).toString();
+
+                // S49.11: Label con subtítulo descriptivo
+                const labelWrap = document.createElement('ion-label');
+                labelWrap.style.fontFamily = 'var(--sys-font-family-body, system-ui, -apple-system, sans-serif)';
+                
+                const titleSpan = document.createElement('span');
+                titleSpan.textContent = stepName;
+                titleSpan.style.cssText = 'display:block;font-weight:600;font-size:var(--sys-font-body);line-height:1.3;';
+                if (index === 0) titleSpan.style.color = 'var(--ion-color-primary)';
+                
+                const subtitleSpan = document.createElement('span');
+                subtitleSpan.textContent = this._getStepDescription(stepName);
+                subtitleSpan.style.cssText = 'display:block;font-size:var(--sys-font-caption, 0.75rem);color:var(--ion-color-step-500, #888);font-weight:400;line-height:1.3;margin-top:2px;';
+                subtitleSpan.className = 'stepper-sidebar-subtitle';
+                
+                labelWrap.appendChild(titleSpan);
+                labelWrap.appendChild(subtitleSpan);
+
+                item.appendChild(iconContainer);
+                item.appendChild(labelWrap);
+                this.sidebarSteps.appendChild(item);
+
+                this.menuItems[stepName] = { item, icon: iconContainer, label: labelWrap, titleSpan, subtitleSpan, stepNumber: index + 1 };
+            }
+
+            stepDiv.style.display = index === 0 ? 'flex' : 'none';
+            stepDiv.style.flexDirection = 'column';
+            stepDiv.style.justifyContent = 'flex-start';
+            
+            const isFullScreenGrid = (stepName === 'Listado de Equipos' || stepName === 'Directorio de Personas' || stepName === 'Portafolios' || stepName === 'Flujos');
+            
+            if (isFullScreenGrid) {
+                stepDiv.style.flex = '1';
+                stepDiv.style.minHeight = '0';
+                stepDiv.style.height = '100%';
+                stepDiv.style.width = '100%'; // S56: Fuerza a expandirse
+                stepDiv.style.overflow = 'hidden';
+                stepDiv.style.maxWidth = '100%';
+            } else {
+                stepDiv.style.flex = 'none';
+                stepDiv.style.height = 'auto';
+                stepDiv.style.width = '100%';
+                stepDiv.style.overflow = 'visible';
+                stepDiv.style.maxWidth = '600px';
+                stepDiv.style.paddingTop = 'var(--spacing-6)';
+            }
+            stepDiv.style.margin = '0 auto';
+
+            this.splitLeft.appendChild(stepDiv);
+
+            // Header del Content Area
+            const headerWrap = document.createElement('div');
+            headerWrap.style.marginBottom = 'var(--spacing-5)';
+            headerWrap.style.textAlign = 'left';
+
+            // Badge removido a petición del usuario
+
+            const sectionTitle = document.createElement('h2');
+            sectionTitle.textContent = (stepName === 'default' ? 'Configuración General' : stepName);
+            sectionTitle.style.cssText = 'color:var(--ion-text-color);font-size:var(--sys-font-h2, 1.5rem);font-family:var(--font-display, var(--ion-font-family, system-ui, sans-serif));font-weight:700;margin:0 0 var(--spacing-2) 0;';
+            headerWrap.appendChild(sectionTitle);
+
+            // Descripción del paso en el content area
+            const desc = document.createElement('p');
+            desc.style.cssText = 'margin:0;font-size:var(--sys-font-body);max-width:100%;color:var(--ion-color-step-600, #666);line-height:1.5;';
+            desc.textContent = this._getStepDescription(stepName);
+            headerWrap.appendChild(desc);
+
+            // S56: Ocultar título y descripción si es "Listado de Equipos" o "Directorio de Personas" porque toma pantalla completa
+            if (isFullScreenGrid) {
+                sectionTitle.style.display = 'none';
+                desc.style.display = 'none';
+                headerWrap.style.display = 'none';
+            }
+
+            stepDiv.appendChild(headerWrap);
+
+            // Grid para inyección de campos
+            const grid = document.createElement('ion-grid');
+            grid.style.padding = 'var(--spacing-0)';
+            grid.style.width = '100%';
+            
+            if (isFullScreenGrid) {
+                grid.style.flex = '1';
+                grid.style.minHeight = '0';
+                grid.style.overflow = 'hidden';
+                grid.style.display = 'flex';
+                grid.style.flexDirection = 'column';
+            } else {
+                grid.style.flex = 'none';
+                grid.style.overflow = 'visible';
+            }
+
+            const row = document.createElement('ion-row');
+            if (isFullScreenGrid) {
+                row.style.flex = '1';
+                row.style.minHeight = '0';
+                row.style.overflow = 'hidden';
+                row.style.flexDirection = 'column';
+                row.style.alignContent = 'flex-start';
+                row.style.width = '100%';
+            } else {
+                row.style.flex = 'none';
+                row.style.overflow = 'visible';
+                row.style.width = '100%';
+            }
+            grid.appendChild(row);
+
+            stepDiv.appendChild(grid);
+            this.rows[stepName] = row;
+        });
+
+        // S49.11: Barra de progreso al pie del sidebar
+        if (this.sidebarSteps) {
+            const progressWrap = document.createElement('div');
+            progressWrap.style.cssText = 'margin-top:auto;padding:var(--spacing-4) 0 0 0;';
+
+            const progressText = document.createElement('div');
+            progressText.style.cssText = 'display:flex;justify-content:space-between;align-items:center;margin-bottom:var(--spacing-2);';
+            
+            const progLabel = document.createElement('span');
+            progLabel.style.cssText = 'font-size:var(--sys-font-caption, 0.75rem);font-weight:600;color:var(--ion-text-color);';
+            progLabel.textContent = 'Progreso';
+            
+            const progCount = document.createElement('span');
+            progCount.style.cssText = 'font-size:var(--sys-font-caption, 0.75rem);color:var(--ion-color-step-500, #888);';
+            progCount.textContent = `1 de ${this.totalSteps}`;
+            
+            progressText.appendChild(progLabel);
+            progressText.appendChild(progCount);
+
+            const progressBarContainer = document.createElement('div');
+            progressBarContainer.style.cssText = 'width:100%;height:4px;border-radius:var(--rounded-full);background:var(--ion-color-step-150, #e0e0e0);overflow:hidden;';
+            
+            const progressFill = document.createElement('div');
+            progressFill.style.cssText = 'height:100%;border-radius:var(--rounded-full);background:var(--ion-color-primary);transition:width 0.3s ease;';
+            progressFill.style.width = `${(1 / this.totalSteps) * 100}%`;
+            
+            progressBarContainer.appendChild(progressFill);
+            progressWrap.appendChild(progressText);
+            progressWrap.appendChild(progressBarContainer);
+            this.sidebarSteps.appendChild(progressWrap);
+
+            // Guardar referencias para actualización dinámica
+            this._sidebarProgressCount = progCount;
+            this._sidebarProgressFill = progressFill;
+        }
+    }
+
+    _attachListeners() {
+        this.btnPrev.addEventListener('click', () => {
+            if (this.currentStepIndex > 0) this.goToSection(this.steps[this.currentStepIndex - 1]);
+        });
+
+        this.btnNext.addEventListener('click', () => {
+            const currentContainer = this.stepContainers[this.steps[this.currentStepIndex]];
+            const isValid = window.UI_FormUtils ? window.UI_FormUtils.validateRequiredFields(currentContainer) : true;
+
+            if (isValid && this.currentStepIndex < this.totalSteps - 1) {
+                this.goToSection(this.steps[this.currentStepIndex + 1]);
+            }
+        });
+
+        if (this.isStateful) {
+            // S49.2: Escuchar cambios para actualizar estado visual de las secciones
+            const recalcFn = () => this.recalculateAllStatuses();
+            this.cardContent.addEventListener('input', recalcFn);
+            this.cardContent.addEventListener('ionChange', recalcFn);
+            this.cardContent.addEventListener('UI_GraphEdge::Changed', recalcFn);
+        }
+    }
+
+    recalculateAllStatuses() {
+        if (!this.isStateful || !this.sidebarSteps) return;
+
+        this.steps.forEach((stepName, idx) => {
+            const mi = this.menuItems[stepName];
+            if (!mi) return;
+
+            const container = this.stepContainers[stepName];
+            // S49.6: Ampliado para incluir tx-searchable
+            const inputs = container.querySelectorAll('ion-input, ion-textarea, ion-select, input, .subgrid-container, tx-searchable');
+            
+            let hasData = false;
+            inputs.forEach(el => {
+                if (el.classList.contains('subgrid-container')) {
+                    const items = el.querySelectorAll('ion-item');
+                    if (items.length > 0) hasData = true;
+                } else if (Array.isArray(el.value)) {
+                    if (el.value.length > 0) hasData = true;
+                } else if (el.value !== undefined && el.value !== null && String(el.value).trim() !== '' && String(el.value).trim() !== '[]') {
+                    hasData = true;
+                }
+            });
+
+            const isCurrent = (idx === this.currentStepIndex);
+
+            // S49.6: Lógica de actualización para Avatar Chips / Iconos Numéricos
+            if (hasData) {
+                // Completado -> Mostrar icono Check
+                mi.icon.innerHTML = '<ion-icon name="checkmark"></ion-icon>';
+                mi.icon.style.backgroundColor = 'var(--ion-color-success)';
+                mi.icon.style.color = 'var(--ion-color-success-contrast, #fff)';
+            } else {
+                // Incompleto -> Mostrar número
+                mi.icon.innerHTML = '';
+                mi.icon.textContent = mi.stepNumber.toString();
+                if (isCurrent) {
+                    mi.icon.style.backgroundColor = 'var(--ion-color-primary)';
+                    mi.icon.style.color = 'var(--ion-color-primary-contrast)';
+                } else {
+                    mi.icon.style.backgroundColor = 'var(--ion-color-step-150, #e0e0e0)';
+                    mi.icon.style.color = 'var(--ion-color-medium)';
+                }
+            }
+            
+            // S49.11: Actualizar color del título del sidebar
+            mi.titleSpan.style.color = isCurrent ? 'var(--ion-color-primary)' : (hasData ? 'var(--ion-color-success)' : '');
+        });
+    }
+
+    goToSection(targetSectionName, skipAutoSave = false) {
+        let newIdx = this.steps.indexOf(targetSectionName);
+        if (newIdx === -1) newIdx = 0;
+
+        // S55.6: Autoguardado Universal para transiciones de Wizard
+        if (!skipAutoSave && this.btnSubmit && this.btnSubmit._formSubmitterInstance && newIdx !== this.currentStepIndex) {
+            if (this.btnNext) this.btnNext.disabled = true;
+            this.btnSubmit.disabled = true;
+            
+            const submitter = this.btnSubmit._formSubmitterInstance;
+            
+            // Suscribirse a los eventos de éxito o error
+            const unsubSuccess = window.AppEventBus.subscribe('FORM::SUBMIT_SUCCESS', () => {
+                cleanup();
+                this._executeSectionTransition(newIdx, targetSectionName);
+            });
+            
+            const unsubError = window.AppEventBus.subscribe('FORM::SUBMIT_ERROR', () => {
+                cleanup();
+                console.warn("[Stepper] Autoguardado Universal: Fallo el autoguardado en la transición de paso.");
+            });
+            
+            const cleanup = () => {
+                if (typeof unsubSuccess === 'function') unsubSuccess();
+                if (typeof unsubError === 'function') unsubError();
+                if (this.btnNext) this.btnNext.disabled = false;
+                if (this.btnSubmit) this.btnSubmit.disabled = false;
+            };
+
+            // Disparar envío optimista asincrono
+            submitter.executeSave({ isSilent: true });
+            return;
+        }
+
+        this._executeSectionTransition(newIdx, targetSectionName);
+    }
+
+    _executeSectionTransition(newIdx, targetSectionName) {
+        this.currentStepIndex = newIdx;
+
+        Object.keys(this.stepContainers).forEach(key => {
+            const isTarget = key === targetSectionName;
+            const container = this.stepContainers[key];
+            
+            // Si usamos Flex, no podemos usar ion-hide que fuerza display:none vs flex
+            if (isTarget) {
+                container.classList.remove('ion-hide');
+                container.style.display = 'flex';
+            } else {
+                container.classList.add('ion-hide');
+                container.style.display = 'none';
+            }
+        });
+
+        // S54.5: Fullscreen Drawer & Canvas Orchestration
+        const drawerNode = this.cardContent ? this.cardContent.closest('.drawer-panel') : null;
+        const isFullscreenZone = this.cardContent ? this.cardContent.closest('#wizard-fullscreen-zone') !== null : false;
+        
+        // Find the main layout columns to toggle sidebar visibility
+        const layoutColLeft = document.getElementById('wizard-col-left');
+        const layoutColRight = document.getElementById('wizard-col-right');
+
+        if (drawerNode || isFullscreenZone) {
+            const fullscreenSteps = ['Arquitectura de Portafolio', 'Asignación de Responsables', 'Organigrama de Producto', 'Organigrama de Tecnología', 'Organigrama de Agilidad', 'Organigrama de Portafolio'];
+            const isFullscreenStep = (this.entityName === 'Taxonomia' && fullscreenSteps.includes(targetSectionName));
+
+            if (isFullscreenStep) {
+                // S55.2: Ocultar el sidebar de pasos SOLO si estamos en Landing Page (Fullscreen Zone)
+                if (isFullscreenZone) {
+                    if (layoutColLeft) layoutColLeft.style.display = 'none';
+                    if (layoutColRight) {
+                        layoutColRight.setAttribute('size-md', '12');
+                        layoutColRight.setAttribute('size-lg', '12');
+                        layoutColRight.setAttribute('size-xl', '12');
+                    }
+                    // Ocultar panel izquierdo completamente en Landing Page para maximizar espacio
+                    this.splitLeft.style.display = 'none';
+                } else {
+                    // Modo Wizard: mostrar sidebar y panel
+                    this.splitLeft.style.display = '';
+                }
+                
+                this.splitRight.style.display = 'flex';
+                this.splitRight.style.flex = '1';
+                this.splitRight.style.width = '100%';
+                this.splitRight.style.position = 'relative';
+                this.splitRight.style.flexDirection = 'column';
+                this.splitRight.style.background = 'var(--ion-background-color, #ffffff)';
+                this.splitRight.style.borderRadius = 'var(--rounded-md, 8px)';
+                this.splitRight.style.border = '1px solid var(--color-border)';
+                this.splitRight.style.overflow = 'hidden';
+                
+                if (this.btnFullscreen) {
+                    this.btnFullscreen.style.display = 'block';
+                }
+                this._mountCustomViewer(targetSectionName);
+            } else {
+                // Restaurar panel izquierdo
+                this.splitLeft.style.display = '';
+                
+                // Restaurar layout original del sidebar
+                if (isFullscreenZone) {
+                    if (layoutColLeft) layoutColLeft.style.display = '';
+                    if (layoutColRight) {
+                        layoutColRight.setAttribute('size-md', '8');
+                        layoutColRight.setAttribute('size-lg', '9');
+                        layoutColRight.setAttribute('size-xl', '10');
+                    }
+                }
+                
+                this.splitRight.style.display = 'none';
+                if (this.btnFullscreen) this.btnFullscreen.style.display = 'none';
+                this._unmountCustomViewer();
+            }
+        }
+
+        if (this.sidebarSteps) {
+            this.steps.forEach((stepName, idx) => {
+                const mi = this.menuItems[stepName];
+                if (!mi) return;
+                
+                mi.item.style.setProperty('--background', 'transparent');
+
+                if (!this.isStateful) {
+                    mi.icon.style.backgroundColor = 'var(--ion-color-step-150, #e0e0e0)';
+                    mi.icon.style.color = 'var(--ion-color-medium)';
+                    mi.titleSpan.style.color = '';
+
+                    if (idx === this.currentStepIndex) {
+                        mi.item.style.setProperty('--background', 'var(--dv-primary-light, rgba(28, 66, 232, 0.06))');
+                        mi.item.style.borderRadius = 'var(--rounded-sm, 8px)';
+                        mi.icon.style.backgroundColor = 'var(--ion-color-primary)';
+                        mi.icon.style.color = 'var(--ion-color-primary-contrast)';
+                        mi.titleSpan.style.color = 'var(--ion-color-primary)';
+                    }
+                } else {
+                    if (idx === this.currentStepIndex) {
+                        mi.item.style.setProperty('--background', 'var(--dv-primary-light, rgba(28, 66, 232, 0.06))');
+                        mi.item.style.borderRadius = 'var(--rounded-sm, 8px)';
+                    }
+                }
+            });
+            if (this.isStateful) this.recalculateAllStatuses();
+        }
+
+        // S49.11: Badge text ya no necesita actualización dinámica (es estático por paso)
+
+        // S49.11: Actualizar progress bar del sidebar
+        if (this._sidebarProgressCount) {
+            this._sidebarProgressCount.textContent = `${this.currentStepIndex + 1} de ${this.totalSteps}`;
+        }
+        if (this._sidebarProgressFill) {
+            this._sidebarProgressFill.style.width = `${((this.currentStepIndex + 1) / this.totalSteps) * 100}%`;
+        }
+
+        if (this.progressLabel) {
+            this.progressLabel.textContent = `Paso ${this.currentStepIndex + 1} de ${this.totalSteps}`;
+        }
+
+        if (this.progressBar) {
+            // S49.6: Progreso incremental en la barra 
+            const progressRatio = (this.currentStepIndex + 1) / this.totalSteps;
+            this.progressBar.value = progressRatio;
+        }
+        
+        if (this.btnPrev) {
+            this.btnPrev.classList.toggle('ion-hide', this.currentStepIndex === 0);
+        }
+
+        const isLastStep = (this.currentStepIndex === this.totalSteps - 1);
+        if (this.btnNext) this.btnNext.classList.toggle('ion-hide', isLastStep);
+        if (this.btnSubmit) this.btnSubmit.classList.toggle('ion-hide', !isLastStep);
+        
+        // S49.12: Despachar evento nativo al container/renderizador
+        if (typeof this.onStepChange === 'function') {
+            this.onStepChange(this.currentStepIndex, this.totalSteps);
+        }
+    }
+
+    // Exponer Rows para que FormRenderer sepa donde inyectar inputs
+    getRows() {
+        return this.rows;
+    }
+    
+    // S54.5: Canvas Mount/Unmount Orchestration
+    _mountCustomViewer(stepName) {
+        if (!this.splitRight) return;
+        if (this._mountedCustomViewer === stepName) return;
+
+        // If transitioning between different custom viewers, unmount the previous one
+        if (this._mountedCustomViewer) {
+            this.splitRight.innerHTML = '';
+            this._mountedCustomViewer = null;
+        }
+
+        // The optimistic ID is the primary key assigned by UI_FormSubmitter in step 1
+        const taxonomyId = this.cardContent.getAttribute('data-edit-id') || null;
+        
+        if (stepName === 'Arquitectura de Portafolio' || stepName === 'Asignación de Responsables') {
+            if (taxonomyId && typeof window.UI_View_SwimlaneGrid !== 'undefined' && typeof window.UI_View_SwimlaneGrid.render === 'function') {
+                this.splitRight.innerHTML = '';
+                
+                // Use the standard template for the canvas
+                const tmpl = document.getElementById('tmpl-taxonomia-canvas');
+                if (tmpl && tmpl.content) {
+                    this.splitRight.appendChild(tmpl.content.cloneNode(true));
+                } else {
+                    console.error("[Wizard] tmpl-taxonomia-canvas no encontrado o sin content.");
+                    this.splitRight.innerHTML = '<div style="padding: 20px; color: red;">Error: Plantilla de Canvas no encontrada.</div>';
+                    return;
+                }
+                
+                // Initialize the canvas
+                const viewMode = (stepName === 'Arquitectura de Portafolio') ? 'ESTRUCTURA' : 'COMPLETO';
+                window.UI_View_SwimlaneGrid.render(this.splitRight, taxonomyId, viewMode);
+                
+                // S58.5 BugFix: El innerHTML = '' eliminó el btnFullscreen. Lo restauramos al final del mount.
+                if (this.btnFullscreen) {
+                    this.splitRight.appendChild(this.btnFullscreen);
+                }
+                
+                this._mountedCustomViewer = stepName;
+            }
+        } else if (stepName.startsWith('Organigrama')) {
+            if (taxonomyId && typeof window.UI_View_Organigrama !== 'undefined' && typeof window.UI_View_Organigrama.render === 'function') {
+                this.splitRight.innerHTML = '';
+                
+                // Pass the specific perspective
+                let perspective = 'producto';
+                if (stepName.includes('Tecnología')) perspective = 'tecnologia';
+                if (stepName.includes('Agilidad')) perspective = 'agilidad';
+                if (stepName.includes('Portafolio')) perspective = 'portafolio';
+
+                // Initialize the organigram
+                window.UI_View_Organigrama.render(this.splitRight, taxonomyId, perspective);
+                
+                if (this.btnFullscreen) {
+                    this.splitRight.appendChild(this.btnFullscreen);
+                }
+                
+                this._mountedCustomViewer = stepName;
+            } else {
+                 this.splitRight.innerHTML = '<div style="padding: 20px; color: var(--ion-color-medium);">Cargando módulo de organigrama...</div>';
+            }
+        }
+    }
+
+    _unmountCustomViewer() {
+        if (this.splitRight && this._mountedCustomViewer) {
+            this.splitRight.innerHTML = '';
+            this._mountedCustomViewer = null;
+        }
+    }
+
+    start() {
+        // Timeout para asegurar que el DOM está listo antes de inicializar gráficas y canvas
+        setTimeout(() => {
+            let startStep = this.steps[this.initialStepIndex] || this.steps[0];
+            if (this.initialStepName && this.steps.includes(this.initialStepName)) {
+                startStep = this.initialStepName;
+            }
+            this.goToSection(startStep, true);
+        }, 150);
+    }
+
+    destroy() {
+        console.warn("[Stepper Debug] destroy() CALLED! Eliminando UI_FormStepper y su contenedor del DOM...");
+        console.trace("[Stepper Debug] Trace de la llamada a destroy()");
+        if (this.unsubGraph) {
+            this.unsubGraph();
+            this.unsubGraph = null;
+        }
+        
+        // Desuscribir explícitamente para evitar memory leaks reportados por Quality Review
+        if (this.cleanupRef && typeof this.cleanupRef === 'function') {
+            this.cleanupRef();
+            this.cleanupRef = null;
+        }
+
+        // Bugfix: Restauración del DOM cuando el Stepper es destruido (previene leaks en #drawer-root-container)
+        if (this.splitRight && this.splitRight.classList.contains('fullscreen-wizard')) {
+            if (this.splitRight.parentNode) {
+                this.splitRight.parentNode.removeChild(this.splitRight);
+            }
+            this.splitRight.classList.remove('fullscreen-wizard');
+            this.splitRight.style.removeProperty('z-index');
+            if (this.btnFullscreen) {
+                this.btnFullscreen.innerHTML = '<ion-icon name="expand-outline"></ion-icon>';
+            }
+            this.splitContainer.appendChild(this.splitRight); // Restaurar al padre original
+        }
+
+        if (window.ActiveSteppers) {
+            window.ActiveSteppers = window.ActiveSteppers.filter(s => s !== this);
+        }
+    }
+};

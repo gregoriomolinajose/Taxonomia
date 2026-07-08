@@ -30,9 +30,9 @@ function _guardAbac(action, entityName, targetId) {
  * Retorna todos los registros de una entidad desde Engine_DB.list.
  * @returns {{ headers: string[], rows: Object[] }}
  */
-function _handleRead(entityName) {
+function _handleRead(entityName, payload) {
   // Las lecturas son permitidas por defecto (Visibilidad completa del Grafo)
-  return Engine_DB.list(entityName);
+  return Engine_DB.list(entityName, payload || {});
 }
 
 /**

@@ -191,6 +191,235 @@ var Business_Interceptors = (function() {
 
     const INTERCEPTORS = {
         /**
+         * [GreatPeeps] ProvisionDriveFolders
+         * Crea carpetas en Drive para Empresas y Vacantes
+         */
+        ProvisionDriveFolders: function(entityName, items) {
+            if (entityName !== 'Empresas' && entityName !== 'Vacantes') return;
+            if (typeof DriveApp === 'undefined') return;
+
+            // TODO: Ideally we should grab a Root Folder ID from PropertiesService.
+            // For MVP, we create them in root or a specific folder if defined.
+            let rootFolderId = null;
+            try {
+                rootFolderId = PropertiesService.getScriptProperties().getProperty('GREATPEEPS_DRIVE_ROOT');
+            } catch(e) {}
+            
+            let rootFolder = rootFolderId ? DriveApp.getFolderById(rootFolderId) : DriveApp.getRootFolder();
+
+            items.forEach(item => {
+                try {
+                    if (entityName === 'Empresas') {
+                        let folder = null;
+                        let docFolder = null;
+
+                        // 1. Crear o recuperar carpeta principal y subcarpeta
+                        if (!item.drive_folder_id && item.nombre) {
+                            folder = rootFolder.createFolder(item.nombre);
+                            item.drive_folder_id = folder.getId();
+                            
+                            docFolder = folder.createFolder("Documentos de la empresa");
+                            item.drive_folder_link = docFolder.getUrl();
+                            
+                            if (typeof Logger !== 'undefined') Logger.log(`Carpeta creada para Empresa: ${item.nombre}`);
+                        } else if (item.drive_folder_id) {
+                            try {
+                                folder = DriveApp.getFolderById(item.drive_folder_id);
+                                const subfolders = folder.getFoldersByName("Documentos de la empresa");
+                                if (subfolders.hasNext()) {
+                                    docFolder = subfolders.next();
+                                } else {
+                                    docFolder = folder.createFolder("Documentos de la empresa");
+                                    item.drive_folder_link = docFolder.getUrl();
+                                }
+                            } catch(e) {
+                                if (typeof Logger !== 'undefined') Logger.log(`No se pudo acceder a carpeta existente: ${e.message}`);
+                            }
+                        }
+                    } 
+                    else if (entityName === 'Vacantes') {
+                        if (item.drive_folder_id) return; // Si ya tiene, no hacemos nada más por ahora
+                        if (item.titulo && item.empresa_id) {
+                            let parentFolder = rootFolder;
+                            if (typeof Engine_DB !== 'undefined') {
+                                 const empresaRes = Engine_DB.read('Empresas', item.empresa_id);
+                                 if (empresaRes && empresaRes.record && empresaRes.record.drive_folder_id) {
+                                     parentFolder = DriveApp.getFolderById(empresaRes.record.drive_folder_id);
+                                 }
+                            }
+                            const folder = parentFolder.createFolder(item.titulo);
+                            item.drive_folder_id = folder.getId();
+                            if (typeof Logger !== 'undefined') Logger.log(`Carpeta creada para Vacante: ${item.titulo}`);
+                        }
+                    }
+                } catch(e) {
+                    if (typeof Logger !== 'undefined') Logger.log(`Error procesando Drive Interceptor: ${e.message}`);
+                }
+            });
+        },
+
+        /**
+         * Interceptor 6: ProcessDriveUploads
+         * Procesa archivos locales enviados desde UI y los guarda en Drive en la carpeta correspondiente.
+         */
+        ProcessDriveUploads: function(entityName, items) {
+            items.forEach(item => {
+                if (!item.drive_folder_id) return; // Si no hay carpeta principal, no podemos guardar documentos
+
+                try {
+                    let docFolder = null;
+                    if (entityName === 'Empresas') {
+                        // Buscar subcarpeta "Documentos de la empresa"
+                        const folder = DriveApp.getFolderById(item.drive_folder_id);
+                        const subfolders = folder.getFoldersByName("Documentos de la empresa");
+                        if (subfolders.hasNext()) {
+                            docFolder = subfolders.next();
+                        } else {
+                            docFolder = folder.createFolder("Documentos de la empresa");
+                            item.drive_folder_link = docFolder.getUrl();
+                        }
+
+                        // Procesar subida de constancia_situacion_fiscal
+                        if (item.hasOwnProperty('constancia_situacion_fiscal')) {
+                            const uploadObj = item.constancia_situacion_fiscal;
+                            if (uploadObj && uploadObj.type === 'local' && uploadObj.data && uploadObj.filename) {
+                                try {
+                                    const fileUrl = Adapter_Storage.saveBase64File(uploadObj, docFolder);
+                                    item.constancia_situacion_fiscal = fileUrl ? fileUrl : "";
+                                } catch (e) {
+                                    if (typeof Logger !== 'undefined') Logger.log("Error guardando constancia: " + e.message);
+                                    item.constancia_situacion_fiscal = "";
+                                }
+                            } else if (uploadObj && uploadObj.type === 'drive' && uploadObj.url) {
+                                item.constancia_situacion_fiscal = uploadObj.url;
+                            } else if (uploadObj === null || uploadObj === "") {
+                                item.constancia_situacion_fiscal = ""; // Eliminado por el usuario
+                            } else {
+                                delete item.constancia_situacion_fiscal;
+                            }
+                        }
+                    }
+                } catch(e) {
+                    if (typeof Logger !== 'undefined') Logger.log(`Error en ProcessDriveUploads: ${e.message}`);
+                }
+            });
+        },
+
+        /**
+         * [GreatPeeps] GeminiCVScreening
+         * Filtra CVs usando Engine_AI
+         */
+        GeminiCVScreening: function(entityName, items) {
+            if (entityName !== 'Candidatos') return;
+            if (typeof Engine_AI === 'undefined') return;
+
+            items.forEach(item => {
+                // Solo si hay CV y no hay score previo
+                if (item.cv_drive_id && !item.ai_score) {
+                    let vacanteTitulo = "Vacante no especificada";
+                    let vacanteDesc = "Busca en el CV las habilidades principales y resume el perfil.";
+                    
+                    if (item.vacante_id && typeof Engine_DB !== 'undefined') {
+                         const vacanteRes = Engine_DB.read('Vacantes', item.vacante_id);
+                         if (vacanteRes && vacanteRes.record) {
+                             vacanteTitulo = vacanteRes.record.titulo || vacanteTitulo;
+                             vacanteDesc = vacanteRes.record.descripcion || vacanteDesc;
+                         }
+                    }
+
+                    const sysPrompt = "Eres un reclutador experto. Evalúa el CV provisto contra la descripción de la vacante. Responde estrictamente con un JSON con dos llaves: 'score' (número del 0 al 100 indicando afinidad) y 'summary' (texto breve justificando el score y resaltando pros/contras). No incluyas markdown, solo el JSON raw.";
+                    const usrPrompt = `Vacante: ${vacanteTitulo}\nDescripción: ${vacanteDesc}\nPor favor evalúa el documento adjunto (CV del candidato).`;
+
+                    const result = Engine_AI.callGemini(sysPrompt, usrPrompt, item.cv_drive_id);
+                    
+                    if (result && !result.error) {
+                        item.ai_score = result.score;
+                        item.ai_summary = result.summary;
+                        if (typeof Logger !== 'undefined') Logger.log(`CV Evaluado: Score ${result.score}`);
+                    }
+                }
+            });
+        },
+
+        /**
+         * [GreatPeeps] CalendarInterview
+         * Agenda entrevista en Google Calendar usando Engine_Calendar
+         */
+        CalendarInterview: function(entityName, items) {
+            if (entityName !== 'Entrevistas') return;
+            if (typeof Engine_Calendar === 'undefined') return;
+
+            items.forEach(item => {
+                if (item.calendar_event_id) return; // Ya está agendado
+                if (!item.horario) return; // No hay horario
+
+                try {
+                    // Parse horario JSON generated by event_schedule component
+                    const horario = typeof item.horario === 'string' ? JSON.parse(item.horario) : item.horario;
+                    if (!horario.scheduled_start || !horario.scheduled_end) return;
+
+                    let candidatoNombre = "Candidato";
+                    let candidatoEmail = "";
+                    let vacanteTitulo = "Vacante";
+
+                    let cId = item.candidato_id;
+                    if (Array.isArray(cId)) cId = cId[0];
+
+                    if (cId && typeof Engine_DB !== 'undefined') {
+                        const postRes = Engine_DB.read('Candidatos', cId);
+                        if (postRes) {
+                            candidatoNombre = postRes.nombre || candidatoNombre;
+                            candidatoEmail = postRes.email || candidatoEmail;
+                            
+                            let vId = postRes.vacante_id;
+                            if (Array.isArray(vId)) vId = vId[0];
+                            if (vId) {
+                                const vacRes = Engine_DB.read('Vacantes', vId);
+                                if (vacRes) {
+                                    vacanteTitulo = vacRes.titulo || vacanteTitulo;
+                                }
+                            }
+                        }
+                    }
+
+                    const gm = String(item.generar_meet).toLowerCase();
+                    const isMeet = (gm === 'true' || gm === 'on' || gm === '1' || item.generar_meet === true);
+
+                    const payload = {
+                        title: item.titulo ? `${item.titulo} (${candidatoNombre} - ${vacanteTitulo})` : `Entrevista GreatPeeps: ${candidatoNombre} - ${vacanteTitulo}`,
+                        startTimeISO: horario.scheduled_start,
+                        endTimeISO: horario.scheduled_end,
+                        description: item.notas || "Entrevista agendada vía GreatPeeps.",
+                        location: item.location_details || "",
+                        attendees: candidatoEmail ? [candidatoEmail] : [],
+                        meetingProvider: isMeet ? 'GOOGLE_MEET' : 'NONE'
+                    };
+
+                    const eventObj = Engine_Calendar.createEvent(payload);
+                    
+                    if (!eventObj || !eventObj.id) {
+                        throw new Error("No se pudo crear el evento en el calendario.");
+                    } else if (eventObj.id === "mock-event-id") {
+                        console.warn("Evento MOCK generado (API deshabilitada).");
+                    }
+                    item.calendar_event_id = eventObj.htmlLink || eventObj.id;
+                    
+                    if (eventObj.meetLink) {
+                        item.location_details = (item.location_details ? item.location_details + ' | ' : '') + 'Meet: ' + eventObj.meetLink;
+                        item.meet_link = eventObj.meetLink; // <- Asignación del campo meet_link explícito
+                    } else if (payload.meetingProvider === 'GOOGLE_MEET') {
+                        item.location_details = (item.location_details ? item.location_details + ' | ' : '') + 'Meet Status: ' + eventObj.status + ' | Raw: ' + eventObj.raw;
+                    }
+                    
+                    if (typeof Logger !== 'undefined') Logger.log(`Entrevista agendada: ${item.calendar_event_id}`);
+
+                } catch(e) {
+                    if (typeof Logger !== 'undefined') Logger.log(`Error agendando entrevista: ${e.message}`);
+                }
+            });
+        },
+
+        /**
          * AutoProvisionCargo
          */
         AutoProvisionCargo: function(entityName, items) {

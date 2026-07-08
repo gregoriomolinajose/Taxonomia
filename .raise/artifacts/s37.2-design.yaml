@@ -6,7 +6,7 @@ story: 'S37.2'
 epic: 'E37'
 content:
   summary: 'Reactividad UI (requestAnimationFrame Queue) y Transmutación Semántica de IDs en el DataGrid.'
-  complexity: medium
+  complexity: moderate
   acceptance_criteria:
     - id: AC1
       description: 'Filas forzadas de columnas para garantizar orden estricto (Lexical_ID siempre primero, Nombre segundo).'
