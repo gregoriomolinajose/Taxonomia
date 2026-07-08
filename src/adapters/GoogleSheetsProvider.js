@@ -1,13 +1,5 @@
-let IDataProviderRefForSheet;
-if (typeof IDataProvider !== 'undefined') {
-    IDataProviderRefForSheet = IDataProvider;
-} else if (typeof require !== 'undefined') {
-    IDataProviderRefForSheet = require('../core/IDataProvider').IDataProvider;
-}
-
-class GoogleSheetsProvider extends IDataProviderRefForSheet {
+class GoogleSheetsProvider {
     constructor(spreadsheet) {
-        super();
         this.spreadsheet = spreadsheet;
     }
 

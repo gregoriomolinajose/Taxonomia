@@ -1,13 +1,5 @@
-let IDataProviderRef;
-if (typeof IDataProvider !== 'undefined') {
-    IDataProviderRef = IDataProvider;
-} else if (typeof require !== 'undefined') {
-    IDataProviderRef = require('../core/IDataProvider').IDataProvider;
-}
-
-class MockDataProvider extends IDataProviderRef {
+class MockDataProvider {
     constructor(initialData = {}) {
-        super();
         this.data = initialData;
     }
 
