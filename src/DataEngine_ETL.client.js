@@ -67,7 +67,7 @@
             // S45.6 Fast-fail: Validar la existencia de la columna requerida antes de iterar
             if (entityName === 'Persona') {
                 const firstRow = rawPayload[0];
-                const hasEmailColumn = Object.keys(firstRow).some(k => k.trim().toLowerCase() === 'correo' || k.trim().toLowerCase() === 'email');
+                const hasEmailColumn = Object.keys(firstRow).some(k => k.trim().toLowerCase() === 'correo' || k.trim().toLowerCase() === 'email' || k.trim().toLowerCase() === 'correo corporativo');
                 if (!hasEmailColumn) {
                     throw new Error("El archivo no contiene la columna correo");
                 }
@@ -82,7 +82,7 @@
             });
             
             const fileHeaders = Array.from(fileHeadersSet).map(k => {
-                let lowKey = k.trim().toLowerCase().replace(/\s+/g, ' ');
+                let lowKey = getFieldNameFromLabel(entityName, k);
                 if (entityName === 'Dominio') {
                     if (lowKey === 'nivel subdominio') lowKey = 'nivel_tipo';
                     else if (lowKey === 'orden. subdominio' || lowKey === 'orden subdominio' || lowKey === 'orden') lowKey = 'orden_path';
@@ -92,6 +92,7 @@
                     else if (lowKey === 'abreviación (nombre servicio)' || lowKey === 'abreviacion (nombre servicio)') lowKey = 'abreviacion';
                     else if (lowKey === 'abreviación (path servicio)' || lowKey === 'abreviacion (path servicio)') lowKey = 'path_completo_es';
                 }
+                
                 return lowKey;
             });
             
@@ -119,7 +120,8 @@
                     if (row.hasOwnProperty(originalKey)) {
                         let key = originalKey;
                         let value = row[originalKey];
-                        let lowKey = key.trim().toLowerCase().replace(/\s+/g, ' ');
+                        let lowKey = getFieldNameFromLabel(entityName, key);
+                        key = lowKey; // Mantenemos coherencia con el motor
                         
                         // S47: Resolución de alias visuales para Dominios
                         if (entityName === 'Dominio') {
@@ -273,7 +275,7 @@
                 
                 parsedData.forEach((row, index) => {
                     // Buscar la llave "correo" o "email" ignorando mayúsculas
-                    const emailKey = Object.keys(row).find(k => k.trim().toLowerCase() === 'correo' || k.trim().toLowerCase() === 'email');
+                    const emailKey = Object.keys(row).find(k => k.trim().toLowerCase() === 'correo' || k.trim().toLowerCase() === 'email' || k.trim().toLowerCase() === 'correo corporativo');
                     const email = (emailKey && row[emailKey] ? String(row[emailKey]) : "").trim().toLowerCase();
                     
                     if (!email) {

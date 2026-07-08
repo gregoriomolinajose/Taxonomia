@@ -870,8 +870,32 @@ function getEntityTopologyRules(entityName) {
   };
 }
 
+/**
+ * Maps a column label (or raw header string) back to its internal field name 
+ * based on the entity's schema. Facilitates ETL and CSV import robustness.
+ * 
+ * @param {string} entityName 
+ * @param {string} rawHeader 
+ * @returns {string} The normalized internal field name, or the sanitized rawHeader if not found.
+ */
+function getFieldNameFromLabel(entityName, rawHeader) {
+  let lowKey = String(rawHeader).trim().toLowerCase().replace(/\s+/g, ' ');
+  const schema = getAppSchema(entityName);
+  
+  if (schema && schema.fields) {
+      const matchedField = schema.fields.find(f => 
+          String(f.name).toLowerCase() === lowKey || 
+          (f.label && String(f.label).trim().toLowerCase().replace(/\s+/g, ' ') === lowKey)
+      );
+      if (matchedField) {
+          return String(matchedField.name).toLowerCase();
+      }
+  }
+  return lowKey;
+}
+
 if (typeof module !== 'undefined') {
-  module.exports = { APP_SCHEMAS, TOPOLOGY_PRESETS, FIELD_TEMPLATES, getAppSchema, getEntityTopologyRules };
+  module.exports = { APP_SCHEMAS, TOPOLOGY_PRESETS, FIELD_TEMPLATES, getAppSchema, getEntityTopologyRules, getFieldNameFromLabel };
 }
 
 // ─── [E31] Admin GAS endpoints ───────────────────────────────────────────────

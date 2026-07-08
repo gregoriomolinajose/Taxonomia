@@ -175,7 +175,22 @@ var Engine_ETL = (function() {
     if (!columns || columns.length === 0) throw new Error("No hay configuración de columnas.");
     
     // Omitir campos de sistema explícitamente para asegurar que la descarga sirva como "Plantilla Limpia"
-    const SYS_COLS = ['created_at', 'create_by', 'created_by', 'updated_at', 'update_at', 'update_by', 'deleted_at', 'deleted_by', 'version', '_version'];
+    const SYS_COLS = ['created_at', 'create_by', 'created_by', 'updated_at', 'update_at', 'update_by', 'deleted_at', 'deleted_by', 'version', '_version', '_checkbox_', '_row_num_'];
+    
+    let pkCol = 'id';
+    try {
+      if (typeof getAppSchema === 'function') {
+        const schema = getAppSchema(entityName);
+        if (schema && schema.primaryKey) pkCol = schema.primaryKey;
+      }
+    } catch(e) {}
+    
+    // Si es una plantilla vacía (sin filas), omitir también la llave primaria para no confundir al usuario (ej. ID)
+    if (!rows || rows.length === 0) {
+      SYS_COLS.push(pkCol);
+      SYS_COLS.push('id');
+    }
+
     
     // WYSIWYG mode: Only export visible columns
     const visibleCols = columns.filter(c => c.visible && !SYS_COLS.includes(c.key || c.name));
@@ -289,7 +304,7 @@ var Engine_ETL = (function() {
             
             const firstRow = tempSheet.getRange(1, 1, 1, lastCol).getValues()[0];
             const fileHeaders = firstRow.map(k => {
-                let lowKey = String(k).trim().toLowerCase().replace(/\s+/g, ' ');
+                let lowKey = getFieldNameFromLabel(entityName, k);
                 if (entityName === 'Dominio') {
                     if (lowKey === 'nivel subdominio') lowKey = 'nivel_tipo';
                     else if (lowKey === 'orden. subdominio' || lowKey === 'orden subdominio' || lowKey === 'orden') lowKey = 'orden_path';
@@ -299,6 +314,7 @@ var Engine_ETL = (function() {
                     else if (lowKey === 'abreviación (nombre servicio)' || lowKey === 'abreviacion (nombre servicio)') lowKey = 'abreviacion';
                     else if (lowKey === 'abreviación (path servicio)' || lowKey === 'abreviacion (path servicio)') lowKey = 'path_completo_es';
                 }
+                
                 return lowKey;
             });
 
@@ -566,7 +582,9 @@ var Engine_ETL = (function() {
               
               let matchCount = 0;
               fileHeaders.forEach(h => {
-                  if (schemaFields.includes(h) || h === 'id' || h.startsWith('sys_') || h.startsWith('file_')) {
+                  let mappedKey = getFieldNameFromLabel(entityName, h);
+                  
+                  if (schemaFields.includes(mappedKey) || mappedKey === 'id' || mappedKey.startsWith('sys_') || mappedKey.startsWith('file_')) {
                       matchCount++;
                   }
               });
