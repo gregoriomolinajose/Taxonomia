@@ -1,0 +1,468 @@
+<!-- stylelint-disable scale-unlimited/declaration-strict-value, color-named -->
+<!DOCTYPE html>
+<!-- Cache Bust: 1715657333 -->
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Taxonomia Project - EPT OMR</title>
+
+  <!-- Fail-Fast WSOD Mitigation (System Error Interceptor) -->
+  <template id="wsod-mitigator">
+    <div style="background:var(--ion-color-light);color:var(--ion-color-dark);padding:2rem;font-family:sans-serif;height:100vh;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;">
+      <h1 style="font-size:3rem;margin-bottom:0.5rem">⚠️</h1><h2>Error de Sistema</h2>
+      <p style="max-width:500px">Fallo crítico durante la inicialización de la plataforma (SyntaxError o ReferenceError asíncrono). La ejecución ha sido bloqueada (API Fail-Fast).</p>
+      <pre id="wsod-error-detail" style="background:var(--ion-color-light);padding:1rem;border-radius:6px;width:100%;max-width:600px;overflow-x:auto;text-align:left;font-size:0.85rem;border-width:1px;border-style:solid;border-color:var(--ion-color-dark);"></pre>
+      <button data-action="nav:reload" style="margin-top:1.5rem;padding:0.75rem 1.5rem;background:var(--ion-color-dark);color: var(--ion-color-light);border:none;border-radius:6px;cursor:pointer;font-weight:600;">Regresar al Inicio</button>
+    </div>
+  </template>
+  <script>
+    function triggerWSOD(errDetail) {
+      // 1. S19.4 Telemetry Injection (Fire and Forget)
+      // Ejecutado ANTES de la validación del DOM para atrapar errores pre-render
+      if (window.Telemetry && typeof window.Telemetry.track === 'function') {
+        window.Telemetry.track('SYSTEM_WSOD_FATAL', errDetail, 'FATAL');
+      }
+
+      // 2. Abortar UI de error si aún no inicializa el DOM (evita excepciones adicionales)
+      if (!document.body) return; 
+
+      var template = document.getElementById('wsod-mitigator');
+      if (template) {
+        var clone = template.content.cloneNode(true);
+        clone.getElementById('wsod-error-detail').textContent = errDetail;
+        document.body.innerHTML = '';
+        document.body.appendChild(clone);
+      }
+    }
+    window.addEventListener('error', function(e) {
+      triggerWSOD(e.error ? (e.error.stack || e.error.message) : e.message);
+    });
+    window.addEventListener('unhandledrejection', function(e) {
+      var reason = e.reason;
+      var detail = (reason && reason.stack) ? reason.stack : String(reason);
+      triggerWSOD(`Unhandled Promise Rejection: ${detail}`);
+    });
+  </script>
+
+  <!-- Google Fonts Preconnect & Extended Pack (White-Label) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Montserrat:wght@400;500;600;700&family=Playfair+Display:wght@500;600;700&family=Poppins:wght@400;500;600&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+
+  <script>
+    // [E6-S64] Fallback genérico — dominios del tenant se configuran via Adapter_Config (Ajustes Globales)
+    window.ENV_CONFIG = <?!= typeof ENV_CONFIG !== 'undefined' ? ENV_CONFIG : '{"AuthMode":"SSO","ALLOWED_DOMAINS":[]}' ?>;
+    window.WORKSPACE_SYNC_ENABLED = <?!= typeof WORKSPACE_SYNC_ENABLED !== 'undefined' ? WORKSPACE_SYNC_ENABLED : true ?>;
+
+    window.WHITE_LABEL = <?!= typeof WHITE_LABEL_CONFIG !== 'undefined' ? WHITE_LABEL_CONFIG : '{"bodyFont":"Poppins, sans-serif","displayFont":"Roboto, sans-serif"}' ?>;
+    // UI Branding Rule (Zero-FOUC Injection)
+    if (window.WHITE_LABEL) {
+        // Legacy Support
+        let bodyF = window.WHITE_LABEL.font_body || window.WHITE_LABEL.bodyFont || window.WHITE_LABEL.body_font;
+        let dispF = window.WHITE_LABEL.font_display || window.WHITE_LABEL.displayFont || window.WHITE_LABEL.display_font;
+        
+        // Force replacement of Playfair Display with Roboto as requested
+        if (dispF && dispF.includes('Playfair')) dispF = 'Roboto, sans-serif';
+        if (bodyF && bodyF.includes('Playfair')) bodyF = 'Roboto, sans-serif';
+        if (window.WHITE_LABEL.font_h1 && window.WHITE_LABEL.font_h1.includes('Playfair')) window.WHITE_LABEL.font_h1 = 'Roboto, sans-serif';
+        if (window.WHITE_LABEL.font_h2 && window.WHITE_LABEL.font_h2.includes('Playfair')) window.WHITE_LABEL.font_h2 = 'Roboto, sans-serif';
+        if (window.WHITE_LABEL.font_h3 && window.WHITE_LABEL.font_h3.includes('Playfair')) window.WHITE_LABEL.font_h3 = 'Roboto, sans-serif';
+
+        if (bodyF) document.documentElement.style.setProperty('--font-body', bodyF);
+        if (dispF) document.documentElement.style.setProperty('--font-display', dispF);
+        
+        if (window.WHITE_LABEL.font_h1) document.documentElement.style.setProperty('--font-h1', window.WHITE_LABEL.font_h1);
+        if (window.WHITE_LABEL.font_h2) document.documentElement.style.setProperty('--font-h2', window.WHITE_LABEL.font_h2);
+        if (window.WHITE_LABEL.font_h3) document.documentElement.style.setProperty('--font-h3', window.WHITE_LABEL.font_h3);
+        if (window.WHITE_LABEL.font_sub) document.documentElement.style.setProperty('--font-sub', window.WHITE_LABEL.font_sub);
+        if (window.WHITE_LABEL.font_caption) document.documentElement.style.setProperty('--font-caption', window.WHITE_LABEL.font_caption);
+        if (window.WHITE_LABEL.font_mini) document.documentElement.style.setProperty('--font-mini', window.WHITE_LABEL.font_mini);
+        if (window.WHITE_LABEL.font_action) document.documentElement.style.setProperty('--font-action', window.WHITE_LABEL.font_action);
+        
+        // Fluid Scale Injections
+        if (window.WHITE_LABEL.base_size) document.documentElement.style.setProperty('--wl-base-size', window.WHITE_LABEL.base_size);
+        if (window.WHITE_LABEL.scale_ratio) document.documentElement.style.setProperty('--wl-scale-ratio', parseFloat(window.WHITE_LABEL.scale_ratio) || 1.25);
+        if (window.WHITE_LABEL.heading_weight) document.documentElement.style.setProperty('--wl-heading-weight', window.WHITE_LABEL.heading_weight);
+        if (window.WHITE_LABEL.heading_transform) document.documentElement.style.setProperty('--wl-heading-transform', window.WHITE_LABEL.heading_transform);
+    }
+  </script>
+
+  <!-- Ionic Framework CDN -->
+  <script type="module" src="https://cdn.jsdelivr.net/npm/@ionic/core/dist/ionic/ionic.esm.js"></script>
+  <script nomodule src="https://cdn.jsdelivr.net/npm/@ionic/core/dist/ionic/ionic.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@ionic/core/css/ionic.bundle.css"/>
+
+  <!-- Ionicons CDN -->
+  <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+  <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+
+  <!-- ApexCharts -->
+  <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+
+  <!-- ECharts (S57.1 Restoration) -->
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
+
+
+  <!-- SheetJS (S47.1 Excel/XLSX Parser) -->
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
+
+  <!-- ApexTree (S46 Local Integration) -->
+  <?!= include('Vendor_ApexTree'); ?>
+
+  <!-- MOTOR DE DISENO (Regla UI §14) -->
+  <?!= include('UI_ThemeManager'); ?>
+  <?!= include('CSS_DesignSystem'); ?>
+  <?!= include('CSS_App'); ?>
+  <?!= include('CSS_ETL_Modal'); ?>
+  <?!= include('CSS_Sidebar'); ?>
+  <?!= include('CSS_DataView'); ?>
+  <?!= include('CSS_Dashboard'); ?>
+  <?!= include('CSS_TaxonomyCanvas'); ?>
+  <?!= include('CSS_UniversalFilter'); ?>
+  <?!= include('CSS_Utilities'); ?>
+
+
+  <!-- DATA LAYER: Schemas y Estado Global (inyectados por GAS antes del DOM) -->
+  <script>
+    window.APP_SCHEMAS = <?!= JSON.stringify(getAppSchema()) ?>;
+    window.__APP_CACHE__ = {};
+    window.getEntitiesByFlag = function(flagName, scope = 'metadata') {
+      if (!window.APP_SCHEMAS) return [];
+      var items = Object.keys(window.APP_SCHEMAS).reduce((acc, k) => { 
+        var targetObj = window.APP_SCHEMAS[k][scope];
+        if (targetObj && (targetObj[flagName] === true || (typeof targetObj[flagName] === 'object' && targetObj[flagName] !== null))) {
+            acc[k] = window.APP_SCHEMAS[k].metadata || {};
+        }
+        return acc; 
+      }, {});
+      return Object.entries(items).sort(function(a,b){ return (a[1].order || 999) - (b[1].order || 999); });
+    };
+
+    window.ENTITY_META = Object.keys(window.APP_SCHEMAS).reduce((acc, key) => {
+      if (key !== '_UI_CONFIG' && window.APP_SCHEMAS[key].metadata) acc[key] = window.APP_SCHEMAS[key].metadata;
+      return acc;
+    }, {});
+
+    // [SYS-01] Sistema global para ocultamiento de campos técnicos y de auditoría (KISS)
+    window.CORE_SYS_FIELDS = ['created_at', 'create_by', 'created_by', 'updated_at', 'update_at', 'update_by', 'deleted_at', 'deleted_by', 'version', '_version'];
+
+    // [S8.5.1] Inyección Híbrida: Funciones Puras del Backend materializadas en el Frontend
+    <?!= typeof _normalizeId !== 'undefined' ? _normalizeId.toString() : 'function _normalizeId(){}' ?>;
+    <?!= typeof filterAvailableOptions !== 'undefined' ? filterAvailableOptions.toString() : 'function filterAvailableOptions(){return []}' ?>;
+    <?!= typeof evaluateFieldState !== 'undefined' ? evaluateFieldState.toString() : 'function evaluateFieldState(){return "optional"}' ?>;
+    <?!= typeof isNewRecord !== 'undefined' ? isNewRecord.toString() : 'function isNewRecord(){return true}' ?>;
+    window.SubgridState = { _normalizeId, filterAvailableOptions, evaluateFieldState, isNewRecord };
+
+    // [E18 - S18.1] Gobernanza Topológica (ABAC Context)
+    window.__ABAC_CONTEXT__ = <?!= typeof __ABAC_CONTEXT__ !== 'undefined' ? __ABAC_CONTEXT__ : '{"ownerOf":[],"memberOf":[],"permissions":{}}' ?>;
+    
+    // [E18 - S18.4] ABAC Client-Side Helper
+    window.ABAC = {
+        context: window.__ABAC_CONTEXT__,
+        can: function(action, entityName, targetId) {
+            if (action === 'read') return true;
+            
+            // Extract string ID and identify drafts
+            let idStr = targetId;
+            let isDraft = false;
+            if (targetId && typeof targetId === 'object') {
+                isDraft = !!targetId._isLocalDraft;
+                idStr = targetId.id_registro || targetId.id || String(targetId);
+            }
+            
+            // Los borradores locales recién creados siempre pertenecen al usuario actual en esta sesión
+            if (isDraft && (action === 'update' || action === 'delete')) return true;
+
+            // S49.14: Bloqueo estricto Zero-Trust visual si no tiene rol. 
+            // Previene el leak de Graceful Degradation para usuarios sin rol asignado.
+            if (this.context.hasRole === false) return false;
+            
+            const permissions = this.context.permissions || {};
+            // Graceful Degradation si no hay regla en matriz (igual que el backend)
+            if (!permissions.hasOwnProperty(entityName)) {
+                if (entityName.startsWith('Sys_')) return false;
+                return true;
+            }
+            
+            const nivel = permissions[entityName] || "NONE";
+            
+            if (nivel.startsWith("ALL")) return true;
+            if (nivel.startsWith("NONE") || nivel.startsWith("READ_ONLY")) return false;
+            
+            if (action === 'update' || action === 'delete') {
+                if (nivel.startsWith("OWNER_ONLY")) return this.context.ownerOf.includes(idStr);
+                if (nivel.startsWith("MEMBER_ONLY")) return this.context.memberOf.includes(idStr) || this.context.ownerOf.includes(idStr);
+            }
+            
+            if (action === 'create') {
+                if (nivel.startsWith("OWNER") || nivel.startsWith("MEMBER")) return true;
+            }
+            
+            return false;
+        }
+    };
+  </script>
+</head>
+<body>
+  <ion-app>
+
+    <!-- SPLIT PANE — 3-State Sidebar (Regla UI §13) -->
+    <ion-split-pane id="split-pane-shell" content-id="main-content" when="lg">
+
+      <!-- SIDEBAR -->
+      <ion-menu content-id="main-content" side="start">
+        <ion-header class="ion-no-border">
+          <div class="sidebar-brand-container">
+            <div class="sidebar-logo-box">
+              <ion-icon name="aperture-outline"></ion-icon>
+            </div>
+            <span class="sidebar-app-title">Sistema de Taxonomía</span>
+          </div>
+        </ion-header>
+        <ion-content>
+          <ion-list id="main-nav-list" lines="none" style="display:block;"></ion-list>
+          <ion-list id="sidebarList"   lines="none" class="ion-hide"></ion-list>
+        </ion-content>
+        <ion-footer class="ion-no-border" style="background: transparent;">
+          <div class="build-tracker" style="padding: 10px 15px; border-top: 1px solid var(--ion-color-step-100);">
+            <span class="build-version">
+              <ion-icon name="git-branch-outline" style="vertical-align:middle;font-size: var(--sys-font-xs, 10px);margin-right:4px;"></ion-icon>
+              <?= APP_VERSION ?>
+            </span>
+            <span class="build-hash">sha: dynamic &middot; dev-build</span>
+          </div>
+        </ion-footer>
+      </ion-menu>
+
+      <!-- CONTENT AREA -->
+      <div class="ion-page" id="main-content">
+        <ion-header class="ion-no-border" style="background: transparent;">
+          <ion-toolbar style="--background: transparent;">
+            <ion-buttons slot="start" class="hide-on-mobile">
+              <ion-menu-button class="hide-on-desktop"></ion-menu-button>
+              <ion-button class="hide-on-mobile" fill="clear" data-action="nav:toggle-menu">
+                <ion-icon slot="icon-only" name="menu-outline"></ion-icon>
+              </ion-button>
+              <ion-button id="global-back-btn" color="primary" fill="clear" class="ion-hide" data-action="nav:dashboard">
+                <ion-icon slot="icon-only" name="arrow-back-outline"></ion-icon>
+              </ion-button>
+            </ion-buttons>
+            <!-- Top Segments for Layout Navigation -->
+            <div class="hide-on-mobile" style="display: flex; justify-content: flex-start; align-items: center; min-height: var(--toolbar-standard-height, 56px);">
+              <ion-segment mode="ios" value="selfservice" id="main-layout-segment" class="main-layout-segment" style="width: auto;">
+                <ion-segment-button value="selfservice">
+                  <ion-label>Inicio</ion-label>
+                </ion-segment-button>
+                <ion-segment-button value="dashboard">
+                  <ion-label>App</ion-label>
+                </ion-segment-button>
+              </ion-segment>
+            </div>
+            
+            <ion-buttons slot="end" class="hide-on-mobile">
+              <ion-button fill="clear" data-action="theme:cycle" title="Cambiar Tema">
+                <ion-icon id="theme-toggle-icon" slot="icon-only" name="moon-outline"></ion-icon>
+              </ion-button>
+              <!-- Botón Avatar de Perfil en forma de Chip -->
+              <ion-button id="user-profile-btn" fill="clear" style="--border-radius: 24px; --background: rgba(var(--ion-color-primary-rgb, 56, 128, 255), 0.08); margin-left: 8px; height: 48px; --padding-start: 6px; --padding-end: 16px; text-transform: none;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                  <div id="topbar-avatar" style="width: 36px; height: 36px; border-radius: 50%; background: rgba(var(--ion-color-primary-rgb, 56, 128, 255), 0.2); color: var(--ion-color-primary); display: flex; align-items: center; justify-content: center; font-size: 20px; overflow: hidden;">
+                    <ion-icon name="person"></ion-icon>
+                  </div>
+                  <div style="display: flex; flex-direction: column; align-items: flex-start; justify-content: center;">
+                    <span id="topbar-name" style="font-family: var(--sys-font-stack); font-size: 14px; font-weight: 600; color: var(--ion-color-dark); line-height: 1.2;">Usuario</span>
+                    <span id="topbar-email" style="font-family: var(--sys-font-stack); font-size: 11px; font-weight: 400; color: var(--ion-color-medium); line-height: 1;">Cargando...</span>
+                  </div>
+                </div>
+              </ion-button>
+            </ion-buttons>
+          </ion-toolbar>
+
+          <!-- Popover del Perfil -->
+          <ion-popover id="profile-popover" trigger="user-profile-btn" trigger-action="click" dismiss-on-select="true">
+            <ion-content>
+              <ion-list lines="full">
+                <ion-item>
+                  <ion-avatar slot="start">
+                    <div id="popover-avatar" style="width:100%;height:100%;background:rgba(var(--ion-color-primary-rgb, 56, 128, 255), 0.2);color:var(--ion-color-primary);display:flex;align-items:center;justify-content:center;font-size:24px;overflow:hidden;">
+                      <ion-icon name="person"></ion-icon>
+                    </div>
+                  </ion-avatar>
+                  <ion-label>
+                    <h2 id="popover-user-name" style="font-weight:600;">Usuario</h2>
+                    <p id="popover-user-role" style="font-size: 0.85em; color: var(--ion-color-medium); text-transform: uppercase;">Rol: Consultando</p>
+                  </ion-label>
+                </ion-item>
+                
+                <!-- Requested Minimal Menu -->
+                <ion-item button data-dismiss="#profile-popover" data-action="profile:wip">
+                  <ion-icon name="person-circle-outline" slot="start"></ion-icon>
+                  <ion-label>Mi Perfil</ion-label>
+                </ion-item>
+                
+                <ion-item button id="popover-btn-configuracion" class="ion-hide" data-dismiss="#profile-popover" data-action="nav:designkit">
+                  <ion-icon name="settings-outline" slot="start"></ion-icon>
+                  <ion-label>Configuración</ion-label>
+                </ion-item>
+                
+                <ion-item button id="popover-btn-governance" class="ion-hide" data-dismiss="#profile-popover" data-action="nav:governance">
+                  <ion-icon name="shield-checkmark-outline" slot="start"></ion-icon>
+                  <ion-label>Seguridad</ion-label>
+                </ion-item>
+
+                <!-- [E31-S31.5] Sistema: Schema Config Studio — SUPER_ADMIN only, hidden by default -->
+                <ion-item button id="popover-btn-sistema" class="ion-hide" data-dismiss="#profile-popover" data-action="nav:sistema">
+                  <ion-icon name="server-outline" slot="start" color="warning"></ion-icon>
+                  <ion-label>Sistema</ion-label>
+                  <ion-badge slot="end" color="warning" style="font-size:0.65rem;">ADMIN</ion-badge>
+                </ion-item>
+                
+                <ion-item button lines="none" detail="false" data-dismiss="#profile-popover" data-action="auth:logout" style="--color: var(--ion-color-danger);">
+                  <ion-icon name="log-out-outline" slot="start" color="danger"></ion-icon>
+                  <ion-label color="danger">Cerrar Sesión</ion-label>
+                </ion-item>
+              </ion-list>
+            </ion-content>
+          </ion-popover>
+        </ion-header>
+
+        <ion-content class="ion-padding">
+          <div id="app-container">
+            <ion-grid>
+              <!-- Welcome Removed by S22.3 -->
+              <!-- Charts removed by S55.2 redesign -->
+              <!-- Entity Cards -->
+              <ion-row class="ion-justify-content-center" id="dashboard-cards-container"></ion-row>
+            </ion-grid>
+          </div>
+        </ion-content>
+
+        <!-- S22.5 Bottom Tab Bar Mobile (Thumb Zone) -->
+        <ion-footer class="ion-no-border hide-on-desktop">
+          <ion-tab-bar slot="bottom" id="mobile-tab-bar" style="--background: var(--ion-color-step-50);">
+            <!-- Renderizado Dinámico vía UI_Router_Schema / JS_Core -->
+          </ion-tab-bar>
+        </ion-footer>
+      </div><!-- /main-content -->
+
+    </ion-split-pane>
+  </ion-app>
+
+  <!-- V4 Declarative Templates -->
+  <template id="tmpl-datagrid-skeleton">
+    <div class="dv-card dv-card-skel">
+      <div class="dv-skeleton-row"><div class="dv-skeleton-cell" style="width:80px;"></div><div class="dv-skeleton-cell" style="width:160px;"></div><div class="dv-skeleton-cell" style="width:120px;"></div><div class="dv-skeleton-cell" style="width:100px;"></div><div class="dv-skeleton-cell" style="width:90px;"></div></div>
+      <div class="dv-skeleton-row"><div class="dv-skeleton-cell" style="width:80px;"></div><div class="dv-skeleton-cell" style="width:160px;"></div><div class="dv-skeleton-cell" style="width:120px;"></div><div class="dv-skeleton-cell" style="width:100px;"></div><div class="dv-skeleton-cell" style="width:90px;"></div></div>
+      <div class="dv-skeleton-row"><div class="dv-skeleton-cell" style="width:80px;"></div><div class="dv-skeleton-cell" style="width:160px;"></div><div class="dv-skeleton-cell" style="width:120px;"></div><div class="dv-skeleton-cell" style="width:100px;"></div><div class="dv-skeleton-cell" style="width:90px;"></div></div>
+      <div class="dv-skeleton-row"><div class="dv-skeleton-cell" style="width:80px;"></div><div class="dv-skeleton-cell" style="width:160px;"></div><div class="dv-skeleton-cell" style="width:120px;"></div><div class="dv-skeleton-cell" style="width:100px;"></div><div class="dv-skeleton-cell" style="width:90px;"></div></div>
+      <div class="dv-skeleton-row"><div class="dv-skeleton-cell" style="width:80px;"></div><div class="dv-skeleton-cell" style="width:160px;"></div><div class="dv-skeleton-cell" style="width:120px;"></div><div class="dv-skeleton-cell" style="width:100px;"></div><div class="dv-skeleton-cell" style="width:90px;"></div></div>
+    </div>
+  </template>
+
+  <template id="tmpl-datagrid-error">
+    <div class="dv-card">
+      <div class="dv-empty">
+        <div class="dv-empty-icon">⚠️</div>
+        <h3 class="dv-error-title">No pudimos cargar la información.</h3>
+        <p>Por favor, refresca la página para intentar de nuevo.</p>
+        <p class="dv-error-desc" data-errormsg></p>
+      </div>
+    </div>
+  </template>
+
+  <template id="tmpl-datagrid-empty">
+    <div class="dv-card">
+      <div class="dv-empty">
+        <div class="dv-empty-icon">
+          <ion-icon class="dv-folder-icon" name="folder-open-outline"></ion-icon>
+        </div>
+        <h3>Sin resultados</h3>
+        <p>No se encontraron registros. Prueba con otros términos de búsqueda o crea un nuevo registro.</p>
+      </div>
+    </div>
+  </template>
+
+  <template id="tmpl-dashboard">
+    <ion-grid>
+      <ion-row class="ion-justify-content-center" id="dashboard-cards-container"></ion-row>
+      <!-- Directorio de Disciplinas / Roles -->
+      <ion-row class="ion-justify-content-center" id="dashboard-directory-container" style="margin-top: 32px; width: 100%;"></ion-row>
+    </ion-grid>
+  </template>
+
+
+
+  <template id="tmpl-dashboard-error">
+    <div style="width: 100%; text-align: center; padding: 2rem;">
+      <ion-icon name="warning-outline" color="warning" style="font-size: 4rem; opacity: 0.5;"></ion-icon>
+      <h3 style="color: var(--ion-color-medium); margin-top: 1rem;">No pudimos cargar las estadísticas</h3>
+      <p style="color: var(--ion-color-medium);">Intenta refrescar la pantalla para reconectar.</p>
+    </div>
+  </template>
+
+  <!-- Map Templates removed by S55.2 redesign -->
+  <!-- MOTORES LOGICOS (Regla UI §14) -->
+  <?!= include('JS_SchemaUtils'); ?>
+  <?!= include('JS_ValidationEngine'); ?>
+  <?!= include('JS_GraphUtils'); ?>
+  <?!= include('DataAPI'); ?>
+  <?!= include('JS_Core'); ?>
+  <?!= include('Omnibar_UI'); ?>
+  <?!= include('UI_Router'); ?>
+  <?!= include('UI_DataGrid_Controller'); ?>
+  <?!= include('UI_DataGrid'); ?>
+  <?!= include('UI_Components'); ?>
+  <?!= include('UI_Factory'); ?>
+  <?!= include('UI_DrawerManager'); ?>
+  <?!= include('FormBuilder_Inputs_Complex'); ?>
+  <?!= include('FormBuilder_Inputs'); ?>
+  <?!= include('UI_Component_MicroserviceSetup'); ?>
+  <?!= include('UI_Component_DynamicList'); ?>
+  <?!= include('UI_Component_TXSearchable'); ?>
+  <?!= include('UI_Factory_Searchables'); ?>
+  <?!= include('UI_Component_RelationBuilder'); ?>
+  <?!= include('UI_Component_FileUpload'); ?>
+  <?!= include('UI_Component_DashboardCardCont'); ?>
+  <?!= include('SubgridState'); ?>
+  <?!= include('UI_SubgridBuilder'); ?>
+  <?!= include('Math_Engine'); ?>
+  <?!= include('UI_PanZoomManager'); ?>
+  <?!= include('JS_GraphUtils'); ?>
+  <?!= include('UI_FormUtils'); ?>
+  <?!= include('FormEngine_Resolvers'); ?>
+  <?!= include('UI_FormDependencies'); ?>
+  <?!= include('UI_FormStepper'); ?>
+  <?!= include('UI_FormSubmitter'); ?>
+  <?!= include('FormRenderer_UI'); ?>
+  <?!= include('SelfService_Home_UI'); ?>
+  <?!= include('DataEngine_UI'); ?>
+  <?!= include('DataEngine_ETL'); ?>
+  <?!= include('DataEngine_ETL_Capacidades'); ?>
+  <?!= include('UI_Component_BulkImporter'); ?>
+  <?!= include('UI_Component_CanvasLauncher'); ?>
+  <?!= include('UI_CanvasNodeFactory'); ?>
+  <?!= include('UI_CanvasInteractions'); ?>
+  <?!= include('UI_View_FlujoCanvas'); ?>
+  <?!= include('UI_Component_EmbeddedDataView'); ?>
+  <?!= include('UI_ETL_Modal'); ?>
+  <?!= include('UI_UniversalFilter'); ?>
+  <?!= include('UI_DataView_Toolbar'); ?>
+  <?!= include('DataView_DragDrop'); ?>
+  <?!= include('UI_View_Tree'); ?>
+  <?!= include('UI_View_ECharts'); ?>
+  <?!= include('DataView_UI'); ?>
+  <?!= include('UI_Component_EntityDirectory'); ?>
+  <?!= include('Dashboard_UI'); ?>
+  <!-- Maps removed by S55.2 redesign -->
+  <?!= include('UI_View_SwimlaneGrid'); ?>
+  <?!= include('Vendor_ApexTree'); ?>
+  <?!= include('UI_View_Organigrama'); ?>
+  <?!= include('Schema_Studio_UI'); ?>
+  <?!= include('Governance_Admin_UI'); ?>
+  <?!= include('Auth_UI'); ?>
+  <!-- [QA_MODULE_START] -->
+  <?!= include('TEST_Suite_UI'); ?>
+  <!-- [QA_MODULE_END] -->
+</body>
+</html>
