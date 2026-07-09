@@ -1,0 +1,38 @@
+artifact_type: story-design
+version: 1
+skill: rai-story-design
+created: '2026-07-08T18:32:00Z'
+story: 'S61.2'
+epic: 'E61'
+content:
+  summary: 'Mover la lógica dura de entidades a APP_SCHEMAS (onRowTransform) para hacer el motor agnóstico.'
+  complexity: moderate
+  acceptance_criteria:
+    - id: AC1
+      description: 'Engine_ETL.js no debe tener referencias fuertes a entidades específicas (ej. Dominio).'
+      verifiable: true
+    - id: AC2
+      description: 'El ETLEngine debe ejecutar onRowTransform (si existe) en los registros importados.'
+      verifiable: true
+    - id: AC3
+      description: 'La importación de Dominio debe seguir mapeando correctamente las columnas.'
+      verifiable: true
+  integration_points:
+    - module: 'core.ETLEngine'
+      change_type: modification
+      files: ['src/core/ETLEngine.js']
+    - module: 'schema.Dominio'
+      change_type: modification
+      files: ['src/Schema_Engine.js']
+    - module: 'backend.Engine_ETL'
+      change_type: modification
+      files: ['src/Engine_ETL.js']
+  decisions:
+    - id: D1
+      choice: 'Mapear a nivel de fila (onRowTransform) en vez de nivel de matriz (onBeforeImport)'
+      rationale: 'Facilita la lógica de transformación por registro y abstrae la necesidad de lidiar con cabeceras dinámicas.'
+      alternatives_considered: ['Crear onHeaderTransform exclusivo para las cabeceras', 'Interceptar la lectura directamente en GoogleSheetsProvider']
+refs:
+  backlog_item: ''
+  epic_scope: 'work/epics/e61-enterprise-etl-architecture/scope.md'
+metadata: {}

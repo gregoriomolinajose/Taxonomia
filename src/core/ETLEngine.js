@@ -10,7 +10,17 @@ class ETLEngine {
      * @param {string} entityName 
      */
     extractData(entityName) {
-        return this.provider.read(entityName);
+        let rawRecords = this.provider.read(entityName);
+        
+        // Invoke metadata hooks if defined
+        if (typeof APP_SCHEMAS !== 'undefined') {
+            const schema = APP_SCHEMAS[entityName];
+            if (schema && schema.etlHooks && typeof schema.etlHooks.onRowTransform === 'function') {
+                rawRecords = rawRecords.map(row => schema.etlHooks.onRowTransform(row));
+            }
+        }
+        
+        return rawRecords;
     }
 
     /**

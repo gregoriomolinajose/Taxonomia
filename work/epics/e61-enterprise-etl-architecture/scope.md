@@ -126,7 +126,7 @@ Stream 2 (Parallel):           S61.3 (Validation) ───┘
 
 | Story | Size | Status | Actual | Velocity | Notes |
 |-------|:----:|:------:|:------:|:--------:|-------|
-| S61.1 | S | Pending | — | — | |
+| S61.1 | S | Done | — | — | |
 | S61.2 | M | Pending | — | — | |
 | S61.3 | M | Pending | — | — | |
 | S61.4 | L | Pending | — | — | |

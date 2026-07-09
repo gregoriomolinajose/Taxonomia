@@ -238,6 +238,29 @@ var APP_SCHEMAS = {
   },
   Dominio: {
     metadata: { prefix: 'DOMI', showInMenu: true, order: 3, iconName: 'globe-outline', color: 'primary', label: 'Dominios', titleField: 'nombre', idField: 'id_dominio', fkField: null, governancePolicy: 'exempt_from_strict_readonly', deletionStrategy: 'GRANDPARENT' },
+    etlHooks: {
+        onRowTransform: function(row) {
+            const rawKeys = Object.keys(row);
+            rawKeys.forEach(k => {
+                let lowKey = k.toLowerCase().trim();
+                let mappedKey = k;
+                
+                if (lowKey === 'nivel subdominio') mappedKey = 'nivel_tipo';
+                else if (lowKey === 'orden. subdominio' || lowKey === 'orden subdominio' || lowKey === 'orden') mappedKey = 'orden_path';
+                else if (lowKey === 'subdominio') mappedKey = 'nombre_ingles';
+                else if (lowKey === 'nombre español' || lowKey === 'nombre espanol') mappedKey = 'nombre';
+                else if (lowKey === 'definición' || lowKey === 'definicion') mappedKey = 'descripcion';
+                else if (lowKey === 'abreviación (nombre servicio)' || lowKey === 'abreviacion (nombre servicio)') mappedKey = 'abreviacion';
+                else if (lowKey === 'abreviación (path servicio)' || lowKey === 'abreviacion (path servicio)') mappedKey = 'path_completo_es';
+                
+                if (mappedKey !== k) {
+                    row[mappedKey] = row[k];
+                    delete row[k];
+                }
+            });
+            return row;
+        }
+    },
     topological_metadata: {
       ownerFields: ["gerente_dominio_id"]
     },
