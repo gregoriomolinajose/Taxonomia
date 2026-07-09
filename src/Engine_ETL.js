@@ -155,8 +155,7 @@ var Engine_ETL = (function() {
 
     // 5. Hacer el archivo editable para el tester/usuario final
     try {
-      const file = DriveApp.getFileById(ss.getId());
-      file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.EDIT);
+      // Eliminado por restricción de GCP: Drive API bloqueada en la organización
     } catch(e) {
       if (typeof Logger !== 'undefined') Logger.log("Error al aplicar permisos a la plantilla: " + e.toString());
     }
@@ -175,7 +174,22 @@ var Engine_ETL = (function() {
     if (!columns || columns.length === 0) throw new Error("No hay configuración de columnas.");
     
     // Omitir campos de sistema explícitamente para asegurar que la descarga sirva como "Plantilla Limpia"
-    const SYS_COLS = ['created_at', 'create_by', 'created_by', 'updated_at', 'update_at', 'update_by', 'deleted_at', 'deleted_by', 'version', '_version'];
+    const SYS_COLS = ['created_at', 'create_by', 'created_by', 'updated_at', 'update_at', 'update_by', 'deleted_at', 'deleted_by', 'version', '_version', '_checkbox_', '_row_num_'];
+    
+    let pkCol = 'id';
+    try {
+      if (typeof getAppSchema === 'function') {
+        const schema = getAppSchema(entityName);
+        if (schema && schema.primaryKey) pkCol = schema.primaryKey;
+      }
+    } catch(e) {}
+    
+    // Si es una plantilla vacía (sin filas), omitir también la llave primaria para no confundir al usuario (ej. ID)
+    if (!rows || rows.length === 0) {
+      SYS_COLS.push(pkCol);
+      SYS_COLS.push('id');
+    }
+
     
     // WYSIWYG mode: Only export visible columns
     const visibleCols = columns.filter(c => c.visible && !SYS_COLS.includes(c.key || c.name));
@@ -226,8 +240,7 @@ var Engine_ETL = (function() {
     
     // 3. Hacer el archivo editable para el tester/usuario final
     try {
-      const file = DriveApp.getFileById(ss.getId());
-      file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.EDIT);
+      // Eliminado por restricción de GCP: Drive API bloqueada en la organización
     } catch(e) {
       if (typeof Logger !== 'undefined') Logger.log("Error al aplicar permisos a la exportación: " + e.toString());
     }
@@ -258,15 +271,9 @@ var Engine_ETL = (function() {
 
     let ss;
     try {
-      const file = DriveApp.getFileById(sheetId);
-      const mime = file.getMimeType();
-      if (mime !== MimeType.GOOGLE_SHEETS) {
-        throw new Error("El archivo no es un Google Sheet nativo (MimeType: " + mime + "). Si es un archivo de Excel (.xlsx), ábrelo y selecciona 'Archivo > Guardar como hoja de cálculo de Google'.");
-      }
       ss = SpreadsheetApp.openById(sheetId);
     } catch (e) {
-      if (e.message.includes("MimeType")) throw e; // Re-throw our explicit error
-      throw new Error("El archivo introducido es inaccesible o no es una Hoja de Cálculo válida de Google Sheets. Verifica los permisos de Drive. (" + e.message + ")");
+      throw new Error("El archivo introducido es inaccesible o no es una Hoja de Cálculo válida de Google Sheets. Asegúrate de que no sea un .xlsx. (" + e.message + ")");
     }
     
     const sheets = ss.getSheets();
@@ -289,7 +296,7 @@ var Engine_ETL = (function() {
             
             const firstRow = tempSheet.getRange(1, 1, 1, lastCol).getValues()[0];
             const fileHeaders = firstRow.map(k => {
-                let lowKey = String(k).trim().toLowerCase().replace(/\s+/g, ' ');
+                let lowKey = getFieldNameFromLabel(entityName, k);
                 if (entityName === 'Dominio') {
                     if (lowKey === 'nivel subdominio') lowKey = 'nivel_tipo';
                     else if (lowKey === 'orden. subdominio' || lowKey === 'orden subdominio' || lowKey === 'orden') lowKey = 'orden_path';
@@ -299,6 +306,7 @@ var Engine_ETL = (function() {
                     else if (lowKey === 'abreviación (nombre servicio)' || lowKey === 'abreviacion (nombre servicio)') lowKey = 'abreviacion';
                     else if (lowKey === 'abreviación (path servicio)' || lowKey === 'abreviacion (path servicio)') lowKey = 'path_completo_es';
                 }
+                
                 return lowKey;
             });
 
@@ -530,17 +538,11 @@ var Engine_ETL = (function() {
       }
       
       let ss;
-      try {
-          const file = DriveApp.getFileById(sheetId);
-          const mime = file.getMimeType();
-          if (mime !== MimeType.GOOGLE_SHEETS) {
-              throw new Error("El archivo no es un Google Sheet nativo. (Detectado: " + mime + ")");
-          }
+        try {
           ss = SpreadsheetApp.openById(sheetId);
-      } catch (e) {
-          if (e.message.includes("nativo")) throw e;
-          throw new Error("El archivo introducido es inaccesible o no es válido. Verifica los permisos de Drive. (" + e.message + ")");
-      }
+        } catch(e) {
+          throw new Error("El archivo introducido es inaccesible o no es válido. Asegúrate de que no sea un .xlsx. (" + e.message + ")");
+        }
       
       const sheets = ss.getSheets();
       let bestSheet = sheets[0];
@@ -566,7 +568,9 @@ var Engine_ETL = (function() {
               
               let matchCount = 0;
               fileHeaders.forEach(h => {
-                  if (schemaFields.includes(h) || h === 'id' || h.startsWith('sys_') || h.startsWith('file_')) {
+                  let mappedKey = getFieldNameFromLabel(entityName, h);
+                  
+                  if (schemaFields.includes(mappedKey) || mappedKey === 'id' || mappedKey.startsWith('sys_') || mappedKey.startsWith('file_')) {
                       matchCount++;
                   }
               });

@@ -1,3 +1,4 @@
+<script>
 /**
  * DataEngine_ETL.client.js
  * 
@@ -82,7 +83,7 @@
             });
             
             const fileHeaders = Array.from(fileHeadersSet).map(k => {
-                let lowKey = window.Schema_Utils.getFieldNameFromLabel(entityName, k);
+                let lowKey = getFieldNameFromLabel(entityName, k);
                 if (entityName === 'Dominio') {
                     if (lowKey === 'nivel subdominio') lowKey = 'nivel_tipo';
                     else if (lowKey === 'orden. subdominio' || lowKey === 'orden subdominio' || lowKey === 'orden') lowKey = 'orden_path';
@@ -120,7 +121,7 @@
                     if (row.hasOwnProperty(originalKey)) {
                         let key = originalKey;
                         let value = row[originalKey];
-                        let lowKey = window.Schema_Utils.getFieldNameFromLabel(entityName, key);
+                        let lowKey = getFieldNameFromLabel(entityName, key);
                         key = lowKey; // Mantenemos coherencia con el motor
                         
                         // S47: Resolución de alias visuales para Dominios
@@ -543,3 +544,5 @@
     global.DataEngine_ETL = DataEngine_ETL;
 
 })(typeof window !== 'undefined' ? window : this);
+
+</script>
