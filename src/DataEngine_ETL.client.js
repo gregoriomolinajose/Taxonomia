@@ -120,6 +120,13 @@
                     if (row.hasOwnProperty(originalKey)) {
                         let key = originalKey;
                         let value = row[originalKey];
+                        
+                        // Preserve metadata fields like _sheetId and _rowIndex
+                        if (key.startsWith('_')) {
+                            cleanRow[key] = value;
+                            continue;
+                        }
+                        
                         let lowKey = window.Schema_Utils.getFieldNameFromLabel(entityName, key);
                         key = lowKey; // Mantenemos coherencia con el motor
                         
