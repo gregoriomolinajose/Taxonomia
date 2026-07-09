@@ -273,60 +273,52 @@
             let currentSheetId = (parsedData.length > 0 && parsedData[0]._sheetId) ? parsedData[0]._sheetId : null;
             let currentSheetName = (parsedData.length > 0 && parsedData[0]._sheetName) ? parsedData[0]._sheetName : null;
 
-            // S45.6 Validación Pre-Vuelo Estricta (Solo Persona)
+            // S61.3 Validación Pre-Vuelo Estricta Centralizada
             let validData = [];
-            if (entityName === 'Persona') {
-                // [E6-S64] Dominios desde ENV_CONFIG inyectado por server, o [] si no configurado (falla explícita).
-                const allowedDomains = (window.ENV_CONFIG && window.ENV_CONFIG.ALLOWED_DOMAINS && window.ENV_CONFIG.ALLOWED_DOMAINS.length > 0)
-                    ? window.ENV_CONFIG.ALLOWED_DOMAINS
-                    : [];
+            
+            // [E6-S64] Dominios desde ENV_CONFIG inyectado por server, o [] si no configurado (falla explícita).
+            const allowedDomains = (window.ENV_CONFIG && window.ENV_CONFIG.ALLOWED_DOMAINS && window.ENV_CONFIG.ALLOWED_DOMAINS.length > 0)
+                ? window.ENV_CONFIG.ALLOWED_DOMAINS
+                : [];
                 
-                parsedData.forEach((row, index) => {
-                    // Buscar la llave "correo" o "email" ignorando mayúsculas
-                    const emailKey = Object.keys(row).find(k => k.trim().toLowerCase() === 'correo' || k.trim().toLowerCase() === 'email' || k.trim().toLowerCase() === 'correo corporativo');
-                    const email = (emailKey && row[emailKey] ? String(row[emailKey]) : "").trim().toLowerCase();
+            parsedData.forEach((row, index) => {
+                // Validación de Esquema Centralizada
+                const validation = window.ValidationEngine.validate(row, entityName, { partial: false });
+                
+                if (!validation.isValid) {
+                    metrics.error++;
+                    accumulatedFeedback.push({
+                        status: 'error',
+                        _rowIndex: row._rowIndex || (index + 2), // Fallback to assumed CSV line if no sheet index
+                        message: validation.errors[0].message
+                    });
+                    return;
+                }
+                
+                const validatedRow = validation.validatedData;
+                
+                // Regla de Negocio Específica: Dominios permitidos para Persona
+                if (entityName === 'Persona' && allowedDomains.length > 0) {
+                    const emailKey = Object.keys(validatedRow).find(k => k.trim().toLowerCase() === 'correo' || k.trim().toLowerCase() === 'email' || k.trim().toLowerCase() === 'correo corporativo');
+                    const email = (emailKey && validatedRow[emailKey] ? String(validatedRow[emailKey]) : "").trim().toLowerCase();
                     
-                    if (!email) {
-                        metrics.error++;
-                        accumulatedFeedback.push({
-                            status: 'error',
-                            _rowIndex: row._rowIndex || (index + 2), // Fallback to assumed CSV line if no sheet index
-                            message: 'El correo es necesario para realizar un registro'
-                        });
-                        return;
-                    }
-                    
-                    // Validar formato de correo básico
-                    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-                    if (!emailRegex.test(email)) {
-                        metrics.error++;
-                        accumulatedFeedback.push({
-                            status: 'error',
-                            _rowIndex: row._rowIndex || (index + 2),
-                            message: 'El formato del correo no es valido'
-                        });
-                        return;
-                    }
-                    
-                    // Validar dominio solo si hay dominios configurados
-                    if (allowedDomains.length > 0) {
-                        const domainMatch = allowedDomains.some(d => email.endsWith(d.toLowerCase()));
+                    if (email) {
+                        const domain = email.split('@').pop();
+                        const domainMatch = allowedDomains.some(d => domain === d.toLowerCase().replace(/^@/, ''));
                         if (!domainMatch) {
                             metrics.error++;
                             accumulatedFeedback.push({
                                 status: 'error',
-                                _rowIndex: row._rowIndex || (index + 2),
+                                _rowIndex: validatedRow._rowIndex || (index + 2),
                                 message: 'El dominio del correo no es valido'
                             });
                             return;
                         }
                     }
-                    
-                    validData.push(row);
-                });
-            } else {
-                validData = parsedData;
-            }
+                }
+                
+                validData.push(validatedRow);
+            });
 
             const CHUNK_SIZE = 50; 
             const totalChunks = Math.ceil(validData.length / CHUNK_SIZE);
