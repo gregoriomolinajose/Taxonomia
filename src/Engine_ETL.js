@@ -297,16 +297,6 @@ var Engine_ETL = (function() {
             const firstRow = tempSheet.getRange(1, 1, 1, lastCol).getValues()[0];
             const fileHeaders = firstRow.map(k => {
                 let lowKey = getFieldNameFromLabel(entityName, k);
-                if (entityName === 'Dominio') {
-                    if (lowKey === 'nivel subdominio') lowKey = 'nivel_tipo';
-                    else if (lowKey === 'orden. subdominio' || lowKey === 'orden subdominio' || lowKey === 'orden') lowKey = 'orden_path';
-                    else if (lowKey === 'subdominio') lowKey = 'nombre_ingles';
-                    else if (lowKey === 'nombre español' || lowKey === 'nombre espanol') lowKey = 'nombre';
-                    else if (lowKey === 'definición' || lowKey === 'definicion') lowKey = 'descripcion';
-                    else if (lowKey === 'abreviación (nombre servicio)' || lowKey === 'abreviacion (nombre servicio)') lowKey = 'abreviacion';
-                    else if (lowKey === 'abreviación (path servicio)' || lowKey === 'abreviacion (path servicio)') lowKey = 'path_completo_es';
-                }
-                
                 return lowKey;
             });
 
@@ -359,7 +349,13 @@ var Engine_ETL = (function() {
             record._sheetId = sheetId;
             record._sheetName = sheet.getName();
             record._rowIndex = i + 1; // 1-indexed for SpreadsheetApp (row 1 is header)
-            records.push(record);
+            
+            // Aplicar hook de metadatos si está definido
+            if (typeof APP_SCHEMAS !== 'undefined' && APP_SCHEMAS[entityName] && APP_SCHEMAS[entityName].etlHooks && typeof APP_SCHEMAS[entityName].etlHooks.onRowTransform === 'function') {
+                records.push(APP_SCHEMAS[entityName].etlHooks.onRowTransform(record));
+            } else {
+                records.push(record);
+            }
         }
     }
     

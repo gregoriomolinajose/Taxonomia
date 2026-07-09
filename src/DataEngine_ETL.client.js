@@ -147,6 +147,7 @@
                         cleanRow[key] = value;
                     }
                 }
+                
                 return cleanRow;
             });
             

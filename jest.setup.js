@@ -1,9 +1,12 @@
 // vi.setup.js
 // Global Mocks for Google Apps Script Environment
+if (typeof vi === 'undefined' && typeof jest !== 'undefined') {
+    global.vi = jest;
+}
 
 global.Logger = {
     log: vi.fn(),
-    console: vi.fn()
+    console: console
 };
 
 global.Session = {
