@@ -169,9 +169,15 @@ function _reconcileEntity(ss, entityName) {
  * @returns {string[]} Array of column names in declaration order.
  */
 function _getCanonicalHeaders(schema) {
-  return (schema.fields || [])
+  const baseHeaders = (schema.fields || [])
     .filter(f => !PROVISIONER_CONFIG.EXCLUDED_FIELD_TYPES.includes(f.type))
     .map(f => f.name);
+    
+  // Adapter_Sheets.js forcefully injects these fields into all tables, 
+  // so they must be considered canonical to avoid being marked as orphans.
+  const auditFields = ['lexical_id', 'created_at', 'created_by', 'updated_at', 'updated_by', 'deleted_at', 'deleted_by', '_version'];
+  
+  return [...new Set([...baseHeaders, ...auditFields])];
 }
 
 /**
