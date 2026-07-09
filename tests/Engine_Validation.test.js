@@ -86,4 +86,34 @@ describe('ValidationEngine - Basic Structure (T1)', () => {
             expect(result.errors.length).toBe(0);
         });
     });
+
+    describe('Response Standardization & Partial Validation (T3)', () => {
+        test('should return standardized response object', () => {
+            const row = { id: '123', name: 'John Doe' };
+            const result = ValidationEngine.validate(row, 'TestEntity');
+            
+            expect(result).toHaveProperty('isValid');
+            expect(result).toHaveProperty('errors');
+            expect(result).toHaveProperty('validatedData');
+            expect(Array.isArray(result.errors)).toBe(true);
+        });
+
+        test('should allow partial validation (skipping required checks)', () => {
+            const row = { id: '123' }; // missing required 'name'
+            // pass { partial: true } to skip required validation
+            const result = ValidationEngine.validate(row, 'TestEntity', { partial: true });
+
+            expect(result.isValid).toBe(true);
+            expect(result.errors.length).toBe(0);
+        });
+
+        test('partial validation should still validate types if present', () => {
+            const row = { id: '123', emailField: 'invalid-email' }; 
+            const result = ValidationEngine.validate(row, 'TestEntity', { partial: true });
+
+            expect(result.isValid).toBe(false);
+            expect(result.errors.length).toBe(1);
+            expect(result.errors[0].field).toBe('emailField');
+        });
+    });
 });
