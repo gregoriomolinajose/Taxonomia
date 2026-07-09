@@ -1,0 +1,35 @@
+artifact_type: story-design
+version: 1
+skill: rai-story-design
+created: '2026-07-09T09:51:11-06:00'
+story: 'S61.3'
+epic: 'E61'
+content:
+  summary: 'A centralized ValidationEngine that ensures data integrity and consistency for both ingestion and UI.'
+  complexity: moderate
+  acceptance_criteria:
+    - id: AC1
+      description: 'ValidationEngine validates data against corresponding schema in APP_SCHEMAS'
+      verifiable: true
+    - id: AC2
+      description: 'Returns valid rows and standardized validation errors for invalid rows'
+      verifiable: true
+    - id: AC3
+      description: 'Provides instant feedback for UI interactions based on the same schema'
+      verifiable: true
+  integration_points:
+    - module: 'src'
+      change_type: new
+      files: ['src/Engine_Validation.js']
+    - module: 'tests'
+      change_type: new
+      files: ['tests/Engine_Validation.test.js']
+  decisions:
+    - id: D1
+      choice: 'Create a standalone Engine_Validation.js component'
+      rationale: 'Isolates validation logic from ETL and UI components, enabling reuse.'
+      alternatives_considered: ['Embed validation inside Engine_ETL', 'Use a third-party validation library']
+refs:
+  backlog_item: 'S61.3'
+  epic_scope: 'work/epics/e61-enterprise-etl-architecture/scope.md'
+metadata: {}
