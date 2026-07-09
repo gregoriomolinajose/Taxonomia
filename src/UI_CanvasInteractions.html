@@ -1,0 +1,191 @@
+<script>
+/**
+ * UI_CanvasInteractions.client.js
+ * 
+ * Centraliza las interacciones avanzadas de los nodos del Canvas (Drag & Drop, Edición en Línea).
+ * Abstrae el estado complejo fuera de las Vistas para cumplir con DRY.
+ */
+window.UI_CanvasInteractions = (function() {
+    
+    /**
+     * Aplica la API de Drag & Drop de HTML5 a un nodo.
+     * @param {HTMLElement} nodeEl El elemento DOM a hacer arrastrable.
+     * @param {Object} context Datos del nodo (ej. index actual).
+     * @param {Function} onDropCallback(draggedContext, targetContext) Callback cuando se suelta.
+     */
+    function makeDraggable(nodeEl, context, onDropCallback) {
+        nodeEl.draggable = true;
+        
+        nodeEl.addEventListener('dragstart', (e) => {
+            nodeEl.style.opacity = '0.5';
+            nodeEl.classList.add('is-dragging');
+            
+            // Guardamos el JSON del contexto actual en el dataTransfer
+            e.dataTransfer.setData('application/json', JSON.stringify(context));
+            e.dataTransfer.effectAllowed = 'move';
+        });
+        
+        nodeEl.addEventListener('dragend', () => {
+            nodeEl.style.opacity = '1';
+            nodeEl.classList.remove('is-dragging');
+            
+            // Limpiar estilos de drop en hermanos
+            const siblings = nodeEl.parentElement.children;
+            for (let sibling of siblings) {
+                sibling.style.borderLeft = '';
+                sibling.style.borderRight = '';
+                sibling.style.transform = '';
+            }
+        });
+        
+        nodeEl.addEventListener('dragover', (e) => {
+            e.preventDefault(); // Necesario para permitir el drop
+            e.dataTransfer.dropEffect = 'move';
+            
+            if (nodeEl.classList.contains('is-dragging')) return;
+            
+            // Feedback visual
+            const rect = nodeEl.getBoundingClientRect();
+            const midpoint = rect.left + rect.width / 2;
+            
+            if (e.clientX < midpoint) {
+                nodeEl.style.transform = 'translateX(5px)';
+            } else {
+                nodeEl.style.transform = 'translateX(-5px)';
+            }
+        });
+        
+        nodeEl.addEventListener('dragleave', () => {
+            if (nodeEl.classList.contains('is-dragging')) return;
+            nodeEl.style.transform = '';
+        });
+        
+        nodeEl.addEventListener('drop', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            nodeEl.style.transform = '';
+            
+            if (nodeEl.classList.contains('is-dragging')) return;
+            
+            const draggedContextStr = e.dataTransfer.getData('application/json');
+            if (!draggedContextStr) return;
+            
+            try {
+                const draggedContext = JSON.parse(draggedContextStr);
+                
+                // Determinar si insertamos antes o después
+                const rect = nodeEl.getBoundingClientRect();
+                const midpoint = rect.left + rect.width / 2;
+                const insertBefore = e.clientX < midpoint;
+                
+                if (typeof onDropCallback === 'function') {
+                    onDropCallback(draggedContext, context, insertBefore);
+                }
+            } catch(err) {
+                console.error('[CanvasInteractions] Error al parsear contexto drag:', err);
+            }
+        });
+    }
+
+    /**
+     * Convierte el texto de un nodo en un campo editable.
+     * @param {HTMLElement} nodeEl El contenedor del nodo principal.
+     * @param {HTMLElement} textEl El span donde reside el texto.
+     * @param {Function} onSaveCallback(newText) Callback invocado tras guardar.
+     */
+    function makeInlineEditable(nodeEl, textEl, onSaveCallback) {
+        textEl.style.pointerEvents = 'auto'; // Permitir clics
+        
+        textEl.addEventListener('click', (e) => {
+            e.stopPropagation(); // Evitar que el clic abra la vista modal
+            
+            if (nodeEl.classList.contains('is-editing')) return;
+            
+            const currentText = textEl.innerText;
+            nodeEl.classList.add('is-editing');
+            
+            // Ocultar texto original
+            textEl.style.display = 'none';
+            
+            // Crear input temporal
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.value = currentText;
+            input.className = 'inline-edit-input';
+            
+            // Estilos del input para heredar la apariencia
+            input.style.width = '100%';
+            input.style.background = 'rgba(255, 255, 255, 0.2)';
+            input.style.border = '1px solid rgba(255, 255, 255, 0.5)';
+            input.style.color = '#fff';
+            input.style.fontFamily = 'inherit';
+            input.style.fontSize = 'inherit';
+            input.style.fontWeight = 'inherit';
+            input.style.textAlign = 'center';
+            input.style.padding = '2px 4px';
+            input.style.outline = 'none';
+            input.style.borderRadius = '4px';
+            
+            // Insertar antes del texto original
+            nodeEl.insertBefore(input, textEl);
+            input.focus();
+            input.select();
+            
+            // Bloquear el zoom pan mientras se edita
+            if (nodeEl.closest('.tax-canvas-container') || nodeEl.closest('#vs-canvas-container')) {
+                const viewport = nodeEl.closest('.tax-canvas-container') || nodeEl.closest('#vs-canvas-container');
+                viewport.setAttribute('data-no-pan', 'true');
+            }
+
+            const commitSave = () => {
+                if (!nodeEl.classList.contains('is-editing')) return;
+                nodeEl.classList.remove('is-editing');
+                
+                const newVal = input.value.trim();
+                input.remove();
+                textEl.style.display = 'block';
+                
+                if (nodeEl.closest('.tax-canvas-container') || nodeEl.closest('#vs-canvas-container')) {
+                    const viewport = nodeEl.closest('.tax-canvas-container') || nodeEl.closest('#vs-canvas-container');
+                    viewport.removeAttribute('data-no-pan');
+                }
+                
+                if (newVal && newVal !== currentText) {
+                    textEl.innerText = newVal;
+                    if (typeof onSaveCallback === 'function') {
+                        onSaveCallback(newVal);
+                    }
+                }
+            };
+            
+            input.addEventListener('blur', commitSave);
+            
+            input.addEventListener('keydown', (ev) => {
+                // Prevenir zoom nativo al teclear ctrl/+ etc.
+                ev.stopPropagation(); 
+                
+                if (ev.key === 'Enter') {
+                    input.blur();
+                }
+                if (ev.key === 'Escape') {
+                    // Cancelar
+                    nodeEl.classList.remove('is-editing');
+                    input.remove();
+                    textEl.style.display = 'block';
+                    
+                    if (nodeEl.closest('.tax-canvas-container') || nodeEl.closest('#vs-canvas-container')) {
+                        const viewport = nodeEl.closest('.tax-canvas-container') || nodeEl.closest('#vs-canvas-container');
+                        viewport.removeAttribute('data-no-pan');
+                    }
+                }
+            });
+        });
+    }
+
+    return {
+        makeDraggable,
+        makeInlineEditable
+    };
+})();
+
+</script>

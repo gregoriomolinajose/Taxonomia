@@ -905,4 +905,55 @@ if (typeof module !== 'undefined') {
 
 
 
+// [App Filter] Keep only schemas relevant to this app
+(function() {
+    var APP_NAME = 'dev';
+    var appSchemasConfig = {
+        taxonomia: ['Taxonomia', 'Portafolio', 'Value_Stream', 'Equipo', 'Persona', 'Unidad_Negocio', '_UI_CONFIG', 'Sys_Graph_Edges', 'Sys_Cache_Signals', 'Sys_Roles', 'Sys_Permissions', 'Sys_Microservices', 'Sys_IntegrationConfig'],
+        greatpeeps: ['Empresas', 'Vacantes', 'Candidatos', 'Entrevistas', 'Persona', '_UI_CONFIG', 'Sys_Graph_Edges', 'Sys_Cache_Signals', 'Sys_Roles', 'Sys_Permissions', 'Sys_Microservices', 'Sys_IntegrationConfig']
+    };
+    var allowed = appSchemasConfig[APP_NAME] || [];
+    if (typeof APP_SCHEMAS !== 'undefined') {
+        for (var key in APP_SCHEMAS) {
+            if (allowed.indexOf(key) === -1) {
+                delete APP_SCHEMAS[key];
+            }
+        }
+        
+        // [GreatPeeps Specific Overrides]
+        if (APP_NAME === 'greatpeeps' && APP_SCHEMAS['Persona']) {
+            APP_SCHEMAS['Persona'].metadata.label = 'Usuarios del Sistema';
+            APP_SCHEMAS['Persona'].fields = [
+                { name: "id_persona", type: "hidden", primaryKey: true },
+                { name: "estado", type: "hidden", defaultValue: "Activo" },
+                { name: "nombre", type: "text", label: "Nombre", required: true, width: 6, validators: ["minLength:2"] },
+                { name: "apellidos", type: "text", label: "Apellidos", required: true, width: 6, validators: ["minLength:2"] },
+                { name: "email", type: "email", label: "Correo Corporativo", required: true, width: 6, validators: ["regex:^[a-zA-Z0-9._%+\\-]+@[a-zA-Z0-9.\\-]+\\.[a-zA-Z]{2,}$"], unique: true },
+                { name: "correo", type: "hidden" },
+                { name: "id_rol", type: "select", label: "Rol de Permisos", required: true, width: 6, lookupSource: "getSysRolesOptions", abacRule: { action: 'update', target: 'Sys_Permissions' } }
+            ];
+            // Quitar relations y topology rules que no aplican a GP
+            APP_SCHEMAS['Persona'].relationalProvisioners = [];
+            APP_SCHEMAS['Persona'].mutationInterceptors = [];
+        }
+    }
+})();
 
+(function() { 
+    var APP_NAME = 'taxonomia'; 
+    var appSchemasConfig = { 
+        taxonomia: ['Taxonomia', 'Portafolio', 'Value_Stream', 'Equipo', 'Persona', 'Unidad_Negocio', '_UI_CONFIG', 'Sys_Graph_Edges', 'Sys_Cache_Signals', 'Sys_Roles', 'Sys_Permissions', 'Sys_Microservices', 'Sys_IntegrationConfig'], 
+        greatpeeps: ['Empresas', 'Vacantes', 'Candidatos', 'Entrevistas', 'Persona', '_UI_CONFIG', 'Sys_Graph_Edges', 'Sys_Cache_Signals', 'Sys_Roles', 'Sys_Permissions', 'Sys_Microservices', 'Sys_IntegrationConfig'] 
+    }; 
+    var allowed = appSchemasConfig[APP_NAME] || appSchemasConfig['taxonomia'] || []; 
+    console.log("Allowed keys:", allowed);
+    if (typeof APP_SCHEMAS !== 'undefined') { 
+        console.log("Keys before:", Object.keys(APP_SCHEMAS));
+        for (var key in APP_SCHEMAS) { 
+            if (allowed.indexOf(key) === -1) { 
+                delete APP_SCHEMAS[key]; 
+            } 
+        } 
+        console.log("Keys after:", Object.keys(APP_SCHEMAS));
+    } 
+})();

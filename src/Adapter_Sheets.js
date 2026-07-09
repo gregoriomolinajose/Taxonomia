@@ -565,16 +565,27 @@ const Adapter_Sheets = {
         
         // Auto-inyectar headers de esquema si está recién creada, y Auto-Heal si faltan
         let schemaFields = [];
-        if (typeof APP_SCHEMAS !== 'undefined' && APP_SCHEMAS[tableName]) {
-            if (APP_SCHEMAS[tableName].fields) {
-                schemaFields = APP_SCHEMAS[tableName].fields
+        let isGetAppSchemaDefined = (typeof getAppSchema === 'function');
+        let isAppSchemasDefined = (typeof APP_SCHEMAS !== 'undefined');
+        let schemaFromFunc = isGetAppSchemaDefined ? getAppSchema(tableName) : null;
+        let schemaFromObj = isAppSchemasDefined ? APP_SCHEMAS[tableName] : null;
+        
+        Logger.log(`[_ensureSheetExists] Debug: tableName="${tableName}", isGetAppSchemaDefined=${isGetAppSchemaDefined}, isAppSchemasDefined=${isAppSchemasDefined}, schemaFromFunc exists=${!!schemaFromFunc}, schemaFromObj exists=${!!schemaFromObj}`);
+        
+        const schema = schemaFromFunc || schemaFromObj;
+        
+        if (schema) {
+            if (schema.fields) {
+                schemaFields = schema.fields
                     .filter(f => f.type !== 'divider' && f.type !== 'html' && !f.isTemporalGraph)
                     .map(f => f.name);
             } else {
-                schemaFields = Object.keys(APP_SCHEMAS[tableName]).filter(k => typeof APP_SCHEMAS[tableName][k] === 'object' && !['uiBehavior', 'relationType'].includes(k));
+                schemaFields = Object.keys(schema).filter(k => typeof schema[k] === 'object' && !['uiBehavior', 'relationType'].includes(k));
             }
         } else {
-            throw new Error(`[AR-Governance] Inferencia Bloqueada: La hoja DB_${tableName} intentó auto-crearse pero no existe un Schema con primaryKey en Schema_Engine.gs.`);
+            let debugMsg = `tableName="${tableName}", isGetAppSchemaDefined=${isGetAppSchemaDefined}, isAppSchemasDefined=${isAppSchemasDefined}, schemaFromFunc=${!!schemaFromFunc}, schemaFromObj=${!!schemaFromObj}`;
+            let keys = isAppSchemasDefined ? Object.keys(APP_SCHEMAS).join(',') : 'none';
+            throw new Error(`[AR-Governance] Inferencia bloqueada: DB_${tableName}. Debug: [${debugMsg}]. Keys: [${keys}]`);
         }
         
         const auditFields = ['lexical_id', 'created_at', 'created_by', 'updated_at', 'updated_by', 'deleted_at', 'deleted_by', '_version'];

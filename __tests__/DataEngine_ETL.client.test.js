@@ -16,7 +16,8 @@ describe('DataEngine_ETL (Frontend Client S38.6)', () => {
             call: vi.fn().mockResolvedValue({ status: 'success' })
         };
         global.DataAPI = mockDataAPI;
-        window.DataAPI = mockDataAPI; // jsdom bind
+        window.DataAPI = mockDataAPI;
+        window.Schema_Utils = { getFieldNameFromLabel: vi.fn((e, k) => String(k).toLowerCase()) }; // jsdom bind
         
         vi.clearAllMocks();
     });

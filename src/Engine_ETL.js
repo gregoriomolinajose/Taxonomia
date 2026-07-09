@@ -155,8 +155,7 @@ var Engine_ETL = (function() {
 
     // 5. Hacer el archivo editable para el tester/usuario final
     try {
-      const file = DriveApp.getFileById(ss.getId());
-      file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.EDIT);
+      // Eliminado por restricción de GCP: Drive API bloqueada en la organización
     } catch(e) {
       if (typeof Logger !== 'undefined') Logger.log("Error al aplicar permisos a la plantilla: " + e.toString());
     }
@@ -241,8 +240,7 @@ var Engine_ETL = (function() {
     
     // 3. Hacer el archivo editable para el tester/usuario final
     try {
-      const file = DriveApp.getFileById(ss.getId());
-      file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.EDIT);
+      // Eliminado por restricción de GCP: Drive API bloqueada en la organización
     } catch(e) {
       if (typeof Logger !== 'undefined') Logger.log("Error al aplicar permisos a la exportación: " + e.toString());
     }
@@ -273,15 +271,9 @@ var Engine_ETL = (function() {
 
     let ss;
     try {
-      const file = DriveApp.getFileById(sheetId);
-      const mime = file.getMimeType();
-      if (mime !== MimeType.GOOGLE_SHEETS) {
-        throw new Error("El archivo no es un Google Sheet nativo (MimeType: " + mime + "). Si es un archivo de Excel (.xlsx), ábrelo y selecciona 'Archivo > Guardar como hoja de cálculo de Google'.");
-      }
       ss = SpreadsheetApp.openById(sheetId);
     } catch (e) {
-      if (e.message.includes("MimeType")) throw e; // Re-throw our explicit error
-      throw new Error("El archivo introducido es inaccesible o no es una Hoja de Cálculo válida de Google Sheets. Verifica los permisos de Drive. (" + e.message + ")");
+      throw new Error("El archivo introducido es inaccesible o no es una Hoja de Cálculo válida de Google Sheets. Asegúrate de que no sea un .xlsx. (" + e.message + ")");
     }
     
     const sheets = ss.getSheets();
@@ -546,17 +538,11 @@ var Engine_ETL = (function() {
       }
       
       let ss;
-      try {
-          const file = DriveApp.getFileById(sheetId);
-          const mime = file.getMimeType();
-          if (mime !== MimeType.GOOGLE_SHEETS) {
-              throw new Error("El archivo no es un Google Sheet nativo. (Detectado: " + mime + ")");
-          }
+        try {
           ss = SpreadsheetApp.openById(sheetId);
-      } catch (e) {
-          if (e.message.includes("nativo")) throw e;
-          throw new Error("El archivo introducido es inaccesible o no es válido. Verifica los permisos de Drive. (" + e.message + ")");
-      }
+        } catch(e) {
+          throw new Error("El archivo introducido es inaccesible o no es válido. Asegúrate de que no sea un .xlsx. (" + e.message + ")");
+        }
       
       const sheets = ss.getSheets();
       let bestSheet = sheets[0];
