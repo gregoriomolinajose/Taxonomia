@@ -8,7 +8,9 @@ describe('ValidationEngine - Basic Structure (T1)', () => {
                 fields: [
                     { name: 'id', type: 'hidden', required: true },
                     { name: 'name', type: 'text', required: true },
-                    { name: 'optionalField', type: 'text', required: false }
+                    { name: 'optionalField', type: 'text', required: false },
+                    { name: 'emailField', type: 'email', required: false },
+                    { name: 'ageField', type: 'number', required: false }
                 ]
             }
         };
@@ -39,5 +41,49 @@ describe('ValidationEngine - Basic Structure (T1)', () => {
             value: undefined
         });
         expect(result.validatedData).toEqual({ id: '123' });
+    });
+
+    describe('Type & Format Validation (T2)', () => {
+        test('should return validation error for invalid email', () => {
+            const row = { id: '123', name: 'John Doe', emailField: 'invalid-email' };
+            const result = ValidationEngine.validate(row, 'TestEntity');
+
+            expect(result.isValid).toBe(false);
+            expect(result.errors.length).toBe(1);
+            expect(result.errors[0]).toEqual({
+                field: 'emailField',
+                message: 'Formato inválido. Se esperaba: email',
+                value: 'invalid-email'
+            });
+        });
+
+        test('should validate correct email', () => {
+            const row = { id: '123', name: 'John Doe', emailField: 'john@example.com' };
+            const result = ValidationEngine.validate(row, 'TestEntity');
+
+            expect(result.isValid).toBe(true);
+            expect(result.errors.length).toBe(0);
+        });
+
+        test('should return validation error for invalid number', () => {
+            const row = { id: '123', name: 'John Doe', ageField: 'not-a-number' };
+            const result = ValidationEngine.validate(row, 'TestEntity');
+
+            expect(result.isValid).toBe(false);
+            expect(result.errors.length).toBe(1);
+            expect(result.errors[0]).toEqual({
+                field: 'ageField',
+                message: 'Formato inválido. Se esperaba: number',
+                value: 'not-a-number'
+            });
+        });
+
+        test('should validate correct number', () => {
+            const row = { id: '123', name: 'John Doe', ageField: 25 };
+            const result = ValidationEngine.validate(row, 'TestEntity');
+
+            expect(result.isValid).toBe(true);
+            expect(result.errors.length).toBe(0);
+        });
     });
 });

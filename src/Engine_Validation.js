@@ -20,17 +20,37 @@ const ValidationEngine = {
         const errors = [];
         const validatedData = { ...row };
 
-        // T1: Basic required fields check
+        // T1 & T2: Required fields and type check
         if (schema.fields && Array.isArray(schema.fields)) {
             schema.fields.forEach(field => {
-                if (field.required) {
-                    const value = row[field.name];
-                    if (value === undefined || value === null || String(value).trim() === '') {
-                        errors.push({
-                            field: field.name,
-                            message: `Campo requerido faltante: ${field.name}`,
-                            value: value
-                        });
+                const value = row[field.name];
+                const isEmpty = (value === undefined || value === null || String(value).trim() === '');
+
+                if (field.required && isEmpty) {
+                    errors.push({
+                        field: field.name,
+                        message: `Campo requerido faltante: ${field.name}`,
+                        value: value
+                    });
+                } else if (!isEmpty) {
+                    // T2: Format validation
+                    if (field.type === 'email') {
+                        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                        if (!emailRegex.test(String(value))) {
+                            errors.push({
+                                field: field.name,
+                                message: `Formato inválido. Se esperaba: email`,
+                                value: value
+                            });
+                        }
+                    } else if (field.type === 'number') {
+                        if (isNaN(Number(value))) {
+                            errors.push({
+                                field: field.name,
+                                message: `Formato inválido. Se esperaba: number`,
+                                value: value
+                            });
+                        }
                     }
                 }
             });
