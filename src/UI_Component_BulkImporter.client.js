@@ -514,14 +514,9 @@ window.UI_BulkImporter = class UI_BulkImporter {
     }
 
     async _defaultDriveSync(entity, url) {
-        document.querySelectorAll('ion-loading.loader-etl-sync').forEach(el => el.remove());
-        
-        const loading = document.createElement('ion-loading');
-        loading.className = 'loader-etl-sync';
-        loading.message = 'Extrayendo Matriz desde Hoja de Cálculo...';
-        document.body.appendChild(loading);
-        if (typeof window.PresentSafe === 'function') await window.PresentSafe(loading);
-        else await loading.present();
+        // Mostrar UI de Progreso Inmediatamente para evitar el 'vacío' visual
+        this.updateProgress(0, 100, false, null, "Conectando y extrayendo datos (esto puede demorar unos segundos)...");
+
 
         let etlEngine = null;
         let reqOptions = {};
@@ -536,13 +531,11 @@ window.UI_BulkImporter = class UI_BulkImporter {
         }
 
         if (!etlEngine) {
-            loading.dismiss();
             return this._showToast(`No hay motor ETL cargado para procesar los registros.`, 'warning');
         }
 
         try {
             const res = await window.DataAPI.call('API_Universal_Router', 'etl_extract_sheet_data', entity, { url: url, options: reqOptions });
-            loading.dismiss();
             if (res && res.data) {
                 // S56.4: Inyección de Contexto Borrador si es llamado desde el Wizard
                 if (this.contextId && Array.isArray(res.data)) {
@@ -570,7 +563,51 @@ window.UI_BulkImporter = class UI_BulkImporter {
                         }).catch(reject);
                     });
                 } else if (etlEngine.processPayload) {
-                    etlPromise = etlEngine.processPayload(res.data, entity, progressCb);
+                    // S61.4: Enterprise ETL Architecture - Async Jobs
+                    etlPromise = new Promise((resolve, reject) => {
+                        window.DataAPI.call('API_Universal_Router', 'job_enqueue', entity, { data: res.data })
+                        .then(enqueueRes => {
+                            console.log("=== ENQUEUE RESPONSE ===", enqueueRes);
+                            if (!enqueueRes || enqueueRes.status !== 'success') {
+                                const srvMsg = (enqueueRes && enqueueRes.message) ? enqueueRes.message : 'Unknown Server Error';
+                                return reject(new Error("Error encolando job: " + srvMsg));
+                            }
+                            if (enqueueRes.debugWorker) {
+                                console.log("JobWorker Debug:", enqueueRes.debugWorker);
+                                if (enqueueRes.debugWorker.error) {
+                                    alert("CRITICAL BACKEND ERROR: " + enqueueRes.debugWorker.error);
+                                }
+                                if (enqueueRes.debugWorker.debug === "lock_failed") {
+                                    alert("El trabajador está bloqueado (lock_failed). Google tardará unos minutos en liberarlo.");
+                                }
+                            }
+                            const jobId = enqueueRes.data;
+                            progressCb(0, 100, false, null, "Trabajo encolado en el servidor...");
+                            
+                            const pollServer = () => {
+                                window.DataAPI.call('API_Universal_Router', 'job_status', entity, { jobId: jobId })
+                                .then(statusRes => {
+                                    console.log("=== STATUS RESPONSE ===", statusRes);
+                                    if(statusRes && statusRes.status === 'success' && statusRes.data) {
+                                        const job = statusRes.data;
+                                        const chunks = job.total > 0 ? job.total : 100;
+                                        progressCb(job.processed, chunks, false, null, `Procesando en servidor... ${job.processed}/${job.total}`);
+                                        if (job.status === 'COMPLETED' || job.status === 'FAILED') {
+                                            resolve({ success: job.processed - job.errors, duplicate: 0, error: job.errors });
+                                        } else {
+                                            setTimeout(pollServer, 3000);
+                                        }
+                                    } else {
+                                        setTimeout(pollServer, 3000);
+                                    }
+                                }).catch(err => {
+                                    reject(err);
+                                });
+                            };
+                            
+                            setTimeout(pollServer, 3000);
+                        }).catch(reject);
+                    });
                 } else {
                     return this._showToast(`El motor ETL no tiene un método de procesamiento compatible.`, 'warning');
                 }
@@ -618,7 +655,6 @@ window.UI_BulkImporter = class UI_BulkImporter {
                 throw new Error(res.message || "Error desconocido devuelto por el servidor.");
             }
         } catch(err) {
-            loading.dismiss();
             console.error('[ETL Fatal Error]', err);
             const urlInput = this.containerNode.querySelector('#etl-drive-url');
             if (urlInput && err.message && (err.message.includes('vací') || err.message.includes('data útil') || err.message.includes('vacio') || err.message.includes('columna correo') || err.message.includes('acceder al documento') || err.message.includes('inaccesible') || err.message.includes('MimeType'))) {

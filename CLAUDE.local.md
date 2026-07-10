@@ -3,6 +3,7 @@
 > This file is for local preferences and overrides. It is not tracked by Git.
 
 ## Current Focus
+- **Epic E61 (Enterprise ETL Architecture)**: Story S61.3 (Centralized Validation) closed. Ready for next story S61.4 (Async Job Processing).
 - **Epic E6 (Multi-Tenant Config)**: Epic E6 is closed and completed. ? Ready for next epic.
 - **Epic E56 (Wizard Bulk Import)**: Closed.
 - **Epic E57 (Technical Debt Resolution)**: Closed.

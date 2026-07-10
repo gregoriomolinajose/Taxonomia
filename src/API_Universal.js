@@ -98,6 +98,31 @@ function API_Universal_Router(action, entityName, payload) {
       return JSON.stringify({ status: "success", data: responseData, action });
     }
 
+    if (action === 'job_enqueue') {
+      if (typeof payload === 'object') {
+        payload.entity = entityName;
+      }
+      responseData = JobQueue.enqueue(payload);
+      var debugWorker = {};
+      if (typeof JobWorker !== 'undefined') {
+        // Process first chunk synchronously to avoid UI delay for small datasets
+        try {
+           debugWorker = JobWorker.processNextJobChunk() || {};
+        } catch(e) {
+           debugWorker.error = e.toString();
+           if (typeof Logger !== 'undefined') Logger.log("Error processing first chunk: " + e);
+        }
+        JobWorker.triggerProcessing();
+      }
+      return JSON.stringify({ status: "success", data: responseData, action, debugWorker: debugWorker });
+    }
+
+    if (action === 'job_status') {
+      var jobId = (typeof payload === 'object') ? payload.jobId : payload;
+      responseData = JobQueue.getJobStatus(jobId);
+      return JSON.stringify({ status: "success", data: responseData, action });
+    }
+
     if (action === 'create') {
       if (!payload[pkField] || String(payload[pkField]).trim() === '') {
         payload[pkField] = _generateShortUUID(entityName);

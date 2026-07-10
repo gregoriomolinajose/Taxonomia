@@ -338,10 +338,12 @@ var Engine_ETL = (function() {
             const header = headers[j];
             if (!header || header.trim() === '') continue; // Cabecera vacía no sirve
             
+            const mappedKey = getFieldNameFromLabel(entityName, header) || header;
+            
             const value = row[j];
             if (value !== undefined && value !== null && String(value).trim() !== '') {
                isEmptyRow = false;
-               record[header] = value;
+               record[mappedKey] = value;
             }
         }
         

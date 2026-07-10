@@ -16,8 +16,8 @@ Refactorizar el módulo de Importación/Exportación (ETL) para transformarlo en
 |----|-------|:----:|:------:|-------------|
 | S61.1 | IDataProvider Interface | S | Done | Implementar patrón Adapter para abstraer Google Sheets del motor ETL. |
 | S61.2 | Metadata Hooks Engine | M | Done | Mover lógica dura de entidades a APP_SCHEMAS (onRowTransform). |
-| S61.3 | Centralized Validation | M | Pending | Crear ValidationEngine basado en esquema para ingesta y UI. |
-| S61.4 | Async Job Processing | L | Pending | Implementar cola de tareas en backend y polling en frontend. |
+| S61.3 | Centralized Validation | M | Done | Crear ValidationEngine basado en esquema para ingesta y UI. |
+| S61.4 | Async Job Processing | L | Done | Implementar cola de tareas en backend y polling en frontend. |
 | S61.5 | Dead Letter Queue (DLQ) | L | Pending | Tabla temporal para filas con error y UI de resolución de conflictos. |
 
 **Total:** 5 stories, 21 SP
@@ -128,8 +128,8 @@ Stream 2 (Parallel):           S61.3 (Validation) ───┘
 |-------|:----:|:------:|:------:|:--------:|-------|
 | S61.1 | S | Done | — | — | |
 | S61.2 | M | Done | — | — | |
-| S61.3 | M | Pending | — | — | |
-| S61.4 | L | Pending | — | — | |
+| S61.3 | M | Done | — | — | |
+| S61.4 | L | Done | — | — | |
 | S61.5 | L | Pending | — | — | |
 
 ### Sequencing Risks
