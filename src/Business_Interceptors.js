@@ -420,6 +420,46 @@ var Business_Interceptors = (function() {
         },
 
         /**
+         * HydrateWorkspace
+         * Consulta la API de Workspace y enriquece el payload con los datos faltantes (Nombre, Cargo, Líder Directo, etc).
+         * Funciona como la Capa 1 de validación antes de la generación de stubs/relaciones.
+         */
+        HydrateWorkspace: function(entityName, items) {
+            if (entityName !== 'Persona') return;
+            if (typeof resolverDirectorioWorkspace === 'undefined') return;
+            
+            items.forEach(item => {
+                if (!item.email) return;
+
+                const queryEmail = String(item.email).trim().toLowerCase();
+                try {
+                    const wsData = resolverDirectorioWorkspace(queryEmail);
+                    if (wsData && wsData.__status !== 'DISABLED' && wsData.__status !== 'ERROR') {
+                        // Rellenar datos si vienen vacíos desde el Excel/UI
+                        if (!item.nombre && wsData.nombre) item.nombre = wsData.nombre;
+                        if (!item.apellidos && wsData.apellidos) item.apellidos = wsData.apellidos;
+                        if (!item.telefono && wsData.telefono) item.telefono = wsData.telefono;
+                        if (!item.departamento && wsData.departamento) item.departamento = wsData.departamento;
+                        if (!item.centro_costo && wsData.centro_costo) item.centro_costo = wsData.centro_costo;
+                        if (!item.cargo && wsData.cargo) item.cargo = wsData.cargo;
+                        if (!item.ubicacion && wsData.ubicacion) item.ubicacion = wsData.ubicacion;
+                        if (!item.numero_empleado && wsData.numero_empleado) item.numero_empleado = wsData.numero_empleado;
+                        if (!item.lider_directo && wsData.lider_directo) item.lider_directo = wsData.lider_directo;
+                        if (!item.avatar && wsData.avatar) item.avatar = wsData.avatar;
+                        
+                        item.workspace_sync_status = 'synced';
+                        if (typeof Logger !== 'undefined') Logger.log(`[HydrateWorkspace] Hidratado exitosamente: ${queryEmail}`);
+                    } else {
+                        item.workspace_sync_status = 'pending';
+                        if (typeof Logger !== 'undefined') Logger.log(`[HydrateWorkspace] No encontrado o error en Workspace: ${queryEmail}`);
+                    }
+                } catch(e) {
+                    if (typeof Logger !== 'undefined') Logger.log(`[HydrateWorkspace] Error al hidratar ${queryEmail}: ${e.message}`);
+                }
+            });
+        },
+
+        /**
          * AutoProvisionCargo
          */
         AutoProvisionCargo: function(entityName, items) {
