@@ -51,7 +51,11 @@ var JobWorker = (function() {
       
       if (job.status === "PENDING") {
         try {
-          JobQueue.updateJobStatus(job.jobId, { status: "PROCESSING" });
+          JobQueue.updateJobStatus(job.jobId, { 
+            status: "PROCESSING",
+            step: 3,
+            message: "Iniciando validación e inserción de datos..."
+          });
           job.status = "PROCESSING";
         } catch(e) {
           if (typeof Logger !== 'undefined') Logger.log("Error al marcar como PROCESSING: " + e.message);
@@ -223,13 +227,15 @@ var JobWorker = (function() {
       job.payload.dlq = dlq;
     }
     
-    if (newProcessed >= payloadData.length) {
+      if (newProcessed >= payloadData.length) {
       // Completed
       try {
         JobQueue.updateJobStatus(job.jobId, { 
           status: "COMPLETED", 
           processed: newProcessed,
           errors: errors,
+          step: 4,
+          message: "Consolidando resultados finales...",
           payload: job.payload
         });
       } catch(e) {
@@ -240,9 +246,12 @@ var JobWorker = (function() {
     } else {
       // Still processing, update progress
       try {
+        var pct = Math.round((newProcessed / payloadData.length) * 100) + "%";
         JobQueue.updateJobStatus(job.jobId, { 
           processed: newProcessed,
           errors: errors,
+          step: 3,
+          message: "Procesando registros (" + newProcessed + " de " + payloadData.length + ") - " + pct,
           payload: job.payload
         });
       } catch(e) {
