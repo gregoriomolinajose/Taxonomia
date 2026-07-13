@@ -19,7 +19,7 @@ Refactorizar el módulo de Importación/Exportación (ETL) para transformarlo en
 | S61.3 | Centralized Validation | M | Done | Crear ValidationEngine basado en esquema para ingesta y UI. |
 | S61.4 | Async Job Processing | L | Done | Implementar cola de tareas en backend y polling en frontend. |
 | S61.5 | Dead Letter Queue (DLQ) | L | Pending | Tabla temporal para filas con error y UI de resolución de conflictos. |
-| S61.6 | Enhanced ETL Progress UX | S | Pending | Mejorar la experiencia de carga visual con micromensajes en tiempo real. |
+| S61.6 | Enhanced ETL Progress UX | S | Done | Mejorar la experiencia de carga visual con micromensajes en tiempo real. |
 
 **Total:** 6 stories, 23 SP
 
