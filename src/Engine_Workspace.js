@@ -248,3 +248,42 @@ function searchDirectoryByName(queryName) {
     return { __status: "ERROR", message: e.message };
   }
 }
+
+/**
+ * Prueba la conexión con Google Workspace Directory API o Webhook.
+ * 
+ * @returns {Object} { status: 'success'|'error', message: string }
+ */
+function testWorkspaceConnection() {
+  try {
+    var wsConfig = _getWorkspaceConfig();
+    
+    if (!wsConfig.syncEnabled) {
+      return { status: 'error', message: 'Sincronización deshabilitada en la configuración.' };
+    }
+    
+    if (wsConfig.webhookUrl) {
+      var apiUrl = wsConfig.webhookUrl + "?q=test&secret=" + encodeURIComponent(wsConfig.webhookSecret || '');
+      var response = UrlFetchApp.fetch(apiUrl, { muteHttpExceptions: true });
+      if (response.getResponseCode() === 200) {
+        return { status: 'success', message: 'Conexión a Webhook exitosa.' };
+      } else {
+        return { status: 'error', message: 'Error en Webhook (' + response.getResponseCode() + '): ' + response.getContentText() };
+      }
+    } else {
+      if (typeof AdminDirectory === 'undefined' || !AdminDirectory.Users) {
+        return { status: 'error', message: 'API AdminDirectory no encontrada. Verifica appsscript.json.' };
+      }
+      // Llamada de prueba con límite 1
+      var testCall = AdminDirectory.Users.list({ customer: 'my_customer', maxResults: 1 });
+      if (testCall) {
+        return { status: 'success', message: 'Conexión nativa a Workspace exitosa.' };
+      } else {
+        return { status: 'error', message: 'Respuesta vacía de Workspace API.' };
+      }
+    }
+  } catch (e) {
+    Logger.log("[testWorkspaceConnection] Error: " + e.message);
+    return { status: 'error', message: e.message };
+  }
+}
