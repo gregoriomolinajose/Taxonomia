@@ -37,11 +37,33 @@ window.UI_BulkImporter = class UI_BulkImporter {
         container.className = 'etl-body';
         container.style.width = '100%';
 
+        // --- SECTION -1: Workspace Pre-flight Check ---
+        const preflightContainer = document.createElement('div');
+        preflightContainer.id = 'etl-workspace-preflight';
+        preflightContainer.style.display = 'none';
+        preflightContainer.style.marginBottom = '16px';
+        preflightContainer.innerHTML = `
+            <div style="background: var(--ion-color-danger-tint, #ffdddd); border-left: 4px solid var(--ion-color-danger); padding: 12px; border-radius: 4px; display: flex; flex-direction: column; gap: 8px;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <ion-icon name="warning-outline" color="danger" style="font-size: 20px;"></ion-icon>
+                    <span style="font-weight: 600; color: var(--ion-color-danger);">Integración Workspace Deshabilitada</span>
+                </div>
+                <div style="font-size: 13px; color: var(--ion-color-step-800);">
+                    La conexión con Google Workspace no está autorizada o está deshabilitada. No se aplicarán reglas de pre-llenado (cargos, líder directo). La carga está <b>bloqueada</b>.
+                </div>
+                <div style="display: flex; justify-content: flex-end;">
+                    <ion-button fill="outline" color="danger" size="small" id="btn-test-workspace">Probar Conexión</ion-button>
+                </div>
+            </div>
+        `;
+        container.appendChild(preflightContainer);
+
         // --- SECTION 0: Fuente de Datos (Radio Cards) ---
         const sectionTitle1 = document.createElement('div');
         sectionTitle1.className = 'etl-section-title';
         sectionTitle1.textContent = 'SELECCIONA LA FUENTE DE DATOS';
         container.appendChild(sectionTitle1);
+
 
         const radioGrid = document.createElement('div');
         radioGrid.className = 'etl-radio-grid';
@@ -200,6 +222,53 @@ window.UI_BulkImporter = class UI_BulkImporter {
 
         container.appendChild(viewSheets);
         container.appendChild(viewCSV);
+
+        // --- Workspace Pre-flight Check Logic ---
+        if (entityName === 'Persona') {
+            const isWorkspaceEnabled = (window.AppEnv && window.AppEnv.WORKSPACE_ENABLED) || false;
+            if (!isWorkspaceEnabled) {
+                preflightContainer.style.display = 'block';
+                // Hard Block
+                const btnSyncDrive = container.querySelector('#btn-sync-drive');
+                const btnSyncCsv = container.querySelector('#btn-sync-csv');
+                if (btnSyncDrive) btnSyncDrive.disabled = true;
+                if (btnSyncCsv) btnSyncCsv.disabled = true;
+            }
+            
+            const btnTest = preflightContainer.querySelector('#btn-test-workspace');
+            if (btnTest) {
+                btnTest.addEventListener('click', async () => {
+                    const originalText = btnTest.innerText;
+                    btnTest.innerText = 'Probando...';
+                    btnTest.disabled = true;
+                    try {
+                        const res = await window.DataAPI.call('testWorkspaceConnection');
+                        if (res && res.status === 'success') {
+                            this._showToast(res.message, 'success');
+                            preflightContainer.style.display = 'none'; // Se puede ocultar si la prueba fue un éxito y asume que ya sirve, o podríamos recargar
+                            // Quitamos el Hard Block
+                            const btnSyncDrive = container.querySelector('#btn-sync-drive');
+                            const btnSyncCsv = container.querySelector('#btn-sync-csv');
+                            if (btnSyncDrive) btnSyncDrive.disabled = false;
+                            // csv no lo reactivamos hasta que suban archivo, pero podemos quitar un atributo lock
+                            if (btnSyncCsv) btnSyncCsv.removeAttribute('data-hard-blocked');
+                        } else {
+                            this._showToast((res && res.message) || 'Error al conectar', 'danger');
+                        }
+                    } catch (e) {
+                        this._showToast(e.message, 'danger');
+                    } finally {
+                        btnTest.innerText = originalText;
+                        btnTest.disabled = false;
+                    }
+                });
+            }
+        }
+        // Marcar csv btn si está bloqueado
+        if (entityName === 'Persona' && !(window.AppEnv && window.AppEnv.WORKSPACE_ENABLED)) {
+            const btnSyncCsv = container.querySelector('#btn-sync-csv');
+            if (btnSyncCsv) btnSyncCsv.setAttribute('data-hard-blocked', 'true');
+        }
 
         // --- Event Listeners and Logic ---
         
