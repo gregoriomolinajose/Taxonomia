@@ -374,25 +374,184 @@ window.UI_BulkImporter = class UI_BulkImporter {
         }
     }
 
-    updateProgress(chunkIndex, totalChunks, isDone, metrics, customText) {
+    updateProgress(chunkIndex, totalChunks, isDone, metrics, customText, step) {
         if (!this.containerNode) return;
         
         let progressContainer = this.containerNode.querySelector('#etl-progress-container');
+        let currentStep = step || 2;
         
         if (!progressContainer) {
             this.containerNode.innerHTML = `
-                <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; padding: 40px 20px;">
-                    <ion-icon name="cloud-upload" color="primary" style="font-size: 64px; margin-bottom: 20px;"></ion-icon>
-                    <h2 style="font-weight: 600; color: var(--ion-color-dark); margin-bottom: 8px;">Sincronizando Registros</h2>
-                    <p style="color: var(--ion-color-medium); text-align: center; margin-bottom: 40px; font-size: 14px;">Por favor, no cierres esta ventana ni navegues. El proceso puede tomar unos momentos.</p>
+                <div style="display: flex; flex-direction: column; align-items: center; justify-content: flex-start; height: 100%; padding: 40px 20px; background: #fafafa; min-height: 500px;">
                     
-                    <div id="etl-progress-container" style="width: 100%; max-width: 400px; text-align: center;">
-                        <div style="display: flex; justify-content: space-between; margin-bottom: 12px; font-size: 14px; font-weight: 500; color: var(--ion-color-dark);">
+                    <style>
+                        .etl-pulse-container {
+                            width: 120px;
+                            height: 120px;
+                            border-radius: 50%;
+                            background: rgba(var(--ion-color-primary-rgb, 56,128,255), 0.1);
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            margin-bottom: 30px;
+                            position: relative;
+                        }
+                        .etl-pulse-ring {
+                            position: absolute;
+                            width: 100%;
+                            height: 100%;
+                            border-radius: 50%;
+                            border: 2px solid var(--ion-color-primary);
+                            animation: etl-pulse-anim 2s infinite ease-out;
+                        }
+                        .etl-pulse-icon {
+                            font-size: 50px;
+                            color: var(--ion-color-primary);
+                            z-index: 2;
+                            transition: all 0.3s ease;
+                        }
+                        
+                        .etl-step-list {
+                            width: 100%;
+                            max-width: 450px;
+                            background: white;
+                            border-radius: 12px;
+                            padding: 20px;
+                            box-shadow: 0 4px 16px rgba(0,0,0,0.05);
+                            margin-bottom: 30px;
+                        }
+                        .etl-step-item {
+                            display: flex;
+                            align-items: flex-start;
+                            margin-bottom: 16px;
+                            position: relative;
+                            opacity: 0.5;
+                            transition: opacity 0.3s ease;
+                        }
+                        .etl-step-item.active {
+                            opacity: 1;
+                        }
+                        .etl-step-item.completed {
+                            opacity: 0.8;
+                        }
+                        .etl-step-item:last-child {
+                            margin-bottom: 0;
+                        }
+                        .etl-step-item:not(:last-child)::after {
+                            content: '';
+                            position: absolute;
+                            left: 11px;
+                            top: 28px;
+                            bottom: -12px;
+                            width: 2px;
+                            background: #e0e0e0;
+                            z-index: 1;
+                        }
+                        .etl-step-item.completed:not(:last-child)::after {
+                            background: var(--ion-color-success, #2dd36f);
+                        }
+                        .etl-step-indicator {
+                            width: 24px;
+                            height: 24px;
+                            border-radius: 50%;
+                            background: #e0e0e0;
+                            color: white;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            font-size: 12px;
+                            font-weight: bold;
+                            margin-right: 16px;
+                            z-index: 2;
+                            position: relative;
+                        }
+                        .etl-step-item.active .etl-step-indicator {
+                            background: var(--ion-color-primary);
+                            box-shadow: 0 0 0 4px rgba(var(--ion-color-primary-rgb, 56,128,255), 0.2);
+                        }
+                        .etl-step-item.completed .etl-step-indicator {
+                            background: var(--ion-color-success, #2dd36f);
+                        }
+                        .etl-step-text h4 {
+                            margin: 0 0 4px 0;
+                            font-size: 15px;
+                            font-weight: 600;
+                            color: var(--ion-color-dark);
+                        }
+                        .etl-step-text p {
+                            margin: 0;
+                            font-size: 13px;
+                            color: var(--ion-color-medium);
+                            line-height: 1.4;
+                        }
+                        
+                        @keyframes etl-pulse-anim {
+                            0% { transform: scale(0.8); opacity: 1; }
+                            100% { transform: scale(1.5); opacity: 0; }
+                        }
+                        @keyframes etl-spin-anim {
+                            100% { transform: rotate(360deg); }
+                        }
+                        .etl-icon-spin {
+                            animation: etl-spin-anim 2s linear infinite;
+                        }
+                        .etl-icon-bounce {
+                            animation: bounce 1s infinite alternate;
+                        }
+                        @keyframes bounce {
+                            0% { transform: translateY(0); }
+                            100% { transform: translateY(-10px); }
+                        }
+                    </style>
+
+                    <div class="etl-pulse-container" id="etl-anim-container">
+                        <div class="etl-pulse-ring"></div>
+                        <ion-icon name="cloud-upload-outline" class="etl-pulse-icon etl-icon-bounce" id="etl-icon-step-1"></ion-icon>
+                        <ion-icon name="server-outline" class="etl-pulse-icon" id="etl-icon-step-2" style="display:none;"></ion-icon>
+                        <ion-icon name="sync-outline" class="etl-pulse-icon etl-icon-spin" id="etl-icon-step-3" style="display:none;"></ion-icon>
+                        <ion-icon name="checkmark-circle" color="success" class="etl-pulse-icon etl-icon-bounce" id="etl-icon-step-4" style="display:none;"></ion-icon>
+                    </div>
+                    
+                    <h2 style="font-weight: 600; color: var(--ion-color-dark); margin-bottom: 24px; font-size: 20px;">Importando Registros</h2>
+                    
+                    <div class="etl-step-list">
+                        <div class="etl-step-item" id="etl-sitem-1">
+                            <div class="etl-step-indicator">1</div>
+                            <div class="etl-step-text">
+                                <h4>Extracción y Descarga</h4>
+                                <p>Descargando datos desde Google Sheets.</p>
+                            </div>
+                        </div>
+                        <div class="etl-step-item" id="etl-sitem-2">
+                            <div class="etl-step-indicator">2</div>
+                            <div class="etl-step-text">
+                                <h4>Encolando Tareas</h4>
+                                <p>Preparando lote de datos para su procesamiento.</p>
+                            </div>
+                        </div>
+                        <div class="etl-step-item" id="etl-sitem-3">
+                            <div class="etl-step-indicator">3</div>
+                            <div class="etl-step-text">
+                                <h4>Validación e Inserción</h4>
+                                <p>Deduplicando y aplicando reglas de negocio.</p>
+                            </div>
+                        </div>
+                        <div class="etl-step-item" id="etl-sitem-4">
+                            <div class="etl-step-indicator">4</div>
+                            <div class="etl-step-text">
+                                <h4>Consolidación Final</h4>
+                                <p>Finalizando y generando reporte de resultados.</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div id="etl-progress-container" style="width: 100%; max-width: 450px; text-align: center;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 13px; font-weight: 600; color: var(--ion-color-dark);">
                             <span id="etl-progress-label">Iniciando...</span>
                             <span id="etl-progress-percent">0%</span>
                         </div>
-                        <div style="width: 100%; height: 16px; background: var(--ion-color-light); border-radius: 8px; overflow: hidden; position: relative; border: 1px solid rgba(0,0,0,0.05);">
-                            <div id="etl-progress-bar" style="height: 100%; width: 0%; background: var(--ion-color-primary); transition: width 0.4s ease; border-radius: 8px;"></div>
+                        <div style="width: 100%; height: 10px; background: #e0e0e0; border-radius: 5px; overflow: hidden; position: relative;">
+                            <div id="etl-progress-bar" style="height: 100%; width: 0%; background: var(--ion-color-primary); transition: width 0.4s ease; border-radius: 5px;"></div>
                         </div>
                     </div>
                 </div>
@@ -403,6 +562,40 @@ window.UI_BulkImporter = class UI_BulkImporter {
         const progressBar = this.containerNode.querySelector('#etl-progress-bar');
         const progressLabel = this.containerNode.querySelector('#etl-progress-label');
         const progressPercent = this.containerNode.querySelector('#etl-progress-percent');
+        
+        // Update Stepper Classes
+        for (let i = 1; i <= 4; i++) {
+            const item = this.containerNode.querySelector(`#etl-sitem-${i}`);
+            if (item) {
+                if (i < currentStep) {
+                    item.className = 'etl-step-item completed';
+                    item.querySelector('.etl-step-indicator').innerHTML = '<ion-icon name="checkmark"></ion-icon>';
+                } else if (i === currentStep) {
+                    item.className = 'etl-step-item active';
+                    item.querySelector('.etl-step-indicator').innerHTML = i;
+                } else {
+                    item.className = 'etl-step-item';
+                    item.querySelector('.etl-step-indicator').innerHTML = i;
+                }
+            }
+        }
+
+        // Update Animation Icon based on step
+        for (let i = 1; i <= 4; i++) {
+            const icon = this.containerNode.querySelector(`#etl-icon-step-${i}`);
+            if (icon) {
+                if ((currentStep >= 4 && i === 4) || (currentStep === i && currentStep < 4)) {
+                    icon.style.display = 'block';
+                } else {
+                    icon.style.display = 'none';
+                }
+            }
+        }
+        
+        if (currentStep >= 4) {
+            this.containerNode.querySelector('.etl-pulse-ring').style.borderColor = "var(--ion-color-success, #2dd36f)";
+            this.containerNode.querySelector('.etl-pulse-container').style.background = "rgba(45,211,111, 0.1)";
+        }
         
         if (progressContainer && progressBar && progressLabel) {
             const pc = totalChunks > 0 ? (chunkIndex / totalChunks) * 100 : (isDone ? 100 : 0);
@@ -456,6 +649,10 @@ window.UI_BulkImporter = class UI_BulkImporter {
                     </div>
                 </div>
                 ` : ''}
+                
+                <div style="margin-top: 30px; text-align: center;">
+                    <ion-button fill="solid" color="primary" onclick="if(document.querySelector('ion-modal')) document.querySelector('ion-modal').dismiss(); else if(window.UI_ETL_Modal) window.UI_ETL_Modal.close();">Finalizar y Cerrar</ion-button>
+                </div>
             </div>
         `;
         
@@ -515,7 +712,7 @@ window.UI_BulkImporter = class UI_BulkImporter {
 
     async _defaultDriveSync(entity, url) {
         // Mostrar UI de Progreso Inmediatamente para evitar el 'vacío' visual
-        this.updateProgress(0, 100, false, null, "Conectando y extrayendo datos (esto puede demorar unos segundos)...");
+        this.updateProgress(0, 100, false, null, "Esto puede demorar unos segundos...", 1);
 
 
         let etlEngine = null;
@@ -549,8 +746,8 @@ window.UI_BulkImporter = class UI_BulkImporter {
                     });
                 }
 
-                const progressCb = (chunkIndex, totalChunks, isDone, metrics, customText) => {
-                    this.updateProgress(chunkIndex, totalChunks, isDone, metrics, customText);
+                const progressCb = (chunkIndex, totalChunks, isDone, metrics, customText, step) => {
+                    this.updateProgress(chunkIndex, totalChunks, isDone, metrics, customText, step);
                 };
 
                 let etlPromise;
@@ -591,10 +788,11 @@ window.UI_BulkImporter = class UI_BulkImporter {
                                     if(statusRes && statusRes.status === 'success' && statusRes.data) {
                                         const job = statusRes.data;
                                         const chunks = job.total > 0 ? job.total : 100;
-                                        progressCb(job.processed, chunks, false, null, `Procesando en servidor... ${job.processed}/${job.total}`);
                                         if (job.status === 'COMPLETED' || job.status === 'FAILED') {
+                                            progressCb(job.total, job.total, true, null, job.message || "Completado.", 4);
                                             resolve({ success: job.processed - job.errors, duplicate: 0, error: job.errors });
                                         } else {
+                                            progressCb(job.processed, chunks, false, null, job.message || `Procesando en servidor... ${job.processed}/${job.total}`, job.step || 2);
                                             setTimeout(pollServer, 3000);
                                         }
                                     } else {

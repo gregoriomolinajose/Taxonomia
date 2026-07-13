@@ -445,14 +445,25 @@ var Engine_ETL = (function() {
                        Logger.log(`[ETL Debug] payload eval keys: ${evalKeys.join(', ')} -> matchedRow: ${matchedRow ? matchedRow[pkField] : 'NULL'} | _isNewIngest: ${payload._isNewIngest}`);
                    }
                    
-                   if (matchedRow) {
-                       if (payload._isNewIngest) {
-                           payload._isDuplicateMatch = true;
-                           if (typeof Logger !== 'undefined') Logger.log(`[ETL Debug] SET _isDuplicateMatch = true FOR ${matchedRow[pkField]}`);
-                       }
-                       payload._tempId = payload[pkField]; payload[pkField] = matchedRow[pkField]; // Subsumimos el Temp UUID y forzamos modo UPDATE
-                   }
-               }
+                    if (matchedRow) {
+                        if (payload._isNewIngest) {
+                            payload._isDuplicateMatch = true;
+                            if (typeof Logger !== 'undefined') Logger.log(`[ETL Debug] SET _isDuplicateMatch = true FOR ${matchedRow[pkField]}`);
+                        }
+                        payload._tempId = payload[pkField]; payload[pkField] = matchedRow[pkField]; // Subsumimos el Temp UUID y forzamos modo UPDATE
+                    } else {
+                        // [BUGFIX] Intra-Batch Deduplication: Add the new row to lookupMaps
+                        // so that subsequent rows in the same batch with the same unique key will match it.
+                        for (let j = 0; j < uniqueFields.length; j++) {
+                            const uField = uniqueFields[j];
+                            if (payload[uField]) {
+                                const searchKey = String(payload[uField]).trim().toLowerCase();
+                                if (!lookupMaps[uField]) lookupMaps[uField] = {};
+                                lookupMaps[uField][searchKey] = payload;
+                            }
+                        }
+                    }
+                }
        });
 
        // A. Aplicación de Business Interceptors (S45.1) AFTER deduplication so they use Real IDs
