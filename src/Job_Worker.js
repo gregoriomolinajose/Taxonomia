@@ -252,6 +252,11 @@ var JobWorker = (function() {
             Engine_DB.upsertBatch('Sys_DLQ', newDlqBatch, { useSheets: true, useCloudDB: false });
         } catch (dlqErr) {
             if (typeof Logger !== 'undefined') Logger.log("Error guardando en Sys_DLQ: " + dlqErr.toString());
+            debugErrors.push("Error guardando en Sys_DLQ: " + dlqErr.toString());
+            try {
+                JobQueue.updateJobStatus(job.jobId, { status: "ERROR", message: "Fallo fatal persistiendo Sys_DLQ: " + dlqErr.toString() });
+            } catch(e) {}
+            return { debug: "error_dlq", error: dlqErr.toString() };
         }
     }
     

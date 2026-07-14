@@ -127,6 +127,12 @@ function API_Universal_Router(action, entityName, payload) {
       try {
         var id_dlq = payload.id_dlq;
         var targetEntity = payload.entity_name || entityName;
+        
+        // QR Fix: Missing Authorization (Security Leak)
+        if (typeof _guardAbac === 'function') {
+           _guardAbac('create', targetEntity, null);
+        }
+        
         var newPayload = payload.new_payload;
         
         // 1. Validate payload
@@ -139,7 +145,8 @@ function API_Universal_Router(action, entityName, payload) {
         }
         
         // 2. Insert into final destination
-        var pkT = SchemaUtils.getPrimaryKey(targetEntity);
+        // QR Fix: ReferenceError JS_SchemaUtils
+        var pkT = typeof JS_SchemaUtils !== 'undefined' ? JS_SchemaUtils.getPrimaryKey(targetEntity) : 'id';
         if (!newPayload[pkT] || String(newPayload[pkT]).trim() === '') {
            newPayload[pkT] = typeof _generateShortUUID === 'function' ? _generateShortUUID(targetEntity) : 'ID-' + new Date().getTime();
         }
