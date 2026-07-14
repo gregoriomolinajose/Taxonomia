@@ -87,6 +87,30 @@ var JobWorker = (function() {
     }
 
     var newDlqBatch = [];
+    
+    function recordDlqErrors(errChunk, errorMsg) {
+      errors += errChunk.length;
+      for (var k = 0; k < errChunk.length; k++) {
+        var rec = errChunk[k];
+        dlq.push({ record: rec, error: errorMsg });
+        newDlqBatch.push({
+           id_dlq: "SDLQ-" + new Date().getTime() + "-" + Math.floor(Math.random() * 1000) + k,
+           job_id: job.jobId,
+           entity_name: entityName,
+           estado: "Pendiente",
+           error_message: errorMsg,
+           payload: JSON.stringify(rec)
+        });
+        if (rec._rowIndex) {
+          chunkFeedback.push({
+            _rowIndex: rec._rowIndex,
+            status: 'error',
+            reason: errorMsg
+          });
+        }
+      }
+    }
+
     // [BUGFIX] Execute ETL deduplication and interceptors before processing the chunk
     if (typeof Engine_ETL !== 'undefined' && typeof Engine_ETL.hydrateAndDeduplicate === 'function') {
         try {
@@ -95,26 +119,7 @@ var JobWorker = (function() {
             if (typeof Logger !== 'undefined') Logger.log("Error en hydrateAndDeduplicate: " + e.toString());
             debugErrors.push("ETL Deduplication Error: " + e.toString());
             // [CRITICAL BUGFIX] Do not swallow the error! Push the entire chunk to DLQ and abort insertion.
-            errors += chunk.length;
-            for (var k = 0; k < chunk.length; k++) {
-              var errorMsg = e.toString();
-              dlq.push({ record: chunk[k], error: errorMsg });
-              newDlqBatch.push({
-                 id_dlq: "DLQ-" + new Date().getTime() + "-" + Math.floor(Math.random() * 1000) + k,
-                 job_id: job.jobId,
-                 entity_name: entityName,
-                 estado: "Pendiente",
-                 error_message: errorMsg,
-                 payload: JSON.stringify(chunk[k])
-              });
-              if (chunk[k]._rowIndex) {
-                chunkFeedback.push({
-                  _rowIndex: chunk[k]._rowIndex,
-                  status: 'error',
-                  reason: errorMsg
-                });
-              }
-            }
+            recordDlqErrors(chunk, e.toString());
             chunk = []; // Empty the chunk so it skips the insertion loops below
         }
     }
@@ -237,24 +242,7 @@ var JobWorker = (function() {
         }
       }
     } catch(e) {
-      errors += chunk.length;
-      for (var k = 0; k < chunk.length; k++) {
-        var errorMsg = e.toString();
-        dlq.push({ record: chunk[k], error: errorMsg });
-        newDlqBatch.push({
-           id_dlq: "DLQ-" + new Date().getTime() + "-" + Math.floor(Math.random() * 1000) + k,
-           job_id: job.jobId,
-           entity_name: entityName,
-           estado: "Pendiente",
-           error_message: errorMsg,
-           payload: JSON.stringify(chunk[k])
-        });
-        chunkFeedback.push({
-          _rowIndex: chunk[k]._rowIndex,
-          status: 'error',
-          reason: errorMsg
-        });
-      }
+      recordDlqErrors(chunk, e.toString());
       debugErrors.push(e.toString());
     }
     
