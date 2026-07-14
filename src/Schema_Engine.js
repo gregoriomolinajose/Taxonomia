@@ -425,7 +425,7 @@ var APP_SCHEMAS = {
     ],
     metadata: { showInMenu: true, order: 8, iconName: 'person-outline', color: 'warning', label: 'Personas', titleField: '_nombre_completo', idField: 'id_persona', fkField: null },
     primaryKey: "id_persona",
-    mutationInterceptors: ['HydrateWorkspace', 'AutoProvisionCargo', 'AutoProvisionLiderDirecto', 'AutoLinkAgileRoles'],
+    mutationInterceptors: ['WorkspacePreflightBlock', 'HydrateWorkspace', 'AutoProvisionCargo', 'AutoProvisionLiderDirecto', 'AutoLinkAgileRoles'],
     relationalProvisioners: [
       {
         field: 'roles_asignados',
@@ -577,6 +577,23 @@ var APP_SCHEMAS = {
       { name: "by_tenant",      type: "text",   required: true,    label: "Tenant Origen",    width: 6  }
     ]
   },
+  
+  // [E61-S61.5] Dead Letter Queue para errores asíncronos persistentes
+  Sys_DLQ: {
+    metadata: { prefix: 'SDLQ', showInMenu: false, order: 96, iconName: 'warning-outline', color: 'danger',
+                label: 'Dead Letter Queue', titleField: 'error_message', idField: 'id_dlq', fkField: null },
+    primaryKey: "id_dlq",
+    fields: [
+      { name: "id_dlq", type: "text", primaryKey: true, label: "ID Error", width: 6 },
+      ...FIELD_TEMPLATES.AUDIT_FIELDS(),
+      { name: "job_id", type: "text", required: true, label: "Job Origin", width: 6 },
+      { name: "entity_name", type: "text", required: true, label: "Entidad Destino", width: 6 },
+      { name: "estado", type: "select", options: ["Pendiente", "Resuelto", "Ignorado"], defaultValue: "Pendiente", required: true, label: "Estado", width: 6 },
+      { name: "error_message", type: "textarea", required: true, label: "Motivo de Falla", width: 12 },
+      { name: "payload", type: "textarea", required: true, label: "Payload (JSON)", width: 12 }
+    ]
+  },
+
 
   Sys_Roles: {
     metadata: { prefix: 'SROL', showInMenu: false, order: 90, iconName: 'shield-half-outline', color: 'danger', label: 'Seguridad: Roles', titleField: 'nombre', idField: 'id_rol', fkField: null },

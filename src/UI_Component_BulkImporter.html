@@ -552,7 +552,12 @@ window.UI_BulkImporter = class UI_BulkImporter {
                         if (this.edgeType) row._tipo_arista = this.edgeType;
                         if (this.parentEntity) row._entidad_padre = this.parentEntity;
                         if (!row.estado || String(row.estado).trim() === '') {
-                            row.estado = 'Borrador'; // Si está en el Wizard, todo entra como borrador por defecto.
+                            // [Bugfix] Entity-aware state projection
+                            if (entity === 'Persona' || entity === 'Cargo') {
+                                row.estado = 'Activo';
+                            } else {
+                                row.estado = 'Borrador'; // Si está en el Wizard, entidades efímeras entran como borrador por defecto.
+                            }
                         }
                     });
                 }

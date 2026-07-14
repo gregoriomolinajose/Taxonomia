@@ -304,5 +304,92 @@ window.UI_Factory = {
         header.appendChild(identityRow);
 
         return header;
+    },
+
+    /**
+     * [E61-S61.5] Construye un editor JSON especial para el manejo de payloads DLQ.
+     * @param {Object} config - Configuración del editor
+     * @param {Object|String} config.initialData - Datos JSON iniciales
+     * @param {Function} config.onChange - Callback cuando el contenido JSON cambia (y es válido)
+     * @param {Boolean} config.readonly - Si es de solo lectura
+     * @returns {HTMLElement} - Nodo del editor JSON
+     */
+    buildJSONEditorNode: function(config) {
+        const { initialData, onChange, readonly } = config;
+        
+        const container = document.createElement('div');
+        container.style.width = '100%';
+        container.style.height = '300px';
+        container.style.display = 'flex';
+        container.style.flexDirection = 'column';
+        container.style.border = '1px solid var(--ion-color-medium)';
+        container.style.borderRadius = '4px';
+        container.style.overflow = 'hidden';
+        container.style.position = 'relative';
+
+        const textarea = document.createElement('textarea');
+        textarea.style.width = '100%';
+        textarea.style.height = '100%';
+        textarea.style.flex = '1';
+        textarea.style.border = 'none';
+        textarea.style.padding = '12px';
+        textarea.style.fontFamily = 'monospace';
+        textarea.style.fontSize = '12px';
+        textarea.style.resize = 'none';
+        textarea.style.outline = 'none';
+        textarea.style.backgroundColor = 'var(--ion-color-step-50, #f4f5f8)';
+        textarea.style.color = 'var(--ion-color-dark)';
+        
+        if (readonly) {
+            textarea.readOnly = true;
+            textarea.style.backgroundColor = 'var(--ion-color-step-150, #e0e0e0)';
+        }
+
+        const initialStr = typeof initialData === 'string' ? initialData : JSON.stringify(initialData, null, 2);
+        textarea.value = initialStr;
+
+        const errorLabel = document.createElement('div');
+        errorLabel.style.position = 'absolute';
+        errorLabel.style.bottom = '0';
+        errorLabel.style.left = '0';
+        errorLabel.style.right = '0';
+        errorLabel.style.padding = '4px 8px';
+        errorLabel.style.backgroundColor = 'var(--ion-color-danger)';
+        errorLabel.style.color = 'white';
+        errorLabel.style.fontSize = '11px';
+        errorLabel.style.display = 'none';
+
+        container.appendChild(textarea);
+        container.appendChild(errorLabel);
+
+        textarea.addEventListener('input', function() {
+            if (readonly) return;
+            try {
+                const parsed = JSON.parse(textarea.value);
+                errorLabel.style.display = 'none';
+                if (typeof onChange === 'function') {
+                    onChange(parsed);
+                }
+            } catch (e) {
+                errorLabel.textContent = 'JSON Inválido: ' + e.message;
+                errorLabel.style.display = 'block';
+            }
+        });
+
+        // Métodos públicos del componente
+        container.getValidatedJSON = function() {
+            try {
+                return JSON.parse(textarea.value);
+            } catch(e) {
+                return null;
+            }
+        };
+        
+        container.setJSON = function(data) {
+            textarea.value = typeof data === 'string' ? data : JSON.stringify(data, null, 2);
+            errorLabel.style.display = 'none';
+        };
+
+        return container;
     }
 };

@@ -123,6 +123,44 @@ function API_Universal_Router(action, entityName, payload) {
       return JSON.stringify({ status: "success", data: responseData, action });
     }
 
+    if (action === 'dlq_reprocess') {
+      try {
+        var id_dlq = payload.id_dlq;
+        var targetEntity = payload.entity_name || entityName;
+        
+        // QR Fix: Missing Authorization (Security Leak)
+        if (typeof _guardAbac === 'function') {
+           _guardAbac('create', targetEntity, null);
+        }
+        
+        var newPayload = payload.new_payload;
+        
+        // 1. Validate payload
+        var result = typeof Engine_ETL !== 'undefined' && Engine_ETL.hydrateAndDeduplicate ? null : undefined;
+        if (result === null) {
+            var tempChunk = [newPayload];
+            Engine_ETL.hydrateAndDeduplicate(targetEntity, tempChunk);
+            if (tempChunk.length === 0) throw new Error("Registro inválido (interceptores lo descartaron)");
+            newPayload = tempChunk[0];
+        }
+        
+        // 2. Insert into final destination
+        // QR Fix: ReferenceError JS_SchemaUtils
+        var pkT = typeof JS_SchemaUtils !== 'undefined' ? JS_SchemaUtils.getPrimaryKey(targetEntity) : 'id';
+        if (!newPayload[pkT] || String(newPayload[pkT]).trim() === '') {
+           newPayload[pkT] = typeof _generateShortUUID === 'function' ? _generateShortUUID(targetEntity) : 'ID-' + new Date().getTime();
+        }
+        var upsertRes = Engine_DB.upsert(targetEntity, newPayload);
+        
+        // 3. Mark DLQ as Resuelto
+        Engine_DB.update('Sys_DLQ', id_dlq, { estado: 'Resuelto' });
+        
+        return JSON.stringify({ status: "success", data: upsertRes, action });
+      } catch (e) {
+        return JSON.stringify({ status: "error", message: e.toString(), action });
+      }
+    }
+
     if (action === 'create') {
       if (!payload[pkField] || String(payload[pkField]).trim() === '') {
         payload[pkField] = _generateShortUUID(entityName);

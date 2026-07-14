@@ -225,7 +225,7 @@ window.UI_BulkImporter = class UI_BulkImporter {
 
         // --- Workspace Pre-flight Check Logic ---
         if (entityName === 'Persona') {
-            const isWorkspaceEnabled = (window.AppEnv && window.AppEnv.WORKSPACE_ENABLED) || false;
+            const isWorkspaceEnabled = (window.ENV_CONFIG && window.ENV_CONFIG.WORKSPACE_ENABLED) || false;
             if (!isWorkspaceEnabled) {
                 preflightContainer.style.display = 'block';
                 // Hard Block
@@ -265,7 +265,7 @@ window.UI_BulkImporter = class UI_BulkImporter {
             }
         }
         // Marcar csv btn si está bloqueado
-        if (entityName === 'Persona' && !(window.AppEnv && window.AppEnv.WORKSPACE_ENABLED)) {
+        if (entityName === 'Persona' && !(window.ENV_CONFIG && window.ENV_CONFIG.WORKSPACE_ENABLED)) {
             const btnSyncCsv = container.querySelector('#btn-sync-csv');
             if (btnSyncCsv) btnSyncCsv.setAttribute('data-hard-blocked', 'true');
         }
@@ -710,11 +710,17 @@ window.UI_BulkImporter = class UI_BulkImporter {
                 <div style="margin-top: 20px; color: var(--ion-color-medium); font-size: 13px; max-width: 400px; margin-left: auto; margin-right: auto; line-height: 1.4;">
                     <ion-icon name="information-circle-outline" style="vertical-align: middle;"></ion-icon> 
                     Por tu seguridad, la plataforma no puede alterar tu archivo original. Puedes descargar el reporte de los registros ignorados:
-                    <div style="margin-top: 12px; text-align: center;">
+                    <div style="margin-top: 12px; text-align: center; display: flex; justify-content: center; gap: 8px;">
                         <ion-button id="btn-etl-download-csv" fill="outline" color="warning" size="small" style="--border-radius: 6px;">
                             <ion-icon slot="start" name="download-outline"></ion-icon>
                             Descargar Reporte CSV
                         </ion-button>
+                        ${(metrics.jobId && metrics.error > 0) ? `
+                        <ion-button id="btn-etl-resolve-dlq" fill="solid" color="danger" size="small" style="--border-radius: 6px;">
+                            <ion-icon slot="start" name="construct-outline"></ion-icon>
+                            Resolver Errores
+                        </ion-button>
+                        ` : ''}
                     </div>
                 </div>
                 ` : ''}
@@ -740,10 +746,23 @@ window.UI_BulkImporter = class UI_BulkImporter {
                     const encodedUri = encodeURI(csvContent);
                     const link = document.createElement("a");
                     link.setAttribute("href", encodedUri);
-                    link.setAttribute("download", "reporte_errores_ingesta.csv");
+                    link.setAttribute("download", "reporte_errores_importacion.csv");
                     document.body.appendChild(link);
                     link.click();
                     document.body.removeChild(link);
+                });
+            }
+            
+            const btnResolve = this.containerNode.querySelector('#btn-etl-resolve-dlq');
+            if (btnResolve) {
+                btnResolve.addEventListener('click', () => {
+                    if (window.UI_ETL_Modal) window.UI_ETL_Modal.close();
+                    if (document.querySelector('ion-modal')) document.querySelector('ion-modal').dismiss();
+                    if (window.UI_DLQ) {
+                        window.UI_DLQ.openDLQDrawer(metrics.jobId, metrics.entity);
+                    } else {
+                        console.error('UI_DLQ component not found');
+                    }
                 });
             }
         }
@@ -810,7 +829,12 @@ window.UI_BulkImporter = class UI_BulkImporter {
                         if (this.edgeType) row._tipo_arista = this.edgeType;
                         if (this.parentEntity) row._entidad_padre = this.parentEntity;
                         if (!row.estado || String(row.estado).trim() === '') {
-                            row.estado = 'Borrador'; // Si está en el Wizard, todo entra como borrador por defecto.
+                            // [Bugfix] Entity-aware state projection
+                            if (entity === 'Persona' || entity === 'Cargo') {
+                                row.estado = 'Activo';
+                            } else {
+                                row.estado = 'Borrador'; // Si está en el Wizard, entidades efímeras entran como borrador por defecto.
+                            }
                         }
                     });
                 }
@@ -859,7 +883,7 @@ window.UI_BulkImporter = class UI_BulkImporter {
                                         const chunks = job.total > 0 ? job.total : 100;
                                         if (job.status === 'COMPLETED' || job.status === 'FAILED') {
                                             progressCb(job.total, job.total, true, null, job.message || "Completado.", 4);
-                                            resolve({ success: job.processed - job.errors, duplicate: 0, error: job.errors });
+                                            resolve({ success: job.processed - job.errors, duplicate: 0, error: job.errors, jobId: jobId, entity: entity });
                                         } else {
                                             progressCb(job.processed, chunks, false, null, job.message || `Procesando en servidor... ${job.processed}/${job.total}`, job.step || 2);
                                             setTimeout(pollServer, 3000);

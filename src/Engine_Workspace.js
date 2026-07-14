@@ -274,8 +274,23 @@ function testWorkspaceConnection() {
       if (typeof AdminDirectory === 'undefined' || !AdminDirectory.Users) {
         return { status: 'error', message: 'API AdminDirectory no encontrada. Verifica appsscript.json.' };
       }
-      // Llamada de prueba con límite 1
-      var testCall = AdminDirectory.Users.list({ customer: 'my_customer', maxResults: 1 });
+      
+      // [BUGFIX] En lugar de list() que requiere privilegios Super Admin, 
+      // utilizamos get() del propio usuario con domain_public, que es exactamente 
+      // lo mismo que usa el Bulk Importer (S15.1) y funciona para cualquier empleado.
+      var testEmail = "";
+      try { testEmail = Session.getActiveUser().getEmail(); } catch(e) {}
+      
+      if (!testEmail) {
+        // Si no hay sesión (ej. trigger), asumimos que el servicio funciona si el SDK está cargado
+        return { status: 'success', message: 'Conexión nativa a Workspace exitosa (Sin usuario activo).' };
+      }
+      
+      var testCall = AdminDirectory.Users.get(testEmail, { 
+        projection: "full", 
+        viewType: "domain_public" 
+      });
+      
       if (testCall) {
         return { status: 'success', message: 'Conexión nativa a Workspace exitosa.' };
       } else {

@@ -420,6 +420,22 @@ var Business_Interceptors = (function() {
         },
 
         /**
+         * WorkspacePreflightBlock
+         * Actúa como Hard-Block en el backend. Si la sincronización de Workspace está deshabilitada,
+         * aborta completamente la carga masiva (ETL) de Personas.
+         */
+        WorkspacePreflightBlock: function(entityName, items) {
+            if (entityName !== 'Persona') return;
+            
+            if (typeof testWorkspaceConnection === 'function') {
+                const connTest = testWorkspaceConnection();
+                if (connTest && connTest.status === 'error') {
+                    throw new Error("HARD BLOCK: Conexión a Workspace fallida o deshabilitada. Detalles: " + (connTest.message || "Desconocido"));
+                }
+            }
+        },
+
+        /**
          * HydrateWorkspace
          * Consulta la API de Workspace y enriquece el payload con los datos faltantes (Nombre, Cargo, Líder Directo, etc).
          * Funciona como la Capa 1 de validación antes de la generación de stubs/relaciones.
@@ -498,6 +514,35 @@ var Business_Interceptors = (function() {
                 updatePayloadFn: (p, resolvedId) => p.id_cargo = resolvedId,
                 logMessage: 'Se auto-generaron {N} cargos nuevos "Por definir" (Interceptor DRY).'
             });
+            
+            // [BUGFIX S45.3] Generar aristas CARGO_PERSONA para los items principales (los procesados por la ETL)
+            let sysEdges = [];
+            if (typeof Engine_DB !== 'undefined') sysEdges = Engine_DB.list('Sys_Graph_Edges', 'objects').rows || [];
+            let edgesBatch = [];
+            const sysDate = new Date().toISOString();
+            items.forEach(p => {
+                if (p.id_cargo) {
+                    const childId = String(p.id_persona || p._tempId).trim();
+                    if (!childId) return;
+                    const edgeExists = sysEdges.some(e => e.es_version_actual !== false && e.tipo_relacion === "CARGO_PERSONA" && String(e.id_nodo_padre).trim() === String(p.id_cargo).trim() && String(e.id_nodo_hijo).trim() === childId);
+                    if (!edgeExists) {
+                        sysEdges.push({ es_version_actual: true, tipo_relacion: "CARGO_PERSONA", id_nodo_padre: p.id_cargo, id_nodo_hijo: childId });
+                        edgesBatch.push({
+                            id_relacion: "RELA-" + Math.random().toString(36).substring(2, 10).toUpperCase(),
+                            id_nodo_padre: p.id_cargo,
+                            id_nodo_hijo: childId,
+                            tipo_relacion: "CARGO_PERSONA",
+                            valido_desde: sysDate,
+                            valido_hasta: "",
+                            es_version_actual: true,
+                            estado: p.estado || "Activo"
+                        });
+                    }
+                }
+            });
+            if (edgesBatch.length > 0 && typeof Engine_DB !== 'undefined') {
+                try { Engine_DB.upsertBatch('Sys_Graph_Edges', edgesBatch, { muteTriggers: true }); } catch(e) {}
+            }
         },
 
         /**
@@ -630,6 +675,34 @@ var Business_Interceptors = (function() {
                 logMessage: 'Se auto-generaron e hidrataron {N} líderes recursivamente (Interceptor DRY).'
             });
 
+            // [BUGFIX S45.3] Generar aristas PERSONA_LIDER_DIRECTO para los items principales (los procesados por la ETL)
+            let sysEdges = [];
+            if (typeof Engine_DB !== 'undefined') sysEdges = Engine_DB.list('Sys_Graph_Edges', 'objects').rows || [];
+            let edgesBatch = [];
+            const sysDate = new Date().toISOString();
+            items.forEach(p => {
+                if (p.lider_directo) {
+                    const childId = String(p.id_persona || p._tempId).trim();
+                    if (!childId) return;
+                    const edgeExists = sysEdges.some(e => e.es_version_actual !== false && e.tipo_relacion === "PERSONA_LIDER_DIRECTO" && String(e.id_nodo_padre).trim() === String(p.lider_directo).trim() && String(e.id_nodo_hijo).trim() === childId);
+                    if (!edgeExists) {
+                        sysEdges.push({ es_version_actual: true, tipo_relacion: "PERSONA_LIDER_DIRECTO", id_nodo_padre: p.lider_directo, id_nodo_hijo: childId });
+                        edgesBatch.push({
+                            id_relacion: "RELA-" + Math.random().toString(36).substring(2, 10).toUpperCase(),
+                            id_nodo_padre: p.lider_directo,
+                            id_nodo_hijo: childId,
+                            tipo_relacion: "PERSONA_LIDER_DIRECTO",
+                            valido_desde: sysDate,
+                            valido_hasta: "",
+                            es_version_actual: true,
+                            estado: p.estado || "Activo"
+                        });
+                    }
+                }
+            });
+            if (edgesBatch.length > 0 && typeof Engine_DB !== 'undefined') {
+                try { Engine_DB.upsertBatch('Sys_Graph_Edges', edgesBatch, { muteTriggers: true }); } catch(e) {}
+            }
         },
 
         /**
