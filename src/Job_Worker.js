@@ -77,16 +77,53 @@ var JobWorker = (function() {
       var chunk = payloadData.slice(startIndex, endIndex);
       var errors = job.errors || 0;
       var dlq = job.payload && job.payload.dlq ? job.payload.dlq : [];
-      var chunkFeedback = [];
-      var currentSheetId = null;
       var debugErrors = [];
     
+    // Initialize feedback array and identify target sheet for the current batch
+    var chunkFeedback = [];
+    var currentSheetId = null;
+    if (chunk.length > 0 && chunk[0]._sheetId) {
+        currentSheetId = chunk[0]._sheetId;
+    }
+
+    var newDlqBatch = [];
+    // [BUGFIX] Execute ETL deduplication and interceptors before processing the chunk
+    if (typeof Engine_ETL !== 'undefined' && typeof Engine_ETL.hydrateAndDeduplicate === 'function') {
+        try {
+            Engine_ETL.hydrateAndDeduplicate(entityName, chunk);
+        } catch (e) {
+            if (typeof Logger !== 'undefined') Logger.log("Error en hydrateAndDeduplicate: " + e.toString());
+            debugErrors.push("ETL Deduplication Error: " + e.toString());
+            // [CRITICAL BUGFIX] Do not swallow the error! Push the entire chunk to DLQ and abort insertion.
+            errors += chunk.length;
+            for (var k = 0; k < chunk.length; k++) {
+              var errorMsg = e.toString();
+              dlq.push({ record: chunk[k], error: errorMsg });
+              newDlqBatch.push({
+                 id_dlq: "DLQ-" + new Date().getTime() + "-" + Math.floor(Math.random() * 1000) + k,
+                 job_id: job.jobId,
+                 entity_name: entityName,
+                 estado: "Pendiente",
+                 error_message: errorMsg,
+                 payload: JSON.stringify(chunk[k])
+              });
+              if (chunk[k]._rowIndex) {
+                chunkFeedback.push({
+                  _rowIndex: chunk[k]._rowIndex,
+                  status: 'error',
+                  reason: errorMsg
+                });
+              }
+            }
+            chunk = []; // Empty the chunk so it skips the insertion loops below
+        }
+    }
+
     // Process chunk in BATCH mode for massive performance gain
     var batchToInsert = [];
     
     for (var i = 0; i < chunk.length; i++) {
       var record = chunk[i];
-      if (record._sheetId) currentSheetId = record._sheetId;
       
       var pkField = 'id';
       var schema = (typeof APP_SCHEMAS !== 'undefined') ? APP_SCHEMAS[entityName] : null;
@@ -146,12 +183,14 @@ var JobWorker = (function() {
                if (!duplicateEdgeMemory) {
                    if (existingDBEdge) {
                        if (String(existingDBEdge.contexto_id || '').trim() !== parentId) {
+                           var updateEstado = record._tipo_arista === 'PERSONA_TAXONOMIA' ? 'Borrador' : (record.estado || "Activo");
                            existingDBEdge.contexto_id = parentId;
-                           existingDBEdge.estado = record.estado || "Activo";
+                           existingDBEdge.estado = updateEstado;
                            edgesToUpsert.push(existingDBEdge);
                        }
                    } else {
                        var relId = (typeof _generateShortUUID === 'function') ? _generateShortUUID('Sys_Graph_Edges') : 'RELA-' + new Date().getTime() + '-' + Math.floor(Math.random()*1000);
+                       var edgeEstado = record._tipo_arista === 'PERSONA_TAXONOMIA' ? 'Borrador' : (record.estado || "Activo");
                        edgesToUpsert.push({
                            id_relacion: relId,
                            id_nodo_padre: parentId,
@@ -160,7 +199,7 @@ var JobWorker = (function() {
                            valido_desde: sysDate,
                            valido_hasta: "",
                            es_version_actual: true,
-                           estado: record.estado || "Activo",
+                           estado: edgeEstado,
                            contexto_id: parentId
                        });
                    }
@@ -200,14 +239,32 @@ var JobWorker = (function() {
     } catch(e) {
       errors += chunk.length;
       for (var k = 0; k < chunk.length; k++) {
-        dlq.push({ record: chunk[k], error: e.toString() });
+        var errorMsg = e.toString();
+        dlq.push({ record: chunk[k], error: errorMsg });
+        newDlqBatch.push({
+           id_dlq: "DLQ-" + new Date().getTime() + "-" + Math.floor(Math.random() * 1000) + k,
+           job_id: job.jobId,
+           entity_name: entityName,
+           estado: "Pendiente",
+           error_message: errorMsg,
+           payload: JSON.stringify(chunk[k])
+        });
         chunkFeedback.push({
           _rowIndex: chunk[k]._rowIndex,
           status: 'error',
-          reason: e.toString()
+          reason: errorMsg
         });
       }
       debugErrors.push(e.toString());
+    }
+    
+    // Persist new DLQ errors to the database
+    if (newDlqBatch.length > 0 && typeof Engine_DB !== 'undefined') {
+        try {
+            Engine_DB.upsertBatch('Sys_DLQ', newDlqBatch, { useSheets: true, useCloudDB: false });
+        } catch (dlqErr) {
+            if (typeof Logger !== 'undefined') Logger.log("Error guardando en Sys_DLQ: " + dlqErr.toString());
+        }
     }
     
     // Batch processing is atomic, so we always process the full chunk

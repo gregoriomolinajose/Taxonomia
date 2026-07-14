@@ -404,17 +404,20 @@ const Adapter_Sheets = {
         if (useNuclearDump) {
             if (typeof Logger !== 'undefined') Logger.log(`[Metrics I/O] Umbral Excedido (${items.length}). Escribiendo dataset maestro (Nuclear Array Dump)`);
             sheet.getRange(1, 1, originalData.length, originalData[0].length).setValues(originalData);
+            SpreadsheetApp.flush();
         } else {
             if (rowsToUpdate.length > 0) {
                 if (typeof Logger !== 'undefined') Logger.log(`[Metrics I/O] Modificando ${rowsToUpdate.length} filas exactas (Differential Updates)`);
                 rowsToUpdate.forEach(up => {
                     sheet.getRange(up.rowIndex, 1, 1, up.rowData.length).setValues([up.rowData]);
                 });
+                SpreadsheetApp.flush();
             }
             if (rowsToAppend.length > 0) {
                 if (typeof Logger !== 'undefined') Logger.log(`[Metrics I/O] Cimentando ${rowsToAppend.length} registros nuevos en un bloque (Bulk Appends)`);
-                const lastRowPriorToAppend = numRows;
+                const lastRowPriorToAppend = sheet.getLastRow();
                 sheet.getRange(lastRowPriorToAppend + 1, 1, rowsToAppend.length, rowsToAppend[0].length).setValues(rowsToAppend);
+                SpreadsheetApp.flush();
             }
         }
 

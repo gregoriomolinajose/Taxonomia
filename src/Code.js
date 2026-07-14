@@ -104,8 +104,8 @@ function doGet(e) {
       if (wsConfig.domains && Array.isArray(wsConfig.domains)) {
         envObj.ALLOWED_DOMAINS = wsConfig.domains;
       }
-      if (wsConfig.workspace !== undefined) {
-        envObj.WORKSPACE_ENABLED = wsConfig.workspace;
+      if (wsConfig.workspace !== undefined || wsConfig.syncEnabled !== undefined) {
+        envObj.WORKSPACE_ENABLED = wsConfig.workspace !== undefined ? wsConfig.workspace : wsConfig.syncEnabled;
       }
       if (wsConfig.authMode) {
         envObj.AuthMode = wsConfig.authMode;
