@@ -914,34 +914,34 @@ window.UI_BulkImporter = class UI_BulkImporter {
                     return this._showToast(`El motor ETL no tiene un método de procesamiento compatible.`, 'warning');
                 }
 
-                etlPromise.then(async (metrics) => {
+                etlPromise.then((metrics) => {
+                    const m = metrics || { success: res.data.length, duplicate: 0, error: 0 };
+                    const feedbackArray = m._feedback || [];
+                    this.showResults(m, feedbackArray);
+
+                    // Notificar finalización global
+                    if (window.AppEventBus) {
+                        window.AppEventBus.publish('ETL::FINISHED', { entity: entity, contextId: this.contextId });
+                    }
+
                     if (window.DataAPI && window.DataStore) {
-                        try {
-                            const payloads = await Promise.all([
-                                window.DataAPI.call('getInitialPayload', entity),
-                                window.DataAPI.call('getInitialPayload', 'Sys_Graph_Edges')
-                            ]);
+                        // Hydration no bloqueante en segundo plano (UI unblocked)
+                        Promise.all([
+                            window.DataAPI.call('getInitialPayload', entity),
+                            window.DataAPI.call('getInitialPayload', 'Sys_Graph_Edges')
+                        ]).then(payloads => {
                             [entity, 'Sys_Graph_Edges'].forEach((ent, idx) => {
                                 const raw = payloads[idx];
-                                const res = typeof raw === 'string' ? JSON.parse(raw) : raw;
-                                if (res && res.status === 'success') {
-                                    const rows = window.Schema_Utils.inflateTuples(res.data);
+                                const resObj = typeof raw === 'string' ? JSON.parse(raw) : raw;
+                                if (resObj && resObj.status === 'success') {
+                                    const rows = window.Schema_Utils.inflateTuples(resObj.data);
                                     window.DataStore.set(ent, rows);
                                 }
                             });
                             if (window.AppEventBus) window.AppEventBus.publish('CACHE::GRAPH_HYDRATED', { source: 'ETL' });
-                        } catch(e) {
+                        }).catch(e => {
                             console.error('[BulkImporter] Error re-hidratando cache', e);
-                        }
-                    }
-
-                    const m = metrics || { success: res.data.length, duplicate: 0, error: 0 };
-                    const feedbackArray = m._feedback || [];
-                    this.showResults(m, feedbackArray);
-                    
-                    // Notificar finalización global
-                    if (window.AppEventBus) {
-                        window.AppEventBus.publish('ETL::FINISHED', { entity: entity, contextId: this.contextId });
+                        });
                     }
                 }).catch(err => {
                     console.error('[Chunker Error]', err);
