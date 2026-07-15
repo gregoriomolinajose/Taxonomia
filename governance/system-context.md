@@ -1,12 +1,15 @@
-# System Context: Taxonomia Project
+# System Context: CorePlatform
 
-> Define actors and external systems
+> System context diagram — fill with /rai-project-create or /rai-project-onboard
 
 ## External Interfaces
 
-| Actor/System | Integration Type | Description |
-|--------------|------------------|-------------|
-| **Google Identity Workspace** | Auth | Capa de autenticación nativa para validar identidad y gestionar permisos sin gestor de terceros. |
-| **Google Apps Script** | Serverless API / Facade | Motor de enrutamiento y lógica de negocio. |
-| **Google Sheets Data Store** | Persistence Layer | Base de datos relacional híbrida operando bajo un patrón de adaptador agnóstico (Adapter_Sheets). |
-| **Ionic Framework** | UI Components | Sistema externo de diseño consumido vía CDN para garantizar una interfaz Mobile-First estandarizada. |
+| System | Role | Protocol/API | Integration Type |
+|--------|------|--------------|------------------|
+| Google Sheets | Base de Datos Transaccional (Hot) | Google Apps Script Service | Native Sync |
+| Google Drive | Almacenamiento de CVs y Archivos | Google Apps Script Service | Native Sync |
+| Google Calendar | Agendamiento de Entrevistas | Google Apps Script Service | Native Sync |
+| Gemini API | Procesamiento y Scoring de Perfiles | REST / RPC | REST Client |
+| LinkedIn | Fuente de reclutamiento (Bolsa) | REST / OAuth2 | REST Client |
+| Google Workspace | Autenticación y Perfiles | Google Apps Script Service | Native Sync |
+| Cloud Database | Backup/Cold Storage (Opcional) | JDBC / REST | Async |

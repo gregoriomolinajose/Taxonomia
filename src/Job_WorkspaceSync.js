@@ -142,6 +142,17 @@ function runWorkspaceSyncJob(params) {
             var pToSave = Object.assign({}, row);
             var personaId = String(pToSave.id_persona || pToSave.id_registro || pToSave.id || '').trim();
             
+            // Fallback de seguridad: si AutoProvisionCargo falló en inyectar id_cargo pero existe cargo (plano)
+            if (!pToSave.id_cargo && pToSave.cargo && typeof Adapter_Sheets !== 'undefined') {
+                try {
+                    var cRes = Adapter_Sheets.list('Cargo', dbConfig, 'objects');
+                    var cMatch = (cRes && cRes.rows) ? cRes.rows.find(c => String(c.nombre).replace(' (Por definir)', '').trim().toLowerCase() === String(pToSave.cargo).trim().toLowerCase() || String(c.id_externo_workspace).trim().toLowerCase() === String(pToSave.cargo).trim().toLowerCase()) : null;
+                    if (cMatch) {
+                        pToSave.id_cargo = cMatch.id_cargo;
+                    }
+                } catch(e) {}
+            }
+
             // Si el motor inyectó un ID de Cargo plano, construimos la arista temporal
             if (pToSave.id_cargo && typeof pToSave.id_cargo === 'string' && personaId) {
                 incomingEdgesMock.push({

@@ -6,7 +6,7 @@ story: 'S49.5'
 epic: 'E49'
 content:
   summary: 'Implementación del esquema de datos transaccional Wizard_Taxonomia en APP_SCHEMAS y validación E2E.'
-  complexity: medium
+  complexity: moderate
   acceptance_criteria:
     - id: AC1
       description: 'La entidad Wizard_Taxonomia existe en Schema_Engine.js con secciones múltiples.'

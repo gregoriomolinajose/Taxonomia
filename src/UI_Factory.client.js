@@ -1,5 +1,94 @@
 window.UI_Factory = {
     /**
+     * H8 Fix: Formaliza el patrón de abrir un Drawer con un TXSelect de búsqueda múltiple, 
+     * aislando la lógica de "falso field" de los consumidores de la UI.
+     */
+    openSearchableDrawer: function(config) {
+        const { targetEntity, contextId, currentData, title, description, edgeType, onConfirm, localEventBus, parentId } = config;
+        if (!window.DrawerStackController) return;
+        
+        const drawerHeader = window.UI_Factory.buildDrawerHeader({
+            entityName: targetEntity,
+            titleOverride: `Agregar ${window.formatEntityName ? window.formatEntityName(targetEntity) : targetEntity}s`,
+            badgeOverride: '(Búsqueda y Multiselección)',
+            onClose: () => window.DrawerStackController.closeTop()
+        });
+        
+        const content = document.createElement('div');
+        content.style.display = 'flex';
+        content.style.flexDirection = 'column';
+        content.style.height = '100%';
+        content.style.background = 'var(--ion-background-color, #fff)';
+        
+        content.appendChild(drawerHeader);
+        
+        const scrollableContent = document.createElement('div');
+        scrollableContent.style.padding = '24px 16px';
+        scrollableContent.style.flex = '1';
+        scrollableContent.style.overflowY = 'auto';
+        
+        if (description) {
+            const desc = document.createElement('p');
+            desc.textContent = description;
+            desc.style.color = 'var(--ion-color-medium)';
+            desc.style.fontSize = '0.9rem';
+            desc.style.marginBottom = '24px';
+            scrollableContent.appendChild(desc);
+        }
+        
+        const pkField = window.Schema_Utils ? window.Schema_Utils.getPrimaryKey(targetEntity) : 'id_registro';
+        const virtualField = {
+            name: 'vincular_multi',
+            type: 'relation',
+            uiComponent: 'searchable_multi',
+            targetEntity: targetEntity,
+            valueField: pkField,
+            labelField: 'nombre',
+            graphEdgeType: edgeType
+        };
+        
+        const virtualData = { vincular_multi: currentData.map(d => String(d[pkField] || d.id_registro || d)) };
+        const searchableNode = window.UI_Factory.buildFieldNode(virtualField, targetEntity, virtualData, localEventBus, contextId);
+        scrollableContent.appendChild(searchableNode);
+        
+        content._formSubmitterInstance = {
+            executeSave: () => {
+                let actualNode = searchableNode;
+                if (window.UI_FormUtils && window.UI_FormUtils.unwrapFieldNode) {
+                    actualNode = window.UI_FormUtils.unwrapFieldNode(searchableNode);
+                }
+
+                if (actualNode && actualNode.getValidatedValue) {
+                    const selectedIds = actualNode.getValidatedValue() || [];
+                    if (typeof onConfirm === 'function') {
+                        onConfirm(selectedIds);
+                    } else if (window.Graph_Utils && parentId && edgeType) {
+                        const normPK = window.UI_FormUtils ? window.UI_FormUtils.normalizeId(parentId) : String(parentId);
+                        const existingIds = currentData.map(d => {
+                            const rawId = d[pkField] || d.id_registro || d;
+                            return window.UI_FormUtils ? window.UI_FormUtils.normalizeId(rawId) : String(rawId);
+                        });
+                        
+                        // Remove edges that are no longer selected
+                        existingIds.forEach(eid => {
+                            if (!selectedIds.includes(eid)) window.Graph_Utils.deleteTemporalEdge(normPK, eid, edgeType, contextId);
+                        });
+                        // Add newly selected edges
+                        selectedIds.forEach(eid => {
+                            if (!existingIds.includes(eid)) window.Graph_Utils.upsertTemporalEdge(normPK, eid, edgeType, contextId);
+                        });
+                    }
+                }
+                return Promise.resolve(true);
+            }
+        };
+        
+        content.appendChild(scrollableContent);
+        
+        window.DrawerStackController.push(content);
+    },
+
+    /**
      * Construye un Drawer Header reutilizable con un Breadcrumb (Top Row) y Identity Row (Bottom Row).
      * Aislando el layout CSS y el DOM imperativo original de FormRenderer_UI.
      * 
@@ -12,7 +101,7 @@ window.UI_Factory = {
      * @returns {HTMLElement} Div container .drawer-header a ensamblar.
      */
     buildDrawerHeader: function(config = {}) {
-        const { entityName, data = {}, localEditId, onClose, actions } = config;
+        const { entityName, data = {}, localEditId, onClose, actions, titleOverride, badgeOverride } = config;
 
         const header = document.createElement('div');
         header.className = 'drawer-header';
@@ -122,8 +211,8 @@ window.UI_Factory = {
         identityRow.style.marginBottom = '8px';
 
         // Extract Semantic Name early to generate initials
-        let semanticName = 'Creando Registro';
-        if (window.Schema_Utils && window.Schema_Utils.getSemanticTitle) {
+        let semanticName = titleOverride || 'Creando Registro';
+        if (!titleOverride && window.Schema_Utils && window.Schema_Utils.getSemanticTitle) {
             semanticName = window.Schema_Utils.getSemanticTitle(entityName, data);
         }
 
@@ -194,7 +283,7 @@ window.UI_Factory = {
         idTag.style.color = 'var(--ion-color-medium)';
         idTag.style.alignSelf = 'flex-start';
         
-        let displayBadge = localEditId || '(Autogenerado)';
+        let displayBadge = badgeOverride || localEditId || '(Autogenerado)';
         if (data && schemaSchemas && schemaSchemas[entityName]) {
             const schemaDef = schemaSchemas[entityName];
             const targetFields = schemaDef.fields || [];
@@ -215,5 +304,92 @@ window.UI_Factory = {
         header.appendChild(identityRow);
 
         return header;
+    },
+
+    /**
+     * [E61-S61.5] Construye un editor JSON especial para el manejo de payloads DLQ.
+     * @param {Object} config - Configuración del editor
+     * @param {Object|String} config.initialData - Datos JSON iniciales
+     * @param {Function} config.onChange - Callback cuando el contenido JSON cambia (y es válido)
+     * @param {Boolean} config.readonly - Si es de solo lectura
+     * @returns {HTMLElement} - Nodo del editor JSON
+     */
+    buildJSONEditorNode: function(config) {
+        const { initialData, onChange, readonly } = config;
+        
+        const container = document.createElement('div');
+        container.style.width = '100%';
+        container.style.height = '300px';
+        container.style.display = 'flex';
+        container.style.flexDirection = 'column';
+        container.style.border = '1px solid var(--ion-color-medium)';
+        container.style.borderRadius = '4px';
+        container.style.overflow = 'hidden';
+        container.style.position = 'relative';
+
+        const textarea = document.createElement('textarea');
+        textarea.style.width = '100%';
+        textarea.style.height = '100%';
+        textarea.style.flex = '1';
+        textarea.style.border = 'none';
+        textarea.style.padding = '12px';
+        textarea.style.fontFamily = 'monospace';
+        textarea.style.fontSize = '12px';
+        textarea.style.resize = 'none';
+        textarea.style.outline = 'none';
+        textarea.style.backgroundColor = 'var(--ion-color-step-50, #f4f5f8)';
+        textarea.style.color = 'var(--ion-color-dark)';
+        
+        if (readonly) {
+            textarea.readOnly = true;
+            textarea.style.backgroundColor = 'var(--ion-color-step-150, #e0e0e0)';
+        }
+
+        const initialStr = typeof initialData === 'string' ? initialData : JSON.stringify(initialData, null, 2);
+        textarea.value = initialStr;
+
+        const errorLabel = document.createElement('div');
+        errorLabel.style.position = 'absolute';
+        errorLabel.style.bottom = '0';
+        errorLabel.style.left = '0';
+        errorLabel.style.right = '0';
+        errorLabel.style.padding = '4px 8px';
+        errorLabel.style.backgroundColor = 'var(--ion-color-danger)';
+        errorLabel.style.color = 'white';
+        errorLabel.style.fontSize = '11px';
+        errorLabel.style.display = 'none';
+
+        container.appendChild(textarea);
+        container.appendChild(errorLabel);
+
+        textarea.addEventListener('input', function() {
+            if (readonly) return;
+            try {
+                const parsed = JSON.parse(textarea.value);
+                errorLabel.style.display = 'none';
+                if (typeof onChange === 'function') {
+                    onChange(parsed);
+                }
+            } catch (e) {
+                errorLabel.textContent = 'JSON Inválido: ' + e.message;
+                errorLabel.style.display = 'block';
+            }
+        });
+
+        // Métodos públicos del componente
+        container.getValidatedJSON = function() {
+            try {
+                return JSON.parse(textarea.value);
+            } catch(e) {
+                return null;
+            }
+        };
+        
+        container.setJSON = function(data) {
+            textarea.value = typeof data === 'string' ? data : JSON.stringify(data, null, 2);
+            errorLabel.style.display = 'none';
+        };
+
+        return container;
     }
 };

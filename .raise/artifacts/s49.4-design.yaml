@@ -6,7 +6,7 @@ story: 'S49.4'
 epic: 'E49'
 content:
   summary: 'Inyección de Wizard_Taxonomia en el portal de SelfService a través de una ruta nativa a pantalla completa y rediseño de portal estilo Landing Page (iOS).'
-  complexity: medium
+  complexity: moderate
   acceptance_criteria:
     - id: AC1
       description: 'El diseño del Self Service usa gradientes difusos (blurs), fondo claro y tipografía bold estilo iOS.'

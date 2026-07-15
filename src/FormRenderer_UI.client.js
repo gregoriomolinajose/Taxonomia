@@ -36,6 +36,20 @@
 
 
         global.renderForm = async function (entityName, data = null, injectedCallback = null, config = {}) {
+            // S49.2: Redireccionar Taxonomía al Wizard Fullscreen si no estamos ya dentro del wizard
+            if (entityName === 'Taxonomia' && (!config || !config.bypassWizard) && (!config.customContainer)) {
+                if (window.AppEventBus) {
+                    let navPayload = { viewType: 'wizard' };
+                    if (data) {
+                        const targetPkField = window.Schema_Utils ? window.Schema_Utils.getPrimaryKey(entityName) : 'id_taxonomia';
+                        const id = data[targetPkField] || data['id_registro'];
+                        if (id) navPayload.recordId = id;
+                    }
+                    window.AppEventBus.publish('NAV::CHANGE', navPayload);
+                    return false;
+                }
+            }
+
             // S11.3: EventBus de Alcance Léxico Local (Lifecycle atado a Instancia UI para GC automático)
             const LocalEventBus = {
                 listeners: {},
@@ -104,10 +118,17 @@
                 // Header Custom del DrawerS25.2 con soporte para Badge ID congelado
                 // HEADER DESACOPLADO (S37.6)
                 // Se delega al Componente Puro Reutilizable UI_Factory
+                
+                let titleOverride = null;
+                if (config && config.modalContext && entityName === 'Equipo') {
+                    titleOverride = 'Agregar Equipos';
+                }
+
                 const header = window.UI_Factory.buildDrawerHeader({
                     entityName: entityName,
                     data: data,
                     localEditId: localEditId,
+                    titleOverride: titleOverride,
                     onClose: () => {
                         if (window.AppEventBus) { window.AppEventBus.publish('MODAL::CLOSE_REQUEST'); } 
                         else if (window._closeTopModal) { window._closeTopModal(); }
@@ -131,7 +152,9 @@
                         const val = String(rawVal).trim();
                         const dynamicTitleEl = modal.querySelector('.drawer-dynamic-title');
                         if (dynamicTitleEl) {
-                            dynamicTitleEl.textContent = val || 'Nuevo Registro';
+                            let defaultTitle = 'Nuevo Registro';
+                            if (config && config.modalContext && entityName === 'Equipo') defaultTitle = 'Agregar Equipos';
+                            dynamicTitleEl.textContent = val || defaultTitle;
                         }
                     }
                 }
@@ -335,14 +358,14 @@
                         
                         await modalEl.present();
 
-                        modalContent.querySelector('#btn-cancel-deploy').addEventListener('click', () => {
-                            modalEl.dismiss();
-                            setTimeout(() => modalEl.remove(), 500);
+                        modalContent.querySelector('#btn-cancel-deploy').addEventListener('click', async () => {
+                            await modalEl.dismiss();
+                            modalEl.remove();
                         });
 
-                        modalContent.querySelector('#btn-confirm-deploy').addEventListener('click', () => {
-                            modalEl.dismiss();
-                            setTimeout(() => modalEl.remove(), 500);
+                        modalContent.querySelector('#btn-confirm-deploy').addEventListener('click', async () => {
+                            await modalEl.dismiss();
+                            modalEl.remove();
                             
                             // S55.5: Backend Activation Trigger
                             if (global.showToast) global.showToast('Aprobando taxonomía...', 'medium');
@@ -409,7 +432,9 @@
                     btnSubmit: submitBtn,
                     progressLabel: container._progressLabel,
                     entityName: entityName,
-                    stateful: entitySchema && entitySchema.form_stepper_stateful
+                    stateful: entitySchema && entitySchema.form_stepper_stateful,
+                    initialStepIndex: config.initialStepIndex,
+                    initialStepName: config.initialStepName
                 });
                 
                 rows = container._stepperRef.getRows();
@@ -494,6 +519,21 @@
                 // para emular el Figma (label arriba transparente, caja contorno)
                 const inputEl = global.UI_Factory.buildFieldNode(field, entityName, data, LocalEventBus, localEditId);
 
+                if (inputEl.style.display === 'none') {
+                    ionCol.style.display = 'none';
+                } else if (field.uiComponent === 'embedded_dataview') {
+                    ionCol.style.display = 'flex';
+                    ionCol.style.flexDirection = 'column';
+                    ionCol.style.flex = '1';
+                    ionCol.style.minHeight = '0';
+                    ionCol.style.overflow = 'hidden';
+                    ionCol.style.padding = '0'; // Remover padding del col
+                    if (targetRow) {
+                        targetRow.style.flex = '1';
+                        targetRow.style.alignContent = 'stretch';
+                    }
+                }
+
                 ionCol.appendChild(inputEl);
                 targetRow.appendChild(ionCol);
             });
@@ -524,7 +564,7 @@
             footerContainer.className = 'drawer-footer';
             
             const btnGrid = document.createElement('ion-grid');
-            btnGrid.style.padding = 'var(--spacing-1) var(--spacing-2)';
+            btnGrid.style.padding = 'var(--spacing-1) 0';
             const btnRow = document.createElement('ion-row');
             
             // Recrear solo el botón Submit Principal
@@ -537,6 +577,8 @@
                 colLeft.setAttribute('size', '5');
                 colLeft.style.display = 'flex';
                 colLeft.style.alignItems = 'center';
+                colLeft.style.justifyContent = 'flex-start';
+                colLeft.style.paddingLeft = '0';
                 colLeft.style.gap = 'var(--spacing-2)';
                 
                 // S49.11: Dot/Bar indicators — barras para completados, dots para pendientes
@@ -570,10 +612,12 @@
                 colRight.style.display = 'flex';
                 colRight.style.alignItems = 'center';
                 colRight.style.justifyContent = 'flex-end';
+                colRight.style.paddingRight = '0';
                 colRight.style.gap = 'var(--spacing-2)';
                 
                 // S49.11: Botón Atrás — estilo sutil (clear, text + chevron)
                 container._btnPrev.innerHTML = '';
+                container._btnPrev.type = 'button'; // Prevenir trigger de submit nativo
                 container._btnPrev.fill = 'clear';
                 container._btnPrev.color = 'medium';
                 container._btnPrev.style.setProperty('--border-radius', 'var(--rounded-full)');
@@ -584,6 +628,7 @@
                 container._btnPrev.appendChild(document.createTextNode('Atrás'));
 
                 // S49.11: Botón Siguiente — estilo prominente (solid pill, primary)
+                container._btnNext.type = 'button'; // Prevenir trigger de submit nativo
                 container._btnNext.fill = 'solid';
                 container._btnNext.color = 'primary';
                 container._btnNext.style.setProperty('--border-radius', 'var(--rounded-full)');
@@ -594,7 +639,7 @@
 
                 colRight.appendChild(container._btnPrev);
                 colRight.appendChild(container._btnNext);
-                colRight.appendChild(submitBtn);
+                // colRight.appendChild(submitBtn); // Removido para Save-on-Close (Zero-Click)
                 if (approveBtn) colRight.appendChild(approveBtn);
 
                 btnRow.appendChild(colLeft);
@@ -631,7 +676,7 @@
                 const colRight = document.createElement('ion-col');
                 colRight.setAttribute('size', '12');
                 colRight.style.textAlign = 'right';
-                colRight.appendChild(submitBtn);
+                // colRight.appendChild(submitBtn); // Removido para Save-on-Close (Zero-Click)
                 if (approveBtn) colRight.appendChild(approveBtn);
                 btnRow.appendChild(colRight);
             }
@@ -646,23 +691,40 @@
             }
             // --------------------------------------------------------------------
 
-            // --- HOTFIX v1.2.2: Repaint Bidireccional de Opciones por Cambio de Nivel ---
-            container.addEventListener('ionChange', (e) => {
-                const target = e.target;
-                if (target && target.name === 'nivel_tipo') {
-                    const rules = global.APP_SCHEMAS[entityName]?.topologyRules;
-                    if (rules) {
-                        const nuevoNivel = parseInt(target.value, 10);
-                        const parentWrappers = container.querySelectorAll('div[data-relation-type="padre"]');
-                        // Pub/Sub: Notificamos a los contenedores padre usando LocalEventBus
-                        LocalEventBus.publish('TAXONOMY_LEVEL_CHANGED', { newLevel: nuevoNivel, rules: rules });
-                    }
-                }
-            });
+            // --- Schema-Driven Triggers (S57.4) ---
+            const schemaTriggers = global.APP_SCHEMAS[entityName]?.triggers || [];
+            if (schemaTriggers.length > 0) {
+                container.addEventListener('ionChange', (e) => {
+                    const target = e.target;
+                    if (!target) return;
+                    const targetName = target.getAttribute('name');
+                    
+                    schemaTriggers.forEach(trigger => {
+                        if (targetName === trigger.field && trigger.event === 'change') {
+                            const val = e.detail && e.detail.value !== undefined ? e.detail.value : target.value;
+                            const rules = global.APP_SCHEMAS[entityName]?.topologyRules;
+                            
+                            // Publish agnostic payload using LocalEventBus
+                            LocalEventBus.publish(trigger.publishToBus, { 
+                                newLevel: parseInt(val, 10), // Backward compatibility for topological hierarchy
+                                value: val,
+                                rules: rules 
+                            });
+                        }
+                    });
+                });
+            }
             // --------------------------------------------------------------------
 
             // S14.1 Delegación Submitter Object
-            new window.UI_FormSubmitter(entityName, fields, submitBtn, null, modal, localEditId);
+            const submitterOptions = {
+                onSuccess: injectedCallback,
+                modalContext: config.modalContext || null,
+                containerRef: container // S55.6 BugFix: Reliable unmount detection
+            };
+            const formSubmitter = new window.UI_FormSubmitter(entityName, fields, submitBtn, null, modal, localEditId, submitterOptions);
+            modal._formSubmitterInstance = formSubmitter;
+
             
             // --- Metadata-Driven Dependency Injection (Zero-Touch UI) ---
             if (window.UI_FormDependencies) {
@@ -693,7 +755,7 @@
 
         global.FormEngine_Hydrator = async function(container, record, entityName) {
             if (!container || !record) return;
-            const inputs = container.querySelectorAll('ion-input, ion-textarea, ion-select, input[type="hidden"]');
+            const inputs = container.querySelectorAll('ion-input, ion-textarea, ion-select, ion-toggle, input[type="hidden"], [data-form-component]');
             
             // =========================================================================================
             // MDM Guardrail S4.3 Auditoría: Pre-Hidratación de 0ms (Solución a Fallo de Tree Lock Visual)
@@ -737,7 +799,7 @@
             const pkFieldLocal = APP_SCHEMAS[entityName]?.primaryKey || 'id';
 
             inputs.forEach(input => {
-                const name = input.getAttribute('name');
+                const name = input.getAttribute('name') || input.getAttribute('data-form-component');
                 if (!name || input.hasAttribute('data-skip-hydration')) return;
 
                 let valToSet = undefined;
@@ -821,7 +883,13 @@
                         input.value = JSON.stringify(Array.isArray(parsedData) ? parsedData : []);
                         
                         requestAnimationFrame(() => {
-                            if (input.tagName.toLowerCase().startsWith('ion-')) {
+                            if (input.tagName.toLowerCase() === 'ion-toggle') {
+                            if (typeof input.componentOnReady === 'function') {
+                                input.componentOnReady().then(() => { input.checked = (valToSet === true || valToSet === 'true'); });
+                            } else {
+                                input.checked = (valToSet === true || valToSet === 'true');
+                            }
+                        } else if (input.tagName.toLowerCase().startsWith('ion-')) {
                                 input.value = JSON.stringify(Array.isArray(parsedData) ? parsedData : []);
                             }
                         });
@@ -830,7 +898,14 @@
                         input.setAttribute('value', valToSet);
                         
                         // Sincronización StencilJS correcta para Web Components
-                        if (input.tagName.toLowerCase().startsWith('ion-')) {
+                        if (input.tagName.toLowerCase() === 'ion-toggle') {
+                            const isChecked = (valToSet === true || valToSet === 'true' || valToSet === 'on');
+                            if (typeof input.componentOnReady === 'function') {
+                                input.componentOnReady().then(() => { input.checked = isChecked; });
+                            } else {
+                                input.checked = isChecked;
+                            }
+                        } else if (input.tagName.toLowerCase().startsWith('ion-')) {
                             if (typeof input.componentOnReady === 'function') {
                                 input.componentOnReady().then(() => {
                                     input.value = valToSet;
@@ -847,6 +922,24 @@
                     input.dispatchEvent(new CustomEvent('FormHydrated', { detail: valToSet, bubbles: false }));
                 }
             });
+
+            // S57.X: Navigate to specific step if requested (handled in constructor)
+
+            // S57.X: Capture initial state for dirty-checking
+            setTimeout(() => {
+                let currentEl = container;
+                let submitter = null;
+                while (currentEl) {
+                    if (currentEl._formSubmitterInstance) {
+                        submitter = currentEl._formSubmitterInstance;
+                        break;
+                    }
+                    currentEl = currentEl.parentElement;
+                }
+                if (submitter) {
+                    submitter.captureInitialState();
+                }
+            }, 150);
         };
 
         global.openEditForm = async function (id, customEntityName = null, overrideOptions = {}) {
@@ -863,7 +956,17 @@
             
             if (!entityName) {
                 console.error("[FormEngine] Error: Entidad objetivo no identificada.");
+                global._isRenderingForm = false;
                 return;
+            }
+
+            // S49.2: Redireccionar edición de Taxonomía al Wizard Fullscreen
+            if (entityName === 'Taxonomia' && (!overrideOptions || !overrideOptions.bypassWizard)) {
+                if (window.AppEventBus) {
+                    window.AppEventBus.publish('NAV::CHANGE', {viewType: 'wizard', recordId: id});
+                    global._isRenderingForm = false;
+                    return;
+                }
             }
 
             const meta = window.APP_SCHEMAS[entityName];
@@ -917,7 +1020,7 @@
 
             // 5. Pre-llenado de campos (Acelerado a 0ms Local Cache delegando al Hydrator Arquitectónico)
             const container = global.currentFormDrawer || document.getElementById('app-container');
-            await global.FormEngine_Hydrator(container, record, entityName);
+            await global.FormEngine_Hydrator(container, record, entityName, overrideOptions);
 
             // S7.3 - El "Pre-llenado de Chip Components" nativo fue removido. 
             // Reason (Principio DRY): UI_Components gestiona esta hidratación activamente

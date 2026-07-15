@@ -1,0 +1,108 @@
+<script>
+/* ============================================================
+   UI_ETL_Modal.client.js — Hub Visual de Ingesta Híbrida (V4)
+   ============================================================ */
+
+window.UI_ETL_Modal = (function() {
+    let activeImporter = null;
+
+    function present(entityName, options) {
+        // [QA Fix] Evitar DOM Node Leakage eliminando rastros previos
+        const prevModal = document.getElementById('dv-etl-modal');
+        if (prevModal) prevModal.remove();
+
+        const modal = document.createElement('ion-modal');
+        modal.id = 'dv-etl-modal';
+        modal.cssClass = 'etl-central-modal'; 
+
+        const content = document.createElement('ion-content');
+        
+        // --- Header Custom ---
+        const headerContainer = document.createElement('div');
+        headerContainer.className = 'etl-header ion-padding';
+        
+        const closeBtn = document.createElement('ion-icon');
+        closeBtn.name = 'close-outline';
+        closeBtn.style.cssText = 'position: absolute; right: 16px; top: 16px; font-size: 24px; cursor: pointer; color: white; z-index: 10;';
+        closeBtn.addEventListener('click', () => modal.dismiss());
+        headerContainer.appendChild(closeBtn);
+
+        const headerBox = document.createElement('div');
+        headerBox.className = 'etl-header-box';
+        
+        const iconDiv = document.createElement('div');
+        iconDiv.className = 'etl-header-icon';
+        iconDiv.innerHTML = '<ion-icon name="cloud-upload-outline"></ion-icon>';
+        
+        const textDiv = document.createElement('div');
+        textDiv.innerHTML = `
+            <div style="font-weight: 600; font-size: 18px;">Carga masiva</div>
+            <div style="font-size: 12px; opacity: 0.9;">Importar ${window.formatEntityName ? window.formatEntityName(entityName) : entityName}</div>
+        `;
+        
+        headerBox.appendChild(iconDiv);
+        headerBox.appendChild(textDiv);
+        headerContainer.appendChild(headerBox);
+        
+        content.appendChild(headerContainer);
+
+        // --- Body Container using UI_BulkImporter ---
+        let contextId = null;
+        let edgeType = null;
+        let parentEntity = null;
+        let finalOptions = {};
+        
+        if (typeof options === 'string') {
+            contextId = options;
+        } else if (options && typeof options === 'object') {
+            contextId = options.contextId || null;
+            edgeType = options.edgeType || null;
+            parentEntity = options.parentEntity || null;
+            finalOptions = options;
+        }
+
+        activeImporter = new window.UI_BulkImporter({
+            entityName: entityName,
+            options: finalOptions,
+            contextId: contextId,
+            edgeType: edgeType,
+            parentEntity: parentEntity
+        });
+
+        const importerDOM = activeImporter.render();
+        content.appendChild(importerDOM);
+
+        modal.appendChild(content);
+
+        // [QA Fix] Self-destruct listener RAM clear
+        modal.addEventListener('ionModalDidDismiss', () => { 
+            activeImporter = null;
+            modal.remove(); 
+        });
+
+        document.body.appendChild(modal);
+        return typeof window.PresentSafe === 'function' ? window.PresentSafe(modal) : modal.present();
+    }
+
+    return {
+        urlCache: {}, // Used as a fallback source by BulkImporter
+        present: present,
+        updateUrlField: function(urlStr) {
+            if (activeImporter) {
+                activeImporter.updateUrlField(urlStr);
+            }
+        },
+        updateProgress: function(chunkIndex, totalChunks, isDone, metrics, customText) {
+            if (activeImporter) {
+                activeImporter.updateProgress(chunkIndex, totalChunks, isDone, metrics, customText);
+            }
+        },
+        showResults: function(metrics, feedback) {
+            if (activeImporter) {
+                activeImporter.showResults(metrics, feedback);
+            }
+        }
+    };
+})();
+
+</script>

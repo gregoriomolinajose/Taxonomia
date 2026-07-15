@@ -7,7 +7,7 @@
  */
 
 window.UI_FormSubmitter = class UI_FormSubmitter {
-    constructor(entityName, fields, submitBtn, apiService = null, modal = null, localEditId = null) {
+    constructor(entityName, fields, submitBtn, apiService = null, modal = null, localEditId = null, options = {}) {
         this.entityName = entityName;
         this.fields = fields;
         this.submitBtn = submitBtn;
@@ -16,6 +16,7 @@ window.UI_FormSubmitter = class UI_FormSubmitter {
         this.apiService = apiService || window.DataAPI;
         this.modal = modal;
         this._internalRetryId = localEditId;
+        this.options = options;
         
         this.isSaving = false;
         this._isSilent = false; // Flag para auto-guardado sin cerrar modal
@@ -25,70 +26,147 @@ window.UI_FormSubmitter = class UI_FormSubmitter {
     }
 
     _attachSubmitListener() {
-        this.submitBtn.addEventListener('click', async () => {
-            if (this.isSaving) return; // Bloqueo anti-doble envío
-            this.isSaving = true;
-            this.submitBtn.disabled = true;
+        if (this.submitBtn) {
+            this.submitBtn.addEventListener('click', async () => {
+                await this.executeSave({ isSilent: false });
+            });
+        }
+    }
 
+    async executeSave(options = {}) {
+        const container = this.options.containerRef;
+        if (container && !container.isConnected) {
+            console.warn('[FormSubmitter] Form container was unmounted. Canceling queued save to prevent cross-contamination.');
+            return;
+        }
+        
+        const isSilentSave = options.isSilent || false;
+        this._isSilent = isSilentSave;
+
+        if (this.isSaving) {
+            this._pendingSaveOptions = options;
+            return; // Bloqueo anti-doble envío pero encola la petición
+        }
+        this.isSaving = true;
+        
+        if (this.submitBtn && !isSilentSave) {
+            this.submitBtn.disabled = true;
+        }
+
+        // S57.X: Guardrail: Skip save if no changes in UPDATE mode or empty CREATE
+        const action = this._internalRetryId ? 'update' : 'create';
+        if (!this.hasChanges()) {
+            console.log("[FormSubmitter] Sin cambios detectados. Omitiendo guardado en BD.");
+            this.isSaving = false;
+            if (this.submitBtn && !isSilentSave) this.submitBtn.disabled = false;
+            if (window.AppEventBus) {
+                window.AppEventBus.publish('FORM::SUBMIT_SUCCESS', { 
+                    entityName: this.entityName, 
+                    response: { status: 'success', action: 'none', message: 'No changes detected.' }, 
+                    isSilent: this._isSilent 
+                });
+            }
+            return;
+        }
+
+        if (action === 'create') {
+            const payloadCheck = this.extractPayload();
+            let hasMeaningfulData = false;
+            const pkField = window.Schema_Utils ? window.Schema_Utils.getPrimaryKey(this.entityName) : 'id_registro';
+            
+            for (const key of Object.keys(payloadCheck)) {
+                // S57.Y: Ignorar campos de sistema, llaves y campos topológicos pre-rellenados
+                if (key === pkField || key === '_version' || key === '_work_context' || key.startsWith('_')) continue;
+                if (['created_at', 'created_by', 'updated_at', 'updated_by', 'estado'].includes(key)) continue;
+                if (key.endsWith('_padre') || key === 'nivel_tipo') continue; // Campos topológicos inyectados
+                
+                // Ignorar si el schema lo marca como oculto
+                const schemaDef = this.fields ? this.fields.find(f => f.name === key) : null;
+                if (schemaDef && (schemaDef.type === 'hidden' || schemaDef.isSystem)) continue;
+
+                const val = payloadCheck[key];
+                
+                if (Array.isArray(val) && val.length > 0) {
+                    hasMeaningfulData = true; break;
+                }
+                
+                if (val !== null && val !== undefined && String(val).trim() !== '' && val !== '[]' && val !== 'null') {
+                    // Si el schema tiene un default value y el usuario no lo ha cambiado, no lo consideramos "meaningful" por sí solo
+                    if (schemaDef && schemaDef.defaultValue !== undefined && String(val).trim() === String(schemaDef.defaultValue).trim()) {
+                        continue;
+                    }
+                    hasMeaningfulData = true; break;
+                }
+            }
+            
+            if (!hasMeaningfulData) {
+                console.log("[FormSubmitter] Bloqueando creación de registro vacío.");
+                this.isSaving = false;
+                if (this.submitBtn && !isSilentSave) this.submitBtn.disabled = false;
+                if (!isSilentSave) {
+                    this._showToast('⚠️ No se puede guardar un registro completamente vacío.', 'warning');
+                }
+                return;
+            }
+        }
+
+        if (this.submitBtn && !isSilentSave) {
             this.originalBtnChildren = Array.from(this.submitBtn.childNodes);
             window.DOM.clear(this.submitBtn);
             
             this.submitBtn.appendChild(window.DOM.create('ion-spinner', { name: 'crescent' }));
             this.submitBtn.appendChild(document.createTextNode(' \u00a0 Guardando...'));
+        }
 
             // --- Removed UI Blocking (S42.7: Optimistic UI) ---
             // Sincronía background habilitada.
 
             // LECTURA JIT (Evita Detached Nodes)
-            const activeForm = this.modal || document.getElementById('app-container');
-            const freshInputs = activeForm.querySelectorAll('ion-input, ion-textarea, ion-select, input[type="hidden"]');
-            const payload = {};
-            
-            freshInputs.forEach(input => {
-                const name = input.getAttribute('name');
-                if (name && !input.closest('[data-dynamic-list]') && !name.toLowerCase().startsWith('ion-')) {
-                    let val = input.value;
-                    const schemaField = this.fields ? this.fields.find(f => f.name === name) : null;
+            let payload = this.extractPayload();
+
+            // S58.1: Validación Server-Side/Payload-Side de Campos Obligatorios
+            if (this.fields) {
+                const missingReqs = [];
+                this.fields.forEach(f => {
+                    if (f.required) {
+                        const val = payload[f.name];
+                        if (val === undefined || val === null || String(val).trim() === '' || (Array.isArray(val) && val.length === 0)) {
+                            missingReqs.push(f.label || f.name);
+                        }
+                    }
+                });
+                
+                if (missingReqs.length > 0) {
+                    this._showToast('⚠️ Faltan campos obligatorios: ' + missingReqs.join(', '), 'warning');
                     
-                    if (schemaField) {
-                        if (schemaField.type === 'relation' || schemaField.uiComponent === 'select_single') {
-                            let strVal = (val === null || val === undefined) ? "" : String(val).trim();
-                            if (strVal.toLowerCase() === "null" || strVal.toLowerCase() === "undefined") strVal = "";
-                            payload[name] = strVal;
-                        } else {
-                            let cleanVal = (typeof val === 'string') ? val.trim() : val;
-                            if (cleanVal !== undefined && cleanVal !== null && cleanVal !== '') {
-                                payload[name] = cleanVal;
+                    // Native HTML5 Validation Trigger
+                    const activeForm = this.modal || document.getElementById('app-container');
+                    const firstMissingFieldDef = this.fields.find(f => missingReqs.includes(f.label || f.name));
+                    if (firstMissingFieldDef && activeForm) {
+                        const targetInput = activeForm.querySelector(`[name="${firstMissingFieldDef.name}"]`);
+                        if (targetInput) {
+                            if (typeof targetInput.reportValidity === 'function') {
+                                targetInput.reportValidity();
+                            } else if (targetInput.querySelector && targetInput.querySelector('input')) {
+                                const innerNative = targetInput.querySelector('input');
+                                if (innerNative && typeof innerNative.reportValidity === 'function') {
+                                    innerNative.reportValidity();
+                                }
                             }
                         }
-                    } else {
-                        let cleanVal = (typeof val === 'string') ? val.trim() : val;
-                        if (cleanVal !== undefined && cleanVal !== null && cleanVal !== '') {
-                            payload[name] = cleanVal;
-                        }
                     }
+                    
+                    this._revertButtonState(true);
+                    return; // Abort Submit Flow
                 }
-            });
-
-            // S30.11 - Protocolo de Extracción Nodal Frontend (Duck-Typing API)
-            // Extrae datos de WebComponents delegando a su función getValidatedValue local.
-            const nodalComponents = activeForm.querySelectorAll('[data-form-component]');
-            nodalComponents.forEach(cmp => {
-                const name = cmp.getAttribute('data-form-component');
-                if (name && typeof cmp.getValidatedValue === 'function') {
-                    const val = cmp.getValidatedValue();
-                    if (val !== undefined) {
-                        payload[name] = val;
-                    }
-                }
-            });
+            }
 
             // S37.3: Identity Collision Prevention (Uniqueness Checker)
             if (window.DataStore && this.fields) {
                 const liveData = window.DataStore.get(this.entityName) || [];
                 
-                // Extrae cualquier campo marcado oficialmente en Schema_Engine como "único" o trigger workspace
-                const uniquenessFields = this.fields.filter(f => f.triggers_workspace_resolve === true || f.unique === true);
+                // Extrae cualquier campo marcado oficialmente en Schema_Engine como "único"
+                const uniquenessFields = this.fields.filter(f => f.unique === true);
                 
                 let collisionFound = false;
                 
@@ -110,8 +188,38 @@ window.UI_FormSubmitter = class UI_FormSubmitter {
                 }
                 
                 if (collisionFound) {
-                    this._revertButtonState();
+                    this._revertButtonState(true);
                     return; // Abort Submit Flow
+                }
+            }
+
+            // S57.5: Auto-cálculo de Nivel Jerárquico
+            if (this.fields) {
+                const levelFieldDef = this.fields.find(f => f.name === 'nivel_tipo');
+                if (levelFieldDef && window.Math_Engine && typeof window.Math_Engine.calculateHierarchyLevel === 'function') {
+                    const parentDef = this.fields.find(f => f.relationType === 'padre');
+                    const mathParams = {
+                        entity: this.entityName,
+                        levelField: 'nivel_tipo',
+                        parentField: parentDef ? parentDef.name : 'id_dominio_padre',
+                        pkField: window.Schema_Utils ? window.Schema_Utils.getPrimaryKey(this.entityName) : 'id_registro'
+                    };
+                    const cacheData = window.DataStore ? window.DataStore.get(this.entityName) : [];
+                    
+                    const mockState = { ...payload };
+                    const rawParent = mockState[mathParams.parentField];
+                    if (Array.isArray(rawParent) && rawParent.length > 0) {
+                        mockState[mathParams.parentField] = rawParent[0].id_registro || rawParent[0].id || rawParent[0];
+                    } else if (typeof rawParent === 'string' && rawParent.startsWith('[') && rawParent.endsWith(']')) {
+                        try {
+                            const parsed = JSON.parse(rawParent);
+                            if (Array.isArray(parsed) && parsed.length > 0) {
+                                mockState[mathParams.parentField] = parsed[0].id_registro || parsed[0].id || parsed[0];
+                            }
+                        } catch (e) {}
+                    }
+                    
+                    payload['nivel_tipo'] = window.Math_Engine.calculateHierarchyLevel(mockState, mathParams, cacheData);
                 }
             }
 
@@ -121,7 +229,7 @@ window.UI_FormSubmitter = class UI_FormSubmitter {
             delete payload.updated_at;
             delete payload.updated_by;
 
-            const action = this._internalRetryId ? 'update' : 'create';
+            // action is already declared at the top of the listener
             
             // [S50.2] Inyección Atómica de Borradores (Atomic Drafts)
             // Cuando estamos en el Wizard de Taxonomía, forzamos estado y contexto a los hijos
@@ -144,7 +252,7 @@ window.UI_FormSubmitter = class UI_FormSubmitter {
                 }
 
                 const fieldsConfig = formSchema ? (formSchema.fields || Object.keys(formSchema).map(k => ({name: k, ...formSchema[k]}))) : [];
-                const relationKeys = new Set(fieldsConfig.filter(f => f.type === 'relation').map(f => f.name));
+                const relationKeys = new Set(fieldsConfig.filter(f => f.type === 'relation' || f.isTemporalGraph).map(f => f.name));
 
                 // [S53.6] Provide explicit work context to the root payload so Engine_DB can diff correctly when children are empty
                 payload._work_context = contextId;
@@ -219,73 +327,95 @@ window.UI_FormSubmitter = class UI_FormSubmitter {
             const _sessionId = optimisticPK; // Session tagging para aislar asincronía concurrente
             
             for (const key of Object.keys(payload)) {
-                 if (Array.isArray(payload[key])) {
-                      const tField = temporalFields[key];
-                      if (tField) {
-                          if (!optimisticChildren['Sys_Graph_Edges']) optimisticChildren['Sys_Graph_Edges'] = [];
-                          
-                          const edgeName = (tField.graphEdgeType || tField.name).toUpperCase();
-                          const edges = (window.DataStore ? window.DataStore.get('Sys_Graph_Edges') : []) || [];
-                          
-                          // 1. Identify previous edges for this node/context to close them optimistically
-                          let oldEdges = [];
-                          if (tField.workspaceMode) {
-                              const effParent = tField.dynamicParentField ? (payload[tField.dynamicParentField] || tField.fixedParentId) : tField.fixedParentId;
-                              oldEdges = edges.filter(e => String(e.es_version_actual).toLowerCase() === 'true' && String(e.id_nodo_padre).trim() === String(effParent).trim() && e.tipo_relacion === edgeName && String(e.contexto_id).trim() === String(contextId || '').trim());
-                          } else if (tField.relationType === 'padre') {
-                              oldEdges = edges.filter(e => String(e.es_version_actual).toLowerCase() === 'true' && String(e.id_nodo_hijo).trim() === String(optimisticPK).trim() && e.tipo_relacion === edgeName);
-                          } else {
-                              oldEdges = edges.filter(e => String(e.es_version_actual).toLowerCase() === 'true' && String(e.id_nodo_padre).trim() === String(optimisticPK).trim() && e.tipo_relacion === edgeName);
-                          }
-                          
-                          if (payload._work_context) {
-                              oldEdges = oldEdges.filter(e => String(e.contexto_id).trim() === String(payload._work_context).trim());
-                          } else if (contextId && contextId !== 'DRAFT_CTX' && contextId !== optimisticPK) {
-                              oldEdges = oldEdges.filter(e => String(e.contexto_id).trim() === String(contextId).trim());
-                          }
-                          
-                          const closedEdges = oldEdges.map(e => ({ ...e, es_version_actual: false, _optimistic_session: _sessionId }));
-                          optimisticChildren['Sys_Graph_Edges'].push(...closedEdges);
+                 const tField = temporalFields[key];
+                 if (tField) {
+                     let childItems = Array.isArray(payload[key]) ? payload[key] : [];
+                     if (!Array.isArray(payload[key]) && payload[key] !== null && payload[key] !== '') {
+                         childItems = [{
+                             id_registro: String(payload[key]),
+                             _estado_arista: 'Borrador',
+                             _contexto_arista: contextId
+                         }];
+                     }
 
-                          // 2. Create the new edges
-                          const edgeRecords = payload[key].map(child => {
-                              const newId = 'TMP_EDGE_' + Math.random().toString(36).substring(2, 10).toUpperCase();
-                              const childPk = child.id_registro || child[window.Schema_Utils.getPrimaryKey(tField.targetEntity)];
-                              let edgePadre = tField.relationType === 'hijo' ? optimisticPK : childPk;
-                              let edgeHijo = tField.relationType === 'hijo' ? childPk : optimisticPK;
-                              
-                              if (tField.workspaceMode) {
-                                  edgePadre = tField.dynamicParentField ? (payload[tField.dynamicParentField] || tField.fixedParentId) : tField.fixedParentId;
-                                  edgeHijo = childPk;
-                              }
-                              
-                              return {
-                                  id_relacion: newId,
-                                  id_nodo_padre: edgePadre,
-                                  id_nodo_hijo: edgeHijo,
-                                  tipo_relacion: edgeName,
-                                  es_version_actual: true,
-                                  estado: child._estado_arista || 'Activo',
-                                  contexto_id: child._contexto_arista || '',
-                                  _optimistic_session: _sessionId
-                              };
-                          });
-                          optimisticChildren['Sys_Graph_Edges'].push(...edgeRecords);
-                      } else if (window.DataStore && window.DataStore.get(key)) {
-                          optimisticChildren[key] = payload[key].map(child => {
-                              const childClone = { ...child, _optimistic_session: _sessionId };
-                              if (isTempPK) { // Ligar Edges nuevos con el Padre Falso de ser requerido
-                                  const childParentRef = 'id_' + this.entityName.toLowerCase();
-                                  childClone[childParentRef] = optimisticPK;
-                              }
-                              // Asegurar un PK falso temporal para que DataGrid no explote
-                              const childPkF = window.Schema_Utils.getPrimaryKey(key);
-                              if (!childClone[childPkF]) childClone[childPkF] = 'TMP_EDGE_' + Math.random().toString(36).substring(2, 10).toUpperCase();
-                              return childClone;
-                          });
-                          childBackups[key] = JSON.parse(JSON.stringify(window.DataStore.get(key)));
-                      }
+                     if (!optimisticChildren['Sys_Graph_Edges']) optimisticChildren['Sys_Graph_Edges'] = [];
+                     
+                     const edgeName = (tField.graphEdgeType || tField.name).toUpperCase();
+                     const edges = (window.DataStore ? window.DataStore.get('Sys_Graph_Edges') : []) || [];
+                     
+                     // 1. Identify previous edges for this node/context to close them optimistically
+                     let oldEdges = [];
+                     if (tField.workspaceMode) {
+                         const effParent = tField.dynamicParentField ? (payload[tField.dynamicParentField] || tField.fixedParentId) : tField.fixedParentId;
+                         oldEdges = edges.filter(e => String(e.es_version_actual).toLowerCase() === 'true' && String(e.id_nodo_padre).trim() === String(effParent).trim() && e.tipo_relacion === edgeName && String(e.contexto_id).trim() === String(contextId || '').trim());
+                     } else if (tField.relationType === 'padre') {
+                         oldEdges = edges.filter(e => String(e.es_version_actual).toLowerCase() === 'true' && String(e.id_nodo_hijo).trim() === String(optimisticPK).trim() && e.tipo_relacion === edgeName);
+                     } else {
+                         oldEdges = edges.filter(e => String(e.es_version_actual).toLowerCase() === 'true' && String(e.id_nodo_padre).trim() === String(optimisticPK).trim() && e.tipo_relacion === edgeName);
+                     }
+                     
+                     if (payload._work_context) {
+                         oldEdges = oldEdges.filter(e => String(e.contexto_id).trim() === String(payload._work_context).trim());
+                     } else if (contextId && contextId !== 'DRAFT_CTX' && contextId !== optimisticPK) {
+                         oldEdges = oldEdges.filter(e => String(e.contexto_id).trim() === String(contextId).trim());
+                     }
+                     
+                     const closedEdges = oldEdges.map(e => ({ ...e, es_version_actual: false, _optimistic_session: _sessionId }));
+                     optimisticChildren['Sys_Graph_Edges'].push(...closedEdges);
+
+                     // 2. Create the new edges
+                     const edgeRecords = childItems.map(child => {
+                         const newId = 'TMP_EDGE_' + Math.random().toString(36).substring(2, 10).toUpperCase();
+                         const isPrimitive = typeof child === 'string' || typeof child === 'number';
+                         const childPk = isPrimitive ? String(child) : (child.id_registro || child[window.Schema_Utils.getPrimaryKey(tField.targetEntity)]);
+                         let edgePadre = tField.relationType === 'hijo' ? optimisticPK : childPk;
+                         let edgeHijo = tField.relationType === 'hijo' ? childPk : optimisticPK;
+                         
+                         if (tField.workspaceMode) {
+                             edgePadre = tField.dynamicParentField ? (payload[tField.dynamicParentField] || tField.fixedParentId) : tField.fixedParentId;
+                             edgeHijo = childPk;
+                         }
+                         
+                         return {
+                             id_relacion: newId,
+                             id_nodo_padre: edgePadre,
+                             id_nodo_hijo: edgeHijo,
+                             tipo_relacion: edgeName,
+                             es_version_actual: true,
+                             estado: child._estado_arista || 'Activo',
+                             contexto_id: child._contexto_arista || '',
+                             _optimistic_session: _sessionId
+                         };
+                     });
+                     optimisticChildren['Sys_Graph_Edges'].push(...edgeRecords);
+                 } else if (Array.isArray(payload[key]) && window.DataStore && window.DataStore.get(key)) {
+                     optimisticChildren[key] = payload[key].map(child => {
+                         const childClone = { ...child, _optimistic_session: _sessionId };
+                         if (isTempPK) { // Ligar Edges nuevos con el Padre Falso de ser requerido
+                             const childParentRef = 'id_' + this.entityName.toLowerCase();
+                             childClone[childParentRef] = optimisticPK;
+                         }
+                         // Asegurar un PK falso temporal para que DataGrid no explote
+                         const childPkF = window.Schema_Utils.getPrimaryKey(key);
+                         if (!childClone[childPkF]) childClone[childPkF] = 'TMP_EDGE_' + Math.random().toString(36).substring(2, 10).toUpperCase();
+                         return childClone;
+                     });
+                     childBackups[key] = JSON.parse(JSON.stringify(window.DataStore.get(key)));
                  }
+            }
+            // S49.3: Creación implícita de Arista Temporal (Edge) via Modal Context
+            if (this.options && this.options.modalContext) {
+                const mc = this.options.modalContext;
+                if (mc.parentId && mc.edgeType && mc.contextId) {
+                    if (window.Graph_Utils && window.Graph_Utils.upsertTemporalEdge) {
+                        try {
+                            window.Graph_Utils.upsertTemporalEdge(mc.parentId, optimisticPK, mc.edgeType, mc.contextId);
+                            console.log(`[FormSubmitter] Arista temporal creada: ${mc.parentId} -> ${optimisticPK} (${mc.edgeType}) Ctx:${mc.contextId}`);
+                        } catch(ex) {
+                            console.error("[FormSubmitter] Error al crear arista temporal:", ex);
+                        }
+                    }
+                }
             }
             
             const fakeResponse = { status: 'success', action: action, pk: pkField, pkValue: optimisticPK, data: { orchestratedChildren: optimisticChildren } };
@@ -305,17 +435,22 @@ window.UI_FormSubmitter = class UI_FormSubmitter {
                  this._performSuccessCleanup(fakeResponse, isInlineRendered); 
             } catch(opErr) {
                  console.error('Optimistic Patch Fracasó, abortando red:', opErr);
-                 return this._revertButtonState();
+                 this.isSaving = false; // ensure lock dropped if exception occurs
+                 return this._revertButtonState(true);
             }
 
             // FASE 2: THE BACKGROUND FIRE & FORGET (Sin Bloqueo Await)
-            const timeoutMs = 25000; // Incrementado a 25s por el colchón background
-            const _timeoutSafe = new Promise((_, reject) => setTimeout(() => reject(new Error('TIMEOUT_EXCEEDED')), timeoutMs));
+            const timeoutMs = 60000; // Incrementado a 60s para soportar operaciones lentas de Sheets
+            let timeoutId;
+            const _timeoutSafe = new Promise((_, reject) => {
+                timeoutId = setTimeout(() => reject(new Error('TIMEOUT_EXCEEDED')), timeoutMs);
+            });
             
             Promise.race([
                 this.apiService.call('API_Universal_Router', action, this.entityName, safePayload),
                 _timeoutSafe
             ]).then(rawResponse => {
+                clearTimeout(timeoutId);
                 const response = typeof rawResponse === 'string' ? JSON.parse(rawResponse) : rawResponse;
                 
                 if (response && response.status === 'success') {
@@ -344,22 +479,118 @@ window.UI_FormSubmitter = class UI_FormSubmitter {
                     // 3. Reconciliación: Intercambio de Llaves y Versiones
                     if (isTempPK && response.pkValue && String(response.pkValue) !== String(optimisticPK)) {
                         this._reconcileTemporaryId(this.entityName, optimisticPK, response.pkValue, response.lexical_id);
+                        this._internalRetryId = response.pkValue;
                     }
                     if (response.data && response.data.adapter_results && response.data.adapter_results.sheets) {
                         const newVer = response.data.adapter_results.sheets.version;
                         if (newVer) this._reconcileVersion(this.entityName, response.pkValue || optimisticPK, newVer);
                     }
+                    
+                    // S49.3.B: Persistir Arista Temporal en Base de Datos (Inmediato)
+                    if (this.options && this.options.modalContext) {
+                        const mc = this.options.modalContext;
+                        if (mc.parentId && mc.edgeType && mc.contextId && response.pkValue) {
+                            let relId = `RELA_${Date.now()}_${Math.random().toString(36).substr(2,6)}`.toUpperCase();
+                            if (mc.edgeType === 'TAXONOMIA_PERSONA') {
+                                relId = `RELA-${String(mc.contextId).substring(5, 9)}${String(response.pkValue).substring(5, 9)}`.toUpperCase();
+                            }
+                            const newEdge = {
+                                id_relacion: relId,
+                                id_nodo_padre: mc.parentId,
+                                id_nodo_hijo: response.pkValue,
+                                tipo_relacion: mc.edgeType,
+                                estado: 'Borrador',
+                                es_version_actual: true,
+                                contexto_id: mc.contextId,
+                                _work_context: mc.contextId
+                            };
+                            this.apiService.call('API_Universal_Router', 'commitEdges', 'Sys_Graph_Edges', [newEdge])
+                                .then((resp) => {
+                                    if (resp && resp.status === 'error') {
+                                        console.error('[FormSubmitter] Backend error persistiendo arista:', resp.message);
+                                    } else {
+                                        console.log('[FormSubmitter] Arista temporal persistida en DB');
+                                    }
+                                })
+                                .catch(e => console.error('[FormSubmitter] HTTP/Network Error persistiendo arista en DB', e));
+                        }
+                    }
+                    
+                    // S55.6: Actualización JIT del DOM para autoguardados secuenciales (evita OCC)
+                    const activeForm = this.modal || document.getElementById('app-container');
+                    if (activeForm) {
+                        if (response.data && response.data.adapter_results && response.data.adapter_results.sheets) {
+                            const newVer = response.data.adapter_results.sheets.version;
+                            if (newVer) {
+                                const verInput = activeForm.querySelector('input[name="_version"]');
+                                if (verInput) verInput.value = newVer;
+                            }
+                        }
+                        if (response.pkValue) {
+                            const pkF = window.Schema_Utils ? window.Schema_Utils.getPrimaryKey(this.entityName) : 'id';
+                            const idInput = activeForm.querySelector(`input[name="${pkF}"]`);
+                            if (idInput) idInput.value = response.pkValue;
+                            // Asegurar que el siguiente paso se envíe como 'update'
+                            this._internalRetryId = response.pkValue; 
+                            
+                            // [UX Auto-Refresh] Hidratar el formulario con los campos generados por el backend (ej. Google Meet link)
+                            setTimeout(() => {
+                                if (this.apiService && typeof this.apiService.call === 'function') {
+                                    this.apiService.call('API_Universal_Router', 'read', this.entityName, { bypassCache: true })
+                                        .then(raw => {
+                                            const r = typeof raw === 'string' ? JSON.parse(raw) : raw;
+                                            if (r && r.status === 'success' && r.data && Array.isArray(r.data.rows)) {
+                                                const idx = r.data.headers.indexOf(pkF);
+                                                if (idx > -1) {
+                                                    const row = r.data.rows.find(rw => String(rw[idx]) === String(response.pkValue));
+                                                    if (row) {
+                                                        const updatedRecord = {};
+                                                        r.data.headers.forEach((h, i) => updatedRecord[h] = row[i]);
+                                                        
+                                                        // Update cache so grid also sees it
+                                                        if (window.DataStore && typeof window.DataStore.set === 'function') {
+                                                            let liveData = window.DataStore.get(this.entityName) || [];
+                                                            const existingIdx = liveData.findIndex(r => String(r[pkF]) === String(response.pkValue));
+                                                            if (existingIdx > -1) {
+                                                                liveData[existingIdx] = updatedRecord;
+                                                            } else {
+                                                                liveData.unshift(updatedRecord);
+                                                            }
+                                                            window.DataStore.set(this.entityName, liveData);
+                                                            if (window.AppEventBus) {
+                                                                window.AppEventBus.publish('DATA::UPDATED', { entityKey: this.entityName });
+                                                            }
+                                                        }
+                                                        
+                                                        // Hydrate inputs
+                                                        Object.keys(updatedRecord).forEach(k => {
+                                                            const inpt = activeForm.querySelector(`[name="${k}"]`);
+                                                            if (inpt) inpt.dispatchEvent(new CustomEvent('FormHydrated', { detail: updatedRecord[k], bubbles: false }));
+                                                        });
+                                                    }
+                                                }
+                                            }
+                                        });
+                                }
+                            }, 300);
+                        }
+                    }
+                    
+                    // Resetear estado inicial para que hasChanges() evalúe correctamente guardados subsecuentes
+                    this._initialPayload = this.extractPayload();
                     if (response.action === 'updated') {
                         this._showToast(`Registro actualizado silenciosamente.`, 'success');
                     } else {
                         const itemName = (response.data && response.data.Entity) ? response.data.Entity : this.entityName;
-                        this._showToast(`¡${itemName} guardado en nube!`, 'success');
+                        const cleanItemName = itemName.replace(/_/g, ' ');
+                        this._showToast(`¡${cleanItemName} guardado en nube!`, 'success');
                     }
 
                     // [S45.2] We no longer blindly invalidate Cargo and Sys_Graph_Edges on UI save
                     // because Engine_DB.upsert handles graph edges and UI_FormSubmitter reconciles locally.
                     // This restores the 0ms instant-render performance.
-                    if (this.entityName === 'Persona' && response.action !== 'updated') {
+                    // Bugfix: Evitar navegación destructiva si estamos guardando desde un Modal/Drawer
+                    if (this.entityName === 'Persona' && response.action !== 'updated' && !this.modal) {
                         if (window.UI_Router) window.UI_Router.navigateTo('dataview', 'Persona');
                     }
                 } else {
@@ -369,15 +600,28 @@ window.UI_FormSubmitter = class UI_FormSubmitter {
                         this._handleOptimisticRollback(stateBackup, childBackups, response ? response.message : 'Error desconocido de Adaptador');
                     }
                 }
-            }).catch(err => {
-                if (err.message === 'TIMEOUT_EXCEEDED') {
-                    this._handleOptimisticRollback(stateBackup, childBackups, 'Red severamente saturada (>25s) u Off-line.');
-                } else {
-                    this._handleOptimisticRollback(stateBackup, childBackups, 'Falla de conexión: ' + err.message);
-                }
-            });
-            // Fin _attachSubmitListener
+        }).catch(err => {
+            clearTimeout(timeoutId);
+            if (err.message === 'TIMEOUT_EXCEEDED') {
+                this._handleOptimisticRollback(stateBackup, childBackups, 'Red severamente saturada (>60s) u Off-line.');
+            } else {
+                this._handleOptimisticRollback(stateBackup, childBackups, 'Falla de conexión: ' + err.message);
+            }
+        }).finally(() => {
+            this._finalizeSaveCycle();
         });
+        // Fin executeSave
+    }
+
+    _finalizeSaveCycle() {
+        this.isSaving = false;
+        if (this._pendingSaveOptions) {
+            const opts = this._pendingSaveOptions;
+            this._pendingSaveOptions = null;
+            setTimeout(() => {
+                this.executeSave(opts);
+            }, 100);
+        }
     }
 
     // --- SUBRUTINAS DE RECONCILIACIÓN OPTIMISTA (S42.7) ---
@@ -430,21 +674,32 @@ window.UI_FormSubmitter = class UI_FormSubmitter {
     }
 
 
-    _revertButtonState() {
-        this.isSaving = false;
-        this.submitBtn.disabled = false;
-        window.DOM.clear(this.submitBtn);
-        if (this.originalBtnChildren) {
-            this.originalBtnChildren.forEach(node => this.submitBtn.appendChild(node));
+    _revertButtonState(abortSubmit = false) {
+        if (abortSubmit) {
+            this.isSaving = false;
+            this._pendingSaveOptions = null;
+        }
+        if (this.submitBtn && !this._isSilent) {
+            this.submitBtn.disabled = false;
+            window.DOM.clear(this.submitBtn);
+            if (this.originalBtnChildren) {
+                this.originalBtnChildren.forEach(node => this.submitBtn.appendChild(node));
+            }
         }
     }
 
 
     _performSuccessCleanup(response, isInlineRendered) {
         this._revertButtonState();
-        this._internalRetryId = null; // Liberar caché de reintentos
+        
+        // Capture the new saved state as the initial state for subsequent transitions
+        this.captureInitialState();
         
         const wasSilent = this._isSilent; // Cachear para evitar que los suscriptores muten el estado prematuramente
+
+        if (!wasSilent) {
+            this._internalRetryId = null; // Liberar caché de reintentos solo si no es silencioso
+        }
 
         if (window.DataStore) {
             // [S29.7] window.DataStore.clearNested() extirpado. Los Subgrids ahora son stateless.
@@ -456,13 +711,18 @@ window.UI_FormSubmitter = class UI_FormSubmitter {
                 window.FormEngine_Resolvers.invalidateCache();
             }
         }
+        
+        const isTaxonomiaContext = (this.modal && this.modal.dataset && this.modal.dataset.taxonomiaContext);
+
+        console.warn(`[FormSubmitter] _performSuccessCleanup para ${this.entityName}. wasSilent: ${wasSilent}, isTaxonomiaContext: ${isTaxonomiaContext}, depth: ${window.DrawerStackController ? window.DrawerStackController.getDepth() : 'N/A'}`);
         // Cerramos el Modal si no estamos en auto-guardado silencioso
-        if (window._closeTopModal && !wasSilent) {
+        if (isTaxonomiaContext && !wasSilent && window._closeTopModal) {
             window._closeTopModal();
         }
 
         // Enrutamiento post-Guardado Inmediato
-        if (!isInlineRendered && !wasSilent && (!window.ModalStackController || window.ModalStackController.getDepth() === 0)) {
+        // [BugFix] M/L: Si el contexto es Taxonomia, NO redirigir a DataView para no destruir el Wizard (Pantalla Blanca)
+        if (!isInlineRendered && !wasSilent && !isTaxonomiaContext && (!window.DrawerStackController || window.DrawerStackController.getDepth() === 0)) {
             if (window.AppEventBus) {
                 window.AppEventBus.publish('NAV::CHANGE', {viewType: 'dataview', entityKey: this.entityName});
             } else if (window.onSaveSuccessCallback) {
@@ -487,5 +747,99 @@ window.UI_FormSubmitter = class UI_FormSubmitter {
         await window.PresentSafe(toast);
     }
 
+    extractPayload() {
+        const activeForm = this.modal || document.getElementById('app-container');
+        if (!activeForm) return {};
+        const freshInputs = activeForm.querySelectorAll('ion-input, ion-textarea, ion-select, ion-toggle, input[type="hidden"]');
+        const payload = {};
+        
+        freshInputs.forEach(input => {
+            const name = input.getAttribute('name');
+            if (name && !input.closest('[data-dynamic-list]') && !name.toLowerCase().startsWith('ion-')) {
+                let val;
+                if (input.tagName.toLowerCase() === 'ion-toggle') {
+                    val = input.checked;
+                } else {
+                    val = input.value;
+                }
+                const schemaField = this.fields ? this.fields.find(f => f.name === name) : null;
+                
+                if (schemaField) {
+                    if (schemaField.type === 'relation' || schemaField.uiComponent === 'select_single') {
+                        let strVal = (val === null || val === undefined) ? "" : String(val).trim();
+                        if (strVal.toLowerCase() === "null" || strVal.toLowerCase() === "undefined") strVal = "";
+                        payload[name] = strVal;
+                    } else {
+                        let cleanVal = (typeof val === 'string') ? val.trim() : val;
+                        if (cleanVal !== undefined && cleanVal !== null && cleanVal !== '') {
+                            payload[name] = cleanVal;
+                        }
+                    }
+                } else {
+                    let cleanVal = (typeof val === 'string') ? val.trim() : val;
+                    if (cleanVal !== undefined && cleanVal !== null && cleanVal !== '') {
+                        payload[name] = cleanVal;
+                    }
+                }
+            }
+        });
+
+        const nodalComponents = activeForm.querySelectorAll('[data-form-component]');
+        nodalComponents.forEach(cmp => {
+            const name = cmp.getAttribute('data-form-component');
+            const actualNode = (window.UI_FormUtils && window.UI_FormUtils.unwrapFieldNode) 
+                ? window.UI_FormUtils.unwrapFieldNode(cmp) 
+                : cmp;
+                
+            if (name && actualNode && typeof actualNode.getValidatedValue === 'function') {
+                const val = actualNode.getValidatedValue();
+                if (val !== undefined) {
+                    payload[name] = val;
+                }
+            }
+        });
+
+        return payload;
+    }
+
+    captureInitialState() {
+        this._initialPayload = this.extractPayload();
+    }
+
+    hasChanges() {
+        if (!this._initialPayload) return true;
+        
+        const currentPayload = this.extractPayload();
+        console.log(`[FormSubmitter Debug] _initialPayload:`, this._initialPayload);
+        console.log(`[FormSubmitter Debug] currentPayload:`, currentPayload);
+        
+        const keys1 = Object.keys(this._initialPayload);
+        const keys2 = Object.keys(currentPayload);
+        const allKeys = new Set([...keys1, ...keys2]);
+        
+        for (const key of allKeys) {
+            const val1 = this._initialPayload[key];
+            const val2 = currentPayload[key];
+            
+            if (!this._areEqual(val1, val2)) {
+                console.log(`[FormSubmitter] Guardado cancelado temporalmente: Cambio detectado en '${key}': '${JSON.stringify(val1)}' -> '${JSON.stringify(val2)}'`);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    _areEqual(val1, val2) {
+        if (val1 === val2) return true;
+        const isEmpty1 = (val1 === null || val1 === undefined || val1 === '');
+        const isEmpty2 = (val2 === null || val2 === undefined || val2 === '');
+        if (isEmpty1 && isEmpty2) return true;
+        if (isEmpty1 !== isEmpty2) return false;
+        
+        if (typeof val1 === 'object' && typeof val2 === 'object') {
+            return JSON.stringify(val1) === JSON.stringify(val2);
+        }
+        return String(val1).trim() === String(val2).trim();
+    }
 
 };

@@ -33,7 +33,17 @@ class TXSearchable extends HTMLElement {
         if (!item) return '';
         const idCampo = this.getAttribute('value-field') || 'id';
         const labelCampo = this.getAttribute('label-field') || 'nombre';
-        return item[labelCampo] ?? item[idCampo] ?? item.id_registro ?? item.id ?? '';
+        
+        let labelVal = item[labelCampo];
+        
+        // [S67.2] Robust Fallback for denormalized table structures (e.g. nombre_equipo instead of nombre)
+        if (!labelVal) {
+            const nameKey = Object.keys(item).find(k => k.startsWith('nombre_') && k !== 'nombre_ingles');
+            if (nameKey) labelVal = item[nameKey];
+        }
+        
+        // Fallback sequentially to IDs
+        return labelVal ?? item[idCampo] ?? item.id_registro ?? item.id ?? '';
     }
 
     _extractPayloadId(item) {
@@ -43,7 +53,26 @@ class TXSearchable extends HTMLElement {
     }
 
     _formatDisplayString(item, rawId) {
-        if (!item) return String(rawId);
+        if (!item) {
+            // [Bugfix S67.3] Global fallback for lazy-hydrated components (readonly drawers)
+            const fieldName = this.getAttribute('data-form-component') || this.getAttribute('name');
+            if (fieldName && window._LOOKUP_DATA && window._LOOKUP_DATA[fieldName]) {
+                const lookupArr = window._LOOKUP_DATA[fieldName];
+                const opt = lookupArr.find(o => String(o.value) === String(rawId));
+                if (opt && opt.label) return opt.label;
+            }
+            
+            // Global DataStore fallback
+            if (window.FormEngine_Resolvers && typeof window.FormEngine_Resolvers.resolveEntityRecord === 'function') {
+                const targetEntity = this.getAttribute('target-entity') || this.getAttribute('entity-name');
+                if (targetEntity) {
+                    const globalRec = window.FormEngine_Resolvers.resolveEntityRecord(targetEntity, rawId);
+                    if (globalRec) return this._extractPayloadTitle(globalRec);
+                }
+            }
+            
+            return String(rawId);
+        }
         return this._extractPayloadTitle(item);
     }
 
@@ -61,7 +90,7 @@ class TXSearchable extends HTMLElement {
             const sFieldMeta = window.Graph_Utils.getTemporalEdgeMeta(targetEntity, subtitleField);
             
             if (sFieldMeta) {
-                localSubtitleId = window.Graph_Utils.resolveLinkedId(idVal, sFieldMeta.graphEdgeType, this.getAttribute('context-id'));
+                localSubtitleId = window.Graph_Utils.resolveLinkedId(idVal, sFieldMeta.graphEdgeType, this.getAttribute('context-id'), false, sFieldMeta.relationType);
             }
         }
 
@@ -86,7 +115,7 @@ class TXSearchable extends HTMLElement {
     // 1. API Contract / Declarative Attributes
     // ===============================================
     static get observedAttributes() {
-        return ['entity-name', 'multiple', 'pre-selected', 'disabled', 'max-selection'];
+        return ['entity-name', 'multiple', 'pre-selected', 'disabled', 'max-selection', 'placeholder'];
     }
 
     attributeChangedCallback(name, oldValue, newValue) {
@@ -157,15 +186,36 @@ class TXSearchable extends HTMLElement {
             this.buildListItems(this._searchTerm || '');
         }
     }
-
     /**
      * Bridge compatible con API de Recolección (Epic E35/FormSubmitter.js)
      * Utilizado externamente vía nodo.getValidatedValue()
      */
     getValidatedValue() {
-        if (this._isMultiple) {
-            return Array.from(this._selectedState || new Set());
+        let excluded = [];
+        const formContainer = this.closest('form, ion-content, .drawer-content');
+        const disallowedEdgesStr = this.getAttribute('disallowed-context-edges');
+        
+        if (typeof window !== 'undefined' && window.UI_FormUtils && window.UI_FormUtils.getExcludedGraphNodes && formContainer && disallowedEdgesStr) {
+            let currentContextId = this.getAttribute('context-id');
+            if (!currentContextId) {
+                const possiblePkInput = formContainer.querySelector('input[type="hidden"][name^="id_"]');
+                if (possiblePkInput && possiblePkInput.value) {
+                    currentContextId = possiblePkInput.value;
+                }
+            }
+            
+            const currentEntityName = this.getAttribute('entity-name');
+            excluded = window.UI_FormUtils.getExcludedGraphNodes(disallowedEdgesStr, currentEntityName, formContainer, currentContextId) || [];
         }
+
+        if (this._isMultiple) {
+            let current = Array.from(this._selectedState || new Set());
+            if (excluded.length > 0) {
+                current = current.filter(id => !excluded.includes(String(id)));
+            }
+            return current;
+        }
+        if (excluded.includes(String(this._selectedState))) return null;
         return this._selectedState || null;
     }
 
@@ -178,16 +228,17 @@ class TXSearchable extends HTMLElement {
             this._selectedState = String(val);
         }
         this._scheduleRender();
-        this.dispatchSelection();
+        this.dispatchSelection(false);
     }
 
-    dispatchSelection() {
+    dispatchSelection(isUserEvent = false) {
         const payload = this.getValidatedValue();
         const ev = new CustomEvent('txChange', {
             detail: {
                 value: payload,
                 entity: this._entityName,
-                isMultiple: this._isMultiple
+                isMultiple: this._isMultiple,
+                isUserEvent: isUserEvent
             },
             bubbles: true,
             composed: true // Permite que el evento cruce boundaries
@@ -219,11 +270,33 @@ class TXSearchable extends HTMLElement {
                 
                 if (this._selectedState !== null) {
                     this._selectedState = null;
-                    this.dispatchSelection();
+                    this.dispatchSelection(true);
                     this._scheduleRender();
                 }
             });
         }
+
+        const singleCardItem = this.querySelector(`#${this._componentId}-single-filled ion-item`);
+        if (singleCardItem && !this._singleClickBound) {
+            this._singleClickBound = true;
+            singleCardItem.style.cursor = 'pointer';
+            singleCardItem.addEventListener('click', (ev) => {
+                if (ev.target.closest('ion-button')) return;
+                const targetEntity = this.getAttribute('target-entity') || this._entityName;
+                
+                let idToOpen = this._selectedState;
+                if (Array.isArray(idToOpen)) idToOpen = idToOpen[0];
+                if (typeof idToOpen === 'object' && idToOpen !== null) idToOpen = this._extractPayloadId(idToOpen);
+                idToOpen = String(idToOpen).trim();
+                
+                console.log("[TXSearchable] Click en singleCardItem. Abriendo:", { targetEntity, idToOpen, rawState: this._selectedState });
+                
+                if (window.openEditForm && targetEntity && idToOpen && idToOpen !== 'undefined' && idToOpen !== 'null') {
+                    window.openEditForm(idToOpen, targetEntity);
+                }
+            });
+        }
+        
         
         if (triggers.length > 0 && !this._triggerBound) {
             triggers.forEach(trigger => {
@@ -246,7 +319,7 @@ class TXSearchable extends HTMLElement {
                     if (rawVal.trim() === '' && !this._isMultiple) {
                         if (this._selectedState !== null) {
                             this._selectedState = null;
-                            this.dispatchSelection(); // Avisar a formulario (FormRenderer)
+                            this.dispatchSelection(true); // Avisar a formulario (FormRenderer)
                             this._scheduleRender();
                         }
                         return;
@@ -310,6 +383,7 @@ class TXSearchable extends HTMLElement {
 
         const iconName = this.getAttribute('icon-name') || 'folder-outline';
         const iconColor = this.getAttribute('icon-color') || 'step-200';
+        this._fieldLabel = this.getAttribute('field-label') || this._entityName;
         
         const readOnlyAttr = this.isMobile() ? 'readonly="true"' : '';
         const searchIconStyle = 'display: flex;'; // Start visible universally
@@ -322,8 +396,8 @@ class TXSearchable extends HTMLElement {
                         ${this._getPlaceholderTemplate(`${this._componentId}-placeholder`, true, iconName)}
 
                         <!-- ESTADO LLENO HEADER (MULTISELECT) -->
-                        <div id="${this._componentId}-filled-header" data-tx-state="hidden" style="justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                            <strong style="color: var(--ion-color-dark); font-size: 14px; margin-left: 4px;">${this._entityName}</strong>
+                        <div id="${this._componentId}-filled-header" data-tx-state="hidden" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                            <strong style="color: var(--ion-color-dark); font-size: 14px; margin-left: 4px;">${this._fieldLabel}</strong>
                             <ion-button class="trigger-container" size="small" fill="clear" style="margin: 0; --color: var(--ion-color-primary, #3880ff); font-weight: bold; font-family: var(--sys-font-family, inherit); display: ${this._isDisabled ? 'none' : 'block'};">
                                 + AGREGAR
                             </ion-button>
@@ -332,7 +406,7 @@ class TXSearchable extends HTMLElement {
                         ${this._getInlineOverlayTemplate()}
 
                         <!-- CARDS SIEMPRE VISIBLES DEBAJO -->
-                        <div class="tx-multi-cards-container" style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 24px;"></div>
+                        <div class="tx-multi-cards-container" style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 4px;"></div>
                     </div>
                 `;
             } else {
@@ -342,8 +416,8 @@ class TXSearchable extends HTMLElement {
                         ${this._getPlaceholderTemplate(`${this._componentId}-single-ph`, false, iconName)}
 
                         <!-- ESTADO LLENO HEADER (SINGLE SELECT) -->
-                        <div id="${this._componentId}-single-filled-header" data-tx-state="hidden" style="justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                            <strong style="color: var(--ion-color-dark); font-size: 14px; margin-left: 4px;">${this._entityName}</strong>
+                        <div id="${this._componentId}-single-filled-header" data-tx-state="hidden" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                            <strong style="color: var(--ion-color-dark); font-size: 14px; margin-left: 4px;">${this._fieldLabel}</strong>
                             <ion-button class="trigger-container" size="small" fill="clear" style="margin: 0; --color: var(--ion-color-primary, #3880ff); font-weight: bold; font-family: var(--sys-font-family, inherit); display: ${this._isDisabled ? 'none' : 'block'};">
                                 CAMBIAR
                             </ion-button>
@@ -352,7 +426,7 @@ class TXSearchable extends HTMLElement {
                         ${this._getInlineOverlayTemplate()}
                         
                         <!-- ESTADO LLENO CARD (SINGLE SELECT) -->
-                        <div id="${this._componentId}-single-filled" data-tx-state="hidden" style="width: 100%; margin-bottom: 24px;">
+                        <div id="${this._componentId}-single-filled" data-tx-state="hidden" style="width: 100%; margin-bottom: 4px;">
                             ${this._getSharedCardTemplate({
                                 textId: `${this._componentId}-single-text`,
                                 subId: `${this._componentId}-single-sub`,
@@ -428,13 +502,14 @@ class TXSearchable extends HTMLElement {
     // ===============================================
     // 4. Communication Interface
     // ===============================================
-    dispatchSelection() {
+    dispatchSelection(isUserEvent = false) {
         const payload = this.getValidatedValue();
         const ev = new CustomEvent('txChange', {
             detail: {
                 value: payload,
                 entity: this._entityName,
-                isMultiple: this._isMultiple
+                isMultiple: this._isMultiple,
+                isUserEvent: isUserEvent
             },
             bubbles: true,
             composed: true // Atraviesa arquitecturas de Shadow DOM superiores si fuésemos encapsulados
@@ -574,18 +649,19 @@ class TXSearchable extends HTMLElement {
         }
         
         this._scheduleRender();
-        this.dispatchSelection(); 
+        this.dispatchSelection(true); 
     }
 
     _getSharedOverlayHtml(isMob) {
         const targetEntity = this.getAttribute('target-entity') || this._entityName || '';
         const canCreate = !window.ABAC || window.ABAC.can('create', targetEntity);
+        const displayName = this._entityName ? this._entityName.replace(/_/g, ' ') : '';
         
         return `
             <ion-header class="ion-no-border" style="border-top-left-radius: var(--border-radius, 16px); border-top-right-radius: var(--border-radius, 16px); overflow: hidden;">
                 ${isMob ? `
                 <ion-toolbar color="primary">
-                    <ion-title style="color: var(--ion-color-primary-contrast, #ffffff); font-weight: 600;">Buscar ${this._entityName}</ion-title>
+                    <ion-title style="color: var(--ion-color-primary-contrast, #ffffff); font-weight: 600;">Buscar ${displayName}</ion-title>
                     <ion-buttons slot="end">
                         ${canCreate ? `
                         <ion-button id="${this._componentId}-btn-create-mob" style="font-weight: 600;">
@@ -617,7 +693,7 @@ class TXSearchable extends HTMLElement {
                 <div style="border-top: 1px solid var(--color-border, #e0e0e0);">
                     <ion-item id="${this._componentId}-btn-create-desk" button lines="none" detail="false" style="--background: transparent; margin: 0;">
                         <ion-icon slot="start" name="add-outline" style="color: var(--ion-color-primary, #3880ff);"></ion-icon>
-                        <ion-label style="color: var(--ion-color-primary, #3880ff); font-weight: 600;">Crear ${this._entityName}</ion-label>
+                        <ion-label style="color: var(--ion-color-primary, #3880ff); font-weight: 600;">Crear ${displayName}</ion-label>
                     </ion-item>
                 </div>
                 ` : ''}
@@ -629,13 +705,14 @@ class TXSearchable extends HTMLElement {
     _getInlineOverlayTemplate() {
         const targetEntity = this.getAttribute('target-entity') || this._entityName || '';
         const canCreate = !window.ABAC || window.ABAC.can('create', targetEntity);
+        const displayName = this._entityName ? this._entityName.replace(/_/g, ' ') : '';
 
         return `
             <div id="${this._componentId}-inline-list-container" data-tx-state="hidden" style="flex-direction: column; margin-bottom: 12px; border: 1px solid var(--color-border, #cccccc); border-radius: 8px; overflow: hidden; background: var(--ion-background-color, #ffffff);">
                 <!-- HEADER / CLOSER -->
                 <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 16px; border-bottom: 1px solid var(--color-border, #e0e0e0); background: var(--ion-color-secondary, #f8f9fa);">
                     <div style="display: flex; align-items: center; gap: 8px;">
-                        <strong style="color: var(--ion-color-dark); font-size: 14px;">${this._entityName}</strong>
+                        <strong style="color: var(--ion-color-dark); font-size: 14px;">${this._fieldLabel}</strong>
                         <span id="${this._componentId}-inline-counter" style="font-size: 11px; background: var(--color-border, #e0e0e0); padding: 2px 8px; border-radius: 12px; color: var(--ion-color-dark); ${!this._isMultiple ? 'display:none;' : ''}"></span>
                     </div>
                     <ion-button id="${this._componentId}-inline-close" size="small" fill="clear" color="medium" style="margin: 0; font-family: var(--sys-font-family, inherit); font-weight: bold;">
@@ -657,7 +734,7 @@ class TXSearchable extends HTMLElement {
                 <div style="border-top: 1px solid var(--color-border, #e0e0e0);">
                     <ion-item id="${this._componentId}-btn-create-inline" button lines="none" detail="false" style="--background: transparent; margin: 0;">
                         <ion-icon slot="start" name="add-outline" style="color: var(--ion-color-primary, #3880ff);"></ion-icon>
-                        <ion-label style="color: var(--ion-color-primary, #3880ff); font-weight: 600;">Crear ${this._entityName}</ion-label>
+                        <ion-label style="color: var(--ion-color-primary, #3880ff); font-weight: 600;">Crear ${displayName}</ion-label>
                     </ion-item>
                 </div>
                 ` : ''}
@@ -666,50 +743,64 @@ class TXSearchable extends HTMLElement {
     }
 
     // S41.13: Refactorización Estructural (DRY UI Factories)
-    _getPlaceholderTemplate(domId, hidden, iconName) {
+    _getPlaceholderTemplate(domId, isMultiple, iconName) {
+        const hidden = this._isMultiple ? (this._selectedItems && this._selectedItems.length > 0) : !!this._selectedValue;
+        const customPlaceholder = this.getAttribute('placeholder');
+        const lockText = customPlaceholder || 'Para relacionarlo vaya a la sección Taxonomía';
+        const displayName = this._entityName ? this._entityName.replace(/_/g, ' ') : '';
+        
         return `
             <!-- ACTIVE PLACEHOLDER -->
-            <div id="${domId}-active" class="trigger-container tx-placeholder-hover" ${hidden || this._isDisabled ? 'data-tx-state="hidden"' : ''} style="background: #ffffff; border-radius: 12px; border: 2px dashed var(--color-border, #d1d5db); margin-bottom: 24px; cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.02);">
-                
-                <div class="tx-icon-scale" style="width: 56px; height: 56px; background: rgba(56, 128, 255, 0.08); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-bottom: 16px; transition: all 0.3s ease;">
-                    <ion-icon name="${iconName}" style="color: var(--ion-color-primary, #3880ff); font-size: 28px;"></ion-icon>
+            <div id="${domId}-active" ${hidden || this._isDisabled ? 'data-tx-state="hidden"' : ''} style="margin-bottom: 4px;">
+                <div style="font-size: 12px; margin-bottom: 8px; color: var(--ion-color-medium, #92949c); padding-left: 4px;">${this._fieldLabel}</div>
+                <div class="trigger-container tx-placeholder-hover" style="background: #ffffff; border-radius: 12px; border: 2px dashed var(--color-border, #d1d5db); cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); display: flex; flex-direction: row; align-items: center; justify-content: space-between; padding: 16px 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.02); gap: 16px;">
+                    <div style="display: flex; align-items: center; gap: 16px; flex: 1;">
+                        <div class="tx-icon-scale" style="width: 40px; height: 40px; border-radius: 50%; background: var(--ion-color-light, #f4f5f8); display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all 0.3s ease;">
+                            <ion-icon name="${iconName}" style="font-size: 20px; color: var(--ion-color-primary, #3880ff);"></ion-icon>
+                        </div>
+                        <div style="display: flex; flex-direction: column;">
+                            <h3 style="font-size: 15px; font-weight: 600; margin: 0; padding: 0; color: var(--ion-color-dark, #222428); margin-bottom: 2px; font-family: var(--sys-font-family, inherit);">Vincular ${displayName}</h3>
+                            <p style="font-size: 13px; color: var(--ion-color-medium, #92949c); margin: 0; padding: 0; line-height: 1.3;">Busca registros o crea uno nuevo al instante.</p>
+                        </div>
+                    </div>
+                    <ion-button fill="clear" color="primary" style="font-family: var(--ion-font-family, inherit); margin: 0; --padding-start: 8px; --padding-end: 8px; flex-shrink: 0;">
+                        <ion-icon slot="icon-only" name="search-outline" style="font-size: 22px;"></ion-icon>
+                    </ion-button>
                 </div>
-                
-                <h4 style="color: var(--ion-color-dark, #111827); font-size: 16px; font-weight: 700; margin: 0 0 8px 0; font-family: var(--font-display, var(--ion-font-family, inherit));">Vincular ${this._entityName}</h4>
-                <p style="color: var(--ion-color-medium, #6b7280); font-size: 14px; margin: 0 0 24px 0; text-align: center; max-width: 320px; line-height: 1.5; font-family: var(--ion-font-family, inherit);">
-                    Busca y selecciona registros existentes o crea uno nuevo al instante.
-                </p>
-                
-                <ion-button size="default" fill="solid" color="primary" style="font-family: var(--ion-font-family, inherit); --border-radius: 8px; --box-shadow: 0 4px 6px rgba(56, 128, 255, 0.2); font-weight: 600; margin: 0; --padding-start: 24px; --padding-end: 24px;">
-                    <ion-icon slot="start" name="search-outline" style="font-size: 18px;"></ion-icon>
-                    Buscar
-                </ion-button>
             </div>
 
             <!-- READONLY PLACEHOLDER (CARD SIZE) -->
-            <div id="${domId}-readonly" ${hidden || !this._isDisabled ? 'data-tx-state="hidden"' : ''} style="margin-bottom: 24px;">
-                <div style="margin-bottom: 8px;">
-                    <strong style="color: var(--ion-color-dark); font-size: 14px; margin-left: 4px;">${this._entityName}</strong>
-                </div>
-                <ion-item lines="none" style="--min-height: 56px; --padding-top: 4px; --padding-bottom: 4px; --border-radius: var(--border-radius, 8px); border-radius: var(--border-radius, 8px); width: 100%; border: 1px dashed var(--color-border, #cccccc); --background: #f8f9fa;">
-                    <div slot="start" style="width: 32px; height: 32px; background: var(--ion-color-light, #f4f5f8); border: 1px solid var(--color-border, #e0e0e0); border-radius: 4px; display: inline-flex; justify-content: center; align-items: center; margin-right: 12px;">
-                        <ion-icon name="${iconName}" style="color: var(--ion-color-medium, #92949c); font-size: 18px;"></ion-icon>
+            <div id="${domId}-readonly" ${hidden || !this._isDisabled ? 'data-tx-state="hidden"' : ''} style="margin-bottom: 4px;">
+                <div style="font-size: 12px; margin-bottom: 8px; color: var(--ion-color-medium, #92949c); padding-left: 4px;">${this._fieldLabel}</div>
+                <div style="background: var(--ion-color-light-tint, #fbfbfb); border-radius: 8px; border: 1px dashed var(--color-border, #e5e7eb); padding: 16px; display: flex; align-items: center; gap: 16px; opacity: 0.8;">
+                    <div style="width: 40px; height: 40px; border-radius: 8px; background: #ffffff; border: 1px solid var(--color-border, #e5e7eb); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                        <ion-icon name="lock-closed" style="font-size: 20px; color: var(--ion-color-medium, #92949c);"></ion-icon>
                     </div>
-                    <ion-label class="ion-text-wrap" style="flex: 1; margin: 0; padding-right: 8px;">
-                        <h3 style="font-size: 13px; font-weight: bold; margin: 0; padding: 0; line-height: 1.2; color: var(--ion-color-medium, #92949c);">Sin ${this._entityName}</h3>
-                        <p style="font-size: 11px; color: var(--ion-color-danger, #eb445a); margin: 0; padding: 0; line-height: 1.2; margin-top: 4px;"><ion-icon name="lock-closed" style="vertical-align: text-bottom; margin-right: 2px;"></ion-icon>Para relacionarlo vaya a la sección Taxonomía</p>
-                    </ion-label>
-                </ion-item>
+                    <div style="flex: 1;">
+                        <div style="font-size: 14px; font-weight: 500; color: var(--ion-color-dark, #222428); margin-bottom: 4px;">Sin ${displayName}</div>
+                        <div style="font-size: 12px; color: var(--ion-color-danger, #eb445a); display: flex; align-items: center; gap: 4px;">
+                            <ion-icon name="lock-closed" style="font-size: 12px;"></ion-icon>
+                            <span>${lockText}</span>
+                        </div>
+                    </div>
+                </div>
             </div>
         `;
     }
 
     _getSharedCardTemplate(config) {
-        const { textId = '', subId = '', btnId = '', iconName, iconColor, title = '', subtitle = '' } = config;
+        const { textId = '', subId = '', btnId = '', iconName, iconColor, title = '', subtitle = '', avatarUrl = '' } = config;
+        
+        const avatarOrIconHtml = avatarUrl 
+            ? `<img id="${textId ? textId.replace('-text', '-avatar-img') : ''}" src="${avatarUrl}" style="width: 100%; height: 100%; object-fit: cover; display: block; position: absolute; top: 0; left: 0;" onerror="this.style.display='none'" />
+               <ion-icon id="${textId ? textId.replace('-text', '-avatar-icon') : ''}" name="${iconName}" style="color: var(--ion-color-light, white); font-size: 18px; display: none;"></ion-icon>`
+            : `<img id="${textId ? textId.replace('-text', '-avatar-img') : ''}" src="" style="width: 100%; height: 100%; object-fit: cover; display: none; position: absolute; top: 0; left: 0;" onerror="this.style.display='none'" />
+               <ion-icon id="${textId ? textId.replace('-text', '-avatar-icon') : ''}" name="${iconName}" style="color: var(--ion-color-light, white); font-size: 18px; display: block;"></ion-icon>`;
+
         return `
             <ion-item lines="none" style="--min-height: 56px; --padding-top: 4px; --padding-bottom: 4px; --border-radius: var(--border-radius, 8px); border-radius: var(--border-radius, 8px); box-shadow: 0 4px 12px rgba(0,0,0,0.08); width: 100%; border: 1px solid var(--color-border, #e0e0e0);">
-                <div slot="start" style="width: 32px; height: 32px; background: var(--ion-color-${iconColor}, var(--ion-color-primary)); border-radius: 4px; display: inline-flex; justify-content: center; align-items: center; margin-right: 12px;">
-                    <ion-icon name="${iconName}" style="color: var(--ion-color-light, white); font-size: 18px;"></ion-icon>
+                <div slot="start" style="width: 32px; height: 32px; background: var(--ion-color-${iconColor}, var(--ion-color-primary)); border-radius: 4px; display: inline-flex; justify-content: center; align-items: center; margin-right: 12px; overflow: hidden; position: relative;">
+                    ${avatarOrIconHtml}
                 </div>
                 <ion-label class="ion-text-wrap" style="flex: 1; margin: 0; padding-right: 8px;">
                     <h3 ${textId ? `id="${textId}"` : ''} style="font-size: 13px; font-weight: bold; margin: 0; padding: 0; line-height: 1.2;">${title}</h3>
@@ -807,6 +898,27 @@ class TXSearchable extends HTMLElement {
 
         // RAM-Secure Local Filter (YAGNI Endless Scroll)
         let filtered = this._dataSource || [];
+
+        const formContainer = this.closest('form, ion-content, .drawer-content');
+        const disallowedEdgesStr = this.getAttribute('disallowed-context-edges');
+        
+        if (typeof window !== 'undefined' && window.UI_FormUtils && window.UI_FormUtils.getExcludedGraphNodes && formContainer && disallowedEdgesStr) {
+            let currentContextId = this.getAttribute('context-id');
+            if (!currentContextId) {
+                const possiblePkInput = formContainer.querySelector('input[type="hidden"][name^="id_"]');
+                if (possiblePkInput && possiblePkInput.value) {
+                    currentContextId = possiblePkInput.value;
+                }
+            }
+            
+            const currentEntityName = this.getAttribute('entity-name');
+            const excludeIds = window.UI_FormUtils.getExcludedGraphNodes(disallowedEdgesStr, currentEntityName, formContainer, currentContextId);
+            
+            if (excludeIds && excludeIds.length > 0) {
+                filtered = filtered.filter(item => !excludeIds.includes(String(this._extractPayloadId(item))));
+            }
+        }
+
         if (query.trim()) {
             const rawQ = query.trim().toLowerCase();
             filtered = filtered.filter(item => String(this._extractPayloadTitle(item)).toLowerCase().includes(rawQ));
@@ -818,7 +930,8 @@ class TXSearchable extends HTMLElement {
         const iconName = this.getAttribute('icon-name') || 'folder-outline';
         const iconColorTheme = this.getAttribute('icon-color') || 'step-300';
         const iconStyleBackground = `var(--ion-color-${iconColorTheme}, #3880ff)`;
-        const entityName = this.getAttribute('entity-name') || 'Registro';
+        this._entityName = this.getAttribute('entity-name') || 'Registro';
+        this._fieldLabel = this.getAttribute('field-label') || this._entityName;
         const subtitleField = this.getAttribute('subtitle-field');
 
         filtered.forEach(item => {
@@ -833,9 +946,21 @@ class TXSearchable extends HTMLElement {
             el.addEventListener('mousedown', setBlurGuard);
             el.addEventListener('touchstart', setBlurGuard, {passive: true});
 
+            let avatarUrl = '';
+            if (item.Avatar) {
+                avatarUrl = Array.isArray(item.Avatar) ? (item.Avatar[0]?.url || '') : item.Avatar;
+            } else if (item.avatar) {
+                avatarUrl = item.avatar;
+            }
+
+            const avatarOrIconHtml = avatarUrl 
+                ? `<img src="${avatarUrl}" style="width: 100%; height: 100%; object-fit: cover; display: block; position: absolute; top: 0; left: 0;" onerror="this.style.display='none'" />
+                   <ion-icon name="${iconName}" style="color: var(--ion-color-light, white); font-size: 18px; display: none;"></ion-icon>`
+                : `<ion-icon name="${iconName}" style="color: var(--ion-color-light, white); font-size: 18px; display: block;"></ion-icon>`;
+
             const iBoxHtml = `
-                <div slot="start" style="width: 32px; height: 32px; background: ${iconStyleBackground}; border-radius: 6px; display: inline-flex; justify-content: center; align-items: center; margin-right: 12px;">
-                    <ion-icon name="${iconName}" style="color: var(--ion-color-light, white); font-size: 18px;"></ion-icon>
+                <div slot="start" style="width: 32px; height: 32px; background: ${iconStyleBackground}; border-radius: 6px; display: inline-flex; justify-content: center; align-items: center; margin-right: 12px; overflow: hidden; position: relative;">
+                    ${avatarOrIconHtml}
                 </div>
             `;
             
@@ -901,7 +1026,7 @@ class TXSearchable extends HTMLElement {
                     this._temporaryBlurFlag = false;
                     
                     this._scheduleRender(); // Reflejar cuenta externamente
-                    this.dispatchSelection(); // S41.9: Zero-Latency Live Syncing
+                    this.dispatchSelection(true); // S41.9: Zero-Latency Live Syncing
                 });
             } else {
                 const isSelected = String(this._selectedState) === idVal;
@@ -916,7 +1041,7 @@ class TXSearchable extends HTMLElement {
                     this._temporaryBlurFlag = false; 
                     
                     this._scheduleRender();
-                    this.dispatchSelection(); // Disparo automático inmediato si es Single
+                    this.dispatchSelection(true); // Disparo automático inmediato si es Single
                     
                     if (this._inlineMode) {
                         this._closeInlineMode();
@@ -990,6 +1115,29 @@ class TXSearchable extends HTMLElement {
                         if (subNode) {
                             subNode.textContent = found ? (found.lexical_id || found.id_numero || rawId) : rawId;
                         }
+                        
+                        // S44.x Update Avatar for single state
+                        const avatarImg = this.querySelector(`#${this._componentId}-single-avatar-img`);
+                        const avatarIcon = this.querySelector(`#${this._componentId}-single-avatar-icon`);
+                        if (avatarImg && avatarIcon) {
+                            let avatarUrl = '';
+                            if (found) {
+                                if (found.Avatar) {
+                                    avatarUrl = Array.isArray(found.Avatar) ? (found.Avatar[0]?.url || '') : found.Avatar;
+                                } else if (found.avatar) {
+                                    avatarUrl = found.avatar;
+                                }
+                            }
+                            
+                            if (avatarUrl) {
+                                avatarImg.src = avatarUrl;
+                                avatarImg.style.display = 'block';
+                                avatarIcon.style.display = 'none';
+                            } else {
+                                avatarImg.style.display = 'none';
+                                avatarIcon.style.display = 'block';
+                            }
+                        }
                     }
                 } else {
                     if (phNodeActive) phNodeActive.setAttribute('data-tx-state', this._isDisabled ? 'hidden' : 'block');
@@ -1028,7 +1176,8 @@ class TXSearchable extends HTMLElement {
                         }, 100);
                     }
                 }
-                if (inlineCounterNode) inlineCounterNode.textContent = hasItems ? `${this._selectedState.size} seleccionados` : 'Ninguno';
+                const totalItems = this._dataSource ? this._dataSource.length : 0;
+                if (inlineCounterNode) inlineCounterNode.textContent = hasItems ? `${this._selectedState.size}/${totalItems}` : `0/${totalItems}`;
             } else {
                 if (inlineContainerNode) {
                     inlineContainerNode.setAttribute('data-tx-state', 'hidden');
@@ -1045,11 +1194,11 @@ class TXSearchable extends HTMLElement {
                 } else {
                     if (phNodeActive) {
                         phNodeActive.setAttribute('data-tx-state', this._isDisabled ? 'hidden' : 'block');
-                        phNodeActive.style.marginBottom = '24px';
+                        phNodeActive.style.marginBottom = '4px';
                     }
                     if (phNodeReadonly) {
                         phNodeReadonly.setAttribute('data-tx-state', this._isDisabled ? 'block' : 'hidden');
-                        phNodeReadonly.style.marginBottom = '24px';
+                        phNodeReadonly.style.marginBottom = '4px';
                     }
                     if (filledHeaderNode) filledHeaderNode.setAttribute('data-tx-state', 'hidden');
                 }
@@ -1061,7 +1210,8 @@ class TXSearchable extends HTMLElement {
                 const iconColor = this.getAttribute('icon-color') || 'primary';
                 
                 if (hasItems) {
-                    this._selectedState.forEach(singleId => {
+                    const validValues = this.getValidatedValue();
+                    validValues.forEach(singleId => {
                         const found = this._dataSource.find(item => String(this._extractPayloadId(item)) === String(singleId));
                         const titleText = found ? this._extractPayloadTitle(found) : singleId;
                         const lexicalId = found ? (found.lexical_id || found.id_numero || singleId) : singleId;
@@ -1069,12 +1219,38 @@ class TXSearchable extends HTMLElement {
                         let finalCardSub = this._resolveSubtitle(found, singleId);
                         finalCardSub = `${finalCardSub} • ${lexicalId}`;
                         
+                        let avatarUrl = '';
+                        if (found) {
+                            if (found.Avatar) {
+                                avatarUrl = Array.isArray(found.Avatar) ? (found.Avatar[0]?.url || '') : found.Avatar;
+                            } else if (found.avatar) {
+                                avatarUrl = found.avatar;
+                            }
+                        }
+                        
                         const fakeItem = document.createElement('div');
                         fakeItem.innerHTML = this._getSharedCardTemplate({
-                            iconName, iconColor, title: titleText, subtitle: finalCardSub
+                            iconName, iconColor, title: titleText, subtitle: finalCardSub, avatarUrl
                         });
                         
                         const finalNode = fakeItem.firstElementChild;
+                        
+                        finalNode.style.cursor = 'pointer';
+                        finalNode.addEventListener('click', (ev) => {
+                            if (ev.target.closest('ion-button')) return;
+                            const targetEntity = this.getAttribute('target-entity') || this._entityName;
+                            
+                            let idToOpen = singleId;
+                            if (typeof idToOpen === 'object' && idToOpen !== null) idToOpen = this._extractPayloadId(idToOpen);
+                            idToOpen = String(idToOpen).trim();
+                            
+                            console.log("[TXSearchable] Click en multiCard. Abriendo:", { targetEntity, idToOpen, rawState: singleId });
+                            
+                            if (window.openEditForm && targetEntity && idToOpen && idToOpen !== 'undefined' && idToOpen !== 'null') {
+                                window.openEditForm(idToOpen, targetEntity);
+                            }
+                        });
+
                         const removeBtn = finalNode.querySelector('ion-button');
                         if (!this._isDisabled) {
                             removeBtn.addEventListener('click', (e) => {
@@ -1089,7 +1265,7 @@ class TXSearchable extends HTMLElement {
                                     this.buildListItems(this._searchTerm || '');
                                 }
                                 
-                                this.dispatchSelection();
+                                this.dispatchSelection(true);
                             });
                         } else {
                             removeBtn.disabled = true;

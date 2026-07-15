@@ -1,0 +1,38 @@
+artifact_type: story-design
+version: 1
+skill: rai-story-design
+created: '2026-07-09T17:48:00Z'
+story: 'S61.4'
+epic: 'E61'
+content:
+  summary: 'Implementar backend asíncrono para ingesta de datos y polling desde el frontend para evitar timeouts del navegador en cargas masivas.'
+  complexity: complex
+  acceptance_criteria:
+    - id: AC1
+      description: 'The backend must expose an API to enqueue jobs and return a jobId immediately.'
+      verifiable: true
+    - id: AC2
+      description: 'A background worker must process the queued job in chunks, respecting GAS 6-minute limits.'
+      verifiable: true
+    - id: AC3
+      description: 'The frontend must poll the status endpoint until the job is COMPLETED or FAILED.'
+      verifiable: true
+  integration_points:
+    - module: 'backend.jobs'
+      change_type: new
+      files: ['src/backend/jobs/JobQueue.ts', 'src/backend/jobs/JobWorker.ts']
+    - module: 'backend.api'
+      change_type: modification
+      files: ['src/backend/controllers/ImportController.ts']
+    - module: 'frontend.ui'
+      change_type: modification
+      files: ['src/frontend/components/Import/ImportWizard.tsx']
+  decisions:
+    - id: D1
+      choice: 'Use chunked execution triggered by GAS triggers if necessary or simple continuation loops.'
+      rationale: 'GAS terminates scripts after 6 minutes, so large jobs must be chunked and re-triggered.'
+      alternatives_considered: ['External AWS Lambda worker', 'Processing synchronously']
+refs:
+  backlog_item: 'S61.4'
+  epic_scope: 'work/epics/e61-enterprise-etl-architecture/scope.md'
+metadata: {}

@@ -404,17 +404,20 @@ const Adapter_Sheets = {
         if (useNuclearDump) {
             if (typeof Logger !== 'undefined') Logger.log(`[Metrics I/O] Umbral Excedido (${items.length}). Escribiendo dataset maestro (Nuclear Array Dump)`);
             sheet.getRange(1, 1, originalData.length, originalData[0].length).setValues(originalData);
+            SpreadsheetApp.flush();
         } else {
             if (rowsToUpdate.length > 0) {
                 if (typeof Logger !== 'undefined') Logger.log(`[Metrics I/O] Modificando ${rowsToUpdate.length} filas exactas (Differential Updates)`);
                 rowsToUpdate.forEach(up => {
                     sheet.getRange(up.rowIndex, 1, 1, up.rowData.length).setValues([up.rowData]);
                 });
+                SpreadsheetApp.flush();
             }
             if (rowsToAppend.length > 0) {
                 if (typeof Logger !== 'undefined') Logger.log(`[Metrics I/O] Cimentando ${rowsToAppend.length} registros nuevos en un bloque (Bulk Appends)`);
-                const lastRowPriorToAppend = numRows;
+                const lastRowPriorToAppend = sheet.getLastRow();
                 sheet.getRange(lastRowPriorToAppend + 1, 1, rowsToAppend.length, rowsToAppend[0].length).setValues(rowsToAppend);
+                SpreadsheetApp.flush();
             }
         }
 
@@ -552,6 +555,11 @@ const Adapter_Sheets = {
     },
 
     _ensureSheetExists: function(ss, tableName) {
+        // Ejecutar Auto-Healing (S31.7) en cada operación para evitar DB Drift
+        if (typeof ensureProvisioned === 'function') {
+             ensureProvisioned(tableName, ss);
+        }
+        
         let sheet = ss.getSheetByName('DB_' + tableName);
         if (!sheet) {
             sheet = ss.insertSheet('DB_' + tableName);
@@ -560,16 +568,27 @@ const Adapter_Sheets = {
         
         // Auto-inyectar headers de esquema si está recién creada, y Auto-Heal si faltan
         let schemaFields = [];
-        if (typeof APP_SCHEMAS !== 'undefined' && APP_SCHEMAS[tableName]) {
-            if (APP_SCHEMAS[tableName].fields) {
-                schemaFields = APP_SCHEMAS[tableName].fields
+        let isGetAppSchemaDefined = (typeof getAppSchema === 'function');
+        let isAppSchemasDefined = (typeof APP_SCHEMAS !== 'undefined');
+        let schemaFromFunc = isGetAppSchemaDefined ? getAppSchema(tableName) : null;
+        let schemaFromObj = isAppSchemasDefined ? APP_SCHEMAS[tableName] : null;
+        
+        Logger.log(`[_ensureSheetExists] Debug: tableName="${tableName}", isGetAppSchemaDefined=${isGetAppSchemaDefined}, isAppSchemasDefined=${isAppSchemasDefined}, schemaFromFunc exists=${!!schemaFromFunc}, schemaFromObj exists=${!!schemaFromObj}`);
+        
+        const schema = schemaFromFunc || schemaFromObj;
+        
+        if (schema) {
+            if (schema.fields) {
+                schemaFields = schema.fields
                     .filter(f => f.type !== 'divider' && f.type !== 'html' && !f.isTemporalGraph)
                     .map(f => f.name);
             } else {
-                schemaFields = Object.keys(APP_SCHEMAS[tableName]).filter(k => typeof APP_SCHEMAS[tableName][k] === 'object' && !['uiBehavior', 'relationType'].includes(k));
+                schemaFields = Object.keys(schema).filter(k => typeof schema[k] === 'object' && !['uiBehavior', 'relationType'].includes(k));
             }
         } else {
-            throw new Error(`[AR-Governance] Inferencia Bloqueada: La hoja DB_${tableName} intentó auto-crearse pero no existe un Schema con primaryKey en Schema_Engine.gs.`);
+            let debugMsg = `tableName="${tableName}", isGetAppSchemaDefined=${isGetAppSchemaDefined}, isAppSchemasDefined=${isAppSchemasDefined}, schemaFromFunc=${!!schemaFromFunc}, schemaFromObj=${!!schemaFromObj}`;
+            let keys = isAppSchemasDefined ? Object.keys(APP_SCHEMAS).join(',') : 'none';
+            throw new Error(`[AR-Governance] Inferencia bloqueada: DB_${tableName}. Debug: [${debugMsg}]. Keys: [${keys}]`);
         }
         
         const auditFields = ['lexical_id', 'created_at', 'created_by', 'updated_at', 'updated_by', 'deleted_at', 'deleted_by', '_version'];

@@ -17,7 +17,43 @@ function doGet(e) {
     }
   }
 
+  // [E6-S65] First-Run Detection — Backend-First.
+  // Si SPREADSHEET_ID_DB no está configurado en ninguna fuente, retorna el Wizard.
+  // Fuentes verificadas en orden de prioridad:
+  //   1. Adapter_Config (PropertiesService, clave APP_CONFIG__spreadsheet_id)
+  //   2. ENV_CONFIG en PropertiesService (SPREADSHEET_ID_DB)
+  //   3. CONFIG.SPREADSHEET_ID_DB (build-time, entorno actual)
+  var _spreadsheetConfigured = false;
+  try {
+    var _configSheetId = PropertiesService.getScriptProperties().getProperty('APP_CONFIG__spreadsheet_id');
+    if (_configSheetId && _configSheetId.trim().length > 0) {
+      _spreadsheetConfigured = true;
+    } else {
+      var _envStr = PropertiesService.getScriptProperties().getProperty('ENV_CONFIG');
+      if (_envStr) {
+        var _envObj = JSON.parse(_envStr);
+        if (_envObj.SPREADSHEET_ID_DB && _envObj.SPREADSHEET_ID_DB.trim().length > 0) {
+          _spreadsheetConfigured = true;
+        }
+      }
+    }
+    if (!_spreadsheetConfigured && typeof CONFIG !== 'undefined' && CONFIG.SPREADSHEET_ID_DB && CONFIG.SPREADSHEET_ID_DB.trim().length > 0) {
+      _spreadsheetConfigured = true;
+    }
+  } catch(_frErr) {
+    console.warn('[S65] Error en detección first-run:', _frErr);
+  }
+
+  if (!_spreadsheetConfigured) {
+    console.log('[S65] SPREADSHEET_ID_DB no configurado — sirviendo FirstRun.html');
+    return HtmlService.createHtmlOutputFromFile('FirstRun')
+      .setTitle('Configuración Inicial · Taxonomía')
+      .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL)
+      .addMetaTag('viewport', 'width=device-width, initial-scale=1.0, viewport-fit=cover');
+  }
+
   var template = HtmlService.createTemplateFromFile('Index');
+
 
   // Backend variables injected into the template scope
   // (available as <?= APP_VERSION ?> in Index.html)
@@ -44,21 +80,54 @@ function doGet(e) {
     // Default system font pairing with safe generic fallbacks
     whiteLabel = JSON.stringify({ 
       bodyFont: "Poppins, sans-serif", 
-      displayFont: "Playfair Display, serif"
+      displayFont: "Roboto, sans-serif"
     });
   }
   template.WHITE_LABEL_CONFIG = whiteLabel;
 
   // Environment Config Load (S23.4) - SRP Separation
-  var envConfigStr = null;
+  var envObj = { AuthMode: "SSO", ALLOWED_DOMAINS: [], WORKSPACE_ENABLED: false };
   try {
-    envConfigStr = PropertiesService.getScriptProperties().getProperty('ENV_CONFIG');
+    var props = PropertiesService.getScriptProperties();
+    var legacyEnvStr = props.getProperty('ENV_CONFIG');
+    if (legacyEnvStr) {
+      var legacyEnv = JSON.parse(legacyEnvStr);
+      if (legacyEnv.AuthMode) envObj.AuthMode = legacyEnv.AuthMode;
+      if (legacyEnv.ALLOWED_DOMAINS) envObj.ALLOWED_DOMAINS = legacyEnv.ALLOWED_DOMAINS;
+      if (legacyEnv.WORKSPACE_ENABLED !== undefined) envObj.WORKSPACE_ENABLED = legacyEnv.WORKSPACE_ENABLED;
+    }
+    
+    // Sobrescribir con nuevo esquema E6 de APP_WORKSPACE_CONFIG
+    var wsConfigStr = props.getProperty('APP_WORKSPACE_CONFIG');
+    if (wsConfigStr) {
+      var wsConfig = JSON.parse(wsConfigStr);
+      if (wsConfig.domains && Array.isArray(wsConfig.domains)) {
+        envObj.ALLOWED_DOMAINS = wsConfig.domains;
+      }
+      if (wsConfig.workspace !== undefined || wsConfig.syncEnabled !== undefined) {
+        envObj.WORKSPACE_ENABLED = wsConfig.workspace !== undefined ? wsConfig.workspace : wsConfig.syncEnabled;
+      }
+      if (wsConfig.authMode) {
+        envObj.AuthMode = wsConfig.authMode;
+      }
+    }
+    
+    // Fallback a variable antigua si wsConfig no proveyó dominios
+    if (!envObj.ALLOWED_DOMAINS || envObj.ALLOWED_DOMAINS.length === 0) {
+      var newDomains = props.getProperty('APP_CONFIG__allowed_domains');
+      if (newDomains && newDomains.trim().length > 0) {
+        envObj.ALLOWED_DOMAINS = newDomains.split(',').map(function(d) { return d.trim(); }).filter(Boolean);
+      }
+    }
   } catch(e) {}
-  
-  if (!envConfigStr) {
-    envConfigStr = JSON.stringify({ AuthMode: "SSO", ALLOWED_DOMAINS: ["@coppel.com", "@bancoppel.com"] });
+
+  if (!envObj.ALLOWED_DOMAINS || envObj.ALLOWED_DOMAINS.length === 0) {
+      if (typeof CONFIG !== 'undefined' && CONFIG.ALLOWED_DOMAINS) {
+          envObj.ALLOWED_DOMAINS = CONFIG.ALLOWED_DOMAINS;
+      }
   }
-  template.ENV_CONFIG = envConfigStr;
+  
+  template.ENV_CONFIG = JSON.stringify(envObj);
 
   // ABAC Resolver: Cálculo de Topología O(n) al vuelo para proveer Contexto Seguro en Frontend
   var email = "";
@@ -74,17 +143,27 @@ function doGet(e) {
       
   template.__ABAC_CONTEXT__ = JSON.stringify(abacContext).replace(/</g, '\\u003c');
 
-  // Branding Config Load (S48.1)
+  // [E6-S64] Branding genérico — configurar via Ajustes Globales en Schema Studio
   let brandingConfig = {
-    appTitle: 'Gobierno de Modelo de Producto — EPT OMR',
-    faviconUrl: 'https://www.coppel.com/favicon.ico'
+    appTitle: 'Gobierno de Modelo de Producto',
+    faviconUrl: ''
   };
   try {
-    var brandingStr = PropertiesService.getScriptProperties().getProperty('APP_BRANDING_CONFIG');
-    if (brandingStr) {
-      var parsedBranding = JSON.parse(brandingStr);
-      if (parsedBranding.appTitle) brandingConfig.appTitle = parsedBranding.appTitle;
-      if (parsedBranding.faviconUrl) brandingConfig.faviconUrl = parsedBranding.faviconUrl;
+    var props = PropertiesService.getScriptProperties();
+    var titleVal = props.getProperty('APP_CONFIG__app_title');
+    var favVal = props.getProperty('APP_CONFIG__favicon_url');
+
+    if (titleVal) brandingConfig.appTitle = titleVal;
+    if (favVal) brandingConfig.faviconUrl = favVal;
+
+    // Fallback legacy
+    if (!titleVal && !favVal) {
+      var brandingStr = props.getProperty('APP_BRANDING_CONFIG');
+      if (brandingStr) {
+        var parsedBranding = JSON.parse(brandingStr);
+        if (parsedBranding.appTitle) brandingConfig.appTitle = parsedBranding.appTitle;
+        if (parsedBranding.faviconUrl) brandingConfig.faviconUrl = parsedBranding.faviconUrl;
+      }
     }
   } catch(e) {
     console.error("Error leyendo APP_BRANDING_CONFIG. Usando defaults.", e);
@@ -93,11 +172,16 @@ function doGet(e) {
   // Workspace Sync Config Load (S48.3)
   template.WORKSPACE_SYNC_ENABLED = (typeof isWorkspaceSyncEnabled !== 'undefined') ? isWorkspaceSyncEnabled() : true;
 
-  return template.evaluate()
+  let htmlOutput = template.evaluate()
     .setTitle(brandingConfig.appTitle)
     .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL)
-    .addMetaTag('viewport', 'width=device-width, initial-scale=1.0, viewport-fit=cover')
-    .setFaviconUrl(brandingConfig.faviconUrl);
+    .addMetaTag('viewport', 'width=device-width, initial-scale=1.0, viewport-fit=cover');
+
+  if (brandingConfig.faviconUrl) {
+    htmlOutput.setFaviconUrl(brandingConfig.faviconUrl);
+  }
+
+  return htmlOutput;
 }
 
 /**

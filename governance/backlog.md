@@ -7,6 +7,7 @@
 | ID | Epic | Status | Scope | Priority |
 |----|------|--------|-------|----------|
 | E1 | Setup de Plataforma SAFe 6.0 e Integración Dual-Write | ✅ Complete  | Implementar backend en GAS y base UI en Ionic. | Alta     |
+| E6 | Multi-Tenant Config                         | ✅ Complete   | S60-S68: Adapter, Wizard, CI/CD, Cache | Alta     |
 | E3 | Migración a Producción SGMP                           | ✅ Complete   | S3.2 / S1.1 / S1.2: [DONE]                            | Alta     |
 | E8 | Graph Governance & Business Rules Engine              | ✅ Complete  | TDAG server backend & Business Rules interceptors     | Media    |
 | E9 | Refactor UI MDM & ThemeManager                        | ✅ Complete   | Migrar estilos hardcoded, sanear LIFO Max Depth GC    | Alta     |
@@ -28,6 +29,7 @@
 | E28| Dashboard Top Cards                                   | ✅ Complete   | Visibilidad de Estructura Ágil en Dashboard                          | Alta     |
 | E29| Fixes Configuración Jerárquica Estricta 1:N           | ✅ Complete  | Auditoría y parche sobre las restricciones topológicas padre-hijo    | Alta     |
 | E30| Bug Bash & Tech Debt Cleaning Sprint                  | ✅ Complete  | Limpieza de assets `.claspignore` y muteo estructural relacional     | Alta     |
+| E57 | Technical Debt Resolution | ✅ Complete | Refactorización de UI relacional y optimización matemática. | Alta |
 | E31| Schema Governance Studio                              | ✅ Complete  | Catálogos de Presets/Templates y Blueprint Composer multi-contexto   | Alta     |
 | E32| Bug Bash: Visual & Persistence                        | ✅ Complete  | Fix: Carga en caliente reactiva y Persistencia en Engine DB          | Alta     |
 | E33| Ghost Stealing Resilience Bug Bash                      | ✅ Complete  | Mitigar omisión de hidratación SCD-2 de relaciones en subgrids 1:N   | Máxima   |
@@ -40,7 +42,7 @@
 | E44| Visibilidad y Control de Topología                  | ✅ Complete  | Decoupling auto-provisioning logic & UI latency          | Alta     |
 | E45| Architecture Refactoring                            | ✅ Complete  | DOM-based hydration state & centralize logic             | Alta     |
 | E46| Org Chart Visualization                             | ✅ Complete  | Implementar diagrama piramidal ApexTree para relaciones de empleados | Alta     |
-| E47| ETL Carga Masiva Capacidades                        | 🔄 In Progress| Desarrollo de ETL para poblar archivo de capacidades jerárquicas    | Alta     |
+| E47| ETL Carga Masiva Capacidades                        | ✅ Complete   | Desarrollo de ETL para poblar archivo de capacidades jerárquicas    | Alta     |
 | E48| Admin Settings & Schema-Driven ETL                  | ✅ Complete   | Configuración de interceptores declarativos y utilidades de Admin   | Alta     |
 | E49| Taxonomía Wizard & Self-Service Portal              | ✅ Complete   | Asistente a pantalla completa para agrupar arquitectura N:M         | Max      |
 | E51| Taxonomía como Contexto de Trabajo (Workspace Mode) | ✅ Complete   | Habilitar esquemas M:N y 1:N en modo contexto                       | Alta     |
@@ -49,6 +51,7 @@
 | E54| Filtros Universales de Entidades                    | ✅ Complete   | Implementar Drawer de filtros avanzados con lógica de intersección y JIT | Alta     |
 | E55| Taxonomy Governance & Deployment Engine             | ✅ Complete   | Transición de modelo relacional distribuido a centralizado y motor diffing | Max      |
 | E56| Wizard Bulk Import (Equipos & Personas)             | ✅ Complete   | Integrar carga masiva de equipos y personas directamente en el wizard      | Alta     |
+| E101 | GreatPeeps: Módulo MVP de Reclutamiento             | In Progress   | Implementar hub integrador de reclutamiento con Gemini, Calendar y LinkedIn | Máxima   |
 ## Parking Lot / Deuda Técnica (Post-Epic 11)
 
 ### 🏗️ Historial Resuelto
@@ -81,4 +84,4 @@
 >   - *Arch Review*: Deshardcodear el umbral estático `MAX_ATTRS = 5` en Tarjetas `UI_DataGrid` para delegarlo a `UI_CONFIG` (Vistas Sensibles/Densas); monitorear métricas de Developer Experience (DX) tras pulverizar God Objects en micro-fragmentos de 150 líneas.
 >   - *Quality Review*: Evaluar seriamente incluir un paso constructivo formal de Transpilación vía Babel (ES6 a ES5) garantizando el Polyfill si las corporaciones clientes manejan Chrome obsoleto.
 >   - *Arch Review*: Abstraer el "Bypass Profile Path" (`.auth/chrome-profile`) de Playwright como variable paramétrica vía `.env` global para evitar conflictos locales de sesión de Google entre desarrolladores o servidores de CI/CD externos durante ejecuciones E2E persistentes.
-
+

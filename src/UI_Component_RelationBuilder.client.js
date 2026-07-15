@@ -21,54 +21,68 @@
             });
         }
 
-        function bindLevelChangeRepaint(selectEl, activeData, field, emptyOptNode, localBus) {
-            if (!Array.isArray(activeData)) return;
+        // State-Driven Controller (S57.4)
+        class RelationStateController {
+            constructor(selectEl, activeData, field, emptyOptNode, localBus, isActuallyReadonly = false) {
+                this.selectEl = selectEl;
+                this.activeData = activeData;
+                this.field = field;
+                this.emptyOptNode = emptyOptNode;
+                this.isActuallyReadonly = isActuallyReadonly;
+                this.localBus = localBus;
+                
+                if (this.localBus) {
+                    // Soporta el evento genérico definido por metadata
+                    this.localBus.subscribe('TAXONOMY_LEVEL_CHANGED', this.handleLevelChange.bind(this));
+                }
+            }
 
-            if (localBus) {
-                localBus.subscribe('TAXONOMY_LEVEL_CHANGED', (ev) => {
-                    const newLevel = ev.detail.newLevel;
-                    const rulesContext = ev.detail.rules;
-                    
-                    const uiState = window.SubgridState ? 
-                        window.SubgridState.evaluateFieldState(rulesContext, newLevel, field.relationType) : 
-                        { isDisabled: false, opacity: '1', placeholder: '— Sin asignar —' };
-                    
-                    const finalDisabledState = uiState.isDisabled || isActuallyReadonly;
-                    selectEl.disabled = finalDisabledState;
-                    selectEl.style.opacity = uiState.opacity;
-                    emptyOptNode.textContent = uiState.placeholder;
-                    
-                    let freshFiltered = activeData;
-                    
-                    if (rulesContext) {
-                        // [S35.4] Filtrado centralizado — elimina duplicación H9 con buildRelation/reloadDataset
-                        freshFiltered = window.UI_FormUtils.filterByTopology(activeData, rulesContext, newLevel, field.relationType);
+            handleLevelChange(ev) {
+                const newLevel = ev.detail.newLevel;
+                const rulesContext = ev.detail.rules;
+                
+                const uiState = window.SubgridState ? 
+                    window.SubgridState.evaluateFieldState(rulesContext, newLevel, this.field.relationType) : 
+                    { isDisabled: false, opacity: '1', placeholder: '— Sin asignar —' };
+                
+                let freshFiltered = this.activeData;
+                if (rulesContext) {
+                    freshFiltered = window.UI_FormUtils.filterByTopology(this.activeData, rulesContext, newLevel, this.field.relationType);
+                }
+                
+                this.setState(uiState, freshFiltered);
+            }
+            
+            setState(uiState, freshFiltered) {
+                const finalDisabledState = uiState.isDisabled || this.isActuallyReadonly;
+                this.selectEl.disabled = finalDisabledState;
+                this.selectEl.style.opacity = uiState.opacity;
+                this.emptyOptNode.textContent = uiState.placeholder;
+                
+                if (this.selectEl.tagName.toLowerCase() === 'tx-searchable') {
+                    this.selectEl.dataSource = freshFiltered || [];
+                    if (uiState.placeholder) this.selectEl.setAttribute('placeholder', uiState.placeholder);
+                    if (finalDisabledState) this.selectEl.setAttribute('disabled', 'true');
+                    else this.selectEl.removeAttribute('disabled');
+                } else {
+                    const oldVal = this.selectEl.value;
+                    this.selectEl.innerHTML = '';
+                    this.selectEl.appendChild(this.emptyOptNode);
+                    populateSelectOptions(this.selectEl, freshFiltered, this.field);
+                    if (oldVal) {
+                        const stillExists = freshFiltered.some(d => String(typeof d[this.field.valueField] !== 'undefined' ? d[this.field.valueField] : d.id_registro) === String(oldVal));
+                        if (stillExists) this.selectEl.value = oldVal;
                     }
-                    
-                    if (typeof selectEl.updateConfig === 'function') {
-                        // S37.1 - Modern SearchableSingle Integration
-                        const finalDisabledState = uiState.isDisabled || isActuallyReadonly;
-                        selectEl.updateConfig(freshFiltered, finalDisabledState, uiState.placeholder);
-                    } else {
-                        // Legacy HTML Select
-                        const oldVal = selectEl.value;
-                        selectEl.innerHTML = '';
-                        selectEl.appendChild(emptyOptNode);
-                        
-                        populateSelectOptions(selectEl, freshFiltered, field);
-                        
-                        // Restaurar el valor si sigue existiendo en el nuevo dataset
-                        if (oldVal) {
-                            const stillExists = freshFiltered.some(d => String(typeof d[field.valueField] !== 'undefined' ? d[field.valueField] : d.id_registro) === String(oldVal));
-                            if (stillExists) selectEl.value = oldVal;
-                        }
-                    }
-                });
+                }
             }
         }
 
         // --- Constructor Builder ---
         function buildRelation(field, entityName, data, localEventBus, currentEditId) {
+            if (field.uiComponent === 'embedded_dataview' && global.UI_Factory.BuilderRegistry && global.UI_Factory.BuilderRegistry['uiComponent']) {
+                return global.UI_Factory.BuilderRegistry['uiComponent'](field, entityName, data, localEventBus, currentEditId);
+            }
+
             const inputEl = document.createElement('div');
             inputEl.setAttribute('data-relation-type', field.relationType || 'relacionado');
             inputEl.style.width = '100%';
@@ -82,8 +96,12 @@
             const explicitContext = (window.currentFormDrawer && window.currentFormDrawer.dataset && window.currentFormDrawer.dataset.taxonomiaContext) ? window.currentFormDrawer.dataset.taxonomiaContext : null;
             const fallbackContext = window.UI_FormUtils ? window.UI_FormUtils.extractDraftContext(entityName, currentPK) : null;
             const contextId = explicitContext || fallbackContext;
-            const strictContext = !!explicitContext || entityName === 'Taxonomia';
-            const isActuallyReadonly = field.readonly && !strictContext;
+            const isTopologyContainer = window.APP_SCHEMAS && window.APP_SCHEMAS[entityName] && window.APP_SCHEMAS[entityName].metadata && window.APP_SCHEMAS[entityName].metadata.isTopologyContainer;
+            const strictContext = !!explicitContext || isTopologyContainer;
+            let isActuallyReadonly = false;
+            if (field.readonlyMode === 'always') isActuallyReadonly = true;
+            else if (field.readonlyMode === 'outside_context' && !strictContext) isActuallyReadonly = true;
+            else if (field.readonlyMode === 'inside_context' && strictContext) isActuallyReadonly = true;
             
             // [S55.1] Contextual List Wrapper
             const activeData = window.UI_FormUtils && window.UI_FormUtils.fetchContextualData 
@@ -104,7 +122,7 @@
                         ).map(e => window.UI_FormUtils.normalizeId(field.relationType === 'padre' ? e.id_nodo_padre : e.id_nodo_hijo));
                     } else if (window.Graph_Utils && window.Graph_Utils.resolveAllLinkedIds) {
                         // S54.5 Fix Contextual Graph Leak: Enforce state-aware graph index to respect 'Borrador' boundaries
-                        initialValues = window.Graph_Utils.resolveAllLinkedIds(currentPK, edgeName, contextId, strictContext);
+                        initialValues = window.Graph_Utils.resolveAllLinkedIds(currentPK, edgeName, contextId, strictContext, field.relationType);
                     } else if (field.relationType === 'padre') {
                         initialValues = aristas.filter(e => window.UI_FormUtils.normalizeId(e.id_nodo_hijo) === window.UI_FormUtils.normalizeId(currentPK) && String(e.tipo_relacion).toUpperCase() === edgeName).map(e => window.UI_FormUtils.normalizeId(e.id_nodo_padre));
                     } else if (field.relationType === 'hijo') {
@@ -123,17 +141,53 @@
                 initialValues = [mockToken];
             }
 
-            if (field.uiComponent === 'searchable_multi') {
+            if (field.disallowedContextEdges && window.UI_FormUtils && window.UI_FormUtils.getExcludedGraphNodes) {
+                const excludedStr = field.disallowedContextEdges.join(',');
+                // formContainer is not passed here, but contextId / currentPK provides DB-level exclusions
+                const targetContextId = currentPK || contextId;
+                const excludeIds = window.UI_FormUtils.getExcludedGraphNodes(excludedStr, entityName, null, targetContextId);
+                if (excludeIds && excludeIds.length > 0) {
+                    initialValues = initialValues.filter(v => !excludeIds.includes(String(window.UI_FormUtils.normalizeId(v))));
+                }
+            }
+
+            if (field.uiComponent === 'treemap_selector') {
+                if (global.UI_Factory.buildTreemapSelector) {
+                    actualElement = global.UI_Factory.buildTreemapSelector(field, activeData, initialValues, localEventBus, {});
+                } else {
+                    const fallback = document.createElement('div');
+                    fallback.textContent = 'Treemap Selector no disponible';
+                    actualElement = fallback;
+                }
+            } else if (field.uiComponent === 'searchable_multi') {
                 if (global.UI_Factory.buildSearchableMulti) {
                     const metadataToken = (window.APP_SCHEMAS && window.APP_SCHEMAS[field.targetEntity] && window.APP_SCHEMAS[field.targetEntity].metadata) || {};
-                    const componentConfig = { iconName: metadataToken.iconName, color: metadataToken.color, contextId: contextId };
+                    const componentConfig = { iconName: metadataToken.iconName, color: metadataToken.color, contextId: contextId, readonly: isActuallyReadonly };
                     const multiNodes = global.UI_Factory.buildSearchableMulti(field, activeData, initialValues, localEventBus, componentConfig);
 
                     // S41.14 Bind Create Action
                     multiNodes.addEventListener('txSearchableCreate', (e) => {
                         const targetE = e.detail.targetEntity;
                         if (typeof window.renderForm === 'function') {
-                            window.renderForm(targetE);
+                            window.renderForm(targetE, null, (response) => {
+                                if (response && response.pkValue) {
+                                    let currentSelected = multiNodes.value || [];
+                                    if (!Array.isArray(currentSelected)) {
+                                        currentSelected = currentSelected ? [currentSelected] : [];
+                                    }
+                                    if (!currentSelected.includes(response.pkValue)) {
+                                        currentSelected.push(response.pkValue);
+                                        multiNodes.value = currentSelected;
+                                    }
+                                }
+                            }, {
+                                asModal: true,
+                                modalContext: { 
+                                    edgeType: (field.targetEntity === 'Persona' && String(contextId).startsWith('TAXO-')) ? 'TAXONOMIA_PERSONA' : (field.graphEdgeType || field.name), 
+                                    parentId: contextId, 
+                                    contextId: contextId 
+                                }
+                            });
                         }
                     });
                     
@@ -169,8 +223,10 @@
                                 ? window.UI_FormUtils.fetchContextualData(field.targetEntity, contextId)
                                 : freshLiveData.filter(d => d.estado !== 'Eliminado' && typeof d === 'object');
                             
-                            if (typeof multiNodes.updateConfig === 'function') {
-                                multiNodes.updateConfig(freshActiveData, isActuallyReadonly || false);
+                            if (multiNodes && multiNodes.tagName.toLowerCase() === 'tx-searchable') {
+                                multiNodes.dataSource = freshActiveData || [];
+                                if (isActuallyReadonly) multiNodes.setAttribute('disabled', 'true');
+                                else multiNodes.removeAttribute('disabled');
                             }
                         };
                         window.AppEventBus.subscribe('FormEngine::RecordHydrated', reloadDatasetMulti);
@@ -182,7 +238,7 @@
                 } else {
                     console.warn('[UI_Component_RelationBuilder] Falta UI_Component_SearchableMulti.html en el Index.');
                 }
-            } else if (field.uiComponent === 'select_single') {
+            } else if (field.uiComponent === 'select_single' || field.uiComponent === 'searchable_single') {
                 let filteredActiveData = activeData;
                 const rules = window.APP_SCHEMAS && window.APP_SCHEMAS[entityName] ? window.APP_SCHEMAS[entityName].topologyRules : null;
                 const cLevel = Number(data ? (data.nivel_tipo || 1) : 1);
@@ -206,7 +262,7 @@
                 // S37.1 UI_Component_SearchableSingle reemplaza al framework nativo de ionic
                 // Inversion de Control: Inyectamos componentConfig de Metadatos desde afuera en vez de que el Componente de búsqueda lo escanee por sí mismo
                 const metadataToken = (window.APP_SCHEMAS && window.APP_SCHEMAS[field.targetEntity] && window.APP_SCHEMAS[field.targetEntity].metadata) || {};
-                const componentConfig = { iconName: metadataToken.iconName, color: metadataToken.color, contextId: contextId };
+                const componentConfig = { iconName: metadataToken.iconName, color: metadataToken.color, contextId: contextId, readonly: isActuallyReadonly };
                 
                 const basicSel = global.UI_Factory.buildSearchableSingle(field, filteredActiveData, initialValues, localEventBus, componentConfig);
                 
@@ -214,7 +270,25 @@
                 basicSel.addEventListener('txSearchableCreate', (e) => {
                     const targetE = e.detail.targetEntity;
                     if (typeof window.renderForm === 'function') {
-                        window.renderForm(targetE);
+                        window.renderForm(targetE, null, (response) => {
+                            if (response && response.pkValue) {
+                                let currentSelected = basicSel.value || [];
+                                if (!Array.isArray(currentSelected)) {
+                                    currentSelected = currentSelected ? [currentSelected] : [];
+                                }
+                                if (!currentSelected.includes(response.pkValue)) {
+                                    currentSelected.push(response.pkValue);
+                                    basicSel.value = field.isMultiple ? currentSelected : response.pkValue;
+                                }
+                            }
+                        }, {
+                            asModal: true,
+                            modalContext: { 
+                                edgeType: (field.targetEntity === 'Persona' && String(contextId).startsWith('TAXO-')) ? 'TAXONOMIA_PERSONA' : (field.graphEdgeType || field.name), 
+                                parentId: contextId, 
+                                contextId: contextId 
+                            }
+                        });
                     }
                 });
                 
@@ -230,19 +304,32 @@
                 if (uiStateInit.isDisabled || isActuallyReadonly) {
                     basicSel.setAttribute('disabled', 'true');
                 }
+                if (uiStateInit.placeholder) {
+                    basicSel.setAttribute('placeholder', uiStateInit.placeholder);
+                }
                 basicSel.style.opacity = uiStateInit.opacity;
 
-                // Soporte Legacy para `bindLevelChangeRepaint`
+                // Controller Setup
                 const emptyOpt = { textContent: uiStateInit.placeholder };
-                bindLevelChangeRepaint(basicSel, activeData, field, emptyOpt, localEventBus);
+                new RelationStateController(basicSel, activeData, field, emptyOpt, localEventBus, isActuallyReadonly);
 
-                if (field.isTemporalGraph && field.relationType === 'padre') {
+                // S57.X: Ignorar alerta de jerarquía si el target es una Persona o un Rol (no estructural)
+                if (field.isTemporalGraph && field.relationType === 'padre' && field.targetEntity !== 'Persona' && field.targetEntity !== 'Rol') {
                     let originalVal = initialValues.length > 0 ? initialValues[0] : "";
                     basicSel.addEventListener('ionChange', async (ev) => {
                         const newVal = ev.detail.value;
+                        
+                        // S57.6: Ignorar eventos programáticos (evitando bloqueo en carga/hidratación)
+                        if (!ev.detail || !ev.detail.isUserEvent) {
+                            originalVal = newVal;
+                            return;
+                        }
+
                         const isNewContext = { currentEditId: currentEditId, data: data };
                         const isNewRecord = window.SubgridState ? window.SubgridState.isNewRecord(isNewContext) : (!currentEditId && (!data || !data.id_registro));
-                        if (!isNewRecord && originalVal && originalVal !== "" && newVal !== originalVal) {
+                        const mockToken = (window.UI_CONSTANTS && window.UI_CONSTANTS.MOCK_FK_TOKEN) ? window.UI_CONSTANTS.MOCK_FK_TOKEN : '_NEW_PARENT_';
+                        
+                        if (!isNewRecord && originalVal && originalVal !== "" && originalVal !== mockToken && newVal !== originalVal) {
                             const alert = document.createElement('ion-alert');
                             alert.header = 'Cambio de Jerarquía Detectado';
                             alert.message = 'Estás reasignando el nodo padre. Si guardas este cambio, toda la rama se trasladará a la nueva ubicación. ¿Estás seguro de continuar?';
@@ -252,7 +339,7 @@
                             ];
                             document.body.appendChild(alert);
                             await window.PresentSafe(alert);
-                        } else if (!originalVal || originalVal === "") {
+                        } else if (!originalVal || originalVal === "" || originalVal === mockToken) {
                             originalVal = newVal;
                             basicSel.dataset.optimisticLock = 'true';
                             setTimeout(()=> basicSel.dataset.optimisticLock = 'false', 6000);
@@ -295,13 +382,16 @@
                         if (isSyncingSingle) basicSel.setAttribute('is-loading', 'true');
                         else basicSel.removeAttribute('is-loading');
 
-                        if (typeof basicSel.updateConfig === 'function') {
-                            // S37.1 - Modern SearchableSingle Integration
+                        if (basicSel && basicSel.tagName.toLowerCase() === 'tx-searchable') {
+                            // State-Driven Web Component Interaction (S57.4)
                             const uiStateInit = window.SubgridState ? 
                                 window.SubgridState.evaluateFieldState(rules, cLvl, field.relationType) : 
                                 { isDisabled: false, opacity: '1', placeholder: '— Sin asignar —' };
                             const finalDisabledState = uiStateInit.isDisabled || isActuallyReadonly;
-                            basicSel.updateConfig(freshFiltered, finalDisabledState, uiStateInit.placeholder);
+                            basicSel.dataSource = freshFiltered || [];
+                            if (uiStateInit.placeholder) basicSel.setAttribute('placeholder', uiStateInit.placeholder);
+                            if (finalDisabledState) basicSel.setAttribute('disabled', 'true');
+                            else basicSel.removeAttribute('disabled');
                         } else {
                             // Legacy ion-select rollback
                             const oldVal = basicSel.value || (initialValues.length > 0 ? initialValues[0] : null);
@@ -319,6 +409,12 @@
                     window.AppEventBus.subscribe('DATASTORE::CHANGED', reloadDataset);
                     window.AppEventBus.subscribe('CACHE::GRAPH_HYDRATED', reloadDataset);
                 }
+                
+                // S57.5: Ocultar el componente del padre si el formulario está en modo lectura y el dominio no tiene un padre asignado (Nodo Raíz)
+                if (isActuallyReadonly && initialValues.length === 0 && field.relationType === 'padre' && field.hideIfEmptyAndReadonly !== false) {
+                    inputEl.style.display = 'none';
+                }
+                
                 inputEl.appendChild(basicSel);
             }
             return inputEl;

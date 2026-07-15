@@ -1,14 +1,17 @@
-const fs = require('fs');
+const fs   = require('fs');
 const path = require('path');
+const os   = require('os');
 const { execSync } = require('child_process');
 const readline = require('readline');
-const esbuild = require('esbuild');
+const esbuild  = require('esbuild');
 const { stripQAModule, extractAndValidateScripts } = require('./scripts/pipelineUtils.js');
 
-const env = process.argv[2];
 
-if (!['dev', 'prod'].includes(env)) {
-    console.error('Usage: node deploy.js <dev|prod>');
+const env = process.argv[2];
+const appName = env === 'greatpeeps' ? 'greatpeeps' : 'taxonomia';
+
+if (!['dev', 'prod', 'staging', 'tenantB', 'greatpeeps'].includes(env)) {
+    console.error('Usage: node deploy.js <dev|prod|staging|tenantB|greatpeeps>');
     process.exit(1);
 }
 
@@ -18,17 +21,99 @@ try {
     console.log(`[Deploy] Switching to ${env} environment...`);
 
     const SCRIPT_IDS = {
-        'dev': '1ZjGYDSsBgXy9mxa9guRoj69oabUJAVZz9GOy9DzJ5280tzYmMIjIBd5q',
-        'prod': '14oIjG_akx2DuX1nZe_HWBR8TECPYZgCyYikKwtRnng_pgzxcK0wLekYa'
+        'dev':     '1ZjGYDSsBgXy9mxa9guRoj69oabUJAVZz9GOy9DzJ5280tzYmMIjIBd5q',
+        'staging': '14oIjG_akx2DuX1nZe_HWBR8TECPYZgCyYikKwtRnng_pgzxcK0wLekYa',   // ex-prod
+        'prod':    '1kpN1TjMRtU6sE5rXStorv3rHF2gs_SvHWwBJyCkyGC9nWMKAx9GF7Ijw',    // nuevo prod (Tenant A)
+        'tenantB': '1ifdT9dDsDP0Efvrq2eCaBdB4TM5jRnRz9dXnshn0aT8hvbSfUnqMC5hi',    // Tenant B
+        'greatpeeps': '1jQrbCCSVxLNK0q3gHeKiL4mMHe-_Y-y_USJaih0NJFenleDGo4Vao_oG'   // GreatPeeps dev (Gmail)
     };
 
     const DEPLOYMENT_IDS = {
-        'prod': 'AKfycbyM1dZ_VxFzyaljHVEkTC0NXn_FYxnvRfHGZqjtbpnd-T-mRiGyXFWVdI0diJWtH79-eg'
+        'staging': 'AKfycbyM1dZ_VxFzyaljHVEkTC0NXn_FYxnvRfHGZqjtbpnd-T-mRiGyXFWVdI0diJWtH79-eg',  // ex-prod
+        'prod':    'AKfycbxzO-_6ud4UpYZoBgL8xbmcKy9Xlx5LgMtIW7jQdD9zP8-8peiPUKAysEae12xW-JOs',     // Tenant A prod
+        'tenantB': 'AKfycbzv5roNRhVzT5f0kOvCHikd-PjNjPzuyJUJyzKs_VjlZVwx7Wiscomprv2Y3iYYeL3jLg'   // Tenant B
     };
 
     if (!SCRIPT_IDS[env]) {
         throw new Error(`No scriptId configured for environment: ${env}`);
     }
+
+    // [S67] Multi-Account Clasp Auth — Swap temporal de ~/.clasprc.json
+    // clasp 3.x no soporta --creds. La estrategia es intercambiar el archivo
+    // de sesión activa justo antes del push y restaurarlo siempre al finalizar.
+    // Los archivos de credenciales NO van al repo (viven en el HOME del developer).
+    // Setup: ver docs/deploy-setup.md
+    const CLASPRC = path.join(os.homedir(), '.clasprc.json');
+    const CREDS_FILE = {
+        'dev':     path.join(os.homedir(), '.clasp-coppel.json'),      // Coppel  → dev
+        'staging': path.join(os.homedir(), '.clasp-coppel.json'),      // Coppel  → staging
+        'prod':    path.join(os.homedir(), '.clasp-coppel.json'),      // Coppel  → prod (Tenant A)
+        'tenantB': path.join(os.homedir(), '.clasp-coppel.json'),      // Coppel  → Tenant B
+        'greatpeeps': path.join(os.homedir(), '.clasp-gmail.json')     // Gmail   → GreatPeeps
+    };
+
+    const credsPath = CREDS_FILE[env];
+    let originalClasprc = null; // backup del token activo antes del swap
+    let originalClasprcExisted = false;
+
+    function swapClaspCredentials() {
+        if (!credsPath) return;
+        if (!fs.existsSync(credsPath)) {
+            console.error(`[Deploy] ERROR: Credentials file not found: ${credsPath}`);
+            console.error(`[Deploy] Para crearlo: ver docs/deploy-setup.md`);
+            process.exit(1);
+        }
+        // Guardar el token actual antes de reemplazarlo
+        if (fs.existsSync(CLASPRC)) {
+            originalClasprc = fs.readFileSync(CLASPRC, 'utf8');
+            originalClasprcExisted = true;
+        } else {
+            originalClasprcExisted = false;
+        }
+        try {
+            fs.copyFileSync(credsPath, CLASPRC);
+            console.log(`[Deploy] Using credentials: ${credsPath}`);
+        } catch (e) {
+            console.error(`[Deploy] Failed to swap credentials:`, e.message);
+            // Abort gracefully if copy fails
+        }
+    }
+
+    function restoreClaspCredentials() {
+        if (originalClasprcExisted && originalClasprc !== null) {
+            fs.writeFileSync(CLASPRC, originalClasprc, 'utf8');
+            console.log(`[Deploy] Credentials restored to original token.`);
+            originalClasprc = null;
+        } else if (!originalClasprcExisted && fs.existsSync(CLASPRC) && credsPath && fs.existsSync(credsPath)) {
+            // Only unlink if we actually did a swap (credsPath exists) and it wasn't there before
+            try {
+                fs.unlinkSync(CLASPRC);
+                console.log(`[Deploy] Credentials file removed (did not exist originally).`);
+            } catch (err) {
+                console.warn(`[Deploy] Warning: could not remove temporary credentials file.`, err.message);
+            }
+        }
+    }
+
+    // Handlers for graceful shutdown
+    let cleanupDone = false;
+    function doCleanup() {
+        if (!cleanupDone) {
+            restoreClaspCredentials();
+            cleanupDone = true;
+        }
+    }
+    process.on('SIGINT', () => {
+        console.log('\n[Deploy] Process aborted via SIGINT. Cleaning up...');
+        doCleanup();
+        process.exit(1);
+    });
+    process.on('uncaughtException', (err) => {
+        console.error('\n[Deploy] Uncaught Exception:', err);
+        doCleanup();
+        process.exit(1);
+    });
+
 
     const configFile = `environments/Config.${env}.js`;
     let currentConfigContent = fs.existsSync(configFile) ? fs.readFileSync(configFile, 'utf8') : '';
@@ -60,8 +145,8 @@ try {
         let newVersion = finalBase;
 
         // Si cambió la versión, modificamos el archivo Config original
-        if (newVersion !== currentVersion && currentConfigContent) {
-            currentConfigContent = currentConfigContent.replace(/APP_VERSION:\s*['"].*?['"]/, `APP_VERSION: '${newVersion}'`);
+        if (newVersion !== currentVersion && fs.existsSync(configFile)) {
+            currentConfigContent = currentConfigContent.replace(/APP_VERSION:\s*['"].*?['"]/, `APP_VERSION: '${newVersion}'`).replace(/APP_NAME:\s*['"].*?['"]/, `APP_NAME: '${appName}'`);
             fs.writeFileSync(configFile, currentConfigContent);
             console.log(`[Deploy] Version actualizada a ${newVersion} en ${configFile}`);
         }
@@ -169,6 +254,48 @@ try {
             fs.copyFileSync(configFile, targetConfig);
         }
 
+        // [Filter Schemas] Only keep the schemas relevant to the current appName
+        let schemaFile = `${buildDir}/Schema_Engine.js`;
+        if (fs.existsSync(schemaFile)) {
+            let sContent = fs.readFileSync(schemaFile, 'utf8');
+            sContent += `\n
+// [App Filter] Keep only schemas relevant to this app
+(function() {
+    var APP_NAME = '${appName}';
+    var appSchemasConfig = {
+        taxonomia: ['Taxonomia', 'Portafolio', 'Value_Stream', 'Value_Stream_Step', 'Equipo', 'Persona', 'Unidad_Negocio', 'Dominio', 'Grupo_Productos', 'Producto', 'Capacidad', 'Cargo', 'Rol', 'Config_Typography', 'Config_System', '_UI_CONFIG', 'Sys_Graph_Edges', 'Sys_Cache_Signals', 'Sys_Roles', 'Sys_Permissions', 'Sys_Jobs', 'Sys_DLQ'],
+        greatpeeps: ['Empresas', 'Vacantes', 'Candidatos', 'Entrevistas', 'Persona', '_UI_CONFIG', 'Sys_Graph_Edges', 'Sys_Cache_Signals', 'Sys_Roles', 'Sys_Permissions', 'Sys_Jobs', 'Sys_DLQ']
+    };
+    var allowed = appSchemasConfig[APP_NAME] || appSchemasConfig['taxonomia'] || [];
+    if (typeof APP_SCHEMAS !== 'undefined') {
+        for (var key in APP_SCHEMAS) {
+            if (allowed.indexOf(key) === -1) {
+                delete APP_SCHEMAS[key];
+            }
+        }
+        
+        // [GreatPeeps Specific Overrides]
+        if (APP_NAME === 'greatpeeps' && APP_SCHEMAS['Persona']) {
+            APP_SCHEMAS['Persona'].metadata.label = 'Usuarios del Sistema';
+            APP_SCHEMAS['Persona'].fields = [
+                { name: "id_persona", type: "hidden", primaryKey: true },
+                { name: "estado", type: "hidden", defaultValue: "Activo" },
+                { name: "nombre", type: "text", label: "Nombre", required: true, width: 6, validators: ["minLength:2"] },
+                { name: "apellidos", type: "text", label: "Apellidos", required: true, width: 6, validators: ["minLength:2"] },
+                { name: "email", type: "email", label: "Correo Corporativo", required: true, width: 6, validators: ["regex:^[a-zA-Z0-9._%+\\\\-]+@[a-zA-Z0-9.\\\\-]+\\\\.[a-zA-Z]{2,}$"], unique: true },
+                { name: "correo", type: "hidden" },
+                { name: "id_rol", type: "select", label: "Rol de Permisos", required: true, width: 6, lookupSource: "getSysRolesOptions", abacRule: { action: 'update', target: 'Sys_Permissions' } }
+            ];
+            // Quitar relations y topology rules que no aplican a GP
+            APP_SCHEMAS['Persona'].relationalProvisioners = [];
+            APP_SCHEMAS['Persona'].mutationInterceptors = [];
+        }
+    }
+})();
+`;
+            fs.writeFileSync(schemaFile, sContent, 'utf8');
+        }
+
         // Alter .clasp.json to point to .build
         console.log(`[Deploy] Generating temporary .clasp.json for ${env}...`);
         let claspConfig = {
@@ -179,6 +306,9 @@ try {
 
         console.log(`[Deploy] Environment files updated for ${env}. Running npx clasp push...`);
 
+        // [S67] Intercambiar credenciales antes del push
+        swapClaspCredentials();
+
         let pushSuccess = false;
         let attempts = 0;
         const maxAttempts = 3;
@@ -188,13 +318,14 @@ try {
             console.log(`[Deploy] Attempt ${attempts} of ${maxAttempts}...`);
             try {
                 const output = execSync(`npx clasp push -f`, { encoding: 'utf8', stdio: 'pipe' });
+
                 console.log(output);
                 
                 if (output.includes('Pushed') && output.includes('files.')) {
                     pushSuccess = true;
                     console.log(`[Deploy] Verified: Clasp confirmed files were physically pushed.`);
-                } else if (output.includes('No files to push')) {
-                    console.log(`[Deploy] Warning: Clasp reports 'No files to push'. Either files are identical remotely, or manifest is out of sync.`);
+                } else if (output.includes('No files to push') || output.includes('Script is already up to date')) {
+                    console.log(`[Deploy] Warning: Clasp reports no files to push. Either files are identical remotely, or manifest is out of sync.`);
                     // Lo tomamos como éxito estructural si realmente no había cambios.
                     pushSuccess = true; 
                 } else {
@@ -211,7 +342,11 @@ try {
             }
         }
 
+        // [S67] Restaurar credenciales originales después del push (siempre)
+        restoreClaspCredentials();
+
         if (!pushSuccess) {
+
             console.error("[Deploy] Error: Clasp failed to reliably push code after 3 attempts.");
             process.exit(1);
         }
@@ -219,6 +354,8 @@ try {
         // --- S14.5: Auto-Deploy Versioning for PROD Environment ---
         if (env === 'prod' && DEPLOYMENT_IDS['prod']) {
             console.log(`[Deploy] Publishing new Version and updating PROD Executable Link...`);
+            // [S67] El clasp deploy también necesita las creds correctas
+            swapClaspCredentials();
             try {
                 const deployOutput = execSync(`npx clasp deploy -i ${DEPLOYMENT_IDS['prod']} -d "Release ${newVersion}"`, { encoding: 'utf8', stdio: 'pipe' });
                 console.log(deployOutput);
@@ -227,8 +364,11 @@ try {
                 console.error(`[Deploy] Warning: Failed to update the Web App deployment link for PROD:`);
                 console.error(e.stdout || e.message);
                 console.log(`[Deploy] Remember: You may need to manually update the deployment version in Apps Script GUI.`);
+            } finally {
+                restoreClaspCredentials();
             }
         }
+
 
         // Cleanup
         if (fs.existsSync(buildDir)) {

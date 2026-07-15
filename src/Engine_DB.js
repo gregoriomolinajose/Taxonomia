@@ -29,6 +29,7 @@ function _getAppVersionHash() {
 /**
  * _invalidateCache (Directiva Architect: Cache Busting)
  * Purga la RAM para forzar lectura fresca tras mutaciones.
+ * [S66] Al final llama _publishCacheSignal para notificar a otros tenants.
  */
 function _invalidateCache(entityName) {
     if (typeof CacheService === 'undefined') return;
@@ -51,6 +52,94 @@ function _invalidateCache(entityName) {
     }
     
     if (typeof Logger !== 'undefined') Logger.log(`[Cache] BUSTED para ${entityName}`);
+
+    // [E6-S66] Publicar señal cross-tenant para invalidar caché de otros tenants
+    // No publicar señal para Sys_Cache_Signals (evitar recursión)
+    if (entityName !== 'Sys_Cache_Signals') {
+        _publishCacheSignal(entityName);
+    }
+}
+
+/**
+ * [E6-S66] _publishCacheSignal
+ * Escribe una fila append-only en la pestaña Sys_Cache_Signals del Sheet compartido.
+ * Fallback silencioso: un fallo aquí nunca rompe la operación principal.
+ *
+ * @param {string} entityName — Entidad que fue mutada
+ */
+function _publishCacheSignal(entityName) {
+    try {
+        if (typeof _Adapter_Sheets === 'undefined' || typeof CONFIG === 'undefined') return;
+        if (!CONFIG.SPREADSHEET_ID_DB || CONFIG.SPREADSHEET_ID_DB.trim().length === 0) return;
+        const tenantName = CONFIG.TENANT_NAME || 'default';
+        const signal = {
+            signal_id:      'SIG-' + Math.random().toString(36).substring(2, 10).toUpperCase(),
+            entity_name:    entityName,
+            invalidated_at: new Date().toISOString(),
+            by_tenant:      tenantName
+        };
+        // Usar upsert con la PK signal_id — siempre nuevo (UUID), nunca sobrescribe
+        _Adapter_Sheets.upsert('Sys_Cache_Signals', signal, CONFIG);
+        // Invalidar la mini-caché de señales para que otros tenants la vean en ≤ 60s
+        if (typeof CacheService !== 'undefined') {
+            CacheService.getScriptCache().remove('CACHE_SIGNALS_v1');
+        }
+    } catch(e) {
+        // Silencioso — fallar al publicar señal no debe romper la operación principal
+        if (typeof Logger !== 'undefined') Logger.log('[CacheSignal] Fallo al publicar señal: ' + e.message);
+    }
+}
+
+/**
+ * [E6-S66] _checkCacheSignals
+ * Verifica si hay señales de OTROS tenants más nuevas que nuestra caché local.
+ * Usa una mini-caché propia de 60 segundos para amortizar lecturas de Sheets.
+ *
+ * @param {string} entityName  — Entidad a verificar
+ * @param {string} cachedAt    — ISO timestamp de cuando guardamos nuestra caché local
+ * @returns {boolean}          — true si debemos invalidar la caché local
+ */
+function _checkCacheSignals(entityName, cachedAt) {
+    try {
+        if (typeof CacheService === 'undefined') return false;
+        const cache = CacheService.getScriptCache();
+        const signalsCacheKey = 'CACHE_SIGNALS_v1';
+
+        let signals;
+        const rawCached = cache.get(signalsCacheKey);
+        if (rawCached) {
+            signals = JSON.parse(rawCached);
+        } else {
+            // Cache miss: leer de Sheets (tabla pequeña, máx 500 filas por limpieza del job)
+            const config = (typeof CONFIG !== 'undefined') ? CONFIG : {};
+            if (!config.SPREADSHEET_ID_DB || config.SPREADSHEET_ID_DB.trim().length === 0) return false;
+            const result = _Adapter_Sheets.list('Sys_Cache_Signals', config, 'objects');
+            signals = (result && result.rows) ? result.rows : [];
+            // TTL intencional de 60 segundos — ventana máxima de inconsistencia cross-tenant
+            cache.put(signalsCacheKey, JSON.stringify(signals), 60);
+        }
+
+        const tenantName = (typeof CONFIG !== 'undefined' && CONFIG.TENANT_NAME) || 'default';
+        // Solo evaluar señales de OTROS tenants (las propias ya las procesamos en tiempo real)
+        const externalSignals = signals.filter(function(s) {
+            return s.entity_name === entityName && s.by_tenant !== tenantName;
+        });
+
+        if (externalSignals.length === 0) return false;
+
+        // Encontrar la señal más reciente
+        const latestSignal = externalSignals.reduce(function(latest, s) {
+            return s.invalidated_at > latest.invalidated_at ? s : latest;
+        });
+
+        // Si la señal es posterior a cuando guardamos nuestra caché → invalidar
+        return latestSignal.invalidated_at > cachedAt;
+
+    } catch(e) {
+        // En caso de error, conservar caché existente — mejor dato ligeramente viejo que WSOD
+        if (typeof Logger !== 'undefined') Logger.log('[CacheSignal] Error al verificar señales: ' + e.message);
+        return false;
+    }
 }
 
 /**
@@ -112,98 +201,6 @@ function _removeCacheChunked(cache, key) {
     cache.remove(key);
 }
 
-/**
- * [S5.4 Quality] Dependency Injection: Matrix Provider
- * Desacopla la lógica topológica de la API nativa de Google Sheets para posibilitar Tests locales (Jest).
- */
-const SheetMatrixIO = {
-    readRelacionDominios: function(config) {
-        if (typeof SpreadsheetApp === 'undefined') return { sheet: null, data: [] };
-        const ssStr = (config && config.SPREADSHEET_ID_DB) ? config.SPREADSHEET_ID_DB : (typeof CONFIG !== 'undefined' ? CONFIG.SPREADSHEET_ID_DB : null);
-        if (!ssStr) return { sheet: null, data: [] };
-        const ss = SpreadsheetApp.openById(ssStr);
-        const relSheet = ss.getSheetByName("Relacion_Dominios");
-        if (!relSheet) return { sheet: null, data: [] };
-        return { sheet: relSheet, data: relSheet.getDataRange().getValues() };
-    },
-    writeBulk: function(sheet, data, headersLength) {
-        if (sheet && typeof SpreadsheetApp !== 'undefined') sheet.getRange(1, 1, data.length, headersLength).setValues(data);
-    },
-    writeRow: function(sheet, rowNum, rowData, headersLength) {
-        if (sheet && typeof SpreadsheetApp !== 'undefined') sheet.getRange(rowNum, 1, 1, headersLength).setValues([rowData]);
-    },
-    appendRow: function(sheet, rowData) {
-        if (sheet && typeof SpreadsheetApp !== 'undefined') sheet.appendRow(rowData);
-    }
-};
-
-/**
- * _updateGraphEdges (S5.3)
- * Orquesta transacciones SCD-2 interrumpiendo el flujo plano para poblar el Grafo Temporal.
- */
-function _updateGraphEdges(childId, newParentId, config) {
-    newParentId = (newParentId === "NULL" || !newParentId) ? "" : String(newParentId).trim();
-
-    const io = SheetMatrixIO.readRelacionDominios(config);
-    let data = io.data;
-    if (data.length === 0) return;
-    
-    const headers = data[0];
-    const idxHid = headers.indexOf("id_nodo_hijo");
-    const idxPid = headers.indexOf("id_nodo_padre");
-    const idxHasta = headers.indexOf("valido_hasta");
-    const idxActual = headers.indexOf("es_version_actual");
-    const idxUpdated = headers.indexOf("updated_at");
-    
-    let currentActiveIdx = -1;
-    let oldParentId = "";
-    
-    for (let i = 1; i < data.length; i++) {
-        if (data[i][idxHid] === childId && data[i][idxActual] === true) {
-            currentActiveIdx = i;
-            oldParentId = data[i][idxPid];
-            break;
-        }
-    }
-    
-    if (currentActiveIdx !== -1 && oldParentId === newParentId) return; 
-    
-    const sysDate = new Date().toISOString();
-    
-    // Soft-Expire Old Edge (SCD-2)
-    if (currentActiveIdx !== -1) {
-        data[currentActiveIdx][idxHasta] = sysDate;
-        data[currentActiveIdx][idxActual] = false;
-        data[currentActiveIdx][idxUpdated] = sysDate;
-        
-        SheetMatrixIO.writeRow(io.sheet, currentActiveIdx + 1, data[currentActiveIdx], headers.length);
-        if (typeof Logger !== 'undefined') Logger.log(`[DAG] Caducada arista vieja para hijo ${childId} (padre previo: ${oldParentId})`);
-    }
-    
-    // Spawn Active Edge
-    if (newParentId !== "") {
-        let rID = "RELA-" + Utilities.getUuid().substring(0, 8).toUpperCase(); // [S5.4 Quality] Collision hardening
-        let newEdge = [];
-        for (let i = 0; i < headers.length; i++) {
-            let h = headers[i];
-            if (h === "id_relacion") newEdge.push(rID);
-            else if (h === "id_nodo_padre") newEdge.push(newParentId);
-            else if (h === "id_nodo_hijo") newEdge.push(childId);
-            else if (h === "tipo_relacion") newEdge.push("SCD2_EDGE");
-            else if (h === "peso_influencia") newEdge.push(1);
-            else if (h === "valido_desde") newEdge.push(sysDate);
-            else if (h === "valido_hasta") newEdge.push("");
-            else if (h === "es_version_actual") newEdge.push(true);
-            else if (h === "created_at") newEdge.push(sysDate);
-            else if (h === "created_by") newEdge.push("DAG_SETTER");
-            else newEdge.push("");
-        }
-        SheetMatrixIO.appendRow(io.sheet, newEdge);
-        if (typeof Logger !== 'undefined') Logger.log(`[DAG] Arista nueva instanciada: ${newParentId} -> ${childId}`);
-    }
-    
-    _invalidateCache("Relacion_Dominios");
-}
 
 
 const Engine_DB = {
@@ -249,14 +246,22 @@ const Engine_DB = {
      * 4. Guarda Hijos masivamente.
      */
     orchestrateNestedSave: function (entityName, payload, config) {
+        // [S60/E6] Guard de routing: entidades con adapter especial no usan Sheets
+        const schemaForAdapter = (typeof APP_SCHEMAS !== 'undefined') ? APP_SCHEMAS[entityName] : null;
+        if (schemaForAdapter && schemaForAdapter.metadata && schemaForAdapter.metadata.adapter === 'config') {
+            if (typeof Adapter_Config !== 'undefined') {
+                return Adapter_Config.setAll(payload);
+            }
+            throw new Error('[Engine_DB] Adapter_Config requerido para guardar ' + entityName + '. Ejecuta S61 para crearlo.');
+        }
+
         const nestedData = {};
         const flatPayload = { ...payload };
         let precalculatedGraphContext = {};
         let cachedGraphFull = null;
 
         // [S5.6] Dynamic DAG Subgrid takes over Transient Edge
-        // transientParentId y _updateGraphEdges ya no se usan porque la topología
-        // se administra directamente mediante subgrids hacia Relacion_Dominios.
+        // La topología se administra directamente mediante subgrids hacia Sys_Graph_Edges.
 
         // Paso A: Desempaquetado basado en esquema
         const schema = (typeof APP_SCHEMAS !== 'undefined') ? APP_SCHEMAS[entityName] : null;
@@ -531,6 +536,79 @@ const Engine_DB = {
                             if (!globalBatches[f.graphEntity]) globalBatches[f.graphEntity] = [];
                             globalBatches[f.graphEntity].push(...edgeRecords);
                             globalCachesToBust.add(f.graphEntity);
+                            
+                            // --- AUTO-LINK PERSONA A LA TAXONOMIA ---
+                            // [Rule: Siempre que una Persona se vincule a un elemento de la taxonomía, vincularla a la Taxonomía también]
+                            if (targetEntity === 'Persona') {
+                                const taxEdgesToAdd = [];
+                                edgeRecords.forEach(er => {
+                                    const ctxId = er.contexto_id;
+                                    if (ctxId && String(ctxId).startsWith('TAXO-')) {
+                                        const personaId = String(f.relationType === 'hijo' ? er.id_nodo_hijo : er.id_nodo_padre);
+                                        
+                                        // ID Determinístico: Evita duplicados en Google Sheets (Upsert sobrescribe si ya existe)
+                                        const deterministicId = `RELA-${String(ctxId).substring(5, 9)}${personaId.substring(5, 9)}`.toUpperCase();
+                                        
+                                        // Prevenir duplicados dentro del mismo payload
+                                        if (!taxEdgesToAdd.some(e => e.id_relacion === deterministicId) && !globalBatches[f.graphEntity].some(e => e.id_relacion === deterministicId && e.tipo_relacion === 'TAXONOMIA_PERSONA')) {
+                                            taxEdgesToAdd.push({
+                                                id_relacion: deterministicId,
+                                                id_nodo_padre: ctxId,
+                                                id_nodo_hijo: personaId,
+                                                tipo_relacion: "TAXONOMIA_PERSONA",
+                                                valido_desde: er.valido_desde,
+                                                valido_hasta: "",
+                                                es_version_actual: true,
+                                                estado: "Borrador",
+                                                contexto_id: ctxId
+                                            });
+                                        }
+                                    }
+                                });
+                                
+                                if (taxEdgesToAdd.length > 0) {
+                                    if (typeof Logger !== 'undefined') Logger.log(`[Auto-Link] Inyectando ${taxEdgesToAdd.length} aristas TAXONOMIA_PERSONA.`);
+                                    globalBatches[f.graphEntity].push(...taxEdgesToAdd);
+                                    if (!parentResults.orchestratedChildren) parentResults.orchestratedChildren = {};
+                                    if (!parentResults.orchestratedChildren[f.graphEntity]) parentResults.orchestratedChildren[f.graphEntity] = [];
+                                    parentResults.orchestratedChildren[f.graphEntity].push(...taxEdgesToAdd);
+                                }
+                            }
+                            
+                            // --- EXPLICIT-LINK PORTAFOLIO A UNIDAD DE NEGOCIO ---
+                            if (targetEntity === 'Portafolio') {
+                                const portafolioEdgesToAdd = [];
+                                newChildrenToInsert.forEach(child => {
+                                    if (child.unidad_negocio_padre) {
+                                        const portafolioId = child[pkField] || child['id_registro'];
+                                        const undnId = child.unidad_negocio_padre;
+                                        
+                                        const deterministicId = `RELA-${String(undnId).substring(5, 9)}${portafolioId.substring(5, 9)}`.toUpperCase();
+                                        
+                                        if (!portafolioEdgesToAdd.some(e => e.id_relacion === deterministicId) && !globalBatches[f.graphEntity].some(e => e.id_relacion === deterministicId && e.tipo_relacion === 'UNIDAD_NEGOCIO_PORTAFOLIO')) {
+                                            portafolioEdgesToAdd.push({
+                                                id_relacion: deterministicId,
+                                                id_nodo_padre: undnId,
+                                                id_nodo_hijo: portafolioId,
+                                                tipo_relacion: "UNIDAD_NEGOCIO_PORTAFOLIO",
+                                                valido_desde: child.valido_desde || new Date().toISOString(),
+                                                valido_hasta: "",
+                                                es_version_actual: true,
+                                                estado: child._estado_arista || child.estado || "Borrador",
+                                                contexto_id: child._contexto_arista || child.contexto_id || flatPayload.id_taxonomia || ""
+                                            });
+                                        }
+                                    }
+                                });
+                                
+                                if (portafolioEdgesToAdd.length > 0) {
+                                    if (typeof Logger !== 'undefined') Logger.log(`[Explicit-Link] Inyectando ${portafolioEdgesToAdd.length} aristas explícitas UNIDAD_NEGOCIO_PORTAFOLIO.`);
+                                    globalBatches[f.graphEntity].push(...portafolioEdgesToAdd);
+                                    if (!parentResults.orchestratedChildren) parentResults.orchestratedChildren = {};
+                                    if (!parentResults.orchestratedChildren[f.graphEntity]) parentResults.orchestratedChildren[f.graphEntity] = [];
+                                    parentResults.orchestratedChildren[f.graphEntity].push(...portafolioEdgesToAdd);
+                                }
+                            }
                         }
 
                         if (!parentResults.orchestratedChildren) parentResults.orchestratedChildren = {};
@@ -637,8 +715,15 @@ const Engine_DB = {
     },
 
     create: function (entityName, data) {
+        data = data || {}; // Null/Undefined defense
         Logger.log("Engine_DB_create_router: Routing " + entityName + " with Orchestration.");
         const config = (typeof CONFIG !== 'undefined') ? CONFIG : { useSheets: true, useCloudDB: false };
+        // [Draft Lifecycle Security Enforcement]
+        const schema = (typeof APP_SCHEMAS !== 'undefined') ? APP_SCHEMAS[entityName] : null;
+        if (schema && schema.metadata && schema.metadata.hasDraftLifecycle) {
+            // Force status Borrador if this entity governs a draft lifecycle on creation
+            data.estado = 'Borrador';
+        }
         
         // Usar orquestador para manejar posibles relaciones anidadas
         const result = this.orchestrateNestedSave(entityName, data, config);
@@ -746,25 +831,53 @@ const Engine_DB = {
      */
     list: function (entityName, format, options) {
         const config = (typeof CONFIG !== 'undefined') ? CONFIG : { useSheets: true, SPREADSHEET_ID_DB: '' };
-        
-        // Intentar leer de RAM (CacheService) con Fragmentación Inteligente S42.1
+
+        // [S60/E6] Guard de routing: entidades con adapter especial no usan Sheets
+        const schemaForAdapter = (typeof APP_SCHEMAS !== 'undefined') ? APP_SCHEMAS[entityName] : null;
+        if (schemaForAdapter && schemaForAdapter.metadata && schemaForAdapter.metadata.adapter === 'config') {
+            if (typeof Adapter_Config !== 'undefined') {
+                return Adapter_Config.asListResponse();
+            }
+            if (typeof Logger !== 'undefined') Logger.log('[Engine_DB] WARN: Adapter_Config no disponible aún para ' + entityName + '. Retornando vacío.');
+            return { headers: [], rows: [] };
+        }
+        // [E6-S66] Intentar leer de RAM (CacheService) con señal cross-tenant
         const cacheKey = `CACHE_LIST_${_getAppVersionHash()}_${entityName}`;
         if (typeof CacheService !== 'undefined' && (!options || !options.skipCache)) {
             const cache = CacheService.getScriptCache();
-            const cached = _getCacheChunked(cache, cacheKey);
-            if (cached && format !== 'tuples') {
-                Logger.log(`[Cache Engine] HIT para ${entityName}`);
-                return JSON.parse(cached);
+            const cachedRaw = _getCacheChunked(cache, cacheKey);
+            if (cachedRaw && format !== 'tuples') {
+                try {
+                    const wrapped = JSON.parse(cachedRaw);
+                    // [S66] Si tiene campo cached_at, verificar señales cross-tenant
+                    if (wrapped && wrapped.cached_at && wrapped.data !== undefined) {
+                        const shouldInvalidate = _checkCacheSignals(entityName, wrapped.cached_at);
+                        if (!shouldInvalidate) {
+                            if (typeof Logger !== 'undefined') Logger.log(`[Cache Engine] HIT para ${entityName} (cross-tenant OK)`);
+                            return wrapped.data;
+                        }
+                        // Señal externa más nueva → invalidar y releer de Sheets
+                        if (typeof Logger !== 'undefined') Logger.log(`[Cache Engine] INVALIDADO por señal cross-tenant para ${entityName}`);
+                        _removeCacheChunked(cache, cacheKey);
+                    } else {
+                        // Retrocompatibilidad: dato sin wrapped — servir directamente
+                        if (typeof Logger !== 'undefined') Logger.log(`[Cache Engine] HIT para ${entityName}`);
+                        return wrapped;
+                    }
+                } catch(parseErr) {
+                    if (typeof Logger !== 'undefined') Logger.log(`[Cache Engine] Error parseando caché de ${entityName}, releyendo de DB.`);
+                }
             }
         }
 
-        Logger.log(`[Cache Engine] MISS para ${entityName}. Leyendo de DB...`);
+        if (typeof Logger !== 'undefined') Logger.log(`[Cache Engine] MISS para ${entityName}. Leyendo de DB...`);
         const result = _Adapter_Sheets.list(entityName, config, format);
         
-        // Guardar en caché si no es formato tuplas (Chunked blindado)
+        // [S66] Guardar en caché envuelto con timestamp para soporte de señales cross-tenant
         if (typeof CacheService !== 'undefined' && format !== 'tuples' && result) {
             const cache = CacheService.getScriptCache();
-            _putCacheChunked(cache, cacheKey, JSON.stringify(result), 3600);
+            const wrappedResult = { data: result, cached_at: new Date().toISOString() };
+            _putCacheChunked(cache, cacheKey, JSON.stringify(wrappedResult), 3600);
         }
         
         return result;
@@ -793,20 +906,20 @@ const Engine_DB = {
      * @param {string} contextId
      * @returns {Object} { approvedEdges: number }
      */
-    publishDraftContext: function(contextId) {
-        if (!contextId) throw new Error("publishDraftContext: contextId requerido.");
+    publishDraftContext: function(entityName, contextId) {
+        if (!contextId || !entityName) throw new Error("publishDraftContext: contextId y entityName requeridos.");
         if (typeof Logger !== 'undefined') Logger.log(`[Mass Approval] Publicando Draft Context: ${contextId}`);
         const sysDate = new Date().toISOString();
 
-        // 1. Update master entity (Taxonomia)
-        const taxRes = _Adapter_Sheets.list('Taxonomia', { useSheets: true }, 'objects');
+        // 1. Update master entity dynamically
+        const taxRes = _Adapter_Sheets.list(entityName, { useSheets: true }, 'objects');
         const taxRecords = taxRes && taxRes.rows ? taxRes.rows : [];
-        const taxRecord = taxRecords.find(r => r.id_registro === contextId || r.id_taxonomia === contextId);
+        const taxRecord = taxRecords.find(r => String(r.id_registro) === String(contextId) || (r[APP_SCHEMAS[entityName].primaryKey] && String(r[APP_SCHEMAS[entityName].primaryKey]) === String(contextId)));
         if (taxRecord) {
             taxRecord.estado = 'Activo';
             taxRecord.updated_at = sysDate;
-            _Adapter_Sheets.upsertBatch('Taxonomia', [taxRecord], { isVolatile: false });
-            _invalidateCache('Taxonomia');
+            _Adapter_Sheets.upsertBatch(entityName, [taxRecord], { isVolatile: false });
+            _invalidateCache(entityName);
         }
 
         // 2. Mass update edges
@@ -822,6 +935,52 @@ const Engine_DB = {
             _Adapter_Sheets.upsertBatch('Sys_Graph_Edges', edgesToUpdate, { isVolatile: false });
             _invalidateCache('Sys_Graph_Edges');
             if (typeof Logger !== 'undefined') Logger.log(`[Mass Approval] ${edgesToUpdate.length} aristas validadas.`);
+            
+            // 3. Update Unidad_Negocio to Activo if linked
+            const rootEdge = edgesToUpdate.find(e => e.tipo_relacion === 'TAXONOMIA_UNIDAD' && String(e.id_nodo_hijo) === String(contextId));
+            if (rootEdge && rootEdge.id_nodo_padre) {
+                const undnId = rootEdge.id_nodo_padre;
+                const undnRes = _Adapter_Sheets.list('Unidad_Negocio', { useSheets: true }, 'objects');
+                const undnRecords = undnRes && undnRes.rows ? undnRes.rows : [];
+                const undnRec = undnRecords.find(r => String(r.id_unidad_negocio) === String(undnId));
+                
+                if (undnRec && undnRec.estado !== 'Activo') {
+                    undnRec.estado = 'Activo';
+                    undnRec.updated_at = sysDate;
+                    _Adapter_Sheets.upsertBatch('Unidad_Negocio', [undnRec], { isVolatile: false });
+                    _invalidateCache('Unidad_Negocio');
+                    if (typeof Logger !== 'undefined') Logger.log(`[Mass Approval] Unidad de Negocio ${undnId} activada.`);
+                }
+            }
+            
+            // 4. Activar Entidades Secundarias Vinculadas al Contexto (Portafolios, Value Streams, etc.)
+            const edgeMappings = [
+                { edgeType: 'UNIDAD_NEGOCIO_PORTAFOLIO', entity: 'Portafolio', pk: 'id_portafolio' },
+                { edgeType: 'PORTAFOLIO_VALUE_STREAM', entity: 'Value_Stream', pk: 'id_value_stream' },
+                { edgeType: 'VALUE_STREAM_GRUPO_PRODUCTO', entity: 'Grupo_Productos', pk: 'id_grupo_producto' },
+                { edgeType: 'GRUPO_PRODUCTO_PRODUCTO', entity: 'Producto', pk: 'id_producto' },
+                { edgeType: 'GRUPO_PRODUCTO_EQUIPO', entity: 'Equipo', pk: 'id_equipo' }
+            ];
+
+            edgeMappings.forEach(mapping => {
+                const entityEdges = edgesToUpdate.filter(e => e.tipo_relacion === mapping.edgeType);
+                if (entityEdges.length > 0) {
+                    const nodeIds = entityEdges.map(e => String(e.id_nodo_hijo));
+                    const res = _Adapter_Sheets.list(mapping.entity, { useSheets: true }, 'objects');
+                    const records = res && res.rows ? res.rows : [];
+                    const recordsToUpdate = records.filter(r => nodeIds.includes(String(r[mapping.pk])) && r.estado !== 'Activo');
+                    
+                    if (recordsToUpdate.length > 0) {
+                        recordsToUpdate.forEach(p => {
+                            p.estado = 'Activo';
+                            p.updated_at = sysDate;
+                        });
+                        _Adapter_Sheets.upsertBatch(mapping.entity, recordsToUpdate, { isVolatile: false });
+                        _invalidateCache(mapping.entity);
+                        if (typeof Logger !== 'undefined') Logger.log(`[Mass Approval] ${recordsToUpdate.length} ${mapping.entity} activados.`);
+                    }
+                }
+            });
         }
 
         return { approvedEdges: edgesToUpdate.length };
@@ -830,7 +989,13 @@ const Engine_DB = {
     delete: function (entityName, id) {
         const config = (typeof CONFIG !== 'undefined') ? CONFIG : { useSheets: true, useCloudDB: false };
         if (typeof Logger !== 'undefined') Logger.log("Engine_DB_delete_router: Routing " + entityName + " (ID: " + id + ") to Architect Unit of Work Deletion.");
-        
+
+        // [S60/E6] Guard de routing: entidades con adapter especial no usan Sheets
+        const schemaForDel = (typeof APP_SCHEMAS !== 'undefined') ? APP_SCHEMAS[entityName] : null;
+        if (schemaForDel && schemaForDel.metadata && schemaForDel.metadata.adapter === 'config') {
+            throw new Error('[Engine_DB] La entidad ' + entityName + ' es gestionada por Adapter_Config y no soporta operación delete. Usa setAll() para actualizar la configuración.');
+        }
+
         let results = { sheets: {}, cloud: {} };
 
         // [S8.1] Check graph topology configuration
@@ -845,9 +1010,10 @@ const Engine_DB = {
             }
         } else {
             // Legacy hardcode validation
-            if (entityName === "Dominio") {
+            const schemaForDel = (typeof APP_SCHEMAS !== 'undefined') ? APP_SCHEMAS[entityName] : null;
+            if (schemaForDel && schemaForDel.metadata && schemaForDel.metadata.deletionStrategy) {
                 isGraphEntity = true;
-                strategy = "GRANDPARENT"; // fallback behavior if Schema_Engine isn't strictly loaded
+                strategy = schemaForDel.metadata.deletionStrategy;
             }
         }
 
@@ -962,4 +1128,65 @@ const Engine_DB = {
 
 if (typeof module !== 'undefined') {
     module.exports = Engine_DB;
+}
+
+/**
+ * [E6-S66] Job_CleanCacheSignals
+ * Limpia señales con más de 1 hora de antigüedad de la pestaña Sys_Cache_Signals.
+ * Retiene siempre las últimas 500 señales como máximo.
+ * Debe configurarse como trigger de tiempo en Apps Script: cada 24 horas.
+ *
+ * @returns {{ deleted: number, retained: number }}
+ */
+function Job_CleanCacheSignals() {
+    try {
+        if (typeof CONFIG === 'undefined' || !CONFIG.SPREADSHEET_ID_DB) {
+            Logger.log('[Job_CleanCacheSignals] SPREADSHEET_ID_DB no configurado. Abortando.');
+            return { deleted: 0, retained: 0 };
+        }
+        const config = CONFIG;
+        const cutoffISO = new Date(Date.now() - 3600 * 1000).toISOString(); // 1 hora atrás
+        const MAX_RETAIN = 500;
+
+        // Leer todas las señales
+        const result = _Adapter_Sheets.list('Sys_Cache_Signals', config, 'objects');
+        const allSignals = (result && result.rows) ? result.rows : [];
+
+        if (allSignals.length === 0) {
+            Logger.log('[Job_CleanCacheSignals] No hay señales. Nada que limpiar.');
+            return { deleted: 0, retained: 0 };
+        }
+
+        // Filtrar: eliminar las que son más viejas que 1 hora, y respetar MAX_RETAIN
+        const toRetain = allSignals
+            .filter(function(s) { return s.invalidated_at >= cutoffISO; })
+            .slice(-MAX_RETAIN);
+
+        const deleted = allSignals.length - toRetain.length;
+
+        // Borrar las señales viejas por su signal_id
+        const toDelete = allSignals.filter(function(s) {
+            return !toRetain.some(function(r) { return r.signal_id === s.signal_id; });
+        });
+
+        toDelete.forEach(function(s) {
+            try {
+                _Adapter_Sheets.remove('Sys_Cache_Signals', s.signal_id, config);
+            } catch(e) {
+                Logger.log('[Job_CleanCacheSignals] Error borrando señal ' + s.signal_id + ': ' + e.message);
+            }
+        });
+
+        // Invalidar mini-caché de señales para que el siguiente request lea los datos frescos
+        if (typeof CacheService !== 'undefined') {
+            CacheService.getScriptCache().remove('CACHE_SIGNALS_v1');
+        }
+
+        Logger.log(`[Job_CleanCacheSignals] Limpieza completada. Eliminadas: ${deleted}, Retenidas: ${toRetain.length}`);
+        return { deleted: deleted, retained: toRetain.length };
+
+    } catch(e) {
+        Logger.log('[Job_CleanCacheSignals] Error crítico: ' + e.message);
+        return { deleted: 0, retained: 0, error: e.message };
+    }
 }

@@ -6,24 +6,31 @@
  * Requiere que la API avanzada "Admin Directory" esté habilitada en appsscript.json.
  */
 
-/**
- * Evalúa si la sincronización Workspace está habilitada,
- * revisando tanto el flag estático (CONFIG) como la configuración dinámica del Admin.
- */
-function isWorkspaceSyncEnabled() {
-  if (typeof CONFIG !== 'undefined' && CONFIG.WORKSPACE_INTEGRATION === false) return false;
+function _getWorkspaceConfig() {
+  var cfg = { syncEnabled: true, webhookUrl: null, webhookSecret: null };
+  if (typeof CONFIG !== 'undefined' && CONFIG.WORKSPACE_INTEGRATION === false) cfg.syncEnabled = false;
   try {
     if (typeof PropertiesService !== 'undefined') {
       var cfgStr = PropertiesService.getScriptProperties().getProperty('APP_WORKSPACE_CONFIG');
       if (cfgStr) {
-        var cfg = JSON.parse(cfgStr);
-        if (cfg.syncEnabled === false) return false;
+        var parsed = JSON.parse(cfgStr);
+        if (parsed.syncEnabled === false) cfg.syncEnabled = false;
+        if (parsed.webhookUrl) cfg.webhookUrl = parsed.webhookUrl;
+        if (parsed.webhookSecret) cfg.webhookSecret = parsed.webhookSecret;
       }
     }
   } catch (e) {
     Logger.log("Error parseando APP_WORKSPACE_CONFIG: " + e.message);
   }
-  return true;
+  return cfg;
+}
+
+/**
+ * Evalúa si la sincronización Workspace está habilitada,
+ * revisando tanto el flag estático (CONFIG) como la configuración dinámica del Admin.
+ */
+function isWorkspaceSyncEnabled() {
+  return _getWorkspaceConfig().syncEnabled;
 }
 
 /**
@@ -35,33 +42,37 @@ function isWorkspaceSyncEnabled() {
  */
 function resolverDirectorioWorkspace(queryEmail) {
   try {
+    var wsConfig = _getWorkspaceConfig();
+    
     // Zero-Touch CI/CD Environment & Admin Config flag guard
-    if (!isWorkspaceSyncEnabled()) {
+    if (!wsConfig.syncEnabled) {
       Logger.log("Workspace API Bypassed: Sync is disabled globally or by admin config.");
       return { __status: "DISABLED" };
     }
     
     var user;
-    var domain = queryEmail.substring(queryEmail.indexOf('@'));
-    var oauthToken = (typeof Auth_GetTokenForDomain === 'function') ? Auth_GetTokenForDomain(domain) : null;
-    
-    if (oauthToken) {
-      // Modo OAuth2 Externo
-      var apiUrl = 'https://admin.googleapis.com/admin/directory/v1/users/' + encodeURIComponent(queryEmail) + '?projection=full&viewType=domain_public';
-      var res = UrlFetchApp.fetch(apiUrl, {
-        headers: { 'Authorization': 'Bearer ' + oauthToken },
-        muteHttpExceptions: true
-      });
-      if (res.getResponseCode() === 200) {
-        user = JSON.parse(res.getContentText());
+    if (wsConfig.webhookUrl) {
+      // Modo Microservicio Puente Nativo
+      var apiUrl = wsConfig.webhookUrl + "?q=" + encodeURIComponent(queryEmail) + "&secret=" + encodeURIComponent(wsConfig.webhookSecret || '');
+      var response = UrlFetchApp.fetch(apiUrl, { muteHttpExceptions: true });
+      if (response.getResponseCode() === 200) {
+        var respBody = JSON.parse(response.getContentText());
+        if (respBody.error) {
+            Logger.log("[Webhook] Error remoto: " + respBody.error);
+            return null;
+        }
+        if (respBody && respBody.length > 0) {
+           // We expect an array of users, or the exact match. Usually the webhook returns the list of users that match q.
+           // Since we queried EXACT email, we look for it in the array or take the first.
+           user = respBody.find(function(u) { return u.primaryEmail === queryEmail; }) || respBody[0];
+        }
       } else {
-        throw new Error("HTTP " + res.getResponseCode() + ": " + res.getContentText());
+        Logger.log("Error en Webhook Puente: " + response.getResponseCode());
+        return null;
       }
     } else {
-      // Modo Nativo (Dominio principal)
-      if (!AdminDirectory || !AdminDirectory.Users) {
-        throw new Error("AdminDirectory SDK no está inyectado o habilitado.");
-      }
+      // Modo Nativo (Solo si el script owner tiene permisos directos, ej: mismo dominio)
+      if (typeof AdminDirectory === 'undefined' || !AdminDirectory.Users) return null;
       user = AdminDirectory.Users.get(queryEmail, { projection: "full", viewType: "domain_public" });
     }
     
@@ -110,6 +121,7 @@ function resolverDirectorioWorkspace(queryEmail) {
       }
     }
     
+    var isSuspended = user.suspended === true;
     var dto = {
       nombre: givenName,
       apellidos: familyName,
@@ -120,7 +132,8 @@ function resolverDirectorioWorkspace(queryEmail) {
       cargo: title,
       ubicacion: location,
       numero_empleado: numEmpleado,
-      lider_directo: manager
+      lider_directo: manager,
+      estado: isSuspended ? "Inactivo" : "Activo"
     };
 
       // [S44.9] Mapeo de Cargo. Delegate creation to Engine_ETL (SRP)
@@ -167,8 +180,17 @@ function searchDirectoryByName(queryName) {
     // query compuesta (Nativo + OAuth2 Externos)
     var users = [];
 
-    // 1. Nativo
-    if (typeof AdminDirectory !== 'undefined' && AdminDirectory.Users) {
+    // 1. Nativo (Sujeto a S59.4)
+    var sessionEmail = "";
+    try { sessionEmail = Session.getActiveUser().getEmail(); } catch(e){}
+    var nativeDomain = sessionEmail ? sessionEmail.substring(sessionEmail.indexOf('@')) : null;
+    
+    var runNative = true;
+    if (nativeDomain) {
+       runNative = getDomainConfig(nativeDomain).enabled;
+    }
+
+    if (runNative && typeof AdminDirectory !== 'undefined' && AdminDirectory.Users) {
         try {
             var response = AdminDirectory.Users.list({
               customer: 'my_customer',
@@ -183,28 +205,30 @@ function searchDirectoryByName(queryName) {
         }
     }
 
-    // 2. OAuth2
-    if (typeof API_Admin_GetConnectedDomains === 'function') {
-      var domains = API_Admin_GetConnectedDomains();
-      domains.forEach(function(d) {
-        var token = typeof Auth_GetTokenForDomain === 'function' ? Auth_GetTokenForDomain(d) : null;
-        if (token) {
-          try {
-            var url = 'https://admin.googleapis.com/admin/directory/v1/users?customer=my_customer&query=name%3A' + encodeURIComponent(q + '*') + '&maxResults=10&projection=full&viewType=domain_public';
-            var res = UrlFetchApp.fetch(url, {
-              headers: { 'Authorization': 'Bearer ' + token },
-              muteHttpExceptions: true
-            });
+    // 2. Webhooks Externos (S59.5)
+    var allConfigs = getAllDomainConfigs();
+    var processedWebhookUrls = {}; // Para evitar llamar al mismo webhook varias veces por alias
+    
+    for (var key in allConfigs) {
+      var dCfg = allConfigs[key];
+      // Si está encendido, no es el dominio nativo y tiene webhook
+      if (dCfg.enabled && dCfg.webhookUrl && !processedWebhookUrls[dCfg.webhookUrl]) {
+         processedWebhookUrls[dCfg.webhookUrl] = true;
+         try {
+            var apiUrl = dCfg.webhookUrl + "?q=" + encodeURIComponent(q) + "&secret=" + encodeURIComponent(dCfg.webhookSecret || '');
+            var res = UrlFetchApp.fetch(apiUrl, { muteHttpExceptions: true });
             if (res.getResponseCode() === 200) {
-              var payload = JSON.parse(res.getContentText());
-              if (payload && payload.users) {
-                users = users.concat(payload.users);
-              }
+               var payload = JSON.parse(res.getContentText());
+               if (!payload.error && Array.isArray(payload)) {
+                  users = users.concat(payload);
+               }
             }
-          } catch(err) {}
-        }
-      });
+         } catch(err) {
+            Logger.log("[Typeahead Webhook Error]: " + err.message);
+         }
+      }
     }
+    
     var dtos = users.map(function(u) {
       return {
          email: u.primaryEmail,
@@ -222,5 +246,59 @@ function searchDirectoryByName(queryName) {
   } catch (e) {
     Logger.log("Workspace Typeahead Error [" + queryName + "]: " + e.message);
     return { __status: "ERROR", message: e.message };
+  }
+}
+
+/**
+ * Prueba la conexión con Google Workspace Directory API o Webhook.
+ * 
+ * @returns {Object} { status: 'success'|'error', message: string }
+ */
+function testWorkspaceConnection() {
+  try {
+    var wsConfig = _getWorkspaceConfig();
+    
+    if (!wsConfig.syncEnabled) {
+      return { status: 'error', message: 'Sincronización deshabilitada en la configuración.' };
+    }
+    
+    if (wsConfig.webhookUrl) {
+      var apiUrl = wsConfig.webhookUrl + "?q=test&secret=" + encodeURIComponent(wsConfig.webhookSecret || '');
+      var response = UrlFetchApp.fetch(apiUrl, { muteHttpExceptions: true });
+      if (response.getResponseCode() === 200) {
+        return { status: 'success', message: 'Conexión a Webhook exitosa.' };
+      } else {
+        return { status: 'error', message: 'Error en Webhook (' + response.getResponseCode() + '): ' + response.getContentText() };
+      }
+    } else {
+      if (typeof AdminDirectory === 'undefined' || !AdminDirectory.Users) {
+        return { status: 'error', message: 'API AdminDirectory no encontrada. Verifica appsscript.json.' };
+      }
+      
+      // [BUGFIX] En lugar de list() que requiere privilegios Super Admin, 
+      // utilizamos get() del propio usuario con domain_public, que es exactamente 
+      // lo mismo que usa el Bulk Importer (S15.1) y funciona para cualquier empleado.
+      var testEmail = "";
+      try { testEmail = Session.getActiveUser().getEmail(); } catch(e) {}
+      
+      if (!testEmail) {
+        // Si no hay sesión (ej. trigger), asumimos que el servicio funciona si el SDK está cargado
+        return { status: 'success', message: 'Conexión nativa a Workspace exitosa (Sin usuario activo).' };
+      }
+      
+      var testCall = AdminDirectory.Users.get(testEmail, { 
+        projection: "full", 
+        viewType: "domain_public" 
+      });
+      
+      if (testCall) {
+        return { status: 'success', message: 'Conexión nativa a Workspace exitosa.' };
+      } else {
+        return { status: 'error', message: 'Respuesta vacía de Workspace API.' };
+      }
+    }
+  } catch (e) {
+    Logger.log("[testWorkspaceConnection] Error: " + e.message);
+    return { status: 'error', message: e.message };
   }
 }

@@ -1,0 +1,41 @@
+artifact_type: story-design
+version: 1
+skill: rai-story-design
+created: '2026-05-28T17:21:00Z'
+story: 'S68'
+epic: 'E6'
+content:
+  summary: 'Inverts the deployment flow so the Coppel account pushes to all environments, bypassing cross-account sharing restrictions.'
+  complexity: simple
+  acceptance_criteria:
+    - id: AC1
+      description: 'Account Coppel can push to dev (Gmail)'
+      verifiable: true
+    - id: AC2
+      description: 'Account Coppel can push to prod (Coppel)'
+      verifiable: true
+    - id: AC3
+      description: 'Account Coppel can push to tenantB (Bancoppel)'
+      verifiable: true
+    - id: AC4
+      description: 'Real Bancoppel Script ID is registered in deploy.js'
+      verifiable: true
+    - id: AC5
+      description: 'Setup documentation is updated for multi-account auth'
+      verifiable: true
+  integration_points:
+    - module: 'deployment.config'
+      change_type: modification
+      files: ['deploy.js']
+    - module: 'documentation.setup'
+      change_type: new
+      files: ['docs/deploy-setup.md']
+  decisions:
+    - id: D1
+      choice: 'Coppel account acts as the primary deployment account'
+      rationale: 'Corporate security policies prevent sharing Coppel resources with external Gmail accounts, so the Coppel account must push to the Gmail dev environment instead.'
+      alternatives_considered: ['Sharing Coppel Sheet with Gmail (rejected due to corporate policy)']
+refs:
+  backlog_item: 'S68'
+  epic_scope: '.raise/work/epics/e6-multi-tenant-config/s68-scope.md'
+metadata: {}

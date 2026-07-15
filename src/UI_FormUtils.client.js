@@ -171,14 +171,10 @@ window.UI_FormUtils = (function () {
         //        nivel 1, deben ir ANTES de este bloque o se quedarán sombradas.
         const level = parseInt(currentLevel, 10);
 
-        // Regla: Nodo raíz (nivel 1) no puede tener padre.
-        if (rules.rootRequiresNoParent === true && level === 1 && relationType === 'padre') {
-            return [];
-        }
-
-        // Regla: Filtrado estricto por nivel (solo padres del nivel inmediatamente superior).
-        if (rules.levelFiltering === true && rules.strictLevelJumps === true && relationType === 'padre') {
-            filtered = dataset.filter(d => parseInt(d.nivel_tipo, 10) === level - 1);
+        // S57.5: Ya no filtramos a los padres por nivel porque el nivel del nodo actual 
+        // se calculará dinámicamente en base al padre que el usuario decida seleccionar.
+        if (rules.levelFiltering === true && rules.strictLevelJumps === true && relationType === 'hijo') {
+            filtered = dataset.filter(d => parseInt(d.nivel_tipo, 10) === level + 1);
         }
 
         return filtered;
@@ -297,7 +293,11 @@ window.UI_FormUtils = (function () {
      * Resuelve la duplicación semántica (H9) entre constructores de UI.
      */
     function extractDraftContext(entityName, currentPK) {
-        if (entityName === 'Taxonomia') {
+        if (typeof window !== 'undefined' && window.WorkspaceManager && window.WorkspaceManager.isActive && window.WorkspaceManager.isActive()) {
+            return window.WorkspaceManager.getActiveWorkspaceId();
+        }
+        const isTop = window.APP_SCHEMAS && window.APP_SCHEMAS[entityName] && window.APP_SCHEMAS[entityName].metadata && window.APP_SCHEMAS[entityName].metadata.isTopologyContainer;
+        if (isTop) {
             return currentPK;
         }
         const activeContainer = document.querySelector('ion-modal, .drawer-panel');
@@ -321,11 +321,80 @@ window.UI_FormUtils = (function () {
         const liveData = window.DataStore ? (window.DataStore.get(entityName) || []) : [];
         return liveData.filter(d => {
             if (d.estado === 'Eliminado' || typeof d !== 'object') return false;
+            const isTop = window.APP_SCHEMAS && window.APP_SCHEMAS[entityName] && window.APP_SCHEMAS[entityName].metadata && window.APP_SCHEMAS[entityName].metadata.isTopologyContainer;
+            if (entityName === 'Unidad_Negocio' || isTop) return true;
             if (String(d.estado).toLowerCase() === 'borrador') {
+                const schema = window.APP_SCHEMAS ? window.APP_SCHEMAS[entityName] : null;
+                if (schema && !schema.isContextualWorkspace) return true; // Mostrar borradores de entidades globales
                 return contextId && String(d.contexto_id) === String(contextId);
             }
             return true;
         });
+    }
+
+    /**
+     * [S55.2] getExcludedGraphNodes
+     * Helper puro que unifica las reglas de exclusión de topología (H9).
+     * Lee tanto del estado de la base de datos (Sys_Graph_Edges) como del estado
+     * sucio del formulario en base a los graphEdgeType del esquema de la entidad.
+     */
+    function getExcludedGraphNodes(disallowedEdgesStr, currentEntityName, formContainer, contextId) {
+        let excludeIds = [];
+        if (!disallowedEdgesStr || !currentEntityName) return excludeIds;
+        
+        const disallowedEdges = disallowedEdgesStr.split(',').map(e => e.trim());
+        
+        // 1. Exclusión desde el Formulario Sucio (Unsaved State)
+        if (formContainer && typeof window !== 'undefined' && window.APP_SCHEMAS && window.APP_SCHEMAS[currentEntityName]) {
+            const schemaFields = window.APP_SCHEMAS[currentEntityName].fields || [];
+            
+            // Buscar campos del esquema que generen las aristas bloqueadas
+            schemaFields.forEach(f => {
+                if (f.graphEdgeType && disallowedEdges.includes(f.graphEdgeType)) {
+                    // Si el campo actual genera una arista bloqueada, excluimos su valor
+                    const fieldInput = formContainer.querySelector(`[name="${f.name}"]`);
+                    if (fieldInput) {
+                        const val = typeof fieldInput.getValidatedValue === 'function' ? fieldInput.getValidatedValue() : fieldInput.value;
+                        if (val) {
+                            if (Array.isArray(val)) {
+                                excludeIds.push(...val.map(v => String(v)));
+                            } else {
+                                excludeIds.push(String(val));
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // 2. Exclusión desde la Base de Datos (Saved State)
+        if (typeof window !== 'undefined' && window.DataStore && contextId) {
+            const edgesTable = window.DataStore.get('Sys_Graph_Edges') || [];
+            const blockedPersonIds = edgesTable
+                .filter(e => disallowedEdges.includes(e.tipo_relacion) && String(e.id_nodo_padre) === String(contextId))
+                .map(e => String(e.id_nodo_hijo));
+                
+            excludeIds.push(...blockedPersonIds);
+        }
+        
+        return excludeIds;
+    }
+
+    /**
+     * S55.3 - Wrapper Drill-Down Helper (H10 Extracción de Duplicación)
+     * Resuelve el desajuste entre el contenedor visual div (generado por buildRelation)
+     * y el componente real de Shadow DOM que maneja el estado.
+     */
+    function unwrapFieldNode(node) {
+        if (!node) return null;
+        let actualNode = node;
+        if (typeof actualNode.getValidatedValue !== 'function' && typeof actualNode.querySelector === 'function') {
+            const inner = actualNode.querySelector('tx-searchable, [data-searchable-multi], [data-searchable-single]');
+            if (inner && typeof inner.getValidatedValue === 'function') {
+                actualNode = inner;
+            }
+        }
+        return actualNode;
     }
 
     return {
@@ -339,6 +408,8 @@ window.UI_FormUtils = (function () {
         attachBusinessRulesListeners,
         executeAsyncValidations,
         extractDraftContext,
-        fetchContextualData
+        fetchContextualData,
+        getExcludedGraphNodes,
+        unwrapFieldNode
     };
 })();

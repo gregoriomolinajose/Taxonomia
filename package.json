@@ -10,8 +10,17 @@
     "lint:css": "stylelint \"src/**/*.css\" \"src/**/*.html\"",
     "deploy:dev": "node deploy.js dev",
     "deploy:dev:auto": "node deploy.js dev --zero-touch",
+    "deploy:staging": "node deploy.js staging",
+    "deploy:staging:auto": "node deploy.js staging --zero-touch",
     "deploy:prod": "node deploy.js prod",
-    "deploy:prod:auto": "node deploy.js prod --zero-touch"
+    "deploy:prod:auto": "node deploy.js prod --zero-touch",
+    "deploy:tenantA": "node deploy.js prod",
+    "deploy:tenantA:auto": "node deploy.js prod --zero-touch",
+    "deploy:tenantB": "node deploy.js tenantB",
+    "deploy:tenantB:auto": "node deploy.js tenantB --zero-touch",
+    "deploy:greatpeeps": "node deploy.js greatpeeps",
+    "deploy:greatpeeps:auto": "node deploy.js greatpeeps --zero-touch"
+
   },
   "keywords": [],
   "author": "",

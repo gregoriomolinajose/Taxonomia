@@ -132,13 +132,21 @@ var Engine_ETL = (function() {
             .setAllowInvalid(true)
             .build();
           sheet.getRange(2, i, 1000).setDataValidation(rule);
-        }
-        if (colName === 'equipo' && equiposCatalogRange) {
+        } else if (colName === 'equipo' && equiposCatalogRange) {
           const rule = SpreadsheetApp.newDataValidation()
             .requireValueInRange(equiposCatalogRange, true)
             .setAllowInvalid(true)
             .build();
           sheet.getRange(2, i, 1000).setDataValidation(rule);
+        } else {
+          const field = schema.fields.find(f => f.name === colName);
+          if (field && field.type === 'select' && field.options && field.options.length > 0) {
+            const rule = SpreadsheetApp.newDataValidation()
+              .requireValueInList(field.options, true)
+              .setAllowInvalid(true)
+              .build();
+            sheet.getRange(2, i, 1000).setDataValidation(rule);
+          }
         }
       }
     } catch(e) {
@@ -147,13 +155,96 @@ var Engine_ETL = (function() {
 
     // 5. Hacer el archivo editable para el tester/usuario final
     try {
-      const file = DriveApp.getFileById(ss.getId());
-      file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.EDIT);
+      // Eliminado por restricción de GCP: Drive API bloqueada en la organización
     } catch(e) {
       if (typeof Logger !== 'undefined') Logger.log("Error al aplicar permisos a la plantilla: " + e.toString());
     }
 
     // 6. Retornar link
+    return ss.getUrl();
+  }
+
+  /**
+   * Genera un Google Sheet con los datos filtrados, excluyendo UUIDs y campos de sistema.
+   * @param {string} entityName
+   * @param {Array} columns
+   * @param {Array} rows
+   */
+  function exportDataToSheet(entityName, columns, rows) {
+    if (!columns || columns.length === 0) throw new Error("No hay configuración de columnas.");
+    
+    // Omitir campos de sistema explícitamente para asegurar que la descarga sirva como "Plantilla Limpia"
+    const SYS_COLS = ['created_at', 'create_by', 'created_by', 'updated_at', 'update_at', 'update_by', 'deleted_at', 'deleted_by', 'version', '_version', '_checkbox_', '_row_num_'];
+    
+    let pkCol = 'id';
+    try {
+      if (typeof getAppSchema === 'function') {
+        const schema = getAppSchema(entityName);
+        if (schema && schema.primaryKey) pkCol = schema.primaryKey;
+      }
+    } catch(e) {}
+    
+    // Si es una plantilla vacía (sin filas), omitir también la llave primaria para no confundir al usuario (ej. ID)
+    if (!rows || rows.length === 0) {
+      SYS_COLS.push(pkCol);
+      SYS_COLS.push('id');
+    }
+
+    
+    // WYSIWYG mode: Only export visible columns
+    const visibleCols = columns.filter(c => c.visible && !SYS_COLS.includes(c.key || c.name));
+    
+    const headers = visibleCols.map(c => c.label || c.key || c.name);
+    const keys = visibleCols.map(c => c.key || c.name);
+    
+    const ssName = "Exportación " + entityName + " - " + Utilities.formatDate(new Date(), Session.getScriptTimeZone(), "yyyy-MM-dd HH:mm");
+    const ss = SpreadsheetApp.create(ssName);
+    const sheet = ss.getActiveSheet();
+    sheet.setName(entityName);
+    
+    // 1. Formatear la Hoja Principal
+    const headerRange = sheet.getRange(1, 1, 1, headers.length);
+    headerRange.setValues([headers]);
+    headerRange.setFontWeight("bold");
+    headerRange.setBackground("#E8EAF6"); // Color Corporativo Suave
+    sheet.setFrozenRows(1);
+    
+    // Opcional: Forzar ancho uniforme requerido por UX
+    for (let i = 1; i <= headers.length; i++) {
+      sheet.setColumnWidth(i, 200);
+    }
+    
+    // 2. Inyectar Filas de Datos
+    if (rows && rows.length > 0) {
+      const data2D = rows.map((row, rowIndex) => {
+        return keys.map(key => {
+          if (key === '_num') return rowIndex + 1;
+          let val = row[key];
+          if (val === undefined || val === null) return "";
+          if (typeof val === 'object') return JSON.stringify(val);
+          return String(val);
+        });
+      });
+      
+      const dataRange = sheet.getRange(2, 1, rows.length, headers.length);
+      
+      // Pre-formatear columnas sensibles como Texto Plano para evitar que Sheets las auto-convierta a fecha (ej. "orden_path")
+      keys.forEach((key, i) => {
+        if (key === 'orden_path' || key === 'id_externo' || key === 'path_completo_es') {
+          sheet.getRange(2, i + 1, rows.length, 1).setNumberFormat("@");
+        }
+      });
+      
+      dataRange.setValues(data2D);
+    }
+    
+    // 3. Hacer el archivo editable para el tester/usuario final
+    try {
+      // Eliminado por restricción de GCP: Drive API bloqueada en la organización
+    } catch(e) {
+      if (typeof Logger !== 'undefined') Logger.log("Error al aplicar permisos a la exportación: " + e.toString());
+    }
+
     return ss.getUrl();
   }
 
@@ -180,15 +271,9 @@ var Engine_ETL = (function() {
 
     let ss;
     try {
-      const file = DriveApp.getFileById(sheetId);
-      const mime = file.getMimeType();
-      if (mime !== MimeType.GOOGLE_SHEETS) {
-        throw new Error("El archivo no es un Google Sheet nativo (MimeType: " + mime + "). Si es un archivo de Excel (.xlsx), ábrelo y selecciona 'Archivo > Guardar como hoja de cálculo de Google'.");
-      }
       ss = SpreadsheetApp.openById(sheetId);
     } catch (e) {
-      if (e.message.includes("MimeType")) throw e; // Re-throw our explicit error
-      throw new Error("El archivo introducido es inaccesible o no es una Hoja de Cálculo válida de Google Sheets. Verifica los permisos de Drive.");
+      throw new Error("El archivo introducido es inaccesible o no es una Hoja de Cálculo válida de Google Sheets. Asegúrate de que no sea un .xlsx. (" + e.message + ")");
     }
     
     const sheets = ss.getSheets();
@@ -211,16 +296,7 @@ var Engine_ETL = (function() {
             
             const firstRow = tempSheet.getRange(1, 1, 1, lastCol).getValues()[0];
             const fileHeaders = firstRow.map(k => {
-                let lowKey = String(k).trim().toLowerCase().replace(/\s+/g, ' ');
-                if (entityName === 'Dominio') {
-                    if (lowKey === 'nivel subdominio') lowKey = 'nivel_tipo';
-                    else if (lowKey === 'orden. subdominio' || lowKey === 'orden subdominio' || lowKey === 'orden') lowKey = 'orden_path';
-                    else if (lowKey === 'subdominio') lowKey = 'nombre_ingles';
-                    else if (lowKey === 'nombre español' || lowKey === 'nombre espanol') lowKey = 'nombre';
-                    else if (lowKey === 'definición' || lowKey === 'definicion') lowKey = 'descripcion';
-                    else if (lowKey === 'abreviación (nombre servicio)' || lowKey === 'abreviacion (nombre servicio)') lowKey = 'abreviacion';
-                    else if (lowKey === 'abreviación (path servicio)' || lowKey === 'abreviacion (path servicio)') lowKey = 'path_completo_es';
-                }
+                let lowKey = getFieldNameFromLabel(entityName, k);
                 return lowKey;
             });
 
@@ -240,11 +316,22 @@ var Engine_ETL = (function() {
     }
     
     const sheet = (maxOverlap >= 0.30) ? bestSheet : sheets[0];
-    const data = sheet.getDataRange().getDisplayValues();
+    const rawDataRange = sheet.getDataRange();
+    const rawValues = rawDataRange.getValues();
+
+    let trueLastRow = 0;
+    for (let r = rawValues.length - 1; r >= 0; r--) {
+        if (rawValues[r].some(cell => cell !== undefined && cell !== null && String(cell).trim() !== "")) {
+            trueLastRow = r + 1;
+            break;
+        }
+    }
     
-    if (!data || data.length < 2) {
+    if (trueLastRow < 2) {
       throw new Error("La hoja de cálculo está vacía o carece de registros.");
     }
+
+    const data = sheet.getRange(1, 1, trueLastRow, rawDataRange.getNumColumns()).getDisplayValues();
 
     if (options.rawMatrix) {
         return data; // Return 2D array directly for specialized parsers
@@ -262,10 +349,12 @@ var Engine_ETL = (function() {
             const header = headers[j];
             if (!header || header.trim() === '') continue; // Cabecera vacía no sirve
             
+            const mappedKey = getFieldNameFromLabel(entityName, header) || header;
+            
             const value = row[j];
             if (value !== undefined && value !== null && String(value).trim() !== '') {
                isEmptyRow = false;
-               record[header] = value;
+               record[mappedKey] = value;
             }
         }
         
@@ -273,7 +362,13 @@ var Engine_ETL = (function() {
             record._sheetId = sheetId;
             record._sheetName = sheet.getName();
             record._rowIndex = i + 1; // 1-indexed for SpreadsheetApp (row 1 is header)
-            records.push(record);
+            
+            // Aplicar hook de metadatos si está definido
+            if (typeof APP_SCHEMAS !== 'undefined' && APP_SCHEMAS[entityName] && APP_SCHEMAS[entityName].etlHooks && typeof APP_SCHEMAS[entityName].etlHooks.onRowTransform === 'function') {
+                records.push(APP_SCHEMAS[entityName].etlHooks.onRowTransform(record));
+            } else {
+                records.push(record);
+            }
         }
     }
     
@@ -361,14 +456,25 @@ var Engine_ETL = (function() {
                        Logger.log(`[ETL Debug] payload eval keys: ${evalKeys.join(', ')} -> matchedRow: ${matchedRow ? matchedRow[pkField] : 'NULL'} | _isNewIngest: ${payload._isNewIngest}`);
                    }
                    
-                   if (matchedRow) {
-                       if (payload._isNewIngest) {
-                           payload._isDuplicateMatch = true;
-                           if (typeof Logger !== 'undefined') Logger.log(`[ETL Debug] SET _isDuplicateMatch = true FOR ${matchedRow[pkField]}`);
-                       }
-                       payload._tempId = payload[pkField]; payload[pkField] = matchedRow[pkField]; // Subsumimos el Temp UUID y forzamos modo UPDATE
-                   }
-               }
+                    if (matchedRow) {
+                        if (payload._isNewIngest) {
+                            payload._isDuplicateMatch = true;
+                            if (typeof Logger !== 'undefined') Logger.log(`[ETL Debug] SET _isDuplicateMatch = true FOR ${matchedRow[pkField]}`);
+                        }
+                        payload._tempId = payload[pkField]; payload[pkField] = matchedRow[pkField]; // Subsumimos el Temp UUID y forzamos modo UPDATE
+                    } else {
+                        // [BUGFIX] Intra-Batch Deduplication: Add the new row to lookupMaps
+                        // so that subsequent rows in the same batch with the same unique key will match it.
+                        for (let j = 0; j < uniqueFields.length; j++) {
+                            const uField = uniqueFields[j];
+                            if (payload[uField]) {
+                                const searchKey = String(payload[uField]).trim().toLowerCase();
+                                if (!lookupMaps[uField]) lookupMaps[uField] = {};
+                                lookupMaps[uField][searchKey] = payload;
+                            }
+                        }
+                    }
+                }
        });
 
        // A. Aplicación de Business Interceptors (S45.1) AFTER deduplication so they use Real IDs
@@ -452,17 +558,11 @@ var Engine_ETL = (function() {
       }
       
       let ss;
-      try {
-          const file = DriveApp.getFileById(sheetId);
-          const mime = file.getMimeType();
-          if (mime !== MimeType.GOOGLE_SHEETS) {
-              throw new Error("El archivo no es un Google Sheet nativo. (Detectado: " + mime + ")");
-          }
+        try {
           ss = SpreadsheetApp.openById(sheetId);
-      } catch (e) {
-          if (e.message.includes("nativo")) throw e;
-          throw new Error("El archivo introducido es inaccesible o no es válido. Verifica los permisos.");
-      }
+        } catch(e) {
+          throw new Error("El archivo introducido es inaccesible o no es válido. Asegúrate de que no sea un .xlsx. (" + e.message + ")");
+        }
       
       const sheets = ss.getSheets();
       let bestSheet = sheets[0];
@@ -488,7 +588,9 @@ var Engine_ETL = (function() {
               
               let matchCount = 0;
               fileHeaders.forEach(h => {
-                  if (schemaFields.includes(h) || h === 'id' || h.startsWith('sys_') || h.startsWith('file_')) {
+                  let mappedKey = getFieldNameFromLabel(entityName, h);
+                  
+                  if (schemaFields.includes(mappedKey) || mappedKey === 'id' || mappedKey.startsWith('sys_') || mappedKey.startsWith('file_')) {
                       matchCount++;
                   }
               });
@@ -524,7 +626,8 @@ var Engine_ETL = (function() {
     extractDataFromDrive: extractDataFromDrive,
     hydrateAndDeduplicate: hydrateAndDeduplicate,
     writebackFeedback: writebackFeedback,
-    inspectDriveSheet: inspectDriveSheet
+    inspectDriveSheet: inspectDriveSheet,
+    exportDataToSheet: exportDataToSheet
   };
 
 })();

@@ -179,7 +179,15 @@ describe('Provisioner: schema completeness (all entities)', () => {
 
   it('every entity has at least an id + created_at in canonical headers', () => {
     Object.keys(APP_SCHEMAS)
-      .filter(k => k !== '_UI_CONFIG' && k !== 'Relacion_Dominios')
+      .filter(k => {
+        if (k === '_UI_CONFIG' || k === 'Relacion_Dominios') return false;
+        // Entidades de sistema con adapter especial no usan Sheets y no requieren AUDIT_FIELDS
+        const schema = APP_SCHEMAS[k];
+        if (schema && schema.metadata && schema.metadata.adapter) return false;
+        // [E6-S66] Sys_Cache_Signals es append-only (pub-sub), su timestamp es invalidated_at
+        if (k === 'Sys_Cache_Signals') return false;
+        return true;
+      })
       .forEach(entityName => {
         const schema = getAppSchema(entityName);
         const headers = _getCanonicalHeaders(schema);

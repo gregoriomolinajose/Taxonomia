@@ -9,11 +9,11 @@
 
   <!-- Fail-Fast WSOD Mitigation (System Error Interceptor) -->
   <template id="wsod-mitigator">
-    <div style="background:var(--ion-color-light);color:var(--ion-color-light);padding:2rem;font-family:sans-serif;height:100vh;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;">
+    <div style="background:var(--ion-color-light);color:var(--ion-color-dark);padding:2rem;font-family:sans-serif;height:100vh;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;">
       <h1 style="font-size:3rem;margin-bottom:0.5rem">⚠️</h1><h2>Error de Sistema</h2>
       <p style="max-width:500px">Fallo crítico durante la inicialización de la plataforma (SyntaxError o ReferenceError asíncrono). La ejecución ha sido bloqueada (API Fail-Fast).</p>
-      <pre id="wsod-error-detail" style="background:var(--ion-color-light);padding:1rem;border-radius:6px;width:100%;max-width:600px;overflow-x:auto;text-align:left;font-size:0.85rem;border-width:1px;border-style:solid;border-color:var(--ion-color-light);"></pre>
-      <button data-action="nav:reload" style="margin-top:1.5rem;padding:0.75rem 1.5rem;background:var(--ion-color-light);color: var(--ion-color-light);border:none;border-radius:6px;cursor:pointer;font-weight:600;">Regresar al Inicio</button>
+      <pre id="wsod-error-detail" style="background:var(--ion-color-light);padding:1rem;border-radius:6px;width:100%;max-width:600px;overflow-x:auto;text-align:left;font-size:0.85rem;border-width:1px;border-style:solid;border-color:var(--ion-color-dark);"></pre>
+      <button data-action="nav:reload" style="margin-top:1.5rem;padding:0.75rem 1.5rem;background:var(--ion-color-dark);color: var(--ion-color-light);border:none;border-radius:6px;cursor:pointer;font-weight:600;">Regresar al Inicio</button>
     </div>
   </template>
   <script>
@@ -51,16 +51,24 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Montserrat:wght@400;500;600;700&family=Playfair+Display:wght@500;600;700&family=Poppins:wght@400;500;600&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
 
   <script>
-    window.ENV_CONFIG = <?!= typeof ENV_CONFIG !== 'undefined' ? ENV_CONFIG : '{"AuthMode":"SSO","ALLOWED_DOMAINS":["@coppel.com","@bancoppel.com"]}' ?>;
+    // [E6-S64] Fallback genérico — dominios del tenant se configuran via Adapter_Config (Ajustes Globales)
+    window.ENV_CONFIG = <?!= typeof ENV_CONFIG !== 'undefined' ? ENV_CONFIG : '{"AuthMode":"SSO","ALLOWED_DOMAINS":[]}' ?>;
     window.WORKSPACE_SYNC_ENABLED = <?!= typeof WORKSPACE_SYNC_ENABLED !== 'undefined' ? WORKSPACE_SYNC_ENABLED : true ?>;
 
-    window.WHITE_LABEL = <?!= typeof WHITE_LABEL_CONFIG !== 'undefined' ? WHITE_LABEL_CONFIG : '{"bodyFont":"Poppins, sans-serif","displayFont":"Playfair Display, serif"}' ?>;
+    window.WHITE_LABEL = <?!= typeof WHITE_LABEL_CONFIG !== 'undefined' ? WHITE_LABEL_CONFIG : '{"bodyFont":"Poppins, sans-serif","displayFont":"Roboto, sans-serif"}' ?>;
     // UI Branding Rule (Zero-FOUC Injection)
     if (window.WHITE_LABEL) {
         // Legacy Support
-        const bodyF = window.WHITE_LABEL.font_body || window.WHITE_LABEL.bodyFont || window.WHITE_LABEL.body_font;
-        const dispF = window.WHITE_LABEL.font_display || window.WHITE_LABEL.displayFont || window.WHITE_LABEL.display_font;
+        let bodyF = window.WHITE_LABEL.font_body || window.WHITE_LABEL.bodyFont || window.WHITE_LABEL.body_font;
+        let dispF = window.WHITE_LABEL.font_display || window.WHITE_LABEL.displayFont || window.WHITE_LABEL.display_font;
         
+        // Force replacement of Playfair Display with Roboto as requested
+        if (dispF && dispF.includes('Playfair')) dispF = 'Roboto, sans-serif';
+        if (bodyF && bodyF.includes('Playfair')) bodyF = 'Roboto, sans-serif';
+        if (window.WHITE_LABEL.font_h1 && window.WHITE_LABEL.font_h1.includes('Playfair')) window.WHITE_LABEL.font_h1 = 'Roboto, sans-serif';
+        if (window.WHITE_LABEL.font_h2 && window.WHITE_LABEL.font_h2.includes('Playfair')) window.WHITE_LABEL.font_h2 = 'Roboto, sans-serif';
+        if (window.WHITE_LABEL.font_h3 && window.WHITE_LABEL.font_h3.includes('Playfair')) window.WHITE_LABEL.font_h3 = 'Roboto, sans-serif';
+
         if (bodyF) document.documentElement.style.setProperty('--font-body', bodyF);
         if (dispF) document.documentElement.style.setProperty('--font-display', dispF);
         
@@ -91,6 +99,9 @@
 
   <!-- ApexCharts -->
   <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+
+  <!-- ECharts (S57.1 Restoration) -->
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
 
 
   <!-- SheetJS (S47.1 Excel/XLSX Parser) -->
@@ -152,6 +163,17 @@
         can: function(action, entityName, targetId) {
             if (action === 'read') return true;
             
+            // Extract string ID and identify drafts
+            let idStr = targetId;
+            let isDraft = false;
+            if (targetId && typeof targetId === 'object') {
+                isDraft = !!targetId._isLocalDraft;
+                idStr = targetId.id_registro || targetId.id || String(targetId);
+            }
+            
+            // Los borradores locales recién creados siempre pertenecen al usuario actual en esta sesión
+            if (isDraft && (action === 'update' || action === 'delete')) return true;
+
             // S49.14: Bloqueo estricto Zero-Trust visual si no tiene rol. 
             // Previene el leak de Graceful Degradation para usuarios sin rol asignado.
             if (this.context.hasRole === false) return false;
@@ -169,8 +191,8 @@
             if (nivel.startsWith("NONE") || nivel.startsWith("READ_ONLY")) return false;
             
             if (action === 'update' || action === 'delete') {
-                if (nivel.startsWith("OWNER_ONLY")) return this.context.ownerOf.includes(targetId);
-                if (nivel.startsWith("MEMBER_ONLY")) return this.context.memberOf.includes(targetId) || this.context.ownerOf.includes(targetId);
+                if (nivel.startsWith("OWNER_ONLY")) return this.context.ownerOf.includes(idStr);
+                if (nivel.startsWith("MEMBER_ONLY")) return this.context.memberOf.includes(idStr) || this.context.ownerOf.includes(idStr);
             }
             
             if (action === 'create') {
@@ -215,9 +237,9 @@
 
       <!-- CONTENT AREA -->
       <div class="ion-page" id="main-content">
-        <ion-header class="ion-no-border">
-          <ion-toolbar>
-            <ion-buttons slot="start">
+        <ion-header class="ion-no-border" style="background: transparent;">
+          <ion-toolbar style="--background: transparent;">
+            <ion-buttons slot="start" class="hide-on-mobile">
               <ion-menu-button class="hide-on-desktop"></ion-menu-button>
               <ion-button class="hide-on-mobile" fill="clear" data-action="nav:toggle-menu">
                 <ion-icon slot="icon-only" name="menu-outline"></ion-icon>
@@ -227,7 +249,7 @@
               </ion-button>
             </ion-buttons>
             <!-- Top Segments for Layout Navigation -->
-            <div style="display: flex; justify-content: flex-start; align-items: center; min-height: var(--toolbar-standard-height, 56px);">
+            <div class="hide-on-mobile" style="display: flex; justify-content: flex-start; align-items: center; min-height: var(--toolbar-standard-height, 56px);">
               <ion-segment mode="ios" value="selfservice" id="main-layout-segment" class="main-layout-segment" style="width: auto;">
                 <ion-segment-button value="selfservice">
                   <ion-label>Inicio</ion-label>
@@ -238,13 +260,21 @@
               </ion-segment>
             </div>
             
-            <ion-buttons slot="end">
+            <ion-buttons slot="end" class="hide-on-mobile">
               <ion-button fill="clear" data-action="theme:cycle" title="Cambiar Tema">
                 <ion-icon id="theme-toggle-icon" slot="icon-only" name="moon-outline"></ion-icon>
               </ion-button>
-              <!-- Botón Avatar de Perfil -->
-              <ion-button id="user-profile-btn" fill="clear">
-                <div id="topbar-avatar" style="width: 32px; height: 32px; border-radius: 50%; background: var(--ion-color-primary); color: var(--ion-color-light); display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: var(--sys-font-body, 14px);">?</div>
+              <!-- Botón Avatar de Perfil en forma de Chip -->
+              <ion-button id="user-profile-btn" fill="clear" style="--border-radius: 24px; --background: rgba(var(--ion-color-primary-rgb, 56, 128, 255), 0.08); margin-left: 8px; height: 48px; --padding-start: 6px; --padding-end: 16px; text-transform: none;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                  <div id="topbar-avatar" style="width: 36px; height: 36px; border-radius: 50%; background: rgba(var(--ion-color-primary-rgb, 56, 128, 255), 0.2); color: var(--ion-color-primary); display: flex; align-items: center; justify-content: center; font-size: 20px; overflow: hidden;">
+                    <ion-icon name="person"></ion-icon>
+                  </div>
+                  <div style="display: flex; flex-direction: column; align-items: flex-start; justify-content: center;">
+                    <span id="topbar-name" style="font-family: var(--sys-font-stack); font-size: 14px; font-weight: 600; color: var(--ion-color-dark); line-height: 1.2;">Usuario</span>
+                    <span id="topbar-email" style="font-family: var(--sys-font-stack); font-size: 11px; font-weight: 400; color: var(--ion-color-medium); line-height: 1;">Cargando...</span>
+                  </div>
+                </div>
               </ion-button>
             </ion-buttons>
           </ion-toolbar>
@@ -254,7 +284,11 @@
             <ion-content>
               <ion-list lines="full">
                 <ion-item>
-                  <ion-avatar slot="start"><div id="popover-avatar" style="width:100%;height:100%;background:var(--ion-color-primary);color:var(--ion-color-light);display:flex;align-items:center;justify-content:center;font-weight:bold;font-size: var(--sys-font-header, 18px);">?</div></ion-avatar>
+                  <ion-avatar slot="start">
+                    <div id="popover-avatar" style="width:100%;height:100%;background:rgba(var(--ion-color-primary-rgb, 56, 128, 255), 0.2);color:var(--ion-color-primary);display:flex;align-items:center;justify-content:center;font-size:24px;overflow:hidden;">
+                      <ion-icon name="person"></ion-icon>
+                    </div>
+                  </ion-avatar>
                   <ion-label>
                     <h2 id="popover-user-name" style="font-weight:600;">Usuario</h2>
                     <p id="popover-user-role" style="font-size: 0.85em; color: var(--ion-color-medium); text-transform: uppercase;">Rol: Consultando</p>
@@ -352,8 +386,8 @@
   <template id="tmpl-dashboard">
     <ion-grid>
       <ion-row class="ion-justify-content-center" id="dashboard-cards-container"></ion-row>
-      <!-- Charts removed by S55.2 redesign -->
-
+      <!-- Directorio de Disciplinas / Roles -->
+      <ion-row class="ion-justify-content-center" id="dashboard-directory-container" style="margin-top: 32px; width: 100%;"></ion-row>
     </ion-grid>
   </template>
 
@@ -370,24 +404,32 @@
   <!-- Map Templates removed by S55.2 redesign -->
   <!-- MOTORES LOGICOS (Regla UI §14) -->
   <?!= include('JS_SchemaUtils'); ?>
+  <?!= include('JS_ValidationEngine'); ?>
   <?!= include('JS_GraphUtils'); ?>
   <?!= include('DataAPI'); ?>
   <?!= include('JS_Core'); ?>
   <?!= include('Omnibar_UI'); ?>
   <?!= include('UI_Router'); ?>
+  <?!= include('UI_DataGrid_Controller'); ?>
   <?!= include('UI_DataGrid'); ?>
   <?!= include('UI_Components'); ?>
   <?!= include('UI_Factory'); ?>
   <?!= include('UI_DrawerManager'); ?>
+  <?!= include('FormBuilder_Inputs_Complex'); ?>
   <?!= include('FormBuilder_Inputs'); ?>
+  <?!= include('UI_Component_MicroserviceSetup'); ?>
   <?!= include('UI_Component_DynamicList'); ?>
   <?!= include('UI_Component_TXSearchable'); ?>
   <?!= include('UI_Factory_Searchables'); ?>
   <?!= include('UI_Component_RelationBuilder'); ?>
+  <?!= include('UI_Component_FileUpload'); ?>
+  <?!= include('UI_Component_JSONTextarea'); ?>
   <?!= include('UI_Component_DashboardCardCont'); ?>
   <?!= include('SubgridState'); ?>
   <?!= include('UI_SubgridBuilder'); ?>
   <?!= include('Math_Engine'); ?>
+  <?!= include('UI_PanZoomManager'); ?>
+  <?!= include('JS_GraphUtils'); ?>
   <?!= include('UI_FormUtils'); ?>
   <?!= include('FormEngine_Resolvers'); ?>
   <?!= include('UI_FormDependencies'); ?>
@@ -399,17 +441,25 @@
   <?!= include('DataEngine_ETL'); ?>
   <?!= include('DataEngine_ETL_Capacidades'); ?>
   <?!= include('UI_Component_BulkImporter'); ?>
+  <?!= include('UI_Component_CanvasLauncher'); ?>
+  <?!= include('UI_CanvasNodeFactory'); ?>
+  <?!= include('UI_CanvasInteractions'); ?>
+  <?!= include('UI_View_FlujoCanvas'); ?>
+  <?!= include('UI_Component_EmbeddedDataView'); ?>
   <?!= include('UI_ETL_Modal'); ?>
+  <?!= include('UI_DLQ_Modal'); ?>
   <?!= include('UI_UniversalFilter'); ?>
   <?!= include('UI_DataView_Toolbar'); ?>
   <?!= include('DataView_DragDrop'); ?>
   <?!= include('UI_View_Tree'); ?>
-
+  <?!= include('UI_View_ECharts'); ?>
   <?!= include('DataView_UI'); ?>
+  <?!= include('UI_Component_EntityDirectory'); ?>
   <?!= include('Dashboard_UI'); ?>
   <!-- Maps removed by S55.2 redesign -->
   <?!= include('UI_View_SwimlaneGrid'); ?>
-  <?!= include('DesignKit_UI'); ?>
+  <?!= include('Vendor_ApexTree'); ?>
+  <?!= include('UI_View_Organigrama'); ?>
   <?!= include('Schema_Studio_UI'); ?>
   <?!= include('Governance_Admin_UI'); ?>
   <?!= include('Auth_UI'); ?>

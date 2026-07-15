@@ -1,0 +1,400 @@
+// UI_View_Organigrama.client.js
+// Renderiza 4 perspectivas de organigrama usando ApexTree y el motor de grafos.
+
+window.UI_View_Organigrama = {
+    render: function(container, taxonomyId, perspective) {
+        if (!container) return;
+        
+        container.innerHTML = `
+            <div class="organigrama-wrapper" style="width: 100%; height: 100%; display: flex; flex-direction: column; background: var(--color-bg-body, #f8f9fa);">
+                <div class="organigrama-header" style="padding: 16px; background: #fff; border-bottom: 1px solid #e0e0e0; display: flex; justify-content: space-between; align-items: center; z-index: 10;">
+                    <div>
+                        <h2 style="margin: 0; font-size: 1.25rem; font-weight: 600; color: var(--ion-text-color);">
+                            Organigrama de ${this._capitalize(perspective)}
+                        </h2>
+                        <p style="margin: 4px 0 0 0; font-size: 0.85rem; color: var(--ion-color-medium);">
+                            Jerarquía de roles basada en la topología estructural.
+                        </p>
+                    </div>
+                </div>
+                <div id="apextree-viewport" style="flex: 1; width: 100%; position: relative; overflow: hidden; background: transparent; cursor: grab;">
+                    <div id="apextree-canvas" style="transform-origin: 0 0; width: 100%; height: 100%;">
+                        <div id="apextree-container" style="width: 100%; height: 100%;"></div>
+                    </div>
+                    </div>
+                    ${window.UI_PanZoomManager ? window.UI_PanZoomManager.createZoomControlHTML('org') : ''}
+                </div>
+            </div>
+        `;
+
+        const treeContainer = container.querySelector('#apextree-container');
+        
+        // Forzar la posición del toolbar nativo de ApexTree hacia la parte inferior izquierda
+        const styleOverride = document.createElement('style');
+        styleOverride.innerHTML = `
+            #apextree-container #toolbar { display: none !important; }
+            #apextree-container > svg { pointer-events: none; }
+            #apextree-container > svg foreignObject { pointer-events: auto; }
+        `;
+        container.appendChild(styleOverride);
+        
+        // Mostrar loader
+        treeContainer.innerHTML = '<div style="padding: 20px; color: var(--ion-color-medium);">Procesando jerarquías...</div>';
+
+        setTimeout(() => {
+            try {
+                const treeData = this._buildTreeData(taxonomyId, perspective);
+                
+                treeContainer.innerHTML = ''; // Limpiar loader
+                
+                if (!treeData || treeData.length === 0) {
+                    treeContainer.innerHTML = `
+                        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: var(--ion-color-medium);">
+                            <ion-icon name="information-circle-outline" style="font-size: 48px; margin-bottom: 16px; opacity: 0.5;"></ion-icon>
+                            <h3 style="margin: 0 0 8px 0;">No hay datos para esta perspectiva</h3>
+                            <p style="margin: 0; max-width: 400px; text-align: center; font-size: 0.9rem;">
+                                Asegúrate de haber vinculado las entidades estructurales (Value Streams, Dominios, Equipos) y asignado a las personas en los roles correspondientes.
+                            </p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                // Asegurar que exista un único nodo raíz (ApexTree requiere un objeto, no un array si hay multiples roots, los metemos en un root virtual)
+                let finalData = treeData;
+                if (Array.isArray(treeData) && treeData.length > 1) {
+                    finalData = {
+                        id: 'root-virtual',
+                        data: {
+                            name: 'Organización',
+                            title: 'Estructura Global',
+                            entityName: ''
+                        },
+                        options: {
+                            nodeBGColor: '#ffffff',
+                            nodeBGColorHover: '#ffffff',
+                            fontColor: '#000'
+                        },
+                        children: treeData
+                    };
+                } else if (Array.isArray(treeData)) {
+                    finalData = treeData[0];
+                }
+
+                const options = {
+                    contentKey: 'data',
+                    width: treeContainer.clientWidth,
+                    height: treeContainer.clientHeight,
+                    nodeWidth: 240,
+                    nodeHeight: 140,
+                    childrenSpacing: 50,
+                    siblingSpacing: 30,
+                    direction: 'top',
+                    enableToolbar: false,
+                    canvasStyle: 'background: transparent;',
+                    onNodeClick: (node) => {
+                        if (node && node.id && window.openEditForm) {
+                            const personaId = String(node.id).replace('hr_', '');
+                            window.openEditForm(personaId, 'Persona');
+                        }
+                    },
+                    nodeTemplate: (content) => {
+                        const initials = content.name && content.name !== 'Persona Desconocida' ? content.name.split(' ').map(n => n[0]).filter(c => c && c.match(/[A-Z]/i)).slice(0,2).join('').toUpperCase() : '?';
+                        const avatarHtml = content.avatar 
+                            ? `<img src="${content.avatar}" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover; border: 2px solid #e0e0e0; margin-bottom: 6px;" onerror="this.outerHTML='<div style=\ - \\ - \'width: 40px; height: 40px; border-radius: 50%; background: #e0e0e0; color: #666; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: bold; margin-bottom: 6px;\ - \\ - \'>${initials}</div>'"/>`
+                            : `<div style="width: 40px; height: 40px; border-radius: 50%; background: var(--ion-color-light, #f4f5f8); border: 1px solid #d7d8da; color: var(--ion-color-medium, #92949c); display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: bold; margin-bottom: 6px;">${initials}</div>`;
+
+                        // Custom card template for HR Graph
+                        const recId = String(content.recordId || content.id || '').replace('hr_', '');
+                        return `
+                            <div onclick="if(window.openEditForm) window.openEditForm('${recId}', 'Persona')" style="cursor: pointer; display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100%; background: #fff; border: 1px solid #e0e0e0; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); padding: 8px; font-family: system-ui, sans-serif; box-sizing: border-box;">
+                                ${avatarHtml}
+                                <div style="font-size: 0.65rem; font-weight: 500; color: #666; margin-bottom: 2px; text-align: center;">
+                                    ${content.cargo || 'Sin Asignar'}
+                                </div>
+                                <div style="font-size: 0.85rem; font-weight: 700; color: #111; text-align: center; line-height: 1.2; margin-bottom: 4px;">
+                                    ${content.name || '<span style="color: #999; font-style: italic;">Desconocido</span>'}
+                                </div>
+                                <div style="font-size: 0.70rem; font-weight: 700; color: var(--ion-color-primary); text-transform: uppercase; letter-spacing: 0.05em; text-align: center;">
+                                    ${content.title || 'Líder Organizacional'}
+                                </div>
+                                ${content.topologia ? `<div style="font-size: 0.65rem; font-weight: 600; color: #444; margin-top: 4px; background: #f0f0f0; padding: 2px 6px; border-radius: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%;">${content.topologia}</div>` : ''}
+                            </div>
+                        `;
+                    },
+                    tooltip: false
+                };
+
+                const tree = new window.ApexTree(treeContainer, options);
+                tree.render(finalData);
+                this._initPanZoom(container.querySelector('#apextree-viewport'), container.querySelector('#apextree-canvas'));
+
+                // Re-render en resize
+                window.addEventListener('resize', () => {
+                    if (treeContainer && treeContainer.clientWidth > 0) {
+                        // Debounce simple
+                        clearTimeout(this._resizeTimer);
+                        this._resizeTimer = setTimeout(() => {
+                            treeContainer.innerHTML = '';
+                            options.width = treeContainer.clientWidth;
+                            options.height = treeContainer.clientHeight;
+                            const newTree = new window.ApexTree(treeContainer, options);
+                            newTree.render(finalData);
+                        }, 200);
+                    }
+                });
+
+            } catch (err) {
+                console.error("[Organigrama] Error rendering tree:", err);
+                treeContainer.innerHTML = `<div style="padding: 20px; color: red;">Error al procesar el organigrama: ${err.message}</div>`;
+            }
+        }, 100);
+    },
+
+    _capitalize: function(str) {
+        return str.charAt(0).toUpperCase() + str.slice(1);
+    },
+
+    _buildTreeData: function(taxonomyId, perspective) {
+        // 1. Obtener todas las entidades del DataStore
+        const ds = window.DataStore ? window.DataStore : null;
+        if (!ds) throw new Error("DataStore no disponible");
+
+        // Helper para obtener datos contextuales
+        const fetchContextual = (entity) => {
+            return window.UI_FormUtils && window.UI_FormUtils.fetchContextualData
+                ? window.UI_FormUtils.fetchContextualData(entity, taxonomyId)
+                : (window.DataStore ? window.DataStore.get(entity) || [] : []);
+        };
+
+        const personas = fetchContextual('Persona');
+        const edges = fetchContextual('Sys_Graph_Edges');
+
+        // Build a set of valid node IDs based on the edges in the taxonomy graph
+        const validGraphNodeIds = new Set();
+        if (taxonomyId) {
+            for (const edge of edges) {
+                // Solo consider las aristas que pertenecen a la taxonomía actual
+                if (String(edge.contexto_id) === String(taxonomyId)) {
+                    if (edge.id_nodo_padre) validGraphNodeIds.add(String(edge.id_nodo_padre));
+                    if (edge.id_nodo_hijo) validGraphNodeIds.add(String(edge.id_nodo_hijo));
+                }
+            }
+        }
+
+        // Helper: Obtener hijos de Sys_Graph_Edges
+        const getChildrenIds = (parentId, edgeType) => {
+            return edges.filter(e => String(e.id_nodo_padre) === String(parentId) && e.tipo_relacion === edgeType && String(e.es_version_actual).toLowerCase() === 'true').map(e => String(e.id_nodo_hijo));
+        };
+
+        // Reglas de anclaje topológico (Solo las entidades a mapear a Personas)
+        const rules = {
+            producto: [
+                { entity: 'Value_Stream', roleField: 'head_of_product_id', roleTitle: 'Head of Product' },
+                { entity: 'Dominio', roleField: 'gerente_dominio_id', roleTitle: 'Responsable de Dominio' },
+                { entity: 'Grupo_Productos', roleField: 'gerente_producto_id', roleTitle: 'Gerente de Producto' },
+                { entity: 'Equipo', roleField: 'product_owner_id', roleTitle: 'Product Owner' }
+            ],
+            tecnologia: [
+                { entity: 'Value_Stream', roleField: 'head_of_technology_id', roleTitle: 'Head of Technology' },
+                { entity: 'Dominio', roleField: 'gerente_ti_id', roleTitle: 'Gerente de TI' },
+                { entity: 'Equipo', roleField: 'technical_lead_id', roleTitle: 'Líder Técnico' }
+            ],
+            agilidad: [
+                { entity: 'Value_Stream', roleField: 'agile_coach_id', roleTitle: 'Agile Coach' },
+                { entity: 'Dominio', roleField: 'rte_id', roleTitle: 'Release Train Engineer' },
+                { entity: 'Equipo', roleField: 'scrum_master_id', roleTitle: 'Team Coach / SM' }
+            ],
+            portafolio: [
+                { entity: 'Portafolio', roleField: 'gerente_portafolio_id', roleTitle: 'Gerente de Portafolio' },
+                { entity: 'Value_Stream', roleField: 'dueno_vs_id', roleTitle: 'Dueño del Value Stream' }
+            ]
+        };
+
+        const currentRules = rules[perspective];
+        if (!currentRules) return [];
+
+        // PASO 1: Identificar Personas Clave (Target Anchors)
+        const relevantPersonas = {}; // personaId -> { roles: Set, entities: Set }
+
+        for (const rule of currentRules) {
+            // Caso especial Dev Team
+            if (rule.entity === 'Persona_Dev') {
+                const equipos = fetchContextual('Equipo').filter(eq => {
+                    if (!taxonomyId) return true;
+                    const pkField = window.Schema_Utils ? window.Schema_Utils.getPrimaryKey('Equipo') : 'id_equipo';
+                    return validGraphNodeIds.has(String(eq[pkField]));
+                });
+                
+                for (const eq of equipos) {
+                    const devIds = getChildrenIds(eq.id_equipo, 'PERSONA_EQUIPO');
+                    for (const dId of devIds) {
+                        // Excluir líderes conocidos (para no duplicar roles si están asignados ahí erróneamente)
+                        if (dId !== eq.product_owner_id && dId !== eq.scrum_master_id && dId !== eq.technical_lead_id) {
+                            if (!relevantPersonas[dId]) relevantPersonas[dId] = { roles: new Set(), entities: new Set() };
+                            relevantPersonas[dId].roles.add('Development Team');
+                            relevantPersonas[dId].entities.add(`Equipo: ${eq.nombre || 'Desconocido'}`);
+                        }
+                    }
+                }
+                continue;
+            }
+
+            // Flujo normal
+            const allEntities = fetchContextual(rule.entity);
+            const pkField = window.Schema_Utils ? window.Schema_Utils.getPrimaryKey(rule.entity) : 'id_' + rule.entity.toLowerCase();
+
+            // Filtro estricto de contexto: Si estamos dentro de una Taxonomía, descartar las entidades que NO forman parte de su grafo de aristas
+            const entities = allEntities.filter(e => {
+                if (!taxonomyId) return true;
+                return validGraphNodeIds.has(String(e[pkField]));
+            });
+
+            for (const entityObj of entities) {
+                const entityId = entityObj[pkField];
+                let personaId = entityObj[rule.roleField];
+
+                // Extraer de Sys_Graph_Edges si es campo virtual relacional
+                if (!personaId && window.APP_SCHEMAS && window.APP_SCHEMAS[rule.entity]) {
+                    const sField = window.APP_SCHEMAS[rule.entity].fields.find(f => f.name === rule.roleField);
+                    if (sField && sField.type === 'relation' && sField.graphEdgeType) {
+                        let matchingEdge = null;
+                        if (sField.relationType === 'padre') {
+                            matchingEdge = edges.find(e => String(e.id_nodo_hijo) === String(entityId) && e.tipo_relacion === sField.graphEdgeType && String(e.es_version_actual).toLowerCase() === 'true');
+                            if (matchingEdge) personaId = matchingEdge.id_nodo_padre;
+                        } else if (sField.relationType === 'hijo') {
+                            matchingEdge = edges.find(e => String(e.id_nodo_padre) === String(entityId) && e.tipo_relacion === sField.graphEdgeType && String(e.es_version_actual).toLowerCase() === 'true');
+                            if (matchingEdge) personaId = matchingEdge.id_nodo_hijo;
+                        }
+                    }
+                }
+
+                if (personaId) {
+                    if (!relevantPersonas[personaId]) relevantPersonas[personaId] = { roles: new Set(), entities: new Set() };
+                    relevantPersonas[personaId].roles.add(rule.roleTitle);
+                    
+                    let entityTypeLabel = rule.entity.replace(/_/g, ' ');
+                    if (rule.entity === 'Grupo_Productos') entityTypeLabel = 'Producto';
+                    relevantPersonas[personaId].entities.add(`${entityTypeLabel}: ${entityObj.nombre || 'Desconocido'}`);
+                }
+            }
+        }
+
+        // Si no hay anclas, devolver array vacío para que renderice el mensaje de error "No hay datos para esta perspectiva"
+        if (Object.keys(relevantPersonas).length === 0) {
+            return [];
+        }
+
+        // PASO 2: Resolver Linaje Ascendente (Grafo de RRHH)
+        const hrNodes = {}; // id -> { id, childrenIds: Set }
+        const rootIds = new Set();
+
+        for (const anchorId of Object.keys(relevantPersonas)) {
+            let currentId = anchorId;
+            const visited = new Set(); // Prevención de ciclos infinitos
+
+            while (currentId) {
+                if (!hrNodes[currentId]) hrNodes[currentId] = { id: currentId, childrenIds: new Set() };
+                
+                if (visited.has(currentId)) {
+                    console.warn(`[Organigrama] Ciclo detectado en linaje de RRHH para persona ID ${currentId}. Rompiendo ciclo.`);
+                    rootIds.add(currentId);
+                    break;
+                }
+                visited.add(currentId);
+
+                // Buscar el líder directo
+                const liderEdge = edges.find(e => String(e.id_nodo_hijo) === String(currentId) && e.tipo_relacion === 'PERSONA_LIDER_DIRECTO' && String(e.es_version_actual).toLowerCase() === 'true');
+                const liderId = liderEdge ? liderEdge.id_nodo_padre : null;
+
+                if (liderId) {
+                    if (!hrNodes[liderId]) hrNodes[liderId] = { id: liderId, childrenIds: new Set() };
+                    hrNodes[liderId].childrenIds.add(currentId);
+                    currentId = liderId;
+                } else {
+                    // No tiene líder, es raíz del grafo
+                    rootIds.add(currentId);
+                    break;
+                }
+            }
+        }
+
+        // PASO 3: Ensamblar el Árbol Final
+        // Obtenemos los cargos globales sin filtro contextual, ya que son compartidos en el Workspace
+        const cargos = window.DataStore ? window.DataStore.get('Cargo') || [] : [];
+        const buildHrTree = (personaId) => {
+            const hrNodeData = hrNodes[personaId];
+            const isAnchor = relevantPersonas[personaId];
+            const pObj = personas.find(p => String(p.id_persona) === String(personaId));
+            
+            const personaName = pObj ? (pObj._nombre_completo || pObj.nombre) : 'Persona Desconocida';
+            
+            // Obtener Cargo (Priorizando la tabla de relaciones Sys_Graph_Edges)
+            let cargoName = '';
+            
+            // 1. Intentar resolver mediante Sys_Graph_Edges (CARGO_PERSONA)
+            const cargoEdge = edges.find(e => String(e.id_nodo_hijo) === String(personaId) && e.tipo_relacion === 'CARGO_PERSONA' && String(e.es_version_actual).toLowerCase() === 'true');
+            if (cargoEdge) {
+                const c = cargos.find(x => String(x.id_cargo) === String(cargoEdge.id_nodo_padre));
+                if (c) cargoName = String(c.nombre || cargoEdge.id_nodo_padre);
+            }
+            
+            // 2. Fallback a los atributos de la Persona
+            if (!cargoName) {
+                let rawCargo = pObj ? (pObj.cargo || pObj.id_cargo) : '';
+                if (Array.isArray(rawCargo)) rawCargo = rawCargo[0];
+                let cargoIdOrName = String(rawCargo || '').trim();
+                
+                if (cargoIdOrName) {
+                    const c = cargos.find(x => String(x.id_cargo) === cargoIdOrName);
+                    cargoName = c ? String(c.nombre || cargoIdOrName) : cargoIdOrName;
+                }
+            }
+            
+            if (!cargoName || cargoName === '') cargoName = 'Sin Cargo Asignado';
+
+            // Formatear Rol y Topología
+            let title = 'Líder Organizacional';
+            let topologia = '';
+            if (isAnchor) {
+                const rolesArr = Array.from(isAnchor.roles);
+                const entitiesArr = Array.from(isAnchor.entities);
+                title = rolesArr.length === 1 ? rolesArr[0] : rolesArr.join(' / ');
+                topologia = entitiesArr.length === 1 ? entitiesArr[0] : (entitiesArr.length > 0 ? `${entitiesArr[0]} ${entitiesArr.length}+` : '');
+            }
+
+            const treeNode = {
+                id: 'hr_' + personaId,
+                data: {
+                    name: personaName,
+                    title: title,
+                    cargo: cargoName,
+                    topologia: topologia,
+                    avatar: pObj ? pObj.avatar : null,
+                    recordId: personaId
+                },
+                children: []
+            };
+
+            for (const childId of Array.from(hrNodeData.childrenIds)) {
+                const childTree = buildHrTree(childId);
+                if (childTree) treeNode.children.push(childTree);
+            }
+
+            return treeNode;
+        };
+
+        const resultTree = [];
+        for (const rootId of Array.from(rootIds)) {
+            resultTree.push(buildHrTree(rootId));
+        }
+
+        return resultTree;
+    },
+
+    _initPanZoom: function(viewport, canvas) {
+        if (window.UI_PanZoomManager) {
+            window.UI_PanZoomManager.bind(viewport, canvas, 'org');
+        }
+    }
+};

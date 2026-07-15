@@ -1,0 +1,162 @@
+<script>
+class TXJSONTextarea extends HTMLElement {
+    constructor() {
+        super();
+        this._field = null;
+        this.selectedData = null;
+        this.isValid = true;
+    }
+
+    set field(f) {
+        this._field = f;
+        this.render();
+    }
+
+    get field() {
+        return this._field;
+    }
+
+    getValidatedValue() {
+        if (!this.isValid) return null; // Invalid state
+        return this.selectedData;
+    }
+
+    connectedCallback() {
+        if (this.hasOwnProperty('field')) {
+            let value = this.field;
+            delete this.field;
+            this.field = value;
+        } else if (this._field && !this.textarea) {
+            this.render();
+        }
+
+        this.addEventListener('FormHydrated', (e) => {
+            this.hydrateValue(e.detail);
+        });
+    }
+
+    set value(v) {
+        this.hydrateValue(v);
+    }
+    
+    get value() {
+        return this.getValidatedValue();
+    }
+
+    hydrateValue(val) {
+        if (val) {
+            try {
+                let parsed = typeof val === 'string' ? JSON.parse(val) : val;
+                this.selectedData = parsed;
+                if (this.textarea) {
+                    this.textarea.value = JSON.stringify(parsed, null, 2);
+                    this.validate(this.textarea.value);
+                }
+            } catch (err) {
+                this.selectedData = val; // Store raw value if invalid
+                if (this.textarea) {
+                    this.textarea.value = typeof val === 'string' ? val : JSON.stringify(val);
+                    this.validate(this.textarea.value);
+                }
+            }
+        }
+    }
+
+    validate(strValue) {
+        if (!strValue || strValue.trim() === '') {
+            this.isValid = !this._field.required;
+            this.selectedData = null;
+            this.updateValidationUI();
+            return;
+        }
+
+        try {
+            this.selectedData = JSON.parse(strValue);
+            this.isValid = true;
+        } catch (e) {
+            this.isValid = false;
+        }
+        this.updateValidationUI();
+    }
+
+    updateValidationUI() {
+        if (!this.errorText || !this.textarea) return;
+
+        if (!this.isValid) {
+            this.errorText.style.display = 'block';
+            this.textarea.style.setProperty('--border-color', 'var(--ion-color-danger)');
+            this.textarea.style.setProperty('--border-width', '2px');
+        } else {
+            this.errorText.style.display = 'none';
+            this.textarea.style.setProperty('--border-color', 'var(--ion-color-step-300)');
+            this.textarea.style.setProperty('--border-width', '1px');
+        }
+    }
+
+    render() {
+        this.innerHTML = ''; 
+        if (!this._field) return;
+
+        const container = document.createElement('div');
+        container.style.width = '100%';
+        container.style.marginBottom = 'var(--spacing-4)';
+
+        const label = document.createElement('ion-label');
+        label.style.display = 'block';
+        label.style.marginBottom = 'var(--spacing-2)';
+        label.style.fontWeight = '500';
+        label.style.color = 'var(--ion-color-dark)';
+        label.textContent = `${this._field.label}${this._field.required ? ' *' : ''}`;
+        container.appendChild(label);
+
+        this.textarea = document.createElement('ion-textarea');
+        this.textarea.setAttribute('rows', this._field.rows || '8');
+        this.textarea.setAttribute('fill', 'outline');
+        this.textarea.style.fontFamily = 'monospace';
+        this.textarea.style.fontSize = '14px';
+        this.textarea.style.setProperty('--background', 'var(--ion-color-step-50)');
+        
+        if (this._field.readonly) {
+            this.textarea.setAttribute('readonly', 'true');
+        }
+        
+        this.textarea.addEventListener('ionInput', (e) => {
+            this.validate(e.target.value);
+            // Notify form listeners of changes
+            const ev = new CustomEvent('change', { detail: { value: this.selectedData, isValid: this.isValid }, bubbles: true });
+            this.dispatchEvent(ev);
+        });
+
+        this.textarea.addEventListener('ionBlur', (e) => {
+            if (this.isValid && this.selectedData) {
+                // Auto format on blur
+                this.textarea.value = JSON.stringify(this.selectedData, null, 2);
+            }
+        });
+
+        container.appendChild(this.textarea);
+
+        this.errorText = document.createElement('ion-text');
+        this.errorText.setAttribute('color', 'danger');
+        this.errorText.style.display = 'none';
+        this.errorText.style.fontSize = '12px';
+        this.errorText.style.marginTop = '4px';
+        this.errorText.textContent = 'JSON Inválido';
+        container.appendChild(this.errorText);
+
+        if (this._field.helpText) {
+            const help = document.createElement('ion-text');
+            help.setAttribute('color', 'medium');
+            help.style.display = 'block';
+            help.style.fontSize = '12px';
+            help.style.marginTop = '4px';
+            help.textContent = this._field.helpText;
+            container.appendChild(help);
+        }
+
+        this.appendChild(container);
+    }
+}
+
+customElements.define('tx-json-textarea', TXJSONTextarea);
+</script>

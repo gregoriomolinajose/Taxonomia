@@ -82,7 +82,7 @@ describe('Math_Engine Hierarchical Calculations', () => {
                     { id_dominio: 'D1', n0_es: 'Root Dom', path_completo_es: 'PATH: Root' },
                     { id_dominio: 'D2', n0_es: 'Child Dom', path_completo_es: 'PATH: Root > Child' }
                 ],
-                'Relacion_Dominios': [
+                'Sys_Graph_Edges': [
                     { id_nodo_padre: 'D1', id_nodo_hijo: 'D2', tipo_relacion: 'Militar_Directa', es_version_actual: true }
                 ]
             };
@@ -101,7 +101,7 @@ describe('Math_Engine Hierarchical Calculations', () => {
                 'Dominio': [
                     { id_dominio: 'D2', n0_es: 'Orphan Child' }
                 ],
-                'Relacion_Dominios': [
+                'Sys_Graph_Edges': [
                     { id_nodo_padre: 'NON_EXISTENT', id_nodo_hijo: 'D2', tipo_relacion: 'Militar_Directa', es_version_actual: true }
                 ]
             };

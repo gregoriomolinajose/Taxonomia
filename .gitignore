@@ -4,6 +4,10 @@ node_modules
 .raise/rai/personal/
 # Clasp configuration (managed by deploy.js)
 .clasp.json
+# [S67] Archivos de credenciales multi-cuenta — NUNCA subir al repo
+.clasp-*.json
+.clasprc*.json
+
 
 # Debug & test log artifacts (prevent future accumulation)
 *.log

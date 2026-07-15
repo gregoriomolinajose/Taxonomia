@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Configuración Inicial · Taxonomía</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    /* ── Reset & Base ── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:       #0f1117;
+      --surface:  #181c27;
+      --border:   rgba(255,255,255,0.08);
+      --primary:  #6c63ff;
+      --primary-h: #8b84ff;
+      --success:  #22c55e;
+      --warning:  #f59e0b;
+      --danger:   #ef4444;
+      --text:     #e8eaf0;
+      --muted:    #7b8299;
+      --radius:   14px;
+      --shadow:   0 24px 64px rgba(0,0,0,0.55);
+    }
+
+    body {
+      font-family: 'Inter', 'Poppins', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      overflow-x: hidden;
+    }
+
+    /* Animated background */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 80% 60% at 20% 10%, rgba(108,99,255,0.12) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 50% at 80% 90%, rgba(34,197,94,0.07) 0%, transparent 60%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ── Card ── */
+    .wizard-card {
+      position: relative;
+      z-index: 1;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      box-shadow: var(--shadow);
+      width: 100%;
+      max-width: 560px;
+      overflow: hidden;
+    }
+
+    /* ── Header ── */
+    .wizard-header {
+      background: linear-gradient(135deg, #1a1f35 0%, #111420 100%);
+      padding: 32px 36px 28px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .wizard-logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .wizard-logo-icon {
+      width: 40px; height: 40px;
+      background: linear-gradient(135deg, var(--primary), #9c8fff);
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px;
+      box-shadow: 0 4px 16px rgba(108,99,255,0.35);
+    }
+
+    .wizard-logo-name {
+      font-size: 1.1rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      color: #fff;
+    }
+
+    .wizard-logo-badge {
+      font-size: 0.65rem;
+      font-weight: 600;
+      background: rgba(108,99,255,0.2);
+      border: 1px solid rgba(108,99,255,0.35);
+      color: var(--primary-h);
+      padding: 2px 7px;
+      border-radius: 20px;
+      margin-left: 4px;
+    }
+
+    .wizard-title {
+      font-size: 1.45rem;
+      font-weight: 700;
+      color: #fff;
+      line-height: 1.25;
+    }
+
+    .wizard-subtitle {
+      font-size: 0.82rem;
+      color: var(--muted);
+      margin-top: 6px;
+      line-height: 1.5;
+    }
+
+    /* ── Progress stepper ── */
+    .stepper {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      margin-top: 24px;
+    }
+
+    .step-item {
+      display: flex;
+      align-items: center;
+      flex: 1;
+    }
+
+    .step-item:last-child { flex: none; }
+
+    .step-dot {
+      width: 28px; height: 28px;
+      border-radius: 50%;
+      border: 2px solid var(--border);
+      background: transparent;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: var(--muted);
+      transition: all 0.25s;
+      flex-shrink: 0;
+    }
+
+    .step-dot.active {
+      border-color: var(--primary);
+      background: var(--primary);
+      color: #fff;
+      box-shadow: 0 0 0 4px rgba(108,99,255,0.2);
+    }
+
+    .step-dot.done {
+      border-color: var(--success);
+      background: var(--success);
+      color: #fff;
+    }
+
+    .step-label {
+      font-size: 0.68rem;
+      color: var(--muted);
+      margin-left: 6px;
+      white-space: nowrap;
+      font-weight: 500;
+    }
+
+    .step-label.active { color: var(--primary-h); }
+    .step-label.done   { color: var(--success); }
+
+    .step-line {
+      flex: 1;
+      height: 2px;
+      background: var(--border);
+      margin: 0 8px;
+      border-radius: 2px;
+      transition: background 0.3s;
+    }
+
+    .step-line.done { background: var(--success); }
+
+    /* ── Body / Steps ── */
+    .wizard-body {
+      padding: 28px 36px 32px;
+    }
+
+    .step-panel { display: none; }
+    .step-panel.active { display: block; }
+
+    /* ── Form elements ── */
+    .field-group {
+      margin-bottom: 18px;
+    }
+
+    .field-label {
+      display: block;
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 7px;
+      letter-spacing: 0.01em;
+    }
+
+    .field-hint {
+      font-size: 0.7rem;
+      color: var(--muted);
+      margin-top: 5px;
+      line-height: 1.5;
+    }
+
+    .field-input {
+      width: 100%;
+      padding: 10px 14px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      color: var(--text);
+      font-size: 0.85rem;
+      font-family: inherit;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      outline: none;
+    }
+
+    .field-input::placeholder { color: rgba(255,255,255,0.2); }
+
+    .field-input:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(108,99,255,0.15);
+    }
+
+    .field-input.error { border-color: var(--danger); }
+
+    select.field-input {
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='%237b8299'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+      padding-right: 32px;
+      cursor: pointer;
+    }
+
+    select.field-input option { background: #1e2235; color: var(--text); }
+
+    /* ── Info box ── */
+    .info-box {
+      background: rgba(108,99,255,0.07);
+      border: 1px solid rgba(108,99,255,0.18);
+      border-radius: 10px;
+      padding: 12px 14px;
+      font-size: 0.74rem;
+      color: var(--primary-h);
+      line-height: 1.6;
+      margin-bottom: 20px;
+      display: flex;
+      gap: 8px;
+      align-items: flex-start;
+    }
+
+    .info-box-icon { font-size: 14px; flex-shrink: 0; margin-top: 1px; }
+
+    .warn-box {
+      background: rgba(245,158,11,0.07);
+      border: 1px solid rgba(245,158,11,0.2);
+      border-radius: 10px;
+      padding: 12px 14px;
+      font-size: 0.74rem;
+      color: #fcd34d;
+      line-height: 1.6;
+      margin-bottom: 16px;
+      display: flex;
+      gap: 8px;
+      align-items: flex-start;
+    }
+
+    /* ── Step title ── */
+    .step-heading {
+      font-size: 1rem;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 5px;
+    }
+
+    .step-desc {
+      font-size: 0.78rem;
+      color: var(--muted);
+      margin-bottom: 20px;
+      line-height: 1.5;
+    }
+
+    /* ── Actions ── */
+    .wizard-actions {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 24px;
+      gap: 10px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 10px 22px;
+      border-radius: 9px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: all 0.2s;
+      font-family: inherit;
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: #fff;
+      box-shadow: 0 4px 14px rgba(108,99,255,0.35);
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      background: var(--primary-h);
+      box-shadow: 0 6px 20px rgba(108,99,255,0.45);
+      transform: translateY(-1px);
+    }
+
+    .btn-primary:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--muted);
+      border: 1px solid var(--border);
+    }
+
+    .btn-ghost:hover { color: var(--text); border-color: rgba(255,255,255,0.18); }
+
+    .btn-success {
+      background: var(--success);
+      color: #fff;
+      box-shadow: 0 4px 14px rgba(34,197,94,0.3);
+    }
+
+    .btn-success:hover:not(:disabled) {
+      filter: brightness(1.1);
+      transform: translateY(-1px);
+    }
+
+    .btn-success:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* ── Success state ── */
+    .success-panel {
+      text-align: center;
+      padding: 16px 0 8px;
+    }
+
+    .success-icon {
+      width: 72px; height: 72px;
+      background: linear-gradient(135deg, rgba(34,197,94,0.15), rgba(34,197,94,0.05));
+      border: 2px solid rgba(34,197,94,0.3);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 32px;
+      margin: 0 auto 20px;
+      animation: pop 0.4s cubic-bezier(0.34,1.56,0.64,1);
+    }
+
+    @keyframes pop {
+      from { transform: scale(0.5); opacity: 0; }
+      to   { transform: scale(1);   opacity: 1; }
+    }
+
+    .success-title {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: var(--success);
+      margin-bottom: 8px;
+    }
+
+    .success-msg {
+      font-size: 0.82rem;
+      color: var(--muted);
+      line-height: 1.6;
+      max-width: 380px;
+      margin: 0 auto 24px;
+    }
+
+    /* ── Error feedback ── */
+    .error-msg {
+      color: var(--danger);
+      font-size: 0.75rem;
+      margin-top: 5px;
+      display: none;
+    }
+
+    .status-bar {
+      font-size: 0.75rem;
+      color: var(--muted);
+      text-align: center;
+      flex: 1;
+    }
+
+    /* ── Spinner ── */
+    .spinner {
+      width: 14px; height: 14px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      display: inline-block;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Footer ── */
+    .wizard-footer {
+      padding: 12px 36px 16px;
+      border-top: 1px solid var(--border);
+      text-align: center;
+      font-size: 0.7rem;
+      color: var(--muted);
+    }
+
+    .wizard-footer a { color: var(--primary-h); text-decoration: none; }
+  </style>
+</head>
+<body>
+
+<div class="wizard-card">
+  <!-- Header -->
+  <div class="wizard-header">
+    <div class="wizard-logo">
+      <div class="wizard-logo-icon">🧬</div>
+      <div>
+        <span class="wizard-logo-name">Taxonomía</span>
+        <span class="wizard-logo-badge">First-Run</span>
+      </div>
+    </div>
+    <div class="wizard-title">Configuración Inicial del Sistema</div>
+    <div class="wizard-subtitle">
+      Completa los 3 pasos para activar tu instancia. Este asistente sólo aparece una vez.
+    </div>
+
+    <!-- Stepper -->
+    <div class="stepper" id="stepper">
+      <div class="step-item">
+        <div class="step-dot active" id="dot-1">1</div>
+        <div class="step-label active" id="lbl-1">Tenant</div>
+      </div>
+      <div class="step-line" id="line-1"></div>
+      <div class="step-item">
+        <div class="step-dot" id="dot-2">2</div>
+        <div class="step-label" id="lbl-2">Base de Datos</div>
+      </div>
+      <div class="step-line" id="line-2"></div>
+      <div class="step-item">
+        <div class="step-dot" id="dot-3">3</div>
+        <div class="step-label" id="lbl-3">Acceso</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Body -->
+  <div class="wizard-body">
+
+    <!-- ── STEP 1: Identidad del Tenant ── -->
+    <div class="step-panel active" id="panel-1">
+      <div class="step-heading">Identidad del Tenant</div>
+      <div class="step-desc">¿Cómo se llama esta instancia? Este nombre aparecerá en los reportes y la UI.</div>
+
+      <div class="field-group">
+        <label class="field-label" for="fr-tenant-name">Nombre del Tenant *</label>
+        <input type="text" id="fr-tenant-name" class="field-input"
+               placeholder="Ej. Tenant A" autocomplete="off" />
+        <div class="error-msg" id="err-tenant-name">El nombre del tenant es requerido.</div>
+      </div>
+
+      <div class="field-group">
+        <label class="field-label" for="fr-app-title">Título de la Aplicación</label>
+        <input type="text" id="fr-app-title" class="field-input"
+               placeholder="Ej. Gobierno de Modelo de Producto" />
+        <div class="field-hint">Aparece en la pestaña del navegador. Puedes cambiarlo después en Ajustes Globales.</div>
+      </div>
+
+      <div class="field-group">
+        <label class="field-label" for="fr-favicon">URL del Favicon</label>
+        <input type="text" id="fr-favicon" class="field-input"
+               placeholder="https://empresa.com/favicon.ico" />
+        <div class="field-hint">Opcional. Deja en blanco para usar el favicon por defecto.</div>
+      </div>
+    </div>
+
+    <!-- ── STEP 2: Base de Datos ── -->
+    <div class="step-panel" id="panel-2">
+      <div class="step-heading">Base de Datos</div>
+      <div class="step-desc">Especifica el Google Sheet compartido que actúa como base de datos de la plataforma.</div>
+
+      <div class="info-box">
+        <span class="info-box-icon">ℹ️</span>
+        <div>
+          En arquitectura Single-DB Multi-Tenant, <strong>todos los tenants apuntan al mismo Sheet</strong>.
+          Si eres Tenant B, usa el mismo Sheet ID que el Tenant A te haya compartido con acceso <strong>Editor</strong>.
+        </div>
+      </div>
+
+      <div class="field-group">
+        <label class="field-label" for="fr-spreadsheet-id">ID del Google Sheet (Base de Datos) *</label>
+        <input type="text" id="fr-spreadsheet-id" class="field-input"
+               placeholder="1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgVE2upms" autocomplete="off" />
+        <div class="field-hint">
+          Encuéntralo en la URL del Sheet: <code style="color:rgba(255,255,255,0.5);font-size:0.7rem;">
+          docs.google.com/spreadsheets/d/<strong>[ID]</strong>/edit</code>
+        </div>
+        <div class="error-msg" id="err-spreadsheet-id">El ID del Google Sheet es requerido.</div>
+      </div>
+
+      <div class="field-group">
+        <label class="field-label" for="fr-db-adapter">Adaptador de Base de Datos</label>
+        <select id="fr-db-adapter" class="field-input">
+          <option value="sheets">Google Sheets (por defecto)</option>
+          <option value="clouddb">Cloud Database (futuro)</option>
+        </select>
+        <div class="field-hint">Mantén "Google Sheets" a menos que estés migrando a una BD externa.</div>
+      </div>
+
+      <div class="warn-box">
+        <span>⚠️</span>
+        <div>
+          Asegúrate de que la cuenta de servicio de Apps Script tiene acceso <strong>Editor</strong> al Sheet
+          antes de continuar. Sin este permiso, el sistema no podrá leer ni escribir datos.
+        </div>
+      </div>
+    </div>
+
+    <!-- ── STEP 3: Control de Acceso ── -->
+    <div class="step-panel" id="panel-3">
+      <div class="step-heading">Control de Acceso SSO</div>
+      <div class="step-desc">¿Qué dominios de correo pueden acceder a esta instancia?</div>
+
+      <div class="field-group">
+        <label class="field-label" for="fr-allowed-domains">Dominios Permitidos (separados por coma) *</label>
+        <input type="text" id="fr-allowed-domains" class="field-input"
+               placeholder="@tenantA.com, @tenantB.com" autocomplete="off" />
+        <div class="field-hint">
+          Sólo usuarios con correo en estos dominios podrán iniciar sesión.
+          Puedes agregar más dominios después desde <strong>Ajustes Globales</strong>.
+        </div>
+        <div class="error-msg" id="err-allowed-domains">Ingresa al menos un dominio válido (ej. @empresa.com).</div>
+      </div>
+
+      <div class="info-box" style="margin-bottom:0;">
+        <span class="info-box-icon">🔐</span>
+        <div>
+          Esta configuración se persiste de forma segura en <strong>PropertiesService</strong>
+          del proyecto Apps Script — nunca en el Google Sheet compartido.
+          Cada tenant tiene su propia configuración aislada.
+        </div>
+      </div>
+    </div>
+
+    <!-- ── SUCCESS ── -->
+    <div class="step-panel" id="panel-success">
+      <div class="success-panel">
+        <div class="success-icon">✅</div>
+        <div class="success-title">¡Sistema Configurado!</div>
+        <div class="success-msg">
+          La configuración inicial se guardó correctamente en PropertiesService.
+          El sistema se reiniciará automáticamente. Si no ocurre en 5 segundos, haz clic en el botón.
+        </div>
+        <button class="btn btn-success" onclick="window.location.reload()">
+          🚀 Ingresar al Sistema
+        </button>
+      </div>
+    </div>
+
+    <!-- ── Actions ── -->
+    <div class="wizard-actions" id="wizard-actions">
+      <button class="btn btn-ghost" id="btn-back" onclick="wizardBack()" style="display:none;">
+        ← Atrás
+      </button>
+      <div class="status-bar" id="status-bar"></div>
+      <button class="btn btn-primary" id="btn-next" onclick="wizardNext()">
+        Continuar →
+      </button>
+    </div>
+
+  </div><!-- /wizard-body -->
+
+  <div class="wizard-footer">
+    Taxonomía · Plataforma de Gobierno de Modelo de Producto ·
+    <a href="https://github.com" target="_blank">Documentación</a>
+  </div>
+</div>
+
+<script>
+// ── [S65/E6] First-Run Wizard Logic ──────────────────────────────────────────
+(function() {
+
+  var _step = 1;
+  var _total = 3;
+
+  // ── Navigate ──────────────────────────────────────────────────────────────
+  function _showStep(n) {
+    for (var i = 1; i <= _total; i++) {
+      var panel = document.getElementById('panel-' + i);
+      if (panel) panel.classList.toggle('active', i === n);
+    }
+
+    // Stepper state
+    for (var s = 1; s <= _total; s++) {
+      var dot  = document.getElementById('dot-' + s);
+      var lbl  = document.getElementById('lbl-' + s);
+      var line = document.getElementById('line-' + s);
+      if (!dot) continue;
+
+      dot.className  = 'step-dot ' + (s < n ? 'done' : s === n ? 'active' : '');
+      lbl.className  = 'step-label ' + (s < n ? 'done' : s === n ? 'active' : '');
+      if (line) line.className = 'step-line ' + (s < n ? 'done' : '');
+
+      if (s < n)  dot.textContent = '✓';
+      else        dot.textContent = String(s);
+    }
+
+    document.getElementById('btn-back').style.display = n > 1 ? 'inline-flex' : 'none';
+    document.getElementById('btn-next').textContent   = n < _total ? 'Continuar →' : '✓ Finalizar';
+    document.getElementById('status-bar').textContent = '';
+    _step = n;
+  }
+
+  // ── Validate current step ─────────────────────────────────────────────────
+  function _validate() {
+    clearErrors();
+
+    if (_step === 1) {
+      var name = document.getElementById('fr-tenant-name').value.trim();
+      if (!name) { showError('err-tenant-name'); return false; }
+    }
+
+    if (_step === 2) {
+      var sheetId = document.getElementById('fr-spreadsheet-id').value.trim();
+      if (!sheetId) { showError('err-spreadsheet-id'); return false; }
+    }
+
+    if (_step === 3) {
+      var domainsRaw = document.getElementById('fr-allowed-domains').value.trim();
+      var domains    = parseDomains(domainsRaw);
+      if (domainsRaw.length > 0 && domains.length === 0) {
+        showError('err-allowed-domains'); return false;
+      }
+      if (domains.length === 0) {
+        showError('err-allowed-domains'); return false;
+      }
+    }
+
+    return true;
+  }
+
+  function showError(id) {
+    var el = document.getElementById(id);
+    if (el) el.style.display = 'block';
+  }
+
+  function clearErrors() {
+    ['err-tenant-name', 'err-spreadsheet-id', 'err-allowed-domains'].forEach(function(id) {
+      var el = document.getElementById(id);
+      if (el) el.style.display = 'none';
+    });
+  }
+
+  function parseDomains(raw) {
+    return raw.split(',')
+      .map(function(d) { return d.trim().toLowerCase(); })
+      .filter(function(d) { return d.length > 0 && d.startsWith('@'); });
+  }
+
+  // ── Public: next ──────────────────────────────────────────────────────────
+  window.wizardNext = function() {
+    if (!_validate()) return;
+    if (_step < _total) {
+      _showStep(_step + 1);
+    } else {
+      _submitWizard();
+    }
+  };
+
+  // ── Public: back ──────────────────────────────────────────────────────────
+  window.wizardBack = function() {
+    if (_step > 1) _showStep(_step - 1);
+  };
+
+  // ── Submit ────────────────────────────────────────────────────────────────
+  function _submitWizard() {
+    var btn    = document.getElementById('btn-next');
+    var status = document.getElementById('status-bar');
+
+    var payload = {
+      config_id:       'SYS-CONFIG-001',
+      tenant_name:     document.getElementById('fr-tenant-name').value.trim(),
+      app_title:       document.getElementById('fr-app-title').value.trim()
+                       || document.getElementById('fr-tenant-name').value.trim(),
+      favicon_url:     document.getElementById('fr-favicon').value.trim(),
+      spreadsheet_id:  document.getElementById('fr-spreadsheet-id').value.trim(),
+      db_adapter_id:   document.getElementById('fr-db-adapter').value,
+      allowed_domains: document.getElementById('fr-allowed-domains').value.trim()
+    };
+
+    btn.disabled    = true;
+    btn.innerHTML   = '<span class="spinner"></span> Guardando...';
+    status.textContent = '';
+
+    // Call GAS server function
+    if (typeof google !== 'undefined' && google.script && google.script.run) {
+      google.script.run
+        .withSuccessHandler(function(res) {
+          if (res && res.success) {
+            _showSuccessPanel();
+          } else {
+            btn.disabled = false;
+            btn.innerHTML = '✓ Finalizar';
+            status.textContent = '⚠ Error: ' + (res ? res.message : 'Respuesta inesperada.');
+          }
+        })
+        .withFailureHandler(function(err) {
+          btn.disabled = false;
+          btn.innerHTML = '✓ Finalizar';
+          status.textContent = '⚠ Error de red: ' + (err.message || String(err));
+        })
+        .API_Admin_SaveFirstRunConfig(payload);
+    } else {
+      // Dev mode — simular éxito
+      console.log('[FirstRun Dev] Payload que se enviaría:', payload);
+      setTimeout(_showSuccessPanel, 800);
+    }
+  }
+
+  function _showSuccessPanel() {
+    // Ocultar todos los paneles de paso
+    for (var i = 1; i <= _total; i++) {
+      var p = document.getElementById('panel-' + i);
+      if (p) p.classList.remove('active');
+    }
+    document.getElementById('panel-success').classList.add('active');
+    document.getElementById('wizard-actions').style.display = 'none';
+
+    // Auto-reload tras 5 segundos
+    setTimeout(function() { window.location.reload(); }, 5000);
+  }
+
+  // Init
+  _showStep(1);
+
+})();
+</script>
+
+</body>
+</html>

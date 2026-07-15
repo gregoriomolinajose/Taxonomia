@@ -22,7 +22,7 @@ function doPost(e) {
     if (action === 'create') {
       responseData = _handleCreate(entity, data);
     } else if (action === 'read') {
-      responseData = _handleRead(entity);
+      responseData = _handleRead(entity, data);
     } else if (action === 'update') {
       responseData = _handleUpdate(entity, data.id, data);
     } else if (action === 'delete') {
@@ -71,6 +71,12 @@ function API_Universal_Router(action, entityName, payload) {
       return JSON.stringify({ status: "success", data: responseData, action });
     }
 
+    if (action === 'etl_export_sheet') {
+      // Exportación de datos de la vista a Google Sheets
+      responseData = Engine_ETL.exportDataToSheet(entityName, payload.columns, payload.rows);
+      return JSON.stringify({ status: "success", data: responseData, action });
+    }
+
     if (action === 'etl_extract_sheet_data') {
       if (typeof _guardAbac === 'function') {
          // Extracción masiva presupone Upsert, demandando permisos conjuntos.
@@ -90,6 +96,76 @@ function API_Universal_Router(action, entityName, payload) {
       if (!payload || !payload.url) throw new Error("Parámetro URL faltante en request ETL.");
       responseData = Engine_ETL.inspectDriveSheet(entityName, payload.url);
       return JSON.stringify({ status: "success", data: responseData, action });
+    }
+
+    if (action === 'job_enqueue') {
+      if (typeof payload === 'object') {
+        payload.entity = entityName;
+      }
+      responseData = JobQueue.enqueue(payload);
+      var debugWorker = {};
+      if (typeof JobWorker !== 'undefined') {
+        // En lugar de procesar síncronamente, solo disparamos el trigger en background
+        JobWorker.triggerProcessing();
+      }
+      return JSON.stringify({ status: "success", data: responseData, action, debugWorker: debugWorker });
+    }
+
+    if (action === 'job_process_chunk') {
+      var debugWorker = {};
+      if (typeof JobWorker !== 'undefined') {
+        try {
+           debugWorker = JobWorker.processNextJobChunk() || {};
+        } catch(e) {
+           debugWorker.error = e.toString();
+           if (typeof Logger !== 'undefined') Logger.log("Error processing chunk on demand: " + e);
+        }
+      }
+      return JSON.stringify({ status: "success", data: debugWorker, action });
+    }
+
+    if (action === 'job_status') {
+      var jobId = (typeof payload === 'object') ? payload.jobId : payload;
+      responseData = JobQueue.getJobStatus(jobId);
+      return JSON.stringify({ status: "success", data: responseData, action });
+    }
+
+    if (action === 'dlq_reprocess') {
+      try {
+        var id_dlq = payload.id_dlq;
+        var targetEntity = payload.entity_name || entityName;
+        
+        // QR Fix: Missing Authorization (Security Leak)
+        if (typeof _guardAbac === 'function') {
+           _guardAbac('create', targetEntity, null);
+        }
+        
+        var newPayload = payload.new_payload;
+        
+        // 1. Validate payload
+        var result = typeof Engine_ETL !== 'undefined' && Engine_ETL.hydrateAndDeduplicate ? null : undefined;
+        if (result === null) {
+            var tempChunk = [newPayload];
+            Engine_ETL.hydrateAndDeduplicate(targetEntity, tempChunk);
+            if (tempChunk.length === 0) throw new Error("Registro inválido (interceptores lo descartaron)");
+            newPayload = tempChunk[0];
+        }
+        
+        // 2. Insert into final destination
+        // QR Fix: ReferenceError JS_SchemaUtils
+        var pkT = typeof JS_SchemaUtils !== 'undefined' ? JS_SchemaUtils.getPrimaryKey(targetEntity) : 'id';
+        if (!newPayload[pkT] || String(newPayload[pkT]).trim() === '') {
+           newPayload[pkT] = typeof _generateShortUUID === 'function' ? _generateShortUUID(targetEntity) : 'ID-' + new Date().getTime();
+        }
+        var upsertRes = Engine_DB.upsert(targetEntity, newPayload);
+        
+        // 3. Mark DLQ as Resuelto
+        Engine_DB.update('Sys_DLQ', id_dlq, { estado: 'Resuelto' });
+        
+        return JSON.stringify({ status: "success", data: upsertRes, action });
+      } catch (e) {
+        return JSON.stringify({ status: "error", message: e.toString(), action });
+      }
     }
 
     if (action === 'create') {
@@ -118,7 +194,7 @@ function API_Universal_Router(action, entityName, payload) {
       if (id) {
         responseData = Engine_DB.readFull(entityName, id);
       } else {
-        responseData = _handleRead(entityName);
+        responseData = _handleRead(entityName, payload);
       }
     } else if (action === 'update') {
       const id = payload[pkField];
@@ -132,10 +208,10 @@ function API_Universal_Router(action, entityName, payload) {
       if (!payload || !payload.contextId) throw new Error("Falta contextId para publicar el borrador.");
       const email = Session.getActiveUser().getEmail();
       if (typeof Engine_ABAC !== 'undefined') {
-          const canPublish = Engine_ABAC.validatePermission(email, 'update', 'Taxonomia', payload.contextId);
+          const canPublish = Engine_ABAC.validatePermission(email, 'update', entityName, payload.contextId);
           if (!canPublish) throw new Error("ABAC_REJECTED: Permisos insuficientes para aprobar taxonomías.");
       }
-      responseData = Engine_DB.publishDraftContext(payload.contextId);
+      responseData = Engine_DB.publishDraftContext(entityName, payload.contextId);
       return JSON.stringify({ status: "success", data: responseData, action });
     } else if (action === 'etl_writeback_feedback') {
       if (typeof _guardAbac === 'function') {
@@ -167,11 +243,11 @@ function API_Universal_Router(action, entityName, payload) {
       let edgesToUpsert = [];
       const sysDate = new Date().toISOString();
       const schema = (typeof APP_SCHEMAS !== 'undefined') ? APP_SCHEMAS[entityName] : null;
+      const currentEdges = Engine_DB.list('Sys_Graph_Edges', 'objects').rows || [];
       
       if (schema && schema.fields) {
           const graphFields = schema.fields.filter(f => f.isTemporalGraph && f.graphEntity === 'Sys_Graph_Edges' && f.relationType === 'padre' && f.topologyCardinality !== 'M:N');
           if (graphFields.length > 0) {
-              const currentEdges = Engine_DB.list('Sys_Graph_Edges', 'objects').rows || [];
               payload.forEach(record => {
                   const childId = String(record[pkField]).trim();
                   graphFields.forEach(f => {
@@ -225,6 +301,52 @@ function API_Universal_Router(action, entityName, payload) {
               });
           }
       }
+      
+      // [S50.4] M:N Contextual Graph Injection (Bulk Importer Wizard)
+      payload.forEach(record => {
+          if (record._contexto_arista && record._tipo_arista) {
+              const childId = String(record[pkField]).trim();
+              const parentId = String(record._contexto_arista).trim();
+              
+              // Evitar duplicados en memoria
+              const duplicateEdgeMemory = edgesToUpsert.some(e => 
+                  e.tipo_relacion === record._tipo_arista && 
+                  String(e.id_nodo_padre).trim() === parentId && 
+                  String(e.id_nodo_hijo).trim() === childId
+              );
+              
+              // Buscar duplicados en Base de Datos
+              const existingDBEdge = currentEdges.find(e => 
+                  e.es_version_actual !== false &&
+                  e.tipo_relacion === record._tipo_arista && 
+                  String(e.id_nodo_padre).trim() === parentId && 
+                  String(e.id_nodo_hijo).trim() === childId
+              );
+              
+              if (!duplicateEdgeMemory) {
+                  if (existingDBEdge) {
+                      // Si existe pero le falta el contexto_id (reparación de aristas fantasma de pruebas anteriores)
+                      if (String(existingDBEdge.contexto_id || '').trim() !== parentId) {
+                          existingDBEdge.contexto_id = parentId;
+                          existingDBEdge.estado = record.estado || "Activo";
+                          edgesToUpsert.push(existingDBEdge);
+                      }
+                  } else {
+                      edgesToUpsert.push({
+                          id_relacion: _generateShortUUID('Sys_Graph_Edges'),
+                          id_nodo_padre: parentId,
+                          id_nodo_hijo: childId,
+                          tipo_relacion: record._tipo_arista,
+                          valido_desde: sysDate,
+                          valido_hasta: "",
+                          es_version_actual: true,
+                          estado: record.estado || "Activo",
+                          contexto_id: parentId // Al ser una relación en contexto (Wizard), el contexto es el nodo padre
+                      });
+                  }
+              }
+          }
+      });
       
       // Delegamos la unidad de trabajo cruda (Unit of Work) al backend
       responseData = Engine_DB.upsertBatch(entityName, payload);

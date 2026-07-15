@@ -10,20 +10,21 @@
         
         /* ── Punto de Entrada Central de la Factoría ── */
         buildLayout: function(config) {
-            this.cfg = config; 
-            this._edgeMemo = null;   // Flush memo cache para Grafos (H9/AR)
-            this._targetMemo = null; // Flush memo cache para Semántica (H9/AR)
+            const builder = Object.create(this);
+            builder.cfg = config; 
+            builder._edgeMemo = null;   // Flush memo cache para Grafos (H9/AR)
+            builder._targetMemo = null; // Flush memo cache para Semántica (H9/AR)
             
-            if (config.loading) return this._renderSkeleton();
-            if (config.error) return this._renderErrorState(config.error);
-            if (!config.filteredData || config.filteredData.length === 0) return this._renderEmpty();
+            if (config.loading) return builder._renderSkeleton();
+            if (config.error) return builder._renderErrorState(config.error);
+            if (!config.filteredData || config.filteredData.length === 0) return builder._renderEmpty();
 
             if (config.view === 'table') {
-                return this._renderTableView();
+                return builder._renderTableView();
             } else if (config.view === 'grid') {
-                return this._renderGridView();
+                return builder._renderGridView();
             } else {
-                return this._renderEmpty();
+                return builder._renderEmpty();
             }
         },
 
@@ -60,9 +61,16 @@
             
             const card = document.createElement('div');
             card.className = 'dv-card';
+            card.style.display = 'flex';
+            card.style.flexDirection = 'column';
+            card.style.flex = '1';
+            card.style.minHeight = '0';
             
             const tableWrap = document.createElement('div');
             tableWrap.className = 'dv-table-wrap';
+            tableWrap.style.flex = '1';
+            tableWrap.style.overflowY = 'auto';
+            tableWrap.style.minHeight = '0';
             
             const table = document.createElement('table');
             table.className = 'dv-table';
@@ -327,8 +335,14 @@
                 if (estadoVal) {
                     const statusWrap = document.createElement('div');
                     statusWrap.className = 'dv-card-status-wrap';
-                    const isInactive = String(estadoVal).toLowerCase().includes('inactiv');
-                    statusWrap.classList.add(isInactive ? 'dv-status--inactive' : 'dv-status--active');
+                    const sLower = String(estadoVal).toLowerCase();
+                    if (sLower.includes('inactiv')) {
+                        statusWrap.classList.add('dv-status--inactive');
+                    } else if (sLower.includes('borrador') || sLower.includes('revis')) {
+                        statusWrap.classList.add('dv-status--draft');
+                    } else {
+                        statusWrap.classList.add('dv-status--active');
+                    }
                     
                     const statusDot = document.createElement('div');
                     statusDot.className = 'dv-card-status-dot';
@@ -345,6 +359,27 @@
                 const topRight = document.createElement('div');
                 topRight.className = 'dv-card-top-right';
                 
+                if (this.cfg.entityName === 'Taxonomia') {
+                    const btnCanvas = document.createElement('button');
+                    btnCanvas.className = 'dv-btn-primary-lite';
+                    btnCanvas.title = 'Abrir Canvas';
+                    btnCanvas.style.padding = '4px 6px';
+                    btnCanvas.style.marginRight = '4px';
+                    btnCanvas.style.background = 'transparent';
+                    btnCanvas.style.color = 'var(--dv-primary)';
+                    btnCanvas.style.border = 'none';
+                    btnCanvas.style.cursor = 'pointer';
+                    btnCanvas.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        if (typeof window.openEditForm === 'function') {
+                            window.openEditForm(idStr, 'Taxonomia', { initialStepIndex: 3, initialStepName: 'Arquitectura de Portafolio' });
+                        }
+                    });
+                    const iconCanvas = document.createElement('ion-icon');
+                    iconCanvas.setAttribute('name', 'color-palette');
+                    btnCanvas.appendChild(iconCanvas);
+                    topRight.appendChild(btnCanvas);
+                }
 
                 
                 if (!window.ABAC || window.ABAC.can('delete', this.cfg.entityName, idStr)) {
@@ -498,6 +533,57 @@
                     cardEl.appendChild(graphWrap);
                 }
                 
+                // --- S45.7 Renderizado dinámico de Enlaces Externos ---
+                const schema = window.APP_SCHEMAS && window.APP_SCHEMAS[this.cfg.entityName];
+                if (schema && schema.dashboardCard && Array.isArray(schema.dashboardCard.actionButtons)) {
+                    const extFieldNames = schema.dashboardCard.actionButtons;
+                    if (extFieldNames.length > 0 && schema.fields) {
+                        const linksWrap = document.createElement('div');
+                        linksWrap.className = 'dv-card-external-links';
+                        linksWrap.style.marginTop = '12px';
+                        linksWrap.style.display = 'flex';
+                        linksWrap.style.gap = '8px';
+                        linksWrap.style.flexWrap = 'wrap';
+
+                        const extFields = schema.fields.filter(f => extFieldNames.includes(f.name));
+
+                        extFields.forEach(f => {
+                            const val = row[f.name];
+                            const linkHref = (window.Schema_Utils && window.Schema_Utils.normalizeExternalUrl) ? window.Schema_Utils.normalizeExternalUrl(val) : val;
+                            if (linkHref) {
+                                
+                                const btnLink = document.createElement('ion-button');
+                                btnLink.setAttribute('fill', 'outline');
+                                btnLink.setAttribute('size', 'small');
+                                
+                                if (f.customColor) {
+                                    btnLink.style.setProperty('--color', f.customColor);
+                                    btnLink.style.setProperty('--border-color', f.customColor);
+                                } else {
+                                    btnLink.setAttribute('color', f.color || 'primary');
+                                }
+                                
+                                btnLink.classList.add('text-action');
+
+                                btnLink.innerHTML = `<ion-icon slot="start" name="${f.iconName || 'link'}"></ion-icon><ion-label class="text-action">${f.label || 'Enlace'}</ion-label>`;
+                                btnLink.style.margin = '0';
+                                btnLink.style.textTransform = 'none';
+                                
+                                btnLink.addEventListener('click', (e) => {
+                                    e.stopPropagation();
+                                    window.open(linkHref, '_blank');
+                                });
+                                linksWrap.appendChild(btnLink);
+                            }
+                        });
+
+                        if (linksWrap.childNodes.length > 0) {
+                            cardEl.appendChild(linksWrap);
+                        }
+                    }
+                }
+                // ----------------------------------------------------
+                
                 cardEl.addEventListener('click', (e) => {
                     if (e.target.closest('button')) return;
                     if (idStr) {
@@ -576,6 +662,7 @@
             wrapperZone.style.flex = '1';
             wrapperZone.style.position = 'relative'; 
             wrapperZone.style.minHeight = '0';
+            wrapperZone.style.overflow = 'hidden';
             
             wrapperZone.appendChild(fabTopBtn);
             wrapperZone.appendChild(gridScrollWrap);
@@ -706,7 +793,7 @@
                 }
 
                 if (field.relationType === 'padre') {
-                    let parentId = window.Graph_Utils.resolveLinkedId(rowId, edgeName);
+                    let parentId = window.Graph_Utils.resolveLinkedId(rowId, edgeName, null, false, field.relationType);
                     if (parentId || joinedLabel) {
                         const trgLabelKey = field.labelField || (window.ENTITY_META && window.ENTITY_META[field.targetEntity] && window.ENTITY_META[field.targetEntity].titleField) || 'nombre';
                         const targetMemo = this._buildTargetMemo(field.targetEntity, trgLabelKey);
@@ -721,7 +808,7 @@
                         metaNodes.singleNodes.push({ label: entityLabel, value: parentName, icon: icon });
                     }
                 } else if (field.relationType === 'hijo' && field.topologyCardinality === '1:N') {
-                    const childrenArray = window.Graph_Utils.resolveAllLinkedIds(rowId, edgeName);
+                    const childrenArray = window.Graph_Utils.resolveAllLinkedIds(rowId, edgeName, null, false, field.relationType);
                     metaNodes.multiNodes.push({ label: entityLabel, count: childrenArray.length, icon: icon });
                 }
             });
@@ -764,7 +851,7 @@
             // 1. Resolve Graph Edge pointer if it's a Temporal Graph edge AND physically empty
             if (isEmptyValue && fieldMeta.isTemporalGraph && window.Graph_Utils) {
                 const edgeName = (fieldMeta.graphEdgeType || fieldMeta.name).toUpperCase();
-                resolvedVal = window.Graph_Utils.resolveLinkedId(currentPK, edgeName);
+                resolvedVal = window.Graph_Utils.resolveLinkedId(currentPK, edgeName, null, false, fieldMeta.relationType);
             }
             
             // 2. Transmute the physical ID explicitly to the schema's labelField

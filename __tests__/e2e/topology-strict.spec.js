@@ -113,7 +113,7 @@ async function clickTopButtonByText(frame, text) {
         await window.DataStore.save('Producto', prod);
         
         // Agil
-        const eq = { nombre_equipo: 'Eq Auto', id_grupo_producto: gp.id_grupo_producto, id_equipo: 'eq_' + stamp, metodologia: 'Scrum' };
+        const eq = { nombre_equipo: 'Eq Auto', id_grupo_producto: gp.id_grupo_producto, id_equipo: 'eq_' + stamp, formas_de_trabajo: 'Scrum' };
         await window.DataStore.save('Equipo', eq);
         
         const pers = { email: 'a'+stamp+'@nttdata.com', nombre: 'Test', apellidos: 'Auto', equipo: eq.id_equipo, unidad_negocio: un.id_unidad_negocio, rol_agil: 'Developer', departamento: 'IT', centro_costo: 'IT.1', cargo: 'Dev', modalidad: 'Virtual', herradura: 'X', esquema: 'Interno' };

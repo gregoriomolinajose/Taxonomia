@@ -1,0 +1,60 @@
+artifact_type: story-design
+version: 1
+skill: rai-story-design
+created: '2026-05-26T19:06:00Z'
+story: 'S60'
+epic: 'E6'
+content:
+  summary: >
+    No existe un panel centralizado y administrable para configurar los parámetros
+    fundamentales del sistema (BD, dominio, branding). Esta historia crea el schema
+    de la entidad Config_System con un campo adapter:'config' que permite al
+    Engine_DB enrutar su persistencia al PropertiesService local de cada tenant,
+    sin tocar Google Sheets.
+  complexity: moderate
+  acceptance_criteria:
+    - id: AC1
+      description: 'Config_System aparece en el menú lateral bajo sección ADMINISTRACIÓN con ícono settings-outline'
+      verifiable: true
+    - id: AC2
+      description: 'El FormRenderer renderiza los 6 campos con tipos correctos (select, text)'
+      verifiable: true
+    - id: AC3
+      description: >
+        Engine_DB.list() y Engine_DB.save() detectan metadata.adapter === 'config'
+        y delegan a Adapter_Config (con guard claro si el adaptador no existe aún)
+      verifiable: true
+    - id: AC4
+      description: 'Config_System NO aparece en Schema Studio Blueprint Composer (showInSchemaStudio: false)'
+      verifiable: true
+    - id: AC5
+      description: 'Ningún campo del schema contiene strings con nombres de empresa o dominios específicos'
+      verifiable: true
+  integration_points:
+    - module: Schema_Engine
+      change_type: modification
+      files: ['src/Schema_Engine.js']
+    - module: Engine_DB
+      change_type: modification
+      files: ['src/Engine_DB.js']
+  decisions:
+    - id: D1
+      choice: 'Campo adapter en metadata del schema, no en Engine_DB como string hardcodeado'
+      rationale: >
+        Mantiene el Engine_DB genérico. Si en el futuro se necesita otro adaptador
+        especial (Config_Notifications), solo se declara adapter: 'notifications'
+        en el schema, sin tocar el motor.
+      alternatives_considered:
+        - 'if (entityName === Config_System) en Engine_DB — rechazado por acoplamiento'
+        - 'Tabla de routing separada en JSON — sobre-ingeniería para el caso actual'
+    - id: D2
+      choice: 'Una sola entidad Config_System con todos los campos (no una por sección)'
+      rationale: >
+        El volumen de campos es pequeño (6). Separar en Config_DB, Config_Branding,
+        etc. añadiría complejidad de navegación sin beneficio real.
+      alternatives_considered:
+        - 'Múltiples entidades por sección — rechazado por complejidad de UX'
+refs:
+  backlog_item: 'E6-S60'
+  epic_scope: 'work/epics/e6-multi-tenant-config/scope.md'
+metadata: {}

@@ -30,7 +30,7 @@ describe('TDD: Jerarquía Recursiva Dinámica (Zero-Touch Trigger)', () => {
 
         const relationsField = schema.fields.find(f => f.name === 'relaciones_padre');
         expect(relationsField).toBeDefined();
-        expect(relationsField.uiComponent).toBe('select_single');
+        expect(relationsField.uiComponent).toBe('searchable_single');
         expect(relationsField.isTemporalGraph).toBe(true);
     });
 

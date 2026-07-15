@@ -1,0 +1,10 @@
+key: E6
+summary: 'Multi-Tenant Architecture & Config Governance'
+issue_type: Epic
+status: pending
+labels:
+- epic
+- multi-tenant
+- infrastructure
+created: '2026-05-26T18:22:00.000000+00:00'
+updated: '2026-05-26T18:22:00.000000+00:00'
