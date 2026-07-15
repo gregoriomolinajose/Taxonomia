@@ -151,7 +151,11 @@ var JobWorker = (function() {
          }
       }
       if (schema && schema.metadata && schema.metadata.hasDraftLifecycle) {
-          record.estado = 'Borrador';
+          if (entityName === 'Persona') {
+              record.estado = 'Activo';
+          } else {
+              record.estado = 'Borrador';
+          }
       }
       
       batchToInsert.push(record);
@@ -188,14 +192,16 @@ var JobWorker = (function() {
                if (!duplicateEdgeMemory) {
                    if (existingDBEdge) {
                        if (String(existingDBEdge.contexto_id || '').trim() !== parentId) {
-                           var updateEstado = record._tipo_arista === 'PERSONA_TAXONOMIA' ? 'Borrador' : (record.estado || "Activo");
+                           var isPersonaEdge = entityName === 'Persona' || (record._tipo_arista && record._tipo_arista.indexOf('PERSONA') !== -1);
+                           var updateEstado = isPersonaEdge ? 'Borrador' : (record.estado || "Activo");
                            existingDBEdge.contexto_id = parentId;
                            existingDBEdge.estado = updateEstado;
                            edgesToUpsert.push(existingDBEdge);
                        }
                    } else {
                        var relId = (typeof _generateShortUUID === 'function') ? _generateShortUUID('Sys_Graph_Edges') : 'RELA-' + new Date().getTime() + '-' + Math.floor(Math.random()*1000);
-                       var edgeEstado = record._tipo_arista === 'PERSONA_TAXONOMIA' ? 'Borrador' : (record.estado || "Activo");
+                       var isPersonaEdge = entityName === 'Persona' || (record._tipo_arista && record._tipo_arista.indexOf('PERSONA') !== -1);
+                       var edgeEstado = isPersonaEdge ? 'Borrador' : (record.estado || "Activo");
                        edgesToUpsert.push({
                            id_relacion: relId,
                            id_nodo_padre: parentId,

@@ -535,7 +535,7 @@ var Business_Interceptors = (function() {
                             valido_desde: sysDate,
                             valido_hasta: "",
                             es_version_actual: true,
-                            estado: p.estado || "Activo"
+                            estado: "Borrador"
                         });
                     }
                 }
@@ -645,7 +645,7 @@ var Business_Interceptors = (function() {
                                 valido_desde: sysDate,
                                 valido_hasta: "",
                                 es_version_actual: true,
-                                estado: "Activo"
+                                estado: "Borrador"
                             });
                         }
                         if (r.lider_directo) {
@@ -660,7 +660,7 @@ var Business_Interceptors = (function() {
                                 valido_desde: sysDate,
                                 valido_hasta: "",
                                 es_version_actual: true,
-                                estado: "Activo"
+                                estado: "Borrador"
                             });
                         }
                     });
@@ -695,7 +695,7 @@ var Business_Interceptors = (function() {
                             valido_desde: sysDate,
                             valido_hasta: "",
                             es_version_actual: true,
-                            estado: p.estado || "Activo"
+                            estado: "Borrador"
                         });
                     }
                 }

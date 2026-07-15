@@ -1,0 +1,35 @@
+artifact_type: story-design
+version: 1
+skill: rai-story-design
+created: '2026-07-14T15:43:29-06:00'
+story: 'S61.9'
+epic: 'E61'
+content:
+  summary: 'The current ETL process times out on enterprise-scale data sets. Improving efficiency with background processing ensures large volumes of data are handled reliably with correct error reporting.'
+  complexity: moderate
+  acceptance_criteria:
+    - id: AC1
+      description: 'Enterprise ETL operations complete without timing out.'
+      verifiable: true
+    - id: AC2
+      description: 'Error states are correctly reported.'
+      verifiable: true
+    - id: AC3
+      description: 'Code is fully type-annotated and passes pyright/ruff quality checks.'
+      verifiable: true
+  integration_points:
+    - module: 'etl.runner'
+      change_type: modification
+      files: ['src/etl/runner.py']
+    - module: 'etl.reporter'
+      change_type: modification
+      files: ['src/etl/reporter.py']
+  decisions:
+    - id: D1
+      choice: 'Implement background processing and data chunking'
+      rationale: 'Avoids main thread blocking and timeouts for large enterprise datasets.'
+      alternatives_considered: ['Increasing timeout limits', 'In-memory processing optimizations']
+refs:
+  backlog_item: 'RAISE-619'
+  epic_scope: 'work/epics/e61-enterprise-etl-architecture/scope.md'
+metadata: {}

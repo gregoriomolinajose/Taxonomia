@@ -446,6 +446,12 @@
         });
         global.UI_Factory.registerBuilder('textarea', (f) => global.UI_Factory.buildTextarea(f));
         global.UI_Factory.registerBuilder('select', (f) => global.UI_Factory.buildSelect(f));
+        global.UI_Factory.registerBuilder('json_textarea', (f) => {
+            const comp = document.createElement('tx-json-textarea');
+            comp.setAttribute('data-form-component', f.name);
+            comp.field = f;
+            return comp;
+        });
         global.UI_Factory.registerBuilder('divider', (f) => global.UI_Factory.buildDivider(f));
         global.UI_Factory.registerBuilder('avatar', (f) => global.UI_Factory.buildAvatar(f));
         global.UI_Factory.registerBuilder('external_link_button', (f) => global.UI_Factory.buildExternalLinkButton(f));

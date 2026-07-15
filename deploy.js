@@ -263,8 +263,8 @@ try {
 (function() {
     var APP_NAME = '${appName}';
     var appSchemasConfig = {
-        taxonomia: ['Taxonomia', 'Portafolio', 'Value_Stream', 'Value_Stream_Step', 'Equipo', 'Persona', 'Unidad_Negocio', 'Dominio', 'Grupo_Productos', 'Producto', 'Capacidad', 'Cargo', 'Rol', 'Config_Typography', 'Config_System', '_UI_CONFIG', 'Sys_Graph_Edges', 'Sys_Cache_Signals', 'Sys_Roles', 'Sys_Permissions'],
-        greatpeeps: ['Empresas', 'Vacantes', 'Candidatos', 'Entrevistas', 'Persona', '_UI_CONFIG', 'Sys_Graph_Edges', 'Sys_Cache_Signals', 'Sys_Roles', 'Sys_Permissions']
+        taxonomia: ['Taxonomia', 'Portafolio', 'Value_Stream', 'Value_Stream_Step', 'Equipo', 'Persona', 'Unidad_Negocio', 'Dominio', 'Grupo_Productos', 'Producto', 'Capacidad', 'Cargo', 'Rol', 'Config_Typography', 'Config_System', '_UI_CONFIG', 'Sys_Graph_Edges', 'Sys_Cache_Signals', 'Sys_Roles', 'Sys_Permissions', 'Sys_Jobs', 'Sys_DLQ'],
+        greatpeeps: ['Empresas', 'Vacantes', 'Candidatos', 'Entrevistas', 'Persona', '_UI_CONFIG', 'Sys_Graph_Edges', 'Sys_Cache_Signals', 'Sys_Roles', 'Sys_Permissions', 'Sys_Jobs', 'Sys_DLQ']
     };
     var allowed = appSchemasConfig[APP_NAME] || appSchemasConfig['taxonomia'] || [];
     if (typeof APP_SCHEMAS !== 'undefined') {

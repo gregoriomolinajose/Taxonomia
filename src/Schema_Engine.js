@@ -578,9 +578,27 @@ var APP_SCHEMAS = {
     ]
   },
   
+  // [E61] Registro de ejecuciones asíncronas
+  Sys_Jobs: {
+    metadata: { prefix: 'SJOB', showInMenu: true, order: 95, iconName: 'list-outline', color: 'primary',
+                label: 'Ejecuciones de Carga', titleField: 'jobId', idField: 'jobId', fkField: null },
+    primaryKey: "jobId",
+    fields: [
+      { name: "jobId", type: "text", primaryKey: true, label: "ID Job", width: 6 },
+      { name: "status", type: "text", label: "Estado", width: 6 },
+      { name: "total", type: "number", label: "Total Registros", width: 4 },
+      { name: "processed", type: "number", label: "Procesados", width: 4 },
+      { name: "errors", type: "number", label: "Errores", width: 4 },
+      { name: "step", type: "number", label: "Paso Actual", width: 4 },
+      { name: "message", type: "text", label: "Mensaje", width: 8 },
+      { name: "createdAt", type: "text", label: "Fecha Inicio", width: 6 },
+      { name: "updatedAt", type: "text", label: "Última Actividad", width: 6 }
+    ]
+  },
+
   // [E61-S61.5] Dead Letter Queue para errores asíncronos persistentes
   Sys_DLQ: {
-    metadata: { prefix: 'SDLQ', showInMenu: false, order: 96, iconName: 'warning-outline', color: 'danger',
+    metadata: { prefix: 'SDLQ', showInMenu: true, order: 96, iconName: 'warning-outline', color: 'danger',
                 label: 'Dead Letter Queue', titleField: 'error_message', idField: 'id_dlq', fkField: null },
     primaryKey: "id_dlq",
     fields: [
