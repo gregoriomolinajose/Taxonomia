@@ -4,7 +4,7 @@
  */
 
 var JobQueue = (function() {
-  var JOB_SHEET_NAME = "SYS_JOBS_V3";
+  var JOB_SHEET_NAME = "Sys_Jobs";
   var CHUNK_SIZE = 45000;
 
   function _getJobSheet() {
@@ -17,9 +17,10 @@ var JobQueue = (function() {
     }
     
     var ss = ssId ? SpreadsheetApp.openById(ssId) : SpreadsheetApp.getActiveSpreadsheet();
-    var sheet = ss.getSheetByName(JOB_SHEET_NAME);
+    var actualSheetName = "DB_" + JOB_SHEET_NAME;
+    var sheet = ss.getSheetByName(actualSheetName);
     if (!sheet) {
-      sheet = ss.insertSheet(JOB_SHEET_NAME);
+      sheet = ss.insertSheet(actualSheetName);
       sheet.appendRow(["jobId", "status", "total", "processed", "errors", "step", "message", "createdAt", "updatedAt", "payload..."]);
     }
     return sheet;

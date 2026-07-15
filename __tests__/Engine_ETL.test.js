@@ -30,6 +30,7 @@ global.APP_SCHEMAS = {
 };
 
 global.getAppSchema = (entityName) => global.APP_SCHEMAS[entityName];
+global.getFieldNameFromLabel = vi.fn((entityName, label) => String(label).toLowerCase());
 
 // Mock DB Storage to emulate list()
 const dbPersonaRows = [
@@ -95,5 +96,61 @@ describe('Engine_ETL: hydrateAndDeduplicate (S38.6)', () => {
         expect(payload[0].equipo).toBe('Data Engineer');
         expect(payload[0].cargo).toBe('Front-End Developer');
         expect(payload[0].roles_asignados).toBe('Admin, Superuser');
+    });
+});
+
+describe('Engine_ETL: extractDataFromDrive (S61.10)', () => {
+    beforeEach(() => {
+        vi.clearAllMocks();
+    });
+
+    it('should bound the extraction range to ignore empty trailing rows', () => {
+        const mockGetDisplayValues = vi.fn(() => [['email', 'nombre'], ['test@test.com', 'Test']]);
+        const mockGetValues = vi.fn(() => {
+            const raw = [['email', 'nombre'], ['test@test.com', 'Test']];
+            for (let i = 2; i < 1000; i++) {
+                raw.push(['', '']);
+            }
+            return raw;
+        });
+        const mockGetRange = vi.fn(() => ({
+            getDisplayValues: mockGetDisplayValues,
+            getValues: vi.fn(() => [['email', 'nombre']]) // Just for line 297 getValues()[0]
+        }));
+        const mockGetDataRange = vi.fn(() => ({
+            getValues: mockGetValues,
+            getNumColumns: vi.fn(() => 2),
+            getDisplayValues: vi.fn(() => {
+                const raw = [['email', 'nombre'], ['test@test.com', 'Test']];
+                for (let i = 2; i < 1000; i++) {
+                    raw.push(['', '']);
+                }
+                return raw;
+            })
+        }));
+
+        const mockSheet = {
+            getLastColumn: vi.fn(() => 2),
+            getLastRow: vi.fn(() => 1000),
+            getName: vi.fn(() => 'TestSheet'),
+            getDataRange: mockGetDataRange,
+            getRange: mockGetRange
+        };
+
+        global.SpreadsheetApp = {
+            openById: vi.fn(() => ({
+                getSheets: vi.fn(() => [mockSheet]),
+                getName: vi.fn(() => 'Test Spreadsheet')
+            }))
+        };
+
+        const records = Engine_ETL.extractDataFromDrive('Persona', 'https://docs.google.com/spreadsheets/d/12345/edit');
+
+        expect(records.length).toBe(1);
+        expect(records[0].email).toBe('test@test.com');
+        
+        // Assert that getRange was called with bounded rows
+        expect(mockGetRange).toHaveBeenCalledWith(1, 1, 2, 2);
+        expect(mockGetDisplayValues).toHaveBeenCalled();
     });
 });

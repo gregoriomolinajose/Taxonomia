@@ -1,0 +1,32 @@
+artifact_type: story-design
+version: 1
+skill: rai-story-design
+created: '2026-07-15T09:25:00Z'
+story: 'S61.10'
+epic: 'e61'
+content:
+  summary: 'Optimizes ETL extraction by applying Acotamiento de Rango Real to avoid parsing empty rows with data validation rules. Reduces load times from minutes to seconds.'
+  complexity: moderate
+  acceptance_criteria:
+    - id: AC1
+      description: 'The extraction process only calls getDisplayValues() on rows that contain actual data, ignoring rows that only have formatting or data validation rules.'
+      verifiable: true
+    - id: AC2
+      description: 'A real Google Sheet with 1000 rows of data validation but only 5 rows of data processes in seconds instead of minutes.'
+      verifiable: true
+    - id: AC3
+      description: 'An empty sheet correctly throws the empty sheet error without trying to process 1000 rows.'
+      verifiable: true
+  integration_points:
+    - module: 'src.Engine_ETL'
+      change_type: modification
+      files: ['src/Engine_ETL.js']
+  decisions:
+    - id: D1
+      choice: 'Use raw getValues() to scan for true last row, then call getDisplayValues() only on bounded range.'
+      rationale: 'getValues() is significantly faster than getDisplayValues() on empty cells with validation rules. By finding the true bounding box first, we avoid expensive formatting operations on empty cells.'
+      alternatives_considered: ['Using Google Sheets API to fetch trimmed data directly (blocked by organization restrictions as per file comments)', 'Removing validation rules before reading (destructive to the template).']
+refs:
+  backlog_item: 'S61.10'
+  epic_scope: 'work/epics/e61-enterprise-etl-architecture/stories/s61.10-scope.md'
+metadata: {}
