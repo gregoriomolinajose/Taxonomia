@@ -20,6 +20,11 @@ Refactorizar el módulo de Importación/Exportación (ETL) para transformarlo en
 | S61.4 | Async Job Processing | L | Done | Implementar cola de tareas en backend y polling en frontend. |
 | S61.5 | Dead Letter Queue (DLQ) | L | Pending | Tabla temporal para filas con error y UI de resolución de conflictos. |
 | S61.6 | Enhanced ETL Progress UX | S | Done | Mejorar la experiencia de carga visual con micromensajes en tiempo real. |
+| S61.10 | Bounded Extraction | S | Done | Optimización de extracción acotada. |
+| S61.11 | Async Pulse | S | Done | Procesamiento de chunks por pulsos. |
+| S61.12 | Non-blocking Hydration | S | Done | Hidratación en background sin congelar UI. |
+| S61.13 | CacheSignal Limits | S | Done | Pruning de la caché para evitar límite de 100KB y fixes de logs. |
+| S61.14 | ETL Job Mutex Lock | S | Pending | Control de concurrencia para evitar race condition entre API y Trigger. |
 
 **Total:** 6 stories, 23 SP
 

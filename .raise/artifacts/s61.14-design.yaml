@@ -1,0 +1,32 @@
+artifact_type: story-design
+version: 1
+skill: rai-story-design
+created: '2026-07-15T16:27:00Z'
+story: 'S61.14'
+epic: 'E61'
+content:
+  summary: 'Implement a cache-based mutex in processNextJobChunk to prevent concurrent execution of the same job by UI pulses and Time Triggers.'
+  complexity: simple
+  acceptance_criteria:
+    - id: AC1
+      description: 'Job processing locks the job ID in CacheService for 240 seconds.'
+      verifiable: true
+    - id: AC2
+      description: 'If a lock exists for the job ID, the process releases the general lock and exits early with { debug: "job_already_processing" }.'
+      verifiable: true
+    - id: AC3
+      description: 'The cache lock is removed in a finally block after processing completes or fails.'
+      verifiable: true
+  integration_points:
+    - module: 'src.Job_Worker'
+      change_type: modification
+      files: ['src/Job_Worker.js']
+  decisions:
+    - id: D1
+      choice: 'Use CacheService over PropertiesService for the lock.'
+      rationale: 'CacheService supports explicit expiration (240s) and is faster, suitable for ephemeral locks.'
+      alternatives_considered: ['PropertiesService', 'DB-level lock status']
+refs:
+  backlog_item: 'S61.14'
+  epic_scope: 'work/epics/e61-enterprise-etl-architecture/scope.md'
+metadata: {}
