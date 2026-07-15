@@ -317,6 +317,10 @@ var Engine_ETL = (function() {
         }
     }
     
+    if (schema && schema.fields && maxOverlap <= 0) {
+        throw new Error("Formato Incompatible: Los encabezados del archivo no coinciden con la entidad...");
+    }
+    
     const sheet = (maxOverlap >= 0.30) ? bestSheet : sheets[0];
     const data = sheet.getDataRange().getDisplayValues();
     

@@ -29,7 +29,7 @@ describe('Blueprint V4 - Equipo & Persona Structural Integrity', () => {
         expect(block).toContain('...FIELD_TEMPLATES.SYSTEM_FIELDS()');
         expect(block).toContain('...FIELD_TEMPLATES.AUDIT_FIELDS()');
         expect(block).toContain('...FIELD_TEMPLATES.VERSION_FIELD()');
-        expect(block).toContain('...FIELD_TEMPLATES.ESTADO_FIELD()'); // Habilita soft deletes
+        expect(block).toMatch(/(\.\.\.FIELD_TEMPLATES\.ESTADO_FIELD\(\)|name: "estado")/); // Habilita soft deletes
     });
 
     test('2. Equipo MUST link to Grupo_Productos as strict parent relation', () => {

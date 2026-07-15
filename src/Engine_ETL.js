@@ -315,7 +315,7 @@ var Engine_ETL = (function() {
         }
         
         if (maxOverlap <= 0) {
-            throw new Error("Formato Incompatible: Los encabezados del archivo no coinciden con la entidad...");
+            throw new Error("Formato Incompatible: Los encabezados del archivo no coinciden con la entidad " + entityName);
         }
     }
     const sheet = (maxOverlap >= 0.30) ? bestSheet : sheets[0];

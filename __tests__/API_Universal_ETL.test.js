@@ -7,11 +7,12 @@
 
 // Mock Dependencies
 global.Engine_DB = {
-    upsertBatch: vi.fn().mockReturnValue({ count: 2, status: 'success' })
+    upsertBatch: vi.fn().mockReturnValue({ count: 2, status: 'success' }),
+    list: vi.fn().mockReturnValue({ rows: [] })
 };
 
 global.Engine_ETL = {
-    hydrateAndDeduplicate: vi.fn()
+    hydrateAndDeduplicate: vi.fn().mockImplementation((e, items) => ({ data: items }))
 };
 
 global.APP_SCHEMAS = {

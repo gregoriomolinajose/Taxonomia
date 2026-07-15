@@ -236,7 +236,10 @@ function API_Universal_Router(action, entityName, payload) {
       
       // [S38.5] Pre-procesamiento de Batch: Deduplicación Lógica e Hidratación Automática
       if (typeof Engine_ETL !== 'undefined' && typeof Engine_ETL.hydrateAndDeduplicate === 'function') {
-          Engine_ETL.hydrateAndDeduplicate(entityName, payload);
+          const hydratedResult = Engine_ETL.hydrateAndDeduplicate(entityName, payload);
+          if (hydratedResult && hydratedResult.data) {
+              payload = hydratedResult.data;
+          }
       }
       
       // [S47.6] Bulk Temporal Graph Resolution (Diffing)
