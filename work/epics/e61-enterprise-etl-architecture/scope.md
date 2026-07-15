@@ -26,7 +26,7 @@ Refactorizar el módulo de Importación/Exportación (ETL) para transformarlo en
 | S61.13 | CacheSignal Limits | S | Done | Pruning de la caché para evitar límite de 100KB y fixes de logs. |
 | S61.14 | ETL Job Mutex Lock | S | Done | Control de concurrencia para evitar race condition entre API y Trigger. |
 | S61.15 | Intra-batch Deduplication Bugfix | S | Pending | Corrección de fallo de deduplicación interna dentro del mismo chunk del ETL. |
-| S61.16 | Fail-fast Schema Format Validation | S | Pending | Agregar validación temprana de cabeceras para abortar si el formato es completamente distinto. |
+| S61.16 | Fail-fast Schema Format Validation | S | Done | Agregar validación temprana de cabeceras para abortar si el formato es completamente distinto. |
 
 **Total:** 7 stories, 24 SP
 
@@ -139,6 +139,7 @@ Stream 2 (Parallel):           S61.3 (Validation) ───┘
 | S61.3 | M | Done | — | — | |
 | S61.4 | L | Done | — | — | |
 | S61.5 | L | Pending | — | — | |
+| S61.16 | S | Done | 90m | — | |
 
 ### Sequencing Risks
 
