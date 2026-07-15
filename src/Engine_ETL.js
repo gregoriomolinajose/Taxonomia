@@ -316,11 +316,22 @@ var Engine_ETL = (function() {
     }
     
     const sheet = (maxOverlap >= 0.30) ? bestSheet : sheets[0];
-    const data = sheet.getDataRange().getDisplayValues();
+    const rawDataRange = sheet.getDataRange();
+    const rawValues = rawDataRange.getValues();
+
+    let trueLastRow = 0;
+    for (let r = rawValues.length - 1; r >= 0; r--) {
+        if (rawValues[r].some(cell => cell !== undefined && cell !== null && String(cell).trim() !== "")) {
+            trueLastRow = r + 1;
+            break;
+        }
+    }
     
-    if (!data || data.length < 2) {
+    if (trueLastRow < 2) {
       throw new Error("La hoja de cálculo está vacía o carece de registros.");
     }
+
+    const data = sheet.getRange(1, 1, trueLastRow, rawDataRange.getNumColumns()).getDisplayValues();
 
     if (options.rawMatrix) {
         return data; // Return 2D array directly for specialized parsers
