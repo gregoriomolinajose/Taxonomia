@@ -182,7 +182,7 @@ describe('Engine_ETL: extractDataFromDrive (S61.10)', () => {
 
         expect(() => {
             Engine_ETL.extractDataFromDrive('Persona', 'https://docs.google.com/spreadsheets/d/12345/edit');
-        }).toThrow("Formato Incompatible: Los encabezados del archivo no coinciden con la entidad...");
+        }).toThrow("Formato Incompatible: Los encabezados del archivo no coinciden con la entidad Persona");
     });
 
     it('should throw explicit Error when sheet is completely empty (S61.16)', () => {
@@ -203,6 +203,6 @@ describe('Engine_ETL: extractDataFromDrive (S61.10)', () => {
 
         expect(() => {
             Engine_ETL.extractDataFromDrive('Persona', 'https://docs.google.com/spreadsheets/d/empty/edit');
-        }).toThrow("Formato Incompatible: Los encabezados del archivo no coinciden con la entidad...");
+        }).toThrow("Formato Incompatible: Los encabezados del archivo no coinciden con la entidad Persona");
     });
 });
