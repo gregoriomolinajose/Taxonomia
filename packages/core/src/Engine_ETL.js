@@ -443,13 +443,23 @@ var Engine_ETL = (function() {
                        Logger.log(`[ETL Debug] payload eval keys: ${evalKeys.join(', ')} -> matchedRow: ${matchedRow ? matchedRow[pkField] : 'NULL'} | _isNewIngest: ${payload._isNewIngest}`);
                    }
                    
-                   if (matchedRow) {
-                       if (payload._isNewIngest) {
-                           payload._isDuplicateMatch = true;
-                           if (typeof Logger !== 'undefined') Logger.log(`[ETL Debug] SET _isDuplicateMatch = true FOR ${matchedRow[pkField]}`);
-                       }
-                       payload._tempId = payload[pkField]; payload[pkField] = matchedRow[pkField]; // Subsumimos el Temp UUID y forzamos modo UPDATE
-                   }
+                    if (matchedRow) {
+                        if (payload._isNewIngest) {
+                            payload._isDuplicateMatch = true;
+                            if (typeof Logger !== 'undefined') Logger.log(`[ETL Debug] SET _isDuplicateMatch = true FOR ${matchedRow[pkField]}`);
+                        }
+                        
+                        // [BUGFIX] S61.15 Intra-Batch Deduplication Fix
+                        if (!matchedRow[pkField]) {
+                            // Ambos son nuevos en este mismo lote. Fusionamos información y descartamos el duplicado.
+                            Object.assign(matchedRow, payload);
+                            payload._dropFromBatch = true; // Marcar para eliminar del lote
+                        } else {
+                            // El matchedRow ya existe en DB, preparamos actualización normal
+                            payload._tempId = payload[pkField]; 
+                            payload[pkField] = matchedRow[pkField]; // Subsumimos el Temp UUID y forzamos modo UPDATE
+                        }
+                    }
                }
        });
 
@@ -459,6 +469,9 @@ var Engine_ETL = (function() {
        }
 
        // [S44.11] Commit batch creations before closing pipeline - REMOVIDO (Movido a Interceptor)
+
+       // Filtrar los duplicados intra-lote marcados para descarte
+       items = items.filter(p => !p._dropFromBatch);
 
        return { data: items }; // Return payload wrapped in object
   }

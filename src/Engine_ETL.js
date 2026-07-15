@@ -313,8 +313,11 @@ var Engine_ETL = (function() {
                 bestSheet = tempSheet;
             }
         }
+        
+        if (maxOverlap <= 0) {
+            throw new Error("Formato Incompatible: Los encabezados del archivo no coinciden con la entidad...");
+        }
     }
-    
     const sheet = (maxOverlap >= 0.30) ? bestSheet : sheets[0];
     const rawDataRange = sheet.getDataRange();
     const rawValues = rawDataRange.getValues();
@@ -465,7 +468,17 @@ var Engine_ETL = (function() {
                             payload._isDuplicateMatch = true;
                             if (typeof Logger !== 'undefined') Logger.log(`[ETL Debug] SET _isDuplicateMatch = true FOR ${matchedRow[pkField]}`);
                         }
-                        payload._tempId = payload[pkField]; payload[pkField] = matchedRow[pkField]; // Subsumimos el Temp UUID y forzamos modo UPDATE
+                        
+                        // [BUGFIX] S61.15 Intra-Batch Deduplication Fix
+                        if (!matchedRow[pkField]) {
+                            // Ambos son nuevos en este mismo lote. Fusionamos información y descartamos el duplicado.
+                            Object.assign(matchedRow, payload);
+                            payload._dropFromBatch = true; // Marcar para eliminar del lote
+                        } else {
+                            // El matchedRow ya existe en DB, preparamos actualización normal
+                            payload._tempId = payload[pkField]; 
+                            payload[pkField] = matchedRow[pkField]; // Subsumimos el Temp UUID y forzamos modo UPDATE
+                        }
                     } else {
                         // [BUGFIX] Intra-Batch Deduplication: Add the new row to lookupMaps
                         // so that subsequent rows in the same batch with the same unique key will match it.
@@ -487,6 +500,9 @@ var Engine_ETL = (function() {
        }
 
        // [S44.11] Commit batch creations before closing pipeline - REMOVIDO (Movido a Interceptor)
+
+       // Filtrar los duplicados intra-lote marcados para descarte
+       items = items.filter(p => !p._dropFromBatch);
 
        return { data: items }; // Return payload wrapped in object
   }
