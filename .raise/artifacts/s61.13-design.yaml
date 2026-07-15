@@ -1,0 +1,32 @@
+artifact_type: story-design
+version: 1
+skill: rai-story-design
+created: '2026-07-15T15:52:44Z'
+story: 'S61.13'
+epic: 'E61'
+content:
+  summary: 'Limit CacheSignals to prevent 100KB size limit exceptions, and explicitly log null for unmatched ETL rows.'
+  complexity: simple
+  acceptance_criteria:
+    - id: AC1
+      description: 'In _checkCacheSignals, before cache.put, reduce the signals array to keep only the most recent signal per entity_name and by_tenant combination.'
+      verifiable: true
+    - id: AC2
+      description: 'In Engine_ETL.js, if the DB search returns no match, set matchedRow to null instead of undefined.'
+      verifiable: true
+  integration_points:
+    - module: 'Engine_DB.js'
+      change_type: modification
+      files: ['Engine_DB.js']
+    - module: 'Engine_ETL.js'
+      change_type: modification
+      files: ['Engine_ETL.js']
+  decisions:
+    - id: D1
+      choice: 'Reduce signals in _checkCacheSignals instead of before sending to the function.'
+      rationale: 'Ensures the cache only stores the minimally required data at the point of caching.'
+      alternatives_considered: ['Prune before calling _checkCacheSignals']
+refs:
+  backlog_item: 'S61.13'
+  epic_scope: 'work/epics/e61-enterprise-etl-architecture/scope.md'
+metadata: {}
