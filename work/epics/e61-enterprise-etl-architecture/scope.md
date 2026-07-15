@@ -24,7 +24,7 @@ Refactorizar el módulo de Importación/Exportación (ETL) para transformarlo en
 | S61.11 | Async Pulse | S | Done | Procesamiento de chunks por pulsos. |
 | S61.12 | Non-blocking Hydration | S | Done | Hidratación en background sin congelar UI. |
 | S61.13 | CacheSignal Limits | S | Done | Pruning de la caché para evitar límite de 100KB y fixes de logs. |
-| S61.14 | ETL Job Mutex Lock | S | Pending | Control de concurrencia para evitar race condition entre API y Trigger. |
+| S61.14 | ETL Job Mutex Lock | S | Done | Control de concurrencia para evitar race condition entre API y Trigger. |
 
 **Total:** 6 stories, 23 SP
 
