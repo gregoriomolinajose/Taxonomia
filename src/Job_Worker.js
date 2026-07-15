@@ -49,6 +49,14 @@ var JobWorker = (function() {
         return { debug: "no_pending_job" };
       }
       
+      var cache = CacheService.getScriptCache();
+      var jobLockKey = 'JOB_LOCK_' + job.jobId;
+      if (cache.get(jobLockKey)) {
+        lock.releaseLock();
+        return { debug: "job_already_processing" };
+      }
+      cache.put(jobLockKey, "1", 240);
+      
       if (job.status === "PENDING") {
         try {
           JobQueue.updateJobStatus(job.jobId, { 
@@ -320,6 +328,10 @@ var JobWorker = (function() {
     } catch(err) {
       if (typeof Logger !== 'undefined') Logger.log("Error general en processNextJobChunk: " + err.toString());
       return { debug: "error_general", error: err.toString() };
+    } finally {
+      if (typeof jobLockKey !== 'undefined' && jobLockKey) {
+        try { CacheService.getScriptCache().remove(jobLockKey); } catch(e) {}
+      }
     }
   }
 
