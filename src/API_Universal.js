@@ -105,16 +105,23 @@ function API_Universal_Router(action, entityName, payload) {
       responseData = JobQueue.enqueue(payload);
       var debugWorker = {};
       if (typeof JobWorker !== 'undefined') {
-        // Process first chunk synchronously to avoid UI delay for small datasets
+        // En lugar de procesar síncronamente, solo disparamos el trigger en background
+        JobWorker.triggerProcessing();
+      }
+      return JSON.stringify({ status: "success", data: responseData, action, debugWorker: debugWorker });
+    }
+
+    if (action === 'job_process_chunk') {
+      var debugWorker = {};
+      if (typeof JobWorker !== 'undefined') {
         try {
            debugWorker = JobWorker.processNextJobChunk() || {};
         } catch(e) {
            debugWorker.error = e.toString();
-           if (typeof Logger !== 'undefined') Logger.log("Error processing first chunk: " + e);
+           if (typeof Logger !== 'undefined') Logger.log("Error processing chunk on demand: " + e);
         }
-        JobWorker.triggerProcessing();
       }
-      return JSON.stringify({ status: "success", data: responseData, action, debugWorker: debugWorker });
+      return JSON.stringify({ status: "success", data: debugWorker, action });
     }
 
     if (action === 'job_status') {

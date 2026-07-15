@@ -874,7 +874,7 @@ window.UI_BulkImporter = class UI_BulkImporter {
                             const jobId = enqueueRes.data;
                             progressCb(0, 100, false, null, "Trabajo encolado en el servidor...");
                             
-                            const pollServer = () => {
+                            const checkStatus = () => {
                                 window.DataAPI.call('API_Universal_Router', 'job_status', entity, { jobId: jobId })
                                 .then(statusRes => {
                                     console.log("=== STATUS RESPONSE ===", statusRes);
@@ -886,17 +886,28 @@ window.UI_BulkImporter = class UI_BulkImporter {
                                             resolve({ success: job.processed - job.errors, duplicate: 0, error: job.errors, jobId: jobId, entity: entity });
                                         } else {
                                             progressCb(job.processed, chunks, false, null, job.message || `Procesando en servidor... ${job.processed}/${job.total}`, job.step || 2);
-                                            setTimeout(pollServer, 3000);
+                                            // Pulso activo para seguir procesando sin esperar al trigger
+                                            activeProcessPulse();
                                         }
                                     } else {
-                                        setTimeout(pollServer, 3000);
+                                        setTimeout(checkStatus, 3000);
                                     }
                                 }).catch(err => {
-                                    reject(err);
+                                    setTimeout(checkStatus, 3000);
+                                });
+                            };
+
+                            const activeProcessPulse = () => {
+                                window.DataAPI.call('API_Universal_Router', 'job_process_chunk', entity, { jobId: jobId })
+                                .then(() => {
+                                    checkStatus();
+                                }).catch(err => {
+                                    setTimeout(checkStatus, 3000);
                                 });
                             };
                             
-                            setTimeout(pollServer, 3000);
+                            // Iniciar el procesamiento forzado
+                            activeProcessPulse();
                         }).catch(reject);
                     });
                 } else {
