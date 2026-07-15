@@ -153,4 +153,56 @@ describe('Engine_ETL: extractDataFromDrive (S61.10)', () => {
         expect(mockGetRange).toHaveBeenCalledWith(1, 1, 2, 2);
         expect(mockGetDisplayValues).toHaveBeenCalled();
     });
+
+    it('should throw explicit Error when headers are completely incompatible (maxOverlap <= 0) (S61.16)', () => {
+        const mockGetValues = vi.fn(() => [['col_invalida_1', 'col_invalida_2'], ['foo', 'bar']]);
+        const mockGetRange = vi.fn(() => ({
+            getValues: mockGetValues,
+            getDisplayValues: mockGetValues
+        }));
+        
+        const mockSheet = {
+            getLastColumn: vi.fn(() => 2),
+            getLastRow: vi.fn(() => 2),
+            getName: vi.fn(() => 'TestSheet'),
+            getRange: mockGetRange,
+            getDataRange: vi.fn(() => ({
+                getValues: mockGetValues,
+                getNumColumns: vi.fn(() => 2),
+                getDisplayValues: mockGetValues
+            }))
+        };
+
+        global.SpreadsheetApp = {
+            openById: vi.fn(() => ({
+                getSheets: vi.fn(() => [mockSheet]),
+                getName: vi.fn(() => 'Test Spreadsheet')
+            }))
+        };
+
+        expect(() => {
+            Engine_ETL.extractDataFromDrive('Persona', 'https://docs.google.com/spreadsheets/d/12345/edit');
+        }).toThrow("Formato Incompatible: Los encabezados del archivo no coinciden con la entidad Persona");
+    });
+
+    it('should throw explicit Error when sheet is completely empty (S61.16)', () => {
+        const mockSheet = {
+            getLastColumn: vi.fn(() => 0),
+            getLastRow: vi.fn(() => 0),
+            getName: vi.fn(() => 'EmptySheet'),
+            getRange: vi.fn(),
+            getDataRange: vi.fn()
+        };
+
+        global.SpreadsheetApp = {
+            openById: vi.fn(() => ({
+                getSheets: vi.fn(() => [mockSheet]),
+                getName: vi.fn(() => 'Test Spreadsheet')
+            }))
+        };
+
+        expect(() => {
+            Engine_ETL.extractDataFromDrive('Persona', 'https://docs.google.com/spreadsheets/d/empty/edit');
+        }).toThrow("Formato Incompatible: Los encabezados del archivo no coinciden con la entidad Persona");
+    });
 });

@@ -18,6 +18,7 @@ describe('DataEngine_ETL (Frontend Client S38.6)', () => {
         global.DataAPI = mockDataAPI;
         window.DataAPI = mockDataAPI;
         window.Schema_Utils = { getFieldNameFromLabel: vi.fn((e, k) => String(k).toLowerCase()) }; // jsdom bind
+        window.ValidationEngine = { validate: vi.fn((row, entity) => ({ isValid: true, validatedData: row })) };
         
         vi.clearAllMocks();
     });
