@@ -435,6 +435,10 @@ var Engine_ETL = (function() {
                        }
                    }
                    
+                   if (matchedRow === undefined) {
+                       matchedRow = null;
+                   }
+                   
                    if (typeof Logger !== 'undefined') {
                        Logger.log(`[ETL Debug] payload eval keys: ${evalKeys.join(', ')} -> matchedRow: ${matchedRow ? matchedRow[pkField] : 'NULL'} | _isNewIngest: ${payload._isNewIngest}`);
                    }

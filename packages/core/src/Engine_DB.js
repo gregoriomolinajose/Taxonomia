@@ -114,7 +114,18 @@ function _checkCacheSignals(entityName, cachedAt) {
             const config = (typeof CONFIG !== 'undefined') ? CONFIG : {};
             if (!config.SPREADSHEET_ID_DB || config.SPREADSHEET_ID_DB.trim().length === 0) return false;
             const result = _Adapter_Sheets.list('Sys_Cache_Signals', config, 'objects');
-            signals = (result && result.rows) ? result.rows : [];
+            let rawSignals = (result && result.rows) ? result.rows : [];
+            
+            // Prune signals to keep only the most recent per entity_name and by_tenant combination
+            const prunedMap = {};
+            rawSignals.forEach(function(s) {
+                const key = s.entity_name + '|' + s.by_tenant;
+                if (!prunedMap[key] || s.invalidated_at > prunedMap[key].invalidated_at) {
+                    prunedMap[key] = s;
+                }
+            });
+            signals = Object.keys(prunedMap).map(function(k) { return prunedMap[k]; });
+
             // TTL intencional de 60 segundos — ventana máxima de inconsistencia cross-tenant
             cache.put(signalsCacheKey, JSON.stringify(signals), 60);
         }
