@@ -18,7 +18,7 @@ Refactorizar el módulo de Importación/Exportación (ETL) para transformarlo en
 | S61.2 | Metadata Hooks Engine | M | Done | Mover lógica dura de entidades a APP_SCHEMAS (onRowTransform). |
 | S61.3 | Centralized Validation | M | Done | Crear ValidationEngine basado en esquema para ingesta y UI. |
 | S61.4 | Async Job Processing | L | Done | Implementar cola de tareas en backend y polling en frontend. |
-| S61.5 | Dead Letter Queue (DLQ) | L | Pending | Tabla temporal para filas con error y UI de resolución de conflictos. |
+| S61.5 | Dead Letter Queue (DLQ) | L | Done | Tabla temporal para filas con error y UI de resolución de conflictos. |
 | S61.6 | Enhanced ETL Progress UX | S | Done | Mejorar la experiencia de carga visual con micromensajes en tiempo real. |
 | S61.10 | Bounded Extraction | S | Done | Optimización de extracción acotada. |
 | S61.11 | Async Pulse | S | Done | Procesamiento de chunks por pulsos. |
@@ -138,7 +138,7 @@ Stream 2 (Parallel):           S61.3 (Validation) ───┘
 | S61.2 | M | Done | — | — | |
 | S61.3 | M | Done | — | — | |
 | S61.4 | L | Done | — | — | |
-| S61.5 | L | Pending | — | — | |
+| S61.5 | L | Done | 150m | — | |
 | S61.16 | S | Done | 90m | — | |
 
 ### Sequencing Risks
