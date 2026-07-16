@@ -326,7 +326,7 @@ var JobWorker = (function() {
           payload: job.payload
         });
         
-        if (entityName === 'Persona' && errors === 0 && typeof JobQueue !== 'undefined') {
+        if (entityName === 'Persona' && typeof JobQueue !== 'undefined') {
             JobQueue.enqueue({ action: 'Job_WorkspaceSync' });
         }
 
