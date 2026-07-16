@@ -145,7 +145,7 @@ var JobWorker = (function() {
     // [BUGFIX] Execute ETL deduplication and interceptors before processing the chunk
     if (typeof Engine_ETL !== 'undefined' && typeof Engine_ETL.hydrateAndDeduplicate === 'function') {
         try {
-            Engine_ETL.hydrateAndDeduplicate(entityName, chunk);
+            chunk = Engine_ETL.hydrateAndDeduplicate(entityName, chunk);
         } catch (e) {
             if (typeof Logger !== 'undefined') Logger.log("Error en hydrateAndDeduplicate: " + e.toString());
             debugErrors.push("ETL Deduplication Error: " + e.toString());
@@ -160,6 +160,12 @@ var JobWorker = (function() {
     
     for (var i = 0; i < chunk.length; i++) {
       var record = chunk[i];
+      
+      // Check if Business Interceptors rejected the record
+      if (record._metadata && record._metadata.error) {
+          recordDlqErrors([record], record._metadata.error);
+          continue;
+      }
       
       var pkField = 'id';
       var schema = (typeof APP_SCHEMAS !== 'undefined') ? APP_SCHEMAS[entityName] : null;
