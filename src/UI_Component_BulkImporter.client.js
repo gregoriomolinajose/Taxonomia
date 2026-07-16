@@ -450,8 +450,18 @@ window.UI_BulkImporter = class UI_BulkImporter {
         let currentStep = step || 2;
         
         if (!progressContainer) {
-            this.containerNode.innerHTML = `
-                <div style="display: flex; flex-direction: column; align-items: center; justify-content: flex-start; height: 100%; padding: 40px 20px; background: #fafafa; min-height: 500px;">
+            // Hide initial UI elements safely instead of destroying them
+            Array.from(this.containerNode.children).forEach(c => {
+                if (!c.classList.contains('etl-progress-wrapper')) {
+                    c.style.display = 'none';
+                    c.classList.add('etl-hidden-by-progress');
+                }
+            });
+            
+            const wrapper = document.createElement('div');
+            wrapper.className = 'etl-progress-wrapper';
+            wrapper.style.cssText = "display: flex; flex-direction: column; align-items: center; justify-content: flex-start; height: 100%; padding: 40px 20px; background: #fafafa; min-height: 500px;";
+            wrapper.innerHTML = `
                     
                     <style>
                         .etl-pulse-container {
@@ -624,8 +634,11 @@ window.UI_BulkImporter = class UI_BulkImporter {
                         </div>
                     </div>
                 </div>
+                    </div>
+                </div>
             `;
-            progressContainer = this.containerNode.querySelector('#etl-progress-container');
+            this.containerNode.appendChild(wrapper);
+            progressContainer = wrapper.querySelector('#etl-progress-container');
         }
         
         const progressBar = this.containerNode.querySelector('#etl-progress-bar');
@@ -799,9 +812,14 @@ window.UI_BulkImporter = class UI_BulkImporter {
     }
 
     async _defaultDriveSync(entity, url) {
-        // Mostrar UI de Progreso Inmediatamente para evitar el 'vacío' visual
-        this.updateProgress(0, 100, false, null, "Esto puede demorar unos segundos...", 1);
-
+        // En lugar de ocultar la forma de inmediato, damos un estado de "Validando" al botón
+        const btnSyncDrive = this.containerNode.querySelector('#btn-sync-drive');
+        const originalBtnText = btnSyncDrive ? btnSyncDrive.innerHTML : 'Cargar Registros';
+        
+        if (btnSyncDrive) {
+            btnSyncDrive.disabled = true;
+            btnSyncDrive.innerHTML = '<ion-spinner name="crescent" style="width:20px;height:20px;vertical-align:middle;margin-right:8px;"></ion-spinner> Validando...';
+        }
 
         let etlEngine = null;
         let reqOptions = {};
@@ -822,6 +840,16 @@ window.UI_BulkImporter = class UI_BulkImporter {
         try {
             const res = await window.DataAPI.call('API_Universal_Router', 'etl_extract_sheet_data', entity, { url: url, options: reqOptions });
             if (res && res.data) {
+                // Si la validación es exitosa, restauramos el botón internamente 
+                // y pasamos a la pantalla de progreso del wizard
+                if (btnSyncDrive) {
+                    btnSyncDrive.disabled = false;
+                    btnSyncDrive.innerHTML = originalBtnText;
+                }
+                
+                // Ahora sí iniciamos el flujo del wizard visualmente
+                this.updateProgress(0, 100, false, null, "Preparando lote de datos...", 1);
+                
                 // S56.4: Inyección de Contexto Borrador si es llamado desde el Wizard
                 if (this.contextId && Array.isArray(res.data)) {
                     res.data.forEach(row => {
@@ -958,12 +986,34 @@ window.UI_BulkImporter = class UI_BulkImporter {
             }
         } catch(err) {
             console.error('[ETL Fatal Error]', err);
+            
+            // Restauramos el botón a su estado normal si falló la validación
+            if (btnSyncDrive) {
+                btnSyncDrive.disabled = false;
+                btnSyncDrive.innerHTML = originalBtnText;
+            }
+            
+            // Revert progress UI
+            const wrapper = this.containerNode.querySelector('.etl-progress-wrapper');
+            if (wrapper) wrapper.remove();
+            
+            Array.from(this.containerNode.children).forEach(c => {
+                if (c.classList.contains('etl-hidden-by-progress')) {
+                    c.style.display = '';
+                    c.classList.remove('etl-hidden-by-progress');
+                }
+            });
+
             const urlInput = this.containerNode.querySelector('#etl-drive-url');
-            if (urlInput && err.message && (err.message.includes('vací') || err.message.includes('data útil') || err.message.includes('vacio') || err.message.includes('columna correo') || err.message.includes('acceder al documento') || err.message.includes('inaccesible') || err.message.includes('MimeType'))) {
+            if (urlInput && err.message && (err.message.includes('vací') || err.message.includes('data útil') || err.message.includes('vacio') || err.message.includes('columna correo') || err.message.includes('acceder al documento') || err.message.includes('inaccesible') || err.message.includes('MimeType') || err.message.includes('Formato Estricto Incompatible'))) {
                 let displayMsg = 'El archivo proporcionado se encuentra vacío o sin data útil.';
                 if (err.message.includes('columna correo')) displayMsg = err.message;
                 if (err.message.includes('acceder al documento') || err.message.includes('inaccesible') || err.message.includes('MimeType')) {
                     displayMsg = 'El enlace es incorrecto, no tienes permisos, o el archivo es un Excel (.xlsx) antiguo. Asegúrate de usar el enlace del nuevo Google Sheet convertido.';
+                }
+                if (err.message.includes('Formato Estricto Incompatible')) {
+                    const cleanEntityName = window.formatEntityName ? window.formatEntityName(entity) : entity;
+                    displayMsg = "El archivo ingresado no coincide con el formato de la plantilla para '" + cleanEntityName + "'";
                 }
                 urlInput.setAttribute('error-text', displayMsg);
                 urlInput.classList.add('ion-invalid', 'ion-touched');

@@ -300,22 +300,67 @@ var Engine_ETL = (function() {
                 return lowKey;
             });
 
+            const requiredFields = schema.fields.filter(f => f.required && !f.primaryKey && !f.readonly).map(f => String(f.name).toLowerCase());
+            
             let matchCount = 0;
+            let reqMatchCount = 0;
             fileHeaders.forEach(h => {
-                if (schemaFields.includes(h) || h === 'id' || h.startsWith('sys_') || h.startsWith('file_')) {
+                if (schemaFields.includes(h)) {
                     matchCount++;
+                    if (requiredFields.includes(h)) reqMatchCount++;
+                } else if (h === 'id' || h.startsWith('sys_') || h.startsWith('file_')) {
+                    // Ignoramos campos del sistema en el ratio base, pero tampoco restan
+                    matchCount += 0.5;
                 }
             });
             
             const overlapRatio = fileHeaders.length > 0 ? matchCount / fileHeaders.length : 0;
-            if (overlapRatio > maxOverlap) {
+            
+            // Un archivo es candidato si tiene buen overlap y tiene al menos todos los campos requeridos de negocio
+            const missingReqs = requiredFields.length > 0 ? (reqMatchCount < requiredFields.length) : false;
+            
+            if (overlapRatio > maxOverlap && !missingReqs) {
+                maxOverlap = overlapRatio;
+                bestSheet = tempSheet;
+            } else if (overlapRatio > maxOverlap) {
+                // If it's the only sheet, we might store its overlap, but it lacks reqs
                 maxOverlap = overlapRatio;
                 bestSheet = tempSheet;
             }
         }
         
-        if (maxOverlap <= 0) {
-            throw new Error("Formato Incompatible: Los encabezados del archivo no coinciden con la entidad " + entityName);
+        // --- S61.16 Format Validation (Fail-Fast) Estricta ---
+        // Construimos la lista exacta de cabeceras que la plantilla oficial de esta entidad debe tener
+        let excludedFields = [];
+        if (typeof FIELD_TEMPLATES !== 'undefined') {
+            const technicalTemplates = [
+                ...(FIELD_TEMPLATES.SYSTEM_FIELDS ? FIELD_TEMPLATES.SYSTEM_FIELDS() : []),
+                ...(FIELD_TEMPLATES.ESTADO_FIELD ? FIELD_TEMPLATES.ESTADO_FIELD() : []),
+                ...(FIELD_TEMPLATES.AUDIT_FIELDS ? FIELD_TEMPLATES.AUDIT_FIELDS() : []),
+                ...(FIELD_TEMPLATES.VERSION_FIELD ? FIELD_TEMPLATES.VERSION_FIELD() : [])
+            ];
+            excludedFields = technicalTemplates.map(f => f.name);
+        } else {
+            excludedFields = ['created_at', 'created_by', 'updated_at', 'updated_by', 'deleted_at', 'deleted_by', 'estado', '_version', 'lexical_id'];
+        }
+
+        const templateHeaders = [];
+        schema.fields.forEach(f => {
+            if (f.type === 'divider' || f.type === 'title') return;
+            if (f.type === 'hidden') return;
+            if (f.primaryKey === true) return;
+            if (f.excludeFromETL === true) return;
+            if ((f.type === 'relation' || f.isTemporalGraph || f.isEdge) && !f.allowInETL) return;
+            if (f.type === 'image' || f.type === 'file' || f.name === 'avatar') return;
+            if (excludedFields.includes(f.name)) return;
+            templateHeaders.push(String(f.name).toLowerCase());
+        });
+        
+        const bestHeaders = bestSheet.getRange(1, 1, 1, bestSheet.getLastColumn() || 1).getValues()[0].map(k => getFieldNameFromLabel(entityName, k));
+        const missingFromTemplate = templateHeaders.filter(th => !bestHeaders.includes(th));
+        
+        if (missingFromTemplate.length > 0) {
+            throw new Error("Formato Estricto Incompatible: El archivo no cumple con la estructura exacta de la plantilla de " + entityName + ". Faltan columnas de la plantilla original: " + missingFromTemplate.join(", "));
         }
     }
     const sheet = (maxOverlap >= 0.30) ? bestSheet : sheets[0];
