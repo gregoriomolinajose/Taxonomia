@@ -1,0 +1,38 @@
+artifact_type: story-design
+version: 1
+skill: rai-story-design
+created: '2026-07-16T22:42:16Z'
+story: 'S62.2'
+epic: 'E62'
+content:
+  summary: 'Migrate the relaciones_padre calculation for Dominio from the frontend ETL script to a backend business interceptor.'
+  complexity: moderate
+  acceptance_criteria:
+    - id: AC1
+      description: 'The CalculateDominioTopology interceptor correctly deduces relaciones_padre from orden_path by splitting on "." and matching the prefix.'
+      verifiable: true
+    - id: AC2
+      description: 'The frontend logic for relaciones_padre in DataEngine_ETL.client.js is removed.'
+      verifiable: true
+    - id: AC3
+      description: 'The interceptor handles missing parents gracefully (leaves relaciones_padre unchanged or empty) just as the frontend did.'
+      verifiable: true
+  integration_points:
+    - module: 'src.Business_Interceptors'
+      change_type: modification
+      files: ['src/Business_Interceptors.js']
+    - module: 'src.Schema_Engine'
+      change_type: modification
+      files: ['src/Schema_Engine.js']
+    - module: 'src.DataEngine_ETL'
+      change_type: modification
+      files: ['src/DataEngine_ETL.client.js']
+  decisions:
+    - id: D1
+      choice: 'Create a new backend interceptor CalculateDominioTopology instead of modifying core ETL engine.'
+      rationale: 'Keeps business logic specific to Dominio isolated from generic ETL engine flows, adhering to the framework architecture.'
+      alternatives_considered: ['Modify Engine_ETL.js directly to handle topology logic for Dominio.']
+refs:
+  backlog_item: 'S62.2'
+  epic_scope: 'work/epics/e62-etl-legacy-migration/scope.md'
+metadata: {}

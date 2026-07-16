@@ -191,6 +191,53 @@ var Business_Interceptors = (function() {
 
     const INTERCEPTORS = {
         /**
+         * [Taxonomia] CalculateDominioTopology
+         * Calcula y asigna relaciones_padre basado en orden_path para la entidad Dominio.
+         */
+        CalculateDominioTopology: function(entityName, items) {
+            if (entityName !== 'Dominio' || !items || items.length === 0) return;
+            
+            // 1. Fetch all Dominio records to build a complete lookup map
+            let allDominios = [];
+            if (typeof Engine_DB !== 'undefined') {
+                const res = Engine_DB.list('Dominio', 'objects', { skipCache: true });
+                if (res && res.rows) {
+                    allDominios = res.rows;
+                }
+            }
+
+            // Also include current items in the lookup (so intra-batch parents are found)
+            const combinedDominios = [...allDominios];
+            items.forEach(item => {
+                if (!combinedDominios.some(d => (d.id_dominio && d.id_dominio === item.id_dominio) || (d._tempId && d._tempId === item._tempId))) {
+                    combinedDominios.push(item);
+                }
+            });
+
+            // 2. Build map of orden_path -> id_dominio
+            const pathMap = {};
+            combinedDominios.forEach(d => {
+                if (d.orden_path && (d.id_dominio || d._tempId)) {
+                    pathMap[String(d.orden_path).trim()] = d.id_dominio || d._tempId;
+                }
+            });
+
+            // 3. Assign relaciones_padre
+            items.forEach(item => {
+                if (!item.orden_path) return;
+                const currentPath = String(item.orden_path).trim();
+                const parts = currentPath.split('.');
+                
+                if (parts.length > 1) {
+                    parts.pop(); // Remove the last segment to get parent path
+                    const parentPath = parts.join('.');
+                    if (pathMap[parentPath]) {
+                        item.relaciones_padre = pathMap[parentPath];
+                    }
+                }
+            });
+        },
+        /**
          * [GreatPeeps] ProvisionDriveFolders
          * Crea carpetas en Drive para Empresas y Vacantes
          */
