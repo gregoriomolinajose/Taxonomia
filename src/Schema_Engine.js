@@ -425,7 +425,7 @@ var APP_SCHEMAS = {
     ],
     metadata: { showInMenu: true, order: 8, iconName: 'person-outline', color: 'warning', label: 'Personas', titleField: '_nombre_completo', idField: 'id_persona', fkField: null },
     primaryKey: "id_persona",
-    mutationInterceptors: ['WorkspacePreflightBlock', 'HydrateWorkspace', 'AutoProvisionCargo', 'AutoProvisionLiderDirecto', 'AutoLinkAgileRoles'],
+    mutationInterceptors: ['EnforceAllowedDomains', 'WorkspacePreflightBlock', 'HydrateWorkspace', 'AutoProvisionCargo', 'AutoProvisionLiderDirecto', 'AutoLinkAgileRoles'],
     relationalProvisioners: [
       {
         field: 'roles_asignados',

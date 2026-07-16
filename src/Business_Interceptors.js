@@ -420,6 +420,37 @@ var Business_Interceptors = (function() {
         },
 
         /**
+         * EnforceAllowedDomains
+         * Valida que el email de la Persona pertenezca a los dominios permitidos (CONFIG.ALLOWED_DOMAINS).
+         */
+        EnforceAllowedDomains: function(entityName, items) {
+            if (entityName !== 'Persona') return;
+            
+            const allowedDomains = (typeof CONFIG !== 'undefined' && CONFIG.ALLOWED_DOMAINS) 
+                ? CONFIG.ALLOWED_DOMAINS 
+                : [];
+                
+            if (allowedDomains.length === 0) return;
+
+            items.forEach(item => {
+                if (!item.email || String(item.email).trim() === '') {
+                    throw new Error("Validation Error: Email is required for Persona.");
+                }
+                
+                const emailStr = String(item.email).trim().toLowerCase();
+                const domainIndex = emailStr.lastIndexOf('@');
+                if (domainIndex === -1) {
+                    throw new Error(`Validation Error: Invalid email format (${item.email}).`);
+                }
+                
+                const domain = emailStr.substring(domainIndex);
+                if (!allowedDomains.includes(domain)) {
+                    throw new Error(`Validation Error: Domain ${domain} is not allowed.`);
+                }
+            });
+        },
+
+        /**
          * WorkspacePreflightBlock
          * Actúa como Hard-Block en el backend. Si la sincronización de Workspace está deshabilitada,
          * aborta completamente la carga masiva (ETL) de Personas.
