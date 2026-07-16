@@ -8,6 +8,7 @@ Migrate all remaining entity-specific business rules from the legacy frontend ET
 - Migration of `Persona` auto-provisioning (Workspace Sync) to trigger automatically after the ETL job completes (Job Queuing chaining).
 - Migration of `Dominio` dynamic topology mapping (`relaciones_padre` from `orden_path`).
 - Migration of Date formatting fallback to ISO 8601 globally in `Engine_ETL.js`.
+- Flattening de XLSX (Capacidades) para soportar archivos de jerarquía anidada Macro/Capacidad.
 - Complete deletion of `DataEngine_ETL.client.js` and `DataEngine_ETL_Capacidades.client.js`.
 
 ## Out of Scope
