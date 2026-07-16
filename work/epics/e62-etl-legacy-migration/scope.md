@@ -17,7 +17,12 @@ Migrate all remaining entity-specific business rules from the legacy frontend ET
 - Any UI/UX changes on the ETL modal (already covered in e61).
 
 ## Planned Stories
-- **S62.1:** Migrate Persona Rules (Allowed Domains & Auto-Sync)
+- [x] S62.1 Migrate Persona Rules (Allowed Domains & Auto-Sync) ✓
 - **S62.2:** Migrate Dominio Dynamic Topology
 - **S62.3:** Capacidad Flattening Strategy & Global Date Parsing
 - **S62.4:** Clean up legacy ETL modules
+
+## Progress Tracking
+| Story | Status | Estimated Time | Actual Time | Velocity |
+|-------|--------|----------------|-------------|----------|
+| S62.1 | Completed | 120m | 120m | 1.0 |

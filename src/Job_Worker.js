@@ -145,7 +145,8 @@ var JobWorker = (function() {
     // [BUGFIX] Execute ETL deduplication and interceptors before processing the chunk
     if (typeof Engine_ETL !== 'undefined' && typeof Engine_ETL.hydrateAndDeduplicate === 'function') {
         try {
-            chunk = Engine_ETL.hydrateAndDeduplicate(entityName, chunk);
+            var dedupeResult = Engine_ETL.hydrateAndDeduplicate(entityName, chunk);
+            chunk = (dedupeResult && dedupeResult.data) ? dedupeResult.data : chunk;
         } catch (e) {
             if (typeof Logger !== 'undefined') Logger.log("Error en hydrateAndDeduplicate: " + e.toString());
             debugErrors.push("ETL Deduplication Error: " + e.toString());
