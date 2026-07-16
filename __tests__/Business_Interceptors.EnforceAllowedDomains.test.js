@@ -14,22 +14,19 @@ describe('Business_Interceptors - EnforceAllowedDomains', () => {
     test('Should allow mutation when domain is valid', () => {
         const items = [
             { email: 'user@bancoppel.com', name: 'Alice' },
-            { email: 'user@coppel.com', name: 'Bob' }
+            { email: 'user@coppel.com', name: 'Bob' },
+            { email: 'user@BANCOPPEL.com', name: 'Charlie' } // Test case insensitivity
         ];
 
-        expect(() => {
-            // we will invoke the interceptor directly for unit testing
-            Business_Interceptors.apply('Persona', items); // this will do nothing if it's not wired in Schema_Engine
-        }).not.toThrow();
-
-        // But to test just the interceptor method directly, we can mock getAppSchema
         global.getAppSchema = vi.fn(() => ({
             mutationInterceptors: ['EnforceAllowedDomains']
         }));
 
-        expect(() => {
-            Business_Interceptors.apply('Persona', items);
-        }).not.toThrow();
+        Business_Interceptors.apply('Persona', items);
+        
+        expect(items[0]._metadata?.error).toBeUndefined();
+        expect(items[1]._metadata?.error).toBeUndefined();
+        expect(items[2]._metadata?.error).toBeUndefined();
     });
 
     test('Should reject mutation when domain is invalid', () => {
@@ -41,9 +38,8 @@ describe('Business_Interceptors - EnforceAllowedDomains', () => {
             mutationInterceptors: ['EnforceAllowedDomains']
         }));
 
-        expect(() => {
-            Business_Interceptors.apply('Persona', items);
-        }).toThrow(/Domain @gmail\.com is not allowed/);
+        Business_Interceptors.apply('Persona', items);
+        expect(items[0]._metadata.error).toMatch(/Domain @gmail\.com is not allowed/);
     });
 
     test('Should reject when email is missing or empty', () => {
@@ -55,8 +51,20 @@ describe('Business_Interceptors - EnforceAllowedDomains', () => {
             mutationInterceptors: ['EnforceAllowedDomains']
         }));
 
-        expect(() => {
-            Business_Interceptors.apply('Persona', items);
-        }).toThrow(/Email is required/);
+        Business_Interceptors.apply('Persona', items);
+        expect(items[0]._metadata.error).toMatch(/Email is required/);
+    });
+
+    test('Should reject when email lacks an @ symbol', () => {
+        const items = [
+            { email: 'invalid-email', name: 'No At' }
+        ];
+
+        global.getAppSchema = vi.fn(() => ({
+            mutationInterceptors: ['EnforceAllowedDomains']
+        }));
+
+        Business_Interceptors.apply('Persona', items);
+        expect(items[0]._metadata.error).toMatch(/Invalid email format/);
     });
 });

@@ -432,20 +432,27 @@ var Business_Interceptors = (function() {
                 
             if (allowedDomains.length === 0) return;
 
+            const allowedDomainsLower = allowedDomains.map(d => String(d).trim().toLowerCase());
+
             items.forEach(item => {
+                item._metadata = item._metadata || {};
+                
                 if (!item.email || String(item.email).trim() === '') {
-                    throw new Error("Validation Error: Email is required for Persona.");
+                    item._metadata.error = "Validation Error: Email is required for Persona.";
+                    return;
                 }
                 
                 const emailStr = String(item.email).trim().toLowerCase();
                 const domainIndex = emailStr.lastIndexOf('@');
                 if (domainIndex === -1) {
-                    throw new Error(`Validation Error: Invalid email format (${item.email}).`);
+                    item._metadata.error = `Validation Error: Invalid email format (${item.email}).`;
+                    return;
                 }
                 
                 const domain = emailStr.substring(domainIndex);
-                if (!allowedDomains.includes(domain)) {
-                    throw new Error(`Validation Error: Domain ${domain} is not allowed.`);
+                if (!allowedDomainsLower.includes(domain)) {
+                    item._metadata.error = `Validation Error: Domain ${domain} is not allowed.`;
+                    return;
                 }
             });
         },
