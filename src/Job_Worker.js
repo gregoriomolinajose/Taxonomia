@@ -78,6 +78,29 @@ var JobWorker = (function() {
     // Now process the job without holding the ScriptLock
     var startTime = new Date().getTime();
     try {
+      if (job.payload && job.payload.action === 'Job_WorkspaceSync') {
+         if (typeof runWorkspaceSyncJob === 'function') {
+             var syncResult = runWorkspaceSyncJob({ manual: false });
+             if (syncResult && syncResult.remaining > 0) {
+                 JobQueue.updateJobStatus(job.jobId, {
+                     status: "PROCESSING",
+                     message: "Sincronizando Workspace... Restantes: " + syncResult.remaining
+                 });
+                 triggerProcessing();
+                 return { debug: "processing_sync", remaining: syncResult.remaining };
+             } else {
+                 JobQueue.updateJobStatus(job.jobId, {
+                     status: "COMPLETED",
+                     message: "Sincronización Workspace completada."
+                 });
+                 return { debug: "completed_sync" };
+             }
+         } else {
+             JobQueue.updateJobStatus(job.jobId, { status: "ERROR", message: "runWorkspaceSyncJob is not defined" });
+             return { debug: "error_sync", error: "not_defined" };
+         }
+      }
+
       var payloadData = job.payload && job.payload.data ? job.payload.data : (Array.isArray(job.payload) ? job.payload : []);
       var entityName = job.payload && job.payload.entity ? job.payload.entity : "Unknown";
       var startIndex = job.processed || 0;
@@ -122,7 +145,8 @@ var JobWorker = (function() {
     // [BUGFIX] Execute ETL deduplication and interceptors before processing the chunk
     if (typeof Engine_ETL !== 'undefined' && typeof Engine_ETL.hydrateAndDeduplicate === 'function') {
         try {
-            Engine_ETL.hydrateAndDeduplicate(entityName, chunk);
+            var dedupeResult = Engine_ETL.hydrateAndDeduplicate(entityName, chunk);
+            chunk = (dedupeResult && dedupeResult.data) ? dedupeResult.data : chunk;
         } catch (e) {
             if (typeof Logger !== 'undefined') Logger.log("Error en hydrateAndDeduplicate: " + e.toString());
             debugErrors.push("ETL Deduplication Error: " + e.toString());
@@ -137,6 +161,12 @@ var JobWorker = (function() {
     
     for (var i = 0; i < chunk.length; i++) {
       var record = chunk[i];
+      
+      // Check if Business Interceptors rejected the record
+      if (record._metadata && record._metadata.error) {
+          recordDlqErrors([record], record._metadata.error);
+          continue;
+      }
       
       var pkField = 'id';
       var schema = (typeof APP_SCHEMAS !== 'undefined') ? APP_SCHEMAS[entityName] : null;
@@ -302,6 +332,11 @@ var JobWorker = (function() {
           message: "Consolidando resultados finales...",
           payload: job.payload
         });
+        
+        if (entityName === 'Persona' && typeof JobQueue !== 'undefined') {
+            JobQueue.enqueue({ action: 'Job_WorkspaceSync' });
+        }
+
       } catch(e) {
         if (typeof Logger !== 'undefined') Logger.log("Error en updateJobStatus (COMPLETED): " + e.message);
         debugErrors.push("UpdateStatus Error: " + e.message);

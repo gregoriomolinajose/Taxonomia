@@ -1,0 +1,36 @@
+artifact_type: story-design
+version: 1
+skill: rai-story-design
+created: '2026-07-16T02:16:56-06:00'
+story: 'S62.1'
+epic: 'E62'
+content:
+  summary: 'Migrate legacy Persona email domain validation and Workspace Sync triggering to the backend to enable legacy ETL client script deprecation.'
+  complexity: moderate
+  acceptance_criteria:
+    - id: AC1
+      description: 'Backend validation rejects Persona mutations if their email domain is not in ALLOWED_DOMAINS configuration.'
+      verifiable: true
+    - id: AC2
+      description: 'Upon successful ETL job completion for Persona entities, the Job Worker triggers the Workspace Sync Job queue.'
+      verifiable: true
+  integration_points:
+    - module: 'src.Business_Interceptors'
+      change_type: modification
+      files: ['src/Business_Interceptors.js']
+    - module: 'src.Job_Worker'
+      change_type: modification
+      files: ['src/Job_Worker.js']
+  decisions:
+    - id: D1
+      choice: 'Enforce domain validation inside Business_Interceptors for Persona.'
+      rationale: 'Domain validation is a core business rule and should be consistently applied regardless of the mutation entry point (ETL vs UI vs API).'
+      alternatives_considered: ['Implement validation inside Engine_ETL']
+    - id: D2
+      choice: 'Trigger Workspace Sync via Job Queuing chaining from Job_Worker upon Persona ETL success.'
+      rationale: 'Ensures reliable execution and decouples the synchronous UI from the slow Workspace Sync operation.'
+      alternatives_considered: ['Trigger Workspace Sync from the UI after ETL success', 'Run Workspace Sync synchronously inside Engine_ETL']
+refs:
+  backlog_item: 'S62.1'
+  epic_scope: 'work/epics/e62-etl-legacy-migration/scope.md'
+metadata: {}

@@ -420,6 +420,44 @@ var Business_Interceptors = (function() {
         },
 
         /**
+         * EnforceAllowedDomains
+         * Valida que el email de la Persona pertenezca a los dominios permitidos (CONFIG.ALLOWED_DOMAINS).
+         */
+        EnforceAllowedDomains: function(entityName, items) {
+            if (entityName !== 'Persona') return;
+            
+            const allowedDomains = (typeof CONFIG !== 'undefined' && CONFIG.ALLOWED_DOMAINS) 
+                ? CONFIG.ALLOWED_DOMAINS 
+                : [];
+                
+            if (allowedDomains.length === 0) return;
+
+            const allowedDomainsLower = allowedDomains.map(d => String(d).trim().toLowerCase());
+
+            items.forEach(item => {
+                item._metadata = item._metadata || {};
+                
+                if (!item.email || String(item.email).trim() === '') {
+                    item._metadata.error = "Validation Error: Email is required for Persona.";
+                    return;
+                }
+                
+                const emailStr = String(item.email).trim().toLowerCase();
+                const domainIndex = emailStr.lastIndexOf('@');
+                if (domainIndex === -1) {
+                    item._metadata.error = `Validation Error: Invalid email format (${item.email}).`;
+                    return;
+                }
+                
+                const domain = emailStr.substring(domainIndex);
+                if (!allowedDomainsLower.includes(domain)) {
+                    item._metadata.error = `Validation Error: Domain ${domain} is not allowed.`;
+                    return;
+                }
+            });
+        },
+
+        /**
          * WorkspacePreflightBlock
          * Actúa como Hard-Block en el backend. Si la sincronización de Workspace está deshabilitada,
          * aborta completamente la carga masiva (ETL) de Personas.
