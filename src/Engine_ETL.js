@@ -49,7 +49,7 @@ var Engine_ETL = (function() {
       if (f.type === 'image' || f.type === 'file' || f.name === 'avatar') return; // Elementos multimedia o binarios estorbosos excluidos
       if (excludedFields.includes(f.name)) return;
       
-      headers.push(f.name);
+      headers.push(f.label || f.name);
     });
 
     if (headers.length === 0) {

@@ -3,9 +3,9 @@ const { Business_Interceptors } = require('../src/Business_Interceptors.js');
 describe('Business_Interceptors - CalculateDominioTopology', () => {
     beforeEach(() => {
         global.Engine_DB = {
-            list: jest.fn()
+            list: vi.fn()
         };
-        global.Logger = { log: jest.fn() };
+        global.Logger = { log: vi.fn() };
     });
 
     afterEach(() => {
@@ -28,7 +28,7 @@ describe('Business_Interceptors - CalculateDominioTopology', () => {
             { id_dominio: 'DOM-4', orden_path: '1.1.1', nombre: 'Grandchild' }
         ];
 
-        global.getAppSchema = jest.fn(() => ({
+        global.getAppSchema = vi.fn(() => ({
             mutationInterceptors: ['CalculateDominioTopology']
         }));
 
@@ -52,7 +52,7 @@ describe('Business_Interceptors - CalculateDominioTopology', () => {
             { id_dominio: 'DOM-5', orden_path: '1.3', nombre: 'Child C' } // Parent '1' is missing
         ];
 
-        global.getAppSchema = jest.fn(() => ({
+        global.getAppSchema = vi.fn(() => ({
             mutationInterceptors: ['CalculateDominioTopology']
         }));
 

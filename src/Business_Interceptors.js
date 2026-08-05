@@ -222,20 +222,91 @@ var Business_Interceptors = (function() {
                 }
             });
 
-            // 3. Assign relaciones_padre
+            if (typeof Logger !== 'undefined') Logger.log(`[Dominio Topology] pathMap keys: ${Object.keys(pathMap).join(', ')}`);
+
+            let sysEdges = [];
+            if (typeof Engine_DB !== 'undefined') {
+                sysEdges = Engine_DB.list('Sys_Graph_Edges', 'objects').rows || [];
+            }
+            
+            let edgesBatch = [];
+            const sysDate = new Date().toISOString();
+
+            // 2.5 Build map of id_dominio -> node to extract names
+            const nodeMap = {};
+            combinedDominios.forEach(d => {
+                const id = d.id_dominio || d._tempId;
+                if (id) {
+                    nodeMap[id] = d;
+                }
+            });
+
+            // 3. Assign relaciones_padre, persistir aristas ETL y generar path_completo_es
             items.forEach(item => {
                 if (!item.orden_path) return;
                 const currentPath = String(item.orden_path).trim();
                 const parts = currentPath.split('.');
+                
+                // --- Generación de path_completo_es ---
+                let accum = [];
+                let pathNames = [];
+                for (let i = 0; i < parts.length; i++) {
+                    accum.push(parts[i]);
+                    const lineagePath = accum.join('.');
+                    const lineageId = pathMap[lineagePath];
+                    if (lineageId && nodeMap[lineageId]) {
+                        pathNames.push(String(nodeMap[lineageId].nombre || '').trim());
+                    }
+                }
+                if (pathNames.length > 0) {
+                    item.path_completo_es = pathNames.join(' > ');
+                }
+                // --------------------------------------
                 
                 if (parts.length > 1) {
                     parts.pop(); // Remove the last segment to get parent path
                     const parentPath = parts.join('.');
                     if (pathMap[parentPath]) {
                         item.relaciones_padre = pathMap[parentPath];
+                        if (typeof Logger !== 'undefined') Logger.log(`[Dominio Topology] Assigned parent ${pathMap[parentPath]} to ${currentPath}`);
+                        
+                        const parentId = pathMap[parentPath];
+                        const childId = item.id_dominio || item._tempId;
+                        const edgeType = 'DOMINIO_HIJO';
+                        const contextoId = '';
+                        
+                        const exists = sysEdges.some(e => e.es_version_actual !== false && e.tipo_relacion === edgeType && String(e.id_nodo_padre).trim() === String(parentId).trim() && String(e.id_nodo_hijo).trim() === String(childId).trim());
+                        
+                        if (!exists && childId) {
+                            sysEdges.push({ es_version_actual: true, tipo_relacion: edgeType, id_nodo_padre: parentId, id_nodo_hijo: childId, contexto_id: contextoId });
+                            edgesBatch.push({
+                                id_relacion: "RELA-" + Math.random().toString(36).substring(2, 10).toUpperCase(),
+                                id_nodo_padre: parentId,
+                                id_nodo_hijo: childId,
+                                tipo_relacion: edgeType,
+                                contexto_id: contextoId,
+                                valido_desde: sysDate,
+                                valido_hasta: "",
+                                es_version_actual: true,
+                                estado: 'Activo'
+                            });
+                        }
+                    } else {
+                        if (typeof Logger !== 'undefined') Logger.log(`[Dominio Topology] Parent path ${parentPath} NOT FOUND in pathMap for ${currentPath}`);
                     }
+                } else {
+                     if (typeof Logger !== 'undefined') Logger.log(`[Dominio Topology] ${currentPath} is a root node (no parent)`);
                 }
             });
+            
+            if (edgesBatch.length > 0 && typeof Engine_DB !== 'undefined') {
+                try {
+                    Engine_DB.upsertBatch('Sys_Graph_Edges', edgesBatch, { muteTriggers: true });
+                    if (typeof Logger !== 'undefined') Logger.log(`[Dominio Topology] Se generaron ${edgesBatch.length} aristas DOMINIO_HIJO automáticamente.`);
+                } catch(e) {
+                    if (typeof console !== 'undefined') console.error(`[CRITICAL] Error persistiendo aristas DOMINIO_HIJO: ${e.message}`);
+                }
+            }
         },
         /**
          * [GreatPeeps] ProvisionDriveFolders
