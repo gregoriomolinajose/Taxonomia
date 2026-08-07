@@ -342,6 +342,7 @@ var APP_SCHEMAS = {
       parentEntity: "Capacidad",
       parentField: "id_dominio_padre"
     },
+    mutationInterceptors: ['CalculateCapacidadTopology'],
     primaryKey: "id_capacidad",
     titleField: "nombre",
     topologyRules: TOPOLOGY_PRESETS.JERARQUICA_ESTRICTA_DOMAIN,

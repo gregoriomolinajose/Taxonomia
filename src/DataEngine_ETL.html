@@ -152,6 +152,14 @@
                             value = value.trim();
                         }
                         
+                        // Estandarización Global de orden_path (S62.2 / S62.3)
+                        if (key === 'orden_path' && value) {
+                            value = String(value).split('.').map(num => {
+                                const parsed = parseInt(num, 10);
+                                return isNaN(parsed) ? num : String(parsed).padStart(2, '0');
+                            }).join('.');
+                        }
+                        
                         cleanRow[key] = value;
                     }
                 }

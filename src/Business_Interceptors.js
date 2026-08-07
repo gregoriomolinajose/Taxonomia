@@ -191,6 +191,56 @@ var Business_Interceptors = (function() {
 
     const INTERCEPTORS = {
         /**
+         * [Taxonomia] CalculateCapacidadTopology
+         * Extrae relaciones de Capacidad (id_dominio_padre) y genera aristas en Sys_Graph_Edges.
+         */
+        CalculateCapacidadTopology: function(entityName, items) {
+            if (entityName !== 'Capacidad' || !items || items.length === 0) return;
+            
+            let sysEdges = [];
+            if (typeof Engine_DB !== 'undefined') {
+                sysEdges = Engine_DB.list('Sys_Graph_Edges', 'objects').rows || [];
+            }
+            
+            let edgesBatch = [];
+            const sysDate = new Date().toISOString();
+
+            items.forEach(item => {
+                const childId = item.id_capacidad || item._tempId;
+                const parentId = item.id_dominio_padre;
+                
+                if (childId && parentId) {
+                    const edgeType = 'CAPACIDAD_HIJO';
+                    const exists = sysEdges.some(e => e.es_version_actual !== false && e.tipo_relacion === edgeType && String(e.id_nodo_padre).trim() === String(parentId).trim() && String(e.id_nodo_hijo).trim() === String(childId).trim());
+                    
+                    if (!exists) {
+                        sysEdges.push({ es_version_actual: true, tipo_relacion: edgeType, id_nodo_padre: parentId, id_nodo_hijo: childId, contexto_id: "" });
+                        edgesBatch.push({
+                            id_relacion: "RELA-" + Math.random().toString(36).substring(2, 10).toUpperCase(),
+                            id_nodo_padre: parentId,
+                            id_nodo_hijo: childId,
+                            tipo_relacion: edgeType,
+                            contexto_id: "",
+                            valido_desde: sysDate,
+                            valido_hasta: "",
+                            es_version_actual: true,
+                            estado: 'Activo'
+                        });
+                    }
+                }
+            });
+
+            if (edgesBatch.length > 0 && typeof Engine_DB !== 'undefined') {
+                try {
+                    Engine_DB.upsertBatch('Sys_Graph_Edges', edgesBatch, { muteTriggers: true });
+                    if (typeof Logger !== 'undefined') Logger.log(`[Capacidad Topology] Se generaron ${edgesBatch.length} aristas CAPACIDAD_HIJO automáticamente.`);
+                } catch(e) {
+                    if (typeof console !== 'undefined') console.error(`[CRITICAL] Error persistiendo aristas CAPACIDAD_HIJO: ${e.message}`);
+                }
+            }
+        },
+
+        /**
          * [Taxonomia] CalculateDominioTopology
          * Calcula y asigna relaciones_padre basado en orden_path para la entidad Dominio.
          */

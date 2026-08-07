@@ -359,7 +359,7 @@ var Engine_ETL = (function() {
         const bestHeaders = bestSheet.getRange(1, 1, 1, bestSheet.getLastColumn() || 1).getValues()[0].map(k => getFieldNameFromLabel(entityName, k));
         const missingFromTemplate = templateHeaders.filter(th => !bestHeaders.includes(th));
         
-        if (missingFromTemplate.length > 0) {
+        if (missingFromTemplate.length > 0 && entityName !== 'Capacidad') {
             throw new Error("Formato Estricto Incompatible: El archivo no cumple con la estructura exacta de la plantilla de " + entityName + ". Faltan columnas de la plantilla original: " + missingFromTemplate.join(", "));
         }
     }
@@ -379,17 +379,26 @@ var Engine_ETL = (function() {
       throw new Error("La hoja de cálculo está vacía o carece de registros.");
     }
 
-    const data = sheet.getRange(1, 1, trueLastRow, rawDataRange.getNumColumns()).getDisplayValues();
+    const dataDisplay = sheet.getRange(1, 1, trueLastRow, rawDataRange.getNumColumns()).getDisplayValues();
+    
+    // Si la entidad es Capacidad, derivamos al procesador de matriz especializado (aplanamiento)
+    if (entityName === 'Capacidad') {
+        return _processCapacidadesMatrix(dataDisplay);
+    }
 
     if (options.rawMatrix) {
-        return data; // Return 2D array directly for specialized parsers
+        return dataDisplay; // Return 2D array directly for specialized parsers
     }
     
-    const headers = data[0]; // Fila 0 es el Diccionario de Cabeceras
+    // Extraemos valores puros para poder detectar objetos Date nativos
+    const dataValues = sheet.getRange(1, 1, trueLastRow, rawDataRange.getNumColumns()).getValues();
+
+    const headers = dataDisplay[0]; // Fila 0 es el Diccionario de Cabeceras
     const records = [];
     
-    for (let i = 1; i < data.length; i++) {
-        const row = data[i];
+    for (let i = 1; i < dataDisplay.length; i++) {
+        const rowDisplay = dataDisplay[i];
+        const rowValues = dataValues[i];
         const record = {};
         let isEmptyRow = true;
         
@@ -399,7 +408,22 @@ var Engine_ETL = (function() {
             
             const mappedKey = getFieldNameFromLabel(entityName, header) || header;
             
-            const value = row[j];
+            let value = rowDisplay[j];
+            const rawValue = rowValues[j];
+            
+            // S62.3 Global Date Parsing: Si SpreadSheetApp detectó un Date, estandarizamos a ISO 8601
+            if (rawValue instanceof Date) {
+                value = rawValue.toISOString();
+                
+                // Si el campo es solo "date" sin "time" en el schema, cortamos el string
+                if (schema && schema.fields) {
+                    const fieldDef = schema.fields.find(f => f.name === mappedKey);
+                    if (fieldDef && fieldDef.type === 'date') {
+                        value = value.split('T')[0];
+                    }
+                }
+            }
+
             if (value !== undefined && value !== null && String(value).trim() !== '') {
                isEmptyRow = false;
                record[mappedKey] = value;
@@ -683,6 +707,158 @@ var Engine_ETL = (function() {
           isValid: maxOverlap >= 0.30,
           sheets: sheetInfos
       };
+  }
+
+  /**
+   * S62.3: Procesa la matriz 2D para la entidad 'Capacidad'.
+   * Aplana la jerarquía anidada leyendo desde la Fila 6 y genera los nodos
+   * con UUID y Path (Topología).
+   * 
+   * @param {Array<Array>} jsonRaw 
+   * @returns {Array<Object>} 
+   */
+  function _processCapacidadesMatrix(jsonRaw) {
+      if (jsonRaw.length < 6) {
+          throw new Error('El archivo no tiene suficientes filas para ser un Modelo de Capacidades 2.0');
+      }
+      
+      const payloads = [];
+      let lastMacro = '', lastCapacidad = '', lastSubcapacidad = '';
+
+      for (let i = 5; i < jsonRaw.length; i++) { // Excel row 6 is index 5
+          const row = jsonRaw[i];
+          if (!row || row.length === 0) continue;
+          
+          const isRowEmpty = row.every(cell => cell === undefined || cell === null || String(cell).trim() === '');
+          if (isRowEmpty) continue;
+
+          let rawMacro = row[1];
+          let rawCap = row[2];
+          let rawDescCap = row[3];
+          let rawSubcap = row[4];
+          let rawDescSubcap = row[5];
+          let rawComp = row[6];
+          let rawDescComp = row[7];
+
+          if (rawMacro !== undefined && rawMacro !== null && String(rawMacro).trim() !== '') {
+              lastMacro = String(rawMacro).trim();
+              lastCapacidad = '';
+              lastSubcapacidad = '';
+          }
+          
+          if (rawCap !== undefined && rawCap !== null && String(rawCap).trim() !== '') {
+              lastCapacidad = String(rawCap).trim();
+              lastSubcapacidad = '';
+          }
+          
+          if (rawSubcap !== undefined && rawSubcap !== null && String(rawSubcap).trim() !== '') {
+              lastSubcapacidad = String(rawSubcap).trim();
+          }
+          
+          let safeComp = (rawComp !== undefined && rawComp !== null) ? String(rawComp).trim() : '';
+
+          payloads.push({
+              "Macrocapacidad": lastMacro,
+              "Capacidad": lastCapacidad,
+              "Subcapacidad": lastSubcapacidad,
+              "Componente": safeComp,
+              "Descripción de la capacidad": rawDescCap,
+              "Descripción de la Subcapacidad": rawDescSubcap,
+              "Descripción del componente": rawDescComp
+          });
+      }
+      
+      const nodesMap = new Map();
+      
+      let macroCount = 0, capCount = 0, subCount = 0, compCount = 0;
+      let currIdMacro = null, currIdCap = null, currIdSub = null;
+      let currNameMacro = '', currNameCap = '', currNameSub = '';
+
+      const createNode = (id, nombre, desc, etiqueta, nivel, idPadre, ordenPath, pathCompleto) => {
+          if (nodesMap.has(id) || !nombre) return id;
+          
+          const nodo = {
+              id_capacidad: id,
+              nombre: nombre,
+              descripcion: desc || '',
+              nivel_tipo: nivel,
+              id_dominio_padre: idPadre || null,
+              orden_path: ordenPath,
+              path_completo_es: pathCompleto,
+              _tempId: id // used for resolving parent linking later
+          };
+          nodesMap.set(id, nodo);
+          return id;
+      };
+
+      payloads.forEach(record => {
+          const mName = record["Macrocapacidad"];
+          const cName = record["Capacidad"];
+          const sName = record["Subcapacidad"];
+          const compName = record["Componente"];
+
+          let idMacro = mName ? `M|||${mName}` : null;
+          let idCap = cName && idMacro ? `${idMacro}|||C|||${cName}` : null;
+          let idSub = sName && idCap ? `${idCap}|||S|||${sName}` : null;
+          let idComp = compName && idSub ? `${idSub}|||COMP|||${compName}` : null;
+
+          if (mName && currIdMacro !== idMacro) {
+              macroCount++; capCount = 0; subCount = 0; compCount = 0;
+              currIdMacro = idMacro; currNameMacro = mName;
+              currIdCap = null; currIdSub = null;
+          }
+          
+          if (cName && currIdCap !== idCap) {
+              capCount++; subCount = 0; compCount = 0;
+              currIdCap = idCap; currNameCap = cName;
+              currIdSub = null;
+          }
+          
+          if (sName && currIdSub !== idSub) {
+              subCount++; compCount = 0;
+              currIdSub = idSub; currNameSub = sName;
+          }
+          
+          if (compName) {
+              compCount++;
+          }
+          
+          const sM = String(macroCount).padStart(2, '0');
+          const sC = String(capCount).padStart(2, '0');
+          const sS = String(subCount).padStart(2, '0');
+          const sComp = String(compCount).padStart(2, '0');
+
+          if (mName) createNode(idMacro, mName, '', 'Macrocapacidad', 0, null, `${sM}`, `${mName}`);
+          if (cName) createNode(idCap, cName, record["Descripción de la capacidad"], 'Capacidad', 1, idMacro, `${sM}.${sC}`, `${currNameMacro} > ${cName}`);
+          if (sName) createNode(idSub, sName, record["Descripción de la Subcapacidad"], 'Sub capacidad', 2, idCap, `${sM}.${sC}.${sS}`, `${currNameMacro} > ${currNameCap} > ${sName}`);
+          if (compName) createNode(idComp, compName, record["Descripción del componente"], 'Componente', 3, idSub, `${sM}.${sC}.${sS}.${sComp}`, `${currNameMacro} > ${currNameCap} > ${currNameSub} > ${compName}`);
+      });
+
+      const finalPayloads = Array.from(nodesMap.values());
+      
+      // S47.3: UUID Generation & Idempotency Resolution
+      finalPayloads.forEach(node => {
+          node.id_capacidad = "CAPA-" + Math.random().toString(36).substring(2, 10).toUpperCase();
+      });
+      // Resolve parent ids
+      finalPayloads.forEach(node => {
+          if (node.id_dominio_padre) {
+              const parentNode = finalPayloads.find(n => n._tempId === node.id_dominio_padre);
+              if (parentNode) {
+                  node.id_dominio_padre = parentNode.id_capacidad;
+              }
+          }
+      });
+      // Cleanup _tempId after all resolutions are done
+      finalPayloads.forEach(node => {
+          delete node._tempId;
+      });
+
+      if (finalPayloads.length === 0) {
+          throw new Error("El archivo no parece corresponder a la entidad 'Capacidad'. No se pudo extraer data válida.");
+      }
+
+      return finalPayloads;
   }
 
   // --- Public API ---
