@@ -828,17 +828,8 @@ window.UI_BulkImporter = class UI_BulkImporter {
             btnSyncDrive.innerHTML = '<ion-spinner name="crescent" style="width:20px;height:20px;vertical-align:middle;margin-right:8px;"></ion-spinner> Validando...';
         }
 
-        let etlEngine = null;
+        let etlEngine = window.DataEngine_ETL;
         let reqOptions = {};
-        let isCustom = false;
-
-        if (window[`DataEngine_ETL_${entity}`]) {
-            etlEngine = window[`DataEngine_ETL_${entity}`];
-            reqOptions = { rawMatrix: true };
-            isCustom = true;
-        } else if (window.DataEngine_ETL) {
-            etlEngine = window.DataEngine_ETL;
-        }
 
         if (!etlEngine) {
             return this._showToast(`No hay motor ETL cargado para procesar los registros.`, 'warning');
@@ -879,15 +870,7 @@ window.UI_BulkImporter = class UI_BulkImporter {
                 };
 
                 let etlPromise;
-                if (isCustom && etlEngine.processMatrix) {
-                    etlPromise = new Promise((resolve, reject) => {
-                        etlEngine.processMatrix(entity, res.data, {
-                            progressCallback: progressCb,
-                            completionCallback: resolve,
-                            contextId: this.contextId // Provide Wizard context for ETL
-                        }).catch(reject);
-                    });
-                } else if (etlEngine.processPayload) {
+                if (etlEngine.processPayload) {
                     // S61.4: Enterprise ETL Architecture - Async Jobs
                     etlPromise = new Promise((resolve, reject) => {
                         window.DataAPI.call('API_Universal_Router', 'job_enqueue', entity, { data: res.data })
