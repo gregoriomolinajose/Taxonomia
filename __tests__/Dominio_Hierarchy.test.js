@@ -34,6 +34,12 @@ describe('TDD: Jerarquía Recursiva Dinámica (Zero-Touch Trigger)', () => {
         expect(relationsField.isTemporalGraph).toBe(true);
     });
 
+    test('El esquema Dominio debe tener registrado el interceptor CalculateDominioTopology (S62.2)', () => {
+        const schema = APP_SCHEMAS['Dominio'];
+        expect(schema.mutationInterceptors).toBeDefined();
+        expect(schema.mutationInterceptors).toContain('CalculateDominioTopology');
+    });
+
     // ── O-01: BEHAVIORAL TESTS ────────────────────────────────────────────
     describe('getGenericOrdenPath — behavioral coverage (O-01)', () => {
 

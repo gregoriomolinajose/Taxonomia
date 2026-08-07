@@ -264,7 +264,7 @@ var APP_SCHEMAS = {
     topological_metadata: {
       ownerFields: ["gerente_dominio_id"]
     },
-    mutationInterceptors: ['AutoProvisionEntityRoles'],
+    mutationInterceptors: ['AutoProvisionEntityRoles', 'CalculateDominioTopology'],
     primaryKey: "id_dominio",
     titleField: "nombre",
     topologyRules: TOPOLOGY_PRESETS.JERARQUICA_ESTRICTA_DOMAIN,
@@ -342,6 +342,7 @@ var APP_SCHEMAS = {
       parentEntity: "Capacidad",
       parentField: "id_dominio_padre"
     },
+    mutationInterceptors: ['CalculateCapacidadTopology'],
     primaryKey: "id_capacidad",
     titleField: "nombre",
     topologyRules: TOPOLOGY_PRESETS.JERARQUICA_ESTRICTA_DOMAIN,

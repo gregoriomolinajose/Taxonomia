@@ -151,6 +151,14 @@
                             value = value.trim();
                         }
                         
+                        // Estandarización Global de orden_path (S62.2 / S62.3)
+                        if (key === 'orden_path' && value) {
+                            value = String(value).split('.').map(num => {
+                                const parsed = parseInt(num, 10);
+                                return isNaN(parsed) ? num : String(parsed).padStart(2, '0');
+                            }).join('.');
+                        }
+                        
                         cleanRow[key] = value;
                     }
                 }
@@ -173,24 +181,6 @@
 
                 // Sort by orden_path to ensure parents are processed before children
                 sanitized.sort((a, b) => (a.orden_path || '').localeCompare(b.orden_path || ''));
-
-                const pathMap = {};
-                sanitized.forEach(r => {
-                    const orden = (r.orden_path || '').trim();
-                    if (!orden) return;
-                    
-                    pathMap[orden] = r;
-                    
-                    const parts = orden.split('.');
-                    if (parts.length > 1) {
-                        parts.pop();
-                        const parentOrden = parts.join('.');
-                        const parent = pathMap[parentOrden];
-                        if (parent) {
-                            r.relaciones_padre = parent.id_dominio;
-                        }
-                    }
-                });
                 
                 // Generar Path Completo utilizando el Math_Engine (Fuente Única de Verdad)
                 const fastCache = { isFastCache: true, nodesById: new Map() };

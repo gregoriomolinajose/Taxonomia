@@ -142,6 +142,33 @@ var JobWorker = (function() {
       }
     }
 
+    // Generate primary keys for new records BEFORE deduplication/interceptors
+    // so that topological interceptors can link parent-child intra-batch.
+    var pkField = 'id';
+    var schema = (typeof APP_SCHEMAS !== 'undefined') ? APP_SCHEMAS[entityName] : null;
+    if (schema && schema.primaryKey) {
+        pkField = schema.primaryKey;
+    } else if (typeof JS_SchemaUtils !== 'undefined') {
+        pkField = JS_SchemaUtils.getPrimaryKey(entityName);
+    } else {
+        pkField = 'id_' + entityName.toLowerCase();
+    }
+    
+    for (var k = 0; k < chunk.length; k++) {
+        var rec = chunk[k];
+        if (!rec[pkField] || String(rec[pkField]).trim() === '') {
+            if (typeof _generateShortUUID === 'function') {
+                rec[pkField] = _generateShortUUID(entityName);
+            } else {
+                var safeName = entityName ? entityName.replace(/[^a-zA-Z0-9]/g, '').substring(0, 4).toUpperCase() : 'UUID';
+                var chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+                var suffix = '';
+                for (var c = 0; c < 8; c++) suffix += chars.charAt(Math.floor(Math.random() * chars.length));
+                rec[pkField] = safeName + '-' + suffix;
+            }
+        }
+    }
+
     // [BUGFIX] Execute ETL deduplication and interceptors before processing the chunk
     if (typeof Engine_ETL !== 'undefined' && typeof Engine_ETL.hydrateAndDeduplicate === 'function') {
         try {
@@ -168,26 +195,6 @@ var JobWorker = (function() {
           continue;
       }
       
-      var pkField = 'id';
-      var schema = (typeof APP_SCHEMAS !== 'undefined') ? APP_SCHEMAS[entityName] : null;
-      if (schema && schema.primaryKey) {
-          pkField = schema.primaryKey;
-      } else if (typeof JS_SchemaUtils !== 'undefined') {
-          pkField = JS_SchemaUtils.getPrimaryKey(entityName);
-      } else {
-          pkField = 'id_' + entityName.toLowerCase();
-      }
-      if (!record[pkField] || String(record[pkField]).trim() === '') {
-         if (typeof _generateShortUUID === 'function') {
-             record[pkField] = _generateShortUUID(entityName);
-         } else {
-             var safeName = entityName ? entityName.replace(/[^a-zA-Z0-9]/g, '').substring(0, 4).toUpperCase() : 'UUID';
-             var chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-             var suffix = '';
-             for (var c = 0; c < 8; c++) suffix += chars.charAt(Math.floor(Math.random() * chars.length));
-             record[pkField] = safeName + '-' + suffix;
-         }
-      }
       if (schema && schema.metadata && schema.metadata.hasDraftLifecycle) {
           if (entityName === 'Persona') {
               record.estado = 'Activo';
@@ -198,6 +205,7 @@ var JobWorker = (function() {
       
       batchToInsert.push(record);
     }
+
     
     try {
       if (typeof Engine_DB !== 'undefined' && Engine_DB.upsertBatch && batchToInsert.length > 0) {

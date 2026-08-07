@@ -739,7 +739,14 @@ window.UI_BulkImporter = class UI_BulkImporter {
                 ` : ''}
                 
                 <div style="margin-top: 30px; text-align: center;">
-                    <ion-button fill="solid" color="primary" onclick="if(document.querySelector('ion-modal')) document.querySelector('ion-modal').dismiss(); else if(window.UI_ETL_Modal) window.UI_ETL_Modal.close();">Finalizar y Cerrar</ion-button>
+                    <ion-button fill="solid" color="primary" onclick="
+                        if(document.querySelector('ion-modal')) document.querySelector('ion-modal').dismiss();
+                        else if(window.UI_ETL_Modal) window.UI_ETL_Modal.close();
+                        if(window.DataViewEngine && window.DataViewEngine._getState) {
+                           const s = window.DataViewEngine._getState();
+                           if(s && s.entityName && s.containerId) window.DataViewEngine.render(s.entityName, s.containerId);
+                        }
+                    ">Finalizar y Cerrar</ion-button>
                 </div>
             </div>
         `;

@@ -822,9 +822,13 @@
                                 const fallbackContext = window.UI_FormUtils ? window.UI_FormUtils.extractDraftContext(entityName, currentPK) : null;
                                 const contextId = explicitContext || fallbackContext;
                                 const strictContext = !!explicitContext || entityName === 'Taxonomia';
-                                const linkedIds = window.Graph_Utils.resolveAllLinkedIds(currentPK, edgeName, contextId, strictContext);
+                                const linkedIds = window.Graph_Utils.resolveAllLinkedIds(currentPK, edgeName, contextId, strictContext, fieldMeta.relationType);
                                 if (linkedIds && linkedIds.length > 0) {
-                                    valToSet = linkedIds[0];
+                                    if (fieldMeta.uiComponent === 'searchable_multi' || fieldMeta.type === 'relation_multi' || fieldMeta.topologyCardinality === '1:N' || fieldMeta.topologyCardinality === 'N:M') {
+                                        valToSet = linkedIds;
+                                    } else {
+                                        valToSet = linkedIds[0];
+                                    }
                                 }
                             } else {
                                 // Legacy fallback si no está cargado Graph_Utils
@@ -833,8 +837,10 @@
                                     const match = activeEdges.find(e => String(e.id_nodo_hijo) === String(currentPK) && e.tipo_relacion === edgeName);
                                     if (match) valToSet = match.id_nodo_padre;
                                 } else {
-                                    const match = activeEdges.find(e => String(e.id_nodo_padre) === String(currentPK) && e.tipo_relacion === edgeName);
-                                    if (match) valToSet = match.id_nodo_hijo;
+                                    const matches = activeEdges.filter(e => String(e.id_nodo_padre) === String(currentPK) && e.tipo_relacion === edgeName);
+                                    if (matches.length > 0) {
+                                        valToSet = (fieldMeta.uiComponent === 'searchable_multi' || fieldMeta.type === 'relation_multi' || fieldMeta.topologyCardinality === '1:N' || fieldMeta.topologyCardinality === 'N:M') ? matches.map(m => m.id_nodo_hijo) : matches[0].id_nodo_hijo;
+                                    }
                                 }
                             }
                         }
