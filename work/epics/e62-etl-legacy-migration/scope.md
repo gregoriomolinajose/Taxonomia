@@ -19,7 +19,7 @@ Migrate all remaining entity-specific business rules from the legacy frontend ET
 ## Planned Stories
 - [x] S62.1 Migrate Persona Rules (Allowed Domains & Auto-Sync) ✓
 - [x] S62.2 Migrate Dominio Dynamic Topology ✓
-- **S62.3:** Capacidad Flattening Strategy & Global Date Parsing
+- [x] S62.3 Capacidad Flattening Strategy & Global Date Parsing ✓
 - **S62.4:** Clean up legacy ETL modules
 
 ## Progress Tracking
@@ -27,3 +27,4 @@ Migrate all remaining entity-specific business rules from the legacy frontend ET
 |-------|--------|----------------|-------------|----------|
 | S62.1 | Completed | 120m | 120m | 1.0 |
 | S62.2 | Completed | M | M | - |
+| S62.3 | Completed | 120m | 120m | 1.0 |
