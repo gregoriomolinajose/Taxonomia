@@ -22,9 +22,9 @@ function runTaxonomiaInstall() {
 
     const seedPermissions = [];
     if (typeof APP_SCHEMAS !== 'undefined') {
-        Object.keys(APP_SCHEMAS).forEach((schemaKey, index) => {
+        Object.keys(APP_SCHEMAS).forEach((schemaKey) => {
             seedPermissions.push({
-                id_permiso: "PERM-BOOT-" + schemaKey.toUpperCase().replace(/[^A-Z0-9]/g, '') + "-" + index,
+                id_permiso: "PERM-BOOT-" + schemaKey.toUpperCase().replace(/[^A-Z0-9]/g, ''),
                 id_rol: "RO-SYSADMIN",
                 schema_destino: schemaKey,
                 nivel_acceso: "ALL (Admin Total)"
