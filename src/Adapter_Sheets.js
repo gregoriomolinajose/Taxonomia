@@ -415,8 +415,15 @@ const Adapter_Sheets = {
             }
             if (rowsToAppend.length > 0) {
                 if (typeof Logger !== 'undefined') Logger.log(`[Metrics I/O] Cimentando ${rowsToAppend.length} registros nuevos en un bloque (Bulk Appends)`);
-                const lastRowPriorToAppend = sheet.getLastRow();
-                sheet.getRange(lastRowPriorToAppend + 1, 1, rowsToAppend.length, rowsToAppend[0].length).setValues(rowsToAppend);
+                
+                if (config && config.insertAtTop) {
+                    sheet.insertRowsAfter(1, rowsToAppend.length);
+                    sheet.getRange(2, 1, rowsToAppend.length, rowsToAppend[0].length).setValues(rowsToAppend);
+                } else {
+                    const lastRowPriorToAppend = sheet.getLastRow();
+                    sheet.getRange(lastRowPriorToAppend + 1, 1, rowsToAppend.length, rowsToAppend[0].length).setValues(rowsToAppend);
+                }
+                
                 SpreadsheetApp.flush();
             }
         }

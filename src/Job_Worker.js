@@ -209,7 +209,8 @@ var JobWorker = (function() {
     
     try {
       if (typeof Engine_DB !== 'undefined' && Engine_DB.upsertBatch && batchToInsert.length > 0) {
-        var batchConfig = { useSheets: true, useCloudDB: false };
+        var insertAtTopFlag = (schema && schema.metadata && schema.metadata.insertAtTop) || false;
+        var batchConfig = { useSheets: true, useCloudDB: false, insertAtTop: insertAtTopFlag };
         
         // 1. Resolve Graph Edges (M:N contextual relationships)
         var edgesToUpsert = [];

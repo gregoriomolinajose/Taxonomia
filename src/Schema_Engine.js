@@ -424,7 +424,7 @@ var APP_SCHEMAS = {
     computedFields: [
       { name: '_nombre_completo', concat: ['nombre', 'apellidos'], separator: ' ', fallback: ['email', 'id_persona'] }
     ],
-    metadata: { showInMenu: true, order: 8, iconName: 'person-outline', color: 'warning', label: 'Personas', titleField: '_nombre_completo', idField: 'id_persona', fkField: null },
+    metadata: { showInMenu: true, order: 8, iconName: 'person-outline', color: 'warning', label: 'Personas', titleField: '_nombre_completo', idField: 'id_persona', fkField: null, insertAtTop: true },
     primaryKey: "id_persona",
     mutationInterceptors: ['EnforceAllowedDomains', 'WorkspacePreflightBlock', 'HydrateWorkspace', 'AutoProvisionCargo', 'AutoProvisionLiderDirecto', 'AutoLinkAgileRoles'],
     relationalProvisioners: [
