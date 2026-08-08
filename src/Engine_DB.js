@@ -884,6 +884,7 @@ const Engine_DB = {
             current = (current - temp - 1) / 26;
         }
         return letter;
+    },
 
     /**
      * list(entityName, format)
