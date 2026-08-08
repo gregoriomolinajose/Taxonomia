@@ -1,12 +1,18 @@
-# Architecture Review: E68
+## Architecture Review: E68 (scope: epic)
 
-## Verdict: PASS
+### Critical (fix before merge)
+*No se detectaron violaciones críticas de arquitectura.*
 
-## Analysis
-- **H13. The complexity is bounded:** Se añade un proxy GViz en lugar de integrar una base de datos SQL completa (e.g. Cloud SQL).
-- **H14. Abstractions are isolated:** El acoplamiento a GViz está aislado enteramente en `Adapter_Sheets.js`.
-- **H15. Security defaults closed:** El rediseño de ABAC elimina explícitamente el Fail-Open.
-- **H16. Scalability scales O(1):** El escaneo de tablas ya no transfiere N bytes a través de V8; transfiere únicamente los C bytes filtrados previamente por Sheets.
+### Recommended (simplify before next cycle)
+*No hay recomendaciones de simplificación estructural. El adaptador GViz es necesario para la escalabilidad.*
 
-## Recommendations
-Ninguna. La estructura técnica probó resolver la colisión VRAM-OOM sin introducir costos adicionales.
+### Questions (require human judgment)
+- **H16 (Shotgun Surgery):** ¿Es `Adapter_Sheets.js` el único lugar que debería conectarse con GViz? Actualmente, todo pasa por `Engine_DB.listBy`, lo cual respeta las capas de abstracción (DB facade -> Adapter). Mantener esta regla es vital para evitar que el dominio se acople a URLs de Google Sheets.
+
+### Observations (patterns noted)
+- **H6 (Indirection Depth):** La cadena de llamadas `resolveTopologyFor` -> `Engine_DB.listBy` -> `Adapter_Sheets.query` -> `UrlFetchApp` introduce 3 capas de indirección. Sin embargo, esto está justificado por el principio de Responsabilidad Única (SRP): ABAC no debe saber SQL, DB no debe saber de peticiones HTTP, y Adapter no debe saber de permisos. **Proporcionalidad: Justificada**.
+- **H14 (Coupling Direction):** El motor principal de ABAC (`Engine_ABAC`) ahora depende del facade `Engine_DB.listBy`. Esto es correcto ya que ABAC es una capa superior de negocio consumiendo servicios de persistencia, manteniendo la dirección del acoplamiento hacia el núcleo estable (la DB).
+- **H13 (Orphaned Abstractions):** Se eliminó la lógica huérfana de "Graceful Degradation" en ABAC, reduciendo la deuda técnica.
+
+### Verdict
+- [x] PASS
