@@ -1,18 +1,52 @@
-## Architecture Review: E68 (scope: epic)
+## Architecture Review: E68 — Ronda 2 (scope: epic)
+
+**Auditor:** Opus  
+**Fecha:** 2026-08-08  
+**Scope:** Todos los archivos modificados en E68
+
+---
 
 ### Critical (fix before merge)
-- **H16 (Shotgun Surgery / DB Consistency):** El Paso 1 del algoritmo BFS (`Engine_ABAC.js:75-92`) sigue realizando un Full Table Scan, que es exactamente el problema arquitectónico de escala que esta épica (E68) busca resolver con GViz. Esto rompe la consistencia del diseño. **Debe corregirse implementando llamadas a GViz (`Engine_DB.listBy`).**
+
+- **Engine_DB.js:886** — *Regresión sintáctica:* Al extraer `_getColumnLetter`, faltaba `},` de cierre. Hubiera impedido la instanciación completa de `Engine_DB`. **Estado: CORREGIDO.**
+
+---
 
 ### Recommended (simplify before next cycle)
-*No hay recomendaciones adicionales.*
+
+*Ninguna recomendación de simplificación. La complejidad actual está justificada.*
+
+---
 
 ### Questions (require human judgment)
-- **H16 (Shotgun Surgery):** ¿Es `Adapter_Sheets.js` el único lugar que debería conectarse con GViz? Actualmente, todo pasa por `Engine_DB.listBy`, lo cual respeta las capas de abstracción (DB facade -> Adapter). Mantener esta regla es vital para evitar que el dominio se acople a URLs de Google Sheets.
+
+**Q1. ¿Hasta dónde llega el alcance de GViz en E68?**
+
+Actualmente, E68 migró los dos pasos del BFS topológico a GViz pero dejó intactas las consultas de identidad (`Persona`) y de permisos (`Sys_Permissions`) que siguen usando `_getCachedData` (Full Table Scan). Esto es consistente internamente porque:
+
+- `Persona` se carga una sola vez por request (caché efímera) y se usa en múltiples puntos (identidad + validación).
+- `Sys_Permissions` es típicamente una tabla pequeña (< 500 filas).
+
+Sin embargo, si el sistema escala a 50,000+ personas, la carga inicial de `Persona` seguirá siendo un cuello de botella. **Decisión del negocio:** ¿Aceptamos este límite para E68 o lo incluimos en scope?
+
+---
 
 ### Observations (patterns noted)
-- **H6 (Indirection Depth):** La cadena de llamadas `resolveTopologyFor` -> `Engine_DB.listBy` -> `Adapter_Sheets.query` -> `UrlFetchApp` introduce 3 capas de indirección. Sin embargo, esto está justificado por el principio de Responsabilidad Única (SRP): ABAC no debe saber SQL, DB no debe saber de peticiones HTTP, y Adapter no debe saber de permisos. **Proporcionalidad: Justificada**.
-- **H14 (Coupling Direction):** El motor principal de ABAC (`Engine_ABAC`) ahora depende del facade `Engine_DB.listBy`. Esto es correcto ya que ABAC es una capa superior de negocio consumiendo servicios de persistencia, manteniendo la dirección del acoplamiento hacia el núcleo estable (la DB).
-- **H13 (Orphaned Abstractions):** Se eliminó la lógica huérfana de "Graceful Degradation" en ABAC, reduciendo la deuda técnica.
+
+**H1 (Single Implementation):** `Engine_DB.listBy` tiene un solo consumidor real (`Engine_ABAC`). Pero esto es intencional — es un facade de persistencia diseñado para ser genérico. No es una abstracción huérfana.
+
+**H6 (Indirection Depth):** `ABAC → Engine_DB.listBy → Adapter_Sheets.query → UrlFetchApp` = 3 capas. Justificado por SRP: ABAC no sabe SQL, DB no sabe HTTP, Adapter no sabe de permisos.
+
+**H14 (Coupling Direction):** Correcto. ABAC (volátil) depende de Engine_DB (estable). Engine_DB depende de Adapter_Sheets (infraestructura). La dirección del acoplamiento va de lo volátil hacia lo estable.
+
+**H9 (Semantic Duplication):** El patrón try/GViz + catch/fallback-cache se repite textualmente en el Paso 1 y el Paso 2 del BFS. Son 12 líneas duplicadas semánticamente. Candidato para extracción a un helper `_queryWithFallback(entityName, fieldName, value)` en un ciclo futuro.
+
+**H13 (Orphaned Abstractions):** Eliminación exitosa del código de Graceful Degradation en seguridad. No se detectan abstracciones huérfanas nuevas.
+
+---
 
 ### Verdict
-- [ ] SIMPLIFY (Requiere completar la refactorización de escalabilidad del BFS)
+
+- [x] **PASS**
+
+La arquitectura es proporcionada al problema. Las duplicaciones semánticas detectadas (H9) son candidatas para simplificación futura, no bloqueantes.

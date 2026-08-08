@@ -1,18 +1,67 @@
-## Quality Review: E68 (Zero-Trust & GViz Scalability)
+## Quality Review: E68 — Ronda 2 (Post-Fixes)
+
+**Auditor:** Opus  
+**Fecha:** 2026-08-08  
+**Archivos revisados:** Engine_ABAC.js, Engine_DB.js, Adapter_Sheets.js, Install_Seeder.js
+
+---
 
 ### Critical (fix before merge)
-- **Engine_DB.js:884** - *Reference Error*: El código llama a `_Adapter_Sheets.query(...)`. El objeto instanciado se llama `Adapter_Sheets`. Esto lanzará un `ReferenceError` en runtime y romperá el motor completo de ABAC. **Sugerencia:** Renombrar `_Adapter_Sheets` a `Adapter_Sheets`.
-- **Engine_ABAC.js:75-92** - *Memory Scalability (OOM)*: El Paso 1 de la resolución topológica (Base Ownership) no fue refactorizado. Sigue iterando sobre *todas* las entidades y ejecutando `this._getCachedData(entName)` para buscar coincidencias. Esto descarga todas las tablas a la memoria de V8 (Full Table Scan), derrotando el propósito de esta épica (evitar OOM). **Sugerencia:** Refactorizar el Paso 1 para utilizar `Engine_DB.listBy` con GViz, idéntico al Paso 2.
+
+- **Engine_DB.js:886** — *Syntax Error (REGRESIÓN):* La extracción de `_getColumnLetter` como helper dejó la función sin llave de cierre `}` ni coma `,`. El objeto `Engine_DB` completo fallaría al parsearse en V8. **Estado: CORREGIDO en esta ronda.**
+
+---
 
 ### Recommended (improve code quality)
-- **Install_Seeder.js:25** - *Generación de IDs de Permisos*: [FIXED] El índice fue removido garantizando idempotencia.
-- **Engine_DB.js:862** - *Escape de comillas en GViz*: [FIXED] Se añadió la validación temprana de `null/undefined`.
-- **Engine_DB.js:857** - *Code Smells*: La función `getColumnLetter` se declara anónima dentro de `listBy` en cada ejecución. **Sugerencia:** Extraerla como un helper privado `_getColumnLetter` en el objeto principal.
-- **Install_Seeder.js:150-153** - *Inconsistencia de Patrones*: La función `seedGreatPeepsRoles` sigue usando IDs harcodeados manuales, en contraste con el nuevo modelo dinámico del resto del seeder. **Sugerencia:** Alinear los patrones.
+
+**1. Engine_ABAC.js:37 — Persona sigue con Full Table Scan**
+
+La resolución de identidad (`this._getCachedData('Persona')`) descarga *toda* la tabla `Persona` para hacer un `.find()` por email. Esto no fue tocado en E68 pero es el mismo patrón que se corrigió en el BFS. En un sistema con 50,000+ empleados, esta sola línea puede consumir decenas de MB.
+
+> **Mitigación:** No es bloqueante porque `_getCachedData` solo la carga una vez por request (caché efímera). Es un candidato para E69, no para E68.
+
+**2. Engine_ABAC.js:56 — Sys_Permissions también Full Table Scan**
+
+Mismo patrón: `this._getCachedData('Sys_Permissions')` seguido de `.filter()`. El riesgo es menor porque la tabla de permisos suele ser pequeña (< 500 filas), pero rompe la consistencia del diseño.
+
+> **Mitigación:** Aceptable en E68. Candidato para E69.
+
+**3. Install_Seeder.js:34-37 — Fallback con IDs truncados inconsistentes**
+
+Cuando `APP_SCHEMAS` no está definido, el fallback hardcodea `PERM-BOOT-PERM` y `PERM-BOOT-WORK`. Estos IDs no siguen el patrón completo (`PERM-BOOT-SYSPERMISSIONS`). Si alguien corre el seeder sin esquemas y luego con esquemas, habrá registros huérfanos.
+
+> **Sugerencia:** Alinear el fallback al mismo patrón: `PERM-BOOT-SYSPERMISSIONS` y `PERM-BOOT-CONFIGWORKSPACE`.
+
+**4. Adapter_Sheets.js:827 — Serialización redundante**
+
+`JSON.parse(JSON.stringify(rows))` clona profundo un array que ya fue construido línea a línea con valores primitivos. No hay referencias circulares ni objetos compartidos. Es CPU y memoria desperdiciada.
+
+> **Sugerencia:** Devolver `rows` directamente o documentar por qué el deep-clone es necesario.
+
+---
 
 ### Observations (no action needed)
-- **Adapter_Sheets.js:782** - *Regex Parser*: El uso de `(?<=.*\().*(?=\);)` para limpiar el callback `/*O_o*/` de GViz es frágil si Google alguna vez cambia la estructura del callback, pero es el estándar de la industria (no documentado) que lleva 10 años sin cambiar. Es un riesgo aceptado.
-- **Engine_ABAC.js:106** - *Fallback Recursivo*: Si GViz falla (ej. por cuotas de UrlFetchApp agotadas), el motor retrocede limpiamente a `_getCachedData`. Esto es una excelente práctica de resiliencia (graceful degradation técnico, no de seguridad).
+
+**1. Engine_ABAC.js:80-103 — Paso 1 BFS bien refactorizado**
+
+La iteración ahora recorre `ownerFields` individualmente y delega a `Engine_DB.listBy`. El fallback a `_getCachedData` con `.filter()` manual es correcto y defensivo. Aprobado.
+
+**2. Engine_ABAC.js:127-137 — Paso 2 BFS consistente**
+
+Mismo patrón que el Paso 1: intenta GViz, cae a caché si falla. La aserción `String(childRow[parentField]) === current.id` en línea 141 es redundante cuando GViz tiene éxito (ya filtró), pero es inofensiva y necesaria para el path de fallback. Aceptable.
+
+**3. Engine_ABAC.js:190-210 — Zero-Trust limpio**
+
+La lógica de denegación por defecto es clara, tiene log de trazabilidad, y el default final `return false` cierra cualquier caso no contemplado. Sin observaciones.
+
+**4. Engine_DB.js:856 — `this._getColumnLetter` correctamente extraído**
+
+El helper es ahora reutilizable y testeable de forma independiente. Buen refactor.
+
+---
 
 ### Verdict
-- [ ] FAIL (Requiere corrección del Reference Error y la escalabilidad del Paso 1)
+
+- [x] **PASS WITH RECOMMENDATIONS**
+
+Los hallazgos pendientes (Persona FTS, Sys_Permissions FTS, fallback IDs, serialización redundante) son candidatos para un ciclo futuro (E69). Ninguno es bloqueante para merge.
