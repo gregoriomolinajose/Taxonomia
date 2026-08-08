@@ -905,6 +905,30 @@ function getAppSchema(entityName) {
 }
 
 /**
+ * Returns a pruned version of the schemas for frontend payload injection.
+ * Strips out backend-only metadata like audit fields to reduce payload size.
+ */
+function getPrunedAppSchema() {
+  const schemas = getAppSchema();
+  const pruned = {};
+  const backendOnlyFields = typeof CORE_SYS_FIELDS !== 'undefined' ? CORE_SYS_FIELDS : ['created_at', 'create_by', 'created_by', 'updated_at', 'update_at', 'update_by', 'deleted_at', 'deleted_by', 'version', '_version'];
+  
+  for (const key in schemas) {
+    if (key === '_UI_CONFIG') {
+      pruned[key] = schemas[key];
+      continue;
+    }
+    
+    pruned[key] = Object.assign({}, schemas[key]);
+    if (pruned[key].fields) {
+      pruned[key].fields = pruned[key].fields.filter(f => !backendOnlyFields.includes(f.name));
+    }
+  }
+  
+  return pruned;
+}
+
+/**
  * Epic E8: Safe getter for topology rules. Returns the configured rules
  * for the entity if available, otherwise returns a safe default (FLAT).
  * Prevents downstream failures for legacy entities.
@@ -954,7 +978,7 @@ function getFieldNameFromLabel(entityName, rawHeader) {
 }
 
 if (typeof module !== 'undefined') {
-  module.exports = { APP_SCHEMAS, TOPOLOGY_PRESETS, FIELD_TEMPLATES, getAppSchema, getEntityTopologyRules, getFieldNameFromLabel };
+  module.exports = { APP_SCHEMAS, TOPOLOGY_PRESETS, FIELD_TEMPLATES, getAppSchema, getPrunedAppSchema, getEntityTopologyRules, getFieldNameFromLabel };
 }
 
 // ─── [E31] Admin GAS endpoints ───────────────────────────────────────────────

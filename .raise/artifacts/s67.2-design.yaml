@@ -1,0 +1,35 @@
+artifact_type: story-design
+version: 1
+skill: rai-story-design
+created: '2026-08-08T14:03:20-06:00'
+story: 'S67.2'
+epic: 'e67'
+content:
+  summary: 'Reduce page load time and payload size by deferring CDNs, lazy loading tab data, and pruning backend-only schema metadata.'
+  complexity: moderate
+  acceptance_criteria:
+    - id: AC1
+      description: 'Heavy libraries in Index.html are deferred and do not block rendering.'
+      verifiable: true
+    - id: AC2
+      description: 'The initial bootstrap payload only contains data for the initially visible dashboard/tab.'
+      verifiable: true
+    - id: AC3
+      description: 'Unused backend metadata is pruned from the injected APP_SCHEMAS.'
+      verifiable: true
+  integration_points:
+    - module: 'frontend.index'
+      change_type: modification
+      files: ['Index.html']
+    - module: 'backend.bootstrap'
+      change_type: modification
+      files: ['Server.gs'] 
+  decisions:
+    - id: D1
+      choice: 'Use `defer` for CDNs instead of `async`'
+      rationale: '`defer` ensures scripts are executed in order after DOM parsing, preserving dependencies.'
+      alternatives_considered: ['async', 'dynamic script insertion']
+refs:
+  backlog_item: 'S67.2'
+  epic_scope: 'work/epics/e67-optimizacion-carga-seguridad/scope.md'
+metadata: {}

@@ -76,17 +76,30 @@ const Engine_ABAC = {
             const schema = APP_SCHEMAS[entName];
             if (schema.topological_metadata && Array.isArray(schema.topological_metadata.ownerFields)) {
                 const pkField = getPkField(schema, entName);
-                const rows = this._getCachedData(entName) || [];
                 
-                rows.forEach(row => {
-                    const isOwner = schema.topological_metadata.ownerFields.some(f => row[f] && row[f] === personaId);
-                    if (isOwner) {
+                schema.topological_metadata.ownerFields.forEach(ownerField => {
+                    let rows = [];
+                    if (typeof Engine_DB !== 'undefined' && typeof Engine_DB.listBy === 'function') {
+                        try {
+                            const dbRes = Engine_DB.listBy(entName, ownerField, personaId);
+                            if (dbRes && dbRes.rows) rows = dbRes.rows;
+                        } catch (e) {
+                            if (typeof Logger !== 'undefined') Logger.log(`[ABAC_BFS_P1] Fallback a caché para ${entName}. Error GViz: ${e.message}`);
+                            const allRows = this._getCachedData(entName) || [];
+                            rows = allRows.filter(r => r[ownerField] && r[ownerField] === personaId);
+                        }
+                    } else {
+                        const allRows = this._getCachedData(entName) || [];
+                        rows = allRows.filter(r => r[ownerField] && r[ownerField] === personaId);
+                    }
+                    
+                    rows.forEach(row => {
                         const rowId = String(row[pkField]);
                         if (rowId && rowId !== 'undefined' && !ownerSet.has(rowId)) {
                             ownerSet.add(rowId);
                             bfsQueue.push({ entity: entName, id: rowId });
                         }
-                    }
+                    });
                 });
             }
         });
@@ -106,9 +119,25 @@ const Engine_ABAC = {
                     if (!parentField) return;
 
                     const childPkField = getPkField(childSchema, childEntName);
-                    const childRows = this._getCachedData(childEntName) || [];
+                    
+                    // ENTERPRISE SCALABILITY REFACTOR:
+                    // En lugar de descargar todo el arreglo (Full Table Scan O(N)) y filtrarlo en memoria,
+                    // le pedimos a la DB (vía GViz API) que nos devuelva exclusivamente los hijos relevantes.
+                    let childRows = [];
+                    if (typeof Engine_DB !== 'undefined' && typeof Engine_DB.listBy === 'function') {
+                        try {
+                            const dbRes = Engine_DB.listBy(childEntName, parentField, current.id);
+                            if (dbRes && dbRes.rows) childRows = dbRes.rows;
+                        } catch (e) {
+                            if (typeof Logger !== 'undefined') Logger.log(`[ABAC_BFS] Fallback a caché para ${childEntName}. Error GViz: ${e.message}`);
+                            childRows = this._getCachedData(childEntName) || [];
+                        }
+                    } else {
+                        childRows = this._getCachedData(childEntName) || [];
+                    }
                     
                     childRows.forEach(childRow => {
+                        // Mantenemos la aserción estricta por seguridad y compatibilidad con el fallback
                         if (String(childRow[parentField]) === current.id) {
                             const childId = String(childRow[childPkField]);
                             // Shield: Detección de Ciclo O(1). Si el nodo ya fue visitado en la cascada, lo ignora (Rompe los infinite loops).
@@ -171,13 +200,13 @@ const Engine_ABAC = {
     // Cruza exacto de ABAC
     const rule = permisos.find(p => p.id_rol === roleId && p.schema_destino === entityName);
     
-    // S18.2: Regla Opcional Bypass. Si no hay regla Matrix definida explícitamente para esta entidad, 
-    // somos tolerantes y permitimos el flujo clásico (Graceful Degradation de Gobernanza)
+    // ENTERPRISE ZERO-TRUST STRICT MODE: 
+    // Si no hay regla Matrix definida explícitamente para esta entidad, denegamos el acceso.
     if (!rule) {
-      if (typeof APP_SCHEMAS !== 'undefined' && APP_SCHEMAS[entityName] && APP_SCHEMAS[entityName].metadata && APP_SCHEMAS[entityName].metadata.requireStrictMatrixAccess) {
-        return false;
+      if (typeof Logger !== 'undefined') {
+        Logger.log(`[ABAC_FIREWALL] Acceso denegado: No existe regla explícita en Sys_Permissions para el Rol '${roleId}' hacia la entidad '${entityName}'.`);
       }
-      return true;
+      return false;
     }
     
     const nivel = rule.nivel_acceso || "NONE (Denegado)";

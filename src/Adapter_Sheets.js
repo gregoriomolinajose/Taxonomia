@@ -732,6 +732,100 @@ const Adapter_Sheets = {
         const sanitizedRows = JSON.parse(JSON.stringify(rows));
         
         return { headers: filteredHeaders, rows: sanitizedRows };
+    },
+
+    /**
+     * [S68] GViz Native Query Interface para Escalabilidad Topológica O(1) en Memoria
+     * Ejecuta una consulta SQL-like delegando el procesamiento al backend de Google Sheets.
+     */
+    query: function (entityName, config, sqlString) {
+        if (typeof UrlFetchApp === 'undefined' || typeof ScriptApp === 'undefined') {
+            throw new Error("El motor GViz requiere el entorno de Google Apps Script con UrlFetchApp y ScriptApp disponibles.");
+        }
+
+        const spreadsheetId = (config && config.SPREADSHEET_ID_DB) ? config.SPREADSHEET_ID_DB : CONFIG.SPREADSHEET_ID_DB;
+        if (!spreadsheetId) {
+            throw new Error(`[Adapter_Sheets.query] SPREADSHEET_ID_DB no definido.`);
+        }
+
+        // Asumimos que la hoja física se llama igual que la entidad
+        const sheetName = entityName; 
+        const encodedQuery = encodeURIComponent(sqlString);
+        const url = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/gviz/tq?tq=${encodedQuery}&sheet=${sheetName}`;
+
+        let token;
+        try {
+            token = ScriptApp.getOAuthToken();
+        } catch (e) {
+            throw new Error("[Adapter_Sheets.query] Error al obtener OAuth token. Verifica los scopes: " + e.message);
+        }
+
+        const options = {
+            method: "get",
+            headers: {
+                "Authorization": "Bearer " + token
+            },
+            muteHttpExceptions: true
+        };
+
+        const response = UrlFetchApp.fetch(url, options);
+        const statusCode = response.getResponseCode();
+        const text = response.getContentText();
+
+        if (statusCode !== 200) {
+            if (typeof Logger !== 'undefined') Logger.log(`[Adapter_Sheets.query] HTTP ${statusCode} en GViz para ${entityName}: ${text}`);
+            throw new Error(`Fallo en GViz: HTTP ${statusCode}`);
+        }
+
+        // GViz retorna: /*O_o*/ google.visualization.Query.setResponse({...})
+        const jsonMatch = text.match(/(?<=.*\().*(?=\);)/s);
+        if (!jsonMatch || !jsonMatch[0]) {
+            throw new Error(`[Adapter_Sheets.query] Formato GViz irreconocible: ${text.substring(0, 50)}...`);
+        }
+
+        let data;
+        try {
+            data = JSON.parse(jsonMatch[0]);
+        } catch (e) {
+            throw new Error(`[Adapter_Sheets.query] Fallo al parsear JSON de GViz: ${e.message}`);
+        }
+
+        if (data.status !== 'ok') {
+            throw new Error(`[Adapter_Sheets.query] GViz Error Lógico: ${JSON.stringify(data.errors)}`);
+        }
+
+        // Mapear headers desde data.table.cols
+        const headers = [];
+        if (data.table && data.table.cols) {
+            data.table.cols.forEach(col => {
+                const headerName = col.label ? col.label : col.id;
+                headers.push(_normalizeHeader(headerName));
+            });
+        }
+
+        // Reconstruir rows
+        const rows = [];
+        if (data.table && data.table.rows) {
+            data.table.rows.forEach(r => {
+                const rowObj = {};
+                if (r.c) {
+                    for (let i = 0; i < headers.length; i++) {
+                        const h = headers[i];
+                        const cell = r.c[i];
+                        // Extraer el valor 'v' o el string formateado 'f' si 'v' no es óptimo, pero 'v' es estándar.
+                        rowObj[h] = (cell && cell.v !== null && cell.v !== undefined) ? cell.v : '';
+                    }
+                }
+                
+                // Excluir nodos lógicamente eliminados
+                if (!this._isNodeLogicallyDeleted(headers, rowObj)) {
+                    rows.push(rowObj);
+                }
+            });
+        }
+
+        const sanitizedRows = JSON.parse(JSON.stringify(rows));
+        return { headers: headers, rows: sanitizedRows };
     }
 };
 

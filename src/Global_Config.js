@@ -7,6 +7,8 @@ const CONFIG = {
     WORKSPACE_INTEGRATION: true
 };
 
+const CORE_SYS_FIELDS = ['created_at', 'create_by', 'created_by', 'updated_at', 'update_at', 'update_by', 'deleted_at', 'deleted_by', 'version', '_version'];
+
 if (typeof PropertiesService !== 'undefined') {
     try {
         var _props = PropertiesService.getScriptProperties();
