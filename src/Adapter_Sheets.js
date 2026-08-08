@@ -824,8 +824,7 @@ const Adapter_Sheets = {
             });
         }
 
-        const sanitizedRows = JSON.parse(JSON.stringify(rows));
-        return { headers: headers, rows: sanitizedRows };
+        return { headers: headers, rows: rows };
     }
 };
 
