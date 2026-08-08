@@ -853,11 +853,12 @@ const Engine_DB = {
             return { headers: [], rows: [] };
         }
         // [E6-S66] Intentar leer de RAM (CacheService) con señal cross-tenant
-        const cacheKey = `CACHE_LIST_${_getAppVersionHash()}_${entityName}`;
+        const safeFormat = format || 'objects';
+        const cacheKey = `CACHE_LIST_${_getAppVersionHash()}_${entityName}_${safeFormat}`;
         if (typeof CacheService !== 'undefined' && (!options || !options.skipCache)) {
             const cache = CacheService.getScriptCache();
             const cachedRaw = _getCacheChunked(cache, cacheKey);
-            if (cachedRaw && format !== 'tuples') {
+            if (cachedRaw) {
                 try {
                     const wrapped = JSON.parse(cachedRaw);
                     // [S66] Si tiene campo cached_at, verificar señales cross-tenant
@@ -885,7 +886,7 @@ const Engine_DB = {
         const result = _Adapter_Sheets.list(entityName, config, format);
         
         // [S66] Guardar en caché envuelto con timestamp para soporte de señales cross-tenant
-        if (typeof CacheService !== 'undefined' && format !== 'tuples' && result) {
+        if (typeof CacheService !== 'undefined' && result) {
             const cache = CacheService.getScriptCache();
             const wrappedResult = { data: result, cached_at: new Date().toISOString() };
             _putCacheChunked(cache, cacheKey, JSON.stringify(wrappedResult), 3600);
