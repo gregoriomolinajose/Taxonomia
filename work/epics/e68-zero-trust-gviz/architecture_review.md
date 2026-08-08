@@ -1,10 +1,10 @@
 ## Architecture Review: E68 (scope: epic)
 
 ### Critical (fix before merge)
-*No se detectaron violaciones críticas de arquitectura.*
+- **H16 (Shotgun Surgery / DB Consistency):** El Paso 1 del algoritmo BFS (`Engine_ABAC.js:75-92`) sigue realizando un Full Table Scan, que es exactamente el problema arquitectónico de escala que esta épica (E68) busca resolver con GViz. Esto rompe la consistencia del diseño. **Debe corregirse implementando llamadas a GViz (`Engine_DB.listBy`).**
 
 ### Recommended (simplify before next cycle)
-*No hay recomendaciones de simplificación estructural. El adaptador GViz es necesario para la escalabilidad.*
+*No hay recomendaciones adicionales.*
 
 ### Questions (require human judgment)
 - **H16 (Shotgun Surgery):** ¿Es `Adapter_Sheets.js` el único lugar que debería conectarse con GViz? Actualmente, todo pasa por `Engine_DB.listBy`, lo cual respeta las capas de abstracción (DB facade -> Adapter). Mantener esta regla es vital para evitar que el dominio se acople a URLs de Google Sheets.
@@ -15,4 +15,4 @@
 - **H13 (Orphaned Abstractions):** Se eliminó la lógica huérfana de "Graceful Degradation" en ABAC, reduciendo la deuda técnica.
 
 ### Verdict
-- [x] PASS
+- [ ] SIMPLIFY (Requiere completar la refactorización de escalabilidad del BFS)

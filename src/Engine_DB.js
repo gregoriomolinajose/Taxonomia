@@ -853,19 +853,7 @@ const Engine_DB = {
             throw new Error(`[Engine_DB.listBy] Campo '${fieldName}' no existe en el esquema de '${entityName}'.`);
         }
 
-        // Mapear el índice (0, 1, 2...) a Letras de Columna GViz (A, B, C...)
-        const getColumnLetter = (colIndex) => {
-            let temp, letter = '';
-            let current = colIndex + 1;
-            while (current > 0) {
-                temp = (current - 1) % 26;
-                letter = String.fromCharCode(temp + 65) + letter;
-                current = (current - temp - 1) / 26;
-            }
-            return letter;
-        };
-
-        const colLetter = getColumnLetter(fieldIndex);
+        const colLetter = this._getColumnLetter(fieldIndex);
         
         if (value === null || value === undefined) {
             throw new Error(`[Engine_DB.listBy] Valor de filtrado inválido para el campo '${fieldName}'.`);
@@ -881,8 +869,21 @@ const Engine_DB = {
         }
 
         // Delegar al adaptador de Sheets
-        return _Adapter_Sheets.query(entityName, config, sqlString);
+        return Adapter_Sheets.query(entityName, config, sqlString);
     },
+
+    /**
+     * Helper privado para mapear índice (0, 1, 2...) a Letras de Columna GViz (A, B, C...)
+     */
+    _getColumnLetter: function(colIndex) {
+        let temp, letter = '';
+        let current = colIndex + 1;
+        while (current > 0) {
+            temp = (current - 1) % 26;
+            letter = String.fromCharCode(temp + 65) + letter;
+            current = (current - temp - 1) / 26;
+        }
+        return letter;
 
     /**
      * list(entityName, format)

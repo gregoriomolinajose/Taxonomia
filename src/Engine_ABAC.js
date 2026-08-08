@@ -76,17 +76,30 @@ const Engine_ABAC = {
             const schema = APP_SCHEMAS[entName];
             if (schema.topological_metadata && Array.isArray(schema.topological_metadata.ownerFields)) {
                 const pkField = getPkField(schema, entName);
-                const rows = this._getCachedData(entName) || [];
                 
-                rows.forEach(row => {
-                    const isOwner = schema.topological_metadata.ownerFields.some(f => row[f] && row[f] === personaId);
-                    if (isOwner) {
+                schema.topological_metadata.ownerFields.forEach(ownerField => {
+                    let rows = [];
+                    if (typeof Engine_DB !== 'undefined' && typeof Engine_DB.listBy === 'function') {
+                        try {
+                            const dbRes = Engine_DB.listBy(entName, ownerField, personaId);
+                            if (dbRes && dbRes.rows) rows = dbRes.rows;
+                        } catch (e) {
+                            if (typeof Logger !== 'undefined') Logger.log(`[ABAC_BFS_P1] Fallback a caché para ${entName}. Error GViz: ${e.message}`);
+                            const allRows = this._getCachedData(entName) || [];
+                            rows = allRows.filter(r => r[ownerField] && r[ownerField] === personaId);
+                        }
+                    } else {
+                        const allRows = this._getCachedData(entName) || [];
+                        rows = allRows.filter(r => r[ownerField] && r[ownerField] === personaId);
+                    }
+                    
+                    rows.forEach(row => {
                         const rowId = String(row[pkField]);
                         if (rowId && rowId !== 'undefined' && !ownerSet.has(rowId)) {
                             ownerSet.add(rowId);
                             bfsQueue.push({ entity: entName, id: rowId });
                         }
-                    }
+                    });
                 });
             }
         });
