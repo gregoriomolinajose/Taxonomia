@@ -20,20 +20,22 @@ function runTaxonomiaInstall() {
         }
     ];
 
-    const seedPermissions = [
-        {
-            id_permiso: "PERM-BOOT-PERM",
-            id_rol: "RO-SYSADMIN",
-            schema_destino: "Sys_Permissions",
-            nivel_acceso: "ALL (Admin Total)"
-        },
-        {
-            id_permiso: "PERM-BOOT-WORK",
-            id_rol: "RO-SYSADMIN",
-            schema_destino: "Config_Workspace",
-            nivel_acceso: "ALL (Admin Total)"
-        }
-    ];
+    const seedPermissions = [];
+    if (typeof APP_SCHEMAS !== 'undefined') {
+        Object.keys(APP_SCHEMAS).forEach((schemaKey, index) => {
+            seedPermissions.push({
+                id_permiso: "PERM-BOOT-" + schemaKey.substring(0, 10).toUpperCase() + "-" + index,
+                id_rol: "RO-SYSADMIN",
+                schema_destino: schemaKey,
+                nivel_acceso: "ALL (Admin Total)"
+            });
+        });
+    } else {
+        seedPermissions.push(
+            { id_permiso: "PERM-BOOT-PERM", id_rol: "RO-SYSADMIN", schema_destino: "Sys_Permissions", nivel_acceso: "ALL (Admin Total)" },
+            { id_permiso: "PERM-BOOT-WORK", id_rol: "RO-SYSADMIN", schema_destino: "Config_Workspace", nivel_acceso: "ALL (Admin Total)" }
+        );
+    }
 
     if (typeof Engine_DB !== 'undefined') {
         Logger.log("Instalando Roles...");

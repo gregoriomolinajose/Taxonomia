@@ -836,6 +836,51 @@ const Engine_DB = {
     },
 
     /**
+     * [S68] listBy(entityName, fieldName, value)
+     * Ejecuta una consulta GViz nativa para filtrar los registros en el backend de DB.
+     */
+    listBy: function (entityName, fieldName, value) {
+        const config = (typeof CONFIG !== 'undefined') ? CONFIG : { useSheets: true, SPREADSHEET_ID_DB: '' };
+        
+        const schema = (typeof APP_SCHEMAS !== 'undefined') ? APP_SCHEMAS[entityName] : null;
+        if (!schema || !schema.fields) {
+            throw new Error(`[Engine_DB.listBy] Esquema no encontrado o sin campos para '${entityName}'.`);
+        }
+
+        // Obtener el índice de la columna basándose en el esquema
+        const fieldIndex = schema.fields.findIndex(f => f.name === fieldName);
+        if (fieldIndex === -1) {
+            throw new Error(`[Engine_DB.listBy] Campo '${fieldName}' no existe en el esquema de '${entityName}'.`);
+        }
+
+        // Mapear el índice (0, 1, 2...) a Letras de Columna GViz (A, B, C...)
+        const getColumnLetter = (colIndex) => {
+            let temp, letter = '';
+            let current = colIndex + 1;
+            while (current > 0) {
+                temp = (current - 1) % 26;
+                letter = String.fromCharCode(temp + 65) + letter;
+                current = (current - temp - 1) / 26;
+            }
+            return letter;
+        };
+
+        const colLetter = getColumnLetter(fieldIndex);
+        
+        // Construir el SQL para GViz
+        // Nota: En GViz, los strings deben ir entre comillas simples.
+        const safeValue = String(value).replace(/'/g, "''"); 
+        const sqlString = `SELECT * WHERE ${colLetter} = '${safeValue}'`;
+
+        if (typeof Logger !== 'undefined') {
+            Logger.log(`[Engine_DB.listBy] Ejecutando GViz en ${entityName}: ${sqlString}`);
+        }
+
+        // Delegar al adaptador de Sheets
+        return _Adapter_Sheets.query(entityName, config, sqlString);
+    },
+
+    /**
      * list(entityName, format)
      * Devuelve todos los registros de una entidad como { headers[], rows[] }.
      * Delega a Adapter_Sheets con CAPA DE CACHÉ (Directiva Architect).
