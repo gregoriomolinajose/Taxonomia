@@ -37,9 +37,10 @@ function doPost(e) {
     })).setMimeType(ContentService.MimeType.JSON);
 
   } catch (error) {
+    if (typeof Logger !== 'undefined') Logger.log('🚀 ERROR POST: ' + error.message + '\\n' + error.stack);
     return ContentService.createTextOutput(JSON.stringify({
       status: "error",
-      message: error.message
+      message: "Ocurrió un error interno al procesar su solicitud."
     })).setMimeType(ContentService.MimeType.JSON);
   }
 }
@@ -411,15 +412,17 @@ function API_Universal_Router(action, entityName, payload) {
     // Categorización Semántica del Error para el Cliente
     let errorType = 'GENERAL';
     const msg = error.message || '';
-    if (msg.indexOf('ERROR_CONCURRENCY') !== -1) errorType = 'CONCURRENCY';
-    else if (msg.indexOf('ABAC Error') !== -1) errorType = 'UNAUTHORIZED';
-    else if (msg.indexOf('not supported') !== -1 || msg.indexOf('must be an array') !== -1 || msg.indexOf('no especificada') !== -1) errorType = 'BAD_REQUEST';
+    let clientMessage = "Ocurrió un error inesperado al procesar la solicitud.";
+    
+    if (msg.indexOf('ERROR_CONCURRENCY') !== -1) { errorType = 'CONCURRENCY'; clientMessage = "Error de concurrencia al procesar los datos."; }
+    else if (msg.indexOf('ABAC Error') !== -1) { errorType = 'UNAUTHORIZED'; clientMessage = "No tiene permisos suficientes para realizar esta acción."; }
+    else if (msg.indexOf('not supported') !== -1 || msg.indexOf('must be an array') !== -1 || msg.indexOf('no especificada') !== -1) { errorType = 'BAD_REQUEST'; clientMessage = "La solicitud enviada no es válida."; }
 
     const sanitizedReturn = JSON.stringify({
       status: "error",
       success: false,
       errorType: errorType,
-      message: error.message
+      message: clientMessage
     });
     return sanitizedReturn;
   }
