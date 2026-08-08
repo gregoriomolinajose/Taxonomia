@@ -867,6 +867,10 @@ const Engine_DB = {
 
         const colLetter = getColumnLetter(fieldIndex);
         
+        if (value === null || value === undefined) {
+            throw new Error(`[Engine_DB.listBy] Valor de filtrado inválido para el campo '${fieldName}'.`);
+        }
+        
         // Construir el SQL para GViz
         // Nota: En GViz, los strings deben ir entre comillas simples.
         const safeValue = String(value).replace(/'/g, "''"); 
