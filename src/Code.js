@@ -171,6 +171,8 @@ function doGet(e) {
 
   // Workspace Sync Config Load (S48.3)
   template.WORKSPACE_SYNC_ENABLED = (typeof isWorkspaceSyncEnabled !== 'undefined') ? isWorkspaceSyncEnabled() : true;
+  
+  template.CORE_SYS_FIELDS_JSON = (typeof CORE_SYS_FIELDS !== 'undefined') ? JSON.stringify(CORE_SYS_FIELDS) : '["created_at","create_by","created_by","updated_at","update_at","update_by","deleted_at","deleted_by","version","_version"]';
 
   let htmlOutput = template.evaluate()
     .setTitle(brandingConfig.appTitle)

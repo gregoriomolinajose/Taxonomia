@@ -145,7 +145,7 @@
     }, {});
 
     // [SYS-01] Sistema global para ocultamiento de campos técnicos y de auditoría (KISS)
-    window.CORE_SYS_FIELDS = ['created_at', 'create_by', 'created_by', 'updated_at', 'update_at', 'update_by', 'deleted_at', 'deleted_by', 'version', '_version'];
+    window.CORE_SYS_FIELDS = <?!= CORE_SYS_FIELDS_JSON ?>;
 
     // [S8.5.1] Inyección Híbrida: Funciones Puras del Backend materializadas en el Frontend
     <?!= typeof _normalizeId !== 'undefined' ? _normalizeId.toString() : 'function _normalizeId(){}' ?>;

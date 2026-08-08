@@ -911,7 +911,7 @@ function getAppSchema(entityName) {
 function getPrunedAppSchema() {
   const schemas = getAppSchema();
   const pruned = {};
-  const backendOnlyFields = ['created_at', 'create_by', 'created_by', 'updated_at', 'update_at', 'update_by', 'deleted_at', 'deleted_by', 'version', '_version'];
+  const backendOnlyFields = typeof CORE_SYS_FIELDS !== 'undefined' ? CORE_SYS_FIELDS : ['created_at', 'create_by', 'created_by', 'updated_at', 'update_at', 'update_by', 'deleted_at', 'deleted_by', 'version', '_version'];
   
   for (const key in schemas) {
     if (key === '_UI_CONFIG') {
