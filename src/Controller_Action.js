@@ -122,6 +122,16 @@ function getAppBootstrapPayload() {
     
     for (let i = 0; i < entities.length; i++) {
         const entityName = entities[i];
+        if (entityName === '_UI_CONFIG') continue;
+        
+        const schema = schemas[entityName];
+        const isDashboard = schema.uiConfig && (schema.uiConfig.dashboardCard || schema.uiConfig.dashboardDirectory);
+        
+        if (!isDashboard) {
+            // Lazy load later
+            continue;
+        }
+
         const result = Engine_DB.list(entityName, 'tuples'); // Tuples for internal speed
         
         // Desempacar tuplas a objetos en el backend para evitar bloqueos de renderizado en UI
