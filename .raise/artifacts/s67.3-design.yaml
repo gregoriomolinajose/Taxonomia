@@ -1,0 +1,39 @@
+artifact_type: story-design
+version: 1
+skill: rai-story-design
+created: '2026-08-08T15:25:00-06:00'
+story: 'S67.3'
+epic: 'E67'
+content:
+  summary: 'Consolidar lecturas de PropertiesService en una sola llamada masiva y optimizar el caché ABAC con aislamiento multitenant, respetando el modelo Zero-Trust (E68).'
+  complexity: moderate
+  acceptance_criteria:
+    - id: AC1
+      description: 'PropertiesService.getScriptProperties().getProperties() es llamado exactamente una vez por ciclo de vida de request.'
+      verifiable: true
+    - id: AC2
+      description: 'El mecanismo de caché de ABAC aísla los permisos por tenant usando llaves compuestas.'
+      verifiable: true
+    - id: AC3
+      description: 'El modelo Zero-Trust y consultas GViz de E68 permanecen inalterados (validatePermission sigue denegando por defecto).'
+      verifiable: true
+  integration_points:
+    - module: 'backend.config'
+      change_type: modification
+      files: ['Code.js', 'Controller_Action.js']
+    - module: 'backend.security'
+      change_type: modification
+      files: ['Engine_ABAC.js']
+  decisions:
+    - id: D1
+      choice: 'Cargar todas las propiedades en un objeto estático en memoria durante el bootstrap.'
+      rationale: 'Reduce drásticamente el overhead de I/O en Google Apps Script, crítico para lograr la meta de 2.5s.'
+      alternatives_considered: ['Caché dinámico on-demand', 'Hardcodear valores fijos']
+    - id: D2
+      choice: 'Usar llaves compuestas `tenant_id:role` en el CacheService para ABAC.'
+      rationale: 'Garantiza el aislamiento de tenants sin alterar la validación estricta Zero-Trust de E68.'
+      alternatives_considered: ['Caché global único']
+refs:
+  backlog_item: 'S67.3'
+  epic_scope: 'work/epics/e67-optimizacion-carga-seguridad/scope.md'
+metadata: {}
