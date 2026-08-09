@@ -30,7 +30,7 @@ Reducir el tiempo de carga percibido y el payload de inicio a menos de 2.5 segun
 |:-:|-------|:----:|--------|--------|----------|-------|
 | 1 | S67.1 — Correcciones Críticas Inmediatas | S | Done | - | - | Fix duplicado, caché DB y XSS (Dependencia 0) |
 | 2 | S67.2 — Bootstrap Selectivo y Diferimiento | M | Done | 150m | - | Diferir CDNs, carga lazy de tabs y poda de esquema (Depende de S67.1) |
-| 3 | S67.3 | Refactorización Server-Side (I/O y Caché ABAC) | M | Done | `story/s67.3/server-side-refactor` | Single `PropertiesService` batch read, multi-tenant ABAC cache L2, GViz compatibility. |
+| 3 | S67.3 — Refactorización Server-Side (I/O y Caché ABAC) | M | Done | 60m | - | Caché de seguridad cruzada, propiedades en 1 I/O (Puede paralelizarse parcialmente) |
 
 ### Milestones
 - **M1: Quick Wins & Security Baseline** (Completa S67.1): Doble llamada de red eliminada, vulnerabilidades cerradas y caché básico de tuples funcionando.
