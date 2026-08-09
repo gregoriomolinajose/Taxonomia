@@ -27,7 +27,7 @@ Convertir el motor ABAC de un modelo Fail-Open de degradación a un paradigma Ze
 | Story | Size | Status | Actual | Velocity | Notes |
 |-------|------|--------|--------|----------|-------|
 | S68.1 — Refactor ABAC & GViz API | L | Done | L | Normal | Implementado directamente en la base. |
-| S68.2 — Optimizaciones FTS y DRY (Día 2) | M | Todo | | | Reemplazo de FTS en Identidad y Permisos, DRY en BFS, fixes menores en Seeder y clonación JSON. |
+| S68.2 — Optimizaciones FTS y DRY (Día 2) | M | Done | M | Rápida | Reemplazo de FTS en Identidad y Permisos, DRY en BFS, fixes menores en Seeder y clonación JSON. |
 
 ## Done Criteria
 - Todos los commits de refactorización unidos a la rama `story/s67.2/bootstrap-selectivo`.
