@@ -748,8 +748,8 @@ const Adapter_Sheets = {
             throw new Error(`[Adapter_Sheets.query] SPREADSHEET_ID_DB no definido.`);
         }
 
-        // Asumimos que la hoja física se llama igual que la entidad
-        const sheetName = entityName; 
+        // La capa de base de datos siempre antepone DB_ al nombre de la entidad
+        const sheetName = 'DB_' + entityName; 
         const encodedQuery = encodeURIComponent(sqlString);
         const url = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/gviz/tq?tq=${encodedQuery}&sheet=${sheetName}`;
 
