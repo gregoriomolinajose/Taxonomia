@@ -781,7 +781,7 @@ const Adapter_Sheets = {
         // La capa de base de datos siempre antepone DB_ al nombre de la entidad
         const sheetName = 'DB_' + entityName; 
         const encodedQuery = encodeURIComponent(sqlString);
-        const url = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/gviz/tq?tq=${encodedQuery}&sheet=${sheetName}`;
+        const url = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/gviz/tq?tq=${encodedQuery}&sheet=${sheetName}&headers=1`;
 
         let token;
         try {

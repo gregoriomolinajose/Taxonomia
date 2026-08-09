@@ -351,17 +351,17 @@ try {
             process.exit(1);
         }
 
-        // --- S14.5: Auto-Deploy Versioning for PROD & STAGING Environment ---
-        if (['prod', 'staging'].includes(env) && DEPLOYMENT_IDS[env]) {
-            console.log(`[Deploy] Publishing new Version and updating ${env.toUpperCase()} Executable Link...`);
+        // --- S14.5: Auto-Deploy Versioning for PROD Environment ---
+        if (env === 'prod' && DEPLOYMENT_IDS['prod']) {
+            console.log(`[Deploy] Publishing new Version and updating PROD Executable Link...`);
             // [S67] El clasp deploy también necesita las creds correctas
             swapClaspCredentials();
             try {
-                const deployOutput = execSync(`npx clasp deploy -i ${DEPLOYMENT_IDS[env]} -d "Release ${newVersion}"`, { encoding: 'utf8', stdio: 'pipe' });
+                const deployOutput = execSync(`npx clasp deploy -i ${DEPLOYMENT_IDS['prod']} -d "Release ${newVersion}"`, { encoding: 'utf8', stdio: 'pipe' });
                 console.log(deployOutput);
-                console.log(`[Deploy] Executable Link (Web App) updated successfully for ${env.toUpperCase()}.`);
+                console.log(`[Deploy] Executable Link (Web App) updated successfully for PROD.`);
             } catch (e) {
-                console.error(`[Deploy] Warning: Failed to update the Web App deployment link for ${env.toUpperCase()}:`);
+                console.error(`[Deploy] Warning: Failed to update the Web App deployment link for PROD:`);
                 console.error(e.stdout || e.message);
                 console.log(`[Deploy] Remember: You may need to manually update the deployment version in Apps Script GUI.`);
             } finally {
