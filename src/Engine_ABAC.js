@@ -17,9 +17,29 @@ const Engine_ABAC = {
 
   _queryWithFallback: function(entName, fieldName, value) {
     const cacheKey = `query_${entName}_${fieldName}_${value}`;
+    
+    // L1: Caché efímera en memoria (per-request)
     if (this._requestCache[cacheKey]) {
         return this._requestCache[cacheKey];
     }
+    
+    // L2: CacheService compartida (cross-request)
+    const l2Key = `ABAC_L2_${cacheKey}`.substring(0, 250);
+    if (typeof CacheService !== 'undefined') {
+        try {
+            const cache = CacheService.getScriptCache();
+            const cached = cache.get(l2Key);
+            if (cached) {
+                const parsed = JSON.parse(cached);
+                this._requestCache[cacheKey] = parsed; // Hidratar L1
+                return parsed;
+            }
+        } catch (e) {
+            if (typeof Logger !== 'undefined') Logger.log(`[ABAC_L2] Error leyendo caché L2: ${e.message}`);
+        }
+    }
+
+    // L3: Live DB Query (GViz)
     let rows = [];
     if (typeof Engine_DB !== 'undefined' && typeof Engine_DB.listBy === 'function') {
         try {
@@ -34,7 +54,22 @@ const Engine_ABAC = {
         const allRows = this._getCachedData(entName) || [];
         rows = allRows.filter(r => String(r[fieldName]).toLowerCase() === String(value).toLowerCase());
     }
+    
+    // Hidratar L1 y L2
     this._requestCache[cacheKey] = rows;
+    if (typeof CacheService !== 'undefined') {
+        try {
+            const cache = CacheService.getScriptCache();
+            const payload = JSON.stringify(rows);
+            // Máximo 100KB en CacheService
+            if (payload.length < 100000) {
+                cache.put(l2Key, payload, 300); // TTL: 5 minutos
+            }
+        } catch (e) {
+            if (typeof Logger !== 'undefined') Logger.log(`[ABAC_L2] Error escribiendo caché L2: ${e.message}`);
+        }
+    }
+    
     return rows;
   },
 
