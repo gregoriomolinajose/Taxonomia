@@ -51,6 +51,7 @@
 | E54| Filtros Universales de Entidades                    | ✅ Complete   | Implementar Drawer de filtros avanzados con lógica de intersección y JIT | Alta     |
 | E55| Taxonomy Governance & Deployment Engine             | ✅ Complete   | Transición de modelo relacional distribuido a centralizado y motor diffing | Max      |
 | E56| Wizard Bulk Import (Equipos & Personas)             | ✅ Complete   | Integrar carga masiva de equipos y personas directamente en el wizard      | Alta     |
+| E67| Optimización Extrema de Carga Inicial y Postura de Seguridad | ✅ Complete | Reducir tiempo de carga, refactorizar caché ABAC y mejorar seguridad | Alta |
 | E101 | GreatPeeps: Módulo MVP de Reclutamiento             | In Progress   | Implementar hub integrador de reclutamiento con Gemini, Calendar y LinkedIn | Máxima   |
 ## Parking Lot / Deuda Técnica (Post-Epic 11)
 
