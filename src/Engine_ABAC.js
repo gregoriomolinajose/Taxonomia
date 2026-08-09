@@ -24,7 +24,8 @@ const Engine_ABAC = {
     }
     
     // L2: CacheService compartida (cross-request)
-    const l2Key = `ABAC_L2_${cacheKey}`.substring(0, 250);
+    // Se cambia a ABAC_V3 para invalidar cachés corruptos/vacíos que duraban 5 mins.
+    const l2Key = `ABAC_V3_${cacheKey}`.substring(0, 250);
     if (typeof CacheService !== 'undefined') {
         try {
             const cache = CacheService.getScriptCache();
