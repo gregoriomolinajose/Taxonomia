@@ -32,8 +32,8 @@ function runTaxonomiaInstall() {
         });
     } else {
         seedPermissions.push(
-            { id_permiso: "PERM-BOOT-PERM", id_rol: "RO-SYSADMIN", schema_destino: "Sys_Permissions", nivel_acceso: "ALL (Admin Total)" },
-            { id_permiso: "PERM-BOOT-WORK", id_rol: "RO-SYSADMIN", schema_destino: "Config_Workspace", nivel_acceso: "ALL (Admin Total)" }
+            { id_permiso: "PERM-BOOT-SYSPERMISSIONS", id_rol: "RO-SYSADMIN", schema_destino: "Sys_Permissions", nivel_acceso: "ALL (Admin Total)" },
+            { id_permiso: "PERM-BOOT-CONFIGWORKSPACE", id_rol: "RO-SYSADMIN", schema_destino: "Config_Workspace", nivel_acceso: "ALL (Admin Total)" }
         );
     }
 

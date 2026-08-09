@@ -39,7 +39,7 @@ Sin embargo, si el sistema escala a 50,000+ personas, la carga inicial de `Perso
 
 **H14 (Coupling Direction):** Correcto. ABAC (volátil) depende de Engine_DB (estable). Engine_DB depende de Adapter_Sheets (infraestructura). La dirección del acoplamiento va de lo volátil hacia lo estable.
 
-**H9 (Semantic Duplication):** El patrón try/GViz + catch/fallback-cache se repite textualmente en el Paso 1 y el Paso 2 del BFS. Son 12 líneas duplicadas semánticamente. Candidato para extracción a un helper `_queryWithFallback(entityName, fieldName, value)` en un ciclo futuro.
+**H9 (Semantic Duplication):** El patrón try/GViz + catch/fallback-cache se repetía textualmente. **✅ CORREGIDO EN S68.2:** Se extrajo a un helper unificado `_queryWithFallback(entityName, fieldName, value)`.
 
 **H13 (Orphaned Abstractions):** Eliminación exitosa del código de Graceful Degradation en seguridad. No se detectan abstracciones huérfanas nuevas.
 

@@ -15,6 +15,65 @@ const Engine_ABAC = {
     return this._requestCache[entityName];
   },
 
+  _queryWithFallback: function(entName, fieldName, value) {
+    const cacheKey = `query_${entName}_${fieldName}_${value}`;
+    
+    // L1: Caché efímera en memoria (per-request)
+    if (this._requestCache[cacheKey]) {
+        return this._requestCache[cacheKey];
+    }
+    
+    // L2: CacheService compartida (cross-request)
+    // Se cambia a ABAC_V3 para invalidar cachés corruptos/vacíos que duraban 5 mins.
+    const l2Key = `ABAC_V3_${cacheKey}`.substring(0, 250);
+    if (typeof CacheService !== 'undefined') {
+        try {
+            const cache = CacheService.getScriptCache();
+            const cached = cache.get(l2Key);
+            if (cached) {
+                const parsed = JSON.parse(cached);
+                this._requestCache[cacheKey] = parsed; // Hidratar L1
+                return parsed;
+            }
+        } catch (e) {
+            if (typeof Logger !== 'undefined') Logger.log(`[ABAC_L2] Error leyendo caché L2: ${e.message}`);
+        }
+    }
+
+    // L3: Live DB Query (GViz)
+    let rows = [];
+    if (typeof Engine_DB !== 'undefined' && typeof Engine_DB.listBy === 'function') {
+        try {
+            const dbRes = Engine_DB.listBy(entName, fieldName, value, { caseInsensitive: true });
+            if (dbRes && dbRes.rows) rows = dbRes.rows;
+        } catch (e) {
+            if (typeof Logger !== 'undefined') Logger.log(`[ABAC_GViz] Fallback a caché para ${entName}. Error GViz: ${e.message}`);
+            const allRows = this._getCachedData(entName) || [];
+            rows = allRows.filter(r => String(r[fieldName]).toLowerCase() === String(value).toLowerCase());
+        }
+    } else {
+        const allRows = this._getCachedData(entName) || [];
+        rows = allRows.filter(r => String(r[fieldName]).toLowerCase() === String(value).toLowerCase());
+    }
+    
+    // Hidratar L1 y L2
+    this._requestCache[cacheKey] = rows;
+    if (typeof CacheService !== 'undefined') {
+        try {
+            const cache = CacheService.getScriptCache();
+            const payload = JSON.stringify(rows);
+            // Máximo 100KB en CacheService
+            if (payload.length < 100000) {
+                cache.put(l2Key, payload, 300); // TTL: 5 minutos
+            }
+        } catch (e) {
+            if (typeof Logger !== 'undefined') Logger.log(`[ABAC_L2] Error escribiendo caché L2: ${e.message}`);
+        }
+    }
+    
+    return rows;
+  },
+
   _getCachedTopology: function(email) {
     const key = "topology_" + email;
     if (!this._requestCache[key]) {
@@ -33,10 +92,11 @@ const Engine_ABAC = {
     if (!email) return { ownerOf: [], memberOf: [] };
     
     // 1. Obtener la Persona (Identidad) asociada al Correo
-    // Se extrae desde la caché efímera
-    const personas = this._getCachedData('Persona');
+    // Se usa GViz para evitar Full Table Scan de miles de empleados
     const _email = email.trim().toLowerCase();
-    const persona = personas.find(p => (p.email || p.correo || "").toLowerCase() === _email);
+    const personaRows = this._queryWithFallback('Persona', 'email', _email);
+    // Soporte legacy por si el campo principal es 'correo' en esquemas viejos
+    const persona = personaRows.length > 0 ? personaRows[0] : (this._queryWithFallback('Persona', 'correo', _email)[0] || null);
     
     if (!persona) {
       // Usuario no registrado en el grafo. Devuelve permisos nulos.
@@ -53,8 +113,7 @@ const Engine_ABAC = {
     // Inyección del diccionario CUD de la matriz para el Frontend (S18.4)
     if (persona.id_rol) {
       abacContext.hasRole = true;
-      const permisos = this._getCachedData('Sys_Permissions');
-      const misReglas = permisos.filter(p => p.id_rol === persona.id_rol);
+      const misReglas = this._queryWithFallback('Sys_Permissions', 'id_rol', persona.id_rol);
       misReglas.forEach(r => {
         abacContext.permissions[r.schema_destino] = r.nivel_acceso;
       });
@@ -78,20 +137,7 @@ const Engine_ABAC = {
                 const pkField = getPkField(schema, entName);
                 
                 schema.topological_metadata.ownerFields.forEach(ownerField => {
-                    let rows = [];
-                    if (typeof Engine_DB !== 'undefined' && typeof Engine_DB.listBy === 'function') {
-                        try {
-                            const dbRes = Engine_DB.listBy(entName, ownerField, personaId);
-                            if (dbRes && dbRes.rows) rows = dbRes.rows;
-                        } catch (e) {
-                            if (typeof Logger !== 'undefined') Logger.log(`[ABAC_BFS_P1] Fallback a caché para ${entName}. Error GViz: ${e.message}`);
-                            const allRows = this._getCachedData(entName) || [];
-                            rows = allRows.filter(r => r[ownerField] && r[ownerField] === personaId);
-                        }
-                    } else {
-                        const allRows = this._getCachedData(entName) || [];
-                        rows = allRows.filter(r => r[ownerField] && r[ownerField] === personaId);
-                    }
+                    const rows = this._queryWithFallback(entName, ownerField, personaId);
                     
                     rows.forEach(row => {
                         const rowId = String(row[pkField]);
@@ -122,19 +168,8 @@ const Engine_ABAC = {
                     
                     // ENTERPRISE SCALABILITY REFACTOR:
                     // En lugar de descargar todo el arreglo (Full Table Scan O(N)) y filtrarlo en memoria,
-                    // le pedimos a la DB (vía GViz API) que nos devuelva exclusivamente los hijos relevantes.
-                    let childRows = [];
-                    if (typeof Engine_DB !== 'undefined' && typeof Engine_DB.listBy === 'function') {
-                        try {
-                            const dbRes = Engine_DB.listBy(childEntName, parentField, current.id);
-                            if (dbRes && dbRes.rows) childRows = dbRes.rows;
-                        } catch (e) {
-                            if (typeof Logger !== 'undefined') Logger.log(`[ABAC_BFS] Fallback a caché para ${childEntName}. Error GViz: ${e.message}`);
-                            childRows = this._getCachedData(childEntName) || [];
-                        }
-                    } else {
-                        childRows = this._getCachedData(childEntName) || [];
-                    }
+                    // le pedimos a la DB (vía GViz API) que nos devuelva exclusivamente los hijos relevantes mediante el helper unificado.
+                    const childRows = this._queryWithFallback(childEntName, parentField, current.id);
                     
                     childRows.forEach(childRow => {
                         // Mantenemos la aserción estricta por seguridad y compatibilidad con el fallback
@@ -181,9 +216,9 @@ const Engine_ABAC = {
     // Ignorar sistema y lecturas para este Firewall de mutaciones
     if (action === 'read') return true;
     
-    const personas = this._getCachedData('Persona');
     const _email = email.trim().toLowerCase();
-    const persona = personas.find(p => (p.email || p.correo || "").toLowerCase() === _email);
+    const personaRows = this._queryWithFallback('Persona', 'email', _email);
+    const persona = personaRows.length > 0 ? personaRows[0] : (this._queryWithFallback('Persona', 'correo', _email)[0] || null);
 
     // Usuario desconocido -> Fail Close estricto (Zero Match)
     if (!persona) {
@@ -196,9 +231,9 @@ const Engine_ABAC = {
     // Si la persona no tiene rol explícito asignado, opera el principio de Mínimo Privilegio (Solo Lectura)
     if (!roleId) return false;
     
-    const permisos = this._getCachedData('Sys_Permissions');
+    const misReglas = this._queryWithFallback('Sys_Permissions', 'id_rol', roleId);
     // Cruza exacto de ABAC
-    const rule = permisos.find(p => p.id_rol === roleId && p.schema_destino === entityName);
+    const rule = misReglas.find(p => p.schema_destino === entityName);
     
     // ENTERPRISE ZERO-TRUST STRICT MODE: 
     // Si no hay regla Matrix definida explícitamente para esta entidad, denegamos el acceso.

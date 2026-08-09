@@ -632,6 +632,36 @@ const Adapter_Sheets = {
         return sheet;
     },
 
+    resolveColumnLetter: function(entityName, fieldName) {
+        const config = (typeof CONFIG !== 'undefined') ? CONFIG : { useSheets: true, SPREADSHEET_ID_DB: '' };
+        const spreadsheetId = (config && config.SPREADSHEET_ID_DB) ? config.SPREADSHEET_ID_DB : CONFIG.SPREADSHEET_ID_DB;
+        const ss = this._getSpreadsheet(spreadsheetId);
+        const sheet = this._ensureSheetExists(ss, entityName);
+        
+        let headers;
+        if (typeof __HEADER_CACHE__ !== 'undefined' && __HEADER_CACHE__[entityName]) {
+            headers = __HEADER_CACHE__[entityName];
+        } else {
+            const numCols = sheet.getLastColumn() || 1;
+            const headersRange = sheet.getRange(1, 1, 1, numCols);
+            headers = headersRange.getValues()[0].map(h => typeof _normalizeHeader === 'function' ? _normalizeHeader(h) : h.toLowerCase().trim().replace(/[^a-z0-9]+/g, '_'));
+            if (typeof __HEADER_CACHE__ !== 'undefined') __HEADER_CACHE__[entityName] = headers;
+        }
+        
+        const normName = typeof _normalizeHeader === 'function' ? _normalizeHeader(fieldName) : fieldName.toLowerCase().trim().replace(/[^a-z0-9]+/g, '_');
+        const colIndex = headers.indexOf(normName);
+        if (colIndex === -1) return null;
+        
+        let temp, letter = '';
+        let current = colIndex + 1;
+        while (current > 0) {
+            temp = (current - 1) % 26;
+            letter = String.fromCharCode(temp + 65) + letter;
+            current = (current - temp - 1) / 26;
+        }
+        return letter;
+    },
+
     /**
      * list(entityName, config, format)
      * Lee todas las filas de DB_<entityName> y las devuelve como un objeto estructurado.
@@ -748,10 +778,10 @@ const Adapter_Sheets = {
             throw new Error(`[Adapter_Sheets.query] SPREADSHEET_ID_DB no definido.`);
         }
 
-        // Asumimos que la hoja física se llama igual que la entidad
-        const sheetName = entityName; 
+        // La capa de base de datos siempre antepone DB_ al nombre de la entidad
+        const sheetName = 'DB_' + entityName; 
         const encodedQuery = encodeURIComponent(sqlString);
-        const url = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/gviz/tq?tq=${encodedQuery}&sheet=${sheetName}`;
+        const url = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/gviz/tq?tq=${encodedQuery}&sheet=${sheetName}&headers=1`;
 
         let token;
         try {
@@ -824,8 +854,7 @@ const Adapter_Sheets = {
             });
         }
 
-        const sanitizedRows = JSON.parse(JSON.stringify(rows));
-        return { headers: headers, rows: sanitizedRows };
+        return { headers: headers, rows: rows };
     }
 };
 

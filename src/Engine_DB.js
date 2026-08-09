@@ -839,30 +839,42 @@ const Engine_DB = {
      * [S68] listBy(entityName, fieldName, value)
      * Ejecuta una consulta GViz nativa para filtrar los registros en el backend de DB.
      */
-    listBy: function (entityName, fieldName, value) {
+    listBy: function (entityName, fieldName, value, options = {}) {
         const config = (typeof CONFIG !== 'undefined') ? CONFIG : { useSheets: true, SPREADSHEET_ID_DB: '' };
-        
-        const schema = (typeof APP_SCHEMAS !== 'undefined') ? APP_SCHEMAS[entityName] : null;
-        if (!schema || !schema.fields) {
-            throw new Error(`[Engine_DB.listBy] Esquema no encontrado o sin campos para '${entityName}'.`);
-        }
-
-        // Obtener el índice de la columna basándose en el esquema
-        const fieldIndex = schema.fields.findIndex(f => f.name === fieldName);
-        if (fieldIndex === -1) {
-            throw new Error(`[Engine_DB.listBy] Campo '${fieldName}' no existe en el esquema de '${entityName}'.`);
-        }
-
-        const colLetter = this._getColumnLetter(fieldIndex);
         
         if (value === null || value === undefined) {
             throw new Error(`[Engine_DB.listBy] Valor de filtrado inválido para el campo '${fieldName}'.`);
         }
         
+        let colLetter;
+        if (typeof Adapter_Sheets !== 'undefined' && typeof Adapter_Sheets.resolveColumnLetter === 'function') {
+            colLetter = Adapter_Sheets.resolveColumnLetter(entityName, fieldName);
+            if (!colLetter) {
+                throw new Error(`[Engine_DB.listBy] Columna física '${fieldName}' no encontrada en DB_${entityName}`);
+            }
+        } else {
+            // Fallback al esquema si Adapter_Sheets no está disponible o no tiene el método
+            const schema = (typeof APP_SCHEMAS !== 'undefined') ? APP_SCHEMAS[entityName] : null;
+            if (!schema || !schema.fields) {
+                throw new Error(`[Engine_DB.listBy] Esquema no encontrado o sin campos para '${entityName}'.`);
+            }
+            const fieldIndex = schema.fields.findIndex(f => f.name === fieldName);
+            if (fieldIndex === -1) {
+                throw new Error(`[Engine_DB.listBy] Campo '${fieldName}' no existe en el esquema de '${entityName}'.`);
+            }
+            colLetter = this._getColumnLetter(fieldIndex);
+        }
+        
         // Construir el SQL para GViz
         // Nota: En GViz, los strings deben ir entre comillas simples.
-        const safeValue = String(value).replace(/'/g, "''"); 
-        const sqlString = `SELECT * WHERE ${colLetter} = '${safeValue}'`;
+        let sqlString;
+        if (options.caseInsensitive) {
+            const safeValue = String(value).toLowerCase().replace(/'/g, "''"); 
+            sqlString = `SELECT * WHERE lower(${colLetter}) = '${safeValue}'`;
+        } else {
+            const safeValue = String(value).replace(/'/g, "''"); 
+            sqlString = `SELECT * WHERE ${colLetter} = '${safeValue}'`;
+        }
 
         if (typeof Logger !== 'undefined') {
             Logger.log(`[Engine_DB.listBy] Ejecutando GViz en ${entityName}: ${sqlString}`);

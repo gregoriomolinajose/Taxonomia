@@ -16,27 +16,19 @@
 
 **1. Engine_ABAC.js:37 — Persona sigue con Full Table Scan**
 
-La resolución de identidad (`this._getCachedData('Persona')`) descarga *toda* la tabla `Persona` para hacer un `.find()` por email. Esto no fue tocado en E68 pero es el mismo patrón que se corrigió en el BFS. En un sistema con 50,000+ empleados, esta sola línea puede consumir decenas de MB.
-
-> **Mitigación:** No es bloqueante porque `_getCachedData` solo la carga una vez por request (caché efímera). Es un candidato para E69, no para E68.
+> **Estado:** ✅ CORREGIDO EN S68.2. Se implementó el helper `_queryWithFallback` con GViz.
 
 **2. Engine_ABAC.js:56 — Sys_Permissions también Full Table Scan**
 
-Mismo patrón: `this._getCachedData('Sys_Permissions')` seguido de `.filter()`. El riesgo es menor porque la tabla de permisos suele ser pequeña (< 500 filas), pero rompe la consistencia del diseño.
-
-> **Mitigación:** Aceptable en E68. Candidato para E69.
+> **Estado:** ✅ CORREGIDO EN S68.2.
 
 **3. Install_Seeder.js:34-37 — Fallback con IDs truncados inconsistentes**
 
-Cuando `APP_SCHEMAS` no está definido, el fallback hardcodea `PERM-BOOT-PERM` y `PERM-BOOT-WORK`. Estos IDs no siguen el patrón completo (`PERM-BOOT-SYSPERMISSIONS`). Si alguien corre el seeder sin esquemas y luego con esquemas, habrá registros huérfanos.
-
-> **Sugerencia:** Alinear el fallback al mismo patrón: `PERM-BOOT-SYSPERMISSIONS` y `PERM-BOOT-CONFIGWORKSPACE`.
+> **Estado:** ✅ CORREGIDO EN S68.2. Se renombraron a `PERM-BOOT-SYSPERMISSIONS` y `PERM-BOOT-CONFIGWORKSPACE`.
 
 **4. Adapter_Sheets.js:827 — Serialización redundante**
 
-`JSON.parse(JSON.stringify(rows))` clona profundo un array que ya fue construido línea a línea con valores primitivos. No hay referencias circulares ni objetos compartidos. Es CPU y memoria desperdiciada.
-
-> **Sugerencia:** Devolver `rows` directamente o documentar por qué el deep-clone es necesario.
+> **Estado:** ✅ CORREGIDO EN S68.2. Se eliminó la clonación profunda.
 
 ---
 
