@@ -839,7 +839,7 @@ const Engine_DB = {
      * [S68] listBy(entityName, fieldName, value)
      * Ejecuta una consulta GViz nativa para filtrar los registros en el backend de DB.
      */
-    listBy: function (entityName, fieldName, value) {
+    listBy: function (entityName, fieldName, value, options = {}) {
         const config = (typeof CONFIG !== 'undefined') ? CONFIG : { useSheets: true, SPREADSHEET_ID_DB: '' };
         
         const schema = (typeof APP_SCHEMAS !== 'undefined') ? APP_SCHEMAS[entityName] : null;
@@ -861,8 +861,14 @@ const Engine_DB = {
         
         // Construir el SQL para GViz
         // Nota: En GViz, los strings deben ir entre comillas simples.
-        const safeValue = String(value).replace(/'/g, "''"); 
-        const sqlString = `SELECT * WHERE ${colLetter} = '${safeValue}'`;
+        let sqlString;
+        if (options.caseInsensitive) {
+            const safeValue = String(value).toLowerCase().replace(/'/g, "''"); 
+            sqlString = `SELECT * WHERE lower(${colLetter}) = '${safeValue}'`;
+        } else {
+            const safeValue = String(value).replace(/'/g, "''"); 
+            sqlString = `SELECT * WHERE ${colLetter} = '${safeValue}'`;
+        }
 
         if (typeof Logger !== 'undefined') {
             Logger.log(`[Engine_DB.listBy] Ejecutando GViz en ${entityName}: ${sqlString}`);

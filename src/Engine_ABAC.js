@@ -43,7 +43,7 @@ const Engine_ABAC = {
     let rows = [];
     if (typeof Engine_DB !== 'undefined' && typeof Engine_DB.listBy === 'function') {
         try {
-            const dbRes = Engine_DB.listBy(entName, fieldName, value);
+            const dbRes = Engine_DB.listBy(entName, fieldName, value, { caseInsensitive: true });
             if (dbRes && dbRes.rows) rows = dbRes.rows;
         } catch (e) {
             if (typeof Logger !== 'undefined') Logger.log(`[ABAC_GViz] Fallback a caché para ${entName}. Error GViz: ${e.message}`);
