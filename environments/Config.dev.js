@@ -1,5 +1,5 @@
 const CONFIG = {
-    APP_VERSION: 'v1.2.19 - 2608091359',
+    APP_VERSION: 'v1.2.19 - 2608092105',
     SPREADSHEET_ID_DB: '',
     ALLOWED_DOMAINS: [],  // Dev only — dominios del tenant se configuran via Adapter_Config
     useSheets: true,

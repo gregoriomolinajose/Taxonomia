@@ -930,7 +930,10 @@ const Engine_DB = {
             return { headers: [], rows: [] };
         }
         // [E6-S66] Intentar leer de RAM (CacheService) con señal cross-tenant
-        const safeFormat = format || 'objects';
+        let safeFormat = 'objects';
+        if (typeof format === 'string') safeFormat = format;
+        else if (format === true) safeFormat = 'tuples'; // Fallback for old code
+        
         const cacheKey = `CACHE_LIST_${_getAppVersionHash()}_${entityName}_${safeFormat}`;
         if (typeof CacheService !== 'undefined' && (!options || !options.skipCache)) {
             const cache = CacheService.getScriptCache();

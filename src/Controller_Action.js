@@ -32,7 +32,9 @@ function _guardAbac(action, entityName, targetId) {
  */
 function _handleRead(entityName, payload) {
   // Las lecturas son permitidas por defecto (Visibilidad completa del Grafo)
-  return Engine_DB.list(entityName, payload || {});
+  const format = (payload && typeof payload === 'string') ? payload : 'objects';
+  const options = (payload && typeof payload === 'object') ? payload : {};
+  return Engine_DB.list(entityName, format, options);
 }
 
 /**
