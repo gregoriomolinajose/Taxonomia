@@ -15,6 +15,20 @@ const Engine_ABAC = {
     return this._requestCache[entityName];
   },
 
+  _getAbacGlobalVersion: function() {
+    if (!this._requestCache['ABAC_GLOBAL_VER']) {
+      let ver = 'V3';
+      if (typeof CacheService !== 'undefined') {
+        try {
+          const cachedVer = CacheService.getScriptCache().get('ABAC_GLOBAL_VER');
+          if (cachedVer) ver = cachedVer;
+        } catch(e) {}
+      }
+      this._requestCache['ABAC_GLOBAL_VER'] = ver;
+    }
+    return this._requestCache['ABAC_GLOBAL_VER'];
+  },
+
   _queryWithFallback: function(entName, fieldName, value) {
     const cacheKey = `query_${entName}_${fieldName}_${value}`;
     
@@ -25,7 +39,7 @@ const Engine_ABAC = {
     
     // L2: CacheService compartida (cross-request)
     // Se cambia a ABAC_V3 para invalidar cachés corruptos/vacíos que duraban 5 mins.
-    const l2Key = `ABAC_V3_${cacheKey}`.substring(0, 250);
+    const l2Key = `ABAC_${this._getAbacGlobalVersion()}_${cacheKey}`.substring(0, 250);
     if (typeof CacheService !== 'undefined') {
         try {
             const cache = CacheService.getScriptCache();

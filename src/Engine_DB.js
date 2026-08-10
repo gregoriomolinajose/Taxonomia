@@ -53,6 +53,14 @@ function _invalidateCache(entityName) {
     
     if (typeof Logger !== 'undefined') Logger.log(`[Cache] BUSTED para ${entityName}`);
 
+    // [ABAC S-Tier Fix] Invalidación global determinista O(1) de matriz de seguridad
+    if (entityName === 'Sys_Permissions' || entityName === 'Sys_Roles' || entityName === 'Persona') {
+        try {
+            cache.put('ABAC_GLOBAL_VER', 'V3_' + Date.now().toString(), 21600);
+            if (typeof Logger !== 'undefined') Logger.log(`[Cache] ABAC_GLOBAL_VER BUMPED for ${entityName}`);
+        } catch(e) {}
+    }
+
     // [E6-S66] Publicar señal cross-tenant para invalidar caché de otros tenants
     // No publicar señal para Sys_Cache_Signals (evitar recursión)
     if (entityName !== 'Sys_Cache_Signals') {
