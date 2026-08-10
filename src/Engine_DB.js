@@ -39,6 +39,12 @@ function _invalidateCache(entityName) {
     _removeCacheChunked(cache, 'CACHE_LIST_' + entityName);
     _removeCacheChunked(cache, `CACHE_LIST_${_getAppVersionHash()}_${entityName}`);
     
+    // [Fix] M-Tier Bug: Invalidar las llaves que contienen los sufijos de formato que Engine_DB.list() genera
+    const formats = ['objects', 'tuples', 'native'];
+    formats.forEach(f => {
+        _removeCacheChunked(cache, `CACHE_LIST_${_getAppVersionHash()}_${entityName}_${f}`);
+    });
+    
     // Invalidación de lookups asociados
     const lookupMap = {
         'Portafolio': 'getPortafoliosOptions',
