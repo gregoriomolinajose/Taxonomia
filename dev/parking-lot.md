@@ -70,3 +70,7 @@ Este documento condensa la Deuda Técnica material devuelta por los heurísticos
 ### 21. Visualización Gráfica Interactiva de Borradores de Taxonomía
 * **Origen:** Sesión de Diseño S50 (Taxonomía Draft Payload).
 * **Acción Causal:** La representación del borrador actualmente reside en subgrids planos y listados M:N. Aprovechar ECharts o ApexTree para inyectar el JSON local del borrador y renderizar visualmente el "Scenario Planning" antes de su aprobación.
+
+### 22. Bug: Cierre del Canvas de Taxonomía en Fullscreen
+* **Origen:** Investigación de Bug en Canvas (Sesión abandonada).
+* **Acción Causal:** Al colapsar los integrantes de un equipo en el UI_View_SwimlaneGrid, el listener global de DrawerStackController (con capture: true) intercepta el clic y detecta falsamente que ocurrió fuera del Drawer. Esto ocurre presuntamente porque la modificación del DOM (cambio de name de ion-icon y reemplazo de su shadow DOM SVG) desasocia el target del evento en la propagación. Se requiere deshabilitar la escucha en capture o validar la ascendencia del path del evento.
