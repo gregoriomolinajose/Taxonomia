@@ -44,6 +44,13 @@ function resolverDirectorioWorkspace(queryEmail) {
   try {
     var wsConfig = _getWorkspaceConfig();
     
+    // Validación básica defensiva: Si no parece un correo, rechazar temprano
+    // para evitar que el SDK AdminDirectory estalle con Resource Not Found.
+    if (!queryEmail || queryEmail.indexOf('@') === -1) {
+      Logger.log("Workspace API Bypassed: '" + queryEmail + "' no es un correo válido.");
+      return null;
+    }
+    
     // Zero-Touch CI/CD Environment & Admin Config flag guard
     if (!wsConfig.syncEnabled) {
       Logger.log("Workspace API Bypassed: Sync is disabled globally or by admin config.");
@@ -180,14 +187,14 @@ function searchDirectoryByName(queryName) {
     // query compuesta (Nativo + OAuth2 Externos)
     var users = [];
 
-    // 1. Nativo (Sujeto a S59.4)
-    var sessionEmail = "";
-    try { sessionEmail = Session.getActiveUser().getEmail(); } catch(e){}
-    var nativeDomain = sessionEmail ? sessionEmail.substring(sessionEmail.indexOf('@')) : null;
-    
+    // 1. Nativo (Sujeto a Admin Config)
+    var wsConfig = _getWorkspaceConfig();
     var runNative = true;
-    if (nativeDomain) {
-       runNative = getDomainConfig(nativeDomain).enabled;
+
+    // Si hay un webhook configurado, asumimos que el webhook es la fuente primaria 
+    // y no ejecutamos la búsqueda nativa (al igual que resolverDirectorioWorkspace prioriza el webhook)
+    if (wsConfig.webhookUrl) {
+       runNative = false;
     }
 
     if (runNative && typeof AdminDirectory !== 'undefined' && AdminDirectory.Users) {
@@ -205,28 +212,20 @@ function searchDirectoryByName(queryName) {
         }
     }
 
-    // 2. Webhooks Externos (S59.5)
-    var allConfigs = getAllDomainConfigs();
-    var processedWebhookUrls = {}; // Para evitar llamar al mismo webhook varias veces por alias
-    
-    for (var key in allConfigs) {
-      var dCfg = allConfigs[key];
-      // Si está encendido, no es el dominio nativo y tiene webhook
-      if (dCfg.enabled && dCfg.webhookUrl && !processedWebhookUrls[dCfg.webhookUrl]) {
-         processedWebhookUrls[dCfg.webhookUrl] = true;
-         try {
-            var apiUrl = dCfg.webhookUrl + "?q=" + encodeURIComponent(q) + "&secret=" + encodeURIComponent(dCfg.webhookSecret || '');
-            var res = UrlFetchApp.fetch(apiUrl, { muteHttpExceptions: true });
-            if (res.getResponseCode() === 200) {
-               var payload = JSON.parse(res.getContentText());
-               if (!payload.error && Array.isArray(payload)) {
-                  users = users.concat(payload);
-               }
-            }
-         } catch(err) {
-            Logger.log("[Typeahead Webhook Error]: " + err.message);
-         }
-      }
+    // 2. Webhook Externo (Configuración única S67/S68)
+    if (wsConfig.webhookUrl) {
+       try {
+          var apiUrl = wsConfig.webhookUrl + "?q=" + encodeURIComponent(q) + "&secret=" + encodeURIComponent(wsConfig.webhookSecret || '');
+          var res = UrlFetchApp.fetch(apiUrl, { muteHttpExceptions: true });
+          if (res.getResponseCode() === 200) {
+             var payload = JSON.parse(res.getContentText());
+             if (!payload.error && Array.isArray(payload)) {
+                users = users.concat(payload);
+             }
+          }
+       } catch(err) {
+          Logger.log("[Typeahead Webhook Error]: " + err.message);
+       }
     }
     
     var dtos = users.map(function(u) {
