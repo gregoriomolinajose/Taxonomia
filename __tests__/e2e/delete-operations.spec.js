@@ -61,7 +61,7 @@ test.describe('E69: Delete Operations (Individual & Bulk) en Entorno DEV Real', 
     // Hacer clic en el elemento del sidebar (puede estar oculto en ciertas resoluciones de Ionic)
     const btnPortafolio = frame.locator('#nav-item-Portafolio');
     await btnPortafolio.waitFor({ state: 'attached', timeout: 30000 });
-    await btnPortafolio.click({ force: true });
+    await btnPortafolio.evaluate(node => node.click());
     
     // Ahora esperar a que la tabla de registros cargue
     const gridRows = frame.locator('table.dv-table tbody tr');
@@ -100,7 +100,7 @@ test.describe('E69: Delete Operations (Individual & Bulk) en Entorno DEV Real', 
     // Hacer clic en el elemento del sidebar (puede estar oculto en ciertas resoluciones de Ionic)
     const btnPortafolio = frame.locator('#nav-item-Portafolio');
     await btnPortafolio.waitFor({ state: 'attached', timeout: 30000 });
-    await btnPortafolio.click({ force: true });
+    await btnPortafolio.evaluate(node => node.click());
 
     // Ahora esperar a que la tabla de registros cargue
     const gridRows = frame.locator('table.dv-table tbody tr');

@@ -12,12 +12,10 @@
 # Error details
 
 ```
-Error: locator.click: Element is not visible
+TimeoutError: locator.waitFor: Timeout 120000ms exceeded.
 Call log:
-  - waiting for locator('#sandboxFrame').contentFrame().locator('#userHtmlFrame').contentFrame().locator('#nav-item-Portafolio')
-    - locator resolved to <div class="nav-item" title="Portafolios" id="nav-item-Portafolio">…</div>
-  - attempting click action
-    - scrolling into view if needed
+  - waiting for locator('#sandboxFrame').contentFrame().locator('#userHtmlFrame').contentFrame().locator('ion-content').first()
+    - waiting for" https://script.google.com/macros/s/AKfycbyYY8F6scltfXdK_CycPcxIQaeNn5tDFn78VhaHGMKlcMzUjOjdrHFvks1OZl5OBqDuzQ/exec" navigation to finish...
 
 ```
 
@@ -71,7 +69,8 @@ Call log:
   45  |     // Esperar a que el sandbox construya el DOM. En Ionic, `ion-app` siempre existe.
   46  |     const frame = page.frameLocator('#sandboxFrame').frameLocator('#userHtmlFrame');
   47  |     // En lugar de `ion-app`, esperamos algo que sí es visible
-  48  |     await frame.locator('ion-content').first().waitFor({ state: 'attached', timeout: 120000 });
+> 48  |     await frame.locator('ion-content').first().waitFor({ state: 'attached', timeout: 120000 });
+      |                                                ^ TimeoutError: locator.waitFor: Timeout 120000ms exceeded.
   49  |     
   50  |     const fs = require('fs');
   51  |     fs.writeFileSync('debug-frame.html', await frame.locator('body').innerHTML());
@@ -87,8 +86,7 @@ Call log:
   61  |     // Hacer clic en el elemento del sidebar (puede estar oculto en ciertas resoluciones de Ionic)
   62  |     const btnPortafolio = frame.locator('#nav-item-Portafolio');
   63  |     await btnPortafolio.waitFor({ state: 'attached', timeout: 30000 });
-> 64  |     await btnPortafolio.click({ force: true });
-      |                         ^ Error: locator.click: Element is not visible
+  64  |     await btnPortafolio.evaluate(node => node.click());
   65  |     
   66  |     // Ahora esperar a que la tabla de registros cargue
   67  |     const gridRows = frame.locator('table.dv-table tbody tr');
@@ -127,7 +125,7 @@ Call log:
   100 |     // Hacer clic en el elemento del sidebar (puede estar oculto en ciertas resoluciones de Ionic)
   101 |     const btnPortafolio = frame.locator('#nav-item-Portafolio');
   102 |     await btnPortafolio.waitFor({ state: 'attached', timeout: 30000 });
-  103 |     await btnPortafolio.click({ force: true });
+  103 |     await btnPortafolio.evaluate(node => node.click());
   104 | 
   105 |     // Ahora esperar a que la tabla de registros cargue
   106 |     const gridRows = frame.locator('table.dv-table tbody tr');

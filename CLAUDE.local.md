@@ -16,5 +16,10 @@
 - **Siguientes Pasos**:
   - Al abrir la nueva conversación, utiliza el skill `/rai-session-start` para cargar este contexto automáticamente y luego retoma los tests fallidos en la rama `story/s70.1-bulk-delete`.
 
+## Current Focus
+- **Epic E70 (Operaciones Masivas)**: En progreso.
+- **Story S70.1 (Bulk Delete)**: El working tree quedó sucio (cambios en e2e spec `delete-operations.spec.js`, `debug-frame.html`, y borrado de `test-results`). El usuario va a reiniciar la conversación desde cero. El próximo agente o sesión debe retomar esta rama (`story/s70.1-bulk-delete`) y evaluar si hacer un commit de estos tests E2E en progreso o restaurarlos.
+
 ## Patterns
-- Use A-XX prefix for local patterns.
+
+- Use `A-XX` prefix for local patterns.

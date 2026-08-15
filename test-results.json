@@ -87,25 +87,25 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "failed",
-                      "duration": 30112,
+                      "duration": 0,
                       "error": {
-                        "message": "TimeoutError: locator.waitFor: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#sandboxFrame').contentFrame().locator('#userHtmlFrame').contentFrame().locator('#nav-item-Portafolio') to be visible\u001b[22m\n\u001b[2m    63 × locator resolved to hidden <div class=\"nav-item\" title=\"Portafolios\" id=\"nav-item-Portafolio\">…</div>\u001b[22m\n",
-                        "stack": "TimeoutError: locator.waitFor: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#sandboxFrame').contentFrame().locator('#userHtmlFrame').contentFrame().locator('#nav-item-Portafolio') to be visible\u001b[22m\n\u001b[2m    63 × locator resolved to hidden <div class=\"nav-item\" title=\"Portafolios\" id=\"nav-item-Portafolio\">…</div>\u001b[22m\n\n    at C:\\Users\\grego\\Antigravity\\Taxonomia Project\\__tests__\\e2e\\delete-operations.spec.js:63:25",
+                        "message": "TimeoutError: locator.waitFor: Timeout 120000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#sandboxFrame').contentFrame().locator('#userHtmlFrame').contentFrame().locator('ion-content').first()\u001b[22m\n\u001b[2m    - waiting for\" https://script.google.com/macros/s/AKfycbyYY8F6scltfXdK_CycPcxIQaeNn5tDFn78VhaHGMKlcMzUjOjdrHFvks1OZl5OBqDuzQ/exec\" navigation to finish...\u001b[22m\n",
+                        "stack": "TimeoutError: locator.waitFor: Timeout 120000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#sandboxFrame').contentFrame().locator('#userHtmlFrame').contentFrame().locator('ion-content').first()\u001b[22m\n\u001b[2m    - waiting for\" https://script.google.com/macros/s/AKfycbyYY8F6scltfXdK_CycPcxIQaeNn5tDFn78VhaHGMKlcMzUjOjdrHFvks1OZl5OBqDuzQ/exec\" navigation to finish...\u001b[22m\n\n    at C:\\Users\\grego\\Antigravity\\Taxonomia Project\\__tests__\\e2e\\delete-operations.spec.js:48:48",
                         "location": {
                           "file": "C:\\Users\\grego\\Antigravity\\Taxonomia Project\\__tests__\\e2e\\delete-operations.spec.js",
-                          "column": 25,
-                          "line": 63
+                          "column": 48,
+                          "line": 48
                         },
-                        "snippet": "\u001b[0m \u001b[90m 61 |\u001b[39m     \u001b[90m// Hacer clic en el elemento del sidebar\u001b[39m\n \u001b[90m 62 |\u001b[39m     \u001b[36mconst\u001b[39m btnPortafolio \u001b[33m=\u001b[39m frame\u001b[33m.\u001b[39mlocator(\u001b[32m'#nav-item-Portafolio'\u001b[39m)\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 63 |\u001b[39m     \u001b[36mawait\u001b[39m btnPortafolio\u001b[33m.\u001b[39mwaitFor({ state\u001b[33m:\u001b[39m \u001b[32m'visible'\u001b[39m\u001b[33m,\u001b[39m timeout\u001b[33m:\u001b[39m \u001b[35m30000\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                         \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 64 |\u001b[39m     \u001b[36mawait\u001b[39m btnPortafolio\u001b[33m.\u001b[39mclick({ force\u001b[33m:\u001b[39m \u001b[36mtrue\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m 65 |\u001b[39m     \n \u001b[90m 66 |\u001b[39m     \u001b[90m// Ahora esperar a que la tabla de registros cargue\u001b[39m\u001b[0m"
+                        "snippet": "\u001b[0m \u001b[90m 46 |\u001b[39m     \u001b[36mconst\u001b[39m frame \u001b[33m=\u001b[39m page\u001b[33m.\u001b[39mframeLocator(\u001b[32m'#sandboxFrame'\u001b[39m)\u001b[33m.\u001b[39mframeLocator(\u001b[32m'#userHtmlFrame'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 47 |\u001b[39m     \u001b[90m// En lugar de `ion-app`, esperamos algo que sí es visible\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 48 |\u001b[39m     \u001b[36mawait\u001b[39m frame\u001b[33m.\u001b[39mlocator(\u001b[32m'ion-content'\u001b[39m)\u001b[33m.\u001b[39mfirst()\u001b[33m.\u001b[39mwaitFor({ state\u001b[33m:\u001b[39m \u001b[32m'attached'\u001b[39m\u001b[33m,\u001b[39m timeout\u001b[33m:\u001b[39m \u001b[35m120000\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                                                \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 49 |\u001b[39m     \n \u001b[90m 50 |\u001b[39m     \u001b[36mconst\u001b[39m fs \u001b[33m=\u001b[39m require(\u001b[32m'fs'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 51 |\u001b[39m     fs\u001b[33m.\u001b[39mwriteFileSync(\u001b[32m'debug-frame.html'\u001b[39m\u001b[33m,\u001b[39m \u001b[36mawait\u001b[39m frame\u001b[33m.\u001b[39mlocator(\u001b[32m'body'\u001b[39m)\u001b[33m.\u001b[39minnerHTML())\u001b[33m;\u001b[39m\u001b[0m"
                       },
                       "errors": [
                         {
                           "location": {
                             "file": "C:\\Users\\grego\\Antigravity\\Taxonomia Project\\__tests__\\e2e\\delete-operations.spec.js",
-                            "column": 25,
-                            "line": 63
+                            "column": 48,
+                            "line": 48
                           },
-                          "message": "TimeoutError: locator.waitFor: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#sandboxFrame').contentFrame().locator('#userHtmlFrame').contentFrame().locator('#nav-item-Portafolio') to be visible\u001b[22m\n\u001b[2m    63 × locator resolved to hidden <div class=\"nav-item\" title=\"Portafolios\" id=\"nav-item-Portafolio\">…</div>\u001b[22m\n\n\n  61 |     // Hacer clic en el elemento del sidebar\n  62 |     const btnPortafolio = frame.locator('#nav-item-Portafolio');\n> 63 |     await btnPortafolio.waitFor({ state: 'visible', timeout: 30000 });\n     |                         ^\n  64 |     await btnPortafolio.click({ force: true });\n  65 |     \n  66 |     // Ahora esperar a que la tabla de registros cargue\n    at C:\\Users\\grego\\Antigravity\\Taxonomia Project\\__tests__\\e2e\\delete-operations.spec.js:63:25"
+                          "message": "TimeoutError: locator.waitFor: Timeout 120000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#sandboxFrame').contentFrame().locator('#userHtmlFrame').contentFrame().locator('ion-content').first()\u001b[22m\n\u001b[2m    - waiting for\" https://script.google.com/macros/s/AKfycbyYY8F6scltfXdK_CycPcxIQaeNn5tDFn78VhaHGMKlcMzUjOjdrHFvks1OZl5OBqDuzQ/exec\" navigation to finish...\u001b[22m\n\n\n  46 |     const frame = page.frameLocator('#sandboxFrame').frameLocator('#userHtmlFrame');\n  47 |     // En lugar de `ion-app`, esperamos algo que sí es visible\n> 48 |     await frame.locator('ion-content').first().waitFor({ state: 'attached', timeout: 120000 });\n     |                                                ^\n  49 |     \n  50 |     const fs = require('fs');\n  51 |     fs.writeFileSync('debug-frame.html', await frame.locator('body').innerHTML());\n    at C:\\Users\\grego\\Antigravity\\Taxonomia Project\\__tests__\\e2e\\delete-operations.spec.js:48:48"
                         }
                       ],
                       "stdout": [
@@ -114,40 +114,17 @@
                         },
                         {
                           "text": "Navigation error/timeout (continuing to wait for iframe): page.goto: Timeout 60000ms exceeded.\nCall log:\n\u001b[2m  - navigating to \"https://script.google.com/macros/s/AKfycbyYY8F6scltfXdK_CycPcxIQaeNn5tDFn78VhaHGMKlcMzUjOjdrHFvks1OZl5OBqDuzQ/exec\", waiting until \"load\"\u001b[22m\n\n"
-                        },
-                        {
-                          "text": "PAGE LOG [warning]: An iframe which has both allow-scripts and allow-same-origin for its sandbox attribute can escape its sandboxing.\n"
-                        },
-                        {
-                          "text": "PAGE LOG [warning]: [Ionic Warning]: [ion-popover] - A trigger element with the ID \"global-omnibar\" was not found in the DOM. The trigger element must be in the DOM when the \"trigger\" property is set on ion-popover. JSHandle@node [Ionic Warning]: [ion-popover] - A trigger element with the ID \"global-omnibar\" was not found in the DOM. The trigger element must be in the DOM when the \"trigger\" property is set on ion-popover. ref: <Node>\n"
-                        },
-                        {
-                          "text": "PAGE LOG [warning]: [Ionic Warning]: [ion-popover] - A trigger element with the ID \"global-omnibar\" was not found in the DOM. The trigger element must be in the DOM when the \"trigger\" property is set on ion-popover. JSHandle@node [Ionic Warning]: [ion-popover] - A trigger element with the ID \"global-omnibar\" was not found in the DOM. The trigger element must be in the DOM when the \"trigger\" property is set on ion-popover. ref: <Node>\n"
-                        },
-                        {
-                          "text": "PAGE LOG [info]: Net state changed from IDLE to BUSY Net state changed from IDLE to BUSY\n"
-                        },
-                        {
-                          "text": "PAGE LOG [info]: Net state changed from BUSY to IDLE Net state changed from BUSY to IDLE\n"
-                        },
-                        {
-                          "text": "PAGE LOG [info]: Net state changed from IDLE to BUSY Net state changed from IDLE to BUSY\n"
                         }
                       ],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-08-15T14:53:58.764Z",
+                      "startTime": "2026-08-15T15:04:17.892Z",
                       "annotations": [],
                       "attachments": [
                         {
                           "name": "screenshot",
                           "contentType": "image/png",
                           "path": "C:\\Users\\grego\\Antigravity\\Taxonomia Project\\test-results\\delete-operations-E69-Dele-b1885--ejecuta-soft-delete-visual-chromium\\test-failed-1.png"
-                        },
-                        {
-                          "name": "screenshot",
-                          "contentType": "image/png",
-                          "path": "C:\\Users\\grego\\Antigravity\\Taxonomia Project\\test-results\\delete-operations-E69-Dele-b1885--ejecuta-soft-delete-visual-chromium\\test-failed-2.png"
                         },
                         {
                           "name": "error-context",
@@ -162,8 +139,8 @@
                       ],
                       "errorLocation": {
                         "file": "C:\\Users\\grego\\Antigravity\\Taxonomia Project\\__tests__\\e2e\\delete-operations.spec.js",
-                        "column": 25,
-                        "line": 63
+                        "column": 48,
+                        "line": 48
                       }
                     }
                   ],
@@ -177,7 +154,7 @@
             },
             {
               "title": "Historia 17: Borrado Masivo UI selecciona filas múltiples y limpia el Grid",
-              "ok": false,
+              "ok": true,
               "tags": [],
               "tests": [
                 {
@@ -188,90 +165,20 @@
                   "projectName": "chromium",
                   "results": [
                     {
-                      "workerIndex": 1,
-                      "parallelIndex": 0,
-                      "status": "failed",
-                      "duration": 30125,
-                      "error": {
-                        "message": "TimeoutError: locator.waitFor: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#sandboxFrame').contentFrame().locator('#userHtmlFrame').contentFrame().locator('#nav-item-Portafolio') to be visible\u001b[22m\n\u001b[2m    63 × locator resolved to hidden <div class=\"nav-item\" title=\"Portafolios\" id=\"nav-item-Portafolio\">…</div>\u001b[22m\n",
-                        "stack": "TimeoutError: locator.waitFor: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#sandboxFrame').contentFrame().locator('#userHtmlFrame').contentFrame().locator('#nav-item-Portafolio') to be visible\u001b[22m\n\u001b[2m    63 × locator resolved to hidden <div class=\"nav-item\" title=\"Portafolios\" id=\"nav-item-Portafolio\">…</div>\u001b[22m\n\n    at C:\\Users\\grego\\Antigravity\\Taxonomia Project\\__tests__\\e2e\\delete-operations.spec.js:102:25",
-                        "location": {
-                          "file": "C:\\Users\\grego\\Antigravity\\Taxonomia Project\\__tests__\\e2e\\delete-operations.spec.js",
-                          "column": 25,
-                          "line": 102
-                        },
-                        "snippet": "\u001b[0m \u001b[90m 100 |\u001b[39m     \u001b[90m// Hacer clic en el elemento del sidebar\u001b[39m\n \u001b[90m 101 |\u001b[39m     \u001b[36mconst\u001b[39m btnPortafolio \u001b[33m=\u001b[39m frame\u001b[33m.\u001b[39mlocator(\u001b[32m'#nav-item-Portafolio'\u001b[39m)\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 102 |\u001b[39m     \u001b[36mawait\u001b[39m btnPortafolio\u001b[33m.\u001b[39mwaitFor({ state\u001b[33m:\u001b[39m \u001b[32m'visible'\u001b[39m\u001b[33m,\u001b[39m timeout\u001b[33m:\u001b[39m \u001b[35m30000\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m     |\u001b[39m                         \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 103 |\u001b[39m     \u001b[36mawait\u001b[39m btnPortafolio\u001b[33m.\u001b[39mclick({ force\u001b[33m:\u001b[39m \u001b[36mtrue\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m 104 |\u001b[39m\n \u001b[90m 105 |\u001b[39m     \u001b[90m// Ahora esperar a que la tabla de registros cargue\u001b[39m\u001b[0m"
-                      },
-                      "errors": [
-                        {
-                          "location": {
-                            "file": "C:\\Users\\grego\\Antigravity\\Taxonomia Project\\__tests__\\e2e\\delete-operations.spec.js",
-                            "column": 25,
-                            "line": 102
-                          },
-                          "message": "TimeoutError: locator.waitFor: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#sandboxFrame').contentFrame().locator('#userHtmlFrame').contentFrame().locator('#nav-item-Portafolio') to be visible\u001b[22m\n\u001b[2m    63 × locator resolved to hidden <div class=\"nav-item\" title=\"Portafolios\" id=\"nav-item-Portafolio\">…</div>\u001b[22m\n\n\n  100 |     // Hacer clic en el elemento del sidebar\n  101 |     const btnPortafolio = frame.locator('#nav-item-Portafolio');\n> 102 |     await btnPortafolio.waitFor({ state: 'visible', timeout: 30000 });\n      |                         ^\n  103 |     await btnPortafolio.click({ force: true });\n  104 |\n  105 |     // Ahora esperar a que la tabla de registros cargue\n    at C:\\Users\\grego\\Antigravity\\Taxonomia Project\\__tests__\\e2e\\delete-operations.spec.js:102:25"
-                        }
-                      ],
-                      "stdout": [
-                        {
-                          "text": "Navigating to: https://script.google.com/macros/s/AKfycbyYY8F6scltfXdK_CycPcxIQaeNn5tDFn78VhaHGMKlcMzUjOjdrHFvks1OZl5OBqDuzQ/exec\n"
-                        },
-                        {
-                          "text": "Navigation error/timeout (continuing to wait for iframe): page.goto: Timeout 60000ms exceeded.\nCall log:\n\u001b[2m  - navigating to \"https://script.google.com/macros/s/AKfycbyYY8F6scltfXdK_CycPcxIQaeNn5tDFn78VhaHGMKlcMzUjOjdrHFvks1OZl5OBqDuzQ/exec\", waiting until \"load\"\u001b[22m\n\n"
-                        },
-                        {
-                          "text": "PAGE LOG [warning]: An iframe which has both allow-scripts and allow-same-origin for its sandbox attribute can escape its sandboxing.\n"
-                        },
-                        {
-                          "text": "PAGE LOG [warning]: [Ionic Warning]: [ion-popover] - A trigger element with the ID \"global-omnibar\" was not found in the DOM. The trigger element must be in the DOM when the \"trigger\" property is set on ion-popover. JSHandle@node [Ionic Warning]: [ion-popover] - A trigger element with the ID \"global-omnibar\" was not found in the DOM. The trigger element must be in the DOM when the \"trigger\" property is set on ion-popover. ref: <Node>\n"
-                        },
-                        {
-                          "text": "PAGE LOG [warning]: [Ionic Warning]: [ion-popover] - A trigger element with the ID \"global-omnibar\" was not found in the DOM. The trigger element must be in the DOM when the \"trigger\" property is set on ion-popover. JSHandle@node [Ionic Warning]: [ion-popover] - A trigger element with the ID \"global-omnibar\" was not found in the DOM. The trigger element must be in the DOM when the \"trigger\" property is set on ion-popover. ref: <Node>\n"
-                        },
-                        {
-                          "text": "PAGE LOG [info]: Net state changed from IDLE to BUSY Net state changed from IDLE to BUSY\n"
-                        },
-                        {
-                          "text": "PAGE LOG [info]: Net state changed from BUSY to IDLE Net state changed from BUSY to IDLE\n"
-                        },
-                        {
-                          "text": "PAGE LOG [info]: Net state changed from IDLE to BUSY Net state changed from IDLE to BUSY\n"
-                        }
-                      ],
+                      "workerIndex": -1,
+                      "parallelIndex": -1,
+                      "status": "skipped",
+                      "duration": 0,
+                      "errors": [],
+                      "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-08-15T14:56:25.982Z",
+                      "startTime": "2026-08-15T15:07:24.029Z",
                       "annotations": [],
-                      "attachments": [
-                        {
-                          "name": "screenshot",
-                          "contentType": "image/png",
-                          "path": "C:\\Users\\grego\\Antigravity\\Taxonomia Project\\test-results\\delete-operations-E69-Dele-367a2--múltiples-y-limpia-el-Grid-chromium\\test-failed-2.png"
-                        },
-                        {
-                          "name": "screenshot",
-                          "contentType": "image/png",
-                          "path": "C:\\Users\\grego\\Antigravity\\Taxonomia Project\\test-results\\delete-operations-E69-Dele-367a2--múltiples-y-limpia-el-Grid-chromium\\test-failed-1.png"
-                        },
-                        {
-                          "name": "error-context",
-                          "contentType": "text/markdown",
-                          "path": "C:\\Users\\grego\\Antigravity\\Taxonomia Project\\test-results\\delete-operations-E69-Dele-367a2--múltiples-y-limpia-el-Grid-chromium\\error-context.md"
-                        },
-                        {
-                          "name": "error-context",
-                          "contentType": "text/markdown",
-                          "path": "C:\\Users\\grego\\Antigravity\\Taxonomia Project\\test-results\\delete-operations-E69-Dele-367a2--múltiples-y-limpia-el-Grid-chromium\\error-context.md"
-                        }
-                      ],
-                      "errorLocation": {
-                        "file": "C:\\Users\\grego\\Antigravity\\Taxonomia Project\\__tests__\\e2e\\delete-operations.spec.js",
-                        "column": 25,
-                        "line": 102
-                      }
+                      "attachments": []
                     }
                   ],
-                  "status": "unexpected"
+                  "status": "skipped"
                 }
               ],
               "id": "92e4a93cacd18abd8e49-6d33c75ae1132da8a76f",
@@ -286,11 +193,11 @@
   ],
   "errors": [],
   "stats": {
-    "startTime": "2026-08-15T14:53:57.358Z",
-    "duration": 274751.96499999997,
+    "startTime": "2026-08-15T15:04:16.451Z",
+    "duration": 187606.731,
     "expected": 0,
-    "skipped": 0,
-    "unexpected": 2,
+    "skipped": 1,
+    "unexpected": 1,
     "flaky": 0
   }
 }
