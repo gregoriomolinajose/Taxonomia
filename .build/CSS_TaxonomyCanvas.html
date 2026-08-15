@@ -1,0 +1,269 @@
+<!-- CSS_TaxonomyCanvas.html -->
+<style>
+/* ==========================================================================
+   E53: TAXONOMIA VISUAL CANVAS (SWIMLANES)
+   ========================================================================== */
+
+.tax-canvas-container {
+    display: inline-flex;
+    flex-direction: column;
+    gap: 30px;
+    padding: var(--spacing-6);
+    background: transparent;
+    width: max-content; /* change from 100% to max-content */
+    min-width: 100%; /* Ensure it spans at least the screen */
+    align-items: flex-start; /* Prevent stretching rows to full width by default */
+    height: 100%;
+    min-height: max-content;
+    box-sizing: border-box; /* Prevent padding from adding to 100% height */
+    transform-origin: 0 0;
+}
+
+.fullscreen-wizard {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    max-height: 100vh !important;
+    max-width: 100vw !important;
+    z-index: 99999 !important;
+    margin: 0 !important;
+    border-radius: 0 !important;
+    background: var(--ion-background-color, #ffffff) !important;
+    pointer-events: auto !important;
+}
+
+/* S53.8: Miro-like Interaction & Scroll Hide */
+.tax-canvas-viewport {
+    width: 100%;
+    flex: 1;
+    overflow: hidden;
+    position: relative;
+    cursor: grab;
+    background-color: #f0f2f5;
+    background-image: 
+        linear-gradient(rgba(0, 0, 0, 0.06) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 0, 0, 0.06) 1px, transparent 1px);
+    background-size: 30px 30px;
+    background-position: center center;
+    border-radius: 12px;
+}
+.tax-canvas-viewport:active {
+    cursor: grabbing;
+}
+.tax-canvas-viewport::-webkit-scrollbar,
+.tax-canvas-container::-webkit-scrollbar {
+    display: none;
+}
+
+.tax-canvas-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px;
+    color: var(--ion-color-medium);
+    text-align: center;
+    background: var(--ion-color-step-50, #f9f9f9);
+    border-radius: var(--radius-md, 8px);
+    border: 2px dashed var(--ion-color-step-200, #e0e0e0);
+    width: 100%;
+    height: 100%;
+    box-sizing: border-box;
+}
+
+.tax-canvas-empty ion-icon {
+    font-size: 48px;
+    margin-bottom: 16px;
+    color: var(--ion-color-step-400, #999);
+}
+
+/* Nodos Base */
+.tax-node {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 20px;
+    border-radius: var(--radius-md, 8px);
+    color: white;
+    font-weight: 600;
+    font-size: 14px;
+    position: relative;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    transition: transform 0.2s, box-shadow 0.2s;
+    user-select: none;
+}
+
+.tax-node:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+.tax-node-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.tax-node-icon {
+    font-size: 18px;
+    opacity: 0.9;
+}
+
+.tax-add-btn {
+    background: rgba(255,255,255,0.2);
+    border: none;
+    color: white;
+    border-radius: 50%;
+    width: 28px;
+    height: 28px;
+    min-width: 28px;
+    min-height: 28px;
+    flex-shrink: 0;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 18px;
+    transition: background 0.2s;
+    outline: none;
+}
+
+.tax-add-btn:hover {
+    background: rgba(255,255,255,0.4);
+}
+
+.tax-add-btn:active {
+    background: rgba(255,255,255,0.5);
+    transform: scale(0.95);
+}
+
+/* Layout Anidado (Swimlanes) */
+.tax-swimlane-row {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 12px;
+    min-width: 50vw; /* Inicia en la mitad de la pantalla y crece */
+    /* Remover background y border para que los nodos floten sobre la cuadrícula del canvas, 
+       evitando el desbordamiento de "background blanco" cuando el diagrama crece */
+}
+
+.tax-swimlane-children-horizontal {
+    display: flex;
+    flex-direction: row;
+    gap: 16px;
+    flex-wrap: nowrap; /* Prevent wrapping to maintain matrix layout */
+    overflow: visible;
+    padding-bottom: 8px; /* For scrollbar */
+    min-width: 50vw; /* Inicia en la mitad de la pantalla y crece */
+}
+
+.tax-swimlane-children-vertical {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    flex: 1 0 auto; /* Distribuye el espacio entre columnas sin encogerse más allá de sus hijos */
+    min-width: 50vw; /* Inicia en la mitad de la pantalla y crece */
+}
+
+/* Scrollbars para los swimlanes */
+.tax-swimlane-children-horizontal::-webkit-scrollbar {
+    height: 6px;
+}
+.tax-swimlane-children-horizontal::-webkit-scrollbar-track {
+    background: var(--ion-color-step-100, #f1f1f1); 
+    border-radius: 3px;
+}
+.tax-swimlane-children-horizontal::-webkit-scrollbar-thumb {
+    background: var(--ion-color-step-300, #c1c1c1); 
+    border-radius: 3px;
+}
+.tax-swimlane-children-horizontal::-webkit-scrollbar-thumb:hover {
+    background: var(--ion-color-step-400, #a8a8a8); 
+}
+
+/* Layout Nivel 3 (Value Streams) */
+.tax-swimlane-value-streams {
+    display: flex;
+    flex-direction: row;
+    gap: 16px;
+    flex-wrap: nowrap;
+    overflow: visible;
+    min-width: max-content;
+}
+
+/* Grupos de productos apilados verticalmente dentro de Value Stream */
+.tax-swimlane-grupo-productos {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 12px;
+    margin-left: 20px;
+}
+
+/* S55.3 Zoom Controller */
+.tax-zoom-ctrl {
+    position: absolute;
+    bottom: 32px;
+    left: 32px;
+    display: flex;
+    align-items: center;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+    padding: 6px 16px;
+    z-index: 1000;
+    gap: 16px;
+    border: 1px solid rgba(0,0,0,0.05);
+}
+.tax-zoom-btn {
+    background: transparent;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    color: #333;
+    transition: background 0.2s;
+}
+.tax-zoom-btn:hover {
+    background: rgba(0,0,0,0.08);
+}
+.tax-zoom-label {
+    font-size: 1.15rem;
+    font-weight: 600;
+    min-width: 56px;
+    text-align: center;
+    color: #333;
+    user-select: none;
+}
+
+</style>
+
+<template id="tmpl-taxonomia-canvas">
+    <div class="tax-canvas-wrapper" style="width: 100%; height: 100%; display: flex; flex-direction: column; min-height: 80vh; background: var(--color-bg-body, #f8f9fa);">
+        <div class="organigrama-header" style="padding: 16px; background: #fff; border-bottom: 1px solid #e0e0e0; display: flex; justify-content: space-between; align-items: center; z-index: 10; flex-shrink: 0;">
+            <div>
+                <h2 style="margin: 0; font-size: 1.25rem; font-weight: 600; color: var(--ion-text-color);">
+                    Taxonomía
+                </h2>
+                <p style="margin: 4px 0 0 0; font-size: 0.85rem; color: var(--ion-color-medium);">
+                    Arquitectura de Portafolio
+                </p>
+            </div>
+        </div>
+        <div id="tax-canvas-root" class="tax-canvas-viewport">
+            <!-- El Canvas se renderiza aquí -->
+        </div>
+    </div>
+</template>

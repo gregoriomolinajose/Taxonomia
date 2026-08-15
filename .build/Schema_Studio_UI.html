@@ -1,0 +1,2525 @@
+<!-- [E31-S31.5/S31.6] Schema_Studio_UI.html
+     Schema Governance Config Studio — Viewer + Blueprint Composer (Code Export)
+     Acceso: SUPER_ADMIN exclusivo — revelado desde icono de perfil → Sistema
+     Inyectado via: <?!= include('Schema_Studio_UI'); ?>
+-->
+
+<!-- ═══ TEMPLATE ════════════════════════════════════════════════════════════ -->
+<template id="tmpl-schema-studio">
+  <div id="schema-studio-root" style="
+    font-family: var(--font-body, 'Inter', sans-serif);
+    color: var(--ion-text-color);
+    padding: 0 8px 32px;
+    max-width: 1400px;
+    margin: 0 auto;
+    animation: ss-fade-in 0.35s ease;
+  ">
+
+    <!-- Header Banner -->
+    <div style="
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 20px 24px;
+      background: linear-gradient(135deg, var(--ion-color-warning) 0%, var(--ion-color-warning-shade) 100%);
+      border-radius: 14px;
+      margin-bottom: 24px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.12);
+    ">
+      <div style="display:flex;align-items:center;gap:14px;">
+        <div style="
+          width:48px;height:48px;border-radius:12px;
+          background:rgba(0,0,0,0.12);
+          display:flex;align-items:center;justify-content:center;
+        ">
+          <ion-icon name="server-outline" style="font-size:24px;color:#fff;"></ion-icon>
+        </div>
+        <div>
+          <div style="font-family:var(--font-display,'Poppins',sans-serif);font-size:1.25rem;font-weight:700;color:#fff;">
+            Schema Governance Studio
+          </div>
+          <div style="font-size:0.8rem;color:rgba(255,255,255,0.8);margin-top:2px;">
+            E31 · Viewer + Blueprint Composer · SUPER_ADMIN
+          </div>
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;align-items:center;">
+        <div id="ss-db-status-pill" style="
+          padding:6px 14px;border-radius:20px;
+          background:rgba(255,255,255,0.2);
+          font-size:0.75rem;font-weight:600;color:#fff;
+          display:flex;align-items:center;gap:6px;
+        ">
+          <ion-icon name="ellipse" style="font-size:8px;color:#fff;" id="ss-status-dot"></ion-icon>
+          <span id="ss-status-text">Verificando DB...</span>
+        </div>
+        <button id="ss-btn-reconcile" onclick="window.SchemaStudio.runReconcile()" style="
+          padding:8px 18px;border-radius:8px;
+          background:rgba(255,255,255,0.92);
+          color:var(--ion-color-warning-shade);
+          font-weight:700;font-size:0.8rem;
+          border:none;cursor:pointer;
+          display:flex;align-items:center;gap:6px;
+          transition:all 0.2s;
+        " title="Reconciliar esquema contra Google Sheets">
+          <ion-icon name="sync-outline"></ion-icon>
+          Reconciliar DB
+        </button>
+      </div>
+    </div>
+
+    <!-- Tab Selector -->
+    <div style="
+      display:flex;gap:8px;margin-bottom:20px;
+      border-bottom:1px solid var(--ion-color-step-100);
+      padding-bottom:0;
+    " id="ss-tabs">
+      <button class="ss-tab ss-tab-active" data-tab="entities" onclick="window.SchemaStudio.switchTab('entities')" style="
+        padding:10px 20px;border:none;background:none;cursor:pointer;
+        font-weight:600;font-size:0.85rem;color:var(--ion-color-warning);
+        border-bottom:2px solid var(--ion-color-warning);margin-bottom:-1px;
+        display:flex;align-items:center;gap:6px;transition:all 0.2s;
+      ">
+        <ion-icon name="layers-outline"></ion-icon> Entidades
+      </button>
+      <button class="ss-tab" data-tab="templates" onclick="window.SchemaStudio.switchTab('templates')" style="
+        padding:10px 20px;border:none;background:none;cursor:pointer;
+        font-weight:600;font-size:0.85rem;color:var(--ion-color-medium);
+        border-bottom:2px solid transparent;margin-bottom:-1px;
+        display:flex;align-items:center;gap:6px;transition:all 0.2s;
+      ">
+        <ion-icon name="code-slash-outline"></ion-icon> Templates
+      </button>
+      <button class="ss-tab" data-tab="presets" onclick="window.SchemaStudio.switchTab('presets')" style="
+        padding:10px 20px;border:none;background:none;cursor:pointer;
+        font-weight:600;font-size:0.85rem;color:var(--ion-color-medium);
+        border-bottom:2px solid transparent;margin-bottom:-1px;
+        display:flex;align-items:center;gap:6px;transition:all 0.2s;
+      ">
+        <ion-icon name="git-network-outline"></ion-icon> Graph Behavior
+      </button>
+      <button class="ss-tab" data-tab="global" onclick="window.SchemaStudio.switchTab('global')" style="
+        padding:10px 20px;border:none;background:none;cursor:pointer;
+        font-weight:600;font-size:0.85rem;color:var(--ion-color-medium);
+        border-bottom:2px solid transparent;margin-bottom:-1px;
+        display:flex;align-items:center;gap:6px;transition:all 0.2s;
+      ">
+        <ion-icon name="settings-outline"></ion-icon> Ajustes Globales
+      </button>
+      <button class="ss-tab" data-tab="db" onclick="window.SchemaStudio.switchTab('db')" style="
+        padding:10px 20px;border:none;background:none;cursor:pointer;
+        font-weight:600;font-size:0.85rem;color:var(--ion-color-medium);
+        border-bottom:2px solid transparent;margin-bottom:-1px;
+        display:flex;align-items:center;gap:6px;transition:all 0.2s;
+      ">
+        <ion-icon name="hardware-chip-outline"></ion-icon> DB Health
+      </button>
+      
+      <!-- [S48.3] Workspace Sync Config Tab -->
+      <button class="ss-tab" data-tab="workspace" onclick="window.SchemaStudio.switchTab('workspace')" style="
+        padding:10px 20px;border:none;background:none;cursor:pointer;
+        font-weight:600;font-size:0.85rem;color:var(--ion-color-medium);
+        border-bottom:2px solid transparent;margin-bottom:-1px;
+        display:flex;align-items:center;gap:6px;transition:all 0.2s;
+      ">
+        <ion-icon name="sync-circle-outline"></ion-icon> Workspace Sync
+      </button>
+
+      <!-- [E31-S31.6] Blueprint Composer Tab -->
+      <button class="ss-tab" data-tab="composer" onclick="window.SchemaStudio.switchTab('composer')" style="
+        padding:10px 20px;border:none;background:none;cursor:pointer;
+        font-weight:600;font-size:0.85rem;color:var(--ion-color-medium);
+        border-bottom:2px solid transparent;margin-bottom:-1px;
+        display:flex;align-items:center;gap:6px;transition:all 0.2s;
+        margin-left:auto;
+      ">
+        <ion-icon name="construct-outline"></ion-icon> Composer
+        <span class="ss-code-export-badge" style="font-size:0.65rem;padding:2px 6px;border-radius:10px;background:rgba(var(--ion-color-warning-rgb),0.15);color:var(--ion-color-warning-shade);font-weight:700;transition:opacity 0.2s;">CODE EXPORT</span>
+      </button>
+    </div>
+
+    <!-- Tab Content Area -->
+    <div id="ss-tab-content">
+      <!-- Rendered by SchemaStudio.mount() -->
+      <div style="text-align:center;padding:60px 20px;color:var(--ion-color-medium);">
+        <ion-spinner name="crescent" color="warning"></ion-spinner>
+        <div style="margin-top:12px;font-size:0.85rem;">Cargando catálogo...</div>
+      </div>
+    </div>
+
+  </div>
+</template>
+
+<!-- ═══ STYLES ════════════════════════════════════════════════════════════ -->
+<style>
+  @keyframes ss-fade-in {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes ss-card-in {
+    from { opacity: 0; transform: scale(0.97); }
+    to   { opacity: 1; transform: scale(1); }
+  }
+
+  .ss-entity-card {
+    background: var(--ion-item-background, var(--ion-color-step-50));
+    border: 1px solid var(--ion-color-step-100);
+    border-radius: 12px;
+    padding: 16px 20px;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    animation: ss-card-in 0.2s ease;
+    transition: box-shadow 0.2s;
+  }
+  .ss-entity-card:hover {
+    box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+  }
+
+  .ss-field-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 9px;
+    border-radius: 20px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    margin: 2px 3px 2px 0;
+    white-space: nowrap;
+  }
+  .ss-field-chip.system   { background: rgba(var(--ion-color-primary-rgb),0.12); color: var(--ion-color-primary); }
+  .ss-field-chip.audit    { background: rgba(var(--ion-color-success-rgb),0.12); color: var(--ion-color-success); }
+  .ss-field-chip.version  { background: rgba(var(--ion-color-warning-rgb),0.12); color: var(--ion-color-warning-shade); }
+  .ss-field-chip.custom   { background: var(--ion-color-step-100); color: var(--ion-color-medium); }
+  .ss-field-chip.relation { background: rgba(var(--ion-color-tertiary-rgb),0.12); color: var(--ion-color-tertiary); }
+
+  .ss-template-card {
+    background: var(--ion-item-background);
+    border: 1px solid var(--ion-color-step-100);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 14px;
+    animation: ss-card-in 0.2s ease;
+  }
+
+  .ss-preset-card {
+    background: var(--ion-item-background);
+    border: 1px solid var(--ion-color-step-100);
+    border-left: 4px solid var(--ion-color-primary);
+    border-radius: 12px;
+    padding: 18px 20px;
+    margin-bottom: 12px;
+    animation: ss-card-in 0.2s ease;
+  }
+
+  .ss-health-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    border-radius: 10px;
+    margin-bottom: 8px;
+    border: 1px solid var(--ion-color-step-100);
+    background: var(--ion-item-background);
+    animation: ss-card-in 0.2s ease;
+    transition: background 0.2s;
+  }
+  .ss-health-row:hover { background: var(--ion-color-step-50); }
+
+  .ss-pill {
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+  }
+  .ss-pill.ok      { background: rgba(var(--ion-color-success-rgb),0.15); color: var(--ion-color-success); }
+  .ss-pill.warn    { background: rgba(var(--ion-color-warning-rgb),0.15); color: var(--ion-color-warning-shade); }
+  .ss-pill.missing { background: rgba(var(--ion-color-danger-rgb),0.12); color: var(--ion-color-danger); }
+
+  .ss-code {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 0.78rem;
+    background: var(--ion-color-step-100);
+    padding: 2px 7px;
+    border-radius: 5px;
+    color: var(--ion-color-primary);
+  }
+
+  .ss-tab { outline: none; }
+  .ss-tab:hover { color: var(--ion-color-warning-shade) !important; }
+
+  #ss-btn-reconcile:hover {
+    background: #fff !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    transform: translateY(-1px);
+  }
+
+  /* ── Composer Styles (S31.6) ────────────────────────────────────────────── */
+  .ss-composer-layout {
+    display: grid;
+    grid-template-columns: 220px 1fr;
+    gap: 16px;
+    min-height: 600px;
+  }
+  @media (max-width: 768px) {
+    .ss-composer-layout { grid-template-columns: 1fr; }
+  }
+
+  .ss-composer-sidebar {
+    background: var(--ion-item-background);
+    border: 1px solid var(--ion-color-step-100);
+    border-radius: 12px;
+    padding: 12px 0;
+    height: fit-content;
+    position: sticky;
+    top: 16px;
+  }
+  .ss-sidebar-section-title {
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: var(--ion-color-medium);
+    padding: 10px 16px 4px;
+    text-transform: uppercase;
+  }
+  .ss-sidebar-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 16px;
+    cursor: pointer;
+    font-size: 0.82rem;
+    font-weight: 500;
+    color: var(--ion-text-color);
+    transition: background 0.15s, color 0.15s;
+    border-left: 3px solid transparent;
+  }
+  .ss-sidebar-item:hover { background: var(--ion-color-step-50); color: var(--ion-color-warning-shade); }
+  .ss-sidebar-item.active {
+    background: rgba(var(--ion-color-warning-rgb),0.08);
+    color: var(--ion-color-warning-shade);
+    border-left-color: var(--ion-color-warning);
+    font-weight: 700;
+  }
+  .ss-sidebar-item.disabled { opacity: 0.45; cursor: not-allowed; }
+  .ss-sidebar-divider { height: 1px; background: var(--ion-color-step-100); margin: 8px 12px; }
+
+  .ss-composer-panel {
+    background: var(--ion-item-background);
+    border: 1px solid var(--ion-color-step-100);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+
+  .ss-field-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--ion-color-step-50);
+    transition: background 0.15s;
+    font-size: 0.82rem;
+  }
+  .ss-field-row:hover { background: var(--ion-color-step-50); }
+  .ss-field-row.locked { opacity: 0.7; }
+  .ss-field-row .ss-drag-handle {
+    color: var(--ion-color-step-300);
+    cursor: grab;
+    font-size: 1rem;
+    flex-shrink: 0;
+  }
+  .ss-field-row.locked .ss-drag-handle { visibility: hidden; }
+
+  .ss-btn-primary {
+    padding: 8px 18px;
+    border-radius: 8px;
+    background: var(--ion-color-warning);
+    color: #fff;
+    font-weight: 700;
+    font-size: 0.82rem;
+    border: none;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s;
+  }
+  .ss-btn-primary:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.15); transform: translateY(-1px); }
+  .ss-btn-secondary {
+    padding: 8px 16px;
+    border-radius: 8px;
+    background: var(--ion-color-step-100);
+    color: var(--ion-text-color);
+    font-weight: 600;
+    font-size: 0.82rem;
+    border: 1px solid var(--ion-color-step-150);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s;
+  }
+  .ss-btn-secondary:hover { background: var(--ion-color-step-150); }
+  .ss-btn-danger {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--ion-color-danger);
+    font-size: 1rem;
+    padding: 4px;
+    border-radius: 4px;
+    transition: background 0.15s;
+  }
+  .ss-btn-danger:hover { background: rgba(var(--ion-color-danger-rgb),0.1); }
+
+  .ss-code-block {
+    font-family: 'Roboto Mono', 'Courier New', monospace;
+    font-size: 0.78rem;
+    line-height: 1.6;
+    background: #1a1a2e;
+    color: #e2e8f0;
+    padding: 20px;
+    border-radius: 0 0 12px 12px;
+    overflow-x: auto;
+    white-space: pre;
+    max-height: 380px;
+    overflow-y: auto;
+  }
+  .ss-code-key    { color: #93c5fd; }
+  .ss-code-str    { color: #86efac; }
+  .ss-code-num    { color: #fcd34d; }
+  .ss-code-spread { color: #fbbf24; font-weight: 700; }    /* GAS: ...FIELD_TEMPLATES spread */
+  .ss-code-entity { color: #c084fc; font-weight: 700; }    /* GAS: entity name */
+  .ss-code-bool   { color: #f0abfc; }
+  .ss-code-templ  { color: #67e8f9; font-weight: 600; }
+  .ss-code-comment{ color: #94a3b8; font-style: italic; }
+
+  .ss-form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  .ss-input {
+    width: 100%;
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--ion-color-step-150);
+    background: var(--ion-color-step-50);
+    color: var(--ion-text-color);
+    font-size: 0.82rem;
+    font-family: inherit;
+    box-sizing: border-box;
+    transition: border-color 0.15s;
+  }
+  .ss-input:focus { outline: none; border-color: var(--ion-color-warning); }
+  .ss-label {
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--ion-color-medium);
+    margin-bottom: 4px;
+    display: block;
+  }
+
+  .ss-preview-form {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    gap: 10px;
+    padding: 16px;
+  }
+  .ss-preview-field {
+    border-radius: 8px;
+    border: 1px dashed var(--ion-color-step-200);
+    background: var(--ion-color-step-50);
+    padding: 10px 12px;
+    min-height: 48px;
+    animation: ss-card-in 0.15s ease;
+  }
+  .ss-preview-field .pf-label {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--ion-color-medium);
+    margin-bottom: 4px;
+  }
+  .ss-preview-field .pf-input {
+    font-size: 0.8rem;
+    color: var(--ion-color-step-400);
+  }
+  .ss-preview-field.required .pf-label::after { content: " *"; color: var(--ion-color-danger); }
+  .ss-preview-field.hidden-field {
+    background: rgba(var(--ion-color-warning-rgb),0.05);
+    border-color: rgba(var(--ion-color-warning-rgb),0.2);
+    opacity: 0.6;
+  }
+  .ss-preview-field.divider-field {
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid var(--ion-color-step-200);
+    border-radius: 0;
+    padding: 4px 0 8px;
+    min-height: 24px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--ion-color-medium);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+</style>
+
+<!-- ═══ ENGINE ════════════════════════════════════════════════════════════ -->
+<script>
+(function() {
+  'use strict';
+
+  // ── Field Classification ────────────────────────────────────────────────────────────
+  // SYNC [H9]: These name arrays MUST match FIELD_TEMPLATES.* in Schema_Engine.gs.
+  // If a template field is added/renamed, update all three lists here.
+  // Future: replace with getGovernedFieldNames() GAS API to eliminate drift risk.
+  var SYSTEM_FIELD_NAMES  = ['lexical_id', 'estado'];
+  var AUDIT_FIELD_NAMES   = ['created_at','created_by','updated_at','updated_by','deleted_at','deleted_by'];
+  var VERSION_FIELD_NAMES = ['version'];
+
+  function classifyField(fieldName) {
+    if (AUDIT_FIELD_NAMES.includes(fieldName))   return 'audit';
+    if (VERSION_FIELD_NAMES.includes(fieldName)) return 'version';
+    if (SYSTEM_FIELD_NAMES.includes(fieldName))  return 'system';
+    return 'custom';
+  }
+
+  // ── Chip HTML ─────────────────────────────────────────────────────────────
+  function chipHtml(name, type, icon) {
+    return '<span class="ss-field-chip ' + type + '">' +
+           '<ion-icon name="' + icon + '"></ion-icon>' +
+           name + '</span>';
+  }
+
+  function renderFieldChips(fields) {
+    if (!fields || !fields.length) return '<span style="color:var(--ion-color-medium);font-size:0.8rem;">Sin campos</span>';
+    return fields.map(function(f) {
+      var t = f.type;
+      if (t === 'relation') return chipHtml(f.name, 'relation', 'link-outline');
+      if (t === 'divider' ) return ''; // skip UI-only
+      var cls = classifyField(f.name);
+      var icons = { system:'finger-print-outline', audit:'time-outline', version:'git-commit-outline', custom:'code-slash-outline' };
+      return chipHtml(f.name, cls, icons[cls] || 'code-slash-outline');
+    }).filter(Boolean).join('');
+  }
+
+  // ── Tabs ──────────────────────────────────────────────────────────────────
+  function switchTab(tabId) {
+    // [S31.10] Track _lastContentTab for Composer multi-context mode
+    if (tabId === 'entities' || tabId === 'templates' || tabId === 'presets' || tabId === 'global') {
+      _lastContentTab = tabId;
+    }
+    var tabs = document.querySelectorAll('.ss-tab');
+    tabs.forEach(function(t) {
+      var active = t.getAttribute('data-tab') === tabId;
+      t.style.color        = active ? 'var(--ion-color-warning)' : 'var(--ion-color-medium)';
+      t.style.borderBottom = active ? '2px solid var(--ion-color-warning)' : '2px solid transparent';
+    });
+    // [S31.13] Dynamic badge label and visibility based on context
+    var badge = document.querySelector('.ss-tab[data-tab="composer"] .ss-code-export-badge');
+    if (badge) {
+      if (tabId === 'entities' || tabId === 'composer') {
+        badge.textContent = 'CODE EXPORT';
+        badge.style.opacity = '1';
+        badge.style.pointerEvents = 'auto';
+        badge.title = '';
+      } else if (tabId === 'templates') {
+        badge.textContent = 'TEMPLATES';
+        badge.style.opacity = '1';
+        badge.style.pointerEvents = 'auto';
+        badge.title = 'Abre composer de FIELD_TEMPLATES';
+      } else if (tabId === 'presets') {
+        badge.textContent = 'BEHAVIORS';
+        badge.style.opacity = '1';
+        badge.style.pointerEvents = 'auto';
+        badge.title = 'Abre composer de TOPOLOGY_PRESETS';
+      } else {
+        badge.textContent = 'CODE EXPORT';
+        badge.style.opacity = '0.25';
+        badge.style.pointerEvents = 'none';
+        badge.title = 'N/A en este tab';
+      }
+    }
+    renderTab(tabId);
+  }
+
+  // ── Tab Renderers ─────────────────────────────────────────────────────────
+  function renderTab(tabId) {
+    var container = document.getElementById('ss-tab-content');
+    if (!container) return;
+    container.innerHTML = '';
+
+    if (tabId === 'entities')       renderEntitiesTab(container);
+    else if (tabId === 'templates') renderTemplatesTab(container);
+    else if (tabId === 'presets')   renderPresetsTab(container);
+    else if (tabId === 'db')        renderDbHealthTab(container);
+    else if (tabId === 'global')    renderGlobalTab(container);
+    else if (tabId === 'workspace') renderWorkspaceTab(container);
+    else if (tabId === 'composer')  renderComposerTab(container);
+  }
+
+  // ── Entities Tab ──────────────────────────────────────────────────────────
+  function renderEntitiesTab(container) {
+    var schemas = window.APP_SCHEMAS || {};
+    var html = '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">' +
+      '<div>' +
+        '<div style="font-weight:700;font-size:1rem;">Catálogo de Entidades</div>' +
+        '<div style="font-size:0.78rem;color:var(--ion-color-medium);margin-top:2px;">' +
+          Object.keys(schemas).filter(function(k){return k!=='_UI_CONFIG';}).length +
+          ' entidades registradas en APP_SCHEMAS' +
+        '</div>' +
+      '</div>' +
+      '<div style="display:flex;gap:8px;font-size:0.72rem;">' +
+        '<span class="ss-field-chip system"><ion-icon name="finger-print-outline"></ion-icon>SYSTEM_FIELDS</span>' +
+        '<span class="ss-field-chip audit"><ion-icon name="time-outline"></ion-icon>AUDIT_FIELDS</span>' +
+        '<span class="ss-field-chip version"><ion-icon name="git-commit-outline"></ion-icon>VERSION</span>' +
+        '<span class="ss-field-chip custom"><ion-icon name="code-slash-outline"></ion-icon>CUSTOM</span>' +
+        '<span class="ss-field-chip relation"><ion-icon name="link-outline"></ion-icon>RELATION</span>' +
+      '</div>' +
+    '</div>';
+
+    Object.keys(schemas).sort().forEach(function(entityName) {
+      if (entityName === '_UI_CONFIG') return;
+      var schema = schemas[entityName];
+      var meta = schema.metadata || {};
+      var fields = schema.fields || [];
+
+      var fieldCount    = fields.filter(function(f){ return f.type !== 'divider'; }).length;
+      var auditCount    = fields.filter(function(f){ return AUDIT_FIELD_NAMES.includes(f.name); }).length;
+      var hasVersion    = fields.some(function(f){ return f.name === 'version'; });
+      var hasLexical    = fields.some(function(f){ return f.name === 'lexical_id'; });
+      var topologyKey   = schema.topologyRules ? (schema.topologyRules._preset || '—') : '—';
+
+      // Compliance score
+      var score = 0;
+      if (auditCount === 6) score++;
+      if (hasVersion) score++;
+      if (hasLexical || entityName.startsWith('Sys_') || entityName.startsWith('Config_') || entityName.startsWith('Relacion_')) score++;
+      var scoreColor = score >= 3 ? 'var(--ion-color-success)' : score >= 2 ? 'var(--ion-color-warning-shade)' : 'var(--ion-color-danger)';
+
+      html += '<div class="ss-entity-card">' +
+        '<div style="flex:1;min-width:0;">' +
+          '<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">' +
+            '<ion-icon name="' + (meta.iconName || 'cube-outline') + '" style="font-size:18px;color:var(--ion-color-' + (meta.color || 'primary') + ');flex-shrink:0;"></ion-icon>' +
+            '<span style="font-weight:700;font-size:0.9rem;">' + entityName + '</span>' +
+            (meta.label ? '<span style="font-size:0.75rem;color:var(--ion-color-medium);">' + meta.label + '</span>' : '') +
+            (topologyKey !== '—' ? '<span class="ss-code">' + topologyKey + '</span>' : '') +
+          '</div>' +
+          '<div style="flex-wrap:wrap;display:flex;">' + renderFieldChips(fields) + '</div>' +
+        '</div>' +
+        '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0;">' +
+          '<div style="font-size:0.72rem;font-weight:700;color:' + scoreColor + ';">' +
+            '<ion-icon name="' + (score >= 3 ? 'checkmark-circle' : 'warning') + '"></ion-icon> ' +
+            fieldCount + ' campos' +
+          '</div>' +
+          '<div style="font-size:0.7rem;color:var(--ion-color-medium);">Audit: ' + auditCount + '/6 · Version: ' + (hasVersion?'✓':'–') + ' · Lexical: ' + (hasLexical?'✓':'–') + '</div>' +
+        '</div>' +
+      '</div>';
+    });
+
+    container.innerHTML = html;
+  }
+
+  // ── Templates Tab ─────────────────────────────────────────────────────────
+  function renderTemplatesTab(container) {
+    var templates = [
+      {
+        key: 'SYSTEM_FIELDS',
+        description: 'ID amigable para el usuario + estado de ciclo de vida. Universal en todas las entidades de negocio.',
+        fields: [
+          { name: 'lexical_id', hint: 'Auto: ACRONIMO-0042. Readonly.' },
+          { name: 'estado',     hint: 'Activo | Eliminado | Borrador. Soft-delete.' }
+        ],
+        icon: 'finger-print-outline',
+        color: 'var(--ion-color-primary)'
+      },
+      {
+        key: 'ESTADO_FIELD',
+        description: 'Estado de ciclo de vida standalone para entidades de sistema que no requieren lexical_id.',
+        fields: [
+          { name: 'estado', hint: 'Activo | Eliminado | Borrador.' }
+        ],
+        icon: 'toggle-outline',
+        color: 'var(--ion-color-secondary)'
+      },
+      {
+        key: 'AUDIT_FIELDS',
+        description: 'Trail completo de auditoría de industria. Todos hidden — manejados exclusivamente por Engine_DB.',
+        fields: [
+          { name: 'created_at',  hint: 'ISO 8601 UTC. Inmutable tras creación.' },
+          { name: 'created_by',  hint: 'Email del creador. Inmutable.' },
+          { name: 'updated_at',  hint: 'ISO 8601. Actualizado en cada write.' },
+          { name: 'updated_by',  hint: 'Email del último editor.' },
+          { name: 'deleted_at',  hint: 'ISO 8601. Soft-delete timestamp.' },
+          { name: 'deleted_by',  hint: 'Email del que marcó como eliminado.' }
+        ],
+        icon: 'time-outline',
+        color: 'var(--ion-color-success)'
+      },
+      {
+        key: 'VERSION_FIELD',
+        description: 'Contador de versión para optimistic locking. Previene lost-update en ediciones concurrentes.',
+        fields: [
+          { name: 'version', hint: 'Int incremental. Default: 1. Manejado por Engine_DB.' }
+        ],
+        icon: 'git-commit-outline',
+        color: 'var(--ion-color-warning-shade)'
+      },
+      {
+        key: 'GRAPH_SEPARATOR',
+        description: 'Separador visual de sección para la topología de grafo en el FormEngine.',
+        fields: [
+          { name: 'separator_grafo', hint: 'type: divider. Acepta label personalizado.' }
+        ],
+        icon: 'apps-outline',
+        color: 'var(--ion-color-tertiary)'
+      }
+    ];
+
+    var html = '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">' +
+      '<div style="font-weight:700;font-size:1rem;">Catálogo FIELD_TEMPLATES</div>' +
+      '<button class="ss-btn-primary" id="ss-copy-templates-btn" onclick="window.SchemaStudio.copyTemplatesGas()" style="font-size:0.75rem;padding:5px 14px;display:flex;align-items:center;gap:6px;">' +
+        '<ion-icon name="copy-outline"></ion-icon>Copiar Templates GAS</button>' +
+    '</div>' +
+      '<div style="font-size:0.78rem;color:var(--ion-color-medium);margin-bottom:18px;">' + templates.length + ' templates · Fuente: Schema_Engine.gs · Object.freeze()</div>';
+
+    templates.forEach(function(t) {
+      html += '<div class="ss-template-card">' +
+        '<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">' +
+          '<ion-icon name="' + t.icon + '" style="font-size:20px;color:' + t.color + ';"></ion-icon>' +
+          '<div>' +
+            '<span style="font-family:\'Roboto Mono\',monospace;font-weight:700;font-size:0.9rem;color:' + t.color + ';">FIELD_TEMPLATES.' + t.key + '()</span>' +
+            '<div style="font-size:0.78rem;color:var(--ion-color-medium);margin-top:2px;">' + t.description + '</div>' +
+          '</div>' +
+        '</div>' +
+        '<div style="display:flex;flex-direction:column;gap:6px;">' +
+        t.fields.map(function(f) {
+          return '<div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--ion-color-step-50);border-radius:8px;">' +
+            '<span class="ss-code">' + f.name + '</span>' +
+            '<span style="font-size:0.75rem;color:var(--ion-color-medium);">' + f.hint + '</span>' +
+          '</div>';
+        }).join('') +
+        '</div>' +
+      '</div>';
+    });
+
+    container.innerHTML = html;
+  }
+
+  // ── Presets Tab ───────────────────────────────────────────────────────────
+  function renderPresetsTab(container) {
+    var presets = window.APP_SCHEMAS
+      ? Object.entries(window.APP_SCHEMAS)
+          .filter(function(e){ return e[0] !== '_UI_CONFIG'; })
+          .reduce(function(acc, e) {
+            var rules = e[1].topologyRules;
+            if (rules && rules._preset && !acc[rules._preset]) {
+              acc[rules._preset] = { key: rules._preset, rules: rules, users: [] };
+            }
+            if (rules && rules._preset) acc[rules._preset].users.push(e[0]);
+            return acc;
+          }, {})
+      : {};
+
+    var html = '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">' +
+      '<div style="font-weight:700;font-size:1rem;">Catálogo GRAPH BEHAVIOR</div>' +
+      '<button class="ss-btn-primary" id="ss-copy-presets-btn" onclick="window.SchemaStudio.copyPresetsGas()" style="font-size:0.75rem;padding:5px 14px;display:flex;align-items:center;gap:6px;">' +
+        '<ion-icon name="copy-outline"></ion-icon>Copiar Presets GAS</button>' +
+    '</div>' +
+      '<div style="font-size:0.78rem;color:var(--ion-color-medium);margin-bottom:18px;">' +
+        Object.keys(presets).length + ' presets · Object.freeze() · Reglas referenciadas, no duplicadas</div>';
+
+    Object.values(presets).forEach(function(p) {
+      var rules = p.rules || {};
+      html += '<div class="ss-preset-card">' +
+        '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;">' +
+          '<div style="flex:1;">' +
+            '<div style="font-family:\'Roboto Mono\',monospace;font-weight:700;font-size:0.9rem;color:var(--ion-color-primary);">TOPOLOGY_PRESETS.' + p.key + '</div>' +
+            '<div style="margin-top:10px;display:flex;flex-wrap:wrap;gap:6px;">' +
+              (rules.maxChildren !== undefined ? '<span class="ss-field-chip system">maxChildren: ' + rules.maxChildren + '</span>' : '') +
+              (rules.maxDepth !== undefined    ? '<span class="ss-field-chip system">maxDepth: '    + rules.maxDepth    + '</span>' : '') +
+              (rules.allowCycles !== undefined ? '<span class="ss-field-chip ' + (rules.allowCycles?'warn':'audit') + '">cycles: ' + rules.allowCycles + '</span>' : '') +
+              (rules.allowStealing !== undefined ? '<span class="ss-field-chip custom">stealing: ' + rules.allowStealing + '</span>' : '') +
+              (rules.topologyType  ? '<span class="ss-field-chip version">' + rules.topologyType + '</span>' : '') +
+            '</div>' +
+          '</div>' +
+          '<div style="text-align:right;flex-shrink:0;">' +
+            '<div style="font-size:0.7rem;color:var(--ion-color-medium);">Usado por</div>' +
+            '<div style="font-size:0.78rem;font-weight:600;margin-top:4px;">' + p.users.join(', ') + '</div>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
+    });
+
+    if (!Object.keys(presets).length) {
+      html += '<div style="text-align:center;padding:40px;color:var(--ion-color-medium);">No se detectaron Graph Behaviors activos en APP_SCHEMAS.</div>';
+    }
+
+    container.innerHTML = html;
+  }
+
+  // ── Global Config Tab ──────────────────────────────────────────────────────────
+  // [S62/E6] renderGlobalTab — Config_System como fuente única de verdad.
+  // Lee y escribe via Engine_DB → Adapter_Config → PropertiesService.
+  // Reemplaza el formulario manual con claves APP_BRANDING_CONFIG / APP_SECURITY_CONFIG.
+  function renderGlobalTab(container) {
+    // Estado interno del formulario
+    var _cfg = {};
+
+    // ── Esqueleto HTML del formulario ─────────────────────────────────────────
+    container.innerHTML = [
+      '<div style="max-width:640px;margin:0 auto;padding:20px 0;" id="cfg-sys-root">',
+
+        // ── Loading state ──────────────────────────────────────────────────
+        '<div id="cfg-sys-loading" style="text-align:center;padding:40px;">',
+          '<ion-spinner name="crescent" color="warning"></ion-spinner>',
+          '<div style="margin-top:12px;font-size:0.85rem;color:var(--ion-color-medium);">',
+            'Cargando configuración del sistema...',
+          '</div>',
+        '</div>',
+
+        // ── Formulario (oculto hasta que cargue) ───────────────────────────
+        '<div id="cfg-sys-form" style="display:none;">',
+
+          // Banner de identidad del tenant
+          '<div style="display:flex;align-items:center;gap:12px;padding:16px 20px;',
+            'background:linear-gradient(135deg,var(--ion-color-primary),var(--ion-color-primary-shade));',
+            'border-radius:12px;margin-bottom:24px;">',
+            '<ion-icon name="business-outline" style="font-size:24px;color:#fff;flex-shrink:0;"></ion-icon>',
+            '<div>',
+              '<div style="font-weight:700;font-size:1rem;color:#fff;">Configuración del Sistema</div>',
+              '<div style="font-size:0.75rem;color:rgba(255,255,255,0.75);margin-top:2px;">',
+                'Configuración del tenant · Persiste en PropertiesService',
+              '</div>',
+            '</div>',
+          '</div>',
+
+          // ── Sección: Identidad del Tenant ──────────────────────────────
+          '<div style="font-weight:700;font-size:0.9rem;letter-spacing:0.04em;',
+            'color:var(--ion-color-medium);text-transform:uppercase;margin-bottom:12px;">',
+            '<ion-icon name="id-card-outline" style="vertical-align:middle;margin-right:6px;"></ion-icon>',
+            'Identidad del Tenant',
+          '</div>',
+          '<div class="ss-template-card" style="margin-bottom:20px;">',
+            '<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">',
+              '<div>',
+                '<label class="ss-label">Nombre del Tenant</label>',
+                '<input type="text" id="cfg-tenant-name" class="ss-input"',
+                  ' placeholder="Ej: Tenant A" />',
+                '<div style="font-size:0.72rem;color:var(--ion-color-medium);margin-top:4px;">',
+                  'Identificador white-label de esta instancia.',
+                '</div>',
+              '</div>',
+              '<div>',
+                '<label class="ss-label">Adaptador de Base de Datos</label>',
+                '<select id="cfg-db-adapter" class="ss-input" style="height:40px;">',
+                  '<option value="sheets">Google Sheets</option>',
+                  '<option value="clouddb">Cloud Database</option>',
+                '</select>',
+              '</div>',
+              '<div style="grid-column:1/-1;">',
+                '<label class="ss-label">ID de Google Sheet (Base de Datos)</label>',
+                '<input type="text" id="cfg-spreadsheet-id" class="ss-input"',
+                  ' placeholder="ID del archivo Google Sheets compartido" />',
+                '<div style="font-size:0.72rem;color:var(--ion-color-medium);margin-top:4px;">',
+                  'ID del archivo Google Sheets que actúa como base de datos compartida entre tenants.',
+                '</div>',
+              '</div>',
+            '</div>',
+          '</div>',
+
+          // ── Sección: Control de Acceso ─────────────────────────────────
+          '<div style="font-weight:700;font-size:0.9rem;letter-spacing:0.04em;',
+            'color:var(--ion-color-medium);text-transform:uppercase;margin-bottom:12px;">',
+            '<ion-icon name="shield-checkmark-outline" style="vertical-align:middle;margin-right:6px;"></ion-icon>',
+            'Control de Acceso SSO',
+          '</div>',
+          '<div class="ss-template-card" style="margin-bottom:20px;">',
+            '<div>',
+              '<label class="ss-label">Dominios de Correo Permitidos (CSV)</label>',
+              '<input type="text" id="cfg-allowed-domains" class="ss-input"',
+                ' placeholder="Ej. @tenantA.com,@tenantB.com" />',
+              '<div style="font-size:0.72rem;color:var(--ion-color-medium);margin-top:4px;">',
+                'Correos permitidos para acceder al sistema. ',
+                'Si se deja vacío, se aplica la configuración estática del archivo de entorno.',
+              '</div>',
+            '</div>',
+          '</div>',
+
+          // ── Sección: Apariencia ────────────────────────────────────────
+          '<div style="font-weight:700;font-size:0.9rem;letter-spacing:0.04em;',
+            'color:var(--ion-color-medium);text-transform:uppercase;margin-bottom:12px;">',
+            '<ion-icon name="color-palette-outline" style="vertical-align:middle;margin-right:6px;"></ion-icon>',
+            'Apariencia (Branding)',
+          '</div>',
+          '<div class="ss-template-card" style="margin-bottom:24px;">',
+            '<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">',
+              '<div>',
+                '<label class="ss-label">Título de la Aplicación</label>',
+                '<input type="text" id="cfg-app-title" class="ss-input"',
+                  ' placeholder="Ej. Sistema de Taxonomía" />',
+                '<div style="font-size:0.72rem;color:var(--ion-color-medium);margin-top:4px;">',
+                  'Texto en la pestaña del navegador.',
+                '</div>',
+              '</div>',
+              '<div>',
+                '<label class="ss-label">URL del Favicon</label>',
+                '<input type="text" id="cfg-favicon-url" class="ss-input"',
+                  ' placeholder="https://empresa.com/favicon.ico" />',
+              '</div>',
+            '</div>',
+          '</div>',
+
+          // ── Acciones ────────────────────────────────────────────────────
+          '<div style="display:flex;justify-content:flex-end;gap:10px;align-items:center;">',
+            '<div id="cfg-sys-status" style="font-size:0.78rem;color:var(--ion-color-medium);flex:1;"></div>',
+            '<button class="ss-btn-secondary" id="btn-cfg-cancel" onclick="window.SchemaStudio._cfgCancel()"',
+              ' style="padding:8px 18px;border-radius:8px;border:1px solid var(--ion-color-step-200);',
+              'background:transparent;cursor:pointer;font-weight:600;font-size:0.82rem;color:var(--ion-color-medium);">',
+              '<ion-icon name="close-outline"></ion-icon> Cancelar',
+            '</button>',
+            '<button class="ss-btn-primary" id="btn-cfg-save" onclick="window.SchemaStudio.saveSystemConfig()">',
+              '<ion-icon name="save-outline"></ion-icon> Guardar Configuración',
+            '</button>',
+          '</div>',
+
+          // ── Info de migracion ───────────────────────────────────────────
+          '<div style="margin-top:20px;padding:12px 16px;border-radius:10px;',
+            'background:rgba(var(--ion-color-primary-rgb),0.07);',
+            'border:1px solid rgba(var(--ion-color-primary-rgb),0.15);',
+            'font-size:0.73rem;color:var(--ion-color-primary);display:flex;gap:8px;align-items:flex-start;">',
+            '<ion-icon name="information-circle-outline" style="flex-shrink:0;font-size:14px;margin-top:1px;"></ion-icon>',
+            '<div>',
+              '<strong>[E6/S62]</strong> Esta configuración persiste en <code>PropertiesService</code> ',
+              'via <code>Adapter_Config</code> — aislada por tenant, sin escritura en Google Sheets.',
+            '</div>',
+          '</div>',
+
+        '</div>', // fin #cfg-sys-form
+
+        // ── Error state ────────────────────────────────────────────────────
+        '<div id="cfg-sys-error" style="display:none;text-align:center;padding:40px;">',
+          '<ion-icon name="warning-outline" style="font-size:3rem;color:var(--ion-color-warning);"></ion-icon>',
+          '<div style="font-weight:600;margin-top:12px;">No se pudo cargar la configuración</div>',
+          '<div id="cfg-sys-error-msg" style="font-size:0.8rem;color:var(--ion-color-medium);margin-top:6px;"></div>',
+          '<button onclick="window.SchemaStudio._cfgLoad()" style="margin-top:16px;" class="ss-btn-primary">',
+            '<ion-icon name="refresh-outline"></ion-icon> Reintentar',
+          '</button>',
+        '</div>',
+
+      '</div>'
+    ].join('');
+
+    // ── Helper: rellenar formulario desde objeto config ────────────────────
+    function _populate(cfg) {
+      _cfg = cfg || {};
+      var set = function(id, val) {
+        var el = document.getElementById(id);
+        if (el) el.value = val || '';
+      };
+      set('cfg-tenant-name',    _cfg.tenant_name);
+      set('cfg-db-adapter',     _cfg.db_adapter_id || 'sheets');
+      set('cfg-spreadsheet-id', _cfg.spreadsheet_id);
+      set('cfg-allowed-domains',_cfg.allowed_domains);
+      set('cfg-app-title',      _cfg.app_title);
+      set('cfg-favicon-url',    _cfg.favicon_url);
+    }
+
+    // ── Cargar datos desde Config_System via DataAPI ──────────────────────
+    window.SchemaStudio._cfgLoad = function() {
+      var loading = document.getElementById('cfg-sys-loading');
+      var form    = document.getElementById('cfg-sys-form');
+      var errBox  = document.getElementById('cfg-sys-error');
+      if (loading) loading.style.display = 'block';
+      if (form)    form.style.display    = 'none';
+      if (errBox)  errBox.style.display  = 'none';
+
+      if (typeof DataAPI === 'undefined') {
+        // Modo desarrollo sin DataAPI — mostrar form vacío
+        if (loading) loading.style.display = 'none';
+        if (form)    form.style.display    = 'block';
+        return;
+      }
+
+      DataAPI.call('getEntityList', 'Config_System').then(function(res) {
+        if (loading) loading.style.display = 'none';
+        var cfg = {};
+        // Adapter_Config.asListResponse() → {headers,rows} → rows[0]
+        if (res && res.headers && res.rows && res.rows.length > 0) {
+          var row = res.rows[0];
+          res.headers.forEach(function(h, i) { cfg[h] = row[i] !== undefined ? row[i] : ''; });
+        } else if (res && res.data) {
+          // Formato alternativo legacy
+          try { cfg = JSON.parse(typeof res.data === 'string' ? res.data : JSON.stringify(res.data)); } catch(e) {}
+        }
+        _populate(cfg);
+        if (form) form.style.display = 'block';
+      }).catch(function(err) {
+        if (loading) loading.style.display = 'none';
+        var errBox2  = document.getElementById('cfg-sys-error');
+        var errMsg   = document.getElementById('cfg-sys-error-msg');
+        if (errBox2) errBox2.style.display  = 'block';
+        if (errMsg)  errMsg.textContent     = err.message || String(err);
+      });
+    };
+
+    // ── Cancelar — restaura valores originales ────────────────────────────
+    window.SchemaStudio._cfgCancel = function() {
+      _populate(_cfg);
+      var status = document.getElementById('cfg-sys-status');
+      if (status) { status.textContent = 'Cambios descartados.'; setTimeout(function(){ status.textContent=''; }, 2500); }
+    };
+
+    // Iniciar carga al montar
+    window.SchemaStudio._cfgLoad();
+  }
+
+
+  // ── Workspace Sync Tab ─────────────────────────────────────────────────────────
+  function renderWorkspaceTab(container) {
+    var html = '<div style="max-width: 600px; margin: 0 auto; padding: 20px 0;">' +
+      '<div style="font-weight:700;font-size:1.1rem;margin-bottom:8px;">Workspace Sync Configuration</div>' +
+      '<div style="font-size:0.85rem;color:var(--ion-color-medium);line-height:1.4;margin-bottom:20px;">' +
+      'Configura la sincronización con Google Workspace. Activa o desactiva la conexión global, y administra los dominios autorizados vía OAuth2.' +
+      '</div>' +
+      
+      '<div class="ss-entity-card" style="flex-direction:column;gap:16px;">' +
+        '<div style="font-weight:600;font-size:0.95rem;color:var(--ion-color-dark);display:flex;align-items:center;gap:8px;">' +
+          '<ion-icon name="power-outline"></ion-icon> Sincronización Global' +
+        '</div>' +
+        '<label style="display:flex;align-items:center;gap:12px;cursor:pointer;font-size:0.85rem;color:var(--ion-color-dark);">' +
+          '<input type="checkbox" id="ss-workspace-sync-enabled" checked style="width:18px;height:18px;cursor:pointer;">' +
+          'Habilitar interceptor de Workspace en la creación de Personas' +
+        '</label>' +
+        '<div style="font-size:0.75rem;color:var(--ion-color-medium);">' +
+          'Si está desactivado, el sistema no consultará el directorio de Google y creará perfiles básicos.' +
+        '</div>' +
+        '<div style="margin-top:10px;text-align:right;">' +
+          '<button id="btn-save-workspace" class="ss-btn-primary" onclick="window.SchemaStudio.saveWorkspaceConfig()">' +
+            '<ion-icon name="save-outline"></ion-icon> Guardar Configuración' +
+          '</button>' +
+        '</div>' +
+      '</div>' +
+
+      '<div class="ss-entity-card" style="flex-direction:column;gap:16px;margin-top:16px;">' +
+        '<div style="font-weight:600;font-size:0.95rem;color:var(--ion-color-dark);display:flex;align-items:center;gap:8px;">' +
+          '<ion-icon name="globe-outline"></ion-icon> Configuración de Webhook (Opcional)' +
+        '</div>' +
+        '<div style="font-size:0.8rem;color:var(--ion-color-medium);">' +
+          'Si el backend de este entorno requiere comunicarse mediante un microservicio webhook para sortear bloqueos de dominio, ingresa la URL aquí. Si se deja en blanco, utilizará acceso nativo.' +
+        '</div>' +
+        '<div class="ss-form-row">' +
+          '<div><label class="ss-label">Webhook URL</label>' +
+            '<input type="text" id="ss-workspace-webhook-url" class="ss-input" placeholder="https://script.google.com/macros/s/.../exec"></div>' +
+        '</div>' +
+        '<div class="ss-form-row">' +
+          '<div><label class="ss-label">Webhook Secret (Token)</label>' +
+            '<input type="password" id="ss-workspace-webhook-secret" class="ss-input" placeholder="Token de Autorización"></div>' +
+        '</div>' +
+      '</div>' +
+
+      '<div class="ss-entity-card" style="flex-direction:column;gap:16px;margin-top:16px;">' +
+        '<div style="font-weight:600;font-size:0.95rem;color:var(--ion-color-dark);display:flex;align-items:center;gap:8px;">' +
+          '<ion-icon name="sync-circle-outline"></ion-icon> Ejecución Manual' +
+        '</div>' +
+        '<div style="font-size:0.8rem;color:var(--ion-color-medium);">' +
+          'Fuerza un barrido completo de hidratación contra el directorio base. Consumirá cuotas masivas de la API.' +
+        '</div>' +
+        '<div style="text-align:right;">' +
+          '<button id="ss-btn-sync-ws" onclick="window.SchemaStudio.triggerWsSync()" style="background:var(--ion-color-step-100);color:var(--ion-color-primary);border:1px solid var(--ion-color-step-200);padding:8px 16px;border-radius:6px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:6px;font-size:0.8rem;">' +
+            '<ion-icon name="play-circle-outline"></ion-icon> Forzar Sincronización' +
+          '</button>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+    
+    container.innerHTML = html;
+
+    if (typeof google !== 'undefined' && google.script && google.script.run) {
+      google.script.run.withSuccessHandler(function(res) {
+        if (res && res.success && res.data) {
+          try {
+            var cfg = JSON.parse(res.data);
+            var chk = document.getElementById('ss-workspace-sync-enabled');
+            if (chk) chk.checked = (cfg.syncEnabled !== false);
+            var txtUrl = document.getElementById('ss-workspace-webhook-url');
+            if (txtUrl) txtUrl.value = cfg.webhookUrl || '';
+            var txtSecret = document.getElementById('ss-workspace-webhook-secret');
+            if (txtSecret) txtSecret.value = cfg.webhookSecret || '';
+          } catch(e){}
+        }
+      }).API_Admin_GetGlobalConfig('APP_WORKSPACE_CONFIG');
+    }
+  }
+
+  // ── DB Health Tab ─────────────────────────────────────────────────────────
+  function renderDbHealthTab(container) {
+    container.innerHTML = '<div style="text-align:center;padding:40px;color:var(--ion-color-medium);">' +
+      '<ion-spinner name="crescent" color="warning"></ion-spinner>' +
+      '<div style="margin-top:12px;font-size:0.85rem;">Consultando estado de la base de datos...</div>' +
+      '</div>';
+
+    if (typeof google !== 'undefined' && google.script && google.script.run) {
+      google.script.run
+        .withSuccessHandler(function(statusData) {
+          renderDbHealthResults(container, statusData);
+        })
+        .withFailureHandler(function(err) {
+          container.innerHTML = '<div style="text-align:center;padding:40px;">' +
+            '<ion-icon name="cloud-offline-outline" style="font-size:3rem;color:var(--ion-color-danger);"></ion-icon>' +
+            '<div style="margin-top:12px;font-weight:600;">Error consultando DB</div>' +
+            '<div style="font-size:0.8rem;color:var(--ion-color-medium);margin-top:6px;">' + (err.message || String(err)) + '</div>' +
+          '</div>';
+        })
+        .getSchemaProvisioningStatus();
+    } else {
+      // Dev fallback: derive from APP_SCHEMAS
+      var mockData = Object.keys(window.APP_SCHEMAS || {})
+        .filter(function(k){ return k !== '_UI_CONFIG'; })
+        .map(function(entityName) {
+          return { entity: entityName, exists: null, managed: null, isHealthy: null, missingColumns: [], orphanedColumns: [] };
+        });
+      renderDbHealthResults(container, mockData);
+    }
+  }
+
+  function renderDbHealthResults(container, data) {
+    var healthy  = (data || []).filter(function(r){ return r.isHealthy === true; }).length;
+    var warn     = (data || []).filter(function(r){ return r.orphanedColumns && r.orphanedColumns.length > 0; }).length;
+    var missing  = (data || []).filter(function(r){ return r.isHealthy === false || r.exists === false; }).length;
+    var unknown  = (data || []).filter(function(r){ return r.isHealthy === null; }).length;
+
+    var html = '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:20px;">' +
+      statsCard('checkmark-circle-outline', healthy, 'Saludables', 'var(--ion-color-success)') +
+      statsCard('warning-outline',         warn,    'Con Huérfanas', 'var(--ion-color-warning-shade)') +
+      statsCard('close-circle-outline',    missing, 'Con Defectos', 'var(--ion-color-danger)') +
+      statsCard('help-circle-outline',     unknown, 'Sin Verificar', 'var(--ion-color-medium)') +
+    '</div>';
+
+    html += '<div style="font-weight:600;font-size:0.85rem;margin-bottom:10px;color:var(--ion-color-medium);">ESTADO POR ENTIDAD</div>';
+
+    (data || []).forEach(function(r) {
+      var statusIcon  = r.isHealthy === true ? 'checkmark-circle' : r.isHealthy === false ? 'close-circle' : 'help-circle';
+      var statusColor = r.isHealthy === true ? 'var(--ion-color-success)' : r.isHealthy === false ? 'var(--ion-color-danger)' : 'var(--ion-color-medium)';
+      var pill = r.isHealthy === true ? 'ok' : r.orphanedColumns && r.orphanedColumns.length ? 'warn' : r.isHealthy === false ? 'missing' : '';
+
+      html += '<div class="ss-health-row">' +
+        '<ion-icon name="' + statusIcon + '" style="font-size:20px;color:' + statusColor + ';flex-shrink:0;"></ion-icon>' +
+        '<div style="flex:1;min-width:0;">' +
+          '<div style="font-weight:600;font-size:0.85rem;">' + r.entity + '</div>' +
+          (r.orphanedColumns && r.orphanedColumns.length
+            ? '<div style="font-size:0.72rem;color:var(--ion-color-warning-shade);margin-top:2px;">Huérfanas: ' + r.orphanedColumns.join(', ') + '</div>'
+            : ''
+          ) +
+          (r.missingColumns && r.missingColumns.length
+            ? '<div style="font-size:0.72rem;color:var(--ion-color-danger);margin-top:2px;">Faltantes: ' + r.missingColumns.join(', ') + '</div>'
+            : ''
+          ) +
+        '</div>' +
+        (r.provisionedAt
+          ? '<div style="font-size:0.68rem;color:var(--ion-color-medium);flex-shrink:0;">' + new Date(r.provisionedAt).toLocaleDateString() + '</div>'
+          : ''
+        ) +
+        (pill ? '<span class="ss-pill ' + pill + '">' + (r.isHealthy === true ? 'OK' : r.orphanedColumns && r.orphanedColumns.length ? 'WARN' : 'FAIL') + '</span>' : '') +
+      '</div>';
+    });
+
+    html += '<div style="margin-top:16px;padding:12px;background:var(--ion-color-step-50);border-radius:10px;font-size:0.75rem;color:var(--ion-color-medium);">' +
+      '<ion-icon name="information-circle-outline"></ion-icon> ' +
+      'Para reconciliar el esquema contra Google Sheets, usa el botón <strong>Reconciliar DB</strong> en la cabecera.' +
+    '</div>';
+
+    container.innerHTML = html;
+  }
+
+  function statsCard(icon, count, label, color) {
+    return '<div style="background:var(--ion-item-background);border:1px solid var(--ion-color-step-100);border-radius:12px;padding:16px;text-align:center;">' +
+      '<ion-icon name="' + icon + '" style="font-size:28px;color:' + color + ';"></ion-icon>' +
+      '<div style="font-size:1.6rem;font-weight:800;color:' + color + ';line-height:1;">' + count + '</div>' +
+      '<div style="font-size:0.72rem;color:var(--ion-color-medium);margin-top:4px;">' + label + '</div>' +
+    '</div>';
+  }
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // ── [E31-S31.6] BLUEPRINT COMPOSER ENGINE ────────────────────────────────
+  // ══════════════════════════════════════════════════════════════════════════
+
+  // Business entities eligible for Blueprint composition.
+  // [O3-AR] Derived dynamically from APP_SCHEMAS using showInMenu + order metadata.
+  // Automatically reflects new entities added to APP_SCHEMAS without code changes.
+  function _getBusinessEntities() {
+    return Object.keys(window.APP_SCHEMAS || {})
+      .filter(function(k) {
+        if (k === '_UI_CONFIG') return false;
+        var meta = (window.APP_SCHEMAS[k].metadata || {});
+        return meta.showInMenu === true;
+      })
+      .sort(function(a, b) {
+        var oa = ((window.APP_SCHEMAS[a].metadata || {}).order) || 999;
+        var ob = ((window.APP_SCHEMAS[b].metadata || {}).order) || 999;
+        return oa - ob;
+      });
+  }
+
+  // Template group definitions (mirrors FIELD_TEMPLATES)
+  // SYNC [H9]: Field definitions here must match FIELD_TEMPLATES.* in Schema_Engine.gs.
+  // Fields array uses objects {name, type} so composerInsertTemplate preserves correct types.
+  var TEMPLATE_GROUPS = {
+    SYSTEM_FIELDS:  { fields: [{ name:'lexical_id', type:'text', readonly:true }, { name:'estado', type:'hidden' }], label: 'SYSTEM_FIELDS', color: 'var(--ion-color-primary)' },
+    ESTADO_FIELD:   { fields: [{ name:'estado', type:'hidden' }], label: 'ESTADO_FIELD', color: 'var(--ion-color-secondary)' },
+    AUDIT_FIELDS:   { fields: ['created_at','created_by','updated_at','updated_by','deleted_at','deleted_by'].map(function(n){ return { name:n, type:'hidden', readonly:true }; }), label: 'AUDIT_FIELDS', color: 'var(--ion-color-success)' },
+    VERSION_FIELD:  { fields: [{ name:'version', type:'hidden', readonly:true, defaultValue:1 }], label: 'VERSION_FIELD', color: 'var(--ion-color-warning-shade)' }
+  };
+  var FIELD_TYPES = ['text','textarea','number','email','tel','select','lookup','relation','avatar','hidden','divider','date'];
+
+  // Composer state
+  var _composer = {
+    // Entity mode (original behaviour - unchanged)
+    entityName:    null,
+    fields:        [],   // working copy - mutable
+    dirty:         false,
+    // [S31.10] Multi-context extension
+    mode:           'entity',  // 'entity' | 'template' | 'behavior'
+    // Template mode
+    templateKey:    null,
+    templateFields: [],
+    // Behavior mode
+    behaviorKey:   null,
+    behaviorRules: {}
+  };
+
+  // [S31.10] Tracks which content tab was last active before switching to Composer.
+  // Determines the Composer mode: 'entities'->entity, 'templates'->template, 'presets'->behavior.
+  var _lastContentTab = 'entities';
+
+  // SYNC [H9]: Must stay in sync with FIELD_TEMPLATES.* in Schema_Engine.gs.
+  // Covers: SYSTEM_FIELDS (lexical_id, estado), AUDIT_FIELDS (6 names), VERSION_FIELD.
+  // Future: replace with getGovernedFieldNames() GAS API to eliminate drift risk.
+  var GOVERNED_FIELD_NAMES = ['lexical_id','estado','created_at','created_by','updated_at',
+    'updated_by','deleted_at','deleted_by','version'];
+
+  // ── Composer Tab Renderer ─────────────────────────────────────────────────
+  // [S31.10] Branch dispatcher — routes to the correct composer based on _lastContentTab.
+  function renderComposerTab(container) {
+    _composer.mode = _lastContentTab === 'templates' ? 'template'
+                   : _lastContentTab === 'presets'   ? 'behavior'
+                   : 'entity';
+    if (_composer.mode === 'template')  renderTemplateComposer(container);
+    else if (_composer.mode === 'behavior') renderBehaviorComposer(container);
+    else                                renderEntityComposer(container);
+  }
+
+  // [S31.10] Original entity composer — renamed from renderComposerTab.
+  function renderEntityComposer(container) {
+    var schemas  = window.APP_SCHEMAS || {};
+    var entities = _getBusinessEntities(); // [O3-AR] dynamic
+    var sidebar  = buildComposerSidebar(schemas, entities);
+    var panel    = buildComposerPanel();
+
+    var layout = document.createElement('div');
+    layout.className = 'ss-composer-layout';
+    layout.appendChild(sidebar);
+    layout.appendChild(panel);
+    container.appendChild(layout);
+
+    // Auto-select first business entity
+    if (entities.length) composerSelectEntity(entities[0]);
+  }
+
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // S31.11 — TEMPLATE COMPOSER
+  // Composer context for FIELD_TEMPLATES: view, add, remove fields per group.
+  // CODE EXPORT produces a GAS factory-function ready to paste in Schema_Engine.gs.
+  // ══════════════════════════════════════════════════════════════════════════
+
+  // [S31.11] Static catalogue — mirrors FIELD_TEMPLATES in Schema_Engine.gs.
+  // NOTE: When a new template group is added here via Composer, the developer
+  //       copies the CODE EXPORT and adds it to Schema_Engine.gs, then redeploys.
+  var _TEMPLATE_CATALOGUE = [
+    {
+      key: 'SYSTEM_FIELDS', description: 'ID amigable + estado de ciclo de vida. Universal en entidades de negocio.',
+      fields: [
+        { name: 'lexical_id', type: 'text',   hint: 'Auto: ACRONIMO-0042. Readonly.' },
+        { name: 'estado',     type: 'hidden',  hint: 'Activo | Eliminado | Borrador. Soft-delete.' }
+      ]
+    },
+    {
+      key: 'AUDIT_FIELDS', description: 'Trail completo de auditoría. Todos hidden — manejados por Engine_DB.',
+      fields: [
+        { name: 'created_at', type: 'hidden', hint: 'ISO 8601 UTC. Inmutable tras creación.' },
+        { name: 'created_by', type: 'hidden', hint: 'Email del creador. Inmutable.' },
+        { name: 'updated_at', type: 'hidden', hint: 'ISO 8601. Actualizado en cada write.' },
+        { name: 'updated_by', type: 'hidden', hint: 'Email del último editor.' },
+        { name: 'deleted_at', type: 'hidden', hint: 'ISO 8601. Soft-delete timestamp.' },
+        { name: 'deleted_by', type: 'hidden', hint: 'Email del que marcó como eliminado.' }
+      ]
+    },
+    {
+      key: 'VERSION_FIELD', description: 'Contador de versión para optimistic locking.',
+      fields: [
+        { name: 'version', type: 'hidden', hint: 'Int incremental. Default: 1. Manejado por Engine_DB.' }
+      ]
+    },
+    {
+      key: 'GRAPH_SEPARATOR', description: 'Divisor visual de sección en el formulario. Acepta un label dinámico.',
+      fields: [
+        { name: 'separator_label', type: 'text', hint: 'Ej: "Topología (Grafo)". Argumento de GRAPH_SEPARATOR("...").' }
+      ]
+    }
+  ];
+
+  function renderTemplateComposer(container) {
+    var layout = document.createElement('div');
+    layout.className = 'ss-composer-layout';
+
+    // ── Sidebar ──────────────────────────────────────────────────────────────
+    var sidebar = document.createElement('div');
+    sidebar.className = 'ss-composer-sidebar';
+    sidebar.id = 'ss-tmpl-sidebar';
+
+    var sidebarHtml = '<div style="padding:12px 16px;border-bottom:1px solid var(--ion-color-step-100);">' +
+      '<div style="font-size:0.7rem;font-weight:700;color:var(--ion-color-medium);letter-spacing:0.06em;display:flex;align-items:center;gap:6px;">' +
+        '<ion-icon name="code-slash-outline"></ion-icon>FIELD_TEMPLATES</div>' +
+      '</div>';
+
+    _TEMPLATE_CATALOGUE.forEach(function(tmpl) {
+      var isActive = _composer.templateKey === tmpl.key;
+      sidebarHtml += '<div class="ss-entity-item' + (isActive ? ' active' : '') + '" ' +
+        'onclick="window.SchemaStudio.composerTemplateSelect(\'' + tmpl.key + '\')" ' +
+        'style="cursor:pointer;padding:10px 16px;border-bottom:1px solid var(--ion-color-step-50);">' +
+        '<div style="font-size:0.82rem;font-weight:600;">' + tmpl.key + '</div>' +
+        '<div style="font-size:0.7rem;color:var(--ion-color-medium);margin-top:2px;">' +
+          tmpl.fields.length + ' campo(s)</div>' +
+      '</div>';
+    });
+
+    sidebarHtml += '<div style="padding:12px 16px;">' +
+      '<button class="ss-btn-secondary" onclick="window.SchemaStudio.composerTemplateNew()" style="width:100%;font-size:0.78rem;">' +
+        '<ion-icon name="add-circle-outline"></ion-icon>Nuevo Template</button></div>';
+
+    sidebar.innerHTML = sidebarHtml;
+
+    // ── Panel ─────────────────────────────────────────────────────────────────
+    var panel = document.createElement('div');
+    panel.className = 'ss-composer-panel';
+    panel.id = 'ss-tmpl-panel';
+    panel.innerHTML = '<div style="padding:40px;text-align:center;color:var(--ion-color-medium);">' +
+      '<ion-icon name="code-slash-outline" style="font-size:2.5rem;opacity:0.3;display:block;margin-bottom:12px;"></ion-icon>' +
+      'Selecciona un Template Group para editar</div>';
+
+    layout.appendChild(sidebar);
+    layout.appendChild(panel);
+    container.appendChild(layout);
+
+    // Auto-select first template
+    if (!_composer.templateKey && _TEMPLATE_CATALOGUE.length) {
+      composerTemplateSelect(_TEMPLATE_CATALOGUE[0].key);
+    } else if (_composer.templateKey) {
+      composerTemplateSelect(_composer.templateKey);
+    }
+  }
+
+  function composerTemplateSelect(key) {
+    // Find in catalogue or in user-created templates
+    var tmpl = _activeTemplate(); // [AR-R2]
+    var tmpl = all.find(function(t) { return t.key === key; });
+    if (!tmpl) return;
+
+    _composer.templateKey    = key;
+    _composer.templateFields = tmpl.fields.map(function(f) { return Object.assign({}, f); });
+
+    // Re-render sidebar to update active state
+    var sidebar = document.getElementById('ss-tmpl-sidebar');
+    if (sidebar) {
+      var items = sidebar.querySelectorAll('.ss-entity-item');
+      items.forEach(function(el) {
+        var elKey = el.querySelector('.ss-entity-item div') ? el.querySelector('div').textContent : '';
+        el.classList.toggle('active', el.onclick && el.getAttribute('onclick') &&
+          el.getAttribute('onclick').indexOf("'" + key + "'") !== -1);
+      });
+    }
+
+    renderTemplatePanelContent(tmpl);
+  }
+
+  function renderTemplatePanelContent(tmpl) {
+    var panel = document.getElementById('ss-tmpl-panel');
+    if (!panel) return;
+
+    var html = '<div style="padding:12px 16px;background:var(--ion-color-step-50);display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--ion-color-step-100);">' +
+      '<div style="font-size:0.7rem;font-weight:700;color:var(--ion-color-medium);letter-spacing:0.06em;">' +
+        '<ion-icon name="code-slash-outline" style="color:var(--ion-color-primary);"></ion-icon>' +
+        ' FIELD_TEMPLATES.' + tmpl.key + '</div>' +
+    '</div>';
+
+    // Description
+    html += '<div style="padding:16px;border-bottom:1px solid var(--ion-color-step-100);">' +
+      '<div style="font-size:0.72rem;color:var(--ion-color-medium);margin-bottom:4px;">DESCRIPCIÓN</div>' +
+      '<div style="font-size:0.85rem;">' + (tmpl.description || '—') + '</div>' +
+    '</div>';
+
+    // Fields list
+    html += '<div style="padding:16px;border-bottom:1px solid var(--ion-color-step-100);">' +
+      '<div style="font-size:0.72rem;font-weight:700;color:var(--ion-color-medium);margin-bottom:10px;letter-spacing:0.06em;">CAMPOS DEL TEMPLATE</div>' +
+      '<div id="ss-tmpl-field-list">';
+
+    (_composer.templateFields || []).forEach(function(f, idx) {
+      html += '<div class="ss-field-row" data-idx="' + idx + '">' +
+        '<span class="ss-field-chip system" style="flex-shrink:0;">' + f.name + '</span>' +
+        '<span style="font-size:0.72rem;color:var(--ion-color-medium);flex:1;">' +
+          (f.type || 'text') + (f.hint ? ' — ' + f.hint : '') + '</span>' +
+        '<button class="ss-btn-danger-sm" onclick="window.SchemaStudio.composerTemplateRemoveField(' + idx + ')" ' +
+          'style="font-size:0.72rem;padding:3px 8px;background:rgba(var(--ion-color-danger-rgb),0.12);color:var(--ion-color-danger);border:none;border-radius:4px;cursor:pointer;">' +
+          '<ion-icon name="trash-outline"></ion-icon></button>' +
+      '</div>';
+    });
+
+    html += '</div>';
+
+    // Add field form
+    html += '<div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;">' +
+      '<input id="ss-tmpl-new-name" type="text" placeholder="nombre_campo" style="flex:1;min-width:120px;background:var(--ion-color-step-100);border:1px solid var(--ion-color-step-150);border-radius:6px;padding:6px 10px;font-size:0.8rem;color:inherit;">' +
+      '<select id="ss-tmpl-new-type" style="background:var(--ion-color-step-100);border:1px solid var(--ion-color-step-150);border-radius:6px;padding:6px 10px;font-size:0.8rem;color:inherit;">' +
+        '<option value="text">text</option><option value="hidden">hidden</option>' +
+        '<option value="textarea">textarea</option><option value="number">number</option>' +
+        '<option value="relation">relation</option><option value="divider">divider</option></select>' +
+      '<input id="ss-tmpl-new-hint" type="text" placeholder="Descripción / hint" style="flex:2;min-width:160px;background:var(--ion-color-step-100);border:1px solid var(--ion-color-step-150);border-radius:6px;padding:6px 10px;font-size:0.8rem;color:inherit;">' +
+      '<button class="ss-btn-secondary" onclick="window.SchemaStudio.composerTemplateAddField()" style="font-size:0.78rem;padding:6px 12px;">' +
+        '<ion-icon name="add-outline"></ion-icon>Agregar</button>' +
+    '</div></div>';
+
+    // CODE EXPORT
+    var gasCode = _generateTemplateGas(tmpl.key, _composer.templateFields || []);
+    html += '<div style="margin-top:8px;padding:10px 16px;background:rgba(251,191,36,0.08);border:1px solid rgba(251,191,36,0.25);border-radius:8px 8px 0 0;display:flex;align-items:center;justify-content:space-between;">' +
+      '<div style="font-size:0.72rem;font-weight:700;color:#fbbf24;letter-spacing:0.08em;display:flex;align-items:center;gap:8px;">' +
+        '<ion-icon name="code-download-outline"></ion-icon>' +
+        'CODE EXPORT (GAS) \u2014 FIELD_TEMPLATES.' + tmpl.key + '</div>' +
+      '<button class="ss-btn-primary" id="ss-copy-tmpl-export" onclick="window.SchemaStudio.composerTemplateCopy()" style="font-size:0.75rem;padding:5px 14px;display:flex;align-items:center;gap:6px;">' +
+        '<ion-icon name="copy-outline"></ion-icon>Copiar GAS</button>' +
+    '</div>';
+    html += '<div class="ss-code-block" id="ss-tmpl-code-output" data-plain="">' + generateCodeHtml(gasCode) + '</div>';
+
+    panel.innerHTML = html;
+    var codeEl = panel.querySelector('#ss-tmpl-code-output');
+    if (codeEl) codeEl.dataset.plain = gasCode;
+  }
+
+  function _generateTemplateGas(key, fields) {
+    var lines = ['  ' + key + ': function(label) {', '    return ['];
+    fields.forEach(function(f) {
+      var obj = '      { name: "' + f.name + '"';
+      if (f.type && f.type !== 'text') obj += ', type: "' + f.type + '"';
+      if (f.hint) obj += ', hint: "' + f.hint + '"';
+      obj += ' }';
+      lines.push(obj + ',');
+    });
+    lines.push('    ];');
+    lines.push('  },');
+    return '// FIELD_TEMPLATES.' + key + '\n' + lines.join('\n');
+  }
+
+  function composerTemplateAddField() {
+    var name = (document.getElementById('ss-tmpl-new-name') || {}).value || '';
+    var type = (document.getElementById('ss-tmpl-new-type') || {}).value || 'text';
+    var hint = (document.getElementById('ss-tmpl-new-hint') || {}).value || '';
+    if (!name.trim()) return;
+    _composer.templateFields.push({ name: name.trim(), type: type, hint: hint.trim() });
+    var tmpl = _activeTemplate(); // [AR-R2]
+    if (tmpl) { tmpl.fields = _composer.templateFields; renderTemplatePanelContent(tmpl); }
+  }
+
+  function composerTemplateRemoveField(idx) {
+    _composer.templateFields.splice(idx, 1);
+    var tmpl = _activeTemplate(); // [AR-R2]
+    if (tmpl) { tmpl.fields = _composer.templateFields; renderTemplatePanelContent(tmpl); }
+  }
+
+  // [AR-R1] Delegates to _copyTabContent (single clipboard implementation)
+  function composerTemplateCopy() {
+    var codeEl = document.getElementById('ss-tmpl-code-output');
+    if (!codeEl) return;
+    _copyTabContent(codeEl.dataset.plain || codeEl.textContent, 'ss-copy-tmpl-export', 'Copiar GAS');
+  }
+
+  function composerTemplateNew() {
+    var key = prompt('Nombre del nuevo template group (ej: COMPLIANCE_FIELDS):');
+    if (!key || !key.trim()) return;
+    key = key.trim().toUpperCase().replace(/\s+/g, '_');
+    _composer._customTemplates = _composer._customTemplates || [];
+    if (_TEMPLATE_CATALOGUE.some(function(t){ return t.key === key; }) ||
+        _composer._customTemplates.some(function(t){ return t.key === key; })) {
+      alert('Ya existe un template con ese nombre.'); return;
+    }
+    var newTmpl = { key: key, description: 'Nuevo template group personalizado.', fields: [] };
+    _composer._customTemplates.push(newTmpl);
+    _composer.templateKey = key;
+    // Re-render
+    var container = document.getElementById('ss-tab-content');
+    if (container) { container.innerHTML = ''; renderTemplateComposer(container); }
+  }
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // S31.12 — BEHAVIOR COMPOSER
+  // Composer context for TOPOLOGY_PRESETS: view, add, remove rules per preset.
+  // CODE EXPORT produces Object.freeze({...}) GAS ready to paste in Schema_Engine.gs.
+  // ══════════════════════════════════════════════════════════════════════════
+
+  function _getPresetsFromSchemas() {
+    var schemas = window.APP_SCHEMAS || {};
+    var presets = {};
+    Object.entries(schemas).forEach(function(e) {
+      if (e[0] === '_UI_CONFIG') return;
+      var rules = e[1].topologyRules;
+      if (rules && rules._preset) {
+        if (!presets[rules._preset]) {
+          presets[rules._preset] = { key: rules._preset, rules: Object.assign({}, rules), users: [] };
+        }
+        presets[rules._preset].users.push(e[0]);
+      }
+    });
+    // Merge any user-created behaviors
+    (_composer._customBehaviors || []).forEach(function(b) {
+      if (!presets[b.key]) presets[b.key] = b;
+    });
+    return Object.values(presets);
+  }
+
+  function renderBehaviorComposer(container) {
+    var p = _activePreset(); // [AR-R2]
+    var layout = document.createElement('div');
+    layout.className = 'ss-composer-layout';
+
+    // ── Sidebar ──────────────────────────────────────────────────────────────
+    var sidebar = document.createElement('div');
+    sidebar.className = 'ss-composer-sidebar';
+    sidebar.id = 'ss-beh-sidebar';
+
+    var sidebarHtml = '<div style="padding:12px 16px;border-bottom:1px solid var(--ion-color-step-100);">' +
+      '<div style="font-size:0.7rem;font-weight:700;color:var(--ion-color-medium);letter-spacing:0.06em;display:flex;align-items:center;gap:6px;">' +
+        '<ion-icon name="git-network-outline"></ion-icon>TOPOLOGY_PRESETS</div>' +
+    '</div>';
+
+    presets.forEach(function(p) {
+      var isActive = _composer.behaviorKey === p.key;
+      sidebarHtml += '<div class="ss-entity-item' + (isActive ? ' active' : '') + '" ' +
+        'onclick="window.SchemaStudio.composerBehaviorSelect(\'' + p.key + '\')" ' +
+        'style="cursor:pointer;padding:10px 16px;border-bottom:1px solid var(--ion-color-step-50);">' +
+        '<div style="font-size:0.82rem;font-weight:600;">' + p.key + '</div>' +
+        '<div style="font-size:0.7rem;color:var(--ion-color-medium);margin-top:2px;">' +
+          (p.users && p.users.length ? 'Usado por: ' + p.users.join(', ') : 'Sin entidades') + '</div>' +
+      '</div>';
+    });
+
+    sidebarHtml += '<div style="padding:12px 16px;">' +
+      '<button class="ss-btn-secondary" onclick="window.SchemaStudio.composerBehaviorNew()" style="width:100%;font-size:0.78rem;">' +
+        '<ion-icon name="add-circle-outline"></ion-icon>Nuevo Graph Behavior</button></div>';
+
+    sidebar.innerHTML = sidebarHtml;
+
+    // ── Panel ─────────────────────────────────────────────────────────────────
+    var panel = document.createElement('div');
+    panel.className = 'ss-composer-panel';
+    panel.id = 'ss-beh-panel';
+    panel.innerHTML = '<div style="padding:40px;text-align:center;color:var(--ion-color-medium);">' +
+      '<ion-icon name="git-network-outline" style="font-size:2.5rem;opacity:0.3;display:block;margin-bottom:12px;"></ion-icon>' +
+      'Selecciona un Graph Behavior para editar</div>';
+
+    layout.appendChild(sidebar);
+    layout.appendChild(panel);
+    container.appendChild(layout);
+
+    if (presets.length) {
+      var selectKey = _composer.behaviorKey || presets[0].key;
+      composerBehaviorSelect(selectKey);
+    }
+  }
+
+  function composerBehaviorSelect(key) {
+    var p = _activePreset(); // [AR-R2]
+    var preset = presets.find(function(p) { return p.key === key; });
+    if (!preset) return;
+    _composer.behaviorKey   = key;
+    _composer.behaviorRules = Object.assign({}, preset.rules);
+    delete _composer.behaviorRules._preset; // managed separately
+    renderBehaviorPanelContent(preset);
+  }
+
+  function renderBehaviorPanelContent(preset) {
+    var panel = document.getElementById('ss-beh-panel');
+    if (!panel) return;
+    var rules = _composer.behaviorRules;
+
+    var html = '<div style="padding:12px 16px;background:var(--ion-color-step-50);display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--ion-color-step-100);">' +
+      '<div style="font-size:0.7rem;font-weight:700;color:var(--ion-color-medium);letter-spacing:0.06em;">' +
+        '<ion-icon name="git-network-outline" style="color:var(--ion-color-primary);"></ion-icon>' +
+        ' TOPOLOGY_PRESETS.' + preset.key + '</div>' +
+    '</div>';
+
+    // Usado por
+    if (preset.users && preset.users.length) {
+      html += '<div style="padding:12px 16px;border-bottom:1px solid var(--ion-color-step-100);display:flex;align-items:center;gap:8px;flex-wrap:wrap;">' +
+        '<span style="font-size:0.7rem;color:var(--ion-color-medium);font-weight:600;">USADO POR:</span>';
+      preset.users.forEach(function(u) {
+        html += '<span class="ss-field-chip system">' + u + '</span>';
+      });
+      html += '</div>';
+    }
+
+    // Rules table
+    html += '<div style="padding:16px;border-bottom:1px solid var(--ion-color-step-100);">' +
+      '<div style="font-size:0.72rem;font-weight:700;color:var(--ion-color-medium);margin-bottom:10px;letter-spacing:0.06em;">REGLAS DE COMPORTAMIENTO</div>' +
+      '<div id="ss-beh-rules-list">';
+
+    Object.keys(rules).forEach(function(k, idx) {
+      var val = rules[k];
+      var valType = typeof val;
+      html += '<div class="ss-field-row" style="align-items:center;">' +
+        '<span class="ss-field-chip custom" style="flex-shrink:0;font-family:monospace;">' + k + '</span>' +
+        '<span class="ss-field-chip ' + (valType === 'boolean' ? (val ? 'version' : 'warn') : 'audit') + '" style="flex-shrink:0;">' +
+          (val === null ? 'null' : String(val)) + '</span>' +
+        '<span style="font-size:0.7rem;color:var(--ion-color-medium);flex:1;">' + valType + '</span>' +
+        '<button onclick="window.SchemaStudio.composerBehaviorRemoveRule(\'' + k + '\')" ' +
+          'style="font-size:0.72rem;padding:3px 8px;background:rgba(var(--ion-color-danger-rgb),0.12);color:var(--ion-color-danger);border:none;border-radius:4px;cursor:pointer;">' +
+          '<ion-icon name="trash-outline"></ion-icon></button>' +
+      '</div>';
+    });
+
+    html += '</div>';
+
+    // Add rule form
+    html += '<div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;">' +
+      '<input id="ss-beh-new-key" type="text" placeholder="ruleKey" style="flex:1;min-width:120px;background:var(--ion-color-step-100);border:1px solid var(--ion-color-step-150);border-radius:6px;padding:6px 10px;font-size:0.8rem;color:inherit;">' +
+      '<select id="ss-beh-new-type" style="background:var(--ion-color-step-100);border:1px solid var(--ion-color-step-150);border-radius:6px;padding:6px 10px;font-size:0.8rem;color:inherit;">' +
+        '<option value="boolean">boolean</option><option value="integer">integer</option>' +
+        '<option value="string">string</option></select>' +
+      '<input id="ss-beh-new-val" type="text" placeholder="valor" style="flex:1;min-width:100px;background:var(--ion-color-step-100);border:1px solid var(--ion-color-step-150);border-radius:6px;padding:6px 10px;font-size:0.8rem;color:inherit;">' +
+      '<button class="ss-btn-secondary" onclick="window.SchemaStudio.composerBehaviorAddRule()" style="font-size:0.78rem;padding:6px 12px;">' +
+        '<ion-icon name="add-outline"></ion-icon>Agregar</button>' +
+    '</div></div>';
+
+    // CODE EXPORT
+    var gasCode = _generateBehaviorGas(preset.key, rules);
+    html += '<div style="margin-top:8px;padding:10px 16px;background:rgba(251,191,36,0.08);border:1px solid rgba(251,191,36,0.25);border-radius:8px 8px 0 0;display:flex;align-items:center;justify-content:space-between;">' +
+      '<div style="font-size:0.72rem;font-weight:700;color:#fbbf24;letter-spacing:0.08em;display:flex;align-items:center;gap:8px;">' +
+        '<ion-icon name="code-download-outline"></ion-icon>' +
+        'CODE EXPORT (GAS) \u2014 TOPOLOGY_PRESETS.' + preset.key + '</div>' +
+      '<button class="ss-btn-primary" id="ss-copy-beh-export" onclick="window.SchemaStudio.composerBehaviorCopy()" style="font-size:0.75rem;padding:5px 14px;display:flex;align-items:center;gap:6px;">' +
+        '<ion-icon name="copy-outline"></ion-icon>Copiar GAS</button>' +
+    '</div>';
+    html += '<div class="ss-code-block" id="ss-beh-code-output" data-plain="">' + generateCodeHtml(gasCode) + '</div>';
+
+    panel.innerHTML = html;
+    var codeEl = panel.querySelector('#ss-beh-code-output');
+    if (codeEl) codeEl.dataset.plain = gasCode;
+  }
+
+  function _generateBehaviorGas(key, rules) {
+    var lines = ['  ' + key + ': Object.freeze({',
+      '    _preset: \'' + key + '\',  // [E31] Studio Viewer identifier'];
+    Object.keys(rules).forEach(function(k) {
+      var v = rules[k];
+      var val = typeof v === 'string' ? '"' + v + '"' : String(v);
+      lines.push('    ' + k + ': ' + val + ',');
+    });
+    lines.push('  })');
+    return '// TOPOLOGY_PRESETS.' + key + '\n' + lines.join('\n');
+  }
+
+  function composerBehaviorAddRule() {
+    var key  = (document.getElementById('ss-beh-new-key') || {}).value || '';
+    var type = (document.getElementById('ss-beh-new-type') || {}).value || 'string';
+    var val  = (document.getElementById('ss-beh-new-val') || {}).value || '';
+    if (!key.trim()) return;
+    var parsed = val;
+    if (type === 'boolean') parsed = val === 'true' || val === '1';
+    else if (type === 'integer') parsed = parseInt(val, 10) || 0;
+    _composer.behaviorRules[key.trim()] = parsed;
+    var p = _activePreset(); // [AR-R2]
+    var p = presets.find(function(x){ return x.key === _composer.behaviorKey; });
+    if (p) { p.rules = Object.assign({ _preset: p.key }, _composer.behaviorRules); renderBehaviorPanelContent(p); }
+  }
+
+  function composerBehaviorRemoveRule(key) {
+    delete _composer.behaviorRules[key];
+    var p = _activePreset(); // [AR-R2]
+    var p = presets.find(function(x){ return x.key === _composer.behaviorKey; });
+    if (p) { p.rules = Object.assign({ _preset: p.key }, _composer.behaviorRules); renderBehaviorPanelContent(p); }
+  }
+
+  // [AR-R1] Delegates to _copyTabContent (single clipboard implementation)
+  function composerBehaviorCopy() {
+    var codeEl = document.getElementById('ss-beh-code-output');
+    if (!codeEl) return;
+    _copyTabContent(codeEl.dataset.plain || codeEl.textContent, 'ss-copy-beh-export', 'Copiar GAS');
+  }
+
+  function composerBehaviorNew() {
+    var key = prompt('Nombre del nuevo Graph Behavior (ej: FLAT_TAXONOMY):');
+    if (!key || !key.trim()) return;
+    key = key.trim().toUpperCase().replace(/\s+/g, '_');
+    var existing = _getPresetsFromSchemas();
+    if (existing.some(function(p){ return p.key === key; })) {
+      alert('Ya existe un preset con ese nombre.'); return;
+    }
+    _composer._customBehaviors = _composer._customBehaviors || [];
+    _composer._customBehaviors.push({ key: key, rules: { _preset: key }, users: [] });
+    _composer.behaviorKey = key;
+    var container = document.getElementById('ss-tab-content');
+    if (container) { container.innerHTML = ''; renderBehaviorComposer(container); }
+  }
+
+  function buildComposerSidebar(schemas, entities) {
+    var sb = document.createElement('div');
+    sb.className = 'ss-composer-sidebar';
+
+    // ── NEGOCIO Section ──────────────────────────────────────────────────────
+    sb.innerHTML = '<div class="ss-sidebar-section-title">🏗 Blueprint</div>';
+    entities.forEach(function(eName) {
+      var s = schemas[eName];
+      var meta = (s && s.metadata) || {};
+      var btn = document.createElement('div');
+      btn.className = 'ss-sidebar-item';
+      btn.id = 'ss-side-' + eName;
+      btn.innerHTML = '<ion-icon name="' + (meta.iconName || 'cube-outline') + '" style="font-size:16px;color:var(--ion-color-' + (meta.color || 'primary') + ');"></ion-icon>' + eName;
+      btn.addEventListener('click', function() { composerSelectEntity(eName); });
+      sb.appendChild(btn);
+    });
+
+    // ── CONFIG Section (placeholder) ─────────────────────────────────────────
+    var div1 = document.createElement('div'); div1.className = 'ss-sidebar-divider'; sb.appendChild(div1);
+    var t2 = document.createElement('div'); t2.className = 'ss-sidebar-section-title'; t2.textContent = '⚙️ Configuración'; sb.appendChild(t2);
+    var cfgItem = document.createElement('div');
+    cfgItem.className = 'ss-sidebar-item disabled';
+    cfgItem.title = 'Disponible en sesión futura';
+    cfgItem.innerHTML = '<ion-icon name="time-outline" style="font-size:14px;"></ion-icon>Próximamente';
+    sb.appendChild(cfgItem);
+
+    // ── GOVERNANCE Section ────────────────────────────────────────────────────
+    var div2 = document.createElement('div'); div2.className = 'ss-sidebar-divider'; sb.appendChild(div2);
+    var t3 = document.createElement('div'); t3.className = 'ss-sidebar-section-title'; t3.textContent = '🛡 Gobernanza'; sb.appendChild(t3);
+    var govItem = document.createElement('div');
+    govItem.className = 'ss-sidebar-item';
+    govItem.title = 'Ir a Governance_Admin_UI';
+    govItem.innerHTML = '<ion-icon name="shield-checkmark-outline" style="font-size:14px;"></ion-icon>Roles & Permisos →';
+    govItem.addEventListener('click', function() {
+      if (window.AppEventBus) window.AppEventBus.publish('NAV::CHANGE', { viewType: 'governance' });
+    });
+    sb.appendChild(govItem);
+
+    return sb;
+  }
+
+  function buildComposerPanel() {
+    var panel = document.createElement('div');
+    panel.className = 'ss-composer-panel';
+    panel.id = 'ss-composer-panel';
+    panel.innerHTML = '<div style="padding:40px;text-align:center;color:var(--ion-color-medium);">Selecciona una entidad en el panel izquierdo</div>';
+    return panel;
+  }
+
+  // ── Entity Select ─────────────────────────────────────────────────────────
+  function composerSelectEntity(entityName) {
+    // Update sidebar active state
+    document.querySelectorAll('.ss-sidebar-item').forEach(function(el) { el.classList.remove('active'); });
+    var activeEl = document.getElementById('ss-side-' + entityName);
+    if (activeEl) activeEl.classList.add('active');
+
+    // Load working copy from APP_SCHEMAS
+    var schema = (window.APP_SCHEMAS || {})[entityName];
+    if (!schema) return;
+    _composer.entityName = entityName;
+    _composer.fields     = JSON.parse(JSON.stringify(schema.fields || [])); // deep clone
+    _composer.dirty      = false;
+
+    renderComposerPanelContent();
+  }
+
+  // ── Panel Content Renderer ────────────────────────────────────────────────
+  function renderComposerPanelContent() {
+    var panel = document.getElementById('ss-composer-panel');
+    if (!panel) return;
+
+    var entityName = _composer.entityName;
+    var schema     = (window.APP_SCHEMAS || {})[entityName] || {};
+    var meta       = schema.metadata || {};
+    var pkField    = schema.primaryKey;
+
+    var html = '<div style="padding:16px 20px;border-bottom:1px solid var(--ion-color-step-100);display:flex;align-items:center;justify-content:space-between;gap:12px;">' +
+      '<div style="display:flex;align-items:center;gap:10px;">' +
+        '<ion-icon name="' + (meta.iconName || 'cube-outline') + '" style="font-size:20px;color:var(--ion-color-' + (meta.color || 'primary') + ');"></ion-icon>' +
+        '<div>' +
+          '<div style="font-weight:700;font-size:1rem;">' + entityName + '</div>' +
+          '<div style="font-size:0.72rem;color:var(--ion-color-medium);">' + (meta.label || '') + '  &middot;  PK: ' + (pkField || '--') + '</div>' +
+        '</div>' +
+      '</div>' +
+      '<div style="display:flex;gap:8px;">' +
+        '<button class="ss-btn-secondary" onclick="window.SchemaStudio.composerReset()">' +
+          '<ion-icon name="refresh-outline"></ion-icon>Reset</button>' +
+        '<button class="ss-btn-primary" onclick="window.SchemaStudio.composerExport()">' +
+          '<ion-icon name="code-download-outline"></ion-icon>Code Export</button>' +
+      '</div>' +
+    '</div>';
+
+    html += '<div style="padding:12px 16px;border-bottom:1px solid var(--ion-color-step-100);">' +
+      '<div style="font-size:0.72rem;font-weight:700;color:var(--ion-color-medium);margin-bottom:8px;letter-spacing:0.06em;">CAMPOS ACTUALES</div>' +
+      '<div id="ss-field-list">';
+
+    _composer.fields.forEach(function(f, idx) {
+      var isLocked = GOVERNED_FIELD_NAMES.includes(f.name) || f.primaryKey;
+      var isPK     = !!f.primaryKey || f.name === pkField;
+      var cls      = classifyField(f.name);
+      if (isPK) cls = 'system';
+      html += '<div class="ss-field-row' + (isLocked ? ' locked' : '') + '" data-idx="' + idx + '">' +
+        '<ion-icon class="ss-drag-handle" name="reorder-four-outline"></ion-icon>' +
+        '<span class="ss-field-chip ' + cls + '" style="flex-shrink:0;">' + f.name + '</span>' +
+        '<span style="font-size:0.72rem;color:var(--ion-color-medium);flex:1;">' + (f.type || 'text') +
+          (f.label ? ' - ' + f.label : '') +
+          (f.required ? ' - <span style="color:var(--ion-color-danger);">req</span>' : '') +
+        '</span>' +
+        (isPK  ? '<ion-icon name="key-outline" style="color:var(--ion-color-warning-shade);font-size:14px;"></ion-icon>' : '') +
+        (isLocked && !isPK ? '<ion-icon name="lock-closed-outline" style="color:var(--ion-color-medium);font-size:13px;"></ion-icon>' : '') +
+        (!isLocked ? '<button class="ss-btn-danger" onclick="window.SchemaStudio.composerRemoveField(' + idx + ')"><ion-icon name="trash-outline"></ion-icon></button>' : '') +
+      '</div>';
+    });
+    html += '</div></div>';
+
+    html += '<div style="padding:16px;border-bottom:1px solid var(--ion-color-step-100);">' +
+      '<div style="font-size:0.72rem;font-weight:700;color:var(--ion-color-medium);margin-bottom:12px;letter-spacing:0.06em;">AGREGAR CAMPO</div>' +
+      '<div class="ss-form-row" style="margin-bottom:10px;">' +
+        '<div><label class="ss-label">Nombre (snake_case) *</label>' +
+          '<input class="ss-input" id="ss-new-name" placeholder="mi_campo" autocomplete="off"></div>' +
+        '<div><label class="ss-label">Tipo *</label>' +
+          '<select class="ss-input" id="ss-new-type">' +
+            FIELD_TYPES.map(function(t){ return '<option value="' + t + '">' + t + '</option>'; }).join('') +
+          '</select></div>' +
+      '</div>' +
+      '<div class="ss-form-row" style="margin-bottom:10px;">' +
+        '<div><label class="ss-label">Label</label>' +
+          '<input class="ss-input" id="ss-new-label" placeholder="Mi Campo"></div>' +
+        '<div><label class="ss-label">Width (cols)</label>' +
+          '<select class="ss-input" id="ss-new-width">' +
+            [12,6,4,3].map(function(w){ return '<option value="' + w + '"' + (w===6?' selected':'') + '>' + w + ' col</option>'; }).join('') +
+          '</select></div>' +
+      '</div>' +
+      '<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">' +
+        '<label style="display:flex;align-items:center;gap:6px;font-size:0.8rem;cursor:pointer;">' +
+          '<input type="checkbox" id="ss-new-required"> Requerido' +
+        '</label>' +
+        '<div style="display:flex;gap:8px;align-items:center;">' +
+          '<select class="ss-input" id="ss-new-template" style="width:auto;font-size:0.78rem;">' +
+            '<option value="">Insertar template...</option>' +
+            Object.keys(TEMPLATE_GROUPS).map(function(k){ return '<option value="' + k + '">+ ' + k + '</option>'; }).join('') +
+          '</select>' +
+          '<button class="ss-btn-primary" onclick="window.SchemaStudio.composerAddField()">' +
+            '<ion-icon name="add-outline"></ion-icon>Agregar</button>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+
+    html += '<div style="border-bottom:1px solid var(--ion-color-step-100);">' +
+      '<div style="padding:12px 16px 4px;font-size:0.72rem;font-weight:700;color:var(--ion-color-medium);letter-spacing:0.06em;">LIVE PREVIEW <span style="font-weight:400;">(FormEngine sim)</span></div>' +
+      '<div class="ss-preview-form" id="ss-form-preview">' + buildFormPreview(_composer.fields) + '</div>' +
+    '</div>';
+
+    // [O2-AR] Code Export: generateCodeJson -> clipboard, generateCodeHtml -> display
+    // [GAS Format] generateCodeGas() collapses template groups back to FIELD_TEMPLATES.* spread refs
+    var plainJson = generateCodeGas(entityName, _composer.fields, schema);
+    html += '<div style="margin-top:16px;padding:10px 16px;background:rgba(251,191,36,0.1);border:1px solid rgba(251,191,36,0.3);border-radius:8px 8px 0 0;display:flex;align-items:center;justify-content:space-between;">' +
+      '<div style="font-size:0.72rem;font-weight:700;color:#fbbf24;letter-spacing:0.08em;display:flex;align-items:center;gap:8px;">' +
+        '<ion-icon name="code-download-outline"></ion-icon>' +
+        'CODE EXPORT (GAS) \u2014 ' + entityName +
+      '</div>' +
+      '<button class="ss-btn-primary" id="ss-copy-btn" onclick="window.SchemaStudio.composerCopyCode()" style="font-size:0.75rem;padding:5px 14px;">' +
+        '<ion-icon name="copy-outline"></ion-icon>Copiar GAS' +
+      '</button>' +
+    '</div>';
+    html += '<div class="ss-code-block" id="ss-code-output" data-plain="">' + generateCodeHtml(plainJson) + '</div>';
+
+    panel.innerHTML = html;
+    var codeEl = panel.querySelector('#ss-code-output');
+    if (codeEl) codeEl.dataset.plain = plainJson;
+
+    var tmplSelect = document.getElementById('ss-new-template');
+    if (tmplSelect) {
+      tmplSelect.addEventListener('change', function() {
+        var key = this.value;
+        if (key) { window.SchemaStudio.composerInsertTemplate(key); this.value = ''; }
+      });
+    }
+  }
+
+  // ── Form Preview Builder ──────────────────────────────────────────────────
+  function buildFormPreview(fields) {
+    if (!fields || !fields.length) return '<div style="color:var(--ion-color-medium);font-size:0.8rem;grid-column:span 12;">Sin campos para previsualizar.</div>';
+    return fields.map(function(f) {
+      if (f.type === 'hidden') {
+        return '<div class="ss-preview-field hidden-field" style="grid-column:span ' + (f.width || 12) + ';">' +
+          '<div class="pf-label">🔒 ' + f.name + ' (hidden)</div>' +
+          '<div class="pf-input" style="font-size:0.7rem;font-style:italic;">Gestionado por Engine_DB</div></div>';
+      }
+      if (f.type === 'divider') {
+        return '<div class="ss-preview-field divider-field" style="grid-column:span 12;">' + (f.label || f.name) + '</div>';
+      }
+      var typeIcon = { text:'—', textarea:'≡', select:'▼', lookup:'🔍', number:'#', email:'@', tel:'☎', date:'📅', avatar:'👤', relation:'⇌' };
+      return '<div class="ss-preview-field' + (f.required?' required':'') + '" style="grid-column:span ' + (f.width || 6) + ';">' +
+        '<div class="pf-label">' + (f.label || f.name) + '</div>' +
+        '<div class="pf-input">' + (typeIcon[f.type] || '–') + ' ' + (f.type || 'text') + '</div>' +
+      '</div>';
+    }).join('');
+  }
+
+  // ── Code Generator [GAS Format] ──────────────────────────────────────────────
+  // ARCHITECTURE:
+  //   generateCodeGas()  → template-aware GAS JS (clipboard payload, direct paste into Schema_Engine.gs)
+  //   generateCodeHtml() → syntax-highlighted HTML (display only)
+  //
+  // Template group detection collapses governed fields back to FIELD_TEMPLATES.* spread refs
+  // mirroring exactly how Schema_Engine.gs composes schemas (spread pattern).
+
+  // SYNC [H9]: Must match FIELD_TEMPLATES.* field name order in Schema_Engine.gs.
+  var TEMPLATE_SEQUENCES = [
+    { key: 'SYSTEM_FIELDS', names: ['lexical_id', 'estado'] },
+    { key: 'AUDIT_FIELDS',  names: ['created_at','created_by','updated_at','updated_by','deleted_at','deleted_by'] },
+    { key: 'VERSION_FIELD', names: ['version'] }
+  ];
+
+  /**
+   * Detect whether fields[idx..] starts a known template group.
+   * Returns { groupKey, consumed } or null.
+   */
+  function _detectTemplateAt(fields, idx) {
+    for (var t = 0; t < TEMPLATE_SEQUENCES.length; t++) {
+      var tpl = TEMPLATE_SEQUENCES[t];
+      if (idx + tpl.names.length > fields.length) continue;
+      var match = true;
+      for (var n = 0; n < tpl.names.length; n++) {
+        if (fields[idx + n].name !== tpl.names[n]) { match = false; break; }
+      }
+      if (match) return { groupKey: tpl.key, consumed: tpl.names.length };
+    }
+    return null;
+  }
+
+  /**
+   * Serialize a single field object to a GAS-compatible JS literal.
+   * Omits defaults to keep output clean (matches Schema_Engine.gs style).
+   */
+  function _fieldToGasLiteral(f) {
+    var parts = [];
+    if (f.name)                         parts.push('name: "' + f.name + '"');
+    if (f.type && f.type !== 'text')    parts.push('type: "' + f.type + '"');
+    if (f.label)                        parts.push('label: "' + f.label + '"');
+    if (f.required)                     parts.push('required: true');
+    if (f.width && f.width !== 12)      parts.push('width: ' + f.width);
+    if (f.primaryKey)                   parts.push('primaryKey: true');
+    if (f.readonly)                     parts.push('readonly: true');
+    if (f.relationType)                 parts.push('relationType: "' + f.relationType + '"');
+    if (f.defaultValue !== undefined)   parts.push('defaultValue: ' + JSON.stringify(f.defaultValue));
+    return '    { ' + parts.join(', ') + ' }';
+  }
+
+  /**
+   * Generate a GAS-compatible JS block for pasting into Schema_Engine.gs.
+   * Governed field groups are collapsed to FIELD_TEMPLATES.* spread references.
+   * Dividers become GRAPH_SEPARATOR calls. Custom fields become object literals.
+   * This is the clipboard payload — no HTML markup.
+   */
+  function generateCodeGas(entityName, fields, schema) {
+    var pk = schema && schema.primaryKey;
+    var lines = [];
+    lines.push('  ' + entityName + ': {');
+    if (pk) lines.push('    primaryKey: "' + pk + '",');
+    lines.push('    fields: [');
+
+    var i = 0;
+    while (i < fields.length) {
+      var f = fields[i];
+
+      // Skip UI-only dividers (or emit as GRAPH_SEPARATOR for labeled ones)
+      if (f.type === 'divider') {
+        if (f.label) {
+          lines.push('      ...FIELD_TEMPLATES.GRAPH_SEPARATOR("' + f.label + '"),');
+        }
+        i++;
+        continue;
+      }
+
+      // Try to match a template group starting at current position
+      var tplMatch = _detectTemplateAt(fields, i);
+      if (tplMatch) {
+        lines.push('      ...FIELD_TEMPLATES.' + tplMatch.groupKey + '(),');
+        i += tplMatch.consumed;
+        continue;
+      }
+
+      // Regular field — emit as JS object literal
+      lines.push(_fieldToGasLiteral(f) + ',');
+      i++;
+    }
+
+    lines.push('    ]');
+    lines.push('  }');
+    return lines.join('\n');
+  }
+
+  /**
+   * GAS JS syntax highlighter for display in the code block.
+   * Highlights: spread (...), template refs, string values, keywords, numbers.
+   * NEVER use for clipboard — use generateCodeGas() directly.
+   */
+  function generateCodeHtml(plain) {
+    return plain
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      // Spread + FIELD_TEMPLATES reference  → highlighted in warning color
+      .replace(/(\.\.\.FIELD_TEMPLATES\.[A-Z_]+\([^)]*\))/g, '<span class="ss-code-spread">$1</span>')
+      // Object keys (word: )
+      .replace(/\b([a-zA-Z_]+):/g, '<span class="ss-code-key">$1</span>:')
+      // String values
+      .replace(/:\s*"([^"]+)"/g, ': <span class="ss-code-str">"$1"</span>')
+      // Boolean / numeric values
+      .replace(/:\s*(true|false)\b/g, ': <span class="ss-code-bool">$1</span>')
+      .replace(/:\s*(-?\d+)\b/g, ': <span class="ss-code-num">$1</span>')
+      // Entity name (first identifier on a line followed by :)
+      .replace(/^(\s{2})([A-Z][A-Za-z_]+)(<span class="ss-code-key">:)/, '$1<span class="ss-code-entity">$2</span>$3');
+  }
+
+  // ── Public Composer Actions ───────────────────────────────────────────────
+  function composerAddField() {
+    var name     = (document.getElementById('ss-new-name')     || {}).value || '';
+    var type     = (document.getElementById('ss-new-type')     || {}).value || 'text';
+    var label    = (document.getElementById('ss-new-label')    || {}).value || '';
+    var width    = parseInt((document.getElementById('ss-new-width') || {}).value || '6', 10);
+    var required = (document.getElementById('ss-new-required') || {}).checked || false;
+
+    name = name.trim().toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
+    if (!name) { if (window.showToast) window.showToast('El nombre del campo es requerido', 'warning'); return; }
+    if (_composer.fields.some(function(f){ return f.name === name; })) {
+      if (window.showToast) window.showToast('Ya existe un campo con ese nombre', 'warning'); return;
+    }
+
+    _composer.fields.push({ name: name, type: type, label: label || undefined, width: width, required: required || undefined });
+    _composer.dirty = true;
+    renderComposerPanelContent();
+  }
+
+  function composerRemoveField(idx) {
+    var f = _composer.fields[idx];
+    if (!f || GOVERNED_FIELD_NAMES.includes(f.name) || f.primaryKey) return;
+    _composer.fields.splice(idx, 1);
+    _composer.dirty = true;
+    renderComposerPanelContent();
+  }
+
+  function composerInsertTemplate(templateKey) {
+    var group = TEMPLATE_GROUPS[templateKey];
+    if (!group) return;
+    var existingNames = _composer.fields.map(function(f){ return f.name; });
+    var alreadyAll = group.fields.every(function(fd){ var n = typeof fd === 'string' ? fd : fd.name; return existingNames.includes(n); });
+    if (alreadyAll) { if (window.showToast) window.showToast(templateKey + ' ya está incluido', 'warning'); return; }
+    group.fields.forEach(function(fieldDef) {
+      var fn = typeof fieldDef === 'string' ? { name: fieldDef, type: 'hidden' } : fieldDef;
+      if (!existingNames.includes(fn.name)) {
+        _composer.fields.push(JSON.parse(JSON.stringify(fn)));
+      }
+    });
+    _composer.dirty = true;
+    renderComposerPanelContent();
+    if (window.showToast) window.showToast(templateKey + ' insertado', 'success');
+  }
+
+  function composerReset() {
+    if (!_composer.entityName) return;
+    var schema = (window.APP_SCHEMAS || {})[_composer.entityName];
+    if (!schema) return;
+    _composer.fields = JSON.parse(JSON.stringify(schema.fields || []));
+    _composer.dirty  = false;
+    renderComposerPanelContent();
+    if (window.showToast) window.showToast('Campos restaurados desde APP_SCHEMAS', 'success');
+  }
+
+  function composerExport() {
+    var codeEl = document.getElementById('ss-code-output');
+    if (!codeEl) return;
+    codeEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    composerCopyCode();
+  }
+
+  function composerCopyCode() {
+    var codeEl = document.getElementById('ss-code-output');
+    if (!codeEl) return;
+    // [C1-QR][O2-AR] data-plain holds pure JSON; no HTML tag contamination
+    var plainText = codeEl.dataset.plain || codeEl.innerText || codeEl.textContent;
+
+    function _onSuccess() {
+      var btn = document.getElementById('ss-copy-btn');
+      if (btn) {
+        btn.innerHTML = '<ion-icon name="checkmark-outline"></ion-icon>Copiado!';
+        setTimeout(function(){ btn.innerHTML = '<ion-icon name="copy-outline"></ion-icon>Copiar GAS'; }, 2000);
+      }
+      if (window.showToast) window.showToast('JSON copiado al portapapeles', 'success');
+    }
+    function _onError() {
+      if (window.showToast) window.showToast('No se pudo copiar automaticamente', 'warning');
+    }
+
+    if (navigator.clipboard) {
+      // Modern async API (HTTPS / same-origin contexts)
+      navigator.clipboard.writeText(plainText).then(_onSuccess).catch(_onError);
+    } else {
+      // [C1-QR] Fallback: execCommand for HTTP / GAS WebApp iframe contexts
+      try {
+        var ta = document.createElement('textarea');
+        ta.value = plainText;
+        ta.style.cssText = 'position:fixed;top:-9999px;left:-9999px;opacity:0;';
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+        _onSuccess();
+      } catch(e) {
+        _onError();
+      }
+    }
+  }
+
+  // ── Reconcile Handler ─────────────────────────────────────────────────────
+  function runReconcile() {
+    var btn = document.getElementById('ss-btn-reconcile');
+    if (btn) { btn.disabled = true; btn.innerHTML = '<ion-spinner name="crescent" style="width:14px;height:14px;"></ion-spinner> Reconciliando...'; }
+
+    var statusText = document.getElementById('ss-status-text');
+    if (statusText) statusText.textContent = 'Reconciliando...';
+
+    if (typeof google !== 'undefined' && google.script && google.script.run) {
+      google.script.run
+        .withSuccessHandler(function(report) {
+          if (btn) { btn.disabled = false; btn.innerHTML = '<ion-icon name="sync-outline"></ion-icon> Reconciliar DB'; }
+          if (statusText) {
+            var total = Object.keys(report.entities || {}).length;
+            var orphan = (report.orphanedSheets || []).length;
+            statusText.textContent = total + ' entidades · ' + orphan + ' hojas huérfanas';
+          }
+          if (window.showToast) window.showToast('Reconciliación completada', 'success');
+          switchTab('db');
+        })
+        .withFailureHandler(function(err) {
+          if (btn) { btn.disabled = false; btn.innerHTML = '<ion-icon name="sync-outline"></ion-icon> Reconciliar DB'; }
+          if (window.showToast) window.showToast('Error: ' + (err.message || String(err)), 'danger');
+        })
+        .runSchemaReconcile();
+    } else {
+      setTimeout(function() {
+        if (btn) { btn.disabled = false; btn.innerHTML = '<ion-icon name="sync-outline"></ion-icon> Reconciliar DB'; }
+        if (statusText) statusText.textContent = 'Solo disponible en GAS';
+        if (window.showToast) window.showToast('Reconciliación simulada (modo dev)', 'warning');
+      }, 1200);
+    }
+  }
+
+
+  // ── Context-aware tab export functions [Debug-fix] ─────────────────────────
+  // These let Templates and Graph Behavior tabs export their own content,
+  // eliminating the confusion of CODE EXPORT always producing entity data.
+
+
+  // [AR-R2] Private helpers to avoid repeated catalogue.concat().find() pattern
+  function _activeTemplate() {
+    var all = _TEMPLATE_CATALOGUE.concat(_composer._customTemplates || []);
+    return all.find(function(t) { return t.key === _composer.templateKey; }) || null;
+    return all.find(function(t) { return t.key === _composer.templateKey; }) || null;
+  }
+  function _activePreset() {
+    return _getPresetsFromSchemas().find(function(p) { return p.key === _composer.behaviorKey; }) || null;
+  }
+  function _copyTabContent(text, btnId, newLabel) {
+    var btn = btnId ? document.getElementById(btnId) : null;
+    function onCopied() {
+      if (btn) {
+        btn.innerHTML = '<ion-icon name="checkmark-outline"></ion-icon>Copiado!';
+        setTimeout(function() {
+          btn.innerHTML = '<ion-icon name="copy-outline"></ion-icon>' + (newLabel || 'Copiar GAS');
+        }, 2000);
+      }
+    }
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(text).then(onCopied).catch(function() {
+        var el = document.createElement('textarea'); el.value = text;
+        document.body.appendChild(el); el.select(); document.execCommand('copy');
+        document.body.removeChild(el); onCopied();
+      });
+    } else {
+      var el = document.createElement('textarea'); el.value = text;
+      document.body.appendChild(el); el.select(); document.execCommand('copy');
+      document.body.removeChild(el); onCopied();
+    }
+  }
+
+  function copyTemplatesGas() {
+    var lines = [
+      '// ─── FIELD_TEMPLATES — Reference Card ─────────────────────────────────',
+      '// Paste these spreads into your entity fields array in Schema_Engine.gs:',
+      '',
+      '  ...FIELD_TEMPLATES.SYSTEM_FIELDS(),    // lexical_id, estado',
+      '  ...FIELD_TEMPLATES.AUDIT_FIELDS(),     // created_at/by, updated_at/by, deleted_at/by',
+      '  ...FIELD_TEMPLATES.VERSION_FIELD(),    // version (optimistic locking)',
+      '  ...FIELD_TEMPLATES.GRAPH_SEPARATOR("Label"),  // section divider',
+      '',
+      '// Usage pattern:',
+      '  MyEntity: {',
+      '    primaryKey: "id_entity",',
+      '    fields: [',
+      '      { name: "id_entity", type: "hidden", primaryKey: true },',
+      '      ...FIELD_TEMPLATES.SYSTEM_FIELDS(),',
+      '      ...FIELD_TEMPLATES.AUDIT_FIELDS(),',
+      '      ...FIELD_TEMPLATES.VERSION_FIELD(),',
+      '      ...FIELD_TEMPLATES.GRAPH_SEPARATOR("Datos de Negocio"),',
+      '      // ... custom fields',
+      '    ]',
+      '  }'
+    ];
+    _copyTabContent(lines.join('\n'), 'ss-copy-templates-btn', 'Copiar Templates GAS');
+  }
+
+  function copyPresetsGas() {
+    var schemas = window.APP_SCHEMAS || {};
+    var presets = Object.entries(schemas)
+      .filter(function(e) { return e[0] !== '_UI_CONFIG'; })
+      .reduce(function(acc, e) {
+        var rules = e[1].topologyRules;
+        if (rules && rules._preset && !acc[rules._preset]) {
+          acc[rules._preset] = { key: rules._preset, rules: rules, users: [] };
+        }
+        if (rules && rules._preset) acc[rules._preset].users.push(e[0]);
+        return acc;
+      }, {});
+
+    var lines = ['// ─── TOPOLOGY_PRESETS — Active Graph Behaviors ──────────────────────────────'];
+    Object.values(presets).forEach(function(p) {
+      var r = p.rules;
+      lines.push('');
+      lines.push('  // Used by: ' + p.users.join(', '));
+      lines.push('  ' + p.key + ': Object.freeze({');
+      Object.keys(r).forEach(function(k) {
+        if (k !== '_preset') lines.push('    ' + k + ': ' + JSON.stringify(r[k]) + ',');
+      });
+      lines.push('  }),');
+    });
+    _copyTabContent(lines.join('\n'), 'ss-copy-presets-btn', 'Copiar Presets GAS');
+  }
+
+  function _saveGlobalConfig(configKey, payload, btnId, successMessage) {
+    var btn = document.getElementById(btnId);
+    if (!btn) return;
+    var origText = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = 'Guardando...';
+
+    if (!window.google || !window.google.script || !window.google.script.run) {
+        alert("GAS context missing (local dev)");
+        btn.disabled = false;
+        btn.innerHTML = origText;
+        return;
+    }
+    
+    window.google.script.run
+        .withSuccessHandler(function(res) {
+            btn.disabled = false;
+            btn.innerHTML = origText;
+            if (res && res.success) {
+                alert(successMessage || 'Configuración guardada exitosamente.');
+            } else {
+                alert('Error: ' + (res ? res.message : 'desconocido'));
+            }
+        })
+        .withFailureHandler(function(err) {
+            btn.disabled = false;
+            btn.innerHTML = origText;
+            alert('Error de red: ' + err.message);
+        })
+        .API_Admin_SaveGlobalConfig(configKey, payload);
+  }
+
+  // ── Public API ────────────────────────────────────────────────────────────
+  window.SchemaStudio = {
+    mount: function() {
+      switchTab('entities');
+      this._loadDbStatusPill();
+    },
+    switchTab:              switchTab,
+    runReconcile:           runReconcile,
+    
+    // [S62/E6] saveSystemConfig — guarda Config_System via Engine_DB → Adapter_Config.
+    // Punto único de guardado que reemplaza saveBrandingConfig + saveSecurityConfig.
+    saveSystemConfig: function() {
+        var btn    = document.getElementById('btn-cfg-save');
+        var status = document.getElementById('cfg-sys-status');
+        if (!btn) return;
+
+        var get = function(id) {
+            var el = document.getElementById(id);
+            return el ? el.value.trim() : '';
+        };
+
+        var payload = {
+            config_id:       'SYS-CONFIG-001',
+            tenant_name:     get('cfg-tenant-name'),
+            db_adapter_id:   get('cfg-db-adapter'),
+            spreadsheet_id:  get('cfg-spreadsheet-id'),
+            allowed_domains: get('cfg-allowed-domains'),
+            app_title:       get('cfg-app-title'),
+            favicon_url:     get('cfg-favicon-url')
+        };
+
+        var origText = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<ion-spinner name="crescent" style="width:16px;height:16px;"></ion-spinner> Guardando...';
+        if (status) status.textContent = '';
+
+        if (typeof DataAPI === 'undefined') {
+            btn.disabled = false;
+            btn.innerHTML = origText;
+            alert('[Dev] DataAPI no disponible. En producción, guardará en PropertiesService via Adapter_Config.');
+            return;
+        }
+
+        DataAPI.call('save', 'Config_System', payload).then(function(res) {
+            btn.disabled = false;
+            btn.innerHTML = origText;
+            if (res && res.success !== false) {
+                if (status) {
+                    status.innerHTML = '<ion-icon name="checkmark-circle-outline" style="color:var(--ion-color-success);vertical-align:middle;"></ion-icon> Configuración guardada exitosamente.';
+                    setTimeout(function(){ status.textContent = ''; }, 3500);
+                }
+                // Aplicar app_title al documento inmediatamente si está presente
+                if (payload.app_title) document.title = payload.app_title;
+            } else {
+                var msg = (res && res.message) ? res.message : 'Error desconocido';
+                if (status) status.innerHTML = '<ion-icon name="alert-circle-outline" style="color:var(--ion-color-danger);vertical-align:middle;"></ion-icon> Error: ' + msg;
+            }
+        }).catch(function(err) {
+            btn.disabled = false;
+            btn.innerHTML = origText;
+            if (status) status.innerHTML = '<ion-icon name="alert-circle-outline" style="color:var(--ion-color-danger);vertical-align:middle;"></ion-icon> Error de red: ' + err.message;
+        });
+    },
+
+    // Compatibilidad retroactiva — delegan a saveSystemConfig si el formulario nuevo existe
+    saveBrandingConfig: function() {
+        if (document.getElementById('cfg-app-title')) {
+            window.SchemaStudio.saveSystemConfig();
+            return;
+        }
+        // Ruta legacy (si la pestaña vieja estuviera activa de alguna forma)
+        var titleInput   = document.getElementById('input-branding-title');
+        var faviconInput = document.getElementById('input-branding-favicon');
+        if (!titleInput || !faviconInput) return;
+        var payload = { appTitle: titleInput.value.trim(), faviconUrl: faviconInput.value.trim() };
+        _saveGlobalConfig('APP_BRANDING_CONFIG', payload, 'btn-save-branding', 'Identidad guardada exitosamente. Recarga la pestaña (F5) para aplicar.');
+    },
+
+    saveSecurityConfig: function() {
+        if (document.getElementById('cfg-allowed-domains')) {
+            window.SchemaStudio.saveSystemConfig();
+            return;
+        }
+        // Ruta legacy
+        var domainsInput = document.getElementById('input-security-domains');
+        if (!domainsInput) return;
+        var domainsRaw   = domainsInput.value || '';
+        var domainsArray = domainsRaw.split(',')
+            .map(function(d) { return d.trim().toLowerCase(); })
+            .filter(function(d) { return d.length > 0 && d.startsWith('@'); });
+        if (domainsRaw.trim().length > 0 && domainsArray.length === 0) {
+            alert("Error: Los dominios deben comenzar con '@' (ej. @tenantA.com)");
+            return;
+        }
+        var payload = { allowedDomains: domainsArray };
+        _saveGlobalConfig('APP_SECURITY_CONFIG', payload, 'btn-save-security', 'Accesos SSO guardados exitosamente. Aplicarán en los siguientes inicios de sesión.');
+    },
+
+
+    
+    saveWorkspaceConfig: function() {
+        var chk = document.getElementById('ss-workspace-sync-enabled');
+        if (!chk) return;
+        var payload = { syncEnabled: chk.checked };
+        
+        var txtUrl = document.getElementById('ss-workspace-webhook-url');
+        if (txtUrl && txtUrl.value.trim() !== '') {
+            payload.webhookUrl = txtUrl.value.trim();
+        }
+        var txtSecret = document.getElementById('ss-workspace-webhook-secret');
+        if (txtSecret && txtSecret.value.trim() !== '') {
+            payload.webhookSecret = txtSecret.value.trim();
+        }
+        
+        // Actualizar el estado global en tiempo real para evitar requerir F5
+        window.WORKSPACE_SYNC_ENABLED = chk.checked;
+        
+        _saveGlobalConfig('APP_WORKSPACE_CONFIG', payload, 'btn-save-workspace', 'Configuración de sincronización guardada exitosamente.');
+    },
+
+    // Composer
+    composerAddField:       composerAddField,
+    composerRemoveField:    composerRemoveField,
+    composerInsertTemplate: composerInsertTemplate,
+    composerReset:          composerReset,
+    composerExport:         composerExport,
+    composerCopyCode:       composerCopyCode,
+    // Tab-specific exports [Debug-fix]
+    copyTemplatesGas: copyTemplatesGas,
+    copyPresetsGas:   copyPresetsGas,
+
+    connectWorkspaceDomain: function() {
+        var btn = document.getElementById('btn-connect-domain');
+        if (!btn) return;
+        var originalHtml = btn.innerHTML;
+        btn.innerHTML = '<ion-spinner name="crescent" style="width:16px;height:16px;"></ion-spinner> Generando...';
+        btn.disabled = true;
+        
+        DataAPI.call('Auth_GetWorkspaceAuthUrl').then(function(url) {
+            btn.innerHTML = originalHtml;
+            btn.disabled = false;
+            window.open(url, '_blank', 'width=600,height=700');
+            setTimeout(function() { window.SchemaStudio._loadConnectedDomains(); }, 15000);
+        }).catch(function(e) {
+            btn.innerHTML = originalHtml;
+            btn.disabled = false;
+            alert('Asegúrate de configurar las credenciales OAuth en Properties:\n\n' + e.message);
+        });
+    },
+    
+    _loadConnectedDomains: function() {
+        var container = document.getElementById('ss-oauth2-domains-container');
+        if (!container) return;
+        container.innerHTML = '<div style="text-align:center;"><ion-spinner name="crescent"></ion-spinner></div>';
+
+        DataAPI.call('API_Admin_GetConnectedDomains').then(function(domains) {
+            var container2 = document.getElementById('ss-oauth2-domains-container');
+            if (!container2) return;
+            if (!domains || domains.length === 0) {
+                container2.innerHTML = '<div style="font-style:italic;">No hay dominios secundarios conectados. Se utilizará el acceso nativo del dominio principal.</div>';
+                return;
+            }
+            var html = '<ul style="margin:0;padding-left:20px;display:flex;flex-direction:column;gap:8px;">';
+            domains.forEach(function(d) {
+                html += '<li style="font-weight:600;color:var(--ion-color-success);"><ion-icon name="checkmark-circle" style="vertical-align:middle;"></ion-icon> ' + d + '</li>';
+            });
+            html += '</ul>';
+            container2.innerHTML = html;
+        }).catch(function(e) {
+            console.error(e);
+            var container3 = document.getElementById('ss-oauth2-domains-container');
+            if (container3) container3.innerHTML = '<div style="color:red;">Error: ' + e.message + '</div>';
+        });
+    },
+    
+    // [S44.11] Workspace Sync
+    triggerWsSync: function(recurseMode = false, acc = { evaluados: 0, actualizados: 0, sin_resultados: 0 }) {
+      if (!recurseMode) {
+        if (!confirm('¿Ejecutar Job Sincronizador de Workspace? Esto consumirá cuotas de AdminDirectory.')) return;
+      }
+      if (typeof DataAPI !== 'undefined') {
+          const btn = document.getElementById('ss-btn-sync-ws');
+          if(btn) btn.innerHTML = '<ion-spinner name="dots"></ion-spinner>' + (recurseMode ? ' Sincronizando (Lote Adicional)...' : ' Sincronizando...');
+          
+          DataAPI.call('runWorkspaceSyncJob', { manual: true })
+            .then(res => {
+                const stepEvaluados = res.evaluados || 0;
+                const stepActualizados = res.actualizados || 0;
+                const stepSinResultados = res.sin_resultados || 0;
+                
+                acc.evaluados += stepEvaluados;
+                acc.actualizados += stepActualizados;
+                acc.sin_resultados += stepSinResultados;
+                
+                if (res && res.status === 'OK' && res.remaining > 0) {
+                    if(btn) btn.innerHTML = `<ion-spinner name="lines"></ion-spinner> Sincronizando (~${res.remaining} restantes)...`;
+                    // Wait a second to cool down API quota, then run next batch
+                    setTimeout(() => window.SchemaStudio.triggerWsSync(true, acc), 1000);
+                    return;
+                }
+
+                var msg = "Sincronización total finalizada.\n\n" + 
+                          "Archivo: " + (res.db_id || 'N/A') + "\n" +
+                          "Registros Evaluados: " + acc.evaluados + "\n" +
+                          "Registros Actualizados: " + acc.actualizados + "\n" +
+                          "Registros Sin Resultados: " + acc.sin_resultados + "\n\n" +
+                          "Info del Motor: " + (res.message || 'Sin mensaje');
+
+                if (window.DataStore && window.DataAPI) {
+                    if (btn) btn.innerHTML = '<ion-spinner name="crescent"></ion-spinner> Refrescando memoria local...';
+                    
+                    // Disparar hidratación silenciosa paralela (JIT Cache Refresh)
+                    Promise.all([
+                        window.DataAPI.call('getInitialPayload', 'Persona'),
+                        window.DataAPI.call('getInitialPayload', 'Cargo'),
+                        window.DataAPI.call('getInitialPayload', 'Sys_Graph_Edges')
+                    ]).then(payloads => {
+                        ['Persona', 'Cargo', 'Sys_Graph_Edges'].forEach((entity, idx) => {
+                            const raw = payloads[idx];
+                            const res = typeof raw === 'string' ? JSON.parse(raw) : raw;
+                            if (res && res.status === 'success') {
+                                const rows = window.Schema_Utils.inflateTuples(res.data);
+                                window.DataStore.set(entity, rows);
+                                if (window.AppEventBus) window.AppEventBus.publish('DATA::UPDATED', { entityKey: entity });
+                                
+                                // Si acabamos de hidratar el grafo, avisar al UI que repinte relaciones
+                                if (entity === 'Sys_Graph_Edges' && window.AppEventBus) {
+                                    window.AppEventBus.publish('CACHE::GRAPH_HYDRATED', { source: 'WorkspaceSync' });
+                                }
+                            }
+                        });
+                        
+                        alert(msg);
+                        if (btn) btn.innerHTML = '<ion-icon name="sync-circle-outline"></ion-icon> Sincronizar Workspace';
+                    }).catch(err => {
+                        console.error('[Sync] Error refrescando caché local', err);
+                        alert(msg + "\\n\\n(Nota: Haz un refresh manual F5 para visualizar los cambios.)");
+                        if (btn) btn.innerHTML = '<ion-icon name="sync-circle-outline"></ion-icon> Sincronizar Workspace';
+                    });
+                } else {
+                    if (window.DataStore) {
+                        window.DataStore.invalidate('Persona');
+                        window.DataStore.invalidate('Cargo');
+                        window.DataStore.invalidate('Sys_Graph_Edges');
+                    }
+                    alert(msg);
+                    if(btn) btn.innerHTML = '<ion-icon name="sync-circle-outline"></ion-icon> Sincronizar Workspace';
+                }
+            })
+            .catch(err => {
+                alert("Error en Job: " + err.message);
+                if(btn) btn.innerHTML = '<ion-icon name="sync-circle-outline"></ion-icon> Sincronizar Workspace';
+            });
+      }
+    },
+
+    // Template Composer [S31.11]
+    composerTemplateSelect:     composerTemplateSelect,
+    composerTemplateAddField:   composerTemplateAddField,
+    composerTemplateRemoveField:composerTemplateRemoveField,
+    composerTemplateCopy:       composerTemplateCopy,
+    composerTemplateNew:        composerTemplateNew,
+    // Behavior Composer [S31.12]
+    composerBehaviorSelect:     composerBehaviorSelect,
+    composerBehaviorAddRule:    composerBehaviorAddRule,
+    composerBehaviorRemoveRule: composerBehaviorRemoveRule,
+    composerBehaviorCopy:       composerBehaviorCopy,
+    composerBehaviorNew:        composerBehaviorNew,
+    composerSelectEntity:    composerSelectEntity,   // [C2-QR] export for programmatic entity switching
+    _loadDbStatusPill: function() {
+      var dot = document.getElementById('ss-status-dot');
+      var txt = document.getElementById('ss-status-text');
+      if (!txt) return;
+      var entityCount = Object.keys(window.APP_SCHEMAS || {}).filter(function(k){ return k !== '_UI_CONFIG'; }).length;
+      txt.textContent = entityCount + ' entidades en schema';
+      if (dot) dot.style.color = '#a5f3a5';
+    }
+  };
+
+})();
+</script>
