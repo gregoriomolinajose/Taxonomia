@@ -24,3 +24,15 @@ Este archivo es de lectura OBLIGATORIA para cualquier agente que inicie una sesi
   }
   ```
 - **Regla Preventiva de Diseño:** Queda estrictamente PROHIBIDO escribir nuevos esquemas de base de datos bajo el formato V1 (diccionarios directos). Siempre se debe encapsular el mapeo de columnas dentro de un array `fields: []` y declarar `primaryKey` y `titleField` al mismo nivel de raíz. 
+
+## Hito: Corrección de Desincronización de Caché en Eliminación (Zero-Latency Rule)
+- **Punto de Falla (Root Cause):** Al eliminar un registro exitosamente desde el frontend, el bloque `withSuccessHandler` estaba ejecutando un destructivo `delete window.__APP_CACHE__[_state.entityName]`. Esto aniquilaba la data local y provocaba que, al navegar de nuevo hacia la vista de esa entidad, el frontend hiciera un *refetch* bloqueante hacia el servidor, rompiendo la experiencia de latencia cero.
+- **Solución Maestra (Golden Pattern):** En lugar de purgar todo el array de la entidad, se aplicó una mutación inmutable por filtrado que respeta la configuración dinámica del esquema:
+  ```javascript
+  if (window.__APP_CACHE__ && window.__APP_CACHE__[_state.entityName]) {
+      const idField = (ENTITY_META[_state.entityName] || { idField: 'id' }).idField;
+      window.__APP_CACHE__[_state.entityName] = window.__APP_CACHE__[_state.entityName].filter(row => row[idField] !== id);
+  }
+  _rerenderData();
+  ```
+- **Regla Preventiva de Diseño:** Queda estrictamente prohibido usar la instrucción `delete` sobre las llaves principales de `window.__APP_CACHE__` al ejecutar un CRUD exitoso. Toda operación (Create, Update, Delete) debe actualizar el array de la entidad en memoria de forma optimista o inmutable y forzar un `_rerenderData()`, preservando así el "Zero-Latency" en las transiciones de vista.

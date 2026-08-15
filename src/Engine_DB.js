@@ -753,8 +753,7 @@ const Engine_DB = {
         // Usar orquestador para manejar posibles relaciones anidadas
         const result = this.orchestrateNestedSave(entityName, data, config);
         
-        // Cache Busting
-        _invalidateCache(entityName);
+        // orchestrateNestedSave internally busts the cache for the parent entity and any modified relations.
         
         return {
             success: true,
@@ -982,8 +981,7 @@ const Engine_DB = {
         // Usar orquestador para manejar posibles relaciones anidadas
         const result = this.orchestrateNestedSave(entityName, data, config);
 
-        // Cache Busting
-        _invalidateCache(entityName);
+        // orchestrateNestedSave internally busts the cache for the parent entity and any modified relations.
 
         return {
             success: true,
@@ -1196,8 +1194,6 @@ const Engine_DB = {
                 results.sheets = this.upsertBatch(entityName, nodesToSoftDelete, config);
             }
 
-            _invalidateCache(graphTableName);
-
         } else {
             // ==============================================
             // STANDARD SINGULAR DELETETION 
@@ -1207,9 +1203,149 @@ const Engine_DB = {
             }
         }
 
-        // Cache Busting
-        _invalidateCache(entityName);
+        // upsertBatch calls _invalidateCache, but _Adapter_Sheets.remove does not.
+        // Cache Busting is handled manually for remove.
+        if (config.useSheets && results.sheets) {
+            _invalidateCache(entityName);
+        } else if (!config.useSheets) {
+            _invalidateCache(entityName);
+        }
 
+        return {
+            success: true,
+            Entity: entityName,
+            adapter_results: results
+        };
+    },
+
+    bulkDelete: function (entityName, ids) {
+        const config = (typeof CONFIG !== 'undefined') ? CONFIG : { useSheets: true, useCloudDB: false };
+        if (typeof Logger !== 'undefined') Logger.log("Engine_DB_bulkDelete_router: Routing " + entityName + " (" + ids.length + " IDs) to Architect Unit of Work Deletion.");
+
+        // [S60/E6] Guard de routing: entidades con adapter especial no usan Sheets
+        const schemaForDel = (typeof APP_SCHEMAS !== 'undefined') ? APP_SCHEMAS[entityName] : null;
+        if (schemaForDel && schemaForDel.metadata && schemaForDel.metadata.adapter === 'config') {
+            throw new Error('[Engine_DB] La entidad ' + entityName + ' es gestionada por Adapter_Config y no soporta operación delete. Usa setAll() para actualizar la configuración.');
+        }
+
+        let results = { sheets: {}, cloud: {} };
+
+        // [S8.1] Check graph topology configuration
+        let strategy = "ORPHAN"; 
+        let isGraphEntity = false;
+        if (typeof getEntityTopologyRules !== 'undefined') {
+            const rules = getEntityTopologyRules(entityName);
+            if (rules && rules.topologyType && rules.topologyType !== "FLAT") {
+                isGraphEntity = true;
+                strategy = rules.deletionStrategy || "ORPHAN";
+            }
+        } else {
+            if (schemaForDel && schemaForDel.metadata && schemaForDel.metadata.deletionStrategy) {
+                isGraphEntity = true;
+                strategy = schemaForDel.metadata.deletionStrategy;
+            }
+        }
+
+        const pkField = schemaForDel && schemaForDel.primaryKey ? schemaForDel.primaryKey : null;
+        if (!pkField) throw new Error(`[AR-Governance] Violación Topológica: Imposible eliminar nodos para '${entityName}'. Falta declarar 'primaryKey' en Schema_Engine.`);
+
+        const sysDate = new Date().toISOString();
+        const currentUser = (typeof Session !== 'undefined') ? Session.getActiveUser().getEmail() : 'system@localhost';
+
+        if (isGraphEntity && config.useSheets) {
+            const graphTableName = "Sys_Graph_Edges";
+            const listResponse = _Adapter_Sheets.list(graphTableName, config, "objects");
+            const activeGraph = (listResponse && listResponse.rows) ? listResponse.rows.filter(r => r.es_version_actual !== false) : [];
+            
+            let globalEdgesToClose = [];
+            let globalEdgesToSpawn = [];
+            let globalNodesToDelete = [];
+            
+            ids.forEach(id => {
+                let patch = { edgesToClose: [], edgesToSpawn: [], nodesToDelete: [id] };
+                if (typeof Engine_Graph !== 'undefined' && typeof Engine_Graph.buildDeletionPatch === 'function') {
+                    patch = Engine_Graph.buildDeletionPatch(id, strategy, activeGraph);
+                }
+                
+                const contextualEdges = activeGraph.filter(e => String(e.contexto_id).trim() === String(id).trim());
+                contextualEdges.forEach(ce => {
+                    if (!patch.edgesToClose.some(existing => existing.id_relacion === ce.id_relacion)) {
+                        patch.edgesToClose.push(ce);
+                    }
+                });
+
+                globalEdgesToClose.push(...patch.edgesToClose);
+                globalEdgesToSpawn.push(...patch.edgesToSpawn);
+                globalNodesToDelete.push(...patch.nodesToDelete);
+            });
+            
+            const uniqueEdgesToClose = Array.from(new Map(globalEdgesToClose.map(item => [item.id_relacion, item])).values());
+            const uniqueNodesToDelete = [...new Set(globalNodesToDelete)];
+
+            const edgesClosed = uniqueEdgesToClose.map(e => ({
+                id_relacion: e.id_relacion,
+                es_version_actual: false,
+                estado: 'Eliminado',
+                valido_hasta: sysDate,
+                updated_at: sysDate,
+                updated_by: currentUser,
+                _overrideConcurrency: true
+            }));
+
+            const uuidFn = (typeof Utilities !== 'undefined') ? Utilities.getUuid : () => Math.random().toString(36).substring(2,10);
+            
+            const edgesSpawned = globalEdgesToSpawn.map(e => {
+                let rID = "RELA-" + uuidFn().substring(0, 8).toUpperCase();
+                return {
+                    id_relacion: rID,
+                    id_nodo_padre: e.id_nodo_padre,
+                    id_nodo_hijo: e.id_nodo_hijo,
+                    tipo_relacion: e.tipo_relacion || "SCD2_EDGE",
+                    peso_influencia: 1,
+                    valido_desde: sysDate,
+                    valido_hasta: "",
+                    es_version_actual: true,
+                    created_at: sysDate,
+                    created_by: "DAG_DELETION_" + strategy
+                };
+            });
+
+            const edgesToUpsert = [...edgesClosed, ...edgesSpawned];
+
+            const nodesToSoftDelete = uniqueNodesToDelete.map(nId => {
+                const nodePayload = { estado: 'Eliminado', deleted_at: sysDate, deleted_by: currentUser, _overrideConcurrency: true };
+                nodePayload[pkField] = nId;
+                return nodePayload;
+            });
+
+            if (edgesToUpsert.length > 0) {
+                if (typeof Logger !== 'undefined') Logger.log(`[Unit of Work] Upserting ${edgesToUpsert.length} graph edges (SCD-2) to array.`);
+                this.upsertBatch(graphTableName, edgesToUpsert, config);
+            }
+
+            if (nodesToSoftDelete.length > 0) {
+                if (typeof Logger !== 'undefined') Logger.log(`[Unit of Work] Logical bulk deletion of ${nodesToSoftDelete.length} nodes in DB_${entityName}.`);
+                results.sheets = this.upsertBatch(entityName, nodesToSoftDelete, config);
+            }
+
+        } else {
+            if (config.useSheets) {
+                const uniqueNodesToDelete = [...new Set(ids)];
+                const nodesToSoftDelete = uniqueNodesToDelete.map(nId => {
+                    const nodePayload = { estado: 'Eliminado', deleted_at: sysDate, deleted_by: currentUser, _overrideConcurrency: true };
+                    nodePayload[pkField] = nId;
+                    return nodePayload;
+                });
+                
+                if (nodesToSoftDelete.length > 0) {
+                    if (typeof Logger !== 'undefined') Logger.log(`[Unit of Work] Logical bulk deletion of ${nodesToSoftDelete.length} nodes in DB_${entityName}.`);
+                    results.sheets = this.upsertBatch(entityName, nodesToSoftDelete, config);
+                }
+            }
+        }
+
+        // upsertBatch already triggers cache invalidation internally.
+        
         return {
             success: true,
             Entity: entityName,

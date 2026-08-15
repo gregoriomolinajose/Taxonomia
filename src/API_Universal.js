@@ -204,6 +204,9 @@ function API_Universal_Router(action, entityName, payload) {
       // Para delete, el payload puede ser solo el ID como string o un obj {id: ...}
       const id = (typeof payload === 'object') ? payload[pkField] || payload.id : payload;
       responseData = _handleDelete(entityName, id);
+    } else if (action === 'bulk_delete') {
+      if (!Array.isArray(payload) || payload.length === 0) throw new Error("bulk_delete requiere un array de IDs");
+      responseData = _handleBulkDelete(entityName, payload);
     } else if (action === 'publish_draft_context') {
       // [S50.4] Mass Approval ETL Endpoint
       if (!payload || !payload.contextId) throw new Error("Falta contextId para publicar el borrador.");

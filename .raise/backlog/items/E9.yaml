@@ -1,0 +1,13 @@
+key: E9
+summary: Refactorizar y expandir suite de pruebas de Borrado
+issue_type: Task
+status: pending
+description: "Refactorizar las pruebas dispersas sobre el proceso de borrado centraliz\xE1\
+  ndolas en nuevos archivos con est\xE1ndar limpio (Engine_DB_Delete.test.js y Controller_Action_Delete.test.js).\
+  \ Adem\xE1s, expandir la cobertura para alcanzar >95% abarcando validaciones de\
+  \ OCC, invalidaci\xF3n de cach\xE9, y concurrencia en borrado masivo."
+labels:
+- qa
+- testing
+created: '2026-08-14T17:50:40.817098+00:00'
+updated: '2026-08-14T17:50:40.817098+00:00'

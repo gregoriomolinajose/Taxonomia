@@ -187,7 +187,7 @@ window.UI_DataView_Toolbar = (function () {
     /* ────────────────────────────────────────────
        3. DataView Header Global
     ───────────────────────────────────────────── */
-    function buildHeader(entityName, totalRecords, canCreate, onExportCSV, onImportCSVTrigger, onAddClick) {
+    function buildHeader(entityName, totalRecords, canCreate, onExportCSV, onImportCSVTrigger, onAddClick, onBulkDeleteClick) {
         const meta = ENTITY_META[entityName] || { iconName: 'document-text-outline', color: 'medium', label: window.formatEntityName ? window.formatEntityName(entityName) : entityName };
         const displayLabel = window.formatEntityName ? window.formatEntityName(meta.label || entityName) : entityName;
         
@@ -304,6 +304,18 @@ window.UI_DataView_Toolbar = (function () {
         btnAdd.appendChild(iconAdd);
         btnAdd.appendChild(document.createTextNode(` Crear ${displayLabel.replace(/s$/, '')}`));
         
+        const btnBulkDelete = document.createElement('button');
+        btnBulkDelete.id = 'dv-bulk-delete-btn';
+        btnBulkDelete.className = 'dv-btn dv-btn-danger';
+        btnBulkDelete.style.display = 'none'; // Oculto por defecto
+        if (typeof onBulkDeleteClick === 'function') btnBulkDelete.addEventListener('click', onBulkDeleteClick);
+        const iconDel = document.createElement('ion-icon');
+        iconDel.setAttribute('name', 'trash-outline');
+        iconDel.setAttribute('slot', 'start');
+        btnBulkDelete.appendChild(iconDel);
+        btnBulkDelete.appendChild(document.createTextNode(' Eliminar Seleccionados'));
+        
+        rightDiv.appendChild(btnBulkDelete);
         rightDiv.appendChild(btnExpFull);
         rightDiv.appendChild(btnExp);
         // btnImp se inyecta condicionalmente más abajo

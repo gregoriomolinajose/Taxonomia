@@ -284,7 +284,8 @@
                     canCreate, 
                     _exportToSheet, 
                     function(e) { window.DataViewEngine._openETLModal(e); },
-                    onAddClick
+                    onAddClick,
+                    _onBulkDelete
                 );
 
                 if (_state.payload && _state.payload.strictFilter && _state.payload.strictFilter.key) {
@@ -330,6 +331,14 @@
 
             const dataZone = document.getElementById('dv-data-zone');
             if (!dataZone) return;
+            
+            // Re-render header para actualizar el contador de registros sin destruir el DOM del header
+            const countLabel = document.querySelector('#dv-header-zone .dv-header-left p');
+            if (countLabel) {
+                const total = _state.filtered ? _state.filtered.length : 0;
+                countLabel.textContent = `${total} registro${total !== 1 ? 's' : ''} en total`;
+            }
+
             window.DOM.clear(dataZone);
 
             if (_state.view === 'tree') {
@@ -584,12 +593,12 @@
             } else {
                 _state.selectedRows = _state.selectedRows.filter(r => String(r) !== strId);
             }
+            _updateBulkDeleteBtn();
         }
 
         function _onSelectAll(checked) {
             const pkField = window.Schema_Utils.getPrimaryKey(_state.entityName);
-            const pageIds = window.UI_DataGrid._getPageData ? window.UI_DataGrid._getPageData().map(r => String(r[pkField] || '')) : [];
-            const dataToIterate = pageIds.length > 0 ? pageIds : _state.filteredData.slice((_state.page - 1) * _state.pageSize, _state.page * _state.pageSize).map(r => String(r[pkField] || ''));
+            const dataToIterate = _state.filtered.slice((_state.page - 1) * _state.pageSize, _state.page * _state.pageSize).map(r => String(r[pkField] || ''));
             
             if (checked) {
                 dataToIterate.forEach(id => {
@@ -598,17 +607,93 @@
             } else {
                 _state.selectedRows = _state.selectedRows.filter(r => !dataToIterate.includes(String(r)));
             }
+            _updateBulkDeleteBtn();
             _rerenderData();
+        }
+
+        function _updateBulkDeleteBtn() {
+            const btn = document.getElementById('dv-bulk-delete-btn');
+            if (!btn) return;
+            if (_state.selectedRows && _state.selectedRows.length > 0) {
+                btn.style.display = 'inline-flex';
+                btn.innerHTML = `<ion-icon name="trash-outline" slot="start"></ion-icon> Eliminar ${_state.selectedRows.length} seleccionados`;
+            } else {
+                btn.style.display = 'none';
+            }
+        }
+
+        async function _onBulkDelete() {
+            if (!_state.selectedRows || _state.selectedRows.length === 0) return;
+            
+            const count = _state.selectedRows.length;
+            const confirmMsg = `¿Estás seguro de eliminar los ${count} registros seleccionados de ${_state.entityName}?`;
+            
+            const alertNode = document.createElement('ion-alert');
+            alertNode.header = 'Confirmar Borrado Masivo';
+            alertNode.message = confirmMsg;
+            alertNode.buttons = [
+                { text: 'Cancelar', role: 'cancel' },
+                {
+                    text: 'Eliminar', 
+                    role: 'confirm',
+                    handler: async () => {
+                        const loading = document.createElement('ion-loading');
+                        loading.message = `Eliminando ${count} registros...`;
+                        document.body.appendChild(loading);
+                        window.PresentSafe(loading);
+                        
+                        try {
+                            const response = await window.DataAPI.call('API_Universal_Router', 'bulk_delete', _state.entityName, _state.selectedRows);
+                            
+                            if (response && response.status === 'success') {
+                                window.dispatchEvent(new CustomEvent('toast:show', {
+                                    detail: { message: `✅ ${count} registros eliminados exitosamente.`, color: 'success' }
+                                }));
+                                
+                                const rowsToDelete = [..._state.selectedRows];
+                                _state.selectedRows = [];
+                                _updateBulkDeleteBtn();
+                                
+                                const pkField = window.Schema_Utils ? window.Schema_Utils.getPrimaryKey(_state.entityName) : 'id';
+                                
+                                // Purge from local state
+                                if (_state.data) {
+                                    _state.data = _state.data.filter(r => !rowsToDelete.includes(String(r[pkField])));
+                                }
+                                
+                                // Purge from global cache
+                                if (window.DataStore && window.DataStore.get(_state.entityName)) {
+                                    window.DataStore.set(_state.entityName, window.DataStore.get(_state.entityName).filter(r => !rowsToDelete.includes(String(r[pkField]))));
+                                }
+                                
+                                const searchInput = document.getElementById('dv-search-input');
+                                _applyFilter(searchInput ? searchInput.value || '' : '');
+                            } else {
+                                throw new Error(response ? (response.message || response.errorType || 'Error desconocido') : 'Respuesta inválida del servidor');
+                            }
+                        } catch (err) {
+                            console.error('[DataView] Bulk Delete Error:', err);
+                            window.dispatchEvent(new CustomEvent('toast:show', {
+                                detail: { message: '❌ Error: ' + err.message, color: 'danger' }
+                            }));
+                        } finally {
+                            loading.dismiss();
+                        }
+                    }
+                }
+            ];
+            document.body.appendChild(alertNode);
+            window.PresentSafe(alertNode);
         }
 
         function _onRowOrderChange(srcId, targetId) {
             const pkField = window.Schema_Utils.getPrimaryKey(_state.entityName);
-            const srcIdx = _state.filteredData.findIndex(r => String(r[pkField]) === String(srcId));
-            const targetIdx = _state.filteredData.findIndex(r => String(r[pkField]) === String(targetId));
+            const srcIdx = _state.filtered.findIndex(r => String(r[pkField]) === String(srcId));
+            const targetIdx = _state.filtered.findIndex(r => String(r[pkField]) === String(targetId));
             
             if(srcIdx > -1 && targetIdx > -1) {
-                const item = _state.filteredData.splice(srcIdx, 1)[0];
-                _state.filteredData.splice(targetIdx, 0, item);
+                const item = _state.filtered.splice(srcIdx, 1)[0];
+                _state.filtered.splice(targetIdx, 0, item);
             }
         }
 

@@ -100,6 +100,24 @@ function _handleDelete(entityName, id) {
 }
 
 /**
+ * _handleBulkDelete
+ * Llama a Engine_DB.bulkDelete() para un borrado logico masivo,
+ * validando ABAC para cada ID.
+ */
+function _handleBulkDelete(entityName, ids) {
+  if (!ids || !Array.isArray(ids)) throw new Error('ERR_BAD_REQUEST_INVALID_IDS');
+  
+  // 1. Validar permisos ABAC para CADA id a eliminar
+  ids.forEach(id => {
+    _guardAbac('delete', entityName, id);
+  });
+  
+  // 2. Ejecutar la transacción en Engine_DB
+  const result = Engine_DB.bulkDelete(entityName, ids);
+  return result;
+}
+
+/**
  * _applyAdminBypass (SRP Helper)
  * Implícitamente salta controles de concurrencia y despliega override 
  * para acciones CUD previamente autenticadas sobre matrices estructurales.
@@ -315,6 +333,7 @@ if (typeof module !== 'undefined') {
     _handleCreate,
     _handleUpdate,
     _handleDelete,
+    _handleBulkDelete,
     _handleRead,
     _generateShortUUID
   };
