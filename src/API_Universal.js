@@ -174,7 +174,6 @@ function API_Universal_Router(action, entityName, payload) {
         payload[pkField] = _generateShortUUID(entityName);
       }
       responseData = _handleCreate(entityName, payload);
-      responseData = JSON.parse(JSON.stringify(responseData)); // Destruir Date Nativos (Regla 10)
 
       // Enrich response with confirmed PK so the frontend cache injection
       // can build the newRecord without guessing the adapter's internal shape.
@@ -402,6 +401,11 @@ function API_Universal_Router(action, entityName, payload) {
 
     const itemName = payload.nombre || payload.id_portafolio || entityName;
     if (typeof Logger !== 'undefined') Logger.log('Persistencia completada para: ' + itemName);
+
+    // Destrucción obligatoria de Objetos Date nativos de Rhino/V8 (Regla 10) para evitar caída de IPC
+    if (responseData) {
+      responseData = JSON.parse(JSON.stringify(responseData));
+    }
 
     // Emitir como String previene Google Apps Script IPC Deserialize Threw Error Native Bug
     const sanitizedReturn = JSON.stringify({

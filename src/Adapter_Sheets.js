@@ -744,7 +744,9 @@ const Adapter_Sheets = {
                 const tuple = [];
                 for (let k = 0; k < visibleHeaderIndices.length; k++) {
                     const colIdx = visibleHeaderIndices[k];
-                    tuple.push(rowData[colIdx] !== undefined ? rowData[colIdx] : '');
+                    let val = rowData[colIdx] !== undefined ? rowData[colIdx] : '';
+                    if (val instanceof Date) val = val.toISOString();
+                    tuple.push(val);
                 }
                 rows.push(tuple);
             } else {
@@ -752,16 +754,15 @@ const Adapter_Sheets = {
                 for (let k = 0; k < visibleHeaderIndices.length; k++) {
                     const colIdx = visibleHeaderIndices[k];
                     const headerName = filteredHeaders[k];
-                    rowObj[headerName] = rowData[colIdx] !== undefined ? rowData[colIdx] : '';
+                    let val = rowData[colIdx] !== undefined ? rowData[colIdx] : '';
+                    if (val instanceof Date) val = val.toISOString();
+                    rowObj[headerName] = val;
                 }
                 rows.push(rowObj);
             }
         }
 
-        // Sanitización Obligatoria: Destruir Objetos Date nativos de Rhino/V8
-        const sanitizedRows = JSON.parse(JSON.stringify(rows));
-        
-        return { headers: filteredHeaders, rows: sanitizedRows };
+        return { headers: filteredHeaders, rows: rows };
     },
 
     /**
