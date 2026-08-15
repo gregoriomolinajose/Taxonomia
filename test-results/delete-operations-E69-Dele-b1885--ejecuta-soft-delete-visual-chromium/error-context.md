@@ -12,10 +12,12 @@
 # Error details
 
 ```
-TimeoutError: locator.waitFor: Timeout 30000ms exceeded.
+Error: locator.click: Element is not visible
 Call log:
-  - waiting for locator('#sandboxFrame').contentFrame().locator('#userHtmlFrame').contentFrame().locator('#nav-item-Portafolio') to be visible
-    63 × locator resolved to hidden <div class="nav-item" title="Portafolios" id="nav-item-Portafolio">…</div>
+  - waiting for locator('#sandboxFrame').contentFrame().locator('#userHtmlFrame').contentFrame().locator('#nav-item-Portafolio')
+    - locator resolved to <div class="nav-item" title="Portafolios" id="nav-item-Portafolio">…</div>
+  - attempting click action
+    - scrolling into view if needed
 
 ```
 
@@ -82,11 +84,11 @@ Call log:
   58  |   test('Historia 16: Borrado Individual en UI renderiza ion-alert y ejecuta soft-delete visual', async () => {
   59  |     const frame = page.frameLocator('#sandboxFrame').frameLocator('#userHtmlFrame');
   60  |     
-  61  |     // Hacer clic en el elemento del sidebar
+  61  |     // Hacer clic en el elemento del sidebar (puede estar oculto en ciertas resoluciones de Ionic)
   62  |     const btnPortafolio = frame.locator('#nav-item-Portafolio');
-> 63  |     await btnPortafolio.waitFor({ state: 'visible', timeout: 30000 });
-      |                         ^ TimeoutError: locator.waitFor: Timeout 30000ms exceeded.
-  64  |     await btnPortafolio.click({ force: true });
+  63  |     await btnPortafolio.waitFor({ state: 'attached', timeout: 30000 });
+> 64  |     await btnPortafolio.click({ force: true });
+      |                         ^ Error: locator.click: Element is not visible
   65  |     
   66  |     // Ahora esperar a que la tabla de registros cargue
   67  |     const gridRows = frame.locator('table.dv-table tbody tr');
@@ -122,9 +124,9 @@ Call log:
   97  |   test('Historia 17: Borrado Masivo UI selecciona filas múltiples y limpia el Grid', async () => {
   98  |     const frame = page.frameLocator('#sandboxFrame').frameLocator('#userHtmlFrame');
   99  | 
-  100 |     // Hacer clic en el elemento del sidebar
+  100 |     // Hacer clic en el elemento del sidebar (puede estar oculto en ciertas resoluciones de Ionic)
   101 |     const btnPortafolio = frame.locator('#nav-item-Portafolio');
-  102 |     await btnPortafolio.waitFor({ state: 'visible', timeout: 30000 });
+  102 |     await btnPortafolio.waitFor({ state: 'attached', timeout: 30000 });
   103 |     await btnPortafolio.click({ force: true });
   104 | 
   105 |     // Ahora esperar a que la tabla de registros cargue

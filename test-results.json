@@ -87,25 +87,25 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "failed",
-                      "duration": 60123,
+                      "duration": 30112,
                       "error": {
-                        "message": "TimeoutError: locator.waitFor: Timeout 60000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#sandboxFrame').contentFrame().locator('#userHtmlFrame').contentFrame().locator('table.dv-table tbody tr').first() to be visible\u001b[22m\n",
-                        "stack": "TimeoutError: locator.waitFor: Timeout 60000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#sandboxFrame').contentFrame().locator('#userHtmlFrame').contentFrame().locator('table.dv-table tbody tr').first() to be visible\u001b[22m\n\n    at C:\\Users\\grego\\Antigravity\\Taxonomia Project\\__tests__\\e2e\\delete-operations.spec.js:62:28",
+                        "message": "TimeoutError: locator.waitFor: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#sandboxFrame').contentFrame().locator('#userHtmlFrame').contentFrame().locator('#nav-item-Portafolio') to be visible\u001b[22m\n\u001b[2m    63 × locator resolved to hidden <div class=\"nav-item\" title=\"Portafolios\" id=\"nav-item-Portafolio\">…</div>\u001b[22m\n",
+                        "stack": "TimeoutError: locator.waitFor: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#sandboxFrame').contentFrame().locator('#userHtmlFrame').contentFrame().locator('#nav-item-Portafolio') to be visible\u001b[22m\n\u001b[2m    63 × locator resolved to hidden <div class=\"nav-item\" title=\"Portafolios\" id=\"nav-item-Portafolio\">…</div>\u001b[22m\n\n    at C:\\Users\\grego\\Antigravity\\Taxonomia Project\\__tests__\\e2e\\delete-operations.spec.js:63:25",
                         "location": {
                           "file": "C:\\Users\\grego\\Antigravity\\Taxonomia Project\\__tests__\\e2e\\delete-operations.spec.js",
-                          "column": 28,
-                          "line": 62
+                          "column": 25,
+                          "line": 63
                         },
-                        "snippet": "\u001b[0m \u001b[90m 60 |\u001b[39m     \n \u001b[90m 61 |\u001b[39m     \u001b[36mconst\u001b[39m gridRows \u001b[33m=\u001b[39m frame\u001b[33m.\u001b[39mlocator(\u001b[32m'table.dv-table tbody tr'\u001b[39m)\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 62 |\u001b[39m     \u001b[36mawait\u001b[39m gridRows\u001b[33m.\u001b[39mfirst()\u001b[33m.\u001b[39mwaitFor({ state\u001b[33m:\u001b[39m \u001b[32m'visible'\u001b[39m\u001b[33m,\u001b[39m timeout\u001b[33m:\u001b[39m \u001b[35m60000\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                            \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 63 |\u001b[39m     \n \u001b[90m 64 |\u001b[39m     \u001b[36mconst\u001b[39m rowCountBefore \u001b[33m=\u001b[39m \u001b[36mawait\u001b[39m gridRows\u001b[33m.\u001b[39mcount()\u001b[33m;\u001b[39m\n \u001b[90m 65 |\u001b[39m     expect(rowCountBefore)\u001b[33m.\u001b[39mtoBeGreaterThan(\u001b[35m0\u001b[39m)\u001b[33m;\u001b[39m\u001b[0m"
+                        "snippet": "\u001b[0m \u001b[90m 61 |\u001b[39m     \u001b[90m// Hacer clic en el elemento del sidebar\u001b[39m\n \u001b[90m 62 |\u001b[39m     \u001b[36mconst\u001b[39m btnPortafolio \u001b[33m=\u001b[39m frame\u001b[33m.\u001b[39mlocator(\u001b[32m'#nav-item-Portafolio'\u001b[39m)\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 63 |\u001b[39m     \u001b[36mawait\u001b[39m btnPortafolio\u001b[33m.\u001b[39mwaitFor({ state\u001b[33m:\u001b[39m \u001b[32m'visible'\u001b[39m\u001b[33m,\u001b[39m timeout\u001b[33m:\u001b[39m \u001b[35m30000\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                         \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 64 |\u001b[39m     \u001b[36mawait\u001b[39m btnPortafolio\u001b[33m.\u001b[39mclick({ force\u001b[33m:\u001b[39m \u001b[36mtrue\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m 65 |\u001b[39m     \n \u001b[90m 66 |\u001b[39m     \u001b[90m// Ahora esperar a que la tabla de registros cargue\u001b[39m\u001b[0m"
                       },
                       "errors": [
                         {
                           "location": {
                             "file": "C:\\Users\\grego\\Antigravity\\Taxonomia Project\\__tests__\\e2e\\delete-operations.spec.js",
-                            "column": 28,
-                            "line": 62
+                            "column": 25,
+                            "line": 63
                           },
-                          "message": "TimeoutError: locator.waitFor: Timeout 60000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#sandboxFrame').contentFrame().locator('#userHtmlFrame').contentFrame().locator('table.dv-table tbody tr').first() to be visible\u001b[22m\n\n\n  60 |     \n  61 |     const gridRows = frame.locator('table.dv-table tbody tr');\n> 62 |     await gridRows.first().waitFor({ state: 'visible', timeout: 60000 });\n     |                            ^\n  63 |     \n  64 |     const rowCountBefore = await gridRows.count();\n  65 |     expect(rowCountBefore).toBeGreaterThan(0);\n    at C:\\Users\\grego\\Antigravity\\Taxonomia Project\\__tests__\\e2e\\delete-operations.spec.js:62:28"
+                          "message": "TimeoutError: locator.waitFor: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#sandboxFrame').contentFrame().locator('#userHtmlFrame').contentFrame().locator('#nav-item-Portafolio') to be visible\u001b[22m\n\u001b[2m    63 × locator resolved to hidden <div class=\"nav-item\" title=\"Portafolios\" id=\"nav-item-Portafolio\">…</div>\u001b[22m\n\n\n  61 |     // Hacer clic en el elemento del sidebar\n  62 |     const btnPortafolio = frame.locator('#nav-item-Portafolio');\n> 63 |     await btnPortafolio.waitFor({ state: 'visible', timeout: 30000 });\n     |                         ^\n  64 |     await btnPortafolio.click({ force: true });\n  65 |     \n  66 |     // Ahora esperar a que la tabla de registros cargue\n    at C:\\Users\\grego\\Antigravity\\Taxonomia Project\\__tests__\\e2e\\delete-operations.spec.js:63:25"
                         }
                       ],
                       "stdout": [
@@ -132,20 +132,11 @@
                         },
                         {
                           "text": "PAGE LOG [info]: Net state changed from IDLE to BUSY Net state changed from IDLE to BUSY\n"
-                        },
-                        {
-                          "text": "PAGE LOG [info]: Net state changed from BUSY to IDLE Net state changed from BUSY to IDLE\n"
-                        },
-                        {
-                          "text": "PAGE LOG [info]: Net state changed from IDLE to BUSY Net state changed from IDLE to BUSY\n"
-                        },
-                        {
-                          "text": "PAGE LOG [info]: Net state changed from BUSY to IDLE Net state changed from BUSY to IDLE\n"
                         }
                       ],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-08-15T14:47:55.067Z",
+                      "startTime": "2026-08-15T14:53:58.764Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -171,8 +162,8 @@
                       ],
                       "errorLocation": {
                         "file": "C:\\Users\\grego\\Antigravity\\Taxonomia Project\\__tests__\\e2e\\delete-operations.spec.js",
-                        "column": 28,
-                        "line": 62
+                        "column": 25,
+                        "line": 63
                       }
                     }
                   ],
@@ -200,25 +191,25 @@
                       "workerIndex": 1,
                       "parallelIndex": 0,
                       "status": "failed",
-                      "duration": 60107,
+                      "duration": 30125,
                       "error": {
-                        "message": "TimeoutError: locator.waitFor: Timeout 60000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#sandboxFrame').contentFrame().locator('#userHtmlFrame').contentFrame().locator('table.dv-table tbody tr').first() to be visible\u001b[22m\n",
-                        "stack": "TimeoutError: locator.waitFor: Timeout 60000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#sandboxFrame').contentFrame().locator('#userHtmlFrame').contentFrame().locator('table.dv-table tbody tr').first() to be visible\u001b[22m\n\n    at C:\\Users\\grego\\Antigravity\\Taxonomia Project\\__tests__\\e2e\\delete-operations.spec.js:95:28",
+                        "message": "TimeoutError: locator.waitFor: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#sandboxFrame').contentFrame().locator('#userHtmlFrame').contentFrame().locator('#nav-item-Portafolio') to be visible\u001b[22m\n\u001b[2m    63 × locator resolved to hidden <div class=\"nav-item\" title=\"Portafolios\" id=\"nav-item-Portafolio\">…</div>\u001b[22m\n",
+                        "stack": "TimeoutError: locator.waitFor: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#sandboxFrame').contentFrame().locator('#userHtmlFrame').contentFrame().locator('#nav-item-Portafolio') to be visible\u001b[22m\n\u001b[2m    63 × locator resolved to hidden <div class=\"nav-item\" title=\"Portafolios\" id=\"nav-item-Portafolio\">…</div>\u001b[22m\n\n    at C:\\Users\\grego\\Antigravity\\Taxonomia Project\\__tests__\\e2e\\delete-operations.spec.js:102:25",
                         "location": {
                           "file": "C:\\Users\\grego\\Antigravity\\Taxonomia Project\\__tests__\\e2e\\delete-operations.spec.js",
-                          "column": 28,
-                          "line": 95
+                          "column": 25,
+                          "line": 102
                         },
-                        "snippet": "\u001b[0m \u001b[90m 93 |\u001b[39m\n \u001b[90m 94 |\u001b[39m     \u001b[36mconst\u001b[39m gridRows \u001b[33m=\u001b[39m frame\u001b[33m.\u001b[39mlocator(\u001b[32m'table.dv-table tbody tr'\u001b[39m)\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 95 |\u001b[39m     \u001b[36mawait\u001b[39m gridRows\u001b[33m.\u001b[39mfirst()\u001b[33m.\u001b[39mwaitFor({ state\u001b[33m:\u001b[39m \u001b[32m'visible'\u001b[39m\u001b[33m,\u001b[39m timeout\u001b[33m:\u001b[39m \u001b[35m60000\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                            \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 96 |\u001b[39m\n \u001b[90m 97 |\u001b[39m     \u001b[36mconst\u001b[39m totalRows \u001b[33m=\u001b[39m \u001b[36mawait\u001b[39m gridRows\u001b[33m.\u001b[39mcount()\u001b[33m;\u001b[39m\n \u001b[90m 98 |\u001b[39m     test\u001b[33m.\u001b[39mskip(totalRows \u001b[33m<\u001b[39m \u001b[35m2\u001b[39m\u001b[33m,\u001b[39m \u001b[32m'No hay suficientes filas para la prueba de borrado masivo'\u001b[39m)\u001b[33m;\u001b[39m\u001b[0m"
+                        "snippet": "\u001b[0m \u001b[90m 100 |\u001b[39m     \u001b[90m// Hacer clic en el elemento del sidebar\u001b[39m\n \u001b[90m 101 |\u001b[39m     \u001b[36mconst\u001b[39m btnPortafolio \u001b[33m=\u001b[39m frame\u001b[33m.\u001b[39mlocator(\u001b[32m'#nav-item-Portafolio'\u001b[39m)\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 102 |\u001b[39m     \u001b[36mawait\u001b[39m btnPortafolio\u001b[33m.\u001b[39mwaitFor({ state\u001b[33m:\u001b[39m \u001b[32m'visible'\u001b[39m\u001b[33m,\u001b[39m timeout\u001b[33m:\u001b[39m \u001b[35m30000\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m     |\u001b[39m                         \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 103 |\u001b[39m     \u001b[36mawait\u001b[39m btnPortafolio\u001b[33m.\u001b[39mclick({ force\u001b[33m:\u001b[39m \u001b[36mtrue\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m 104 |\u001b[39m\n \u001b[90m 105 |\u001b[39m     \u001b[90m// Ahora esperar a que la tabla de registros cargue\u001b[39m\u001b[0m"
                       },
                       "errors": [
                         {
                           "location": {
                             "file": "C:\\Users\\grego\\Antigravity\\Taxonomia Project\\__tests__\\e2e\\delete-operations.spec.js",
-                            "column": 28,
-                            "line": 95
+                            "column": 25,
+                            "line": 102
                           },
-                          "message": "TimeoutError: locator.waitFor: Timeout 60000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#sandboxFrame').contentFrame().locator('#userHtmlFrame').contentFrame().locator('table.dv-table tbody tr').first() to be visible\u001b[22m\n\n\n  93 |\n  94 |     const gridRows = frame.locator('table.dv-table tbody tr');\n> 95 |     await gridRows.first().waitFor({ state: 'visible', timeout: 60000 });\n     |                            ^\n  96 |\n  97 |     const totalRows = await gridRows.count();\n  98 |     test.skip(totalRows < 2, 'No hay suficientes filas para la prueba de borrado masivo');\n    at C:\\Users\\grego\\Antigravity\\Taxonomia Project\\__tests__\\e2e\\delete-operations.spec.js:95:28"
+                          "message": "TimeoutError: locator.waitFor: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#sandboxFrame').contentFrame().locator('#userHtmlFrame').contentFrame().locator('#nav-item-Portafolio') to be visible\u001b[22m\n\u001b[2m    63 × locator resolved to hidden <div class=\"nav-item\" title=\"Portafolios\" id=\"nav-item-Portafolio\">…</div>\u001b[22m\n\n\n  100 |     // Hacer clic en el elemento del sidebar\n  101 |     const btnPortafolio = frame.locator('#nav-item-Portafolio');\n> 102 |     await btnPortafolio.waitFor({ state: 'visible', timeout: 30000 });\n      |                         ^\n  103 |     await btnPortafolio.click({ force: true });\n  104 |\n  105 |     // Ahora esperar a que la tabla de registros cargue\n    at C:\\Users\\grego\\Antigravity\\Taxonomia Project\\__tests__\\e2e\\delete-operations.spec.js:102:25"
                         }
                       ],
                       "stdout": [
@@ -249,18 +240,18 @@
                       ],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-08-15T14:50:22.855Z",
+                      "startTime": "2026-08-15T14:56:25.982Z",
                       "annotations": [],
                       "attachments": [
                         {
                           "name": "screenshot",
                           "contentType": "image/png",
-                          "path": "C:\\Users\\grego\\Antigravity\\Taxonomia Project\\test-results\\delete-operations-E69-Dele-367a2--múltiples-y-limpia-el-Grid-chromium\\test-failed-1.png"
+                          "path": "C:\\Users\\grego\\Antigravity\\Taxonomia Project\\test-results\\delete-operations-E69-Dele-367a2--múltiples-y-limpia-el-Grid-chromium\\test-failed-2.png"
                         },
                         {
                           "name": "screenshot",
                           "contentType": "image/png",
-                          "path": "C:\\Users\\grego\\Antigravity\\Taxonomia Project\\test-results\\delete-operations-E69-Dele-367a2--múltiples-y-limpia-el-Grid-chromium\\test-failed-2.png"
+                          "path": "C:\\Users\\grego\\Antigravity\\Taxonomia Project\\test-results\\delete-operations-E69-Dele-367a2--múltiples-y-limpia-el-Grid-chromium\\test-failed-1.png"
                         },
                         {
                           "name": "error-context",
@@ -275,8 +266,8 @@
                       ],
                       "errorLocation": {
                         "file": "C:\\Users\\grego\\Antigravity\\Taxonomia Project\\__tests__\\e2e\\delete-operations.spec.js",
-                        "column": 28,
-                        "line": 95
+                        "column": 25,
+                        "line": 102
                       }
                     }
                   ],
@@ -285,7 +276,7 @@
               ],
               "id": "92e4a93cacd18abd8e49-6d33c75ae1132da8a76f",
               "file": "delete-operations.spec.js",
-              "line": 91,
+              "line": 97,
               "column": 3
             }
           ]
@@ -295,8 +286,8 @@
   ],
   "errors": [],
   "stats": {
-    "startTime": "2026-08-15T14:47:53.649Z",
-    "duration": 311660.128,
+    "startTime": "2026-08-15T14:53:57.358Z",
+    "duration": 274751.96499999997,
     "expected": 0,
     "skipped": 0,
     "unexpected": 2,

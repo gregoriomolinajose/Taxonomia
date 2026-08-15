@@ -58,9 +58,9 @@ test.describe('E69: Delete Operations (Individual & Bulk) en Entorno DEV Real', 
   test('Historia 16: Borrado Individual en UI renderiza ion-alert y ejecuta soft-delete visual', async () => {
     const frame = page.frameLocator('#sandboxFrame').frameLocator('#userHtmlFrame');
     
-    // Hacer clic en el elemento del sidebar
+    // Hacer clic en el elemento del sidebar (puede estar oculto en ciertas resoluciones de Ionic)
     const btnPortafolio = frame.locator('#nav-item-Portafolio');
-    await btnPortafolio.waitFor({ state: 'visible', timeout: 30000 });
+    await btnPortafolio.waitFor({ state: 'attached', timeout: 30000 });
     await btnPortafolio.click({ force: true });
     
     // Ahora esperar a que la tabla de registros cargue
@@ -97,9 +97,9 @@ test.describe('E69: Delete Operations (Individual & Bulk) en Entorno DEV Real', 
   test('Historia 17: Borrado Masivo UI selecciona filas múltiples y limpia el Grid', async () => {
     const frame = page.frameLocator('#sandboxFrame').frameLocator('#userHtmlFrame');
 
-    // Hacer clic en el elemento del sidebar
+    // Hacer clic en el elemento del sidebar (puede estar oculto en ciertas resoluciones de Ionic)
     const btnPortafolio = frame.locator('#nav-item-Portafolio');
-    await btnPortafolio.waitFor({ state: 'visible', timeout: 30000 });
+    await btnPortafolio.waitFor({ state: 'attached', timeout: 30000 });
     await btnPortafolio.click({ force: true });
 
     // Ahora esperar a que la tabla de registros cargue

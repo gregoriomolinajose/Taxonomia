@@ -1,18 +1,18 @@
 
 
-  <ion-app class="md ion-page hydrated">
+  <ion-app class="md ion-page">
 
 
 
     
 
-    <ion-split-pane id="split-pane-shell" content-id="main-content" when="false" class="md split-pane-md hydrated">
+    <ion-split-pane id="split-pane-shell" content-id="main-content" when="false" class="md split-pane-md">
 
 
 
       
 
-      <ion-menu content-id="main-content" side="start" role="navigation" aria-label="menu" class="md menu-type-overlay menu-enabled menu-side-start split-pane-side hydrated">
+      <ion-menu content-id="main-content" side="start" role="navigation" aria-label="menu" class="md menu-type-overlay menu-enabled menu-side-start split-pane-side">
 
         <ion-header class="ion-no-border md header-md header-collapse-none hydrated" role="none"><!---->
 
@@ -63,21 +63,21 @@
 
       <div class="ion-page split-pane-main menu-content menu-content-overlay" id="main-content">
 
-        <ion-header class="ion-no-border md header-md header-collapse-none hydrated" style="background: transparent;" role="banner"><!---->
+        <ion-header class="ion-no-border md header-md header-collapse-none" style="background: transparent;" role="banner"><!---->
 
-          <ion-toolbar style="--background: transparent;" class="toolbar-segment md in-toolbar hydrated toolbar-label">
+          <ion-toolbar style="--background: transparent;" class="toolbar-segment md in-toolbar">
 
-            <ion-buttons slot="start" class="hide-on-mobile buttons-first-slot sc-ion-buttons-md-h md sc-ion-buttons-md sc-ion-buttons-md-s hydrated"><!---->
+            <ion-buttons slot="start" class="hide-on-mobile buttons-first-slot sc-ion-buttons-md-h md sc-ion-buttons-md sc-ion-buttons-md-s"><!---->
 
-              <ion-menu-button class="hide-on-desktop md button in-toolbar ion-activatable ion-focusable hydrated"></ion-menu-button>
+              <ion-menu-button class="hide-on-desktop md button menu-button-hidden in-toolbar ion-activatable ion-focusable" aria-hidden="true"></ion-menu-button>
 
-              <ion-button class="hide-on-mobile md button button-clear in-toolbar in-buttons button-has-icon-only ion-activatable ion-focusable hydrated" fill="clear" data-action="nav:toggle-menu">
+              <ion-button class="hide-on-mobile md button button-clear in-toolbar in-buttons button-has-icon-only ion-activatable ion-focusable" fill="clear" data-action="nav:toggle-menu">
 
                 <ion-icon slot="icon-only" name="menu-outline" role="img" class="md hydrated"></ion-icon>
 
               </ion-button>
 
-              <ion-button id="global-back-btn" color="primary" fill="clear" class="ion-color ion-color-primary md button button-clear in-toolbar in-buttons button-has-icon-only ion-activatable ion-focusable hydrated" data-action="nav:dashboard">
+              <ion-button id="global-back-btn" color="primary" fill="clear" class="ion-color ion-color-primary md button button-clear in-toolbar in-buttons button-has-icon-only ion-activatable ion-focusable" data-action="nav:dashboard">
 
                 <ion-icon slot="icon-only" name="arrow-back-outline" role="img" class="md flip-rtl hydrated"></ion-icon>
 
@@ -109,9 +109,9 @@
 
             
 
-            <ion-buttons slot="end" class="hide-on-mobile buttons-last-slot sc-ion-buttons-md-h md sc-ion-buttons-md sc-ion-buttons-md-s hydrated"><!---->
+            <ion-buttons slot="end" class="hide-on-mobile buttons-last-slot sc-ion-buttons-md-h md sc-ion-buttons-md sc-ion-buttons-md-s"><!---->
 
-              <ion-button fill="clear" data-action="theme:cycle" title="Cambiar Tema" class="md button button-clear in-toolbar in-buttons button-has-icon-only ion-activatable ion-focusable hydrated">
+              <ion-button fill="clear" data-action="theme:cycle" title="Cambiar Tema" class="md button button-clear in-toolbar in-buttons button-has-icon-only ion-activatable ion-focusable">
 
                 <ion-icon id="theme-toggle-icon" slot="icon-only" name="moon-outline" role="img" class="md hydrated"></ion-icon>
 
@@ -119,7 +119,7 @@
 
               
 
-              <ion-button id="user-profile-btn" fill="clear" style="--border-radius: 24px; --background: rgba(var(--ion-color-primary-rgb, 56, 128, 255), 0.08); margin-left: 8px; height: 48px; --padding-start: 6px; --padding-end: 16px; text-transform: none;" class="md button button-clear in-toolbar in-buttons ion-activatable ion-focusable hydrated" data-ion-popover-trigger="true">
+              <ion-button id="user-profile-btn" fill="clear" style="--border-radius: 24px; --background: rgba(var(--ion-color-primary-rgb, 56, 128, 255), 0.08); margin-left: 8px; height: 48px; --padding-start: 6px; --padding-end: 16px; text-transform: none;" data-ion-popover-trigger="true" class="md button button-clear in-toolbar in-buttons ion-activatable ion-focusable">
 
                 <div style="display: flex; align-items: center; gap: 10px;">
 
@@ -149,11 +149,11 @@
 
           
 
-          <ion-popover id="profile-popover" trigger="user-profile-btn" trigger-action="click" dismiss-on-select="true" aria-modal="true" no-router="" tabindex="-1" class="md overlay-hidden popover-desktop popover-side-bottom hydrated" style="z-index: 20001;">
+          <ion-popover id="profile-popover" trigger="user-profile-btn" trigger-action="click" dismiss-on-select="true" aria-modal="true" no-router="" tabindex="-1" class="md overlay-hidden popover-desktop popover-side-bottom" style="z-index: 20001;">
 
-            <ion-content class="md content-sizing content-ltr hydrated" style="--offset-top: 0px; --offset-bottom: 0px;">
+            <ion-content class="md content-sizing content-ltr" style="--offset-top: 0px; --offset-bottom: 0px;">
 
-              <ion-list lines="full" role="list" class="md list-md list-lines-full list-md-lines-full hydrated">
+              <ion-list lines="full" role="list" class="md list-md list-lines-full list-md-lines-full">
 
                 <ion-item class="item-has-start-slot item md item-lines-default in-list hydrated item-label" role="listitem">
 
@@ -181,7 +181,7 @@
 
                 
 
-                <ion-item button="" data-dismiss="#profile-popover" data-action="profile:wip" class="item-has-start-slot item md item-lines-default in-list ion-activatable ion-focusable hydrated item-label" role="listitem">
+                <ion-item button="" data-dismiss="#profile-popover" data-action="profile:wip" class="item-has-start-slot item md item-lines-default in-list ion-activatable ion-focusable" role="listitem">
 
                   <ion-icon name="person-circle-outline" slot="start" role="img" class="md hydrated"></ion-icon>
 
@@ -191,7 +191,7 @@
 
                 
 
-                <ion-item button="" id="popover-btn-configuracion" class="ion-hide item-has-start-slot item md item-lines-default in-list ion-activatable ion-focusable hydrated item-label" data-dismiss="#profile-popover" data-action="nav:designkit" role="listitem">
+                <ion-item button="" id="popover-btn-configuracion" class="ion-hide item-has-start-slot item md item-lines-default in-list ion-activatable ion-focusable" data-dismiss="#profile-popover" data-action="nav:designkit" role="listitem">
 
                   <ion-icon name="settings-outline" slot="start" role="img" class="md hydrated"></ion-icon>
 
@@ -201,7 +201,7 @@
 
                 
 
-                <ion-item button="" id="popover-btn-governance" class="ion-hide item-has-start-slot item md item-lines-default in-list ion-activatable ion-focusable hydrated item-label" data-dismiss="#profile-popover" data-action="nav:governance" role="listitem">
+                <ion-item button="" id="popover-btn-governance" class="ion-hide item-has-start-slot item md item-lines-default in-list ion-activatable ion-focusable" data-dismiss="#profile-popover" data-action="nav:governance" role="listitem">
 
                   <ion-icon name="shield-checkmark-outline" slot="start" role="img" class="md hydrated"></ion-icon>
 
@@ -213,7 +213,7 @@
 
                 
 
-                <ion-item button="" id="popover-btn-sistema" class="ion-hide item-has-start-slot item md item-lines-default in-list ion-activatable ion-focusable hydrated item-label" data-dismiss="#profile-popover" data-action="nav:sistema" role="listitem">
+                <ion-item button="" id="popover-btn-sistema" class="ion-hide item-has-start-slot item md item-lines-default in-list ion-activatable ion-focusable" data-dismiss="#profile-popover" data-action="nav:sistema" role="listitem">
 
                   <ion-icon name="server-outline" slot="start" color="warning" role="img" class="md ion-color ion-color-warning hydrated"></ion-icon>
 
@@ -225,7 +225,7 @@
 
                 
 
-                <ion-item button="" lines="none" detail="false" data-dismiss="#profile-popover" data-action="auth:logout" style="--color: var(--ion-color-danger);" class="item-has-start-slot item md item-lines-none in-list ion-activatable ion-focusable hydrated item-label item-label-color ion-color-danger" role="listitem">
+                <ion-item button="" lines="none" detail="false" data-dismiss="#profile-popover" data-action="auth:logout" style="--color: var(--ion-color-danger);" class="item-has-start-slot item md item-lines-none in-list ion-activatable ion-focusable" role="listitem">
 
                   <ion-icon name="log-out-outline" slot="start" color="danger" role="img" class="md ion-color ion-color-danger hydrated"></ion-icon>
 
@@ -243,14 +243,14 @@
 
 
 
-        <ion-content class="ion-padding md content-ltr hydrated" role="main" style="--offset-top: 0px; --offset-bottom: 0px;">
+        <ion-content class="ion-padding md content-ltr" role="main" style="--offset-top: 0px; --offset-bottom: 0px;">
 
           <div id="app-container"><div class="self-service-container">
-            <canvas id="taxonomy-network-canvas" width="1185" height="737"></canvas>
+            <canvas id="taxonomy-network-canvas" width="1185" height="807"></canvas>
             <div class="hero-content" style="margin-bottom: 40px;">
                 <h1 class="premium-title">Taxonomía de Portafolio para Negocios</h1>
                 <p class="premium-subtitle">Descubre el poder del diseñar la taxonomía en tu portafolio. Orquesta portafolios, productos y capacidades en un entornos fluido y enfocado.</p>
-                <ion-button id="btn-start-wizard" class="ios-btn md button button-solid ion-activatable ion-focusable hydrated">
+                <ion-button id="btn-start-wizard" class="ios-btn md button button-solid ion-activatable ion-focusable">
                     Diseñar Nueva Taxonomía
                     <ion-icon name="arrow-forward-outline" slot="end" role="img" class="md flip-rtl hydrated"></ion-icon>
                 </ion-button>
@@ -290,7 +290,7 @@
 
     </ion-split-pane>
 
-  <div id="drawer-root-container" class="ion-page"><div class="drawer-backdrop" id="drawer-backdrop"></div></div><ion-loading id="ion-overlay-2" class="sc-ion-loading-md-h md sc-ion-loading-md hydrated" role="dialog" aria-modal="true" aria-labelledby="loading-5-msg" tabindex="-1" style="z-index: 40005;"><ion-backdrop class="sc-ion-loading-md md backdrop-no-tappable hydrated" aria-hidden="true" style="pointer-events: none;"></ion-backdrop><div tabindex="0" aria-hidden="true" class="sc-ion-loading-md"></div><div class="loading-wrapper ion-overlay-wrapper sc-ion-loading-md"><div class="loading-spinner sc-ion-loading-md"><ion-spinner aria-hidden="true" class="sc-ion-loading-md md spinner-crescent hydrated" role="progressbar"></ion-spinner></div><div class="loading-content sc-ion-loading-md" id="loading-5-msg">Verificando identidad...</div></div><div tabindex="0" aria-hidden="true" class="sc-ion-loading-md"></div></ion-loading><ion-loading id="ion-overlay-1" class="sc-ion-loading-md-h md sc-ion-loading-md hydrated" role="dialog" aria-modal="true" aria-labelledby="loading-6-msg" tabindex="-1" style="z-index: 40006;"><ion-backdrop class="sc-ion-loading-md md backdrop-no-tappable hydrated" aria-hidden="true" style="pointer-events: none;"></ion-backdrop><div tabindex="0" aria-hidden="true" class="sc-ion-loading-md"></div><div class="loading-wrapper ion-overlay-wrapper sc-ion-loading-md"><div class="loading-spinner sc-ion-loading-md"><ion-spinner aria-hidden="true" class="sc-ion-loading-md md spinner-crescent hydrated" role="progressbar"></ion-spinner></div><div class="loading-content sc-ion-loading-md" id="loading-6-msg">Verificando identidad...</div></div><div tabindex="0" aria-hidden="true" class="sc-ion-loading-md"></div></ion-loading></ion-app>
+  <div id="drawer-root-container" class="ion-page"><div class="drawer-backdrop" id="drawer-backdrop"></div></div></ion-app>
 
 
 
@@ -1611,7 +1611,7 @@ ion-popover.omnibar-popover {
 </style>
 
 
-<ion-popover id="omnibar-results-popover" trigger="global-omnibar" trigger-action="click" alignment="center" side="bottom" keyboard-close="false" class="omnibar-popover md overlay-hidden popover-desktop popover-side-bottom hydrated" aria-modal="true" no-router="" tabindex="-1" style="z-index: 20002;">
+<ion-popover id="omnibar-results-popover" trigger="global-omnibar" trigger-action="click" alignment="center" side="bottom" keyboard-close="false" class="omnibar-popover md overlay-hidden popover-desktop popover-side-bottom" aria-modal="true" no-router="" tabindex="-1" style="z-index: 20002;">
   <ion-content class="md content-sizing content-ltr hydrated" style="--offset-top: 0px; --offset-bottom: 0px;">
     <ion-list id="omnibar-results-list" lines="full" role="list" class="md list-md list-lines-full list-md-lines-full hydrated">
       <div class="omnibar-empty">
@@ -23641,4 +23641,4 @@ window.GovernanceEngine = {
 
 
 
-<!--ionic teleport--><!--ionic teleport-->
+<ion-loading id="ion-overlay-1" class="sc-ion-loading-md-h md overlay-hidden sc-ion-loading-md" role="dialog" aria-modal="true" aria-labelledby="loading-3-msg" tabindex="-1" style="z-index: 40003;"><ion-backdrop class="sc-ion-loading-md"></ion-backdrop><div tabindex="0" aria-hidden="true" class="sc-ion-loading-md"></div><div class="loading-wrapper ion-overlay-wrapper sc-ion-loading-md"><div class="loading-spinner sc-ion-loading-md"><ion-spinner aria-hidden="true" class="sc-ion-loading-md md spinner-crescent hydrated" role="progressbar"></ion-spinner></div><div class="loading-content sc-ion-loading-md" id="loading-3-msg">Verificando identidad...</div></div><div tabindex="0" aria-hidden="true" class="sc-ion-loading-md"></div></ion-loading><ion-loading id="ion-overlay-2" class="sc-ion-loading-md-h md overlay-hidden sc-ion-loading-md" role="dialog" aria-modal="true" aria-labelledby="loading-4-msg" tabindex="-1" style="z-index: 40004;"><ion-backdrop class="sc-ion-loading-md"></ion-backdrop><div tabindex="0" aria-hidden="true" class="sc-ion-loading-md"></div><div class="loading-wrapper ion-overlay-wrapper sc-ion-loading-md"><div class="loading-spinner sc-ion-loading-md"><ion-spinner aria-hidden="true" class="sc-ion-loading-md md spinner-crescent hydrated" role="progressbar"></ion-spinner></div><div class="loading-content sc-ion-loading-md" id="loading-4-msg">Verificando identidad...</div></div><div tabindex="0" aria-hidden="true" class="sc-ion-loading-md"></div></ion-loading>
