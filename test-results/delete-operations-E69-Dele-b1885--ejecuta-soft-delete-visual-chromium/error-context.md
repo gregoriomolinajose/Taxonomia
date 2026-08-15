@@ -12,10 +12,9 @@
 # Error details
 
 ```
-TimeoutError: locator.waitFor: Timeout 120000ms exceeded.
+TimeoutError: locator.waitFor: Timeout 60000ms exceeded.
 Call log:
-  - waiting for locator('#sandboxFrame').contentFrame().locator('#userHtmlFrame').contentFrame().locator('ion-content').first()
-    - waiting for" https://script.google.com/macros/s/AKfycbyYY8F6scltfXdK_CycPcxIQaeNn5tDFn78VhaHGMKlcMzUjOjdrHFvks1OZl5OBqDuzQ/exec" navigation to finish...
+  - waiting for locator('#sandboxFrame').contentFrame().locator('#userHtmlFrame').contentFrame().locator('table.dv-table tbody tr').first() to be visible
 
 ```
 
@@ -69,8 +68,7 @@ Call log:
   45  |     // Esperar a que el sandbox construya el DOM. En Ionic, `ion-app` siempre existe.
   46  |     const frame = page.frameLocator('#sandboxFrame').frameLocator('#userHtmlFrame');
   47  |     // En lugar de `ion-app`, esperamos algo que sí es visible
-> 48  |     await frame.locator('ion-content').first().waitFor({ state: 'attached', timeout: 120000 });
-      |                                                ^ TimeoutError: locator.waitFor: Timeout 120000ms exceeded.
+  48  |     await frame.locator('ion-content').first().waitFor({ state: 'attached', timeout: 120000 });
   49  |     
   50  |     const fs = require('fs');
   51  |     fs.writeFileSync('debug-frame.html', await frame.locator('body').innerHTML());
@@ -90,7 +88,8 @@ Call log:
   65  |     
   66  |     // Ahora esperar a que la tabla de registros cargue
   67  |     const gridRows = frame.locator('table.dv-table tbody tr');
-  68  |     await gridRows.first().waitFor({ state: 'visible', timeout: 60000 });
+> 68  |     await gridRows.first().waitFor({ state: 'visible', timeout: 60000 });
+      |                            ^ TimeoutError: locator.waitFor: Timeout 60000ms exceeded.
   69  |     
   70  |     const rowCountBefore = await gridRows.count();
   71  |     expect(rowCountBefore).toBeGreaterThan(0);
