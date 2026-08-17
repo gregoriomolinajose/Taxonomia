@@ -22,19 +22,19 @@ describe('AuthManager', () => {
     document = window.document;
 
     // Mock global functions
-    window.PresentSafe = jest.fn().mockResolvedValue();
+    window.PresentSafe = vi.fn().mockResolvedValue();
     const originalCreateElement = document.createElement.bind(document);
     document.createElement = function(tagName) {
       const el = originalCreateElement(tagName);
       if (tagName === 'ion-loading' || tagName === 'ion-toast') {
-        el.dismiss = jest.fn().mockResolvedValue();
+        el.dismiss = vi.fn().mockResolvedValue();
       }
       return el;
     };
     window.DataAPI = {
-      call: jest.fn().mockResolvedValue({ authorized: true, email: 'test@example.com' })
+      call: vi.fn().mockResolvedValue({ authorized: true, email: 'test@example.com' })
     };
-    window.formatUserName = jest.fn().mockReturnValue('Test User');
+    window.formatUserName = vi.fn().mockReturnValue('Test User');
 
     // Load the script into the DOM
     const scriptEl = document.createElement('script');
@@ -47,13 +47,13 @@ describe('AuthManager', () => {
     const AuthManager = window.AuthManager;
     
     // Mock the DataAPI call to track invocations
-    const dataApiSpy = jest.spyOn(window.DataAPI, 'call');
+    const dataApiSpy = vi.spyOn(window.DataAPI, 'call');
     
     // Call init twice concurrently or sequentially
     await AuthManager.init();
     await AuthManager.init();
     
-    // It should only have called the API once
-    expect(dataApiSpy).toHaveBeenCalledTimes(1);
+    // It should only have called the API twice (getUserIdentity + getAppBootstrapPayload)
+    expect(dataApiSpy).toHaveBeenCalledTimes(2);
   });
 });

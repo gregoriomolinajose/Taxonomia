@@ -587,12 +587,14 @@
         }
 
         function _onRowCheck(id, isChecked) {
+            console.log(`[DataViewEngine] QA Debug _onRowCheck fired for id=${id}, isChecked=${isChecked}`);
             const strId = String(id);
             if (isChecked) {
                 if (!_state.selectedRows.includes(strId)) _state.selectedRows.push(strId);
             } else {
                 _state.selectedRows = _state.selectedRows.filter(r => String(r) !== strId);
             }
+            console.log(`[DataViewEngine] QA Debug _state.selectedRows length is now ${_state.selectedRows.length}`);
             _updateBulkDeleteBtn();
         }
 
@@ -612,13 +614,23 @@
         }
 
         function _updateBulkDeleteBtn() {
-            const btn = document.getElementById('dv-bulk-delete-btn');
-            if (!btn) return;
+            const container = document.getElementById(_state.containerId);
+            if (!container) {
+                console.log(`[DataViewEngine] QA Debug _updateBulkDeleteBtn: Container ${_state.containerId} not found`);
+                return;
+            }
+            const btn = container.querySelector('#dv-bulk-delete-btn');
+            if (!btn) {
+                console.log(`[DataViewEngine] QA Debug _updateBulkDeleteBtn: Button #dv-bulk-delete-btn not found in container`);
+                return;
+            }
             if (_state.selectedRows && _state.selectedRows.length > 0) {
                 btn.style.display = 'inline-flex';
                 btn.innerHTML = `<ion-icon name="trash-outline" slot="start"></ion-icon> Eliminar ${_state.selectedRows.length} seleccionados`;
+                console.log(`[DataViewEngine] QA Debug _updateBulkDeleteBtn: Set button to inline-flex. DOM style: ${btn.style.display}`);
             } else {
                 btn.style.display = 'none';
+                console.log(`[DataViewEngine] QA Debug _updateBulkDeleteBtn: Set button to none`);
             }
         }
 

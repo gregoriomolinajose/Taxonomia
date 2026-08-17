@@ -567,7 +567,7 @@ var APP_SCHEMAS = {
   // [E6-S66] Canal pub-sub nativo para invalidación proactiva de caché cross-tenant.
   // Append-only. El job Job_CleanCacheSignals() limpia señales > 1 hora cada 24h.
   Sys_Cache_Signals: {
-    metadata: { prefix: 'SCCH', showInMenu: false, order: 95, iconName: 'radio-outline', color: 'warning',
+    metadata: { skipProvisioning: true, prefix: 'SCCH', showInMenu: false, order: 95, iconName: 'radio-outline', color: 'warning',
                 label: 'Señales de Caché Cross-Tenant', titleField: 'entity_name',
                 idField: 'signal_id', fkField: null },
     primaryKey: "signal_id",
@@ -581,7 +581,7 @@ var APP_SCHEMAS = {
   
   // [E61] Registro de ejecuciones asíncronas
   Sys_Jobs: {
-    metadata: { prefix: 'SJOB', showInMenu: true, order: 95, iconName: 'list-outline', color: 'primary',
+    metadata: { skipProvisioning: true, prefix: 'SJOB', showInMenu: true, order: 95, iconName: 'list-outline', color: 'primary',
                 label: 'Ejecuciones de Carga', titleField: 'jobId', idField: 'jobId', fkField: null },
     primaryKey: "jobId",
     fields: [

@@ -62,7 +62,12 @@ function reconcileAll(ss) {
   };
 
   // 1. Provision all known entities
-  const entityNames = Object.keys(APP_SCHEMAS).filter(k => k !== '_UI_CONFIG');
+  const entityNames = Object.keys(APP_SCHEMAS).filter(k => {
+    if (k === '_UI_CONFIG') return false;
+    const schema = APP_SCHEMAS[k];
+    if (schema && schema.metadata && schema.metadata.skipProvisioning) return false;
+    return true;
+  });
   entityNames.forEach(entityName => {
     try {
       report.entities[entityName] = _reconcileEntity(ss, entityName);
@@ -97,6 +102,12 @@ function reconcileAll(ss) {
  */
 function ensureProvisioned(entityName, ss) {
   ss = ss || SpreadsheetApp.getActiveSpreadsheet();
+  
+  const schema = (typeof APP_SCHEMAS !== 'undefined') ? APP_SCHEMAS[entityName] : null;
+  if (schema && schema.metadata && schema.metadata.skipProvisioning) {
+    return { skipped: true, reason: 'skipProvisioning' };
+  }
+
   try {
     return _reconcileEntity(ss, entityName);
   } catch (e) {
@@ -328,7 +339,12 @@ function _removeDeveloperMetadata(sheet, key) {
  */
 function getProvisioningStatus(ss) {
   ss = ss || SpreadsheetApp.getActiveSpreadsheet();
-  const entityNames = Object.keys(APP_SCHEMAS).filter(k => k !== '_UI_CONFIG');
+  const entityNames = Object.keys(APP_SCHEMAS).filter(k => {
+    if (k === '_UI_CONFIG') return false;
+    const schema = APP_SCHEMAS[k];
+    if (schema && schema.metadata && schema.metadata.skipProvisioning) return false;
+    return true;
+  });
 
   return entityNames.map(entityName => {
     // [BugA-fix] Look up 'DB_<EntityName>' — the actual tab naming convention.

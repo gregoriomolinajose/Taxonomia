@@ -562,9 +562,18 @@ const Adapter_Sheets = {
     },
 
     _ensureSheetExists: function(ss, tableName) {
+        let schemaFields = [];
+        let isGetAppSchemaDefined = (typeof getAppSchema === 'function');
+        let isAppSchemasDefined = (typeof APP_SCHEMAS !== 'undefined');
+        let schemaFromFunc = isGetAppSchemaDefined ? getAppSchema(tableName) : null;
+        let schemaFromObj = isAppSchemasDefined ? APP_SCHEMAS[tableName] : null;
+        const schema = schemaFromFunc || schemaFromObj;
+
         // Ejecutar Auto-Healing (S31.7) en cada operación para evitar DB Drift
         if (typeof ensureProvisioned === 'function') {
-             ensureProvisioned(tableName, ss);
+             if (!schema || !schema.metadata || !schema.metadata.skipProvisioning) {
+                 ensureProvisioned(tableName, ss);
+             }
         }
         
         let sheet = ss.getSheetByName('DB_' + tableName);
@@ -574,15 +583,7 @@ const Adapter_Sheets = {
         }
         
         // Auto-inyectar headers de esquema si está recién creada, y Auto-Heal si faltan
-        let schemaFields = [];
-        let isGetAppSchemaDefined = (typeof getAppSchema === 'function');
-        let isAppSchemasDefined = (typeof APP_SCHEMAS !== 'undefined');
-        let schemaFromFunc = isGetAppSchemaDefined ? getAppSchema(tableName) : null;
-        let schemaFromObj = isAppSchemasDefined ? APP_SCHEMAS[tableName] : null;
-        
         Logger.log(`[_ensureSheetExists] Debug: tableName="${tableName}", isGetAppSchemaDefined=${isGetAppSchemaDefined}, isAppSchemasDefined=${isAppSchemasDefined}, schemaFromFunc exists=${!!schemaFromFunc}, schemaFromObj exists=${!!schemaFromObj}`);
-        
-        const schema = schemaFromFunc || schemaFromObj;
         
         if (schema) {
             if (schema.fields) {
@@ -604,7 +605,7 @@ const Adapter_Sheets = {
         if (sheet.getLastRow() === 0) {
             sheet.getRange(1, 1, 1, allHeaders.length).setValues([allHeaders]);
             Logger.log(`[Auto-Provision] Encabezados inyectados: ${allHeaders.join(', ')}`);
-        } else {
+        } else if (!schema || !schema.metadata || !schema.metadata.skipProvisioning) {
             // [S21.4 Auto-Healing] Prevenir pérdida silenciosa de I/O si hay desvío (drift) en las columnas de Sheets
             const currentHeadersRange = sheet.getRange(1, 1, 1, Math.max(1, sheet.getLastColumn()));
             const currentHeadersVals = (currentHeadersRange && typeof currentHeadersRange.getValues === 'function') ? currentHeadersRange.getValues() : [];

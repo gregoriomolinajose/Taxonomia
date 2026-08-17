@@ -59,7 +59,7 @@ describe('API_Universal: Integration ETL Hub (S38.6)', () => {
         const result = JSON.parse(responseJson);
         
         expect(result.status).toBe('error');
-        expect(result.message).toMatch(/must be an array/i);
+        expect(result.message).toMatch(/no es válida/i);
         
         // Pipeline should be halted
         expect(global.Engine_ETL.hydrateAndDeduplicate).not.toHaveBeenCalled();

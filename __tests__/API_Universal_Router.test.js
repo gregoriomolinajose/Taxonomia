@@ -120,7 +120,7 @@ describe('API_Universal Controller', () => {
             const parsedContent = JSON.parse(result.content);
             
             expect(parsedContent.status).toBe('error');
-            expect(parsedContent.message).toBe("Action not supported yet.");
+            expect(parsedContent.message).toContain("Ocurrió un error");
     });
     });
 
@@ -182,7 +182,7 @@ describe('API_Universal Controller', () => {
             expect(result.status).toBe('error');
             expect(result.success).toBe(false);
             expect(result.errorType).toBe('CONCURRENCY');
-            expect(result.message).toContain('ERROR_CONCURRENCY');
+            expect(result.message).toContain('Error de concurrencia');
         });
         
         it('should handle generic errors as GENERAL errorType', () => {

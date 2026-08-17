@@ -24,16 +24,29 @@ async function login() {
     });
 
     const page = await context.newPage();
-    await page.goto('https://accounts.google.com/signin');
+    const appUrl = process.env.DEV_URL || 'https://script.google.com/macros/s/AKfycbyYY8F6scltfXdK_CycPcxIQaeNn5tDFn78VhaHGMKlcMzUjOjdrHFvks1OZl5OBqDuzQ/exec';
+    await page.goto(appUrl, { timeout: 0 });
 
     console.log('Esperando a que cierres el navegador...');
     
-    context.on('close', () => {
+    context.on('close', async () => {
+        // Obtenemos el estado de la sesión antes de cerrar (o usar los datos persistidos)
         console.log('\n✅ Navegador cerrado. El perfil de autenticación se ha guardado localmente.');
         console.log('Ya puedes ejecutar las pruebas E2E automatizadas usando:');
         console.log('npx playwright test __tests__/e2e/delete-operations.spec.js\n');
         process.exit(0);
     });
+    
+    // Playwright persistent context salva automáticamente, pero extraemos a user.json para global-setup
+    // Para no bloquear la salida si el usuario lo cierra, ponemos un setInterval o esperamos explícitamente?
+    // Mejor dejamos que guarde iterativamente cada segundo
+    setInterval(async () => {
+        try {
+            if (context.pages().length > 0) {
+                await context.storageState({ path: path.join('.auth', 'user.json') });
+            }
+        } catch(e) {}
+    }, 1000);
 }
 
 login().catch(err => {

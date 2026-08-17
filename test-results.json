@@ -89,36 +89,39 @@
                       "status": "failed",
                       "duration": 0,
                       "error": {
-                        "message": "TimeoutError: locator.waitFor: Timeout 120000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#sandboxFrame').contentFrame().locator('#userHtmlFrame').contentFrame().locator('ion-content').first()\u001b[22m\n\u001b[2m    - waiting for\" https://script.google.com/macros/s/AKfycbyYY8F6scltfXdK_CycPcxIQaeNn5tDFn78VhaHGMKlcMzUjOjdrHFvks1OZl5OBqDuzQ/exec\" navigation to finish...\u001b[22m\n",
-                        "stack": "TimeoutError: locator.waitFor: Timeout 120000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#sandboxFrame').contentFrame().locator('#userHtmlFrame').contentFrame().locator('ion-content').first()\u001b[22m\n\u001b[2m    - waiting for\" https://script.google.com/macros/s/AKfycbyYY8F6scltfXdK_CycPcxIQaeNn5tDFn78VhaHGMKlcMzUjOjdrHFvks1OZl5OBqDuzQ/exec\" navigation to finish...\u001b[22m\n\n    at C:\\Users\\grego\\Antigravity\\Taxonomia Project\\__tests__\\e2e\\delete-operations.spec.js:48:48",
+                        "message": "Error: Sesión OAuth expirada o inexistente. Por favor ejecuta 'npm run e2e:login' primero.",
+                        "stack": "Error: Sesión OAuth expirada o inexistente. Por favor ejecuta 'npm run e2e:login' primero.\n    at C:\\Users\\grego\\Antigravity\\Taxonomia Project\\__tests__\\e2e\\delete-operations.spec.js:43:15",
                         "location": {
                           "file": "C:\\Users\\grego\\Antigravity\\Taxonomia Project\\__tests__\\e2e\\delete-operations.spec.js",
-                          "column": 48,
-                          "line": 48
+                          "column": 15,
+                          "line": 43
                         },
-                        "snippet": "\u001b[0m \u001b[90m 46 |\u001b[39m     \u001b[36mconst\u001b[39m frame \u001b[33m=\u001b[39m page\u001b[33m.\u001b[39mframeLocator(\u001b[32m'#sandboxFrame'\u001b[39m)\u001b[33m.\u001b[39mframeLocator(\u001b[32m'#userHtmlFrame'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 47 |\u001b[39m     \u001b[90m// En lugar de `ion-app`, esperamos algo que sí es visible\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 48 |\u001b[39m     \u001b[36mawait\u001b[39m frame\u001b[33m.\u001b[39mlocator(\u001b[32m'ion-content'\u001b[39m)\u001b[33m.\u001b[39mfirst()\u001b[33m.\u001b[39mwaitFor({ state\u001b[33m:\u001b[39m \u001b[32m'attached'\u001b[39m\u001b[33m,\u001b[39m timeout\u001b[33m:\u001b[39m \u001b[35m120000\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                                                \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 49 |\u001b[39m     \n \u001b[90m 50 |\u001b[39m     \u001b[36mconst\u001b[39m fs \u001b[33m=\u001b[39m require(\u001b[32m'fs'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 51 |\u001b[39m     fs\u001b[33m.\u001b[39mwriteFileSync(\u001b[32m'debug-frame.html'\u001b[39m\u001b[33m,\u001b[39m \u001b[36mawait\u001b[39m frame\u001b[33m.\u001b[39mlocator(\u001b[32m'body'\u001b[39m)\u001b[33m.\u001b[39minnerHTML())\u001b[33m;\u001b[39m\u001b[0m"
+                        "snippet": "\u001b[0m \u001b[90m 41 |\u001b[39m\n \u001b[90m 42 |\u001b[39m     \u001b[36mif\u001b[39m (page\u001b[33m.\u001b[39murl()\u001b[33m.\u001b[39mincludes(\u001b[32m'accounts.google.com'\u001b[39m)) {\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 43 |\u001b[39m         \u001b[36mthrow\u001b[39m \u001b[36mnew\u001b[39m \u001b[33mError\u001b[39m(\u001b[32m\"Sesión OAuth expirada o inexistente. Por favor ejecuta 'npm run e2e:login' primero.\"\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m               \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 44 |\u001b[39m     }\n \u001b[90m 45 |\u001b[39m     \n \u001b[90m 46 |\u001b[39m     \u001b[90m// Esperar a que el sandbox construya el DOM. En Ionic, `ion-app` siempre existe.\u001b[39m\u001b[0m"
                       },
                       "errors": [
                         {
                           "location": {
                             "file": "C:\\Users\\grego\\Antigravity\\Taxonomia Project\\__tests__\\e2e\\delete-operations.spec.js",
-                            "column": 48,
-                            "line": 48
+                            "column": 15,
+                            "line": 43
                           },
-                          "message": "TimeoutError: locator.waitFor: Timeout 120000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#sandboxFrame').contentFrame().locator('#userHtmlFrame').contentFrame().locator('ion-content').first()\u001b[22m\n\u001b[2m    - waiting for\" https://script.google.com/macros/s/AKfycbyYY8F6scltfXdK_CycPcxIQaeNn5tDFn78VhaHGMKlcMzUjOjdrHFvks1OZl5OBqDuzQ/exec\" navigation to finish...\u001b[22m\n\n\n  46 |     const frame = page.frameLocator('#sandboxFrame').frameLocator('#userHtmlFrame');\n  47 |     // En lugar de `ion-app`, esperamos algo que sí es visible\n> 48 |     await frame.locator('ion-content').first().waitFor({ state: 'attached', timeout: 120000 });\n     |                                                ^\n  49 |     \n  50 |     const fs = require('fs');\n  51 |     fs.writeFileSync('debug-frame.html', await frame.locator('body').innerHTML());\n    at C:\\Users\\grego\\Antigravity\\Taxonomia Project\\__tests__\\e2e\\delete-operations.spec.js:48:48"
+                          "message": "Error: Sesión OAuth expirada o inexistente. Por favor ejecuta 'npm run e2e:login' primero.\n\n  41 |\n  42 |     if (page.url().includes('accounts.google.com')) {\n> 43 |         throw new Error(\"Sesión OAuth expirada o inexistente. Por favor ejecuta 'npm run e2e:login' primero.\");\n     |               ^\n  44 |     }\n  45 |     \n  46 |     // Esperar a que el sandbox construya el DOM. En Ionic, `ion-app` siempre existe.\n    at C:\\Users\\grego\\Antigravity\\Taxonomia Project\\__tests__\\e2e\\delete-operations.spec.js:43:15"
                         }
                       ],
                       "stdout": [
                         {
-                          "text": "Navigating to: https://script.google.com/macros/s/AKfycbyYY8F6scltfXdK_CycPcxIQaeNn5tDFn78VhaHGMKlcMzUjOjdrHFvks1OZl5OBqDuzQ/exec\n"
+                          "text": "Navigating to: https://script.google.com/macros/s/AKfycbz7zuW-QEf2_zU6TxxIJr8kCVfycH7zS2fbxRulBK4nQeuFqObQz1BCcRd4L6uSKXzEow/exec\n"
                         },
                         {
-                          "text": "Navigation error/timeout (continuing to wait for iframe): page.goto: Timeout 60000ms exceeded.\nCall log:\n\u001b[2m  - navigating to \"https://script.google.com/macros/s/AKfycbyYY8F6scltfXdK_CycPcxIQaeNn5tDFn78VhaHGMKlcMzUjOjdrHFvks1OZl5OBqDuzQ/exec\", waiting until \"load\"\u001b[22m\n\n"
+                          "text": "PAGE LOG [log]: %c%s color: red; background: yellow; font-size: 24px; WARNING! %c%s color: red; background: yellow; font-size: 24px; WARNING!\n"
+                        },
+                        {
+                          "text": "PAGE LOG [log]: %c%s font-size: 18px; Using this console may allow attackers to impersonate you and steal your information using an attack called Self-XSS.\nDo not enter or paste code that you do not understand. %c%s font-size: 18px; Using this console may allow attackers to impersonate you and steal your information using an attack called Self-XSS.\nDo not enter or paste code that you do not understand.\n"
                         }
                       ],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-08-15T15:04:17.892Z",
+                      "startTime": "2026-08-16T22:44:06.307Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -139,8 +142,8 @@
                       ],
                       "errorLocation": {
                         "file": "C:\\Users\\grego\\Antigravity\\Taxonomia Project\\__tests__\\e2e\\delete-operations.spec.js",
-                        "column": 48,
-                        "line": 48
+                        "column": 15,
+                        "line": 43
                       }
                     }
                   ],
@@ -149,7 +152,7 @@
               ],
               "id": "92e4a93cacd18abd8e49-8d414afaf854921d85e8",
               "file": "delete-operations.spec.js",
-              "line": 58,
+              "line": 64,
               "column": 3
             },
             {
@@ -173,7 +176,7 @@
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-08-15T15:07:24.029Z",
+                      "startTime": "2026-08-16T22:44:09.240Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -183,7 +186,7 @@
               ],
               "id": "92e4a93cacd18abd8e49-6d33c75ae1132da8a76f",
               "file": "delete-operations.spec.js",
-              "line": 97,
+              "line": 120,
               "column": 3
             }
           ]
@@ -193,8 +196,8 @@
   ],
   "errors": [],
   "stats": {
-    "startTime": "2026-08-15T15:04:16.451Z",
-    "duration": 187606.731,
+    "startTime": "2026-08-16T22:44:04.936Z",
+    "duration": 4335.112,
     "expected": 0,
     "skipped": 1,
     "unexpected": 1,

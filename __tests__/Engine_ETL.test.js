@@ -115,7 +115,7 @@ describe('Engine_ETL: extractDataFromDrive (S61.10)', () => {
         });
         const mockGetRange = vi.fn(() => ({
             getDisplayValues: mockGetDisplayValues,
-            getValues: vi.fn(() => [['email', 'nombre', 'numero_empleado']]) // Just for line 297 getValues()[0]
+            getValues: vi.fn(() => [['email', 'nombre', 'numero_empleado'], ['test@test.com', 'Test', '123']])
         }));
         const mockGetDataRange = vi.fn(() => ({
             getValues: mockGetValues,
