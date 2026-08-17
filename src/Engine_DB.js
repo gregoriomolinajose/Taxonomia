@@ -1145,7 +1145,8 @@ const Engine_DB = {
                 estado: 'Eliminado',
                 valido_hasta: sysDate,
                 updated_at: sysDate,
-                updated_by: currentUser
+                updated_by: currentUser,
+                _overrideConcurrency: true
             }));
 
             const uuidFn = (typeof Utilities !== 'undefined') ? Utilities.getUuid : () => Math.random().toString(36).substring(2,10);
@@ -1177,7 +1178,8 @@ const Engine_DB = {
                 const nodePayload = {
                     estado: 'Eliminado',
                     deleted_at: sysDate,
-                    deleted_by: currentUser
+                    deleted_by: currentUser,
+                    _overrideConcurrency: true
                 };
                 nodePayload[pkField] = nId;
                 return nodePayload;

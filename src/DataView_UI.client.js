@@ -652,16 +652,13 @@
                         const loading = document.createElement('ion-loading');
                         loading.message = `Eliminando ${count} registros...`;
                         document.body.appendChild(loading);
-                        window.PresentSafe(loading);
+                        await window.PresentSafe(loading);
                         
                         try {
                             const response = await window.DataAPI.call('API_Universal_Router', 'bulk_delete', _state.entityName, _state.selectedRows);
                             
                             if (response && response.status === 'success') {
-                                window.dispatchEvent(new CustomEvent('toast:show', {
-                                    detail: { message: `✅ ${count} registros eliminados exitosamente.`, color: 'success' }
-                                }));
-                                
+                                _showToast(`✅ ${count} registros eliminados exitosamente.`, 'success');
                                 const rowsToDelete = [..._state.selectedRows];
                                 _state.selectedRows = [];
                                 _updateBulkDeleteBtn();
@@ -685,9 +682,7 @@
                             }
                         } catch (err) {
                             console.error('[DataView] Bulk Delete Error:', err);
-                            window.dispatchEvent(new CustomEvent('toast:show', {
-                                detail: { message: '❌ Error: ' + err.message, color: 'danger' }
-                            }));
+                            _showToast('❌ Error: ' + err.message, 'danger');
                         } finally {
                             loading.dismiss();
                         }

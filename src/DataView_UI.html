@@ -641,7 +641,7 @@
                         const loading = document.createElement('ion-loading');
                         loading.message = `Eliminando ${count} registros...`;
                         document.body.appendChild(loading);
-                        window.PresentSafe(loading);
+                        await window.PresentSafe(loading);
                         
                         try {
                             const response = await window.DataAPI.call('API_Universal_Router', 'bulk_delete', _state.entityName, _state.selectedRows);

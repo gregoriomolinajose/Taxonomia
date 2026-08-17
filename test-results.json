@@ -72,91 +72,7 @@
           "column": 6,
           "specs": [
             {
-              "title": "Historia 16: Borrado Individual en UI renderiza ion-alert y ejecuta soft-delete visual",
-              "ok": false,
-              "tags": [],
-              "tests": [
-                {
-                  "timeout": 150000,
-                  "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "chromium",
-                  "projectName": "chromium",
-                  "results": [
-                    {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
-                      "status": "failed",
-                      "duration": 0,
-                      "error": {
-                        "message": "Error: Sesión OAuth expirada o inexistente. Por favor ejecuta 'npm run e2e:login' primero.",
-                        "stack": "Error: Sesión OAuth expirada o inexistente. Por favor ejecuta 'npm run e2e:login' primero.\n    at C:\\Users\\grego\\Antigravity\\Taxonomia Project\\__tests__\\e2e\\delete-operations.spec.js:43:15",
-                        "location": {
-                          "file": "C:\\Users\\grego\\Antigravity\\Taxonomia Project\\__tests__\\e2e\\delete-operations.spec.js",
-                          "column": 15,
-                          "line": 43
-                        },
-                        "snippet": "\u001b[0m \u001b[90m 41 |\u001b[39m\n \u001b[90m 42 |\u001b[39m     \u001b[36mif\u001b[39m (page\u001b[33m.\u001b[39murl()\u001b[33m.\u001b[39mincludes(\u001b[32m'accounts.google.com'\u001b[39m)) {\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 43 |\u001b[39m         \u001b[36mthrow\u001b[39m \u001b[36mnew\u001b[39m \u001b[33mError\u001b[39m(\u001b[32m\"Sesión OAuth expirada o inexistente. Por favor ejecuta 'npm run e2e:login' primero.\"\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m               \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 44 |\u001b[39m     }\n \u001b[90m 45 |\u001b[39m     \n \u001b[90m 46 |\u001b[39m     \u001b[90m// Esperar a que el sandbox construya el DOM. En Ionic, `ion-app` siempre existe.\u001b[39m\u001b[0m"
-                      },
-                      "errors": [
-                        {
-                          "location": {
-                            "file": "C:\\Users\\grego\\Antigravity\\Taxonomia Project\\__tests__\\e2e\\delete-operations.spec.js",
-                            "column": 15,
-                            "line": 43
-                          },
-                          "message": "Error: Sesión OAuth expirada o inexistente. Por favor ejecuta 'npm run e2e:login' primero.\n\n  41 |\n  42 |     if (page.url().includes('accounts.google.com')) {\n> 43 |         throw new Error(\"Sesión OAuth expirada o inexistente. Por favor ejecuta 'npm run e2e:login' primero.\");\n     |               ^\n  44 |     }\n  45 |     \n  46 |     // Esperar a que el sandbox construya el DOM. En Ionic, `ion-app` siempre existe.\n    at C:\\Users\\grego\\Antigravity\\Taxonomia Project\\__tests__\\e2e\\delete-operations.spec.js:43:15"
-                        }
-                      ],
-                      "stdout": [
-                        {
-                          "text": "Navigating to: https://script.google.com/macros/s/AKfycbz7zuW-QEf2_zU6TxxIJr8kCVfycH7zS2fbxRulBK4nQeuFqObQz1BCcRd4L6uSKXzEow/exec\n"
-                        },
-                        {
-                          "text": "PAGE LOG [log]: %c%s color: red; background: yellow; font-size: 24px; WARNING! %c%s color: red; background: yellow; font-size: 24px; WARNING!\n"
-                        },
-                        {
-                          "text": "PAGE LOG [log]: %c%s font-size: 18px; Using this console may allow attackers to impersonate you and steal your information using an attack called Self-XSS.\nDo not enter or paste code that you do not understand. %c%s font-size: 18px; Using this console may allow attackers to impersonate you and steal your information using an attack called Self-XSS.\nDo not enter or paste code that you do not understand.\n"
-                        }
-                      ],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-08-16T22:44:06.307Z",
-                      "annotations": [],
-                      "attachments": [
-                        {
-                          "name": "screenshot",
-                          "contentType": "image/png",
-                          "path": "C:\\Users\\grego\\Antigravity\\Taxonomia Project\\test-results\\delete-operations-E69-Dele-b1885--ejecuta-soft-delete-visual-chromium\\test-failed-1.png"
-                        },
-                        {
-                          "name": "error-context",
-                          "contentType": "text/markdown",
-                          "path": "C:\\Users\\grego\\Antigravity\\Taxonomia Project\\test-results\\delete-operations-E69-Dele-b1885--ejecuta-soft-delete-visual-chromium\\error-context.md"
-                        },
-                        {
-                          "name": "error-context",
-                          "contentType": "text/markdown",
-                          "path": "C:\\Users\\grego\\Antigravity\\Taxonomia Project\\test-results\\delete-operations-E69-Dele-b1885--ejecuta-soft-delete-visual-chromium\\error-context.md"
-                        }
-                      ],
-                      "errorLocation": {
-                        "file": "C:\\Users\\grego\\Antigravity\\Taxonomia Project\\__tests__\\e2e\\delete-operations.spec.js",
-                        "column": 15,
-                        "line": 43
-                      }
-                    }
-                  ],
-                  "status": "unexpected"
-                }
-              ],
-              "id": "92e4a93cacd18abd8e49-8d414afaf854921d85e8",
-              "file": "delete-operations.spec.js",
-              "line": 64,
-              "column": 3
-            },
-            {
-              "title": "Historia 17: Borrado Masivo UI selecciona filas múltiples y limpia el Grid",
+              "title": "Historia 18: Borrado Individual desde Vista Grid (Cards)",
               "ok": true,
               "tags": [],
               "tests": [
@@ -168,23 +84,60 @@
                   "projectName": "chromium",
                   "results": [
                     {
-                      "workerIndex": -1,
-                      "parallelIndex": -1,
-                      "status": "skipped",
-                      "duration": 0,
+                      "workerIndex": 13,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 8639,
                       "errors": [],
-                      "stdout": [],
+                      "stdout": [
+                        {
+                          "text": "Navigating to: https://script.google.com/macros/s/AKfycbz7zuW-QEf2_zU6TxxIJr8kCVfycH7zS2fbxRulBK4nQeuFqObQz1BCcRd4L6uSKXzEow/exec\n"
+                        },
+                        {
+                          "text": "PAGE LOG [warning]: An iframe which has both allow-scripts and allow-same-origin for its sandbox attribute can escape its sandboxing.\n"
+                        },
+                        {
+                          "text": "PAGE LOG [warning]: [Ionic Warning]: [ion-popover] - A trigger element with the ID \"global-omnibar\" was not found in the DOM. The trigger element must be in the DOM when the \"trigger\" property is set on ion-popover. JSHandle@node [Ionic Warning]: [ion-popover] - A trigger element with the ID \"global-omnibar\" was not found in the DOM. The trigger element must be in the DOM when the \"trigger\" property is set on ion-popover. ref: <Node>\n"
+                        },
+                        {
+                          "text": "PAGE LOG [warning]: [Ionic Warning]: [ion-popover] - A trigger element with the ID \"global-omnibar\" was not found in the DOM. The trigger element must be in the DOM when the \"trigger\" property is set on ion-popover. JSHandle@node [Ionic Warning]: [ion-popover] - A trigger element with the ID \"global-omnibar\" was not found in the DOM. The trigger element must be in the DOM when the \"trigger\" property is set on ion-popover. ref: <Node>\n"
+                        },
+                        {
+                          "text": "PAGE LOG [info]: Net state changed from IDLE to BUSY Net state changed from IDLE to BUSY\n"
+                        },
+                        {
+                          "text": "PAGE LOG [info]: Net state changed from BUSY to IDLE Net state changed from BUSY to IDLE\n"
+                        },
+                        {
+                          "text": "PAGE LOG [info]: Net state changed from IDLE to BUSY Net state changed from IDLE to BUSY\n"
+                        },
+                        {
+                          "text": "PAGE LOG [timeEnd]: [Perf] Single RPC Hydration: 5785.01806640625 ms [Perf] Single RPC Hydration: 5785.01806640625 ms\n"
+                        },
+                        {
+                          "text": "PAGE LOG [log]: [DataViewEngine] Graph hydrated, forzando silent re-render para actualizar columnas de relaciones en Portafolio [DataViewEngine] Graph hydrated, forzando silent re-render para actualizar columnas de relaciones en Portafolio\n"
+                        },
+                        {
+                          "text": "PAGE LOG [log]: [Cache] Registro eliminado de caché global: PORT-3WP89 [Cache] Registro eliminado de caché global: PORT-3WP89\n"
+                        }
+                      ],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-08-16T22:44:09.240Z",
+                      "startTime": "2026-08-17T20:41:58.196Z",
                       "annotations": [],
-                      "attachments": []
+                      "attachments": [
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "C:\\Users\\grego\\Antigravity\\Taxonomia Project\\test-results\\delete-operations-E69-Dele-c20e8-ual-desde-Vista-Grid-Cards--chromium\\trace.zip"
+                        }
+                      ]
                     }
                   ],
-                  "status": "skipped"
+                  "status": "expected"
                 }
               ],
-              "id": "92e4a93cacd18abd8e49-6d33c75ae1132da8a76f",
+              "id": "92e4a93cacd18abd8e49-040821ac4c23073c8ab7",
               "file": "delete-operations.spec.js",
               "line": 120,
               "column": 3
@@ -196,11 +149,11 @@
   ],
   "errors": [],
   "stats": {
-    "startTime": "2026-08-16T22:44:04.936Z",
-    "duration": 4335.112,
-    "expected": 0,
-    "skipped": 1,
-    "unexpected": 1,
+    "startTime": "2026-08-17T20:41:56.016Z",
+    "duration": 23626.461000000127,
+    "expected": 1,
+    "skipped": 0,
+    "unexpected": 0,
     "flaky": 0
   }
 }

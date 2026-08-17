@@ -20,4 +20,5 @@ Implementar la funcionalidad de borrado masivo en el DataGrid, permitiendo a los
 
 | # | Story | Size | Status | Actual | Velocity | Notes |
 |:-:|-------|:----:|--------|--------|----------|-------|
-| 1 | S70.1 — UI Toolbar & Motor Base Datos Bulk Delete | M | Pending | | | |
+| 1 | S70.1 — UI Toolbar & Motor Base Datos Bulk Delete | M | Completed | | | |
+| 2 | S70.2 — Pruebas E2E para Borrado en Vista Grid (Card) | S | Completed | | | |
