@@ -18,9 +18,9 @@ Refactorizar el Motor ETL (Ingesta Masiva) para emplear la API GViz en la fase d
 
 | # | Story | Size | Status | Actual | Velocity | Notes |
 |:-:|-------|:----:|--------|:------:|:--------:|-------|
-| 1 | S69.1 — Wrapper GViz en Adapter_Sheets | S | Done | - | - | Implementado en PR anterior. |
-| 2 | S69.2 — Implementar `_fetchGVizExternal` y GViz Parsing | M | Pending | - | - | |
-| 3 | S69.3 — Refactor `hydrateAndDeduplicate` (GViz Projection) | M | Pending | - | - | |
+| 1 | S69.1 — Wrapper GViz en Adapter_Sheets | S | Done | - | - | Implementado en PR anterior (E68). |
+| 2 | S69.2 — Implementar `_fetchGVizExternal` y GViz Parsing | M | Descoped | - | - | Hipótesis técnica invalidada (OOM no se resuelve con GViz para archivos externos). |
+| 3 | S69.3 — Refactor `hydrateAndDeduplicate` (GViz Projection) | M | Superseded | - | - | Válida pero trivial (~30 líneas). Se abordará como deuda técnica o parche de optimización. |
 
 ## Done Criteria
 - [ ] ETL extrae registros remotamente vía `UrlFetchApp` en lugar de `SpreadsheetApp.getDataRange()`.

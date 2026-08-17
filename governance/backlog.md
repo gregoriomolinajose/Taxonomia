@@ -52,6 +52,8 @@
 | E55| Taxonomy Governance & Deployment Engine             | ✅ Complete   | Transición de modelo relacional distribuido a centralizado y motor diffing | Max      |
 | E56| Wizard Bulk Import (Equipos & Personas)             | ✅ Complete   | Integrar carga masiva de equipos y personas directamente en el wizard      | Alta     |
 | E67| Optimización Extrema de Carga Inicial y Postura de Seguridad | ✅ Complete | Reducir tiempo de carga, refactorizar caché ABAC y mejorar seguridad | Alta |
+| E69| Refactorización ETL GViz | ❌ Descoped | Usar GViz para cargas masivas externas. Descartado por viabilidad técnica. | Baja |
+| E70| Borrado Masivo (Bulk Delete)                        | ✅ Complete   | Operación de borrado múltiple y visualización en Grid con topologías | Alta     |
 | E101 | GreatPeeps: Módulo MVP de Reclutamiento             | In Progress   | Implementar hub integrador de reclutamiento con Gemini, Calendar y LinkedIn | Máxima   |
 ## Parking Lot / Deuda Técnica (Post-Epic 11)
 
