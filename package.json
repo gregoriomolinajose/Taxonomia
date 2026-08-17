@@ -19,8 +19,8 @@
     "deploy:tenantB": "node deploy.js tenantB",
     "deploy:tenantB:auto": "node deploy.js tenantB --zero-touch",
     "deploy:greatpeeps": "node deploy.js greatpeeps",
-    "deploy:greatpeeps:auto": "node deploy.js greatpeeps --zero-touch"
-
+    "deploy:greatpeeps:auto": "node deploy.js greatpeeps --zero-touch",
+    "e2e:login": "node scripts/e2e-login.js"
   },
   "keywords": [],
   "author": "",

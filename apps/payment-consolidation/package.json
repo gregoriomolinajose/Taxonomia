@@ -1,0 +1,16 @@
+{
+  "name": "payment-consolidation",
+  "version": "1.0.0",
+  "description": "Sistema de Relación de Pagos — Conciliación automatizada de Zelle via Gmail + Google Sheets + Telegram",
+  "main": "deploy.js",
+  "scripts": {
+    "deploy:dev": "node deploy.js dev",
+    "deploy:dev:auto": "node deploy.js dev --zero-touch"
+  },
+  "keywords": ["apps-script", "zelle", "payment", "consolidation"],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@google/clasp": "^3.2.0"
+  }
+}

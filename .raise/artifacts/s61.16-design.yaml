@@ -1,0 +1,29 @@
+artifact_type: story-design
+version: 1
+skill: rai-story-design
+created: '2026-07-15T19:58:42Z'
+story: 'S61.16'
+epic: 'E61'
+content:
+  summary: 'Fail-fast schema format validation in Engine_ETL to prevent processing invalid Google Sheets uploads.'
+  complexity: simple
+  acceptance_criteria:
+    - id: AC1
+      description: 'Engine_ETL.extractDataFromDrive throws an Error when maxOverlap <= 0 and schema exists.'
+      verifiable: true
+    - id: AC2
+      description: 'The validation happens before extracting the actual data rows.'
+      verifiable: true
+  integration_points:
+    - module: 'src.Engine_ETL'
+      change_type: modification
+      files: ['src/Engine_ETL.js']
+  decisions:
+    - id: D1
+      choice: 'Throw Error explicitly instead of returning an empty array.'
+      rationale: 'Failing fast with a clear message helps users immediately correct the file instead of wondering why no data was imported.'
+      alternatives_considered: ['Return an empty array and let the caller handle it.']
+refs:
+  backlog_item: 'RAISE-TBD'
+  epic_scope: 'work/epics/e61-enterprise-etl-architecture/stories/s61.16-scope.md'
+metadata: {}

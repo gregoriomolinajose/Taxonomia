@@ -39,6 +39,8 @@
   ═══════════════════════════════════════════════════════ */
   window.AuthManager = {
     init: async function() {
+      if (this._initialized) return;
+      this._initialized = true;
       var appContainer = document.getElementById('app-container');
       
       var loading = document.createElement('ion-loading');

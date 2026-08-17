@@ -15,6 +15,33 @@ const Engine_ABAC = {
     return this._requestCache[entityName];
   },
 
+  _getRolePermissionsMatrix: function(roleId, tenantId) {
+    const cacheKey = `abac_tenant_${tenantId}_role_${roleId}`;
+    
+    // Checking cache
+    if (typeof CacheService !== 'undefined') {
+      const cachedAbac = CacheService.getScriptCache().get(cacheKey);
+      if (cachedAbac) {
+        return JSON.parse(cachedAbac);
+      }
+    }
+    
+    // Generate topology and cache it (Cache Miss -> Fallback a Zero-Trust Pipeline en DB)
+    const permisos = this._getCachedData('Sys_Permissions') || [];
+    const misReglas = permisos.filter(p => String(p.id_rol) === String(roleId));
+    
+    const permMap = {};
+    misReglas.forEach(r => {
+      permMap[r.schema_destino] = r.nivel_acceso;
+    });
+    
+    if (typeof CacheService !== 'undefined') {
+      CacheService.getScriptCache().put(cacheKey, JSON.stringify(permMap), 21600);
+    }
+    
+    return permMap;
+  },
+
   _getCachedTopology: function(email) {
     const key = "topology_" + email;
     if (!this._requestCache[key]) {
@@ -53,11 +80,8 @@ const Engine_ABAC = {
     // Inyección del diccionario CUD de la matriz para el Frontend (S18.4)
     if (persona.id_rol) {
       abacContext.hasRole = true;
-      const permisos = this._getCachedData('Sys_Permissions');
-      const misReglas = permisos.filter(p => p.id_rol === persona.id_rol);
-      misReglas.forEach(r => {
-        abacContext.permissions[r.schema_destino] = r.nivel_acceso;
-      });
+      const tenantId = persona.tenant_id || persona.id_tenant || 'default';
+      abacContext.permissions = this._getRolePermissionsMatrix(persona.id_rol, tenantId);
     }
     
     const personaId = persona.email || persona.numero_empleado || persona.id_persona || persona.id;
@@ -167,20 +191,22 @@ const Engine_ABAC = {
     // Si la persona no tiene rol explícito asignado, opera el principio de Mínimo Privilegio (Solo Lectura)
     if (!roleId) return false;
     
-    const permisos = this._getCachedData('Sys_Permissions');
+    const tenantId = persona.tenant_id || persona.id_tenant || 'default';
+    const matrix = this._getRolePermissionsMatrix(roleId, tenantId);
+    
     // Cruza exacto de ABAC
-    const rule = permisos.find(p => p.id_rol === roleId && p.schema_destino === entityName);
+    const ruleNivel = matrix[entityName];
     
     // S18.2: Regla Opcional Bypass. Si no hay regla Matrix definida explícitamente para esta entidad, 
     // somos tolerantes y permitimos el flujo clásico (Graceful Degradation de Gobernanza)
-    if (!rule) {
+    if (!ruleNivel) {
       if (typeof APP_SCHEMAS !== 'undefined' && APP_SCHEMAS[entityName] && APP_SCHEMAS[entityName].metadata && APP_SCHEMAS[entityName].metadata.requireStrictMatrixAccess) {
         return false;
       }
       return true;
     }
     
-    const nivel = rule.nivel_acceso || "NONE (Denegado)";
+    const nivel = ruleNivel || "NONE (Denegado)";
     
     // Aserciones Directas Base
     if (nivel.startsWith("ALL")) return true;

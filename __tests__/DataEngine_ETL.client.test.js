@@ -18,6 +18,7 @@ describe('DataEngine_ETL (Frontend Client S38.6)', () => {
         global.DataAPI = mockDataAPI;
         window.DataAPI = mockDataAPI;
         window.Schema_Utils = { getFieldNameFromLabel: vi.fn((e, k) => String(k).toLowerCase()) }; // jsdom bind
+        window.ValidationEngine = { validate: vi.fn((row, entity) => ({ isValid: true, validatedData: row })) };
         
         vi.clearAllMocks();
     });
@@ -76,5 +77,25 @@ describe('DataEngine_ETL (Frontend Client S38.6)', () => {
         // Progress Callback fue llamado 7 veces (3 de ingesta + 1 inicio sync + 1 fin sync + 1 refresh + 1 complete)
         expect(progressCb).toHaveBeenCalledTimes(7);
         expect(progressCb).toHaveBeenLastCalledWith(100, 100, true, expect.any(Object), expect.any(String), expect.any(Array));
+    });
+
+    test('3. No debe mutar relaciones_padre basado en orden_path para Dominio en el frontend (S62.2)', async () => {
+        const rawPayload = [
+            { id_dominio: 'DOM-1', orden_path: '1', nombre: 'Root' },
+            { id_dominio: 'DOM-2', orden_path: '1.1', nombre: 'Child A' }
+        ];
+
+        window.Math_Engine = { buildPathName: vi.fn(() => 'test path') };
+        const dispatchSpy = vi.spyOn(window.DataEngine_ETL, '_dispatchChunks').mockResolvedValue(true);
+
+        await window.DataEngine_ETL.processPayload(rawPayload, 'Dominio', null);
+
+        expect(dispatchSpy).toHaveBeenCalledTimes(1);
+        const [dispatchedData, entity] = dispatchSpy.mock.calls[0];
+        
+        // Child A should not have relaciones_padre populated by the frontend
+        expect(dispatchedData[1]).not.toHaveProperty('relaciones_padre');
+
+        dispatchSpy.mockRestore();
     });
 });

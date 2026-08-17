@@ -37,9 +37,10 @@ function doPost(e) {
     })).setMimeType(ContentService.MimeType.JSON);
 
   } catch (error) {
+    if (typeof Logger !== 'undefined') Logger.log('🚀 ERROR POST: ' + error.message + '\\n' + error.stack);
     return ContentService.createTextOutput(JSON.stringify({
       status: "error",
-      message: error.message
+      message: "Ocurrió un error interno al procesar su solicitud."
     })).setMimeType(ContentService.MimeType.JSON);
   }
 }
@@ -173,7 +174,6 @@ function API_Universal_Router(action, entityName, payload) {
         payload[pkField] = _generateShortUUID(entityName);
       }
       responseData = _handleCreate(entityName, payload);
-      responseData = JSON.parse(JSON.stringify(responseData)); // Destruir Date Nativos (Regla 10)
 
       // Enrich response with confirmed PK so the frontend cache injection
       // can build the newRecord without guessing the adapter's internal shape.
@@ -203,6 +203,9 @@ function API_Universal_Router(action, entityName, payload) {
       // Para delete, el payload puede ser solo el ID como string o un obj {id: ...}
       const id = (typeof payload === 'object') ? payload[pkField] || payload.id : payload;
       responseData = _handleDelete(entityName, id);
+    } else if (action === 'bulk_delete') {
+      if (!Array.isArray(payload) || payload.length === 0) throw new Error("bulk_delete requiere un array de IDs");
+      responseData = _handleBulkDelete(entityName, payload);
     } else if (action === 'publish_draft_context') {
       // [S50.4] Mass Approval ETL Endpoint
       if (!payload || !payload.contextId) throw new Error("Falta contextId para publicar el borrador.");
@@ -236,7 +239,10 @@ function API_Universal_Router(action, entityName, payload) {
       
       // [S38.5] Pre-procesamiento de Batch: Deduplicación Lógica e Hidratación Automática
       if (typeof Engine_ETL !== 'undefined' && typeof Engine_ETL.hydrateAndDeduplicate === 'function') {
-          Engine_ETL.hydrateAndDeduplicate(entityName, payload);
+          const hydratedResult = Engine_ETL.hydrateAndDeduplicate(entityName, payload);
+          if (hydratedResult && hydratedResult.data) {
+              payload = hydratedResult.data;
+          }
       }
       
       // [S47.6] Bulk Temporal Graph Resolution (Diffing)
@@ -396,6 +402,11 @@ function API_Universal_Router(action, entityName, payload) {
     const itemName = payload.nombre || payload.id_portafolio || entityName;
     if (typeof Logger !== 'undefined') Logger.log('Persistencia completada para: ' + itemName);
 
+    // Destrucción obligatoria de Objetos Date nativos de Rhino/V8 (Regla 10) para evitar caída de IPC
+    if (responseData) {
+      responseData = JSON.parse(JSON.stringify(responseData));
+    }
+
     // Emitir como String previene Google Apps Script IPC Deserialize Threw Error Native Bug
     const sanitizedReturn = JSON.stringify({
       status: "success",
@@ -408,15 +419,17 @@ function API_Universal_Router(action, entityName, payload) {
     // Categorización Semántica del Error para el Cliente
     let errorType = 'GENERAL';
     const msg = error.message || '';
-    if (msg.indexOf('ERROR_CONCURRENCY') !== -1) errorType = 'CONCURRENCY';
-    else if (msg.indexOf('ABAC Error') !== -1) errorType = 'UNAUTHORIZED';
-    else if (msg.indexOf('not supported') !== -1 || msg.indexOf('must be an array') !== -1 || msg.indexOf('no especificada') !== -1) errorType = 'BAD_REQUEST';
+    let clientMessage = "Ocurrió un error inesperado al procesar la solicitud.";
+    
+    if (msg.indexOf('ERROR_CONCURRENCY') !== -1) { errorType = 'CONCURRENCY'; clientMessage = "Error de concurrencia al procesar los datos."; }
+    else if (msg.indexOf('ABAC Error') !== -1) { errorType = 'UNAUTHORIZED'; clientMessage = "No tiene permisos suficientes para realizar esta acción."; }
+    else if (msg.indexOf('not supported') !== -1 || msg.indexOf('must be an array') !== -1 || msg.indexOf('no especificada') !== -1) { errorType = 'BAD_REQUEST'; clientMessage = "La solicitud enviada no es válida."; }
 
     const sanitizedReturn = JSON.stringify({
       status: "error",
       success: false,
       errorType: errorType,
-      message: error.message
+      message: clientMessage
     });
     return sanitizedReturn;
   }

@@ -7,11 +7,12 @@
 
 // Mock Dependencies
 global.Engine_DB = {
-    upsertBatch: vi.fn().mockReturnValue({ count: 2, status: 'success' })
+    upsertBatch: vi.fn().mockReturnValue({ count: 2, status: 'success' }),
+    list: vi.fn().mockReturnValue({ rows: [] })
 };
 
 global.Engine_ETL = {
-    hydrateAndDeduplicate: vi.fn()
+    hydrateAndDeduplicate: vi.fn().mockImplementation((e, items) => ({ data: items }))
 };
 
 global.APP_SCHEMAS = {
@@ -58,7 +59,7 @@ describe('API_Universal: Integration ETL Hub (S38.6)', () => {
         const result = JSON.parse(responseJson);
         
         expect(result.status).toBe('error');
-        expect(result.message).toMatch(/must be an array/i);
+        expect(result.message).toMatch(/no es válida/i);
         
         // Pipeline should be halted
         expect(global.Engine_ETL.hydrateAndDeduplicate).not.toHaveBeenCalled();

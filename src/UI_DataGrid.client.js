@@ -215,6 +215,7 @@
                         rowCheck.checked = (this.cfg.selectedRows || []).includes(String(id));
                         rowCheck.addEventListener('click', e => e.stopPropagation());
                         rowCheck.addEventListener('change', e => {
+                            console.log(`[DataGrid] QA Debug change event fired for id=${id}`);
                             if (typeof this.cfg.onRowCheck === 'function') this.cfg.onRowCheck(id, e.target.checked);
                         });
                         tdCheck.appendChild(dragHandle);

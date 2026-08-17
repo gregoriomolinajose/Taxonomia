@@ -1,0 +1,3058 @@
+
+<!doctype html>
+<html lang="en">
+
+<head>
+    <title>Code coverage report for src/Schema_Engine.js</title>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="../prettify.css" />
+    <link rel="stylesheet" href="../base.css" />
+    <link rel="shortcut icon" type="image/x-icon" href="../favicon.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style type='text/css'>
+        .coverage-summary .sorter {
+            background-image: url(../sort-arrow-sprite.png);
+        }
+    </style>
+</head>
+    
+<body>
+<div class='wrapper'>
+    <div class='pad1'>
+        <h1><a href="../index.html">All files</a> / <a href="index.html">src</a> Schema_Engine.js</h1>
+        <div class='clearfix'>
+            
+            <div class='fl pad1y space-right2'>
+                <span class="strong">40.21% </span>
+                <span class="quiet">Statements</span>
+                <span class='fraction'>37/92</span>
+            </div>
+        
+            
+            <div class='fl pad1y space-right2'>
+                <span class="strong">30.52% </span>
+                <span class="quiet">Branches</span>
+                <span class='fraction'>29/95</span>
+            </div>
+        
+            
+            <div class='fl pad1y space-right2'>
+                <span class="strong">50% </span>
+                <span class="quiet">Functions</span>
+                <span class='fraction'>9/18</span>
+            </div>
+        
+            
+            <div class='fl pad1y space-right2'>
+                <span class="strong">44.44% </span>
+                <span class="quiet">Lines</span>
+                <span class='fraction'>36/81</span>
+            </div>
+        
+            
+        </div>
+        <p class="quiet">
+            Press <em>n</em> or <em>j</em> to go to the next uncovered block, <em>b</em>, <em>p</em> or <em>k</em> for the previous block.
+        </p>
+        <template id="filterTemplate">
+            <div class="quiet">
+                Filter:
+                <input type="search" id="fileSearch">
+            </div>
+        </template>
+    </div>
+    <div class='status-line low'></div>
+    <pre><table class="coverage">
+<tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
+<a name='L2'></a><a href='#L2'>2</a>
+<a name='L3'></a><a href='#L3'>3</a>
+<a name='L4'></a><a href='#L4'>4</a>
+<a name='L5'></a><a href='#L5'>5</a>
+<a name='L6'></a><a href='#L6'>6</a>
+<a name='L7'></a><a href='#L7'>7</a>
+<a name='L8'></a><a href='#L8'>8</a>
+<a name='L9'></a><a href='#L9'>9</a>
+<a name='L10'></a><a href='#L10'>10</a>
+<a name='L11'></a><a href='#L11'>11</a>
+<a name='L12'></a><a href='#L12'>12</a>
+<a name='L13'></a><a href='#L13'>13</a>
+<a name='L14'></a><a href='#L14'>14</a>
+<a name='L15'></a><a href='#L15'>15</a>
+<a name='L16'></a><a href='#L16'>16</a>
+<a name='L17'></a><a href='#L17'>17</a>
+<a name='L18'></a><a href='#L18'>18</a>
+<a name='L19'></a><a href='#L19'>19</a>
+<a name='L20'></a><a href='#L20'>20</a>
+<a name='L21'></a><a href='#L21'>21</a>
+<a name='L22'></a><a href='#L22'>22</a>
+<a name='L23'></a><a href='#L23'>23</a>
+<a name='L24'></a><a href='#L24'>24</a>
+<a name='L25'></a><a href='#L25'>25</a>
+<a name='L26'></a><a href='#L26'>26</a>
+<a name='L27'></a><a href='#L27'>27</a>
+<a name='L28'></a><a href='#L28'>28</a>
+<a name='L29'></a><a href='#L29'>29</a>
+<a name='L30'></a><a href='#L30'>30</a>
+<a name='L31'></a><a href='#L31'>31</a>
+<a name='L32'></a><a href='#L32'>32</a>
+<a name='L33'></a><a href='#L33'>33</a>
+<a name='L34'></a><a href='#L34'>34</a>
+<a name='L35'></a><a href='#L35'>35</a>
+<a name='L36'></a><a href='#L36'>36</a>
+<a name='L37'></a><a href='#L37'>37</a>
+<a name='L38'></a><a href='#L38'>38</a>
+<a name='L39'></a><a href='#L39'>39</a>
+<a name='L40'></a><a href='#L40'>40</a>
+<a name='L41'></a><a href='#L41'>41</a>
+<a name='L42'></a><a href='#L42'>42</a>
+<a name='L43'></a><a href='#L43'>43</a>
+<a name='L44'></a><a href='#L44'>44</a>
+<a name='L45'></a><a href='#L45'>45</a>
+<a name='L46'></a><a href='#L46'>46</a>
+<a name='L47'></a><a href='#L47'>47</a>
+<a name='L48'></a><a href='#L48'>48</a>
+<a name='L49'></a><a href='#L49'>49</a>
+<a name='L50'></a><a href='#L50'>50</a>
+<a name='L51'></a><a href='#L51'>51</a>
+<a name='L52'></a><a href='#L52'>52</a>
+<a name='L53'></a><a href='#L53'>53</a>
+<a name='L54'></a><a href='#L54'>54</a>
+<a name='L55'></a><a href='#L55'>55</a>
+<a name='L56'></a><a href='#L56'>56</a>
+<a name='L57'></a><a href='#L57'>57</a>
+<a name='L58'></a><a href='#L58'>58</a>
+<a name='L59'></a><a href='#L59'>59</a>
+<a name='L60'></a><a href='#L60'>60</a>
+<a name='L61'></a><a href='#L61'>61</a>
+<a name='L62'></a><a href='#L62'>62</a>
+<a name='L63'></a><a href='#L63'>63</a>
+<a name='L64'></a><a href='#L64'>64</a>
+<a name='L65'></a><a href='#L65'>65</a>
+<a name='L66'></a><a href='#L66'>66</a>
+<a name='L67'></a><a href='#L67'>67</a>
+<a name='L68'></a><a href='#L68'>68</a>
+<a name='L69'></a><a href='#L69'>69</a>
+<a name='L70'></a><a href='#L70'>70</a>
+<a name='L71'></a><a href='#L71'>71</a>
+<a name='L72'></a><a href='#L72'>72</a>
+<a name='L73'></a><a href='#L73'>73</a>
+<a name='L74'></a><a href='#L74'>74</a>
+<a name='L75'></a><a href='#L75'>75</a>
+<a name='L76'></a><a href='#L76'>76</a>
+<a name='L77'></a><a href='#L77'>77</a>
+<a name='L78'></a><a href='#L78'>78</a>
+<a name='L79'></a><a href='#L79'>79</a>
+<a name='L80'></a><a href='#L80'>80</a>
+<a name='L81'></a><a href='#L81'>81</a>
+<a name='L82'></a><a href='#L82'>82</a>
+<a name='L83'></a><a href='#L83'>83</a>
+<a name='L84'></a><a href='#L84'>84</a>
+<a name='L85'></a><a href='#L85'>85</a>
+<a name='L86'></a><a href='#L86'>86</a>
+<a name='L87'></a><a href='#L87'>87</a>
+<a name='L88'></a><a href='#L88'>88</a>
+<a name='L89'></a><a href='#L89'>89</a>
+<a name='L90'></a><a href='#L90'>90</a>
+<a name='L91'></a><a href='#L91'>91</a>
+<a name='L92'></a><a href='#L92'>92</a>
+<a name='L93'></a><a href='#L93'>93</a>
+<a name='L94'></a><a href='#L94'>94</a>
+<a name='L95'></a><a href='#L95'>95</a>
+<a name='L96'></a><a href='#L96'>96</a>
+<a name='L97'></a><a href='#L97'>97</a>
+<a name='L98'></a><a href='#L98'>98</a>
+<a name='L99'></a><a href='#L99'>99</a>
+<a name='L100'></a><a href='#L100'>100</a>
+<a name='L101'></a><a href='#L101'>101</a>
+<a name='L102'></a><a href='#L102'>102</a>
+<a name='L103'></a><a href='#L103'>103</a>
+<a name='L104'></a><a href='#L104'>104</a>
+<a name='L105'></a><a href='#L105'>105</a>
+<a name='L106'></a><a href='#L106'>106</a>
+<a name='L107'></a><a href='#L107'>107</a>
+<a name='L108'></a><a href='#L108'>108</a>
+<a name='L109'></a><a href='#L109'>109</a>
+<a name='L110'></a><a href='#L110'>110</a>
+<a name='L111'></a><a href='#L111'>111</a>
+<a name='L112'></a><a href='#L112'>112</a>
+<a name='L113'></a><a href='#L113'>113</a>
+<a name='L114'></a><a href='#L114'>114</a>
+<a name='L115'></a><a href='#L115'>115</a>
+<a name='L116'></a><a href='#L116'>116</a>
+<a name='L117'></a><a href='#L117'>117</a>
+<a name='L118'></a><a href='#L118'>118</a>
+<a name='L119'></a><a href='#L119'>119</a>
+<a name='L120'></a><a href='#L120'>120</a>
+<a name='L121'></a><a href='#L121'>121</a>
+<a name='L122'></a><a href='#L122'>122</a>
+<a name='L123'></a><a href='#L123'>123</a>
+<a name='L124'></a><a href='#L124'>124</a>
+<a name='L125'></a><a href='#L125'>125</a>
+<a name='L126'></a><a href='#L126'>126</a>
+<a name='L127'></a><a href='#L127'>127</a>
+<a name='L128'></a><a href='#L128'>128</a>
+<a name='L129'></a><a href='#L129'>129</a>
+<a name='L130'></a><a href='#L130'>130</a>
+<a name='L131'></a><a href='#L131'>131</a>
+<a name='L132'></a><a href='#L132'>132</a>
+<a name='L133'></a><a href='#L133'>133</a>
+<a name='L134'></a><a href='#L134'>134</a>
+<a name='L135'></a><a href='#L135'>135</a>
+<a name='L136'></a><a href='#L136'>136</a>
+<a name='L137'></a><a href='#L137'>137</a>
+<a name='L138'></a><a href='#L138'>138</a>
+<a name='L139'></a><a href='#L139'>139</a>
+<a name='L140'></a><a href='#L140'>140</a>
+<a name='L141'></a><a href='#L141'>141</a>
+<a name='L142'></a><a href='#L142'>142</a>
+<a name='L143'></a><a href='#L143'>143</a>
+<a name='L144'></a><a href='#L144'>144</a>
+<a name='L145'></a><a href='#L145'>145</a>
+<a name='L146'></a><a href='#L146'>146</a>
+<a name='L147'></a><a href='#L147'>147</a>
+<a name='L148'></a><a href='#L148'>148</a>
+<a name='L149'></a><a href='#L149'>149</a>
+<a name='L150'></a><a href='#L150'>150</a>
+<a name='L151'></a><a href='#L151'>151</a>
+<a name='L152'></a><a href='#L152'>152</a>
+<a name='L153'></a><a href='#L153'>153</a>
+<a name='L154'></a><a href='#L154'>154</a>
+<a name='L155'></a><a href='#L155'>155</a>
+<a name='L156'></a><a href='#L156'>156</a>
+<a name='L157'></a><a href='#L157'>157</a>
+<a name='L158'></a><a href='#L158'>158</a>
+<a name='L159'></a><a href='#L159'>159</a>
+<a name='L160'></a><a href='#L160'>160</a>
+<a name='L161'></a><a href='#L161'>161</a>
+<a name='L162'></a><a href='#L162'>162</a>
+<a name='L163'></a><a href='#L163'>163</a>
+<a name='L164'></a><a href='#L164'>164</a>
+<a name='L165'></a><a href='#L165'>165</a>
+<a name='L166'></a><a href='#L166'>166</a>
+<a name='L167'></a><a href='#L167'>167</a>
+<a name='L168'></a><a href='#L168'>168</a>
+<a name='L169'></a><a href='#L169'>169</a>
+<a name='L170'></a><a href='#L170'>170</a>
+<a name='L171'></a><a href='#L171'>171</a>
+<a name='L172'></a><a href='#L172'>172</a>
+<a name='L173'></a><a href='#L173'>173</a>
+<a name='L174'></a><a href='#L174'>174</a>
+<a name='L175'></a><a href='#L175'>175</a>
+<a name='L176'></a><a href='#L176'>176</a>
+<a name='L177'></a><a href='#L177'>177</a>
+<a name='L178'></a><a href='#L178'>178</a>
+<a name='L179'></a><a href='#L179'>179</a>
+<a name='L180'></a><a href='#L180'>180</a>
+<a name='L181'></a><a href='#L181'>181</a>
+<a name='L182'></a><a href='#L182'>182</a>
+<a name='L183'></a><a href='#L183'>183</a>
+<a name='L184'></a><a href='#L184'>184</a>
+<a name='L185'></a><a href='#L185'>185</a>
+<a name='L186'></a><a href='#L186'>186</a>
+<a name='L187'></a><a href='#L187'>187</a>
+<a name='L188'></a><a href='#L188'>188</a>
+<a name='L189'></a><a href='#L189'>189</a>
+<a name='L190'></a><a href='#L190'>190</a>
+<a name='L191'></a><a href='#L191'>191</a>
+<a name='L192'></a><a href='#L192'>192</a>
+<a name='L193'></a><a href='#L193'>193</a>
+<a name='L194'></a><a href='#L194'>194</a>
+<a name='L195'></a><a href='#L195'>195</a>
+<a name='L196'></a><a href='#L196'>196</a>
+<a name='L197'></a><a href='#L197'>197</a>
+<a name='L198'></a><a href='#L198'>198</a>
+<a name='L199'></a><a href='#L199'>199</a>
+<a name='L200'></a><a href='#L200'>200</a>
+<a name='L201'></a><a href='#L201'>201</a>
+<a name='L202'></a><a href='#L202'>202</a>
+<a name='L203'></a><a href='#L203'>203</a>
+<a name='L204'></a><a href='#L204'>204</a>
+<a name='L205'></a><a href='#L205'>205</a>
+<a name='L206'></a><a href='#L206'>206</a>
+<a name='L207'></a><a href='#L207'>207</a>
+<a name='L208'></a><a href='#L208'>208</a>
+<a name='L209'></a><a href='#L209'>209</a>
+<a name='L210'></a><a href='#L210'>210</a>
+<a name='L211'></a><a href='#L211'>211</a>
+<a name='L212'></a><a href='#L212'>212</a>
+<a name='L213'></a><a href='#L213'>213</a>
+<a name='L214'></a><a href='#L214'>214</a>
+<a name='L215'></a><a href='#L215'>215</a>
+<a name='L216'></a><a href='#L216'>216</a>
+<a name='L217'></a><a href='#L217'>217</a>
+<a name='L218'></a><a href='#L218'>218</a>
+<a name='L219'></a><a href='#L219'>219</a>
+<a name='L220'></a><a href='#L220'>220</a>
+<a name='L221'></a><a href='#L221'>221</a>
+<a name='L222'></a><a href='#L222'>222</a>
+<a name='L223'></a><a href='#L223'>223</a>
+<a name='L224'></a><a href='#L224'>224</a>
+<a name='L225'></a><a href='#L225'>225</a>
+<a name='L226'></a><a href='#L226'>226</a>
+<a name='L227'></a><a href='#L227'>227</a>
+<a name='L228'></a><a href='#L228'>228</a>
+<a name='L229'></a><a href='#L229'>229</a>
+<a name='L230'></a><a href='#L230'>230</a>
+<a name='L231'></a><a href='#L231'>231</a>
+<a name='L232'></a><a href='#L232'>232</a>
+<a name='L233'></a><a href='#L233'>233</a>
+<a name='L234'></a><a href='#L234'>234</a>
+<a name='L235'></a><a href='#L235'>235</a>
+<a name='L236'></a><a href='#L236'>236</a>
+<a name='L237'></a><a href='#L237'>237</a>
+<a name='L238'></a><a href='#L238'>238</a>
+<a name='L239'></a><a href='#L239'>239</a>
+<a name='L240'></a><a href='#L240'>240</a>
+<a name='L241'></a><a href='#L241'>241</a>
+<a name='L242'></a><a href='#L242'>242</a>
+<a name='L243'></a><a href='#L243'>243</a>
+<a name='L244'></a><a href='#L244'>244</a>
+<a name='L245'></a><a href='#L245'>245</a>
+<a name='L246'></a><a href='#L246'>246</a>
+<a name='L247'></a><a href='#L247'>247</a>
+<a name='L248'></a><a href='#L248'>248</a>
+<a name='L249'></a><a href='#L249'>249</a>
+<a name='L250'></a><a href='#L250'>250</a>
+<a name='L251'></a><a href='#L251'>251</a>
+<a name='L252'></a><a href='#L252'>252</a>
+<a name='L253'></a><a href='#L253'>253</a>
+<a name='L254'></a><a href='#L254'>254</a>
+<a name='L255'></a><a href='#L255'>255</a>
+<a name='L256'></a><a href='#L256'>256</a>
+<a name='L257'></a><a href='#L257'>257</a>
+<a name='L258'></a><a href='#L258'>258</a>
+<a name='L259'></a><a href='#L259'>259</a>
+<a name='L260'></a><a href='#L260'>260</a>
+<a name='L261'></a><a href='#L261'>261</a>
+<a name='L262'></a><a href='#L262'>262</a>
+<a name='L263'></a><a href='#L263'>263</a>
+<a name='L264'></a><a href='#L264'>264</a>
+<a name='L265'></a><a href='#L265'>265</a>
+<a name='L266'></a><a href='#L266'>266</a>
+<a name='L267'></a><a href='#L267'>267</a>
+<a name='L268'></a><a href='#L268'>268</a>
+<a name='L269'></a><a href='#L269'>269</a>
+<a name='L270'></a><a href='#L270'>270</a>
+<a name='L271'></a><a href='#L271'>271</a>
+<a name='L272'></a><a href='#L272'>272</a>
+<a name='L273'></a><a href='#L273'>273</a>
+<a name='L274'></a><a href='#L274'>274</a>
+<a name='L275'></a><a href='#L275'>275</a>
+<a name='L276'></a><a href='#L276'>276</a>
+<a name='L277'></a><a href='#L277'>277</a>
+<a name='L278'></a><a href='#L278'>278</a>
+<a name='L279'></a><a href='#L279'>279</a>
+<a name='L280'></a><a href='#L280'>280</a>
+<a name='L281'></a><a href='#L281'>281</a>
+<a name='L282'></a><a href='#L282'>282</a>
+<a name='L283'></a><a href='#L283'>283</a>
+<a name='L284'></a><a href='#L284'>284</a>
+<a name='L285'></a><a href='#L285'>285</a>
+<a name='L286'></a><a href='#L286'>286</a>
+<a name='L287'></a><a href='#L287'>287</a>
+<a name='L288'></a><a href='#L288'>288</a>
+<a name='L289'></a><a href='#L289'>289</a>
+<a name='L290'></a><a href='#L290'>290</a>
+<a name='L291'></a><a href='#L291'>291</a>
+<a name='L292'></a><a href='#L292'>292</a>
+<a name='L293'></a><a href='#L293'>293</a>
+<a name='L294'></a><a href='#L294'>294</a>
+<a name='L295'></a><a href='#L295'>295</a>
+<a name='L296'></a><a href='#L296'>296</a>
+<a name='L297'></a><a href='#L297'>297</a>
+<a name='L298'></a><a href='#L298'>298</a>
+<a name='L299'></a><a href='#L299'>299</a>
+<a name='L300'></a><a href='#L300'>300</a>
+<a name='L301'></a><a href='#L301'>301</a>
+<a name='L302'></a><a href='#L302'>302</a>
+<a name='L303'></a><a href='#L303'>303</a>
+<a name='L304'></a><a href='#L304'>304</a>
+<a name='L305'></a><a href='#L305'>305</a>
+<a name='L306'></a><a href='#L306'>306</a>
+<a name='L307'></a><a href='#L307'>307</a>
+<a name='L308'></a><a href='#L308'>308</a>
+<a name='L309'></a><a href='#L309'>309</a>
+<a name='L310'></a><a href='#L310'>310</a>
+<a name='L311'></a><a href='#L311'>311</a>
+<a name='L312'></a><a href='#L312'>312</a>
+<a name='L313'></a><a href='#L313'>313</a>
+<a name='L314'></a><a href='#L314'>314</a>
+<a name='L315'></a><a href='#L315'>315</a>
+<a name='L316'></a><a href='#L316'>316</a>
+<a name='L317'></a><a href='#L317'>317</a>
+<a name='L318'></a><a href='#L318'>318</a>
+<a name='L319'></a><a href='#L319'>319</a>
+<a name='L320'></a><a href='#L320'>320</a>
+<a name='L321'></a><a href='#L321'>321</a>
+<a name='L322'></a><a href='#L322'>322</a>
+<a name='L323'></a><a href='#L323'>323</a>
+<a name='L324'></a><a href='#L324'>324</a>
+<a name='L325'></a><a href='#L325'>325</a>
+<a name='L326'></a><a href='#L326'>326</a>
+<a name='L327'></a><a href='#L327'>327</a>
+<a name='L328'></a><a href='#L328'>328</a>
+<a name='L329'></a><a href='#L329'>329</a>
+<a name='L330'></a><a href='#L330'>330</a>
+<a name='L331'></a><a href='#L331'>331</a>
+<a name='L332'></a><a href='#L332'>332</a>
+<a name='L333'></a><a href='#L333'>333</a>
+<a name='L334'></a><a href='#L334'>334</a>
+<a name='L335'></a><a href='#L335'>335</a>
+<a name='L336'></a><a href='#L336'>336</a>
+<a name='L337'></a><a href='#L337'>337</a>
+<a name='L338'></a><a href='#L338'>338</a>
+<a name='L339'></a><a href='#L339'>339</a>
+<a name='L340'></a><a href='#L340'>340</a>
+<a name='L341'></a><a href='#L341'>341</a>
+<a name='L342'></a><a href='#L342'>342</a>
+<a name='L343'></a><a href='#L343'>343</a>
+<a name='L344'></a><a href='#L344'>344</a>
+<a name='L345'></a><a href='#L345'>345</a>
+<a name='L346'></a><a href='#L346'>346</a>
+<a name='L347'></a><a href='#L347'>347</a>
+<a name='L348'></a><a href='#L348'>348</a>
+<a name='L349'></a><a href='#L349'>349</a>
+<a name='L350'></a><a href='#L350'>350</a>
+<a name='L351'></a><a href='#L351'>351</a>
+<a name='L352'></a><a href='#L352'>352</a>
+<a name='L353'></a><a href='#L353'>353</a>
+<a name='L354'></a><a href='#L354'>354</a>
+<a name='L355'></a><a href='#L355'>355</a>
+<a name='L356'></a><a href='#L356'>356</a>
+<a name='L357'></a><a href='#L357'>357</a>
+<a name='L358'></a><a href='#L358'>358</a>
+<a name='L359'></a><a href='#L359'>359</a>
+<a name='L360'></a><a href='#L360'>360</a>
+<a name='L361'></a><a href='#L361'>361</a>
+<a name='L362'></a><a href='#L362'>362</a>
+<a name='L363'></a><a href='#L363'>363</a>
+<a name='L364'></a><a href='#L364'>364</a>
+<a name='L365'></a><a href='#L365'>365</a>
+<a name='L366'></a><a href='#L366'>366</a>
+<a name='L367'></a><a href='#L367'>367</a>
+<a name='L368'></a><a href='#L368'>368</a>
+<a name='L369'></a><a href='#L369'>369</a>
+<a name='L370'></a><a href='#L370'>370</a>
+<a name='L371'></a><a href='#L371'>371</a>
+<a name='L372'></a><a href='#L372'>372</a>
+<a name='L373'></a><a href='#L373'>373</a>
+<a name='L374'></a><a href='#L374'>374</a>
+<a name='L375'></a><a href='#L375'>375</a>
+<a name='L376'></a><a href='#L376'>376</a>
+<a name='L377'></a><a href='#L377'>377</a>
+<a name='L378'></a><a href='#L378'>378</a>
+<a name='L379'></a><a href='#L379'>379</a>
+<a name='L380'></a><a href='#L380'>380</a>
+<a name='L381'></a><a href='#L381'>381</a>
+<a name='L382'></a><a href='#L382'>382</a>
+<a name='L383'></a><a href='#L383'>383</a>
+<a name='L384'></a><a href='#L384'>384</a>
+<a name='L385'></a><a href='#L385'>385</a>
+<a name='L386'></a><a href='#L386'>386</a>
+<a name='L387'></a><a href='#L387'>387</a>
+<a name='L388'></a><a href='#L388'>388</a>
+<a name='L389'></a><a href='#L389'>389</a>
+<a name='L390'></a><a href='#L390'>390</a>
+<a name='L391'></a><a href='#L391'>391</a>
+<a name='L392'></a><a href='#L392'>392</a>
+<a name='L393'></a><a href='#L393'>393</a>
+<a name='L394'></a><a href='#L394'>394</a>
+<a name='L395'></a><a href='#L395'>395</a>
+<a name='L396'></a><a href='#L396'>396</a>
+<a name='L397'></a><a href='#L397'>397</a>
+<a name='L398'></a><a href='#L398'>398</a>
+<a name='L399'></a><a href='#L399'>399</a>
+<a name='L400'></a><a href='#L400'>400</a>
+<a name='L401'></a><a href='#L401'>401</a>
+<a name='L402'></a><a href='#L402'>402</a>
+<a name='L403'></a><a href='#L403'>403</a>
+<a name='L404'></a><a href='#L404'>404</a>
+<a name='L405'></a><a href='#L405'>405</a>
+<a name='L406'></a><a href='#L406'>406</a>
+<a name='L407'></a><a href='#L407'>407</a>
+<a name='L408'></a><a href='#L408'>408</a>
+<a name='L409'></a><a href='#L409'>409</a>
+<a name='L410'></a><a href='#L410'>410</a>
+<a name='L411'></a><a href='#L411'>411</a>
+<a name='L412'></a><a href='#L412'>412</a>
+<a name='L413'></a><a href='#L413'>413</a>
+<a name='L414'></a><a href='#L414'>414</a>
+<a name='L415'></a><a href='#L415'>415</a>
+<a name='L416'></a><a href='#L416'>416</a>
+<a name='L417'></a><a href='#L417'>417</a>
+<a name='L418'></a><a href='#L418'>418</a>
+<a name='L419'></a><a href='#L419'>419</a>
+<a name='L420'></a><a href='#L420'>420</a>
+<a name='L421'></a><a href='#L421'>421</a>
+<a name='L422'></a><a href='#L422'>422</a>
+<a name='L423'></a><a href='#L423'>423</a>
+<a name='L424'></a><a href='#L424'>424</a>
+<a name='L425'></a><a href='#L425'>425</a>
+<a name='L426'></a><a href='#L426'>426</a>
+<a name='L427'></a><a href='#L427'>427</a>
+<a name='L428'></a><a href='#L428'>428</a>
+<a name='L429'></a><a href='#L429'>429</a>
+<a name='L430'></a><a href='#L430'>430</a>
+<a name='L431'></a><a href='#L431'>431</a>
+<a name='L432'></a><a href='#L432'>432</a>
+<a name='L433'></a><a href='#L433'>433</a>
+<a name='L434'></a><a href='#L434'>434</a>
+<a name='L435'></a><a href='#L435'>435</a>
+<a name='L436'></a><a href='#L436'>436</a>
+<a name='L437'></a><a href='#L437'>437</a>
+<a name='L438'></a><a href='#L438'>438</a>
+<a name='L439'></a><a href='#L439'>439</a>
+<a name='L440'></a><a href='#L440'>440</a>
+<a name='L441'></a><a href='#L441'>441</a>
+<a name='L442'></a><a href='#L442'>442</a>
+<a name='L443'></a><a href='#L443'>443</a>
+<a name='L444'></a><a href='#L444'>444</a>
+<a name='L445'></a><a href='#L445'>445</a>
+<a name='L446'></a><a href='#L446'>446</a>
+<a name='L447'></a><a href='#L447'>447</a>
+<a name='L448'></a><a href='#L448'>448</a>
+<a name='L449'></a><a href='#L449'>449</a>
+<a name='L450'></a><a href='#L450'>450</a>
+<a name='L451'></a><a href='#L451'>451</a>
+<a name='L452'></a><a href='#L452'>452</a>
+<a name='L453'></a><a href='#L453'>453</a>
+<a name='L454'></a><a href='#L454'>454</a>
+<a name='L455'></a><a href='#L455'>455</a>
+<a name='L456'></a><a href='#L456'>456</a>
+<a name='L457'></a><a href='#L457'>457</a>
+<a name='L458'></a><a href='#L458'>458</a>
+<a name='L459'></a><a href='#L459'>459</a>
+<a name='L460'></a><a href='#L460'>460</a>
+<a name='L461'></a><a href='#L461'>461</a>
+<a name='L462'></a><a href='#L462'>462</a>
+<a name='L463'></a><a href='#L463'>463</a>
+<a name='L464'></a><a href='#L464'>464</a>
+<a name='L465'></a><a href='#L465'>465</a>
+<a name='L466'></a><a href='#L466'>466</a>
+<a name='L467'></a><a href='#L467'>467</a>
+<a name='L468'></a><a href='#L468'>468</a>
+<a name='L469'></a><a href='#L469'>469</a>
+<a name='L470'></a><a href='#L470'>470</a>
+<a name='L471'></a><a href='#L471'>471</a>
+<a name='L472'></a><a href='#L472'>472</a>
+<a name='L473'></a><a href='#L473'>473</a>
+<a name='L474'></a><a href='#L474'>474</a>
+<a name='L475'></a><a href='#L475'>475</a>
+<a name='L476'></a><a href='#L476'>476</a>
+<a name='L477'></a><a href='#L477'>477</a>
+<a name='L478'></a><a href='#L478'>478</a>
+<a name='L479'></a><a href='#L479'>479</a>
+<a name='L480'></a><a href='#L480'>480</a>
+<a name='L481'></a><a href='#L481'>481</a>
+<a name='L482'></a><a href='#L482'>482</a>
+<a name='L483'></a><a href='#L483'>483</a>
+<a name='L484'></a><a href='#L484'>484</a>
+<a name='L485'></a><a href='#L485'>485</a>
+<a name='L486'></a><a href='#L486'>486</a>
+<a name='L487'></a><a href='#L487'>487</a>
+<a name='L488'></a><a href='#L488'>488</a>
+<a name='L489'></a><a href='#L489'>489</a>
+<a name='L490'></a><a href='#L490'>490</a>
+<a name='L491'></a><a href='#L491'>491</a>
+<a name='L492'></a><a href='#L492'>492</a>
+<a name='L493'></a><a href='#L493'>493</a>
+<a name='L494'></a><a href='#L494'>494</a>
+<a name='L495'></a><a href='#L495'>495</a>
+<a name='L496'></a><a href='#L496'>496</a>
+<a name='L497'></a><a href='#L497'>497</a>
+<a name='L498'></a><a href='#L498'>498</a>
+<a name='L499'></a><a href='#L499'>499</a>
+<a name='L500'></a><a href='#L500'>500</a>
+<a name='L501'></a><a href='#L501'>501</a>
+<a name='L502'></a><a href='#L502'>502</a>
+<a name='L503'></a><a href='#L503'>503</a>
+<a name='L504'></a><a href='#L504'>504</a>
+<a name='L505'></a><a href='#L505'>505</a>
+<a name='L506'></a><a href='#L506'>506</a>
+<a name='L507'></a><a href='#L507'>507</a>
+<a name='L508'></a><a href='#L508'>508</a>
+<a name='L509'></a><a href='#L509'>509</a>
+<a name='L510'></a><a href='#L510'>510</a>
+<a name='L511'></a><a href='#L511'>511</a>
+<a name='L512'></a><a href='#L512'>512</a>
+<a name='L513'></a><a href='#L513'>513</a>
+<a name='L514'></a><a href='#L514'>514</a>
+<a name='L515'></a><a href='#L515'>515</a>
+<a name='L516'></a><a href='#L516'>516</a>
+<a name='L517'></a><a href='#L517'>517</a>
+<a name='L518'></a><a href='#L518'>518</a>
+<a name='L519'></a><a href='#L519'>519</a>
+<a name='L520'></a><a href='#L520'>520</a>
+<a name='L521'></a><a href='#L521'>521</a>
+<a name='L522'></a><a href='#L522'>522</a>
+<a name='L523'></a><a href='#L523'>523</a>
+<a name='L524'></a><a href='#L524'>524</a>
+<a name='L525'></a><a href='#L525'>525</a>
+<a name='L526'></a><a href='#L526'>526</a>
+<a name='L527'></a><a href='#L527'>527</a>
+<a name='L528'></a><a href='#L528'>528</a>
+<a name='L529'></a><a href='#L529'>529</a>
+<a name='L530'></a><a href='#L530'>530</a>
+<a name='L531'></a><a href='#L531'>531</a>
+<a name='L532'></a><a href='#L532'>532</a>
+<a name='L533'></a><a href='#L533'>533</a>
+<a name='L534'></a><a href='#L534'>534</a>
+<a name='L535'></a><a href='#L535'>535</a>
+<a name='L536'></a><a href='#L536'>536</a>
+<a name='L537'></a><a href='#L537'>537</a>
+<a name='L538'></a><a href='#L538'>538</a>
+<a name='L539'></a><a href='#L539'>539</a>
+<a name='L540'></a><a href='#L540'>540</a>
+<a name='L541'></a><a href='#L541'>541</a>
+<a name='L542'></a><a href='#L542'>542</a>
+<a name='L543'></a><a href='#L543'>543</a>
+<a name='L544'></a><a href='#L544'>544</a>
+<a name='L545'></a><a href='#L545'>545</a>
+<a name='L546'></a><a href='#L546'>546</a>
+<a name='L547'></a><a href='#L547'>547</a>
+<a name='L548'></a><a href='#L548'>548</a>
+<a name='L549'></a><a href='#L549'>549</a>
+<a name='L550'></a><a href='#L550'>550</a>
+<a name='L551'></a><a href='#L551'>551</a>
+<a name='L552'></a><a href='#L552'>552</a>
+<a name='L553'></a><a href='#L553'>553</a>
+<a name='L554'></a><a href='#L554'>554</a>
+<a name='L555'></a><a href='#L555'>555</a>
+<a name='L556'></a><a href='#L556'>556</a>
+<a name='L557'></a><a href='#L557'>557</a>
+<a name='L558'></a><a href='#L558'>558</a>
+<a name='L559'></a><a href='#L559'>559</a>
+<a name='L560'></a><a href='#L560'>560</a>
+<a name='L561'></a><a href='#L561'>561</a>
+<a name='L562'></a><a href='#L562'>562</a>
+<a name='L563'></a><a href='#L563'>563</a>
+<a name='L564'></a><a href='#L564'>564</a>
+<a name='L565'></a><a href='#L565'>565</a>
+<a name='L566'></a><a href='#L566'>566</a>
+<a name='L567'></a><a href='#L567'>567</a>
+<a name='L568'></a><a href='#L568'>568</a>
+<a name='L569'></a><a href='#L569'>569</a>
+<a name='L570'></a><a href='#L570'>570</a>
+<a name='L571'></a><a href='#L571'>571</a>
+<a name='L572'></a><a href='#L572'>572</a>
+<a name='L573'></a><a href='#L573'>573</a>
+<a name='L574'></a><a href='#L574'>574</a>
+<a name='L575'></a><a href='#L575'>575</a>
+<a name='L576'></a><a href='#L576'>576</a>
+<a name='L577'></a><a href='#L577'>577</a>
+<a name='L578'></a><a href='#L578'>578</a>
+<a name='L579'></a><a href='#L579'>579</a>
+<a name='L580'></a><a href='#L580'>580</a>
+<a name='L581'></a><a href='#L581'>581</a>
+<a name='L582'></a><a href='#L582'>582</a>
+<a name='L583'></a><a href='#L583'>583</a>
+<a name='L584'></a><a href='#L584'>584</a>
+<a name='L585'></a><a href='#L585'>585</a>
+<a name='L586'></a><a href='#L586'>586</a>
+<a name='L587'></a><a href='#L587'>587</a>
+<a name='L588'></a><a href='#L588'>588</a>
+<a name='L589'></a><a href='#L589'>589</a>
+<a name='L590'></a><a href='#L590'>590</a>
+<a name='L591'></a><a href='#L591'>591</a>
+<a name='L592'></a><a href='#L592'>592</a>
+<a name='L593'></a><a href='#L593'>593</a>
+<a name='L594'></a><a href='#L594'>594</a>
+<a name='L595'></a><a href='#L595'>595</a>
+<a name='L596'></a><a href='#L596'>596</a>
+<a name='L597'></a><a href='#L597'>597</a>
+<a name='L598'></a><a href='#L598'>598</a>
+<a name='L599'></a><a href='#L599'>599</a>
+<a name='L600'></a><a href='#L600'>600</a>
+<a name='L601'></a><a href='#L601'>601</a>
+<a name='L602'></a><a href='#L602'>602</a>
+<a name='L603'></a><a href='#L603'>603</a>
+<a name='L604'></a><a href='#L604'>604</a>
+<a name='L605'></a><a href='#L605'>605</a>
+<a name='L606'></a><a href='#L606'>606</a>
+<a name='L607'></a><a href='#L607'>607</a>
+<a name='L608'></a><a href='#L608'>608</a>
+<a name='L609'></a><a href='#L609'>609</a>
+<a name='L610'></a><a href='#L610'>610</a>
+<a name='L611'></a><a href='#L611'>611</a>
+<a name='L612'></a><a href='#L612'>612</a>
+<a name='L613'></a><a href='#L613'>613</a>
+<a name='L614'></a><a href='#L614'>614</a>
+<a name='L615'></a><a href='#L615'>615</a>
+<a name='L616'></a><a href='#L616'>616</a>
+<a name='L617'></a><a href='#L617'>617</a>
+<a name='L618'></a><a href='#L618'>618</a>
+<a name='L619'></a><a href='#L619'>619</a>
+<a name='L620'></a><a href='#L620'>620</a>
+<a name='L621'></a><a href='#L621'>621</a>
+<a name='L622'></a><a href='#L622'>622</a>
+<a name='L623'></a><a href='#L623'>623</a>
+<a name='L624'></a><a href='#L624'>624</a>
+<a name='L625'></a><a href='#L625'>625</a>
+<a name='L626'></a><a href='#L626'>626</a>
+<a name='L627'></a><a href='#L627'>627</a>
+<a name='L628'></a><a href='#L628'>628</a>
+<a name='L629'></a><a href='#L629'>629</a>
+<a name='L630'></a><a href='#L630'>630</a>
+<a name='L631'></a><a href='#L631'>631</a>
+<a name='L632'></a><a href='#L632'>632</a>
+<a name='L633'></a><a href='#L633'>633</a>
+<a name='L634'></a><a href='#L634'>634</a>
+<a name='L635'></a><a href='#L635'>635</a>
+<a name='L636'></a><a href='#L636'>636</a>
+<a name='L637'></a><a href='#L637'>637</a>
+<a name='L638'></a><a href='#L638'>638</a>
+<a name='L639'></a><a href='#L639'>639</a>
+<a name='L640'></a><a href='#L640'>640</a>
+<a name='L641'></a><a href='#L641'>641</a>
+<a name='L642'></a><a href='#L642'>642</a>
+<a name='L643'></a><a href='#L643'>643</a>
+<a name='L644'></a><a href='#L644'>644</a>
+<a name='L645'></a><a href='#L645'>645</a>
+<a name='L646'></a><a href='#L646'>646</a>
+<a name='L647'></a><a href='#L647'>647</a>
+<a name='L648'></a><a href='#L648'>648</a>
+<a name='L649'></a><a href='#L649'>649</a>
+<a name='L650'></a><a href='#L650'>650</a>
+<a name='L651'></a><a href='#L651'>651</a>
+<a name='L652'></a><a href='#L652'>652</a>
+<a name='L653'></a><a href='#L653'>653</a>
+<a name='L654'></a><a href='#L654'>654</a>
+<a name='L655'></a><a href='#L655'>655</a>
+<a name='L656'></a><a href='#L656'>656</a>
+<a name='L657'></a><a href='#L657'>657</a>
+<a name='L658'></a><a href='#L658'>658</a>
+<a name='L659'></a><a href='#L659'>659</a>
+<a name='L660'></a><a href='#L660'>660</a>
+<a name='L661'></a><a href='#L661'>661</a>
+<a name='L662'></a><a href='#L662'>662</a>
+<a name='L663'></a><a href='#L663'>663</a>
+<a name='L664'></a><a href='#L664'>664</a>
+<a name='L665'></a><a href='#L665'>665</a>
+<a name='L666'></a><a href='#L666'>666</a>
+<a name='L667'></a><a href='#L667'>667</a>
+<a name='L668'></a><a href='#L668'>668</a>
+<a name='L669'></a><a href='#L669'>669</a>
+<a name='L670'></a><a href='#L670'>670</a>
+<a name='L671'></a><a href='#L671'>671</a>
+<a name='L672'></a><a href='#L672'>672</a>
+<a name='L673'></a><a href='#L673'>673</a>
+<a name='L674'></a><a href='#L674'>674</a>
+<a name='L675'></a><a href='#L675'>675</a>
+<a name='L676'></a><a href='#L676'>676</a>
+<a name='L677'></a><a href='#L677'>677</a>
+<a name='L678'></a><a href='#L678'>678</a>
+<a name='L679'></a><a href='#L679'>679</a>
+<a name='L680'></a><a href='#L680'>680</a>
+<a name='L681'></a><a href='#L681'>681</a>
+<a name='L682'></a><a href='#L682'>682</a>
+<a name='L683'></a><a href='#L683'>683</a>
+<a name='L684'></a><a href='#L684'>684</a>
+<a name='L685'></a><a href='#L685'>685</a>
+<a name='L686'></a><a href='#L686'>686</a>
+<a name='L687'></a><a href='#L687'>687</a>
+<a name='L688'></a><a href='#L688'>688</a>
+<a name='L689'></a><a href='#L689'>689</a>
+<a name='L690'></a><a href='#L690'>690</a>
+<a name='L691'></a><a href='#L691'>691</a>
+<a name='L692'></a><a href='#L692'>692</a>
+<a name='L693'></a><a href='#L693'>693</a>
+<a name='L694'></a><a href='#L694'>694</a>
+<a name='L695'></a><a href='#L695'>695</a>
+<a name='L696'></a><a href='#L696'>696</a>
+<a name='L697'></a><a href='#L697'>697</a>
+<a name='L698'></a><a href='#L698'>698</a>
+<a name='L699'></a><a href='#L699'>699</a>
+<a name='L700'></a><a href='#L700'>700</a>
+<a name='L701'></a><a href='#L701'>701</a>
+<a name='L702'></a><a href='#L702'>702</a>
+<a name='L703'></a><a href='#L703'>703</a>
+<a name='L704'></a><a href='#L704'>704</a>
+<a name='L705'></a><a href='#L705'>705</a>
+<a name='L706'></a><a href='#L706'>706</a>
+<a name='L707'></a><a href='#L707'>707</a>
+<a name='L708'></a><a href='#L708'>708</a>
+<a name='L709'></a><a href='#L709'>709</a>
+<a name='L710'></a><a href='#L710'>710</a>
+<a name='L711'></a><a href='#L711'>711</a>
+<a name='L712'></a><a href='#L712'>712</a>
+<a name='L713'></a><a href='#L713'>713</a>
+<a name='L714'></a><a href='#L714'>714</a>
+<a name='L715'></a><a href='#L715'>715</a>
+<a name='L716'></a><a href='#L716'>716</a>
+<a name='L717'></a><a href='#L717'>717</a>
+<a name='L718'></a><a href='#L718'>718</a>
+<a name='L719'></a><a href='#L719'>719</a>
+<a name='L720'></a><a href='#L720'>720</a>
+<a name='L721'></a><a href='#L721'>721</a>
+<a name='L722'></a><a href='#L722'>722</a>
+<a name='L723'></a><a href='#L723'>723</a>
+<a name='L724'></a><a href='#L724'>724</a>
+<a name='L725'></a><a href='#L725'>725</a>
+<a name='L726'></a><a href='#L726'>726</a>
+<a name='L727'></a><a href='#L727'>727</a>
+<a name='L728'></a><a href='#L728'>728</a>
+<a name='L729'></a><a href='#L729'>729</a>
+<a name='L730'></a><a href='#L730'>730</a>
+<a name='L731'></a><a href='#L731'>731</a>
+<a name='L732'></a><a href='#L732'>732</a>
+<a name='L733'></a><a href='#L733'>733</a>
+<a name='L734'></a><a href='#L734'>734</a>
+<a name='L735'></a><a href='#L735'>735</a>
+<a name='L736'></a><a href='#L736'>736</a>
+<a name='L737'></a><a href='#L737'>737</a>
+<a name='L738'></a><a href='#L738'>738</a>
+<a name='L739'></a><a href='#L739'>739</a>
+<a name='L740'></a><a href='#L740'>740</a>
+<a name='L741'></a><a href='#L741'>741</a>
+<a name='L742'></a><a href='#L742'>742</a>
+<a name='L743'></a><a href='#L743'>743</a>
+<a name='L744'></a><a href='#L744'>744</a>
+<a name='L745'></a><a href='#L745'>745</a>
+<a name='L746'></a><a href='#L746'>746</a>
+<a name='L747'></a><a href='#L747'>747</a>
+<a name='L748'></a><a href='#L748'>748</a>
+<a name='L749'></a><a href='#L749'>749</a>
+<a name='L750'></a><a href='#L750'>750</a>
+<a name='L751'></a><a href='#L751'>751</a>
+<a name='L752'></a><a href='#L752'>752</a>
+<a name='L753'></a><a href='#L753'>753</a>
+<a name='L754'></a><a href='#L754'>754</a>
+<a name='L755'></a><a href='#L755'>755</a>
+<a name='L756'></a><a href='#L756'>756</a>
+<a name='L757'></a><a href='#L757'>757</a>
+<a name='L758'></a><a href='#L758'>758</a>
+<a name='L759'></a><a href='#L759'>759</a>
+<a name='L760'></a><a href='#L760'>760</a>
+<a name='L761'></a><a href='#L761'>761</a>
+<a name='L762'></a><a href='#L762'>762</a>
+<a name='L763'></a><a href='#L763'>763</a>
+<a name='L764'></a><a href='#L764'>764</a>
+<a name='L765'></a><a href='#L765'>765</a>
+<a name='L766'></a><a href='#L766'>766</a>
+<a name='L767'></a><a href='#L767'>767</a>
+<a name='L768'></a><a href='#L768'>768</a>
+<a name='L769'></a><a href='#L769'>769</a>
+<a name='L770'></a><a href='#L770'>770</a>
+<a name='L771'></a><a href='#L771'>771</a>
+<a name='L772'></a><a href='#L772'>772</a>
+<a name='L773'></a><a href='#L773'>773</a>
+<a name='L774'></a><a href='#L774'>774</a>
+<a name='L775'></a><a href='#L775'>775</a>
+<a name='L776'></a><a href='#L776'>776</a>
+<a name='L777'></a><a href='#L777'>777</a>
+<a name='L778'></a><a href='#L778'>778</a>
+<a name='L779'></a><a href='#L779'>779</a>
+<a name='L780'></a><a href='#L780'>780</a>
+<a name='L781'></a><a href='#L781'>781</a>
+<a name='L782'></a><a href='#L782'>782</a>
+<a name='L783'></a><a href='#L783'>783</a>
+<a name='L784'></a><a href='#L784'>784</a>
+<a name='L785'></a><a href='#L785'>785</a>
+<a name='L786'></a><a href='#L786'>786</a>
+<a name='L787'></a><a href='#L787'>787</a>
+<a name='L788'></a><a href='#L788'>788</a>
+<a name='L789'></a><a href='#L789'>789</a>
+<a name='L790'></a><a href='#L790'>790</a>
+<a name='L791'></a><a href='#L791'>791</a>
+<a name='L792'></a><a href='#L792'>792</a>
+<a name='L793'></a><a href='#L793'>793</a>
+<a name='L794'></a><a href='#L794'>794</a>
+<a name='L795'></a><a href='#L795'>795</a>
+<a name='L796'></a><a href='#L796'>796</a>
+<a name='L797'></a><a href='#L797'>797</a>
+<a name='L798'></a><a href='#L798'>798</a>
+<a name='L799'></a><a href='#L799'>799</a>
+<a name='L800'></a><a href='#L800'>800</a>
+<a name='L801'></a><a href='#L801'>801</a>
+<a name='L802'></a><a href='#L802'>802</a>
+<a name='L803'></a><a href='#L803'>803</a>
+<a name='L804'></a><a href='#L804'>804</a>
+<a name='L805'></a><a href='#L805'>805</a>
+<a name='L806'></a><a href='#L806'>806</a>
+<a name='L807'></a><a href='#L807'>807</a>
+<a name='L808'></a><a href='#L808'>808</a>
+<a name='L809'></a><a href='#L809'>809</a>
+<a name='L810'></a><a href='#L810'>810</a>
+<a name='L811'></a><a href='#L811'>811</a>
+<a name='L812'></a><a href='#L812'>812</a>
+<a name='L813'></a><a href='#L813'>813</a>
+<a name='L814'></a><a href='#L814'>814</a>
+<a name='L815'></a><a href='#L815'>815</a>
+<a name='L816'></a><a href='#L816'>816</a>
+<a name='L817'></a><a href='#L817'>817</a>
+<a name='L818'></a><a href='#L818'>818</a>
+<a name='L819'></a><a href='#L819'>819</a>
+<a name='L820'></a><a href='#L820'>820</a>
+<a name='L821'></a><a href='#L821'>821</a>
+<a name='L822'></a><a href='#L822'>822</a>
+<a name='L823'></a><a href='#L823'>823</a>
+<a name='L824'></a><a href='#L824'>824</a>
+<a name='L825'></a><a href='#L825'>825</a>
+<a name='L826'></a><a href='#L826'>826</a>
+<a name='L827'></a><a href='#L827'>827</a>
+<a name='L828'></a><a href='#L828'>828</a>
+<a name='L829'></a><a href='#L829'>829</a>
+<a name='L830'></a><a href='#L830'>830</a>
+<a name='L831'></a><a href='#L831'>831</a>
+<a name='L832'></a><a href='#L832'>832</a>
+<a name='L833'></a><a href='#L833'>833</a>
+<a name='L834'></a><a href='#L834'>834</a>
+<a name='L835'></a><a href='#L835'>835</a>
+<a name='L836'></a><a href='#L836'>836</a>
+<a name='L837'></a><a href='#L837'>837</a>
+<a name='L838'></a><a href='#L838'>838</a>
+<a name='L839'></a><a href='#L839'>839</a>
+<a name='L840'></a><a href='#L840'>840</a>
+<a name='L841'></a><a href='#L841'>841</a>
+<a name='L842'></a><a href='#L842'>842</a>
+<a name='L843'></a><a href='#L843'>843</a>
+<a name='L844'></a><a href='#L844'>844</a>
+<a name='L845'></a><a href='#L845'>845</a>
+<a name='L846'></a><a href='#L846'>846</a>
+<a name='L847'></a><a href='#L847'>847</a>
+<a name='L848'></a><a href='#L848'>848</a>
+<a name='L849'></a><a href='#L849'>849</a>
+<a name='L850'></a><a href='#L850'>850</a>
+<a name='L851'></a><a href='#L851'>851</a>
+<a name='L852'></a><a href='#L852'>852</a>
+<a name='L853'></a><a href='#L853'>853</a>
+<a name='L854'></a><a href='#L854'>854</a>
+<a name='L855'></a><a href='#L855'>855</a>
+<a name='L856'></a><a href='#L856'>856</a>
+<a name='L857'></a><a href='#L857'>857</a>
+<a name='L858'></a><a href='#L858'>858</a>
+<a name='L859'></a><a href='#L859'>859</a>
+<a name='L860'></a><a href='#L860'>860</a>
+<a name='L861'></a><a href='#L861'>861</a>
+<a name='L862'></a><a href='#L862'>862</a>
+<a name='L863'></a><a href='#L863'>863</a>
+<a name='L864'></a><a href='#L864'>864</a>
+<a name='L865'></a><a href='#L865'>865</a>
+<a name='L866'></a><a href='#L866'>866</a>
+<a name='L867'></a><a href='#L867'>867</a>
+<a name='L868'></a><a href='#L868'>868</a>
+<a name='L869'></a><a href='#L869'>869</a>
+<a name='L870'></a><a href='#L870'>870</a>
+<a name='L871'></a><a href='#L871'>871</a>
+<a name='L872'></a><a href='#L872'>872</a>
+<a name='L873'></a><a href='#L873'>873</a>
+<a name='L874'></a><a href='#L874'>874</a>
+<a name='L875'></a><a href='#L875'>875</a>
+<a name='L876'></a><a href='#L876'>876</a>
+<a name='L877'></a><a href='#L877'>877</a>
+<a name='L878'></a><a href='#L878'>878</a>
+<a name='L879'></a><a href='#L879'>879</a>
+<a name='L880'></a><a href='#L880'>880</a>
+<a name='L881'></a><a href='#L881'>881</a>
+<a name='L882'></a><a href='#L882'>882</a>
+<a name='L883'></a><a href='#L883'>883</a>
+<a name='L884'></a><a href='#L884'>884</a>
+<a name='L885'></a><a href='#L885'>885</a>
+<a name='L886'></a><a href='#L886'>886</a>
+<a name='L887'></a><a href='#L887'>887</a>
+<a name='L888'></a><a href='#L888'>888</a>
+<a name='L889'></a><a href='#L889'>889</a>
+<a name='L890'></a><a href='#L890'>890</a>
+<a name='L891'></a><a href='#L891'>891</a>
+<a name='L892'></a><a href='#L892'>892</a>
+<a name='L893'></a><a href='#L893'>893</a>
+<a name='L894'></a><a href='#L894'>894</a>
+<a name='L895'></a><a href='#L895'>895</a>
+<a name='L896'></a><a href='#L896'>896</a>
+<a name='L897'></a><a href='#L897'>897</a>
+<a name='L898'></a><a href='#L898'>898</a>
+<a name='L899'></a><a href='#L899'>899</a>
+<a name='L900'></a><a href='#L900'>900</a>
+<a name='L901'></a><a href='#L901'>901</a>
+<a name='L902'></a><a href='#L902'>902</a>
+<a name='L903'></a><a href='#L903'>903</a>
+<a name='L904'></a><a href='#L904'>904</a>
+<a name='L905'></a><a href='#L905'>905</a>
+<a name='L906'></a><a href='#L906'>906</a>
+<a name='L907'></a><a href='#L907'>907</a>
+<a name='L908'></a><a href='#L908'>908</a>
+<a name='L909'></a><a href='#L909'>909</a>
+<a name='L910'></a><a href='#L910'>910</a>
+<a name='L911'></a><a href='#L911'>911</a>
+<a name='L912'></a><a href='#L912'>912</a>
+<a name='L913'></a><a href='#L913'>913</a>
+<a name='L914'></a><a href='#L914'>914</a>
+<a name='L915'></a><a href='#L915'>915</a>
+<a name='L916'></a><a href='#L916'>916</a>
+<a name='L917'></a><a href='#L917'>917</a>
+<a name='L918'></a><a href='#L918'>918</a>
+<a name='L919'></a><a href='#L919'>919</a>
+<a name='L920'></a><a href='#L920'>920</a>
+<a name='L921'></a><a href='#L921'>921</a>
+<a name='L922'></a><a href='#L922'>922</a>
+<a name='L923'></a><a href='#L923'>923</a>
+<a name='L924'></a><a href='#L924'>924</a>
+<a name='L925'></a><a href='#L925'>925</a>
+<a name='L926'></a><a href='#L926'>926</a>
+<a name='L927'></a><a href='#L927'>927</a>
+<a name='L928'></a><a href='#L928'>928</a>
+<a name='L929'></a><a href='#L929'>929</a>
+<a name='L930'></a><a href='#L930'>930</a>
+<a name='L931'></a><a href='#L931'>931</a>
+<a name='L932'></a><a href='#L932'>932</a>
+<a name='L933'></a><a href='#L933'>933</a>
+<a name='L934'></a><a href='#L934'>934</a>
+<a name='L935'></a><a href='#L935'>935</a>
+<a name='L936'></a><a href='#L936'>936</a>
+<a name='L937'></a><a href='#L937'>937</a>
+<a name='L938'></a><a href='#L938'>938</a>
+<a name='L939'></a><a href='#L939'>939</a>
+<a name='L940'></a><a href='#L940'>940</a>
+<a name='L941'></a><a href='#L941'>941</a>
+<a name='L942'></a><a href='#L942'>942</a>
+<a name='L943'></a><a href='#L943'>943</a>
+<a name='L944'></a><a href='#L944'>944</a>
+<a name='L945'></a><a href='#L945'>945</a>
+<a name='L946'></a><a href='#L946'>946</a>
+<a name='L947'></a><a href='#L947'>947</a>
+<a name='L948'></a><a href='#L948'>948</a>
+<a name='L949'></a><a href='#L949'>949</a>
+<a name='L950'></a><a href='#L950'>950</a>
+<a name='L951'></a><a href='#L951'>951</a>
+<a name='L952'></a><a href='#L952'>952</a>
+<a name='L953'></a><a href='#L953'>953</a>
+<a name='L954'></a><a href='#L954'>954</a>
+<a name='L955'></a><a href='#L955'>955</a>
+<a name='L956'></a><a href='#L956'>956</a>
+<a name='L957'></a><a href='#L957'>957</a>
+<a name='L958'></a><a href='#L958'>958</a>
+<a name='L959'></a><a href='#L959'>959</a>
+<a name='L960'></a><a href='#L960'>960</a>
+<a name='L961'></a><a href='#L961'>961</a>
+<a name='L962'></a><a href='#L962'>962</a>
+<a name='L963'></a><a href='#L963'>963</a>
+<a name='L964'></a><a href='#L964'>964</a>
+<a name='L965'></a><a href='#L965'>965</a>
+<a name='L966'></a><a href='#L966'>966</a>
+<a name='L967'></a><a href='#L967'>967</a>
+<a name='L968'></a><a href='#L968'>968</a>
+<a name='L969'></a><a href='#L969'>969</a>
+<a name='L970'></a><a href='#L970'>970</a>
+<a name='L971'></a><a href='#L971'>971</a>
+<a name='L972'></a><a href='#L972'>972</a>
+<a name='L973'></a><a href='#L973'>973</a>
+<a name='L974'></a><a href='#L974'>974</a>
+<a name='L975'></a><a href='#L975'>975</a>
+<a name='L976'></a><a href='#L976'>976</a>
+<a name='L977'></a><a href='#L977'>977</a>
+<a name='L978'></a><a href='#L978'>978</a>
+<a name='L979'></a><a href='#L979'>979</a>
+<a name='L980'></a><a href='#L980'>980</a>
+<a name='L981'></a><a href='#L981'>981</a>
+<a name='L982'></a><a href='#L982'>982</a>
+<a name='L983'></a><a href='#L983'>983</a>
+<a name='L984'></a><a href='#L984'>984</a>
+<a name='L985'></a><a href='#L985'>985</a>
+<a name='L986'></a><a href='#L986'>986</a>
+<a name='L987'></a><a href='#L987'>987</a>
+<a name='L988'></a><a href='#L988'>988</a>
+<a name='L989'></a><a href='#L989'>989</a>
+<a name='L990'></a><a href='#L990'>990</a>
+<a name='L991'></a><a href='#L991'>991</a>
+<a name='L992'></a><a href='#L992'>992</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">26x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">34x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">12x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">44x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">34x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">10x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">10x</span>
+<span class="cline-any cline-yes">34x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">32x</span>
+<span class="cline-any cline-yes">32x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">562x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">83x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">83x</span>
+<span class="cline-any cline-yes">54x</span>
+<span class="cline-any cline-yes">54x</span>
+<span class="cline-any cline-yes">54x</span>
+<span class="cline-any cline-yes">54x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">508x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">32x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">10x</span>
+<span class="cline-any cline-yes">9x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">26x</span>
+<span class="cline-any cline-yes">25x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">7x</span>
+<span class="cline-any cline-yes">7x</span>
+<span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">/**
+ * EPT-OMR Project: APP_SCHEMAS Configuration (Server-Side)
+ *
+ * This object is the Single Source of Truth for the FormEngine.
+ *
+ * [E31] TOPOLOGY_PRESETS: Named catalog of reusable topology rule sets.
+ * Entities reference a preset by key instead of redeclaring inline blocks.
+ * All presets are frozen (immutable) to prevent accidental mutation.
+ */
+&nbsp;
+var TOPOLOGY_PRESETS = Object.freeze({
+&nbsp;
+  /**
+   * Standard hierarchical topology for graph-linked business entities.
+   * Used by: Unidad_Negocio, Portafolio, Grupo_Productos, Producto
+   */
+  JERARQUICA_ESTRICTA_GRAPH_STD: Object.freeze({
+    _preset: 'JERARQUICA_ESTRICTA_GRAPH_STD',  // [E31] Studio Viewer identifier
+    topologyType: "JERARQUICA_ESTRICTA",
+    preventCycles: true,
+    maxDepth: 9,
+    allowOrphanStealing: true,
+    deletionStrategy: "ORPHAN",
+    siblingCollisionCheck: true,
+    scd2Enabled: true
+  }),
+&nbsp;
+  /**
+   * Hierarchical topology for taxonomy domain entities.
+   * Enforces level filtering and strict level jumps.
+   * Used by: Dominio
+   */
+  JERARQUICA_ESTRICTA_DOMAIN: Object.freeze({
+    _preset: 'JERARQUICA_ESTRICTA_DOMAIN',  // [E31] Studio Viewer identifier
+    topologyType: "JERARQUICA_ESTRICTA",
+    levelFiltering: true,
+    strictLevelJumps: true,
+    rootRequiresNoParent: true,
+    allowOrphanStealing: true,
+    maxDepth: 8,
+    deletionStrategy: "ORPHAN",
+    siblingCollisionCheck: true,
+    scd2Enabled: true,
+    preventCycles: true
+  }),
+&nbsp;
+  /**
+   * Minimal hierarchical topology for person-to-person leadership graph.
+   * No orphan stealing, no deletion strategy, sibling checks disabled.
+   * Used by: Persona
+   */
+  JERARQUICA_PERSONA: Object.freeze({
+    _preset: 'JERARQUICA_PERSONA',  // [E31] Studio Viewer identifier
+    topologyType: "JERARQUICA_ESTRICTA",
+    preventCycles: true,
+    maxDepth: 15,
+    scd2Enabled: true,
+    siblingCollisionCheck: false
+  })
+&nbsp;
+});
+&nbsp;
+/**
+ * [E31] FIELD_TEMPLATES: Composable field factories for common repeated patterns.
+ *
+ * Usage (spread into fields array):
+ *   fields: [
+ *     { name: "id_entity", type: "hidden", primaryKey: true },
+ *     ...FIELD_TEMPLATES.SYSTEM_FIELDS(),
+ *     ...FIELD_TEMPLATES.AUDIT_FIELDS(),
+ *     ...FIELD_TEMPLATES.VERSION_FIELD(),
+ *     // ← entity-specific fields below
+ *   ]
+ *
+ * All factories return frozen arrays — immutable source, safe for spread.
+ */
+var FIELD_TEMPLATES = Object.freeze({
+&nbsp;
+  /**
+   * Identity Name field.
+   * Standardizes the semantic name of any entity.
+   */
+  NAME_FIELD: (label = <span class="branch-0 cbranch-no" title="branch not covered" >"Nombre",</span> width = 12) =&gt; Object.freeze([
+    { name: "nombre", type: "text", label: label, required: true, width: width, unique: true, gridOrder: 4 }
+  ]),
+&nbsp;
+  /**
+   * Identity fields: user-friendly ID + status.
+   * Universal for all business entities.
+   * - lexical_id: prefix-acronym + consecutive (e.g. "PORT-0042"). Generated by Engine_DB.
+   * - estado: lifecycle status flag ("Activo" | "Eliminado" | "Borrador").
+   */
+  SYSTEM_FIELDS: () =&gt; Object.freeze([
+    {
+      name: "lexical_id", type: "text", label: "ID", uiBehavior: "badge", readonly: true,
+      helpText: "Generado automáticamente: ACRONIMO-CONSECUTIVO (ej. PORT-0042)", gridOrder: 3
+    },
+    { name: "estado", type: "hidden", defaultValue: "Activo" }
+  ]),
+&nbsp;
+  /**
+   * Standalone status field for non-business entities (system/config tables)
+   * that don't use lexical_id.
+   */
+  ESTADO_FIELD: () =&gt; Object.freeze([
+    { name: "estado", type: "hidden", defaultValue: "Activo" }
+  ]),
+&nbsp;
+  /**
+   * Industry-standard audit trail fields.
+   * All hidden — managed exclusively by Engine_DB. Never rendered by FormEngine.
+   * Provides full creation, modification, and soft-delete traceability.
+   */
+  AUDIT_FIELDS: () =&gt; Object.freeze([
+    { name: "created_at", type: "hidden", readonly: true },
+    { name: "created_by", type: "hidden", readonly: true },
+    { name: "updated_at", type: "hidden", readonly: true },
+    { name: "updated_by", type: "hidden", readonly: true },
+    { name: "deleted_at", type: "hidden", readonly: true },
+    { name: "deleted_by", type: "hidden", readonly: true }
+  ]),
+&nbsp;
+  /**
+   * Optimistic locking version counter.
+   * Incremented by Engine_DB on every write. Prevents lost-update on concurrent edits.
+   * Default: 1 (first write).
+   */
+  VERSION_FIELD: () =&gt; Object.freeze([
+    { name: "_version", type: "hidden", readonly: true, defaultValue: 1 }
+  ]),
+&nbsp;
+  /**
+   * Standard graph topology section separator.
+   * Returns a frozen single-element array (consistent with other FIELD_TEMPLATES factories).
+   * Use with spread: ...FIELD_TEMPLATES.GRAPH_SEPARATOR()
+   * @param {string} [label="Pertenencia Topológica (Grafo)"] - Section label
+   */
+  GRAPH_SEPARATOR: <span class="fstat-no" title="function not covered" >(l</span>abel = <span class="branch-0 cbranch-no" title="branch not covered" >"Pertenencia Topológica (Grafo)")</span> =&gt; <span class="cstat-no" title="statement not covered" >Object.freeze([</span>
+    { name: "separator_grafo", type: "divider", label, width: 12 }
+  ])
+&nbsp;
+});
+&nbsp;
+var APP_SCHEMAS = {
+  Taxonomia: {
+    metadata: { prefix: 'TAXO', showInMenu: true, iconName: 'library-outline', color: 'tertiary', label: 'Taxonomías', titleField: 'nombre', idField: 'id_taxonomia', fkField: null, isTopologyContainer: true, hasDraftLifecycle: true, useWizardForm: true },
+    primaryKey: "id_taxonomia",
+    titleField: "nombre",
+    wizardConfig: true,
+    stepDescriptions: {
+      "Taxonomía del Portafolio": "Asigna un nombre descriptivo para comenzar. Te recomendamos utilizar un nombre representativo del segmento de estudio que vas a estructurar.",
+      "Portafolios": "Agregue el portafolio o los portafolios que formarán parte del segmento de estudio a evaluar en la taxonomía.",
+      "Value Streams": "Agregue el o los value streams que formarán parte del segmento de estudio a evaluar en la taxonomía.",
+      "Arquitectura de Portafolio": "Diseña la estructura utilizando el lienzo interactivo ubicado a la derecha.",
+      "Listado de Equipos": "Carga la plantilla de equipos mediante URL o archivo de Google Sheets.",
+      "Directorio de Personas": "Carga la plantilla de personas mediante URL o archivo de Google Sheets.",
+      "Asignación de Responsables": "Interactúa con el lienzo interactivo para asignar personas a los diferentes roles y entidades.",
+      "Organigrama de Producto": "Visualiza la jerarquía de reporte orientada a la toma de decisiones de Producto.",
+      "Organigrama de Tecnología": "Visualiza la jerarquía de reporte orientada al desarrollo técnico y arquitectura.",
+      "Organigrama de Agilidad": "Visualiza la jerarquía de reporte de los agentes de cambio y metodologías ágiles.",
+      "Organigrama de Portafolio": "Visualiza la jerarquía estructural y de negocio del portafolio completo."
+    },
+    hooks: {
+      preSubmit: <span class="fstat-no" title="function not covered" >fu</span>nction (payload, contextId, action, isTempPk, internalRetryId) {
+        let isActuallyCreate = <span class="cstat-no" title="statement not covered" >action === 'create';</span>
+<span class="cstat-no" title="statement not covered" >        if (!isActuallyCreate &amp;&amp; internalRetryId &amp;&amp; typeof window !== 'undefined' &amp;&amp; window.DataStore) {</span>
+          const existing = <span class="cstat-no" title="statement not covered" >window.DataStore.get('Taxonomia') || [];</span>
+          const match = <span class="cstat-no" title="statement not covered" >existing.find(<span class="fstat-no" title="function not covered" >t </span>=&gt; <span class="cstat-no" title="statement not covered" >String(t.id_taxonomia) === String(internalRetryId))</span>;</span>
+<span class="cstat-no" title="statement not covered" >          if (!match) <span class="cstat-no" title="statement not covered" >isActuallyCreate = true;</span></span>
+        }
+<span class="cstat-no" title="statement not covered" >        if (isActuallyCreate || isTempPk) {</span>
+<span class="cstat-no" title="statement not covered" >          payload.estado = 'Borrador';</span>
+        }
+<span class="cstat-no" title="statement not covered" >        if (!payload.id_taxonomia &amp;&amp; contextId &amp;&amp; contextId !== 'DRAFT_CTX') {</span>
+<span class="cstat-no" title="statement not covered" >          payload.id_taxonomia = contextId;</span>
+        }
+<span class="cstat-no" title="statement not covered" >        return payload;</span>
+      }
+    },
+    fields: [
+      { name: "id_taxonomia", type: "hidden", primaryKey: true },
+      ...FIELD_TEMPLATES.SYSTEM_FIELDS(),
+      ...FIELD_TEMPLATES.ESTADO_FIELD(),
+      ...FIELD_TEMPLATES.AUDIT_FIELDS(),
+      ...FIELD_TEMPLATES.VERSION_FIELD(),
+      { name: "nombre", type: "text", label: "Nombre de la Taxonomía", required: true, width: 12, section: "Taxonomía del Portafolio" },
+      { name: "descripcion", type: "textarea", label: "Descripción", required: false, width: 12, section: "Taxonomía del Portafolio" },
+      { name: "id_unidad_negocio", type: "relation", relationType: "padre", targetEntity: "Unidad_Negocio", graphEntity: "Sys_Graph_Edges", valueField: "id_unidad_negocio", labelField: "nombre", uiComponent: "searchable_single", label: "Unidad de Negocio", isTemporalGraph: true, graphEdgeType: "TAXONOMIA_UNIDAD", topologyCardinality: "1:N", width: 12, section: "Taxonomía del Portafolio", required: true },
+      { name: "portafolios_vinculados", type: "relation", relationType: "hijo", targetEntity: "Portafolio", graphEntity: "Sys_Graph_Edges", valueField: "id_portafolio", labelField: "nombre", uiComponent: "embedded_dataview", label: "Portafolios de la Taxonomía", isTemporalGraph: true, graphEdgeType: "TAXONOMIA_PORTAFOLIO", topologyCardinality: "M:N", width: 12, section: "Portafolios" },
+      { name: "value_streams_vinculados", type: "relation", relationType: "hijo", targetEntity: "Value_Stream", graphEntity: "Sys_Graph_Edges", valueField: "id_value_stream", labelField: "nombre", uiComponent: "embedded_dataview", label: "Value Streams de la Taxonomía", isTemporalGraph: true, graphEdgeType: "TAXONOMIA_VALUE_STREAM", topologyCardinality: "M:N", width: 12, section: "Value Streams" },
+      { name: "equipos_vinculados", type: "relation", relationType: "hijo", targetEntity: "Equipo", graphEntity: "Sys_Graph_Edges", valueField: "id_equipo", labelField: "nombre", uiComponent: "embedded_dataview", label: "Equipos de la Taxonomía", isTemporalGraph: true, graphEdgeType: "TAXONOMIA_EQUIPO", topologyCardinality: "M:N", width: 12, section: "Listado de Equipos" },
+      { name: "personas_vinculadas", type: "relation", relationType: "hijo", targetEntity: "Persona", graphEntity: "Sys_Graph_Edges", valueField: "id_persona", labelField: "_nombre_completo", uiComponent: "embedded_dataview", label: "Personas de la Taxonomía", isTemporalGraph: true, graphEdgeType: "TAXONOMIA_PERSONA", topologyCardinality: "M:N", width: 12, section: "Directorio de Personas" },
+      { name: "info_canvas", type: "divider", label: "Interactúa con el lienzo a tu derecha para modelar las capacidades y productos.", width: 12, section: "Arquitectura de Portafolio" },
+      { name: "info_asignaciones", type: "divider", label: "Interactúa con el lienzo a tu derecha para asignar a las personas a los diferentes niveles de la estructura.", width: 12, section: "Asignación de Responsables" },
+      { name: "org_producto", type: "custom_organigrama", viewTarget: "producto", label: "Render", width: 12, section: "Organigrama de Producto" },
+      { name: "org_tecnologia", type: "custom_organigrama", viewTarget: "tecnologia", label: "Render", width: 12, section: "Organigrama de Tecnología" },
+      { name: "org_agilidad", type: "custom_organigrama", viewTarget: "agilidad", label: "Render", width: 12, section: "Organigrama de Agilidad" },
+      { name: "org_portafolio", type: "custom_organigrama", viewTarget: "portafolio", label: "Render", width: 12, section: "Organigrama de Portafolio" }
+    ]
+  },
+  Unidad_Negocio: {
+    metadata: { prefix: 'UNDN', showInMenu: true, order: 1, iconName: 'business-outline', color: 'primary', label: 'Unidades de Negocio', titleField: 'nombre', idField: 'id_unidad_negocio', fkField: null },
+    primaryKey: "id_unidad_negocio",
+    topologyRules: TOPOLOGY_PRESETS.JERARQUICA_ESTRICTA_GRAPH_STD,
+    fields: [
+      { name: "id_unidad_negocio", type: "hidden", primaryKey: true },
+      ...FIELD_TEMPLATES.SYSTEM_FIELDS(),
+      { name: "estado", type: "hidden", defaultValue: "Borrador" },
+      ...FIELD_TEMPLATES.AUDIT_FIELDS(),
+      ...FIELD_TEMPLATES.VERSION_FIELD(),
+      ...FIELD_TEMPLATES.NAME_FIELD("Nombre de Unidad"),
+      { name: "taxonomias_vinculadas", type: "relation", relationType: "hijo", targetEntity: "Taxonomia", graphEntity: "Sys_Graph_Edges", valueField: "id_taxonomia", labelField: "nombre", uiComponent: "searchable_multi", label: "Taxonomías Vinculadas", isTemporalGraph: true, graphEdgeType: "TAXONOMIA_UNIDAD", topologyCardinality: "1:N", width: 12 },
+      { name: "portafolios_vinculados", type: "relation", relationType: "hijo", targetEntity: "Portafolio", graphEntity: "Sys_Graph_Edges", valueField: "id_portafolio", labelField: "nombre", uiComponent: "searchable_multi", label: "Portafolios Vinculados", isTemporalGraph: true, graphEdgeType: "UNIDAD_NEGOCIO_PORTAFOLIO", topologyCardinality: "1:N", width: 12 }
+    ]
+  },
+  Portafolio: {
+    uiConfig: { dashboardCard: { order: 1, iconName: 'briefcase-outline', color: 'var(--ion-color-danger)' } },
+    metadata: { prefix: 'PORT', showInMenu: true, order: 2, iconName: 'briefcase-outline', color: 'danger', label: 'Portafolios', titleField: 'nombre', idField: 'id_portafolio', fkField: null, maxListAttrs: 8, governancePolicy: 'exempt_from_strict_readonly' },
+    topological_metadata: {
+      ownerFields: ["director_id", "vp_id"],
+      parentEntity: "Unidad_Negocio",
+      parentField: "unidad_negocio_padre"
+    },
+    mutationInterceptors: ['AutoProvisionEntityRoles'],
+    primaryKey: "id_portafolio",
+    topologyRules: TOPOLOGY_PRESETS.JERARQUICA_ESTRICTA_GRAPH_STD,
+    fields: [
+      { name: "id_portafolio", type: "hidden", primaryKey: true },
+      ...FIELD_TEMPLATES.SYSTEM_FIELDS(),
+      { name: "estado", type: "hidden", defaultValue: "Borrador" },
+      ...FIELD_TEMPLATES.AUDIT_FIELDS(),
+      ...FIELD_TEMPLATES.VERSION_FIELD(),
+      ...FIELD_TEMPLATES.NAME_FIELD("Nombre de Portafolio"),
+      { name: "gerente_portafolio_id", type: "relation", relationType: "padre", targetEntity: "Persona", graphEntity: "Sys_Graph_Edges", label: "Gerente de Portafolio", isTemporalGraph: true, graphEdgeType: "PORTAFOLIO_GERENTE", uiComponent: "searchable_single", valueField: "id_persona", labelField: "_nombre_completo", width: 12 },
+      { name: "unidad_negocio_padre", type: "relation", relationType: "padre", targetEntity: "Unidad_Negocio", graphEntity: "Sys_Graph_Edges", valueField: "id_unidad_negocio", labelField: "nombre", uiComponent: "select_single", label: "Unidad de Negocio", isTemporalGraph: true, graphEdgeType: "UNIDAD_NEGOCIO_PORTAFOLIO", topologyCardinality: "1:N", width: 12, showInList: true, required: false },
+      { name: "value_streams_vinculados", type: "relation", relationType: "hijo", targetEntity: "Value_Stream", graphEntity: "Sys_Graph_Edges", valueField: "id_value_stream", labelField: "nombre", uiComponent: "searchable_multi", label: "Value Streams", isTemporalGraph: true, graphEdgeType: "PORTAFOLIO_VALUE_STREAM", topologyCardinality: "N:M", width: 12 }
+    ]
+  },
+  Dominio: {
+    metadata: { prefix: 'DOMI', showInMenu: true, order: 3, iconName: 'globe-outline', color: 'primary', label: 'Dominios', titleField: 'nombre', idField: 'id_dominio', fkField: null, governancePolicy: 'exempt_from_strict_readonly', deletionStrategy: 'GRANDPARENT' },
+    etlHooks: {
+        onRowTransform: <span class="fstat-no" title="function not covered" >fu</span>nction(row) {
+            const rawKeys = <span class="cstat-no" title="statement not covered" >Object.keys(row);</span>
+<span class="cstat-no" title="statement not covered" >            rawKeys.forEach(<span class="fstat-no" title="function not covered" >k </span>=&gt; {</span>
+                let lowKey = <span class="cstat-no" title="statement not covered" >k.toLowerCase().trim();</span>
+                let mappedKey = <span class="cstat-no" title="statement not covered" >k;</span>
+                
+<span class="cstat-no" title="statement not covered" >                if (lowKey === 'nivel subdominio') <span class="cstat-no" title="statement not covered" >mappedKey = 'nivel_tipo';</span></span>
+                else <span class="cstat-no" title="statement not covered" >if (lowKey === 'orden. subdominio' || lowKey === 'orden subdominio' || lowKey === 'orden') <span class="cstat-no" title="statement not covered" >mappedKey = 'orden_path';</span></span>
+                else <span class="cstat-no" title="statement not covered" >if (lowKey === 'subdominio') <span class="cstat-no" title="statement not covered" >mappedKey = 'nombre_ingles';</span></span>
+                else <span class="cstat-no" title="statement not covered" >if (lowKey === 'nombre español' || lowKey === 'nombre espanol') <span class="cstat-no" title="statement not covered" >mappedKey = 'nombre';</span></span>
+                else <span class="cstat-no" title="statement not covered" >if (lowKey === 'definición' || lowKey === 'definicion') <span class="cstat-no" title="statement not covered" >mappedKey = 'descripcion';</span></span>
+                else <span class="cstat-no" title="statement not covered" >if (lowKey === 'abreviación (nombre servicio)' || lowKey === 'abreviacion (nombre servicio)') <span class="cstat-no" title="statement not covered" >mappedKey = 'abreviacion';</span></span>
+                else <span class="cstat-no" title="statement not covered" >if (lowKey === 'abreviación (path servicio)' || lowKey === 'abreviacion (path servicio)') <span class="cstat-no" title="statement not covered" >mappedKey = 'path_completo_es';</span></span>
+                
+<span class="cstat-no" title="statement not covered" >                if (mappedKey !== k) {</span>
+<span class="cstat-no" title="statement not covered" >                    row[mappedKey] = row[k];</span>
+<span class="cstat-no" title="statement not covered" >                    delete row[k];</span>
+                }
+            });
+<span class="cstat-no" title="statement not covered" >            return row;</span>
+        }
+    },
+    topological_metadata: {
+      ownerFields: ["gerente_dominio_id"]
+    },
+    mutationInterceptors: ['AutoProvisionEntityRoles', 'CalculateDominioTopology'],
+    primaryKey: "id_dominio",
+    titleField: "nombre",
+    topologyRules: TOPOLOGY_PRESETS.JERARQUICA_ESTRICTA_DOMAIN,
+    fields: [
+      { name: "id_dominio", type: "hidden", primaryKey: true },
+      ...FIELD_TEMPLATES.SYSTEM_FIELDS(),
+      ...FIELD_TEMPLATES.AUDIT_FIELDS(),
+      ...FIELD_TEMPLATES.VERSION_FIELD(),
+      ...FIELD_TEMPLATES.NAME_FIELD("Nombre (ES)", 12),
+      { name: "nombre_ingles", type: "text", label: "Nombre (EN)", required: false, width: 12 },
+      { name: "abreviacion", type: "text", label: "Abreviación", required: false, width: 12 },
+      { name: "descripcion", type: "textarea", label: "Definición / Descripción", required: true, width: 12, showInList: false },
+      { name: "contexto_completo_analisis", type: "textarea", label: "Contexto Análisis", required: false, width: 12, showInList: false },
+      { width: 12, name: "relaciones_padre", type: "relation", relationType: "padre", targetEntity: "Dominio", graphEntity: "Sys_Graph_Edges", valueField: "id_dominio", labelField: "nombre", uiComponent: "searchable_single", label: "Dominio Padre", isTemporalGraph: true, graphEdgeType: "DOMINIO_HIJO", topologyCardinality: "1:N", readonlyMode: "inside_context", contextPlaceholder: "Para editar vaya a la vista principal de Dominios." },
+      { width: 12, name: "relaciones_hijo", type: "relation", relationType: "hijo", targetEntity: "Dominio", graphEntity: "Sys_Graph_Edges", valueField: "id_dominio", labelField: "nombre", uiComponent: "searchable_multi", label: "Dominios Subordinados", isTemporalGraph: true, graphEdgeType: "DOMINIO_HIJO", topologyCardinality: "1:N", readonlyMode: "inside_context", contextPlaceholder: "Para vincular vaya a la vista principal de Dominios." },
+      { width: 12, name: "value_streams_vinculados", type: "relation", relationType: "padre", targetEntity: "Value_Stream", graphEntity: "Sys_Graph_Edges", valueField: "id_value_stream", labelField: "nombre", uiComponent: "searchable_multi", label: "Value Streams", isTemporalGraph: true, graphEdgeType: "VALUE_STREAM_DOMINIO", topologyCardinality: "N:M", required: false, readonlyMode: "outside_context", contextPlaceholder: "Para vincular vaya al flujo de Taxonomía." },
+      { name: "gerente_dominio_id", type: "relation", relationType: "padre", targetEntity: "Persona", graphEntity: "Sys_Graph_Edges", label: "Responsable de Dominio", isTemporalGraph: true, graphEdgeType: "DOMINIO_RESPONSABLE", uiComponent: "searchable_single", valueField: "id_persona", labelField: "_nombre_completo", width: 12, readonlyMode: "outside_context", contextPlaceholder: "Para vincular vaya al flujo de Taxonomía." },
+      { name: "rte_id", type: "relation", relationType: "padre", targetEntity: "Persona", graphEntity: "Sys_Graph_Edges", label: "Release Train Engineer (RTE)", isTemporalGraph: true, graphEdgeType: "DOMINIO_RTE", uiComponent: "searchable_single", valueField: "id_persona", labelField: "_nombre_completo", width: 12 },
+      { name: "gerente_ti_id", type: "relation", relationType: "padre", targetEntity: "Persona", graphEntity: "Sys_Graph_Edges", label: "Gerente de TI", isTemporalGraph: true, graphEdgeType: "DOMINIO_GERENTE_TI", uiComponent: "searchable_single", valueField: "id_persona", labelField: "_nombre_completo", width: 12 },
+      { width: 12, name: "equipos_asignados", type: "relation", relationType: "hijo", targetEntity: "Equipo", graphEntity: "Sys_Graph_Edges", valueField: "id_equipo", labelField: "nombre", uiComponent: "searchable_multi", label: "Equipos", isTemporalGraph: true, graphEdgeType: "DOMINIO_EQUIPO", topologyCardinality: "1:N", readonlyMode: "outside_context", contextPlaceholder: "Para vincular vaya al flujo de Taxonomía." },
+      { name: "path_completo_es", type: "text", label: "Path Completo", required: false, width: 12 },
+      { name: "id_externo", type: "text", label: "ID Externo", required: true, width: 4 },
+      { name: "orden_path", type: "text", label: "Orden Path", required: false, width: 4 },
+      { name: "nivel_tipo", type: "number", label: "Nivel Tipo", required: false, readonly: true, width: 4 }
+    ]
+  },
+  Grupo_Productos: {
+    metadata: { showInMenu: true, order: 4, iconName: 'layers-outline', color: 'dark', label: 'Grupos de Producto', titleField: 'nombre', idField: 'id_grupo_producto', fkField: { key: 'id_value_stream', label: 'Value Stream' } },
+    topological_metadata: {
+      ownerFields: ["group_manager_id"],
+      parentEntity: "Value_Stream",
+      parentField: "id_value_stream"
+    },
+    mutationInterceptors: ['AutoProvisionEntityRoles'],
+    primaryKey: "id_grupo_producto",
+    titleField: "nombre",
+    topologyRules: TOPOLOGY_PRESETS.JERARQUICA_ESTRICTA_GRAPH_STD,
+    fields: [
+      { name: "id_grupo_producto", type: "hidden", primaryKey: true },
+      ...FIELD_TEMPLATES.SYSTEM_FIELDS(),
+      { name: "estado", type: "hidden", defaultValue: "Borrador" },
+      ...FIELD_TEMPLATES.AUDIT_FIELDS(),
+      ...FIELD_TEMPLATES.VERSION_FIELD(),
+      ...FIELD_TEMPLATES.NAME_FIELD("Nombre"),
+      { name: "gerente_producto_id", type: "relation", relationType: "padre", targetEntity: "Persona", graphEntity: "Sys_Graph_Edges", label: "Gerente de Producto", isTemporalGraph: true, graphEdgeType: "GRUPO_PRODUCTO_GERENTE", uiComponent: "searchable_single", valueField: "id_persona", labelField: "_nombre_completo", width: 12 },
+      { width: 12, name: "id_value_stream", type: "relation", relationType: "padre", targetEntity: "Value_Stream", graphEntity: "Sys_Graph_Edges", valueField: "id_value_stream", labelField: "nombre", uiComponent: "select_single", label: "Value Stream", isTemporalGraph: true, graphEdgeType: "VALUE_STREAM_GRUPO_PRODUCTO", topologyCardinality: "1:N", required: true },
+      { width: 12, name: "productos_vinculados", type: "relation", relationType: "hijo", targetEntity: "Producto", graphEntity: "Sys_Graph_Edges", valueField: "id_producto", labelField: "nombre", uiComponent: "searchable_multi", label: "Productos", isTemporalGraph: true, graphEdgeType: "GRUPO_PRODUCTO_PRODUCTO", topologyCardinality: "1:N" },
+      { width: 12, name: "equipos_asignados", type: "relation", relationType: "hijo", targetEntity: "Equipo", graphEntity: "Sys_Graph_Edges", valueField: "id_equipo", labelField: "nombre", uiComponent: "searchable_multi", label: "Equipos", isTemporalGraph: true, graphEdgeType: "GRUPO_PRODUCTO_EQUIPO", topologyCardinality: "1:N" }
+    ]
+  },
+  Producto: {
+    uiConfig: { dashboardCard: { order: 3, iconName: 'cube-outline', color: 'var(--ion-color-tertiary)' } },
+    metadata: { showInMenu: true, order: 5, iconName: 'cube-outline', color: 'tertiary', label: 'Productos', titleField: 'nombre', idField: 'id_producto', fkField: { key: 'id_grupo_producto', label: 'Grupo' } },
+    topological_metadata: {
+      ownerFields: ["rte_id", "pm_id", "agile_coach_id"],
+      parentEntity: "Grupo_Productos",
+      parentField: "id_grupo_producto"
+    },
+    primaryKey: "id_producto",
+    titleField: "nombre",
+    topologyRules: TOPOLOGY_PRESETS.JERARQUICA_ESTRICTA_GRAPH_STD,
+    fields: [
+      { name: "id_producto", type: "hidden", primaryKey: true },
+      ...FIELD_TEMPLATES.SYSTEM_FIELDS(),
+      { name: "estado", type: "hidden", defaultValue: "Borrador" },
+      ...FIELD_TEMPLATES.AUDIT_FIELDS(),
+      ...FIELD_TEMPLATES.VERSION_FIELD(),
+      ...FIELD_TEMPLATES.NAME_FIELD("Nombre de Producto"),
+      { width: 12, name: "id_grupo_producto", type: "relation", relationType: "padre", targetEntity: "Grupo_Productos", graphEntity: "Sys_Graph_Edges", valueField: "id_grupo_producto", labelField: "nombre", uiComponent: "select_single", label: "Grupo de Producto", isTemporalGraph: true, graphEdgeType: "GRUPO_PRODUCTO_PRODUCTO", topologyCardinality: "1:N", required: true }
+    ]
+  },
+  Capacidad: {
+    metadata: { showInMenu: true, order: 6, iconName: 'layers-outline', color: 'warning', label: 'Capacidades', titleField: 'nombre', idField: 'id_capacidad', fkField: null, governancePolicy: 'exempt_from_strict_readonly' },
+    topological_metadata: {
+      parentEntity: "Capacidad",
+      parentField: "id_dominio_padre"
+    },
+    mutationInterceptors: ['CalculateCapacidadTopology'],
+    primaryKey: "id_capacidad",
+    titleField: "nombre",
+    topologyRules: TOPOLOGY_PRESETS.JERARQUICA_ESTRICTA_DOMAIN,
+    fields: [
+      { name: "id_capacidad", type: "hidden", primaryKey: true },
+      ...FIELD_TEMPLATES.SYSTEM_FIELDS(),
+      ...FIELD_TEMPLATES.AUDIT_FIELDS(),
+      ...FIELD_TEMPLATES.VERSION_FIELD(),
+      { name: "id_externo", type: "text", label: "ID Externo", required: false, width: 6 },
+      { name: "nivel_tipo", type: "number", label: "Nivel Tipo", required: false, readonly: true, width: 6 },
+      { name: "orden_path", type: "text", label: "Orden Path", required: false, width: 12 },
+      ...FIELD_TEMPLATES.NAME_FIELD("Macrocapacidad"),
+      { name: "nombre_ingles", type: "text", label: "Nombre Inglés", required: false, width: 12 },
+      { name: "abreviacion", type: "text", label: "Abreviación", required: false, width: 6 },
+      { name: "descripcion", type: "textarea", label: "Descripción", required: false, width: 12, showInList: false },
+      { name: "contexto_completo_analisis", type: "textarea", label: "Contexto Análisis", required: false, width: 12, showInList: false },
+      { name: "path_completo_es", type: "text", label: "Path Completo", required: false, width: 12 },
+      { name: "id_dominio_padre", type: "relation", relationType: "padre", targetEntity: "Capacidad", graphEntity: "Sys_Graph_Edges", label: "Capacidad Padre", isTemporalGraph: true, topologyCardinality: "1:N", graphEdgeType: "CAPACIDAD_HIJO", required: false, width: 12, uiComponent: "searchable_single", valueField: "id_capacidad", labelField: "nombre" },
+      { name: "capacidades_hijas", type: "relation", relationType: "hijo", targetEntity: "Capacidad", graphEntity: "Sys_Graph_Edges", label: "Capacidades Subordinadas", isTemporalGraph: true, topologyCardinality: "1:N", graphEdgeType: "CAPACIDAD_HIJO", required: false, width: 12, uiComponent: "searchable_multi", valueField: "id_capacidad", labelField: "nombre" }
+    ]
+  },
+  Equipo: {
+    uiConfig: {
+      dashboardCard: { order: 4, iconName: 'people-outline', color: 'var(--ion-color-success)' },
+      dashboardDirectory: {
+        order: 2,
+        title: "Equipos de",
+        titleHighlight: "Desarrollo",
+        description: "Encuentra la persona que buscas y en que equipo participa utilizando el buscador",
+        emptyMessage: "No hay personas asignadas a equipos en este momento.",
+        targetEntity: "Persona",
+        edgeType: "PERSONA_EQUIPO",
+        subtitleFallbackEntity: "Rol",
+        subtitleFallbackEdge: "PERSONA_ROL"
+      }
+    },
+    metadata: { showInMenu: true, order: 7, iconName: 'people-outline', color: 'success', label: 'Equipos', titleField: 'nombre', idField: 'id_equipo', fkField: { key: 'id_grupo_producto', label: 'Grupo de Producto' } },
+    topological_metadata: {
+      ownerFields: ["scrum_master_id", "product_owner_id"],
+      parentEntity: "Grupo_Productos",
+      parentField: "id_grupo_producto"
+    },
+    mutationInterceptors: ['AutoProvisionEntityRoles'],
+    primaryKey: "id_equipo",
+    fields: [
+      { name: "id_equipo", type: "hidden", primaryKey: true },
+      ...FIELD_TEMPLATES.SYSTEM_FIELDS(),
+      ...FIELD_TEMPLATES.AUDIT_FIELDS(),
+      ...FIELD_TEMPLATES.VERSION_FIELD(),
+      { name: "estado", type: "hidden", defaultValue: "Borrador" },
+      ...FIELD_TEMPLATES.NAME_FIELD("Nombre de Equipo", 12),
+      { name: "seudonimo", type: "text", label: "Seudónimo", required: false, width: 6 },
+      { name: "formas_de_trabajo", type: "select", label: "Formas de Trabajo", required: false, width: 6, options: ["Scrum", "Kanban", "Híbrido"] },
+      { name: "url_tablero_trabajo", type: "url", label: "URL Tablero de Trabajo", required: false, width: 12 },
+      { name: "proposito", type: "textarea", label: "Propósito", required: false, width: 12 },
+      { name: "id_grupo_producto", type: "relation", relationType: "padre", targetEntity: "Grupo_Productos", graphEntity: "Sys_Graph_Edges", label: "Grupo de Producto", isTemporalGraph: true, graphEdgeType: "GRUPO_PRODUCTO_EQUIPO", uiComponent: "searchable_single", valueField: "id_grupo_producto", labelField: "nombre", readonly: true, required: false, width: 12, hideIfEmptyAndReadonly: false },
+      { name: "id_dominio", type: "relation", relationType: "padre", targetEntity: "Dominio", graphEntity: "Sys_Graph_Edges", label: "Dominio", isTemporalGraph: true, graphEdgeType: "DOMINIO_EQUIPO", uiComponent: "searchable_single", valueField: "id_dominio", labelField: "nombre", readonly: true, required: false, width: 12, hideIfEmptyAndReadonly: false },
+      { name: "rte_id", type: "relation", relationType: "hijo", targetEntity: "Persona", graphEntity: "Sys_Graph_Edges", label: "Release Train Engineer (RTE)", isTemporalGraph: true, graphEdgeType: "EQUIPO_RTE", uiComponent: "searchable_single", valueField: "id_persona", labelField: "_nombre_completo", readonlyMode: "always", required: false, width: 6, hideInCanvas: true },
+      { name: "product_manager_id", type: "relation", relationType: "hijo", targetEntity: "Persona", graphEntity: "Sys_Graph_Edges", label: "Product Manager", isTemporalGraph: true, graphEdgeType: "EQUIPO_PM", uiComponent: "searchable_single", valueField: "id_persona", labelField: "_nombre_completo", readonlyMode: "always", required: false, width: 6, hideInCanvas: true },
+      { name: "scrum_master_id", type: "relation", relationType: "hijo", targetEntity: "Persona", graphEntity: "Sys_Graph_Edges", label: "Team Coach", isTemporalGraph: true, graphEdgeType: "EQUIPO_SM", uiComponent: "searchable_single", valueField: "id_persona", labelField: "_nombre_completo", readonlyMode: "always", required: false, width: 6 },
+      { name: "product_owner_id", type: "relation", relationType: "hijo", targetEntity: "Persona", graphEntity: "Sys_Graph_Edges", label: "Dueño de Producto", isTemporalGraph: true, graphEdgeType: "EQUIPO_PO", uiComponent: "searchable_single", valueField: "id_persona", labelField: "_nombre_completo", readonlyMode: "always", required: false, width: 6 },
+      { name: "technical_lead_id", type: "relation", relationType: "hijo", targetEntity: "Persona", graphEntity: "Sys_Graph_Edges", label: "Líder Técnico", isTemporalGraph: true, graphEdgeType: "EQUIPO_TL", uiComponent: "searchable_single", valueField: "id_persona", labelField: "_nombre_completo", readonlyMode: "always", required: false, width: 6 },
+      { name: "personas_asignadas", type: "relation", relationType: "hijo", targetEntity: "Persona", graphEntity: "Sys_Graph_Edges", isTemporalGraph: true, graphEdgeType: "PERSONA_EQUIPO", label: "Development Team", uiComponent: "searchable_multi", valueField: "id_persona", labelField: "_nombre_completo", topologyCardinality: "M:N", disallowedContextEdges: ["EQUIPO_PO", "EQUIPO_SM", "EQUIPO_PM", "EQUIPO_RTE", "EQUIPO_TL"], width: 12 }
+    ]
+  },
+  Persona: {
+    uiConfig: {
+      dashboardCard: {
+        order: 5,
+        iconName: 'person-outline',
+        color: 'var(--ion-color-warning)',
+        avatarField: 'avatar',
+        subtitleFields: [
+          { field: 'email', icon: 'mail-outline' },
+          { field: 'departamento', icon: 'business-outline' }
+        ]
+      }
+    },
+    computedFields: [
+      { name: '_nombre_completo', concat: ['nombre', 'apellidos'], separator: ' ', fallback: ['email', 'id_persona'] }
+    ],
+    metadata: { showInMenu: true, order: 8, iconName: 'person-outline', color: 'warning', label: 'Personas', titleField: '_nombre_completo', idField: 'id_persona', fkField: null, insertAtTop: true },
+    primaryKey: "id_persona",
+    mutationInterceptors: ['EnforceAllowedDomains', 'WorkspacePreflightBlock', 'HydrateWorkspace', 'AutoProvisionCargo', 'AutoProvisionLiderDirecto', 'AutoLinkAgileRoles'],
+    relationalProvisioners: [
+      {
+        field: 'roles_asignados',
+        targetEntity: 'Rol',
+        idField: 'id_rol',
+        edgeType: 'PERSONA_ROL',
+        stubPrefix: 'ROL-',
+        extraStubFields: { nivel: "Nivel Base" }
+      },
+      {
+        field: 'equipo',
+        targetEntity: 'Equipo',
+        idField: 'id_equipo',
+        edgeType: 'PERSONA_EQUIPO',
+        stubPrefix: 'EQUI-'
+      }
+    ],
+    topologyRules: TOPOLOGY_PRESETS.JERARQUICA_PERSONA,
+    fields: [
+      { name: "id_persona", type: "hidden", primaryKey: true },
+      ...FIELD_TEMPLATES.SYSTEM_FIELDS(),
+      ...FIELD_TEMPLATES.AUDIT_FIELDS(),
+      ...FIELD_TEMPLATES.VERSION_FIELD(),
+      ...FIELD_TEMPLATES.ESTADO_FIELD(),
+&nbsp;
+      { name: "separator_1", type: "divider", label: "Datos Personales", icon: "person-outline", width: 12 },
+      { name: "nombre", type: "text", label: "Nombre(s)", required: false, width: 6, validators: ["minLength:2"], triggers_workspace_resolve: true },
+      { name: "apellidos", type: "text", label: "Apellidos", required: false, width: 6, validators: ["minLength:2"] },
+&nbsp;
+      { name: "separator_2", type: "divider", label: "Datos de Contacto", icon: "mail-outline", width: 12 },
+      // [E6-S64] Validator genérico de email — la restricción de dominio la aplica API_Auth via Adapter_Config
+      { name: "email", type: "email", primaryKey: false, label: "Correo Corporativo", required: true, width: 12, validators: ["regex:^[a-zA-Z0-9._%+\\-]+@[a-zA-Z0-9.\\-]+\\.[a-zA-Z]{2,}$"], triggers_workspace_resolve: true, unique: true },
+      { name: "telefono", type: "tel", label: "Teléfono", required: false, width: 12 },
+&nbsp;
+      { name: "separator_4", type: "divider", label: "Datos Agilidad", icon: "git-network-outline", width: 12 },
+      { name: "roles_asignados", type: "relation", relationType: "padre", targetEntity: "Rol", graphEntity: "Sys_Graph_Edges", label: "Roles Organizacionales", isTemporalGraph: true, graphEdgeType: "PERSONA_ROL", valueField: "id_rol", labelField: "nombre", uiComponent: "searchable_multi", topologyCardinality: "M:N", width: 12, allowInETL: true },
+      { name: "equipo", type: "relation", relationType: "padre", targetEntity: "Equipo", graphEntity: "Sys_Graph_Edges", label: "Equipos Asignados", isTemporalGraph: true, graphEdgeType: "PERSONA_EQUIPO", required: false, width: 12, uiComponent: "searchable_multi", topologyCardinality: "M:N", valueField: "id_equipo", labelField: "nombre", allowInETL: true },
+      { name: "porcentaje_asignacion", type: "select", label: "Asignación", options: ["Full Time", "Part Time", "Por Proyecto"], width: 12, excludeFromETL: true },
+&nbsp;
+      { name: "separator_3", type: "divider", label: "Datos Empresariales", icon: "business-outline", width: 12 },
+      { name: "unidad_negocio", type: "lookup", lookupTarget: "Unidad_Negocio", label: "Unidad de Negocio", required: false, width: 12 },
+      { name: "departamento", type: "text", label: "Departamento", required: false, width: 12, excludeFromETL: true },
+      { name: "id_cargo", type: "relation", relationType: "padre", targetEntity: "Cargo", graphEntity: "Sys_Graph_Edges", label: "Cargo Oficial", isTemporalGraph: true, topologyCardinality: "1:N", graphEdgeType: "CARGO_PERSONA", uiComponent: "select_single", valueField: "id_cargo", labelField: "nombre", required: false, width: 12 },
+      { name: "cargo", type: "hidden", label: "Cargo Oficial Workspace (Plano)" },
+      { name: "lider_directo", type: "relation", relationType: "padre", targetEntity: "Persona", graphEntity: "Sys_Graph_Edges", valueField: "id_persona", labelField: "_nombre_completo", topologyCardinality: "1:N", isTemporalGraph: true, graphEdgeType: "PERSONA_LIDER_DIRECTO", label: "Líder Directo", required: false, width: 12, uiComponent: "select_single" },
+      { name: "centro_costo", type: "text", label: "Centro de Costos", required: false, width: 6, excludeFromETL: true },
+      { name: "numero_empleado", type: "number", label: "Número de Empleado", required: false, width: 6, validators: ["regex:^\\d{8}$"], unique: true, excludeFromETL: true },
+      { name: "modalidad", type: "select", label: "Modalidad", options: ["Presencial", "Virtual", "Híbrido"], required: false, width: 6 },
+      { name: "esquema", type: "select", label: "Esquema Laboral", options: ["Interno", "Externo"], required: false, width: 6 },
+      { name: "proveedor", type: "text", label: "Empresa Contratante", required: false, width: 6 },
+      { name: "ubicacion", type: "text", label: "Ubicación Geográfica", required: false, width: 12 },
+      { name: "estado_geo", type: "text", label: "Estado", required: false, width: 6 },
+      { name: "ciudad", type: "text", label: "Ciudad", required: false, width: 6 },
+&nbsp;
+      { name: "separator_5", type: "divider", label: "Control de Accesos (Admin)", width: 12, abacRule: { action: 'update', target: 'Sys_Permissions' } },
+      { name: "id_rol", type: "select", label: "Rol de Autorización", required: false, width: 12, lookupSource: "getSysRolesOptions", abacRule: { action: 'update', target: 'Sys_Permissions' }, excludeFromETL: true },
+      { name: "workspace_sync_status", type: "hidden", label: "Estado Sincronización WS" },
+      { name: "avatar", type: "hidden", label: "Avatar URL" }
+    ]
+  },
+  Cargo: {
+    uiConfig: {
+      dashboardDirectory: {
+        order: 3,
+        title: "Cargos y",
+        titleHighlight: "Posiciones",
+        description: "Encuentra la persona que buscas y que cargo desempeña utilizando el buscador",
+        emptyMessage: "No hay personas asignadas a cargos en este momento.",
+        targetEntity: "Persona",
+        edgeType: "CARGO_PERSONA",
+        subtitleFallbackEntity: "Equipo",
+        subtitleFallbackEdge: "PERSONA_EQUIPO"
+      }
+    },
+    metadata: { prefix: 'CARG', showInMenu: true, order: 8, iconName: 'id-card-outline', color: 'tertiary', label: 'Cargos y Posiciones', titleField: 'nombre', idField: 'id_cargo', fkField: null },
+    primaryKey: "id_cargo",
+    titleField: "nombre",
+    fields: [
+      { name: "id_cargo", type: "hidden", primaryKey: true },
+      ...FIELD_TEMPLATES.SYSTEM_FIELDS(),
+      ...FIELD_TEMPLATES.AUDIT_FIELDS(),
+      ...FIELD_TEMPLATES.VERSION_FIELD(),
+      ...FIELD_TEMPLATES.ESTADO_FIELD(),
+      { name: "id_externo_workspace", type: "text", label: "ID Workspace (Ext)", required: false, width: 12, unique: true, readonly: true, showInForm: false, helpText: "Generado auto. Se oculta del motor form ya que no requiere captura humana." },
+      ...FIELD_TEMPLATES.NAME_FIELD("Nombre de Cargo"),
+      { name: "personas_asignadas", type: "relation", relationType: "hijo", targetEntity: "Persona", graphEntity: "Sys_Graph_Edges", label: "Personas Asignadas", isTemporalGraph: true, graphEdgeType: "CARGO_PERSONA", valueField: "id_persona", labelField: "_nombre_completo", uiComponent: "searchable_multi", topologyCardinality: "1:N", width: 12 }
+    ]
+  },
+  Rol: {
+    uiConfig: {
+      dashboardDirectory: {
+        order: 1,
+        title: "Roles en Arquitectura",
+        titleHighlight: "del Portafolio",
+        description: "Encuentra la persona que buscas y que cargo desempeña utilizando el buscador",
+        emptyMessage: "No hay personas asignadas a roles en este momento.",
+        targetEntity: "Persona",
+        edgeType: "PERSONA_ROL",
+        subtitleFallbackEntity: "Equipo",
+        subtitleFallbackEdge: "PERSONA_EQUIPO"
+      }
+    },
+    metadata: { prefix: 'ROLE', showInMenu: true, order: 9, iconName: 'shirt-outline', color: 'primary', label: 'Roles', titleField: 'nombre', idField: 'id_rol', fkField: null },
+    primaryKey: "id_rol",
+    titleField: "nombre",
+    fields: [
+      { name: "id_rol", type: "hidden", primaryKey: true },
+      ...FIELD_TEMPLATES.SYSTEM_FIELDS(),
+      ...FIELD_TEMPLATES.AUDIT_FIELDS(),
+      ...FIELD_TEMPLATES.VERSION_FIELD(),
+      ...FIELD_TEMPLATES.ESTADO_FIELD(),
+      ...FIELD_TEMPLATES.NAME_FIELD("Nombre de Rol", 6),
+      { name: "nombre_ingles", type: "text", label: "Nombre en Inglés", required: false, width: 6 },
+      { name: "color_icono", type: "select", options: ["primary", "secondary", "tertiary", "success", "warning", "danger", "dark", "medium", "light"], label: "Color del Ícono", width: 6 },
+      { name: "especialidad", type: "select", options: ["TI", "Negocio", "Producto", "Agilidad"], label: "Área de Gestión / Especialidad", width: 12, placeholder: "Seleccione..." },
+      { name: "descripcion", type: "textarea", label: "Descripción", required: false, width: 12, showInList: false },
+      { name: "personas_asignadas", type: "relation", relationType: "hijo", targetEntity: "Persona", graphEntity: "Sys_Graph_Edges", label: "Personas Asignadas", isTemporalGraph: true, graphEdgeType: "PERSONA_ROL", valueField: "id_persona", labelField: "_nombre_completo", uiComponent: "searchable_multi", topologyCardinality: "M:N", width: 12 }
+    ]
+  },
+  Sys_Graph_Edges: {
+    metadata: { prefix: 'SYS', showInMenu: false, order: 10, iconName: 'git-network-outline', color: 'primary', label: 'Grafo Universal Temporal', titleField: 'tipo_relacion', idField: 'id_relacion', fkField: { key: 'id_nodo_padre', label: 'Nodo Padre' } },
+    primaryKey: "id_relacion",
+    fields: [
+      { name: "id_relacion", type: "hidden", primaryKey: true },
+      ...FIELD_TEMPLATES.ESTADO_FIELD(),
+      ...FIELD_TEMPLATES.AUDIT_FIELDS(),
+      { name: "id_nodo_padre", type: "text", required: true, width: 6 },
+      { name: "id_nodo_hijo", type: "text", required: true, width: 6 },
+      { name: "tipo_relacion", type: "text", required: true, width: 6 },
+      { name: "valido_desde", type: "hidden" },
+      { name: "valido_hasta", type: "hidden" },
+      { name: "es_version_actual", type: "hidden", defaultValue: true },
+      { name: "peso_capacidad", type: "number", label: "Dedicación (%)", defaultValue: 100, width: 6, validators: ["min:0", "max:100"] },
+      { name: "contexto_id", type: "text", required: false, label: "ID Contexto/Borrador", showInList: false },
+      { name: "metadata_config", type: "textarea", label: "Configuración Adicional (JSON)", required: false, width: 12, showInList: false, validators: ["json"] }
+    ]
+  },
+  // [E6-S66] Canal pub-sub nativo para invalidación proactiva de caché cross-tenant.
+  // Append-only. El job Job_CleanCacheSignals() limpia señales &gt; 1 hora cada 24h.
+  Sys_Cache_Signals: {
+    metadata: { prefix: 'SCCH', showInMenu: false, order: 95, iconName: 'radio-outline', color: 'warning',
+                label: 'Señales de Caché Cross-Tenant', titleField: 'entity_name',
+                idField: 'signal_id', fkField: null },
+    primaryKey: "signal_id",
+    fields: [
+      { name: "signal_id",      type: "text",   primaryKey: true,  label: "ID Señal",        width: 6  },
+      { name: "entity_name",    type: "text",   required: true,    label: "Entidad",          width: 6  },
+      { name: "invalidated_at", type: "text",   required: true,    label: "Invalidado el",    width: 6  },
+      { name: "by_tenant",      type: "text",   required: true,    label: "Tenant Origen",    width: 6  }
+    ]
+  },
+  
+  // [E61] Registro de ejecuciones asíncronas
+  Sys_Jobs: {
+    metadata: { prefix: 'SJOB', showInMenu: true, order: 95, iconName: 'list-outline', color: 'primary',
+                label: 'Ejecuciones de Carga', titleField: 'jobId', idField: 'jobId', fkField: null },
+    primaryKey: "jobId",
+    fields: [
+      { name: "jobId", type: "text", primaryKey: true, label: "ID Job", width: 6 },
+      { name: "status", type: "text", label: "Estado", width: 6 },
+      { name: "total", type: "number", label: "Total Registros", width: 4 },
+      { name: "processed", type: "number", label: "Procesados", width: 4 },
+      { name: "errors", type: "number", label: "Errores", width: 4 },
+      { name: "step", type: "number", label: "Paso Actual", width: 4 },
+      { name: "message", type: "text", label: "Mensaje", width: 8 },
+      { name: "createdAt", type: "text", label: "Fecha Inicio", width: 6 },
+      { name: "updatedAt", type: "text", label: "Última Actividad", width: 6 }
+    ]
+  },
+&nbsp;
+  // [E61-S61.5] Dead Letter Queue para errores asíncronos persistentes
+  Sys_DLQ: {
+    metadata: { prefix: 'SDLQ', showInMenu: true, order: 96, iconName: 'warning-outline', color: 'danger',
+                label: 'Dead Letter Queue', titleField: 'error_message', idField: 'id_dlq', fkField: null },
+    primaryKey: "id_dlq",
+    fields: [
+      { name: "id_dlq", type: "text", primaryKey: true, label: "ID Error", width: 6 },
+      ...FIELD_TEMPLATES.AUDIT_FIELDS(),
+      { name: "job_id", type: "text", required: true, label: "Job Origin", width: 6 },
+      { name: "entity_name", type: "text", required: true, label: "Entidad Destino", width: 6 },
+      { name: "estado", type: "select", options: ["Pendiente", "Resuelto", "Ignorado"], defaultValue: "Pendiente", required: true, label: "Estado", width: 6 },
+      { name: "error_message", type: "textarea", required: true, label: "Motivo de Falla", width: 12 },
+      { name: "payload", type: "textarea", required: true, label: "Payload (JSON)", width: 12 }
+    ]
+  },
+&nbsp;
+&nbsp;
+  Sys_Roles: {
+    metadata: { prefix: 'SROL', showInMenu: false, order: 90, iconName: 'shield-half-outline', color: 'danger', label: 'Seguridad: Roles', titleField: 'nombre', idField: 'id_rol', fkField: null },
+    primaryKey: "id_rol",
+    fields: [
+      { name: "id_rol", type: "text", primaryKey: true, readonly: true, label: "ID Rol", width: 12 },
+      ...FIELD_TEMPLATES.AUDIT_FIELDS(),
+      ...FIELD_TEMPLATES.NAME_FIELD("Nombre de Rol", 6),
+      { name: "descripcion", type: "textarea", label: "Descripción", required: false, width: 12, showInList: false }
+    ]
+  },
+  Config_Typography: {
+    metadata: { showInMenu: false, order: 92, iconName: 'text-outline', color: 'medium', label: 'Temas Tipográficos', titleField: 'nombre', idField: 'id_tipografia', fkField: null },
+    primaryKey: "id_tipografia",
+    fields: [
+      { name: "id_tipografia", type: "text", primaryKey: true, readonly: true, label: "ID Pack", width: 12 },
+      ...FIELD_TEMPLATES.ESTADO_FIELD(),
+      ...FIELD_TEMPLATES.AUDIT_FIELDS(),
+      ...FIELD_TEMPLATES.NAME_FIELD("Nombre de Pack"),
+      { name: "font_display", type: "select", label: "Ultra Título (.text-display)", required: true, width: 6, options: ["Poppins, sans-serif", "Playfair Display, serif", "Inter, sans-serif", "Roboto, sans-serif", "Montserrat, sans-serif"], helpText: "El texto con el que representamos frases, conceptos o ideas urgentes o de gran importancia." },
+&nbsp;
+      { name: "div_headers", type: "divider", label: "Headers 1, 2, 3", width: 12 },
+      { name: "font_h1", type: "select", label: "Título Principal (h1)", required: true, width: 6, options: ["Poppins, sans-serif", "Playfair Display, serif", "Inter, sans-serif", "Roboto, sans-serif", "Montserrat, sans-serif"], helpText: "El título más importante de una página o sección." },
+      { name: "font_h2", type: "select", label: "Título Secundario (h2)", required: true, width: 6, options: ["Poppins, sans-serif", "Playfair Display, serif", "Inter, sans-serif", "Roboto, sans-serif", "Montserrat, sans-serif"], helpText: "Un título de menor importancia que el título principal." },
+      { name: "font_h3", type: "select", label: "Título Terciario (h3)", required: true, width: 6, options: ["Poppins, sans-serif", "Playfair Display, serif", "Inter, sans-serif", "Roboto, sans-serif", "Montserrat, sans-serif"], helpText: "Un título de menor importancia que el título secundario." },
+&nbsp;
+      { name: "div_subs", type: "divider", label: "SubHeaders", width: 12 },
+      { name: "font_sub", type: "select", label: "Subtítulos (.text-sub)", required: true, width: 6, options: ["Poppins, sans-serif", "Playfair Display, serif", "Inter, sans-serif", "Roboto, sans-serif", "Montserrat, sans-serif"], helpText: "Un texto breve que complementa y expande un título." },
+&nbsp;
+      { name: "div_body", type: "divider", label: "Body &amp; Small", width: 12 },
+      { name: "font_body", type: "select", label: "Texto Cuerpo (body)", required: true, width: 6, options: ["Poppins, sans-serif", "Playfair Display, serif", "Inter, sans-serif", "Roboto, sans-serif", "Montserrat, sans-serif"], helpText: "Párrafos largos, artículos, descripciones." },
+      { name: "font_mini", type: "select", label: "Miniaturas (.text-mini)", required: true, width: 6, options: ["Poppins, sans-serif", "Playfair Display, serif", "Inter, sans-serif", "Roboto, sans-serif", "Montserrat, sans-serif"], helpText: "Un texto de menor importancia que el texto principal." },
+&nbsp;
+      { name: "div_caption", type: "divider", label: "Caption &amp; Action", width: 12 },
+      { name: "font_caption", type: "select", label: "Leyendas (.text-caption)", required: true, width: 6, options: ["Poppins, sans-serif", "Playfair Display, serif", "Inter, sans-serif", "Roboto, sans-serif", "Montserrat, sans-serif"], helpText: "Un texto breve que describe una imagen, gráfico o tabla." },
+      { name: "font_action", type: "select", label: "Acciones (.text-action)", required: true, width: 6, options: ["Poppins, sans-serif", "Playfair Display, serif", "Inter, sans-serif", "Roboto, sans-serif", "Montserrat, sans-serif"], helpText: "Botones, enlaces y llamados a la acción." },
+&nbsp;
+      { name: "div_math", type: "divider", label: "Escala y Proporciones", width: 12 },
+&nbsp;
+      { name: "base_size", type: "select", label: "Tamaño Base (Body Px)", required: true, width: 6, options: ["12px", "14px", "16px", "18px"], defaultValue: "16px", helpText: "Impacta directamente el tamaño de los párrafos y textos base." },
+      { name: "scale_ratio", type: "select", label: "Multiplicador de Escala", required: true, width: 6, options: ["1.125 (Major Second)", "1.200 (Minor Third)", "1.250 (Major Third)", "1.333 (Perfect Fourth)", "1.618 (Golden Ratio)"], defaultValue: "1.250 (Major Third)", helpText: "Define qué tan rápido crecen los títulos en proporción al texto base." },
+      { name: "heading_weight", type: "select", label: "Peso de Títulos (Weight)", required: true, width: 6, options: ["400", "500", "600", "700", "800"], defaultValue: "600", helpText: "Controla el grosor global de todos los Títulos y Subtítulos." },
+      { name: "heading_transform", type: "select", label: "Mayúsculas/Minúsculas", required: true, width: 6, options: ["none", "uppercase", "capitalize", "lowercase"], defaultValue: "none", helpText: "Transforma automáticamente la capitalización de los títulos." }
+    ]
+  },
+  Sys_Permissions: {
+    metadata: { prefix: 'SPRM', showInMenu: false, order: 91, iconName: 'key-outline', color: 'danger', label: 'Seguridad: Permisos ABAC', titleField: 'schema_destino', idField: 'id_permiso', fkField: { key: 'id_rol', label: 'Rol Base' } },
+    primaryKey: "id_permiso",
+    fields: [
+      { name: "id_permiso", type: "text", primaryKey: true, readonly: true, label: "ID Permiso", width: 12 },
+      ...FIELD_TEMPLATES.AUDIT_FIELDS(),
+      { name: "id_rol", type: "select", label: "Rol Organizacional", required: true, width: 6, lookupSource: "getSysRolesOptions" },
+      { name: "schema_destino", type: "select", label: "Entidad del Sistema", required: true, width: 6, options: ["Portafolio", "Dominio", "Grupo_Productos", "Producto", "Capacidad", "Unidad_Negocio", "Equipo", "Persona", "Sys_Graph_Edges", "Sys_Roles", "Sys_Permissions", "Config_Typography"] },
+      { name: "nivel_acceso", type: "select", label: "Nivel de Acceso", required: true, width: 12, options: ["ALL (Admin Total)", "OWNER_ONLY (Solo propios)", "MEMBER_ONLY (Siendo Miembro)", "READ_ONLY (Solo lectura)", "NONE (Denegado)"] }
+    ]
+  },
+  // [E31-S31.4] Duplicate Sys_Graph_Edges key removed. Canonical definition ~line 282.
+&nbsp;
+  Value_Stream: {
+    uiConfig: { dashboardCard: { order: 2, iconName: 'swap-horizontal-outline', color: 'var(--ion-color-tertiary)', title: 'VS' } },
+    metadata: { prefix: 'VSTR', showInMenu: true, order: 8, iconName: 'swap-horizontal-outline', color: 'tertiary', label: 'Value Streams', titleField: 'nombre', idField: 'id_value_stream', fkField: null, maxListAttrs: 8 },
+    topological_metadata: {
+      ownerFields: ["dueno_vs_id", "head_of_technology_id"],
+      parentEntity: "Portafolio",
+      parentField: "portafolios_padre"
+    },
+    mutationInterceptors: ['AutoProvisionEntityRoles'],
+    primaryKey: "id_value_stream",
+    topologyRules: TOPOLOGY_PRESETS.JERARQUICA_ESTRICTA_GRAPH_STD,
+    fields: [
+      { name: "id_value_stream", type: "hidden", primaryKey: true },
+      ...FIELD_TEMPLATES.SYSTEM_FIELDS(),
+      { name: "estado", type: "hidden", defaultValue: "Borrador" },
+      ...FIELD_TEMPLATES.AUDIT_FIELDS(),
+      ...FIELD_TEMPLATES.VERSION_FIELD(),
+      ...FIELD_TEMPLATES.NAME_FIELD("Nombre de Value Stream", 12),
+      { name: "descripcion", type: "text", label: "Descripción / Propósito", required: false, width: 12, section: "Configuración General" },
+      { name: "dueno_vs_id", type: "relation", relationType: "padre", targetEntity: "Persona", graphEntity: "Sys_Graph_Edges", label: "Dueño del Value Stream", isTemporalGraph: true, graphEdgeType: "VALUE_STREAM_DUENO", uiComponent: "searchable_single", valueField: "id_persona", labelField: "_nombre_completo", width: 12, section: "Liderazgo" },
+      { name: "head_of_technology_id", type: "relation", relationType: "padre", targetEntity: "Persona", graphEntity: "Sys_Graph_Edges", label: "Head of Technology", isTemporalGraph: true, graphEdgeType: "VALUE_STREAM_HEAD_OF_TECHNOLOGY", uiComponent: "searchable_single", valueField: "id_persona", labelField: "_nombre_completo", width: 12, section: "Liderazgo" },
+      { name: "head_of_product_id", type: "relation", relationType: "padre", targetEntity: "Persona", graphEntity: "Sys_Graph_Edges", label: "Head of Product", isTemporalGraph: true, graphEdgeType: "VALUE_STREAM_HEAD_OF_PRODUCT", uiComponent: "searchable_single", valueField: "id_persona", labelField: "_nombre_completo", width: 12, section: "Liderazgo" },
+      { name: "agile_coach_id", type: "relation", relationType: "padre", targetEntity: "Persona", graphEntity: "Sys_Graph_Edges", label: "Agile Coach", isTemporalGraph: true, graphEdgeType: "VALUE_STREAM_AGILE_COACH", uiComponent: "searchable_single", valueField: "id_persona", labelField: "_nombre_completo", width: 12, section: "Liderazgo" },
+      { width: 12, name: "portafolios_padre", type: "relation", relationType: "padre", targetEntity: "Portafolio", graphEntity: "Sys_Graph_Edges", valueField: "id_portafolio", labelField: "nombre", uiComponent: "searchable_multi", label: "Portafolios", isTemporalGraph: true, graphEdgeType: "PORTAFOLIO_VALUE_STREAM", topologyCardinality: "N:M", required: true, section: "Contexto Organizacional" },
+      { width: 12, name: "dominios_vinculados", type: "relation", relationType: "hijo", targetEntity: "Dominio", graphEntity: "Sys_Graph_Edges", valueField: "id_dominio", labelField: "nombre", uiComponent: "treemap_selector", label: "Dominios", isTemporalGraph: true, graphEdgeType: "VALUE_STREAM_DOMINIO", topologyCardinality: "N:M", section: "Contexto Organizacional" },
+      { width: 12, name: "grupos_productos_vinculados", type: "relation", relationType: "hijo", targetEntity: "Grupo_Productos", graphEntity: "Sys_Graph_Edges", valueField: "id_grupo_producto", labelField: "nombre", uiComponent: "searchable_multi", label: "Grupos de Productos", isTemporalGraph: true, graphEdgeType: "VALUE_STREAM_GRUPO_PRODUCTO", topologyCardinality: "1:N", section: "Contexto Organizacional" },
+      { width: 12, name: "value_stream_pasos", type: "relation", relationType: "hijo", targetEntity: "Value_Stream_Step", graphEntity: "Sys_Graph_Edges", valueField: "id_value_stream_step", labelField: "nombre", uiComponent: "searchable_multi", label: "Pasos del Value Stream", isTemporalGraph: true, graphEdgeType: "VALUE_STREAM_PASO", topologyCardinality: "N:M", section: "Pasos del Value Stream" },
+      { name: "div_canvas", type: "divider", label: "CANVAS", width: 12, icon: "analytics-outline", section: "Pasos del Value Stream" },
+      { name: "canvas_vs", type: "uiComponent", label: "Modelador de Value Stream", width: 12, uiComponent: "canvas_launcher", required: false, section: "Pasos del Value Stream" }
+    ]
+  },
+  
+  Value_Stream_Step: {
+    uiConfig: { dashboardCard: null }, // Oculto del Dashboard
+    metadata: { prefix: 'PASO', showInMenu: false, iconName: 'footsteps-outline', color: 'tertiary', label: 'Pasos de Value Stream', titleField: 'nombre', idField: 'id_value_stream_step', fkField: null },
+    primaryKey: "id_value_stream_step",
+    fields: [
+      { name: "id_value_stream_step", type: "hidden", primaryKey: true },
+      ...FIELD_TEMPLATES.SYSTEM_FIELDS(),
+      { name: "estado", type: "hidden", defaultValue: "Activo" },
+      ...FIELD_TEMPLATES.AUDIT_FIELDS(),
+      ...FIELD_TEMPLATES.VERSION_FIELD(),
+      ...FIELD_TEMPLATES.NAME_FIELD("Nombre del Paso", 12),
+      { name: "descripcion", type: "text", label: "Descripción", required: false, width: 12 }
+    ]
+  },
+  // [S60/E6] Config_System: Entidad especial de configuración del sistema.
+  // Persiste en PropertiesService (local al tenant) mediante Adapter_Config.
+  // NO usa Google Sheets. Routing gestionado por Engine_DB via metadata.adapter.
+  Config_System: {
+    metadata: {
+      adapter: 'config',
+      showInMenu: false,
+      showInSchemaStudio: false,
+      order: 99,
+      iconName: 'settings-outline',
+      color: 'medium',
+      label: 'Configuración del Sistema',
+      section: 'ADMINISTRACIÓN',
+      titleField: 'tenant_name',
+      idField: 'config_id',
+      fkField: null,
+      requireStrictMatrixAccess: true
+    },
+    primaryKey: 'config_id',
+    fields: [
+      { name: 'config_id', type: 'text', primaryKey: true, readonly: true, label: 'ID Configuración', width: 6 },
+      { name: 'tenant_name', type: 'text', label: 'Nombre del Tenant', required: true, width: 6,
+        helpText: 'Identificador White-Label de esta instancia. Ej: Tenant A' },
+      { name: 'db_adapter_id', type: 'select', label: 'Adaptador de Base de Datos', required: true, width: 6,
+        options: [
+          { value: 'sheets', label: 'Google Sheets' },
+          { value: 'clouddb', label: 'Cloud Database' }
+        ],
+        helpText: 'Motor de almacenamiento de datos activo para este tenant.' },
+      { name: 'spreadsheet_id', type: 'text', label: 'ID de Google Sheet (Base de Datos)', required: false, width: 12,
+        helpText: 'ID del archivo Google Sheets que actúa como base de datos compartida entre tenants.' },
+      { name: 'allowed_domains', type: 'text', label: 'Dominios SSO Permitidos (CSV)', required: false, width: 6,
+        helpText: 'Correos permitidos para acceder al sistema. Ej: @tenantA.com,@tenantB.com' },
+      { name: 'app_title', type: 'text', label: 'Título de la Aplicación', required: false, width: 6,
+        helpText: 'Texto que aparece en la pestaña del navegador.' },
+      { name: 'favicon_url', type: 'text', label: 'URL del Favicon', required: false, width: 12,
+        helpText: 'URL pública del ícono de la aplicación (favicon).' }
+    ]
+  },
+  Empresas: {
+    metadata: { prefix: 'EMP', showInMenu: true, iconName: 'business-outline', color: 'primary', label: 'Empresas / Clientes', titleField: 'nombre', idField: 'id_empresa', fkField: null },
+    mutationInterceptors: ['ProvisionDriveFolders', 'ProcessDriveUploads'],
+    primaryKey: "id_empresa",
+    fields: [
+      { name: "id_empresa", type: "hidden", primaryKey: true },
+      ...FIELD_TEMPLATES.SYSTEM_FIELDS(),
+      ...FIELD_TEMPLATES.AUDIT_FIELDS(),
+      ...FIELD_TEMPLATES.VERSION_FIELD(),
+      { name: "nombre", type: "text", label: "Nombre de Empresa", required: true, width: 12, unique: true },
+      { name: "giro_empresa", type: "text", label: "Giro de la Empresa", required: false, width: 6 },
+      { name: "numero_empleados", type: "number", label: "Número de Empleados Actuales", required: false, width: 6 },
+      { name: "etapa_empresa", type: "text", label: "Etapa de la Empresa", required: false, width: 12 },
+      { name: "contacto_principal", type: "text", label: "Contacto Principal", required: false, width: 12 },
+      { name: "drive_folder_id", type: "hidden", readonly: true },
+      { name: "constancia_situacion_fiscal", type: "file_upload", label: "Constancia de Situación Fiscal", required: false, width: 12, allowedTypes: ['application/pdf'], maxSizeMB: 5 },
+      { name: "drive_folder_link", type: "external_link_button", label: "Ver Documentos de la Empresa", iconName: "folder-open-outline", customColor: "#34A853", width: 12, readonly: true },
+      { name: "vacantes_vinculadas", type: "relation", relationType: "hijo", targetEntity: "Vacantes", graphEntity: "Sys_Graph_Edges", valueField: "id_vacante", labelField: "titulo", uiComponent: "searchable_multi", label: "Vacantes Asociadas", isTemporalGraph: true, graphEdgeType: "VACANTE_EMPRESA", topologyCardinality: "M:N", width: 12 }
+    ]
+  },
+  Vacantes: {
+    metadata: { prefix: 'VAC', showInMenu: true, iconName: 'briefcase-outline', color: 'tertiary', label: 'Vacantes', titleField: 'titulo', idField: 'id_vacante', fkField: null },
+    mutationInterceptors: ['ProvisionDriveFolders', 'ProcessDriveUploads'],
+    relationalProvisioners: [
+      {
+        field: 'empresas',
+        targetEntity: 'Empresas',
+        idField: 'id_empresa',
+        edgeType: 'VACANTE_EMPRESA',
+        stubPrefix: 'EMP-'
+      }
+    ],
+    primaryKey: "id_vacante",
+    fields: [
+      { name: "id_vacante", type: "hidden", primaryKey: true },
+      ...FIELD_TEMPLATES.SYSTEM_FIELDS(),
+      ...FIELD_TEMPLATES.AUDIT_FIELDS(),
+      ...FIELD_TEMPLATES.VERSION_FIELD(),
+      { name: "titulo", type: "text", label: "Título de la Vacante", required: true, width: 12 },
+      { name: "empresas", type: "relation", relationType: "padre", targetEntity: "Empresas", graphEntity: "Sys_Graph_Edges", valueField: "id_empresa", labelField: "nombre", uiComponent: "searchable_multi", label: "Empresas Cliente", isTemporalGraph: true, graphEdgeType: "VACANTE_EMPRESA", topologyCardinality: "M:N", width: 12, required: true },
+      { name: "estado_vacante", type: "select", label: "Estado", required: true, width: 6, options: [{value: "Draft", label: "Borrador"}, {value: "Publicada", label: "Publicada"}, {value: "Cerrada", label: "Cerrada"}], defaultValue: "Draft" },
+      { name: "presupuesto_salario", type: "number", label: "Presupuesto Salarial", required: false, width: 6 },
+      { name: "descripcion", type: "textarea", label: "Descripción de la Vacante", required: true, width: 12 },
+      { name: "drive_folder_id", type: "hidden", readonly: true },
+      { name: "candidatos_vinculados", type: "relation", relationType: "hijo", targetEntity: "Candidatos", graphEntity: "Sys_Graph_Edges", valueField: "id_candidato", labelField: "nombre", uiComponent: "searchable_multi", label: "Candidatos Postulados", isTemporalGraph: true, graphEdgeType: "VACANTE_CANDIDATO", topologyCardinality: "1:N", width: 12 }
+    ]
+  },
+  Candidatos: {
+    metadata: { prefix: 'CND', showInMenu: true, iconName: 'people-outline', color: 'secondary', label: 'Candidatos', titleField: 'nombre', idField: 'id_candidato', fkField: null },
+    mutationInterceptors: ['GeminiCVScreening'],
+    primaryKey: "id_candidato",
+    fields: [
+      { name: "id_candidato", type: "hidden", primaryKey: true },
+      ...FIELD_TEMPLATES.SYSTEM_FIELDS(),
+      ...FIELD_TEMPLATES.AUDIT_FIELDS(),
+      ...FIELD_TEMPLATES.VERSION_FIELD(),
+      { name: "nombre", type: "text", label: "Nombre del Candidato", required: true, width: 6 },
+      { name: "email", type: "email", label: "Correo Electrónico", required: true, width: 6 },
+      { name: "vacante_id", type: "relation", relationType: "padre", targetEntity: "Vacantes", graphEntity: "Sys_Graph_Edges", valueField: "id_vacante", labelField: "titulo", uiComponent: "searchable_single", label: "Aplicando a Vacante", isTemporalGraph: true, graphEdgeType: "VACANTE_CANDIDATO", topologyCardinality: "1:N", width: 12, required: true },
+      { name: "etapa_embudo", type: "select", label: "Etapa en el Embudo", required: true, width: 6, options: [{value:"Nuevo",label:"Nuevo"}, {value:"Screening",label:"Screening"}, {value:"Tecnica",label:"Entrevista Técnica"}, {value:"Cultural",label:"Entrevista Cultural"}, {value:"Oferta",label:"Oferta Enviada"}, {value:"Contratado",label:"Contratado"}, {value:"Descartado",label:"Descartado"}], defaultValue: "Nuevo" },
+      { name: "linkedin_url", type: "text", label: "Perfil LinkedIn", required: false, width: 6 },
+      { name: "cv_drive_id", type: "text", label: "ID CV Drive", required: false, width: 6, readonly: true },
+      { name: "ai_score", type: "number", label: "Gemini Match Score", required: false, width: 6, readonly: true },
+      { name: "ai_summary", type: "textarea", label: "Gemini Resumen CV", required: false, width: 12, readonly: true }
+    ]
+  },
+  Entrevistas: {
+    metadata: { prefix: 'INT', showInMenu: true, iconName: 'calendar-outline', color: 'warning', label: 'Entrevistas', titleField: 'titulo', idField: 'id_entrevista', fkField: null },
+    dashboardCard: {
+      avatarField: null,
+      subtitleFields: [
+        { field: "horario", icon: "time-outline" },
+        { field: "notas", icon: "document-text-outline" },
+        { field: "candidato_id", icon: "person-outline" }
+      ],
+      actionButtons: ['calendar_event_id', 'meet_link']
+    },
+    mutationInterceptors: ['CalendarInterview'],
+    primaryKey: "id_entrevista",
+    fields: [
+      { name: "id_entrevista", type: "hidden", primaryKey: true },
+      ...FIELD_TEMPLATES.SYSTEM_FIELDS(),
+      ...FIELD_TEMPLATES.AUDIT_FIELDS(),
+      ...FIELD_TEMPLATES.VERSION_FIELD(),
+      { name: "titulo", type: "text", label: "Título de la Sesión", required: true, width: 12 },
+      { name: "horario", type: "event_schedule", label: "Horario Programado", required: true, width: 12 },
+      { name: "notas", type: "textarea", label: "Notas / Descripción", required: false, width: 12 },
+      { name: "location_type", type: "select", label: "Tipo de Ubicación", required: true, width: 12, options: [{value: "VIRTUAL", label: "Virtual"}, {value: "PRESENCIAL", label: "Presencial"}], defaultValue: "VIRTUAL" },
+      { name: "candidato_id", type: "relation", relationType: "padre", targetEntity: "Candidatos", graphEntity: "Sys_Graph_Edges", valueField: "id_candidato", labelField: "nombre", uiComponent: "searchable_single", label: "Candidato", isTemporalGraph: true, graphEdgeType: "CANDIDATO_ENTREVISTA", topologyCardinality: "1:N", width: 12, required: true },
+      { name: "generar_meet", type: "toggle", label: "Generar enlace Google Meet", required: false, width: 12, defaultValue: "true" },
+      { name: "div_links", type: "divider", label: "Accesos", icon: "logo-google", width: 12 },
+      { name: "calendar_event_id", type: "external_link_button", label: "Ver Calendar", iconName: "calendar-outline", customColor: "#4285F4", width: 6, readonly: true },
+      { name: "meet_link", type: "external_link_button", label: "Ir al Meet", iconName: "videocam-outline", customColor: "#FBBC04", width: 6, readonly: true },
+      { name: "location_details", type: "text", label: "Dirección o Link externo", required: false, width: 12 }
+    ]
+  },
+  _UI_CONFIG: {
+    badgeMap: {
+      'activo': 'activo', 'borrador': 'borrador', 'en-revis-n': 'en-revision', 'en-revision': 'en-revision',
+      'tier-1-cr-tico': 'tier-1-critico', 'tier-1-critico': 'tier-1-critico',
+      'tier-2-alto': 'tier-2-alto', 'tier-3-medio': 'tier-3-medio', 'tier-4-bajo': 'tier-4-bajo',
+      'saas': 'saas', 'marketplace': 'marketplace', 'b2b': 'b2b', 'b2c': 'b2c', 'transaccional': 'transaccional',
+      'all-admin-total': 'danger', 'owner-only-solo-propios': 'primary', 'member-only-siendo-miembro': 'secondary', 'read-only-solo-lectura': 'medium', 'none-denegado': 'light'
+    }
+  }
+};
+&nbsp;
+function getAppSchema(entityName) {
+  const isTaxonomiaContext = typeof window !== 'undefined' &amp;&amp; <span class="branch-1 cbranch-no" title="branch not covered" >window.taxonomiaContext;</span>
+&nbsp;
+  const applyGovernance = (schema) =&gt; {
+    if (!schema || !schema.fields) return schema;
+&nbsp;
+    // Deep clone the fields array to avoid mutating global definition
+    const clonedSchema = Object.assign({}, schema);
+    clonedSchema.fields = schema.fields.map(field =&gt; {
+      // E55 Governance: Topological fields are readonly
+      if (field.type === 'relation' &amp;&amp; field.graphEntity === 'Sys_Graph_Edges') {
+        // Schema-Driven Governance Exemption (S57.4)
+        const isExemptEntity = schema.metadata &amp;&amp; schema.metadata.governancePolicy === 'exempt_from_strict_readonly';
+        
+        if (!isTaxonomiaContext &amp;&amp; !isExemptEntity) {
+          const clonedField = Object.assign({}, field);
+          clonedField.readonly = true;
+          clonedField.helpText = (clonedField.helpText ? <span class="branch-0 cbranch-no" title="branch not covered" >clonedField.helpText + ' ' </span>: '') + '(Solo lectura: Gestionado vía Canvas de Taxonomía)';
+          return clonedField;
+        }
+      }
+      return field;
+    });
+    return clonedSchema;
+  };
+&nbsp;
+  if (entityName) {
+    return applyGovernance(APP_SCHEMAS[entityName]);
+  } else {
+    const clonedSchemas = {};
+    for (const key in APP_SCHEMAS) {
+      if (key !== '_UI_CONFIG' &amp;&amp; APP_SCHEMAS[key] &amp;&amp; APP_SCHEMAS[key].fields) {
+        clonedSchemas[key] = applyGovernance(APP_SCHEMAS[key]);
+      } else {
+        clonedSchemas[key] = APP_SCHEMAS[key];
+      }
+    }
+    return clonedSchemas;
+  }
+}
+&nbsp;
+/**
+ * Returns a pruned version of the schemas for frontend payload injection.
+ * Strips out backend-only metadata like audit fields to reduce payload size.
+ */
+function <span class="fstat-no" title="function not covered" >getPrunedAppSchema(</span>) {
+  const schemas = <span class="cstat-no" title="statement not covered" >getAppSchema();</span>
+  const pruned = <span class="cstat-no" title="statement not covered" >{};</span>
+  const backendOnlyFields = <span class="cstat-no" title="statement not covered" >typeof CORE_SYS_FIELDS !== 'undefined' ? CORE_SYS_FIELDS : ['created_at', 'create_by', 'created_by', 'updated_at', 'update_at', 'update_by', 'deleted_at', 'deleted_by', 'version', '_version'];</span>
+  
+<span class="cstat-no" title="statement not covered" >  for (const key in schemas) {</span>
+<span class="cstat-no" title="statement not covered" >    if (key === '_UI_CONFIG') {</span>
+<span class="cstat-no" title="statement not covered" >      pruned[key] = schemas[key];</span>
+<span class="cstat-no" title="statement not covered" >      continue;</span>
+    }
+    
+<span class="cstat-no" title="statement not covered" >    pruned[key] = Object.assign({}, schemas[key]);</span>
+<span class="cstat-no" title="statement not covered" >    if (pruned[key].fields) {</span>
+<span class="cstat-no" title="statement not covered" >      pruned[key].fields = pruned[key].fields.filter(<span class="fstat-no" title="function not covered" >f </span>=&gt; <span class="cstat-no" title="statement not covered" >!backendOnlyFields.includes(f.name))</span>;</span>
+    }
+  }
+  
+<span class="cstat-no" title="statement not covered" >  return pruned;</span>
+}
+&nbsp;
+/**
+ * Epic E8: Safe getter for topology rules. Returns the configured rules
+ * for the entity if available, otherwise returns a safe default (FLAT).
+ * Prevents downstream failures for legacy entities.
+ */
+function getEntityTopologyRules(entityName) {
+  const schema = getAppSchema(entityName);
+  if (schema &amp;&amp; schema.topologyRules) {
+    return schema.topologyRules;
+  }
+  // Safe Fallback defaults
+  return {
+    topologyType: "FLAT",
+    levelFiltering: false,
+    strictLevelJumps: false,
+    rootRequiresNoParent: false,
+    allowOrphanStealing: false,
+    maxDepth: 0,
+    deletionStrategy: "ORPHAN", // Always default to a safe setting (no cascading)
+    siblingCollisionCheck: false,
+    scd2Enabled: false,
+    preventCycles: false
+  };
+}
+&nbsp;
+/**
+ * Maps a column label (or raw header string) back to its internal field name 
+ * based on the entity's schema. Facilitates ETL and CSV import robustness.
+ * 
+ * @param {string} entityName 
+ * @param {string} rawHeader 
+ * @returns {string} The normalized internal field name, or the sanitized rawHeader if not found.
+ */
+function <span class="fstat-no" title="function not covered" >getFieldNameFromLabel(</span>entityName, rawHeader) {
+  let lowKey = <span class="cstat-no" title="statement not covered" >String(rawHeader).trim().toLowerCase().replace(/\s+/g, ' ');</span>
+  const schema = <span class="cstat-no" title="statement not covered" >getAppSchema(entityName);</span>
+  
+<span class="cstat-no" title="statement not covered" >  if (schema &amp;&amp; schema.fields) {</span>
+      const matchedField = <span class="cstat-no" title="statement not covered" >schema.fields.find(<span class="fstat-no" title="function not covered" >f </span>=&gt; </span>
+<span class="cstat-no" title="statement not covered" >          String(f.name).toLowerCase() === lowKey || </span>
+          (f.label &amp;&amp; String(f.label).trim().toLowerCase().replace(/\s+/g, ' ') === lowKey)
+      );
+<span class="cstat-no" title="statement not covered" >      if (matchedField) {</span>
+<span class="cstat-no" title="statement not covered" >          return String(matchedField.name).toLowerCase();</span>
+      }
+  }
+<span class="cstat-no" title="statement not covered" >  return lowKey;</span>
+}
+&nbsp;
+<span class="missing-if-branch" title="else path not taken" >E</span>if (typeof module !== 'undefined') {
+  module.exports = { APP_SCHEMAS, TOPOLOGY_PRESETS, FIELD_TEMPLATES, getAppSchema, getPrunedAppSchema, getEntityTopologyRules, getFieldNameFromLabel };
+}
+&nbsp;
+// ─── [E31] Admin GAS endpoints ───────────────────────────────────────────────
+// Requires: Adapter_Sheets_Provisioner.gs (shares GAS global scope)
+// These endpoints are now maintained in API_Admin.gs for SRP.
+// See API_Admin.gs for getSchemaProvisioningStatus() and runSchemaReconcile().
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;</pre></td></tr></table></pre>
+
+                <div class='push'></div><!-- for sticky footer -->
+            </div><!-- /wrapper -->
+            <div class='footer quiet pad2 space-top1 center small'>
+                Code coverage generated by
+                <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
+                at 2026-08-15T13:46:17.386Z
+            </div>
+        <script src="../prettify.js"></script>
+        <script>
+            window.onload = function () {
+                prettyPrint();
+            };
+        </script>
+        <script src="../sorter.js"></script>
+        <script src="../block-navigation.js"></script>
+    </body>
+</html>
+    

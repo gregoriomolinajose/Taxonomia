@@ -49,6 +49,14 @@ var JobWorker = (function() {
         return { debug: "no_pending_job" };
       }
       
+      var cache = CacheService.getScriptCache();
+      var jobLockKey = 'JOB_LOCK_' + job.jobId;
+      if (cache.get(jobLockKey)) {
+        lock.releaseLock();
+        return { debug: "job_already_processing" };
+      }
+      cache.put(jobLockKey, "1", 240);
+      
       if (job.status === "PENDING") {
         try {
           JobQueue.updateJobStatus(job.jobId, { 
@@ -70,6 +78,29 @@ var JobWorker = (function() {
     // Now process the job without holding the ScriptLock
     var startTime = new Date().getTime();
     try {
+      if (job.payload && job.payload.action === 'Job_WorkspaceSync') {
+         if (typeof runWorkspaceSyncJob === 'function') {
+             var syncResult = runWorkspaceSyncJob({ manual: false });
+             if (syncResult && syncResult.remaining > 0) {
+                 JobQueue.updateJobStatus(job.jobId, {
+                     status: "PROCESSING",
+                     message: "Sincronizando Workspace... Restantes: " + syncResult.remaining
+                 });
+                 triggerProcessing();
+                 return { debug: "processing_sync", remaining: syncResult.remaining };
+             } else {
+                 JobQueue.updateJobStatus(job.jobId, {
+                     status: "COMPLETED",
+                     message: "Sincronización Workspace completada."
+                 });
+                 return { debug: "completed_sync" };
+             }
+         } else {
+             JobQueue.updateJobStatus(job.jobId, { status: "ERROR", message: "runWorkspaceSyncJob is not defined" });
+             return { debug: "error_sync", error: "not_defined" };
+         }
+      }
+
       var payloadData = job.payload && job.payload.data ? job.payload.data : (Array.isArray(job.payload) ? job.payload : []);
       var entityName = job.payload && job.payload.entity ? job.payload.entity : "Unknown";
       var startIndex = job.processed || 0;
@@ -111,10 +142,38 @@ var JobWorker = (function() {
       }
     }
 
+    // Generate primary keys for new records BEFORE deduplication/interceptors
+    // so that topological interceptors can link parent-child intra-batch.
+    var pkField = 'id';
+    var schema = (typeof APP_SCHEMAS !== 'undefined') ? APP_SCHEMAS[entityName] : null;
+    if (schema && schema.primaryKey) {
+        pkField = schema.primaryKey;
+    } else if (typeof JS_SchemaUtils !== 'undefined') {
+        pkField = JS_SchemaUtils.getPrimaryKey(entityName);
+    } else {
+        pkField = 'id_' + entityName.toLowerCase();
+    }
+    
+    for (var k = 0; k < chunk.length; k++) {
+        var rec = chunk[k];
+        if (!rec[pkField] || String(rec[pkField]).trim() === '') {
+            if (typeof _generateShortUUID === 'function') {
+                rec[pkField] = _generateShortUUID(entityName);
+            } else {
+                var safeName = entityName ? entityName.replace(/[^a-zA-Z0-9]/g, '').substring(0, 4).toUpperCase() : 'UUID';
+                var chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+                var suffix = '';
+                for (var c = 0; c < 8; c++) suffix += chars.charAt(Math.floor(Math.random() * chars.length));
+                rec[pkField] = safeName + '-' + suffix;
+            }
+        }
+    }
+
     // [BUGFIX] Execute ETL deduplication and interceptors before processing the chunk
     if (typeof Engine_ETL !== 'undefined' && typeof Engine_ETL.hydrateAndDeduplicate === 'function') {
         try {
-            Engine_ETL.hydrateAndDeduplicate(entityName, chunk);
+            var dedupeResult = Engine_ETL.hydrateAndDeduplicate(entityName, chunk);
+            chunk = (dedupeResult && dedupeResult.data) ? dedupeResult.data : chunk;
         } catch (e) {
             if (typeof Logger !== 'undefined') Logger.log("Error en hydrateAndDeduplicate: " + e.toString());
             debugErrors.push("ETL Deduplication Error: " + e.toString());
@@ -130,26 +189,12 @@ var JobWorker = (function() {
     for (var i = 0; i < chunk.length; i++) {
       var record = chunk[i];
       
-      var pkField = 'id';
-      var schema = (typeof APP_SCHEMAS !== 'undefined') ? APP_SCHEMAS[entityName] : null;
-      if (schema && schema.primaryKey) {
-          pkField = schema.primaryKey;
-      } else if (typeof JS_SchemaUtils !== 'undefined') {
-          pkField = JS_SchemaUtils.getPrimaryKey(entityName);
-      } else {
-          pkField = 'id_' + entityName.toLowerCase();
+      // Check if Business Interceptors rejected the record
+      if (record._metadata && record._metadata.error) {
+          recordDlqErrors([record], record._metadata.error);
+          continue;
       }
-      if (!record[pkField] || String(record[pkField]).trim() === '') {
-         if (typeof _generateShortUUID === 'function') {
-             record[pkField] = _generateShortUUID(entityName);
-         } else {
-             var safeName = entityName ? entityName.replace(/[^a-zA-Z0-9]/g, '').substring(0, 4).toUpperCase() : 'UUID';
-             var chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-             var suffix = '';
-             for (var c = 0; c < 8; c++) suffix += chars.charAt(Math.floor(Math.random() * chars.length));
-             record[pkField] = safeName + '-' + suffix;
-         }
-      }
+      
       if (schema && schema.metadata && schema.metadata.hasDraftLifecycle) {
           if (entityName === 'Persona') {
               record.estado = 'Activo';
@@ -160,10 +205,12 @@ var JobWorker = (function() {
       
       batchToInsert.push(record);
     }
+
     
     try {
       if (typeof Engine_DB !== 'undefined' && Engine_DB.upsertBatch && batchToInsert.length > 0) {
-        var batchConfig = { useSheets: true, useCloudDB: false };
+        var insertAtTopFlag = (schema && schema.metadata && schema.metadata.insertAtTop) || false;
+        var batchConfig = { useSheets: true, useCloudDB: false, insertAtTop: insertAtTopFlag };
         
         // 1. Resolve Graph Edges (M:N contextual relationships)
         var edgesToUpsert = [];
@@ -294,6 +341,11 @@ var JobWorker = (function() {
           message: "Consolidando resultados finales...",
           payload: job.payload
         });
+        
+        if (entityName === 'Persona' && typeof JobQueue !== 'undefined') {
+            JobQueue.enqueue({ action: 'Job_WorkspaceSync' });
+        }
+
       } catch(e) {
         if (typeof Logger !== 'undefined') Logger.log("Error en updateJobStatus (COMPLETED): " + e.message);
         debugErrors.push("UpdateStatus Error: " + e.message);
@@ -320,6 +372,10 @@ var JobWorker = (function() {
     } catch(err) {
       if (typeof Logger !== 'undefined') Logger.log("Error general en processNextJobChunk: " + err.toString());
       return { debug: "error_general", error: err.toString() };
+    } finally {
+      if (typeof jobLockKey !== 'undefined' && jobLockKey) {
+        try { CacheService.getScriptCache().remove(jobLockKey); } catch(e) {}
+      }
     }
   }
 

@@ -18,10 +18,17 @@ Refactorizar el módulo de Importación/Exportación (ETL) para transformarlo en
 | S61.2 | Metadata Hooks Engine | M | Done | Mover lógica dura de entidades a APP_SCHEMAS (onRowTransform). |
 | S61.3 | Centralized Validation | M | Done | Crear ValidationEngine basado en esquema para ingesta y UI. |
 | S61.4 | Async Job Processing | L | Done | Implementar cola de tareas en backend y polling en frontend. |
-| S61.5 | Dead Letter Queue (DLQ) | L | Pending | Tabla temporal para filas con error y UI de resolución de conflictos. |
+| S61.5 | Dead Letter Queue (DLQ) | L | Done | Tabla temporal para filas con error y UI de resolución de conflictos. |
 | S61.6 | Enhanced ETL Progress UX | S | Done | Mejorar la experiencia de carga visual con micromensajes en tiempo real. |
+| S61.10 | Bounded Extraction | S | Done | Optimización de extracción acotada. |
+| S61.11 | Async Pulse | S | Done | Procesamiento de chunks por pulsos. |
+| S61.12 | Non-blocking Hydration | S | Done | Hidratación en background sin congelar UI. |
+| S61.13 | CacheSignal Limits | S | Done | Pruning de la caché para evitar límite de 100KB y fixes de logs. |
+| S61.14 | ETL Job Mutex Lock | S | Done | Control de concurrencia para evitar race condition entre API y Trigger. |
+| S61.15 | Intra-batch Deduplication Bugfix | S | Pending | Corrección de fallo de deduplicación interna dentro del mismo chunk del ETL. |
+| S61.16 | Fail-fast Schema Format Validation | S | Done | Agregar validación temprana de cabeceras para abortar si el formato es completamente distinto. |
 
-**Total:** 6 stories, 23 SP
+**Total:** 7 stories, 24 SP
 
 ## Scope
 
@@ -131,7 +138,8 @@ Stream 2 (Parallel):           S61.3 (Validation) ───┘
 | S61.2 | M | Done | — | — | |
 | S61.3 | M | Done | — | — | |
 | S61.4 | L | Done | — | — | |
-| S61.5 | L | Pending | — | — | |
+| S61.5 | L | Done | 150m | — | |
+| S61.16 | S | Done | 90m | — | |
 
 ### Sequencing Risks
 

@@ -61,3 +61,8 @@
 ## 12. Gobernanza Estricta de Esquemas (SDA - Schema Driven Architecture)
 - **Ley del Origen de la Verdad (Ground Truth):** Queda estrictamente prohibido intentar inferir llaves primarias o nombres de entidades mediante heurísticas (fallbacks como buscar prefijos `id_` o truncamientos de strings) dentro de la capa `Engine_DB` o adaptadores. Todo ruteo, mutación y evaluación de PKs **DEBE** leerse implícitamente de la configuración declarada en `APP_SCHEMAS`.
 - **Política Fail-Fast:** Si una entidad intenta persistirse y no cuenta con la directiva explícita `primaryKey` configurada, o no coincide la llave en el payload con la del esquema, el backend debe lanzar un Error Crítico (Hard Error) y detener la ejecución, impidiendo corrupción estructural de datos.
+
+## 13. Borrado Lógico (Soft Delete)
+- **Prohibición de Borrado Físico:** Queda ESTRICTAMENTE PROHIBIDO utilizar `deleteRow()` o borrar físicamente registros de Google Sheets. Todo registro debe ser inmortal para preservar el historial de auditoría y evitar la orfandad de relaciones.
+- **Mecánica de Borrado:** Toda operación Delete del CRUD se debe traducir en un "Upsert Dirigido" que mute la columna `estado` al valor `Eliminado`. El sistema de auditoría debe inyectar el autor de la eliminación en `updated_by` e ignorar alteraciones sobre los campos `created`.
+- **Filtro Frontend (UI):** Es responsabilidad del Frontend ofuscar los datos filtrando optimísticamente el state manager de la capa de presentación (ej. `.filter(r => r.estado !== 'Eliminado')`).

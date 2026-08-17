@@ -450,8 +450,18 @@ window.UI_BulkImporter = class UI_BulkImporter {
         let currentStep = step || 2;
         
         if (!progressContainer) {
-            this.containerNode.innerHTML = `
-                <div style="display: flex; flex-direction: column; align-items: center; justify-content: flex-start; height: 100%; padding: 40px 20px; background: #fafafa; min-height: 500px;">
+            // Hide initial UI elements safely instead of destroying them
+            Array.from(this.containerNode.children).forEach(c => {
+                if (!c.classList.contains('etl-progress-wrapper')) {
+                    c.style.display = 'none';
+                    c.classList.add('etl-hidden-by-progress');
+                }
+            });
+            
+            const wrapper = document.createElement('div');
+            wrapper.className = 'etl-progress-wrapper';
+            wrapper.style.cssText = "display: flex; flex-direction: column; align-items: center; justify-content: flex-start; height: 100%; padding: 40px 20px; background: #fafafa; min-height: 500px;";
+            wrapper.innerHTML = `
                     
                     <style>
                         .etl-pulse-container {
@@ -624,8 +634,11 @@ window.UI_BulkImporter = class UI_BulkImporter {
                         </div>
                     </div>
                 </div>
+                    </div>
+                </div>
             `;
-            progressContainer = this.containerNode.querySelector('#etl-progress-container');
+            this.containerNode.appendChild(wrapper);
+            progressContainer = wrapper.querySelector('#etl-progress-container');
         }
         
         const progressBar = this.containerNode.querySelector('#etl-progress-bar');
@@ -726,7 +739,14 @@ window.UI_BulkImporter = class UI_BulkImporter {
                 ` : ''}
                 
                 <div style="margin-top: 30px; text-align: center;">
-                    <ion-button fill="solid" color="primary" onclick="if(document.querySelector('ion-modal')) document.querySelector('ion-modal').dismiss(); else if(window.UI_ETL_Modal) window.UI_ETL_Modal.close();">Finalizar y Cerrar</ion-button>
+                    <ion-button fill="solid" color="primary" onclick="
+                        if(document.querySelector('ion-modal')) document.querySelector('ion-modal').dismiss();
+                        else if(window.UI_ETL_Modal) window.UI_ETL_Modal.close();
+                        if(window.DataViewEngine && window.DataViewEngine._getState) {
+                           const s = window.DataViewEngine._getState();
+                           if(s && s.entityName && s.containerId) window.DataViewEngine.render(s.entityName, s.containerId);
+                        }
+                    ">Finalizar y Cerrar</ion-button>
                 </div>
             </div>
         `;
@@ -799,21 +819,17 @@ window.UI_BulkImporter = class UI_BulkImporter {
     }
 
     async _defaultDriveSync(entity, url) {
-        // Mostrar UI de Progreso Inmediatamente para evitar el 'vacío' visual
-        this.updateProgress(0, 100, false, null, "Esto puede demorar unos segundos...", 1);
-
-
-        let etlEngine = null;
-        let reqOptions = {};
-        let isCustom = false;
-
-        if (window[`DataEngine_ETL_${entity}`]) {
-            etlEngine = window[`DataEngine_ETL_${entity}`];
-            reqOptions = { rawMatrix: true };
-            isCustom = true;
-        } else if (window.DataEngine_ETL) {
-            etlEngine = window.DataEngine_ETL;
+        // En lugar de ocultar la forma de inmediato, damos un estado de "Validando" al botón
+        const btnSyncDrive = this.containerNode.querySelector('#btn-sync-drive');
+        const originalBtnText = btnSyncDrive ? btnSyncDrive.innerHTML : 'Cargar Registros';
+        
+        if (btnSyncDrive) {
+            btnSyncDrive.disabled = true;
+            btnSyncDrive.innerHTML = '<ion-spinner name="crescent" style="width:20px;height:20px;vertical-align:middle;margin-right:8px;"></ion-spinner> Validando...';
         }
+
+        let etlEngine = window.DataEngine_ETL;
+        let reqOptions = {};
 
         if (!etlEngine) {
             return this._showToast(`No hay motor ETL cargado para procesar los registros.`, 'warning');
@@ -822,6 +838,16 @@ window.UI_BulkImporter = class UI_BulkImporter {
         try {
             const res = await window.DataAPI.call('API_Universal_Router', 'etl_extract_sheet_data', entity, { url: url, options: reqOptions });
             if (res && res.data) {
+                // Si la validación es exitosa, restauramos el botón internamente 
+                // y pasamos a la pantalla de progreso del wizard
+                if (btnSyncDrive) {
+                    btnSyncDrive.disabled = false;
+                    btnSyncDrive.innerHTML = originalBtnText;
+                }
+                
+                // Ahora sí iniciamos el flujo del wizard visualmente
+                this.updateProgress(0, 100, false, null, "Preparando lote de datos...", 1);
+                
                 // S56.4: Inyección de Contexto Borrador si es llamado desde el Wizard
                 if (this.contextId && Array.isArray(res.data)) {
                     res.data.forEach(row => {
@@ -844,15 +870,7 @@ window.UI_BulkImporter = class UI_BulkImporter {
                 };
 
                 let etlPromise;
-                if (isCustom && etlEngine.processMatrix) {
-                    etlPromise = new Promise((resolve, reject) => {
-                        etlEngine.processMatrix(entity, res.data, {
-                            progressCallback: progressCb,
-                            completionCallback: resolve,
-                            contextId: this.contextId // Provide Wizard context for ETL
-                        }).catch(reject);
-                    });
-                } else if (etlEngine.processPayload) {
+                if (etlEngine.processPayload) {
                     // S61.4: Enterprise ETL Architecture - Async Jobs
                     etlPromise = new Promise((resolve, reject) => {
                         window.DataAPI.call('API_Universal_Router', 'job_enqueue', entity, { data: res.data })
@@ -914,34 +932,34 @@ window.UI_BulkImporter = class UI_BulkImporter {
                     return this._showToast(`El motor ETL no tiene un método de procesamiento compatible.`, 'warning');
                 }
 
-                etlPromise.then(async (metrics) => {
+                etlPromise.then((metrics) => {
+                    const m = metrics || { success: res.data.length, duplicate: 0, error: 0 };
+                    const feedbackArray = m._feedback || [];
+                    this.showResults(m, feedbackArray);
+
+                    // Notificar finalización global
+                    if (window.AppEventBus) {
+                        window.AppEventBus.publish('ETL::FINISHED', { entity: entity, contextId: this.contextId });
+                    }
+
                     if (window.DataAPI && window.DataStore) {
-                        try {
-                            const payloads = await Promise.all([
-                                window.DataAPI.call('getInitialPayload', entity),
-                                window.DataAPI.call('getInitialPayload', 'Sys_Graph_Edges')
-                            ]);
+                        // Hydration no bloqueante en segundo plano (UI unblocked)
+                        Promise.all([
+                            window.DataAPI.call('getInitialPayload', entity),
+                            window.DataAPI.call('getInitialPayload', 'Sys_Graph_Edges')
+                        ]).then(payloads => {
                             [entity, 'Sys_Graph_Edges'].forEach((ent, idx) => {
                                 const raw = payloads[idx];
-                                const res = typeof raw === 'string' ? JSON.parse(raw) : raw;
-                                if (res && res.status === 'success') {
-                                    const rows = window.Schema_Utils.inflateTuples(res.data);
+                                const resObj = typeof raw === 'string' ? JSON.parse(raw) : raw;
+                                if (resObj && resObj.status === 'success') {
+                                    const rows = window.Schema_Utils.inflateTuples(resObj.data);
                                     window.DataStore.set(ent, rows);
                                 }
                             });
                             if (window.AppEventBus) window.AppEventBus.publish('CACHE::GRAPH_HYDRATED', { source: 'ETL' });
-                        } catch(e) {
+                        }).catch(e => {
                             console.error('[BulkImporter] Error re-hidratando cache', e);
-                        }
-                    }
-
-                    const m = metrics || { success: res.data.length, duplicate: 0, error: 0 };
-                    const feedbackArray = m._feedback || [];
-                    this.showResults(m, feedbackArray);
-                    
-                    // Notificar finalización global
-                    if (window.AppEventBus) {
-                        window.AppEventBus.publish('ETL::FINISHED', { entity: entity, contextId: this.contextId });
+                        });
                     }
                 }).catch(err => {
                     console.error('[Chunker Error]', err);
@@ -958,12 +976,34 @@ window.UI_BulkImporter = class UI_BulkImporter {
             }
         } catch(err) {
             console.error('[ETL Fatal Error]', err);
+            
+            // Restauramos el botón a su estado normal si falló la validación
+            if (btnSyncDrive) {
+                btnSyncDrive.disabled = false;
+                btnSyncDrive.innerHTML = originalBtnText;
+            }
+            
+            // Revert progress UI
+            const wrapper = this.containerNode.querySelector('.etl-progress-wrapper');
+            if (wrapper) wrapper.remove();
+            
+            Array.from(this.containerNode.children).forEach(c => {
+                if (c.classList.contains('etl-hidden-by-progress')) {
+                    c.style.display = '';
+                    c.classList.remove('etl-hidden-by-progress');
+                }
+            });
+
             const urlInput = this.containerNode.querySelector('#etl-drive-url');
-            if (urlInput && err.message && (err.message.includes('vací') || err.message.includes('data útil') || err.message.includes('vacio') || err.message.includes('columna correo') || err.message.includes('acceder al documento') || err.message.includes('inaccesible') || err.message.includes('MimeType'))) {
+            if (urlInput && err.message && (err.message.includes('vací') || err.message.includes('data útil') || err.message.includes('vacio') || err.message.includes('columna correo') || err.message.includes('acceder al documento') || err.message.includes('inaccesible') || err.message.includes('MimeType') || err.message.includes('Formato Estricto Incompatible'))) {
                 let displayMsg = 'El archivo proporcionado se encuentra vacío o sin data útil.';
                 if (err.message.includes('columna correo')) displayMsg = err.message;
                 if (err.message.includes('acceder al documento') || err.message.includes('inaccesible') || err.message.includes('MimeType')) {
                     displayMsg = 'El enlace es incorrecto, no tienes permisos, o el archivo es un Excel (.xlsx) antiguo. Asegúrate de usar el enlace del nuevo Google Sheet convertido.';
+                }
+                if (err.message.includes('Formato Estricto Incompatible')) {
+                    const cleanEntityName = window.formatEntityName ? window.formatEntityName(entity) : entity;
+                    displayMsg = "El archivo ingresado no coincide con el formato de la plantilla para '" + cleanEntityName + "'";
                 }
                 urlInput.setAttribute('error-text', displayMsg);
                 urlInput.classList.add('ion-invalid', 'ion-touched');

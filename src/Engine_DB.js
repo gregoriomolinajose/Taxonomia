@@ -39,6 +39,12 @@ function _invalidateCache(entityName) {
     _removeCacheChunked(cache, 'CACHE_LIST_' + entityName);
     _removeCacheChunked(cache, `CACHE_LIST_${_getAppVersionHash()}_${entityName}`);
     
+    // [Fix] M-Tier Bug: Invalidar las llaves que contienen los sufijos de formato que Engine_DB.list() genera
+    const formats = ['objects', 'tuples', 'native'];
+    formats.forEach(f => {
+        _removeCacheChunked(cache, `CACHE_LIST_${_getAppVersionHash()}_${entityName}_${f}`);
+    });
+    
     // Invalidación de lookups asociados
     const lookupMap = {
         'Portafolio': 'getPortafoliosOptions',
@@ -52,6 +58,14 @@ function _invalidateCache(entityName) {
     }
     
     if (typeof Logger !== 'undefined') Logger.log(`[Cache] BUSTED para ${entityName}`);
+
+    // [ABAC S-Tier Fix] Invalidación global determinista O(1) de matriz de seguridad
+    if (entityName === 'Sys_Permissions' || entityName === 'Sys_Roles' || entityName === 'Persona') {
+        try {
+            cache.put('ABAC_GLOBAL_VER', 'V3_' + Date.now().toString(), 21600);
+            if (typeof Logger !== 'undefined') Logger.log(`[Cache] ABAC_GLOBAL_VER BUMPED for ${entityName}`);
+        } catch(e) {}
+    }
 
     // [E6-S66] Publicar señal cross-tenant para invalidar caché de otros tenants
     // No publicar señal para Sys_Cache_Signals (evitar recursión)
@@ -114,7 +128,18 @@ function _checkCacheSignals(entityName, cachedAt) {
             const config = (typeof CONFIG !== 'undefined') ? CONFIG : {};
             if (!config.SPREADSHEET_ID_DB || config.SPREADSHEET_ID_DB.trim().length === 0) return false;
             const result = _Adapter_Sheets.list('Sys_Cache_Signals', config, 'objects');
-            signals = (result && result.rows) ? result.rows : [];
+            let rawSignals = (result && result.rows) ? result.rows : [];
+            
+            // Prune signals to keep only the most recent per entity_name and by_tenant combination
+            const prunedMap = {};
+            rawSignals.forEach(function(s) {
+                const key = s.entity_name + '|' + s.by_tenant;
+                if (!prunedMap[key] || s.invalidated_at > prunedMap[key].invalidated_at) {
+                    prunedMap[key] = s;
+                }
+            });
+            signals = Object.keys(prunedMap).map(function(k) { return prunedMap[k]; });
+
             // TTL intencional de 60 segundos — ventana máxima de inconsistencia cross-tenant
             cache.put(signalsCacheKey, JSON.stringify(signals), 60);
         }
@@ -728,8 +753,7 @@ const Engine_DB = {
         // Usar orquestador para manejar posibles relaciones anidadas
         const result = this.orchestrateNestedSave(entityName, data, config);
         
-        // Cache Busting
-        _invalidateCache(entityName);
+        // orchestrateNestedSave internally busts the cache for the parent entity and any modified relations.
         
         return {
             success: true,
@@ -825,6 +849,69 @@ const Engine_DB = {
     },
 
     /**
+     * [S68] listBy(entityName, fieldName, value)
+     * Ejecuta una consulta GViz nativa para filtrar los registros en el backend de DB.
+     */
+    listBy: function (entityName, fieldName, value, options = {}) {
+        const config = (typeof CONFIG !== 'undefined') ? CONFIG : { useSheets: true, SPREADSHEET_ID_DB: '' };
+        
+        if (value === null || value === undefined) {
+            throw new Error(`[Engine_DB.listBy] Valor de filtrado inválido para el campo '${fieldName}'.`);
+        }
+        
+        let colLetter;
+        if (typeof Adapter_Sheets !== 'undefined' && typeof Adapter_Sheets.resolveColumnLetter === 'function') {
+            colLetter = Adapter_Sheets.resolveColumnLetter(entityName, fieldName);
+            if (!colLetter) {
+                throw new Error(`[Engine_DB.listBy] Columna física '${fieldName}' no encontrada en DB_${entityName}`);
+            }
+        } else {
+            // Fallback al esquema si Adapter_Sheets no está disponible o no tiene el método
+            const schema = (typeof APP_SCHEMAS !== 'undefined') ? APP_SCHEMAS[entityName] : null;
+            if (!schema || !schema.fields) {
+                throw new Error(`[Engine_DB.listBy] Esquema no encontrado o sin campos para '${entityName}'.`);
+            }
+            const fieldIndex = schema.fields.findIndex(f => f.name === fieldName);
+            if (fieldIndex === -1) {
+                throw new Error(`[Engine_DB.listBy] Campo '${fieldName}' no existe en el esquema de '${entityName}'.`);
+            }
+            colLetter = this._getColumnLetter(fieldIndex);
+        }
+        
+        // Construir el SQL para GViz
+        // Nota: En GViz, los strings deben ir entre comillas simples.
+        let sqlString;
+        if (options.caseInsensitive) {
+            const safeValue = String(value).toLowerCase().replace(/'/g, "''"); 
+            sqlString = `SELECT * WHERE lower(${colLetter}) = '${safeValue}'`;
+        } else {
+            const safeValue = String(value).replace(/'/g, "''"); 
+            sqlString = `SELECT * WHERE ${colLetter} = '${safeValue}'`;
+        }
+
+        if (typeof Logger !== 'undefined') {
+            Logger.log(`[Engine_DB.listBy] Ejecutando GViz en ${entityName}: ${sqlString}`);
+        }
+
+        // Delegar al adaptador de Sheets
+        return Adapter_Sheets.query(entityName, config, sqlString);
+    },
+
+    /**
+     * Helper privado para mapear índice (0, 1, 2...) a Letras de Columna GViz (A, B, C...)
+     */
+    _getColumnLetter: function(colIndex) {
+        let temp, letter = '';
+        let current = colIndex + 1;
+        while (current > 0) {
+            temp = (current - 1) % 26;
+            letter = String.fromCharCode(temp + 65) + letter;
+            current = (current - temp - 1) / 26;
+        }
+        return letter;
+    },
+
+    /**
      * list(entityName, format)
      * Devuelve todos los registros de una entidad como { headers[], rows[] }.
      * Delega a Adapter_Sheets con CAPA DE CACHÉ (Directiva Architect).
@@ -842,11 +929,15 @@ const Engine_DB = {
             return { headers: [], rows: [] };
         }
         // [E6-S66] Intentar leer de RAM (CacheService) con señal cross-tenant
-        const cacheKey = `CACHE_LIST_${_getAppVersionHash()}_${entityName}`;
+        let safeFormat = 'objects';
+        if (typeof format === 'string') safeFormat = format;
+        else if (format === true) safeFormat = 'tuples'; // Fallback for old code
+        
+        const cacheKey = `CACHE_LIST_${_getAppVersionHash()}_${entityName}_${safeFormat}`;
         if (typeof CacheService !== 'undefined' && (!options || !options.skipCache)) {
             const cache = CacheService.getScriptCache();
             const cachedRaw = _getCacheChunked(cache, cacheKey);
-            if (cachedRaw && format !== 'tuples') {
+            if (cachedRaw) {
                 try {
                     const wrapped = JSON.parse(cachedRaw);
                     // [S66] Si tiene campo cached_at, verificar señales cross-tenant
@@ -874,7 +965,7 @@ const Engine_DB = {
         const result = _Adapter_Sheets.list(entityName, config, format);
         
         // [S66] Guardar en caché envuelto con timestamp para soporte de señales cross-tenant
-        if (typeof CacheService !== 'undefined' && format !== 'tuples' && result) {
+        if (typeof CacheService !== 'undefined' && result) {
             const cache = CacheService.getScriptCache();
             const wrappedResult = { data: result, cached_at: new Date().toISOString() };
             _putCacheChunked(cache, cacheKey, JSON.stringify(wrappedResult), 3600);
@@ -890,8 +981,7 @@ const Engine_DB = {
         // Usar orquestador para manejar posibles relaciones anidadas
         const result = this.orchestrateNestedSave(entityName, data, config);
 
-        // Cache Busting
-        _invalidateCache(entityName);
+        // orchestrateNestedSave internally busts the cache for the parent entity and any modified relations.
 
         return {
             success: true,
@@ -1055,7 +1145,8 @@ const Engine_DB = {
                 estado: 'Eliminado',
                 valido_hasta: sysDate,
                 updated_at: sysDate,
-                updated_by: currentUser
+                updated_by: currentUser,
+                _overrideConcurrency: true
             }));
 
             const uuidFn = (typeof Utilities !== 'undefined') ? Utilities.getUuid : () => Math.random().toString(36).substring(2,10);
@@ -1087,7 +1178,8 @@ const Engine_DB = {
                 const nodePayload = {
                     estado: 'Eliminado',
                     deleted_at: sysDate,
-                    deleted_by: currentUser
+                    deleted_by: currentUser,
+                    _overrideConcurrency: true
                 };
                 nodePayload[pkField] = nId;
                 return nodePayload;
@@ -1104,8 +1196,6 @@ const Engine_DB = {
                 results.sheets = this.upsertBatch(entityName, nodesToSoftDelete, config);
             }
 
-            _invalidateCache(graphTableName);
-
         } else {
             // ==============================================
             // STANDARD SINGULAR DELETETION 
@@ -1115,9 +1205,149 @@ const Engine_DB = {
             }
         }
 
-        // Cache Busting
-        _invalidateCache(entityName);
+        // upsertBatch calls _invalidateCache, but _Adapter_Sheets.remove does not.
+        // Cache Busting is handled manually for remove.
+        if (config.useSheets && results.sheets) {
+            _invalidateCache(entityName);
+        } else if (!config.useSheets) {
+            _invalidateCache(entityName);
+        }
 
+        return {
+            success: true,
+            Entity: entityName,
+            adapter_results: results
+        };
+    },
+
+    bulkDelete: function (entityName, ids) {
+        const config = (typeof CONFIG !== 'undefined') ? CONFIG : { useSheets: true, useCloudDB: false };
+        if (typeof Logger !== 'undefined') Logger.log("Engine_DB_bulkDelete_router: Routing " + entityName + " (" + ids.length + " IDs) to Architect Unit of Work Deletion.");
+
+        // [S60/E6] Guard de routing: entidades con adapter especial no usan Sheets
+        const schemaForDel = (typeof APP_SCHEMAS !== 'undefined') ? APP_SCHEMAS[entityName] : null;
+        if (schemaForDel && schemaForDel.metadata && schemaForDel.metadata.adapter === 'config') {
+            throw new Error('[Engine_DB] La entidad ' + entityName + ' es gestionada por Adapter_Config y no soporta operación delete. Usa setAll() para actualizar la configuración.');
+        }
+
+        let results = { sheets: {}, cloud: {} };
+
+        // [S8.1] Check graph topology configuration
+        let strategy = "ORPHAN"; 
+        let isGraphEntity = false;
+        if (typeof getEntityTopologyRules !== 'undefined') {
+            const rules = getEntityTopologyRules(entityName);
+            if (rules && rules.topologyType && rules.topologyType !== "FLAT") {
+                isGraphEntity = true;
+                strategy = rules.deletionStrategy || "ORPHAN";
+            }
+        } else {
+            if (schemaForDel && schemaForDel.metadata && schemaForDel.metadata.deletionStrategy) {
+                isGraphEntity = true;
+                strategy = schemaForDel.metadata.deletionStrategy;
+            }
+        }
+
+        const pkField = schemaForDel && schemaForDel.primaryKey ? schemaForDel.primaryKey : null;
+        if (!pkField) throw new Error(`[AR-Governance] Violación Topológica: Imposible eliminar nodos para '${entityName}'. Falta declarar 'primaryKey' en Schema_Engine.`);
+
+        const sysDate = new Date().toISOString();
+        const currentUser = (typeof Session !== 'undefined') ? Session.getActiveUser().getEmail() : 'system@localhost';
+
+        if (isGraphEntity && config.useSheets) {
+            const graphTableName = "Sys_Graph_Edges";
+            const listResponse = _Adapter_Sheets.list(graphTableName, config, "objects");
+            const activeGraph = (listResponse && listResponse.rows) ? listResponse.rows.filter(r => r.es_version_actual !== false) : [];
+            
+            let globalEdgesToClose = [];
+            let globalEdgesToSpawn = [];
+            let globalNodesToDelete = [];
+            
+            ids.forEach(id => {
+                let patch = { edgesToClose: [], edgesToSpawn: [], nodesToDelete: [id] };
+                if (typeof Engine_Graph !== 'undefined' && typeof Engine_Graph.buildDeletionPatch === 'function') {
+                    patch = Engine_Graph.buildDeletionPatch(id, strategy, activeGraph);
+                }
+                
+                const contextualEdges = activeGraph.filter(e => String(e.contexto_id).trim() === String(id).trim());
+                contextualEdges.forEach(ce => {
+                    if (!patch.edgesToClose.some(existing => existing.id_relacion === ce.id_relacion)) {
+                        patch.edgesToClose.push(ce);
+                    }
+                });
+
+                globalEdgesToClose.push(...patch.edgesToClose);
+                globalEdgesToSpawn.push(...patch.edgesToSpawn);
+                globalNodesToDelete.push(...patch.nodesToDelete);
+            });
+            
+            const uniqueEdgesToClose = Array.from(new Map(globalEdgesToClose.map(item => [item.id_relacion, item])).values());
+            const uniqueNodesToDelete = [...new Set(globalNodesToDelete)];
+
+            const edgesClosed = uniqueEdgesToClose.map(e => ({
+                id_relacion: e.id_relacion,
+                es_version_actual: false,
+                estado: 'Eliminado',
+                valido_hasta: sysDate,
+                updated_at: sysDate,
+                updated_by: currentUser,
+                _overrideConcurrency: true
+            }));
+
+            const uuidFn = (typeof Utilities !== 'undefined') ? Utilities.getUuid : () => Math.random().toString(36).substring(2,10);
+            
+            const edgesSpawned = globalEdgesToSpawn.map(e => {
+                let rID = "RELA-" + uuidFn().substring(0, 8).toUpperCase();
+                return {
+                    id_relacion: rID,
+                    id_nodo_padre: e.id_nodo_padre,
+                    id_nodo_hijo: e.id_nodo_hijo,
+                    tipo_relacion: e.tipo_relacion || "SCD2_EDGE",
+                    peso_influencia: 1,
+                    valido_desde: sysDate,
+                    valido_hasta: "",
+                    es_version_actual: true,
+                    created_at: sysDate,
+                    created_by: "DAG_DELETION_" + strategy
+                };
+            });
+
+            const edgesToUpsert = [...edgesClosed, ...edgesSpawned];
+
+            const nodesToSoftDelete = uniqueNodesToDelete.map(nId => {
+                const nodePayload = { estado: 'Eliminado', deleted_at: sysDate, deleted_by: currentUser, _overrideConcurrency: true };
+                nodePayload[pkField] = nId;
+                return nodePayload;
+            });
+
+            if (edgesToUpsert.length > 0) {
+                if (typeof Logger !== 'undefined') Logger.log(`[Unit of Work] Upserting ${edgesToUpsert.length} graph edges (SCD-2) to array.`);
+                this.upsertBatch(graphTableName, edgesToUpsert, config);
+            }
+
+            if (nodesToSoftDelete.length > 0) {
+                if (typeof Logger !== 'undefined') Logger.log(`[Unit of Work] Logical bulk deletion of ${nodesToSoftDelete.length} nodes in DB_${entityName}.`);
+                results.sheets = this.upsertBatch(entityName, nodesToSoftDelete, config);
+            }
+
+        } else {
+            if (config.useSheets) {
+                const uniqueNodesToDelete = [...new Set(ids)];
+                const nodesToSoftDelete = uniqueNodesToDelete.map(nId => {
+                    const nodePayload = { estado: 'Eliminado', deleted_at: sysDate, deleted_by: currentUser, _overrideConcurrency: true };
+                    nodePayload[pkField] = nId;
+                    return nodePayload;
+                });
+                
+                if (nodesToSoftDelete.length > 0) {
+                    if (typeof Logger !== 'undefined') Logger.log(`[Unit of Work] Logical bulk deletion of ${nodesToSoftDelete.length} nodes in DB_${entityName}.`);
+                    results.sheets = this.upsertBatch(entityName, nodesToSoftDelete, config);
+                }
+            }
+        }
+
+        // upsertBatch already triggers cache invalidation internally.
+        
         return {
             success: true,
             Entity: entityName,

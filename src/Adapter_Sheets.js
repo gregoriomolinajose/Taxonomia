@@ -415,8 +415,15 @@ const Adapter_Sheets = {
             }
             if (rowsToAppend.length > 0) {
                 if (typeof Logger !== 'undefined') Logger.log(`[Metrics I/O] Cimentando ${rowsToAppend.length} registros nuevos en un bloque (Bulk Appends)`);
-                const lastRowPriorToAppend = sheet.getLastRow();
-                sheet.getRange(lastRowPriorToAppend + 1, 1, rowsToAppend.length, rowsToAppend[0].length).setValues(rowsToAppend);
+                
+                if (config && config.insertAtTop) {
+                    sheet.insertRowsAfter(1, rowsToAppend.length);
+                    sheet.getRange(2, 1, rowsToAppend.length, rowsToAppend[0].length).setValues(rowsToAppend);
+                } else {
+                    const lastRowPriorToAppend = sheet.getLastRow();
+                    sheet.getRange(lastRowPriorToAppend + 1, 1, rowsToAppend.length, rowsToAppend[0].length).setValues(rowsToAppend);
+                }
+                
                 SpreadsheetApp.flush();
             }
         }
@@ -555,9 +562,18 @@ const Adapter_Sheets = {
     },
 
     _ensureSheetExists: function(ss, tableName) {
+        let schemaFields = [];
+        let isGetAppSchemaDefined = (typeof getAppSchema === 'function');
+        let isAppSchemasDefined = (typeof APP_SCHEMAS !== 'undefined');
+        let schemaFromFunc = isGetAppSchemaDefined ? getAppSchema(tableName) : null;
+        let schemaFromObj = isAppSchemasDefined ? APP_SCHEMAS[tableName] : null;
+        const schema = schemaFromFunc || schemaFromObj;
+
         // Ejecutar Auto-Healing (S31.7) en cada operación para evitar DB Drift
         if (typeof ensureProvisioned === 'function') {
-             ensureProvisioned(tableName, ss);
+             if (!schema || !schema.metadata || !schema.metadata.skipProvisioning) {
+                 ensureProvisioned(tableName, ss);
+             }
         }
         
         let sheet = ss.getSheetByName('DB_' + tableName);
@@ -567,15 +583,7 @@ const Adapter_Sheets = {
         }
         
         // Auto-inyectar headers de esquema si está recién creada, y Auto-Heal si faltan
-        let schemaFields = [];
-        let isGetAppSchemaDefined = (typeof getAppSchema === 'function');
-        let isAppSchemasDefined = (typeof APP_SCHEMAS !== 'undefined');
-        let schemaFromFunc = isGetAppSchemaDefined ? getAppSchema(tableName) : null;
-        let schemaFromObj = isAppSchemasDefined ? APP_SCHEMAS[tableName] : null;
-        
         Logger.log(`[_ensureSheetExists] Debug: tableName="${tableName}", isGetAppSchemaDefined=${isGetAppSchemaDefined}, isAppSchemasDefined=${isAppSchemasDefined}, schemaFromFunc exists=${!!schemaFromFunc}, schemaFromObj exists=${!!schemaFromObj}`);
-        
-        const schema = schemaFromFunc || schemaFromObj;
         
         if (schema) {
             if (schema.fields) {
@@ -597,7 +605,7 @@ const Adapter_Sheets = {
         if (sheet.getLastRow() === 0) {
             sheet.getRange(1, 1, 1, allHeaders.length).setValues([allHeaders]);
             Logger.log(`[Auto-Provision] Encabezados inyectados: ${allHeaders.join(', ')}`);
-        } else {
+        } else if (!schema || !schema.metadata || !schema.metadata.skipProvisioning) {
             // [S21.4 Auto-Healing] Prevenir pérdida silenciosa de I/O si hay desvío (drift) en las columnas de Sheets
             const currentHeadersRange = sheet.getRange(1, 1, 1, Math.max(1, sheet.getLastColumn()));
             const currentHeadersVals = (currentHeadersRange && typeof currentHeadersRange.getValues === 'function') ? currentHeadersRange.getValues() : [];
@@ -623,6 +631,36 @@ const Adapter_Sheets = {
         }
         
         return sheet;
+    },
+
+    resolveColumnLetter: function(entityName, fieldName) {
+        const config = (typeof CONFIG !== 'undefined') ? CONFIG : { useSheets: true, SPREADSHEET_ID_DB: '' };
+        const spreadsheetId = (config && config.SPREADSHEET_ID_DB) ? config.SPREADSHEET_ID_DB : CONFIG.SPREADSHEET_ID_DB;
+        const ss = this._getSpreadsheet(spreadsheetId);
+        const sheet = this._ensureSheetExists(ss, entityName);
+        
+        let headers;
+        if (typeof __HEADER_CACHE__ !== 'undefined' && __HEADER_CACHE__[entityName]) {
+            headers = __HEADER_CACHE__[entityName];
+        } else {
+            const numCols = sheet.getLastColumn() || 1;
+            const headersRange = sheet.getRange(1, 1, 1, numCols);
+            headers = headersRange.getValues()[0].map(h => typeof _normalizeHeader === 'function' ? _normalizeHeader(h) : h.toLowerCase().trim().replace(/[^a-z0-9]+/g, '_'));
+            if (typeof __HEADER_CACHE__ !== 'undefined') __HEADER_CACHE__[entityName] = headers;
+        }
+        
+        const normName = typeof _normalizeHeader === 'function' ? _normalizeHeader(fieldName) : fieldName.toLowerCase().trim().replace(/[^a-z0-9]+/g, '_');
+        const colIndex = headers.indexOf(normName);
+        if (colIndex === -1) return null;
+        
+        let temp, letter = '';
+        let current = colIndex + 1;
+        while (current > 0) {
+            temp = (current - 1) % 26;
+            letter = String.fromCharCode(temp + 65) + letter;
+            current = (current - temp - 1) / 26;
+        }
+        return letter;
     },
 
     /**
@@ -707,7 +745,9 @@ const Adapter_Sheets = {
                 const tuple = [];
                 for (let k = 0; k < visibleHeaderIndices.length; k++) {
                     const colIdx = visibleHeaderIndices[k];
-                    tuple.push(rowData[colIdx] !== undefined ? rowData[colIdx] : '');
+                    let val = rowData[colIdx] !== undefined ? rowData[colIdx] : '';
+                    if (val instanceof Date) val = val.toISOString();
+                    tuple.push(val);
                 }
                 rows.push(tuple);
             } else {
@@ -715,16 +755,108 @@ const Adapter_Sheets = {
                 for (let k = 0; k < visibleHeaderIndices.length; k++) {
                     const colIdx = visibleHeaderIndices[k];
                     const headerName = filteredHeaders[k];
-                    rowObj[headerName] = rowData[colIdx] !== undefined ? rowData[colIdx] : '';
+                    let val = rowData[colIdx] !== undefined ? rowData[colIdx] : '';
+                    if (val instanceof Date) val = val.toISOString();
+                    rowObj[headerName] = val;
                 }
                 rows.push(rowObj);
             }
         }
 
-        // Sanitización Obligatoria: Destruir Objetos Date nativos de Rhino/V8
-        const sanitizedRows = JSON.parse(JSON.stringify(rows));
-        
-        return { headers: filteredHeaders, rows: sanitizedRows };
+        return { headers: filteredHeaders, rows: rows };
+    },
+
+    /**
+     * [S68] GViz Native Query Interface para Escalabilidad Topológica O(1) en Memoria
+     * Ejecuta una consulta SQL-like delegando el procesamiento al backend de Google Sheets.
+     */
+    query: function (entityName, config, sqlString) {
+        if (typeof UrlFetchApp === 'undefined' || typeof ScriptApp === 'undefined') {
+            throw new Error("El motor GViz requiere el entorno de Google Apps Script con UrlFetchApp y ScriptApp disponibles.");
+        }
+
+        const spreadsheetId = (config && config.SPREADSHEET_ID_DB) ? config.SPREADSHEET_ID_DB : CONFIG.SPREADSHEET_ID_DB;
+        if (!spreadsheetId) {
+            throw new Error(`[Adapter_Sheets.query] SPREADSHEET_ID_DB no definido.`);
+        }
+
+        // La capa de base de datos siempre antepone DB_ al nombre de la entidad
+        const sheetName = 'DB_' + entityName; 
+        const encodedQuery = encodeURIComponent(sqlString);
+        const url = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/gviz/tq?tq=${encodedQuery}&sheet=${sheetName}&headers=1`;
+
+        let token;
+        try {
+            token = ScriptApp.getOAuthToken();
+        } catch (e) {
+            throw new Error("[Adapter_Sheets.query] Error al obtener OAuth token. Verifica los scopes: " + e.message);
+        }
+
+        const options = {
+            method: "get",
+            headers: {
+                "Authorization": "Bearer " + token
+            },
+            muteHttpExceptions: true
+        };
+
+        const response = UrlFetchApp.fetch(url, options);
+        const statusCode = response.getResponseCode();
+        const text = response.getContentText();
+
+        if (statusCode !== 200) {
+            if (typeof Logger !== 'undefined') Logger.log(`[Adapter_Sheets.query] HTTP ${statusCode} en GViz para ${entityName}: ${text}`);
+            throw new Error(`Fallo en GViz: HTTP ${statusCode}`);
+        }
+
+        // GViz retorna: /*O_o*/ google.visualization.Query.setResponse({...})
+        const jsonMatch = text.match(/(?<=.*\().*(?=\);)/s);
+        if (!jsonMatch || !jsonMatch[0]) {
+            throw new Error(`[Adapter_Sheets.query] Formato GViz irreconocible: ${text.substring(0, 50)}...`);
+        }
+
+        let data;
+        try {
+            data = JSON.parse(jsonMatch[0]);
+        } catch (e) {
+            throw new Error(`[Adapter_Sheets.query] Fallo al parsear JSON de GViz: ${e.message}`);
+        }
+
+        if (data.status !== 'ok') {
+            throw new Error(`[Adapter_Sheets.query] GViz Error Lógico: ${JSON.stringify(data.errors)}`);
+        }
+
+        // Mapear headers desde data.table.cols
+        const headers = [];
+        if (data.table && data.table.cols) {
+            data.table.cols.forEach(col => {
+                const headerName = col.label ? col.label : col.id;
+                headers.push(_normalizeHeader(headerName));
+            });
+        }
+
+        // Reconstruir rows
+        const rows = [];
+        if (data.table && data.table.rows) {
+            data.table.rows.forEach(r => {
+                const rowObj = {};
+                if (r.c) {
+                    for (let i = 0; i < headers.length; i++) {
+                        const h = headers[i];
+                        const cell = r.c[i];
+                        // Extraer el valor 'v' o el string formateado 'f' si 'v' no es óptimo, pero 'v' es estándar.
+                        rowObj[h] = (cell && cell.v !== null && cell.v !== undefined) ? cell.v : '';
+                    }
+                }
+                
+                // Excluir nodos lógicamente eliminados
+                if (!this._isNodeLogicallyDeleted(headers, rowObj)) {
+                    rows.push(rowObj);
+                }
+            });
+        }
+
+        return { headers: headers, rows: rows };
     }
 };
 

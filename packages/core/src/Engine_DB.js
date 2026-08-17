@@ -114,7 +114,18 @@ function _checkCacheSignals(entityName, cachedAt) {
             const config = (typeof CONFIG !== 'undefined') ? CONFIG : {};
             if (!config.SPREADSHEET_ID_DB || config.SPREADSHEET_ID_DB.trim().length === 0) return false;
             const result = _Adapter_Sheets.list('Sys_Cache_Signals', config, 'objects');
-            signals = (result && result.rows) ? result.rows : [];
+            let rawSignals = (result && result.rows) ? result.rows : [];
+            
+            // Prune signals to keep only the most recent per entity_name and by_tenant combination
+            const prunedMap = {};
+            rawSignals.forEach(function(s) {
+                const key = s.entity_name + '|' + s.by_tenant;
+                if (!prunedMap[key] || s.invalidated_at > prunedMap[key].invalidated_at) {
+                    prunedMap[key] = s;
+                }
+            });
+            signals = Object.keys(prunedMap).map(function(k) { return prunedMap[k]; });
+
             // TTL intencional de 60 segundos — ventana máxima de inconsistencia cross-tenant
             cache.put(signalsCacheKey, JSON.stringify(signals), 60);
         }
@@ -839,7 +850,7 @@ const Engine_DB = {
         if (typeof CacheService !== 'undefined' && (!options || !options.skipCache)) {
             const cache = CacheService.getScriptCache();
             const cachedRaw = _getCacheChunked(cache, cacheKey);
-            if (cachedRaw && format !== 'tuples') {
+            if (cachedRaw) {
                 try {
                     const wrapped = JSON.parse(cachedRaw);
                     // [S66] Si tiene campo cached_at, verificar señales cross-tenant
@@ -867,7 +878,7 @@ const Engine_DB = {
         const result = _Adapter_Sheets.list(entityName, config, format);
         
         // [S66] Guardar en caché envuelto con timestamp para soporte de señales cross-tenant
-        if (typeof CacheService !== 'undefined' && format !== 'tuples' && result) {
+        if (typeof CacheService !== 'undefined' && result) {
             const cache = CacheService.getScriptCache();
             const wrappedResult = { data: result, cached_at: new Date().toISOString() };
             _putCacheChunked(cache, cacheKey, JSON.stringify(wrappedResult), 3600);

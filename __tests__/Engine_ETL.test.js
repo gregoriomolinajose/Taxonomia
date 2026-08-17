@@ -107,30 +107,30 @@ describe('Engine_ETL: extractDataFromDrive (S61.10)', () => {
     it('should bound the extraction range to ignore empty trailing rows', () => {
         const mockGetDisplayValues = vi.fn(() => [['email', 'nombre'], ['test@test.com', 'Test']]);
         const mockGetValues = vi.fn(() => {
-            const raw = [['email', 'nombre'], ['test@test.com', 'Test']];
+            const raw = [['email', 'nombre', 'numero_empleado'], ['test@test.com', 'Test', '123']];
             for (let i = 2; i < 1000; i++) {
-                raw.push(['', '']);
+                raw.push(['', '', '']);
             }
             return raw;
         });
         const mockGetRange = vi.fn(() => ({
             getDisplayValues: mockGetDisplayValues,
-            getValues: vi.fn(() => [['email', 'nombre']]) // Just for line 297 getValues()[0]
+            getValues: vi.fn(() => [['email', 'nombre', 'numero_empleado'], ['test@test.com', 'Test', '123']])
         }));
         const mockGetDataRange = vi.fn(() => ({
             getValues: mockGetValues,
-            getNumColumns: vi.fn(() => 2),
+            getNumColumns: vi.fn(() => 3),
             getDisplayValues: vi.fn(() => {
-                const raw = [['email', 'nombre'], ['test@test.com', 'Test']];
+                const raw = [['email', 'nombre', 'numero_empleado'], ['test@test.com', 'Test', '123']];
                 for (let i = 2; i < 1000; i++) {
-                    raw.push(['', '']);
+                    raw.push(['', '', '']);
                 }
                 return raw;
             })
         }));
 
         const mockSheet = {
-            getLastColumn: vi.fn(() => 2),
+            getLastColumn: vi.fn(() => 3),
             getLastRow: vi.fn(() => 1000),
             getName: vi.fn(() => 'TestSheet'),
             getDataRange: mockGetDataRange,
@@ -150,7 +150,59 @@ describe('Engine_ETL: extractDataFromDrive (S61.10)', () => {
         expect(records[0].email).toBe('test@test.com');
         
         // Assert that getRange was called with bounded rows
-        expect(mockGetRange).toHaveBeenCalledWith(1, 1, 2, 2);
+        expect(mockGetRange).toHaveBeenCalledWith(1, 1, 2, 3);
         expect(mockGetDisplayValues).toHaveBeenCalled();
+    });
+
+    it('should throw explicit Error when headers are completely incompatible (maxOverlap <= 0) (S61.16)', () => {
+        const mockGetValues = vi.fn(() => [['col_invalida_1', 'col_invalida_2'], ['foo', 'bar']]);
+        const mockGetRange = vi.fn(() => ({
+            getValues: mockGetValues,
+            getDisplayValues: mockGetValues
+        }));
+        
+        const mockSheet = {
+            getLastColumn: vi.fn(() => 2),
+            getLastRow: vi.fn(() => 2),
+            getName: vi.fn(() => 'TestSheet'),
+            getRange: mockGetRange,
+            getDataRange: vi.fn(() => ({
+                getValues: mockGetValues,
+                getNumColumns: vi.fn(() => 2),
+                getDisplayValues: mockGetValues
+            }))
+        };
+
+        global.SpreadsheetApp = {
+            openById: vi.fn(() => ({
+                getSheets: vi.fn(() => [mockSheet]),
+                getName: vi.fn(() => 'Test Spreadsheet')
+            }))
+        };
+
+        expect(() => {
+            Engine_ETL.extractDataFromDrive('Persona', 'https://docs.google.com/spreadsheets/d/12345/edit');
+        }).toThrow(/Formato Estricto Incompatible/);
+    });
+
+    it('should throw explicit Error when sheet is completely empty (S61.16)', () => {
+        const mockSheet = {
+            getLastColumn: vi.fn(() => 0),
+            getLastRow: vi.fn(() => 0),
+            getName: vi.fn(() => 'EmptySheet'),
+            getRange: vi.fn(),
+            getDataRange: vi.fn()
+        };
+
+        global.SpreadsheetApp = {
+            openById: vi.fn(() => ({
+                getSheets: vi.fn(() => [mockSheet]),
+                getName: vi.fn(() => 'Test Spreadsheet')
+            }))
+        };
+
+        expect(() => {
+            Engine_ETL.extractDataFromDrive('Persona', 'https://docs.google.com/spreadsheets/d/empty/edit');
+        }).toThrow();
     });
 });

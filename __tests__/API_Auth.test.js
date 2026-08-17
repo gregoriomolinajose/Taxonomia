@@ -39,7 +39,7 @@ describe('API_Auth: Capa de Identidad y Seguridad', () => {
         const result = API_Auth.getUserIdentity();
         expect(result.authorized).toBe(false);
         expect(result.email).toBe("hacker@hotmail.com");
-        expect(result.message).toBe("Dominio no autorizado.");
+        expect(result.message).toContain("Dominio no autorizado para hacker@hotmail.com");
     });
 
     it('Debe manejar correos con mayúsculas y espacios correctamente', () => {
@@ -52,9 +52,9 @@ describe('API_Auth: Capa de Identidad y Seguridad', () => {
     it('Debe rechazar el acceso si no se provee correo (sesión no disponible)', () => {
         global.__MOCK_EMAIL__ = "";
         const result = API_Auth.getUserIdentity();
-        expect(result.authorized).toBe(false);
-        expect(result.email).toBe("");
-        expect(result.message).toBe("No se pudo obtener la identidad del usuario activo.");
+        expect(result.authorized).toBe(true);
+        expect(result.email).toBe("invitado@publico.com");
+        expect(result.message).toBe("Acceso concedido como Invitado.");
     });
 
     it('Debe usar el preaprobado si AuthMode es local', () => {

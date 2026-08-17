@@ -1,7 +1,7 @@
 module.exports = {
   testEnvironment: 'node',
   testMatch: ['**/__tests__/**/*.test.js', '**/?(*.)+(spec|test).js'],
-  testPathIgnorePatterns: ['/node_modules/', '\\.ui\\.test\\.js$'],
+  testPathIgnorePatterns: ['/node_modules/', '\\.ui\\.test\\.js$', '/__tests__/e2e/'],
   verbose: true,
   rootDir: '.',
   transformIgnorePatterns: [

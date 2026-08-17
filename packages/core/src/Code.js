@@ -17,19 +17,24 @@ function doGet(e) {
     }
   }
 
+  // [S67.3] Consolidar I/O de PropertiesService
+  var AppConfig;
+  try {
+    AppConfig = PropertiesService.getScriptProperties().getProperties();
+    if (!AppConfig) throw new Error("Config properties could not be loaded");
+  } catch(e) {
+    throw new Error("CRITICAL FAILURE: Could not read PropertiesService configuration. " + e.message);
+  }
+
   // [E6-S65] First-Run Detection — Backend-First.
   // Si SPREADSHEET_ID_DB no está configurado en ninguna fuente, retorna el Wizard.
-  // Fuentes verificadas en orden de prioridad:
-  //   1. Adapter_Config (PropertiesService, clave APP_CONFIG__spreadsheet_id)
-  //   2. ENV_CONFIG en PropertiesService (SPREADSHEET_ID_DB)
-  //   3. CONFIG.SPREADSHEET_ID_DB (build-time, entorno actual)
   var _spreadsheetConfigured = false;
   try {
-    var _configSheetId = PropertiesService.getScriptProperties().getProperty('APP_CONFIG__spreadsheet_id');
+    var _configSheetId = AppConfig['APP_CONFIG__spreadsheet_id'];
     if (_configSheetId && _configSheetId.trim().length > 0) {
       _spreadsheetConfigured = true;
     } else {
-      var _envStr = PropertiesService.getScriptProperties().getProperty('ENV_CONFIG');
+      var _envStr = AppConfig['ENV_CONFIG'];
       if (_envStr) {
         var _envObj = JSON.parse(_envStr);
         if (_envObj.SPREADSHEET_ID_DB && _envObj.SPREADSHEET_ID_DB.trim().length > 0) {
@@ -64,7 +69,7 @@ function doGet(e) {
   // White-Label Config Load (S24.5) - Refactorizado para Seguridad (WSOD Prevention)
   var whiteLabel = null;
   try {
-    var rawStr = PropertiesService.getScriptProperties().getProperty('WHITE_LABEL_CONFIG');
+    var rawStr = AppConfig['WHITE_LABEL_CONFIG'];
     if (rawStr) {
         var testObj = JSON.parse(rawStr);
         if (testObj && testObj.bodyFont) {
@@ -88,8 +93,7 @@ function doGet(e) {
   // Environment Config Load (S23.4) - SRP Separation
   var envObj = { AuthMode: "SSO", ALLOWED_DOMAINS: [], WORKSPACE_ENABLED: false };
   try {
-    var props = PropertiesService.getScriptProperties();
-    var legacyEnvStr = props.getProperty('ENV_CONFIG');
+    var legacyEnvStr = AppConfig['ENV_CONFIG'];
     if (legacyEnvStr) {
       var legacyEnv = JSON.parse(legacyEnvStr);
       if (legacyEnv.AuthMode) envObj.AuthMode = legacyEnv.AuthMode;
@@ -98,7 +102,7 @@ function doGet(e) {
     }
     
     // Sobrescribir con nuevo esquema E6 de APP_WORKSPACE_CONFIG
-    var wsConfigStr = props.getProperty('APP_WORKSPACE_CONFIG');
+    var wsConfigStr = AppConfig['APP_WORKSPACE_CONFIG'];
     if (wsConfigStr) {
       var wsConfig = JSON.parse(wsConfigStr);
       if (wsConfig.domains && Array.isArray(wsConfig.domains)) {
@@ -114,7 +118,7 @@ function doGet(e) {
     
     // Fallback a variable antigua si wsConfig no proveyó dominios
     if (!envObj.ALLOWED_DOMAINS || envObj.ALLOWED_DOMAINS.length === 0) {
-      var newDomains = props.getProperty('APP_CONFIG__allowed_domains');
+      var newDomains = AppConfig['APP_CONFIG__allowed_domains'];
       if (newDomains && newDomains.trim().length > 0) {
         envObj.ALLOWED_DOMAINS = newDomains.split(',').map(function(d) { return d.trim(); }).filter(Boolean);
       }
@@ -149,16 +153,15 @@ function doGet(e) {
     faviconUrl: ''
   };
   try {
-    var props = PropertiesService.getScriptProperties();
-    var titleVal = props.getProperty('APP_CONFIG__app_title');
-    var favVal = props.getProperty('APP_CONFIG__favicon_url');
+    var titleVal = AppConfig['APP_CONFIG__app_title'];
+    var favVal = AppConfig['APP_CONFIG__favicon_url'];
 
     if (titleVal) brandingConfig.appTitle = titleVal;
     if (favVal) brandingConfig.faviconUrl = favVal;
 
     // Fallback legacy
     if (!titleVal && !favVal) {
-      var brandingStr = props.getProperty('APP_BRANDING_CONFIG');
+      var brandingStr = AppConfig['APP_BRANDING_CONFIG'];
       if (brandingStr) {
         var parsedBranding = JSON.parse(brandingStr);
         if (parsedBranding.appTitle) brandingConfig.appTitle = parsedBranding.appTitle;

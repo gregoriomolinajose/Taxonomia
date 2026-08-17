@@ -32,7 +32,9 @@ function _guardAbac(action, entityName, targetId) {
  */
 function _handleRead(entityName, payload) {
   // Las lecturas son permitidas por defecto (Visibilidad completa del Grafo)
-  return Engine_DB.list(entityName, payload || {});
+  const format = (payload && typeof payload === 'string') ? payload : 'objects';
+  const options = (payload && typeof payload === 'object') ? payload : {};
+  return Engine_DB.list(entityName, format, options);
 }
 
 /**
@@ -98,6 +100,24 @@ function _handleDelete(entityName, id) {
 }
 
 /**
+ * _handleBulkDelete
+ * Llama a Engine_DB.bulkDelete() para un borrado logico masivo,
+ * validando ABAC para cada ID.
+ */
+function _handleBulkDelete(entityName, ids) {
+  if (!ids || !Array.isArray(ids)) throw new Error('ERR_BAD_REQUEST_INVALID_IDS');
+  
+  // 1. Validar permisos ABAC para CADA id a eliminar
+  ids.forEach(id => {
+    _guardAbac('delete', entityName, id);
+  });
+  
+  // 2. Ejecutar la transacción en Engine_DB
+  const result = Engine_DB.bulkDelete(entityName, ids);
+  return result;
+}
+
+/**
  * _applyAdminBypass (SRP Helper)
  * Implícitamente salta controles de concurrencia y despliega override 
  * para acciones CUD previamente autenticadas sobre matrices estructurales.
@@ -122,6 +142,16 @@ function getAppBootstrapPayload() {
     
     for (let i = 0; i < entities.length; i++) {
         const entityName = entities[i];
+        if (entityName === '_UI_CONFIG') continue;
+        
+        const schema = schemas[entityName];
+        const isDashboard = schema.uiConfig && (schema.uiConfig.dashboardCard || schema.uiConfig.dashboardDirectory);
+        
+        if (!isDashboard) {
+            // Lazy load later
+            continue;
+        }
+
         const result = Engine_DB.list(entityName, 'tuples'); // Tuples for internal speed
         
         // Desempacar tuplas a objetos en el backend para evitar bloqueos de renderizado en UI
@@ -303,6 +333,7 @@ if (typeof module !== 'undefined') {
     _handleCreate,
     _handleUpdate,
     _handleDelete,
+    _handleBulkDelete,
     _handleRead,
     _generateShortUUID
   };

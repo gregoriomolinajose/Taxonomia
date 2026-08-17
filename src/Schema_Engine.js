@@ -264,7 +264,7 @@ var APP_SCHEMAS = {
     topological_metadata: {
       ownerFields: ["gerente_dominio_id"]
     },
-    mutationInterceptors: ['AutoProvisionEntityRoles'],
+    mutationInterceptors: ['AutoProvisionEntityRoles', 'CalculateDominioTopology'],
     primaryKey: "id_dominio",
     titleField: "nombre",
     topologyRules: TOPOLOGY_PRESETS.JERARQUICA_ESTRICTA_DOMAIN,
@@ -342,6 +342,7 @@ var APP_SCHEMAS = {
       parentEntity: "Capacidad",
       parentField: "id_dominio_padre"
     },
+    mutationInterceptors: ['CalculateCapacidadTopology'],
     primaryKey: "id_capacidad",
     titleField: "nombre",
     topologyRules: TOPOLOGY_PRESETS.JERARQUICA_ESTRICTA_DOMAIN,
@@ -423,9 +424,9 @@ var APP_SCHEMAS = {
     computedFields: [
       { name: '_nombre_completo', concat: ['nombre', 'apellidos'], separator: ' ', fallback: ['email', 'id_persona'] }
     ],
-    metadata: { showInMenu: true, order: 8, iconName: 'person-outline', color: 'warning', label: 'Personas', titleField: '_nombre_completo', idField: 'id_persona', fkField: null },
+    metadata: { showInMenu: true, order: 8, iconName: 'person-outline', color: 'warning', label: 'Personas', titleField: '_nombre_completo', idField: 'id_persona', fkField: null, insertAtTop: true },
     primaryKey: "id_persona",
-    mutationInterceptors: ['WorkspacePreflightBlock', 'HydrateWorkspace', 'AutoProvisionCargo', 'AutoProvisionLiderDirecto', 'AutoLinkAgileRoles'],
+    mutationInterceptors: ['EnforceAllowedDomains', 'WorkspacePreflightBlock', 'HydrateWorkspace', 'AutoProvisionCargo', 'AutoProvisionLiderDirecto', 'AutoLinkAgileRoles'],
     relationalProvisioners: [
       {
         field: 'roles_asignados',
@@ -566,7 +567,7 @@ var APP_SCHEMAS = {
   // [E6-S66] Canal pub-sub nativo para invalidación proactiva de caché cross-tenant.
   // Append-only. El job Job_CleanCacheSignals() limpia señales > 1 hora cada 24h.
   Sys_Cache_Signals: {
-    metadata: { prefix: 'SCCH', showInMenu: false, order: 95, iconName: 'radio-outline', color: 'warning',
+    metadata: { skipProvisioning: true, prefix: 'SCCH', showInMenu: false, order: 95, iconName: 'radio-outline', color: 'warning',
                 label: 'Señales de Caché Cross-Tenant', titleField: 'entity_name',
                 idField: 'signal_id', fkField: null },
     primaryKey: "signal_id",
@@ -580,7 +581,7 @@ var APP_SCHEMAS = {
   
   // [E61] Registro de ejecuciones asíncronas
   Sys_Jobs: {
-    metadata: { prefix: 'SJOB', showInMenu: true, order: 95, iconName: 'list-outline', color: 'primary',
+    metadata: { skipProvisioning: true, prefix: 'SJOB', showInMenu: true, order: 95, iconName: 'list-outline', color: 'primary',
                 label: 'Ejecuciones de Carga', titleField: 'jobId', idField: 'jobId', fkField: null },
     primaryKey: "jobId",
     fields: [
@@ -904,6 +905,30 @@ function getAppSchema(entityName) {
 }
 
 /**
+ * Returns a pruned version of the schemas for frontend payload injection.
+ * Strips out backend-only metadata like audit fields to reduce payload size.
+ */
+function getPrunedAppSchema() {
+  const schemas = getAppSchema();
+  const pruned = {};
+  const backendOnlyFields = typeof CORE_SYS_FIELDS !== 'undefined' ? CORE_SYS_FIELDS : ['created_at', 'create_by', 'created_by', 'updated_at', 'update_at', 'update_by', 'deleted_at', 'deleted_by', 'version', '_version'];
+  
+  for (const key in schemas) {
+    if (key === '_UI_CONFIG') {
+      pruned[key] = schemas[key];
+      continue;
+    }
+    
+    pruned[key] = Object.assign({}, schemas[key]);
+    if (pruned[key].fields) {
+      pruned[key].fields = pruned[key].fields.filter(f => !backendOnlyFields.includes(f.name));
+    }
+  }
+  
+  return pruned;
+}
+
+/**
  * Epic E8: Safe getter for topology rules. Returns the configured rules
  * for the entity if available, otherwise returns a safe default (FLAT).
  * Prevents downstream failures for legacy entities.
@@ -953,7 +978,7 @@ function getFieldNameFromLabel(entityName, rawHeader) {
 }
 
 if (typeof module !== 'undefined') {
-  module.exports = { APP_SCHEMAS, TOPOLOGY_PRESETS, FIELD_TEMPLATES, getAppSchema, getEntityTopologyRules, getFieldNameFromLabel };
+  module.exports = { APP_SCHEMAS, TOPOLOGY_PRESETS, FIELD_TEMPLATES, getAppSchema, getPrunedAppSchema, getEntityTopologyRules, getFieldNameFromLabel };
 }
 
 // ─── [E31] Admin GAS endpoints ───────────────────────────────────────────────

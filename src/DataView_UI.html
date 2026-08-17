@@ -285,7 +285,8 @@
                     canCreate, 
                     _exportToSheet, 
                     function(e) { window.DataViewEngine._openETLModal(e); },
-                    onAddClick
+                    onAddClick,
+                    _onBulkDelete
                 );
 
                 if (_state.payload && _state.payload.strictFilter && _state.payload.strictFilter.key) {
@@ -331,6 +332,14 @@
 
             const dataZone = document.getElementById('dv-data-zone');
             if (!dataZone) return;
+            
+            // Re-render header para actualizar el contador de registros sin destruir el DOM del header
+            const countLabel = document.querySelector('#dv-header-zone .dv-header-left p');
+            if (countLabel) {
+                const total = _state.filtered ? _state.filtered.length : 0;
+                countLabel.textContent = `${total} registro${total !== 1 ? 's' : ''} en total`;
+            }
+
             window.DOM.clear(dataZone);
 
             if (_state.view === 'tree') {
@@ -585,12 +594,12 @@
             } else {
                 _state.selectedRows = _state.selectedRows.filter(r => String(r) !== strId);
             }
+            _updateBulkDeleteBtn();
         }
 
         function _onSelectAll(checked) {
             const pkField = window.Schema_Utils.getPrimaryKey(_state.entityName);
-            const pageIds = window.UI_DataGrid._getPageData ? window.UI_DataGrid._getPageData().map(r => String(r[pkField] || '')) : [];
-            const dataToIterate = pageIds.length > 0 ? pageIds : _state.filteredData.slice((_state.page - 1) * _state.pageSize, _state.page * _state.pageSize).map(r => String(r[pkField] || ''));
+            const dataToIterate = _state.filtered.slice((_state.page - 1) * _state.pageSize, _state.page * _state.pageSize).map(r => String(r[pkField] || ''));
             
             if (checked) {
                 dataToIterate.forEach(id => {
@@ -599,17 +608,89 @@
             } else {
                 _state.selectedRows = _state.selectedRows.filter(r => !dataToIterate.includes(String(r)));
             }
+            _updateBulkDeleteBtn();
             _rerenderData();
+        }
+
+        function _updateBulkDeleteBtn() {
+            const btn = document.getElementById('dv-bulk-delete-btn');
+            if (!btn) return;
+            if (_state.selectedRows && _state.selectedRows.length > 0) {
+                btn.style.display = 'inline-flex';
+                btn.innerHTML = `<ion-icon name="trash-outline" slot="start"></ion-icon> Eliminar ${_state.selectedRows.length} seleccionados`;
+            } else {
+                btn.style.display = 'none';
+            }
+        }
+
+        async function _onBulkDelete() {
+            if (!_state.selectedRows || _state.selectedRows.length === 0) return;
+            
+            const count = _state.selectedRows.length;
+            const confirmMsg = `¿Estás seguro de eliminar los ${count} registros seleccionados de ${_state.entityName}?`;
+            
+            const alertNode = document.createElement('ion-alert');
+            alertNode.header = 'Confirmar Borrado Masivo';
+            alertNode.message = confirmMsg;
+            alertNode.buttons = [
+                { text: 'Cancelar', role: 'cancel' },
+                {
+                    text: 'Eliminar', 
+                    role: 'confirm',
+                    handler: async () => {
+                        const loading = document.createElement('ion-loading');
+                        loading.message = `Eliminando ${count} registros...`;
+                        document.body.appendChild(loading);
+                        await window.PresentSafe(loading);
+                        
+                        try {
+                            const response = await window.DataAPI.call('API_Universal_Router', 'bulk_delete', _state.entityName, _state.selectedRows);
+                            
+                            if (response && response.status === 'success') {
+                                _showToast(`✅ ${count} registros eliminados exitosamente.`, 'success');
+                                
+                                const rowsToDelete = [..._state.selectedRows];
+                                _state.selectedRows = [];
+                                _updateBulkDeleteBtn();
+                                
+                                const pkField = window.Schema_Utils ? window.Schema_Utils.getPrimaryKey(_state.entityName) : 'id';
+                                
+                                // Purge from local state
+                                if (_state.data) {
+                                    _state.data = _state.data.filter(r => !rowsToDelete.includes(String(r[pkField])));
+                                }
+                                
+                                // Purge from global cache
+                                if (window.DataStore && window.DataStore.get(_state.entityName)) {
+                                    window.DataStore.set(_state.entityName, window.DataStore.get(_state.entityName).filter(r => !rowsToDelete.includes(String(r[pkField]))));
+                                }
+                                
+                                const searchInput = document.getElementById('dv-search-input');
+                                _applyFilter(searchInput ? searchInput.value || '' : '');
+                            } else {
+                                throw new Error(response ? (response.message || response.errorType || 'Error desconocido') : 'Respuesta inválida del servidor');
+                            }
+                        } catch (err) {
+                            console.error('[DataView] Bulk Delete Error:', err);
+                            _showToast('❌ Error: ' + err.message, 'danger');
+                        } finally {
+                            loading.dismiss();
+                        }
+                    }
+                }
+            ];
+            document.body.appendChild(alertNode);
+            window.PresentSafe(alertNode);
         }
 
         function _onRowOrderChange(srcId, targetId) {
             const pkField = window.Schema_Utils.getPrimaryKey(_state.entityName);
-            const srcIdx = _state.filteredData.findIndex(r => String(r[pkField]) === String(srcId));
-            const targetIdx = _state.filteredData.findIndex(r => String(r[pkField]) === String(targetId));
+            const srcIdx = _state.filtered.findIndex(r => String(r[pkField]) === String(srcId));
+            const targetIdx = _state.filtered.findIndex(r => String(r[pkField]) === String(targetId));
             
             if(srcIdx > -1 && targetIdx > -1) {
-                const item = _state.filteredData.splice(srcIdx, 1)[0];
-                _state.filteredData.splice(targetIdx, 0, item);
+                const item = _state.filtered.splice(srcIdx, 1)[0];
+                _state.filtered.splice(targetIdx, 0, item);
             }
         }
 
@@ -907,147 +988,9 @@ function _openETLModal() {
                 return _showToast('Módulo ETL no cargado.', 'danger');
             }
             
-            // Presentamos la instancia
+            // Presentamos la instancia delegando al Motor Central (UI_BulkImporter) 
+            // las operaciones asíncronas de Drive (Queue / Fail-Fast)
             window.UI_ETL_Modal.present(_state.entityName, {
-                onDriveSync: async function(entity, url, modal) {
-                    let loading;
-                    try {
-                        // H10: Limpiar preventivamente cualquier loader previo atascado para evitar que el botón quede bloqueado permanentemente
-                        document.querySelectorAll('ion-loading.loader-etl-sync').forEach(el => el.remove());
-                        
-                        loading = document.createElement('ion-loading');
-                        loading.className = 'loader-etl-sync';
-                        loading.message = 'Extrayendo Matriz desde Hoja de Cálculo...';
-                        document.body.appendChild(loading);
-                        await loading.present();
-
-                        let etlEngine = null;
-                        let reqOptions = {};
-                        let isCustom = false;
-
-                        if (window[`DataEngine_ETL_${entity}`]) {
-                            etlEngine = window[`DataEngine_ETL_${entity}`];
-                            reqOptions = { rawMatrix: true };
-                            isCustom = true;
-                        } else if (window.DataEngine_ETL) {
-                            etlEngine = window.DataEngine_ETL;
-                        }
-
-                        if (!etlEngine) {
-                            loading.dismiss();
-                            modal.dismiss();
-                            return _showToast(`No hay motor ETL cargado para procesar los registros.`, 'warning');
-                        }
-
-                        window.DataAPI.call('API_Universal_Router', 'etl_extract_sheet_data', entity, { url: url, options: reqOptions })
-                            .then(res => {
-                                loading.dismiss();
-                                if (res && res.data) {
-                                    const progressCb = function onProgress(chunkIndex, totalChunks, isDone, metrics, customText) {
-                                        if (window.UI_ETL_Modal && window.UI_ETL_Modal.updateProgress) {
-                                            window.UI_ETL_Modal.updateProgress(chunkIndex, totalChunks, isDone, metrics, customText);
-                                        }
-                                    };
-
-                                    let etlPromise;
-                                    if (isCustom && etlEngine.processMatrix) {
-                                        etlPromise = new Promise((resolve, reject) => {
-                                            etlEngine.processMatrix(entity, res.data, {
-                                                progressCallback: progressCb,
-                                                completionCallback: resolve
-                                            }).catch(reject);
-                                        });
-                                    } else if (etlEngine.processPayload) {
-                                        etlPromise = etlEngine.processPayload(res.data, entity, progressCb);
-                                    } else {
-                                        modal.dismiss();
-                                        return _showToast(`El motor ETL no tiene un método de procesamiento compatible.`, 'warning');
-                                    }
-
-                                    etlPromise.then((metrics) => {
-                                        if (window.DataStore) window.DataStore.set(entity, null); 
-                                        const m = metrics || { success: res.data.length, duplicate: 0, error: 0 };
-                                        const feedbackArray = m._feedback || [];
-                                        if (window.UI_ETL_Modal && window.UI_ETL_Modal.showResults) {
-                                            window.UI_ETL_Modal.showResults(m, feedbackArray);
-                                        } else {
-                                            modal.dismiss();
-                                            alert(`Resumen:\n✅ ${m.success || 0} satisfactorios\n⚠️ ${m.duplicate || 0} ya existentes\n❌ ${m.error || 0} no realizados`);
-                                        }
-                                        modal.addEventListener('ionModalDidDismiss', () => {
-                                            console.log(`[DataViewEngine] ETL finalizado, forzando re-render de ${entity} para hidratar DataStore.`);
-                                            render(_state.entityName, _state.containerId);
-                                        }, { once: true });
-                                    }).catch(err => {
-                                        console.error('[Chunker Error]', err);
-                                        const urlInput = modal.querySelector('#etl-drive-url');
-                                        if (urlInput && err.message && (err.message.includes('vací') || err.message.includes('data útil') || err.message.includes('vacio') || err.message.includes('columna correo') || err.message.includes('filas'))) {
-                                            const displayMsg = err.message.includes('columna correo') ? err.message : err.message;
-                                            urlInput.setAttribute('error-text', displayMsg);
-                                            urlInput.classList.add('ion-invalid', 'ion-touched');
-                                        } else {
-                                            alert(`Error general de procesamiento:\n${err.message}`);
-                                        }
-                                    });
-                                } else if (res && res.status === 'error') {
-                                    // El backend capturó el error pero lo devolvió como éxito 200 en capa HTTP (API_Universal_Router)
-                                    throw new Error(res.message || "Error desconocido devuelto por el servidor.");
-                                }
-                            })
-                            .catch(err => {
-                                loading.dismiss();
-                                console.error('[ETL Fatal Error]', err);
-                                const urlInput = modal.querySelector('#etl-drive-url');
-                                if (urlInput && err.message && (err.message.includes('vací') || err.message.includes('data útil') || err.message.includes('vacio') || err.message.includes('columna correo') || err.message.includes('acceder al documento') || err.message.includes('inaccesible') || err.message.includes('MimeType'))) {
-                                    let displayMsg = 'El archivo proporcionado se encuentra vacío o sin data útil.';
-                                    if (err.message.includes('columna correo')) displayMsg = err.message;
-                                    if (err.message.includes('acceder al documento') || err.message.includes('inaccesible') || err.message.includes('MimeType')) {
-                                        displayMsg = 'El enlace es incorrecto, no tienes permisos, o el archivo es un Excel (.xlsx) antiguo. Asegúrate de usar el enlace del nuevo Google Sheet convertido.';
-                                    }
-                                    
-                                    urlInput.setAttribute('error-text', displayMsg);
-                                    urlInput.classList.add('ion-invalid', 'ion-touched');
-                                } else {
-                                    _showToast(`Fallo al extraer registros: ${err.message}`, 'danger');
-                                }
-                            });
-                    } catch (fatalErr) {
-                        if (loading) loading.dismiss();
-                        console.error('[UI Fatal Error]', fatalErr);
-                        _showToast(`Error inesperado procesando la sincronización: ${fatalErr.message}`, 'danger');
-                    }
-                },
-                onGenerateTemplate: async function(entity, modal) {
-                    // Limpieza proactiva de loaders huérfanos que provocan el "bloqueo fantasma"
-                    document.querySelectorAll('ion-loading.loader-etl').forEach(el => el.remove());
-                    
-                    const loading = document.createElement('ion-loading');
-                    loading.className = 'loader-etl';
-                    loading.message = 'Creando plantilla en Google Sheet...';
-                    document.body.appendChild(loading);
-                    await loading.present();
-
-                    window.DataAPI.call('API_Universal_Router', 'etl_generate_template', entity, {})
-                        .then(res => {
-                            loading.dismiss();
-                            if (res && res.data) {
-                                // H10: Guardado local de la URL temporal delegado nativamente al diccionario Cache del UI_ETL_Modal
-                                window.UI_ETL_Modal.urlCache[entity] = res.data;
-                                window.UI_ETL_Modal.updateUrlField(res.data);
-                                
-                                const newWin = window.open(res.data, '_blank'); // Redirigir al usuario proactivamente
-                                if (newWin) {
-                                    _showToast('¡Plantilla Creada en tu Drive! Pega tus datos en ella.', 'success');
-                                } else {
-                                    _showToast('Plantilla creada, pero tu navegador bloqueó la pestaña. Usa la opción "Abrir archivo" para acceder a ella.', 'warning');
-                                }
-                            }
-                        })
-                        .catch(err => {
-                            loading.dismiss();
-                            _showToast(`Fallo crítico al forjar plantilla: ${err.message}`, 'danger');
-                        });
-                },
                 onDownloadCSVTpl: function(entity) {
                     window.DataEngine.exportToSheet(entity, _state.columns, []);
                 },

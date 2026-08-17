@@ -98,14 +98,14 @@
   <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
 
   <!-- ApexCharts -->
-  <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+  <script src="https://cdn.jsdelivr.net/npm/apexcharts" defer></script>
 
   <!-- ECharts (S57.1 Restoration) -->
-  <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js" defer></script>
 
 
   <!-- SheetJS (S47.1 Excel/XLSX Parser) -->
-  <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js" defer></script>
 
   <!-- ApexTree (S46 Local Integration) -->
   <?!= include('Vendor_ApexTree'); ?>
@@ -125,7 +125,7 @@
 
   <!-- DATA LAYER: Schemas y Estado Global (inyectados por GAS antes del DOM) -->
   <script>
-    window.APP_SCHEMAS = <?!= JSON.stringify(getAppSchema()) ?>;
+    window.APP_SCHEMAS = <?!= JSON.stringify(getPrunedAppSchema()) ?>;
     window.__APP_CACHE__ = {};
     window.getEntitiesByFlag = function(flagName, scope = 'metadata') {
       if (!window.APP_SCHEMAS) return [];
@@ -145,7 +145,7 @@
     }, {});
 
     // [SYS-01] Sistema global para ocultamiento de campos técnicos y de auditoría (KISS)
-    window.CORE_SYS_FIELDS = ['created_at', 'create_by', 'created_by', 'updated_at', 'update_at', 'update_by', 'deleted_at', 'deleted_by', 'version', '_version'];
+    window.CORE_SYS_FIELDS = <?!= CORE_SYS_FIELDS_JSON ?>;
 
     // [S8.5.1] Inyección Híbrida: Funciones Puras del Backend materializadas en el Frontend
     <?!= typeof _normalizeId !== 'undefined' ? _normalizeId.toString() : 'function _normalizeId(){}' ?>;
@@ -429,7 +429,6 @@
   <?!= include('UI_SubgridBuilder'); ?>
   <?!= include('Math_Engine'); ?>
   <?!= include('UI_PanZoomManager'); ?>
-  <?!= include('JS_GraphUtils'); ?>
   <?!= include('UI_FormUtils'); ?>
   <?!= include('FormEngine_Resolvers'); ?>
   <?!= include('UI_FormDependencies'); ?>
@@ -439,7 +438,6 @@
   <?!= include('SelfService_Home_UI'); ?>
   <?!= include('DataEngine_UI'); ?>
   <?!= include('DataEngine_ETL'); ?>
-  <?!= include('DataEngine_ETL_Capacidades'); ?>
   <?!= include('UI_Component_BulkImporter'); ?>
   <?!= include('UI_Component_CanvasLauncher'); ?>
   <?!= include('UI_CanvasNodeFactory'); ?>
@@ -458,7 +456,6 @@
   <?!= include('Dashboard_UI'); ?>
   <!-- Maps removed by S55.2 redesign -->
   <?!= include('UI_View_SwimlaneGrid'); ?>
-  <?!= include('Vendor_ApexTree'); ?>
   <?!= include('UI_View_Organigrama'); ?>
   <?!= include('Schema_Studio_UI'); ?>
   <?!= include('Governance_Admin_UI'); ?>

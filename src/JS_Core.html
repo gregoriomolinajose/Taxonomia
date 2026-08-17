@@ -589,9 +589,32 @@
             
             function bindAvatar(picUrl) {
                 if (!picUrl || picUrl === 'pending') return;
-                const imgHtm = `<img src="${picUrl}" style="width:100%; height:100%; border-radius:50%; object-fit:cover;" />`;
-                if (avatarBtn) { avatarBtn.innerHTML = imgHtm; avatarBtn.style.background = 'transparent'; }
-                if (avatarPop) { avatarPop.innerHTML = imgHtm; avatarPop.style.background = 'transparent'; }
+                
+                let safeUrl = '';
+                try {
+                    const parsedUrl = new URL(picUrl, window.location.origin);
+                    if (['http:', 'https:', 'data:'].includes(parsedUrl.protocol)) {
+                        safeUrl = parsedUrl.href;
+                    }
+                } catch(e) {
+                    safeUrl = '';
+                }
+                if (!safeUrl) return;
+
+                function injectImg(target) {
+                    if (!target) return;
+                    target.innerHTML = '';
+                    const img = document.createElement('img');
+                    img.src = safeUrl;
+                    img.style.width = '100%';
+                    img.style.height = '100%';
+                    img.style.borderRadius = '50%';
+                    img.style.objectFit = 'cover';
+                    target.appendChild(img);
+                    target.style.background = 'transparent';
+                }
+                injectImg(avatarBtn);
+                injectImg(avatarPop);
             }
 
             // Hydrate text

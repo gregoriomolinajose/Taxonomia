@@ -1,0 +1,38 @@
+artifact_type: story-design
+version: 1
+skill: rai-story-design
+created: '2026-08-08T11:59:31-06:00'
+story: 'S67.1'
+epic: 'E67'
+content:
+  summary: 'Fixes redundant initialization calls and cache bypass to improve load speed, while addressing Avatar XSS and Domain Leakage vulnerabilities.'
+  complexity: moderate
+  acceptance_criteria:
+    - id: AC1
+      description: 'AuthManager.init() is called exactly once during initialization'
+      verifiable: true
+    - id: AC2
+      description: 'Engine_DB.list uses the tuple cache correctly on repeated calls'
+      verifiable: true
+    - id: AC3
+      description: 'Avatar URLs are sanitized against XSS payloads'
+      verifiable: true
+    - id: AC4
+      description: 'Domain leakage vulnerabilities are closed'
+      verifiable: true
+  integration_points:
+    - module: 'AuthManager'
+      change_type: modification
+      files: []
+    - module: 'Engine_DB'
+      change_type: modification
+      files: []
+  decisions:
+    - id: D1
+      choice: 'Sanitize avatar URLs at rendering time'
+      rationale: 'Prevents XSS without mutating stored DB data unnecessarily'
+      alternatives_considered: ['Sanitize on write to DB']
+refs:
+  backlog_item: 'S67.1'
+  epic_scope: 'work/epics/e67-optimizacion-carga-seguridad/stories/s67.1-scope.md'
+metadata: {}

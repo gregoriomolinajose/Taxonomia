@@ -101,7 +101,7 @@ window.UI_SubgridBuilder = {
             if (childRecords.length === 0) {
                 const normPK = window.UI_FormUtils ? window.UI_FormUtils.normalizeId(currentPK) : String(currentPK);
                 const edgeName = (field.graphEdgeType || field.name).toUpperCase();
-                const childIds = window.Graph_Utils.resolveAllLinkedIds(normPK, edgeName, contextId, strictContext);
+                const childIds = window.Graph_Utils.resolveAllLinkedIds(normPK, edgeName, contextId, strictContext, field.relationType);
             
             if (childIds.length > 0 && window.DataStore) {
                 const targetTable = window.DataStore.get(field.targetEntity) || [];

@@ -20,20 +20,22 @@ function runTaxonomiaInstall() {
         }
     ];
 
-    const seedPermissions = [
-        {
-            id_permiso: "PERM-BOOT-PERM",
-            id_rol: "RO-SYSADMIN",
-            schema_destino: "Sys_Permissions",
-            nivel_acceso: "ALL (Admin Total)"
-        },
-        {
-            id_permiso: "PERM-BOOT-WORK",
-            id_rol: "RO-SYSADMIN",
-            schema_destino: "Config_Workspace",
-            nivel_acceso: "ALL (Admin Total)"
-        }
-    ];
+    const seedPermissions = [];
+    if (typeof APP_SCHEMAS !== 'undefined') {
+        Object.keys(APP_SCHEMAS).forEach((schemaKey) => {
+            seedPermissions.push({
+                id_permiso: "PERM-BOOT-" + schemaKey.toUpperCase().replace(/[^A-Z0-9]/g, ''),
+                id_rol: "RO-SYSADMIN",
+                schema_destino: schemaKey,
+                nivel_acceso: "ALL (Admin Total)"
+            });
+        });
+    } else {
+        seedPermissions.push(
+            { id_permiso: "PERM-BOOT-SYSPERMISSIONS", id_rol: "RO-SYSADMIN", schema_destino: "Sys_Permissions", nivel_acceso: "ALL (Admin Total)" },
+            { id_permiso: "PERM-BOOT-CONFIGWORKSPACE", id_rol: "RO-SYSADMIN", schema_destino: "Config_Workspace", nivel_acceso: "ALL (Admin Total)" }
+        );
+    }
 
     if (typeof Engine_DB !== 'undefined') {
         Logger.log("Instalando Roles...");
@@ -145,9 +147,9 @@ function seedGreatPeepsRoles() {
     ];
 
     const seedPermissions = [
-        { id_permiso: "PERM-GP-ADMIN", id_rol: "RO-SYSADMIN", schema_destino: "Sys_Permissions", nivel_acceso: "ALL (Admin Total)" },
-        { id_permiso: "PERM-GP-ROLES", id_rol: "RO-SYSADMIN", schema_destino: "Sys_Roles", nivel_acceso: "ALL (Admin Total)" },
-        { id_permiso: "PERM-GP-PERS", id_rol: "RO-SYSADMIN", schema_destino: "Persona", nivel_acceso: "ALL (Admin Total)" }
+        { id_permiso: "PERM-BOOT-" + "Sys_Permissions".toUpperCase().replace(/[^A-Z0-9]/g, ''), id_rol: "RO-SYSADMIN", schema_destino: "Sys_Permissions", nivel_acceso: "ALL (Admin Total)" },
+        { id_permiso: "PERM-BOOT-" + "Sys_Roles".toUpperCase().replace(/[^A-Z0-9]/g, ''), id_rol: "RO-SYSADMIN", schema_destino: "Sys_Roles", nivel_acceso: "ALL (Admin Total)" },
+        { id_permiso: "PERM-BOOT-" + "Persona".toUpperCase().replace(/[^A-Z0-9]/g, ''), id_rol: "RO-SYSADMIN", schema_destino: "Persona", nivel_acceso: "ALL (Admin Total)" }
     ];
 
     if (typeof Engine_DB !== 'undefined') {
